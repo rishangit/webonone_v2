@@ -1,0 +1,222 @@
+---
+description: Standalone microservices, secure cross-service data passing, boundaries, and events
+alwaysApply: true
+---
+
+# Microservice Architecture Rules
+
+## Platform model
+
+Every microservice in this platform must satisfy **three requirements**:
+
+| Requirement | Meaning |
+|-------------|---------|
+| **Runs standalone** | Own frontend (if UI), backend, and database; `npm run dev` works without other services |
+| **Can connect** | Integrates with other services only through defined contracts below — not shared code or DB |
+| **Passes data securely** | Uses the correct channel per layer; never ad-hoc coupling |
+
+Reference implementation (Identity ↔ WebOnOne): [spec/1.0.0/07-identity-webonone-integration.md](../../spec/1.0.0/07-identity-webonone-integration.md).
+
+## Core principles
+
+- Design around **business domains**, not technical layers.
+- Each service owns its **business logic, database, and APIs**.
+- **Independently deployable and scalable** — no hard runtime dependency on another service for its own core flows.
+- **No shared databases** and no cross-service SQL queries.
+
+## Standalone service contract
+
+Each service folder is a **complete unit**:
+
+```text
+service-name/
+  frontend/     # optional — own SPA, own port
+  backend/      # own Express API, own port
+  migrations/   # own MySQL database
+  package.json  # dev starts FE + BE + DB connection
+```
+
+**Standalone means:**
+
+- Service starts and serves its own `/health` without another service running.
+- Service uses **only its own database** for persistence.
+- Another service being down must not prevent startup (connected features may degrade gracefully).
+
+**Connecting means:**
+
+- Optional integration via **versioned contracts** (JWT, events, iframe/postMessage, public HTTP API).
+- Consumer never imports producer's source, repositories, or DB models.
+
+## Environment configuration (per service)
+
+Each microservice owns **separate env files per layer**. Do not use a monorepo-root `.env` for service secrets or ports.
+
+```text
+service-name/
+  frontend/
+    .env.example    # committed — VITE_* only (browser-safe config)
+    .env            # gitignored — local dev copy
+  backend/
+    .env.example    # committed — server secrets (DB, JWT, PORT)
+    .env            # gitignored — local dev copy
+  package.json
+```
+
+| Layer | File | Allowed variables | Loader |
+|-------|------|-------------------|--------|
+| **Frontend** | `frontend/.env` | `VITE_*` only (API base URL, peer origins, iframe URLs) | Vite auto-loads from `frontend/` |
+| **Backend** | `backend/.env` | `DATABASE_URL`, `PORT`, `JWT_SECRET`, service-specific server config | `dotenv` in `backend/src/config/env.ts` and `backend/knexfile.ts` |
+
+**Loading convention (backend):**
+
+```typescript
+// backend/src/config/env.ts — resolve to backend/.env
+dotenv.config({ path: path.resolve(backendRoot, '.env') })
+```
+
+Express handler details: [nodejs-express.mdc](nodejs-express.mdc).
+
+**Cross-service shared values** (e.g. `JWT_SECRET` for Identity sign + WebOnOne verify): duplicate the **same value** in each service's `backend/.env` — separate files, never a shared root file.
+
+**When scaffolding a new service:**
+
+1. Add `frontend/.env.example` and `backend/.env.example` (omit a layer if the service has no FE or BE).
+2. Document every required key in the example file.
+3. Point `config/env.ts` and `knexfile.ts` at `backend/.env` only.
+4. Never read another service's `.env` or a repo-root `.env`.
+
+### Env forbidden
+
+- Monorepo-root `.env` shared across services
+- Backend secrets (`JWT_SECRET`, `DATABASE_URL`, passwords) in `frontend/.env` or any `VITE_*` variable
+- Importing or `dotenv`-loading another service's env file
+- Committing `.env` (only `.env.example` is committed)
+
+## Service boundaries
+
+One business capability per service.
+
+Good: Identity Service, Order Service, Payment Service, Notification Service  
+Bad: Database Service, CRUD Service, Common Service, Utility Service
+
+Schema detail: [mysql-database-architecture.mdc](mysql-database-architecture.mdc).
+
+## Secure cross-service data passing
+
+Use the **right channel per layer**. Do not mix channels.
+
+| Layer | Channel | Passes | Example |
+|-------|---------|--------|---------|
+| **UI embed** | `<iframe>` + query params | Hosted UI from owning service | WebOnOne embeds Identity `/login?parentOrigin=...` |
+| **Browser handoff** | `window.postMessage` + origin checks | JWT + public profile fields | Login success → parent app |
+| **API auth** | `Authorization: Bearer <JWT>` | Signed identity claims (`sub`, `email`, `iss`, `aud`, `exp`) | App FE → own service BE |
+| **Async sync** | Versioned events | Domain facts + foreign IDs (`user_id` CHAR(21)) | `UserRegistered` → local provisioning |
+| **Sync API** | Versioned public HTTP (last resort) | Request/response DTOs only | Coarse-grained; avoid hot-path chains |
+
+```text
+Standalone:     Service A runs alone (own FE + BE + DB)
+UI connect:     App A FE ←iframe/postMessage→ Service B FE
+API auth:       App FE ──JWT──► Own service BE (verify locally; no per-request call to Identity)
+Backend sync:   Service B ──event──► Service A (idempotent consumer, local copy)
+```
+
+### Security rules (required)
+
+- **JWT**: Issuer signs; consumers verify signature + `iss` + `aud` + `exp` locally — never query issuer's DB per request.
+- **postMessage**: Send only to allowlisted `parentOrigin`; receiver validates `event.origin`; never `'*'`.
+- **Secrets**: Never pass tokens, passwords, or refresh tokens in URL query or hash.
+- **Events**: `eventVersion` + `eventId` for idempotency; payload = contract fields only — no internal schema leakage.
+- **iframe**: `Content-Security-Policy: frame-ancestors` on embedded pages; validate `parentOrigin` before postMessage.
+- **Foreign keys**: ID copies only (`user_id` CHAR(21)) — no FK to another service's tables.
+
+### Forbidden
+
+- Shared tables or cross-database queries
+- `postMessage` between backends (browser API only)
+- Duplicating another service's owned UI (embed instead)
+- Long synchronous chains on request path: `A → B → C → D`
+- Calling another service on every request when JWT claims or a local copy suffice
+
+## Backend communication preference
+
+**Prefer events** for cross-service writes and provisioning:
+
+```text
+Order Service → OrderCreated event → Payment Service
+Identity Service → UserRegistered event → WebOnOne Service
+```
+
+**Avoid sync chains:**
+
+```text
+Bad:  Frontend → Gateway → Order → User → Payment
+Good: Frontend → Order API; OrderCreated event → Payment
+```
+
+Use **outbox pattern** when other services depend on your writes. Consumers must be **idempotent** (`eventId` or business key).
+
+## API and event contracts
+
+- Public REST: OpenAPI, versioned (`/api/v1/...`), backward compatible.
+- Events: versioned `eventType` + `eventVersion`; never break required fields.
+- Allowed shared packages: API contracts, event schemas, logging — **not** business logic or repositories.
+
+## Data duplication
+
+Acceptable when it removes runtime dependencies:
+
+```text
+Prefer: UserUpdated event → Order Service local user_profiles copy
+Avoid:  Order Service → User Service HTTP on every read
+```
+
+## Frontend communication
+
+### Option A — Gateway / BFF
+
+One SPA → gateway → multiple services. Use when aggregating many backends behind one origin.
+
+### Option B — Standalone apps (WebOnOne v2 default)
+
+Each app: own FE + BE. Connect to other services as follows:
+
+```text
+Owned UI elsewhere  → iframe + postMessage
+Own domain API      → call own backend with JWT
+Never               → one SPA calling many service backends for domain APIs without gateway
+```
+
+Embed auth, billing, or other **owned UI** from the service that owns it.
+
+## Reliability
+
+- Design for dependency failure; retries, circuit breakers, idempotent handlers, dead-letter queues.
+- A connected service unavailable should not crash the consumer — degrade or queue work.
+
+## Architecture checklist
+
+Before adding or changing a service:
+
+- [ ] Represents a single business domain
+- [ ] Runs standalone (`dev`, `/health`, own DB migrations)
+- [ ] Owns one database; no cross-service queries
+- [ ] Cross-service data uses the correct layer (iframe / postMessage / JWT / event / public API)
+- [ ] JWT verified locally; no per-request Identity (or issuer) HTTP on hot paths
+- [ ] Events versioned; consumers idempotent
+- [ ] No sync chains on request path
+- [ ] No shared business logic, repositories, or DB models across services
+- [ ] Operates when unrelated services are down
+- [ ] `frontend/.env.example` and `backend/.env.example` exist (when that layer exists)
+- [ ] Backend loads config only from `backend/.env` (not repo root or another service)
+- [ ] No shared monorepo-root `.env` for service secrets
+
+If any item fails, reconsider the design.
+
+## Verification
+
+When reviewing service integration:
+
+- Confirm service starts without peer services running.
+- Confirm cross-service links use documented contracts (spec or OpenAPI/event schema).
+- Confirm no `postMessage('*')`, no tokens in URLs, no shared DB access.
+- Confirm each service starts with only its own `frontend/.env` and `backend/.env` (copied from `.env.example`); no repo-root `.env` required.

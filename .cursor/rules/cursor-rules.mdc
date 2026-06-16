@@ -1,0 +1,58 @@
+---
+description: How to add or edit Cursor rules in our project
+alwaysApply: true
+---
+
+# Cursor Rules
+
+## Location and naming
+
+1. Place rule files in **`.cursor/rules/`** only (kebab-case, `.mdc` extension).
+2. Never place rules in the project root or subdirectories outside `.cursor/rules/`.
+3. See [README.md](.cursor/rules/README.md) for the full index of existing rules.
+
+## Rule file format
+
+```yaml
+---
+description: Short description (shown in rule picker)
+globs: front-end/src/**/*.tsx   # omit when alwaysApply: true
+alwaysApply: false
+---
+```
+
+| Field | When to use |
+|-------|-------------|
+| `alwaysApply: true` | Repo-wide standards only (~5 rules). Do **not** also set globs. |
+| `alwaysApply: false` + `globs` | Area-specific rules (front-end UI, backend routes, etc.). |
+
+Keep each rule **under ~80 lines** when possible; split when a topic grows. Every rule should include a **Verification** section with exact commands (`npm run type-check`, `npm run lint`, etc.).
+
+## When to add or update rules
+
+**Add a new rule when:**
+- A pattern appears in **3+ files** and keeps getting copied
+- Common bugs could be prevented by a short guideline
+- Code reviews repeat the same feedback
+
+**Update an existing rule when:**
+- Better reference implementations exist in the codebase
+- Related rules or APIs changed
+- Edge cases were discovered in production code
+
+**Deprecate or remove when:**
+- The pattern no longer exists in the codebase
+- ESLint/CI now enforces the same constraint — keep the rule only if it adds project-specific context
+
+## Quality checklist
+
+- Actionable bullets, one concern per file
+- Concrete examples from actual code paths (not abstract generics)
+- Cross-link related rules instead of duplicating content
+- Prefer `@/` path aliases in examples (see `code-cleanliness.mdc`)
+
+## Continuous maintenance
+
+After major refactors, audit `.cursor/rules/` against the codebase. Update the [README.md](.cursor/rules/README.md) index when adding or removing rules.
+
+For multi-step workflows (releases, showcase registration, new WebpageEditor addons), prefer **project skills** in `.cursor/skills/` over very long always-on rules.

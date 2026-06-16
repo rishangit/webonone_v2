@@ -1,0 +1,9 @@
+{
+  "name": "ui-kit-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev -w @webonone/ui-kit-showcase",
+    "build": "npm run build -w @webonone/ui-kit",
+    "type-check": "npm run type-check -w @webonone/ui-kit && npm run type-check -w @webonone/ui-kit-showcase"
+  }
+}

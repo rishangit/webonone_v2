@@ -1,0 +1,51 @@
+---
+description: Clean structure, path aliases, no dead code, and remove empty unused folders/files
+alwaysApply: true
+---
+# Code cleanliness and structure
+
+Apply these expectations in every coding task for this repo.
+
+## Import paths (aliases)
+
+- **Always use configured path aliases** for imports from the app source tree (e.g. in `front-end`, use **`@/...`** for modules under `src/`), not long relative paths like `../../../components/...`.
+- **Exception:** use relative imports when they are clearly local to the same feature folder (e.g. sibling `./Foo`, `../components/Bar` inside one page or wizard) if that matches existing patterns in that directory—otherwise prefer `@/` for shared code (`@/components`, `@/utils`, `@/pages`, etc.).
+
+## Structure and clarity
+
+- Prefer small, focused functions and components; keep files readable top-to-bottom.
+- Match existing patterns in the same folder (naming, file layout, import order).
+- Avoid drive-by refactors unrelated to the task; keep diffs focused.
+- Do not leave large blocks of commented-out code; remove or replace with a short note only when history must be preserved.
+
+## Empty or unused folders and files
+
+**TS/ESLint do not report empty directories** (see **Verification**). When a change leaves artifacts behind, clean them up as part of "done" work (when safe):
+
+- Remove **empty folders** left after moving or deleting code.
+- Remove **unused files** (orphaned components, duplicate stubs, leftover `.tsx`/`.ts` that nothing imports) once you have confirmed nothing references them (grep or the toolchain).
+- Do not delete files that are entry points, config, or intentionally kept for a future task unless the user or task scope says so.
+
+## Unused imports, variables, and functions
+
+**Always treat removal of dead code as part of "done" work** when touching a file:
+
+- Remove **unused imports** (including type-only imports that are no longer referenced).
+- Remove **unused variables** and **unused function parameters** (prefix with `_` only when the signature must stay for API/callback compatibility).
+- Remove **unused functions**, **private helpers**, and **dead branches** that are never called.
+- After edits, rely on the project toolchain: TypeScript (`noUnusedLocals` / `noUnusedParameters` where enabled) and ESLint unused rules—fix reported issues in files you changed.
+
+## When not to remove
+
+- Do not delete exports that are part of the public API or used by other packages unless the task explicitly includes that change.
+- Keep intentionally unused parameters when required by an interface (use `_name` or omit via ESLint overrides only if the codebase already does).
+
+## Verification
+
+Before considering a change complete for touched files, ensure there are no new unused symbols and imports remain minimal and accurate. For refactors or deletions, confirm **no empty folders** remain and **imports use `@/`** where this rule expects aliases (not deep `../../` hops to shared modules).
+
+**Front-end:** `cd front-end` then `npm run type-check`, `npm run lint`, and `npm run format:check` if Prettier is configured.
+
+**Backend:** see [nodejs-express.mdc](nodejs-express.mdc) verification commands for the service package.
+
+Empty directories are **not** reported by type-check or lint—spot-check the folder tree after big moves.

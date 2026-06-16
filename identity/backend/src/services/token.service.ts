@@ -1,0 +1,54 @@
+import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
+import { env } from '../config/env.js'
+import type { UserRow } from '../models/user.repository.js'
+import { toUserProfile } from '../models/user.repository.js'
+
+export interface AccessTokenPayload {
+  sub: string
+  email: string
+  iss: string
+  aud: string
+}
+
+export function signAccessToken(user: UserRow): { accessToken: string; expiresIn: number } {
+  const payload: AccessTokenPayload = {
+    sub: user.id,
+    email: user.email,
+    iss: env.jwtIssuer,
+    aud: env.jwtAudience,
+  }
+  const accessToken = jwt.sign(payload, env.jwtSecret, {
+    expiresIn: env.accessTokenExpirySeconds,
+  })
+  return { accessToken, expiresIn: env.accessTokenExpirySeconds }
+}
+
+export function generateRefreshToken(): string {
+  return crypto.randomBytes(48).toString('hex')
+}
+
+export function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
+export function generatePasswordResetToken(): string {
+  return crypto.randomBytes(32).toString('hex')
+}
+
+export function buildAuthResponse(user: UserRow, accessToken: string, expiresIn: number, refreshToken: string) {
+  return {
+    accessToken,
+    refreshToken,
+    expiresIn,
+    user: toUserProfile(user),
+  }
+}
+
+export function verifyAccessToken(token: string): AccessTokenPayload {
+  const decoded = jwt.verify(token, env.jwtSecret, {
+    issuer: env.jwtIssuer,
+    audience: env.jwtAudience,
+  }) as AccessTokenPayload
+  return decoded
+}

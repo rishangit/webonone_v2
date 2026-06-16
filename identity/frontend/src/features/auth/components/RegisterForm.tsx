@@ -1,0 +1,83 @@
+import { useState } from 'react'
+import { Alert, AlertDescription, Button, Form, FormField, Input, Spinner } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { registerSchema, type RegisterFormValues } from '../schemas/authSchemas'
+import { authActions } from '../store'
+
+export function RegisterForm() {
+  const dispatch = useAppDispatch()
+  const { isLoading, error } = useAppSelector((s) => s.auth)
+  const [values, setValues] = useState<RegisterFormValues>({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+  })
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterFormValues, string>>>({})
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const parsed = registerSchema.safeParse(values)
+    if (!parsed.success) {
+      const errors: Partial<Record<keyof RegisterFormValues, string>> = {}
+      parsed.error.issues.forEach((issue) => {
+        const key = issue.path[0] as keyof RegisterFormValues
+        errors[key] = issue.message
+      })
+      setFieldErrors(errors)
+      return
+    }
+    setFieldErrors({})
+    dispatch(authActions.clearAuthError())
+    dispatch(authActions.registerRequested(parsed.data))
+  }
+
+  return (
+    <Form onSubmit={handleSubmit}>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="First name" htmlFor="firstName" error={fieldErrors.firstName}>
+          <Input
+            id="firstName"
+            autoComplete="given-name"
+            value={values.firstName}
+            onChange={(e) => setValues((v) => ({ ...v, firstName: e.target.value }))}
+          />
+        </FormField>
+        <FormField label="Last name" htmlFor="lastName" error={fieldErrors.lastName}>
+          <Input
+            id="lastName"
+            autoComplete="family-name"
+            value={values.lastName}
+            onChange={(e) => setValues((v) => ({ ...v, lastName: e.target.value }))}
+          />
+        </FormField>
+      </div>
+      <FormField label="Email" htmlFor="email" error={fieldErrors.email}>
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          value={values.email}
+          onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
+        />
+      </FormField>
+      <FormField label="Password" htmlFor="password" error={fieldErrors.password}>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="new-password"
+          value={values.password}
+          onChange={(e) => setValues((v) => ({ ...v, password: e.target.value }))}
+        />
+      </FormField>
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? <Spinner size="sm" /> : 'Create account'}
+      </Button>
+    </Form>
+  )
+}

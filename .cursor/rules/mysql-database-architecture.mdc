@@ -1,0 +1,116 @@
+---
+description: MySQL schema design, migrations, and data ownership for Node.js microservices
+globs: backend/**/{migrations,prisma,models,db,repositories}/**/*.{sql,ts,js},backend/**/schema.prisma
+alwaysApply: false
+---
+
+# MySQL Database Architecture
+
+Related: [microservice-architecture.mdc](microservice-architecture.mdc) (one DB per service, events, no cross-service queries), [nodejs-express.mdc](nodejs-express.mdc) (Express layout and handlers).
+
+## Before designing tables
+
+1. Confirm the table belongs to **this service’s bounded context** — other services’ entities are ID copies only.
+2. List intra-service entities, relationships, state transitions, and query patterns.
+3. Sketch indexes from real access paths.
+
+## Boundaries (MySQL layer)
+
+- **FK constraints** only within the same database.
+- Cross-service references: `user_id`, `order_id` as `CHAR(21)` nanoid — **no FK** to another service’s tables.
+- Sync and denormalize via **events** or public APIs (see microservice architecture rule).
+
+## Naming and types
+
+- **Tables**: `snake_case`, plural (`orders`, `order_line_items`).
+- **Columns**: `snake_case` (`created_at`, `status`).
+- **Primary keys**: **`CHAR(21)`** via Node.js [`nanoid`](https://github.com/ai/nanoid) (default size 21). No `AUTO_INCREMENT`, MySQL `UUID()`, or `CHAR(36)` for new tables.
+- **FK columns**: `CHAR(21)` matching the referenced `id`.
+- **Charset**: `utf8mb4` / `utf8mb4_unicode_ci` (or `_0900_ai_ci` on MySQL 8+). **Engine**: InnoDB.
+- **Timestamps**: `created_at`, `updated_at` as `DATETIME(3)`; UTC in app code.
+- **Money**: `DECIMAL(19,4)`. **Booleans**: `TINYINT(1)`; positive names (`is_active`).
+- **Status**: lookup tables or `VARCHAR` over MySQL `ENUM` when values evolve.
+
+## Standard columns
+
+```sql
+id            CHAR(21)     NOT NULL PRIMARY KEY,
+created_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+updated_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
+```
+
+Optional: `deleted_at DATETIME(3) NULL` for soft deletes.
+
+## Nanoid IDs (Node.js)
+
+- Assign `id` **before** `INSERT` in the service layer (`import { nanoid } from 'nanoid'`).
+- Custom `size`/`customAlphabet`: use matching `CHAR(n)` consistently across PKs and FKs.
+- Validate IDs at API boundary: `z.string().length(21)` for default nanoid.
+
+```typescript
+import { nanoid } from 'nanoid'
+
+export const createOrder = async (input: CreateOrderInput) => {
+  const id = nanoid()
+  await db.query(
+    'INSERT INTO orders (id, user_id, status, total_amount) VALUES (?, ?, ?, ?)',
+    [id, input.userId, 'pending', input.totalAmount],
+  )
+  return { id, ...input, status: 'pending' }
+}
+```
+
+## Relationships, migrations, and access
+
+- Intra-service FKs: explicit `ON DELETE` (`RESTRICT` for core parents, `CASCADE` for owned children).
+- Index FK columns and `WHERE`/`ORDER BY`/`JOIN` columns; composite indexes match filter order.
+- **Migrations**: versioned, append-only, one logical change each; seeds separate from schema.
+- **Pool** per process (`DB_POOL_MAX`); **parameterized queries** only; **transactions** for multi-row writes.
+- Least-privilege DB user per service database.
+
+## Microservice data patterns
+
+- **Outbox table**: same transaction as business write; worker publishes events.
+- **Idempotency**: unique `idempotency_key` for retried creates/payments.
+- **Read models**: denormalize via event consumers; treat as eventually consistent.
+
+## Example schema
+
+```sql
+CREATE TABLE orders (
+  id           CHAR(21)      NOT NULL PRIMARY KEY,
+  user_id      CHAR(21)      NOT NULL,
+  status       VARCHAR(32)   NOT NULL,
+  total_amount DECIMAL(19,4) NOT NULL,
+  created_at   DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at   DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_orders_user_id (user_id),
+  INDEX idx_orders_status_created (status, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE order_line_items (
+  id         CHAR(21)    NOT NULL PRIMARY KEY,
+  order_id   CHAR(21)    NOT NULL,
+  product_id CHAR(21)    NOT NULL,
+  quantity   INT         NOT NULL,
+  unit_price DECIMAL(19,4) NOT NULL,
+  CONSTRAINT fk_line_items_order
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+## Checklist
+
+- [ ] Correct service database; no cross-service FKs or shared tables
+- [ ] `CHAR(21)` nanoid PKs/FKs generated in Node.js before insert
+- [ ] Indexes and constraints for FKs and query paths
+- [ ] Migration append-only; outbox/idempotency where other services depend on writes
+
+## Verification
+
+```bash
+npm run type-check
+npm run lint
+npm run migrate:status   # prisma migrate status, knex migrate:list, etc.
+npm test
+```

@@ -1,0 +1,45 @@
+---
+description: React and TypeScript conventions for the front-end
+globs: front-end/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React (TypeScript) Development Guide
+
+Related: [front-end-structure.mdc](front-end-structure.mdc) (folders), [tailwind-css.mdc](tailwind-css.mdc) (styling), [redux-store-and-epics.mdc](redux-store-and-epics.mdc) (store/epics).
+
+## Key Principles
+
+- Functional, declarative components — avoid classes.
+- Descriptive names with auxiliary verbs (`isLoading`, `hasError`).
+- Named exports for components; RORO for multi-arg helpers.
+- Directory naming: lowercase with dashes (e.g. `components/auth-wizard`).
+
+## TypeScript
+
+- Prefer **interfaces** over types; avoid enums — use const maps or union literals.
+- Source files: `.ts` and `.tsx` only.
+- File order: exported component → subcomponents → helpers → static content → types.
+- Use `function` for pure helpers and **component definitions** (not `const` arrow components).
+
+## Error Handling
+
+- Guard clauses and early returns at the top; happy path last.
+- Log errors with context; surface user-friendly messages in UI.
+- Forms: validate with **Zod** (often via `react-hook-form`).
+
+## React
+
+- Props: TypeScript interfaces on functional components.
+- Minimize `useEffect` and local state — derive when possible; colocate logic in custom hooks.
+- Async UI: `React.lazy` + `Suspense` with a fallback; wrap risky trees in error boundaries.
+- Images: WebP where supported, explicit dimensions, lazy loading.
+- Accessibility: prefer Radix primitives (see [tailwind-css.mdc](tailwind-css.mdc) for shadcn/ui usage).
+
+## Verification
+
+```bash
+cd front-end
+npm run type-check
+npm run lint
+```

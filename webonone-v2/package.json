@@ -1,0 +1,12 @@
+{
+  "name": "webonone-v2-root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n fe,be -c blue,green \"npm run dev -w @webonone/webonone-frontend\" \"npm run dev -w @webonone/webonone-backend\"",
+    "type-check": "npm run type-check -w @webonone/webonone-frontend && npm run type-check -w @webonone/webonone-backend",
+    "migrate": "npm run migrate -w @webonone/webonone-backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

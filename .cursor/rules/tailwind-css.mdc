@@ -1,0 +1,161 @@
+---
+description: Tailwind CSS styling standards
+globs: front-end/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Tailwind CSS Standards
+
+Related: [react-typescript.mdc](react-typescript.mdc) (components), [front-end-structure.mdc](front-end-structure.mdc) (file layout).
+
+## Core Principles
+
+- Use Tailwind utility classes for component styling.
+- Prefer Tailwind utilities over custom CSS.
+- Avoid custom CSS files unless absolutely necessary.
+- Never use inline styles.
+- Never use the `@apply` directive.
+- Follow a mobile-first approach.
+- Prioritize readable and maintainable class lists.
+
+Preferred:
+
+```tsx
+<div className="flex items-center gap-4 rounded-lg border p-4" />
+```
+
+Avoid:
+
+```tsx
+<div className="user-card" />
+```
+
+## Utility Classes
+
+- Use spacing, sizing, typography, color, border, and layout utilities directly.
+- Prefer composing existing utilities over creating ad-hoc custom class names.
+- Keep class names concise and consistently ordered.
+
+## Responsive Design
+
+- Design mobile-first.
+- Add responsive variants with `sm:`, `md:`, `lg:`, `xl:`, `2xl:`.
+- Avoid fixed layouts that do not adapt across viewports.
+
+Preferred:
+
+```tsx
+<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" />
+```
+
+## Class Ordering
+
+Maintain this order when practical:
+
+1. Layout (`flex`, `grid`, `block`)
+2. Position (`relative`, `absolute`, `fixed`)
+3. Size (`w-*`, `h-*`, `min-w-*`, `max-w-*`)
+4. Spacing (`p-*`, `px-*`, `py-*`, `m-*`, `gap-*`)
+5. Typography (`text-*`, `font-*`, `leading-*`)
+6. Visual (`bg-*`, `border-*`, `rounded-*`, `shadow-*`)
+7. State (`hover:*`, `focus:*`, `active:*`, `disabled:*`)
+8. Responsive (`sm:*`, `md:*`, `lg:*`, `xl:*`, `2xl:*`)
+
+Example:
+
+```tsx
+className="
+flex items-center
+w-full
+gap-4 px-4 py-2
+text-sm font-medium
+bg-background border rounded-md
+hover:bg-accent
+md:px-6
+"
+```
+
+## Colors
+
+- Use semantic color tokens from the Tailwind theme.
+- Avoid hardcoded hex values in class names.
+
+Preferred:
+
+```tsx
+<div className="bg-primary text-primary-foreground border-border" />
+```
+
+Avoid:
+
+```tsx
+<div className="bg-[#2563EB] text-[#FFFFFF] border-[#D1D5DB]" />
+```
+
+## Spacing
+
+- Use the Tailwind spacing scale.
+- Avoid arbitrary values unless there is a strong, documented reason.
+
+Preferred:
+
+```tsx
+<div className="p-4 gap-6 mt-8" />
+```
+
+Avoid:
+
+```tsx
+<div className="p-[17px] gap-[13px]" />
+```
+
+## Typography
+
+- Use Tailwind typography utilities and consistent design-system sizes.
+- Avoid arbitrary font sizes and weights.
+
+Preferred:
+
+```tsx
+<p className="text-sm text-base text-lg font-medium" />
+```
+
+Avoid:
+
+```tsx
+<p className="text-[15px] font-[550]" />
+```
+
+## Design Tokens
+
+- Define and maintain colors, spacing, typography, radii, shadows, and animation in `tailwind.config.ts`.
+- Reuse theme tokens and avoid repeating hardcoded design values.
+
+## shadcn/ui Integration
+
+- Use shadcn/ui components whenever available.
+- Prefer component variants before custom styling.
+- Avoid modifying generated shadcn/ui source files unless task-scoped and necessary.
+
+## Styling Checklist
+
+Before submitting code:
+
+- Uses Tailwind utility classes
+- No unnecessary custom CSS
+- No inline styles
+- No `@apply` usage
+- Mobile responsive behavior implemented
+- Uses theme tokens
+- No hardcoded colors
+- No excessive arbitrary values
+- Follows class ordering convention
+- Reuses existing shadcn/ui components when applicable
+
+## Verification
+
+```bash
+cd front-end
+npm run type-check
+npm run lint
+```

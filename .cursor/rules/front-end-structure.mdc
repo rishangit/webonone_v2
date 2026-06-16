@@ -1,0 +1,79 @@
+---
+description: Enforce frontend src and feature module structure
+globs: front-end/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Front-end Structure Standards
+
+Related: [redux-store-and-epics.mdc](redux-store-and-epics.mdc) (slices/epics), [react-typescript.mdc](react-typescript.mdc), [tailwind-css.mdc](tailwind-css.mdc).
+
+Use this structure for all frontend code under `front-end/src`:
+
+- **`app/`**: app bootstrap concerns only (`store.ts`, `router.tsx`, `App.tsx`).
+- **`features/`**: main business modules. Each domain lives in its own folder.
+- **`shared/`**: reusable code **and** the **only** supported way for one feature to use another feature’s public types, UI, or helpers (see **Cross-module dependencies** below).
+- **`layouts/`**: reusable page/layout shells (for example dashboard layouts).
+- **`routes/`**: route declarations when separated from router setup.
+- **`assets/`**: static assets (images, fonts, icons).
+- **`styles/`**: global styles and style tokens.
+- **`main.tsx`**: frontend entry point only.
+
+## Feature Module Contract
+
+Each feature folder in `features/` should follow this shape (example: `products/`):
+
+- **`components/`**: feature-scoped UI building blocks (for example `ProductCard`, `ProductList`).
+- **`pages/`**: route-level pages for the feature (for example `ProductPage`).
+- **`services/`**: API/service layer (for example `productApi.ts`).
+- **`store/`**: feature state slices/selectors/actions (for example `productSlice.ts`).
+- **`hooks/`**: feature-specific hooks (for example `useProducts.ts`).
+- **`types/`**: feature types/interfaces (for example `product.types.ts`).
+- **`schemas/`**: validation schemas for this module only (for example Yup/Zod shapes, resolver helpers) used by pages, dialogs, and services in the same feature—name files by domain (for example `productValidation.ts`, `companyWizardSchemas.ts`). Do not put another feature’s validation here.
+- **`index.ts`**: public API of the module for **app shell, router, and layouts**; features must **not** rely on another feature’s `index.ts` for imports (use `shared/` instead).
+
+## Boundary Rules
+
+- **Keep domain implementation local**: Keep **domain implementation** inside its feature (`features/<module>/`); do not copy large feature-only flows into `shared/` just to avoid structure.
+- **Cross-module dependencies**: A feature **must not** import from **another** feature’s path (no `@/features/<other-module>/...` from inside `@/features/<this-module>/...` when `other-module !== this-module`). Imports **within the same** `features/<module>/` tree (relative paths or same-module aliases) are required and normal. This rule targets **feature ↔ feature** coupling only.
+- **When feature A needs feature B**: Expose it through **`front-end/src/shared`** using the right subfolder: **`shared/components/`** (UI), **`shared/types/`** (types), **`shared/schemas/`** (validation reused across features, rare), **`shared/store/`** (Redux actions used across features), **`shared/services/`** (API clients), **`shared/hooks/`** (shared hooks), **`shared/utils/`** (helpers). Use small domain files (for example `shared/store/tags.ts`, `shared/components/appointments.ts`) that re-export from `features/<B>`. Other features import **`@/shared/...`** only. Acceptable patterns include:
+- **Move generic building blocks**: moving genuinely generic building blocks into `shared/` when they are used by multiple features.
+- **Thin barrel re-exports**: a **thin barrel** in `shared/` that re-exports a stable, intentional API from one feature (document the dependency in a one-line comment if non-obvious).
+- **Shared DTOs/adapters**: shared DTOs/types and small adapters that multiple features agree on.
+- **Wiring is allowed in app shells**: **`app/`**, **`layouts/`**, **`routes/`**, and **`main.tsx`** may import from `@/features/<module>` (including `index.ts`) to wire screens and data; that is not “feature ↔ feature” coupling.
+- **New modules**: New modules (for example `auth`, `orders`, `products`) must follow the same folder contract for consistency.
+
+## Migration and Placement Rules
+
+- **Restructure by moving into module folders**: When restructuring old code, move related files into the correct `features/<module>/` folder according to this rule.
+- **Create contract folders first**: Before moving files, create the complete feature contract folders for the target module: `components/`, `pages/`, `services/`, `store/`, `hooks/`, `types/`, `schemas/`, plus `index.ts`.
+- **Store placement**: `features/<module>/store/` — slice/epic conventions in [redux-store-and-epics.mdc](redux-store-and-epics.mdc).
+- **Services placement**: Keep module-specific `services` files inside `features/<module>/services`.
+- **Types placement**: Keep module-specific `types` and model files inside `features/<module>/types` (interfaces, DTOs, domain models, enums).
+- **Hooks placement**: Keep module-specific hooks inside `features/<module>/hooks`.
+- **Schema placement**: Keep module-specific validation schemas inside `features/<module>/schemas` (forms, wizards, create/edit payloads). When migrating legacy top-level `front-end/src/schemas/` (or ad-hoc schema files under `pages/`), move them into the **owning** feature’s `schemas/` folder and fix imports; reserve `shared/schemas/` (optional) only for schemas reused by **multiple** features with no single owner—prefer a thin `shared/schemas/<topic>.ts` barrel if needed.
+- **No legacy module leftovers**: Do not leave module-specific files in legacy top-level folders once migrated; keep them inside the module.
+- **Share only via `shared/`**: Use `shared/*` for code used by **multiple features** and for **any API one feature exposes for others** (see **Cross-module dependencies** above). Prefer small, explicit barrels over deep imports from another feature.
+- **Type index exports**: `features/<module>/types/index.ts` should export local type/model files (for example `./user`, `./product.types`) instead of re-exporting legacy paths.
+- **Move real implementation**: Migrations must move real implementation files, not only reference wrappers.
+- **No legacy placeholders**: Do not implement files in `features/<module>/` as `export ... from '@/legacy/path'` placeholders.
+- **No duplication**: Do not create duplicate feature files/components that only mirror the original file.
+- **Contracts must be real**: This applies to `components`, `services`, `store`, `hooks`, `types`, and `schemas`: feature folders must contain real module code after migration.
+- **Update imports + delete legacy**: After a module is migrated, update imports to the new module paths and remove the original legacy implementation files.
+- **Temporary compatibility only**: Short-lived legacy re-export bridges only when required; remove in the same migration phase. Thin `shared/` barrels for cross-feature APIs are integration wiring, not migration placeholders (see **Cross-module dependencies**).
+
+## Migration completion
+
+- All contract subfolders present: `components/`, `pages/`, `services/`, `store/`, `hooks/`, `types/`, `schemas/`, `index.ts`.
+- Real implementation moved (not `export ... from '@/legacy/path'` wrappers); imports updated; duplicate legacy files removed.
+- If a subfolder is intentionally empty, add a visible placeholder (`README.md` or `index.ts` with TODO).
+- Partial migrations: state explicitly which folders are still pending.
+
+## Verification
+
+From repo root:
+
+- `cd front-end`
+- `npm run type-check`
+- `npm run lint`
+- When reviewing structure: ensure no file under `features/<A>/` imports `@/features/<B>/` for `A !== B`; route those through `@/shared/...` instead.

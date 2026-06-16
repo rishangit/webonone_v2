@@ -1,0 +1,87 @@
+---
+description: Node.js Express API conventions with MySQL and JWT
+globs: backend/**/*.{ts,js}
+alwaysApply: false
+---
+
+# Node.js (Express + MySQL)
+
+Related: [microservice-architecture.mdc](microservice-architecture.mdc) (boundaries, APIs, events), [mysql-database-architecture.mdc](mysql-database-architecture.mdc) (schema, migrations, nanoid).
+
+## Tech stack
+
+- **Runtime**: Node.js with Express.js
+- **Database**: MySQL via Prisma, Sequelize, or Knex — schema rules in mysql-database-architecture
+- **Authentication**: JWT
+- **Frontend**: [react-typescript.mdc](react-typescript.mdc), [front-end-structure.mdc](front-end-structure.mdc) — do not mix UI patterns into backend code
+
+## Before coding a feature
+
+1. Summarize the user flow and acceptance criteria.
+2. Outline REST endpoints (method, path, auth, request/response shape) per microservice API rules.
+3. Pseudocode handlers: validation → authorization → persistence → response.
+4. For tables and migrations, follow [mysql-database-architecture.mdc](mysql-database-architecture.mdc).
+
+## Project layout
+
+Under `backend/` (or per-service root):
+
+- **`src/routes/`** — thin routers
+- **`src/controllers/`** — HTTP mapping (status codes, DTOs)
+- **`src/services/`** — business logic (no `req`/`res`)
+- **`src/models/`** — entities, repositories, ORM models
+- **`src/middleware/`** — auth, validation, errors
+- **`src/utils/`** — JWT, pagination, etc.
+- **`src/config/`** — env-driven configuration
+- **`src/app.ts`** / **`src/server.ts`** — bootstrap
+
+Version public APIs (e.g. `/api/v1/...`).
+
+## REST and validation
+
+- Status codes: `201` create, `400` validation, `401`/`403` auth, `404` not found, `409` conflict.
+- Validate body, params, and query with Zod or Joi at the controller/middleware boundary.
+- Error shape: `{ message, code?, details? }` — no stack traces in production.
+- Guard clauses and early returns; happy path last.
+
+## JWT authentication
+
+- Sign tokens from env secret; set reasonable expiry.
+- Auth middleware verifies token and attaches claims (e.g. `userId`) to `req`.
+- Hash passwords with bcrypt or argon2; never store or log plaintext.
+- `401` missing/invalid token; `403` authenticated but not authorized.
+
+## Error handling
+
+- Central Express error middleware.
+- Custom error classes for operational errors (validation, not found, conflict).
+- Log unexpected errors with context; map to safe client messages.
+
+## TypeScript style
+
+- **Arrow functions** for controllers, handlers, middleware, and services unless a hoisted `function` is required.
+- Named exports: `export const createResource = async (...) => { ... }`.
+
+## Example handler shape
+
+```typescript
+export const createResource = async (req, res, next) => {
+  try {
+    const input = parseCreateResource(req.body)
+    const resource = await resourceService.create(input, req.user.id)
+    res.status(201).json(resource)
+  } catch (err) {
+    next(err)
+  }
+}
+```
+
+## Verification
+
+From the service package root:
+
+```bash
+npm run type-check
+npm run lint
+npm test
+```

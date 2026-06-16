@@ -1,0 +1,7 @@
+packages:
+  - "ui-kit/package"
+  - "ui-kit/showcase"
+  - "identity/frontend"
+  - "identity/backend"
+  - "webonone-v2/frontend"
+  - "webonone-v2/backend"

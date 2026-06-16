@@ -1,0 +1,61 @@
+---
+description: Redux Toolkit global store, feature slices/actions, redux-observable epics
+globs: front-end/**/store/**/*.ts
+alwaysApply: false
+---
+
+# Redux store, actions, and epics
+
+Related: [front-end-structure.mdc](front-end-structure.mdc) (feature folders and cross-module boundaries via `shared/`).
+
+## Key Principles
+
+- **Single store**: Keep one `configureStore` in `front-end/src/app/store/index.ts`.
+- **Feature ownership**: Keep slices and epics inside `front-end/src/features/<domain>/store/`.
+- **Pure reducers**: Reducers stay synchronous and side-effect free.
+- **Epics for async**: Use `redux-observable` epics plus feature services for async flows.
+- **Single epic composition**: Combine all epics only in `front-end/src/app/store/epics/rootEpic.ts`.
+
+## Store and File Structure
+
+- **Global store**: Register all reducers and run `epicMiddleware.run(rootEpic)` in `app/store/index.ts`.
+- **Typed hooks**: Define `useAppDispatch` and `useAppSelector` in `app/store/hooks.ts`.
+- **Feature store contract**: Each domain `store/` should expose `*Slice.ts`, `*Epics.ts`, and `index.ts`.
+- **Service boundary**: Network and side effects belong in `features/<domain>/services/`, not reducers.
+- **Bootstrap**: Wire `Provider` in `front-end/src/main.tsx` using `store` from `./app/store`.
+
+## Imports and Boundaries
+
+- **`@/store/hooks`**: Use for `useAppDispatch` and `useAppSelector` in React code.
+- **`@/store`**: Use for `store`, `RootState`, and `AppDispatch` outside React when needed.
+- **`@/features/<domain>/store`**: Import actions/reducers/epics from the domain barrel.
+- **No deep cross-feature imports**: Route cross-feature store APIs through `@/shared/store/...` (see front-end-structure boundary rules).
+
+## Slices and Actions
+
+- **Slice style**: Use RTK `createSlice` with one primary slice per concern.
+- **State updates**: Store loading, error, and normalized state in reducers.
+- **Barrel exports**: Export slice, reducer, and actions from `features/<domain>/store/index.ts`.
+
+## Epics and Async Flows
+
+- **Epic naming**: Name files `*Epics.ts` (for example `authEpics.ts`).
+- **Operator usage**: Use `ofType` + `from` and choose `switchMap`, `exhaustMap`, or `mergeMap` intentionally.
+- **Error handling**: `catchError` must return `of(failureAction)` (or equivalent observable action).
+- **Async policy**: Keep `thunk: false`; do not add `createAsyncThunk` unless middleware strategy is changed project-wide.
+- **No duplicate wiring**: Do not add another `configureStore` or another root epic composition.
+
+## Checklist
+
+1. Add or update `*Slice.ts`, then export through `features/<domain>/store/index.ts`.
+2. Add or update `*Epics.ts`, then export through the same store barrel.
+3. Register the feature reducer in `app/store/index.ts`.
+4. Register the feature epic in `app/store/epics/rootEpic.ts`.
+
+## Verification
+
+```bash
+cd front-end
+npm run type-check
+npm run lint
+```
