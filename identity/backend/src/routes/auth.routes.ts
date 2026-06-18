@@ -11,6 +11,8 @@ router.post('/forgot-password', authController.forgotPassword)
 router.post('/reset-password', authController.resetPasswordHandler)
 router.post('/refresh', authController.refresh)
 router.post('/logout', authController.logout)
+router.post('/code', requireAuth, authController.createAuthCode)
+router.post('/exchange', authController.exchange)
 router.get('/me', requireAuth, authController.me)
 router.patch('/me', requireAuth, authController.patchMe)
 

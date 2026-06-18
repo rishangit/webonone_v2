@@ -10,91 +10,88 @@ Every cross-service link uses the **right channel** for its layer. Do not mix th
 
 | Layer | Channel | Used for |
 |-------|---------|----------|
-| **1 — UI embed** | `<iframe>` + query params | Host another service's UI (login) in your app |
-| **2 — Browser handoff** | `window.postMessage` | Pass login result (JWT + profile) parent ↔ child |
+| **1 — Browser redirect** | Full-page redirect + auth code | Send user to Identity login; return to consumer callback |
+| **2 — Token exchange** | `POST /auth/exchange` | Trade short-lived code for JWT + profile (never JWT in URL) |
 | **3 — Service trust** | JWT in `Authorization` header | Prove identity on each API request |
 | **4 — Async sync** | Versioned events | Provision or update local copies after registration |
 
 ```text
-Layer 1–2 (browser):  WebOnOne FE ←iframe/postMessage→ Identity FE
+Layer 1–2 (browser):  WebOnOne FE ──redirect──► Identity FE ──code──► WebOnOne /callback ──exchange──► Identity BE
 Layer 3 (API):        WebOnOne FE ──Bearer JWT──► WebOnOne BE (verify locally)
 Layer 4 (async):      Identity BE ──UserRegistered──► WebOnOne BE (future)
 ```
 
-**Never:** shared database, token in URL, `postMessage` with `targetOrigin '*'`, or WebOnOne BE calling Identity BE on every request.
+**Never:** shared database, JWT in URL query/hash, or WebOnOne BE calling Identity BE on every request.
 
 ---
 
-## Layer 1 — Iframe embedding
+## Layer 1 — Redirect to Identity
 
-WebOnOne `/login` hosts Identity login UI:
+WebOnOne sends unauthenticated users to Identity login:
 
 ```text
-Parent: http://localhost:3000/login
-Iframe: http://localhost:3001/login?parentOrigin=http://localhost:3000&returnPath=/
+WebOnOne: http://localhost:3000/login  →  user clicks "Continue to sign in"
+Identity: http://localhost:3001/login?redirect_uri=http://localhost:3000/callback&return_path=/&state=<nonce>
 ```
 
 | Owner | Responsibility |
 |-------|----------------|
-| WebOnOne FE | `IdentityLoginFrame` — build iframe `src`, listen for messages |
-| Identity FE | `LoginPage` embed mode — minimal layout when `parentOrigin` is set |
-| Identity FE | `Content-Security-Policy: frame-ancestors` — allow WebOnOne origins only |
+| WebOnOne FE | Build login URL with `redirect_uri`, `return_path`, `state`; store `state` in `sessionStorage` |
+| Identity FE | Validate `redirect_uri` against allowlist; preserve params across register/forgot links |
+| Identity FE | Shared `AppHeader` from UI Kit (logo when logged out) |
 
 Identity **owns** login, register, and reset-password UI. WebOnOne **never** duplicates auth forms.
 
 ---
 
-## Layer 2 — postMessage handoff
+## Layer 2 — Authorization code exchange
 
-After successful `POST /api/v1/auth/login` inside the iframe, Identity FE sends:
+After successful login, Identity FE requests a one-time code and redirects:
+
+```text
+{callback_url}?code=<oneTimeCode>&state=<nonce>
+```
+
+WebOnOne `/callback` exchanges the code:
+
+```http
+POST /api/v1/auth/exchange HTTP/1.1
+Host: localhost:4001
+Content-Type: application/json
+
+{ "code": "<oneTimeCode>", "redirectUri": "http://localhost:3000/callback" }
+```
+
+Response:
 
 ```json
 {
-  "type": "webonone:auth:success",
   "accessToken": "<jwt>",
   "expiresIn": 900,
   "user": {
     "id": "V7xK9mN2pQw3rTy4uIoP0",
     "email": "user@example.com",
-    "displayName": "Jane Doe"
+    "displayName": "Jane Doe",
+    "avatarUrl": "https://..."
   }
 }
 ```
 
-### Identity FE (send)
+### Identity BE endpoints
 
-```typescript
-window.parent.postMessage(payload, parentOrigin) // never '*'
-```
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/auth/code` | Bearer JWT → create one-time code (Identity FE after login) |
+| POST | `/auth/exchange` | Public; `{ code, redirectUri }` → JWT + user |
 
-- `parentOrigin` from URL query; validate against `VITE_ALLOWED_PARENT_ORIGINS`.
-- Do not redirect `window.top` in embed mode.
+Codes: 60s TTL, single-use, tied to `redirect_uri`. Stored in `auth_codes` table.
 
-### WebOnOne FE (receive)
+### WebOnOne FE after exchange
 
-```typescript
-window.addEventListener('message', (event) => {
-  if (event.origin !== VITE_IDENTITY_ORIGIN) return
-  if (event.data?.type !== 'webonone:auth:success') return
-  dispatch(loginSuccess({ accessToken: event.data.accessToken, user: event.data.user }))
-  navigate(returnPath)
-})
-```
-
-### What to pass
-
-| Field | Include | Notes |
-|-------|---------|-------|
-| `accessToken` | Yes | For WebOnOne API calls |
-| `user.id`, `email`, `displayName` | Yes | Welcome UI without extra round-trip |
-| `refreshToken` | Optional | Prefer Identity-only storage or documented cross-origin policy |
-| `password` | **Never** | Stays in Identity only |
-
-### Optional cancel message
-
-```json
-{ "type": "webonone:auth:cancel" }
-```
+- Validate `state` against `sessionStorage`
+- Store `accessToken` + `user` in Redux auth slice
+- Navigate to `return_path` (default `/`)
+- `apiClient` attaches `Authorization: Bearer <token>` on every WebOnOne API call
 
 ---
 
@@ -130,12 +127,6 @@ Authorization: Bearer <accessToken>
 3. Set `req.user = { id: sub, email }`.
 4. **Do not** query `identity_db`.
 
-### WebOnOne FE after handoff
-
-- Store `accessToken` + `user` in Redux auth slice.
-- `apiClient` attaches `Authorization: Bearer <token>` on every WebOnOne API call.
-- Home page: `Welcome, {user.displayName}!` from Redux (from postMessage).
-
 ---
 
 ## Layer 4 — Events (async, not on login path)
@@ -160,19 +151,30 @@ WebOnOne consumer: idempotent handler, local denormalized copy only — no FK to
 
 ---
 
+## Shared UI — AppHeader
+
+Both services use `@webonone/ui-kit`:
+
+- `AppHeader` — logo left, user avatar + logout menu right (when authenticated)
+- `Avatar` — size variants (`sm` for header)
+- `PageShell` — composes `AppHeader` + main content
+
+---
+
 ## End-to-end sequence
 
 ```text
-1. User → WebOnOne /login
-2. WebOnOne renders iframe → Identity /login?parentOrigin=...
-3. User submits credentials in iframe
-4. Identity FE → Identity BE POST /auth/login
-5. Identity BE → identity_db verify, return JWT + user
-6. Identity FE → postMessage(webonone:auth:success) → WebOnOne parent
-7. WebOnOne FE stores token + user, navigates to /
-8. HomePage shows "Welcome, {displayName}!"
-9. WebOnOne FE → WebOnOne BE with Bearer JWT
-10. WebOnOne BE verifies JWT locally → 200
+1. User → WebOnOne /
+2. PrivateRoute → /login
+3. User clicks sign in → redirect to Identity /login?redirect_uri=...&state=...
+4. User submits credentials on Identity
+5. Identity FE → Identity BE POST /auth/login
+6. Identity FE → POST /auth/code (Bearer) → redirect to /callback?code=...&state=...
+7. WebOnOne /callback → POST /auth/exchange → store token + user
+8. Navigate to / (dashboard)
+9. HomePage shows welcome + header avatar
+10. WebOnOne FE → WebOnOne BE with Bearer JWT
+11. WebOnOne BE verifies JWT locally → 200
 ```
 
 ---
@@ -181,30 +183,13 @@ WebOnOne consumer: idempotent handler, local denormalized copy only — no FK to
 
 | # | Requirement | Owner |
 |---|-------------|-------|
-| 1 | `event.origin === IDENTITY_ORIGIN` on receive | WebOnOne FE |
-| 2 | `postMessage(payload, parentOrigin)` not `'*'` | Identity FE |
-| 3 | Allowlist `parentOrigin` before postMessage | Identity FE |
-| 4 | `frame-ancestors` CSP | Identity FE |
-| 5 | Short-lived access token | Identity BE |
-| 6 | Verify `iss`, `aud`, `exp` on API | WebOnOne BE |
-| 7 | Never JWT in URL query or hash | Both FEs |
-| 8 | Never shared auth tables | Both BEs |
-
----
-
-## Pattern for future microservices
-
-Use the same layer model for any new service:
-
-| Need | Mechanism |
-|------|-----------|
-| Embed another service's UI | iframe + query params + postMessage contract |
-| User/session on API calls | JWT from Identity; verify in each service |
-| Copy user or domain data | Versioned event + idempotent consumer + local table |
-| Sync read at request time | Avoid; prefer JWT claims + local denormalized copy |
-| Service-to-service write | Event first; sync API only when unavoidable |
-
-Full platform rules: `microservice-architecture.mdc` — **Cross-service connection patterns**.
+| 1 | `redirect_uri` allowlisted before code creation/exchange | Identity BE |
+| 2 | `state` validated on callback | WebOnOne FE |
+| 3 | Auth code single-use, 60s TTL | Identity BE |
+| 4 | Short-lived access token | Identity BE |
+| 5 | Verify `iss`, `aud`, `exp` on API | WebOnOne BE |
+| 6 | Never JWT in URL query or hash | Both FEs |
+| 7 | Never shared auth tables | Both BEs |
 
 ---
 
@@ -212,23 +197,27 @@ Full platform rules: `microservice-architecture.mdc` — **Cross-service connect
 
 ```text
 # Identity FE
-VITE_ALLOWED_FRAME_ANCESTORS=http://localhost:3000
-VITE_ALLOWED_PARENT_ORIGINS=http://localhost:3000
+VITE_ALLOWED_REDIRECT_URIS=http://localhost:3000/callback
+
+# Identity BE
+ALLOWED_REDIRECT_URIS=http://localhost:3000/callback
 
 # WebOnOne FE
 VITE_IDENTITY_ORIGIN=http://localhost:3001
 VITE_IDENTITY_LOGIN_URL=http://localhost:3001/login
+VITE_IDENTITY_API_BASE_URL=http://localhost:4001/api/v1
+VITE_AUTH_CALLBACK_URL=http://localhost:3000/callback
 
 # WebOnOne BE + Identity BE (shared verify/sign contract)
-JWT_SECRET=<dev-shared>   # or JWT_PRIVATE_KEY / JWT_PUBLIC_KEY pair
+JWT_SECRET=<dev-shared>
 ```
 
 ---
 
 ## Acceptance criteria
 
-1. Login works via iframe; WebOnOne has no local login form.
-2. postMessage delivers JWT + `user.displayName`; home shows welcome message.
-3. WebOnOne BE accepts Bearer JWT without calling Identity BE per request.
-4. Origin and message-type checks enforced on both sides.
-5. No credentials or tokens in URLs; no cross-database queries.
+1. Login works via redirect; WebOnOne has no local login form fields.
+2. Callback exchanges code for JWT + `user.displayName`; home shows welcome message.
+3. Shared header with avatar and logout on authenticated WebOnOne pages.
+4. WebOnOne BE accepts Bearer JWT without calling Identity BE per request.
+5. `state` and `redirect_uri` checks enforced; no credentials or tokens in URLs.

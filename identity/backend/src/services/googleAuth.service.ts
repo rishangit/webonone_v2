@@ -29,10 +29,15 @@ function getGoogleClient() {
 
 export async function loginWithGoogle(idToken: string) {
   const client = getGoogleClient()
-  const ticket = await client.verifyIdToken({
-    idToken,
-    audience: env.googleClientId,
-  })
+  let ticket
+  try {
+    ticket = await client.verifyIdToken({
+      idToken,
+      audience: env.googleClientId,
+    })
+  } catch {
+    throw new AuthError('Invalid Google token', 401, 'INVALID_GOOGLE_TOKEN')
+  }
 
   const payload = ticket.getPayload() as GoogleTokenPayload | undefined
   if (!payload?.sub || !payload.email) {

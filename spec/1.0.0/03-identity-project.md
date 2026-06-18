@@ -239,8 +239,20 @@ All auth forms use UI Kit only.
 | `JWT_SECRET` | backend | dev secret |
 | `PASSWORD_RESET_EXPIRY` | backend | `1h` |
 | `PORT` | backend | `4001` |
+| `GOOGLE_CLIENT_ID` | backend | `<client-id>.apps.googleusercontent.com` |
+| `ALLOWED_REDIRECT_URIS` | backend | `http://localhost:3000/callback` |
 | `VITE_API_BASE_URL` | frontend | `http://localhost:4001/api/v1` |
+| `VITE_ALLOWED_REDIRECT_URIS` | frontend | `http://localhost:3000/callback` |
+| `VITE_GOOGLE_CLIENT_ID` | frontend | same as `GOOGLE_CLIENT_ID` |
 | `VITE_ALLOWED_FRAME_ANCESTORS` | frontend | `http://localhost:3000` |
+
+### Google Sign-In setup
+
+1. Google Cloud Console → **Credentials** → OAuth 2.0 Client ID (**Web application**).
+2. **Authorized JavaScript origins:** `http://localhost:3001` (Identity FE); add production origin when deployed.
+3. No redirect URI required (GIS button returns `id_token` to the browser).
+4. Set the same Client ID in `GOOGLE_CLIENT_ID` (backend) and `VITE_GOOGLE_CLIENT_ID` (frontend).
+5. Configure OAuth consent screen; add test users if the app is in Testing mode.
 
 ## Standalone run
 

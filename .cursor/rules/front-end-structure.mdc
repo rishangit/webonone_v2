@@ -1,6 +1,6 @@
 ---
 description: Enforce frontend src and feature module structure
-globs: front-end/src/**/*.{ts,tsx}
+globs: "**/frontend/src/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 
@@ -8,7 +8,7 @@ alwaysApply: false
 
 Related: [redux-store-and-epics.mdc](redux-store-and-epics.mdc) (slices/epics), [react-typescript.mdc](react-typescript.mdc), [tailwind-css.mdc](tailwind-css.mdc).
 
-Use this structure for all frontend code under `front-end/src`:
+Use this structure for all frontend code under any service `frontend/src` (e.g. `identity/frontend/src`, `webonone-v2/frontend/src`):
 
 - **`app/`**: app bootstrap concerns only (`store.ts`, `router.tsx`, `App.tsx`).
 - **`features/`**: main business modules. Each domain lives in its own folder.
@@ -71,9 +71,8 @@ Each feature folder in `features/` should follow this shape (example: `products/
 
 ## Verification
 
-From repo root:
+From the service frontend package (e.g. `identity/frontend` or `webonone-v2/frontend`):
 
-- `cd front-end`
 - `npm run type-check`
 - `npm run lint`
 - When reviewing structure: ensure no file under `features/<A>/` imports `@/features/<B>/` for `A !== B`; route those through `@/shared/...` instead.

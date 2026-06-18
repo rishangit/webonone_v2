@@ -13,6 +13,7 @@
     "webonone-v2/backend"
   ],
   "scripts": {
+    "dev": "concurrently -n ui-kit,identity,webonone -c magenta,blue,cyan \"npm run dev:ui-kit\" \"npm run dev:identity\" \"npm run dev:webonone\"",
     "dev:ui-kit": "npm run dev -w ui-kit-root",
     "dev:identity": "npm run dev -w identity-root",
     "dev:webonone": "npm run dev -w webonone-v2-root",

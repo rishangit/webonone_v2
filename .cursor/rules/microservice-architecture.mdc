@@ -47,6 +47,32 @@ service-name/
 - Optional integration via **versioned contracts** (JWT, events, iframe/postMessage, public HTTP API).
 - Consumer never imports producer's source, repositories, or DB models.
 
+## Monorepo dev commands
+
+The repo root orchestrates local dev. **One command starts every service:**
+
+```bash
+npm run dev
+```
+
+Root `package.json` uses `concurrently` to run each service's own `dev` script in parallel (e.g. `dev:identity`, `dev:webonone`, `dev:ui-kit`). Each service root still exposes **`npm run dev`** for standalone work — that requirement does not change.
+
+| Command | Runs |
+|---------|------|
+| `npm run dev` | All microservices (full local stack) |
+| `npm run dev:identity` | Identity FE + BE only |
+| `npm run dev:webonone` | WebOnOne FE + BE only |
+| `npm run dev:ui-kit` | UI kit showcase only |
+
+**When scaffolding a new service:**
+
+1. Add `service-name/package.json` with `dev` starting that service's FE/BE (use `concurrently` when both layers exist).
+2. Register workspaces in the root `package.json`.
+3. Add `dev:<service-name>` at the root pointing at `npm run dev -w <service-root-workspace>`.
+4. Append the new `dev:<service-name>` to the root `dev` `concurrently` command.
+
+Do not replace per-service `dev` with a root-only script — standalone and all-in-one dev must both work.
+
 ## Environment configuration (per service)
 
 Each microservice owns **separate env files per layer**. Do not use a monorepo-root `.env` for service secrets or ports.
@@ -209,6 +235,7 @@ Before adding or changing a service:
 - [ ] `frontend/.env.example` and `backend/.env.example` exist (when that layer exists)
 - [ ] Backend loads config only from `backend/.env` (not repo root or another service)
 - [ ] No shared monorepo-root `.env` for service secrets
+- [ ] New service wired into root `dev:<name>` and root `npm run dev`
 
 If any item fails, reconsider the design.
 
@@ -216,6 +243,7 @@ If any item fails, reconsider the design.
 
 When reviewing service integration:
 
+- Confirm `npm run dev` from repo root starts all services; each service also starts alone via its own `npm run dev`.
 - Confirm service starts without peer services running.
 - Confirm cross-service links use documented contracts (spec or OpenAPI/event schema).
 - Confirm no `postMessage('*')`, no tokens in URLs, no shared DB access.

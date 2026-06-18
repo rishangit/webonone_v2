@@ -1,22 +1,19 @@
-import { PageShell } from '@webonone/ui-kit'
-import { IdentityLoginFrame } from '../components/IdentityLoginFrame'
-
-const LOGIN_URL =
-  import.meta.env.VITE_IDENTITY_LOGIN_URL ?? 'http://localhost:3001/login'
+import { PageShell, Button } from '@webonone/ui-kit'
+import { buildIdentityLoginUrl } from '../utils/buildIdentityLoginUrl'
 
 export function LoginPage() {
+  function handleSignIn() {
+    window.location.assign(buildIdentityLoginUrl('/'))
+  }
+
   return (
     <PageShell title="WebOnOne">
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-4 py-12">
         <h1 className="text-2xl font-semibold">Sign in to WebOnOne</h1>
         <p className="text-sm text-muted-foreground">
-          Authentication is handled securely by Identity
+          You will be redirected to Identity to sign in securely.
         </p>
-        <IdentityLoginFrame
-          loginUrl={LOGIN_URL}
-          parentOrigin={window.location.origin}
-          returnPath="/"
-        />
+        <Button onClick={handleSignIn}>Continue to sign in</Button>
       </div>
     </PageShell>
   )

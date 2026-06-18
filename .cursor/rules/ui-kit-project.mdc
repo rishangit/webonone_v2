@@ -1,0 +1,41 @@
+---
+description: UI Kit package, showcase, exports, and build workflow
+globs: ui-kit/**/*
+alwaysApply: false
+---
+
+# UI Kit project
+
+Agent skill: [.cursor/skills/ui-kit-agent/SKILL.md](../skills/ui-kit-agent/SKILL.md)
+
+## Scope
+
+- `ui-kit/package/` — `@webonone/ui-kit` library (tsup)
+- `ui-kit/showcase/` — demo app, port **3002**
+
+Spec: [spec/1.0.0/05-ui-kit-project.md](../../spec/1.0.0/05-ui-kit-project.md)
+
+## Workflow
+
+1. Change components in `ui-kit/package/src/`.
+2. Export public API from `ui-kit/package/src/index.ts`.
+3. Preview in showcase.
+4. Build: `npm run build -w @webonone/ui-kit`.
+
+## Consumers
+
+| Project | Usage |
+|---------|---------|
+| `identity/frontend` | Auth forms, AuthLayout |
+| `webonone-v2/frontend` | PageShell, layouts — not login forms |
+
+Do not copy kit components into consumer apps.
+
+## Verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
+```
+
+No business logic, auth, or service backends in this project.

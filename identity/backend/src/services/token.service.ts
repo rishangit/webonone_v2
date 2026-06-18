@@ -36,6 +36,10 @@ export function generatePasswordResetToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
+export function generateAuthCode(): string {
+  return crypto.randomBytes(32).toString('hex')
+}
+
 export function buildAuthResponse(user: UserRow, accessToken: string, expiresIn: number, refreshToken: string) {
   return {
     accessToken,

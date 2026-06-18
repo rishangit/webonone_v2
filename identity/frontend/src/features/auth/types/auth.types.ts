@@ -22,14 +22,3 @@ export interface AuthSuccessPayload {
   expiresIn: number
   user: UserProfile
 }
-
-export interface AuthPostMessageSuccess {
-  type: 'webonone:auth:success'
-  accessToken: string
-  expiresIn: number
-  user: Pick<UserProfile, 'id' | 'email' | 'displayName'>
-}
-
-export interface AuthPostMessageCancel {
-  type: 'webonone:auth:cancel'
-}

@@ -1,0 +1,43 @@
+---
+description: Identity service scope, ports, auth ownership, and verification
+globs: identity/**/*
+alwaysApply: false
+---
+
+# Identity project
+
+Agent skill: [.cursor/skills/identity-agent/SKILL.md](../skills/identity-agent/SKILL.md)
+
+## Scope
+
+`identity/frontend`, `identity/backend`, `identity/backend/migrations` — standalone auth service.
+
+Spec: [spec/1.0.0/03-identity-project.md](../../spec/1.0.0/03-identity-project.md)
+
+## Ports and env
+
+| Layer | Port | Env file |
+|-------|------|----------|
+| Frontend | 3001 | `identity/frontend/.env` (`VITE_*` only) |
+| Backend | 4001 | `identity/backend/.env` |
+
+Backend loads only `identity/backend/.env` (not repo root or other services).
+
+## Ownership
+
+- Login, register, forgot/reset password UI + APIs.
+- JWT **issuance**; redirect mode via `redirect_uri` + auth code exchange.
+- Database: `identity` (MySQL).
+
+## Integration
+
+Redirect + auth code contract: [spec/1.0.0/07-identity-webonone-integration.md](../../spec/1.0.0/07-identity-webonone-integration.md)
+
+## Verification
+
+```bash
+npm run type-check -w identity-root
+npm run migrate   # from identity/
+```
+
+Do not implement WebOnOne routes or duplicate UI Kit primitives.

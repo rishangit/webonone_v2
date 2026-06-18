@@ -1,6 +1,6 @@
 ---
 description: Redux Toolkit global store, feature slices/actions, redux-observable epics
-globs: front-end/**/store/**/*.ts
+globs: "**/frontend/**/store/**/*.ts"
 alwaysApply: false
 ---
 
@@ -10,8 +10,8 @@ Related: [front-end-structure.mdc](front-end-structure.mdc) (feature folders and
 
 ## Key Principles
 
-- **Single store**: Keep one `configureStore` in `front-end/src/app/store/index.ts`.
-- **Feature ownership**: Keep slices and epics inside `front-end/src/features/<domain>/store/`.
+- **Single store**: Keep one `configureStore` in each app's `frontend/src/app/store/` (or `store.ts` per existing layout).
+- **Feature ownership**: Keep slices and epics inside `frontend/src/features/<domain>/store/`.
 - **Pure reducers**: Reducers stay synchronous and side-effect free.
 - **Epics for async**: Use `redux-observable` epics plus feature services for async flows.
 - **Single epic composition**: Combine all epics only in `front-end/src/app/store/epics/rootEpic.ts`.

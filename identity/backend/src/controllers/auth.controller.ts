@@ -3,6 +3,8 @@ import { z } from 'zod'
 import type { AuthenticatedRequest } from '../middleware/validate.js'
 import {
   AuthError,
+  createAuthCodeForUser,
+  exchangeAuthCode,
   getCurrentUser,
   loginUser,
   logoutUser,
@@ -56,6 +58,15 @@ const resetPasswordSchema = z.object({
 
 const refreshSchema = z.object({
   refreshToken: z.string().min(1),
+})
+
+const authCodeSchema = z.object({
+  redirectUri: z.string().url(),
+})
+
+const exchangeSchema = z.object({
+  code: z.string().min(1),
+  redirectUri: z.string().url(),
 })
 
 function handleAuthError(err: unknown, res: Response): boolean {
@@ -131,6 +142,32 @@ export async function logout(req: AuthenticatedRequest, res: Response) {
   const body = refreshSchema.parse(req.body)
   await logoutUser(body.refreshToken)
   res.json({ message: 'Logged out' })
+}
+
+export async function createAuthCode(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    const body = authCodeSchema.parse(req.body)
+    const result = await createAuthCodeForUser(req.user.id, body.redirectUri)
+    res.json(result)
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function exchange(req: AuthenticatedRequest, res: Response) {
+  try {
+    const body = exchangeSchema.parse(req.body)
+    const result = await exchangeAuthCode(body.code, body.redirectUri)
+    res.json(result)
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
 }
 
 export async function me(req: AuthenticatedRequest, res: Response) {

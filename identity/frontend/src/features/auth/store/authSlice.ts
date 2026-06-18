@@ -94,6 +94,12 @@ export const authSlice = createSlice({
     clearAuthError(state) {
       state.error = null
     },
+    logout(state) {
+      state.user = null
+      state.accessToken = null
+      state.refreshToken = null
+      state.error = null
+    },
   },
 })
 

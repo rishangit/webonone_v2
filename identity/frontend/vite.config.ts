@@ -16,8 +16,5 @@ export default defineConfig({
   },
   server: {
     port: 3001,
-    headers: {
-      'Content-Security-Policy': "frame-ancestors 'self' http://localhost:3000",
-    },
   },
 })

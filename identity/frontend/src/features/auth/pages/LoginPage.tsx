@@ -4,40 +4,35 @@ import { AuthLayout } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { LoginForm } from '../components/LoginForm'
-import { postAuthSuccess, useEmbedMode } from '../hooks/useEmbedMode'
-import { withEmbedQuery } from '../utils/embedQuery'
+import { useRedirectMode } from '../hooks/useRedirectMode'
+import { completeAuthRedirect } from '../utils/completeAuthRedirect'
+import { withRedirectQuery } from '../utils/redirectQuery'
 
 export function LoginPage() {
   const [searchParams] = useSearchParams()
-  const { isEmbed, parentOrigin } = useEmbedMode()
-  const { accessToken, user, isLoading } = useAppSelector((s) => s.auth)
+  const { isRedirect, redirectUri, state } = useRedirectMode()
+  const { accessToken, user, isLoading, error } = useAppSelector((s) => s.auth)
   const handledRef = useRef(false)
 
   useEffect(() => {
     if (handledRef.current || isLoading || !accessToken || !user) return
 
-    if (isEmbed && parentOrigin) {
+    if (isRedirect && redirectUri && state) {
       handledRef.current = true
-      postAuthSuccess(parentOrigin, {
-        accessToken,
-        expiresIn: 900,
-        user: {
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-        },
+      completeAuthRedirect(accessToken, redirectUri, state).catch(() => {
+        handledRef.current = false
       })
     }
-  }, [accessToken, user, isLoading, isEmbed, parentOrigin])
+  }, [accessToken, user, isLoading, isRedirect, redirectUri, state])
 
-  const registerLink = withEmbedQuery('/register', searchParams)
-  const forgotLink = withEmbedQuery('/forgot-password', searchParams)
+  const registerLink = withRedirectQuery('/register', searchParams)
+  const forgotLink = withRedirectQuery('/forgot-password', searchParams)
 
   return (
     <AuthLayout
       title="Sign in"
       description="Enter your credentials to continue"
-      variant={isEmbed ? 'minimal' : 'full'}
+      variant="minimal"
       footer={
         <span>
           <Link to={registerLink} className="text-primary underline-offset-4 hover:underline">
@@ -62,11 +57,12 @@ export function LoginPage() {
         </div>
         <LoginForm />
       </div>
-      {!isEmbed && accessToken && user ? (
+      {!isRedirect && accessToken && user ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Signed in as {user.displayName}
         </p>
       ) : null}
+      {error ? <p className="mt-2 text-center text-sm text-destructive">{error}</p> : null}
     </AuthLayout>
   )
 }

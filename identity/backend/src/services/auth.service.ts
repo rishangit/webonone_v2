@@ -17,7 +17,13 @@ import {
   type UserRow,
 } from '../models/user.repository.js'
 import {
+  createAuthCode as insertAuthCode,
+  findAuthCodeByHash,
+  markAuthCodeUsed,
+} from '../models/authCode.repository.js'
+import {
   buildAuthResponse,
+  generateAuthCode,
   generatePasswordResetToken,
   generateRefreshToken,
   hashToken,
@@ -163,6 +169,68 @@ export async function getCurrentUser(userId: string) {
 export async function patchCurrentUser(userId: string, input: UpdateUserProfileInput) {
   const user = await updateUserProfile(userId, input)
   return toUserProfile(user)
+}
+
+const AUTH_CODE_EXPIRY_SECONDS = 60
+
+function isAllowedRedirectUri(redirectUri: string): boolean {
+  return env.allowedRedirectUris.includes(redirectUri)
+}
+
+export async function createAuthCodeForUser(userId: string, redirectUri: string): Promise<{ code: string }> {
+  if (!isAllowedRedirectUri(redirectUri)) {
+    throw new AuthError('Invalid redirect URI', 400, 'INVALID_REDIRECT_URI')
+  }
+
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  const code = generateAuthCode()
+  const codeHash = hashToken(code)
+  const expiresAt = new Date()
+  expiresAt.setSeconds(expiresAt.getSeconds() + AUTH_CODE_EXPIRY_SECONDS)
+
+  await insertAuthCode({
+    id: nanoid(),
+    userId,
+    codeHash,
+    redirectUri,
+    expiresAt,
+  })
+
+  return { code }
+}
+
+export async function exchangeAuthCode(code: string, redirectUri: string) {
+  if (!isAllowedRedirectUri(redirectUri)) {
+    throw new AuthError('Invalid redirect URI', 400, 'INVALID_REDIRECT_URI')
+  }
+
+  const codeHash = hashToken(code)
+  const stored = await findAuthCodeByHash(codeHash)
+  if (!stored || stored.used_at || new Date(stored.expires_at) < new Date()) {
+    throw new AuthError('Invalid or expired authorization code', 400, 'INVALID_AUTH_CODE')
+  }
+
+  if (stored.redirect_uri !== redirectUri) {
+    throw new AuthError('Redirect URI mismatch', 400, 'REDIRECT_URI_MISMATCH')
+  }
+
+  const user = await findUserById(stored.user_id)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  await markAuthCodeUsed(stored.id)
+
+  const { accessToken, expiresIn } = signAccessToken(user)
+  return {
+    accessToken,
+    expiresIn,
+    user: toUserProfile(user),
+  }
 }
 
 export { issueAuthTokens }

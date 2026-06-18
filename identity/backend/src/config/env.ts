@@ -20,6 +20,7 @@ const envSchema = z.object({
   ACCESS_TOKEN_EXPIRY_SECONDS: z.coerce.number().default(900),
   REFRESH_TOKEN_EXPIRY_DAYS: z.coerce.number().default(7),
   GOOGLE_CLIENT_ID: z.string().optional(),
+  ALLOWED_REDIRECT_URIS: z.string().default('http://localhost:3000/callback'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -40,4 +41,7 @@ export const env = {
   jwtIssuer: 'webonone-identity',
   jwtAudience: 'webonone-api',
   googleClientId: parsed.GOOGLE_CLIENT_ID ?? '',
+  allowedRedirectUris: parsed.ALLOWED_REDIRECT_URIS.split(',')
+    .map((uri) => uri.trim())
+    .filter(Boolean),
 }

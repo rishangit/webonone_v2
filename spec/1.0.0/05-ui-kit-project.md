@@ -60,14 +60,15 @@ Runs on its own (e.g. `http://localhost:3002`) without Identity or WebOnOne.
 | Actions | Button |
 | Forms | Input, Label, Form, Checkbox |
 | Feedback | Alert, Spinner, Toast |
-| Overlays | Dialog |
-| Layout | Card, AuthLayout, PageShell |
+| Overlays | Dialog, DropdownMenu |
+| Data display | Avatar |
+| Layout | Card, AuthLayout, PageShell, AppHeader, BrandLogo |
 
 ## Package exports (1.0.0 minimum)
 
 | Export | Type |
 |--------|------|
-| `Button`, `Input`, `Label`, `Card`, `Dialog`, `Form`, `Alert`, `Spinner` | Components |
+| `Button`, `Input`, `Label`, `Card`, `Dialog`, `Form`, `Alert`, `Spinner`, `Avatar`, `DropdownMenu`, `BrandLogo`, `AppHeader` | Components |
 | `AuthLayout`, `PageShell` | Layouts |
 | `useToast` | Hook |
 | `@webonone/ui-kit/styles` | Global CSS |
@@ -96,7 +97,7 @@ Follow `tailwind-css.mdc`: utilities only, semantic tokens, shadcn/ui primitives
 | In UI Kit | Not in UI Kit |
 |-----------|---------------|
 | Button, Input, Dialog | LoginForm API wiring |
-| AuthLayout shell | IdentityLoginFrame, iframe logic |
+| AuthLayout shell | Identity auth pages (redirect mode) |
 | PageShell | HomePage, domain pages |
 
 ## Standalone run

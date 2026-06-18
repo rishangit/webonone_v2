@@ -8,14 +8,26 @@
 | [code-cleanliness.mdc](code-cleanliness.mdc) | Path aliases, focused diffs, no dead code or empty folders |
 | [microservice-architecture.mdc](microservice-architecture.mdc) | Standalone services, secure data passing (JWT, events, iframe/postMessage) |
 
-## Front-end (`front-end/`)
+## Service projects
 
 | Rule | Globs | Description |
 |------|-------|-------------|
-| [front-end-structure.mdc](front-end-structure.mdc) | `front-end/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
-| [react-typescript.mdc](react-typescript.mdc) | `front-end/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
-| [tailwind-css.mdc](tailwind-css.mdc) | `front-end/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
-| [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `front-end/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
+| [identity-project.mdc](identity-project.mdc) | `identity/**/*` | Identity ports, auth/embed ownership, verification |
+| [ui-kit-project.mdc](ui-kit-project.mdc) | `ui-kit/**/*` | Package vs showcase, build/export workflow |
+| [webonone-v2-project.mdc](webonone-v2-project.mdc) | `webonone-v2/**/*` | Scaffold, iframe login, JWT verify |
+
+Agent delegation map: [AGENTS.md](../../AGENTS.md)
+
+## Front-end (`**/frontend/src`)
+
+| Rule | Globs | Description |
+|------|-------|-------------|
+| [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
+| [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
+| [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
+| [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
+
+Applies to `identity/frontend`, `webonone-v2/frontend`, and any future `*/frontend` apps.
 
 ## Backend (`backend/`)
 
@@ -23,6 +35,19 @@
 |------|-------|-------------|
 | [nodejs-express.mdc](nodejs-express.mdc) | `backend/**/*.{ts,js}` | Express layout, REST, JWT, handlers |
 | [mysql-database-architecture.mdc](mysql-database-architecture.mdc) | `backend/**/{migrations,prisma,models,db,repositories}/**` | MySQL schema, nanoid, migrations, per-service DB |
+
+## Agents (`.cursor/agents/` + `.cursor/skills/`)
+
+Each service has a **subagent** (system prompt) and a **skill** (workflow). Scoped by service folder and `.cursor/rules/` — independent of `spec/`.
+
+| Agent | Subagent | Skill |
+|-------|----------|-------|
+| Platform orchestrator | [platform-orchestrator](../agents/platform-orchestrator.md) | [skill](../skills/platform-orchestrator/SKILL.md) |
+| Identity | [identity-agent](../agents/identity-agent.md) | [skill](../skills/identity-agent/SKILL.md) |
+| UI Kit | [ui-kit-agent](../agents/ui-kit-agent.md) | [skill](../skills/ui-kit-agent/SKILL.md) |
+| WebOnOne v2 | [webonone-agent](../agents/webonone-agent.md) | [skill](../skills/webonone-agent/SKILL.md) |
+
+Delegation map: [AGENTS.md](../../AGENTS.md)
 
 ## Cross-links (avoid duplicating these topics)
 

@@ -3,7 +3,9 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
+  AppHeader,
   AuthLayout,
+  Avatar,
   Button,
   Card,
   CardContent,
@@ -120,6 +122,26 @@ export function ShowcaseHome() {
               <p className="text-sm">Dialog body content.</p>
             </DialogContent>
           </Dialog>
+        </Section>
+
+        <Section title="Avatar">
+          <div className="flex flex-wrap items-end gap-4">
+            <Avatar size="xs" fallback="JD" />
+            <Avatar size="sm" fallback="JD" />
+            <Avatar size="md" fallback="JD" />
+            <Avatar size="lg" fallback="JD" />
+            <Avatar size="xl" fallback="JD" />
+          </div>
+        </Section>
+
+        <Section title="App header">
+          <div className="space-y-4 overflow-hidden rounded-lg border">
+            <AppHeader />
+            <AppHeader
+              user={{ displayName: 'Jane Doe', email: 'jane@example.com' }}
+              onLogout={() => toast({ title: 'Logged out' })}
+            />
+          </div>
         </Section>
 
         <Section title="Layout">
