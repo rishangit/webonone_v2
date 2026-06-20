@@ -20,6 +20,8 @@
     "dev:webonone": "npm run dev -w webonone-v2-root",
     "build:ui-kit": "npm run build -w @webonone/ui-kit",
     "build:platform-nav": "npm run build -w @webonone/platform-nav",
+    "build:identity": "npm run build -w identity-root",
+    "deploy:identity": "npm run deploy -w identity-root",
     "type-check": "npm run type-check --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
