@@ -23,6 +23,16 @@ Layer 4 (async):      Identity BE ──UserRegistered──► WebOnOne BE (fut
 
 **Never:** shared database, JWT in URL query/hash, or WebOnOne BE calling Identity BE on every request.
 
+### Shared frontend library
+
+Cross-service redirect helpers live in **`@webonone/platform-nav`** (`packages/platform-nav/`):
+
+- `redirectWithAuthCode()` — JWT holder requests auth code, redirects to target FE with `code` (+ optional `return_url`)
+- `buildLoginRedirectUrl()` / `consumeOAuthState()` — Layer 1 login redirect
+- `parseReturnUrl()` — validate `return_url` on the receiving page
+
+See [packages/platform-nav/README.md](../../packages/platform-nav/README.md).
+
 ---
 
 ## Layer 1 — Redirect to Identity

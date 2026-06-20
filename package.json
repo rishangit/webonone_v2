@@ -10,7 +10,8 @@
     "identity/backend",
     "webonone-v2",
     "webonone-v2/frontend",
-    "webonone-v2/backend"
+    "webonone-v2/backend",
+    "packages/*"
   ],
   "scripts": {
     "dev": "concurrently -n ui-kit,identity,webonone -c magenta,blue,cyan \"npm run dev:ui-kit\" \"npm run dev:identity\" \"npm run dev:webonone\"",
@@ -18,6 +19,7 @@
     "dev:identity": "npm run dev -w identity-root",
     "dev:webonone": "npm run dev -w webonone-v2-root",
     "build:ui-kit": "npm run build -w @webonone/ui-kit",
+    "build:platform-nav": "npm run build -w @webonone/platform-nav",
     "type-check": "npm run type-check --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },

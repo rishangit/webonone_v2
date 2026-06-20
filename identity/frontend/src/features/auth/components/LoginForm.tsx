@@ -1,5 +1,14 @@
 import { useState } from 'react'
-import { Alert, AlertDescription, Button, Form, FormField, Input, Spinner } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Form,
+  FormField,
+  Input,
+  mapZodIssuesToFieldErrors,
+  Spinner,
+} from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { loginSchema, type LoginFormValues } from '../schemas/authSchemas'
 import { authActions } from '../store'
@@ -14,12 +23,7 @@ export function LoginForm() {
     e.preventDefault()
     const parsed = loginSchema.safeParse(values)
     if (!parsed.success) {
-      const errors: Partial<Record<keyof LoginFormValues, string>> = {}
-      parsed.error.issues.forEach((issue) => {
-        const key = issue.path[0] as keyof LoginFormValues
-        errors[key] = issue.message
-      })
-      setFieldErrors(errors)
+      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
     }
     setFieldErrors({})
@@ -34,18 +38,16 @@ export function LoginForm() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Email" htmlFor="email" error={fieldErrors.email}>
+      <FormField label="Email" htmlFor="email" required error={fieldErrors.email}>
         <Input
-          id="email"
           type="email"
           autoComplete="email"
           value={values.email}
           onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
         />
       </FormField>
-      <FormField label="Password" htmlFor="password" error={fieldErrors.password}>
+      <FormField label="Password" htmlFor="password" required error={fieldErrors.password}>
         <Input
-          id="password"
           type="password"
           autoComplete="current-password"
           value={values.password}

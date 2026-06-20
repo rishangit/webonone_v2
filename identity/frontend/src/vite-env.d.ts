@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_ALLOWED_FRAME_ANCESTORS?: string
   readonly VITE_ALLOWED_PARENT_ORIGINS?: string
   readonly VITE_GOOGLE_CLIENT_ID?: string
+  readonly VITE_ALLOWED_REDIRECT_URIS?: string
+  readonly VITE_IDENTITY_PROFILE_URL?: string
 }
 
 interface ImportMeta {

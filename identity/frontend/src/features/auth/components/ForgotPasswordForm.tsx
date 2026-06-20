@@ -1,5 +1,14 @@
 import { useState } from 'react'
-import { Alert, AlertDescription, Button, Form, FormField, Input, Spinner } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Form,
+  FormField,
+  Input,
+  mapZodIssuesToFieldErrors,
+  Spinner,
+} from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../schemas/authSchemas'
 import { authActions } from '../store'
@@ -15,12 +24,7 @@ export function ForgotPasswordForm() {
     e.preventDefault()
     const parsed = forgotPasswordSchema.safeParse(values)
     if (!parsed.success) {
-      const errors: Partial<Record<keyof ForgotPasswordFormValues, string>> = {}
-      parsed.error.issues.forEach((issue) => {
-        const key = issue.path[0] as keyof ForgotPasswordFormValues
-        errors[key] = issue.message
-      })
-      setFieldErrors(errors)
+      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
     }
     setFieldErrors({})
@@ -49,10 +53,10 @@ export function ForgotPasswordForm() {
           </AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Email" htmlFor="email" error={fieldErrors.email}>
+      <FormField label="Email" htmlFor="email" required error={fieldErrors.email}>
         <Input
-          id="email"
           type="email"
+          autoComplete="email"
           value={values.email}
           onChange={(e) => setValues({ email: e.target.value })}
         />

@@ -68,7 +68,8 @@ export function AuthCallbackPage() {
             },
           }),
         )
-        navigate(stored.returnPath || '/', { replace: true })
+        const targetPath = stored.returnPath || '/'
+        navigate(targetPath, { replace: true })
       })
       .catch((err: Error) => {
         exchangedCodes.delete(code)

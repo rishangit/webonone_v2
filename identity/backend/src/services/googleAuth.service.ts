@@ -5,6 +5,7 @@ import {
   findUserByEmail,
   findUserByGoogleSub,
   linkGoogleAccount,
+  syncGoogleProfile,
 } from '../models/user.repository.js'
 import { AuthError, issueAuthTokens } from './auth.service.js'
 import { env } from '../config/env.js'
@@ -51,7 +52,16 @@ export async function loginWithGoogle(idToken: string) {
 
   let user = await findUserByGoogleSub(payload.sub)
 
-  if (!user) {
+  if (user) {
+    user = await syncGoogleProfile(user.id, {
+      firstName,
+      lastName,
+      displayName,
+      avatarUrl: payload.picture ?? null,
+      locale: payload.locale ?? null,
+      isEmailVerified: payload.email_verified ?? false,
+    })
+  } else {
     const byEmail = await findUserByEmail(payload.email)
     if (byEmail) {
       user = await linkGoogleAccount(byEmail.id, {
@@ -78,5 +88,5 @@ export async function loginWithGoogle(idToken: string) {
     }
   }
 
-  return issueAuthTokens(user)
+  return issueAuthTokens(user!)
 }

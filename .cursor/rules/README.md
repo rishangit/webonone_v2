@@ -47,6 +47,12 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | UI Kit | [ui-kit-agent](../agents/ui-kit-agent.md) | [skill](../skills/ui-kit-agent/SKILL.md) |
 | WebOnOne v2 | [webonone-agent](../agents/webonone-agent.md) | [skill](../skills/webonone-agent/SKILL.md) |
 
+### Cross-cutting skills
+
+| Skill | Description |
+|-------|-------------|
+| [form-creation](../skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
+
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
 ## Cross-links (avoid duplicating these topics)
@@ -61,3 +67,4 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Slices, epics, `rootEpic` | `redux-store-and-epics.mdc` |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
+| Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |

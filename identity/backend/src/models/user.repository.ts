@@ -44,6 +44,7 @@ export interface UserProfile {
   avatarUrl: string | null
   locale: string | null
   isEmailVerified: boolean
+  isGoogleUser: boolean
 }
 
 export interface CreateUserInput {
@@ -96,6 +97,7 @@ export function toUserProfile(user: UserRow): UserProfile {
     avatarUrl: user.avatar_url,
     locale: user.locale,
     isEmailVerified: Boolean(user.is_email_verified),
+    isGoogleUser: Boolean(user.google_sub),
   }
 }
 
@@ -137,6 +139,36 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
 
   const user = await findUserById(input.id)
   if (!user) throw new Error('Failed to create user')
+  return user
+}
+
+export interface SyncGoogleProfileInput {
+  firstName?: string
+  lastName?: string
+  displayName?: string
+  avatarUrl?: string | null
+  locale?: string | null
+  isEmailVerified?: boolean
+}
+
+export async function syncGoogleProfile(
+  userId: string,
+  input: SyncGoogleProfileInput,
+): Promise<UserRow> {
+  const updates: Record<string, unknown> = {
+    updated_at: new Date(),
+  }
+
+  if (input.firstName) updates.first_name = input.firstName
+  if (input.lastName !== undefined) updates.last_name = input.lastName
+  if (input.displayName) updates.display_name = input.displayName
+  if (input.avatarUrl !== undefined) updates.avatar_url = input.avatarUrl
+  if (input.locale !== undefined) updates.locale = input.locale
+  if (input.isEmailVerified !== undefined) updates.is_email_verified = input.isEmailVerified
+
+  await db('users').where({ id: userId }).update(updates)
+  const user = await findUserById(userId)
+  if (!user) throw new Error('User not found')
   return user
 }
 

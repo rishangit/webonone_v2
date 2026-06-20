@@ -1,6 +1,6 @@
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, map, mergeMap } from 'rxjs/operators'
+import { catchError, exhaustMap, map, mergeMap } from 'rxjs/operators'
 import { authApi } from '../services/authApi'
 import { authActions } from './authSlice'
 
@@ -73,10 +73,34 @@ const googleLoginEpic: AuthEpic = (action$) =>
     ),
   )
 
+const profileFetchEpic: AuthEpic = (action$) =>
+  action$.pipe(
+    ofType(authActions.profileFetchRequested.type),
+    exhaustMap((action: ReturnType<typeof authActions.profileFetchRequested>) =>
+      from(authApi.getMe(action.payload.accessToken)).pipe(
+        map((result) => authActions.profileFetchSucceeded(result.user)),
+        catchError((err: Error) => of(authActions.profileFetchFailed(err.message))),
+      ),
+    ),
+  )
+
+const profileUpdateEpic: AuthEpic = (action$) =>
+  action$.pipe(
+    ofType(authActions.profileUpdateRequested.type),
+    exhaustMap((action: ReturnType<typeof authActions.profileUpdateRequested>) =>
+      from(authApi.patchMe(action.payload.accessToken, action.payload.body)).pipe(
+        map((result) => authActions.profileUpdateSucceeded(result.user)),
+        catchError((err: Error) => of(authActions.profileUpdateFailed(err.message))),
+      ),
+    ),
+  )
+
 export const authEpics = combineEpics(
   loginEpic,
   googleLoginEpic,
   registerEpic,
   forgotPasswordEpic,
   resetPasswordEpic,
+  profileFetchEpic,
+  profileUpdateEpic,
 )

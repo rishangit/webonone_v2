@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { z } from 'zod'
 import {
   Alert,
   AlertDescription,
@@ -21,12 +22,56 @@ import {
   Form,
   FormField,
   Input,
-  Label,
+  mapZodIssuesToFieldErrors,
   PageShell,
   Spinner,
   useToast,
 } from '@webonone/ui-kit'
 
+const showcaseFormSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+  displayName: z.string().optional(),
+})
+
+type ShowcaseFormValues = z.infer<typeof showcaseFormSchema>
+
+function ShowcaseFormDemo() {
+  const [values, setValues] = useState<ShowcaseFormValues>({ email: '', displayName: '' })
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ShowcaseFormValues, string>>>(
+    {},
+  )
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const parsed = showcaseFormSchema.safeParse(values)
+    if (!parsed.success) {
+      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
+      return
+    }
+    setFieldErrors({})
+  }
+
+  return (
+    <Form onSubmit={handleSubmit}>
+      <FormField label="Email" htmlFor="showcase-email" required error={fieldErrors.email}>
+        <Input
+          type="email"
+          placeholder="you@example.com"
+          value={values.email}
+          onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
+        />
+      </FormField>
+      <FormField label="Display name" htmlFor="showcase-name" error={fieldErrors.displayName}>
+        <Input
+          placeholder="Jane Doe (optional)"
+          value={values.displayName ?? ''}
+          onChange={(e) => setValues((v) => ({ ...v, displayName: e.target.value }))}
+        />
+      </FormField>
+      <Button type="submit">Validate</Button>
+    </Form>
+  )
+}
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-4">
@@ -38,8 +83,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export function ShowcaseHome() {
   const { toast } = useToast()
-  const [inputValue, setInputValue] = useState('')
-
   return (
     <PageShell title="UI Kit Showcase">
       <div className="space-y-10">
@@ -63,24 +106,10 @@ export function ShowcaseHome() {
           <Card className="max-w-md">
             <CardHeader>
               <CardTitle>Form example</CardTitle>
-              <CardDescription>Input, Label, and FormField</CardDescription>
+              <CardDescription>Required fields, optional fields, and inline validation errors</CardDescription>
             </CardHeader>
             <CardContent>
-              <Form>
-                <FormField label="Email" htmlFor="showcase-email">
-                  <Input
-                    id="showcase-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                  />
-                </FormField>
-                <div className="space-y-2">
-                  <Label htmlFor="showcase-name">Display name</Label>
-                  <Input id="showcase-name" placeholder="Jane Doe" />
-                </div>
-              </Form>
+              <ShowcaseFormDemo />
             </CardContent>
           </Card>
         </Section>
@@ -139,6 +168,7 @@ export function ShowcaseHome() {
             <AppHeader />
             <AppHeader
               user={{ displayName: 'Jane Doe', email: 'jane@example.com' }}
+              onProfileClick={() => toast({ title: 'Open profile' })}
               onLogout={() => toast({ title: 'Logged out' })}
             />
           </div>

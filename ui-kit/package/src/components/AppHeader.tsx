@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { LogOut } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
@@ -22,6 +22,7 @@ interface AppHeaderProps {
   logo?: ReactNode
   logoHref?: string
   user?: AppHeaderUser | null
+  onProfileClick?: () => void
   onLogout?: () => void
   className?: string
 }
@@ -34,7 +35,7 @@ function getInitials(displayName: string): string {
   return displayName.slice(0, 2).toUpperCase() || '?'
 }
 
-function AppHeader({ logo, logoHref, user, onLogout, className }: AppHeaderProps) {
+function AppHeader({ logo, logoHref, user, onProfileClick, onLogout, className }: AppHeaderProps) {
   const logoNode = logo ?? <BrandLogo href={logoHref} />
 
   return (
@@ -58,15 +59,32 @@ function AppHeader({ logo, logoHref, user, onLogout, className }: AppHeaderProps
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-border bg-card shadow-lg">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                  {user.email ? (
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  ) : null}
-                </div>
-              </DropdownMenuLabel>
+              {onProfileClick ? (
+                <DropdownMenuItem onClick={onProfileClick} className="cursor-pointer p-0">
+                  <div className="flex w-full flex-col space-y-1 px-2 py-1.5">
+                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    {user.email ? (
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    ) : null}
+                  </div>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    {user.email ? (
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    ) : null}
+                  </div>
+                </DropdownMenuLabel>
+              )}
               <DropdownMenuSeparator />
+              {onProfileClick ? (
+                <DropdownMenuItem onClick={onProfileClick}>
+                  <User />
+                  Profile
+                </DropdownMenuItem>
+              ) : null}
               {onLogout ? (
                 <DropdownMenuItem onClick={onLogout}>
                   <LogOut />

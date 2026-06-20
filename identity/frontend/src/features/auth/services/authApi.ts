@@ -1,17 +1,39 @@
-import type { AuthSuccessPayload, UserProfile } from '../types/auth.types'
+import type {
+  AuthSuccessPayload,
+  ExchangeAuthPayload,
+  UpdateProfileInput,
+  UserProfile,
+} from '../types/auth.types'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_IDENTITY_API_BASE_URL ?? 'http://localhost:4001/api/v1'
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ??
+  import.meta.env.VITE_IDENTITY_API_BASE_URL ??
+  'http://localhost:4001/api/v1'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const { headers, ...rest } = options ?? {}
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
+    ...rest,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(data.message ?? 'Request failed')
   }
   return data as T
+}
+
+async function authRequest<T>(path: string, accessToken: string, options?: RequestInit): Promise<T> {
+  return request<T>(path, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
 }
 
 export const authApi = {
@@ -43,6 +65,21 @@ export const authApi = {
     return request<{ message: string }>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify(body),
+    })
+  },
+  getMe(accessToken: string) {
+    return authRequest<{ user: UserProfile }>('/auth/me', accessToken)
+  },
+  patchMe(accessToken: string, body: UpdateProfileInput) {
+    return authRequest<{ user: UserProfile }>('/auth/me', accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+  exchangeCode(code: string, redirectUri: string) {
+    return request<ExchangeAuthPayload>('/auth/exchange', {
+      method: 'POST',
+      body: JSON.stringify({ code, redirectUri }),
     })
   },
 }

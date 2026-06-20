@@ -1,0 +1,63 @@
+import { z } from 'zod'
+
+export const profileSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
+  displayName: z.string().min(1, 'Display name is required').max(255),
+  phoneNumber: z.string().max(32).nullable(),
+  addressLine1: z.string().max(255).nullable(),
+  addressLine2: z.string().max(255).nullable(),
+  city: z.string().max(100).nullable(),
+  stateRegion: z.string().max(100).nullable(),
+  postalCode: z.string().max(20).nullable(),
+  country: z
+    .string()
+    .refine((value) => value === '' || value.length === 2, 'Use a 2-letter country code'),
+  locale: z.string().max(20).nullable(),
+})
+
+export type ProfileFormValues = z.infer<typeof profileSchema>
+
+export function userToProfileFormValues(user: {
+  firstName: string
+  lastName: string
+  displayName: string
+  phoneNumber: string | null
+  addressLine1: string | null
+  addressLine2: string | null
+  city: string | null
+  stateRegion: string | null
+  postalCode: string | null
+  country: string | null
+  locale: string | null
+}): ProfileFormValues {
+  return {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    displayName: user.displayName,
+    phoneNumber: user.phoneNumber,
+    addressLine1: user.addressLine1,
+    addressLine2: user.addressLine2,
+    city: user.city,
+    stateRegion: user.stateRegion,
+    postalCode: user.postalCode,
+    country: user.country ?? '',
+    locale: user.locale,
+  }
+}
+
+export function profileFormToUpdateInput(values: ProfileFormValues) {
+  return {
+    firstName: values.firstName,
+    lastName: values.lastName,
+    displayName: values.displayName,
+    phoneNumber: values.phoneNumber || null,
+    addressLine1: values.addressLine1 || null,
+    addressLine2: values.addressLine2 || null,
+    city: values.city || null,
+    stateRegion: values.stateRegion || null,
+    postalCode: values.postalCode || null,
+    country: values.country ? values.country.toUpperCase() : null,
+    locale: values.locale || null,
+  }
+}

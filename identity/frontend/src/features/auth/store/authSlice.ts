@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { UserProfile } from '../types/auth.types'
+import type { UpdateProfileInput, UserProfile } from '../types/auth.types'
 
 interface AuthState {
   user: UserProfile | null
@@ -10,6 +10,10 @@ interface AuthState {
   forgotPasswordResetToken: string | null
   registrationComplete: boolean
   resetPasswordComplete: boolean
+  isProfileLoading: boolean
+  isProfileSaving: boolean
+  profileError: string | null
+  profileSaveSuccess: boolean
 }
 
 const initialState: AuthState = {
@@ -21,6 +25,10 @@ const initialState: AuthState = {
   forgotPasswordResetToken: null,
   registrationComplete: false,
   resetPasswordComplete: false,
+  isProfileLoading: false,
+  isProfileSaving: false,
+  profileError: null,
+  profileSaveSuccess: false,
 }
 
 export const authSlice = createSlice({
@@ -33,11 +41,15 @@ export const authSlice = createSlice({
     },
     loginSucceeded(
       state,
-      action: PayloadAction<{ accessToken: string; refreshToken: string; user: UserProfile }>,
+      action: PayloadAction<{
+        accessToken: string
+        refreshToken?: string | null
+        user: UserProfile
+      }>,
     ) {
       state.isLoading = false
       state.accessToken = action.payload.accessToken
-      state.refreshToken = action.payload.refreshToken
+      state.refreshToken = action.payload.refreshToken ?? null
       state.user = action.payload.user
     },
     loginFailed(state, action: PayloadAction<string>) {
@@ -91,6 +103,39 @@ export const authSlice = createSlice({
       state.isLoading = false
       state.error = action.payload
     },
+    profileFetchRequested(state, _action: PayloadAction<{ accessToken: string }>) {
+      state.isProfileLoading = true
+      state.profileError = null
+      state.profileSaveSuccess = false
+    },
+    profileFetchSucceeded(state, action: PayloadAction<UserProfile>) {
+      state.isProfileLoading = false
+      state.user = action.payload
+    },
+    profileFetchFailed(state, action: PayloadAction<string>) {
+      state.isProfileLoading = false
+      state.profileError = action.payload
+    },
+    profileUpdateRequested(
+      state,
+      _action: PayloadAction<{ accessToken: string; body: UpdateProfileInput }>,
+    ) {
+      state.isProfileSaving = true
+      state.profileError = null
+      state.profileSaveSuccess = false
+    },
+    profileUpdateSucceeded(state, action: PayloadAction<UserProfile>) {
+      state.isProfileSaving = false
+      state.user = action.payload
+      state.profileSaveSuccess = true
+    },
+    profileUpdateFailed(state, action: PayloadAction<string>) {
+      state.isProfileSaving = false
+      state.profileError = action.payload
+    },
+    clearProfileSaveSuccess(state) {
+      state.profileSaveSuccess = false
+    },
     clearAuthError(state) {
       state.error = null
     },
@@ -99,6 +144,8 @@ export const authSlice = createSlice({
       state.accessToken = null
       state.refreshToken = null
       state.error = null
+      state.profileError = null
+      state.profileSaveSuccess = false
     },
   },
 })

@@ -1,8 +1,18 @@
 # Agent delegation map
 
-This monorepo has three runnable services plus a shared UI library. Each has a **subagent** (`.cursor/agents/`) and a **skill** (`.cursor/skills/`). Agents and skills are scoped by service folder and `.cursor/rules/` — they do not depend on `spec/`.
+This monorepo has three runnable services, a shared UI library, and shared contract packages under `packages/`. Each service has a **subagent** (`.cursor/agents/`) and a **skill** (`.cursor/skills/`). Agents and skills are scoped by service folder and `.cursor/rules/` — they do not depend on `spec/`.
 
 **Orchestrator:** [.cursor/agents/platform-orchestrator.md](.cursor/agents/platform-orchestrator.md) · [skill](.cursor/skills/platform-orchestrator/SKILL.md)
+
+## Shared packages (`packages/`)
+
+Cross-service libraries that are **not** UI Kit and **not** microservices. See [packages/README.md](packages/README.md).
+
+| Package | Purpose |
+|---------|---------|
+| `@webonone/platform-nav` | Cross-service redirect, auth-code handoff, return URL validation |
+
+Root: `npm run build:platform-nav`. Parent agent owns new entries under `packages/*`.
 
 ## Service agents
 
@@ -27,3 +37,4 @@ This monorepo has three runnable services plus a shared UI library. Each has a *
 | `npm run dev:identity` | Identity FE + BE |
 | `npm run dev:ui-kit` | UI Kit showcase |
 | `npm run dev:webonone` | WebOnOne FE + BE |
+| `npm run build:platform-nav` | Build `@webonone/platform-nav` |

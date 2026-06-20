@@ -1,5 +1,14 @@
 import { useState } from 'react'
-import { Alert, AlertDescription, Button, Form, FormField, Input, Spinner } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Form,
+  FormField,
+  Input,
+  mapZodIssuesToFieldErrors,
+  Spinner,
+} from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { resetPasswordSchema, type ResetPasswordFormValues } from '../schemas/authSchemas'
 import { authActions } from '../store'
@@ -21,12 +30,7 @@ export function ResetPasswordForm({ initialToken = '' }: ResetPasswordFormProps)
     e.preventDefault()
     const parsed = resetPasswordSchema.safeParse(values)
     if (!parsed.success) {
-      const errors: Partial<Record<keyof ResetPasswordFormValues, string>> = {}
-      parsed.error.issues.forEach((issue) => {
-        const key = issue.path[0] as keyof ResetPasswordFormValues
-        errors[key] = issue.message
-      })
-      setFieldErrors(errors)
+      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
     }
     setFieldErrors({})
@@ -41,17 +45,16 @@ export function ResetPasswordForm({ initialToken = '' }: ResetPasswordFormProps)
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Reset token" htmlFor="token" error={fieldErrors.token}>
+      <FormField label="Reset token" htmlFor="token" required error={fieldErrors.token}>
         <Input
-          id="token"
           value={values.token}
           onChange={(e) => setValues((v) => ({ ...v, token: e.target.value }))}
         />
       </FormField>
-      <FormField label="New password" htmlFor="newPassword" error={fieldErrors.newPassword}>
+      <FormField label="New password" htmlFor="newPassword" required error={fieldErrors.newPassword}>
         <Input
-          id="newPassword"
           type="password"
+          autoComplete="new-password"
           value={values.newPassword}
           onChange={(e) => setValues((v) => ({ ...v, newPassword: e.target.value }))}
         />

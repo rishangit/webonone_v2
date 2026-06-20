@@ -10,6 +10,7 @@ interface PageShellProps {
   logo?: ReactNode
   logoHref?: string
   user?: AppHeaderUser | null
+  onProfileClick?: () => void
   onLogout?: () => void
   className?: string
 }
@@ -20,6 +21,7 @@ function PageShell({
   logo,
   logoHref,
   user,
+  onProfileClick,
   onLogout,
   className,
 }: PageShellProps) {
@@ -27,7 +29,13 @@ function PageShell({
 
   return (
     <div className={cn('min-h-screen bg-background', className)}>
-      <AppHeader logo={logoNode} logoHref={logoHref} user={user} onLogout={onLogout} />
+      <AppHeader
+        logo={logoNode}
+        logoHref={logoHref}
+        user={user}
+        onProfileClick={onProfileClick}
+        onLogout={onLogout}
+      />
       <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
     </div>
   )
