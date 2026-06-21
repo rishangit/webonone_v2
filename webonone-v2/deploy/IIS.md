@@ -86,8 +86,16 @@ Edit `webonone-v2\frontend\.env.production` — production values:
 |-----|-------|
 | `VITE_API_BASE_URL` | `/api/v1` |
 | `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
+| `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
 
-Login callback (`/callback`), Identity API (`/api/v1`), and profile (`/profile`) URLs are derived at runtime from `VITE_IDENTITY_ORIGIN` and `window.location.origin`.
+| Variable | Purpose |
+|----------|---------|
+| `VITE_IDENTITY_ORIGIN` | Login redirect and profile page (Identity SPA) |
+| `VITE_IDENTITY_API_BASE_URL` | Identity API calls (`/auth/exchange`, `/auth/code`) |
+
+Locally, Identity FE (3001) and BE (4001) run on different ports, so both URLs must be set. On IIS, Identity serves SPA and API from the same host — use the same domain with `/api/v1` for the API base.
+
+Login callback (`/callback`) is derived at runtime from `window.location.origin`.
 
 Vite embeds these values during deploy build. Changes require redeploy.
 
