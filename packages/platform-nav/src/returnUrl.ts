@@ -1,8 +1,9 @@
 import { QUERY } from './constants'
+import { matchesAllowedOrigin } from './redirectAllowlist'
 
 export function parseReturnUrl(
   searchParams: URLSearchParams,
-  allowedOrigins: string[],
+  allowedOriginPatterns: string[],
 ): string | null {
   const raw = searchParams.get(QUERY.RETURN_URL)
   if (!raw) return null
@@ -18,7 +19,7 @@ export function parseReturnUrl(
     return null
   }
 
-  if (!allowedOrigins.includes(parsed.origin)) {
+  if (!matchesAllowedOrigin(parsed.origin, allowedOriginPatterns)) {
     return null
   }
 

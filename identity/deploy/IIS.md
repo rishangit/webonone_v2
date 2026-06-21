@@ -59,7 +59,7 @@ Use the same env files as local development — no separate deploy templates.
 copy identity\backend\.env.example identity\backend\.env
 ```
 
-Edit `identity\backend\.env` — set `DB_*`, `JWT_SECRET`, `ALLOWED_REDIRECT_URIS`, and `GOOGLE_CLIENT_ID` if used.
+Edit `identity\backend\.env` — set `DB_*`, `JWT_SECRET`, `ALLOWED_REDIRECT_URIS` (e.g. `https://*.webonone.com` in production, `http://localhost:*` locally), and `GOOGLE_CLIENT_ID` if used.
 
 For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
 
@@ -69,7 +69,7 @@ For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this fi
 copy identity\frontend\.env.example identity\frontend\.env.production
 ```
 
-Edit `identity\frontend\.env.production` — production URLs must use **https://identity.webonone.com** (and your production callback origins). Vite embeds these values during deploy build.
+Edit `identity\frontend\.env.production` — set `VITE_ALLOWED_REDIRECT_URIS` to the same pattern as backend (e.g. `https://*.webonone.com`). Vite embeds these values during deploy build.
 
 Keep **`ALLOWED_REDIRECT_URIS`** (backend) and **`VITE_ALLOWED_REDIRECT_URIS`** (frontend) in sync, same for Google client IDs.
 

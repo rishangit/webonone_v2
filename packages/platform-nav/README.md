@@ -25,6 +25,33 @@ await redirectWithAuthCode({
 
 The `targetUrl` must be allowlisted on the code issuer (Identity BE `ALLOWED_REDIRECT_URIS`).
 
+## Redirect allowlist patterns
+
+Identity validates `redirect_uri`, auth-code `targetUrl`, and profile `return_url` origins using shared helpers:
+
+```typescript
+import {
+  matchesRedirectUri,
+  matchesAllowedOrigin,
+  parseAllowlistPatterns,
+} from '@webonone/platform-nav'
+```
+
+| Pattern | Matches |
+|---------|---------|
+| `https://app.webonone.com/callback` | Exact URI (legacy) |
+| `https://*.webonone.com` | Any `https` subdomain, any path |
+| `http://localhost:*` | Any localhost port, any path (local dev) |
+
+Production example (backend and Identity frontend — keep in sync):
+
+```env
+ALLOWED_REDIRECT_URIS=https://*.webonone.com
+VITE_ALLOWED_REDIRECT_URIS=https://*.webonone.com
+```
+
+Consumer apps only need `VITE_IDENTITY_ORIGIN`; callback URLs use `window.location.origin + '/callback'`.
+
 ## Query params
 
 | Param | Meaning |

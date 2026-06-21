@@ -4,8 +4,8 @@ import { PageShell, Spinner } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
 import type { UserProfile } from '../types/auth.types'
-import { consumeAuthState, getAuthCallbackUrl } from '../utils/buildIdentityLoginUrl'
-import { IDENTITY_API_BASE } from '../utils/identityConfig'
+import { consumeAuthState } from '../utils/buildIdentityLoginUrl'
+import { getAuthCallbackUrl, getIdentityApiBase } from '../utils/identityConfig'
 
 /** Prevents duplicate exchange when React Strict Mode remounts the callback page. */
 const exchangedCodes = new Set<string>()
@@ -42,7 +42,7 @@ export function AuthCallbackPage() {
 
     const redirectUri = getAuthCallbackUrl()
 
-    fetch(`${IDENTITY_API_BASE}/auth/exchange`, {
+    fetch(`${getIdentityApiBase()}/auth/exchange`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, redirectUri }),

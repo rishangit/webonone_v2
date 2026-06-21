@@ -1,13 +1,13 @@
 import { redirectWithAuthCode, type RedirectWithAuthCodeOptions } from '@webonone/platform-nav'
-import { IDENTITY_API_BASE, IDENTITY_PROFILE_URL } from './identityConfig'
+import { getIdentityApiBase, getIdentityProfileUrl } from './identityConfig'
 
 export function getIdentityProfileRedirectOptions(
   accessToken: string,
 ): RedirectWithAuthCodeOptions {
   return {
     accessToken,
-    authCodeEndpoint: `${IDENTITY_API_BASE}/auth/code`,
-    targetUrl: IDENTITY_PROFILE_URL,
+    authCodeEndpoint: `${getIdentityApiBase()}/auth/code`,
+    targetUrl: getIdentityProfileUrl(),
     returnUrl: `${window.location.origin}/`,
     errorMessage: 'Failed to open profile',
   }

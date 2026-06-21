@@ -18,6 +18,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "test": "node --import tsx --test src/**/*.test.ts",
     "type-check": "tsc --noEmit",
     "lint": "eslint src"
   },

@@ -1,11 +1,25 @@
-export const IDENTITY_API_BASE =
-  import.meta.env.VITE_IDENTITY_API_BASE_URL ?? 'http://localhost:4001/api/v1'
+const DEFAULT_IDENTITY_ORIGIN = 'http://localhost:3001'
 
-export const IDENTITY_LOGIN_URL =
-  import.meta.env.VITE_IDENTITY_LOGIN_URL ?? 'http://localhost:3001/login'
+export function getIdentityOrigin(): string {
+  return import.meta.env.VITE_IDENTITY_ORIGIN ?? DEFAULT_IDENTITY_ORIGIN
+}
 
-export const IDENTITY_PROFILE_URL =
-  import.meta.env.VITE_IDENTITY_PROFILE_URL ?? 'http://localhost:3001/profile'
+export function getIdentityLoginUrl(): string {
+  return `${getIdentityOrigin()}/login`
+}
 
-export const AUTH_CALLBACK_URL =
-  import.meta.env.VITE_AUTH_CALLBACK_URL ?? 'http://localhost:3000/callback'
+export function getIdentityApiBase(): string {
+  return `${getIdentityOrigin()}/api/v1`
+}
+
+export function getIdentityProfileUrl(): string {
+  return `${getIdentityOrigin()}/profile`
+}
+
+export function getAuthCallbackUrl(): string {
+  if (typeof window === 'undefined') {
+    return 'http://localhost:3000/callback'
+  }
+
+  return `${window.location.origin}/callback`
+}

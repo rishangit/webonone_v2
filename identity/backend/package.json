@@ -12,6 +12,7 @@
     "migrate:status": "node --import tsx ../../node_modules/knex/bin/cli.js migrate:status --knexfile knexfile.ts"
   },
   "dependencies": {
+    "@webonone/platform-nav": "*",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

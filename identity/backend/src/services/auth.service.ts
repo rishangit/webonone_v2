@@ -29,6 +29,7 @@ import {
   hashToken,
   signAccessToken,
 } from './token.service.js'
+import { matchesRedirectUri } from '@webonone/platform-nav'
 import { env } from '../config/env.js'
 
 export class AuthError extends Error {
@@ -174,7 +175,7 @@ export async function patchCurrentUser(userId: string, input: UpdateUserProfileI
 const AUTH_CODE_EXPIRY_SECONDS = 60
 
 function isAllowedRedirectUri(redirectUri: string): boolean {
-  return env.allowedRedirectUris.includes(redirectUri)
+  return matchesRedirectUri(redirectUri, env.allowedRedirectUris)
 }
 
 export async function createAuthCodeForUser(userId: string, redirectUri: string): Promise<{ code: string }> {

@@ -23,12 +23,12 @@ Committed files in `webonone-v2\deploy\`: **`web.config`**, **`stage-deploy.ps1`
 
 ## Prerequisites
 
-Identity must be deployed at **https://identity.webonone.com** and allowlist the WebOnOne callback:
+Identity must be deployed at **https://identity.webonone.com** with a platform-wide redirect allowlist:
 
-- `identity\backend\.env` → `ALLOWED_REDIRECT_URIS=https://app.webonone.com/callback,https://identity.webonone.com/profile`
-- `identity\frontend\.env.production` → `VITE_ALLOWED_REDIRECT_URIS=https://app.webonone.com/callback,https://identity.webonone.com/profile`
+- `identity\backend\.env` → `ALLOWED_REDIRECT_URIS=https://*.webonone.com`
+- `identity\frontend\.env.production` → `VITE_ALLOWED_REDIRECT_URIS=https://*.webonone.com`
 
-After updating Identity env, run `npm run deploy:identity` and recycle the Identity app pool.
+This allows any `https://` microservice subdomain (e.g. `app`, `billing`) without listing each callback URL. After updating Identity env, run `npm run deploy:identity` and recycle the Identity app pool.
 
 ---
 
@@ -86,10 +86,8 @@ Edit `webonone-v2\frontend\.env.production` — production values:
 |-----|-------|
 | `VITE_API_BASE_URL` | `/api/v1` |
 | `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
-| `VITE_IDENTITY_LOGIN_URL` | `https://identity.webonone.com/login` |
-| `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
-| `VITE_AUTH_CALLBACK_URL` | `https://app.webonone.com/callback` |
-| `VITE_IDENTITY_PROFILE_URL` | `https://identity.webonone.com/profile` |
+
+Login callback (`/callback`), Identity API (`/api/v1`), and profile (`/profile`) URLs are derived at runtime from `VITE_IDENTITY_ORIGIN` and `window.location.origin`.
 
 Vite embeds these values during deploy build. Changes require redeploy.
 
@@ -195,7 +193,7 @@ Recycle the IIS app pool or restart the site.
 | 500 / Node crash | Check `webonone-v2\deploy\logs\` and `webonone-v2\backend\.env` (DB credentials, `JWT_SECRET`) |
 | SPA 404 | Confirm `webonone-v2\deploy\public\index.html` exists — run `npm run deploy:webonone` |
 | API 404 from SPA | Frontend must be built with `VITE_API_BASE_URL=/api/v1` in `frontend\.env.production` |
-| Login callback rejected | Identity `ALLOWED_REDIRECT_URIS` must include `https://app.webonone.com/callback`; redeploy Identity |
+| Login callback rejected | Identity `ALLOWED_REDIRECT_URIS` must include `https://*.webonone.com` (or match the consumer origin); redeploy Identity |
 | DB errors | Run migrations; verify `DB_*` in `backend\.env` |
 
 ---
