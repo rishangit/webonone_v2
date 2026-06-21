@@ -43,3 +43,5 @@ npm run type-check -w webonone-v2-root
 ```
 
 Login flow requires Identity running (`npm run dev:identity`).
+
+IIS production deploy: [iis-deployment.mdc](../rules/iis-deployment.mdc) · [webonone-v2/deploy/IIS.md](../../webonone-v2/deploy/IIS.md)

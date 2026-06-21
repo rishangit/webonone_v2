@@ -16,6 +16,12 @@
 | [ui-kit-project.mdc](ui-kit-project.mdc) | `ui-kit/**/*` | Package vs showcase, build/export workflow |
 | [webonone-v2-project.mdc](webonone-v2-project.mdc) | `webonone-v2/**/*` | Scaffold, iframe login, JWT verify |
 
+## Deployment
+
+| Rule | Globs | Description |
+|------|-------|-------------|
+| [iis-deployment.mdc](iis-deployment.mdc) | `**/deploy/**/*` | IIS staging, env, web.config, deploy verification (all services) |
+
 Agent delegation map: [AGENTS.md](../../AGENTS.md)
 
 ## Front-end (`**/frontend/src`)

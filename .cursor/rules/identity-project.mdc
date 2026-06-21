@@ -40,4 +40,6 @@ npm run type-check -w identity-root
 npm run migrate   # from identity/
 ```
 
+IIS production deploy: [iis-deployment.mdc](iis-deployment.mdc) · [identity/deploy/IIS.md](../../identity/deploy/IIS.md)
+
 Do not implement WebOnOne routes or duplicate UI Kit primitives.

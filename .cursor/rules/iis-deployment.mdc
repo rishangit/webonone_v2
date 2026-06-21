@@ -1,0 +1,107 @@
+---
+description: IIS deployment for microservices — staging, env, web.config, verification
+globs: "**/deploy/**/*"
+alwaysApply: false
+---
+
+# IIS deployment (all microservices)
+
+Each service that hosts on IIS uses **`{service}/deploy/`** as the site physical path. Reference implementation: [identity/deploy/IIS.md](../../identity/deploy/IIS.md).
+
+## Standard layout
+
+Replace `{service}` with the service folder (e.g. `identity`, `webonone-v2`).
+
+| Path | Role |
+|------|------|
+| `{service}/deploy/` | IIS physical path (generated output — not repo root) |
+| `{service}/deploy/web.config` | HttpPlatformHandler → `node dist/server.js` |
+| `{service}/deploy/dist/` | Backend build (staged) |
+| `{service}/deploy/public/` | Frontend build (staged; omit if backend-only) |
+| `{service}/deploy/logs/` | Node stdout/stderr (IIS writes at runtime) |
+| `{service}/backend/.env` | **Runtime** secrets — read by Node on IIS |
+| `{service}/frontend/.env.production` | **Build-time** config — Vite embeds `VITE_*` into `deploy/public/` |
+| Repo root `node_modules/` | Runtime deps — **not** copied into `deploy/` |
+
+**Committed in `{service}/deploy/` only:** `web.config`, `stage-deploy.ps1`, `IIS.md`. Never commit staged `dist/`, `public/`, or `logs/`.
+
+## Deploy commands
+
+Per service (in `{service}/package.json`):
+
+| Script | Purpose |
+|--------|---------|
+| `deploy` | Build + stage into `{service}/deploy/` |
+| `stage:deploy` | Stage only (after a prior build) |
+| `clean:deploy` | Remove generated output; keep committed deploy files |
+
+From repo root (register `deploy:{service}` in root `package.json`):
+
+```powershell
+npm install
+npm run migrate -w {service-root-workspace}   # when service has migrations
+npm run deploy:{service}
+```
+
+`npm run dev:{service}` and `npm run build:{service}` do **not** touch `{service}/deploy/`.
+
+## Environment (no deploy-only templates)
+
+Use the same env files as local dev — copy from `.env.example`, edit for production **before** deploy.
+
+| Layer | File | When read |
+|-------|------|-----------|
+| Backend | `{service}/backend/.env` | Every IIS request (Node loads at startup) |
+| Frontend | `{service}/frontend/.env.production` | Deploy build only — values compiled into JS; changes require redeploy |
+
+**Frontend** — typical production keys:
+
+- `VITE_API_BASE_URL=/api/v1` (same-origin API on IIS)
+- Other `VITE_*` URLs and client IDs for that service (production `https://…` values)
+- Mirror matching backend env vars where both layers validate the same data (e.g. redirect URIs, OAuth client IDs)
+
+**Backend** — `DB_*`, `JWT_SECRET`, and service-specific server config. Keep paired FE/BE values in sync.
+
+On IIS, HttpPlatformHandler sets `PORT` — backend must not override it when `IIS_NODE_HOSTED=1`. Local dev uses `frontend/.env` (not `.env.production`).
+
+Per-service env rules: [microservice-architecture.mdc](microservice-architecture.mdc).
+
+## web.config rules (required)
+
+- `PORT` = `%HTTP_PLATFORM_PORT%` — **never** hardcode a dev port
+- `IIS_NODE_HOSTED=1` so backend loads `{service}/backend/.env` and serves `{service}/deploy/public/`
+- Node path: `%ProgramFiles%\nodejs\node.exe` (adjust `processPath` if needed)
+- App pool: **No Managed Code**; pool identity needs Read+Execute on `deploy/`, Read on `backend/.env`, Read+Execute on repo `node_modules/`, **Write** on `deploy/logs/`
+
+## Redeploy
+
+```powershell
+git pull
+npm run deploy:{service}
+```
+
+Recycle the IIS app pool or restart the site.
+
+## Verification
+
+| Check | Expected |
+|-------|----------|
+| `https://{host}/api/v1/health` | Service health JSON |
+| `{service}/deploy/public/index.html` | Exists after deploy (when service has a frontend) |
+| `{service}/deploy/logs/` | Inspect on 502/500 or startup failure |
+
+Pre-deploy: `npm run type-check -w {service-root-workspace}`
+
+## Common failures
+
+| Symptom | Fix |
+|---------|-----|
+| 502.3 | Install HttpPlatformHandler; verify Node path in `web.config` |
+| Page spins / timeout | Do not hardcode `PORT` in `web.config` |
+| SPA 404 | Run deploy; confirm `deploy/public/` |
+| API 404 from SPA | Rebuild frontend with `VITE_API_BASE_URL=/api/v1` |
+| DB errors | Run migrations; verify `DB_*` in `backend/.env` |
+
+## Scaffolding a new service
+
+Copy the pattern from `identity/deploy/` (`web.config`, `stage-deploy.ps1`, `IIS.md`, service `package.json` deploy scripts). Add root `deploy:{service}` script. Document host name and verify URLs in `{service}/deploy/IIS.md`.
