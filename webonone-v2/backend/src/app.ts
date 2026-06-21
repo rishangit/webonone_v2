@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import healthRoutes from './routes/health.routes.js'
+import siteMediaRefsRoutes from './routes/siteMediaRefs.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -19,6 +20,7 @@ export function createApp() {
   app.use(cors({ origin: true, credentials: true }))
   app.use(express.json())
   app.use('/api/v1', healthRoutes)
+  app.use('/api/v1', siteMediaRefsRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

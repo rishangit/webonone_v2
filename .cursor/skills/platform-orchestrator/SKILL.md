@@ -1,9 +1,9 @@
 ---
 name: platform-orchestrator
 description: >-
-  Routes monorepo tasks to Identity, UI Kit, or WebOnOne v2 sub-agents via
+  Routes monorepo tasks to Identity, UI Kit, WebOnOne v2, or Media sub-agents via
   Cursor Task tool. Use for any work in this repo touching identity/, ui-kit/,
-  webonone-v2/, microservice boundaries, or cross-service auth integration.
+  webonone-v2/, media/, microservice boundaries, or cross-service auth/media integration.
   Delegates automatically instead of editing all services in the parent agent.
 ---
 
@@ -20,8 +20,9 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `identity/` | `.cursor/agents/identity-agent.md` | `.cursor/skills/identity-agent/SKILL.md` |
 | `ui-kit/` | `.cursor/agents/ui-kit-agent.md` | `.cursor/skills/ui-kit-agent/SKILL.md` |
 | `webonone-v2/` | `.cursor/agents/webonone-agent.md` | `.cursor/skills/webonone-agent/SKILL.md` |
+| `media/`, `packages/media-embed/` | `.cursor/agents/media-agent.md` | `.cursor/skills/media-agent/SKILL.md` |
 
-Keywords: iframe, postMessage, JWT handoff, embed login → often **Identity + WebOnOne**.
+Keywords: iframe, postMessage, JWT handoff, embed login → often **Identity + WebOnOne**. Media picker embed → **Media + consumer FE**.
 
 **Parent handles directly:** root `package.json`, workspace wiring, non-service `.cursor/` config.
 
@@ -32,6 +33,8 @@ Keywords: iframe, postMessage, JWT handoff, embed login → often **Identity + W
 | `identity/**` only | Delegate identity-agent | `generalPurpose` |
 | `ui-kit/**` only | Delegate ui-kit-agent | `generalPurpose` |
 | `webonone-v2/**` only | Delegate webonone-agent | `generalPurpose` |
+| `media/**` or `packages/media-embed/**` only | Delegate media-agent | `generalPurpose` |
+| Media embed in consumer | Sequential: media then consumer FE agent | `generalPurpose` × 2 |
 | iframe/postMessage/JWT across services | Sequential: identity then webonone | `generalPurpose` × 2 |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent | `generalPurpose` × 2 |
 | Read-only exploration in one service | Scoped explore | `explore` |

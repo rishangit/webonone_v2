@@ -1,6 +1,6 @@
 # Agent delegation map
 
-This monorepo has three runnable services, a shared UI library, and shared contract packages under `packages/`. Each service has a **subagent** (`.cursor/agents/`) and a **skill** (`.cursor/skills/`). Agents and skills are scoped by service folder and `.cursor/rules/` — they do not depend on `spec/`.
+This monorepo has four runnable services, a shared UI library, and shared contract packages under `packages/`. Each service has a **subagent** (`.cursor/agents/`) and a **skill** (`.cursor/skills/`). Agents and skills are scoped by service folder and `.cursor/rules/` — they do not depend on `spec/`.
 
 **Orchestrator:** [.cursor/agents/platform-orchestrator.md](.cursor/agents/platform-orchestrator.md) · [skill](.cursor/skills/platform-orchestrator/SKILL.md)
 
@@ -11,8 +11,9 @@ Cross-service libraries that are **not** UI Kit and **not** microservices. See [
 | Package | Purpose |
 |---------|---------|
 | `@webonone/platform-nav` | Cross-service redirect, auth-code handoff, return URL validation |
+| `@webonone/media-embed` | Media iframe embed URL builder, postMessage types, React hooks |
 
-Root: `npm run build:platform-nav`. Parent agent owns new entries under `packages/*`.
+Root: `npm run build:platform-nav`, `npm run build:media-embed`. Parent agent owns new entries under `packages/*`.
 
 ## Service agents
 
@@ -21,6 +22,7 @@ Root: `npm run build:platform-nav`. Parent agent owns new entries under `package
 | Identity | `identity/` | [identity-agent](.cursor/agents/identity-agent.md) | [skill](.cursor/skills/identity-agent/SKILL.md) |
 | UI Kit | `ui-kit/` | [ui-kit-agent](.cursor/agents/ui-kit-agent.md) | [skill](.cursor/skills/ui-kit-agent/SKILL.md) |
 | WebOnOne v2 | `webonone-v2/` | [webonone-agent](.cursor/agents/webonone-agent.md) | [skill](.cursor/skills/webonone-agent/SKILL.md) |
+| Media | `media/` | [media-agent](.cursor/agents/media-agent.md) | [skill](.cursor/skills/media-agent/SKILL.md) |
 
 ## What the parent agent does
 
@@ -33,8 +35,10 @@ Root: `npm run build:platform-nav`. Parent agent owns new entries under `package
 
 | Command | Runs |
 |---------|------|
-| `npm run dev` | All three services |
+| `npm run dev` | All four services |
 | `npm run dev:identity` | Identity FE + BE |
 | `npm run dev:ui-kit` | UI Kit showcase |
 | `npm run dev:webonone` | WebOnOne FE + BE |
+| `npm run dev:media` | Media FE + BE |
 | `npm run build:platform-nav` | Build `@webonone/platform-nav` |
+| `npm run build:media-embed` | Build `@webonone/media-embed` |

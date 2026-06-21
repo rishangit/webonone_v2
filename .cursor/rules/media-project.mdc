@@ -1,0 +1,40 @@
+---
+description: Media microservice — ports, env, verification
+globs: media/**/*
+alwaysApply: false
+---
+
+# Media project
+
+Agent skill: [.cursor/skills/media-agent/SKILL.md](../skills/media-agent/SKILL.md)
+
+## Scope
+
+`media/frontend`, `media/backend`, `media/backend/migrations`, `packages/media-embed`.
+
+Specs: [spec/1.1.0/03-media-project.md](../../spec/1.1.0/03-media-project.md), [spec/1.1.0/08-media-consumer-integration.md](../../spec/1.1.0/08-media-consumer-integration.md)
+
+## Ports and env
+
+| Layer | Port | Env file |
+|-------|------|----------|
+| Frontend | 3003 | `media/frontend/.env` |
+| Backend | 4003 | `media/backend/.env` |
+
+`JWT_SECRET` must match Identity backend.
+
+## Ownership
+
+- All blob storage and media metadata in `webonone_media`.
+- Embed routes `/picker`, `/upload` with `parentOrigin` + `scope` query params.
+- JWT verification locally; no per-request Identity HTTP.
+
+## Verification
+
+```bash
+npm run type-check -w media-root
+npm run migrate -w media-root
+cd media && npm run dev
+```
+
+Do not duplicate upload UI in consumers — embed Media routes via `@webonone/media-embed`.

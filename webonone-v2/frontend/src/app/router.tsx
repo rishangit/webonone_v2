@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { HomePage } from '@/features/home/pages/HomePage'
+import { MediaDemoPage } from '@/features/media/pages/MediaDemoPage'
 import { useAppSelector } from '@/app/store/hooks'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,14 @@ export function App() {
           element={
             <PrivateRoute>
               <HomePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/demo/media"
+          element={
+            <PrivateRoute>
+              <MediaDemoPage />
             </PrivateRoute>
           }
         />

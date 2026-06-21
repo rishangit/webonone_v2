@@ -4,7 +4,7 @@ import {
   matchesAllowedOrigin,
   matchesRedirectUri,
   parseAllowlistPatterns,
-} from './redirectAllowlist.ts'
+} from './redirectAllowlist'
 
 const productionPatterns = parseAllowlistPatterns('https://*.webonone.com')
 const devPatterns = parseAllowlistPatterns('http://localhost:*')

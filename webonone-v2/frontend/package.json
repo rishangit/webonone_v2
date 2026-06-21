@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
+    "@webonone/media-embed": "*",
     "@webonone/platform-nav": "*",
     "@webonone/ui-kit": "*",
     "react": "^19.1.0",

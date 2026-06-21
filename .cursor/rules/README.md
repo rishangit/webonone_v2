@@ -15,6 +15,7 @@
 | [identity-project.mdc](identity-project.mdc) | `identity/**/*` | Identity ports, auth/embed ownership, verification |
 | [ui-kit-project.mdc](ui-kit-project.mdc) | `ui-kit/**/*` | Package vs showcase, build/export workflow |
 | [webonone-v2-project.mdc](webonone-v2-project.mdc) | `webonone-v2/**/*` | Scaffold, iframe login, JWT verify |
+| [media-project.mdc](media-project.mdc) | `media/**/*` | Media service ports, embed routes, storage |
 
 ## Deployment
 

@@ -15,6 +15,7 @@ All packages here use the `@webonone/` scope:
 | Folder | Package | Purpose |
 |--------|---------|---------|
 | `platform-nav/` | `@webonone/platform-nav` | Cross-service redirect, auth code handoff, return URL |
+| `media-embed/` | `@webonone/media-embed` | Media iframe embed URL builder + postMessage contract |
 | *(future)* `event-schemas/` | `@webonone/event-schemas` | Shared event DTO types |
 | *(future)* `api-types/` | `@webonone/api-types` | REST contract types |
 
@@ -32,6 +33,7 @@ All packages here use the `@webonone/` scope:
 
 ```bash
 npm run build -w @webonone/platform-nav
+npm run build -w @webonone/media-embed
 ```
 
 Consumers resolve source via Vite alias during dev; production builds use `dist/`.
