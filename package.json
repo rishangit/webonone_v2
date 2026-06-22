@@ -25,6 +25,7 @@
     "build:ui-kit": "npm run build -w @webonone/ui-kit",
     "build:platform-nav": "npm run build -w @webonone/platform-nav",
     "build:media-embed": "npm run build -w @webonone/media-embed",
+    "build:theme": "npm run build -w @webonone/theme",
     "build:identity": "npm run build -w identity-root",
     "deploy:identity": "npm run deploy -w identity-root",
     "build:webonone": "npm run build -w webonone-v2-root",

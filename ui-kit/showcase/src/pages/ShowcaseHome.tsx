@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { z } from 'zod'
+import { Home, Image, Palette, Settings } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
   AlertTitle,
   AppHeader,
+  AppShell,
   AuthLayout,
   Avatar,
   Button,
@@ -14,11 +16,14 @@ import {
   CardHeader,
   CardTitle,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  type DialogSize,
   Form,
   FormField,
   Input,
@@ -26,7 +31,27 @@ import {
   PageShell,
   Spinner,
   useToast,
+  type NavConfigItem,
 } from '@webonone/ui-kit'
+
+const showcaseNav: NavConfigItem[] = [
+  { type: 'item', to: '#home', label: 'Home', icon: Home },
+  { type: 'item', to: '#media', label: 'Media demo', icon: Image },
+  {
+    type: 'group',
+    label: 'Settings',
+    icon: Settings,
+    children: [{ to: '#theme', label: 'System Theme', icon: Palette }],
+  },
+]
+
+const platformColors = [
+  { name: 'color1', var: '--color-1' },
+  { name: 'color2', var: '--color-2' },
+  { name: 'color3', var: '--color-3' },
+  { name: 'color4', var: '--color-4' },
+  { name: 'color5', var: '--color-5' },
+]
 
 const showcaseFormSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -72,12 +97,150 @@ function ShowcaseFormDemo() {
     </Form>
   )
 }
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-4">
       <h2 className="text-xl font-semibold">{title}</h2>
       {children}
     </section>
+  )
+}
+
+const dialogSizes: DialogSize[] = ['sm', 'md', 'lg', 'xl', '2xl']
+
+function DialogSizeDemo() {
+  const [nestedOpen, setNestedOpen] = useState(false)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {dialogSizes.map((size) => (
+          <Dialog key={size}>
+            <DialogTrigger asChild>
+              <Button variant="outline">{size.toUpperCase()}</Button>
+            </DialogTrigger>
+            <DialogContent size={size}>
+              <DialogHeader>
+                <DialogTitle>{size} dialog</DialogTitle>
+                <DialogDescription>
+                  Fixed header and footer; only the body scrolls when content overflows.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <p className="text-sm text-muted-foreground">
+                  Dialog body content. Size preset: {size}.
+                </p>
+                {size === 'lg' || size === 'xl' || size === '2xl' ? (
+                  <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                    {Array.from({ length: 16 }, (_, i) => (
+                      <p key={i}>Scrollable line {i + 1}</p>
+                    ))}
+                  </div>
+                ) : null}
+              </DialogBody>
+              <DialogFooter>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+                <Button type="button">Confirm</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        ))}
+      </div>
+
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="secondary">Nested dialog (lg → sm)</Button>
+        </DialogTrigger>
+        <DialogContent
+          size="lg"
+          onInteractOutside={(e) => {
+            if (nestedOpen) e.preventDefault()
+          }}
+          onEscapeKeyDown={(e) => {
+            if (nestedOpen) e.preventDefault()
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Outer dialog</DialogTitle>
+            <DialogDescription>Open a smaller nested dialog from inside this panel.</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <Button type="button" variant="outline" onClick={() => setNestedOpen(true)}>
+              Open inner dialog
+            </Button>
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="outline">
+              Close outer
+            </Button>
+          </DialogFooter>
+          <Dialog open={nestedOpen} onOpenChange={setNestedOpen}>
+            <DialogContent size="sm">
+              <DialogHeader>
+                <DialogTitle>Inner dialog</DialogTitle>
+                <DialogDescription>Nested sm dialog — closing this keeps the outer dialog open.</DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setNestedOpen(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function ThemingDemo() {
+  const [dark, setDark] = useState(false)
+
+  function toggleMode() {
+    const next = !dark
+    setDark(next)
+    document.documentElement.classList.toggle('dark', next)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="outline" onClick={toggleMode}>
+          {dark ? 'Switch to light' : 'Switch to dark'}
+        </Button>
+        <Button>Primary gradient</Button>
+        <Button variant="link">Link accent</Button>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {platformColors.map((color) => (
+          <div key={color.name} className="flex items-center gap-2 text-sm">
+            <span
+              className="h-8 w-8 rounded border"
+              style={{ backgroundColor: `var(${color.var})` }}
+            />
+            <span className="text-muted-foreground">{color.name}</span>
+          </div>
+        ))}
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-primary">Scrollbar demo</CardTitle>
+          <CardDescription>Scrollable panel uses scrollbar-themed utility</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="scrollbar-themed h-32 overflow-y-auto rounded-md border p-3 text-sm">
+            {Array.from({ length: 12 }, (_, i) => (
+              <p key={i} className="py-1 text-muted-foreground">
+                Scroll line {i + 1} — thumb uses accent token.
+              </p>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
@@ -138,19 +301,8 @@ export function ShowcaseHome() {
           </div>
         </Section>
 
-        <Section title="Overlays">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">Open dialog</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Dialog title</DialogTitle>
-                <DialogDescription>Dialog description text goes here.</DialogDescription>
-              </DialogHeader>
-              <p className="text-sm">Dialog body content.</p>
-            </DialogContent>
-          </Dialog>
+        <Section title="Dialog">
+          <DialogSizeDemo />
         </Section>
 
         <Section title="Avatar">
@@ -172,6 +324,29 @@ export function ShowcaseHome() {
               onLogout={() => toast({ title: 'Logged out' })}
             />
           </div>
+        </Section>
+
+        <Section title="App Shell">
+          <p className="text-sm text-muted-foreground">
+            Collapsible sidebar, mobile drawer below md, and Settings group with nested item.
+          </p>
+          <div className="overflow-hidden rounded-lg border">
+            <div className="max-w-sm border-b bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground md:max-w-none">
+              Narrow container simulates mobile; resize viewport for hamburger vs fixed sidebar.
+            </div>
+            <AppShell
+              nav={showcaseNav}
+              activePath="#home"
+              user={{ displayName: 'Demo User', email: 'demo@example.com' }}
+            >
+              <h1 className="text-2xl font-semibold text-foreground">Home</h1>
+              <p className="mt-2 text-muted-foreground">Main content area with scrollbar-themed utility.</p>
+            </AppShell>
+          </div>
+        </Section>
+
+        <Section title="Theming">
+          <ThemingDemo />
         </Section>
 
         <Section title="Layout">

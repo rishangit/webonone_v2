@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useRedirectThemeBootstrap } from '@webonone/theme'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { LibraryPage } from '@/features/media/pages/LibraryPage'
@@ -15,6 +16,8 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 export function App() {
+  useRedirectThemeBootstrap()
+
   return (
     <BrowserRouter>
       <Routes>

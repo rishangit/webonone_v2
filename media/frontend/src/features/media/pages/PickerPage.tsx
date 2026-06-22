@@ -25,7 +25,7 @@ export function PickerPage() {
 
   if (embed.isEmbed && !accessToken) {
     return (
-      <EmbedLayout title="Media picker">
+      <EmbedLayout title="Media picker" parentOrigin={embed.parentOrigin}>
         <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
       </EmbedLayout>
     )
@@ -46,6 +46,7 @@ export function PickerPage() {
     return (
       <EmbedLayout
         title="Media picker"
+        parentOrigin={embed.parentOrigin}
         actions={
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={postCancel}>

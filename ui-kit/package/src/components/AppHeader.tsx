@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, Menu, User, X } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
@@ -24,6 +24,9 @@ interface AppHeaderProps {
   user?: AppHeaderUser | null
   onProfileClick?: () => void
   onLogout?: () => void
+  onMenuClick?: () => void
+  showMenuButton?: boolean
+  menuOpen?: boolean
   className?: string
 }
 
@@ -35,13 +38,35 @@ function getInitials(displayName: string): string {
   return displayName.slice(0, 2).toUpperCase() || '?'
 }
 
-function AppHeader({ logo, logoHref, user, onProfileClick, onLogout, className }: AppHeaderProps) {
+function AppHeader({
+  logo,
+  logoHref,
+  user,
+  onProfileClick,
+  onLogout,
+  onMenuClick,
+  showMenuButton = false,
+  menuOpen = false,
+  className,
+}: AppHeaderProps) {
   const logoNode = logo ?? <BrandLogo href={logoHref} />
 
   return (
-    <header className={cn('border-b bg-background', className)}>
+    <header className={cn('glass-card border-b', className)}>
       <div className="flex h-14 w-full items-center justify-between px-4">
-        <div className="flex min-w-0 items-center">{logoNode}</div>
+        <div className="flex min-w-0 items-center gap-2">
+          {showMenuButton ? (
+            <button
+              type="button"
+              onClick={onMenuClick}
+              className="rounded-md p-2 text-foreground outline-none ring-offset-background hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+              aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          ) : null}
+          {logoNode}
+        </div>
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -58,7 +83,7 @@ function AppHeader({ logo, logoHref, user, onProfileClick, onLogout, className }
                 />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 border-border bg-card shadow-lg">
+            <DropdownMenuContent align="end" className="w-56 shadow-lg">
               {onProfileClick ? (
                 <DropdownMenuItem onClick={onProfileClick} className="cursor-pointer p-0">
                   <div className="flex w-full flex-col space-y-1 px-2 py-1.5">
@@ -100,3 +125,4 @@ function AppHeader({ logo, logoHref, user, onProfileClick, onLogout, className }
 }
 
 export { AppHeader }
+export type { AppHeaderProps }

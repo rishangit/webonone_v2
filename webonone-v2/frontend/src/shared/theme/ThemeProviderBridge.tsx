@@ -1,0 +1,64 @@
+import { createContext, useCallback, useContext, useEffect, type ReactNode } from 'react'
+import {
+  applyThemeVariables,
+  broadcastThemeToIframes,
+  buildThemePayload,
+  createPlatformDefaultThemeDto,
+} from '@webonone/theme'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { systemThemeActions } from '@/features/settings/system-theme/store/systemThemeSlice'
+import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
+
+type ThemeBridgeContextValue = {
+  broadcastToIframes: () => void
+}
+
+const ThemeBridgeContext = createContext<ThemeBridgeContextValue | null>(null)
+
+export function useThemeBridge(): ThemeBridgeContextValue {
+  const ctx = useContext(ThemeBridgeContext)
+  if (!ctx) {
+    return { broadcastToIframes: () => undefined }
+  }
+  return ctx
+}
+
+interface ThemeProviderBridgeProps {
+  children: ReactNode
+}
+
+export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
+  const dispatch = useAppDispatch()
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const preferences = useAppSelector((s) => s.systemTheme.preferences)
+
+  useEffect(() => {
+    if (accessToken) {
+      dispatch(systemThemeActions.loadPreferencesRequested())
+    }
+  }, [accessToken, dispatch])
+
+  useEffect(() => {
+    if (!preferences) return
+    const payload = buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode)
+    applyThemeVariables(payload)
+  }, [preferences])
+
+  const broadcastToIframes = useCallback(() => {
+    if (!preferences) return
+    const payload = buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode)
+    broadcastThemeToIframes(payload, document.querySelectorAll('iframe'))
+  }, [preferences])
+
+  useEffect(() => {
+    broadcastToIframes()
+  }, [broadcastToIframes])
+
+  return (
+    <ThemeBridgeContext.Provider value={{ broadcastToIframes }}>{children}</ThemeBridgeContext.Provider>
+  )
+}
+
+export function getGuestThemePayload() {
+  return buildThemePayload(createPlatformDefaultThemeDto(), 'light')
+}

@@ -22,7 +22,7 @@ export function UploadPage() {
 
   if (embed.isEmbed && !accessToken) {
     return (
-      <EmbedLayout title="Upload">
+      <EmbedLayout title="Upload" parentOrigin={embed.parentOrigin}>
         <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
       </EmbedLayout>
     )
@@ -40,7 +40,7 @@ export function UploadPage() {
   )
 
   if (embed.isEmbed) {
-    return <EmbedLayout title="Upload">{content}</EmbedLayout>
+    return <EmbedLayout title="Upload" parentOrigin={embed.parentOrigin}>{content}</EmbedLayout>
   }
 
   return (

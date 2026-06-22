@@ -28,7 +28,7 @@ function PageShell({
   const logoNode = logo ?? (title ? <BrandLogo>{title}</BrandLogo> : undefined)
 
   return (
-    <div className={cn('min-h-screen bg-background', className)}>
+    <div className={cn('min-h-screen', className)}>
       <AppHeader
         logo={logoNode}
         logoHref={logoHref}

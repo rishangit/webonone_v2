@@ -12,6 +12,11 @@ export function buildLoginRedirectUrl(opts: BuildLoginRedirectOptions): string {
   url.searchParams.set(QUERY.REDIRECT_URI, opts.redirectUri)
   url.searchParams.set(QUERY.RETURN_PATH, returnPath)
   url.searchParams.set(QUERY.STATE, state)
+  if (opts.extraSearchParams) {
+    for (const [key, value] of Object.entries(opts.extraSearchParams)) {
+      url.searchParams.set(key, value)
+    }
+  }
   return url.toString()
 }
 

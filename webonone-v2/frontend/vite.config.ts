@@ -6,6 +6,8 @@ const uiKitRoot = path.resolve(__dirname, '../../ui-kit/package')
 const platformNavRoot = path.resolve(__dirname, '../../packages/platform-nav')
 const mediaEmbedRoot = path.resolve(__dirname, '../../packages/media-embed')
 
+const themeRoot = path.resolve(__dirname, '../../packages/theme')
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -15,6 +17,7 @@ export default defineConfig({
       { find: '@webonone/ui-kit', replacement: path.join(uiKitRoot, 'src/index.ts') },
       { find: '@webonone/platform-nav', replacement: path.join(platformNavRoot, 'src/index.ts') },
       { find: '@webonone/media-embed', replacement: path.join(mediaEmbedRoot, 'src/index.ts') },
+      { find: '@webonone/theme', replacement: path.join(themeRoot, 'src/index.ts') },
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },

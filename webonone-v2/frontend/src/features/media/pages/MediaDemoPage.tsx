@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button, PageShell } from '@webonone/ui-kit'
-import { useNavigate } from 'react-router-dom'
+import { Button } from '@webonone/ui-kit'
 import type { MediaItemDto } from '@webonone/media-embed'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { useAppSelector } from '@/app/store/hooks'
 import { apiClient } from '@/shared/services/apiClient'
-import { authActions } from '@/features/auth/store/authSlice'
 import { MediaPickerModal } from '../components/MediaPickerModal'
 import { useMediaSelection } from '../hooks/useMediaSelection'
 import { buildDemoMediaScope, getDemoSiteId, getMediaApiBase } from '../utils/mediaConfig'
@@ -18,9 +16,7 @@ interface SiteMediaRef {
 }
 
 export function MediaDemoPage() {
-  const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const { accessToken, user } = useAppSelector((s) => s.auth)
+  const { accessToken } = useAppSelector((s) => s.auth)
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const [pickerOpenKey, setPickerOpenKey] = useState(0)
   const [refs, setRefs] = useState<SiteMediaRef[]>([])
@@ -77,52 +73,34 @@ export function MediaDemoPage() {
     }
   }
 
-  function handleLogout() {
-    dispatch(authActions.logout())
-    navigate('/login')
-  }
-
   return (
-    <PageShell
-      title="WebOnOne — Media demo"
-      user={
-        user
-          ? {
-              displayName: user.displayName,
-              avatarUrl: user.avatarUrl,
-              email: user.email,
-            }
-          : null
-      }
-      onLogout={handleLogout}
-    >
-      <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Scope: <code className="text-xs">{buildDemoMediaScope()}</code>
-        </p>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        <Button
-          type="button"
-          onClick={() => {
-            setPickerOpenKey((key) => key + 1)
-            setIsPickerOpen(true)
-          }}
-        >
-          Choose images
-        </Button>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {refs.map((ref) => (
-            <div key={ref.id} className="overflow-hidden rounded-lg border">
-              <img src={ref.mediaUrl} alt={ref.label ?? ref.mediaId} className="aspect-square w-full object-cover" />
-              <div className="flex items-center justify-between gap-2 p-2">
-                <p className="truncate text-xs">{ref.label ?? ref.mediaId}</p>
-                <Button type="button" variant="destructive" size="sm" onClick={() => void handleRemoveRef(ref)}>
-                  Remove
-                </Button>
-              </div>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold text-foreground">Media demo</h1>
+      <p className="text-sm text-muted-foreground">
+        Scope: <code className="text-xs">{buildDemoMediaScope()}</code>
+      </p>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      <Button
+        type="button"
+        onClick={() => {
+          setPickerOpenKey((key) => key + 1)
+          setIsPickerOpen(true)
+        }}
+      >
+        Choose images
+      </Button>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        {refs.map((ref) => (
+          <div key={ref.id} className="overflow-hidden rounded-lg border">
+            <img src={ref.mediaUrl} alt={ref.label ?? ref.mediaId} className="aspect-square w-full object-cover" />
+            <div className="flex items-center justify-between gap-2 p-2">
+              <p className="truncate text-xs">{ref.label ?? ref.mediaId}</p>
+              <Button type="button" variant="destructive" size="sm" onClick={() => void handleRemoveRef(ref)}>
+                Remove
+              </Button>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
       <MediaPickerModal
         isOpen={isPickerOpen}
@@ -130,6 +108,6 @@ export function MediaDemoPage() {
         openKey={pickerOpenKey}
         onClose={() => setIsPickerOpen(false)}
       />
-    </PageShell>
+    </div>
   )
 }

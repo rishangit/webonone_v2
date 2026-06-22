@@ -4,26 +4,78 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Platform Default semantic palette — @webonone/theme overwrites at runtime */
+    --color-1: #2563eb;
+    --color-2: #3b82f6;
+    --color-3: #f59e0b;
+    --color-4: #f8fafc;
+    --color-5: #1e293b;
+
+    /* Semantic fallbacks before ThemeProvider */
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-gradient-from: 38 92% 50%;
+    --primary-gradient-to: 221 83% 53%;
+    --glass-bg: 0 0% 100% / 0.85;
+    --glass-border: 0 0% 10% / 0.1;
+    --glass-shadow: 0 0% 0% / 0.1;
+    --accent-primary: 221 83% 53%;
+    --accent-secondary: 38 92% 50%;
+    --accent-primary-hover: 221 83% 43%;
+    --accent-button-text: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 38 92% 50%;
+    --scrollbar-thumb: 38 92% 50% / 0.6;
+
+    /* Glass site canvas (tint from color4 applied at runtime) */
+    --background-base: 0 0% 100%;
+    --background-tint: 210 40% 98%;
+    --background-tint-opacity: 0.16;
+
+    /* Light neutrals / glass surfaces */
+    --background: 210 40% 98% / 0.78;
+    --foreground: 0 0% 10%;
+    --card: 210 40% 98% / 0.78;
+    --card-foreground: 0 0% 10%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 0 0% 10%;
+    --border: 240 6% 90%;
+    --input-background: 221 60% 97%;
+    --input: 221 83% 53% / 0.22;
     --radius: 0.5rem;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 10%;
+  }
+
+  .dark {
+    --background-base: 240 10% 4%;
+    --background-tint: 215 28% 17%;
+    --background-tint-opacity: 0.24;
+    --background: 215 28% 17% / 0.78;
+    --foreground: 0 0% 98%;
+    --card: 215 28% 17% / 0.78;
+    --card-foreground: 0 0% 98%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input-background: 221 35% 17%;
+    --input: 221 83% 53% / 0.38;
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 98%;
+    --glass-bg: 215 28% 17% / 0.8;
+    --glass-border: 0 0% 98% / 0.22;
+    --glass-shadow: 0 0% 0% / 0.25;
+    --accent-primary-hover: 221 83% 43%;
+    --accent-button-text: 0 0% 100%;
   }
 
   * {
@@ -31,6 +83,97 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply theme-canvas theme-canvas-fixed text-foreground;
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  /** Same themed wash as the page body (base + radial tint from @webonone/theme). */
+  .theme-canvas {
+    background-color: hsl(var(--background-base));
+    background-image:
+      radial-gradient(
+        ellipse 120% 70% at 50% -15%,
+        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 1.4)),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 70% 55% at 100% 40%,
+        hsl(var(--background-tint) / var(--background-tint-opacity)),
+        transparent 52%
+      ),
+      radial-gradient(
+        ellipse 65% 50% at 0% 85%,
+        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
+        transparent 50%
+      );
+  }
+
+  .theme-canvas-fixed {
+    background-attachment: fixed;
+  }
+
+  /** Frosted panel — translucent theme surface + blur (token-driven). */
+  .glass-card {
+    background: hsl(var(--glass-bg));
+    border: 1px solid hsl(var(--glass-border));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  .glass-card-elevate {
+    transition: box-shadow 0.3s ease;
+  }
+
+  .glass-card-elevate:hover {
+    box-shadow: 0 10px 25px hsl(var(--glass-shadow));
+  }
+
+  /** Primary button — palette accent (color3 → color1) with hover + tinted shadow. */
+  .btn-primary-gradient {
+    border: 0;
+    background: linear-gradient(
+      to right,
+      hsl(var(--accent-secondary)),
+      hsl(var(--accent-primary))
+    );
+    color: hsl(var(--accent-button-text));
+    box-shadow: 0 2px 6px hsl(var(--accent-secondary) / 0.12);
+    transition:
+      background 0.2s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .btn-primary-gradient:hover:not(:disabled) {
+    background: linear-gradient(
+      to right,
+      hsl(var(--accent-primary-hover)),
+      hsl(var(--accent-primary))
+    );
+  }
+
+  .surface-glass,
+  .shell-glass {
+    @apply glass-card;
+  }
+
+  .scrollbar-themed {
+    scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--background-base));
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-track {
+    background: hsl(var(--background-base));
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-thumb {
+    background: hsl(var(--scrollbar-thumb));
+    border-radius: 4px;
   }
 }

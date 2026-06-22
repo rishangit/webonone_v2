@@ -13,6 +13,7 @@ export type BuildLoginRedirectOptions = {
   redirectUri: string
   returnPath?: string
   stateStorageKeyPrefix?: string
+  extraSearchParams?: Record<string, string>
 }
 
 export type OAuthStatePayload = {

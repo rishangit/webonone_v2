@@ -1,15 +1,17 @@
 import { MediaPickerFrame } from '@webonone/media-embed'
+import { useThemeBridge } from '@/shared/theme/ThemeProviderBridge'
 import { buildDemoMediaScope, getMediaOrigin, getMediaPickerUrl } from '../utils/mediaConfig'
 
 interface MediaPickerModalProps {
   isOpen: boolean
   accessToken: string | null
   onClose: () => void
-  /** Remount iframe when incremented so folder navigation resets to root */
   openKey: number
 }
 
 export function MediaPickerModal({ isOpen, accessToken, onClose, openKey }: MediaPickerModalProps) {
+  const { broadcastToIframes } = useThemeBridge()
+
   if (!isOpen) {
     return null
   }
@@ -40,6 +42,7 @@ export function MediaPickerModal({ isOpen, accessToken, onClose, openKey }: Medi
             mode="multiple"
             accept="image/*"
             className="h-full w-full border-0"
+            onLoad={broadcastToIframes}
           />
         </div>
       </div>

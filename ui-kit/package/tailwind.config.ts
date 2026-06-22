@@ -8,7 +8,10 @@ const config: Config = {
     extend: {
       colors: {
         border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
+        input: {
+          DEFAULT: 'hsl(var(--input))',
+          background: 'hsl(var(--input-background))',
+        },
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -16,6 +19,8 @@ const config: Config = {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },
+        'primary-gradient-from': 'hsl(var(--primary-gradient-from))',
+        'primary-gradient-to': 'hsl(var(--primary-gradient-to))',
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',

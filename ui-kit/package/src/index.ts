@@ -20,9 +20,12 @@ export {
   DialogTrigger,
   DialogContent,
   DialogHeader,
+  DialogBody,
+  DialogFooter,
   DialogTitle,
   DialogDescription,
 } from './components/Dialog'
+export type { DialogSize } from './components/Dialog'
 export { Form, FormField } from './components/Form'
 export { Alert, AlertTitle, AlertDescription } from './components/Alert'
 export { Spinner } from './components/Spinner'
@@ -47,7 +50,18 @@ export {
 } from './components/DropdownMenu'
 export { BrandLogo } from './components/BrandLogo'
 export { AppHeader } from './components/AppHeader'
-export type { AppHeaderUser } from './components/AppHeader'
+export type { AppHeaderProps, AppHeaderUser } from './components/AppHeader'
+export { NavItem } from './components/nav/NavItem'
+export type { NavItemProps } from './components/nav/NavItem'
+export { NavGroup } from './components/nav/NavGroup'
+export type { NavGroupProps } from './components/nav/NavGroup'
+export { SidebarCollapseButton } from './components/nav/SidebarCollapseButton'
+export type { SidebarCollapseButtonProps } from './components/nav/SidebarCollapseButton'
+export { AppSidebar } from './layouts/AppSidebar'
+export type { AppSidebarProps } from './layouts/AppSidebar'
+export { AppShell } from './layouts/AppShell'
+export type { AppShellProps } from './layouts/AppShell'
+export type { NavConfigItem, NavItemConfig } from './types/nav'
 export { AuthLayout } from './layouts/AuthLayout'
 export { PageShell } from './layouts/PageShell'
 export { ToastProvider } from './hooks/ToastProvider'

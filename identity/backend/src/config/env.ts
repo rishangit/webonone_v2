@@ -29,7 +29,7 @@ const envSchema = z.object({
   IDENTITY_PORT: z.coerce.number().optional(),
   IIS_NODE_HOSTED: z.string().optional(),
   PASSWORD_RESET_EXPIRY_HOURS: z.coerce.number().default(1),
-  ACCESS_TOKEN_EXPIRY_SECONDS: z.coerce.number().default(900),
+  ACCESS_TOKEN_EXPIRY_SECONDS: z.coerce.number().default(86400),
   REFRESH_TOKEN_EXPIRY_DAYS: z.coerce.number().default(7),
   GOOGLE_CLIENT_ID: z.string().optional(),
   ALLOWED_REDIRECT_URIS: z.string().default('http://localhost:*'),

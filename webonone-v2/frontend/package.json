@@ -13,12 +13,16 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@webonone/media-embed": "*",
     "@webonone/platform-nav": "*",
+    "@webonone/theme": "*",
     "@webonone/ui-kit": "*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
-    "redux": "^5.0.1"
+    "redux": "^5.0.1",
+    "redux-observable": "3.0.0-rc.3",
+    "rxjs": "^7.8.2",
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@types/react": "^19.1.6",
