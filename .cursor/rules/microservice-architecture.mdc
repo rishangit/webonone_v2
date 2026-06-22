@@ -73,6 +73,34 @@ Root `package.json` uses `concurrently` to run each service's own `dev` script i
 
 Do not replace per-service `dev` with a root-only script — standalone and all-in-one dev must both work.
 
+## Shared packages — production build order
+
+Cross-service libraries live under [`packages/`](../../packages/) (`@webonone/platform-nav`, `@webonone/theme`, `@webonone/media-embed`, future packages). `@webonone/ui-kit` is separate but follows the same `dist/` rule. See [packages/README.md](../../packages/README.md).
+
+**Dev vs prod resolution:**
+
+- **Dev:** each service `vite.config.ts` aliases workspace packages to `src/` — no pre-build required.
+- **Prod / deploy:** frontend `build` runs `tsc -b && vite build`. TypeScript resolves packages via `package.json` `exports` → **`dist/index.d.ts`**. `dist/` must exist before the service frontend build.
+
+**When a service frontend imports a `packages/*` or `@webonone/ui-kit` dependency:**
+
+| Step | Where | Action |
+|------|-------|--------|
+| 1 | Root `package.json` | Add `"build:<short-name>": "npm run build -w @webonone/<name>"` if missing |
+| 2 | `<service>/package.json` `build` | Chain `npm run build:<short-name> --prefix .. &&` **before** frontend/backend workspace builds |
+| 3 | `<service>/frontend/vite.config.ts` | Add Vite alias to package `src/` (mirror `platform-nav` / `theme`) |
+| 4 | `packages/README.md` | Document the new package |
+
+**Current reference builds:**
+
+| Service root | Chained package builds (in order) |
+|--------------|-------------------------------------|
+| `identity/` | `platform-nav`, `theme`, `ui-kit` |
+| `webonone-v2/` | `platform-nav`, `theme`, `ui-kit` |
+| `media/` | `media-embed`, `theme`, `ui-kit` |
+
+**Forbidden:** relying on Vite aliases alone for production; assuming `npm install` produces `dist/`; importing `packages/*/src` from service code outside Vite alias config.
+
 ## Environment configuration (per service)
 
 Each microservice owns **separate env files per layer**. Do not use a monorepo-root `.env` for service secrets or ports.
@@ -261,6 +289,8 @@ Before adding or changing a service:
 - [ ] No shared monorepo-root `.env` for service secrets
 - [ ] New service wired into root `dev:<name>` and root `npm run dev`
 - [ ] Peer connectivity uses origin + API base only; route URLs derived in config module (no per-route `VITE_*` URLs)
+- [ ] Every `packages/*` / `@webonone/ui-kit` import in the service frontend is listed in the service root `build` script via root `build:<name>`
+- [ ] Root `package.json` exposes `build:<name>` for each such dependency
 
 If any item fails, reconsider the design.
 
@@ -274,3 +304,4 @@ When reviewing service integration:
 - Confirm no `postMessage('*')`, no tokens in URLs, no shared DB access.
 - Confirm each service starts with only its own `frontend/.env` and `backend/.env` (copied from `.env.example`); no repo-root `.env` required.
 - Confirm consumer `frontend/.env.example` lists only peer origin + API base (not derived embed paths like `/login`, `/picker`).
+- From a clean `packages/<name>/dist` (deleted), `npm run build -w <service-root>` succeeds without `TS2307` for workspace packages.

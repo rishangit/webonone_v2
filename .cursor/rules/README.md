@@ -6,7 +6,7 @@
 |------|-------------|
 | [cursor-rules.mdc](cursor-rules.mdc) | How to add, edit, and maintain rules |
 | [code-cleanliness.mdc](code-cleanliness.mdc) | Path aliases, focused diffs, no dead code or empty folders |
-| [microservice-architecture.mdc](microservice-architecture.mdc) | Standalone services, secure data passing (JWT, events, iframe/postMessage) |
+| [microservice-architecture.mdc](microservice-architecture.mdc) | Standalone services, secure data passing (JWT, events, iframe/postMessage), shared-package build order |
 
 ## Service projects
 
