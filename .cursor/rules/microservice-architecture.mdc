@@ -90,7 +90,7 @@ service-name/
 
 | Layer | File | Allowed variables | Loader |
 |-------|------|-------------------|--------|
-| **Frontend** | `frontend/.env` | `VITE_*` only (API base URL, peer origins, iframe URLs) | Vite auto-loads from `frontend/` |
+| **Frontend** | `frontend/.env` | `VITE_*` only — own API base, peer **origin** + **API base** per connected service (see below) | Vite auto-loads from `frontend/` |
 | **Backend** | `backend/.env` | `DATABASE_URL`, `PORT`, `JWT_SECRET`, service-specific server config | `dotenv` in `backend/src/config/env.ts` and `backend/knexfile.ts` |
 
 **Loading convention (backend):**
@@ -111,12 +111,34 @@ Express handler details: [nodejs-express.mdc](nodejs-express.mdc).
 3. Point `config/env.ts` and `knexfile.ts` at `backend/.env` only.
 4. Never read another service's `.env` or a repo-root `.env`.
 
+### Cross-service frontend env (minimal)
+
+When a consumer embeds another service's UI or calls its public API from the browser, use **two env keys per peer service** — not one key per route.
+
+| Per peer service | Env keys | Derived in code (do not add to `.env`) |
+|------------------|----------|----------------------------------------|
+| Identity | `VITE_IDENTITY_ORIGIN`, `VITE_IDENTITY_API_BASE_URL` | `/login`, `/profile`; API paths under API base |
+| Media | `VITE_MEDIA_ORIGIN`, `VITE_MEDIA_API_BASE_URL` | `/picker`, `/upload`; API paths under API base |
+| Own app | `VITE_API_BASE_URL` | Callback: `window.location.origin` + `/callback` |
+
+**Convention:** centralize in `frontend/src/features/<peer>/utils/<peer>Config.ts` with local-dev defaults.
+
+Reference: `webonone-v2/frontend/src/features/auth/utils/identityConfig.ts`, `webonone-v2/frontend/src/features/media/utils/mediaConfig.ts`.
+
+**Local dev:** FE and BE on different ports — set both origin and API base.
+
+**Production (IIS):** one host per service — API base is `{origin}/api/v1`.
+
+**Allowed extras:** allowlists and non-derivable config only (e.g. `VITE_ALLOWED_PARENT_ORIGINS`). Never duplicate `{origin}{fixed-path}` as its own env var.
+
 ### Env forbidden
 
 - Monorepo-root `.env` shared across services
 - Backend secrets (`JWT_SECRET`, `DATABASE_URL`, passwords) in `frontend/.env` or any `VITE_*` variable
 - Importing or `dotenv`-loading another service's env file
 - Committing `.env` (only `.env.example` is committed)
+- **Redundant derived peer URLs** — e.g. `VITE_IDENTITY_LOGIN_URL`, `VITE_MEDIA_PICKER_URL`, `VITE_MEDIA_UPLOAD_URL` when origin is already set
+- Reading per-route `VITE_*` in components — use `<peer>Config.ts` getters instead
 
 ## Service boundaries
 
@@ -214,6 +236,8 @@ Never               → one SPA calling many service backends for domain APIs wi
 
 Embed auth, billing, or other **owned UI** from the service that owns it.
 
+**Env:** only peer origin + API base per connected service; derive embed and API paths in `<peer>Config.ts` (see Cross-service frontend env above).
+
 ## Reliability
 
 - Design for dependency failure; retries, circuit breakers, idempotent handlers, dead-letter queues.
@@ -236,6 +260,7 @@ Before adding or changing a service:
 - [ ] Backend loads config only from `backend/.env` (not repo root or another service)
 - [ ] No shared monorepo-root `.env` for service secrets
 - [ ] New service wired into root `dev:<name>` and root `npm run dev`
+- [ ] Peer connectivity uses origin + API base only; route URLs derived in config module (no per-route `VITE_*` URLs)
 
 If any item fails, reconsider the design.
 
@@ -248,3 +273,4 @@ When reviewing service integration:
 - Confirm cross-service links use documented contracts (spec or OpenAPI/event schema).
 - Confirm no `postMessage('*')`, no tokens in URLs, no shared DB access.
 - Confirm each service starts with only its own `frontend/.env` and `backend/.env` (copied from `.env.example`); no repo-root `.env` required.
+- Confirm consumer `frontend/.env.example` lists only peer origin + API base (not derived embed paths like `/login`, `/picker`).

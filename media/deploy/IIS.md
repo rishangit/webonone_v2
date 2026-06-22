@@ -186,7 +186,7 @@ If the site fails, check `media\deploy\logs\` for Node errors.
 
 ## Wire WebOnOne consumer
 
-After Media is verified, update `webonone-v2\frontend\.env.production` with production `VITE_MEDIA_*` URLs (see `webonone-v2\frontend\.env.example`), then:
+After Media is verified, update `webonone-v2\frontend\.env.production` with `VITE_MEDIA_ORIGIN` and `VITE_MEDIA_API_BASE_URL` (see `webonone-v2\frontend\.env.example`), then:
 
 ```powershell
 npm run deploy:webonone

@@ -7,11 +7,11 @@ export function getMediaOrigin(): string {
 }
 
 export function getMediaPickerUrl(): string {
-  return import.meta.env.VITE_MEDIA_PICKER_URL ?? `${getMediaOrigin()}/picker`
+  return `${getMediaOrigin()}/picker`
 }
 
 export function getMediaUploadUrl(): string {
-  return import.meta.env.VITE_MEDIA_UPLOAD_URL ?? `${getMediaOrigin()}/upload`
+  return `${getMediaOrigin()}/upload`
 }
 
 export function getMediaApiBase(): string {

@@ -87,15 +87,19 @@ Edit `webonone-v2\frontend\.env.production` — production values:
 | `VITE_API_BASE_URL` | `/api/v1` |
 | `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
 | `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
+| `VITE_MEDIA_ORIGIN` | `https://media.webonone.com` |
+| `VITE_MEDIA_API_BASE_URL` | `https://media.webonone.com/api/v1` |
 
 | Variable | Purpose |
 |----------|---------|
 | `VITE_IDENTITY_ORIGIN` | Login redirect and profile page (Identity SPA) |
 | `VITE_IDENTITY_API_BASE_URL` | Identity API calls (`/auth/exchange`, `/auth/code`) |
+| `VITE_MEDIA_ORIGIN` | Media picker/upload embed iframes (derived `/picker`, `/upload`) |
+| `VITE_MEDIA_API_BASE_URL` | Media API calls from consumer |
 
-Locally, Identity FE (3001) and BE (4001) run on different ports, so both URLs must be set. On IIS, Identity serves SPA and API from the same host — use the same domain with `/api/v1` for the API base.
+Locally, Identity FE (3001) and BE (4001) run on different ports, so both URLs must be set. On IIS, Identity serves SPA and API from the same host — use the same domain with `/api/v1` for the API base. Same pattern for Media: local dev uses separate FE (3003) and BE (4003) ports; production uses one host with `/api/v1`.
 
-Login callback (`/callback`) is derived at runtime from `window.location.origin`.
+Login callback (`/callback`) is derived at runtime from `window.location.origin`. Media picker and upload URLs are derived from `VITE_MEDIA_ORIGIN`.
 
 Vite embeds these values during deploy build. Changes require redeploy.
 

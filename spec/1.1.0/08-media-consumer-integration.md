@@ -46,9 +46,10 @@ Provides typed contracts and React helpers so consumers do not duplicate iframe/
 
 ```typescript
 import { buildMediaEmbedUrl } from '@webonone/media-embed'
+import { getMediaPickerUrl } from '@/features/media/utils/mediaConfig'
 
 const src = buildMediaEmbedUrl({
-  baseUrl: import.meta.env.VITE_MEDIA_PICKER_URL, // http://localhost:3003/picker
+  baseUrl: getMediaPickerUrl(), // {VITE_MEDIA_ORIGIN}/picker
   parentOrigin: window.location.origin,
   scope: `webonone:site:${siteId}/gallery`,
   mode: 'multiple',
@@ -338,9 +339,8 @@ VITE_ALLOWED_FRAME_ANCESTORS=http://localhost:3000 http://localhost:3001
 ```text
 # webonone-v2/frontend
 VITE_MEDIA_ORIGIN=http://localhost:3003
-VITE_MEDIA_PICKER_URL=http://localhost:3003/picker
-VITE_MEDIA_UPLOAD_URL=http://localhost:3003/upload
 VITE_MEDIA_API_BASE_URL=http://localhost:4003/api/v1
+# Picker and upload embed URLs are derived: {VITE_MEDIA_ORIGIN}/picker, /upload
 ```
 
 ### Identity (unchanged)
