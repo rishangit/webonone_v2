@@ -43,5 +43,16 @@ export function useMediaPostMessage(parentOrigin: string | null, scope: string |
     window.parent.postMessage({ type: MEDIA_MESSAGE_TYPES.CANCEL }, parentOrigin)
   }, [parentOrigin])
 
-  return { postSelect, postUploaded, postDeleted, postCancel }
+  const postSelectionChange = useCallback(
+    (items: MediaItemDto[]) => {
+      if (!parentOrigin || !scope) return
+      window.parent.postMessage(
+        { type: MEDIA_MESSAGE_TYPES.SELECTION_CHANGE, scope, items },
+        parentOrigin,
+      )
+    },
+    [parentOrigin, scope],
+  )
+
+  return { postSelect, postUploaded, postDeleted, postCancel, postSelectionChange }
 }

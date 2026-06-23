@@ -48,7 +48,8 @@
     --input-background: 221 60% 97%;
     --input: 221 83% 53% / 0.22;
     --radius: 0.5rem;
-    --popover: 0 0% 100%;
+    --popover: 210 36% 90% / 0.50;
+    --menu-bg: 210 36% 90% / 0.50;
     --popover-foreground: 0 0% 10%;
   }
 
@@ -69,7 +70,8 @@
     --border: 240 4% 16%;
     --input-background: 221 35% 17%;
     --input: 221 83% 53% / 0.38;
-    --popover: 240 6% 10%;
+    --popover: 215 28% 24% / 0.94;
+    --menu-bg: 215 28% 24% / 0.94;
     --popover-foreground: 0 0% 98%;
     --glass-bg: 215 28% 17% / 0.8;
     --glass-border: 0 0% 98% / 0.22;
@@ -82,9 +84,61 @@
     @apply border-border;
   }
 
+  html {
+    @apply theme-canvas theme-canvas-fixed;
+  }
+
   body {
-    @apply theme-canvas theme-canvas-fixed text-foreground;
+    @apply text-foreground;
     min-height: 100vh;
+  }
+
+  /**
+   * Viewport + in-page scrollbars — must live in @layer base (not @apply) so
+   * ::-webkit-scrollbar pseudo-elements apply. Dialogs use .scrollbar-themed class.
+   */
+  html,
+  body,
+  .scrollbar-themed {
+    scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--background-base));
+    scrollbar-width: thin;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  .scrollbar-themed::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track,
+  .scrollbar-themed::-webkit-scrollbar-track {
+    background: hsl(var(--background-base));
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb,
+  .scrollbar-themed::-webkit-scrollbar-thumb {
+    background: hsl(var(--scrollbar-thumb));
+    border-radius: 4px;
+  }
+
+  /* Keep browser autofill aligned with themed input background/text tokens. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+    -webkit-box-shadow: 0 0 0 1000px hsl(var(--input-background)) inset;
+    box-shadow: 0 0 0 1000px hsl(var(--input-background)) inset;
+    transition: background-color 9999s ease-in-out 0s;
   }
 }
 
@@ -114,6 +168,14 @@
     background-attachment: fixed;
   }
 
+  /** Frosted menu / popover panel — light theme-tinted wash + blur. */
+  .glass-menu {
+    background: hsl(var(--menu-bg));
+    border: 1px solid hsl(var(--glass-border));
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
   /** Frosted panel — translucent theme surface + blur (token-driven). */
   .glass-card {
     background: hsl(var(--glass-bg));
@@ -128,6 +190,15 @@
 
   .glass-card-elevate:hover {
     box-shadow: 0 10px 25px hsl(var(--glass-shadow));
+  }
+
+  /** Item list row — small themed shadow on hover (no border color change). */
+  .item-list-row {
+    transition: box-shadow 0.25s ease;
+  }
+
+  .item-list-row:hover {
+    box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22);
   }
 
   /** Primary button — palette accent (color3 → color1) with hover + tinted shadow. */
@@ -156,24 +227,5 @@
   .surface-glass,
   .shell-glass {
     @apply glass-card;
-  }
-
-  .scrollbar-themed {
-    scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--background-base));
-    scrollbar-width: thin;
-  }
-
-  .scrollbar-themed::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .scrollbar-themed::-webkit-scrollbar-track {
-    background: hsl(var(--background-base));
-  }
-
-  .scrollbar-themed::-webkit-scrollbar-thumb {
-    background: hsl(var(--scrollbar-thumb));
-    border-radius: 4px;
   }
 }

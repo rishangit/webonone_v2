@@ -59,6 +59,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | Skill | Description |
 |-------|-------------|
 | [form-creation](../skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
+| [item-list](../skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
@@ -75,3 +76,4 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
+| Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |

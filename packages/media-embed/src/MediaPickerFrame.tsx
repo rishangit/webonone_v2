@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { forwardRef, useEffect, useRef } from 'react'
 import { buildMediaEmbedUrl, sendMediaInit } from './embedUrl'
 import type { BuildMediaEmbedUrlOptions } from './types'
 
@@ -11,44 +11,53 @@ export interface MediaPickerFrameProps extends BuildMediaEmbedUrlOptions {
   className?: string
 }
 
-export function MediaPickerFrame({
-  isOpen,
-  accessToken,
-  mediaOrigin,
-  onLoad,
-  title = 'Media picker',
-  className,
-  ...urlOptions
-}: MediaPickerFrameProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-  const src = buildMediaEmbedUrl(urlOptions)
+export const MediaPickerFrame = forwardRef<HTMLIFrameElement, MediaPickerFrameProps>(
+  function MediaPickerFrame(
+    {
+      isOpen,
+      accessToken,
+      mediaOrigin,
+      onLoad,
+      title = 'Media picker',
+      className,
+      ...urlOptions
+    },
+    ref,
+  ) {
+    const internalRef = useRef<HTMLIFrameElement>(null)
+    const src = buildMediaEmbedUrl(urlOptions)
 
-  useEffect(() => {
-    if (!isOpen || !accessToken || !iframeRef.current) {
-      return
+    useEffect(() => {
+      if (!isOpen || !accessToken) {
+        return
+      }
+
+      const iframe = (ref && typeof ref !== 'function' ? ref.current : null) ?? internalRef.current
+      if (!iframe) {
+        return
+      }
+
+      function handleLoad() {
+        sendMediaInit(iframe!, mediaOrigin, accessToken!)
+        onLoad?.()
+      }
+
+      iframe.addEventListener('load', handleLoad)
+      return () => iframe.removeEventListener('load', handleLoad)
+    }, [accessToken, isOpen, mediaOrigin, onLoad, ref, src])
+
+    if (!isOpen) {
+      return null
     }
 
-    const iframe = iframeRef.current
-    function handleLoad() {
-      sendMediaInit(iframe, mediaOrigin, accessToken!)
-      onLoad?.()
-    }
-
-    iframe.addEventListener('load', handleLoad)
-    return () => iframe.removeEventListener('load', handleLoad)
-  }, [accessToken, isOpen, mediaOrigin, onLoad, src])
-
-  if (!isOpen) {
-    return null
-  }
-
-  return (
-    <iframe
-      ref={iframeRef}
-      src={src}
-      title={title}
-      className={className ?? 'h-full w-full border-0'}
-      allow="clipboard-read; clipboard-write"
-    />
-  )
-}
+    return (
+      <iframe
+        ref={ref ?? internalRef}
+        src={src}
+        title={title}
+        className={className ?? 'h-full min-h-0 w-full border-0 bg-transparent'}
+        allow="clipboard-read; clipboard-write"
+      />
+    )
+  },
+)

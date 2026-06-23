@@ -3,6 +3,7 @@ import { PLATFORM_DESTRUCTIVE_HEX } from './constants'
 import {
   deriveDarkenedHex,
   deriveInputBackgroundHex,
+  deriveMenuBackgroundHex,
   hexToHslComponents,
   pickForegroundHex,
   resolveSurfaceColors,
@@ -16,6 +17,9 @@ const SITE_TINT_OPACITY: Record<ColorMode, number> = {
 
 /** Frosted surface fill over the tinted canvas. */
 const GLASS_SURFACE_OPACITY = 0.78
+
+/** Menus / popovers — lighter wash of the surface with a stronger opaque tint. */
+const MENU_SURFACE_OPACITY = 0.94
 
 const BACKGROUND_BASE: Record<ColorMode, string> = {
   light: '0 0% 100%',
@@ -47,13 +51,16 @@ export function applyThemeVariables(
   const foregroundHsl = hexToHslComponents(foreground)
   const tintOpacity = SITE_TINT_OPACITY[colorMode]
   const glassSurface = `${backgroundHsl} / ${GLASS_SURFACE_OPACITY}`
+  const menuBackgroundHsl = hexToHslComponents(deriveMenuBackgroundHex(background, colorMode))
+  const menuSurface = `${menuBackgroundHsl} / ${MENU_SURFACE_OPACITY}`
 
   root.style.setProperty('--background-base', BACKGROUND_BASE[colorMode])
   root.style.setProperty('--background-tint', backgroundHsl)
   root.style.setProperty('--background-tint-opacity', String(tintOpacity))
   root.style.setProperty('--background', glassSurface)
   root.style.setProperty('--card', glassSurface)
-  root.style.setProperty('--popover', `${backgroundHsl} / 0.88`)
+  root.style.setProperty('--menu-bg', menuSurface)
+  root.style.setProperty('--popover', menuSurface)
   root.style.setProperty('--foreground', foregroundHsl)
   root.style.setProperty('--card-foreground', foregroundHsl)
   root.style.setProperty('--popover-foreground', foregroundHsl)

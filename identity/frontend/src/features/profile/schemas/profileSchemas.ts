@@ -1,10 +1,16 @@
 import { z } from 'zod'
 
+const phoneNumberSchema = z
+  .string()
+  .max(32)
+  .nullable()
+  .refine((value) => !value || /^\+\d{7,15}$/.test(value), 'Enter a valid phone number with country code')
+
 export const profileSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
   displayName: z.string().min(1, 'Display name is required').max(255),
-  phoneNumber: z.string().max(32).nullable(),
+  phoneNumber: phoneNumberSchema,
   addressLine1: z.string().max(255).nullable(),
   addressLine2: z.string().max(255).nullable(),
   city: z.string().max(100).nullable(),

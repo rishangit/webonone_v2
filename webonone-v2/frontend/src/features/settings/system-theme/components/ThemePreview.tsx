@@ -1,14 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { applyThemeVariables, type ColorMode } from '@webonone/theme'
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@webonone/ui-kit'
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, cn } from '@webonone/ui-kit'
 import type { ThemeFormValues } from '../schemas/themeFormSchema'
 
 interface ThemePreviewProps {
   values: ThemeFormValues
   colorMode: ColorMode
+  className?: string
 }
 
-export function ThemePreview({ values, colorMode }: ThemePreviewProps) {
+export function ThemePreview({ values, colorMode, className }: ThemePreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export function ThemePreview({ values, colorMode }: ThemePreviewProps) {
   }, [values, colorMode])
 
   return (
-    <div ref={previewRef} className="glass-card space-y-4 rounded-lg p-4">
+    <div ref={previewRef} className={cn('glass-card flex h-full min-h-[min(24rem,55vh)] flex-col space-y-4 rounded-lg p-4', className)}>
       <h3 className="text-lg font-semibold text-foreground">Preview</h3>
       <div className="flex flex-wrap gap-2">
         <Button type="button">Primary</Button>

@@ -1,11 +1,13 @@
+import { Trash2 } from 'lucide-react'
 import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@webonone/ui-kit'
 
 interface ThemeDeleteDialogProps {
@@ -24,25 +26,37 @@ export function ThemeDeleteDialog({
   onConfirm,
 }: ThemeDeleteDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="sm">
-        <DialogHeader>
-          <DialogTitle>Delete theme</DialogTitle>
-          <DialogDescription>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && isDeleting) return
+        onOpenChange(next)
+      }}
+    >
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete theme</AlertDialogTitle>
+          <AlertDialogDescription>
             {themeName
               ? `Delete "${themeName}"? This cannot be undone.`
               : 'Delete this theme? This cannot be undone.'}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isDeleting}>
-            Cancel
-          </Button>
-          <Button type="button" variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={isDeleting}
+            onClick={(e) => {
+              e.preventDefault()
+              onConfirm()
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
             {isDeleting ? 'Deleting…' : 'Delete'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

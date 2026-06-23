@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { menuPanelClassName } from '../lib/menuPanel'
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
@@ -9,6 +10,14 @@ const DropdownMenuGroup = DropdownMenuPrimitive.Group
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal
 const DropdownMenuSub = DropdownMenuPrimitive.Sub
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
+
+const dropdownMenuItemClassName =
+  'relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0'
+
+const dropdownMenuPanelClassName = cn(
+  'z-50 min-w-[8rem] overflow-hidden rounded-md p-1',
+  menuPanelClassName,
+)
 
 function DropdownMenuSubTrigger({
   className,
@@ -21,28 +30,29 @@ function DropdownMenuSubTrigger({
   return (
     <DropdownMenuPrimitive.SubTrigger
       className={cn(
-        'flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+        dropdownMenuItemClassName,
+        'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
         inset && 'pl-8',
         className,
       )}
       {...props}
     >
       {children}
-      <ChevronRight className="ml-auto" />
+      <ChevronRight className="ml-auto h-4 w-4" />
     </DropdownMenuPrimitive.SubTrigger>
   )
 }
 
 function DropdownMenuSubContent({
   className,
+  sideOffset = 4,
   ...props
 }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>) {
   return (
     <DropdownMenuPrimitive.SubContent
-      className={cn(
-        'glass-card z-50 min-w-[8rem] overflow-hidden rounded-md p-1 text-card-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
-        className,
-      )}
+      sideOffset={sideOffset}
+      collisionPadding={8}
+      className={cn(dropdownMenuPanelClassName, 'z-[60]', className)}
       {...props}
     />
   )
@@ -57,8 +67,10 @@ function DropdownMenuContent({
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
+        collisionPadding={8}
         className={cn(
-          'glass-card z-50 min-w-[8rem] overflow-hidden rounded-md p-1 text-card-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+          dropdownMenuPanelClassName,
+          'max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overflow-x-visible',
           className,
         )}
         {...props}
@@ -76,11 +88,7 @@ function DropdownMenuItem({
 }) {
   return (
     <DropdownMenuPrimitive.Item
-      className={cn(
-        'relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
-        inset && 'pl-8',
-        className,
-      )}
+      className={cn(dropdownMenuItemClassName, inset && 'pl-8', className)}
       {...props}
     />
   )

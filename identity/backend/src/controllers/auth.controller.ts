@@ -36,7 +36,12 @@ const patchMeSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
   displayName: z.string().min(1).max(255).optional(),
-  phoneNumber: z.string().max(32).nullable().optional(),
+  phoneNumber: z
+    .string()
+    .max(32)
+    .nullable()
+    .optional()
+    .refine((value) => value === undefined || value === null || /^\+\d{7,15}$/.test(value)),
   addressLine1: z.string().max(255).nullable().optional(),
   addressLine2: z.string().max(255).nullable().optional(),
   city: z.string().max(100).nullable().optional(),

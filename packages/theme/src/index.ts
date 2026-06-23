@@ -11,6 +11,7 @@ export {
   deriveDarkenedHex,
   deriveDarkBrandTextHex,
   deriveInputBackgroundHex,
+  deriveMenuBackgroundHex,
   deriveLightBrandTextHex,
   hexToHsl,
   hexToHslComponents,

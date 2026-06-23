@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { PageShell, Spinner } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  AuthLayout,
+  Button,
+  PageShell,
+  Spinner,
+} from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
 import type { UserProfile } from '../types/auth.types'
@@ -74,25 +81,28 @@ export function AuthCallbackPage() {
 
   return (
     <PageShell title="Media">
-      <div className="flex flex-col items-center gap-4 py-12">
+      <AuthLayout title="Signing in" variant="minimal">
         {error ? (
-          <>
-            <p className="text-sm text-destructive">{error}</p>
-            <button
+          <div className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button
               type="button"
-              className="text-sm text-primary underline-offset-4 hover:underline"
+              variant="link"
+              className="px-0"
               onClick={() => navigate('/login', { replace: true })}
             >
               Back to sign in
-            </button>
-          </>
+            </Button>
+          </div>
         ) : (
-          <>
+          <div className="flex flex-col items-center gap-4 py-2">
             <Spinner size="lg" />
             <p className="text-sm text-muted-foreground">Completing sign in…</p>
-          </>
+          </div>
         )}
-      </div>
+      </AuthLayout>
     </PageShell>
   )
 }

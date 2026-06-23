@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
-import { Button } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Form,
+  FormField,
+  Input,
+} from '@webonone/ui-kit'
 import { FolderTree } from './FolderTree'
 import { MediaGrid } from './MediaGrid'
 import { UploadDropzone } from './UploadDropzone'
@@ -25,6 +32,17 @@ interface MediaPickerProps {
   showUpload?: boolean
 }
 
+function validateFolderName(name: string): string | undefined {
+  const trimmed = name.trim()
+  if (!trimmed) {
+    return 'Folder name is required'
+  }
+  if (/[\\/]/.test(trimmed)) {
+    return 'Folder name cannot contain slashes'
+  }
+  return undefined
+}
+
 export function MediaPicker({
   scope,
   folderPath: initialFolderPath,
@@ -42,6 +60,7 @@ export function MediaPicker({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [newFolderName, setNewFolderName] = useState('')
+  const [folderError, setFolderError] = useState<string | undefined>()
 
   const loadData = useCallback(async () => {
     setError(null)
@@ -111,46 +130,69 @@ export function MediaPicker({
     await loadData()
   }
 
-  async function handleCreateFolder() {
+  async function handleCreateFolder(e: React.FormEvent) {
+    e.preventDefault()
+    const validationError = validateFolderName(newFolderName)
+    if (validationError) {
+      setFolderError(validationError)
+      return
+    }
+
     const name = newFolderName.trim()
-    if (!name) return
-    const path = folderPath === '/' ? `/${name}` : `${folderPath}/${name}`
-    await createFolder(scope, path, name)
-    setNewFolderName('')
-    await loadData()
+    setFolderError(undefined)
+    setError(null)
+
+    try {
+      const path = folderPath === '/' ? `/${name}` : `${folderPath}/${name}`
+      await createFolder(scope, path, name)
+      setNewFolderName('')
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create folder')
+    }
   }
 
   return (
     <div className="flex h-full min-h-[400px] gap-4">
-      <aside className="w-40 shrink-0 border-r pr-3">
+      <aside className="w-48 shrink-0 border-r pr-3">
         <FolderTree folders={folders} currentPath={folderPath} onSelectFolder={setFolderPath} />
-        <div className="mt-4 space-y-2">
-          <input
-            type="text"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            placeholder="New folder"
-            className="w-full rounded border px-2 py-1 text-xs"
-          />
-          <Button type="button" size="sm" variant="outline" className="w-full" onClick={() => void handleCreateFolder()}>
+        <Form className="mt-4 space-y-2" onSubmit={(e) => void handleCreateFolder(e)}>
+          <FormField label="New folder" htmlFor="new-folder" error={folderError}>
+            <Input
+              id="new-folder"
+              value={newFolderName}
+              onChange={(e) => {
+                setNewFolderName(e.target.value)
+                if (folderError) {
+                  setFolderError(undefined)
+                }
+              }}
+              placeholder="Folder name"
+            />
+          </FormField>
+          <Button type="submit" size="sm" variant="outline" className="w-full">
             Create folder
           </Button>
-        </div>
+        </Form>
       </aside>
       <div className="min-w-0 flex-1 space-y-4">
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        {showUpload && (
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
+        {showUpload ? (
           <UploadDropzone
             accept={accept}
             maxFiles={maxFiles}
             onFilesSelected={handleUpload}
           />
-        )}
+        ) : null}
         <MediaGrid
           items={items}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
-          onDelete={(id) => void handleDelete(id)}
+          onDelete={handleDelete}
         />
       </div>
     </div>

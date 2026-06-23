@@ -1,15 +1,32 @@
 import type { ReactNode } from 'react'
 import { useEmbedThemeListener } from '@webonone/theme'
+import { cn } from '@webonone/ui-kit'
 
 interface EmbedLayoutProps {
   title: string
   children: ReactNode
   actions?: ReactNode
   parentOrigin?: string | null
+  /** Minimal chrome for iframe inside a parent dialog — no header or page background. */
+  chromeless?: boolean
 }
 
-export function EmbedLayout({ title, children, actions, parentOrigin }: EmbedLayoutProps) {
+export function EmbedLayout({
+  title,
+  children,
+  actions,
+  parentOrigin,
+  chromeless = false,
+}: EmbedLayoutProps) {
   useEmbedThemeListener(parentOrigin)
+
+  if (chromeless) {
+    return (
+      <div className={cn('flex h-full min-h-0 flex-col text-foreground')}>
+        <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">

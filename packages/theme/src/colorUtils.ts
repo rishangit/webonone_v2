@@ -107,6 +107,20 @@ export function deriveInputBackgroundHex(brandHex: string, colorMode: ColorMode)
   return hslToHex(h, tintedSat, 17)
 }
 
+/** Light frosted panel fill for dropdowns, selects, and popovers. */
+export function deriveMenuBackgroundHex(surfaceHex: string, colorMode: ColorMode): string {
+  const { h, s, l } = hexToHsl(surfaceHex)
+  if (colorMode === 'light') {
+    // Soft wash of color4 — ~90% lightness with a clearer theme hue (not flat white).
+    const tintedSat = Math.min(52, Math.max(18, s * 0.58))
+    const tintedL = Math.min(92, Math.max(84, l - 8))
+    return hslToHex(h, tintedSat, tintedL)
+  }
+  const tintedSat = Math.min(32, Math.max(10, s * 0.35))
+  const liftedL = Math.min(34, Math.max(20, l + 14))
+  return hslToHex(h, tintedSat, liftedL)
+}
+
 /** Near-black body/heading text with the brand hue (light mode). */
 export function deriveDarkBrandTextHex(brandHex: string): string {
   const { h, s } = hexToHsl(brandHex)

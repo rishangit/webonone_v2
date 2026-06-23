@@ -11,6 +11,7 @@ export default defineConfig({
       { find: '@webonone/ui-kit/styles', replacement: path.join(uiKitRoot, 'src/styles/globals.css') },
       { find: '@webonone/ui-kit/tailwind', replacement: path.join(uiKitRoot, 'tailwind.config.ts') },
       { find: '@webonone/ui-kit', replacement: path.join(uiKitRoot, 'src/index.ts') },
+      { find: '@webonone/theme', replacement: path.resolve(__dirname, '../../packages/theme/src/index.ts') },
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },

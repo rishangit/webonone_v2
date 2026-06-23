@@ -1,4 +1,4 @@
-import { PageShell } from '@webonone/ui-kit'
+import { Callout, CalloutDescription, PageShell, Spinner } from '@webonone/ui-kit'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
@@ -23,7 +23,12 @@ export function UploadPage() {
   if (embed.isEmbed && !accessToken) {
     return (
       <EmbedLayout title="Upload" parentOrigin={embed.parentOrigin}>
-        <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
+        <div className="flex flex-col items-center gap-3 py-8">
+          <Spinner size="lg" />
+          <Callout variant="muted" className="max-w-sm text-center">
+            <CalloutDescription>Waiting for authentication…</CalloutDescription>
+          </Callout>
+        </div>
       </EmbedLayout>
     )
   }

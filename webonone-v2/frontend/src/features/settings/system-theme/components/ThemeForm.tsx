@@ -1,4 +1,4 @@
-import { FormField, Input } from '@webonone/ui-kit'
+import { ColorInput, FormField, Input } from '@webonone/ui-kit'
 import { THEME_COLOR_LABELS } from '../constants/defaultThemeFormValues'
 import type { ThemeFormValues } from '../schemas/themeFormSchema'
 
@@ -15,9 +15,16 @@ interface ThemeFormProps {
   onChange: (values: ThemeFormValues) => void
   fieldErrors: Partial<Record<keyof ThemeFormValues, string>>
   idPrefix?: string
+  colorColumns?: 1 | 2
 }
 
-export function ThemeForm({ values, onChange, fieldErrors, idPrefix = 'theme' }: ThemeFormProps) {
+export function ThemeForm({
+  values,
+  onChange,
+  fieldErrors,
+  idPrefix = 'theme',
+  colorColumns = 2,
+}: ThemeFormProps) {
   function updateField<K extends keyof ThemeFormValues>(key: K, value: ThemeFormValues[K]) {
     onChange({ ...values, [key]: value })
   }
@@ -37,36 +44,22 @@ export function ThemeForm({ values, onChange, fieldErrors, idPrefix = 'theme' }:
         />
       </FormField>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {COLOR_KEYS.map((key) => {
-          const pickerId = `${idPrefix}-${key}-picker`
-          const hexId = `${idPrefix}-${key}`
-
-          return (
-            <FormField
-              key={key}
-              label={THEME_COLOR_LABELS[key]}
-              htmlFor={hexId}
-              required
-              error={fieldErrors[key]}
-            >
-              <div className="flex items-center gap-2">
-                <input
-                  id={pickerId}
-                  type="color"
-                  value={values[key]}
-                  className="h-10 w-12 cursor-pointer rounded border border-input"
-                  onChange={(e) => updateField(key, e.target.value.toUpperCase())}
-                />
-                <Input
-                  id={hexId}
-                  value={values[key]}
-                  onChange={(e) => updateField(key, e.target.value)}
-                />
-              </div>
-            </FormField>
-          )
-        })}
+      <div className={colorColumns === 1 ? 'grid gap-4 grid-cols-1' : 'grid gap-4 sm:grid-cols-2'}>
+        {COLOR_KEYS.map((key) => (
+          <FormField
+            key={key}
+            label={THEME_COLOR_LABELS[key]}
+            htmlFor={`${idPrefix}-${key}`}
+            required
+            error={fieldErrors[key]}
+          >
+            <ColorInput
+              id={`${idPrefix}-${key}`}
+              value={values[key]}
+              onChange={(value) => updateField(key, value)}
+            />
+          </FormField>
+        ))}
       </div>
     </div>
   )

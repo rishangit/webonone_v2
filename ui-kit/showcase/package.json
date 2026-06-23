@@ -10,6 +10,8 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@radix-ui/react-tabs": "^1.1.12",
+    "@webonone/theme": "*",
     "@webonone/ui-kit": "*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

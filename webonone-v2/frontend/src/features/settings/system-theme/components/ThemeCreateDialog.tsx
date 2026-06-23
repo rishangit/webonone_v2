@@ -1,16 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ClipboardPaste } from 'lucide-react'
 import type { ColorMode } from '@webonone/theme'
 import {
   Alert,
   AlertDescription,
   Button,
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Callout,
+  CalloutAction,
+  CalloutDescription,
+  CalloutTitle,
+  CustomDialog,
   mapZodIssuesToFieldErrors,
 } from '@webonone/ui-kit'
 import { platformDefaultFormValues } from '../constants/defaultThemeFormValues'
@@ -45,6 +44,7 @@ export function ThemeCreateDialog({
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ThemeFormValues, string>>>({})
   const [importOpen, setImportOpen] = useState(false)
   const importOpenRef = useRef(false)
+  const suppressParentCloseRef = useRef(false)
 
   useEffect(() => {
     importOpenRef.current = importOpen
@@ -54,12 +54,27 @@ export function ThemeCreateDialog({
     if (!open) return
     setValues(initialValues ?? { ...platformDefaultFormValues })
     setFieldErrors({})
+    importOpenRef.current = false
     setImportOpen(false)
   }, [open, initialValues])
 
+  const handleImportOpenChange = useCallback((next: boolean) => {
+    if (!next) {
+      suppressParentCloseRef.current = true
+      queueMicrotask(() => {
+        suppressParentCloseRef.current = false
+      })
+    }
+    importOpenRef.current = next
+    setImportOpen(next)
+  }, [])
+
   function handleRootOpenChange(next: boolean) {
-    if (!next && importOpenRef.current) {
-      setImportOpen(false)
+    if (!next && (importOpenRef.current || suppressParentCloseRef.current)) {
+      if (importOpenRef.current) {
+        importOpenRef.current = false
+        setImportOpen(false)
+      }
       return
     }
     onOpenChange(next)
@@ -88,69 +103,103 @@ export function ThemeCreateDialog({
     setFieldErrors({})
   }
 
+  function openImportDialog() {
+    importOpenRef.current = true
+    setImportOpen(true)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={handleRootOpenChange}>
-      <DialogContent
-        size="2xl"
-        onInteractOutside={(e) => {
-          if (importOpenRef.current) e.preventDefault()
-        }}
-        onEscapeKeyDown={(e) => {
-          if (importOpenRef.current) e.preventDefault()
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'Create theme' : 'Edit theme'}</DialogTitle>
-            <DialogDescription>
-              Build a harmonious palette on{' '}
+    <CustomDialog
+      open={open}
+      onOpenChange={handleRootOpenChange}
+      title={mode === 'create' ? 'Create theme' : 'Edit theme'}
+      description={
+        <>
+          Define five palette colors (primary, secondary, accent, background, text) or import them
+          from{' '}
+          <a
+            href="https://ccolorpalette.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            CColorPalette
+          </a>
+          . The preview updates as you edit.
+        </>
+      }
+      sizeWidth="xlarge"
+      sizeHeight="large"
+      nestedDismissGuard={importOpen}
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 px-4"
+            onClick={() => handleRootOpenChange(false)}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button type="button" className="h-10" onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? 'Saving…' : mode === 'create' ? 'Create theme' : 'Save changes'}
+          </Button>
+        </>
+      }
+    >
+      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <div className="space-y-4">
+          <ThemeForm
+            idPrefix={mode === 'create' ? 'create-theme' : 'edit-theme'}
+            values={values}
+            onChange={setValues}
+            fieldErrors={fieldErrors}
+            colorColumns={1}
+          />
+
+          <Callout>
+            <CalloutTitle>Import from CColorPalette</CalloutTitle>
+            <CalloutDescription>
+              On{' '}
               <a
                 href="https://ccolorpalette.com/"
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary underline-offset-4 hover:underline"
+                className="font-medium text-primary underline-offset-4 hover:underline"
               >
                 CColorPalette
               </a>
-              . Palette sites export five colors only — this form maps them as: primary, secondary,
-              accent, background, and text (see field labels). Paste CSS variables or enter hex values
-              below.
-            </DialogDescription>
-        </DialogHeader>
+              , choose a palette → <span className="font-medium text-foreground">Export</span> →{' '}
+              <span className="font-medium text-foreground">CSS variables</span>, then paste the{' '}
+              <code className="rounded bg-background/80 px-1 py-0.5 text-xs">:root {'{ … }'}</code>{' '}
+              block here to fill all five colors at once.
+            </CalloutDescription>
+            <CalloutAction>
+              <Button type="button" className="h-10" onClick={openImportDialog}>
+                <ClipboardPaste className="mr-2 h-4 w-4" />
+                Paste CSS from CColorPalette
+              </Button>
+            </CalloutAction>
+          </Callout>
+        </div>
 
-        <DialogBody>
-          <div className="space-y-4">
-            <ThemeForm
-              idPrefix={mode === 'create' ? 'create-theme' : 'edit-theme'}
-              values={values}
-              onChange={setValues}
-              fieldErrors={fieldErrors}
-            />
+        <div className="min-h-0 lg:sticky lg:top-0 lg:self-start">
+          <ThemePreview values={values} colorMode={colorMode} />
+        </div>
+      </div>
 
-            <Button type="button" variant="link" className="h-auto p-0" onClick={() => setImportOpen(true)}>
-              Paste from CColorPalette
-            </Button>
+      {error ? (
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-            <ThemePreview values={values} colorMode={colorMode} />
-          </div>
-
-          {error ? (
-            <Alert variant="destructive" className="mt-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : null}
-        </DialogBody>
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => handleRootOpenChange(false)} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={handleSubmit} disabled={isSaving}>
-            {isSaving ? 'Saving…' : mode === 'create' ? 'Create theme' : 'Save changes'}
-          </Button>
-        </DialogFooter>
-
-        <ThemeCssImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={handleImport} />
-      </DialogContent>
-    </Dialog>
+      <ThemeCssImportDialog
+        open={importOpen}
+        onOpenChange={handleImportOpenChange}
+        onImport={handleImport}
+      />
+    </CustomDialog>
   )
 }

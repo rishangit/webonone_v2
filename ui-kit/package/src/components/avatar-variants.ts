@@ -1,7 +1,7 @@
 import { cva } from 'class-variance-authority'
 
 export const avatarVariants = cva(
-  'relative flex shrink-0 overflow-hidden rounded-full',
+  'relative flex shrink-0 overflow-hidden rounded-full border border-primary',
   {
     variants: {
       size: {

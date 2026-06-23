@@ -1,4 +1,8 @@
-import { MEDIA_MESSAGE_TYPES, type BuildMediaEmbedUrlOptions } from './types'
+import {
+  MEDIA_MESSAGE_TYPES,
+  type BuildMediaEmbedUrlOptions,
+  type MediaParentMessage,
+} from './types'
 
 export function buildMediaEmbedUrl(options: BuildMediaEmbedUrlOptions): string {
   const url = new URL(options.baseUrl)
@@ -31,4 +35,17 @@ export function sendMediaInit(
     { type: MEDIA_MESSAGE_TYPES.INIT, accessToken },
     mediaOrigin,
   )
+}
+
+export function sendMediaConfirm(iframe: HTMLIFrameElement, mediaOrigin: string): void {
+  const message: MediaParentMessage = { type: MEDIA_MESSAGE_TYPES.CONFIRM }
+  iframe.contentWindow?.postMessage(message, mediaOrigin)
+}
+
+export function isMediaParentMessage(data: unknown): data is MediaParentMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+  const type = (data as { type: string }).type
+  return type === MEDIA_MESSAGE_TYPES.INIT || type === MEDIA_MESSAGE_TYPES.CONFIRM
 }

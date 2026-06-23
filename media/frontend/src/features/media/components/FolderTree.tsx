@@ -1,3 +1,9 @@
+import {
+  ItemList,
+  ItemListContent,
+  ItemListItem,
+  itemListRowActiveClassName,
+} from '@webonone/ui-kit'
 import type { MediaFolderDto } from '../services/mediaApi'
 
 interface FolderTreeProps {
@@ -7,29 +13,37 @@ interface FolderTreeProps {
 }
 
 export function FolderTree({ folders, currentPath, onSelectFolder }: FolderTreeProps) {
+  const rows = Array.isArray(folders) ? folders : []
+
   return (
-    <nav className="space-y-1">
-      <button
-        type="button"
-        className={`block w-full rounded px-2 py-1 text-left text-sm ${
-          currentPath === '/' ? 'bg-muted font-medium' : 'hover:bg-muted/60'
-        }`}
-        onClick={() => onSelectFolder('/')}
-      >
-        Root
-      </button>
-      {folders.map((folder) => (
-        <button
+    <ItemList>
+      <ItemListItem className={currentPath === '/' ? itemListRowActiveClassName : undefined}>
+        <ItemListContent>
+          <button
+            type="button"
+            className="w-full text-left text-sm font-medium"
+            onClick={() => onSelectFolder('/')}
+          >
+            Root
+          </button>
+        </ItemListContent>
+      </ItemListItem>
+      {rows.map((folder) => (
+        <ItemListItem
           key={folder.id}
-          type="button"
-          className={`block w-full rounded px-2 py-1 text-left text-sm ${
-            currentPath === folder.path ? 'bg-muted font-medium' : 'hover:bg-muted/60'
-          }`}
-          onClick={() => onSelectFolder(folder.path)}
+          className={currentPath === folder.path ? itemListRowActiveClassName : undefined}
         >
-          {folder.name}
-        </button>
+          <ItemListContent>
+            <button
+              type="button"
+              className="w-full truncate text-left text-sm"
+              onClick={() => onSelectFolder(folder.path)}
+            >
+              {folder.name}
+            </button>
+          </ItemListContent>
+        </ItemListItem>
       ))}
-    </nav>
+    </ItemList>
   )
 }

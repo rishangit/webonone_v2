@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Mail, User } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -6,6 +7,9 @@ import {
   Form,
   FormField,
   Input,
+  InputGroup,
+  InputGroupIcon,
+  PasswordInput,
   mapZodIssuesToFieldErrors,
   Spinner,
 } from '@webonone/ui-kit'
@@ -45,31 +49,47 @@ export function RegisterForm() {
       ) : null}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="First name" htmlFor="firstName" required error={fieldErrors.firstName}>
-          <Input
-            autoComplete="given-name"
-            value={values.firstName}
-            onChange={(e) => setValues((v) => ({ ...v, firstName: e.target.value }))}
-          />
+          <InputGroup>
+            <InputGroupIcon icon={User} />
+            <Input
+              id="firstName"
+              inGroup
+              autoComplete="given-name"
+              value={values.firstName}
+              onChange={(e) => setValues((v) => ({ ...v, firstName: e.target.value }))}
+            />
+          </InputGroup>
         </FormField>
         <FormField label="Last name" htmlFor="lastName" required error={fieldErrors.lastName}>
-          <Input
-            autoComplete="family-name"
-            value={values.lastName}
-            onChange={(e) => setValues((v) => ({ ...v, lastName: e.target.value }))}
-          />
+          <InputGroup>
+            <InputGroupIcon icon={User} />
+            <Input
+              id="lastName"
+              inGroup
+              autoComplete="family-name"
+              value={values.lastName}
+              onChange={(e) => setValues((v) => ({ ...v, lastName: e.target.value }))}
+            />
+          </InputGroup>
         </FormField>
       </div>
       <FormField label="Email" htmlFor="email" required error={fieldErrors.email}>
-        <Input
-          type="email"
-          autoComplete="email"
-          value={values.email}
-          onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
-        />
+        <InputGroup>
+          <InputGroupIcon icon={Mail} />
+          <Input
+            id="email"
+            inGroup
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
+          />
+        </InputGroup>
       </FormField>
       <FormField label="Password" htmlFor="password" required error={fieldErrors.password}>
-        <Input
-          type="password"
+        <PasswordInput
+          id="password"
+          withIcon
           autoComplete="new-password"
           value={values.password}
           onChange={(e) => setValues((v) => ({ ...v, password: e.target.value }))}

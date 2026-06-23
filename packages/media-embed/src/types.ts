@@ -1,6 +1,8 @@
 export const MEDIA_MESSAGE_TYPES = {
   INIT: 'webonone:media:init',
+  CONFIRM: 'webonone:media:confirm',
   SELECT: 'webonone:media:select',
+  SELECTION_CHANGE: 'webonone:media:selection-change',
   UPLOADED: 'webonone:media:uploaded',
   DELETED: 'webonone:media:deleted',
   CANCEL: 'webonone:media:cancel',
@@ -27,6 +29,12 @@ export interface MediaSelectMessage {
   items: MediaItemDto[]
 }
 
+export interface MediaSelectionChangeMessage {
+  type: typeof MEDIA_MESSAGE_TYPES.SELECTION_CHANGE
+  scope: string
+  items: MediaItemDto[]
+}
+
 export interface MediaUploadedMessage {
   type: typeof MEDIA_MESSAGE_TYPES.UPLOADED
   scope: string
@@ -43,12 +51,19 @@ export interface MediaCancelMessage {
   type: typeof MEDIA_MESSAGE_TYPES.CANCEL
 }
 
+export interface MediaConfirmMessage {
+  type: typeof MEDIA_MESSAGE_TYPES.CONFIRM
+}
+
 export type MediaEmbedMessage =
   | MediaInitMessage
   | MediaSelectMessage
+  | MediaSelectionChangeMessage
   | MediaUploadedMessage
   | MediaDeletedMessage
   | MediaCancelMessage
+
+export type MediaParentMessage = MediaInitMessage | MediaConfirmMessage
 
 export type MediaEmbedMode = 'single' | 'multiple'
 

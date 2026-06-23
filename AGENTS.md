@@ -15,6 +15,13 @@ Cross-service libraries that are **not** UI Kit and **not** microservices. See [
 
 Root: `npm run build:platform-nav`, `npm run build:media-embed`. Parent agent owns new entries under `packages/*`.
 
+### Cross-cutting skills
+
+| Skill | Description |
+|-------|-------------|
+| [form-creation](.cursor/skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
+| [item-list](.cursor/skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
+
 ## Service agents
 
 | Agent | Root | Subagent | Skill |

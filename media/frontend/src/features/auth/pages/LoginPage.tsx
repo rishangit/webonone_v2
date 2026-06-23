@@ -1,4 +1,4 @@
-import { PageShell, Button } from '@webonone/ui-kit'
+import { AuthLayout, Button, PageShell } from '@webonone/ui-kit'
 import { buildIdentityLoginUrl } from '../utils/buildIdentityLoginUrl'
 
 export function LoginPage() {
@@ -8,13 +8,15 @@ export function LoginPage() {
 
   return (
     <PageShell title="Media">
-      <div className="flex flex-col items-center gap-4 py-12">
-        <h1 className="text-2xl font-semibold">Sign in to Media</h1>
-        <p className="text-sm text-muted-foreground">
-          You will be redirected to Identity to sign in securely.
-        </p>
-        <Button onClick={handleSignIn}>Continue to sign in</Button>
-      </div>
+      <AuthLayout
+        title="Sign in to Media"
+        description="You will be redirected to Identity to sign in securely."
+        variant="minimal"
+      >
+        <Button className="w-full" onClick={handleSignIn}>
+          Continue to sign in
+        </Button>
+      </AuthLayout>
     </PageShell>
   )
 }

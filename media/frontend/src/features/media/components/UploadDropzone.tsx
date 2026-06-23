@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { Button } from '@webonone/ui-kit'
+import { Button, Spinner } from '@webonone/ui-kit'
 
 interface UploadDropzoneProps {
   accept: string
@@ -38,10 +38,12 @@ export function UploadDropzone({
     <div
       className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
         isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
-      } ${disabled ? 'opacity-50' : 'cursor-pointer'}`}
+      } ${disabled || isUploading ? 'opacity-50' : 'cursor-pointer'}`}
       onDragOver={(e) => {
         e.preventDefault()
-        setIsDragging(true)
+        if (!disabled && !isUploading) {
+          setIsDragging(true)
+        }
       }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={(e) => {
@@ -49,11 +51,15 @@ export function UploadDropzone({
         setIsDragging(false)
         void handleFiles(e.dataTransfer.files)
       }}
-      onClick={() => inputRef.current?.click()}
+      onClick={() => {
+        if (!disabled && !isUploading) {
+          inputRef.current?.click()
+        }
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isUploading) {
           inputRef.current?.click()
         }
       }}
@@ -67,12 +73,21 @@ export function UploadDropzone({
         disabled={disabled || isUploading}
         onChange={(e) => void handleFiles(e.target.files)}
       />
-      <p className="text-sm text-muted-foreground">
-        {isUploading ? 'Uploading…' : 'Drag and drop files here, or click to browse'}
-      </p>
-      <Button type="button" variant="outline" size="sm" className="mt-3" disabled={disabled || isUploading}>
-        Choose files
-      </Button>
+      {isUploading ? (
+        <div className="flex flex-col items-center gap-2">
+          <Spinner />
+          <p className="text-sm text-muted-foreground">Uploading…</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Drag and drop files here, or click to browse
+          </p>
+          <Button type="button" variant="outline" size="sm" className="mt-3" disabled={disabled}>
+            Choose files
+          </Button>
+        </>
+      )}
     </div>
   )
 }

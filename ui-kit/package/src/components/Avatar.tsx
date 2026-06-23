@@ -18,7 +18,11 @@ function Avatar({ className, size, src, alt, fallback, ...props }: AvatarProps) 
   return (
     <AvatarPrimitive.Root className={cn(avatarVariants({ size }), className)} {...props}>
       {src ? (
-        <AvatarPrimitive.Image src={src} alt={alt ?? fallback ?? 'User avatar'} className="aspect-square h-full w-full" />
+        <AvatarPrimitive.Image
+          src={src}
+          alt={alt ?? fallback ?? 'User avatar'}
+          className="aspect-square h-full w-full object-cover"
+        />
       ) : null}
       <AvatarPrimitive.Fallback className="flex h-full w-full items-center justify-center rounded-full bg-muted font-medium text-muted-foreground">
         {initials}

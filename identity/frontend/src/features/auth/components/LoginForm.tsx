@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Mail } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -6,6 +7,9 @@ import {
   Form,
   FormField,
   Input,
+  InputGroup,
+  InputGroupIcon,
+  PasswordInput,
   mapZodIssuesToFieldErrors,
   Spinner,
 } from '@webonone/ui-kit'
@@ -39,16 +43,22 @@ export function LoginForm() {
         </Alert>
       ) : null}
       <FormField label="Email" htmlFor="email" required error={fieldErrors.email}>
-        <Input
-          type="email"
-          autoComplete="email"
-          value={values.email}
-          onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
-        />
+        <InputGroup>
+          <InputGroupIcon icon={Mail} />
+          <Input
+            id="email"
+            inGroup
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
+          />
+        </InputGroup>
       </FormField>
       <FormField label="Password" htmlFor="password" required error={fieldErrors.password}>
-        <Input
-          type="password"
+        <PasswordInput
+          id="password"
+          withIcon
           autoComplete="current-password"
           value={values.password}
           onChange={(e) => setValues((v) => ({ ...v, password: e.target.value }))}

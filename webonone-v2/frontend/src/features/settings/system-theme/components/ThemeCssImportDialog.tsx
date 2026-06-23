@@ -1,14 +1,5 @@
-import { useState } from 'react'
-import {
-  Button,
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@webonone/ui-kit'
+import { useState, type MouseEvent } from 'react'
+import { Button, CustomDialog } from '@webonone/ui-kit'
 import type { ParsedThemeColors } from '../utils/parseCssThemeVariables'
 import { parseCssThemeVariables } from '../utils/parseCssThemeVariables'
 
@@ -38,7 +29,7 @@ export function ThemeCssImportDialog({ open, onOpenChange, onImport }: ThemeCssI
     onOpenChange(next)
   }
 
-  function handleApply(event: React.MouseEvent) {
+  function handleApply(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
 
@@ -55,52 +46,51 @@ export function ThemeCssImportDialog({ open, onOpenChange, onImport }: ThemeCssI
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        size="sm"
-        onInteractOutside={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>Import palette</DialogTitle>
-          <DialogDescription>
-            Paste the <code className="text-xs">:root {'{ … }'}</code> block from{' '}
-            <a
-              href="https://ccolorpalette.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              CColorPalette
-            </a>{' '}
-            (Export → CSS variables).
-          </DialogDescription>
-        </DialogHeader>
-
-        <DialogBody>
-          <textarea
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value)
-              if (error) setError(null)
-            }}
-            placeholder={PLACEHOLDER}
-            rows={8}
-            className="w-full rounded-md border border-input bg-input-background px-3 py-2 font-mono text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-
-          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
-        </DialogBody>
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+    <CustomDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="Import palette"
+      description={
+        <>
+          Paste the <code className="text-xs">:root {'{ … }'}</code> block from{' '}
+          <a
+            href="https://ccolorpalette.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            CColorPalette
+          </a>{' '}
+          (Export → CSS variables).
+        </>
+      }
+      sizeWidth="auto"
+      maxWidth="max-w-md"
+      onInteractOutside={(e) => e.preventDefault()}
+      onPointerDownOutside={(e) => e.preventDefault()}
+      footer={
+        <>
+          <Button type="button" variant="outline" className="h-10 px-4" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleApply}>
+          <Button type="button" className="h-10" onClick={handleApply}>
             Apply
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <textarea
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value)
+          if (error) setError(null)
+        }}
+        placeholder={PLACEHOLDER}
+        rows={8}
+        className="w-full rounded-md border border-input bg-input-background px-3 py-2 font-mono text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+
+      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+    </CustomDialog>
   )
 }

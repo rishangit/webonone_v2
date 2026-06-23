@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Globe, MapPin, User } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -7,7 +8,13 @@ import {
   Form,
   FormField,
   Input,
+  InputGroup,
+  InputGroupIcon,
+  PhoneInput,
+  formatPhoneE164,
+  getBrowserDefaultCountryIso2,
   mapZodIssuesToFieldErrors,
+  parsePhoneE164,
   Spinner,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -41,9 +48,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ProfileFormValues, string>>>(
     {},
   )
+  const [phoneCountry, setPhoneCountry] = useState(() => getBrowserDefaultCountryIso2())
+  const [phoneNational, setPhoneNational] = useState('')
 
   useEffect(() => {
     setValues(userToProfileFormValues(user))
+    const parsed = parsePhoneE164(user.phoneNumber, {
+      fallbackIso2: getBrowserDefaultCountryIso2(),
+      preferIso2: user.country ?? undefined,
+    })
+    setPhoneCountry(parsed.iso2)
+    setPhoneNational(parsed.nationalNumber)
   }, [user])
 
   useEffect(() => {
@@ -61,7 +76,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const parsed = profileSchema.safeParse(values)
+    const phoneNumber = phoneNational.trim()
+      ? formatPhoneE164(phoneCountry, phoneNational)
+      : null
+    const parsed = profileSchema.safeParse({ ...values, phoneNumber })
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
@@ -118,96 +136,150 @@ export function ProfileForm({ user }: ProfileFormProps) {
         <h2 className="text-lg font-semibold">Name</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="First name" htmlFor="firstName" required error={fieldErrors.firstName}>
-            <Input
-              autoComplete="given-name"
-              value={values.firstName}
-              onChange={(e) => handleChange('firstName', e.target.value)}
-            />
+            <InputGroup>
+              <InputGroupIcon icon={User} />
+              <Input
+                id="firstName"
+                inGroup
+                autoComplete="given-name"
+                value={values.firstName}
+                onChange={(e) => handleChange('firstName', e.target.value)}
+              />
+            </InputGroup>
           </FormField>
           <FormField label="Last name" htmlFor="lastName" required error={fieldErrors.lastName}>
-            <Input
-              autoComplete="family-name"
-              value={values.lastName}
-              onChange={(e) => handleChange('lastName', e.target.value)}
-            />
+            <InputGroup>
+              <InputGroupIcon icon={User} />
+              <Input
+                id="lastName"
+                inGroup
+                autoComplete="family-name"
+                value={values.lastName}
+                onChange={(e) => handleChange('lastName', e.target.value)}
+              />
+            </InputGroup>
           </FormField>
         </div>
         <FormField label="Display name" htmlFor="displayName" required error={fieldErrors.displayName}>
-          <Input
-            autoComplete="name"
-            value={values.displayName}
-            onChange={(e) => handleChange('displayName', e.target.value)}
-          />
+          <InputGroup>
+            <InputGroupIcon icon={User} />
+            <Input
+              id="displayName"
+              inGroup
+              autoComplete="name"
+              value={values.displayName}
+              onChange={(e) => handleChange('displayName', e.target.value)}
+            />
+          </InputGroup>
         </FormField>
       </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Contact</h2>
         <FormField label="Phone number" htmlFor="phoneNumber" error={fieldErrors.phoneNumber}>
-          <Input
-            type="tel"
+          <PhoneInput
+            id="phoneNumber"
+            withIcon
+            country={phoneCountry}
+            onCountryChange={(next) => setPhoneCountry(next.iso2)}
             autoComplete="tel"
-            value={values.phoneNumber ?? ''}
-            onChange={(e) => handleChange('phoneNumber', e.target.value || null)}
+            placeholder="555-0100"
+            value={phoneNational}
+            onChange={(e) => setPhoneNational(e.target.value)}
           />
         </FormField>
         <FormField label="Locale" htmlFor="locale" error={fieldErrors.locale}>
-          <Input
-            placeholder="en-US"
-            value={values.locale ?? ''}
-            onChange={(e) => handleChange('locale', e.target.value || null)}
-          />
+          <InputGroup>
+            <InputGroupIcon icon={Globe} />
+            <Input
+              id="locale"
+              inGroup
+              placeholder="en-US"
+              value={values.locale ?? ''}
+              onChange={(e) => handleChange('locale', e.target.value || null)}
+            />
+          </InputGroup>
         </FormField>
       </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Address</h2>
         <FormField label="Address line 1" htmlFor="addressLine1" error={fieldErrors.addressLine1}>
-          <Input
-            autoComplete="address-line1"
-            value={values.addressLine1 ?? ''}
-            onChange={(e) => handleChange('addressLine1', e.target.value || null)}
-          />
+          <InputGroup>
+            <InputGroupIcon icon={MapPin} />
+            <Input
+              id="addressLine1"
+              inGroup
+              autoComplete="address-line1"
+              value={values.addressLine1 ?? ''}
+              onChange={(e) => handleChange('addressLine1', e.target.value || null)}
+            />
+          </InputGroup>
         </FormField>
         <FormField label="Address line 2" htmlFor="addressLine2" error={fieldErrors.addressLine2}>
-          <Input
-            autoComplete="address-line2"
-            value={values.addressLine2 ?? ''}
-            onChange={(e) => handleChange('addressLine2', e.target.value || null)}
-          />
+          <InputGroup>
+            <InputGroupIcon icon={MapPin} />
+            <Input
+              id="addressLine2"
+              inGroup
+              autoComplete="address-line2"
+              value={values.addressLine2 ?? ''}
+              onChange={(e) => handleChange('addressLine2', e.target.value || null)}
+            />
+          </InputGroup>
         </FormField>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="City" htmlFor="city" error={fieldErrors.city}>
-            <Input
-              autoComplete="address-level2"
-              value={values.city ?? ''}
-              onChange={(e) => handleChange('city', e.target.value || null)}
-            />
+            <InputGroup>
+              <InputGroupIcon icon={MapPin} />
+              <Input
+                id="city"
+                inGroup
+                autoComplete="address-level2"
+                value={values.city ?? ''}
+                onChange={(e) => handleChange('city', e.target.value || null)}
+              />
+            </InputGroup>
           </FormField>
           <FormField label="State / region" htmlFor="stateRegion" error={fieldErrors.stateRegion}>
-            <Input
-              autoComplete="address-level1"
-              value={values.stateRegion ?? ''}
-              onChange={(e) => handleChange('stateRegion', e.target.value || null)}
-            />
+            <InputGroup>
+              <InputGroupIcon icon={MapPin} />
+              <Input
+                id="stateRegion"
+                inGroup
+                autoComplete="address-level1"
+                value={values.stateRegion ?? ''}
+                onChange={(e) => handleChange('stateRegion', e.target.value || null)}
+              />
+            </InputGroup>
           </FormField>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="Postal code" htmlFor="postalCode" error={fieldErrors.postalCode}>
-            <Input
-              autoComplete="postal-code"
-              value={values.postalCode ?? ''}
-              onChange={(e) => handleChange('postalCode', e.target.value || null)}
-            />
+            <InputGroup>
+              <InputGroupIcon icon={MapPin} />
+              <Input
+                id="postalCode"
+                inGroup
+                autoComplete="postal-code"
+                value={values.postalCode ?? ''}
+                onChange={(e) => handleChange('postalCode', e.target.value || null)}
+              />
+            </InputGroup>
           </FormField>
           <FormField label="Country (2-letter code)" htmlFor="country" error={fieldErrors.country}>
-            <Input
-              autoComplete="country"
-              placeholder="US"
-              maxLength={2}
-              value={values.country ?? ''}
-              onChange={(e) => handleChange('country', e.target.value.toUpperCase())}
-            />
+            <InputGroup>
+              <InputGroupIcon icon={Globe} />
+              <Input
+                id="country"
+                inGroup
+                autoComplete="country"
+                placeholder="US"
+                maxLength={2}
+                value={values.country ?? ''}
+                onChange={(e) => handleChange('country', e.target.value.toUpperCase())}
+              />
+            </InputGroup>
           </FormField>
         </div>
       </section>

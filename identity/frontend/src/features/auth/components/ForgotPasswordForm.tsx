@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Mail } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -6,6 +7,8 @@ import {
   Form,
   FormField,
   Input,
+  InputGroup,
+  InputGroupIcon,
   mapZodIssuesToFieldErrors,
   Spinner,
 } from '@webonone/ui-kit'
@@ -54,12 +57,17 @@ export function ForgotPasswordForm() {
         </Alert>
       ) : null}
       <FormField label="Email" htmlFor="email" required error={fieldErrors.email}>
-        <Input
-          type="email"
-          autoComplete="email"
-          value={values.email}
-          onChange={(e) => setValues({ email: e.target.value })}
-        />
+        <InputGroup>
+          <InputGroupIcon icon={Mail} />
+          <Input
+            id="email"
+            inGroup
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={(e) => setValues({ email: e.target.value })}
+          />
+        </InputGroup>
       </FormField>
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? <Spinner size="sm" /> : 'Send reset link'}
