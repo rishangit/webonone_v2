@@ -244,6 +244,24 @@ Manual QA matrix:
 | media project user should be able to show the each component | 86ey2aab9 | Phase 9 |
 | Media project header need to thave the google account image | 86ey2avdh | Phase 10 |
 | image crop implemntation | 86ey2dwgh | Phase 11 |
+| crop image window need to be the same size as the select image dialog window | 86ey2e5bb | Phase 12 |
+
+---
+
+## Phase 12 — Crop dialog sizing + selector UX polish (1–2 days)
+
+| Task | Detail |
+|------|--------|
+| Crop dialog size | `ImageCropDialog` uses `CustomDialog` `sizeWidth="medium"`, `sizeHeight="large"`, `disableContentScroll` — same footprint as selector embed parent dialog; no body scrollbar |
+| Aspect presets | `RadioGroup` + `RadioGroupItem` (not button group) for ratio selection |
+| Selector toolbar | Icon toolbar in file area (no “File selector” heading); **New folder** opens small name dialog → `POST /api/v1/folders` |
+| List view | `ItemList` rows: name, size, modified date; `ItemListMenu` with View + Delete |
+| Thumb view | 1:1 thumb cards, max 4 per row; name, size, modified date below; same 3-dot menu |
+| Image preview | Large `CustomDialog` when View selected from menu |
+| Folders | Folder icon; single-click navigates; breadcrumb updates (existing `useScopedNavigation`) |
+| API | Expose `updatedAt` on `MediaItemDto` for modified date display |
+
+**Exit criteria:** Crop dialog matches selector dialog size without scroll; selector toolbar + list/thumb toggle work in embed and `/components` showcase.
 
 ---
 

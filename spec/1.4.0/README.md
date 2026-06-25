@@ -46,9 +46,11 @@ Implementation branch: **`spec/1.4.0`**
 | media project user should be able to show the each component | 86ey2aab9 | [02-media-iframe-components.md](./02-media-iframe-components.md), `LibraryEmbedDemos` |
 | Media project header need to thave the google account image | 86ey2avdh | [09-media-component-showcase.md](./09-media-component-showcase.md) |
 | image crop implemntation | 86ey2dwgh | [02-media-iframe-components.md#imagecropdialog](./02-media-iframe-components.md#imagecropdialog) — Phase 11 |
+| crop image window need to be the same size as the select image dialog window | 86ey2e5bb | [02-media-iframe-components.md](./02-media-iframe-components.md) — Phase 12 (crop dialog sizing + selector toolbar/views) |
 
 ## Revision history
 
+- **2026-06-25** — Added subtask `86ey2e5bb` (crop dialog matches selector dialog size, radio aspect presets, selector icon toolbar, list/thumb views, item menus, image preview).
 - **2026-06-25** — Added subtask `86ey2dwgh` (`ImageCropDialog` with `react-easy-crop`, zoom slider, aspect presets); synced traceability.
 - **2026-06-25** — Added subtask `86ey2avdh` (app shell, header avatar, `/components` showcase); synced ClickUp traceability to current subtask inventory.
 

@@ -62,23 +62,24 @@ Shared crop dialog used by upload-dialog and selector upload flows.
 | Property | Value |
 |----------|-------|
 | Title | `Crop Image` |
-| `sizeWidth` | `small` (~50% viewport width) |
+| `sizeWidth` | `medium` (~66% viewport width) — **same as selector parent dialog** |
 | `sizeHeight` | `large` (~75% viewport height) |
+| `disableContentScroll` | `true` — no body scrollbar |
 | Icon | Lucide `Crop` (`w-5 h-5`) |
 | Footer | **Cancel** (outline) + **Crop & Upload** (primary) |
 
-`CustomDialog` provides fixed full-screen overlay (`bg-black/50 backdrop-blur-sm`), centered panel with header, scrollable body, and footer.
+`CustomDialog` provides fixed full-screen overlay (`bg-black/50 backdrop-blur-sm`), centered panel with header, non-scrolling flex body, and footer.
 
 #### B. Crop UI — `react-easy-crop`
 
 | Requirement | Detail |
 |-------------|--------|
-| Container | 400px-tall crop area |
+| Container | `flex-1` crop area filling remaining dialog height (not fixed 400px) |
 | `<Cropper>` | `image` from file data URL; controlled `crop`, `zoom`, `aspect` state |
 | Interaction | Drag to reposition crop window |
 | Zoom | UI Kit `Slider`, range **1×–3×** |
 | Crop border | Accent / primary theme color on crop rectangle (`cropAreaStyle`) |
-| Aspect presets | Optional `aspectPresets` prop; when provided, render preset buttons (`1:1`, `1:2`, `2:1`, `3:2`, `4:3`, `16:9`, `free`); active preset highlighted |
+| Aspect presets | Optional `aspectPresets` prop; `RadioGroup` + `RadioGroupItem` per preset (`1:1`, `1:2`, `2:1`, `3:2`, `4:3`, `16:9`, `free`) — not button group |
 
 On confirm, export cropped region to `File` blob (JPEG 0.92) and invoke `onConfirm`.
 
@@ -117,6 +118,18 @@ Consumer opens when user needs to choose an existing file from Media storage (e.
 | Selection | Single click selects row; double-click on folder navigates; double-click on file selects and confirms |
 | Confirm button | Shown for `mode=multiple`; hidden for default single-select (immediate post on file pick) |
 | Callback | Posts `webonone:media:select` with `items` array containing `id`, `url`, `fileName`, `mimeType`, `folderPath` |
+
+### Toolbar and views (`ScopedFolderBrowser` in selector mode)
+
+| Requirement | Detail |
+|-------------|--------|
+| Chrome | No “File selector” title in embed (`chromeless`); toolbar sits in file area |
+| Icon toolbar | **New folder** (`FolderPlus`) opens small `CustomDialog` for name → `POST /api/v1/folders`; **List** / **Grid** toggle for view mode |
+| List view | `ItemList` glass rows per [item-list skill](../../../.cursor/skills/item-list/SKILL.md): name, formatted size, modified date (`updatedAt`); `ItemListMenu` → View image, Delete |
+| Thumb view | Grid max **4 columns**; 1:1 aspect thumb; name, size, modified date below card; same 3-dot menu |
+| View image | Large `CustomDialog` with full image preview (non-destructive) |
+| Folders | `Folder` icon; single-click navigates; breadcrumb updates via `useScopedNavigation` |
+| Delete | `MediaDeleteDialog` + `DELETE /api/v1/media/:id`; refresh list |
 
 ### Return value to consumer
 
@@ -238,6 +251,8 @@ media/frontend/src/features/media/
     ImageCropDialog.tsx       # crop UI + aspect toolbar
     MediaViewer.tsx           # view/edit preview
     ScopedFolderBrowser.tsx   # shared list + breadcrumb for selector & dialog
+    CreateFolderDialog.tsx    # small folder name prompt
+    MediaPreviewDialog.tsx    # large image preview from selector menu
     EmbedToolbar.tsx          # new folder + upload actions
   hooks/
     useScopedNavigation.ts    # enforce folderPath root boundary
