@@ -40,6 +40,7 @@ function rowToDto(row: MediaItemRow): MediaItemDto {
     height: row.height,
     url: row.public_url,
     createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
   }
 }
 

@@ -3,7 +3,14 @@ import type { Area, Point } from 'react-easy-crop'
 import Cropper from 'react-easy-crop'
 import { Crop } from 'lucide-react'
 import type { CropAspectPreset } from '@webonone/media-embed'
-import { Button, CustomDialog, Slider } from '@webonone/ui-kit'
+import {
+  Button,
+  CustomDialog,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  Slider,
+} from '@webonone/ui-kit'
 import 'react-easy-crop/react-easy-crop.css'
 
 const ASPECT_PRESETS: { label: CropAspectPreset; ratio: number | null }[] = [
@@ -152,8 +159,10 @@ export function ImageCropDialog({
       title="Crop Image"
       description="Drag to reposition. Use zoom and aspect ratio controls to adjust the crop area."
       icon={<Crop className="h-5 w-5" />}
-      sizeWidth="small"
+      sizeWidth="medium"
       sizeHeight="large"
+      disableContentScroll
+      nestedDismissGuard={isProcessing}
       footer={
         <>
           <Button type="button" variant="outline" onClick={onCancel} disabled={isProcessing}>
@@ -169,23 +178,24 @@ export function ImageCropDialog({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="flex h-full min-h-0 flex-col gap-3">
         {visiblePresets.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
+          <RadioGroup
+            value={aspectPreset}
+            onValueChange={(value) => setAspectPreset(value as CropAspectPreset)}
+            className="flex flex-wrap gap-x-4 gap-y-2"
+          >
             {visiblePresets.map((preset) => (
-              <Button
-                key={preset.label}
-                type="button"
-                size="sm"
-                variant={aspectPreset === preset.label ? 'default' : 'outline'}
-                onClick={() => setAspectPreset(preset.label)}
-              >
-                {preset.label}
-              </Button>
+              <div key={preset.label} className="flex items-center gap-2">
+                <RadioGroupItem value={preset.label} id={`crop-aspect-${preset.label}`} />
+                <Label htmlFor={`crop-aspect-${preset.label}`} className="cursor-pointer text-sm">
+                  {preset.label}
+                </Label>
+              </div>
             ))}
-          </div>
+          </RadioGroup>
         ) : null}
-        <div className="relative h-[400px] overflow-hidden rounded-md bg-muted/30">
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-md bg-muted/30">
           {imageSrc ? (
             <Cropper
               image={imageSrc}
@@ -216,7 +226,7 @@ export function ImageCropDialog({
             />
           ) : null}
         </div>
-        <div className="space-y-2">
+        <div className="shrink-0 space-y-2">
           <p className="text-sm text-muted-foreground">Zoom</p>
           <Slider
             min={1}
@@ -227,7 +237,7 @@ export function ImageCropDialog({
             aria-label="Crop zoom"
           />
         </div>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {error ? <p className="shrink-0 text-sm text-destructive">{error}</p> : null}
       </div>
     </CustomDialog>
   )

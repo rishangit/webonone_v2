@@ -51,6 +51,7 @@ export interface MediaItemDto {
   height: number | null
   url: string
   createdAt: string
+  updatedAt: string
 }
 
 export interface MediaFolderDto {

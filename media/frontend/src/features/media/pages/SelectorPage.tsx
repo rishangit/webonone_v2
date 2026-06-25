@@ -105,11 +105,10 @@ export function SelectorPage() {
   const selectedIds = new Set(selectedItems.map((item) => item.id))
 
   const content = (
-    <div className="flex h-full min-h-[320px] flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       {showUpload ? (
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Upload from device</p>
-          {uploadError ? <p className="text-sm text-destructive">{uploadError}</p> : null}
+        <div className="shrink-0">
+          {uploadError ? <p className="mb-2 text-sm text-destructive">{uploadError}</p> : null}
           <UploadDropzone
             accept="image/*"
             multiple={false}
@@ -126,6 +125,8 @@ export function SelectorPage() {
         refreshKey={refreshKey}
         onSelectFile={handleSelectFile}
         onToggleSelect={handleToggleSelect}
+        showIconToolbar
+        allowDelete
       />
       {embed.mode === 'multiple' ? (
         <div className="flex justify-end border-t pt-3">

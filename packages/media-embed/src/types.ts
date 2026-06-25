@@ -18,6 +18,8 @@ export interface MediaItemDto {
   width?: number | null
   height?: number | null
   folderPath?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface MediaInitMessage {
