@@ -4,7 +4,7 @@ import { Alert, AlertDescription, Callout, CalloutDescription, Spinner } from '@
 import { EmbedLayout } from '../components/EmbedLayout'
 import { MediaViewer } from '../components/MediaViewer'
 import { ScopedFolderBrowser } from '../components/ScopedFolderBrowser'
-import { useEmbedMode } from '../hooks/useEmbedMode'
+import { useEmbedMode, type ViewerMode } from '../hooks/useEmbedMode'
 import { useMediaAuth } from '../hooks/useMediaAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
 import { getMediaItem } from '../services/mediaApi'
@@ -19,7 +19,15 @@ export function ViewerPage() {
   const [error, setError] = useState<string | null>(null)
 
   const scope = embed.scope ?? 'media:library:default'
-  const viewerMode = embed.viewerMode
+  const [activeMode, setActiveMode] = useState<ViewerMode>(embed.viewerMode)
+
+  useEffect(() => {
+    setActiveMode(embed.viewerMode)
+  }, [embed.viewerMode])
+
+  const toggleViewerMode = useCallback(() => {
+    setActiveMode((current) => (current === 'view' ? 'edit' : 'view'))
+  }, [])
 
   const loadItem = useCallback(async () => {
     setLoading(true)
@@ -86,8 +94,9 @@ export function ViewerPage() {
       ) : (
         <MediaViewer
           item={item}
-          mode={viewerMode}
-          onEdit={viewerMode === 'edit' ? () => setSelectorOpen(true) : undefined}
+          mode={activeMode}
+          onToggleMode={toggleViewerMode}
+          onEdit={activeMode === 'edit' ? () => setSelectorOpen(true) : undefined}
         />
       )}
       {selectorOpen ? (

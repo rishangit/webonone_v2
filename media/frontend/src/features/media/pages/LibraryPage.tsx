@@ -2,6 +2,7 @@ import { PageShell } from '@webonone/ui-kit'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
+import { LibraryEmbedDemos } from '../components/LibraryEmbedDemos'
 import { MediaPicker } from '../components/MediaPicker'
 
 const LIBRARY_SCOPE = 'media:library:default'
@@ -20,6 +21,7 @@ export function LibraryPage() {
         navigate('/login')
       }}
     >
+      <LibraryEmbedDemos />
       <MediaPicker
         scope={LIBRARY_SCOPE}
         folderPath="/"

@@ -12,6 +12,7 @@ interface MediaViewerEmbedProps {
   fileUrl: string
   mediaId?: string
   mode?: 'view' | 'edit'
+  folderPath?: string
   className?: string
 }
 
@@ -19,7 +20,8 @@ export function MediaViewerEmbed({
   accessToken,
   fileUrl,
   mediaId,
-  mode = 'edit',
+  mode = 'view',
+  folderPath = '/',
   className,
 }: MediaViewerEmbedProps) {
   const { broadcastToIframes } = useThemeBridge()
@@ -37,7 +39,8 @@ export function MediaViewerEmbed({
       fileUrl={fileUrl}
       mediaId={mediaId}
       mode={mode}
-      className={className ?? 'h-48 w-full rounded-lg border-0 bg-transparent'}
+      folderPath={folderPath}
+      className={className ?? 'h-[200px] w-[200px] rounded-lg border-0 bg-transparent'}
       onLoad={broadcastToIframes}
     />
   )

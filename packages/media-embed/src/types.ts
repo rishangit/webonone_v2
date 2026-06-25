@@ -110,6 +110,7 @@ export interface BuildMediaViewerUrlOptions {
   fileUrl?: string
   mediaId?: string
   mode?: 'view' | 'edit'
+  folderPath?: string
 }
 
 export interface BuildMediaDialogUrlOptions extends BuildMediaEmbedUrlOptions {

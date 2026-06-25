@@ -195,6 +195,37 @@ Security additions: [08-media-consumer-integration.md#security-checklist-additio
 | Media Viewer iframe — edit mode + open file selector on edit | 86ey24573 | Phase 4 |
 | Full Media Dialog iframe — embed entry + scoped root path | 86ey24570 | Phase 5 |
 | Full Media Dialog — toolbar (new folder, upload) + folder navigation | 86ey24574 | Phase 5 |
+| in weboneone media demo, first item | 86ey2a7wx | Phase 8 |
+| media project user should be able to show the each component | 86ey2aab9 | Phase 9 |
+
+---
+
+## Phase 8 — WebOnOne profile image demo
+
+**Goal:** 200×200 viewer embed with user profile image; double-click toggles view/edit; selector scoped to `/root/users/{userId}`; device upload.
+
+**Exit criteria:** `MediaDemoPage` first section shows profile viewer + upload/selector buttons; type-check passes.
+
+| Task | Paths |
+|------|-------|
+| Profile viewer 200×200 | `webonone-v2/frontend/src/features/media/pages/MediaDemoPage.tsx`, `MediaViewerEmbed.tsx` |
+| Upload modal | `MediaUploadDialogModal.tsx` |
+| Double-click mode toggle | `media/.../MediaViewer.tsx`, `ViewerPage.tsx` |
+| `folderPath` on viewer URL | `packages/media-embed/src/embedUrl.ts`, `types.ts` |
+
+---
+
+## Phase 9 — Media library component demos
+
+**Goal:** Library page buttons open viewer, upload, and selector iframe dialogs.
+
+**Exit criteria:** `LibraryPage` shows `LibraryEmbedDemos` with three working embed buttons.
+
+| Task | Paths |
+|------|-------|
+| Embed demo section | `media/frontend/src/features/media/components/LibraryEmbedDemos.tsx` |
+| Wire into library | `media/frontend/src/features/media/pages/LibraryPage.tsx` |
+| Self-embed origin | `media/frontend/.env.example`, `identityConfig.ts` |
 
 ---
 

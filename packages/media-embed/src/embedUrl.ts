@@ -72,6 +72,9 @@ export function buildMediaViewerUrl(options: BuildMediaViewerUrlOptions): string
   if (options.mode) {
     url.searchParams.set('mode', options.mode)
   }
+  if (options.folderPath) {
+    url.searchParams.set('folderPath', options.folderPath)
+  }
   return url.toString()
 }
 

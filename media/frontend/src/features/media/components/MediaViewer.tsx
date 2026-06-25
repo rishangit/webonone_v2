@@ -6,13 +6,14 @@ interface MediaViewerProps {
   item: MediaItemDto | null
   mode: 'view' | 'edit'
   onEdit?: () => void
+  onToggleMode?: () => void
 }
 
 function isImageMime(mimeType: string): boolean {
   return mimeType.startsWith('image/')
 }
 
-export function MediaViewer({ item, mode, onEdit }: MediaViewerProps) {
+export function MediaViewer({ item, mode, onEdit, onToggleMode }: MediaViewerProps) {
   if (!item) {
     return (
       <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-muted-foreground">
@@ -24,12 +25,15 @@ export function MediaViewer({ item, mode, onEdit }: MediaViewerProps) {
   const showEditOverlay = mode === 'edit' && onEdit
 
   return (
-    <div className="relative flex h-full min-h-[200px] items-center justify-center rounded-lg border bg-muted/20 p-4">
+    <div
+      className="relative flex h-full min-h-[200px] items-center justify-center rounded-lg border bg-muted/20 p-4"
+      onDoubleClick={onToggleMode}
+    >
       {isImageMime(item.mimeType) ? (
         <img
           src={item.url}
           alt={item.fileName}
-          className="max-h-full max-w-full object-contain"
+          className="max-h-full max-w-full cursor-default object-contain"
         />
       ) : (
         <div className="flex flex-col items-center gap-2 text-muted-foreground">

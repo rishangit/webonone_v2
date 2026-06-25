@@ -18,6 +18,7 @@ export function MediaViewerFrame({
   fileUrl,
   mediaId,
   mode,
+  folderPath,
   ...rest
 }: ViewerFrameProps) {
   return (
@@ -31,6 +32,7 @@ export function MediaViewerFrame({
         fileUrl,
         mediaId,
         mode,
+        folderPath,
       }}
     />
   )
