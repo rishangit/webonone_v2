@@ -189,6 +189,25 @@ Security additions: [08-media-consumer-integration.md#security-checklist-additio
 | media project user should be able to show the each component | 86ey2aab9 | Phase 9 |
 | Media project header need to thave the google account image | 86ey2avdh | Phase 10 |
 | image crop implemntation | 86ey2dwgh | Phase 11 |
+| crop image window need to be the same size as the select image dialog window | 86ey2e5bb | Phase 12 |
+
+---
+
+## Phase 12 — Crop dialog sizing + selector UX polish
+
+**Goal:** Match crop dialog to selector parent dialog footprint; enhance selector file area with icon toolbar, list/thumb views, and item menus per [02-media-iframe-components.md](./02-media-iframe-components.md) and subtask `86ey2e5bb`.
+
+**Exit criteria:** Crop dialog `medium`×`large` without scroll; `RadioGroup` aspect presets; selector toolbar + list/thumb views; view/delete menus; image preview dialog; `updatedAt` on API DTO.
+
+| Task | Paths |
+|------|-------|
+| Crop dialog sizing + `RadioGroup` presets | `media/frontend/src/features/media/components/ImageCropDialog.tsx` |
+| Expose `updatedAt` on media items | `media/backend/src/schemas/mediaSchemas.ts`, `media/backend/src/services/media.service.ts`, `packages/media-embed/src/types.ts` |
+| Format helpers | `media/frontend/src/features/media/utils/formatMedia.ts` |
+| Create folder + preview dialogs | `CreateFolderDialog.tsx`, `MediaPreviewDialog.tsx` |
+| Selector toolbar, list/thumb views, menus | `ScopedFolderBrowser.tsx`, `SelectorPage.tsx` |
+
+**Verify:** `npm run type-check -w media-root`; manual crop in selector upload; list/thumb toggle; view image + delete; create folder from toolbar
 
 ---
 
@@ -264,6 +283,7 @@ Security additions: [08-media-consumer-integration.md#security-checklist-additio
 | Risk / item | Mitigation |
 |-------------|------------|
 | Crop library bundle size | Lazy-load crop dialog; lightweight canvas cropper |
+| Crop dialog height in embed | Use `flex-1` cropper + `disableContentScroll` to avoid scrollbar inside selector-sized dialog |
 | Scoped nav edge cases | Unit test `useScopedNavigation`; normalize paths (`/` vs trailing slash) |
 | Overlap with `/picker` | Document surface selection table in 08; keep `/picker` stable |
 | Mobile iframe file input | Test iOS Safari + Android Chrome in Phase 2 |
