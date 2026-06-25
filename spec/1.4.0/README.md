@@ -33,6 +33,7 @@ Implementation branch: **`spec/1.4.0`**
 | [03-media-embed-package.md](./03-media-embed-package.md) | `@webonone/media-embed` API extensions |
 | [04-media-routes-and-api.md](./04-media-routes-and-api.md) | Routes, query params, REST touchpoints |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
+| [plan.mdc](./plan.mdc) | Agent implementation plan (phases, paths, verification) |
 | [08-media-consumer-integration.md](./08-media-consumer-integration.md) | Consumer integration delta from 1.1.0 |
 
 ## Inherited from earlier specs
