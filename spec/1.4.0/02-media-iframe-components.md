@@ -1,0 +1,206 @@
+# 02 — Media Iframe Components
+
+Four embeddable surfaces owned by **Media frontend**. Each route shares:
+
+- **`EmbedLayout`** — minimal chrome, no standalone app nav when `parentOrigin` is set.
+- **`useEmbedMode()`** — reads `parentOrigin`, `scope`, `folderPath`, and surface-specific params from query string.
+- **`useMediaAuth()`** — JWT from `webonone:media:init` (never from URL).
+- **`useMediaPostMessage()`** — posts results to validated `parentOrigin` only.
+
+Reference baseline: [../1.1.0/03-media-project.md](../1.1.0/03-media-project.md).
+
+---
+
+## 1. File Upload iframe
+
+**Route:** `GET /upload-dialog`  
+**Replaces or complements:** `/upload` for flows that need crop and explicit media-type presets.
+
+### Trigger (consumer)
+
+Consumer opens iframe (modal or inline) when user clicks "Upload file" in the host app.
+
+### Behavior
+
+| Requirement | Detail |
+|-------------|--------|
+| Device upload | Native file input + drag-and-drop; works on desktop and mobile browsers |
+| Media type filter | Query `mediaType`: `image` \| `pdf` \| `all` (maps to `accept` MIME list) |
+| Optional MIME override | `accept` query still supported for fine-grained control |
+| Single vs batch | `maxFiles` query (default `1` for upload-dialog; increase for batch) |
+| Auto-close | On success, post `webonone:media:uploaded` and optionally close embed (consumer decides via `autoClose=true`) |
+| Cancel | User dismisses → `webonone:media:cancel` |
+
+### Media type presets
+
+| `mediaType` | Effective `accept` |
+|-------------|-------------------|
+| `image` | `image/*` |
+| `pdf` | `application/pdf` |
+| `all` | `*/*` (subject to `maxSizeBytes` and backend validation) |
+
+### Crop flow
+
+When `crop=true` (only valid with `mediaType=image` or `accept` containing images):
+
+1. User selects image file.
+2. **Crop dialog** opens (`CustomDialog` from UI Kit) with canvas cropper.
+3. **Toolbar** exposes aspect ratio presets: `1:1`, `1:2`, `2:1`, `3:2`, `4:3`, `16:9`, `free`.
+4. User confirms crop → cropped blob uploaded via existing `POST /api/v1/media/upload`.
+5. Parent receives `webonone:media:uploaded` with final `MediaItemDto`.
+
+Crop dimensions are included in upload metadata (`width`, `height`) when available.
+
+### UI notes
+
+- Use `UploadDropzone` from existing Media components where possible.
+- Crop toolbar uses UI Kit `Button` group for ratio selection; active ratio highlighted with theme tokens.
+- Show upload progress and error states inline; errors do not postMessage until user retries or cancels.
+
+---
+
+## 2. File Selector iframe
+
+**Route:** `GET /selector`
+
+Lightweight picker — browse and pick one file (or multiple when `mode=multiple`) without full picker chrome.
+
+### Trigger (consumer)
+
+Consumer opens when user needs to choose an existing file from Media storage (e.g. "Change image" in a form field).
+
+### Behavior
+
+| Requirement | Detail |
+|-------------|--------|
+| Initial path | `folderPath` query opens at that path within `scope` (e.g. `/`, `/root/user/{id}`) |
+| Scoped navigation | User may navigate into subfolders via double-click; **cannot** navigate above the initial `folderPath` (breadcrumb root locked) |
+| Listing order | Folders first, then files (same as full dialog) |
+| Selection | Single click selects row; double-click on folder navigates; double-click on file selects and confirms |
+| Confirm button | Shown for `mode=multiple`; hidden for default single-select (immediate post on file pick) |
+| Callback | Posts `webonone:media:select` with `items` array containing `id`, `url`, `fileName`, `mimeType`, `folderPath` |
+
+### Return value to consumer
+
+Parent handler receives the **file path** (virtual `folderPath` + file name) and public **`url`** in `MediaItemDto`. Consumer stores `media_id` + `url` in its own DB per 1.1.0 — never blob bytes.
+
+---
+
+## 3. Media Viewer iframe
+
+**Route:** `GET /viewer`
+
+Inline preview of a media item with optional edit affordance.
+
+### Query inputs
+
+| Param | Required | Description |
+|-------|----------|-------------|
+| `fileUrl` | Yes* | Public Media file URL to display |
+| `mediaId` | Alt | If `fileUrl` omitted, resolve via Media API by id within `scope` |
+| `mode` | No | `view` (default) or `edit` |
+| `parentOrigin`, `scope` | Yes in embed | Standard embed params |
+
+### View mode
+
+- **Images:** render `<img>` with max dimensions fit inside embed; respect theme background.
+- **Non-images (PDF, etc.):** show file-type icon + file name from URL or API metadata.
+- No edit overlay.
+
+### Edit mode
+
+- Same preview as view mode.
+- **Edit icon** overlay (pencil) on image or file icon.
+- Click edit → open **file selector** (inline overlay iframe or navigate to `/selector` with `parentOrigin` preserved and `returnTo=viewer`).
+- On new selection, viewer updates display and posts:
+
+```json
+{
+  "type": "webonone:media:viewer-changed",
+  "scope": "webonone:site:abc123/gallery",
+  "item": { "id": "...", "url": "...", "fileName": "...", "mimeType": "...", "sizeBytes": 0 }
+}
+```
+
+Parent updates form state / DB reference from this message.
+
+---
+
+## 4. Full Media Dialog iframe
+
+**Route:** `GET /dialog`
+
+Full library experience for consumers that need browse + manage within a scoped subtree (similar to standalone `LibraryPage` but embeddable).
+
+### Trigger (consumer)
+
+Consumer opens modal with iframe when user clicks "Media library" or equivalent.
+
+### Embed entry
+
+| Query param | Purpose |
+|-------------|---------|
+| `folderPath` | Root of navigable tree (scoped root) |
+| `scope` | Storage scope |
+| `parentOrigin` | Embed mode + postMessage target |
+
+### Toolbar and navigation
+
+| Toolbar action | Behavior |
+|----------------|----------|
+| **Create new folder** | Prompt for name → `POST /api/v1/folders` under current path |
+| **Upload files** | Opens upload sub-flow (inline dropzone or nested `/upload-dialog` with `folderPath` = current path) |
+
+| Navigation rule | Detail |
+|-----------------|--------|
+| Folder list | `ItemList` rows; folders listed before files |
+| Enter folder | Double-click folder row |
+| Breadcrumb | Shows path from scoped root to current; clicking ancestor within scoped root navigates |
+| Boundary | User **cannot** navigate above the `folderPath` passed at open time |
+
+### Selection (optional)
+
+When opened with `selectable=true`:
+
+- User selects file(s) and clicks **Confirm** → `webonone:media:select`.
+- Without `selectable`, dialog is manage-only (upload/create folder); close posts `webonone:media:cancel` or silent close per `onClose` query.
+
+### Relationship to `/picker`
+
+| Surface | Use when |
+|---------|----------|
+| `/picker` | Legacy combined browse + upload + confirm (1.1.0) — keep for backward compatibility |
+| `/dialog` | Full manager with toolbar; scoped root; optional selection |
+| `/selector` | Lightweight pick-only; minimal UI |
+
+---
+
+## Shared security (all surfaces)
+
+| Rule | Enforcement |
+|------|-------------|
+| JWT not in URL | Token only via `webonone:media:init` |
+| `parentOrigin` allowlist | Media FE validates against `VITE_ALLOWED_PARENT_ORIGINS` |
+| postMessage target | Specific `parentOrigin` — never `'*'` |
+| `frame-ancestors` CSP | Media FE response headers |
+| Scope ownership | Consumer validates before opening embed; Media API validates JWT + scope format |
+
+---
+
+## File layout (Media frontend)
+
+```text
+media/frontend/src/features/media/
+  pages/
+    UploadDialogPage.tsx      # /upload-dialog
+    SelectorPage.tsx          # /selector
+    ViewerPage.tsx            # /viewer
+    FullDialogPage.tsx        # /dialog
+  components/
+    ImageCropDialog.tsx       # crop UI + aspect toolbar
+    MediaViewer.tsx           # view/edit preview
+    ScopedFolderBrowser.tsx   # shared list + breadcrumb for selector & dialog
+    EmbedToolbar.tsx          # new folder + upload actions
+  hooks/
+    useScopedNavigation.ts    # enforce folderPath root boundary
+```
