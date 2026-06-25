@@ -188,6 +188,24 @@ Security additions: [08-media-consumer-integration.md#security-checklist-additio
 | in weboneone media demo, first item | 86ey2a7wx | Phase 8 |
 | media project user should be able to show the each component | 86ey2aab9 | Phase 9 |
 | Media project header need to thave the google account image | 86ey2avdh | Phase 10 |
+| image crop implemntation | 86ey2dwgh | Phase 11 |
+
+---
+
+## Phase 11 — ImageCropDialog (`react-easy-crop`)
+
+**Goal:** Replace canvas-only crop preview with interactive `react-easy-crop` per [02-media-iframe-components.md#imagecropdialog](./02-media-iframe-components.md#imagecropdialog) and subtask `86ey2dwgh`.
+
+**Exit criteria:** Crop dialog uses `CustomDialog` (small/large), 400px cropper, zoom slider 1–3×, aspect presets, accent crop border; upload-dialog and selector flows upload cropped blob.
+
+| Task | Paths |
+|------|-------|
+| Add `react-easy-crop` dependency | `media/frontend/package.json` |
+| Rewrite `ImageCropDialog` — `Cropper`, zoom slider, presets, `getCroppedImg` | `media/frontend/src/features/media/components/ImageCropDialog.tsx` |
+| Import cropper CSS | `ImageCropDialog.tsx` |
+| Verify upload + selector crop flows | `UploadDialogPage.tsx`, `SelectorPage.tsx` |
+
+**Verify:** `npm run type-check -w media-root`; manual crop with zoom + 1:1 preset in `/components` selector upload
 
 ---
 
