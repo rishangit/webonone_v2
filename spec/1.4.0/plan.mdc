@@ -184,19 +184,31 @@ Security additions: [08-media-consumer-integration.md#security-checklist-additio
 
 | ClickUp item | ID | Phase |
 |--------------|-----|-------|
-| Spec 1.4.0 Media need to support the microservice | 86ey244jy | All |
-| Create feature branch for Spec 1.4.0 media iframe work | 86ey2456u | Phase 0 |
-| Write Spec 1.4.0 documentation for Media iframe components | 86ey24575 | Phase 0 ✅ |
-| @webonone/media-embed — contracts for upload, selector, viewer, full dialog | 86ey24571 | Phase 1 |
-| File Upload iframe — device upload + media type filter | 86ey2456q | Phase 2 |
-| File Upload iframe — image crop dialog + aspect ratio toolbar | 86ey2456v | Phase 2 |
-| File Selector dialog iframe — scoped folder path + selection callback | 86ey2456w | Phase 3 |
-| Media Viewer iframe — view mode (file URL display) | 86ey2456z | Phase 4 |
-| Media Viewer iframe — edit mode + open file selector on edit | 86ey24573 | Phase 4 |
-| Full Media Dialog iframe — embed entry + scoped root path | 86ey24570 | Phase 5 |
-| Full Media Dialog — toolbar (new folder, upload) + folder navigation | 86ey24574 | Phase 5 |
+| Spec 1.4.0 Media need to support the microservice | 86ey244jy | Phases 0–7 |
 | in weboneone media demo, first item | 86ey2a7wx | Phase 8 |
 | media project user should be able to show the each component | 86ey2aab9 | Phase 9 |
+| Media project header need to thave the google account image | 86ey2avdh | Phase 10 |
+
+---
+
+## Phase 10 — Media app shell + component showcase
+
+**Goal:** Standalone Media app with `AppShell`, header avatar, left nav, and `/components` page per [09-media-component-showcase.md](./09-media-component-showcase.md).
+
+**Exit criteria:** After login, header shows Google avatar; Components page has view/edit toggle, centered edit icon, profile-folder selector with upload+1:1 crop, upload at `/root`, selector "Click me" at `/root`.
+
+| Task | Paths |
+|------|-------|
+| `AppLayout` with `AppShell`, nav, avatar | `media/frontend/src/app/AppLayout.tsx`, `features/shell/config/navItems.ts` |
+| Router layout routes | `media/frontend/src/app/router.tsx` |
+| `avatarUrl` in auth slice + callback | `auth.types.ts`, `AuthCallbackPage.tsx` |
+| `ComponentShowcasePage` | `media/frontend/src/features/media/pages/ComponentShowcasePage.tsx` |
+| Centered edit icon | `media/frontend/src/features/media/components/MediaViewer.tsx` |
+| Selector upload + 1:1 crop | `media/frontend/src/features/media/pages/SelectorPage.tsx` |
+| `ensureFolderPath` | `media/frontend/src/features/media/services/mediaApi.ts` |
+| Simplify `LibraryPage` (shell owns chrome) | `LibraryPage.tsx` |
+
+**Verify:** `npm run type-check -w media-root`; manual login + `/components` smoke test
 
 ---
 
