@@ -1,8 +1,10 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useRedirectThemeBootstrap } from '@webonone/theme'
+import { AppLayout } from '@/app/AppLayout'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { LibraryPage } from '@/features/media/pages/LibraryPage'
+import { ComponentShowcasePage } from '@/features/media/pages/ComponentShowcasePage'
 import { PickerPage } from '@/features/media/pages/PickerPage'
 import { UploadPage } from '@/features/media/pages/UploadPage'
 import { UploadDialogPage } from '@/features/media/pages/UploadDialogPage'
@@ -34,13 +36,15 @@ export function App() {
         <Route path="/viewer" element={<ViewerPage />} />
         <Route path="/dialog" element={<FullDialogPage />} />
         <Route
-          path="/library"
           element={
             <PrivateRoute>
-              <LibraryPage />
+              <AppLayout />
             </PrivateRoute>
           }
-        />
+        >
+          <Route path="/library" element={<LibraryPage />} />
+          <Route path="/components" element={<ComponentShowcasePage />} />
+        </Route>
         <Route path="/" element={<Navigate to="/library" replace />} />
         <Route path="*" element={<Navigate to="/library" replace />} />
       </Routes>

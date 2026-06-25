@@ -56,6 +56,9 @@ export function buildMediaSelectorUrl(options: BuildMediaSelectorUrlOptions): st
   const url = new URL(options.baseUrl)
   appendCommonEmbedParams(url, options)
   url.searchParams.set('folderPath', options.folderPath)
+  if (options.selectorUpload) {
+    url.searchParams.set('selectorUpload', 'true')
+  }
   return url.toString()
 }
 

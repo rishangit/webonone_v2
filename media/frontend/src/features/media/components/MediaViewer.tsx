@@ -26,7 +26,7 @@ export function MediaViewer({ item, mode, onEdit, onToggleMode }: MediaViewerPro
 
   return (
     <div
-      className="relative flex h-full min-h-[200px] items-center justify-center rounded-lg border bg-muted/20 p-4"
+      className="relative flex h-full min-h-[200px] w-full items-center justify-center rounded-lg border bg-muted/20 p-4"
       onDoubleClick={onToggleMode}
     >
       {isImageMime(item.mimeType) ? (
@@ -47,7 +47,7 @@ export function MediaViewer({ item, mode, onEdit, onToggleMode }: MediaViewerPro
           type="button"
           size="icon"
           variant="secondary"
-          className="absolute right-3 top-3 shadow-md"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 shadow-md"
           aria-label="Change file"
           onClick={onEdit}
         >

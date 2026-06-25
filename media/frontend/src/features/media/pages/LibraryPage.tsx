@@ -1,26 +1,17 @@
-import { PageShell } from '@webonone/ui-kit'
-import { useNavigate } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store/authSlice'
-import { LibraryEmbedDemos } from '../components/LibraryEmbedDemos'
 import { MediaPicker } from '../components/MediaPicker'
+import { LibraryEmbedDemos } from '../components/LibraryEmbedDemos'
 
 const LIBRARY_SCOPE = 'media:library:default'
 
 export function LibraryPage() {
-  const dispatch = useAppDispatch()
-  const user = useAppSelector((s) => s.auth.user)
-  const navigate = useNavigate()
-
   return (
-    <PageShell
-      title="Media Library"
-      user={user ? { email: user.email, displayName: user.displayName } : null}
-      onLogout={() => {
-        dispatch(authActions.logout())
-        navigate('/login')
-      }}
-    >
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Media Library</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Browse and manage files in your scoped library.
+        </p>
+      </div>
       <LibraryEmbedDemos />
       <MediaPicker
         scope={LIBRARY_SCOPE}
@@ -29,6 +20,6 @@ export function LibraryPage() {
         maxFiles={10}
         mode="multiple"
       />
-    </PageShell>
+    </div>
   )
 }

@@ -2,18 +2,28 @@ import { useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import { Button, Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
 import { EmbedLayout } from '../components/EmbedLayout'
+import { ImageCropDialog } from '../components/ImageCropDialog'
 import { ScopedFolderBrowser } from '../components/ScopedFolderBrowser'
+import { UploadDropzone } from '../components/UploadDropzone'
 import { useEmbedMode } from '../hooks/useEmbedMode'
 import { useMediaAuth } from '../hooks/useMediaAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
+import { useScopedNavigation } from '../hooks/useScopedNavigation'
+import { uploadMediaFile } from '../services/mediaApi'
 
 export function SelectorPage() {
   const embed = useEmbedMode()
   const { accessToken } = useMediaAuth(embed.isEmbed)
   const { postSelect } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const [selectedItems, setSelectedItems] = useState<MediaItemDto[]>([])
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const { currentPath } = useScopedNavigation(embed.folderPath)
 
   const scope = embed.scope ?? 'media:library:default'
+  const showUpload = embed.enableSelectorUpload
 
   if (embed.isEmbed && !accessToken) {
     return (
@@ -60,15 +70,60 @@ export function SelectorPage() {
     }
   }
 
+  async function uploadFile(file: File) {
+    setUploadError(null)
+    try {
+      const result = await uploadMediaFile(file, scope, currentPath)
+      setRefreshKey((key) => key + 1)
+      if (embed.mode === 'single' && embed.isEmbed) {
+        postSelect([result.item])
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    }
+  }
+
+  async function handleFilesSelected(files: File[]) {
+    const file = files[0]
+    if (!file) return
+
+    if (showUpload && file.type.startsWith('image/')) {
+      setPendingFile(file)
+      setCropOpen(true)
+      return
+    }
+
+    await uploadFile(file)
+  }
+
+  async function handleCropConfirm(cropped: File) {
+    setCropOpen(false)
+    setPendingFile(null)
+    await uploadFile(cropped)
+  }
+
   const selectedIds = new Set(selectedItems.map((item) => item.id))
 
   const content = (
     <div className="flex h-full min-h-[320px] flex-col gap-3">
+      {showUpload ? (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Upload from device</p>
+          {uploadError ? <p className="text-sm text-destructive">{uploadError}</p> : null}
+          <UploadDropzone
+            accept="image/*"
+            multiple={false}
+            maxFiles={1}
+            onFilesSelected={handleFilesSelected}
+          />
+        </div>
+      ) : null}
       <ScopedFolderBrowser
         scope={scope}
         scopedRoot={embed.folderPath}
         mode={embed.mode}
         selectedIds={selectedIds}
+        refreshKey={refreshKey}
         onSelectFile={handleSelectFile}
         onToggleSelect={handleToggleSelect}
       />
@@ -83,6 +138,16 @@ export function SelectorPage() {
           </Button>
         </div>
       ) : null}
+      <ImageCropDialog
+        open={cropOpen}
+        file={pendingFile}
+        defaultAspect="1:1"
+        onConfirm={(file) => void handleCropConfirm(file)}
+        onCancel={() => {
+          setCropOpen(false)
+          setPendingFile(null)
+        }}
+      />
     </div>
   )
 

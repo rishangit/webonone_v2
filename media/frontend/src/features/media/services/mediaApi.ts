@@ -1,5 +1,6 @@
 import type { MediaItemDto } from '@webonone/media-embed'
 import { apiClient } from '@/shared/services/apiClient'
+import { normalizeFolderPath } from '../hooks/useScopedNavigation'
 
 export interface MediaListResponse {
   items: MediaItemDto[]
@@ -85,4 +86,26 @@ export async function createFolder(scope: string, path: string, name: string): P
     method: 'POST',
     body: JSON.stringify({ scope, path, name }),
   })
+}
+
+/** Create each segment of a nested folder path if it does not exist. */
+export async function ensureFolderPath(scope: string, folderPath: string): Promise<void> {
+  const normalized = normalizeFolderPath(folderPath)
+  if (normalized === '/') {
+    return
+  }
+
+  const parts = normalized.split('/').filter(Boolean)
+  let current = ''
+  for (const part of parts) {
+    current = `${current}/${part}`
+    try {
+      await createFolder(scope, current, part)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : ''
+      if (!message.toLowerCase().includes('already exists')) {
+        throw err
+      }
+    }
+  }
 }

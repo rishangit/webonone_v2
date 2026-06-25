@@ -101,6 +101,7 @@ export interface BuildMediaUploadDialogUrlOptions extends BuildMediaEmbedUrlOpti
 export interface BuildMediaSelectorUrlOptions extends BuildMediaEmbedUrlOptions {
   folderPath: string
   mode?: MediaEmbedMode
+  selectorUpload?: boolean
 }
 
 export interface BuildMediaViewerUrlOptions {

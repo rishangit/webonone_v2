@@ -22,6 +22,7 @@ export interface EmbedModeState {
   mediaId: string | null
   viewerMode: ViewerMode
   selectable: boolean
+  enableSelectorUpload: boolean
 }
 
 function parseMediaType(value: string | null): MediaTypePreset | null {
@@ -78,6 +79,7 @@ export function useEmbedMode(): EmbedModeState {
     const mediaId = searchParams.get('mediaId')
     const viewerMode: ViewerMode = searchParams.get('mode') === 'edit' ? 'edit' : 'view'
     const selectable = searchParams.get('selectable') === 'true'
+    const enableSelectorUpload = searchParams.get('selectorUpload') === 'true'
 
     return {
       isEmbed,
@@ -95,6 +97,7 @@ export function useEmbedMode(): EmbedModeState {
       mediaId,
       viewerMode,
       selectable,
+      enableSelectorUpload,
     }
   }, [searchParams])
 }

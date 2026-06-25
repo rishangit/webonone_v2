@@ -54,7 +54,7 @@ export function AuthCallbackPage() {
       .then(async (res) => {
         const data = (await res.json().catch(() => ({}))) as {
           accessToken?: string
-          user?: UserProfile
+          user?: UserProfile & { avatarUrl?: string | null }
           message?: string
         }
         if (!res.ok || !data.accessToken || !data.user) {
@@ -68,6 +68,7 @@ export function AuthCallbackPage() {
               id: data.user.id,
               email: data.user.email,
               displayName: data.user.displayName,
+              avatarUrl: data.user.avatarUrl ?? null,
             },
           }),
         )

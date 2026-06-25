@@ -22,6 +22,7 @@ export function MediaSelectorFrame({
   accept,
   maxFiles,
   maxSizeBytes,
+  selectorUpload,
   ...rest
 }: SelectorFrameProps) {
   return (
@@ -37,6 +38,7 @@ export function MediaSelectorFrame({
         accept,
         maxFiles,
         maxSizeBytes,
+        selectorUpload,
       }}
     />
   )

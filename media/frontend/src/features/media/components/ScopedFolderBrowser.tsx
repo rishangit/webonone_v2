@@ -18,6 +18,7 @@ interface ScopedFolderBrowserProps {
   scopedRoot: string
   mode: 'single' | 'multiple'
   selectedIds?: Set<string>
+  refreshKey?: number
   onSelectFile?: (item: MediaItemDto) => void
   onToggleSelect?: (item: MediaItemDto) => void
   onNavigate?: (path: string) => void
@@ -28,6 +29,7 @@ export function ScopedFolderBrowser({
   scopedRoot,
   mode,
   selectedIds = new Set(),
+  refreshKey = 0,
   onSelectFile,
   onToggleSelect,
   onNavigate,
@@ -53,7 +55,7 @@ export function ScopedFolderBrowser({
     } finally {
       setLoading(false)
     }
-  }, [currentPath, scope])
+  }, [currentPath, refreshKey, scope])
 
   useEffect(() => {
     void loadData()
