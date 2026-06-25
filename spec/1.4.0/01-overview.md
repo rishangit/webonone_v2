@@ -61,14 +61,15 @@ All surfaces follow the **1.1.0 embed contract**: `parentOrigin` query param, JW
 
 ## Subtask mapping (ClickUp)
 
-| Subtask | Spec section |
-|---------|----------------|
-| File Upload iframe — device upload + media type filter | [02-media-iframe-components.md](./02-media-iframe-components.md#1-file-upload-iframe) |
-| File Upload iframe — image crop dialog + aspect ratio toolbar | [02-media-iframe-components.md](./02-media-iframe-components.md#crop-flow) |
-| File Selector dialog iframe — scoped folder path + selection callback | [02-media-iframe-components.md](./02-media-iframe-components.md#2-file-selector-iframe) |
-| Media Viewer iframe — view mode | [02-media-iframe-components.md](./02-media-iframe-components.md#3-media-viewer-iframe) |
-| Media Viewer iframe — edit mode + open file selector on edit | [02-media-iframe-components.md](./02-media-iframe-components.md#edit-mode) |
-| Full Media Dialog iframe — embed entry + scoped root path | [02-media-iframe-components.md](./02-media-iframe-components.md#4-full-media-dialog-iframe) |
-| Full Media Dialog — toolbar + folder navigation | [02-media-iframe-components.md](./02-media-iframe-components.md#toolbar-and-navigation) |
-| `@webonone/media-embed` contracts | [03-media-embed-package.md](./03-media-embed-package.md) |
-| Create feature branch | [07-implementation-plan.md](./07-implementation-plan.md) |
+| Subtask | ID | Spec section |
+|---------|-----|----------------|
+| Parent — four iframe surfaces + microservice embed | 86ey244jy | [02](./02-media-iframe-components.md)–[04](./04-media-routes-and-api.md) |
+| in weboneone media demo, first item | 86ey2a7wx | [08-media-consumer-integration.md](./08-media-consumer-integration.md) |
+| media project user should be able to show the each component | 86ey2aab9 | [02](./02-media-iframe-components.md), `LibraryEmbedDemos` |
+| Media project header — google account image + component demos | 86ey2avdh | [09-media-component-showcase.md](./09-media-component-showcase.md) |
+| File Upload iframe — device upload + media type filter | (parent) | [02-media-iframe-components.md](./02-media-iframe-components.md#1-file-upload-iframe) |
+| File Upload iframe — image crop dialog + aspect ratio toolbar | (parent) | [02-media-iframe-components.md](./02-media-iframe-components.md#crop-flow) |
+| File Selector dialog iframe — scoped folder path + selection callback | (parent) | [02-media-iframe-components.md](./02-media-iframe-components.md#2-file-selector-iframe) |
+| Media Viewer iframe — view / edit modes | (parent) | [02-media-iframe-components.md](./02-media-iframe-components.md#3-media-viewer-iframe) |
+| Full Media Dialog iframe — toolbar + navigation | (parent) | [02-media-iframe-components.md](./02-media-iframe-components.md#4-full-media-dialog-iframe) |
+| `@webonone/media-embed` contracts | (parent) | [03-media-embed-package.md](./03-media-embed-package.md) |

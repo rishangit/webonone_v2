@@ -198,17 +198,48 @@ Manual QA matrix:
 
 ---
 
+## Phase 8 — WebOnOne profile image demo (2 days)
+
+| Task | Detail |
+|------|--------|
+| 200×200 viewer embed with user profile image | `MediaDemoPage`, `MediaViewerEmbed` |
+| Double-click view/edit toggle; selector at `/root/users/{userId}` | WebOnOne consumer |
+| Device upload from demo page | `MediaUploadDialogModal` |
+
+**Exit criteria:** First section on `/demo/media` works end-to-end.
+
+---
+
+## Phase 9 — Library embed demos (1 day)
+
+| Task | Detail |
+|------|--------|
+| `LibraryEmbedDemos` on library page | viewer, upload, selector buttons |
+| Preview last selection | 200×200 thumbnail |
+
+**Exit criteria:** `LibraryPage` demonstrates all three surfaces.
+
+---
+
+## Phase 10 — Media app shell + component showcase (2–3 days)
+
+| Task | Detail |
+|------|--------|
+| `AppShell` + left nav + header avatar (`avatarUrl`) | `AppLayout`, nav config |
+| `/components` showcase page | view/edit toggle, centered edit icon, profile-folder selector |
+| Selector upload + 1:1 crop in selector embed | `SelectorPage` |
+| `ensureFolderPath` for `/root/users/{id}/profile` | `mediaApi.ts` |
+| Upload + selector sections at `/root` | `ComponentShowcasePage` |
+
+**Exit criteria:** Logged-in Media app shows avatar in header; Components page meets [09-media-component-showcase.md](./09-media-component-showcase.md).
+
+---
+
 ## ClickUp subtask traceability
 
-| Subtask | Phase |
-|---------|-------|
-| Create feature branch for Spec 1.4.0 | Phase 0 |
-| Write Spec 1.4.0 documentation | Phase 0 ✅ |
-| `@webonone/media-embed` contracts | Phase 1 |
-| File Upload — device + media type | Phase 2 |
-| File Upload — crop + ratios | Phase 2 |
-| File Selector — scoped path + callback | Phase 3 |
-| Media Viewer — view mode | Phase 4 |
-| Media Viewer — edit + selector | Phase 4 |
-| Full Media Dialog — embed + scoped root | Phase 5 |
-| Full Media Dialog — toolbar + navigation | Phase 5 |
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec 1.4.0 Media need to support the microservice | 86ey244jy | Phases 0–7 |
+| in weboneone media demo, first item | 86ey2a7wx | Phase 8 |
+| media project user should be able to show the each component | 86ey2aab9 | Phase 9 |
+| Media project header need to thave the google account image | 86ey2avdh | Phase 10 |

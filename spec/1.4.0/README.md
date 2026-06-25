@@ -35,6 +35,20 @@ Implementation branch: **`spec/1.4.0`**
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan (phases, paths, verification) |
 | [08-media-consumer-integration.md](./08-media-consumer-integration.md) | Consumer integration delta from 1.1.0 |
+| [09-media-component-showcase.md](./09-media-component-showcase.md) | Media app shell, header avatar, in-app component demos |
+
+## ClickUp traceability
+
+| Subtask | ID | Spec doc / phase |
+|---------|-----|------------------|
+| [User Story] Spec 1.4.0 Media need to support the microservice | 86ey244jy | All docs |
+| in weboneone media demo, first item | 86ey2a7wx | [08-media-consumer-integration.md](./08-media-consumer-integration.md) — WebOnOne profile viewer demo |
+| media project user should be able to show the each component | 86ey2aab9 | [02-media-iframe-components.md](./02-media-iframe-components.md), `LibraryEmbedDemos` |
+| Media project header need to thave the google account image | 86ey2avdh | [09-media-component-showcase.md](./09-media-component-showcase.md) |
+
+## Revision history
+
+- **2026-06-25** — Added subtask `86ey2avdh` (app shell, header avatar, `/components` showcase); synced ClickUp traceability to current subtask inventory.
 
 ## Inherited from earlier specs
 
