@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { Area, Point } from 'react-easy-crop'
+import Cropper from 'react-easy-crop'
+import { Crop } from 'lucide-react'
 import type { CropAspectPreset } from '@webonone/media-embed'
-import { Button, CustomDialog } from '@webonone/ui-kit'
+import { Button, CustomDialog, Slider } from '@webonone/ui-kit'
+import 'react-easy-crop/react-easy-crop.css'
 
 const ASPECT_PRESETS: { label: CropAspectPreset; ratio: number | null }[] = [
   { label: '1:1', ratio: 1 },
@@ -16,63 +20,53 @@ interface ImageCropDialogProps {
   open: boolean
   file: File | null
   defaultAspect?: CropAspectPreset
+  aspectPresets?: CropAspectPreset[]
   onConfirm: (croppedFile: File) => void
   onCancel: () => void
 }
 
-function loadImage(file: File): Promise<HTMLImageElement> {
+function getAspectRatio(preset: CropAspectPreset): number | undefined {
+  const ratio = ASPECT_PRESETS.find((p) => p.label === preset)?.ratio
+  return ratio ?? undefined
+}
+
+function createImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      resolve(img)
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('Failed to load image'))
-    }
-    img.src = url
+    const image = new Image()
+    image.addEventListener('load', () => resolve(image))
+    image.addEventListener('error', () => reject(new Error('Failed to load image')))
+    image.crossOrigin = 'anonymous'
+    image.src = url
   })
 }
 
-function getAspectRatio(preset: CropAspectPreset): number | null {
-  return ASPECT_PRESETS.find((p) => p.label === preset)?.ratio ?? null
-}
-
-function cropImageToBlob(
-  img: HTMLImageElement,
-  aspect: CropAspectPreset,
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: Area,
+  mimeType: string,
 ): Promise<Blob> {
-  const ratio = getAspectRatio(aspect)
-  const sourceWidth = img.naturalWidth
-  const sourceHeight = img.naturalHeight
-
-  let cropWidth = sourceWidth
-  let cropHeight = sourceHeight
-
-  if (ratio !== null) {
-    if (sourceWidth / sourceHeight > ratio) {
-      cropHeight = sourceHeight
-      cropWidth = Math.round(sourceHeight * ratio)
-    } else {
-      cropWidth = sourceWidth
-      cropHeight = Math.round(sourceWidth / ratio)
-    }
-  }
-
-  const sx = Math.round((sourceWidth - cropWidth) / 2)
-  const sy = Math.round((sourceHeight - cropHeight) / 2)
-
+  const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
-  canvas.width = cropWidth
-  canvas.height = cropHeight
   const ctx = canvas.getContext('2d')
   if (!ctx) {
-    return Promise.reject(new Error('Canvas not supported'))
+    throw new Error('Canvas not supported')
   }
-  ctx.drawImage(img, sx, sy, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
 
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height,
+  )
+
+  const outputType = mimeType.startsWith('image/png') ? 'image/png' : 'image/jpeg'
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -82,99 +76,64 @@ function cropImageToBlob(
           reject(new Error('Failed to crop image'))
         }
       },
-      fileTypeFromName(img),
+      outputType,
       0.92,
     )
   })
-}
-
-function fileTypeFromName(img: HTMLImageElement): string {
-  return img.src.startsWith('data:image/png') ? 'image/png' : 'image/jpeg'
 }
 
 export function ImageCropDialog({
   open,
   file,
   defaultAspect = 'free',
+  aspectPresets,
   onConfirm,
   onCancel,
 }: ImageCropDialogProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [aspect, setAspect] = useState<CropAspectPreset>(defaultAspect)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [aspectPreset, setAspectPreset] = useState<CropAspectPreset>(defaultAspect)
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
+  const [mediaAspect, setMediaAspect] = useState(1)
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const visiblePresets = aspectPresets
+    ? ASPECT_PRESETS.filter((preset) => aspectPresets.includes(preset.label))
+    : ASPECT_PRESETS
+
   useEffect(() => {
-    setAspect(defaultAspect)
-  }, [defaultAspect, file])
+    setAspectPreset(defaultAspect)
+    setMediaAspect(1)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
+    setError(null)
+  }, [defaultAspect, file, open])
 
   useEffect(() => {
     if (!file || !open) {
-      setPreviewUrl(null)
+      setImageSrc(null)
       return
     }
     const url = URL.createObjectURL(file)
-    setPreviewUrl(url)
+    setImageSrc(url)
     return () => URL.revokeObjectURL(url)
   }, [file, open])
 
-  const drawPreview = useCallback(async () => {
-    if (!file || !canvasRef.current || !open) {
-      return
-    }
-    try {
-      const img = await loadImage(file)
-      const canvas = canvasRef.current
-      const maxSize = 480
-      const scale = Math.min(maxSize / img.naturalWidth, maxSize / img.naturalHeight, 1)
-      canvas.width = Math.round(img.naturalWidth * scale)
-      canvas.height = Math.round(img.naturalHeight * scale)
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels)
+  }, [])
 
-      const ratio = getAspectRatio(aspect)
-      if (ratio !== null) {
-        let overlayW = canvas.width
-        let overlayH = canvas.height
-        if (canvas.width / canvas.height > ratio) {
-          overlayH = canvas.height
-          overlayW = overlayH * ratio
-        } else {
-          overlayW = canvas.width
-          overlayH = overlayW / ratio
-        }
-        const x = (canvas.width - overlayW) / 2
-        const y = (canvas.height - overlayH) / 2
-        ctx.strokeStyle = 'hsl(var(--primary))'
-        ctx.lineWidth = 2
-        ctx.strokeRect(x, y, overlayW, overlayH)
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.clearRect(x, y, overlayW, overlayH)
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        ctx.strokeStyle = 'hsl(var(--primary))'
-        ctx.lineWidth = 2
-        ctx.strokeRect(x, y, overlayW, overlayH)
-      }
-    } catch {
-      setError('Failed to preview image')
-    }
-  }, [aspect, file, open])
-
-  useEffect(() => {
-    void drawPreview()
-  }, [drawPreview, previewUrl])
+  const cropAspect = getAspectRatio(aspectPreset) ?? mediaAspect
 
   async function handleConfirm() {
-    if (!file) return
+    if (!file || !imageSrc || !croppedAreaPixels) return
     setIsProcessing(true)
     setError(null)
     try {
-      const img = await loadImage(file)
-      const blob = await cropImageToBlob(img, aspect)
+      const blob = await getCroppedImg(imageSrc, croppedAreaPixels, file.type)
       const cropped = new File([blob], file.name, { type: blob.type || file.type })
       onConfirm(cropped)
     } catch (err) {
@@ -190,35 +149,83 @@ export function ImageCropDialog({
       onOpenChange={(next) => {
         if (!next) onCancel()
       }}
-      title="Crop image"
-      sizeWidth="medium"
+      title="Crop Image"
+      description="Drag to reposition. Use zoom and aspect ratio controls to adjust the crop area."
+      icon={<Crop className="h-5 w-5" />}
+      sizeWidth="small"
+      sizeHeight="large"
       footer={
         <>
           <Button type="button" variant="outline" onClick={onCancel} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button type="button" onClick={() => void handleConfirm()} disabled={isProcessing || !file}>
-            {isProcessing ? 'Processing…' : 'Apply crop'}
+          <Button
+            type="button"
+            onClick={() => void handleConfirm()}
+            disabled={isProcessing || !file || !croppedAreaPixels}
+          >
+            {isProcessing ? 'Processing…' : 'Crop & Upload'}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {ASPECT_PRESETS.map((preset) => (
-            <Button
-              key={preset.label}
-              type="button"
-              size="sm"
-              variant={aspect === preset.label ? 'default' : 'outline'}
-              onClick={() => setAspect(preset.label)}
-            >
-              {preset.label}
-            </Button>
-          ))}
+        {visiblePresets.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {visiblePresets.map((preset) => (
+              <Button
+                key={preset.label}
+                type="button"
+                size="sm"
+                variant={aspectPreset === preset.label ? 'default' : 'outline'}
+                onClick={() => setAspectPreset(preset.label)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
+        <div className="relative h-[400px] overflow-hidden rounded-md bg-muted/30">
+          {imageSrc ? (
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={cropAspect}
+              rotation={0}
+              minZoom={1}
+              maxZoom={3}
+              cropShape="rect"
+              zoomSpeed={1}
+              restrictPosition
+              keyboardStep={1}
+              style={{
+                cropAreaStyle: { border: '2px solid hsl(var(--primary))' },
+              }}
+              classes={{}}
+              mediaProps={{}}
+              cropperProps={{}}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+              onMediaLoaded={(mediaSize) => {
+                if (aspectPreset === 'free') {
+                  setMediaAspect(mediaSize.naturalWidth / mediaSize.naturalHeight)
+                }
+              }}
+            />
+          ) : null}
         </div>
-        <div className="flex justify-center">
-          <canvas ref={canvasRef} className="max-h-80 rounded-md border bg-muted/30" />
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">Zoom</p>
+          <Slider
+            min={1}
+            max={3}
+            step={0.05}
+            value={[zoom]}
+            onValueChange={(value) => setZoom(value[0] ?? 1)}
+            aria-label="Crop zoom"
+          />
         </div>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
