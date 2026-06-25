@@ -14,6 +14,22 @@ export function getMediaUploadUrl(): string {
   return `${getMediaOrigin()}/upload`
 }
 
+export function getMediaUploadDialogUrl(): string {
+  return `${getMediaOrigin()}/upload-dialog`
+}
+
+export function getMediaSelectorUrl(): string {
+  return `${getMediaOrigin()}/selector`
+}
+
+export function getMediaViewerUrl(): string {
+  return `${getMediaOrigin()}/viewer`
+}
+
+export function getMediaDialogUrl(): string {
+  return `${getMediaOrigin()}/dialog`
+}
+
 export function getMediaApiBase(): string {
   return import.meta.env.VITE_MEDIA_API_BASE_URL ?? DEFAULT_MEDIA_API
 }

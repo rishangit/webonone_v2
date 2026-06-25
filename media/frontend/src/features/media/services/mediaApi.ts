@@ -67,6 +67,10 @@ export async function uploadMediaBatch(
   })
 }
 
+export async function getMediaItem(id: string): Promise<{ item: MediaItemDto }> {
+  return apiClient(`/media/${id}`)
+}
+
 export async function deleteMediaItem(id: string): Promise<void> {
   await apiClient(`/media/${id}`, { method: 'DELETE' })
 }

@@ -1,6 +1,11 @@
 import {
   MEDIA_MESSAGE_TYPES,
+  type BuildMediaDialogUrlOptions,
   type BuildMediaEmbedUrlOptions,
+  type BuildMediaSelectorUrlOptions,
+  type BuildMediaUploadDialogUrlOptions,
+  type BuildMediaViewerUrlOptions,
+  type CropAspectPreset,
   type MediaCancelMessage,
   type MediaDeletedMessage,
   type MediaEmbedMessage,
@@ -9,7 +14,9 @@ import {
   type MediaItemDto,
   type MediaSelectionChangeMessage,
   type MediaSelectMessage,
+  type MediaTypePreset,
   type MediaUploadedMessage,
+  type MediaViewerChangedMessage,
   type MediaParentMessage,
   type MediaConfirmMessage,
   isMediaEmbedMessage,
@@ -18,7 +25,12 @@ import {
 export {
   MEDIA_MESSAGE_TYPES,
   isMediaEmbedMessage,
+  type BuildMediaDialogUrlOptions,
   type BuildMediaEmbedUrlOptions,
+  type BuildMediaSelectorUrlOptions,
+  type BuildMediaUploadDialogUrlOptions,
+  type BuildMediaViewerUrlOptions,
+  type CropAspectPreset,
   type MediaCancelMessage,
   type MediaConfirmMessage,
   type MediaDeletedMessage,
@@ -29,10 +41,29 @@ export {
   type MediaParentMessage,
   type MediaSelectionChangeMessage,
   type MediaSelectMessage,
+  type MediaTypePreset,
   type MediaUploadedMessage,
+  type MediaViewerChangedMessage,
 }
 
-export { buildMediaEmbedUrl, isMediaParentMessage, sendMediaConfirm, sendMediaInit } from './embedUrl'
+export {
+  buildMediaDialogUrl,
+  buildMediaEmbedUrl,
+  buildMediaSelectorUrl,
+  buildMediaUploadDialogUrl,
+  buildMediaViewerUrl,
+  isMediaParentMessage,
+  sendMediaConfirm,
+  sendMediaInit,
+} from './embedUrl'
 export { useMediaEmbedMessage } from './useMediaEmbedMessage'
 export { useMediaPickerFrame } from './useMediaPickerFrame'
+export { useMediaUploadDialogFrame } from './useMediaUploadDialogFrame'
+export { useMediaSelectorFrame } from './useMediaSelectorFrame'
+export { useMediaViewerFrame } from './useMediaViewerFrame'
+export { useMediaDialogFrame } from './useMediaDialogFrame'
 export { MediaPickerFrame } from './MediaPickerFrame'
+export { MediaUploadDialogFrame } from './MediaUploadDialogFrame'
+export { MediaSelectorFrame } from './MediaSelectorFrame'
+export { MediaViewerFrame } from './MediaViewerFrame'
+export { MediaDialogFrame } from './MediaDialogFrame'

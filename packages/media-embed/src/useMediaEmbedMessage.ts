@@ -8,6 +8,7 @@ import {
   type MediaSelectionChangeMessage,
   type MediaSelectMessage,
   type MediaUploadedMessage,
+  type MediaViewerChangedMessage,
 } from './types'
 
 export interface UseMediaEmbedMessageOptions {
@@ -17,10 +18,19 @@ export interface UseMediaEmbedMessageOptions {
   onUploaded?: (message: MediaUploadedMessage) => void
   onDeleted?: (message: MediaDeletedMessage) => void
   onCancel?: (message: MediaCancelMessage) => void
+  onViewerChanged?: (message: MediaViewerChangedMessage) => void
 }
 
 export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void {
-  const { mediaOrigin, onSelect, onSelectionChange, onUploaded, onDeleted, onCancel } = options
+  const {
+    mediaOrigin,
+    onSelect,
+    onSelectionChange,
+    onUploaded,
+    onDeleted,
+    onCancel,
+    onViewerChanged,
+  } = options
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
@@ -48,6 +58,9 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
         case MEDIA_MESSAGE_TYPES.CANCEL:
           onCancel?.(message)
           break
+        case MEDIA_MESSAGE_TYPES.VIEWER_CHANGED:
+          onViewerChanged?.(message)
+          break
         default:
           break
       }
@@ -55,5 +68,5 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [mediaOrigin, onCancel, onDeleted, onSelect, onSelectionChange, onUploaded])
+  }, [mediaOrigin, onCancel, onDeleted, onSelect, onSelectionChange, onUploaded, onViewerChanged])
 }
