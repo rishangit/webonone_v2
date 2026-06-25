@@ -45,9 +45,11 @@ Implementation branch: **`spec/1.4.0`**
 | in weboneone media demo, first item | 86ey2a7wx | [08-media-consumer-integration.md](./08-media-consumer-integration.md) — WebOnOne profile viewer demo |
 | media project user should be able to show the each component | 86ey2aab9 | [02-media-iframe-components.md](./02-media-iframe-components.md), `LibraryEmbedDemos` |
 | Media project header need to thave the google account image | 86ey2avdh | [09-media-component-showcase.md](./09-media-component-showcase.md) |
+| image crop implemntation | 86ey2dwgh | [02-media-iframe-components.md#imagecropdialog](./02-media-iframe-components.md#imagecropdialog) — Phase 11 |
 
 ## Revision history
 
+- **2026-06-25** — Added subtask `86ey2dwgh` (`ImageCropDialog` with `react-easy-crop`, zoom slider, aspect presets); synced traceability.
 - **2026-06-25** — Added subtask `86ey2avdh` (app shell, header avatar, `/components` showcase); synced ClickUp traceability to current subtask inventory.
 
 ## Inherited from earlier specs

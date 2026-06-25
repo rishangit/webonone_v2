@@ -243,3 +243,18 @@ Manual QA matrix:
 | in weboneone media demo, first item | 86ey2a7wx | Phase 8 |
 | media project user should be able to show the each component | 86ey2aab9 | Phase 9 |
 | Media project header need to thave the google account image | 86ey2avdh | Phase 10 |
+| image crop implemntation | 86ey2dwgh | Phase 11 |
+
+---
+
+## Phase 11 — ImageCropDialog (`react-easy-crop`) (1–2 days)
+
+| Task | Detail |
+|------|--------|
+| `ImageCropDialog` shell | `CustomDialog` — title "Crop Image", `sizeWidth="small"`, `sizeHeight="large"`, footer Cancel + Crop & Upload |
+| Crop UI | `react-easy-crop` `<Cropper>` in 400px-tall container; drag reposition; zoom slider 1×–3× |
+| Aspect presets | Button toolbar: `1:1`, `1:2`, `2:1`, `3:2`, `4:3`, `16:9`, `free` |
+| Accent crop border | Primary theme color on crop rectangle |
+| Consumers | `UploadDialogPage`, `SelectorPage` (1:1 default in selector upload flow) |
+
+**Exit criteria:** Crop dialog matches [02-media-iframe-components.md#imagecropdialog](./02-media-iframe-components.md#imagecropdialog); upload and selector flows produce cropped blob before upload.

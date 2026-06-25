@@ -44,17 +44,55 @@ Consumer opens iframe (modal or inline) when user clicks "Upload file" in the ho
 When `crop=true` (only valid with `mediaType=image` or `accept` containing images):
 
 1. User selects image file.
-2. **Crop dialog** opens (`CustomDialog` from UI Kit) with canvas cropper.
-3. **Toolbar** exposes aspect ratio presets: `1:1`, `1:2`, `2:1`, `3:2`, `4:3`, `16:9`, `free`.
-4. User confirms crop → cropped blob uploaded via existing `POST /api/v1/media/upload`.
+2. **`ImageCropDialog`** opens (see below).
+3. User adjusts crop area and aspect ratio, then confirms.
+4. Cropped blob uploaded via existing `POST /api/v1/media/upload`.
 5. Parent receives `webonone:media:uploaded` with final `MediaItemDto`.
 
 Crop dimensions are included in upload metadata (`width`, `height`) when available.
 
+### ImageCropDialog
+
+**Path:** `media/frontend/src/features/media/components/ImageCropDialog.tsx`
+
+Shared crop dialog used by upload-dialog and selector upload flows.
+
+#### A. Shell — `CustomDialog`
+
+| Property | Value |
+|----------|-------|
+| Title | `Crop Image` |
+| `sizeWidth` | `small` (~50% viewport width) |
+| `sizeHeight` | `large` (~75% viewport height) |
+| Icon | Lucide `Crop` (`w-5 h-5`) |
+| Footer | **Cancel** (outline) + **Crop & Upload** (primary) |
+
+`CustomDialog` provides fixed full-screen overlay (`bg-black/50 backdrop-blur-sm`), centered panel with header, scrollable body, and footer.
+
+#### B. Crop UI — `react-easy-crop`
+
+| Requirement | Detail |
+|-------------|--------|
+| Container | 400px-tall crop area |
+| `<Cropper>` | `image` from file data URL; controlled `crop`, `zoom`, `aspect` state |
+| Interaction | Drag to reposition crop window |
+| Zoom | UI Kit `Slider`, range **1×–3×** |
+| Crop border | Accent / primary theme color on crop rectangle (`cropAreaStyle`) |
+| Aspect presets | Optional `aspectPresets` prop; when provided, render preset buttons (`1:1`, `1:2`, `2:1`, `3:2`, `4:3`, `16:9`, `free`); active preset highlighted |
+
+On confirm, export cropped region to `File` blob (JPEG 0.92) and invoke `onConfirm`.
+
+#### Consumers
+
+| Surface | Default aspect | Trigger |
+|---------|----------------|---------|
+| `/upload-dialog` | `defaultCropAspect` query or `free` | `crop=true` + image file selected |
+| `/selector` (upload area) | `1:1` | Image file selected in selector upload zone |
+
 ### UI notes
 
 - Use `UploadDropzone` from existing Media components where possible.
-- Crop toolbar uses UI Kit `Button` group for ratio selection; active ratio highlighted with theme tokens.
+- Lazy-load crop dialog / `react-easy-crop` where bundle size matters.
 - Show upload progress and error states inline; errors do not postMessage until user retries or cancels.
 
 ---
