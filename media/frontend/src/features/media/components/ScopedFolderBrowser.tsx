@@ -71,7 +71,7 @@ export function ScopedFolderBrowser({
   const [items, setItems] = useState<MediaItemDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<BrowserViewMode>('list')
+  const [viewMode, setViewMode] = useState<BrowserViewMode>('thumb')
   const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [previewItem, setPreviewItem] = useState<MediaItemDto | null>(null)
   const [deleteFileTarget, setDeleteFileTarget] = useState<MediaItemDto | null>(null)

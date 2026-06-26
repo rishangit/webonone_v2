@@ -8,6 +8,7 @@ import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirec
 import { mainNav } from '@/features/shell/config/navItems'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
+import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 
 export function AppLayout() {
   const navigate = useNavigate()
@@ -16,6 +17,8 @@ export function AppLayout() {
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const preferences = useAppSelector((s) => s.systemTheme.preferences)
   const { redirect, error: profileError, clearError } = useServiceRedirect()
+
+  useIdentityUserRefresh()
 
   function handleLogout() {
     dispatch(authActions.logout())

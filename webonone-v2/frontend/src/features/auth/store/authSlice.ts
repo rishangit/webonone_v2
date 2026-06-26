@@ -37,6 +37,11 @@ export const authSlice = createSlice({
       state.user = action.payload.user
       persistAuth(state)
     },
+    userProfileUpdated(state, action: PayloadAction<UserProfile>) {
+      if (!state.accessToken) return
+      state.user = action.payload
+      persistAuth(state)
+    },
     logout(state) {
       state.accessToken = null
       state.user = null

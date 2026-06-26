@@ -17,11 +17,6 @@ export function HomePage() {
       <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.displayName ?? 'User'}!</h1>
       <p className="mt-2 text-muted-foreground">You are signed in to WebOnOne.</p>
       <p className="mt-4 text-sm text-muted-foreground">{apiStatus}</p>
-      <p className="mt-2">
-        <a href="/demo/media" className="text-sm text-primary underline-offset-4 hover:underline">
-          Open media picker demo
-        </a>
-      </p>
     </div>
   )
 }
