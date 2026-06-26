@@ -31,14 +31,20 @@ Implementation branch: **`spec/1.5.0`**
 | [01-overview.md](./01-overview.md) | Goals, scope, glossary, success criteria |
 | [02-identity-profile-page.md](./02-identity-profile-page.md) | View/edit modes, avatar selector, crop rules |
 | [03-webonone-cleanup.md](./03-webonone-cleanup.md) | Remove media demo from core product |
+| [04-profile-return-sync.md](./04-profile-return-sync.md) | WebOnOne header avatar refresh after Identity profile save |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
+
+## Revision history
+
+- **1.5.0-delta** — Subtask `86ey2nkuy`: WebOnOne header avatar refresh after profile save; Media selector default thumb view.
 
 ## ClickUp traceability
 
 | Subtask | ID | Spec doc / phase |
 |---------|-----|------------------|
 | [User Story] Spec No 1.5.0 improve the profile page | 86ey2n76k | All docs |
+| When change the profile image core header image is not update to the changed image | 86ey2nkuy | [07](./07-implementation-plan.md) Phase 5; [04](./04-profile-return-sync.md) |
 
 ## Inherited from earlier specs
 

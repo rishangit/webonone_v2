@@ -69,6 +69,33 @@ git checkout -b spec/1.5.0
 
 ---
 
+## Phase 5 — Profile return sync + selector thumb default (0.5 day)
+
+**Goal:** Fix stale WebOnOne header avatar after Identity profile save; default Media selector to thumb view.
+
+| Task | Detail |
+|------|--------|
+| `fetchIdentityUser` + refresh hook | `webonone-v2/frontend/src/features/auth/` |
+| `userProfileUpdated` in auth slice | Merge fresh `avatarUrl` into persisted auth |
+| Wire hook in `AppLayout` | Mount + `visibilitychange` |
+| Remove stale HomePage demo link | `HomePage.tsx` |
+| `ScopedFolderBrowser` default `thumb` | `media/frontend/.../ScopedFolderBrowser.tsx` |
+
+**Exit criteria:** Header avatar updates after profile edit return; selector opens in thumb view.
+
+See [04-profile-return-sync.md](./04-profile-return-sync.md).
+
+---
+
+## Fixes required (subtask 86ey2nkuy)
+
+| Issue | Fix |
+|-------|-----|
+| Core header shows old avatar after profile image change | Refresh Identity `GET /me` on WebOnOne focus/mount |
+| Media selector shows list view by default | Default `viewMode` to `thumb` in `ScopedFolderBrowser` |
+
+---
+
 ## Phase 4 — Verification (0.5 day)
 
 ```bash
@@ -86,6 +113,8 @@ Manual QA:
 | Edit → image | Selector at `/root/users/{id}`, 1:1 crop only |
 | Save | `avatarUrl` persisted |
 | WebOnOne nav | No Media demo |
+| Profile return | WebOnOne header avatar matches saved image |
+| Selector default view | Thumb/grid, not list |
 
 ---
 
@@ -107,6 +136,11 @@ Manual QA:
 
 - [ ] Media demo route and nav removed
 - [ ] No dead imports
+- [ ] Header avatar refreshes after Identity profile edit (GET /me on focus)
+
+### Media (delta)
+
+- [ ] Selector `ScopedFolderBrowser` defaults to thumb view
 
 ### Security
 
@@ -121,3 +155,4 @@ Manual QA:
 | Subtask | ID | Phase |
 |---------|-----|-------|
 | [User Story] Spec No 1.5.0 improve the profile page | 86ey2n76k | Phases 1–4 |
+| When change the profile image core header image is not update to the changed image | 86ey2nkuy | Phase 5 |

@@ -11,6 +11,8 @@ The **Identity profile page** becomes a polished account settings experience: us
 3. **Avatar via Media** — Selector scoped to `folderPath=/root/users/{userId}`; `selectorUpload=true` with **1:1 crop only** (user cannot change aspect ratio).
 4. **Persist avatar** — On image selection, set pending `avatarUrl` from Media item URL; include in profile save (`PATCH /me`).
 5. **WebOnOne cleanup** — Remove `Media demo` nav item and `/demo/media` route (and orphaned demo-only components if unused elsewhere).
+6. **Profile return sync** — After editing profile in Identity and returning to WebOnOne, the shell header avatar reflects the saved `avatarUrl`.
+7. **Selector thumb default** — Media file selector embed shows **thumbnail grid** view by default (not list).
 
 ## Scope (1.5.0)
 
@@ -23,6 +25,8 @@ The **Identity profile page** becomes a polished account settings experience: us
 - Media selector query param `cropAspectPresets` (comma-separated) to lock crop UI to allowed ratios.
 - `packages/media-embed` — `cropAspectPresets` on `BuildMediaSelectorUrlOptions` + URL builder.
 - WebOnOne — remove nav entry, route, `MediaDemoPage`, and demo-only embed wrappers if nothing else imports them.
+- WebOnOne — refresh Identity user profile (`GET /me`) when app regains focus or mounts so header avatar updates after profile edit.
+- Media — `ScopedFolderBrowser` default `viewMode` is `thumb` in selector embed.
 
 ### Out of scope (1.5.0)
 
@@ -48,9 +52,12 @@ The **Identity profile page** becomes a polished account settings experience: us
 4. Selector embed uses `folderPath=/root/users/{userId}`, `accept=image/*`, `selectorUpload=true`, `cropAspectPresets=1:1`.
 5. WebOnOne has no `Media demo` in navigation; `/demo/media` returns 404 or redirects to home.
 6. `npm run type-check -w identity-root` and `npm run type-check -w webonone-v2-root` pass.
+7. Return from Identity profile to WebOnOne shows updated avatar in `AppShell` header without re-login.
+8. Media selector file browser opens in thumb/grid view by default.
 
 ## Subtask mapping (ClickUp)
 
 | Subtask | ID | Spec section |
 |---------|-----|----------------|
 | Parent — profile view/edit + media selector + remove demo | 86ey2n76k | [02](./02-identity-profile-page.md), [03](./03-webonone-cleanup.md) |
+| Header avatar stale after profile image change | 86ey2nkuy | [04](./04-profile-return-sync.md), [07](./07-implementation-plan.md) Phase 5 |
