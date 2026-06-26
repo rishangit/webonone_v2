@@ -47,9 +47,11 @@ Implementation branch: **`spec/1.4.0`**
 | Media project header need to thave the google account image | 86ey2avdh | [09-media-component-showcase.md](./09-media-component-showcase.md) |
 | image crop implemntation | 86ey2dwgh | [02-media-iframe-components.md#imagecropdialog](./02-media-iframe-components.md#imagecropdialog) — Phase 11 |
 | crop image window need to be the same size as the select image dialog window | 86ey2e5bb | [02-media-iframe-components.md](./02-media-iframe-components.md) — Phase 12 (crop dialog sizing + selector toolbar/views) |
+| remove the header tite 'file selcotor' | 86ey2en3d | [02-media-iframe-components.md](./02-media-iframe-components.md) — Phase 13 (selector header bar, integrated drop zone, folder menus) |
 
 ## Revision history
 
+- **2026-06-25** — Added subtask `86ey2en3d` (selector header: breadcrumb left, toolbar right with upload; list area as drop zone; folder/file 3-dot menus; scrollable list; compact thumbs).
 - **2026-06-25** — Added subtask `86ey2e5bb` (crop dialog matches selector dialog size, radio aspect presets, selector icon toolbar, list/thumb views, item menus, image preview).
 - **2026-06-25** — Added subtask `86ey2dwgh` (`ImageCropDialog` with `react-easy-crop`, zoom slider, aspect presets); synced traceability.
 - **2026-06-25** — Added subtask `86ey2avdh` (app shell, header avatar, `/components` showcase); synced ClickUp traceability to current subtask inventory.

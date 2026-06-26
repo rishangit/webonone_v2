@@ -245,6 +245,23 @@ Manual QA matrix:
 | Media project header need to thave the google account image | 86ey2avdh | Phase 10 |
 | image crop implemntation | 86ey2dwgh | Phase 11 |
 | crop image window need to be the same size as the select image dialog window | 86ey2e5bb | Phase 12 |
+| remove the header tite 'file selcotor' | 86ey2en3d | Phase 13 |
+
+---
+
+## Phase 13 — Selector header bar + integrated drop zone (1 day)
+
+| Task | Detail |
+|------|--------|
+| Remove title | No “File selector” heading in embed or standalone selector (`chromeless` / headerless layout) |
+| Header bar | Breadcrumb on **left**; icon toolbar on **right** — New folder, List, Thumb, Upload |
+| Drop zone | Remove separate `UploadDropzone` strip; list/thumb area accepts drag-and-drop + file input; subtle hint text when empty |
+| Folder menus | 3-dot menu on folder rows (list + thumb): Open, Delete (when empty) |
+| File menus | Existing View / Delete on file rows (list + thumb) |
+| Scroll | List and thumb containers use `overflow-auto` / `scrollbar-themed` when content exceeds viewport |
+| Thumb size | Smaller responsive thumbs (`grid-cols-3` … `xl:grid-cols-6`); compact card padding |
+
+**Exit criteria:** Selector embed and `/components` showcase match subtask `86ey2en3d`; more vertical space for file list; upload via header icon or drop on list area.
 
 ---
 

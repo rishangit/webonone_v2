@@ -123,13 +123,17 @@ Consumer opens when user needs to choose an existing file from Media storage (e.
 
 | Requirement | Detail |
 |-------------|--------|
-| Chrome | No “File selector” title in embed (`chromeless`); toolbar sits in file area |
-| Icon toolbar | **New folder** (`FolderPlus`) opens small `CustomDialog` for name → `POST /api/v1/folders`; **List** / **Grid** toggle for view mode |
-| List view | `ItemList` glass rows per [item-list skill](../../../.cursor/skills/item-list/SKILL.md): name, formatted size, modified date (`updatedAt`); `ItemListMenu` → View image, Delete |
-| Thumb view | Grid max **4 columns**; 1:1 aspect thumb; name, size, modified date below card; same 3-dot menu |
+| Chrome | No “File selector” title (`chromeless`); single **header bar** — breadcrumb **left**, icon toolbar **right** |
+| Header toolbar | **New folder** (`FolderPlus`); **List** / **Grid** toggle; **Upload** (`Upload` icon) opens file input — same flow as prior drop zone (image → crop when enabled) |
+| Drop zone | **No separate drop strip.** List/thumb container is the drop target; subtle hint (“Drag files here or use Upload”) when folder is empty |
+| List view | `ItemList` glass rows per [item-list skill](../../../.cursor/skills/item-list/SKILL.md): name, size, modified date; **folders and files** each have `ItemListMenu` |
+| Folder menu | Open (navigate), Delete empty folder (`DELETE /api/v1/folders/:id`) |
+| File menu | View image (images only), Delete file |
+| Thumb view | Responsive grid (`grid-cols-3` … `xl:grid-cols-6`); compact 1:1 thumbs; name, size, date below; 3-dot menu on folders and files |
+| Scroll | File/folder area scrolls when content overflows (`overflow-auto`, themed scrollbar) |
 | View image | Large `CustomDialog` with full image preview (non-destructive) |
-| Folders | `Folder` icon; single-click navigates; breadcrumb updates via `useScopedNavigation` |
-| Delete | `MediaDeleteDialog` + `DELETE /api/v1/media/:id`; refresh list |
+| Folders | `Folder` icon; single-click navigates; breadcrumb in header updates via `useScopedNavigation` |
+| Delete | `MediaDeleteDialog` for files; folder delete when empty; refresh list after |
 
 ### Return value to consumer
 
