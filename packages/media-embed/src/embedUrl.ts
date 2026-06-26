@@ -59,6 +59,9 @@ export function buildMediaSelectorUrl(options: BuildMediaSelectorUrlOptions): st
   if (options.selectorUpload) {
     url.searchParams.set('selectorUpload', 'true')
   }
+  if (options.cropAspectPresets?.length) {
+    url.searchParams.set('cropAspectPresets', options.cropAspectPresets.join(','))
+  }
   return url.toString()
 }
 

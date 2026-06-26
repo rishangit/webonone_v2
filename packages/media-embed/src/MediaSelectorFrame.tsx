@@ -23,6 +23,7 @@ export function MediaSelectorFrame({
   maxFiles,
   maxSizeBytes,
   selectorUpload,
+  cropAspectPresets,
   ...rest
 }: SelectorFrameProps) {
   return (
@@ -39,6 +40,7 @@ export function MediaSelectorFrame({
         maxFiles,
         maxSizeBytes,
         selectorUpload,
+        cropAspectPresets,
       }}
     />
   )

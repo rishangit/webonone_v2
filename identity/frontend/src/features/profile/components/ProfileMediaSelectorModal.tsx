@@ -1,29 +1,28 @@
 import { useRef } from 'react'
 import { MediaSelectorFrame } from '@webonone/media-embed'
-import { CustomDialog, Button } from '@webonone/ui-kit'
-import { useThemeBridge } from '@/shared/theme/ThemeProviderBridge'
+import { Button, CustomDialog } from '@webonone/ui-kit'
 import {
-  buildDemoMediaScope,
+  buildProfileFolderPath,
+  buildProfileMediaScope,
   getMediaOrigin,
   getMediaSelectorUrl,
 } from '../utils/mediaConfig'
 
-interface MediaSelectorModalProps {
+interface ProfileMediaSelectorModalProps {
   isOpen: boolean
   accessToken: string | null
-  folderPath: string
-  onClose: () => void
+  userId: string
   openKey: number
+  onClose: () => void
 }
 
-export function MediaSelectorModal({
+export function ProfileMediaSelectorModal({
   isOpen,
   accessToken,
-  folderPath,
-  onClose,
+  userId,
   openKey,
-}: MediaSelectorModalProps) {
-  const { broadcastToIframes } = useThemeBridge()
+  onClose,
+}: ProfileMediaSelectorModalProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   return (
@@ -32,7 +31,7 @@ export function MediaSelectorModal({
       onOpenChange={(open) => {
         if (!open) onClose()
       }}
-      title="Select file"
+      title="Select profile photo"
       sizeWidth="medium"
       sizeHeight="large"
       className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
@@ -52,12 +51,13 @@ export function MediaSelectorModal({
         mediaOrigin={getMediaOrigin()}
         baseUrl={getMediaSelectorUrl()}
         parentOrigin={window.location.origin}
-        scope={buildDemoMediaScope()}
-        folderPath={folderPath}
+        scope={buildProfileMediaScope(userId)}
+        folderPath={buildProfileFolderPath(userId)}
         mode="single"
         accept="image/*"
+        selectorUpload
+        cropAspectPresets={['1:1']}
         className="h-full min-h-0 w-full border-0 bg-transparent"
-        onLoad={broadcastToIframes}
       />
     </CustomDialog>
   )

@@ -3,7 +3,6 @@ import { AppLayout } from '@/app/AppLayout'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { HomePage } from '@/features/home/pages/HomePage'
-import { MediaDemoPage } from '@/features/media/pages/MediaDemoPage'
 import { SystemThemePage } from '@/features/settings/system-theme/pages/SystemThemePage'
 import { useAppSelector } from '@/app/store/hooks'
 
@@ -29,7 +28,6 @@ export function App() {
           }
         >
           <Route index element={<HomePage />} />
-          <Route path="demo/media" element={<MediaDemoPage />} />
           <Route path="settings/system-theme" element={<SystemThemePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

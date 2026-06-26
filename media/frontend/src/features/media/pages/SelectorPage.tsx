@@ -134,7 +134,8 @@ export function SelectorPage() {
       <ImageCropDialog
         open={cropOpen}
         file={pendingFile}
-        defaultAspect="1:1"
+        defaultAspect={embed.cropAspectPresets?.[0] ?? '1:1'}
+        aspectPresets={embed.cropAspectPresets ?? undefined}
         onConfirm={(file) => void handleCropConfirm(file)}
         onCancel={() => {
           setCropOpen(false)

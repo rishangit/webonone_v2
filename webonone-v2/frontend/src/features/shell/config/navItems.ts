@@ -1,9 +1,8 @@
-import { Home, Image, Palette, Settings } from 'lucide-react'
+import { Home, Palette, Settings } from 'lucide-react'
 import type { NavConfigItem } from '@webonone/ui-kit'
 
 export const mainNav: NavConfigItem[] = [
   { type: 'item', to: '/', label: 'Home', icon: Home },
-  { type: 'item', to: '/demo/media', label: 'Media demo', icon: Image },
   {
     type: 'group',
     label: 'Settings',

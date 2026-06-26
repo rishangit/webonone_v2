@@ -23,6 +23,7 @@ export interface EmbedModeState {
   viewerMode: ViewerMode
   selectable: boolean
   enableSelectorUpload: boolean
+  cropAspectPresets: CropAspectPreset[] | null
 }
 
 function parseMediaType(value: string | null): MediaTypePreset | null {
@@ -38,6 +39,20 @@ function parseCropAspect(value: string | null): CropAspectPreset {
     return value as CropAspectPreset
   }
   return 'free'
+}
+
+function parseCropAspectPresets(value: string | null): CropAspectPreset[] | null {
+  if (!value?.trim()) {
+    return null
+  }
+  const allowed: CropAspectPreset[] = ['1:1', '1:2', '2:1', '3:2', '4:3', '16:9', 'free']
+  const presets = value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry): entry is CropAspectPreset =>
+      allowed.includes(entry as CropAspectPreset),
+    )
+  return presets.length ? presets : null
 }
 
 export function mediaTypeToAccept(mediaType: MediaTypePreset | null, acceptOverride: string): string {
@@ -80,6 +95,7 @@ export function useEmbedMode(): EmbedModeState {
     const viewerMode: ViewerMode = searchParams.get('mode') === 'edit' ? 'edit' : 'view'
     const selectable = searchParams.get('selectable') === 'true'
     const enableSelectorUpload = searchParams.get('selectorUpload') === 'true'
+    const cropAspectPresets = parseCropAspectPresets(searchParams.get('cropAspectPresets'))
 
     return {
       isEmbed,
@@ -98,6 +114,7 @@ export function useEmbedMode(): EmbedModeState {
       viewerMode,
       selectable,
       enableSelectorUpload,
+      cropAspectPresets,
     }
   }, [searchParams])
 }

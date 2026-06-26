@@ -179,7 +179,7 @@ export function ImageCropDialog({
       }
     >
       <div className="flex h-full min-h-0 flex-col gap-3">
-        {visiblePresets.length > 0 ? (
+        {visiblePresets.length > 1 ? (
           <RadioGroup
             value={aspectPreset}
             onValueChange={(value) => setAspectPreset(value as CropAspectPreset)}

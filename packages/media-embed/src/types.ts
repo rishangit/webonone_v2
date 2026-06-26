@@ -104,6 +104,7 @@ export interface BuildMediaSelectorUrlOptions extends BuildMediaEmbedUrlOptions 
   folderPath: string
   mode?: MediaEmbedMode
   selectorUpload?: boolean
+  cropAspectPresets?: CropAspectPreset[]
 }
 
 export interface BuildMediaViewerUrlOptions {
