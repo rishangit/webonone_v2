@@ -1,7 +1,7 @@
 ---
 description: Implementation plan for spec 1.6.0 — Company registration with admin approval and platform roles
 alwaysApply: false
-globs: company/**, webonone-v2/**, packages/media-embed/**
+globs: company/**, webonone-v2/**, ui-kit/package/**, packages/media-embed/**
 ---
 
 # Implementation plan — Spec 1.6.0
@@ -149,13 +149,33 @@ Logo scope: `webonone:company:pending:{userId}`. Media type: `image`, optional 1
 
 ---
 
+## Phase 7 — Registration wizard polish
+
+**Goal:** Subtask 86ey2punp — remove logo, fix overlay z-index, icon nav, country/phone controls, optional address fields.
+
+**Exit criteria:** Wizard usable in dialog; UI Kit country + phone inputs; state/postal optional.
+
+| Task | Paths |
+|------|-------|
+| Optional `logoUrl`; remove logo from wizard | `company/backend/`, `webonone-v2/frontend/.../basic/` |
+| Select/Popover z-index `z-[110]` | `ui-kit/package/src/components/Select.tsx`, `Popover.tsx` |
+| Export `CountrySelect` | `ui-kit/package/src/components/CountrySelect.tsx`, `index.ts` |
+| Icon Previous/Next footer | `RegisterCompanyDialog.tsx` |
+| Country + PhoneInput on step 2 | `RegisterWizardStepLocationContact.tsx` |
+| Optional state/postal schemas | FE + `webonone-v2/backend` + `company/backend` schemas |
+
+**Verify:** type-check company + webonone; manual wizard in dialog
+
+---
+
 ## ClickUp traceability
 
 | ClickUp item | ID | Phase |
 |--------------|-----|-------|
-| Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 1–5 |
+| Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 1–6 |
 | Core project need to have the user roles | 86ey2p61f | Phases 1–5 |
 | comapny registration need to improve | 86ey2pmp2 | Phase 6 |
+| comapny regitration improvements | 86ey2punp | Phase 7 |
 
 ---
 
