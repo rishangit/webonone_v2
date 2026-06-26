@@ -1,0 +1,120 @@
+---
+description: Implementation plan for spec 1.5.0 — Identity profile view/edit with Media avatar selector
+alwaysApply: false
+globs: identity/**, media/**, packages/media-embed/**, webonone-v2/**
+---
+
+# Implementation plan — Spec 1.5.0
+
+## Summary
+
+Spec 1.5.0 delivers **view/edit modes** on the Identity `/profile` page (default view), **Media selector embed** for profile images at `/root/users/{userId}` with **locked 1:1 crop**, and **removes the WebOnOne media demo** route and nav link. Work spans **`identity/`** (profile UX + Media consumer), **`media/`** + **`packages/media-embed/`** (selector `cropAspectPresets`), and **`webonone-v2/`** (demo cleanup). See [01-overview.md](./01-overview.md), [02-identity-profile-page.md](./02-identity-profile-page.md), [03-webonone-cleanup.md](./03-webonone-cleanup.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.5.0` |
+| Package builds | `npm run build:media-embed` before identity prod build |
+| Migrations | None |
+| Env | `identity/frontend/.env.example` — add `VITE_MEDIA_ORIGIN`; derive selector URL in `mediaConfig.ts` |
+| JWT | `JWT_SECRET` in Identity + Media backends (unchanged) |
+
+---
+
+## Phase 1 — Media selector locked crop
+
+**Goal:** `cropAspectPresets` query param locks selector upload crop to allowed ratios.
+
+**Exit criteria:** Selector with `cropAspectPresets=1:1` shows crop dialog without other ratio options.
+
+| Task | Paths |
+|------|-------|
+| Add `cropAspectPresets` to `BuildMediaSelectorUrlOptions` | `packages/media-embed/src/types.ts` |
+| Append comma-separated param in builder | `packages/media-embed/src/embedUrl.ts` |
+| Parse in embed mode | `media/frontend/src/features/media/hooks/useEmbedMode.ts` |
+| Pass to `ImageCropDialog` | `media/frontend/src/features/media/pages/SelectorPage.tsx` |
+| Hide ratio UI when single preset | `media/frontend/src/features/media/components/ImageCropDialog.tsx` |
+| `MediaSelectorFrame` prop passthrough | `packages/media-embed/src/MediaSelectorFrame.tsx` |
+
+**Verify:** `npm run build -w @webonone/media-embed`; `npm run type-check -w media-root`
+
+---
+
+## Phase 2 — Identity profile view/edit
+
+**Goal:** View mode default; edit mode with avatar selector modal. See [02-identity-profile-page.md](./02-identity-profile-page.md).
+
+**Exit criteria:** `/profile` view → edit → select image → save → view shows updated avatar.
+
+| Task | Paths |
+|------|-------|
+| `mediaConfig.ts` | `identity/frontend/src/features/profile/utils/mediaConfig.ts` |
+| Env example | `identity/frontend/.env.example` |
+| `ProfileView` | `identity/frontend/src/features/profile/components/ProfileView.tsx` |
+| `ProfileAvatarEditor` | `identity/frontend/src/features/profile/components/ProfileAvatarEditor.tsx` |
+| `ProfileMediaSelectorModal` | `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx` |
+| Refactor `ProfileForm` — mode toggle, pending avatar | `identity/frontend/src/features/profile/components/ProfileForm.tsx` |
+| Include `avatarUrl` in save payload | `identity/frontend/src/features/profile/schemas/profileSchemas.ts` |
+| Add `@webonone/media-embed` dep + Vite alias | `identity/frontend/package.json`, `vite.config.ts` |
+| Chain `build:media-embed` | `identity/package.json` |
+
+**Verify:** `npm run type-check -w identity-root`; manual `/profile` smoke with Media running
+
+---
+
+## Phase 3 — WebOnOne media demo removal
+
+**Goal:** Remove demo route and nav per [03-webonone-cleanup.md](./03-webonone-cleanup.md).
+
+**Exit criteria:** No Media demo in nav; type-check passes.
+
+| Task | Paths |
+|------|-------|
+| Remove nav item | `webonone-v2/frontend/src/features/shell/config/navItems.ts` |
+| Remove route | `webonone-v2/frontend/src/app/router.tsx` |
+| Delete demo page + unused components | `features/media/pages/MediaDemoPage.tsx`, `MediaViewerEmbed.tsx`, `MediaUploadDialogModal.tsx`, `MediaSelectorModal.tsx` |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Cross-service integration
+
+| Channel | Usage |
+|---------|--------|
+| **iframe** | Identity opens Media `/selector` with `parentOrigin`, `scope`, `folderPath` |
+| **postMessage** | `sendMediaInit` (JWT); `webonone:media:select` returns selected item URL |
+| **REST** | Identity `PATCH /me` with `avatarUrl` — no Media API calls from Identity BE |
+
+Scope: `identity:user:{userId}`. Folder: `/root/users/{userId}`.
+
+---
+
+## ClickUp traceability
+
+| ClickUp item | ID | Phase |
+|--------------|-----|-------|
+| Spec No 1.5.0 improve the profile page | 86ey2n76k | Phases 1–3 |
+
+---
+
+## Risks and open items
+
+| Risk | Mitigation |
+|------|------------|
+| Media not running in dev | Document `npm run dev:media` for avatar picker QA |
+| Stale Google avatar URL | Save replaces with Media CDN URL on first pick |
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/media-embed
+npm run type-check -w identity-root
+npm run type-check -w webonone-v2-root
+npm run type-check -w media-root
+```
+
+Manual: profile view/edit; 1:1 crop only; WebOnOne nav has no Media demo.
