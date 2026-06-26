@@ -1,5 +1,4 @@
 import {
-  Button,
   FormField,
   Input,
   Select,
@@ -18,18 +17,14 @@ interface RegisterWizardStepBasicsProps {
   values: RegisterCompanyFormValues
   fieldErrors: Partial<Record<keyof RegisterCompanyFormValues, string>>
   isSubmitting: boolean
-  hasUser: boolean
   onChange: (patch: Partial<RegisterCompanyFormValues>) => void
-  onOpenUpload: () => void
 }
 
 export function RegisterWizardStepBasics({
   values,
   fieldErrors,
   isSubmitting,
-  hasUser,
   onChange,
-  onOpenUpload,
 }: RegisterWizardStepBasicsProps) {
   return (
     <div className="space-y-4">
@@ -80,19 +75,6 @@ export function RegisterWizardStepBasics({
             ))}
           </SelectContent>
         </Select>
-      </FormField>
-
-      <FormField label="Company logo" htmlFor="register-company-logo" required error={fieldErrors.logoUrl}>
-        <div className="flex flex-col gap-3">
-          {values.logoUrl ? (
-            <img src={values.logoUrl} alt="Company logo preview" className="h-20 w-20 rounded-md object-cover" />
-          ) : (
-            <p className="text-sm text-muted-foreground">Upload a square logo image.</p>
-          )}
-          <Button type="button" variant="secondary" onClick={onOpenUpload} disabled={isSubmitting || !hasUser}>
-            {values.logoUrl ? 'Change logo' : 'Upload logo'}
-          </Button>
-        </div>
       </FormField>
     </div>
   )

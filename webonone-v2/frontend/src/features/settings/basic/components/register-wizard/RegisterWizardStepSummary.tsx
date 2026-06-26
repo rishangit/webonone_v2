@@ -1,3 +1,4 @@
+import { getPhoneCountryByIso2 } from '@webonone/ui-kit'
 import type { RegisterCompanyFormValues } from '../../schemas/companySchemas'
 
 interface RegisterWizardStepSummaryProps {
@@ -18,21 +19,18 @@ export function RegisterWizardStepSummary({ values }: RegisterWizardStepSummaryP
     values.addressLine1,
     values.addressLine2,
     [values.city, values.stateRegion, values.postalCode].filter(Boolean).join(', '),
-    values.country,
+    values.countryIso2
+      ? (getPhoneCountryByIso2(values.countryIso2)?.name ?? values.countryIso2)
+      : '',
   ].filter(Boolean)
 
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg))] p-4 space-y-4">
-        <div className="flex items-start gap-4">
-          {values.logoUrl ? (
-            <img src={values.logoUrl} alt="" className="h-16 w-16 shrink-0 rounded-md object-cover" />
-          ) : null}
-          <div className="min-w-0 space-y-1">
-            <h3 className="text-lg font-medium text-foreground">{values.name}</h3>
-            <p className="text-sm text-muted-foreground">{values.description}</p>
-            <p className="text-xs text-muted-foreground">{values.companySize} employees</p>
-          </div>
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-lg font-medium text-foreground">{values.name}</h3>
+          <p className="text-sm text-muted-foreground">{values.description}</p>
+          <p className="text-xs text-muted-foreground">{values.companySize} employees</p>
         </div>
 
         <dl className="space-y-3 border-t border-[hsl(var(--glass-border))] pt-4">

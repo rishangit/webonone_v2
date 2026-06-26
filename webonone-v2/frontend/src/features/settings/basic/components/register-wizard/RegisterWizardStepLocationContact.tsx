@@ -1,4 +1,13 @@
-import { FormField, Input } from '@webonone/ui-kit'
+import { useEffect, useState } from 'react'
+import {
+  CountrySelect,
+  FormField,
+  Input,
+  PhoneInput,
+  formatPhoneE164,
+  getPhoneCountryByIso2,
+  parsePhoneE164,
+} from '@webonone/ui-kit'
 import type { RegisterCompanyFormValues } from '../../schemas/companySchemas'
 
 interface RegisterWizardStepLocationContactProps {
@@ -14,6 +23,30 @@ export function RegisterWizardStepLocationContact({
   isSubmitting,
   onChange,
 }: RegisterWizardStepLocationContactProps) {
+  const parsedPhone = parsePhoneE164(values.contactPhone, {
+    fallbackIso2: values.countryIso2 || undefined,
+    preferIso2: values.countryIso2 || undefined,
+  })
+  const [phoneCountryIso2, setPhoneCountryIso2] = useState(parsedPhone.iso2)
+  const [phoneNational, setPhoneNational] = useState(parsedPhone.nationalNumber)
+
+  useEffect(() => {
+    const next = parsePhoneE164(values.contactPhone, {
+      fallbackIso2: values.countryIso2 || undefined,
+      preferIso2: values.countryIso2 || undefined,
+    })
+    setPhoneCountryIso2(next.iso2)
+    setPhoneNational(next.nationalNumber)
+  }, [values.contactPhone, values.countryIso2])
+
+  function updatePhone(countryIso2: string, national: string) {
+    onChange({ contactPhone: formatPhoneE164(countryIso2, national) })
+  }
+
+  const countryName = values.countryIso2
+    ? (getPhoneCountryByIso2(values.countryIso2)?.name ?? values.countryIso2)
+    : ''
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -51,11 +84,12 @@ export function RegisterWizardStepLocationContact({
             />
           </FormField>
 
-          <FormField label="State / region" htmlFor="register-state" required error={fieldErrors.stateRegion}>
+          <FormField label="State / region" htmlFor="register-state" error={fieldErrors.stateRegion}>
             <Input
               id="register-state"
               value={values.stateRegion}
               onChange={(e) => onChange({ stateRegion: e.target.value })}
+              placeholder="Optional"
               disabled={isSubmitting}
               className="w-full"
             />
@@ -63,23 +97,24 @@ export function RegisterWizardStepLocationContact({
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField label="Postal code" htmlFor="register-postal" required error={fieldErrors.postalCode}>
+          <FormField label="Postal code" htmlFor="register-postal" error={fieldErrors.postalCode}>
             <Input
               id="register-postal"
               value={values.postalCode}
               onChange={(e) => onChange({ postalCode: e.target.value })}
+              placeholder="Optional"
               disabled={isSubmitting}
               className="w-full"
             />
           </FormField>
 
-          <FormField label="Country" htmlFor="register-country" required error={fieldErrors.country}>
-            <Input
+          <FormField label="Country" htmlFor="register-country" required error={fieldErrors.countryIso2}>
+            <CountrySelect
               id="register-country"
-              value={values.country}
-              onChange={(e) => onChange({ country: e.target.value })}
+              value={values.countryIso2}
+              onValueChange={(country) => onChange({ countryIso2: country.iso2 })}
               disabled={isSubmitting}
-              className="w-full"
+              invalid={Boolean(fieldErrors.countryIso2)}
             />
           </FormField>
         </div>
@@ -100,17 +135,31 @@ export function RegisterWizardStepLocationContact({
         </FormField>
 
         <FormField label="Contact phone" htmlFor="register-contact-phone" required error={fieldErrors.contactPhone}>
-          <Input
+          <PhoneInput
             id="register-contact-phone"
-            type="tel"
-            value={values.contactPhone}
-            onChange={(e) => onChange({ contactPhone: e.target.value })}
-            placeholder="+1 234 567 8901"
+            country={phoneCountryIso2}
+            value={phoneNational}
+            onCountryChange={(country) => {
+              setPhoneCountryIso2(country.iso2)
+              updatePhone(country.iso2, phoneNational)
+            }}
+            onChange={(e) => {
+              const national = e.target.value
+              setPhoneNational(national)
+              updatePhone(phoneCountryIso2, national)
+            }}
             disabled={isSubmitting}
             className="w-full"
+            aria-invalid={Boolean(fieldErrors.contactPhone)}
           />
         </FormField>
       </div>
+
+      {countryName ? (
+        <p className="sr-only" aria-live="polite">
+          Selected country: {countryName}
+        </p>
+      ) : null}
     </div>
   )
 }

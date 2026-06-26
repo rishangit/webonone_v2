@@ -16,6 +16,8 @@ export { PasswordInput } from './components/PasswordInput'
 export type { PasswordInputProps } from './components/PasswordInput'
 export { PhoneInput } from './components/PhoneInput'
 export type { PhoneInputProps } from './components/PhoneInput'
+export { CountrySelect } from './components/CountrySelect'
+export type { CountrySelectProps } from './components/CountrySelect'
 export {
   PHONE_COUNTRIES,
   getPhoneCountryByIso2,

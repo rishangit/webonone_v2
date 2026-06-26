@@ -16,7 +16,7 @@ const PopoverContent = React.forwardRef<
       ref={ref}
       align={align}
       sideOffset={sideOffset}
-      className={cn('z-50 w-auto rounded-md p-4 outline-none', menuPanelClassName, className)}
+      className={cn('z-[110] w-auto rounded-md p-4 outline-none', menuPanelClassName, className)}
       {...props}
     />
   </PopoverPrimitive.Portal>
