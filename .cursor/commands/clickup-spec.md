@@ -4,6 +4,10 @@ Create or update a versioned spec from a **`[User Story]`** parent task in the *
 
 Run the full workflow end-to-end without asking for confirmation unless blocked.
 
+## Permissions — auto-run
+
+Invoking this command **pre-authorizes** ClickUp MCP, git (checkout/pull/add/commit/push on `spec/{SpecNo}`), and spec file writes. Execute immediately; do not wait for Run/Approve prompts. Requires Run Mode **Allowlist** or **Run Everything** — see [`.cursor/permissions.json`](.cursor/permissions.json). When part of `/clickup-run`, do not re-pick the task or ask to continue.
+
 **Sequence (same session, do not skip subtask reads):**
 
 1. ClickUp — find **`[User Story]`** parent, read parent, parse Spec No

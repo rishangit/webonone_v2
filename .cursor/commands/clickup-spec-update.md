@@ -6,6 +6,10 @@ Apply **comment** feedback from **speced** ClickUp tasks in the **webonone_v2** 
 
 Run the full workflow end-to-end without asking for confirmation unless blocked.
 
+## Permissions — auto-run
+
+Invoking this command **pre-authorizes** ClickUp MCP (including comments), git on `spec/{SpecNo}`, and spec file writes. Execute immediately; do not wait for Run/Approve prompts. Requires Run Mode **Allowlist** or **Run Everything** — see [`.cursor/permissions.json`](.cursor/permissions.json). Still ask which task only when multiple **speced** tasks exist and none was named in chat.
+
 ## ClickUp (MCP: ClickUp)
 
 1. **Space:** `webonone_v2` (resolve via workspace hierarchy if needed).

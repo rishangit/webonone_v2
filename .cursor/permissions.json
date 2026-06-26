@@ -1,0 +1,6 @@
+{
+  "terminalAllowlist": [
+    "cd",
+    "git"
+  ]
+}

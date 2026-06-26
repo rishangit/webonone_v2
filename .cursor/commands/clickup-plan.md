@@ -4,6 +4,10 @@ Create or update `spec/{SpecNo}/plan.mdc` from a **`[User Story]`** parent in **
 
 Run the full workflow end-to-end in **Agent mode** without asking for confirmation unless blocked.
 
+## Permissions — auto-run
+
+Invoking this command **pre-authorizes** ClickUp MCP, git (checkout/pull/add/commit/push on `spec/{SpecNo}`), and `plan.mdc` writes. Execute immediately; do not wait for Run/Approve prompts. Requires Run Mode **Allowlist** or **Run Everything** — see [`.cursor/permissions.json`](.cursor/permissions.json). When part of `/clickup-run`, do not re-pick the task or ask to continue.
+
 ## Agent mode only — complete workflow in one pass
 
 Stay in **Agent mode** for the entire workflow. Do **not** switch to Plan mode.

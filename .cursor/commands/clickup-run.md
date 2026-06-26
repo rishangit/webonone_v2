@@ -1,5 +1,23 @@
 # ClickUp → Full pipeline workflow
 
+## Permissions — auto-run (no approval prompts)
+
+Invoking `/clickup-run` **pre-authorizes** the full pipeline. Execute shell, git, MCP, and file edits **immediately** — do not pause for user confirmation or Cursor Run/Approve UI unless the IDE **hard-blocks** a call.
+
+**One-time IDE setup (per machine):** Cursor Settings → **Agents** → **Run Mode** → **Allowlist** (uses [`.cursor/permissions.json`](.cursor/permissions.json)) or **Run Everything** for fully unattended runs.
+
+| Auto-run (no prompt) | Examples |
+|----------------------|----------|
+| ClickUp MCP | `clickup_search`, `clickup_get_task`, `clickup_update_task`, `clickup_filter_tasks`, comments |
+| GitHub MCP | PR/branch/CI tools when needed |
+| Git on `spec/{SpecNo}` | checkout, pull, add, commit, push |
+| Build / verify | `npm`, `pnpm`, `npx`, `node` per `plan.mdc` |
+| Implementation | edit files per plan; delegate per `AGENTS.md` |
+
+**Forbidden:** `AskQuestion` for task pick or "continue?"; stopping after a successful step; telling the user to click Approve/Run — proceed with the next tool call.
+
+---
+
 Run the full ClickUp delivery pipeline **continuously in one session**, with **no questions** and **no confirmation prompts**:
 
 1. `/clickup-spec`
