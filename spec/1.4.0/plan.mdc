@@ -190,6 +190,27 @@ Security additions: [08-media-consumer-integration.md#security-checklist-additio
 | Media project header need to thave the google account image | 86ey2avdh | Phase 10 |
 | image crop implemntation | 86ey2dwgh | Phase 11 |
 | crop image window need to be the same size as the select image dialog window | 86ey2e5bb | Phase 12 |
+| remove the header tite 'file selcotor' | 86ey2en3d | Phase 13 |
+
+---
+
+## Phase 13 — Selector header bar + integrated drop zone
+
+**Goal:** Refine selector chrome per subtask `86ey2en3d` — breadcrumb left, toolbar right (incl. upload), list area as drop zone, folder menus, scrollable content, compact thumbs. See [02-media-iframe-components.md#2-file-selector-iframe](./02-media-iframe-components.md#2-file-selector-iframe).
+
+**Exit criteria:** No “File selector” title; header bar with breadcrumb + icons; upload via header or drag onto list; 3-dot menus on folders and files; scroll when needed; smaller responsive thumb grid.
+
+| Task | Paths |
+|------|-------|
+| Header bar layout (breadcrumb left, toolbar right) | `ScopedFolderBrowser.tsx` |
+| Upload icon + hidden file input; remove separate drop strip | `ScopedFolderBrowser.tsx`, `SelectorPage.tsx` |
+| List/thumb area as drop target + empty hint | `ScopedFolderBrowser.tsx` |
+| Folder `ItemListMenu` (Open, Delete) | `ScopedFolderBrowser.tsx` |
+| `deleteFolder` API client | `media/frontend/src/features/media/services/mediaApi.ts` |
+| Chromeless selector (no title) | `SelectorPage.tsx`, `EmbedLayout` usage |
+| Compact thumb grid | `ScopedFolderBrowser.tsx` |
+
+**Verify:** `npm run type-check -w media-root`; manual selector embed + `/components` showcase
 
 ---
 
