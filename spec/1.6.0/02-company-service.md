@@ -20,7 +20,17 @@ Production host (future): **`company.webonone.com`**. Local dev: FE **`:3004`**,
 |--------|------|-------|
 | `id` | CHAR(21) | Primary key |
 | `name` | VARCHAR(255) | Display name |
+| `description` | TEXT NULL | Company description (wizard step 1) |
+| `company_size` | VARCHAR(32) NULL | Size band e.g. `1-10`, `11-50`, `51-200`, `201-500`, `500+` |
 | `logo_url` | VARCHAR(2048) NULL | Media public URL |
+| `address_line1` | VARCHAR(255) NULL | Street address |
+| `address_line2` | VARCHAR(255) NULL | Suite / unit |
+| `city` | VARCHAR(128) NULL | City |
+| `state_region` | VARCHAR(128) NULL | State or region |
+| `postal_code` | VARCHAR(32) NULL | Postal / ZIP |
+| `country` | VARCHAR(128) NULL | Country |
+| `contact_email` | VARCHAR(255) NULL | Public contact email |
+| `contact_phone` | VARCHAR(64) NULL | Public contact phone |
 | `status` | ENUM | `pending`, `approved` |
 | `created_by_user_id` | CHAR(21) | Identity user who registered |
 | `created_at` | TIMESTAMP | |
@@ -72,14 +82,14 @@ All user routes: `Authorization: Bearer <Identity JWT>` unless noted.
 | `GET` | `/health` | None | Liveness |
 | `POST` | `/auth/super-admin/login` | None | Body: `{ email, password }` → super-admin token |
 | `GET` | `/me/company` | Identity JWT | Current user's company + membership + role; 404 if none |
-| `POST` | `/companies` | Identity JWT | Register company: `{ name, logoUrl }` → status `pending`; creates membership as `member` until approval sets `company_admin` |
+| `POST` | `/companies` | Identity JWT | Register company: `{ name, description, companySize, logoUrl, addressLine1, addressLine2, city, stateRegion, postalCode, country, contactEmail, contactPhone }` → status `pending`; creates membership as `member` until approval sets `company_admin` |
 | `GET` | `/admin/companies/pending` | Super-admin token | List pending companies with registrant `user_id` |
 | `POST` | `/admin/companies/:id/approve` | Super-admin token | Approve → `approved`, registrant role → `company_admin` |
 
 ### Register company rules
 
 - User must not already have a membership (409 if exists).
-- `name` required; `logoUrl` optional but UI requires logo per acceptance criteria.
+- `name` required; `logoUrl` required by UI; `description`, `companySize`, location, and contact fields required by wizard validation (see [03](./03-webonone-company-ui.md)).
 - On create: `companies.status = pending`, `company_memberships.role = member` (promoted on approval).
 
 ### Approval rules

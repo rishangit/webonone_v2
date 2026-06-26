@@ -6,12 +6,16 @@ Implementation branch: **`spec/1.6.0`**
 
 **Spec No:** 1.6.0
 
+## Revision history
+
+- **Wizard registration (subtask 86ey2pmp2):** Replace single-step register dialog with a **3-step wizard** (basics → location/contact → summary/welcome). Extend `companies` schema and register API with description, company size, location, and contact fields. Logo upload remains on step 1.
+
 ## What changed from 1.5.0
 
 | Area | 1.5.0 | 1.6.0 |
 |------|-------|-------|
 | Company domain | None | New **`company/`** microservice with own DB |
-| WebOnOne settings | System Theme only | **Basic Settings** — company registration prompt, register dialog, company section |
+| WebOnOne settings | System Theme only | **Basic Settings** — company registration prompt, **3-step register wizard**, company section |
 | User roles (platform) | None in WebOnOne | `member` (default), `company_admin` (after approval), `super_admin` (seeded) |
 | Logo upload | N/A | Media **upload** embed scoped to company logo path |
 | Super admin | N/A | Hard-coded seed account in Company DB; pending-companies approval UI |
@@ -42,6 +46,7 @@ Implementation branch: **`spec/1.6.0`**
 |---------|-----|------------------|
 | [User Story] Spec No 1.6.0 Register my company | 86ey2nrgd | All docs |
 | Core project need to have the user roles | 86ey2p61f | [02](./02-company-service.md), [03](./03-webonone-company-ui.md), [04](./04-super-admin-approval.md) |
+| comapny registration need to improve | 86ey2pmp2 | [03](./03-webonone-company-ui.md) — wizard; [02](./02-company-service.md) — extended fields |
 
 ## Inherited from earlier specs
 

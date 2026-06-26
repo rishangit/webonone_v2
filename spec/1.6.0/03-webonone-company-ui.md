@@ -34,14 +34,43 @@ When `GET /me/company` (via WebOnOne BFF or direct Company API with JWT) returns
 - Show company name, logo, status **Approved**, user's role (**Company Admin** or **Member**).
 - Company admins: future edit affordances; 1.6.0 minimum is read-only details + role display.
 
-## Register Company dialog
+## Register Company wizard
 
-**Component:** `RegisterCompanyDialog.tsx`
+**Component:** `RegisterCompanyDialog.tsx` (orchestrator) + one step component per slide under `components/register-wizard/`.
+
+Replace the single-step form with a **3-step wizard** inside `CustomDialog` (`sizeWidth="large"`, `sizeHeight="xlarge"` per [dialog-windows.mdc](../../.cursor/rules/dialog-windows.mdc)). Footer: **Cancel**, **Previous**, **Next** / **Submit registration** on final step. Single progress bar (`w-1/2 mx-auto`) — no duplicate numeric stepper.
+
+### Step 1 — Company basics
 
 | Field | Control | Validation |
 |-------|---------|------------|
 | Company name | `Input` | Required, max 255 |
-| Logo | Media upload embed trigger | Required — user must upload before submit |
+| Company description | `Textarea` | Required, max 2000 |
+| Company size | `Select` | Required — options: `1-10`, `11-50`, `51-200`, `201-500`, `500+` |
+| Logo | Media upload embed trigger | Required — square logo before advancing |
+
+Validate step 1 on **Next**; open logo upload in nested `CustomDialog` with `nestedDismissGuard`.
+
+### Step 2 — Location and contact
+
+| Field | Control | Validation |
+|-------|---------|------------|
+| Address line 1 | `Input` | Required, max 255 |
+| Address line 2 | `Input` | Optional, max 255 |
+| City | `Input` | Required, max 128 |
+| State / region | `Input` | Required, max 128 |
+| Postal code | `Input` | Required, max 32 |
+| Country | `Input` | Required, max 128 |
+| Contact email | `Input` | Required, valid email |
+| Contact phone | `Input` | Required, max 64 |
+
+Validate step 2 on **Next**.
+
+### Step 3 — Summary and welcome
+
+- Read-only summary of all entered fields + logo thumbnail.
+- Short welcome message explaining pending approval.
+- **Submit registration** in footer (primary action with `Save` icon).
 
 ### Logo upload flow
 
@@ -52,13 +81,17 @@ Use **`@webonone/media-embed`** upload embed (see [1.4.0 upload iframe](../1.4.0
 - `crop`: optional `true` with `cropAspectPresets=1:1` for square logo
 - JWT via `sendMediaInit` postMessage pattern from [08-media-consumer-integration](../1.4.0/08-media-consumer-integration.md)
 
-On upload complete, store pending `logoUrl` in dialog state; include in register payload.
+On upload complete, store pending `logoUrl` in wizard state; include in register payload.
 
 ### Submit
 
-1. `POST` Company API `/companies` with `{ name, logoUrl }` (proxied through WebOnOne backend or direct with JWT — prefer **WebOnOne backend proxy** to keep API base single-origin in prod).
+1. `POST` Company API `/companies` with full wizard payload (proxied through WebOnOne backend).
 2. Close dialog; refresh company state.
 3. Toast: registration submitted; approval required.
+
+## Register Company dialog (legacy note)
+
+The original single-step dialog (name + logo only) is **superseded** by the wizard above (subtask 86ey2pmp2). Keep the same `RegisterCompanyDialog` export; internal implementation is wizard-only.
 
 ## WebOnOne backend proxy (recommended)
 
@@ -111,7 +144,7 @@ Refresh on Basic Settings mount and after registration.
 | Criterion | Implementation |
 |-----------|----------------|
 | Prompt on Basic Settings if no company | State A banner |
-| Register Company button → dialog | Dialog with name + logo |
+| Register Company button → dialog | 3-step wizard with name, description, size, logo |
 | Pending status + notification | State B + toast on submit |
 | Return to company section | Basic Settings States B/C |
 | Role visible after approval | Show `company_admin` badge |

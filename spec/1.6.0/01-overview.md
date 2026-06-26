@@ -7,7 +7,7 @@ A logged-in WebOnOne user can **register their company** from **Basic Settings**
 ## Goals (1.6.0)
 
 1. **Company microservice** — Standalone `company/` with own frontend, backend, MySQL DB, and `/health`.
-2. **Register company flow** — Basic Settings shows a prompt when the user has no company; **Register Company** opens a dialog (name + logo upload).
+2. **Register company flow** — Basic Settings shows a prompt when the user has no company; **Register Company** opens a **3-step wizard** (basics + logo → location/contact → summary/welcome).
 3. **Pending state** — After submit, company status is `pending`; user sees notification that admin approval is required.
 4. **Super admin (interim)** — Hard-coded super-admin credentials stored securely (hashed) in Company DB; not in Identity.
 5. **Approval** — Super admin sees pending companies list; approve updates company to `approved` and sets registering user's role to `company_admin`.
@@ -64,3 +64,4 @@ A logged-in WebOnOne user can **register their company** from **Basic Settings**
 |---------|-----|----------------|
 | Parent — register company user story | 86ey2nrgd | All docs |
 | Core project need to have the user roles | 86ey2p61f | [02](./02-company-service.md), [03](./03-webonone-company-ui.md), [04](./04-super-admin-approval.md) |
+| comapny registration need to improve | 86ey2pmp2 | [03](./03-webonone-company-ui.md) wizard; [02](./02-company-service.md) extended company fields |

@@ -99,6 +99,22 @@ git checkout -b spec/1.6.0
 
 ---
 
+## Phase 7 — Registration wizard (1 day)
+
+**Goal:** Replace single-step register dialog with 3-step wizard; extend Company API and DB.
+
+| Task | Priority |
+|------|----------|
+| Migration — extend `companies` columns | P0 |
+| Update register Zod schemas (FE + BE + Company) | P0 |
+| Wizard step components + progress bar | P0 |
+| `RegisterCompanyDialog` orchestrator | P0 |
+| Summary step + welcome copy | P0 |
+
+**Exit criteria:** User completes wizard; all fields persisted; pending flow unchanged.
+
+---
+
 ## Phase 6 — Verification (0.5 day)
 
 ```bash
@@ -112,7 +128,7 @@ Manual QA:
 | Check | Expected |
 |-------|----------|
 | No company | Prompt + Register button |
-| Register | Dialog, logo upload, pending status |
+| Register | 3-step wizard, logo upload, pending status |
 | Super admin | Pending list, approve |
 | After approve | Company admin role, approved badge |
 | Standalone | Company starts without WebOnOne |
@@ -132,7 +148,7 @@ Manual QA:
 ### WebOnOne
 
 - [ ] Basic Settings nav + page
-- [ ] Register company dialog with Media logo
+- [ ] Register company **wizard** with Media logo
 - [ ] Pending / approved states
 - [ ] Super-admin pending list + approve
 - [ ] Proxy routes to Company API
@@ -151,3 +167,4 @@ Manual QA:
 |---------|-----|-------|
 | [User Story] Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 0–6 |
 | Core project need to have the user roles | 86ey2p61f | Phases 1–5 |
+| comapny registration need to improve | 86ey2pmp2 | Phase 7 |
