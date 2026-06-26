@@ -80,9 +80,9 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 
 ## Phase 4 — WebOnOne Basic Settings UI
 
-**Goal:** Registration prompt, dialog, company states. See [03-webonone-company-ui.md](./03-webonone-company-ui.md).
+**Goal:** Registration prompt, **3-step wizard**, company states. See [03-webonone-company-ui.md](./03-webonone-company-ui.md).
 
-**Exit criteria:** User registers company → sees pending status + toast.
+**Exit criteria:** User completes wizard → sees pending status + toast.
 
 | Task | Paths |
 |------|-------|
@@ -91,7 +91,7 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 | `mediaConfig.ts` | `webonone-v2/frontend/src/features/media/utils/mediaConfig.ts` |
 | Nav + route | `navItems.ts`, `router.tsx` |
 | `BasicSettingsPage` | `features/settings/basic/pages/BasicSettingsPage.tsx` |
-| `RegisterCompanyDialog` + logo upload | `features/settings/basic/components/` |
+| `RegisterCompanyDialog` wizard + step components | `features/settings/basic/components/` |
 | Company API client | `features/settings/basic/services/companyApi.ts` |
 | Zod form schemas | frontend + backend validation |
 
@@ -117,6 +117,25 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 
 ---
 
+## Phase 6 — Registration wizard
+
+**Goal:** 3-step register wizard with extended company fields. See [03-webonone-company-ui.md](./03-webonone-company-ui.md) wizard section.
+
+**Exit criteria:** Wizard collects basics, location/contact, summary; full payload persisted; pending flow unchanged.
+
+| Task | Paths |
+|------|-------|
+| Migration — extend `companies` | `company/backend/migrations/` |
+| Register Zod schemas | `company/backend/src/schemas/`, `webonone-v2/backend/src/schemas/`, `webonone-v2/frontend/src/features/settings/basic/schemas/` |
+| Repository + service | `company/backend/src/repositories/`, `services/company.service.ts` |
+| Wizard step components | `webonone-v2/frontend/src/features/settings/basic/components/register-wizard/` |
+| `RegisterCompanyDialog` orchestrator | `features/settings/basic/components/RegisterCompanyDialog.tsx` |
+| `companyApi.registerCompany` payload | `features/settings/basic/services/companyApi.ts` |
+
+**Verify:** `npm run type-check -w company-root`; `npm run type-check -w webonone-v2-root`; manual wizard flow
+
+---
+
 ## Cross-service integration
 
 | Channel | Usage |
@@ -136,6 +155,7 @@ Logo scope: `webonone:company:pending:{userId}`. Media type: `image`, optional 1
 |--------------|-----|-------|
 | Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 1–5 |
 | Core project need to have the user roles | 86ey2p61f | Phases 1–5 |
+| comapny registration need to improve | 86ey2pmp2 | Phase 6 |
 
 ---
 
