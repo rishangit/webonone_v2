@@ -99,6 +99,23 @@ git checkout -b spec/1.6.0
 
 ---
 
+## Phase 8 — Registration UX polish (0.5 day)
+
+**Goal:** Refine wizard per subtask 86ey2punp — no logo, dialog-safe overlays, icon nav, country/phone controls, optional address fields.
+
+| Task | Priority |
+|------|----------|
+| Remove logo from wizard + optional `logoUrl` on API | P0 |
+| `Select` / `Popover` z-index above `CustomDialog` (`z-[110]`) | P0 |
+| Previous / Next as icon buttons with `aria-label` | P0 |
+| Country field — searchable country dropdown (UI Kit, same pattern as phone country) | P0 |
+| Contact phone — `PhoneInput` with country selector | P0 |
+| State/region + postal code optional (FE + BE schemas) | P0 |
+
+**Exit criteria:** Wizard works inside dialog without clipped dropdowns; country and phone use UI Kit controls; optional fields submit without validation errors.
+
+---
+
 ## Phase 7 — Registration wizard (1 day)
 
 **Goal:** Replace single-step register dialog with 3-step wizard; extend Company API and DB.
@@ -168,3 +185,4 @@ Manual QA:
 | [User Story] Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 0–6 |
 | Core project need to have the user roles | 86ey2p61f | Phases 1–5 |
 | comapny registration need to improve | 86ey2pmp2 | Phase 7 |
+| comapny regitration improvements | 86ey2punp | Phase 8 |

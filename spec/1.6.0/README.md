@@ -8,6 +8,7 @@ Implementation branch: **`spec/1.6.0`**
 
 ## Revision history
 
+- **Registration UX polish (subtask 86ey2punp):** Remove logo from registration wizard; fix Select z-index inside dialogs; icon-only Previous/Next footer buttons; `CountrySelect` and `PhoneInput` from UI Kit; make state/region and postal code optional.
 - **Wizard registration (subtask 86ey2pmp2):** Replace single-step register dialog with a **3-step wizard** (basics → location/contact → summary/welcome). Extend `companies` schema and register API with description, company size, location, and contact fields. Logo upload remains on step 1.
 
 ## What changed from 1.5.0
@@ -47,6 +48,7 @@ Implementation branch: **`spec/1.6.0`**
 | [User Story] Spec No 1.6.0 Register my company | 86ey2nrgd | All docs |
 | Core project need to have the user roles | 86ey2p61f | [02](./02-company-service.md), [03](./03-webonone-company-ui.md), [04](./04-super-admin-approval.md) |
 | comapny registration need to improve | 86ey2pmp2 | [03](./03-webonone-company-ui.md) — wizard; [02](./02-company-service.md) — extended fields |
+| comapny regitration improvements | 86ey2punp | [03](./03-webonone-company-ui.md) — registration UX polish; [ui-kit](../../ui-kit/package/) — overlay z-index |
 
 ## Inherited from earlier specs
 

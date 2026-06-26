@@ -47,9 +47,7 @@ Replace the single-step form with a **3-step wizard** inside `CustomDialog` (`si
 | Company name | `Input` | Required, max 255 |
 | Company description | `Textarea` | Required, max 2000 |
 | Company size | `Select` | Required — options: `1-10`, `11-50`, `51-200`, `201-500`, `500+` |
-| Logo | Media upload embed trigger | Required — square logo before advancing |
-
-Validate step 1 on **Next**; open logo upload in nested `CustomDialog` with `nestedDismissGuard`.
+Validate step 1 on **Next**. Logo upload was removed from registration (subtask 86ey2punp); `logoUrl` is optional on register API.
 
 ### Step 2 — Location and contact
 
@@ -58,30 +56,24 @@ Validate step 1 on **Next**; open logo upload in nested `CustomDialog` with `nes
 | Address line 1 | `Input` | Required, max 255 |
 | Address line 2 | `Input` | Optional, max 255 |
 | City | `Input` | Required, max 128 |
-| State / region | `Input` | Required, max 128 |
-| Postal code | `Input` | Required, max 32 |
-| Country | `Input` | Required, max 128 |
+| State / region | `Input` | Optional, max 128 |
+| Postal code | `Input` | Optional, max 32 |
+| Country | `CountrySelect` (UI Kit — searchable list, same pattern as phone country selector) | Required |
 | Contact email | `Input` | Required, valid email |
-| Contact phone | `Input` | Required, max 64 |
+| Contact phone | `PhoneInput` with country selector | Required |
 
 Validate step 2 on **Next**.
 
 ### Step 3 — Summary and welcome
 
-- Read-only summary of all entered fields + logo thumbnail.
+- Read-only summary of all entered fields (no logo).
 - Short welcome message explaining pending approval.
 - **Submit registration** in footer (primary action with `Save` icon).
 
-### Logo upload flow
+### Wizard footer navigation (subtask 86ey2punp)
 
-Use **`@webonone/media-embed`** upload embed (see [1.4.0 upload iframe](../1.4.0/02-media-iframe-components.md)):
-
-- `scope`: `webonone:company:pending:{userId}` for pre-registration upload, or create company first with placeholder then update logo — **preferred:** upload first, pass `logoUrl` on `POST /companies`.
-- `mediaType`: `image`
-- `crop`: optional `true` with `cropAspectPresets=1:1` for square logo
-- JWT via `sendMediaInit` postMessage pattern from [08-media-consumer-integration](../1.4.0/08-media-consumer-integration.md)
-
-On upload complete, store pending `logoUrl` in wizard state; include in register payload.
+- **Previous** / **Next:** `Button` `size="icon"` with `ChevronLeft` / `ChevronRight` and `aria-label` (not text labels).
+- **Select** / **Popover** overlays inside `CustomDialog` must render above the dialog shell (`z-[110]` in UI Kit).
 
 ### Submit
 
