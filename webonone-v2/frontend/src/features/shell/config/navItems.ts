@@ -1,4 +1,4 @@
-import { Home, Palette, Settings } from 'lucide-react'
+import { Building2, Home, Palette, Settings } from 'lucide-react'
 import type { NavConfigItem } from '@webonone/ui-kit'
 
 export const mainNav: NavConfigItem[] = [
@@ -7,6 +7,9 @@ export const mainNav: NavConfigItem[] = [
     type: 'group',
     label: 'Settings',
     icon: Settings,
-    children: [{ to: '/settings/system-theme', label: 'System Theme', icon: Palette }],
+    children: [
+      { to: '/settings/basic', label: 'Basic Settings', icon: Building2 },
+      { to: '/settings/system-theme', label: 'System Theme', icon: Palette },
+    ],
   },
 ]

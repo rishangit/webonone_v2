@@ -21,20 +21,23 @@ const envSchema = z.object({
   DB_PORT: z.coerce.number().default(3306),
   DB_USER: z.string().default('root'),
   DB_PASSWORD: z.string().default(''),
-  DB_NAME: z.string().default('webonon_v2'),
+  DB_NAME: z.string().default('webonone_company'),
   JWT_SECRET: z.string().min(8).default('dev-jwt-secret-change-in-production'),
+  SUPER_ADMIN_JWT_SECRET: z.string().min(8).default('dev-jwt-secret-change-in-production'),
   HOST: z.string().default('127.0.0.1'),
   PORT: z.coerce.number().optional(),
-  WEBONONE_PORT: z.coerce.number().optional(),
+  COMPANY_PORT: z.coerce.number().optional(),
   IIS_NODE_HOSTED: z.string().optional(),
-  COMPANY_API_BASE_URL: z.string().url().default('http://localhost:4004/api/v1'),
+  SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
+  SUPER_ADMIN_PASSWORD: z.string().min(8).default('change-me-in-local-env'),
+  SUPER_ADMIN_DISPLAY_NAME: z.string().default('Super Admin'),
 })
 
 const parsed = envSchema.parse(process.env)
 
 const port = iisHosted
   ? Number(process.env.PORT)
-  : (parsed.PORT ?? parsed.WEBONONE_PORT ?? 4000)
+  : (parsed.PORT ?? parsed.COMPANY_PORT ?? 4004)
 
 if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')
@@ -49,10 +52,15 @@ export const env = {
     database: parsed.DB_NAME,
   },
   jwtSecret: parsed.JWT_SECRET,
+  jwtIssuer: 'webonone-identity',
+  jwtAudience: 'webonone-api',
+  superAdminJwtSecret: parsed.SUPER_ADMIN_JWT_SECRET,
+  superAdminJwtIssuer: 'webonone-company',
+  superAdminJwtAudience: 'webonone-company-admin',
   host: parsed.HOST,
   port,
   iisHosted,
-  jwtIssuer: 'webonone-identity',
-  jwtAudience: 'webonone-api',
-  companyApiBaseUrl: parsed.COMPANY_API_BASE_URL.replace(/\/$/, ''),
+  superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
+  superAdminPassword: parsed.SUPER_ADMIN_PASSWORD,
+  superAdminDisplayName: parsed.SUPER_ADMIN_DISPLAY_NAME,
 }
