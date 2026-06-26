@@ -1,0 +1,160 @@
+---
+description: Implementation plan for spec 1.6.0 — Company registration with admin approval and platform roles
+alwaysApply: false
+globs: company/**, webonone-v2/**, packages/media-embed/**
+---
+
+# Implementation plan — Spec 1.6.0
+
+## Summary
+
+Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration, membership roles, and super-admin approval. **WebOnOne v2** gets **Basic Settings** (`/settings/basic`) with register-company dialog (name + Media logo upload), company status display, and a super-admin pending-approval UI. See [01-overview.md](./01-overview.md), [02-company-service.md](./02-company-service.md), [03-webonone-company-ui.md](./03-webonone-company-ui.md), [04-super-admin-approval.md](./04-super-admin-approval.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.6.0` |
+| Package builds | `npm run build:media-embed` before webonone prod build |
+| Migrations | `company/migrations` — companies, memberships, super_admins |
+| Env | `company/backend/.env.example`; `webonone-v2/backend/.env.example` — `COMPANY_API_BASE_URL`; `webonone-v2/frontend/.env.example` — `VITE_MEDIA_ORIGIN` |
+| JWT | `JWT_SECRET` duplicated in Company + WebOnOne backends (same as Identity) |
+
+---
+
+## Phase 1 — Company service scaffold
+
+**Goal:** Standalone `company/` with DB, health, JWT verify, super-admin seed.
+
+**Exit criteria:** `npm run dev:company` starts; `GET /health` 200; super-admin seed login works.
+
+| Task | Paths |
+|------|-------|
+| Scaffold service root | `company/package.json`, workspaces |
+| Backend Express app | `company/backend/src/` |
+| Migrations | `company/migrations/` — `companies`, `company_memberships`, `super_admins` |
+| Super-admin seed | `company/backend/src/db/seeds/` or migration |
+| `GET /health` | `company/backend/src/routes/health.ts` |
+| `requireIdentityJwt` | `company/backend/src/middleware/requireIdentityJwt.ts` |
+| `POST /auth/super-admin/login` | `company/backend/src/routes/auth.ts` |
+| Root wiring | Root `package.json` — `dev:company`, workspace |
+
+**Verify:** `curl http://localhost:4004/health`; super-admin login returns token
+
+---
+
+## Phase 2 — Company registration API
+
+**Goal:** Register company and read membership.
+
+**Exit criteria:** `POST /companies` + `GET /me/company` work with Identity JWT.
+
+| Task | Paths |
+|------|-------|
+| Zod schemas | `company/backend/src/schemas/companySchemas.ts` |
+| Repository + service | `company/backend/src/repositories/`, `services/companyService.ts` |
+| `POST /companies` | `company/backend/src/routes/companies.ts` |
+| `GET /me/company` | same |
+| One-company-per-user unique constraint | migration |
+
+**Verify:** Manual API test with JWT from Identity login
+
+---
+
+## Phase 3 — Super admin approval API
+
+**Goal:** List pending and approve companies.
+
+**Exit criteria:** Approve sets `approved` + `company_admin` role.
+
+| Task | Paths |
+|------|-------|
+| `requireSuperAdmin` middleware | `company/backend/src/middleware/requireSuperAdmin.ts` |
+| `GET /admin/companies/pending` | `company/backend/src/routes/admin.ts` |
+| `POST /admin/companies/:id/approve` | same |
+| Audit fields | `approved_at`, `approved_by_super_admin_id` |
+
+**Verify:** Approve flow via curl or Postman
+
+---
+
+## Phase 4 — WebOnOne Basic Settings UI
+
+**Goal:** Registration prompt, dialog, company states. See [03-webonone-company-ui.md](./03-webonone-company-ui.md).
+
+**Exit criteria:** User registers company → sees pending status + toast.
+
+| Task | Paths |
+|------|-------|
+| BE proxy routes | `webonone-v2/backend/src/routes/company.ts` |
+| `COMPANY_API_BASE_URL` env | `webonone-v2/backend/.env.example` |
+| `mediaConfig.ts` | `webonone-v2/frontend/src/features/media/utils/mediaConfig.ts` |
+| Nav + route | `navItems.ts`, `router.tsx` |
+| `BasicSettingsPage` | `features/settings/basic/pages/BasicSettingsPage.tsx` |
+| `RegisterCompanyDialog` + logo upload | `features/settings/basic/components/` |
+| Company API client | `features/settings/basic/services/companyApi.ts` |
+| Zod form schemas | frontend + backend validation |
+
+**Verify:** `npm run type-check -w webonone-v2-root`; manual register flow
+
+---
+
+## Phase 5 — Super admin UI in WebOnOne
+
+**Goal:** Super-admin login + pending list + approve. See [04-super-admin-approval.md](./04-super-admin-approval.md).
+
+**Exit criteria:** Seed super admin approves company; user sees approved + admin role.
+
+| Task | Paths |
+|------|-------|
+| Super-admin login page | `features/settings/basic/pages/SuperAdminLoginPage.tsx` |
+| Pending companies page | `features/settings/basic/pages/PendingCompaniesPage.tsx` |
+| BE proxy admin routes | `webonone-v2/backend/src/routes/companyAdmin.ts` |
+| Session storage token helper | `features/settings/basic/utils/superAdminSession.ts` |
+| Route guard | `router.tsx` |
+
+**Verify:** End-to-end approve flow
+
+---
+
+## Cross-service integration
+
+| Channel | Usage |
+|---------|--------|
+| **JWT** | Identity token on Company user routes; WebOnOne verifies then proxies |
+| **iframe** | Media upload embed for company logo |
+| **postMessage** | `sendMediaInit` + upload complete message |
+| **HTTP proxy** | WebOnOne BE → Company API (no browser direct call in prod) |
+
+Logo scope: `webonone:company:pending:{userId}`. Media type: `image`, optional 1:1 crop.
+
+---
+
+## ClickUp traceability
+
+| ClickUp item | ID | Phase |
+|--------------|-----|-------|
+| Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 1–5 |
+| Core project need to have the user roles | 86ey2p61f | Phases 1–5 |
+
+---
+
+## Risks and open items
+
+| Risk | Mitigation |
+|------|------------|
+| New service scaffold size | Mirror `media/` layout |
+| Super-admin token vs Identity JWT | Separate `aud` claim + session storage |
+| Media not running | Document in dev QA |
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/media-embed
+npm run type-check -w company-root
+npm run type-check -w webonone-v2-root
+```
+
+Manual: register company; pending UI; super-admin approve; approved + company_admin role; Company standalone `/health`.

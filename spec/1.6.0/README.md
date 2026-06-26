@@ -34,6 +34,7 @@ Implementation branch: **`spec/1.6.0`**
 | [03-webonone-company-ui.md](./03-webonone-company-ui.md) | Basic Settings, register dialog, company section, Media logo |
 | [04-super-admin-approval.md](./04-super-admin-approval.md) | Super-admin login, pending list, approve → role update |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
+| [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
 
