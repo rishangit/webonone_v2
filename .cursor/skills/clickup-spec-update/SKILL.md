@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 Invoked by `/clickup-spec-update` or explicit user request. Follow `.cursor/commands/clickup-spec-update.md` as the source of truth.
 
+**Auto-run:** ClickUp MCP (including comments), git, and spec writes are pre-authorized — execute without waiting for approval. See `.cursor/permissions.json`.
+
 **Not in scope:** new/changed subtasks or spec traceability sync — use `/clickup-spec`.
 
 ## ClickUp constants

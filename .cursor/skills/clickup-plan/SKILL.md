@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 Invoked by `/clickup-plan` or explicit user request. Follow `.cursor/commands/clickup-plan.md` as the source of truth.
 
+**Auto-run:** ClickUp MCP, git, and `plan.mdc` writes are pre-authorized — execute without waiting for approval. See `.cursor/permissions.json`. When part of `/clickup-run`, do not re-pick the task or ask to continue.
+
 ## Agent mode only
 
 Stay in **Agent mode**. Do **not** call `SwitchMode` or `CreatePlan`.
