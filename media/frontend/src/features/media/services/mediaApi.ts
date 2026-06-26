@@ -88,6 +88,10 @@ export async function createFolder(scope: string, path: string, name: string): P
   })
 }
 
+export async function deleteFolder(id: string): Promise<void> {
+  await apiClient(`/folders/${id}`, { method: 'DELETE' })
+}
+
 /** Create each segment of a nested folder path if it does not exist. */
 export async function ensureFolderPath(scope: string, folderPath: string): Promise<void> {
   const normalized = normalizeFolderPath(folderPath)

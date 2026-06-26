@@ -35,6 +35,7 @@ export function MediaSelectorModal({
       title="Select file"
       sizeWidth="medium"
       sizeHeight="large"
+      className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
       noContentPadding
       disableContentScroll
       footer={

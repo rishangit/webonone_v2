@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { FileIcon, Folder, FolderPlus, LayoutGrid, List } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FileIcon, Folder, FolderPlus, LayoutGrid, List, Upload } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
@@ -21,6 +21,7 @@ import { MediaPreviewDialog } from './MediaPreviewDialog'
 import { useScopedNavigation } from '../hooks/useScopedNavigation'
 import {
   createFolder,
+  deleteFolder,
   deleteMediaItem,
   listFolders,
   listMediaItems,
@@ -39,9 +40,13 @@ interface ScopedFolderBrowserProps {
   onSelectFile?: (item: MediaItemDto) => void
   onToggleSelect?: (item: MediaItemDto) => void
   onNavigate?: (path: string) => void
-  /** Icon toolbar with create folder + list/thumb toggle (selector embed). */
+  /** Header bar with breadcrumb left, icon toolbar right (selector embed). */
   showIconToolbar?: boolean
   allowDelete?: boolean
+  enableUpload?: boolean
+  uploadAccept?: string
+  uploadError?: string | null
+  onUploadFiles?: (files: File[]) => void | Promise<void>
 }
 
 export function ScopedFolderBrowser({
@@ -55,8 +60,13 @@ export function ScopedFolderBrowser({
   onNavigate,
   showIconToolbar = false,
   allowDelete = false,
+  enableUpload = false,
+  uploadAccept = 'image/*',
+  uploadError = null,
+  onUploadFiles,
 }: ScopedFolderBrowserProps) {
   const { currentPath, navigateTo, breadcrumbSegments } = useScopedNavigation(scopedRoot)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [folders, setFolders] = useState<MediaFolderDto[]>([])
   const [items, setItems] = useState<MediaItemDto[]>([])
   const [loading, setLoading] = useState(true)
@@ -64,8 +74,11 @@ export function ScopedFolderBrowser({
   const [viewMode, setViewMode] = useState<BrowserViewMode>('list')
   const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [previewItem, setPreviewItem] = useState<MediaItemDto | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<MediaItemDto | null>(null)
+  const [deleteFileTarget, setDeleteFileTarget] = useState<MediaItemDto | null>(null)
+  const [deleteFolderTarget, setDeleteFolderTarget] = useState<MediaFolderDto | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -117,15 +130,43 @@ export function ScopedFolderBrowser({
     await loadData()
   }
 
-  async function handleConfirmDelete() {
-    if (!deleteTarget) return
+  async function handleConfirmDeleteFile() {
+    if (!deleteFileTarget) return
     setIsDeleting(true)
     try {
-      await deleteMediaItem(deleteTarget.id)
-      setDeleteTarget(null)
+      await deleteMediaItem(deleteFileTarget.id)
+      setDeleteFileTarget(null)
       await loadData()
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  async function handleConfirmDeleteFolder() {
+    if (!deleteFolderTarget) return
+    setIsDeleting(true)
+    try {
+      await deleteFolder(deleteFolderTarget.id)
+      setDeleteFolderTarget(null)
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete folder')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  async function handleFilesSelected(fileList: FileList | null) {
+    if (!fileList?.length || !onUploadFiles) return
+    const files = Array.from(fileList)
+    setIsUploading(true)
+    try {
+      await onUploadFiles(files)
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
@@ -150,7 +191,7 @@ export function ScopedFolderBrowser({
             {isImage ? <DropdownMenuSeparator /> : null}
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={() => setDeleteTarget(item)}
+              onClick={() => setDeleteFileTarget(item)}
             >
               Delete
             </DropdownMenuItem>
@@ -160,15 +201,116 @@ export function ScopedFolderBrowser({
     )
   }
 
+  function renderFolderMenu(folder: MediaFolderDto) {
+    return (
+      <ItemListMenu ariaLabel={`Actions for ${folder.name}`}>
+        <DropdownMenuItem onClick={() => handleFolderOpen(folder)}>Open</DropdownMenuItem>
+        {allowDelete ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => setDeleteFolderTarget(folder)}
+            >
+              Delete
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </ItemListMenu>
+    )
+  }
+
+  function renderBreadcrumb() {
+    return (
+      <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-1 text-sm text-muted-foreground">
+        {breadcrumbSegments.map((segment, index) => (
+          <span key={segment.path} className="flex items-center gap-1">
+            {index > 0 ? <span>/</span> : null}
+            <button
+              type="button"
+              className="truncate hover:text-foreground"
+              onClick={() => navigateTo(segment.path)}
+            >
+              {segment.label}
+            </button>
+          </span>
+        ))}
+      </nav>
+    )
+  }
+
+  function renderToolbar() {
+    return (
+      <div className="flex shrink-0 items-center gap-1">
+        {enableUpload ? (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept={uploadAccept}
+              multiple={false}
+              disabled={isUploading}
+              onChange={(e) => void handleFilesSelected(e.target.files)}
+            />
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              aria-label="Upload file"
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+          </>
+        ) : null}
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          aria-label="Create new folder"
+          onClick={() => setCreateFolderOpen(true)}
+        >
+          <FolderPlus className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant={viewMode === 'list' ? 'default' : 'outline'}
+          aria-label="List view"
+          onClick={() => setViewMode('list')}
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant={viewMode === 'thumb' ? 'default' : 'outline'}
+          aria-label="Thumbnail view"
+          onClick={() => setViewMode('thumb')}
+        >
+          <LayoutGrid className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
+
   function renderListView() {
     const hasRows = folders.length > 0 || items.length > 0
 
     if (!hasRows) {
-      return <ItemListEmpty>This folder is empty</ItemListEmpty>
+      return (
+        <ItemListEmpty>
+          {enableUpload
+            ? 'This folder is empty. Drag files here or use Upload.'
+            : 'This folder is empty'}
+        </ItemListEmpty>
+      )
     }
 
     return (
-      <ItemList className="flex-1 overflow-auto">
+      <ItemList className="min-h-0 flex-1 overflow-auto scrollbar-themed">
         {folders.map((folder) => (
           <ItemListItem key={folder.id}>
             <ItemListContent>
@@ -182,6 +324,7 @@ export function ScopedFolderBrowser({
                 <span className="truncate font-medium">{folder.name}</span>
               </button>
             </ItemListContent>
+            {showIconToolbar ? renderFolderMenu(folder) : null}
           </ItemListItem>
         ))}
         {items.map((item) => (
@@ -214,27 +357,42 @@ export function ScopedFolderBrowser({
     const hasRows = folders.length > 0 || items.length > 0
 
     if (!hasRows) {
-      return <ItemListEmpty>This folder is empty</ItemListEmpty>
+      return (
+        <div className="flex flex-1 items-center justify-center p-4 text-center text-sm text-muted-foreground">
+          {enableUpload
+            ? 'This folder is empty. Drag files here or use Upload.'
+            : 'This folder is empty'}
+        </div>
+      )
     }
 
     return (
-      <div className="grid flex-1 grid-cols-2 gap-3 overflow-auto sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-auto scrollbar-themed sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6">
         {folders.map((folder) => (
-          <button
+          <div
             key={folder.id}
-            type="button"
-            className="glass-card flex flex-col overflow-hidden rounded-lg text-left transition-shadow hover:shadow-[0_2px_8px_hsl(var(--accent-primary)/0.15)]"
-            onClick={() => handleFolderOpen(folder)}
-            onDoubleClick={() => handleFolderOpen(folder)}
+            className="glass-card group relative overflow-hidden rounded-lg"
           >
-            <div className="flex aspect-square items-center justify-center bg-muted/40">
-              <Folder className="h-10 w-10 text-muted-foreground" aria-hidden />
-            </div>
-            <div className="space-y-0.5 p-2">
-              <p className="truncate text-sm font-medium">{folder.name}</p>
-              <p className="text-xs text-muted-foreground">Folder</p>
-            </div>
-          </button>
+            <button
+              type="button"
+              className="flex w-full flex-col text-left"
+              onClick={() => handleFolderOpen(folder)}
+              onDoubleClick={() => handleFolderOpen(folder)}
+            >
+              <div className="flex aspect-square items-center justify-center bg-muted/40 p-3">
+                <Folder className="h-8 w-8 text-muted-foreground sm:h-6 sm:w-6" aria-hidden />
+              </div>
+              <div className="space-y-0.5 p-1.5">
+                <p className="truncate text-xs font-medium sm:text-sm">{folder.name}</p>
+                <p className="text-xs text-muted-foreground">Folder</p>
+              </div>
+            </button>
+            {showIconToolbar ? (
+              <div className="absolute right-1 top-1">
+                {renderFolderMenu(folder)}
+              </div>
+            ) : null}
+          </div>
         ))}
         {items.map((item) => {
           const isImage = item.mimeType.startsWith('image/')
@@ -262,12 +420,12 @@ export function ScopedFolderBrowser({
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center p-2">
-                      <FileIcon className="h-8 w-8 text-muted-foreground" aria-hidden />
+                      <FileIcon className="h-6 w-6 text-muted-foreground sm:h-5 sm:w-5" aria-hidden />
                     </div>
                   )}
                 </div>
-                <div className="space-y-0.5 p-2">
-                  <p className="truncate text-sm font-medium">{item.fileName}</p>
+                <div className="space-y-0.5 p-1.5">
+                  <p className="truncate text-xs font-medium sm:text-sm">{item.fileName}</p>
                   {renderFileMeta(item)}
                 </div>
               </button>
@@ -283,70 +441,54 @@ export function ScopedFolderBrowser({
     )
   }
 
-  return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
-      {showIconToolbar ? (
-        <div className="flex shrink-0 items-center gap-1 border-b pb-2">
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            aria-label="Create new folder"
-            onClick={() => setCreateFolderOpen(true)}
-          >
-            <FolderPlus className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            aria-label="List view"
-            onClick={() => setViewMode('list')}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant={viewMode === 'thumb' ? 'default' : 'outline'}
-            aria-label="Thumbnail view"
-            onClick={() => setViewMode('thumb')}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : null}
+  const dropZoneEnabled = enableUpload && Boolean(onUploadFiles)
 
-      <nav className="flex shrink-0 flex-wrap items-center gap-1 text-sm text-muted-foreground">
-        {breadcrumbSegments.map((segment, index) => (
-          <span key={segment.path} className="flex items-center gap-1">
-            {index > 0 ? <span>/</span> : null}
-            <button
-              type="button"
-              className="hover:text-foreground"
-              onClick={() => navigateTo(segment.path)}
-            >
-              {segment.label}
-            </button>
-          </span>
-        ))}
-      </nav>
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      {showIconToolbar ? (
+        <header className="flex shrink-0 flex-col gap-2 border-b pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          {renderBreadcrumb()}
+          {renderToolbar()}
+        </header>
+      ) : (
+        renderBreadcrumb()
+      )}
+
+      {uploadError ? <p className="shrink-0 text-sm text-destructive">{uploadError}</p> : null}
 
       {error ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="shrink-0">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex flex-1 items-center justify-center py-8">
-          <Spinner />
-        </div>
-      ) : viewMode === 'thumb' && showIconToolbar ? (
-        renderThumbView()
-      ) : (
-        renderListView()
-      )}
+      <div
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-md transition-colors ${
+          dropZoneEnabled && isDragging ? 'bg-primary/5 ring-2 ring-primary/30' : ''
+        }`}
+        onDragOver={(e) => {
+          if (!dropZoneEnabled || isUploading) return
+          e.preventDefault()
+          setIsDragging(true)
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => {
+          if (!dropZoneEnabled || isUploading) return
+          e.preventDefault()
+          setIsDragging(false)
+          void handleFilesSelected(e.dataTransfer.files)
+        }}
+      >
+        {loading || isUploading ? (
+          <div className="flex flex-1 items-center justify-center py-8">
+            <Spinner />
+          </div>
+        ) : viewMode === 'thumb' && showIconToolbar ? (
+          renderThumbView()
+        ) : (
+          renderListView()
+        )}
+      </div>
 
       <CreateFolderDialog
         open={createFolderOpen}
@@ -361,13 +503,23 @@ export function ScopedFolderBrowser({
         }}
       />
       <MediaDeleteDialog
-        open={deleteTarget !== null}
-        fileName={deleteTarget?.fileName ?? null}
+        open={deleteFileTarget !== null}
+        fileName={deleteFileTarget?.fileName ?? null}
         isDeleting={isDeleting}
         onOpenChange={(open) => {
-          if (!open && !isDeleting) setDeleteTarget(null)
+          if (!open && !isDeleting) setDeleteFileTarget(null)
         }}
-        onConfirm={() => void handleConfirmDelete()}
+        onConfirm={() => void handleConfirmDeleteFile()}
+      />
+      <MediaDeleteDialog
+        open={deleteFolderTarget !== null}
+        fileName={deleteFolderTarget?.name ?? null}
+        title="Delete folder"
+        isDeleting={isDeleting}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setDeleteFolderTarget(null)
+        }}
+        onConfirm={() => void handleConfirmDeleteFolder()}
       />
     </div>
   )

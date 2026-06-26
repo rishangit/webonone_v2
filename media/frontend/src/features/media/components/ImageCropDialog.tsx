@@ -159,8 +159,8 @@ export function ImageCropDialog({
       title="Crop Image"
       description="Drag to reposition. Use zoom and aspect ratio controls to adjust the crop area."
       icon={<Crop className="h-5 w-5" />}
-      sizeWidth="medium"
-      sizeHeight="large"
+      sizeWidth="large"
+      sizeHeight="xlarge"
       disableContentScroll
       nestedDismissGuard={isProcessing}
       footer={

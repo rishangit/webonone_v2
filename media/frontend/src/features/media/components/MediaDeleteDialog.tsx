@@ -14,6 +14,7 @@ interface MediaDeleteDialogProps {
   open: boolean
   fileName: string | null
   isDeleting: boolean
+  title?: string
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
 }
@@ -22,6 +23,7 @@ export function MediaDeleteDialog({
   open,
   fileName,
   isDeleting,
+  title = 'Delete media',
   onOpenChange,
   onConfirm,
 }: MediaDeleteDialogProps) {
@@ -35,7 +37,7 @@ export function MediaDeleteDialog({
     >
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete media</AlertDialogTitle>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
             {fileName
               ? `Delete "${fileName}"? This cannot be undone.`

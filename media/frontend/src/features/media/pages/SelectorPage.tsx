@@ -4,7 +4,6 @@ import { Button, Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { ImageCropDialog } from '../components/ImageCropDialog'
 import { ScopedFolderBrowser } from '../components/ScopedFolderBrowser'
-import { UploadDropzone } from '../components/UploadDropzone'
 import { useEmbedMode } from '../hooks/useEmbedMode'
 import { useMediaAuth } from '../hooks/useMediaAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
@@ -27,7 +26,7 @@ export function SelectorPage() {
 
   if (embed.isEmbed && !accessToken) {
     return (
-      <EmbedLayout title="Select file" parentOrigin={embed.parentOrigin} chromeless>
+      <EmbedLayout title="" parentOrigin={embed.parentOrigin} chromeless inset>
         <div className="flex flex-col items-center gap-3 py-8">
           <Spinner size="lg" />
           <Callout variant="muted" className="max-w-sm text-center">
@@ -106,17 +105,6 @@ export function SelectorPage() {
 
   const content = (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      {showUpload ? (
-        <div className="shrink-0">
-          {uploadError ? <p className="mb-2 text-sm text-destructive">{uploadError}</p> : null}
-          <UploadDropzone
-            accept="image/*"
-            multiple={false}
-            maxFiles={1}
-            onFilesSelected={handleFilesSelected}
-          />
-        </div>
-      ) : null}
       <ScopedFolderBrowser
         scope={scope}
         scopedRoot={embed.folderPath}
@@ -127,9 +115,13 @@ export function SelectorPage() {
         onToggleSelect={handleToggleSelect}
         showIconToolbar
         allowDelete
+        enableUpload={showUpload}
+        uploadAccept="image/*"
+        uploadError={uploadError}
+        onUploadFiles={showUpload ? handleFilesSelected : undefined}
       />
       {embed.mode === 'multiple' ? (
-        <div className="flex justify-end border-t pt-3">
+        <div className="flex shrink-0 justify-end border-t pt-3">
           <Button
             type="button"
             disabled={!selectedItems.length}
@@ -152,13 +144,14 @@ export function SelectorPage() {
     </div>
   )
 
-  if (embed.isEmbed) {
-    return (
-      <EmbedLayout title="Select file" parentOrigin={embed.parentOrigin} chromeless>
-        {content}
-      </EmbedLayout>
-    )
-  }
-
-  return <EmbedLayout title="File selector">{content}</EmbedLayout>
+  return (
+    <EmbedLayout
+      title=""
+      chromeless
+      inset
+      parentOrigin={embed.isEmbed ? embed.parentOrigin : undefined}
+    >
+      {content}
+    </EmbedLayout>
+  )
 }

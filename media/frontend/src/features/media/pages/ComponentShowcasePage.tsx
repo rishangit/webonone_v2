@@ -158,8 +158,9 @@ export function ComponentShowcasePage() {
           if (!open) setActiveDialog(null)
         }}
         title="Select profile image"
-        sizeWidth="medium"
-        sizeHeight="large"
+        sizeWidth="large"
+        sizeHeight="xlarge"
+        className="w-[calc(100vw-1rem)] max-w-5xl sm:w-3/4"
         noContentPadding
         disableContentScroll
       >
@@ -187,6 +188,7 @@ export function ComponentShowcasePage() {
         title="Media selector"
         sizeWidth="medium"
         sizeHeight="large"
+        className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
         noContentPadding
         disableContentScroll
       >
