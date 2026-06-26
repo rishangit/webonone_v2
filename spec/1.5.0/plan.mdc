@@ -74,8 +74,27 @@ Spec 1.5.0 delivers **view/edit modes** on the Identity `/profile` page (default
 | Remove nav item | `webonone-v2/frontend/src/features/shell/config/navItems.ts` |
 | Remove route | `webonone-v2/frontend/src/app/router.tsx` |
 | Delete demo page + unused components | `features/media/pages/MediaDemoPage.tsx`, `MediaViewerEmbed.tsx`, `MediaUploadDialogModal.tsx`, `MediaSelectorModal.tsx` |
+| Remove stale HomePage demo link | `webonone-v2/frontend/src/features/home/pages/HomePage.tsx` |
 
 **Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 4 — Profile return sync + selector thumb default
+
+**Goal:** WebOnOne header avatar reflects Identity profile save; Media selector defaults to thumb view. See [04-profile-return-sync.md](./04-profile-return-sync.md).
+
+**Exit criteria:** Header avatar updates after profile return; selector opens in thumb grid.
+
+| Task | Paths |
+|------|-------|
+| `fetchIdentityUser` service | `webonone-v2/frontend/src/features/auth/services/identityUserApi.ts` |
+| `useIdentityUserRefresh` hook | `webonone-v2/frontend/src/features/auth/hooks/useIdentityUserRefresh.ts` |
+| `userProfileUpdated` reducer | `webonone-v2/frontend/src/features/auth/store/authSlice.ts` |
+| Wire refresh in shell | `webonone-v2/frontend/src/app/AppLayout.tsx` |
+| Default thumb view | `media/frontend/src/features/media/components/ScopedFolderBrowser.tsx` |
+
+**Verify:** Manual profile edit return; selector thumb default
 
 ---
 
@@ -96,6 +115,7 @@ Scope: `identity:user:{userId}`. Folder: `/root/users/{userId}`.
 | ClickUp item | ID | Phase |
 |--------------|-----|-------|
 | Spec No 1.5.0 improve the profile page | 86ey2n76k | Phases 1–3 |
+| When change the profile image core header image is not update to the changed image | 86ey2nkuy | Phase 4 |
 
 ---
 
@@ -117,4 +137,4 @@ npm run type-check -w webonone-v2-root
 npm run type-check -w media-root
 ```
 
-Manual: profile view/edit; 1:1 crop only; WebOnOne nav has no Media demo.
+Manual: profile view/edit; 1:1 crop only; WebOnOne nav has no Media demo; header avatar sync after profile return; selector thumb default.
