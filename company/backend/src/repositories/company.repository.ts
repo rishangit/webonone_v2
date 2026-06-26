@@ -3,7 +3,17 @@ import { db } from '../models/db.js'
 export type CompanyRow = {
   id: string
   name: string
+  description: string | null
+  company_size: string | null
   logo_url: string | null
+  address_line1: string | null
+  address_line2: string | null
+  city: string | null
+  state_region: string | null
+  postal_code: string | null
+  country: string | null
+  contact_email: string | null
+  contact_phone: string | null
   status: 'pending' | 'approved'
   created_by_user_id: string
   created_at: Date

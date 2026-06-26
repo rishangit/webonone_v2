@@ -1,5 +1,6 @@
 import { apiClient } from '@/shared/services/apiClient'
 import { getSuperAdminToken } from '../utils/superAdminSession'
+import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
 
 export type CompanySummary = {
   company: {
@@ -61,7 +62,7 @@ export const companyApi = {
     }
   },
 
-  async registerCompany(body: { name: string; logoUrl: string }) {
+  async registerCompany(body: RegisterCompanyFormValues) {
     return apiClient<CompanySummary>('/company/register', {
       method: 'POST',
       body: JSON.stringify(body),

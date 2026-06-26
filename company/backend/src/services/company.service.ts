@@ -65,7 +65,17 @@ export async function registerCompany(
   await repo.insertCompany({
     id: companyId,
     name: input.name,
+    description: input.description,
+    company_size: input.companySize,
     logo_url: input.logoUrl,
+    address_line1: input.addressLine1,
+    address_line2: input.addressLine2?.trim() || null,
+    city: input.city,
+    state_region: input.stateRegion,
+    postal_code: input.postalCode,
+    country: input.country,
+    contact_email: input.contactEmail,
+    contact_phone: input.contactPhone,
     status: 'pending',
     created_by_user_id: userId,
   })
