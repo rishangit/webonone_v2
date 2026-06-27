@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
   Form,
   FormField,
+  ImagePreview,
   Input,
   ItemList,
   ItemListContent,
@@ -57,6 +58,7 @@ import {
   Textarea,
   useToast,
   type NavConfigItem,
+  type ImagePreviewMode,
 } from '@webonone/ui-kit'
 import { DemoSection } from '@/components/DemoSection'
 
@@ -188,6 +190,37 @@ function DropdownMenuDemo() {
         <DropdownMenuItem className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+function ImagePreviewDemo({ onEdit }: { onEdit: () => void }) {
+  const [mode, setMode] = useState<ImagePreviewMode>('view')
+  const sampleSrc = demoAvatarUsers[0].src
+
+  return (
+    <div className="flex flex-wrap items-start gap-6">
+      <ImagePreview
+        src={sampleSrc}
+        alt="Sample preview"
+        fallback="SP"
+        mode={mode}
+        onEdit={mode === 'edit' ? onEdit : undefined}
+      />
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Fixed <code className="text-xs">w-40 h-40</code> preview. In edit mode the pencil button is
+          centered on the image — consumers wire <code className="text-xs">onEdit</code> to open the
+          Media selector dialog.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setMode((m) => (m === 'view' ? 'edit' : 'view'))}
+        >
+          Switch to {mode === 'view' ? 'edit' : 'view'} mode
+        </Button>
+      </div>
+    </div>
   )
 }
 
@@ -341,6 +374,21 @@ export function ComponentsPage() {
             <AvatarGroup users={[...demoAvatarUsers]} size="md" max={4} />
           </div>
         </div>
+      </DemoSection>
+
+      <DemoSection
+        id="image-preview"
+        title="Image preview"
+        description="Fixed-size image with view/edit modes. Edit opens Media selector in consuming apps."
+      >
+        <ImagePreviewDemo
+          onEdit={() =>
+            toast({
+              title: 'Edit image',
+              description: 'Consumer would open Media selector dialog here.',
+            })
+          }
+        />
       </DemoSection>
 
       <DemoSection id="app-header" title="App header">

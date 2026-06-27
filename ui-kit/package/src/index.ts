@@ -93,6 +93,8 @@ export type { CalloutProps } from './components/Callout'
 export { Spinner } from './components/Spinner'
 export { Avatar, avatarVariants } from './components/Avatar'
 export type { AvatarProps } from './components/Avatar'
+export { ImagePreview } from './components/ImagePreview'
+export type { ImagePreviewProps, ImagePreviewMode } from './components/ImagePreview'
 export { AvatarGroup } from './components/AvatarGroup'
 export type { AvatarGroupProps, AvatarGroupUser } from './components/AvatarGroup'
 export {
