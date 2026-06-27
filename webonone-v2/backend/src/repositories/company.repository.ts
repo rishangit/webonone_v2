@@ -1,5 +1,7 @@
 import { db } from '../models/db.js'
 
+export type CompanyStatus = 'pending' | 'approved' | 'rejected'
+
 export type CompanyRow = {
   id: string
   name: string
@@ -14,7 +16,7 @@ export type CompanyRow = {
   country: string | null
   contact_email: string | null
   contact_phone: string | null
-  status: 'pending' | 'approved'
+  status: CompanyStatus
   created_by_user_id: string
   created_at: Date
   updated_at: Date
@@ -34,7 +36,7 @@ export type MembershipRow = {
 export type SuperAdminRow = {
   id: string
   email: string
-  password_hash: string
+  password_hash: string | null
   display_name: string
   created_at: Date
 }
@@ -63,6 +65,34 @@ export async function listPendingCompanies(): Promise<CompanyRow[]> {
   return db<CompanyRow>('companies').where({ status: 'pending' }).orderBy('created_at', 'asc')
 }
 
+export async function listAllCompanies(): Promise<CompanyRow[]> {
+  return db<CompanyRow>('companies').orderBy('created_at', 'desc')
+}
+
+export async function updateCompanyStatus(
+  companyId: string,
+  status: CompanyStatus,
+  superAdminId: string | null,
+): Promise<CompanyRow | undefined> {
+  const now = db.fn.now(3)
+  const patch: Partial<CompanyRow> = {
+    status,
+    updated_at: now as unknown as Date,
+  }
+
+  if (status === 'approved') {
+    patch.approved_at = now as unknown as Date
+    patch.approved_by_super_admin_id = superAdminId
+  } else {
+    patch.approved_at = null
+    patch.approved_by_super_admin_id = null
+  }
+
+  const updated = await db<CompanyRow>('companies').where({ id: companyId }).update(patch)
+  if (!updated) return undefined
+  return findCompanyById(companyId)
+}
+
 export async function approveCompany(
   companyId: string,
   superAdminId: string,
@@ -87,6 +117,12 @@ export async function promoteUserToCompanyAdmin(companyId: string, userId: strin
     .update({ role: 'company_admin', updated_at: db.fn.now(3) })
 }
 
+export async function demoteUserToMember(companyId: string, userId: string): Promise<void> {
+  await db('company_memberships')
+    .where({ company_id: companyId, user_id: userId })
+    .update({ role: 'member', updated_at: db.fn.now(3) })
+}
+
 export async function findSuperAdminByEmail(email: string): Promise<SuperAdminRow | undefined> {
   return db<SuperAdminRow>('super_admins').where({ email }).first()
 }
@@ -94,7 +130,6 @@ export async function findSuperAdminByEmail(email: string): Promise<SuperAdminRo
 export async function upsertSuperAdmin(input: {
   id: string
   email: string
-  passwordHash: string
   displayName: string
 }): Promise<void> {
   const existing = await findSuperAdminByEmail(input.email)
@@ -102,7 +137,6 @@ export async function upsertSuperAdmin(input: {
     await db('super_admins')
       .where({ id: existing.id })
       .update({
-        password_hash: input.passwordHash,
         display_name: input.displayName,
       })
     return
@@ -111,7 +145,7 @@ export async function upsertSuperAdmin(input: {
   await db('super_admins').insert({
     id: input.id,
     email: input.email,
-    password_hash: input.passwordHash,
+    password_hash: null,
     display_name: input.displayName,
   })
 }

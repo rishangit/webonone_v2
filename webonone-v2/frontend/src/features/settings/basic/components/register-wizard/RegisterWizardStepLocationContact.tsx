@@ -48,7 +48,7 @@ export function RegisterWizardStepLocationContact({
     : ''
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6 pb-1">
       <div className="space-y-4">
         <h3 className="text-sm font-medium text-foreground">Location</h3>
         <FormField label="Address line 1" htmlFor="register-address-line1" required error={fieldErrors.addressLine1}>
@@ -73,7 +73,7 @@ export function RegisterWizardStepLocationContact({
           />
         </FormField>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           <FormField label="City" htmlFor="register-city" required error={fieldErrors.city}>
             <Input
               id="register-city"
@@ -96,7 +96,7 @@ export function RegisterWizardStepLocationContact({
           </FormField>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           <FormField label="Postal code" htmlFor="register-postal" error={fieldErrors.postalCode}>
             <Input
               id="register-postal"

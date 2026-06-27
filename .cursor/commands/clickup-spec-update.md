@@ -73,10 +73,7 @@ When spec files are updated:
 
 ```bash
 git add spec/{SpecNo}/
-git commit -m "$(cat <<'EOF'
-space updated
-EOF
-)"
+git commit -m "space updated"
 git push origin spec/{SpecNo}
 ```
 

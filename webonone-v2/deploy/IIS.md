@@ -39,7 +39,7 @@ On the Windows Server:
 1. **IIS** — Server Manager → Add Roles → Web Server (IIS)
 2. **[HttpPlatformHandler](https://www.iis.net/downloads/microsoft/httpplatformhandler)** — x64 installer
 3. **Node.js LTS** (22.x) — default install path `C:\Program Files\nodejs\`
-4. **MySQL** — create database `webonon_v2` and a user with access to it
+4. **MySQL** — create database `webonone_v2` and a user with access to it
 
 ---
 

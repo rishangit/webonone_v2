@@ -1,30 +1,29 @@
 ---
 description: Implementation plan for spec 1.6.0 — Company registration with admin approval and platform roles
 alwaysApply: false
-globs: company/**, webonone-v2/**, ui-kit/package/**, packages/media-embed/**
+globs: company/**, webonone-v2/**, ui-kit/package/**
 ---
 
 # Implementation plan — Spec 1.6.0
 
 ## Summary
 
-Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration, membership roles, and super-admin approval. **WebOnOne v2** gets **Basic Settings** (`/settings/basic`) with register-company dialog (name + Media logo upload), company status display, and a super-admin pending-approval UI. See [01-overview.md](./01-overview.md), [02-company-service.md](./02-company-service.md), [03-webonone-company-ui.md](./03-webonone-company-ui.md), [04-super-admin-approval.md](./04-super-admin-approval.md).
+Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration, membership roles, and super-admin approval. **WebOnOne v2** gets **Basic Settings** (`/settings/basic`) with a **3-step register wizard** (no logo in registration), company status display, and a super-admin pending-approval UI. Company data persists to shared **`webonone_v2`** core schema. See [01-overview.md](./01-overview.md), [02-company-service.md](./02-company-service.md), [03-webonone-company-ui.md](./03-webonone-company-ui.md), [04-super-admin-approval.md](./04-super-admin-approval.md).
 
 ## Branch and prerequisites
 
 | Item | Value |
 |------|--------|
 | Branch | `spec/1.6.0` |
-| Package builds | `npm run build:media-embed` before webonone prod build |
-| Migrations | `company/migrations` — companies, memberships, super_admins |
-| Env | `company/backend/.env.example`; `webonone-v2/backend/.env.example` — `COMPANY_API_BASE_URL`; `webonone-v2/frontend/.env.example` — `VITE_MEDIA_ORIGIN` |
+| Migrations | `webonone-v2/backend/migrations/` — companies, memberships, super_admins in `webonone_v2` |
+| Env | `company/backend/.env.example` — `DB_NAME=webonone_v2`; `webonone-v2/backend/.env.example` — `COMPANY_API_BASE_URL` |
 | JWT | `JWT_SECRET` duplicated in Company + WebOnOne backends (same as Identity) |
 
 ---
 
 ## Phase 1 — Company service scaffold
 
-**Goal:** Standalone `company/` with DB, health, JWT verify, super-admin seed.
+**Goal:** Standalone `company/` with health, JWT verify, super-admin seed; tables in `webonone_v2`.
 
 **Exit criteria:** `npm run dev:company` starts; `GET /health` 200; super-admin seed login works.
 
@@ -32,8 +31,8 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 |------|-------|
 | Scaffold service root | `company/package.json`, workspaces |
 | Backend Express app | `company/backend/src/` |
-| Migrations | `company/migrations/` — `companies`, `company_memberships`, `super_admins` |
-| Super-admin seed | `company/backend/src/db/seeds/` or migration |
+| Migrations | `webonone-v2/backend/migrations/` — `companies`, `company_memberships`, `super_admins` |
+| Super-admin seed | `company/backend/src/db/seedSuperAdmin.ts` |
 | `GET /health` | `company/backend/src/routes/health.ts` |
 | `requireIdentityJwt` | `company/backend/src/middleware/requireIdentityJwt.ts` |
 | `POST /auth/super-admin/login` | `company/backend/src/routes/auth.ts` |
@@ -52,8 +51,8 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 | Task | Paths |
 |------|-------|
 | Zod schemas | `company/backend/src/schemas/companySchemas.ts` |
-| Repository + service | `company/backend/src/repositories/`, `services/companyService.ts` |
-| `POST /companies` | `company/backend/src/routes/companies.ts` |
+| Repository + service | `company/backend/src/repositories/`, `services/company.service.ts` |
+| `POST /companies` | `company/backend/src/routes/company.routes.ts` |
 | `GET /me/company` | same |
 | One-company-per-user unique constraint | migration |
 
@@ -70,7 +69,7 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 | Task | Paths |
 |------|-------|
 | `requireSuperAdmin` middleware | `company/backend/src/middleware/requireSuperAdmin.ts` |
-| `GET /admin/companies/pending` | `company/backend/src/routes/admin.ts` |
+| `GET /admin/companies/pending` | `company/backend/src/routes/company.routes.ts` |
 | `POST /admin/companies/:id/approve` | same |
 | Audit fields | `approved_at`, `approved_by_super_admin_id` |
 
@@ -80,18 +79,17 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 
 ## Phase 4 — WebOnOne Basic Settings UI
 
-**Goal:** Registration prompt, **3-step wizard**, company states. See [03-webonone-company-ui.md](./03-webonone-company-ui.md).
+**Goal:** Registration prompt, company states, BE proxy. See [03-webonone-company-ui.md](./03-webonone-company-ui.md).
 
-**Exit criteria:** User completes wizard → sees pending status + toast.
+**Exit criteria:** User completes flow → sees pending status + toast.
 
 | Task | Paths |
 |------|-------|
-| BE proxy routes | `webonone-v2/backend/src/routes/company.ts` |
+| BE proxy routes | `webonone-v2/backend/src/routes/company.routes.ts` |
 | `COMPANY_API_BASE_URL` env | `webonone-v2/backend/.env.example` |
-| `mediaConfig.ts` | `webonone-v2/frontend/src/features/media/utils/mediaConfig.ts` |
 | Nav + route | `navItems.ts`, `router.tsx` |
 | `BasicSettingsPage` | `features/settings/basic/pages/BasicSettingsPage.tsx` |
-| `RegisterCompanyDialog` wizard + step components | `features/settings/basic/components/` |
+| `RegisterCompanyDialog` + step components | `features/settings/basic/components/` |
 | Company API client | `features/settings/basic/services/companyApi.ts` |
 | Zod form schemas | frontend + backend validation |
 
@@ -109,7 +107,7 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 |------|-------|
 | Super-admin login page | `features/settings/basic/pages/SuperAdminLoginPage.tsx` |
 | Pending companies page | `features/settings/basic/pages/PendingCompaniesPage.tsx` |
-| BE proxy admin routes | `webonone-v2/backend/src/routes/companyAdmin.ts` |
+| BE proxy admin routes | `webonone-v2/backend/src/routes/company.routes.ts` |
 | Session storage token helper | `features/settings/basic/utils/superAdminSession.ts` |
 | Route guard | `router.tsx` |
 
@@ -125,9 +123,8 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 
 | Task | Paths |
 |------|-------|
-| Migration — extend `companies` | `company/backend/migrations/` |
+| Migration — extend `companies` | `webonone-v2/backend/migrations/` |
 | Register Zod schemas | `company/backend/src/schemas/`, `webonone-v2/backend/src/schemas/`, `webonone-v2/frontend/src/features/settings/basic/schemas/` |
-| Repository + service | `company/backend/src/repositories/`, `services/company.service.ts` |
 | Wizard step components | `webonone-v2/frontend/src/features/settings/basic/components/register-wizard/` |
 | `RegisterCompanyDialog` orchestrator | `features/settings/basic/components/RegisterCompanyDialog.tsx` |
 | `companyApi.registerCompany` payload | `features/settings/basic/services/companyApi.ts` |
@@ -136,22 +133,9 @@ Spec 1.6.0 adds a **Company microservice** (`company/`) for company registration
 
 ---
 
-## Cross-service integration
-
-| Channel | Usage |
-|---------|--------|
-| **JWT** | Identity token on Company user routes; WebOnOne verifies then proxies |
-| **iframe** | Media upload embed for company logo |
-| **postMessage** | `sendMediaInit` + upload complete message |
-| **HTTP proxy** | WebOnOne BE → Company API (no browser direct call in prod) |
-
-Logo scope: `webonone:company:pending:{userId}`. Media type: `image`, optional 1:1 crop.
-
----
-
 ## Phase 7 — Registration wizard polish
 
-**Goal:** Subtask 86ey2punp — remove logo, fix overlay z-index, icon nav, country/phone controls, optional address fields.
+**Goal:** Subtask 86ey2punp — remove logo, fix overlay z-index, labeled Previous/Next nav, country/phone controls, optional address fields.
 
 **Exit criteria:** Wizard usable in dialog; UI Kit country + phone inputs; state/postal optional.
 
@@ -160,7 +144,7 @@ Logo scope: `webonone:company:pending:{userId}`. Media type: `image`, optional 1
 | Optional `logoUrl`; remove logo from wizard | `company/backend/`, `webonone-v2/frontend/.../basic/` |
 | Select/Popover z-index `z-[110]` | `ui-kit/package/src/components/Select.tsx`, `Popover.tsx` |
 | Export `CountrySelect` | `ui-kit/package/src/components/CountrySelect.tsx`, `index.ts` |
-| Icon Previous/Next footer | `RegisterCompanyDialog.tsx` |
+| Previous/Next with icon + text | `RegisterCompanyDialog.tsx` |
 | Country + PhoneInput on step 2 | `RegisterWizardStepLocationContact.tsx` |
 | Optional state/postal schemas | FE + `webonone-v2/backend` + `company/backend` schemas |
 
@@ -168,11 +152,33 @@ Logo scope: `webonone:company:pending:{userId}`. Media type: `image`, optional 1
 
 ---
 
+## Phase 8 — Verification
+
+```bash
+npm run type-check -w company-root
+npm run type-check -w webonone-v2-root
+```
+
+Manual: register company via wizard; pending UI; super-admin approve; approved + company_admin role; Company standalone `/health`; both services on `webonone_v2`.
+
+---
+
+## Cross-service integration
+
+| Channel | Usage |
+|---------|--------|
+| **JWT** | Identity token on Company user routes; WebOnOne verifies then proxies |
+| **HTTP proxy** | WebOnOne BE → Company API (no browser direct call in prod) |
+
+Media logo upload — **deferred** (post-approval edit; `logo_url` column retained).
+
+---
+
 ## ClickUp traceability
 
 | ClickUp item | ID | Phase |
 |--------------|-----|-------|
-| Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 1–6 |
+| Spec No 1.6.0 Register my company | 86ey2nrgd | Phases 1–8 |
 | Core project need to have the user roles | 86ey2p61f | Phases 1–5 |
 | comapny registration need to improve | 86ey2pmp2 | Phase 6 |
 | comapny regitration improvements | 86ey2punp | Phase 7 |
@@ -183,18 +189,6 @@ Logo scope: `webonone:company:pending:{userId}`. Media type: `image`, optional 1
 
 | Risk | Mitigation |
 |------|------------|
+| Shared core DB exception | Document in 01/02; both services must use same `DB_NAME` |
 | New service scaffold size | Mirror `media/` layout |
 | Super-admin token vs Identity JWT | Separate `aud` claim + session storage |
-| Media not running | Document in dev QA |
-
----
-
-## Final verification
-
-```bash
-npm run build -w @webonone/media-embed
-npm run type-check -w company-root
-npm run type-check -w webonone-v2-root
-```
-
-Manual: register company; pending UI; super-admin approve; approved + company_admin role; Company standalone `/health`.

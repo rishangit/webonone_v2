@@ -1,0 +1,98 @@
+---
+description: Dialog window standards with CustomDialog, AlertDialog, wizard and tab patterns
+globs: "**/frontend/src/**/*.{ts,tsx},ui-kit/showcase/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Dialog Window Standards
+
+Related: [tailwind-css.mdc](tailwind-css.mdc) (mobile-first, tokens), [front-end-structure.mdc](front-end-structure.mdc) (feature folders). Full sizing API: [spec/1.3.0/05-dialogs.md](../../spec/1.3.0/05-dialogs.md).
+
+Reference implementations: `ThemeCreateDialog.tsx`, `CreateFolderDialog.tsx`, `ThemeDeleteDialog.tsx`, `ui-kit/showcase/src/pages/DialogsPage.tsx`.
+
+## Which dialog to use
+
+| Use | Component |
+|-----|-----------|
+| Forms, wizards, selection, previews, delete (sized) | **`CustomDialog`** from `@webonone/ui-kit` |
+| Strict non-dismissible destructive confirm | **`AlertDialog`** |
+| Low-level Radix composition | UI Kit internals only — not feature code |
+
+## Core layout
+
+- Build with **`CustomDialog`**; do not use raw `Dialog` primitives in features when `CustomDialog` applies.
+- Every dialog: visible **header** + visible **footer**.
+- Global actions (Cancel, Save, Submit, Delete, Next, Previous) go in the **`footer` prop only** — never in the body.
+- `CustomDialog` footer is already `flex justify-end gap-2`. Pass buttons as a fragment. No `w-full` / `flex-1` on footer buttons unless explicitly required.
+
+## Footer buttons
+
+- Uniform height: **`h-10`** on all footer actions in the same dialog.
+- **Cancel:** `variant="outline"`, `className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"`.
+- **Primary (Save/Create):** `variant="default"`, `h-10`, Lucide `Save` with `className="mr-2 h-4 w-4"` before the label.
+- **Destructive:** `variant="destructive"`, `h-10`, `Trash2` icon when appropriate.
+- Form dialogs: Zod + `FormField` in body per [form-creation skill](../skills/form-creation/SKILL.md).
+
+## Sizing (quick reference)
+
+| Use case | `sizeWidth` × `sizeHeight` |
+|----------|---------------------------|
+| Simple form | `small` × `medium` or `auto` |
+| Long form / lists | `small` × `large` |
+| Selection | `medium` × `large` |
+| Wizard | `large` × `xlarge` |
+| Delete / short confirm | `auto` + `maxWidth="max-w-md"` |
+
+Full presets, scroll, and `nestedDismissGuard`: [spec/1.3.0/05-dialogs.md](../../spec/1.3.0/05-dialogs.md).
+
+## Padding and theme
+
+- Do not fight shell padding; use `noContentPadding` only for full-bleed body (e.g. media iframe).
+- Body spacing: `space-y-*` — avoid conflicting nested `p-*`.
+- Shell uses **`glass-card`** — do not replace with ad-hoc gradient/solid backgrounds.
+- Inner cards/sections: `bg-[hsl(var(--glass-bg))]` + `border-[hsl(var(--glass-border))]`.
+- Inputs: `bg-[hsl(var(--input-background))]`, `border-[hsl(var(--glass-border))]`, `text-foreground`.
+- Typography: titles `text-foreground`; supporting copy `text-muted-foreground`.
+
+## File structure
+
+- One dialog per file: `features/<module>/components/<Name>Dialog.tsx`.
+- Schemas in `features/<module>/schemas/` (not in the dialog file).
+
+## Wizard dialogs
+
+- One step component per step — no one long inline block.
+- Single **step progress bar** only (`w-1/2 mx-auto`) — no duplicate numeric stepper.
+- Next/Previous in footer.
+
+## Tabbed dialogs
+
+- One tab body component per tab.
+- Tab-scoped actions (Add, Edit selected) in tab body; global actions in footer.
+- Row actions via kebab (`MoreVertical`) per [item-list skill](../skills/item-list/SKILL.md).
+
+## Nested dialogs
+
+- Outer: `nestedDismissGuard={innerOpen}`.
+- Parent `onOpenChange` suppresses close while inner is open (`ThemeCreateDialog` pattern).
+
+## Responsive / mobile-first
+
+**Shell (built into `CustomDialog` — do not override):** outer padding `px-2 py-2` → `sm:px-4 sm:py-4`; `max-h-[calc(100vh-1rem)]`; `maxWidth` overrides use `w-full sm:{maxWidth}`; body scroll per height preset.
+
+**Sizing on mobile:** prefer `auto` + `maxWidth` for short confirms; percent presets apply at all breakpoints — do not assume desktop-only widths; no fixed `px` shell widths.
+
+**Body content:** mobile-first single column; columns at `md:` / `lg:` only (e.g. `grid grid-cols-1 gap-6 lg:grid-cols-2`). No horizontal overflow; `min-w-0` on flex/grid children. Full-width inputs on phone. Wizard bar stays `w-1/2 mx-auto`.
+
+**Footer on narrow screens:** wrap long footers in `<div className="flex flex-wrap items-center justify-end gap-2">`; keep `h-10` touch targets; no full-width stacked buttons unless required.
+
+See [tailwind-css.mdc](tailwind-css.mdc) for breakpoint conventions.
+
+## Verification
+
+```bash
+npm run type-check -w webonone-v2-root   # or media-root / identity frontend workspace
+npm run build -w @webonone/ui-kit        # when touching CustomDialog
+```
+
+Manual (responsive): open at ~375px and ~320px — no clipped footer, no body horizontal scroll; resize to `lg+` for multi-column layouts; long titles wrap and header close remains reachable.

@@ -32,6 +32,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
+| [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, footer, sizing, mobile-first responsive, wizard/tab patterns |
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, and any future `*/frontend` apps.
@@ -77,3 +78,5 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
+| Dialog sizing API, scroll, nested guards | [spec/1.3.0/05-dialogs.md](../../spec/1.3.0/05-dialogs.md) |
+| Dialog layout, footer, responsive, wizard/tab | `dialog-windows.mdc` |

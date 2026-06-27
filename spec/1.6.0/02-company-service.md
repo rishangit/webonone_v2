@@ -1,16 +1,31 @@
-# 02 — Company Service
+# 02 — Company Backend (WebOnOne v2)
 
-New standalone microservice: **`company/`** — frontend, backend, MySQL database **`webonone_company`**.
+Company registration, memberships, platform roles, and super-admin approval are implemented **inside WebOnOne v2** — not as a separate microservice. Backend code lives under `webonone-v2/backend/src/`; tables live in the **WebOnOne core MySQL schema `webonone_v2`**.
 
-Production host (future): **`company.webonone.com`**. Local dev: FE **`:3004`**, BE **`:4004`**.
+## Layout
+
+```text
+webonone-v2/
+  backend/
+    migrations/                # companies, company_memberships, super_admins
+    src/
+      routes/company.routes.ts
+      controllers/company.controller.ts
+      services/company.service.ts
+      repositories/company.repository.ts
+      middleware/requireSuperAdmin.ts
+      db/seedSuperAdmin.ts
+  frontend/
+    src/features/settings/basic/   # registration wizard, company section, super-admin UI
+```
 
 ## Responsibilities
 
-- Store **companies** (name, logo URL, status).
+- Store **companies** (name, optional logo URL, status, wizard fields).
 - Store **company memberships** linking Identity `user_id` to company + **platform role**.
-- Authenticate **super admin** with local credentials (hashed password in Company DB — **not** Identity).
+- Authenticate **super admin** with local credentials (hashed password in `webonone_v2` — **not** Identity).
 - Verify **Identity JWT** on user-facing routes (`sub` → `user_id`).
-- Expose REST API for registration, membership read, pending list, and approval.
+- Expose REST API under `/api/v1/company/*`.
 
 ## Database schema (1.6.0)
 
@@ -22,7 +37,7 @@ Production host (future): **`company.webonone.com`**. Local dev: FE **`:3004`**,
 | `name` | VARCHAR(255) | Display name |
 | `description` | TEXT NULL | Company description (wizard step 1) |
 | `company_size` | VARCHAR(32) NULL | Size band e.g. `1-10`, `11-50`, `51-200`, `201-500`, `500+` |
-| `logo_url` | VARCHAR(2048) NULL | Media public URL |
+| `logo_url` | VARCHAR(2048) NULL | Optional Media public URL; upload deferred in 1.6.0 |
 | `address_line1` | VARCHAR(255) NULL | Street address |
 | `address_line2` | VARCHAR(255) NULL | Suite / unit |
 | `city` | VARCHAR(128) NULL | City |
@@ -31,7 +46,7 @@ Production host (future): **`company.webonone.com`**. Local dev: FE **`:3004`**,
 | `country` | VARCHAR(128) NULL | Country |
 | `contact_email` | VARCHAR(255) NULL | Public contact email |
 | `contact_phone` | VARCHAR(64) NULL | Public contact phone |
-| `status` | ENUM | `pending`, `approved` |
+| `status` | ENUM | `pending`, `approved`, `rejected` |
 | `created_by_user_id` | CHAR(21) | Identity user who registered |
 | `created_at` | TIMESTAMP | |
 | `updated_at` | TIMESTAMP | |
@@ -44,7 +59,7 @@ Production host (future): **`company.webonone.com`**. Local dev: FE **`:3004`**,
 |--------|------|-------|
 | `id` | CHAR(21) | Primary key |
 | `company_id` | CHAR(21) | FK companies |
-| `user_id` | CHAR(21) | Identity user copy — no cross-DB FK |
+| `user_id` | CHAR(21) | Identity user copy — no FK to Identity DB |
 | `role` | ENUM | `member`, `company_admin` |
 | `created_at` | TIMESTAMP | |
 | `updated_at` | TIMESTAMP | |
@@ -56,99 +71,60 @@ Production host (future): **`company.webonone.com`**. Local dev: FE **`:3004`**,
 | Column | Type | Notes |
 |--------|------|-------|
 | `id` | CHAR(21) | Primary key |
-| `email` | VARCHAR(255) UNIQUE | Login identifier |
-| `password_hash` | VARCHAR(255) | bcrypt (or same hasher as Identity) |
+| `email` | VARCHAR(255) UNIQUE | Must match Identity login email |
+| `password_hash` | VARCHAR(255) NULL | Deprecated — auth via Identity JWT |
 | `display_name` | VARCHAR(255) | |
 | `created_at` | TIMESTAMP | |
 
-**Seed migration:** Insert one super admin from env (`SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`) at migration time or via knex seed script documented in `backend/.env.example`. Password never committed to repo.
+**Seed:** Insert one super admin email from env via `npm run seed -w @webonone/webonone-backend`. Create matching Identity user in local dev.
 
 ## Platform roles
 
 | Role | Who | Capabilities (1.6.0) |
 |------|-----|----------------------|
 | `member` | Default before approval / non-admin members | View own membership; register company if none |
-| `company_admin` | User who registered, after approval | View/edit company details (name, logo) — edit scope in 1.6.0: view + logo update optional |
-| `super_admin` | Seeded account | List pending companies; approve |
+| `company_admin` | User who registered, after approval | View company details (read-only in 1.6.0) |
+| `super_admin` | Seeded email in `super_admins` | List all companies; set status approve / reject / pending |
 
-Super admin auth is **separate** from Identity JWT — dedicated login endpoint returns a Company-issued session token (JWT or opaque session) scoped to super-admin routes only. Do not store super-admin password in Identity.
+Super admin auth uses the **Identity JWT** on admin routes; `requireSuperAdmin` verifies JWT and checks `super_admins.email`.
 
-## API (`/api/v1`)
+## API (`/api/v1/company`)
 
 All user routes: `Authorization: Bearer <Identity JWT>` unless noted.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `GET` | `/health` | None | Liveness |
-| `POST` | `/auth/super-admin/login` | None | Body: `{ email, password }` → super-admin token |
-| `GET` | `/me/company` | Identity JWT | Current user's company + membership + role; 404 if none |
-| `POST` | `/companies` | Identity JWT | Register company: `{ name, description, companySize, logoUrl, addressLine1, addressLine2, city, stateRegion, postalCode, country, contactEmail, contactPhone }` → status `pending`; creates membership as `member` until approval sets `company_admin` |
-| `GET` | `/admin/companies/pending` | Super-admin token | List pending companies with registrant `user_id` |
-| `POST` | `/admin/companies/:id/approve` | Super-admin token | Approve → `approved`, registrant role → `company_admin` |
+| `GET` | `/company/me` | Identity JWT | Current user's company + membership + role; 404 if none |
+| `POST` | `/company/register` | Identity JWT | Register company → status `pending`; membership as `member` until approval |
+| `GET` | `/company/admin/me` | Identity JWT | Super-admin profile if email allowlisted; 404 otherwise |
+| `GET` | `/company/admin/companies` | Super admin | All companies |
+| `PATCH` | `/company/admin/:id/status` | Super admin | Body `{ status }` — `pending`, `approved`, or `rejected` |
+| `POST` | `/company/admin/:id/approve` | Super admin | Approve shortcut |
 
 ### Register company rules
 
 - User must not already have a membership (409 if exists).
-- `name` required; `logoUrl` required by UI; `description`, `companySize`, location, and contact fields required by wizard validation (see [03](./03-webonone-company-ui.md)).
-- On create: `companies.status = pending`, `company_memberships.role = member` (promoted on approval).
+- `name` required; `logoUrl` **optional**; wizard fields validated (see [03](./03-webonone-company-ui.md)).
+- On create: `companies.status = pending`, `company_memberships.role = member`.
 
-### Approval rules
+### Status rules
 
-- Only `pending` companies can be approved.
-- Sets `company_admin` on `created_by_user_id` membership.
-- Idempotent: re-approve approved company → 200 no-op or 409 per API style.
+- **Approved:** sets `company_admin` on registrant; records `approved_at` and `approved_by_super_admin_id`.
+- **Rejected / pending:** demotes registrant to `member`; clears approval audit fields.
 
-## Backend layout
-
-```text
-company/
-  frontend/                    # port 3004 — optional standalone admin UI
-  backend/                     # port 4004
-    src/
-      config/env.ts
-      middleware/
-        requireIdentityJwt.ts
-        requireSuperAdmin.ts
-      routes/
-        health.ts
-        companies.ts
-        admin.ts
-        auth.ts
-      services/
-        companyService.ts
-        superAdminAuthService.ts
-      repositories/
-  migrations/
-  package.json
-```
-
-## Environment (`backend/.env.example`)
+## Environment (`webonone-v2/backend/.env.example`)
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | MySQL `webonone_company` |
-| `PORT` | `4004` |
-| `JWT_SECRET` | Same value as Identity/WebOnOne for verifying user JWT |
-| `JWT_ISSUER` / `JWT_AUDIENCE` | Match Identity claims |
-| `SUPER_ADMIN_JWT_SECRET` | Sign super-admin session tokens (may equal `JWT_SECRET` with different `aud`) |
-| `SUPER_ADMIN_EMAIL` | Seed only — local dev |
-| `SUPER_ADMIN_PASSWORD` | Seed only — local dev |
-
-## Folder layout (service root)
-
-```text
-company/
-  frontend/
-  backend/
-  migrations/
-  package.json                 # dev: concurrently FE + BE
-```
-
-Register in root `package.json`: workspace, `dev:company`, append to root `npm run dev`.
+| `DB_*` | MySQL connection to `webonone_v2` |
+| `PORT` | `4000` |
+| `JWT_SECRET` | Same value as Identity for verifying user JWT |
+| `SUPER_ADMIN_EMAIL` | Seed only — must match Identity account email |
+| `SUPER_ADMIN_DISPLAY_NAME` | Seed display name |
 
 ## Security
 
-- Identity JWT: verify signature, `iss`, `aud`, `exp` locally.
-- Super-admin routes: separate token; never accept Identity JWT for `/admin/*`.
+- Identity JWT: verify signature, `iss`, `aud`, `exp` locally (`requireAuth`).
+- Super-admin routes: Identity JWT + `super_admins.email` lookup via `requireSuperAdmin`.
 - No passwords or tokens in URLs.
 - `user_id` is a copy from JWT `sub` — no query to Identity DB.

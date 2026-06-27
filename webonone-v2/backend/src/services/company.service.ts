@@ -1,8 +1,6 @@
-import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
 import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
-import type { RegisterCompanyBody, SuperAdminLoginBody } from '../schemas/companySchemas.js'
+import type { RegisterCompanyBody, UpdateCompanyStatusBody } from '../schemas/companySchemas.js'
 import * as repo from '../repositories/company.repository.js'
 
 export type CompanyWithMembership = {
@@ -10,13 +8,23 @@ export type CompanyWithMembership = {
     id: string
     name: string
     logoUrl: string | null
-    status: 'pending' | 'approved'
+    status: repo.CompanyStatus
     createdAt: string
     approvedAt: string | null
   }
   membership: {
     role: 'member' | 'company_admin'
   }
+}
+
+export type AdminCompanySummary = {
+  id: string
+  name: string
+  logoUrl: string | null
+  status: repo.CompanyStatus
+  createdByUserId: string
+  createdAt: string
+  approvedAt: string | null
 }
 
 function toCompanyWithMembership(
@@ -35,6 +43,18 @@ function toCompanyWithMembership(
     membership: {
       role: membership.role,
     },
+  }
+}
+
+function toAdminCompanySummary(row: repo.CompanyRow): AdminCompanySummary {
+  return {
+    id: row.id,
+    name: row.name,
+    logoUrl: row.logo_url,
+    status: row.status,
+    createdByUserId: row.created_by_user_id,
+    createdAt: row.created_at.toISOString(),
+    approvedAt: row.approved_at ? row.approved_at.toISOString() : null,
   }
 }
 
@@ -96,71 +116,71 @@ export async function registerCompany(
   return toCompanyWithMembership(company, membership)
 }
 
+export async function getSuperAdminProfile(email: string) {
+  const admin = await repo.findSuperAdminByEmail(email)
+  if (!admin) return null
+  return {
+    id: admin.id,
+    email: admin.email,
+    displayName: admin.display_name,
+  }
+}
+
+export async function listAllCompanies(): Promise<AdminCompanySummary[]> {
+  const rows = await repo.listAllCompanies()
+  return rows.map(toAdminCompanySummary)
+}
+
 export async function listPendingCompanies() {
   const rows = await repo.listPendingCompanies()
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    logoUrl: row.logo_url,
-    status: row.status,
-    createdByUserId: row.created_by_user_id,
-    createdAt: row.created_at.toISOString(),
-  }))
+  return rows.map(toAdminCompanySummary)
 }
 
 export async function approveCompany(companyId: string, superAdminId: string) {
-  const company = await repo.approveCompany(companyId, superAdminId)
-  if (!company) {
-    const err = new Error('Company not found or not pending')
+  return updateCompanyStatus(companyId, { status: 'approved' }, superAdminId)
+}
+
+export async function updateCompanyStatus(
+  companyId: string,
+  input: UpdateCompanyStatusBody,
+  superAdminId: string,
+) {
+  const existing = await repo.findCompanyById(companyId)
+  if (!existing) {
+    const err = new Error('Company not found')
     ;(err as Error & { statusCode: number }).statusCode = 404
     throw err
   }
 
-  await repo.promoteUserToCompanyAdmin(company.id, company.created_by_user_id)
+  const company = await repo.updateCompanyStatus(
+    companyId,
+    input.status,
+    input.status === 'approved' ? superAdminId : null,
+  )
+  if (!company) {
+    const err = new Error('Company not found')
+    ;(err as Error & { statusCode: number }).statusCode = 404
+    throw err
+  }
+
+  if (input.status === 'approved') {
+    await repo.promoteUserToCompanyAdmin(company.id, company.created_by_user_id)
+  } else {
+    await repo.demoteUserToMember(company.id, company.created_by_user_id)
+  }
 
   const membership = await repo.findMembershipByUserId(company.created_by_user_id)
   if (!membership) {
-    throw new Error('Membership not found after approval')
+    throw new Error('Membership not found after status update')
   }
 
   return toCompanyWithMembership(company, membership)
 }
 
-export async function loginSuperAdmin(input: SuperAdminLoginBody): Promise<{ accessToken: string; displayName: string }> {
-  const admin = await repo.findSuperAdminByEmail(input.email)
-  if (!admin) {
-    const err = new Error('Invalid credentials')
-    ;(err as Error & { statusCode: number }).statusCode = 401
-    throw err
-  }
-
-  const valid = await bcrypt.compare(input.password, admin.password_hash)
-  if (!valid) {
-    const err = new Error('Invalid credentials')
-    ;(err as Error & { statusCode: number }).statusCode = 401
-    throw err
-  }
-
-  const accessToken = jwt.sign(
-    { email: admin.email },
-    env.superAdminJwtSecret,
-    {
-      subject: admin.id,
-      issuer: env.superAdminJwtIssuer,
-      audience: env.superAdminJwtAudience,
-      expiresIn: '8h',
-    },
-  )
-
-  return { accessToken, displayName: admin.display_name }
-}
-
 export async function seedSuperAdminFromEnv(): Promise<void> {
-  const passwordHash = await bcrypt.hash(env.superAdminPassword, 12)
   await repo.upsertSuperAdmin({
     id: nanoid(),
     email: env.superAdminEmail,
-    passwordHash,
     displayName: env.superAdminDisplayName,
   })
 }

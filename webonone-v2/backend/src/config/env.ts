@@ -21,13 +21,14 @@ const envSchema = z.object({
   DB_PORT: z.coerce.number().default(3306),
   DB_USER: z.string().default('root'),
   DB_PASSWORD: z.string().default(''),
-  DB_NAME: z.string().default('webonon_v2'),
+  DB_NAME: z.string().default('webonone_v2'),
   JWT_SECRET: z.string().min(8).default('dev-jwt-secret-change-in-production'),
   HOST: z.string().default('127.0.0.1'),
   PORT: z.coerce.number().optional(),
   WEBONONE_PORT: z.coerce.number().optional(),
   IIS_NODE_HOSTED: z.string().optional(),
-  COMPANY_API_BASE_URL: z.string().url().default('http://localhost:4004/api/v1'),
+  SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
+  SUPER_ADMIN_DISPLAY_NAME: z.string().default('Super Admin'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -54,5 +55,6 @@ export const env = {
   iisHosted,
   jwtIssuer: 'webonone-identity',
   jwtAudience: 'webonone-api',
-  companyApiBaseUrl: parsed.COMPANY_API_BASE_URL.replace(/\/$/, ''),
+  superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
+  superAdminDisplayName: parsed.SUPER_ADMIN_DISPLAY_NAME,
 }

@@ -14,7 +14,7 @@ Invoking `/clickup-run` **pre-authorizes** the full pipeline. Execute shell, git
 | Build / verify | `npm`, `pnpm`, `npx`, `node` per `plan.mdc` |
 | Implementation | edit files per plan; delegate per `AGENTS.md` |
 
-**Forbidden:** `AskQuestion` for task pick or "continue?"; stopping after a successful step; telling the user to click Approve/Run — proceed with the next tool call.
+**Forbidden:** `AskQuestion` for task pick or "continue?"; stopping after a successful step; telling the user to click Approve/Run — proceed with the next tool call; bash HEREDOC or PowerShell `@' ... '@` for `git commit` on Windows (use `git commit -m "message"`).
 
 ---
 

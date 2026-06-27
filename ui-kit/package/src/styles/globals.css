@@ -102,6 +102,7 @@
   .scrollbar-themed {
     scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--background-base));
     scrollbar-width: thin;
+    overscroll-behavior: contain;
   }
 
   html::-webkit-scrollbar,

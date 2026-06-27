@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ClipboardPaste } from 'lucide-react'
+import { ClipboardPaste, Save } from 'lucide-react'
 import type { ColorMode } from '@webonone/theme'
 import {
   Alert,
@@ -136,13 +136,14 @@ export function ThemeCreateDialog({
           <Button
             type="button"
             variant="outline"
-            className="h-10 px-4"
+            className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
             onClick={() => handleRootOpenChange(false)}
             disabled={isSaving}
           >
             Cancel
           </Button>
           <Button type="button" className="h-10" onClick={handleSubmit} disabled={isSaving}>
+            <Save className="mr-2 h-4 w-4" />
             {isSaving ? 'Saving…' : mode === 'create' ? 'Create theme' : 'Save changes'}
           </Button>
         </>

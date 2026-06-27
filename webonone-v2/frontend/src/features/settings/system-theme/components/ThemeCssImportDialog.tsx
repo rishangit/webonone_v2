@@ -1,4 +1,5 @@
 import { useState, type MouseEvent } from 'react'
+import { Save } from 'lucide-react'
 import { Button, CustomDialog } from '@webonone/ui-kit'
 import type { ParsedThemeColors } from '../utils/parseCssThemeVariables'
 import { parseCssThemeVariables } from '../utils/parseCssThemeVariables'
@@ -70,10 +71,16 @@ export function ThemeCssImportDialog({ open, onOpenChange, onImport }: ThemeCssI
       onPointerDownOutside={(e) => e.preventDefault()}
       footer={
         <>
-          <Button type="button" variant="outline" className="h-10 px-4" onClick={() => handleOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+            onClick={() => handleOpenChange(false)}
+          >
             Cancel
           </Button>
           <Button type="button" className="h-10" onClick={handleApply}>
+            <Save className="mr-2 h-4 w-4" />
             Apply
           </Button>
         </>

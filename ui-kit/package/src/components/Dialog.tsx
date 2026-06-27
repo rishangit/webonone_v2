@@ -42,7 +42,7 @@ function DialogContent({ className, children, size = 'md', ...props }: DialogCon
   return (
     <DialogPortal>
       <DialogOverlay />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-2 sm:p-4">
         <DialogPrimitive.Content
           className={cn(
             'glass-card relative flex w-full flex-col overflow-hidden rounded-lg text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
@@ -76,7 +76,13 @@ function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 
 function DialogBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('scrollbar-themed min-h-0 flex-1 overflow-y-auto px-6 py-4', className)} {...props} />
+    <div
+      className={cn(
+        'scrollbar-themed scrollbar-gutter-stable min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-6 py-4',
+        className,
+      )}
+      {...props}
+    />
   )
 }
 

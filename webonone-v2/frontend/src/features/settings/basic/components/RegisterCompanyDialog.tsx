@@ -125,25 +125,18 @@ export function RegisterCompanyDialog({
             <Button
               type="button"
               variant="outline"
-              size="icon"
-              className="border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+              className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
               onClick={handlePrevious}
               disabled={isSubmitting}
-              aria-label="Previous step"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Previous
             </Button>
           ) : null}
           {step < 3 ? (
-            <Button
-              type="button"
-              size="icon"
-              className="h-10"
-              onClick={handleNext}
-              disabled={isSubmitting}
-              aria-label="Next step"
-            >
-              <ChevronRight className="h-4 w-4" />
+            <Button type="button" className="h-10 px-4" onClick={handleNext} disabled={isSubmitting}>
+              Next
+              <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
             <Button type="button" className="h-10" onClick={handleSubmit} disabled={isSubmitting}>

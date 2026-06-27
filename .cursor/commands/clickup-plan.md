@@ -142,10 +142,7 @@ Set `globs` from the spec **Projects affected** table.
 
 ```bash
 git add spec/{SpecNo}/plan.mdc
-git commit -m "$(cat <<'EOF'
-planed competed
-EOF
-)"
+git commit -m "planed competed"
 git push origin spec/{SpecNo}
 ```
 
@@ -153,12 +150,11 @@ git push origin spec/{SpecNo}
 
 ```bash
 git add spec/{SpecNo}/plan.mdc
-git commit -m "$(cat <<'EOF'
-plan updated
-EOF
-)"
+git commit -m "plan updated"
 git push origin spec/{SpecNo}
 ```
+
+Use single-line `git commit -m "..."` only — no bash HEREDOC or PowerShell here-strings (`@' ... '@`). Cursor allowlist misparses here-strings as separate commands on Windows.
 
 Optionally link `plan.mdc` in `README.md` **Documents** if missing.
 

@@ -8,9 +8,11 @@
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "migrate": "node --import tsx ../../node_modules/knex/bin/cli.js migrate:latest --knexfile knexfile.ts",
-    "migrate:status": "node --import tsx ../../node_modules/knex/bin/cli.js migrate:status --knexfile knexfile.ts"
+    "migrate:status": "node --import tsx ../../node_modules/knex/bin/cli.js migrate:status --knexfile knexfile.ts",
+    "seed": "tsx src/db/seedSuperAdmin.ts"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -21,6 +23,7 @@
     "zod": "^3.25.56"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9",

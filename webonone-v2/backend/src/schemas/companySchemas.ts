@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const companySizeSchema = z.enum(['1-10', '11-50', '51-200', '201-500', '500+'])
+const companyStatusSchema = z.enum(['pending', 'approved', 'rejected'])
 
 export const registerCompanyBodySchema = z.object({
   name: z.string().trim().min(1).max(255),
@@ -17,7 +18,9 @@ export const registerCompanyBodySchema = z.object({
   contactPhone: z.string().trim().min(1).max(64),
 })
 
-export const superAdminLoginBodySchema = z.object({
-  email: z.string().email().max(255),
-  password: z.string().min(1),
+export const updateCompanyStatusBodySchema = z.object({
+  status: companyStatusSchema,
 })
+
+export type RegisterCompanyBody = z.infer<typeof registerCompanyBodySchema>
+export type UpdateCompanyStatusBody = z.infer<typeof updateCompanyStatusBodySchema>

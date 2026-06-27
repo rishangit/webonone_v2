@@ -13,3 +13,17 @@ export const mainNav: NavConfigItem[] = [
     ],
   },
 ]
+
+export const superAdminNav: NavConfigItem[] = [
+  { type: 'item', to: '/', label: 'Home', icon: Home },
+  { type: 'item', to: '/companies', label: 'Companies', icon: Building2 },
+  {
+    type: 'group',
+    label: 'Settings',
+    icon: Settings,
+    children: [
+      { to: '/settings/basic', label: 'Basic Settings', icon: Building2 },
+      { to: '/settings/system-theme', label: 'System Theme', icon: Palette },
+    ],
+  },
+]

@@ -25,14 +25,14 @@ When `GET /me/company` (via WebOnOne BFF or direct Company API with JWT) returns
 
 ### State B — Pending company
 
-- Show company name, logo thumbnail, status badge **Pending**.
+- Show company name, logo thumbnail (if `logo_url` set), status badge **Pending**.
 - Message: admin approval is required before management features unlock.
 - No edit actions beyond optional cancel (out of scope).
 
 ### State C — Approved company
 
-- Show company name, logo, status **Approved**, user's role (**Company Admin** or **Member**).
-- Company admins: future edit affordances; 1.6.0 minimum is read-only details + role display.
+- Show company name, logo (if set), status **Approved**, user's role (**Company Admin** or **Member**).
+- Company admins: read-only details + role display in 1.6.0; name/logo edit deferred.
 
 ## Register Company wizard
 
@@ -47,6 +47,7 @@ Replace the single-step form with a **3-step wizard** inside `CustomDialog` (`si
 | Company name | `Input` | Required, max 255 |
 | Company description | `Textarea` | Required, max 2000 |
 | Company size | `Select` | Required — options: `1-10`, `11-50`, `51-200`, `201-500`, `500+` |
+
 Validate step 1 on **Next**. Logo upload was removed from registration (subtask 86ey2punp); `logoUrl` is optional on register API.
 
 ### Step 2 — Location and contact
@@ -72,7 +73,7 @@ Validate step 2 on **Next**.
 
 ### Wizard footer navigation (subtask 86ey2punp)
 
-- **Previous** / **Next:** `Button` `size="icon"` with `ChevronLeft` / `ChevronRight` and `aria-label` (not text labels).
+- **Previous** / **Next:** labeled footer buttons (`Previous` with leading `ChevronLeft`; `Next` with trailing `ChevronRight`). Use default button size (`h-10 px-4`), not `size="icon"`.
 - **Select** / **Popover** overlays inside `CustomDialog` must render above the dialog shell (`z-[110]` in UI Kit).
 
 ### Submit
@@ -85,30 +86,22 @@ Validate step 2 on **Next**.
 
 The original single-step dialog (name + logo only) is **superseded** by the wizard above (subtask 86ey2pmp2). Keep the same `RegisterCompanyDialog` export; internal implementation is wizard-only.
 
-## WebOnOne backend proxy (recommended)
+## WebOnOne backend API
 
-Add routes under `webonone-v2/backend`:
+Company routes are **native** to WebOnOne backend under `webonone-v2/backend`:
 
 | Method | Path | Action |
 |--------|------|--------|
-| `GET` | `/api/v1/company/me` | Forward to Company `GET /me/company` with verified JWT |
-| `POST` | `/api/v1/company/register` | Forward to Company `POST /companies` |
-
-Env (`backend/.env.example`):
-
-| Variable | Purpose |
-|----------|---------|
-| `COMPANY_API_BASE_URL` | `http://localhost:4004/api/v1` |
+| `GET` | `/api/v1/company/me` | Current user's company + membership |
+| `POST` | `/api/v1/company/register` | Register company (Identity JWT) |
 
 Frontend env (`frontend/.env.example`):
 
 | Variable | Purpose |
 |----------|---------|
-| `VITE_API_BASE_URL` | Own API (proxy paths above) |
-| `VITE_MEDIA_ORIGIN` | Media embed for logo |
-| `VITE_MEDIA_API_BASE_URL` | Media API if needed for init |
+| `VITE_API_BASE_URL` | Own API (paths above) |
 
-Derive Media embed URLs in `features/media/utils/mediaConfig.ts` (mirror Identity/WebOnOne patterns).
+`VITE_MEDIA_ORIGIN` / `VITE_MEDIA_API_BASE_URL` — **deferred** (post-approval logo edit via Media embed; not used in 1.6.0 registration).
 
 ## Auth slice extension
 
@@ -128,7 +121,7 @@ Refresh on Basic Settings mount and after registration.
 
 ## UI Kit
 
-- `Dialog`, `FormField`, `Button`, `Input`, `Badge` from `@webonone/ui-kit`
+- `Dialog`, `FormField`, `Button`, `Input`, `Badge`, `CountrySelect`, `PhoneInput` from `@webonone/ui-kit`
 - Form validation: Zod frontend + matching backend (see form-creation skill)
 
 ## Acceptance mapping (subtask 86ey2p61f)
@@ -136,7 +129,7 @@ Refresh on Basic Settings mount and after registration.
 | Criterion | Implementation |
 |-----------|----------------|
 | Prompt on Basic Settings if no company | State A banner |
-| Register Company button → dialog | 3-step wizard with name, description, size, logo |
+| Register Company button → dialog | 3-step wizard with name, description, size, location, contact |
 | Pending status + notification | State B + toast on submit |
 | Return to company section | Basic Settings States B/C |
 | Role visible after approval | Show `company_admin` badge |

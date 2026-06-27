@@ -12,7 +12,7 @@ Agent skill: [.cursor/skills/webonone-agent/SKILL.md](../skills/webonone-agent/S
 
 `webonone-v2/frontend`, `webonone-v2/backend`, `webonone-v2/backend/migrations`.
 
-Specs: [04-webonone-v2-project.md](../../spec/1.0.0/04-webonone-v2-project.md), [07-identity-webonone-integration.md](../../spec/1.0.0/07-identity-webonone-integration.md)
+Specs: [04-webonone-v2-project.md](../../spec/1.0.0/04-webonone-v2-project.md), [07-identity-webonone-integration.md](../../spec/1.0.0/07-identity-webonone-integration.md), [1.6.0 company feature](../../spec/1.6.0/README.md)
 
 ## Ports and env
 
@@ -21,20 +21,21 @@ Specs: [04-webonone-v2-project.md](../../spec/1.0.0/04-webonone-v2-project.md), 
 | Frontend | 3000 | `webonone-v2/frontend/.env` |
 | Backend | 4000 | `webonone-v2/backend/.env` |
 
-`JWT_SECRET` must match Identity backend.
+`JWT_SECRET` must match Identity backend. Super-admin seed: `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_DISPLAY_NAME` (Identity account must use same email).
 
-## 1.0.0 status
+## Database
 
-Product shell only: health API, JWT middleware, redirect login to Identity, placeholder home. No domain tables yet.
+MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, and **company tables** (`companies`, `company_memberships`, `super_admins`). Migrations run via `npm run migrate -w @webonone/webonone-backend`. Seed super admin via `npm run seed -w @webonone/webonone-backend`.
 
 ## Ownership
 
 - `/login` redirects to Identity — **no local login forms**.
 - `/callback` exchanges auth code for JWT via Identity API.
 - JWT **verification** locally; no per-request Identity HTTP on hot paths.
-- Database: `webonon_v2`.
+- Basic Settings (`/settings/basic`) — company registration wizard and company section (spec 1.6.0).
+- Company API is **native** to WebOnOne BE (`/api/v1/company/*`) — not a separate microservice.
 
-Key paths: `features/auth/pages/AuthCallbackPage.tsx`, `features/auth/utils/buildIdentityLoginUrl.ts`, `backend/src/middleware/auth.ts`.
+Key paths: `features/settings/basic/`, `backend/src/routes/company.routes.ts`, `backend/src/services/company.service.ts`, `backend/src/middleware/auth.ts`, `backend/src/middleware/requireSuperAdmin.ts`.
 
 ## Verification
 

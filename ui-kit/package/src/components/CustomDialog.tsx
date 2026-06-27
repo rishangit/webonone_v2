@@ -117,15 +117,15 @@ function CustomDialog({
     disableContentScroll
       ? 'min-h-0 flex-1 overflow-hidden'
       : isAutoHeight
-        ? 'min-h-0 shrink overflow-y-auto max-h-[calc(100vh-10rem)] scrollbar-themed'
-        : 'min-h-0 flex-1 overflow-y-auto scrollbar-themed',
+        ? 'min-h-0 shrink overflow-y-auto overscroll-y-contain max-h-[calc(100vh-10rem)] scrollbar-themed scrollbar-gutter-stable transform-gpu'
+        : 'min-h-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed scrollbar-gutter-stable transform-gpu',
   )
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <CustomDialogOverlay />
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-2 py-2 sm:px-4 sm:py-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-4">
           <DialogPrimitive.Content
             id={id}
             className={cn(

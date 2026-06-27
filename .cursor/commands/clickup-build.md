@@ -110,12 +110,11 @@ Run **Final verification** from `plan.mdc` before commit. Fix failures before co
 
 ```bash
 git add -A
-git commit -m "$(cat <<'EOF'
-development completed
-EOF
-)"
+git commit -m "development completed"
 git push origin spec/{SpecNo}
 ```
+
+Use single-line `git commit -m "..."` only — no bash HEREDOC or PowerShell here-strings (`@' ... '@`). Cursor allowlist misparses here-strings as separate commands on Windows.
 
 Stage only implementation files when unrelated local changes exist.
 

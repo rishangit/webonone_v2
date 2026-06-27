@@ -5,7 +5,8 @@ import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
-import { mainNav } from '@/features/shell/config/navItems'
+import { mainNav, superAdminNav } from '@/features/shell/config/navItems'
+import { useSuperAdminStatus } from '@/features/settings/basic/hooks/useSuperAdminStatus'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
@@ -19,6 +20,8 @@ export function AppLayout() {
   const { redirect, error: profileError, clearError } = useServiceRedirect()
 
   useIdentityUserRefresh()
+  const { isSuperAdmin } = useSuperAdminStatus()
+  const nav = isSuperAdmin ? superAdminNav : mainNav
 
   function handleLogout() {
     dispatch(authActions.logout())
@@ -46,7 +49,7 @@ export function AppLayout() {
   return (
     <ThemeProviderBridge>
       <AppShell
-        nav={mainNav}
+        nav={nav}
         activePath={location.pathname}
         logo={<BrandLogo>WebOnOne</BrandLogo>}
         user={

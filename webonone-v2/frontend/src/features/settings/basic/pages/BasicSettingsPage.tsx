@@ -4,8 +4,16 @@ import { RegisterCompanyDialog } from '../components/RegisterCompanyDialog'
 import { companyApi, type CompanySummary } from '../services/companyApi'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
 
-function roleLabel(role: CompanySummary['membership']['role']): string {
-  return role === 'company_admin' ? 'Company Admin' : 'Member'
+function statusLabel(status: CompanySummary['company']['status']): string {
+  if (status === 'approved') return 'Approved'
+  if (status === 'rejected') return 'Rejected'
+  return 'Pending'
+}
+
+function statusClassName(status: CompanySummary['company']['status']): string {
+  if (status === 'approved') return 'bg-primary/15 text-primary'
+  if (status === 'rejected') return 'bg-destructive/15 text-destructive'
+  return 'bg-muted text-muted-foreground'
 }
 
 export function BasicSettingsPage() {
@@ -78,13 +86,9 @@ export function BasicSettingsPage() {
               <p className="text-sm text-muted-foreground">Your company on WebOnOne</p>
             </div>
             <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                company.company.status === 'approved'
-                  ? 'bg-primary/15 text-primary'
-                  : 'bg-muted text-muted-foreground'
-              }`}
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClassName(company.company.status)}`}
             >
-              {company.company.status === 'approved' ? 'Approved' : 'Pending'}
+              {statusLabel(company.company.status)}
             </span>
           </div>
 
@@ -97,12 +101,21 @@ export function BasicSettingsPage() {
           ) : null}
 
           <p className="text-sm">
-            Your role: <span className="font-medium">{roleLabel(company.membership.role)}</span>
+            Your role:{' '}
+            <span className="font-medium">
+              {company.membership.role === 'company_admin' ? 'Company Admin' : 'Member'}
+            </span>
           </p>
 
           {company.company.status === 'pending' ? (
             <p className="text-sm text-muted-foreground">
               Your registration is pending admin approval. You will gain company management features once approved.
+            </p>
+          ) : null}
+
+          {company.company.status === 'rejected' ? (
+            <p className="text-sm text-destructive">
+              Your registration was rejected. Contact a platform administrator if you believe this is an error.
             </p>
           ) : null}
         </section>

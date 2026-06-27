@@ -126,10 +126,7 @@ Add numbered docs (`02-*`, `03-*`, …) when subtasks or parent touch those area
 
 ```bash
 git add spec/{SpecNo}/
-git commit -m "$(cat <<'EOF'
-spec created
-EOF
-)"
+git commit -m "spec created"
 git push -u origin spec/{SpecNo}
 ```
 
@@ -137,12 +134,11 @@ git push -u origin spec/{SpecNo}
 
 ```bash
 git add spec/{SpecNo}/
-git commit -m "$(cat <<'EOF'
-space updated
-EOF
-)"
+git commit -m "space updated"
 git push origin spec/{SpecNo}
 ```
+
+Use single-line `git commit -m "..."` only — no bash HEREDOC or PowerShell here-strings (`@' ... '@`). Cursor allowlist misparses here-strings as separate commands on Windows.
 
 ## ClickUp status — speced gate
 
