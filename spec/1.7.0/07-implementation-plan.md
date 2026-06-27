@@ -16,7 +16,7 @@ git checkout -b spec/1.7.0
 |------|--------|
 | Base branch | `master` |
 | Spec branch | `spec/1.7.0` |
-| Scope | `ui-kit/`, `identity/frontend` |
+| Scope | `ui-kit/`, `identity/frontend`, `media/frontend` |
 
 ---
 
@@ -67,12 +67,29 @@ git checkout -b spec/1.7.0
 
 ---
 
+## Phase 4 — UI Kit dialog & phone improvements
+
+**Goal:** AlertDialog delete confirm, sibling stacked nested dialogs, phone showcase cleanup, Media crop stacking.
+
+| Task | Detail |
+|------|--------|
+| `CustomDialog` `stackLevel` | Higher z-index for stacked overlays |
+| `DialogsPage` delete demo | Use `AlertDialog` strict confirm |
+| `DialogsPage` nested demo | Sibling dialogs + `stackLevel` |
+| `ControlsPage` | Remove plain PhoneInput section |
+| `SelectorPage` + `ImageCropDialog` | Crop as sibling dialog with `stackLevel={1}` |
+
+**Exit criteria:** Showcase + Media selector crop verified; type-check passes.
+
+---
+
 ## ClickUp subtask traceability
 
 | Subtask | ID | Phase |
 |---------|-----|-------|
 | [User Story] Spec 1.7.0 | 86ey2y7vc | All phases |
 | UI-kit showcase, show the image preview component | 86ey2ya9p | 2–3 |
+| UI-kit improvement | 86ey2yka6 | 4 |
 
 ---
 
@@ -85,6 +102,9 @@ git checkout -b spec/1.7.0
 - [ ] `npm run build -w @webonone/ui-kit` succeeds
 - [ ] `npm run type-check -w ui-kit-root` succeeds
 - [ ] `npm run type-check -w identity-root` succeeds
+- [ ] Delete confirmation showcase uses `AlertDialog`
+- [ ] Nested dialog showcase uses sibling stacking + `stackLevel`
+- [ ] Media selector crop stacks above selector content
 
 ---
 

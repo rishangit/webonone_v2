@@ -16,6 +16,7 @@ As a user, I want a consistent image preview with a fixed size, so I can easily 
 4. Use theme tokens (`border`, `muted`, `foreground`) so the control adapts to light/dark/system theme.
 5. Refactor Identity profile avatar editor to use the shared component.
 6. Add a showcase demo exercising view/edit toggle.
+7. Dialog/phone showcase improvements: AlertDialog delete, remove plain PhoneInput demo, stacked sibling dialogs for nested flows and Media crop.
 
 ## In scope
 
@@ -26,6 +27,9 @@ As a user, I want a consistent image preview with a fixed size, so I can easily 
 | Showcase demo | `ui-kit/showcase` — Components tab section |
 | Identity refactor | `ProfileAvatarEditor` uses `ImagePreview` |
 | Fallback display | Initials or placeholder when `src` is null |
+| Dialog improvements | AlertDialog delete demo; sibling stacked dialogs; `stackLevel` on `CustomDialog` |
+| Phone showcase | Remove plain PhoneInput demo; standardize on country selector |
+| Media crop stacking | Selector embed crop dialog as sibling with `stackLevel={1}` |
 
 ## Out of scope
 

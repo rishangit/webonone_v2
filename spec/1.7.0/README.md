@@ -8,6 +8,7 @@ Implementation branch: **`spec/1.7.0`**
 
 ## Revision history
 
+- **Subtask 86ey2yka6** — AlertDialog delete confirm in showcase; remove plain PhoneInput demo; stacked sibling dialogs (`stackLevel`); Media selector crop uses stacked pattern.
 - **Subtask 86ey2ya9p** — Showcase demos for with/without image; empty state shows centered image icon; Identity profile view mode uses `ImagePreview` for UI alignment.
 
 ## What changed from 1.5.0
@@ -23,8 +24,9 @@ Implementation branch: **`spec/1.7.0`**
 
 | Project | Role in 1.7.0 |
 |---------|----------------|
-| **UI Kit** (`ui-kit/`) | New `ImagePreview` component + showcase demo |
-| **Identity** (`identity/`) | Refactor `ProfileAvatarEditor` to use `ImagePreview` |
+| **UI Kit** (`ui-kit/`) | `ImagePreview`, dialog/phone showcase improvements |
+| **Identity** (`identity/`) | Refactor profile avatar to `ImagePreview` |
+| **Media** (`media/`) | Stacked crop dialog in selector embed |
 
 ## Documents
 
@@ -32,6 +34,7 @@ Implementation branch: **`spec/1.7.0`**
 |-----|-------|
 | [01-overview.md](./01-overview.md) | Goals, scope, glossary, success criteria |
 | [02-image-preview-component.md](./02-image-preview-component.md) | `ImagePreview` API, modes, theme, Media integration contract |
+| [03-ui-kit-improvements.md](./03-ui-kit-improvements.md) | AlertDialog delete, PhoneInput showcase, stacked sibling dialogs, Media crop |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan (implementation) |
 
@@ -41,6 +44,7 @@ Implementation branch: **`spec/1.7.0`**
 |---------|-----|------------------|
 | [User Story] Spec 1.7.0 | 86ey2y7vc | All docs |
 | UI-kit showcase, show the image preview component | 86ey2ya9p | [02](./02-image-preview-component.md); Phase 2–3 |
+| UI-kit improvement | 86ey2yka6 | [03](./03-ui-kit-improvements.md); Phase 4 |
 
 ## Inherited from earlier specs
 
