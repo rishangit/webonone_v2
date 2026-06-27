@@ -28,6 +28,7 @@ interface ImageCropDialogProps {
   file: File | null
   defaultAspect?: CropAspectPreset
   aspectPresets?: CropAspectPreset[]
+  stackLevel?: number
   onConfirm: (croppedFile: File) => void
   onCancel: () => void
 }
@@ -94,6 +95,7 @@ export function ImageCropDialog({
   file,
   defaultAspect = 'free',
   aspectPresets,
+  stackLevel = 1,
   onConfirm,
   onCancel,
 }: ImageCropDialogProps) {
@@ -162,6 +164,7 @@ export function ImageCropDialog({
       sizeWidth="large"
       sizeHeight="xlarge"
       disableContentScroll
+      stackLevel={stackLevel}
       nestedDismissGuard={isProcessing}
       footer={
         <>

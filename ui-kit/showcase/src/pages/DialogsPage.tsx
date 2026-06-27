@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { Save, Tag, Trash2 } from 'lucide-react'
 import {
@@ -45,29 +45,15 @@ function NestedDialogDemo() {
   const [outerOpen, setOuterOpen] = useState(false)
   const [innerOpen, setInnerOpen] = useState(false)
   const innerOpenRef = useRef(false)
-  const suppressParentCloseRef = useRef(false)
 
   useEffect(() => {
     innerOpenRef.current = innerOpen
   }, [innerOpen])
 
-  const handleInnerOpenChange = useCallback((next: boolean) => {
-    if (!next) {
-      suppressParentCloseRef.current = true
-      queueMicrotask(() => {
-        suppressParentCloseRef.current = false
-      })
-    }
-    innerOpenRef.current = next
-    setInnerOpen(next)
-  }, [])
-
   function handleOuterOpenChange(next: boolean) {
-    if (!next && (innerOpenRef.current || suppressParentCloseRef.current)) {
-      if (innerOpenRef.current) {
-        innerOpenRef.current = false
-        setInnerOpen(false)
-      }
+    if (!next && innerOpenRef.current) {
+      innerOpenRef.current = false
+      setInnerOpen(false)
       return
     }
     setOuterOpen(next)
@@ -82,7 +68,7 @@ function NestedDialogDemo() {
         open={outerOpen}
         onOpenChange={handleOuterOpenChange}
         title="Outer dialog"
-        description="Open inner dialog from body."
+        description="Open inner dialog from body — inner renders as a sibling, not nested in this body."
         sizeWidth="large"
         sizeHeight="medium"
         nestedDismissGuard={innerOpen}
@@ -101,19 +87,22 @@ function NestedDialogDemo() {
         >
           Open inner dialog
         </Button>
-        <CustomDialog
-          open={innerOpen}
-          onOpenChange={handleInnerOpenChange}
-          title="Inner dialog"
-          description="Closing this keeps the outer dialog open."
-          sizeWidth="auto"
-          maxWidth="max-w-sm"
-          footer={
-            <Button variant="outline" className="h-10 px-4" onClick={() => handleInnerOpenChange(false)}>
-              Close
-            </Button>
-          }
-        />
+      </CustomDialog>
+      <CustomDialog
+        open={innerOpen}
+        onOpenChange={setInnerOpen}
+        title="Inner dialog"
+        description="Stacked above the outer dialog with its own overlay."
+        sizeWidth="auto"
+        maxWidth="max-w-sm"
+        stackLevel={1}
+        footer={
+          <Button variant="outline" className="h-10 px-4" onClick={() => setInnerOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <p className="text-sm text-muted-foreground">Closing this keeps the outer dialog open.</p>
       </CustomDialog>
     </>
   )
@@ -302,7 +291,7 @@ export function DialogsPage() {
         </CustomDialog>
       </DemoSection>
 
-      <DemoSection id="custom-dialog-delete" title="CustomDialog — delete confirmation">
+      <DemoSection id="alert-dialog-delete" title="AlertDialog — delete confirmation">
         <ul className="space-y-2">
           {items.map((item) => (
             <li key={item.id} className="flex items-center justify-between rounded-md border px-3 py-2">
@@ -313,31 +302,28 @@ export function DialogsPage() {
             </li>
           ))}
         </ul>
-        <CustomDialog
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          title={deleteTarget ? `Delete ${deleteTarget.name}?` : 'Delete item?'}
-          description="This action cannot be undone. The item will be permanently removed."
-          sizeWidth="auto"
-          maxWidth="max-w-md"
-          hideCloseButton
-          onInteractOutside={(e: Event) => e.preventDefault()}
-          onEscapeKeyDown={(e: KeyboardEvent) => e.preventDefault()}
-          footer={
-            <>
-              <Button variant="outline" className="h-10 px-4" onClick={() => setDeleteOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" className="h-10" onClick={confirmDelete}>
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {deleteTarget ? `Delete ${deleteTarget.name}?` : 'Delete item?'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. The item will be permanently removed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={confirmDelete}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
-              </Button>
-            </>
-          }
-        />
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DemoSection>
 
-      <DemoSection id="custom-dialog-nested" title="CustomDialog — nested">
+      <DemoSection id="custom-dialog-nested" title="CustomDialog — stacked siblings">
         <NestedDialogDemo />
       </DemoSection>
 

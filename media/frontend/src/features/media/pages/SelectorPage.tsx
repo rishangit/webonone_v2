@@ -131,6 +131,19 @@ export function SelectorPage() {
           </Button>
         </div>
       ) : null}
+    </div>
+  )
+
+  return (
+    <>
+      <EmbedLayout
+        title=""
+        chromeless
+        inset
+        parentOrigin={embed.isEmbed ? embed.parentOrigin : undefined}
+      >
+        {content}
+      </EmbedLayout>
       <ImageCropDialog
         open={cropOpen}
         file={pendingFile}
@@ -142,17 +155,6 @@ export function SelectorPage() {
           setPendingFile(null)
         }}
       />
-    </div>
-  )
-
-  return (
-    <EmbedLayout
-      title=""
-      chromeless
-      inset
-      parentOrigin={embed.isEmbed ? embed.parentOrigin : undefined}
-    >
-      {content}
-    </EmbedLayout>
+    </>
   )
 }

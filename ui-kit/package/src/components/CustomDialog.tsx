@@ -63,17 +63,26 @@ export interface CustomDialogProps
   disableContentScroll?: boolean
   /** When true, blocks overlay/focus/Escape dismiss (use while a nested dialog is open). */
   nestedDismissGuard?: boolean
+  /** Stacking order for sibling dialogs (0 = default z-[100], each level adds 10). */
+  stackLevel?: number
   id?: string
+}
+
+function dialogStackZIndex(stackLevel: number): number {
+  return 100 + stackLevel * 10
 }
 
 function CustomDialogOverlay({
   className,
+  stackLevel = 0,
+  style,
   ...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>) {
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> & { stackLevel?: number }) {
   return (
     <DialogPrimitive.Overlay
+      style={{ zIndex: dialogStackZIndex(stackLevel), ...style }}
       className={cn(
-        'fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+        'fixed inset-0 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         className,
       )}
       {...props}
@@ -98,6 +107,7 @@ function CustomDialog({
   noContentPadding = false,
   disableContentScroll = false,
   nestedDismissGuard = false,
+  stackLevel = 0,
   id,
   className,
   onInteractOutside,
@@ -124,8 +134,11 @@ function CustomDialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <CustomDialogOverlay />
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-4">
+        <CustomDialogOverlay stackLevel={stackLevel} />
+        <div
+          className="fixed inset-0 flex items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-4"
+          style={{ zIndex: dialogStackZIndex(stackLevel) }}
+        >
           <DialogPrimitive.Content
             id={id}
             className={cn(

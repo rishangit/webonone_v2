@@ -145,12 +145,6 @@ export function ControlsPage() {
         </div>
       </DemoSection>
 
-      <DemoSection id="phone-input" title="Phone input">
-        <div className="max-w-md">
-          <PhoneInput showCountrySelector={false} placeholder="555-0100" />
-        </div>
-      </DemoSection>
-
       <DemoSection id="phone-input-with-country" title="Phone input (with country)">
         <div className="max-w-md space-y-2">
           <PhoneInput
