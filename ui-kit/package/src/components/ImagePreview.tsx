@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react'
+import { Image as ImageIcon, Pencil } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Button } from './Button'
 
@@ -16,12 +16,10 @@ export interface ImagePreviewProps {
 export function ImagePreview({
   src,
   alt,
-  fallback = '?',
   mode = 'view',
   onEdit,
   className,
 }: ImagePreviewProps) {
-  const displayFallback = fallback.slice(0, 2).toUpperCase() || '?'
   const showEditOverlay = mode === 'edit' && onEdit
 
   return (
@@ -34,8 +32,8 @@ export function ImagePreview({
       {src ? (
         <img src={src} alt={alt} className="h-full w-full object-cover" />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-2xl font-medium text-muted-foreground">
-          {displayFallback}
+        <div className="flex h-full w-full items-center justify-center bg-muted">
+          <ImageIcon className="h-10 w-10 text-muted-foreground" aria-hidden />
         </div>
       )}
       {showEditOverlay ? (

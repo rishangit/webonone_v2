@@ -198,19 +198,33 @@ function ImagePreviewDemo({ onEdit }: { onEdit: () => void }) {
   const sampleSrc = demoAvatarUsers[0].src
 
   return (
-    <div className="flex flex-wrap items-start gap-6">
-      <ImagePreview
-        src={sampleSrc}
-        alt="Sample preview"
-        fallback="SP"
-        mode={mode}
-        onEdit={mode === 'edit' ? onEdit : undefined}
-      />
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start gap-8">
+        <div className="space-y-2">
+          <p className="text-sm font-medium">With image</p>
+          <ImagePreview
+            src={sampleSrc}
+            alt="Sample preview"
+            fallback="SP"
+            mode={mode}
+            onEdit={mode === 'edit' ? onEdit : undefined}
+          />
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Without image (first upload)</p>
+          <ImagePreview
+            src={null}
+            alt="Empty preview"
+            mode={mode}
+            onEdit={mode === 'edit' ? onEdit : undefined}
+          />
+        </div>
+      </div>
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Fixed <code className="text-xs">w-40 h-40</code> preview. In edit mode the pencil button is
-          centered on the image — consumers wire <code className="text-xs">onEdit</code> to open the
-          Media selector dialog.
+          Fixed <code className="text-xs">w-40 h-40</code> preview. Empty state shows a centered image
+          icon. In edit mode the pencil button opens the Media selector in consuming apps via{' '}
+          <code className="text-xs">onEdit</code>.
         </p>
         <Button
           type="button"

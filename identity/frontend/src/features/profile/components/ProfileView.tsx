@@ -1,14 +1,6 @@
 import { Globe, MapPin, User } from 'lucide-react'
-import { Avatar, Button } from '@webonone/ui-kit'
+import { Button, ImagePreview } from '@webonone/ui-kit'
 import type { UserProfile } from '@/features/auth/types/auth.types'
-
-function getInitials(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
-  }
-  return displayName.slice(0, 2).toUpperCase() || '?'
-}
 
 function ReadOnlyField({
   label,
@@ -41,12 +33,11 @@ export function ProfileView({ user, avatarUrl, onEdit }: ProfileViewProps) {
   return (
     <div className="space-y-8">
       <section className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-        <Avatar
-          size="xl"
-          className="h-40 w-40 text-2xl"
+        <ImagePreview
           src={avatarUrl}
           alt={user.displayName}
-          fallback={getInitials(user.displayName)}
+          mode="view"
+          className="rounded-full"
         />
         <div className="min-w-0 flex-1 space-y-2">
           <h2 className="text-xl font-semibold">{user.displayName}</h2>
