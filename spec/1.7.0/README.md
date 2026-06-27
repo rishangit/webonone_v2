@@ -29,7 +29,7 @@ Implementation branch: **`spec/1.7.0`**
 | [01-overview.md](./01-overview.md) | Goals, scope, glossary, success criteria |
 | [02-image-preview-component.md](./02-image-preview-component.md) | `ImagePreview` API, modes, theme, Media integration contract |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
-| [plan.mdc](./plan.mdc) | Agent implementation plan |
+| [plan.mdc](./plan.mdc) | Agent implementation plan (implementation) |
 
 ## ClickUp traceability
 

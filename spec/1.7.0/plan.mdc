@@ -1,0 +1,103 @@
+---
+description: Implementation plan for spec 1.7.0 — ImagePreview component with view/edit modes and Media consumer wiring
+alwaysApply: false
+globs: ui-kit/**, identity/frontend/**
+---
+
+# Implementation plan — Spec 1.7.0
+
+## Summary
+
+Spec 1.7.0 adds **`ImagePreview`** to `@webonone/ui-kit` — fixed `w-40 h-40` image display, **view** and **edit** modes, centered edit overlay, and `onEdit` callback for consumers to open the Media selector embed. **Identity** refactors `ProfileAvatarEditor` to use the shared component. See [01-overview.md](./01-overview.md), [02-image-preview-component.md](./02-image-preview-component.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.7.0` |
+| Package build | `npm run build -w @webonone/ui-kit` before consumer prod builds |
+| Media integration | Consumer-only via existing `ProfileMediaSelectorModal` — no UI Kit → Media import |
+
+---
+
+## Phase 1 — ImagePreview component
+
+**Goal:** Export theme-aware `ImagePreview` from UI Kit.
+
+**Exit criteria:** Component builds and exports types.
+
+| Task | Paths |
+|------|-------|
+| Create component | `ui-kit/package/src/components/ImagePreview.tsx` |
+| Export | `ui-kit/package/src/index.ts` |
+| Use `cn`, `Button`, theme tokens | Match Avatar/Card patterns |
+
+**Verify:** `npm run build -w @webonone/ui-kit`
+
+---
+
+## Phase 2 — Showcase demo
+
+**Goal:** Components tab demo with view/edit toggle.
+
+**Exit criteria:** Type-check passes.
+
+| Task | Paths |
+|------|-------|
+| Demo section | `ui-kit/showcase/src/pages/ComponentsPage.tsx` |
+| Mode toggle + toast on edit | `useToast` from ui-kit |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 3 — Identity refactor
+
+**Goal:** Profile avatar editor uses `ImagePreview`.
+
+**Exit criteria:** Profile edit → Media selector unchanged.
+
+| Task | Paths |
+|------|-------|
+| Refactor editor | `identity/frontend/src/features/profile/components/ProfileAvatarEditor.tsx` |
+| Pass `rounded-full` via className | Preserve avatar shape |
+
+**Verify:** `npm run type-check -w identity-root`
+
+---
+
+## Cross-service integration
+
+| Layer | Channel |
+|-------|---------|
+| ImagePreview → Media | Consumer `onEdit` → `CustomDialog` + `MediaSelectorFrame` (Identity) |
+| JWT to Media iframe | Unchanged — `sendMediaInit` in consumer |
+
+UI Kit must **not** import `@webonone/media-embed` or Media service code.
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec 1.7.0 | 86ey2y7vc | 1–3 |
+
+---
+
+## Risks and open items
+
+- ClickUp AC text says "40×40 pixels" but specifies `w-40`/`h-40` — follow Tailwind classes (160px), consistent with 1.5.0 profile.
+- Showcase uses toast stub instead of live Media iframe (no Media dep in ui-kit showcase).
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
+npm run type-check -w identity-root
+```
+
+Manual: Identity profile → Edit → click image → Media selector opens.
