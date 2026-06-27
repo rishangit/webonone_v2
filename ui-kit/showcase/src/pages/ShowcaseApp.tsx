@@ -7,6 +7,7 @@ import { ControlsPage } from '@/pages/ControlsPage'
 import { ComponentsPage } from '@/pages/ComponentsPage'
 import { DialogsPage } from '@/pages/DialogsPage'
 import { IconsPage } from '@/pages/IconsPage'
+import { TagsPage } from '@/pages/TagsPage'
 
 export function ShowcaseApp() {
   const [tab, setTab] = useState<ShowcaseTab>(() => parseShowcaseTab(window.location.hash))
@@ -56,6 +57,9 @@ export function ShowcaseApp() {
         </Tabs.Content>
         <Tabs.Content value="icons" className="space-y-10 outline-none">
           <IconsPage />
+        </Tabs.Content>
+        <Tabs.Content value="tags" className="space-y-10 outline-none">
+          <TagsPage />
         </Tabs.Content>
       </Tabs.Root>
     </PageShell>

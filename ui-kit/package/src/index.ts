@@ -95,6 +95,8 @@ export { Avatar, avatarVariants } from './components/Avatar'
 export type { AvatarProps } from './components/Avatar'
 export { ImagePreview } from './components/ImagePreview'
 export type { ImagePreviewProps, ImagePreviewMode } from './components/ImagePreview'
+export { StatusTag, statusTagVariants } from './components/StatusTag'
+export type { StatusTagProps, StatusTagVariant } from './components/StatusTag'
 export { AvatarGroup } from './components/AvatarGroup'
 export type { AvatarGroupProps, AvatarGroupUser } from './components/AvatarGroup'
 export {

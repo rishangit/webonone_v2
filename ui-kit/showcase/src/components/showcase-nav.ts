@@ -1,10 +1,11 @@
-export type ShowcaseTab = 'controls' | 'components' | 'dialogs' | 'icons'
+export type ShowcaseTab = 'controls' | 'components' | 'dialogs' | 'icons' | 'tags'
 
 export const SHOWCASE_TABS: { id: ShowcaseTab; label: string }[] = [
   { id: 'controls', label: 'Controls' },
   { id: 'components', label: 'Components' },
   { id: 'dialogs', label: 'Dialogs' },
   { id: 'icons', label: 'Icons' },
+  { id: 'tags', label: 'Tags' },
 ]
 
 export const DEFAULT_SHOWCASE_TAB: ShowcaseTab = 'controls'
