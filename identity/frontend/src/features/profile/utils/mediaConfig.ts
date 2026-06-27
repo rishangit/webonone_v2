@@ -8,6 +8,10 @@ export function getMediaSelectorUrl(): string {
   return `${getMediaOrigin()}/selector`
 }
 
+export function getMediaCropDialogUrl(): string {
+  return `${getMediaOrigin()}/crop-dialog`
+}
+
 export function buildProfileMediaScope(userId: string): string {
   return `identity:user:${userId}`
 }

@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import {
   MEDIA_MESSAGE_TYPES,
   type MediaItemDto,
+  type CropAspectPreset,
 } from '@webonone/media-embed'
 
 export function useMediaPostMessage(parentOrigin: string | null, scope: string | null) {
@@ -65,6 +66,27 @@ export function useMediaPostMessage(parentOrigin: string | null, scope: string |
     [parentOrigin, scope],
   )
 
+  const postCropRequest = useCallback(
+    (payload: {
+      file: File
+      folderPath: string
+      cropAspectPresets?: CropAspectPreset[]
+    }) => {
+      if (!parentOrigin || !scope) return
+      window.parent.postMessage(
+        {
+          type: MEDIA_MESSAGE_TYPES.CROP_REQUEST,
+          scope,
+          folderPath: payload.folderPath,
+          file: payload.file,
+          cropAspectPresets: payload.cropAspectPresets,
+        },
+        parentOrigin,
+      )
+    },
+    [parentOrigin, scope],
+  )
+
   return {
     postSelect,
     postUploaded,
@@ -72,5 +94,6 @@ export function useMediaPostMessage(parentOrigin: string | null, scope: string |
     postCancel,
     postSelectionChange,
     postViewerChanged,
+    postCropRequest,
   }
 }

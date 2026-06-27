@@ -12,8 +12,6 @@ Agent skill: [.cursor/skills/webonone-agent/SKILL.md](../skills/webonone-agent/S
 
 `webonone-v2/frontend`, `webonone-v2/backend`, `webonone-v2/backend/migrations`.
 
-Specs: [04-webonone-v2-project.md](../../spec/1.0.0/04-webonone-v2-project.md), [07-identity-webonone-integration.md](../../spec/1.0.0/07-identity-webonone-integration.md), [1.6.0 company feature](../../spec/1.6.0/README.md)
-
 ## Ports and env
 
 | Layer | Port | Env file |
@@ -32,7 +30,7 @@ MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, an
 - `/login` redirects to Identity — **no local login forms**.
 - `/callback` exchanges auth code for JWT via Identity API.
 - JWT **verification** locally; no per-request Identity HTTP on hot paths.
-- Basic Settings (`/settings/basic`) — company registration wizard and company section (spec 1.6.0).
+- Basic Settings (`/settings/basic`) — company registration wizard and company section.
 - Company API is **native** to WebOnOne BE (`/api/v1/company/*`) — not a separate microservice.
 
 Key paths: `features/settings/basic/`, `backend/src/routes/company.routes.ts`, `backend/src/services/company.service.ts`, `backend/src/middleware/auth.ts`, `backend/src/middleware/requireSuperAdmin.ts`.

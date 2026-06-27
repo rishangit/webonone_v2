@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react'
 import type { Area, Point } from 'react-easy-crop'
 import Cropper from 'react-easy-crop'
 import { Crop } from 'lucide-react'
@@ -23,12 +23,18 @@ const ASPECT_PRESETS: { label: CropAspectPreset; ratio: number | null }[] = [
   { label: 'free', ratio: null },
 ]
 
+export interface ImageCropDialogHandle {
+  confirm: () => Promise<void>
+}
+
 interface ImageCropDialogProps {
   open: boolean
   file: File | null
   defaultAspect?: CropAspectPreset
   aspectPresets?: CropAspectPreset[]
   stackLevel?: number
+  /** Render crop controls only — consumer owns the CustomDialog shell (embed iframe). */
+  embedded?: boolean
   onConfirm: (croppedFile: File) => void
   onCancel: () => void
 }
@@ -90,15 +96,20 @@ async function getCroppedImg(
   })
 }
 
-export function ImageCropDialog({
-  open,
-  file,
-  defaultAspect = 'free',
-  aspectPresets,
-  stackLevel = 1,
-  onConfirm,
-  onCancel,
-}: ImageCropDialogProps) {
+export const ImageCropDialog = forwardRef<ImageCropDialogHandle, ImageCropDialogProps>(
+  function ImageCropDialog(
+    {
+      open,
+      file,
+      defaultAspect = 'free',
+      aspectPresets,
+      stackLevel = 1,
+      embedded = false,
+      onConfirm,
+      onCancel,
+    },
+    ref,
+  ) {
   const [aspectPreset, setAspectPreset] = useState<CropAspectPreset>(defaultAspect)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [mediaAspect, setMediaAspect] = useState(1)
@@ -137,7 +148,7 @@ export function ImageCropDialog({
 
   const cropAspect = getAspectRatio(aspectPreset) ?? mediaAspect
 
-  async function handleConfirm() {
+  const handleConfirm = useCallback(async () => {
     if (!file || !imageSrc || !croppedAreaPixels) return
     setIsProcessing(true)
     setError(null)
@@ -150,6 +161,135 @@ export function ImageCropDialog({
     } finally {
       setIsProcessing(false)
     }
+  }, [croppedAreaPixels, file, imageSrc, onConfirm])
+
+  useImperativeHandle(ref, () => ({ confirm: handleConfirm }), [handleConfirm])
+
+  const footerActions = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+        onClick={onCancel}
+        disabled={isProcessing}
+      >
+        Cancel
+      </Button>
+      <Button
+        type="button"
+        className="h-10"
+        onClick={() => void handleConfirm()}
+        disabled={isProcessing || !file || !croppedAreaPixels}
+      >
+        {isProcessing ? 'Processing…' : 'Crop & Upload'}
+      </Button>
+    </>
+  )
+
+  const aspectControls =
+    visiblePresets.length > 1 ? (
+      <RadioGroup
+        value={aspectPreset}
+        onValueChange={(value) => setAspectPreset(value as CropAspectPreset)}
+        className="flex flex-wrap gap-x-4 gap-y-2"
+      >
+        {visiblePresets.map((preset) => (
+          <div key={preset.label} className="flex items-center gap-2">
+            <RadioGroupItem value={preset.label} id={`crop-aspect-${preset.label}`} />
+            <Label htmlFor={`crop-aspect-${preset.label}`} className="cursor-pointer text-sm">
+              {preset.label}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+    ) : null
+
+  const cropperStyle = {
+    cropAreaStyle: { border: '2px solid hsl(var(--primary))' },
+  }
+
+  const cropperNode = imageSrc ? (
+    <Cropper
+      image={imageSrc}
+      crop={crop}
+      zoom={zoom}
+      aspect={cropAspect}
+      rotation={0}
+      minZoom={1}
+      maxZoom={3}
+      cropShape="rect"
+      zoomSpeed={1}
+      restrictPosition
+      keyboardStep={1}
+      style={cropperStyle}
+      classes={{}}
+      mediaProps={{}}
+      cropperProps={{}}
+      onCropChange={setCrop}
+      onZoomChange={setZoom}
+      onCropComplete={onCropComplete}
+      onMediaLoaded={(mediaSize) => {
+        if (aspectPreset === 'free') {
+          setMediaAspect(mediaSize.naturalWidth / mediaSize.naturalHeight)
+        }
+      }}
+    />
+  ) : null
+
+  const embeddedCropper = (
+    <div className="relative min-h-0 overflow-hidden rounded-md bg-muted/30">{cropperNode}</div>
+  )
+
+  const standaloneCropper = (
+    <div className="relative min-h-[20rem] flex-1 overflow-hidden rounded-md bg-muted/30">
+      {cropperNode}
+    </div>
+  )
+
+  const zoomControls = (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">Zoom</p>
+      <Slider
+        min={1}
+        max={3}
+        step={0.05}
+        value={[zoom]}
+        onValueChange={(value) => setZoom(value[0] ?? 1)}
+        aria-label="Crop zoom"
+      />
+    </div>
+  )
+
+  const cropBody = embedded ? (
+    <div
+      className={
+        aspectControls
+          ? 'grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-3'
+          : 'grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-3'
+      }
+    >
+      {aspectControls}
+      {embeddedCropper}
+      <div>
+        {zoomControls}
+        {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+      </div>
+    </div>
+  ) : (
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      {aspectControls}
+      {standaloneCropper}
+      {zoomControls}
+      {error ? <p className="shrink-0 text-sm text-destructive">{error}</p> : null}
+    </div>
+  )
+
+  if (embedded) {
+    if (!open) {
+      return null
+    }
+    return cropBody
   }
 
   return (
@@ -166,82 +306,10 @@ export function ImageCropDialog({
       disableContentScroll
       stackLevel={stackLevel}
       nestedDismissGuard={isProcessing}
-      footer={
-        <>
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isProcessing}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={() => void handleConfirm()}
-            disabled={isProcessing || !file || !croppedAreaPixels}
-          >
-            {isProcessing ? 'Processing…' : 'Crop & Upload'}
-          </Button>
-        </>
-      }
+      footer={footerActions}
     >
-      <div className="flex h-full min-h-0 flex-col gap-3">
-        {visiblePresets.length > 1 ? (
-          <RadioGroup
-            value={aspectPreset}
-            onValueChange={(value) => setAspectPreset(value as CropAspectPreset)}
-            className="flex flex-wrap gap-x-4 gap-y-2"
-          >
-            {visiblePresets.map((preset) => (
-              <div key={preset.label} className="flex items-center gap-2">
-                <RadioGroupItem value={preset.label} id={`crop-aspect-${preset.label}`} />
-                <Label htmlFor={`crop-aspect-${preset.label}`} className="cursor-pointer text-sm">
-                  {preset.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        ) : null}
-        <div className="relative min-h-0 flex-1 overflow-hidden rounded-md bg-muted/30">
-          {imageSrc ? (
-            <Cropper
-              image={imageSrc}
-              crop={crop}
-              zoom={zoom}
-              aspect={cropAspect}
-              rotation={0}
-              minZoom={1}
-              maxZoom={3}
-              cropShape="rect"
-              zoomSpeed={1}
-              restrictPosition
-              keyboardStep={1}
-              style={{
-                cropAreaStyle: { border: '2px solid hsl(var(--primary))' },
-              }}
-              classes={{}}
-              mediaProps={{}}
-              cropperProps={{}}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-              onMediaLoaded={(mediaSize) => {
-                if (aspectPreset === 'free') {
-                  setMediaAspect(mediaSize.naturalWidth / mediaSize.naturalHeight)
-                }
-              }}
-            />
-          ) : null}
-        </div>
-        <div className="shrink-0 space-y-2">
-          <p className="text-sm text-muted-foreground">Zoom</p>
-          <Slider
-            min={1}
-            max={3}
-            step={0.05}
-            value={[zoom]}
-            onValueChange={(value) => setZoom(value[0] ?? 1)}
-            aria-label="Crop zoom"
-          />
-        </div>
-        {error ? <p className="shrink-0 text-sm text-destructive">{error}</p> : null}
-      </div>
+      {cropBody}
     </CustomDialog>
   )
-}
+  },
+)

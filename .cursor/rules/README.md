@@ -4,7 +4,7 @@
 
 | Rule | Description |
 |------|-------------|
-| [cursor-rules.mdc](cursor-rules.mdc) | How to add, edit, and maintain rules |
+| [cursor-rules.mdc](cursor-rules.mdc) | How to add, edit, and maintain rules (self-contained; no `spec/` links) |
 | [code-cleanliness.mdc](code-cleanliness.mdc) | Path aliases, focused diffs, no dead code or empty folders |
 | [microservice-architecture.mdc](microservice-architecture.mdc) | Standalone services, secure data passing (JWT, events, iframe/postMessage), shared-package build order |
 
@@ -32,7 +32,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
-| [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, footer, sizing, mobile-first responsive, wizard/tab patterns |
+| [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, stacked siblings, pointer fall-through dismiss guard, iframe embed footer + crop height chain, footer, sizing, wizard/tab |
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, and any future `*/frontend` apps.
@@ -69,7 +69,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Topic | Authoritative rule |
 |-------|-------------------|
 | One DB per service, events, JWT, iframe/postMessage | `microservice-architecture.mdc` |
-| Identity ↔ WebOnOne integration (spec) | [spec/1.0.0/07-identity-webonone-integration.md](../../spec/1.0.0/07-identity-webonone-integration.md) |
+| Identity ↔ WebOnOne integration | `microservice-architecture.mdc`, `identity-project.mdc` |
 | Tables, migrations, nanoid `CHAR(21)` | `mysql-database-architecture.mdc` |
 | Express routes, JWT, HTTP errors | `nodejs-express.mdc` |
 | Feature folders, `@/shared` between features | `front-end-structure.mdc` |
@@ -78,5 +78,4 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
-| Dialog sizing API, scroll, nested guards | [spec/1.3.0/05-dialogs.md](../../spec/1.3.0/05-dialogs.md) |
-| Dialog layout, footer, responsive, wizard/tab | `dialog-windows.mdc` |
+| Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |

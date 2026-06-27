@@ -13,7 +13,7 @@ import { uploadMediaFile } from '../services/mediaApi'
 export function SelectorPage() {
   const embed = useEmbedMode()
   const { accessToken } = useMediaAuth(embed.isEmbed)
-  const { postSelect } = useMediaPostMessage(embed.parentOrigin, embed.scope)
+  const { postSelect, postCropRequest } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const [selectedItems, setSelectedItems] = useState<MediaItemDto[]>([])
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [cropOpen, setCropOpen] = useState(false)
@@ -87,6 +87,14 @@ export function SelectorPage() {
     if (!file) return
 
     if (showUpload && file.type.startsWith('image/')) {
+      if (embed.isEmbed) {
+        postCropRequest({
+          file,
+          folderPath: currentPath,
+          cropAspectPresets: embed.cropAspectPresets ?? undefined,
+        })
+        return
+      }
       setPendingFile(file)
       setCropOpen(true)
       return

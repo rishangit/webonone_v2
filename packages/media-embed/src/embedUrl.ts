@@ -1,10 +1,13 @@
 import {
   MEDIA_MESSAGE_TYPES,
+  type BuildMediaCropDialogUrlOptions,
   type BuildMediaDialogUrlOptions,
   type BuildMediaEmbedUrlOptions,
   type BuildMediaSelectorUrlOptions,
   type BuildMediaUploadDialogUrlOptions,
   type BuildMediaViewerUrlOptions,
+  type CropAspectPreset,
+  type MediaCropInitMessage,
   type MediaParentMessage,
 } from './types'
 
@@ -65,6 +68,16 @@ export function buildMediaSelectorUrl(options: BuildMediaSelectorUrlOptions): st
   return url.toString()
 }
 
+export function buildMediaCropDialogUrl(options: BuildMediaCropDialogUrlOptions): string {
+  const url = new URL(options.baseUrl)
+  appendCommonEmbedParams(url, options)
+  url.searchParams.set('folderPath', options.folderPath)
+  if (options.cropAspectPresets?.length) {
+    url.searchParams.set('cropAspectPresets', options.cropAspectPresets.join(','))
+  }
+  return url.toString()
+}
+
 export function buildMediaViewerUrl(options: BuildMediaViewerUrlOptions): string {
   const url = new URL(options.baseUrl)
   url.searchParams.set('parentOrigin', options.parentOrigin)
@@ -105,6 +118,24 @@ export function sendMediaInit(
   )
 }
 
+export function sendMediaCropInit(
+  iframe: HTMLIFrameElement,
+  mediaOrigin: string,
+  options: {
+    file: File
+    defaultAspect?: CropAspectPreset
+    aspectPresets?: CropAspectPreset[]
+  },
+): void {
+  const message: MediaCropInitMessage = {
+    type: MEDIA_MESSAGE_TYPES.CROP_INIT,
+    file: options.file,
+    defaultAspect: options.defaultAspect,
+    aspectPresets: options.aspectPresets,
+  }
+  iframe.contentWindow?.postMessage(message, mediaOrigin)
+}
+
 export function sendMediaConfirm(iframe: HTMLIFrameElement, mediaOrigin: string): void {
   const message: MediaParentMessage = { type: MEDIA_MESSAGE_TYPES.CONFIRM }
   iframe.contentWindow?.postMessage(message, mediaOrigin)
@@ -115,5 +146,9 @@ export function isMediaParentMessage(data: unknown): data is MediaParentMessage 
     return false
   }
   const type = (data as { type: string }).type
-  return type === MEDIA_MESSAGE_TYPES.INIT || type === MEDIA_MESSAGE_TYPES.CONFIRM
+  return (
+    type === MEDIA_MESSAGE_TYPES.INIT ||
+    type === MEDIA_MESSAGE_TYPES.CONFIRM ||
+    type === MEDIA_MESSAGE_TYPES.CROP_INIT
+  )
 }

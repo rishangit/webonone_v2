@@ -3,8 +3,8 @@ import {
   isMediaEmbedMessage,
   MEDIA_MESSAGE_TYPES,
   type MediaCancelMessage,
+  type MediaCropRequestMessage,
   type MediaDeletedMessage,
-  type MediaEmbedMessage,
   type MediaSelectionChangeMessage,
   type MediaSelectMessage,
   type MediaUploadedMessage,
@@ -19,6 +19,7 @@ export interface UseMediaEmbedMessageOptions {
   onDeleted?: (message: MediaDeletedMessage) => void
   onCancel?: (message: MediaCancelMessage) => void
   onViewerChanged?: (message: MediaViewerChangedMessage) => void
+  onCropRequest?: (message: MediaCropRequestMessage) => void
 }
 
 export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void {
@@ -30,6 +31,7 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
     onDeleted,
     onCancel,
     onViewerChanged,
+    onCropRequest,
   } = options
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
         return
       }
 
-      const message = event.data as MediaEmbedMessage
+      const message = event.data
       switch (message.type) {
         case MEDIA_MESSAGE_TYPES.SELECT:
           onSelect?.(message)
@@ -61,6 +63,9 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
         case MEDIA_MESSAGE_TYPES.VIEWER_CHANGED:
           onViewerChanged?.(message)
           break
+        case MEDIA_MESSAGE_TYPES.CROP_REQUEST:
+          onCropRequest?.(message)
+          break
         default:
           break
       }
@@ -68,5 +73,5 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [mediaOrigin, onCancel, onDeleted, onSelect, onSelectionChange, onUploaded, onViewerChanged])
+  }, [mediaOrigin, onCancel, onCropRequest, onDeleted, onSelect, onSelectionChange, onUploaded, onViewerChanged])
 }

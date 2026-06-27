@@ -25,10 +25,10 @@ export function EmbedLayout({
 
   if (chromeless) {
     return (
-      <div className={cn('flex h-full min-h-0 flex-col text-foreground')}>
+      <div className={cn('flex h-dvh min-h-0 w-full flex-col overflow-hidden text-foreground')}>
         <main
           className={cn(
-            'min-h-0 flex-1 overflow-hidden',
+            'flex min-h-0 flex-1 flex-col overflow-hidden',
             inset && 'px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5',
           )}
         >

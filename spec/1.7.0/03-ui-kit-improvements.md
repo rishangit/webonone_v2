@@ -56,14 +56,24 @@ Refactor `NestedDialogDemo` in `DialogsPage.tsx`:
 
 ### Media crop over selector (Identity embed path)
 
-When Identity opens **Select profile photo** (`ProfileMediaSelectorModal` → `MediaSelectorFrame` iframe), upload triggers **Crop Image** inside the Media selector page.
+When Identity opens **Select profile photo**, upload-with-crop must stack in the **Identity document** — not inside the selector iframe (iframe `stackLevel` cannot overlay the consumer modal).
+
+| Step | Detail |
+|------|--------|
+| 1 | Selector embed posts `webonone:media:crop-request` to parent with `File`, `scope`, `folderPath`, `cropAspectPresets` |
+| 2 | [`ProfileMediaSelectorModal`](../../identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx) opens **sibling** inner `CustomDialog` (`stackLevel={1}`, extended `nestedDismissGuard` on outer) |
+| 3 | Inner dialog hosts `MediaCropDialogFrame` → Media `/crop-dialog` route; **all** footer actions (Cancel, Crop & Upload) in consumer `CustomDialog` footer only — embed is body-only (`embedded` `ImageCropDialog`) |
+| 4 | Parent sends JWT `init` + `crop-init` (file) to crop iframe; primary footer calls `sendMediaConfirm` |
+| 5 | Crop confirm uploads and posts `webonone:media:select` → avatar updates |
+
+**Dismiss guard:** inner Cancel must not close the outer selector — use `closeInnerDialog()`, `blockOuterDismiss` (~150ms after inner close), and extended `nestedDismissGuard` to block pointer fall-through. See [`.cursor/rules/dialog-windows.mdc`](../../.cursor/rules/dialog-windows.mdc) (**Inner close must not dismiss outer**).
 
 | File | Change |
 |------|--------|
-| `media/frontend/src/features/media/pages/SelectorPage.tsx` | Move `ImageCropDialog` to page root sibling (not inside scroll/content column) |
-| `media/frontend/src/features/media/components/ImageCropDialog.tsx` | Pass `stackLevel={1}` to crop dialog |
-
-Crop dialog stacks above selector content with its own overlay blur — same sibling/stack pattern as showcase nested demo.
+| `packages/media-embed/` | `CROP_REQUEST`, `CROP_INIT`, `MediaCropDialogFrame`, `sendMediaCropInit`, `buildMediaCropDialogUrl` |
+| `media/.../SelectorPage.tsx` | Embed mode: `postCropRequest` instead of local `ImageCropDialog` |
+| `media/.../CropDialogPage.tsx` | Crop-only embed page (`embedded` `ImageCropDialog`) |
+| `identity/.../ProfileMediaSelectorModal.tsx` | Sibling outer (selector) + inner (crop) `CustomDialog`s |
 
 ---
 
@@ -74,8 +84,9 @@ Crop dialog stacks above selector content with its own overlay blur — same sib
 | `ui-kit/package/src/components/CustomDialog.tsx` | Add `stackLevel` prop |
 | `ui-kit/showcase/src/pages/DialogsPage.tsx` | AlertDialog delete; sibling nested demo |
 | `ui-kit/showcase/src/pages/ControlsPage.tsx` | Remove plain phone input section |
-| `media/frontend/src/features/media/pages/SelectorPage.tsx` | Sibling `ImageCropDialog` |
-| `media/frontend/src/features/media/components/ImageCropDialog.tsx` | `stackLevel={1}` |
+| `media/frontend/src/features/media/pages/CropDialogPage.tsx` | **Create** — crop embed route |
+| `identity/frontend/.../ProfileMediaSelectorModal.tsx` | Sibling stacked dialogs + crop embed |
+| `identity/frontend/.../mediaConfig.ts` | `getMediaCropDialogUrl()` |
 
 ---
 
@@ -84,5 +95,5 @@ Crop dialog stacks above selector content with its own overlay blur — same sib
 - [ ] Delete confirmation showcase uses `AlertDialog` (strict confirm)
 - [ ] Plain phone input demo (no country) removed from Controls tab
 - [ ] Nested dialog showcase uses sibling `CustomDialog` instances + `stackLevel`
-- [ ] Media selector crop opens as stacked sibling dialog over selector content
+- [ ] Identity profile crop opens as sibling `CustomDialog` in parent window (not clipped in selector iframe)
 - [ ] `npm run build -w @webonone/ui-kit` and type-checks pass

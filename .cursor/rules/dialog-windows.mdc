@@ -6,9 +6,9 @@ alwaysApply: false
 
 # Dialog Window Standards
 
-Related: [tailwind-css.mdc](tailwind-css.mdc) (mobile-first, tokens), [front-end-structure.mdc](front-end-structure.mdc) (feature folders). Full sizing API: [spec/1.3.0/05-dialogs.md](../../spec/1.3.0/05-dialogs.md).
+Related: [tailwind-css.mdc](tailwind-css.mdc) (mobile-first, tokens), [front-end-structure.mdc](front-end-structure.mdc) (feature folders). Implementation: [`CustomDialog.tsx`](../../ui-kit/package/src/components/CustomDialog.tsx).
 
-Reference implementations: `ThemeCreateDialog.tsx`, `CreateFolderDialog.tsx`, `ThemeDeleteDialog.tsx`, `ui-kit/showcase/src/pages/DialogsPage.tsx`.
+Reference implementations: `DialogsPage.tsx` (`NestedDialogDemo` — stacked siblings), `ProfileMediaSelectorModal.tsx` (consumer + iframe crop), `CreateFolderDialog.tsx`, `ThemeDeleteDialog.tsx`.
 
 ## Which dialog to use
 
@@ -22,7 +22,8 @@ Reference implementations: `ThemeCreateDialog.tsx`, `CreateFolderDialog.tsx`, `T
 
 - Build with **`CustomDialog`**; do not use raw `Dialog` primitives in features when `CustomDialog` applies.
 - Every dialog: visible **header** + visible **footer**.
-- Global actions (Cancel, Save, Submit, Delete, Next, Previous) go in the **`footer` prop only** — never in the body.
+- Global actions (Cancel, Save, Submit, Delete, Next, Previous, **Crop & Upload**) go in the **`footer` prop only** — never in the body.
+- This applies to **stacked inner dialogs** and **consumer-hosted embed dialogs** — if the consumer renders `CustomDialog`, the iframe/embed child must not duplicate footer actions.
 - `CustomDialog` footer is already `flex justify-end gap-2`. Pass buttons as a fragment. No `w-full` / `flex-1` on footer buttons unless explicitly required.
 
 ## Footer buttons
@@ -43,7 +44,22 @@ Reference implementations: `ThemeCreateDialog.tsx`, `CreateFolderDialog.tsx`, `T
 | Wizard | `large` × `xlarge` |
 | Delete / short confirm | `auto` + `maxWidth="max-w-md"` |
 
-Full presets, scroll, and `nestedDismissGuard`: [spec/1.3.0/05-dialogs.md](../../spec/1.3.0/05-dialogs.md).
+**Width presets:** `small` 50%, `medium` 66%, `large` 75%, `xlarge` 83%, `auto` + `maxWidth`. **Height presets:** `small` 33%, `medium` 50%, `large` 75%, `xlarge` 90%, `auto` content-sized. Shell always `max-h-[calc(100vh-1rem)]`. Omitted `sizeHeight` defaults to `sizeWidth` (or `auto` when `sizeWidth="auto"`).
+
+**Scroll:** fixed height → body `flex-1 min-h-0 overflow-y-auto`; `disableContentScroll` → `overflow-hidden` for internal scroll (iframes, crop).
+
+### CustomDialog props (common)
+
+| Prop | Purpose |
+|------|---------|
+| `nestedDismissGuard` | Blocks overlay/focus/Escape dismiss while inner dialog open (extend with post-close buffer — see stacked section) |
+| `stackLevel` | Stacked sibling z-index (`100 + level * 10`); inner dialog uses `1` or higher |
+| `noContentPadding` | Full-bleed body (media iframe) |
+| `disableContentScroll` | Body does not scroll; children manage overflow |
+| `hideCloseButton` | Delete-style confirms |
+| `maxWidth` | With `sizeWidth="auto"`, caps width; with percent presets, optional `sm:{maxWidth}` override |
+
+Optional Radix passthrough on content: `onInteractOutside`, `onPointerDownOutside`, `onFocusOutside`, `onEscapeKeyDown`. When `nestedDismissGuard` is true, dismiss events are prevented before custom handlers run.
 
 ## Padding and theme
 
@@ -71,10 +87,95 @@ Full presets, scroll, and `nestedDismissGuard`: [spec/1.3.0/05-dialogs.md](../..
 - Tab-scoped actions (Add, Edit selected) in tab body; global actions in footer.
 - Row actions via kebab (`MoreVertical`) per [item-list skill](../skills/item-list/SKILL.md).
 
-## Nested dialogs
+## Stacked sibling dialogs
 
-- Outer: `nestedDismissGuard={innerOpen}`.
-- Parent `onOpenChange` suppresses close while inner is open (`ThemeCreateDialog` pattern).
+When a second dialog opens from an open dialog, use **sibling** `CustomDialog` instances in the **same document** — never render the inner dialog as a **child** of the outer dialog body.
+
+### Required pattern
+
+1. **Sibling JSX** — outer and inner are siblings under a fragment (`<>...</>`), not parent/child in the tree.
+2. **Outer guard** — `nestedDismissGuard={innerOpen || blockOuterDismiss}` on the outer dialog (see **Inner close must not dismiss outer**).
+3. **Inner stack** — `stackLevel={1}` on the inner dialog (+1 per additional layer).
+4. **Dismiss order** — outer `onOpenChange(false)` while inner is open: close inner first, keep outer open (`useRef` + optional state guard).
+
+Simple uncontrolled reference: [`NestedDialogDemo`](ui-kit/showcase/src/pages/DialogsPage.tsx). **Controlled outer** (parent owns `open` / `onClose`): [`ProfileMediaSelectorModal.tsx`](identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx).
+
+### Inner close must not dismiss outer
+
+When the inner dialog closes on button click, the pointer can **fall through** to the outer overlay and trigger outer `onOpenChange(false)` — closing both dialogs.
+
+1. **`closeInnerDialog()` helper** — closes inner state only; never calls parent `onClose()` / `setOuterOpen(false)`.
+2. **`innerOpenRef`** — sync from `innerOpen` in `useEffect` only; set `innerOpenRef.current = true` when **opening** inner; **never** set it `false` inside inner close handlers.
+3. **Post-close dismiss buffer** — `blockOuterDismiss` state + ref; set `true` in `closeInnerDialog()`, clear after ~150ms (`setTimeout`, clear on unmount).
+4. **Extended outer guard** — `nestedDismissGuard={innerOpen || blockOuterDismiss}` (not `innerOpen` alone).
+5. **Outer `onOpenChange(false)`** — return without closing outer when `innerOpen`, `innerOpenRef.current`, or `blockOuterDismiss` / ref is true; call `closeInnerDialog()` if inner still open; only then call parent `onClose()`.
+6. **Inner Cancel** — `type="button"`, `event.stopPropagation()`, call `closeInnerDialog()` directly.
+
+### Anti-patterns
+
+- Inner `CustomDialog` inside outer `CustomDialog` `children` (legacy: `ThemeCreateDialog` — migrate to siblings).
+- Stacked dialog **inside an iframe** when the parent dialog is in the consumer window — `stackLevel` cannot overlay the parent modal; delegate via postMessage (`webonone:media:crop-request` → sibling inner dialog + `MediaCropDialogFrame` in parent document).
+- Clearing `innerOpenRef` synchronously when inner closes → outer guard fails on async `onOpenChange`.
+- `nestedDismissGuard={innerOpen}` without post-close buffer → pointer click-through dismisses outer.
+- Calling parent `onClose()` from inner Cancel or inner `onOpenChange`.
+
+### Skeleton (controlled outer + embed inner)
+
+```tsx
+const [innerOpen, setInnerOpen] = useState(false)
+const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
+const blockOuterDismissRef = useRef(false)
+const innerOpenRef = useRef(false)
+
+useEffect(() => { innerOpenRef.current = innerOpen }, [innerOpen])
+
+const closeInnerDialog = useCallback(() => {
+  setInnerOpen(false)
+  blockOuterDismissRef.current = true
+  setBlockOuterDismiss(true)
+  window.setTimeout(() => {
+    blockOuterDismissRef.current = false
+    setBlockOuterDismiss(false)
+  }, 150)
+}, [])
+
+function handleOuterOpenChange(next: boolean) {
+  if (next) return
+  if (innerOpen || innerOpenRef.current) { closeInnerDialog(); return }
+  if (blockOuterDismissRef.current || blockOuterDismiss) return
+  onClose() // parent-controlled outer only
+}
+
+return (
+  <>
+    <CustomDialog open={isOpen} onOpenChange={handleOuterOpenChange} nestedDismissGuard={innerOpen || blockOuterDismiss} ... />
+    <CustomDialog open={innerOpen} onOpenChange={(next) => !next && closeInnerDialog()} stackLevel={1}
+      footer={<Button type="button" onClick={(e) => { e.stopPropagation(); closeInnerDialog() }}>Cancel</Button>} ... />
+  </>
+)
+```
+
+See **Iframe embed bodies** below when inner dialog hosts a media iframe.
+
+## Iframe embed bodies (`noContentPadding`)
+
+When a `CustomDialog` body hosts a Media (or other) iframe, the **consumer owns the dialog shell** — title, description, and **all** footer actions.
+
+### Required pattern
+
+1. **Footer in consumer only** — Cancel + primary (e.g. Crop & Upload) in host `footer` with `h-10` classes; domain widgets use `embedded` prop (`ImageCropDialog`) — **no** faux footer (`border-t` + Cancel/Submit) in iframe body.
+2. **Confirm via postMessage** — primary footer calls `sendMediaConfirm(iframe, mediaOrigin)`; embed listens with `useMediaParentCommands` ([`CropDialogPage.tsx`](media/frontend/src/features/media/pages/CropDialogPage.tsx)).
+3. **Height — consumer** — body wrapper `flex h-full min-h-0 flex-1 flex-col overflow-hidden`; iframe `h-full min-h-0 w-full flex-1 border-0`.
+4. **Height — embed document** — [`useEmbedDocumentFill`](media/frontend/src/features/media/hooks/useEmbedDocumentFill.ts) on embed pages; [`EmbedLayout`](media/frontend/src/features/media/components/EmbedLayout.tsx) chromeless uses **`h-dvh min-h-0`** (`h-full` alone breaks when `#root` → React tree does not propagate height).
+5. **Height — crop UI** — embedded crop body: CSS grid `grid-rows-[minmax(0,1fr)_auto]` (cropper + zoom); do not rely on bare `flex-1` cropper without a resolved height chain.
+
+### Forbidden in embed iframe content
+
+- Button rows styled as dialog footers; `CustomDialog` inside iframe when parent provides the shell
+- Duplicating footer actions in consumer footer and iframe body
+- `flex-1` cropper without `h-dvh` / grid → cropper collapses (only zoom slider visible)
+
+Reference: [`ProfileMediaSelectorModal.tsx`](identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx), [`CropDialogPage.tsx`](media/frontend/src/features/media/pages/CropDialogPage.tsx).
 
 ## Responsive / mobile-first
 
@@ -91,8 +192,14 @@ See [tailwind-css.mdc](tailwind-css.mdc) for breakpoint conventions.
 ## Verification
 
 ```bash
-npm run type-check -w webonone-v2-root   # or media-root / identity frontend workspace
+npm run type-check -w webonone-v2-root   # or media-root / identity-root
 npm run build -w @webonone/ui-kit        # when touching CustomDialog
 ```
 
-Manual (responsive): open at ~375px and ~320px — no clipped footer, no body horizontal scroll; resize to `lg+` for multi-column layouts; long titles wrap and header close remains reachable.
+Manual (stacked + embed crop):
+
+1. Open outer → trigger inner (e.g. upload image) → **Cancel on inner** → inner closes, **outer stays open**.
+2. Crop: image fills crop area; zoom below cropper; **no** action buttons in iframe body; **Crop & Upload** in consumer footer only.
+3. Escape / overlay on outer while inner open → inner closes first, outer remains.
+
+Manual (responsive): ~375px / ~320px — no clipped footer, no body horizontal scroll; long titles wrap.

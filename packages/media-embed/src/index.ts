@@ -1,5 +1,6 @@
 import {
   MEDIA_MESSAGE_TYPES,
+  type BuildMediaCropDialogUrlOptions,
   type BuildMediaDialogUrlOptions,
   type BuildMediaEmbedUrlOptions,
   type BuildMediaSelectorUrlOptions,
@@ -7,6 +8,8 @@ import {
   type BuildMediaViewerUrlOptions,
   type CropAspectPreset,
   type MediaCancelMessage,
+  type MediaCropInitMessage,
+  type MediaCropRequestMessage,
   type MediaDeletedMessage,
   type MediaEmbedMessage,
   type MediaEmbedMode,
@@ -25,6 +28,7 @@ import {
 export {
   MEDIA_MESSAGE_TYPES,
   isMediaEmbedMessage,
+  type BuildMediaCropDialogUrlOptions,
   type BuildMediaDialogUrlOptions,
   type BuildMediaEmbedUrlOptions,
   type BuildMediaSelectorUrlOptions,
@@ -33,6 +37,8 @@ export {
   type CropAspectPreset,
   type MediaCancelMessage,
   type MediaConfirmMessage,
+  type MediaCropInitMessage,
+  type MediaCropRequestMessage,
   type MediaDeletedMessage,
   type MediaEmbedMessage,
   type MediaEmbedMode,
@@ -47,6 +53,7 @@ export {
 }
 
 export {
+  buildMediaCropDialogUrl,
   buildMediaDialogUrl,
   buildMediaEmbedUrl,
   buildMediaSelectorUrl,
@@ -54,6 +61,7 @@ export {
   buildMediaViewerUrl,
   isMediaParentMessage,
   sendMediaConfirm,
+  sendMediaCropInit,
   sendMediaInit,
 } from './embedUrl'
 export { useMediaEmbedMessage } from './useMediaEmbedMessage'
@@ -66,4 +74,5 @@ export { MediaPickerFrame } from './MediaPickerFrame'
 export { MediaUploadDialogFrame } from './MediaUploadDialogFrame'
 export { MediaSelectorFrame } from './MediaSelectorFrame'
 export { MediaViewerFrame } from './MediaViewerFrame'
+export { MediaCropDialogFrame } from './MediaCropDialogFrame'
 export { MediaDialogFrame } from './MediaDialogFrame'

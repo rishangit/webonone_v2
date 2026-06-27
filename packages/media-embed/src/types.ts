@@ -1,5 +1,7 @@
 export const MEDIA_MESSAGE_TYPES = {
   INIT: 'webonone:media:init',
+  CROP_INIT: 'webonone:media:crop-init',
+  CROP_REQUEST: 'webonone:media:crop-request',
   CONFIRM: 'webonone:media:confirm',
   SELECT: 'webonone:media:select',
   SELECTION_CHANGE: 'webonone:media:selection-change',
@@ -25,6 +27,21 @@ export interface MediaItemDto {
 export interface MediaInitMessage {
   type: typeof MEDIA_MESSAGE_TYPES.INIT
   accessToken: string
+}
+
+export interface MediaCropInitMessage {
+  type: typeof MEDIA_MESSAGE_TYPES.CROP_INIT
+  file: File
+  defaultAspect?: CropAspectPreset
+  aspectPresets?: CropAspectPreset[]
+}
+
+export interface MediaCropRequestMessage {
+  type: typeof MEDIA_MESSAGE_TYPES.CROP_REQUEST
+  scope: string
+  folderPath: string
+  file: File
+  cropAspectPresets?: CropAspectPreset[]
 }
 
 export interface MediaSelectMessage {
@@ -66,15 +83,15 @@ export interface MediaConfirmMessage {
 }
 
 export type MediaEmbedMessage =
-  | MediaInitMessage
   | MediaSelectMessage
   | MediaSelectionChangeMessage
   | MediaUploadedMessage
   | MediaDeletedMessage
   | MediaCancelMessage
   | MediaViewerChangedMessage
+  | MediaCropRequestMessage
 
-export type MediaParentMessage = MediaInitMessage | MediaConfirmMessage
+export type MediaParentMessage = MediaInitMessage | MediaConfirmMessage | MediaCropInitMessage
 
 export type MediaEmbedMode = 'single' | 'multiple'
 
@@ -107,6 +124,11 @@ export interface BuildMediaSelectorUrlOptions extends BuildMediaEmbedUrlOptions 
   cropAspectPresets?: CropAspectPreset[]
 }
 
+export interface BuildMediaCropDialogUrlOptions extends BuildMediaEmbedUrlOptions {
+  folderPath: string
+  cropAspectPresets?: CropAspectPreset[]
+}
+
 export interface BuildMediaViewerUrlOptions {
   baseUrl: string
   parentOrigin: string
@@ -129,6 +151,7 @@ const IFRAME_TO_PARENT_TYPES = new Set<string>([
   MEDIA_MESSAGE_TYPES.DELETED,
   MEDIA_MESSAGE_TYPES.CANCEL,
   MEDIA_MESSAGE_TYPES.VIEWER_CHANGED,
+  MEDIA_MESSAGE_TYPES.CROP_REQUEST,
 ])
 
 export function isMediaEmbedMessage(data: unknown): data is MediaEmbedMessage {

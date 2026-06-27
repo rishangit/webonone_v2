@@ -15,7 +15,7 @@ Every microservice in this platform must satisfy **three requirements**:
 | **Can connect** | Integrates with other services only through defined contracts below — not shared code or DB |
 | **Passes data securely** | Uses the correct channel per layer; never ad-hoc coupling |
 
-Reference implementation (Identity ↔ WebOnOne): [spec/1.0.0/07-identity-webonone-integration.md](../../spec/1.0.0/07-identity-webonone-integration.md).
+Reference implementation (Identity ↔ WebOnOne): iframe login + auth-code callback + local JWT verify — see `identity/frontend` login routes and `webonone-v2/frontend/src/features/auth/utils/identityConfig.ts`.
 
 ## Core principles
 
@@ -300,7 +300,7 @@ When reviewing service integration:
 
 - Confirm `npm run dev` from repo root starts all services; each service also starts alone via its own `npm run dev`.
 - Confirm service starts without peer services running.
-- Confirm cross-service links use documented contracts (spec or OpenAPI/event schema).
+- Confirm cross-service links use documented contracts (OpenAPI, event schema, or rules under `.cursor/rules/`).
 - Confirm no `postMessage('*')`, no tokens in URLs, no shared DB access.
 - Confirm each service starts with only its own `frontend/.env` and `backend/.env` (copied from `.env.example`); no repo-root `.env` required.
 - Confirm consumer `frontend/.env.example` lists only peer origin + API base (not derived embed paths like `/login`, `/picker`).

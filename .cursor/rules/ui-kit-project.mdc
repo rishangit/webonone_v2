@@ -13,8 +13,6 @@ Agent skill: [.cursor/skills/ui-kit-agent/SKILL.md](../skills/ui-kit-agent/SKILL
 - `ui-kit/package/` — `@webonone/ui-kit` library (tsup)
 - `ui-kit/showcase/` — demo app, port **3002**
 
-Spec: [spec/1.0.0/05-ui-kit-project.md](../../spec/1.0.0/05-ui-kit-project.md)
-
 ## Workflow
 
 1. Change components in `ui-kit/package/src/`.

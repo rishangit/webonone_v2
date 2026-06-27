@@ -9,7 +9,7 @@ alwaysApply: true
 
 1. Place rule files in **`.cursor/rules/`** only (kebab-case, `.mdc` extension).
 2. Never place rules in the project root or subdirectories outside `.cursor/rules/`.
-3. See [README.md](.cursor/rules/README.md) for the full index of existing rules.
+3. See [README.md](README.md) for the full index of existing rules.
 
 ## Rule file format
 
@@ -39,20 +39,36 @@ Keep each rule **under ~80 lines** when possible; split when a topic grows. Ever
 - Better reference implementations exist in the codebase
 - Related rules or APIs changed
 - Edge cases were discovered in production code
+- Content was only linked from `spec/` — **inline the required details** into the rule instead of adding spec links
 
 **Deprecate or remove when:**
 - The pattern no longer exists in the codebase
 - ESLint/CI now enforces the same constraint — keep the rule only if it adds project-specific context
 
+## Self-contained — no `spec/` references
+
+Rules under `.cursor/rules/` must **not** link to or depend on `spec/` files. Spec folders may be removed or reorganized; rules are the long-lived source of truth for agents.
+
+**Do instead:**
+- Inline the **minimum required** behavior, props, and patterns directly in the rule
+- Point to **code** reference implementations (e.g. `ProfileMediaSelectorModal.tsx`, `CustomDialog.tsx`)
+- Cross-link other **`.cursor/rules/`** files or **`.cursor/skills/`** when a topic is owned elsewhere
+
+**Forbidden in rule files:**
+- Links or paths like `spec/1.x.x/...`, `../../spec/...`
+- “See spec for details” without copying the actionable requirement into the rule
+
+When retiring spec content, migrate anything agents still need into the matching rule or skill — do not leave a spec-only pointer in `.cursor/rules/`.
+
 ## Quality checklist
 
 - Actionable bullets, one concern per file
 - Concrete examples from actual code paths (not abstract generics)
-- Cross-link related rules instead of duplicating content
+- Cross-link related **rules or skills** instead of duplicating content — never cross-link `spec/`
 - Prefer `@/` path aliases in examples (see `code-cleanliness.mdc`)
 
 ## Continuous maintenance
 
-After major refactors, audit `.cursor/rules/` against the codebase. Update the [README.md](.cursor/rules/README.md) index when adding or removing rules.
+After major refactors, audit `.cursor/rules/` against the codebase. Update the [README.md](README.md) index when adding or removing rules. Remove any `spec/` links surfaced during the audit.
 
 For multi-step workflows (releases, showcase registration, new WebpageEditor addons), prefer **project skills** in `.cursor/skills/` over very long always-on rules.

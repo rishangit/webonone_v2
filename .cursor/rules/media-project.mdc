@@ -12,7 +12,7 @@ Agent skill: [.cursor/skills/media-agent/SKILL.md](../skills/media-agent/SKILL.m
 
 `media/frontend`, `media/backend`, `media/backend/migrations`, `packages/media-embed`.
 
-Specs: [spec/1.1.0/03-media-project.md](../../spec/1.1.0/03-media-project.md), [spec/1.1.0/08-media-consumer-integration.md](../../spec/1.1.0/08-media-consumer-integration.md)
+Consumer embed contract: `@webonone/media-embed` (`packages/media-embed/`).
 
 ## Ports and env
 
