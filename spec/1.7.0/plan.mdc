@@ -1,5 +1,5 @@
 ---
-description: Implementation plan for spec 1.7.0 — ImagePreview component, UI Kit dialog/phone improvements, Media crop stacking
+description: Implementation plan for spec 1.7.0 — ImagePreview, StatusTag, UI Kit dialog/phone improvements, Media crop stacking
 alwaysApply: false
 globs: ui-kit/**, identity/frontend/**, media/frontend/**
 ---
@@ -8,7 +8,7 @@ globs: ui-kit/**, identity/frontend/**, media/frontend/**
 
 ## Summary
 
-Spec 1.7.0 adds **`ImagePreview`** to `@webonone/ui-kit`, refactors Identity profile avatar, and improves dialog/phone patterns: **AlertDialog** delete confirm, sibling stacked dialogs via **`stackLevel`**, phone showcase cleanup, and Media selector crop stacking. See [01-overview.md](./01-overview.md), [02-image-preview-component.md](./02-image-preview-component.md), [03-ui-kit-improvements.md](./03-ui-kit-improvements.md).
+Spec 1.7.0 adds **`ImagePreview`** and **`StatusTag`** to `@webonone/ui-kit`, refactors Identity profile avatar, and improves dialog/phone patterns: **AlertDialog** delete confirm, sibling stacked dialogs via **`stackLevel`**, phone showcase cleanup, and Media selector crop stacking. See [01-overview.md](./01-overview.md), [02-image-preview-component.md](./02-image-preview-component.md), [03-ui-kit-improvements.md](./03-ui-kit-improvements.md), [04-status-tags.md](./04-status-tags.md).
 
 ## Branch and prerequisites
 
@@ -85,6 +85,23 @@ Spec 1.7.0 adds **`ImagePreview`** to `@webonone/ui-kit`, refactors Identity pro
 
 ---
 
+## Phase 5 — Status tags
+
+**Goal:** Export `StatusTag` with approval-workflow variants; add Tags showcase tab.
+
+**Exit criteria:** Tags tab shows group 1; package build and type-check pass.
+
+| Task | Paths |
+|------|-------|
+| Create `StatusTag` | `ui-kit/package/src/components/StatusTag.tsx` — `pending`, `rejected`, `approved` |
+| Export | `ui-kit/package/src/index.ts` |
+| Add Tags tab | `ui-kit/showcase/src/components/showcase-nav.ts`, `ShowcaseApp.tsx` |
+| Tags demo page | `ui-kit/showcase/src/pages/TagsPage.tsx` |
+
+**Verify:** `npm run build -w @webonone/ui-kit`, `npm run type-check -w ui-kit-root`
+
+---
+
 ## Cross-service integration
 
 | Layer | Channel |
@@ -101,9 +118,10 @@ UI Kit must **not** import `@webonone/media-embed` or Media service code.
 
 | Subtask | ID | Phase |
 |---------|-----|-------|
-| [User Story] Spec 1.7.0 | 86ey2y7vc | 1–4 |
+| [User Story] Spec 1.7.0 | 86ey2y7vc | 1–5 |
 | UI-kit showcase, show the image preview component | 86ey2ya9p | 2–3 |
 | UI-kit improvement | 86ey2yka6 | 4 |
+| UI-kit need to have the status tags | 86ey2yv18 | 5 |
 
 ---
 
