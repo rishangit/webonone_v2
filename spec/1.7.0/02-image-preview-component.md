@@ -33,7 +33,8 @@ export interface ImagePreviewProps {
 | Fixed size | Root container **`h-40 w-40`** (Tailwind `w-40` / `h-40` = 10rem ≈ 160px) |
 | Shape | **`rounded-lg`** (square with slight radius; consumers may pass `rounded-full` via `className` for avatars) |
 | Image fit | **`object-cover`** filling the box; `overflow-hidden` on container |
-| Fallback | Centered text on **`bg-muted`** when no `src` |
+| Fallback | When no `src`, centered **`Image`** icon (lucide) on `bg-muted` — first-upload empty state |
+| Optional initials | `fallback` prop reserved for accessibility (`alt` context); not shown when icon empty state is used |
 
 Note: ClickUp AC mentions "40 by 40 pixels" but specifies Tailwind classes **`w-40` and `h-40`** — implementation follows the **class names** (160×160 px), consistent with [1.5.0 profile spec](../1.5.0/02-identity-profile-page.md).
 
@@ -97,7 +98,8 @@ Add section to **Components** tab (`ui-kit/showcase/src/pages/ComponentsPage.tsx
 
 | Demo | Behavior |
 |------|----------|
-| View mode | Static sample image URL |
+| With image | Sample photo URL in view and edit modes |
+| Without image | `src={null}` — centered image icon empty state |
 | Edit mode toggle | Switch between modes |
 | Edit click | Toast: "Would open Media selector" (no Media dep in showcase) |
 
@@ -112,7 +114,8 @@ Optional: link to Media component showcase in Media service for full iframe demo
 | `ui-kit/package/src/components/ImagePreview.tsx` | **Create** |
 | `ui-kit/package/src/index.ts` | Export `ImagePreview`, types |
 | `ui-kit/showcase/src/pages/ComponentsPage.tsx` | Add demo section |
-| `identity/frontend/src/features/profile/components/ProfileAvatarEditor.tsx` | Refactor to use `ImagePreview` |
+| `identity/frontend/src/features/profile/components/ProfileAvatarEditor.tsx` | Refactor to use `ImagePreview` (edit mode) |
+| `identity/frontend/src/features/profile/components/ProfileView.tsx` | Use `ImagePreview` (view mode) for aligned profile image |
 
 ---
 

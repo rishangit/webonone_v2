@@ -47,8 +47,8 @@ git checkout -b spec/1.7.0
 
 | Task | Detail |
 |------|--------|
-| Demo section | Toggle mode; toast on edit click |
-| Theme check | Visible in light/dark |
+| Demo section | With-image + without-image (empty icon) side by side |
+| Mode toggle + toast on edit | `useToast` from ui-kit |
 
 **Exit criteria:** `npm run type-check -w ui-kit-root` passes.
 
@@ -60,9 +60,8 @@ git checkout -b spec/1.7.0
 
 | Task | Detail |
 |------|--------|
-| Refactor `ProfileAvatarEditor.tsx` | Replace inline Avatar+overlay |
-| Preserve behavior | Click edit → parent opens Media modal |
-| Optional `rounded-full` | Pass via `className` for avatar shape |
+| Refactor `ProfileAvatarEditor.tsx` | `ImagePreview` edit mode |
+| Refactor `ProfileView.tsx` | `ImagePreview` view mode for aligned UI |
 
 **Exit criteria:** Profile edit flow unchanged; type-check passes.
 
@@ -73,6 +72,7 @@ git checkout -b spec/1.7.0
 | Subtask | ID | Phase |
 |---------|-----|-------|
 | [User Story] Spec 1.7.0 | 86ey2y7vc | All phases |
+| UI-kit showcase, show the image preview component | 86ey2ya9p | 2–3 |
 
 ---
 

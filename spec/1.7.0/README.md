@@ -6,6 +6,10 @@ Implementation branch: **`spec/1.7.0`**
 
 **Spec No:** 1.7.0
 
+## Revision history
+
+- **Subtask 86ey2ya9p** — Showcase demos for with/without image; empty state shows centered image icon; Identity profile view mode uses `ImagePreview` for UI alignment.
+
 ## What changed from 1.5.0
 
 | Area | 1.5.0 | 1.7.0 |
@@ -36,6 +40,7 @@ Implementation branch: **`spec/1.7.0`**
 | Subtask | ID | Spec doc / phase |
 |---------|-----|------------------|
 | [User Story] Spec 1.7.0 | 86ey2y7vc | All docs |
+| UI-kit showcase, show the image preview component | 86ey2ya9p | [02](./02-image-preview-component.md); Phase 2–3 |
 
 ## Inherited from earlier specs
 
