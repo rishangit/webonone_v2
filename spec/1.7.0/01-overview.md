@@ -17,6 +17,7 @@ As a user, I want a consistent image preview with a fixed size, so I can easily 
 5. Refactor Identity profile avatar editor to use the shared component.
 6. Add a showcase demo exercising view/edit toggle.
 7. Dialog/phone showcase improvements: AlertDialog delete, remove plain PhoneInput demo, stacked sibling dialogs for nested flows and Media crop.
+8. **`StatusTag`** component with semantic variants (pending, rejected, approved) and a **Tags** showcase tab.
 
 ## In scope
 
@@ -30,6 +31,7 @@ As a user, I want a consistent image preview with a fixed size, so I can easily 
 | Dialog improvements | AlertDialog delete demo; sibling stacked dialogs; `stackLevel` on `CustomDialog` |
 | Phone showcase | Remove plain PhoneInput demo; standardize on country selector |
 | Media crop stacking | Selector embed crop dialog as sibling with `stackLevel={1}` |
+| Status tags | `StatusTag` export; Tags showcase tab with group 1 variants |
 
 ## Out of scope
 
@@ -47,7 +49,7 @@ As a user, I want a consistent image preview with a fixed size, so I can easily 
 | **ImagePreview** | UI Kit composite: image + optional edit overlay |
 | **View mode** | Read-only preview; no edit overlay |
 | **Edit mode** | Centered pencil/edit button over image; click invokes `onEdit` |
-| **Media selector** | Media FE `/selector` iframe in `CustomDialog` (consumer-owned) |
+| **StatusTag** | UI Kit inline label for workflow status (pending / rejected / approved) |
 
 ## Success criteria
 
@@ -58,3 +60,5 @@ As a user, I want a consistent image preview with a fixed size, so I can easily 
 5. Theme switch (showcase toolbar) updates border/overlay colors correctly.
 6. `npm run build -w @webonone/ui-kit` and `npm run type-check -w ui-kit-root` pass.
 7. `npm run type-check -w identity-root` passes after refactor.
+8. `StatusTag` variants render with glass surface and semantic borders in light/dark themes.
+9. Showcase **Tags** tab documents group 1 status tags.

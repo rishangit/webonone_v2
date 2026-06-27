@@ -83,6 +83,20 @@ git checkout -b spec/1.7.0
 
 ---
 
+## Phase 5 — Status tags
+
+**Goal:** Export `StatusTag` with approval-workflow variants; add Tags showcase tab.
+
+| Task | Detail |
+|------|--------|
+| Create `StatusTag.tsx` | `pending`, `rejected`, `approved` — glass bg + same-hue border |
+| Export from `index.ts` | Types + component |
+| Tags showcase tab | `showcase-nav.ts`, `ShowcaseApp.tsx`, `TagsPage.tsx` |
+
+**Exit criteria:** Tags tab shows group 1 row; type-check + package build pass.
+
+---
+
 ## ClickUp subtask traceability
 
 | Subtask | ID | Phase |
@@ -90,6 +104,7 @@ git checkout -b spec/1.7.0
 | [User Story] Spec 1.7.0 | 86ey2y7vc | All phases |
 | UI-kit showcase, show the image preview component | 86ey2ya9p | 2–3 |
 | UI-kit improvement | 86ey2yka6 | 4 |
+| UI-kit need to have the status tags | 86ey2yv18 | 5 |
 
 ---
 
@@ -105,6 +120,9 @@ git checkout -b spec/1.7.0
 - [ ] Delete confirmation showcase uses `AlertDialog`
 - [ ] Nested dialog showcase uses sibling stacking + `stackLevel`
 - [ ] Media selector crop stacks above selector content
+- [ ] `StatusTag` exports pending / rejected / approved variants
+- [ ] Tags showcase tab (`#tags`) shows group 1 status tags
+- [ ] Status tags use glass background with semantic darker borders in both themes
 
 ---
 
