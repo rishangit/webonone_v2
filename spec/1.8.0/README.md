@@ -32,6 +32,7 @@ Implementation branch: **`spec/1.8.0`**
 | [02-feature-page-layout.md](./02-feature-page-layout.md) | `FeaturePage` / `PageHeader` API, spacing tokens, consumer contract |
 | [03-cursor-rule.md](./03-cursor-rule.md) | `feature-page-layout.mdc` requirements and verification |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
+| [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
 

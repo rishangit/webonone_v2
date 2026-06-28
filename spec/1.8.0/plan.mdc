@@ -1,0 +1,114 @@
+---
+description: Implementation plan for spec 1.8.0 — FeaturePage layout, WebOnOne refactor, cursor rule
+alwaysApply: false
+globs: ui-kit/**, webonone-v2/frontend/**, .cursor/rules/**
+---
+
+# Implementation plan — Spec 1.8.0
+
+## Summary
+
+Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for consistent feature-page structure inside `AppShell`, refactors WebOnOne v2 settings/home pages, adds a showcase demo, and creates **`feature-page-layout.mdc`**. See [01-overview.md](./01-overview.md), [02-feature-page-layout.md](./02-feature-page-layout.md), [03-cursor-rule.md](./03-cursor-rule.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.8.0` |
+| Package build | `npm run build -w @webonone/ui-kit` before consumer prod builds |
+| Vite alias | WebOnOne already aliases `@webonone/ui-kit` to package `src/` in dev |
+
+---
+
+## Phase 1 — UI Kit layout components
+
+**Goal:** Export `PageHeader` and `FeaturePage`.
+
+**Exit criteria:** Package builds; types exported.
+
+| Task | Paths |
+|------|-------|
+| Create `PageHeader` | `ui-kit/package/src/layouts/PageHeader.tsx` |
+| Create `FeaturePage` | `ui-kit/package/src/layouts/FeaturePage.tsx` |
+| Export | `ui-kit/package/src/index.ts` |
+
+**Verify:** `npm run build -w @webonone/ui-kit`
+
+---
+
+## Phase 2 — Showcase demo
+
+**Goal:** Demonstrate default, narrow, and actions variants.
+
+**Exit criteria:** Type-check passes.
+
+| Task | Paths |
+|------|-------|
+| Layout demo section | `ui-kit/showcase/src/pages/ComponentsPage.tsx` (or `LayoutsPage.tsx` + nav) |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 3 — WebOnOne v2 refactor
+
+**Goal:** Migrate in-scope feature pages to `FeaturePage`.
+
+**Exit criteria:** Type-check passes; pages match spacing contract.
+
+| Task | Paths |
+|------|-------|
+| Home | `webonone-v2/frontend/src/features/home/pages/HomePage.tsx` |
+| Basic Settings | `webonone-v2/frontend/src/features/settings/basic/pages/BasicSettingsPage.tsx` — `maxWidth="2xl"` |
+| Companies | `webonone-v2/frontend/src/features/settings/basic/pages/CompaniesPage.tsx` |
+| System Theme | `webonone-v2/frontend/src/features/settings/system-theme/pages/SystemThemePage.tsx` |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 4 — Cursor rule
+
+**Goal:** Agent-enforced layout standard.
+
+**Exit criteria:** Rule indexed in `.cursor/rules/README.md`.
+
+| Task | Paths |
+|------|-------|
+| Create rule | `.cursor/rules/feature-page-layout.mdc` |
+| Index | `.cursor/rules/README.md` |
+
+---
+
+## Cross-service integration
+
+None — UI Kit layout only; no iframe/JWT/event changes.
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec 1.8.0 | 86ey2ymnf | 1–4 |
+| spaces and gaps | 86ey2ymt2 | 1–4 |
+
+---
+
+## Risks and open items
+
+- `SystemThemePage` "Create theme" button moves to `PageHeader` `actions` — verify flex wrap on narrow viewports.
+- `HomePage` is minimal; add sensible description via `FeaturePage`.
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
+npm run type-check -w webonone-v2-root
+npm run lint -w webonone-v2-root
+```
+
+Manual: WebOnOne → Home, Basic Settings, Companies, System Theme — verify centered column, uniform title size, consistent gap below header.
