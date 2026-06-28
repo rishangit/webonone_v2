@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, Callout, CalloutDescription, CalloutTitle } from '@webonone/ui-kit'
+import { Button, Callout, CalloutDescription, CalloutTitle, FeaturePage } from '@webonone/ui-kit'
 import { RegisterCompanyDialog } from '../components/RegisterCompanyDialog'
 import { companyApi, type CompanySummary } from '../services/companyApi'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
@@ -59,12 +59,11 @@ export function BasicSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Basic Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Register and manage your company on the platform.</p>
-      </div>
-
+    <FeaturePage
+      maxWidth="2xl"
+      title="Basic Settings"
+      description="Register and manage your company on the platform."
+    >
       {loadError ? <p className="text-sm text-destructive">{loadError}</p> : null}
       {successMessage ? <p className="text-sm text-primary">{successMessage}</p> : null}
 
@@ -128,6 +127,6 @@ export function BasicSettingsPage() {
         onOpenChange={setRegisterOpen}
         onSubmit={handleRegister}
       />
-    </div>
+    </FeaturePage>
   )
 }

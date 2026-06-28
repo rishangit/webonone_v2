@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
 import { CompaniesList } from '../components/CompaniesList'
 import { useSuperAdminStatus } from '../hooks/useSuperAdminStatus'
 import { companyApi, type AdminCompany, type CompanyStatus } from '../services/companyApi'
@@ -63,14 +63,10 @@ export function CompaniesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Companies</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review registered companies and update approval status.
-        </p>
-      </div>
-
+    <FeaturePage
+      title="Companies"
+      description="Review registered companies and update approval status."
+    >
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -82,6 +78,6 @@ export function CompaniesPage() {
       {!loading ? (
         <CompaniesList items={items} updatingId={updatingId} onStatusChange={handleStatusChange} />
       ) : null}
-    </div>
+    </FeaturePage>
   )
 }

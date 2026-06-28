@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button } from '@webonone/ui-kit'
+import { Button, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { ColorModeToggle } from '../components/ColorModeToggle'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
@@ -90,40 +90,43 @@ export function SystemThemePage() {
     : undefined
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">System Theme</h1>
-        <p className="mt-2 text-muted-foreground">
-          Create accent palettes and switch light or dark mode for the platform shell.
-        </p>
-      </div>
+    <FeaturePage
+      title="System Theme"
+      description="Create accent palettes and switch light or dark mode for the platform shell."
+      actions={
+        <Button type="button" onClick={() => setCreateOpen(true)}>
+          Create theme
+        </Button>
+      }
+    >
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Color mode</h2>
+          <ColorModeToggle
+            value={preferences?.colorMode ?? 'light'}
+            onChange={(colorMode) => dispatch(systemThemeActions.patchPreferencesRequested({ colorMode }))}
+          />
+        </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Color mode</h2>
-        <ColorModeToggle
-          value={preferences?.colorMode ?? 'light'}
-          onChange={(colorMode) => dispatch(systemThemeActions.patchPreferencesRequested({ colorMode }))}
-        />
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="space-y-3">
           <h2 className="text-lg font-semibold">Themes</h2>
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            Create theme
-          </Button>
-        </div>
-        <ThemeList
-          themes={themes}
-          activeThemeId={preferences?.activeThemeId ?? null}
-          onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
-          onEdit={(theme) => setEditing(theme)}
-          onDelete={(id) => {
-            const theme = themes.find((t) => t.id === id)
-            if (theme) setDeleteTarget(theme)
-          }}
-        />
-      </section>
+          <ThemeList
+            themes={themes}
+            activeThemeId={preferences?.activeThemeId ?? null}
+            onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
+            onEdit={(theme) => setEditing(theme)}
+            onDelete={(id) => {
+              const theme = themes.find((t) => t.id === id)
+              if (theme) setDeleteTarget(theme)
+            }}
+          />
+        </section>
+
+        {status === 'loading' ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
+        {!dialogOpen && !deleteTarget && error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : null}
+      </div>
 
       <ThemeCreateDialog
         mode={dialogMode}
@@ -148,11 +151,6 @@ export function SystemThemePage() {
         }}
         onConfirm={handleDeleteConfirm}
       />
-
-      {status === 'loading' ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
-      {!dialogOpen && !deleteTarget && error ? (
-        <p className="text-sm text-destructive">{error}</p>
-      ) : null}
-    </div>
+    </FeaturePage>
   )
 }

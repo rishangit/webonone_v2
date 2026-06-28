@@ -30,6 +30,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | Rule | Globs | Description |
 |------|-------|-------------|
 | [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
+| [feature-page-layout.mdc](feature-page-layout.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}` | `FeaturePage` / `PageHeader` for AppShell feature pages |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
 | [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, stacked siblings, pointer fall-through dismiss guard, iframe embed footer + crop height chain, footer, sizing, wizard/tab |
@@ -73,6 +74,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Tables, migrations, nanoid `CHAR(21)` | `mysql-database-architecture.mdc` |
 | Express routes, JWT, HTTP errors | `nodejs-express.mdc` |
 | Feature folders, `@/shared` between features | `front-end-structure.mdc` |
+| Feature page layout (`FeaturePage`, `PageHeader`) | `feature-page-layout.mdc` |
 | Slices, epics, `rootEpic` | `redux-store-and-epics.mdc` |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |

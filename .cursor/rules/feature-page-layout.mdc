@@ -1,0 +1,53 @@
+---
+description: Consistent feature page layout inside AppShell main content
+globs: "**/frontend/src/features/**/pages/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Feature page layout
+
+Related: [front-end-structure.mdc](front-end-structure.mdc), [ui-kit-project.mdc](ui-kit-project.mdc).
+
+Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-level pages rendered inside a product shell main content area (e.g. WebOnOne `AppShell` `<Outlet />`).
+
+## Required pattern
+
+- Wrap page body in **`FeaturePage`** — do not hand-roll `mx-auto max-w-*` plus inline `<h1>` blocks.
+- **Default width:** `maxWidth="4xl"` (omit prop). Use `maxWidth="2xl"` only for narrow form-focused pages.
+- **Title block:** `title` + optional `description` props, or a custom `header={<PageHeader … />}`.
+- **Header actions:** pass primary page actions via `actions` (e.g. “Create theme”).
+- **Spacing:** rely on `FeaturePage` **`gap-6`** between header and body — do not add extra top margin on the first child.
+
+## Typography
+
+| Element | Classes |
+|---------|---------|
+| Title | `text-2xl font-semibold` (via `PageHeader`) |
+| Description | `text-sm text-muted-foreground` |
+
+## Exceptions (do not use FeaturePage)
+
+- Auth / callback routes (`AuthLayout`, login redirect pages)
+- Iframe / embed chrome (`EmbedLayout`, Media picker/upload/viewer embeds)
+- Identity `/profile` centered card layout
+- Showcase demo pages that intentionally preview other layouts
+
+## Reference implementations
+
+| Consumer | Path |
+|----------|------|
+| Home | `webonone-v2/frontend/src/features/home/pages/HomePage.tsx` |
+| Basic Settings | `webonone-v2/frontend/src/features/settings/basic/pages/BasicSettingsPage.tsx` |
+| Companies | `webonone-v2/frontend/src/features/settings/basic/pages/CompaniesPage.tsx` |
+| System Theme | `webonone-v2/frontend/src/features/settings/system-theme/pages/SystemThemePage.tsx` |
+| Showcase demo | `ui-kit/showcase/src/pages/ComponentsPage.tsx` — Layout section |
+| Components | `ui-kit/package/src/layouts/FeaturePage.tsx`, `PageHeader.tsx` |
+
+## Verification
+
+```bash
+npm run type-check -w webonone-v2-root
+npm run lint -w webonone-v2-root
+```
+
+New feature pages under `features/*/pages/` must import `FeaturePage` unless listed in **Exceptions**.
