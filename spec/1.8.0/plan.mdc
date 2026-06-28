@@ -98,6 +98,22 @@ Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for
 
 ---
 
+## Phase 6 — Identity standalone welcome / login
+
+**Goal:** Standalone `/login` shows `FeaturePage` welcome with Identity sidebar; redirect/embed login unchanged.
+
+**Exit criteria:** Type-check passes; `:3001/login` shows sidebar + welcome header.
+
+| Task | Paths |
+|------|-------|
+| Home nav item | `identity/frontend/src/features/shell/config/navItems.ts` — add Home → `/login` |
+| Shell route + layout | `navItems.ts` — include `/login` in `IDENTITY_SHELL_ROUTES`; `AppLayout.tsx` — skip shell when `redirect_uri` present |
+| LoginPage welcome | `identity/frontend/src/features/auth/pages/LoginPage.tsx` — standalone: `FeaturePage`; redirect: `AuthLayout` |
+
+**Verify:** `npm run type-check -w identity-root`
+
+---
+
 ## Cross-service integration
 
 - **WebOnOne → Identity profile:** `redirectWithAuthCode` + `return_url` + `core_nav` ([`redirectToIdentityProfile.ts`](../../webonone-v2/frontend/src/features/auth/utils/redirectToIdentityProfile.ts)).
@@ -110,9 +126,10 @@ Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for
 
 | Subtask | ID | Phase |
 |---------|-----|-------|
-| [User Story] Spec 1.8.0 | 86ey2ymnf | 1–5 |
+| [User Story] Spec 1.8.0 | 86ey2ymnf | 1–6 |
 | spaces and gaps | 86ey2ymt2 | 1–4 |
 | need to have the left navigation for the identity service | 86ey33zeu | 5 |
+| identity project stand alone loggin need to have the welcome page | 86ey342mv | 6 |
 
 ---
 
@@ -136,4 +153,4 @@ npm run lint -w @webonone/identity-frontend
 npm run lint -w @webonone/webonone-frontend
 ```
 
-Manual: WebOnOne → Home, Basic Settings, Companies, System Theme — verify uniform title and `gap-6`. Identity `:3001` standalone → Identity sidebar only. WebOnOne profile redirect → core sidebar only (Home + Settings, or Companies for super admin).
+Manual: WebOnOne → Home, Basic Settings, Companies, System Theme — verify uniform title and `gap-6`. Identity `:3001` standalone → Identity sidebar on `/login` (welcome), profile, register, reset-password. WebOnOne profile redirect → core sidebar only (Home + Settings, or Companies for super admin).
