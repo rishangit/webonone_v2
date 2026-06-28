@@ -21,8 +21,8 @@ Index entry required in [`.cursor/rules/README.md`](../../.cursor/rules/README.m
 The rule must state:
 
 1. **Use `FeaturePage`** from `@webonone/ui-kit` for route pages rendered inside `AppShell` (or equivalent product shell main content).
-2. **Do not** hand-roll duplicate `mx-auto max-w-*` + inline `<h1>` blocks on feature pages — use `FeaturePage` / `PageHeader`.
-3. **Default** max width is **`4xl`**; use `maxWidth="2xl"` only for narrow form-focused pages (document reason in PR if non-default).
+2. **Do not** hand-roll inline `<h1>` title blocks on feature pages — use `FeaturePage` / `PageHeader`.
+3. **Width** — full shell main content width (`w-full`); do not add `max-w-*` on the page wrapper. Narrow inner sections may constrain themselves inside `children`.
 4. **Title typography** — `text-2xl font-semibold`; description — `text-sm text-muted-foreground`.
 5. **Header-to-body gap** — always `gap-6` via `FeaturePage` (do not add extra top margin on first child).
 6. **Exceptions** — auth pages, iframe/embed chrome, Identity profile card layout; list explicitly in rule.

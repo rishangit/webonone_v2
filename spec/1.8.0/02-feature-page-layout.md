@@ -54,7 +54,6 @@ Subtask **spaces and gaps** requires one enforced pattern.
 | `description` | `string` | optional | Passed to `PageHeader` |
 | `actions` | `ReactNode` | optional | Passed to `PageHeader` |
 | `header` | `ReactNode` | optional | Custom header (e.g. pre-built `PageHeader`) |
-| `maxWidth` | `'2xl' \| '4xl' \| '5xl' \| 'full'` | `'4xl'` | Maps to Tailwind `max-w-*` |
 | `children` | `ReactNode` | required | Page body below header |
 | `className` | `string` | optional | Extra classes on outer wrapper |
 
@@ -63,18 +62,13 @@ Subtask **spaces and gaps** requires one enforced pattern.
 **Outer wrapper contract:**
 
 ```tsx
-<div className={cn('mx-auto flex w-full flex-col gap-6', maxWidthClass, className)}>
+<div className={cn('flex w-full flex-col gap-6', className)}>
   {header ?? <PageHeader title={title!} description={description} actions={actions} />}
   <div className="min-w-0">{children}</div>
 </div>
 ```
 
-| `maxWidth` | Class |
-|------------|-------|
-| `2xl` | `max-w-2xl` |
-| `4xl` | `max-w-4xl` (default) |
-| `5xl` | `max-w-5xl` |
-| `full` | `max-w-none` |
+Feature pages use the **full width** of the `AppShell` main content area. Do not add `max-w-*` or `mx-auto` on the page wrapper — narrow inner sections (forms, cards) may constrain themselves inside `children`.
 
 ---
 
@@ -107,7 +101,7 @@ export function CompaniesPage() {
 </FeaturePage>
 ```
 
-**Narrow form page** — pass `maxWidth="2xl"` (replaces ad-hoc `max-w-2xl` on Basic Settings).
+**Narrow form page** — keep `FeaturePage` full width; apply `max-w-*` on inner form/card containers if needed (e.g. Basic Settings).
 
 ---
 
@@ -116,8 +110,8 @@ export function CompaniesPage() {
 | Page | Path | Notes |
 |------|------|-------|
 | `HomePage` | `features/home/pages/HomePage.tsx` | Add title + description via `FeaturePage` |
-| `BasicSettingsPage` | `features/settings/basic/pages/BasicSettingsPage.tsx` | `maxWidth="2xl"` |
-| `CompaniesPage` | `features/settings/basic/pages/CompaniesPage.tsx` | default `4xl` |
+| `BasicSettingsPage` | `features/settings/basic/pages/BasicSettingsPage.tsx` | default full width; narrow form inside body if needed |
+| `CompaniesPage` | `features/settings/basic/pages/CompaniesPage.tsx` | default full width |
 | `SystemThemePage` | `features/settings/system-theme/pages/SystemThemePage.tsx` | Move "Create theme" to `actions`; normalize title size |
 
 **Excluded:** `LoginPage`, `AuthCallbackPage` (auth redirect / callback flows).
@@ -128,8 +122,7 @@ export function CompaniesPage() {
 
 Add a **Feature page layout** section demonstrating:
 
-- Default width with title + description
-- `maxWidth="2xl"` narrow variant
+- Default layout with title + description
 - Header with `actions` slot
 
 Location: `ui-kit/showcase/src/pages/ComponentsPage.tsx` or new `LayoutsPage.tsx` linked from showcase nav.
@@ -141,6 +134,6 @@ Location: `ui-kit/showcase/src/pages/ComponentsPage.tsx` or new `LayoutsPage.tsx
 Subtask **spaces and gaps** (86ey2ymt2):
 
 1. Header with clearly defined title section → **`PageHeader`**
-2. Centered fixed max width, equal side spacing → **`FeaturePage`** `mx-auto max-w-*`
+2. Full width within shell main content → **`FeaturePage`** `w-full`
 3. Consistent title-to-content spacing → **`gap-6`**
 4. Cursor rule enforcement → [03-cursor-rule.md](./03-cursor-rule.md)

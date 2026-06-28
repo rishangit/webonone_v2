@@ -2,7 +2,7 @@
 
 ## Vision
 
-Every authenticated **feature page** rendered inside `AppShell`'s main content area shares the same visual structure: a **title header** at the top, a **centered content column** with a fixed maximum width, and **consistent vertical spacing** between the header and page body.
+Every authenticated **feature page** rendered inside `AppShell`'s main content area shares the same visual structure: a **title header** at the top, **full-width** page body within the shell main region, and **consistent vertical spacing** between the header and page body.
 
 ## User story
 
@@ -12,11 +12,11 @@ As a user, I want all feature pages to have a consistent structure within the ma
 
 1. Export **`PageHeader`** and **`FeaturePage`** from `@webonone/ui-kit`.
 2. **`PageHeader`** — title (`h1`), optional description, optional trailing actions slot.
-3. **`FeaturePage`** — wraps page body in `mx-auto w-full max-w-4xl` with **`gap-6`** between header and children.
+3. **`FeaturePage`** — wraps page body in `w-full flex flex-col gap-6` (full width of shell main content).
 4. Refactor WebOnOne v2 feature pages that render inside `AppShell` to use the shared layout.
 5. Add **`feature-page-layout.mdc`** so agents and developers apply the same pattern on new pages.
 6. Showcase demo documenting the layout contract.
-7. Add **Identity standalone left navigation** (`AppShell`) with core return link when redirected from WebOnOne.
+7. Add **Identity dual sidebar navigation** — Identity nav when standalone; full core/WebOnOne nav when redirected (`return_url` + `core_nav`).
 
 ## In scope
 
@@ -28,7 +28,8 @@ As a user, I want all feature pages to have a consistent structure within the ma
 | Showcase demo | Layout section on Components or dedicated showcase page |
 | WebOnOne refactor | `HomePage`, `BasicSettingsPage`, `CompaniesPage`, `SystemThemePage` |
 | Cursor rule | `.cursor/rules/feature-page-layout.mdc` + index in `.cursor/rules/README.md` |
-| Identity nav | `AppShell` sidebar on `/profile`, `/register`, `/reset-password`; core return when `return_url` set |
+| Identity nav | Dual `AppShell` sidebar per [04-identity-navigation.md](./04-identity-navigation.md) |
+| Platform nav | `packages/platform-nav/src/coreNav.ts` — shared core path trees |
 
 ## Out of scope
 
@@ -46,7 +47,9 @@ As a user, I want all feature pages to have a consistent structure within the ma
 |------|---------|
 | **Feature page** | Route-level page inside `AppShell` `<Outlet />` (not auth, not iframe embed) |
 | **PageHeader** | Title block: `h1` + optional description + optional actions |
-| **FeaturePage** | Outer wrapper enforcing max width, centering, and header-to-body gap |
+| **FeaturePage** | Outer wrapper: full shell width + `gap-6` between header and body |
+| **Standalone nav** | Identity sidebar (Profile, Register, Reset password) when no `return_url` |
+| **Core redirect nav** | WebOnOne sidebar only when valid `return_url` is present |
 | **Main content area** | `#main-content` region inside `AppShell` |
 
 ## Success criteria
@@ -56,6 +59,6 @@ As a user, I want all feature pages to have a consistent structure within the ma
 3. Feature pages use full width of shell main content (`w-full`) — no per-page `max-w-*` on wrappers.
 4. Gap between header block and page body is **`gap-6`** (24px).
 5. `feature-page-layout.mdc` documents required structure and lists reference implementations.
-6. Identity standalone shows left nav per [04-identity-navigation.md](./04-identity-navigation.md).
+6. Identity dual nav modes per [04-identity-navigation.md](./04-identity-navigation.md) — mutually exclusive sidebars.
 7. `npm run build -w @webonone/ui-kit` and `npm run type-check -w webonone-v2-root` pass.
 8. `npm run type-check -w identity-root` passes.
