@@ -16,6 +16,7 @@ As a user, I want all feature pages to have a consistent structure within the ma
 4. Refactor WebOnOne v2 feature pages that render inside `AppShell` to use the shared layout.
 5. Add **`feature-page-layout.mdc`** so agents and developers apply the same pattern on new pages.
 6. Showcase demo documenting the layout contract.
+7. Add **Identity standalone left navigation** (`AppShell`) with core return link when redirected from WebOnOne.
 
 ## In scope
 
@@ -27,6 +28,7 @@ As a user, I want all feature pages to have a consistent structure within the ma
 | Showcase demo | Layout section on Components or dedicated showcase page |
 | WebOnOne refactor | `HomePage`, `BasicSettingsPage`, `CompaniesPage`, `SystemThemePage` |
 | Cursor rule | `.cursor/rules/feature-page-layout.mdc` + index in `.cursor/rules/README.md` |
+| Identity nav | `AppShell` sidebar on `/profile`, `/register`, `/reset-password`; core return when `return_url` set |
 
 ## Out of scope
 
@@ -34,7 +36,7 @@ As a user, I want all feature pages to have a consistent structure within the ma
 |------|--------|
 | `AppShell` / sidebar changes | Shell chrome unchanged ([1.2.0](../1.2.0/03-app-shell-navigation.md)) |
 | Auth / embed layouts | `AuthLayout`, `PageShell`, Media `EmbedLayout` keep their own patterns |
-| Identity profile page | Centered card layout is intentional for `/profile` |
+| Identity profile page layout | Centered card layout is intentional for `/profile` body — only shell nav is new |
 | Media iframe embed pages | Chromeless embed routes excluded |
 | Backend API changes | Frontend-only layout spec |
 
@@ -51,7 +53,9 @@ As a user, I want all feature pages to have a consistent structure within the ma
 
 1. All in-scope WebOnOne pages use **`FeaturePage`** (directly or via `PageHeader` inside it).
 2. Title typography is **`text-2xl font-semibold`**; description is **`text-sm text-muted-foreground`** with **`mt-1`** under title.
-3. Content column is **`mx-auto w-full max-w-4xl`** by default.
+3. Feature pages use full width of shell main content (`w-full`) — no per-page `max-w-*` on wrappers.
 4. Gap between header block and page body is **`gap-6`** (24px).
 5. `feature-page-layout.mdc` documents required structure and lists reference implementations.
-6. `npm run build -w @webonone/ui-kit` and `npm run type-check -w webonone-v2-root` pass.
+6. Identity standalone shows left nav per [04-identity-navigation.md](./04-identity-navigation.md).
+7. `npm run build -w @webonone/ui-kit` and `npm run type-check -w webonone-v2-root` pass.
+8. `npm run type-check -w identity-root` passes.

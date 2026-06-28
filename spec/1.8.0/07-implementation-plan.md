@@ -16,7 +16,7 @@ git checkout -b spec/1.8.0
 |------|--------|
 | Base branch | `master` |
 | Spec branch | `spec/1.8.0` |
-| Scope | `ui-kit/`, `webonone-v2/frontend/`, `.cursor/rules/` |
+| Scope | `ui-kit/`, `webonone-v2/frontend/`, `identity/frontend/`, `.cursor/rules/` |
 
 ---
 
@@ -83,12 +83,27 @@ git checkout -b spec/1.8.0
 
 ---
 
+## Phase 5 — Identity standalone navigation
+
+**Goal:** `AppShell` left nav for Identity standalone; core return link when `return_url` present.
+
+| Task | Detail |
+|------|--------|
+| Nav config | `identity/frontend/src/features/shell/config/navItems.ts` |
+| AppLayout | `AppShell` for shell routes; `PageShell` for `/login` |
+| ProfilePage | Remove inline back link |
+
+**Exit criteria:** `npm run type-check -w identity-root` passes.
+
+---
+
 ## ClickUp subtask traceability
 
 | Subtask | ID | Phase |
 |---------|-----|-------|
 | [User Story] Spec 1.8.0 | 86ey2ymnf | All phases |
 | spaces and gaps | 86ey2ymt2 | 1–4 |
+| need to have the left navigation for the identity service | 86ey33zeu | 5 |
 
 ---
 
@@ -101,9 +116,12 @@ git checkout -b spec/1.8.0
 - [ ] WebOnOne pages listed in [02](./02-feature-page-layout.md) use `FeaturePage`
 - [ ] Showcase demonstrates layout variants
 - [ ] `.cursor/rules/feature-page-layout.mdc` exists and is indexed
+- [ ] Identity standalone nav: Profile, Register, Reset password ([04](./04-identity-navigation.md))
+- [ ] Core redirect shows WebOnOne return nav item (no duplicate inline back button)
 - [ ] `npm run build -w @webonone/ui-kit` succeeds
 - [ ] `npm run type-check -w ui-kit-root` succeeds
 - [ ] `npm run type-check -w webonone-v2-root` succeeds
+- [ ] `npm run type-check -w identity-root` succeeds
 
 ---
 

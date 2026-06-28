@@ -1,6 +1,10 @@
 # WebOnOne Platform — Specification (1.8.0)
 
-Extends [1.7.0](../1.7.0/README.md) with a **consistent feature-page layout** inside the `AppShell` main content area — shared **`FeaturePage`** / **`PageHeader`** primitives in UI Kit, consumer refactors in WebOnOne v2, and a **Cursor rule** so new feature pages follow the same structure.
+Extends [1.7.0](../1.7.0/README.md) with a **consistent feature-page layout** inside the `AppShell` main content area — shared **`FeaturePage`** / **`PageHeader`** primitives in UI Kit, consumer refactors in WebOnOne v2, **Identity standalone left navigation**, and a **Cursor rule** so new feature pages follow the same structure.
+
+## Revision history
+
+- **Subtask 86ey33zeu** — Identity `AppShell` left nav (Profile, Register, Reset password) for standalone mode; **WebOnOne** return link when `return_url` is present.
 
 Implementation branch: **`spec/1.8.0`**
 
@@ -22,6 +26,7 @@ Implementation branch: **`spec/1.8.0`**
 |---------|----------------|
 | **UI Kit** (`ui-kit/`) | Export `FeaturePage`, `PageHeader`; showcase demo |
 | **WebOnOne v2** (`webonone-v2/frontend/`) | Refactor authenticated feature pages to use shared layout |
+| **Identity** (`identity/frontend/`) | `AppShell` left nav for standalone + core return link |
 | **Cursor rules** (`.cursor/rules/`) | New `feature-page-layout.mdc`; index entry in `README.md` |
 
 ## Documents
@@ -31,6 +36,7 @@ Implementation branch: **`spec/1.8.0`**
 | [01-overview.md](./01-overview.md) | Goals, scope, glossary, success criteria |
 | [02-feature-page-layout.md](./02-feature-page-layout.md) | `FeaturePage` / `PageHeader` API, spacing tokens, consumer contract |
 | [03-cursor-rule.md](./03-cursor-rule.md) | `feature-page-layout.mdc` requirements and verification |
+| [04-identity-navigation.md](./04-identity-navigation.md) | Identity standalone sidebar + core return nav |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
@@ -39,7 +45,8 @@ Implementation branch: **`spec/1.8.0`**
 | Subtask | ID | Spec doc / phase |
 |---------|-----|------------------|
 | [User Story] Spec 1.8.0 | 86ey2ymnf | All docs |
-| spaces and gaps | 86ey2ymt2 | [02](./02-feature-page-layout.md), [03](./03-cursor-rule.md); Phases 1–3 |
+| spaces and gaps | 86ey2ymt2 | [02](./02-feature-page-layout.md), [03](./03-cursor-rule.md); Phases 1–4 |
+| need to have the left navigation for the identity service | 86ey33zeu | [04](./04-identity-navigation.md); Phase 5 |
 
 ## Inherited from earlier specs
 
@@ -61,6 +68,7 @@ Implementation branch: **`spec/1.8.0`**
 
 ```bash
 npm run dev:webonone    # WebOnOne :3000 — verify settings pages
+npm run dev:identity    # Identity :3001 — verify standalone nav
 npm run dev:ui-kit      # Showcase :3002 — FeaturePage demo
 npm run build -w @webonone/ui-kit
 ```
