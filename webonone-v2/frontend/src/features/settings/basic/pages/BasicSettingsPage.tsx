@@ -60,7 +60,6 @@ export function BasicSettingsPage() {
 
   return (
     <FeaturePage
-      maxWidth="2xl"
       title="Basic Settings"
       description="Register and manage your company on the platform."
     >

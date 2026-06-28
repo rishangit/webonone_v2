@@ -1,14 +1,21 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { PageShell, cn } from '@webonone/ui-kit'
+import { useMemo } from 'react'
+import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { AppShell, BrandLogo, PageShell } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
+import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
+import { buildIdentityNav, isIdentityShellRoute } from '@/features/shell/config/navItems'
 
 export function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
-  const isProfileRoute = location.pathname === '/profile'
+
+  const returnUrl = parseProfileReturnUrl(searchParams)
+  const nav = useMemo(() => buildIdentityNav(returnUrl), [returnUrl])
+  const useShell = isIdentityShellRoute(location.pathname)
 
   const headerUser =
     accessToken && user
@@ -28,18 +35,28 @@ export function AppLayout() {
     navigate('/profile')
   }
 
+  if (useShell) {
+    return (
+      <AppShell
+        nav={nav}
+        activePath={location.pathname}
+        logo={<BrandLogo>Identity</BrandLogo>}
+        user={headerUser}
+        onProfileClick={headerUser ? handleProfileClick : undefined}
+        onLogout={headerUser ? handleLogout : undefined}
+      >
+        <Outlet />
+      </AppShell>
+    )
+  }
+
   return (
     <PageShell
       user={headerUser}
       onProfileClick={headerUser ? handleProfileClick : undefined}
       onLogout={headerUser ? handleLogout : undefined}
     >
-      <div
-        className={cn(
-          'flex min-h-[calc(100vh-3.5rem)] py-4',
-          isProfileRoute ? 'items-start justify-center' : 'items-center justify-center',
-        )}
-      >
+      <div className="flex min-h-[calc(100vh-3.5rem)] w-full items-center justify-center py-4">
         <Outlet />
       </div>
     </PageShell>

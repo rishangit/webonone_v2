@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { Alert, AlertDescription, Button, Spinner } from '@webonone/ui-kit'
+import { Alert, AlertDescription, Spinner } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
 import { ProfileForm } from '../components/ProfileForm'
 import { bootstrapProfileSession } from '../utils/bootstrapProfileSession'
 import {
   buildProfileSearchWithoutCode,
-  parseProfileReturnUrl,
 } from '../utils/profileReturn'
 
 export function ProfilePage() {
@@ -20,7 +19,6 @@ export function ProfilePage() {
   const bootstrapRef = useRef(false)
 
   const code = searchParams.get('code')
-  const returnUrl = parseProfileReturnUrl(searchParams)
 
   useEffect(() => {
     if (!code || bootstrapRef.current) return
@@ -95,12 +93,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
-      {returnUrl ? (
-        <Button variant="link" className="h-auto p-0" asChild>
-          <a href={returnUrl}>Back to WebOnOne</a>
-        </Button>
-      ) : null}
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
         <p className="text-sm text-muted-foreground">Your account details.</p>

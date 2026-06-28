@@ -12,8 +12,8 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 
 ## Required pattern
 
-- Wrap page body in **`FeaturePage`** — do not hand-roll `mx-auto max-w-*` plus inline `<h1>` blocks.
-- **Default width:** `maxWidth="4xl"` (omit prop). Use `maxWidth="2xl"` only for narrow form-focused pages.
+- Wrap page body in **`FeaturePage`** — do not hand-roll inline `<h1>` title blocks.
+- **Width:** full width of the shell main content (`w-full`) — do not add `max-w-*` on feature page wrappers.
 - **Title block:** `title` + optional `description` props, or a custom `header={<PageHeader … />}`.
 - **Header actions:** pass primary page actions via `actions` (e.g. “Create theme”).
 - **Spacing:** rely on `FeaturePage` **`gap-6`** between header and body — do not add extra top margin on the first child.
@@ -29,7 +29,7 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 
 - Auth / callback routes (`AuthLayout`, login redirect pages)
 - Iframe / embed chrome (`EmbedLayout`, Media picker/upload/viewer embeds)
-- Identity `/profile` centered card layout
+- Auth forms (`AuthLayout` card — intentional narrow login/register UI)
 - Showcase demo pages that intentionally preview other layouts
 
 ## Reference implementations

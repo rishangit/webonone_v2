@@ -458,24 +458,15 @@ export function ComponentsPage() {
       <DemoSection
         id="layout"
         title="Layout"
-        description="FeaturePage — centered column, PageHeader title block, and gap-6 between header and body."
+        description="FeaturePage — full-width column with PageHeader title block and gap-6 between header and body."
       >
         <div className="space-y-8 rounded-lg border bg-muted/20 p-4">
           <FeaturePage
             title="Default feature page"
-            description="max-w-4xl centered column with consistent header spacing."
+            description="Full-width layout with consistent header spacing."
           >
             <Card>
               <CardContent className="pt-6">Page body content sits below the header with gap-6.</CardContent>
-            </Card>
-          </FeaturePage>
-          <FeaturePage
-            title="Narrow form page"
-            description='Use maxWidth="2xl" for form-focused settings.'
-            maxWidth="2xl"
-          >
-            <Card>
-              <CardContent className="pt-6">Narrow column for registration or settings forms.</CardContent>
             </Card>
           </FeaturePage>
           <FeaturePage
@@ -496,7 +487,7 @@ export function ComponentsPage() {
           <Card>
             <CardHeader>
               <CardTitle>PageShell</CardTitle>
-              <CardDescription>Simple centered layout wrapper (unauthenticated routes)</CardDescription>
+              <CardDescription>Full-width layout wrapper for standalone service pages</CardDescription>
             </CardHeader>
             <CardContent>
               <PageShell title="Example">Content area</PageShell>
