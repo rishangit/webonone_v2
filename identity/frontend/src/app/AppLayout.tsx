@@ -1,10 +1,16 @@
 import { useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { CORE_NAV_QUERY_PARAM } from '@webonone/platform-nav'
 import { AppShell, BrandLogo, PageShell } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
+import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
-import { buildIdentityNav, isIdentityShellRoute } from '@/features/shell/config/navItems'
+import {
+  buildCoreNavFromQuery,
+  buildStandaloneNav,
+  isIdentityShellRoute,
+} from '@/features/shell/config/navItems'
 
 export function AppLayout() {
   const navigate = useNavigate()
@@ -14,8 +20,17 @@ export function AppLayout() {
   const { accessToken, user } = useAppSelector((s) => s.auth)
 
   const returnUrl = parseProfileReturnUrl(searchParams)
-  const nav = useMemo(() => buildIdentityNav(returnUrl), [returnUrl])
-  const useShell = isIdentityShellRoute(location.pathname)
+  const { isRedirect } = useRedirectMode()
+  const isRedirectLogin = location.pathname === '/login' && isRedirect
+  const nav = useMemo(
+    () =>
+      returnUrl
+        ? buildCoreNavFromQuery(returnUrl, searchParams.get(CORE_NAV_QUERY_PARAM))
+        : buildStandaloneNav(),
+    [returnUrl, searchParams],
+  )
+  const brand = returnUrl ? 'WebOnOne' : 'Identity'
+  const useShell = isIdentityShellRoute(location.pathname) && !isRedirectLogin
 
   const headerUser =
     accessToken && user
@@ -40,7 +55,7 @@ export function AppLayout() {
       <AppShell
         nav={nav}
         activePath={location.pathname}
-        logo={<BrandLogo>Identity</BrandLogo>}
+        logo={<BrandLogo>{brand}</BrandLogo>}
         user={headerUser}
         onProfileClick={headerUser ? handleProfileClick : undefined}
         onLogout={headerUser ? handleLogout : undefined}

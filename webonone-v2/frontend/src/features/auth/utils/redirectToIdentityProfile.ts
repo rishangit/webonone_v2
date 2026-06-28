@@ -1,23 +1,37 @@
-import { redirectWithAuthCode, type RedirectWithAuthCodeOptions } from '@webonone/platform-nav'
+import {
+  redirectWithAuthCode,
+  toCoreNavQueryValue,
+  type PlatformNavVariant,
+  type RedirectWithAuthCodeOptions,
+} from '@webonone/platform-nav'
 import { getIdentityApiBase, getIdentityProfileUrl } from './identityConfig'
 
-export function getIdentityProfileRedirectOptions(
-  accessToken: string,
-  extraSearchParams?: Record<string, string>,
-): RedirectWithAuthCodeOptions {
+export type IdentityProfileRedirectOptions = {
+  accessToken: string
+  extraSearchParams?: Record<string, string>
+  navVariant?: PlatformNavVariant
+}
+
+export function getIdentityProfileRedirectOptions({
+  accessToken,
+  extraSearchParams,
+  navVariant = 'main',
+}: IdentityProfileRedirectOptions): RedirectWithAuthCodeOptions {
   return {
     accessToken,
     authCodeEndpoint: `${getIdentityApiBase()}/auth/code`,
     targetUrl: getIdentityProfileUrl(),
     returnUrl: `${window.location.origin}/`,
-    extraSearchParams,
+    extraSearchParams: {
+      ...extraSearchParams,
+      core_nav: toCoreNavQueryValue(navVariant),
+    },
     errorMessage: 'Failed to open profile',
   }
 }
 
 export function redirectToIdentityProfile(
-  accessToken: string,
-  extraSearchParams?: Record<string, string>,
+  options: IdentityProfileRedirectOptions,
 ): Promise<void> {
-  return redirectWithAuthCode(getIdentityProfileRedirectOptions(accessToken, extraSearchParams))
+  return redirectWithAuthCode(getIdentityProfileRedirectOptions(options))
 }

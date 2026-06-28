@@ -40,7 +40,13 @@ export function AppLayout() {
         )
       : undefined
     try {
-      await redirect(getIdentityProfileRedirectOptions(accessToken, themeParams))
+      await redirect(
+        getIdentityProfileRedirectOptions({
+          accessToken,
+          extraSearchParams: themeParams,
+          navVariant: isSuperAdmin ? 'superAdmin' : 'main',
+        }),
+      )
     } catch {
       // surfaced via hook
     }
