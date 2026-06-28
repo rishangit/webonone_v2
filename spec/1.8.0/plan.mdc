@@ -1,14 +1,14 @@
 ---
-description: Implementation plan for spec 1.8.0 — FeaturePage layout, WebOnOne refactor, cursor rule
+description: Implementation plan for spec 1.8.0 — FeaturePage layout, WebOnOne refactor, Identity nav, cursor rule
 alwaysApply: false
-globs: ui-kit/**, webonone-v2/frontend/**, .cursor/rules/**
+globs: ui-kit/**, webonone-v2/frontend/**, identity/frontend/**, .cursor/rules/**
 ---
 
 # Implementation plan — Spec 1.8.0
 
 ## Summary
 
-Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for consistent feature-page structure inside `AppShell`, refactors WebOnOne v2 settings/home pages, adds a showcase demo, and creates **`feature-page-layout.mdc`**. See [01-overview.md](./01-overview.md), [02-feature-page-layout.md](./02-feature-page-layout.md), [03-cursor-rule.md](./03-cursor-rule.md).
+Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for consistent feature-page structure inside `AppShell`, refactors WebOnOne v2 settings/home pages, adds **Identity standalone left navigation**, adds a showcase demo, and creates **`feature-page-layout.mdc`**. See [01-overview.md](./01-overview.md), [02-feature-page-layout.md](./02-feature-page-layout.md), [03-cursor-rule.md](./03-cursor-rule.md), [04-identity-navigation.md](./04-identity-navigation.md).
 
 ## Branch and prerequisites
 
@@ -16,7 +16,7 @@ Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for
 |------|--------|
 | Branch | `spec/1.8.0` |
 | Package build | `npm run build -w @webonone/ui-kit` before consumer prod builds |
-| Vite alias | WebOnOne already aliases `@webonone/ui-kit` to package `src/` in dev |
+| Vite alias | Consumers alias `@webonone/ui-kit` to package `src/` in dev |
 
 ---
 
@@ -38,13 +38,13 @@ Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for
 
 ## Phase 2 — Showcase demo
 
-**Goal:** Demonstrate default, narrow, and actions variants.
+**Goal:** Demonstrate default and actions variants.
 
 **Exit criteria:** Type-check passes.
 
 | Task | Paths |
 |------|-------|
-| Layout demo section | `ui-kit/showcase/src/pages/ComponentsPage.tsx` (or `LayoutsPage.tsx` + nav) |
+| Layout demo section | `ui-kit/showcase/src/pages/ComponentsPage.tsx` |
 
 **Verify:** `npm run type-check -w ui-kit-root`
 
@@ -59,7 +59,7 @@ Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for
 | Task | Paths |
 |------|-------|
 | Home | `webonone-v2/frontend/src/features/home/pages/HomePage.tsx` |
-| Basic Settings | `webonone-v2/frontend/src/features/settings/basic/pages/BasicSettingsPage.tsx` — `maxWidth="2xl"` |
+| Basic Settings | `webonone-v2/frontend/src/features/settings/basic/pages/BasicSettingsPage.tsx` |
 | Companies | `webonone-v2/frontend/src/features/settings/basic/pages/CompaniesPage.tsx` |
 | System Theme | `webonone-v2/frontend/src/features/settings/system-theme/pages/SystemThemePage.tsx` |
 
@@ -80,9 +80,26 @@ Spec 1.8.0 adds **`PageHeader`** and **`FeaturePage`** to `@webonone/ui-kit` for
 
 ---
 
+## Phase 5 — Identity standalone navigation
+
+**Goal:** `AppShell` left nav for Identity standalone; core return link when `return_url` present.
+
+**Exit criteria:** Type-check passes; nav items per [04-identity-navigation.md](./04-identity-navigation.md).
+
+| Task | Paths |
+|------|-------|
+| Nav config | `identity/frontend/src/features/shell/config/navItems.ts` — `standaloneNav`, `buildIdentityNav(returnUrl?)` |
+| AppLayout | `identity/frontend/src/app/AppLayout.tsx` — `AppShell` for `/profile`, `/register`, `/reset-password`; `PageShell` for `/login` |
+| ProfilePage | `identity/frontend/src/features/profile/pages/ProfilePage.tsx` — remove inline back link |
+
+**Verify:** `npm run type-check -w identity-root`
+
+---
+
 ## Cross-service integration
 
-None — UI Kit layout only; no iframe/JWT/event changes.
+- **WebOnOne → Identity profile:** existing `redirectWithAuthCode` + `return_url` ([`redirectToIdentityProfile.ts`](../../webonone-v2/frontend/src/features/auth/utils/redirectToIdentityProfile.ts)).
+- Identity sidebar reads validated `return_url` via `parseProfileReturnUrl()` — no new env keys.
 
 ---
 
@@ -90,15 +107,16 @@ None — UI Kit layout only; no iframe/JWT/event changes.
 
 | Subtask | ID | Phase |
 |---------|-----|-------|
-| [User Story] Spec 1.8.0 | 86ey2ymnf | 1–4 |
+| [User Story] Spec 1.8.0 | 86ey2ymnf | 1–5 |
 | spaces and gaps | 86ey2ymt2 | 1–4 |
+| need to have the left navigation for the identity service | 86ey33zeu | 5 |
 
 ---
 
 ## Risks and open items
 
 - `SystemThemePage` "Create theme" button moves to `PageHeader` `actions` — verify flex wrap on narrow viewports.
-- `HomePage` is minimal; add sensible description via `FeaturePage`.
+- `/forgot-password` not in sidebar — reachable from login footer only.
 
 ---
 
@@ -108,7 +126,8 @@ None — UI Kit layout only; no iframe/JWT/event changes.
 npm run build -w @webonone/ui-kit
 npm run type-check -w ui-kit-root
 npm run type-check -w webonone-v2-root
+npm run type-check -w identity-root
 npm run lint -w webonone-v2-root
 ```
 
-Manual: WebOnOne → Home, Basic Settings, Companies, System Theme — verify centered column, uniform title size, consistent gap below header.
+Manual: WebOnOne → Home, Basic Settings, Companies, System Theme — verify uniform title and `gap-6`. Identity `:3001` → profile/register/reset-password show sidebar; redirect from WebOnOne profile shows **WebOnOne** return nav item.
