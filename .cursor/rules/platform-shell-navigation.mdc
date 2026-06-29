@@ -81,6 +81,19 @@ Supporting utils (same roles — mirror naming):
 
 **Do not** bootstrap JWT in `AppLayout`. **Do not** show `AuthLayout` during platform handoff.
 
+## Logout (satellite FE in platform shell)
+
+When the user signs out from a satellite opened with `return_url` (core shell mode), send them to the **parent core `/login`**, not the satellite's local login page.
+
+**Required in every satellite `AppLayout` `handleLogout`:**
+
+1. Resolve effective `return_url` **before** Redux `logout` (logout may clear persisted platform context — see Email `authSlice`).
+2. `const target = resolvePlatformLogoutLoginUrl(returnUrl)` from `@webonone/platform-nav`.
+3. `dispatch(logout())` then `window.location.assign(target)` (cross-origin safe; do not use React Router `navigate` for core redirect).
+4. No `return_url` → `resolvePlatformLogoutLoginUrl` returns local `'/login'` (standalone mode).
+
+**Reference:** `email/frontend/src/app/AppLayout.tsx`, `identity/frontend/src/app/AppLayout.tsx`.
+
 ## Destination home page
 
 **Required — match `identity/frontend/src/features/profile/pages/ProfilePage.tsx`:**

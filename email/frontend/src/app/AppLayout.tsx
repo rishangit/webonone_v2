@@ -3,6 +3,7 @@ import { Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import {
   CORE_NAV_QUERY_PARAM,
   parsePlatformNavVariant,
+  resolvePlatformLogoutLoginUrl,
   useServiceRedirect,
 } from '@webonone/platform-nav'
 import { AppShell, BrandLogo, PageShell } from '@webonone/ui-kit'
@@ -76,8 +77,9 @@ export function AppLayout() {
   }
 
   function handleLogout() {
+    const parentLoginUrl = resolvePlatformLogoutLoginUrl(effectiveReturnUrl)
     dispatch(authActions.logout())
-    window.location.assign('/login')
+    window.location.assign(parentLoginUrl)
   }
 
   const headerUser =

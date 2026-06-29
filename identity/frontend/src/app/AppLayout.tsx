@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant, useServiceRedirect } from '@webonone/platform-nav'
+import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant, resolvePlatformLogoutLoginUrl, useServiceRedirect } from '@webonone/platform-nav'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { AppShell, BrandLogo, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
@@ -91,8 +91,9 @@ export function AppLayout() {
       : null
 
   function handleLogout() {
+    const parentLoginUrl = resolvePlatformLogoutLoginUrl(returnUrl)
     dispatch(authActions.logout())
-    navigate('/login')
+    window.location.assign(parentLoginUrl)
   }
 
   function handleProfileClick() {
