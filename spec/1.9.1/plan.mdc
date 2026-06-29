@@ -1,7 +1,7 @@
 ---
 description: Implementation plan for spec 1.9.1 — OTP password reset via Email, 3-attempt lockout, role-scoped History/Templates
 alwaysApply: false
-globs: identity/**, email/**
+globs: identity/**, email/**, webonone-v2/**, packages/platform-nav/**
 ---
 
 # Implementation plan — Spec 1.9.1
@@ -10,7 +10,7 @@ globs: identity/**, email/**
 
 Spec 1.9.1 replaces link-based password reset with a **4-digit OTP** (1-minute expiry, **max 3 failed attempts** per code) sent by the Email microservice. Identity owns a three-step UX (email → OTP with countdown → new password). Email seeds `password_reset_otp` and hardens **History** / **Templates** API scope for super admin vs company admin. See [01-overview.md](./01-overview.md), [02-identity-otp-reset.md](./02-identity-otp-reset.md), [03-email-history-templates.md](./03-email-history-templates.md).
 
-**Services:** `identity/` (FE + BE), `email/` (FE + BE). WebOnOne unchanged.
+**Services:** `identity/` (FE + BE), `email/` (FE + BE), `webonone-v2/` (FE nav), `packages/platform-nav`. WebOnOne BE unchanged.
 
 ## Branch and prerequisites
 
@@ -108,6 +108,7 @@ Spec: [02-identity-otp-reset.md](./02-identity-otp-reset.md)
 | 3-attempt lockout | 3 wrong OTPs → locked; new forgot-password issues fresh code |
 | 1-min expiry | Server rejects expired OTP; UI countdown matches |
 | Role UI | Super admin: all history + platform templates; company admin: scoped only |
+| Platform Email nav | Email group → History / Templates (not dashboard) |
 | Security | No OTP in URL/logs; generic forgot-password response |
 | Type-check | `identity-root`, `email-root` |
 
@@ -127,13 +128,35 @@ Pattern: [../1.9.0/05-platform-integration.md](../1.9.0/05-platform-integration.
 
 ---
 
+## Phase 5 — Email platform nav sub-menus
+
+**Goal:** Core left nav **Email** group with **Email History** and **Templates**; auth-code handoff to `/history` or `/templates` (no dashboard).
+
+**Exit criteria:** Super admin and company admin open History/Templates from WebOnOne or Identity core nav; session bootstraps on target page.
+
+| Task | Paths |
+|------|-------|
+| Email nav group defs | `packages/platform-nav/src/coreNav.ts` — `externalPath` on email leaves |
+| Sentinel helpers | `packages/platform-nav/src/coreNav.ts` — `EMAIL_NAV_SENTINELS`, `emailSentinelToPath` |
+| WebOnOne nav + redirect | `webonone-v2/frontend/src/features/shell/config/navItems.ts`, `redirectToEmail.ts`, `AppLayout.tsx` |
+| Identity nav + redirect | `identity/frontend/src/features/shell/config/navItems.ts`, `redirectToEmail.ts`, `AppLayout.tsx` |
+| Email core nav rewrite | `email/frontend/src/features/shell/config/coreNavItems.ts` |
+| Platform bootstrap hook | `email/frontend/src/features/auth/hooks/usePlatformSessionBootstrap.ts` |
+| Bootstrap on pages | `HistoryPage.tsx`, `TemplatesPage.tsx`, `DashboardPage.tsx` (refactor) |
+| Redirect URI helper | `email/frontend/src/features/auth/utils/bootstrapPlatformSession.ts` |
+
+Spec: [03-email-history-templates.md](./03-email-history-templates.md) — subtask **86ey3j67h**
+
+**Verify:** `npm run build:platform-nav`; type-check webonone, identity, email roots
+
+---
+
 ## ClickUp traceability
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
-| Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | All (Phases 1–4) |
-
-No subtasks on parent — full scope maps to phases above.
+| Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | Phases 1–4 |
+| left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
 
 ---
 
@@ -152,10 +175,12 @@ No subtasks on parent — full scope maps to phases above.
 ## Final verification
 
 ```bash
+npm run build:platform-nav
 npm run migrate -w identity-root
 npm run migrate -w email-root
 npm run type-check -w identity-root
 npm run type-check -w email-root
+npm run type-check -w webonone-v2-root
 npm run dev:identity
 npm run dev:email
 ```
