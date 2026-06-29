@@ -103,6 +103,7 @@ git checkout -b spec/1.9.1
 - [ ] 4-digit OTP emailed via Email service
 - [ ] 1-minute OTP expiry enforced server-side
 - [ ] OTP UI countdown and expiry messaging
+- [ ] Max **3** wrong OTP attempts per code; locked out until new forgot-password request
 - [ ] Password reset after valid OTP
 - [ ] `password_reset_otp` template seeded and super-admin editable
 - [ ] Super admin: all history + platform templates

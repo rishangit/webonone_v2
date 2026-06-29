@@ -14,7 +14,7 @@ As a company admin, I want to see my company's email history and company email t
 
 ## Goals (1.9.1)
 
-1. **OTP password reset** — 4-digit numeric code; 1-minute TTL; invalidate on use or expiry.
+1. **OTP password reset** — 4-digit numeric code; 1-minute TTL; **max 3 wrong attempts** per code; invalidate on use, expiry, or lockout.
 2. **Three-step Identity UX** — (1) enter email, (2) enter OTP with countdown, (3) set new password.
 3. **Email delivery** — Identity backend calls Email internal API; template `password_reset_otp`; no SMTP in Identity.
 4. **Template placeholders** — `userName`, `otp` (and optional body text); super admin editable in Email UI.
@@ -50,7 +50,7 @@ As a company admin, I want to see my company's email history and company email t
 
 1. User submits email on forgot-password → receives email with 4-digit OTP within queue SLA.
 2. OTP entry screen shows ~60s countdown; expired OTP rejected with clear message.
-3. Valid OTP advances to new-password form; invalid OTP shows inline error.
+3. Valid OTP advances to new-password form; invalid OTP shows inline error and remaining attempts (max **3** failures, then must request a new code).
 4. Successful reset invalidates OTP; user can sign in with new password.
 5. Forgot-password response is generic (no email enumeration).
 6. Super admin sees all history rows and platform templates in Email UI.

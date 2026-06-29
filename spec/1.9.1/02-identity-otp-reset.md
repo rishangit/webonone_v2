@@ -44,15 +44,17 @@ Multi-step forgot-password flow owned by **Identity**. Email service sends the O
 - Show masked email hint.
 - Single field: 4-digit OTP (numeric input, max length 4).
 - **Countdown timer** — 60 seconds from page load or from server `expiresAt` in response; at zero disable submit and show "Code expired — request a new one" with link back to forgot-password.
+- **Attempt counter** — show remaining tries (e.g. "2 attempts left") from server `attemptsRemaining` on each failed verify.
 - Submit: `POST /api/v1/auth/verify-reset-otp` with `{ email, otp }`.
 - On success: navigate to `/reset-password` with short-lived **reset session** (see below) — not the OTP in the URL.
+- On **3rd wrong OTP**: disable input and submit; show "Too many incorrect attempts — request a new code" with link to forgot-password (same as locked/expired state).
 
 **Backend (`verifyResetOtp`):**
 
 1. Load latest unused OTP record for email.
-2. Reject if expired, max attempts exceeded, or hash mismatch.
-3. On match: mark OTP used; create **reset session** token (opaque, server-side, ~10 min TTL) returned to client as `{ resetSessionToken }` (store in memory/state — **not** in query string).
-4. Increment attempt counter on mismatch (optional cap, e.g. 5 attempts per OTP).
+2. Reject if expired, `attempt_count >= 3`, or OTP already locked.
+3. On hash **match**: mark OTP used; create **reset session** token (opaque, server-side, ~10 min TTL) returned to client as `{ resetSessionToken }` (store in memory/state — **not** in query string).
+4. On hash **mismatch**: increment `attempt_count`. If `attempt_count` reaches **3**, invalidate the OTP (`used_at` or `locked_at`) and return `403` with code `OTP_MAX_ATTEMPTS` — no further verifies allowed for that issuance. Otherwise return `401` with `attemptsRemaining: 3 - attempt_count`.
 
 ### Step 3 — Set new password
 
@@ -85,7 +87,7 @@ New table or extend existing reset storage:
 | `otp_hash` | VARCHAR | bcrypt or HMAC of 4-digit code |
 | `expires_at` | DATETIME | +1 minute from creation |
 | `used_at` | DATETIME nullable | Set on successful verify |
-| `attempt_count` | INT | Failed verify attempts |
+| `attempt_count` | INT | Failed verify attempts (max **3** per OTP) |
 | `created_at` | DATETIME | |
 
 **Reset sessions** (post-OTP):
@@ -126,7 +128,7 @@ X-Email-Service-Key: {EMAIL_SERVICE_API_KEY}
 | Method | Path | Body | Response |
 |--------|------|------|----------|
 | POST | `/api/v1/auth/forgot-password` | `{ email }` | Generic message |
-| POST | `/api/v1/auth/verify-reset-otp` | `{ email, otp }` | `{ resetSessionToken, expiresAt }` |
+| POST | `/api/v1/auth/verify-reset-otp` | `{ email, otp }` | Success: `{ resetSessionToken, expiresAt }`. Wrong OTP: `{ message, attemptsRemaining }`. Locked (3 failures): `403 OTP_MAX_ATTEMPTS` |
 | POST | `/api/v1/auth/reset-password` | `{ resetSessionToken, newPassword }` or legacy `{ token, newPassword }` | `{ message }` |
 
 Zod validation on all bodies; `validateBody` middleware per `nodejs-express.mdc`.
@@ -149,7 +151,8 @@ Embed mode: preserve `parentOrigin` / redirect query through all three steps.
 
 | Rule | Detail |
 |------|--------|
-| OTP entropy | 4 digits = 9000 values; mitigate with 1-min TTL + attempt limits |
+| OTP entropy | 4 digits = 9000 values; mitigate with 1-min TTL + **max 3 failed attempts** per OTP |
+| Max attempts | **3** wrong OTP entries per issuance; then OTP invalidated — user must request a new code |
 | No OTP in URL | Session token only after verify |
 | Enumeration | Generic forgot-password response |
 | Expiry | Server rejects expired OTP regardless of client timer |
@@ -161,5 +164,6 @@ Embed mode: preserve `parentOrigin` / redirect query through all three steps.
 - [ ] OTP email received with correct code
 - [ ] Countdown reflects 1-minute expiry
 - [ ] Expired / wrong OTP blocked
+- [ ] After **3** wrong OTP entries, verify rejected and UI locked until user requests a new code
 - [ ] Password reset completes after valid OTP
 - [ ] Email sent via internal API only

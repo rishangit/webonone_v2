@@ -10,7 +10,7 @@ Implementation branch: **`spec/1.9.1`**
 
 | Area | 1.9.0 | 1.9.1 |
 |------|-------|-------|
-| Password reset | Email with **reset link** (1-hour token) | Email with **4-digit OTP**; 1-minute expiry; multi-step Identity UI |
+| Password reset | Email with **reset link** (1-hour token) | Email with **4-digit OTP**; 1-minute expiry; **3-attempt** lockout; multi-step Identity UI |
 | Reset validation | Single `/reset-password?token=` page | Email entry → OTP entry (countdown) → new password |
 | Email template | `password_reset` with `actionUrl` | `password_reset_otp` with `userName`, `otp` placeholders |
 | Email admin nav | History + Templates at service nav | Same routes; **role scoping** enforced — super admin sees all system history/templates; company admin sees company-scoped only |
