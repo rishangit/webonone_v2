@@ -8,27 +8,19 @@ export function renderPlaceholders(
 }
 
 export function findMissingPlaceholders(
-  content: string,
+  _content: string,
   requiredKeys: string[],
   payload: Record<string, string>,
   extras: Record<string, string> = {},
 ): string[] {
   const merged = { ...extras, ...payload }
-  const missing = new Set<string>()
+  const missing: string[] = []
 
   for (const key of requiredKeys) {
     if (!merged[key]?.trim()) {
-      missing.add(key)
+      missing.push(key)
     }
   }
 
-  const referenced = content.match(/\{\{(\w+)\}\}/g) ?? []
-  for (const token of referenced) {
-    const key = token.slice(2, -2)
-    if (!merged[key]?.trim()) {
-      missing.add(key)
-    }
-  }
-
-  return [...missing]
+  return missing
 }

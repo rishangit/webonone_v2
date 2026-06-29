@@ -1,24 +1,36 @@
 import { getIdentityApiBase } from './identityConfig'
 import type { UserProfile } from '../types/auth.types'
 
-export function getEmailHomeRedirectUri(): string {
+export function getEmailRedirectUri(path = '/'): string {
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}/`
+    const origin = window.location.origin.replace(/\/$/, '')
+    if (path === '/' || path === '') {
+      return `${origin}/`
+    }
+    return `${origin}${path.startsWith('/') ? path : `/${path}`}`
   }
 
   return 'http://localhost:3004/'
 }
 
-export async function bootstrapPlatformSession(code: string): Promise<{
+/** @deprecated Use getEmailRedirectUri('/') */
+export function getEmailHomeRedirectUri(): string {
+  return getEmailRedirectUri('/')
+}
+
+export async function bootstrapPlatformSession(
+  code: string,
+  redirectUri?: string,
+): Promise<{
   accessToken: string
   user: UserProfile & { avatarUrl?: string | null }
 }> {
-  const redirectUri = getEmailHomeRedirectUri()
+  const uri = redirectUri ?? getEmailRedirectUri('/')
 
   const res = await fetch(`${getIdentityApiBase()}/auth/exchange`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, redirectUri }),
+    body: JSON.stringify({ code, redirectUri: uri }),
   })
 
   const data = (await res.json().catch(() => ({}))) as {

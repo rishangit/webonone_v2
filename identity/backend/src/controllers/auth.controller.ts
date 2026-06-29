@@ -71,8 +71,8 @@ const resetPasswordSchema = z
   })
 
 const verifyResetOtpSchema = z.object({
-  email: z.string().email(),
-  otp: z.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
+  email: z.string().trim().toLowerCase().email(),
+  otp: z.coerce.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
 })
 
 const resendVerificationSchema = z.object({

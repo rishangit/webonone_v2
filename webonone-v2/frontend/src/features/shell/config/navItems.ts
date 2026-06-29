@@ -1,26 +1,27 @@
-import { Building2, Home, Mail, Palette, Settings } from 'lucide-react'
+import { Building2, History, Home, Mail, Palette, Settings } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
+  EMAIL_NAV_SENTINELS,
   getPlatformNavDefs,
+  isEmailNavSentinel,
   type CoreNavDef,
   type CoreNavLeaf,
   type PlatformNavVariant,
 } from '@webonone/platform-nav'
 import type { NavConfigItem } from '@webonone/ui-kit'
 
-/** Internal sentinel for Email nav — handled via `onClick` in AppLayout (not routed). */
-export const PLATFORM_EMAIL_NAV = '/email'
-
 const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
-  [PLATFORM_EMAIL_NAV]: Mail,
+  [EMAIL_NAV_SENTINELS.history]: History,
+  [EMAIL_NAV_SENTINELS.templates]: Mail,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
 
 const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings: Settings,
+  Email: Mail,
 }
 
 function iconForPath(path: string): LucideIcon {
@@ -29,7 +30,7 @@ function iconForPath(path: string): LucideIcon {
 
 function resolveItemPath(item: CoreNavLeaf): string {
   if (item.externalService === 'email') {
-    return PLATFORM_EMAIL_NAV
+    return item.path
   }
   return item.path
 }
@@ -64,3 +65,5 @@ export function buildPlatformNav(variant: PlatformNavVariant): NavConfigItem[] {
 
 export const mainNav = buildPlatformNav('main')
 export const superAdminNav = buildPlatformNav('superAdmin')
+
+export { isEmailNavSentinel }

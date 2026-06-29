@@ -1,9 +1,10 @@
 import {
+  emailSentinelToExternalPath,
   toCoreNavQueryValue,
   type PlatformNavVariant,
   type RedirectWithAuthCodeOptions,
 } from '@webonone/platform-nav'
-import { getEmailHomeRedirectUri } from './emailConfig'
+import { getEmailAppUrl } from './emailConfig'
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ??
@@ -15,6 +16,8 @@ export type EmailRedirectOptions = {
   returnUrl: string
   extraSearchParams?: Record<string, string>
   navVariant?: PlatformNavVariant
+  emailPath?: string
+  emailNavSentinel?: string
 }
 
 export function getEmailRedirectOptions({
@@ -22,11 +25,16 @@ export function getEmailRedirectOptions({
   returnUrl,
   extraSearchParams,
   navVariant = 'main',
+  emailPath = '/history',
+  emailNavSentinel,
 }: EmailRedirectOptions): RedirectWithAuthCodeOptions {
+  const resolvedPath =
+    (emailNavSentinel ? emailSentinelToExternalPath(emailNavSentinel) : null) ?? emailPath
+
   return {
     accessToken,
     authCodeEndpoint: `${API_BASE}/auth/code`,
-    targetUrl: getEmailHomeRedirectUri(),
+    targetUrl: getEmailAppUrl(resolvedPath),
     returnUrl,
     extraSearchParams: {
       ...extraSearchParams,

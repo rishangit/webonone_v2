@@ -7,6 +7,8 @@ export type CoreNavLeaf = {
   path: string
   label: string
   externalService?: ExternalServiceId
+  /** Path on the external service origin (default `/`). */
+  externalPath?: string
 }
 
 export type CoreNavGroup = {
@@ -31,9 +33,49 @@ export type ResolvedCoreNavGroup = {
 
 export type ResolvedCoreNavDef = ResolvedCoreNavLeaf | ResolvedCoreNavGroup
 
+/** Internal sentinels for Email sub-nav in consumer AppLayouts (not routed on core origin). */
+export const EMAIL_NAV_SENTINELS = {
+  history: '/email/history',
+  templates: '/email/templates',
+} as const
+
+export function isEmailNavSentinel(to: string): boolean {
+  return to === EMAIL_NAV_SENTINELS.history || to === EMAIL_NAV_SENTINELS.templates
+}
+
+export function emailSentinelToExternalPath(sentinel: string): string | null {
+  switch (sentinel) {
+    case EMAIL_NAV_SENTINELS.history:
+      return '/history'
+    case EMAIL_NAV_SENTINELS.templates:
+      return '/templates'
+    default:
+      return null
+  }
+}
+
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
-  { kind: 'item', path: '/email', label: 'Email', externalService: 'email' },
+  {
+    kind: 'group',
+    label: 'Email',
+    children: [
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.history,
+        label: 'Email History',
+        externalService: 'email',
+        externalPath: '/history',
+      },
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.templates,
+        label: 'Templates',
+        externalService: 'email',
+        externalPath: '/templates',
+      },
+    ],
+  },
   {
     kind: 'group',
     label: 'Settings',
@@ -47,7 +89,26 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
 export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
   { kind: 'item', path: '/companies', label: 'Companies' },
-  { kind: 'item', path: '/email', label: 'Email', externalService: 'email' },
+  {
+    kind: 'group',
+    label: 'Email',
+    children: [
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.history,
+        label: 'Email History',
+        externalService: 'email',
+        externalPath: '/history',
+      },
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.templates,
+        label: 'Templates',
+        externalService: 'email',
+        externalPath: '/templates',
+      },
+    ],
+  },
   {
     kind: 'group',
     label: 'Settings',
@@ -100,7 +161,12 @@ function resolveLeafHref(
   if (item.externalService) {
     const serviceOrigin = externalOrigins?.[item.externalService]
     if (serviceOrigin) {
-      return `${serviceOrigin.replace(/\/$/, '')}/`
+      const base = serviceOrigin.replace(/\/$/, '')
+      const subPath = item.externalPath ?? '/'
+      if (subPath === '/') {
+        return `${base}/`
+      }
+      return `${base}${subPath.startsWith('/') ? subPath : `/${subPath}`}`
     }
   }
   return resolvePath(origin, item.path)

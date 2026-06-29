@@ -20,5 +20,7 @@ export function buildRedirectQuery(searchParams: URLSearchParams): string {
 
 export function withRedirectQuery(path: string, searchParams: URLSearchParams): string {
   const query = buildRedirectQuery(searchParams)
-  return query ? `${path}?${query}` : path
+  if (!query) return path
+  const separator = path.includes('?') ? '&' : '?'
+  return `${path}${separator}${query}`
 }

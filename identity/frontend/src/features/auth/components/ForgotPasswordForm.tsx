@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../schemas/authSchemas'
 import { authActions } from '../store'
 import { withRedirectQuery } from '../utils/redirectQuery'
+import { saveResetEmail } from '../utils/resetEmailStorage'
 
 export function ForgotPasswordForm() {
   const dispatch = useAppDispatch()
@@ -49,6 +50,7 @@ export function ForgotPasswordForm() {
     }
     setFieldErrors({})
     submittedEmailRef.current = parsed.data.email
+    saveResetEmail(parsed.data.email)
     pendingNavigateRef.current = true
     dispatch(authActions.clearAuthError())
     dispatch(authActions.forgotPasswordRequested(parsed.data))

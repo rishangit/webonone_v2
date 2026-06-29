@@ -9,8 +9,12 @@ export function getEmailApiBase(): string {
   return import.meta.env.VITE_EMAIL_API_BASE_URL ?? DEFAULT_EMAIL_API_BASE
 }
 
-export function getEmailAppUrl(): string {
-  return `${getEmailOrigin()}/`
+export function getEmailAppUrl(path = '/history'): string {
+  const base = getEmailOrigin().replace(/\/$/, '')
+  if (path === '/' || path === '') {
+    return `${base}/`
+  }
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
 
 export function getEmailCallbackUrl(): string {

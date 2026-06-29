@@ -32,6 +32,19 @@ describe('coreNav', () => {
     }
   })
 
+  it('resolves email sub-nav URLs with external paths', () => {
+    const nav = resolvePlatformNavUrls('http://localhost:3000', 'main', {
+      email: 'http://localhost:3004',
+    })
+    const emailGroup = nav.find((item) => item.kind === 'group' && item.label === 'Email')
+    assert.ok(emailGroup?.kind === 'group')
+    if (emailGroup?.kind === 'group') {
+      assert.equal(emailGroup.children.length, 2)
+      assert.equal(emailGroup.children[0]?.href, 'http://localhost:3004/history')
+      assert.equal(emailGroup.children[1]?.href, 'http://localhost:3004/templates')
+    }
+  })
+
   it('round-trips nav variant query values', () => {
     assert.equal(toCoreNavQueryValue('main'), 'main')
     assert.equal(toCoreNavQueryValue('superAdmin'), CORE_NAV_VARIANT_SUPER_ADMIN)

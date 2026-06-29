@@ -1,4 +1,4 @@
-import { Building2, Home, Mail, Palette, Settings } from 'lucide-react'
+import { Building2, History, Home, Mail, Palette, Settings } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   getCoreOriginFromReturnUrl,
@@ -12,13 +12,15 @@ import type { NavConfigItem } from '@webonone/ui-kit'
 const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
-  '/email': Mail,
+  '/history': History,
+  '/templates': Mail,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
 
 const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings,
+  Email: Mail,
 }
 
 function iconForCoreHref(href: string): LucideIcon {
@@ -33,21 +35,28 @@ function iconForCoreHref(href: string): LucideIcon {
 function rewriteEmailOriginLinks(items: NavConfigItem[], emailOrigin: string): NavConfigItem[] {
   const normalizedOrigin = emailOrigin.replace(/\/$/, '')
 
+  function rewriteTo(to: string): string {
+    if (to === normalizedOrigin || to === `${normalizedOrigin}/`) {
+      return '/'
+    }
+    if (to.startsWith(`${normalizedOrigin}/`)) {
+      return to.slice(normalizedOrigin.length)
+    }
+    return to
+  }
+
   return items.map((item) => {
     if (item.type === 'item') {
-      if (item.to === normalizedOrigin || item.to === `${normalizedOrigin}/`) {
-        return { ...item, to: '/' }
-      }
-      return item
+      return { ...item, to: rewriteTo(item.to) }
     }
 
     return {
       ...item,
-      children: item.children.map((child) =>
-        child.to === normalizedOrigin || child.to === `${normalizedOrigin}/`
-          ? { ...child, to: '/' }
-          : child,
-      ),
+      icon: CORE_GROUP_ICON_BY_LABEL[item.label] ?? item.icon,
+      children: item.children.map((child) => ({
+        ...child,
+        to: rewriteTo(child.to),
+      })),
     }
   })
 }

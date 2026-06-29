@@ -14,6 +14,7 @@ import {
 import { verifyResetOtpSchema, type VerifyResetOtpFormValues } from '../schemas/authSchemas'
 import { authApi, type AuthApiError } from '../services/authApi'
 import { saveResetSessionToken } from '../utils/resetSessionStorage'
+import { clearResetEmail, loadResetEmail } from '../utils/resetEmailStorage'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 const OTP_COUNTDOWN_SECONDS = 60
@@ -28,7 +29,8 @@ function maskEmail(email: string): string {
 export function VerifyResetOtpPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const email = searchParams.get('email') ?? ''
+  const emailFromQuery = searchParams.get('email') ?? ''
+  const email = (loadResetEmail() ?? decodeURIComponent(emailFromQuery)).trim().toLowerCase()
   const forgotLink = withRedirectQuery('/forgot-password', searchParams)
   const resetPath = withRedirectQuery('/reset-password', searchParams)
 
@@ -74,6 +76,7 @@ export function VerifyResetOtpPage() {
     try {
       const result = await authApi.verifyResetOtp({ email, otp: parsed.data.otp })
       saveResetSessionToken(result.resetSessionToken)
+      clearResetEmail()
       navigate(resetPath, {
         replace: true,
         state: { resetSessionToken: result.resetSessionToken },

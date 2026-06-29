@@ -1,7 +1,9 @@
-import { Building2, Home, KeyRound, Mail, Palette, Settings, User, UserPlus } from 'lucide-react'
+import { Building2, History, Home, KeyRound, Mail, Palette, Settings, User, UserPlus } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
+  EMAIL_NAV_SENTINELS,
   getCoreOriginFromReturnUrl,
+  isEmailNavSentinel,
   parsePlatformNavVariant,
   resolvePlatformNavUrls,
   type PlatformNavVariant,
@@ -11,19 +13,19 @@ import type { NavConfigItem } from '@webonone/ui-kit'
 
 export const IDENTITY_SHELL_ROUTES = ['/login', '/profile', '/register', '/reset-password'] as const
 
-/** Internal sentinel for Email nav — handled via `onClick` in AppLayout (not routed). */
-export const PLATFORM_EMAIL_NAV = '/email'
-
 const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
   '/email': Mail,
+  '/history': History,
+  '/templates': Mail,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
 
 const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings: Settings,
+  Email: Mail,
 }
 
 export const standaloneNav: NavConfigItem[] = [
@@ -42,27 +44,46 @@ function iconForCoreHref(href: string): LucideIcon {
   }
 }
 
+function emailHrefToSentinel(href: string, emailOrigin: string): string {
+  const normalizedOrigin = emailOrigin.replace(/\/$/, '')
+  if (href === normalizedOrigin || href === `${normalizedOrigin}/`) {
+    return EMAIL_NAV_SENTINELS.history
+  }
+  if (href.startsWith(`${normalizedOrigin}/`)) {
+    const subPath = href.slice(normalizedOrigin.length)
+    if (subPath === '/history') {
+      return EMAIL_NAV_SENTINELS.history
+    }
+    if (subPath === '/templates') {
+      return EMAIL_NAV_SENTINELS.templates
+    }
+  }
+  return href
+}
+
 function rewriteEmailLinksForIdentityNav(
   items: NavConfigItem[],
   emailOrigin: string,
 ): NavConfigItem[] {
-  const normalizedOrigin = emailOrigin.replace(/\/$/, '')
-
   return items.map((item) => {
     if (item.type === 'item') {
-      if (item.to === normalizedOrigin || item.to === `${normalizedOrigin}/`) {
-        return { ...item, to: PLATFORM_EMAIL_NAV, icon: Mail }
+      const sentinel = emailHrefToSentinel(item.to, emailOrigin)
+      if (isEmailNavSentinel(sentinel)) {
+        return { ...item, to: sentinel, icon: iconForCoreHref(item.to) }
       }
       return item
     }
 
     return {
       ...item,
-      children: item.children.map((child) =>
-        child.to === normalizedOrigin || child.to === `${normalizedOrigin}/`
-          ? { ...child, to: PLATFORM_EMAIL_NAV, icon: Mail }
-          : child,
-      ),
+      icon: CORE_GROUP_ICON_BY_LABEL[item.label] ?? item.icon,
+      children: item.children.map((child) => {
+        const sentinel = emailHrefToSentinel(child.to, emailOrigin)
+        if (isEmailNavSentinel(sentinel)) {
+          return { ...child, to: sentinel, icon: iconForCoreHref(child.to) }
+        }
+        return child
+      }),
     }
   })
 }
@@ -131,3 +152,5 @@ export function buildCoreNavFromQuery(
 export function isIdentityShellRoute(pathname: string): boolean {
   return (IDENTITY_SHELL_ROUTES as readonly string[]).includes(pathname)
 }
+
+export { isEmailNavSentinel }

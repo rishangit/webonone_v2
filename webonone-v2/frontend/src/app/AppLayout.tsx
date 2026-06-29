@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
-import { mainNav, PLATFORM_EMAIL_NAV, superAdminNav } from '@/features/shell/config/navItems'
+import { isEmailNavSentinel, mainNav, superAdminNav } from '@/features/shell/config/navItems'
 import { useSuperAdminStatus } from '@/features/settings/basic/hooks/useSuperAdminStatus'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
@@ -16,18 +16,18 @@ import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRef
 
 function withEmailNavAction(
   items: NavConfigItem[],
-  onEmailClick: () => void,
+  onEmailNavClick: (sentinel: string) => void,
 ): NavConfigItem[] {
   return items.map((item) => {
-    if (item.type === 'item' && item.to === PLATFORM_EMAIL_NAV) {
-      return { ...item, onClick: onEmailClick }
+    if (item.type === 'item' && isEmailNavSentinel(item.to)) {
+      return { ...item, onClick: () => onEmailNavClick(item.to) }
     }
 
     if (item.type === 'group') {
       return {
         ...item,
         children: item.children.map((child) =>
-          child.to === PLATFORM_EMAIL_NAV ? { ...child, onClick: onEmailClick } : child,
+          isEmailNavSentinel(child.to) ? { ...child, onClick: () => onEmailNavClick(child.to) } : child,
         ),
       }
     }
@@ -47,33 +47,37 @@ export function AppLayout() {
   useIdentityUserRefresh()
   const { isSuperAdmin } = useSuperAdminStatus()
 
-  const handleEmailClick = useCallback(async () => {
-    if (!accessToken) {
-      navigate('/login')
-      return
-    }
-    clearError()
-    const themeParams = preferences
-      ? serializeThemeQueryParams(
-          buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode),
+  const handleEmailNavClick = useCallback(
+    async (sentinel: string) => {
+      if (!accessToken) {
+        navigate('/login')
+        return
+      }
+      clearError()
+      const themeParams = preferences
+        ? serializeThemeQueryParams(
+            buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode),
+          )
+        : undefined
+      try {
+        await redirect(
+          getEmailRedirectOptions({
+            accessToken,
+            extraSearchParams: themeParams,
+            navVariant: isSuperAdmin ? 'superAdmin' : 'main',
+            emailNavSentinel: sentinel,
+          }),
         )
-      : undefined
-    try {
-      await redirect(
-        getEmailRedirectOptions({
-          accessToken,
-          extraSearchParams: themeParams,
-          navVariant: isSuperAdmin ? 'superAdmin' : 'main',
-        }),
-      )
-    } catch {
-      // surfaced via hook
-    }
-  }, [accessToken, clearError, isSuperAdmin, navigate, preferences, redirect])
+      } catch {
+        // surfaced via hook
+      }
+    },
+    [accessToken, clearError, isSuperAdmin, navigate, preferences, redirect],
+  )
 
   const nav = useMemo(
-    () => withEmailNavAction(isSuperAdmin ? superAdminNav : mainNav, handleEmailClick),
-    [handleEmailClick, isSuperAdmin],
+    () => withEmailNavAction(isSuperAdmin ? superAdminNav : mainNav, handleEmailNavClick),
+    [handleEmailNavClick, isSuperAdmin],
   )
 
   function handleLogout() {

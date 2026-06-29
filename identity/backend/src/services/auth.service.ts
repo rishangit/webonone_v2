@@ -211,7 +211,9 @@ export async function verifyResetOtp(
   email: string,
   otp: string,
 ): Promise<{ resetSessionToken: string; expiresAt: string }> {
-  const user = await findUserByEmail(email)
+  const normalizedEmail = email.trim().toLowerCase()
+  const normalizedOtp = otp.trim()
+  const user = await findUserByEmail(normalizedEmail)
   if (!user) {
     throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', { attemptsRemaining: 0 })
   }
@@ -229,7 +231,7 @@ export async function verifyResetOtp(
     throw new AuthError('Too many incorrect attempts', 403, 'OTP_MAX_ATTEMPTS')
   }
 
-  const otpHash = hashToken(otp)
+  const otpHash = hashToken(normalizedOtp)
   if (otpHash !== record.otp_hash) {
     const nextAttempts = record.attempt_count + 1
     if (nextAttempts >= OTP_MAX_ATTEMPTS) {

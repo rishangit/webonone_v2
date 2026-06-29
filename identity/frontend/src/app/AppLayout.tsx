@@ -12,24 +12,24 @@ import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
 import {
   buildCoreNavFromQuery,
   buildStandaloneNav,
+  isEmailNavSentinel,
   isIdentityShellRoute,
-  PLATFORM_EMAIL_NAV,
 } from '@/features/shell/config/navItems'
 
 function withEmailNavAction(
   items: NavConfigItem[],
-  onEmailClick: () => void,
+  onEmailNavClick: (sentinel: string) => void,
 ): NavConfigItem[] {
   return items.map((item) => {
-    if (item.type === 'item' && item.to === PLATFORM_EMAIL_NAV) {
-      return { ...item, onClick: onEmailClick }
+    if (item.type === 'item' && isEmailNavSentinel(item.to)) {
+      return { ...item, onClick: () => onEmailNavClick(item.to) }
     }
 
     if (item.type === 'group') {
       return {
         ...item,
         children: item.children.map((child) =>
-          child.to === PLATFORM_EMAIL_NAV ? { ...child, onClick: onEmailClick } : child,
+          isEmailNavSentinel(child.to) ? { ...child, onClick: () => onEmailNavClick(child.to) } : child,
         ),
       }
     }
@@ -50,31 +50,35 @@ export function AppLayout() {
   const { isRedirect } = useRedirectMode()
   const isRedirectLogin = location.pathname === '/login' && isRedirect
 
-  const handleEmailClick = useCallback(async () => {
-    if (!accessToken || !returnUrl) {
-      return
-    }
-    clearError()
-    try {
-      await redirect(
-        getEmailRedirectOptions({
-          accessToken,
-          returnUrl,
-          extraSearchParams: relayThemeQueryParams(searchParams),
-          navVariant: parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM)),
-        }),
-      )
-    } catch {
-      // surfaced via hook
-    }
-  }, [accessToken, clearError, redirect, returnUrl, searchParams])
+  const handleEmailNavClick = useCallback(
+    async (sentinel: string) => {
+      if (!accessToken || !returnUrl) {
+        return
+      }
+      clearError()
+      try {
+        await redirect(
+          getEmailRedirectOptions({
+            accessToken,
+            returnUrl,
+            extraSearchParams: relayThemeQueryParams(searchParams),
+            navVariant: parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM)),
+            emailNavSentinel: sentinel,
+          }),
+        )
+      } catch {
+        // surfaced via hook
+      }
+    },
+    [accessToken, clearError, redirect, returnUrl, searchParams],
+  )
 
   const nav = useMemo(() => {
     const base = returnUrl
       ? buildCoreNavFromQuery(returnUrl, searchParams.get(CORE_NAV_QUERY_PARAM))
       : buildStandaloneNav()
-    return returnUrl ? withEmailNavAction(base, handleEmailClick) : base
-  }, [handleEmailClick, returnUrl, searchParams])
+    return returnUrl ? withEmailNavAction(base, handleEmailNavClick) : base
+  }, [handleEmailNavClick, returnUrl, searchParams])
 
   const brand = returnUrl ? 'WebOnOne' : 'Identity'
   const isAuthenticated = Boolean(accessToken && user)

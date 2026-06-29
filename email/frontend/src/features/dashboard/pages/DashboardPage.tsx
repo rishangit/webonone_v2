@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
@@ -14,21 +14,13 @@ import {
   ItemListItem,
   Spinner,
 } from '@webonone/ui-kit'
-import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant } from '@webonone/platform-nav'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
-import { bootstrapPlatformSession } from '@/features/auth/utils/bootstrapPlatformSession'
-import {
-  buildPlatformSearchWithoutCode,
-  hasPlatformHandoff,
-  parsePlatformReturnUrl,
-} from '@/features/auth/utils/platformReturn'
+import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { emailApi } from '@/shared/services/emailApi'
 import { apiClient } from '@/shared/services/apiClient'
 import type { DashboardStats } from '@/shared/types/email.types'
-
-const exchangedCodes = new Set<string>()
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
@@ -48,77 +40,17 @@ function statusLabel(status: DashboardStats['recentActivity'][number]['status'])
 }
 
 export function DashboardPage() {
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
-  const [bootstrapError, setBootstrapError] = useState<string | null>(null)
-  const [isBootstrapping, setIsBootstrapping] = useState(false)
-  const bootstrapRef = useRef(false)
+  const { isBootstrapping, bootstrapError, hasCode } = usePlatformSessionBootstrap('/')
 
-  const code = searchParams.get('code')
   const role: EmailRole = user?.role ?? 'member'
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!code || !hasPlatformHandoff(searchParams) || bootstrapRef.current) {
-      return
-    }
-    if (exchangedCodes.has(code)) {
-      return
-    }
-
-    bootstrapRef.current = true
-    exchangedCodes.add(code)
-    setIsBootstrapping(true)
-    setBootstrapError(null)
-
-    const validatedReturnUrl = parsePlatformReturnUrl(searchParams)
-    const coreNavVariant = parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM))
-
-    bootstrapPlatformSession(code)
-      .then(async (result) => {
-        if (validatedReturnUrl) {
-          dispatch(
-            authActions.setPlatformContext({
-              returnUrl: validatedReturnUrl,
-              coreNavVariant,
-            }),
-          )
-        }
-
-        dispatch(
-          authActions.loginSuccess({
-            accessToken: result.accessToken,
-            user: {
-              id: result.user.id,
-              email: result.user.email,
-              displayName: result.user.displayName,
-              avatarUrl: result.user.avatarUrl ?? null,
-              role: 'member',
-            },
-          }),
-        )
-
-        navigate(
-          { pathname: '/', search: buildPlatformSearchWithoutCode(searchParams) },
-          { replace: true },
-        )
-      })
-      .catch((err: Error) => {
-        bootstrapRef.current = false
-        exchangedCodes.delete(code)
-        setBootstrapError(err.message)
-      })
-      .finally(() => {
-        setIsBootstrapping(false)
-      })
-  }, [code, dispatch, navigate, searchParams])
-
-  useEffect(() => {
-    if (!accessToken || code) {
+    if (!accessToken || hasCode) {
       return
     }
 
@@ -141,7 +73,7 @@ export function DashboardPage() {
     }
 
     void load()
-  }, [accessToken, code, dispatch])
+  }, [accessToken, hasCode, dispatch])
 
   if (isBootstrapping) {
     return (
@@ -159,7 +91,7 @@ export function DashboardPage() {
     )
   }
 
-  if (!accessToken && !code) {
+  if (!accessToken && !hasCode) {
     return <Navigate to="/login" replace />
   }
 

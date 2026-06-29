@@ -4,12 +4,16 @@ export function getEmailOrigin(): string {
   return import.meta.env.VITE_EMAIL_ORIGIN ?? DEFAULT_EMAIL_ORIGIN
 }
 
-export function getEmailAppUrl(): string {
-  return `${getEmailOrigin()}/`
+export function getEmailAppUrl(path = '/history'): string {
+  const base = getEmailOrigin().replace(/\/$/, '')
+  if (path === '/' || path === '') {
+    return `${base}/`
+  }
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
 
 export function getEmailHomeRedirectUri(): string {
-  return getEmailAppUrl()
+  return getEmailAppUrl('/')
 }
 
 export function getEmailCallbackUrl(): string {
