@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { THEME_CONTRACT_VERSION, THEME_QUERY } from './constants'
 import { applyThemeVariables } from './applyTheme'
+import { persistAppliedTheme, readPersistedTheme } from './themeSession'
 import type { ColorMode, ThemeDto, ThemePayload } from './types'
 import { isHexColor } from './colorUtils'
 
@@ -92,7 +93,16 @@ export function relayThemeQueryParams(searchParams: URLSearchParams): Record<str
     const value = searchParams.get(key)
     if (value) out[key] = value
   }
-  return out
+  if (Object.keys(out).length > 0) {
+    return out
+  }
+
+  const persisted = readPersistedTheme()
+  if (!persisted) {
+    return out
+  }
+
+  return serializeThemeQueryParams(persisted)
 }
 
 export function applyThemeFromQueryParams(
@@ -102,6 +112,7 @@ export function applyThemeFromQueryParams(
   const payload = parseThemeQueryParams(searchParams)
   if (!payload) return null
   applyThemeVariables(payload, root)
+  persistAppliedTheme(payload)
   return payload
 }
 

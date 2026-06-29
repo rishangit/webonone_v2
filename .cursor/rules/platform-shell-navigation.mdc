@@ -1,0 +1,151 @@
+---
+description: Canonical auth-code redirect pattern — same layout, file roles, and flow for every peer (Profile reference)
+globs: "**/frontend/src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Platform shell navigation
+
+All authenticated cross-origin navigation between **core (WebOnOne)** and **satellite FEs** (Identity profile, Email, future services) must follow **one pattern**. **Profile is the reference implementation** — copy its roles and flow exactly; only paths and feature names change.
+
+Authoritative reference: Identity profile inbound + WebOnOne `handleProfileClick` outbound.
+
+## Canonical flow (every peer — no exceptions)
+
+```text
+Consumer AppLayout
+  → useServiceRedirect().redirect(get<Peer>RedirectOptions(...))
+  → Identity POST /auth/code (Bearer JWT)
+  → window.location.assign(peerHomeUrl?code&return_url&core_nav)
+
+Destination AppLayout
+  → PageShell + <Outlet /> while !authenticated (platform handoff)
+  → AppShell + core nav when authenticated && return_url
+
+Destination home PAGE (not AppLayout, not /callback)
+  → read ?code
+  → bootstrap<Peer>Session(code) → Identity POST /auth/exchange
+  → dispatch login + strip code from URL (keep return_url / core_nav)
+  → spinner only in page content ("Loading …")
+```
+
+## Three layers — same structure every time
+
+| Layer | Responsibility | Profile (reference) | Email (mirror) | New satellite `<name>` |
+|-------|----------------|---------------------|----------------|-------------------------|
+| **1. Consumer outbound** | Trigger + auth-code redirect | `webonone-v2/.../redirectToIdentityProfile.ts` + `AppLayout` `handleProfileClick` | `webonone-v2/.../redirectToEmail.ts` + `AppLayout` `handleEmailClick` | `redirectTo<Name>.ts` + `AppLayout` `handle<Name>Click` |
+| **2. Destination layout** | Shell split, core nav, profile outbound | `identity/.../app/AppLayout.tsx` | `email/.../app/AppLayout.tsx` | `<service>/.../app/AppLayout.tsx` |
+| **3. Destination home page** | Code bootstrap only | `identity/.../profile/pages/ProfilePage.tsx` | `email/.../dashboard/pages/DashboardPage.tsx` | `<service>/.../<home>/pages/<Home>Page.tsx` |
+
+Supporting utils (same roles — mirror naming):
+
+| Role | Profile (reference) | Email (mirror) | New satellite |
+|------|---------------------|----------------|---------------|
+| Exchange code for JWT | `bootstrapProfileSession.ts` | `bootstrapPlatformSession.ts` | `bootstrap<Name>Session.ts` on home feature |
+| Parse / strip `return_url` | `profileReturn.ts` | `platformReturn.ts` | `<name>Return.ts` or shared pattern |
+| Home `redirectUri` getter | `profileConfig.ts` → `getIdentityProfileRedirectUri()` | `bootstrapPlatformSession.ts` → `getEmailHomeRedirectUri()` | `get<Name>HomeRedirectUri()` |
+| Core nav in platform mode | `shell/config/navItems.ts` `buildCoreNavFromQuery` | `shell/config/coreNavItems.ts` + `buildAppNav.ts` | `buildCoreNav*` in `AppLayout` |
+| Outbound profile | — (is profile host) | `redirectToIdentityProfile.ts` | `redirectToIdentityProfile.ts` |
+| Consumer peer config | `identityConfig.ts` | `emailConfig.ts` | `<peer>Config.ts` |
+
+## Consumer `AppLayout` (WebOnOne + Identity when in core shell)
+
+**Required — same for every outbound peer:**
+
+1. `useServiceRedirect()` hook.
+2. `get<Peer>RedirectOptions({ accessToken, returnUrl, navVariant, extraSearchParams? })` calling `redirectWithAuthCode` with:
+   - `authCodeEndpoint`: `{identityApi}/auth/code`
+   - `targetUrl`: peer **home URL** (not `/callback`)
+   - `returnUrl`: core origin + `/`
+   - `extraSearchParams.core_nav`: `toCoreNavQueryValue(variant)`
+   - `extraSearchParams` **theme**: WebOnOne passes `serializeThemeQueryParams(buildThemePayload(...))` from system theme (see `handleProfileClick`); satellites relay with `relayThemeQueryParams(searchParams)` (falls back to session after URL strip)
+3. Handler calls `redirect(options)` — **no** `navigate` to intermediate route, **no** redirect page component.
+4. Sidebar peers: nav sentinel (e.g. `PLATFORM_EMAIL_NAV = '/email'`) + `onClick` on nav item (ui-kit `NavConfigItem.onClick`). Header profile: `onProfileClick`.
+
+**Reference files:**
+
+- Profile: `webonone-v2/frontend/src/app/AppLayout.tsx` `handleProfileClick`, `redirectToIdentityProfile.ts`
+- Email: `webonone-v2/frontend/src/app/AppLayout.tsx` `handleEmailClick`, `redirectToEmail.ts`
+- Identity → Email: `identity/frontend/src/app/AppLayout.tsx` `handleEmailClick`, `features/email/utils/redirectToEmail.ts`
+
+## Destination `AppLayout` (satellite FE)
+
+**Required — match `identity/frontend/src/app/AppLayout.tsx`:**
+
+1. Parse `return_url` from query (allowlisted).
+2. `useMemo` → core nav when `return_url` present (`buildCoreNavFromQuery` or equivalent).
+3. `usePlatformShell` / `useShell` = platform context **and** (`authenticated` **or** valid `hasPlatformHandoff` on home route) — show core `AppShell` + nav as soon as the user lands with `code` + `return_url`; bootstrap spinner lives in the home page `<Outlet />` only.
+4. **If platform shell:** `AppShell`, brand = core app name (`WebOnOne`), `onProfileClick` → `redirectToIdentityProfile`.
+5. **Else if authenticated standalone:** `AppShell` with service brand + service nav.
+6. **Else:** `PageShell` + centered `<Outlet />` (handoff / login routes).
+
+**Do not** bootstrap JWT in `AppLayout`. **Do not** show `AuthLayout` during platform handoff.
+
+## Destination home page
+
+**Required — match `identity/frontend/src/features/profile/pages/ProfilePage.tsx`:**
+
+1. `const code = searchParams.get('code')`
+2. `useRef` + `useEffect` → single bootstrap when `code` present (platform handoff: `code` without `state`)
+3. `bootstrap<Session>(code)` → dispatch login → `navigate({ pathname: home, search: stripAuthCodeFromSearch })`
+4. While bootstrapping: `<Spinner />` only in **page content** — no "Loading …" copy; never a full-page login or redirect screen.
+5. `if (!accessToken && !code) return <Navigate to="/login" />`
+6. Then load page data (second `useEffect` when `accessToken && !code`)
+
+**Email reference:** `email/frontend/src/features/dashboard/pages/DashboardPage.tsx`
+
+## `PrivateRoute`
+
+Allow route when `accessToken` **or** `hasPlatformHandoff(searchParams)` (`code` + validated `return_url`, no `state`). Never flash `/login` during handoff.
+
+## Routes
+
+| Route | Use |
+|-------|-----|
+| Peer **home** (`/profile`, `/`, …) | Platform inbound handoff + page bootstrap |
+| `/callback` | **Standalone OAuth only** (`code` + `state`) — never platform handoff |
+| `/go/*`, `*RedirectPage` | **Forbidden** on consumer |
+
+## `targetUrl` / `redirectUri` pairs (must match exchange)
+
+| Peer | `targetUrl` / `redirectUri` |
+|------|----------------------------|
+| Identity profile | `{identityOrigin}/profile` |
+| Email home | `{emailOrigin}/` |
+| New satellite | `{serviceOrigin}/<home-path>` |
+
+Identity `ALLOWED_REDIRECT_URIS` must include each home URI.
+
+## Scaffolding checklist (new satellite with platform shell)
+
+Copy Profile roles row-by-row from tables above:
+
+- [ ] `features/<peer>/utils/redirectTo<Peer>.ts` on **each consumer** FE
+- [ ] Consumer `AppLayout`: `handle<Peer>Click` + `redirect()` (nav `onClick` or header)
+- [ ] `features/<home>/utils/bootstrap<Name>Session.ts`
+- [ ] `features/<home>/utils/<name>Return.ts` (`parseReturnUrl`, `stripAuthCodeFromSearch` wrapper)
+- [ ] `<Home>Page.tsx` with Profile-shaped bootstrap `useEffect`
+- [ ] `app/AppLayout.tsx` with Profile-shaped shell split
+- [ ] `PrivateRoute` + `hasPlatformHandoff`
+- [ ] `redirectToIdentityProfile.ts` on satellite for profile header
+- [ ] `packages/platform-nav/src/coreNav.ts` leaf + `externalService` if core menu item
+- [ ] Consumer `features/<peer>/utils/<peer>Config.ts` — origin only; derive home/callback in code
+
+## Forbidden
+
+- `/go/*` routes or `*RedirectPage` components on consumer ("Opening …" spinners)
+- Platform handoff to `/callback` or `AuthLayout`
+- JWT bootstrap in `AppLayout` instead of home page
+- Raw `VITE_*_ORIGIN` hrefs for authenticated peers
+- `PrivateRoute` → `/login` during valid `code` + `return_url` handoff
+- Different flow for Email vs Profile vs the next service — **one pattern only**
+
+## Verification
+
+```bash
+npm run type-check -w webonone-v2-root
+npm run type-check -w identity-root
+npm run type-check -w email-root
+```
+
+Manual: WebOnOne → Profile and WebOnOne → Email — same perceived flow (no consumer spinner, one destination spinner, then core `AppShell`).

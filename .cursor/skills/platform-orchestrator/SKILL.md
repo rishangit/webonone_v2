@@ -22,7 +22,7 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `webonone-v2/` | `.cursor/agents/webonone-agent.md` | `.cursor/skills/webonone-agent/SKILL.md` |
 | `media/`, `packages/media-embed/` | `.cursor/agents/media-agent.md` | `.cursor/skills/media-agent/SKILL.md` |
 
-Keywords: iframe, postMessage, JWT handoff, embed login → often **Identity + WebOnOne**. Media picker embed → **Media + consumer FE**.
+Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**.
 
 **Parent handles directly:** root `package.json`, workspace wiring, non-service `.cursor/` config.
 
@@ -52,6 +52,8 @@ Each prompt **must** include:
 6. **Return format:** summary, files touched, verification, cross-service follow-ups
 
 Sequence cross-service work: Identity before WebOnOne.
+
+**Platform redirection (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). **Profile is the reference** — every peer uses the same three layers: (1) consumer `AppLayout` + `redirectTo<Peer>.ts` + `handle<Peer>Click`, (2) destination `AppLayout` PageShell→AppShell split, (3) destination home page bootstrap (never `/callback`, never `/go/*` redirect pages).
 
 ## Prompt templates
 

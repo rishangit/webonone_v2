@@ -36,3 +36,8 @@ export {
 } from './urlTheme'
 export { broadcastThemeToIframes, useEmbedThemeListener } from './embedTheme'
 export { useRedirectThemeBootstrap } from './redirectTheme'
+export {
+  clearPersistedTheme,
+  persistAppliedTheme,
+  readPersistedTheme,
+} from './themeSession'

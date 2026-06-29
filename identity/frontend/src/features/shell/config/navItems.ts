@@ -11,6 +11,9 @@ import type { NavConfigItem } from '@webonone/ui-kit'
 
 export const IDENTITY_SHELL_ROUTES = ['/login', '/profile', '/register', '/reset-password'] as const
 
+/** Internal sentinel for Email nav — handled via `onClick` in AppLayout (not routed). */
+export const PLATFORM_EMAIL_NAV = '/email'
+
 const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
@@ -35,15 +38,40 @@ function iconForCoreHref(href: string): LucideIcon {
     const path = new URL(href).pathname
     return CORE_ICON_BY_PATH_SUFFIX[path] ?? Home
   } catch {
-    return Home
+    return CORE_ICON_BY_PATH_SUFFIX[href] ?? Home
   }
 }
 
-function toNavConfigItems(defs: ResolvedCoreNavDef[]): NavConfigItem[] {
-  return defs.map((item) => {
+function rewriteEmailLinksForIdentityNav(
+  items: NavConfigItem[],
+  emailOrigin: string,
+): NavConfigItem[] {
+  const normalizedOrigin = emailOrigin.replace(/\/$/, '')
+
+  return items.map((item) => {
+    if (item.type === 'item') {
+      if (item.to === normalizedOrigin || item.to === `${normalizedOrigin}/`) {
+        return { ...item, to: PLATFORM_EMAIL_NAV, icon: Mail }
+      }
+      return item
+    }
+
+    return {
+      ...item,
+      children: item.children.map((child) =>
+        child.to === normalizedOrigin || child.to === `${normalizedOrigin}/`
+          ? { ...child, to: PLATFORM_EMAIL_NAV, icon: Mail }
+          : child,
+      ),
+    }
+  })
+}
+
+function toNavConfigItems(defs: ResolvedCoreNavDef[], emailOrigin: string): NavConfigItem[] {
+  const items: NavConfigItem[] = defs.map((item) => {
     if (item.kind === 'item') {
       return {
-        type: 'item',
+        type: 'item' as const,
         to: item.href,
         label: item.label,
         icon: iconForCoreHref(item.href),
@@ -51,7 +79,7 @@ function toNavConfigItems(defs: ResolvedCoreNavDef[]): NavConfigItem[] {
     }
 
     return {
-      type: 'group',
+      type: 'group' as const,
       label: item.label,
       icon: CORE_GROUP_ICON_BY_LABEL[item.label] ?? Settings,
       children: item.children.map((child) => ({
@@ -61,6 +89,8 @@ function toNavConfigItems(defs: ResolvedCoreNavDef[]): NavConfigItem[] {
       })),
     }
   })
+
+  return rewriteEmailLinksForIdentityNav(items, emailOrigin)
 }
 
 export function buildStandaloneNav(): NavConfigItem[] {
@@ -85,7 +115,9 @@ export function buildCoreNav(
     return standaloneNav
   }
 
-  return toNavConfigItems(resolvePlatformNavUrls(origin, variant, externalOrigins))
+  const emailOrigin = externalOrigins.email ?? DEFAULT_EMAIL_ORIGIN
+
+  return toNavConfigItems(resolvePlatformNavUrls(origin, variant, externalOrigins), emailOrigin)
 }
 
 export function buildCoreNavFromQuery(

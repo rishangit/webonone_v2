@@ -184,6 +184,7 @@ Use the **right channel per layer**. Do not mix channels.
 | Layer | Channel | Passes | Example |
 |-------|---------|--------|---------|
 | **UI embed** | `<iframe>` + query params | Hosted UI from owning service | WebOnOne embeds Identity `/login?parentOrigin=...` |
+| **Browser handoff** | Auth-code redirect + `return_url` / `core_nav` | Session continuity across admin FEs | WebOnOne → Email via `AppLayout` `handleEmailClick`; profile → Identity `/profile` |
 | **Browser handoff** | `window.postMessage` + origin checks | JWT + public profile fields | Login success → parent app |
 | **API auth** | `Authorization: Bearer <JWT>` | Signed identity claims (`sub`, `email`, `iss`, `aud`, `exp`) | App FE → own service BE |
 | **Async sync** | Versioned events | Domain facts + foreign IDs (`user_id` CHAR(21)) | `UserRegistered` → local provisioning |
@@ -291,6 +292,7 @@ Before adding or changing a service:
 - [ ] Peer connectivity uses origin + API base only; route URLs derived in config module (no per-route `VITE_*` URLs)
 - [ ] Every `packages/*` / `@webonone/ui-kit` import in the service frontend is listed in the service root `build` script via root `build:<name>`
 - [ ] Root `package.json` exposes `build:<name>` for each such dependency
+- [ ] Satellite admin FEs use the Profile-shaped three-layer handoff (consumer `AppLayout` → destination `AppLayout` → home page bootstrap) — [platform-shell-navigation.mdc](platform-shell-navigation.mdc)
 
 If any item fails, reconsider the design.
 

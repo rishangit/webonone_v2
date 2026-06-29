@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
@@ -8,6 +9,7 @@ interface NavItemProps {
   active?: boolean
   collapsed?: boolean
   nested?: boolean
+  onClick?: () => void
   onNavigate?: () => void
   className?: string
 }
@@ -19,13 +21,22 @@ function NavItem({
   active = false,
   collapsed = false,
   nested = false,
+  onClick,
   onNavigate,
   className,
 }: NavItemProps) {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (onClick) {
+      event.preventDefault()
+      onClick()
+    }
+    onNavigate?.()
+  }
+
   return (
     <a
-      href={to}
-      onClick={onNavigate}
+      href={onClick ? '#' : to}
+      onClick={handleClick}
       title={collapsed ? label : undefined}
       aria-label={collapsed ? label : undefined}
       aria-current={active ? 'page' : undefined}

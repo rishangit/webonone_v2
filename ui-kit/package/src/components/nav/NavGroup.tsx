@@ -58,8 +58,14 @@ function NavGroup({
           {children.map((child) => (
             <DropdownMenuItem key={child.to} asChild>
               <a
-                href={child.to}
-                onClick={onNavigate}
+                href={child.onClick ? '#' : child.to}
+                onClick={(event) => {
+                  if (child.onClick) {
+                    event.preventDefault()
+                    child.onClick()
+                  }
+                  onNavigate?.()
+                }}
                 className={cn(
                   'flex cursor-pointer items-center gap-2',
                   (activePath === child.to || activePath?.startsWith(`${child.to}/`)) &&
@@ -102,6 +108,7 @@ function NavGroup({
               to={child.to}
               label={child.label}
               icon={child.icon}
+              onClick={child.onClick}
               nested
               active={activePath === child.to || activePath?.startsWith(`${child.to}/`)}
               onNavigate={onNavigate}

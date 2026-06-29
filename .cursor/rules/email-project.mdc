@@ -1,0 +1,50 @@
+---
+description: Email service scope, ports, platform shell nav, and verification
+globs: email/**/*
+alwaysApply: false
+---
+
+# Email project
+
+## Scope
+
+`email/frontend`, `email/backend`, `email/backend/migrations` — standalone transactional email microservice.
+
+## Ports and env
+
+| Layer | Port | Env file |
+|-------|------|----------|
+| Frontend | 3004 | `email/frontend/.env` |
+| Backend | 4004 | `email/backend/.env` |
+
+`JWT_SECRET` must match Identity backend. `EMAIL_SERVICE_API_KEY` shared with Identity and WebOnOne backends for internal send API.
+
+## Ownership
+
+- Templates, queue, SMTP, send history, providers, branding — own DB `webonone_email`.
+- JWT verification locally on public routes; Identity issues tokens.
+- Role copy (`super_admin`, `company_admin`, `member`) in Email DB.
+
+## Platform shell — mirror Identity profile
+
+Email must follow the **same three-layer pattern** as Identity profile. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
+
+| Role | Profile (reference) | Email (this service) |
+|------|---------------------|----------------------|
+| Inbound layout | `identity/.../app/AppLayout.tsx` | `email/frontend/src/app/AppLayout.tsx` |
+| Inbound home + bootstrap | `identity/.../profile/pages/ProfilePage.tsx` | `email/frontend/src/features/dashboard/pages/DashboardPage.tsx` |
+| Bootstrap util | `bootstrapProfileSession.ts` | `features/auth/utils/bootstrapPlatformSession.ts` |
+| Return URL util | `profileReturn.ts` | `features/auth/utils/platformReturn.ts` |
+| Outbound profile | — | `features/auth/utils/redirectToIdentityProfile.ts` |
+| Core nav | `shell/config/navItems.ts` | `shell/config/coreNavItems.ts` + `shell/utils/buildAppNav.ts` |
+
+Consumers (WebOnOne, Identity): `handleEmailClick` in `AppLayout` + `redirectToEmail.ts` — **no** `/go/email` route or redirect page.
+
+## Verification
+
+```bash
+npm run type-check -w email-root
+npm run migrate -w email-root
+```
+
+Cross-service flow requires Identity + WebOnOne running for full platform nav test.

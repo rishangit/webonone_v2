@@ -16,6 +16,7 @@
 | [ui-kit-project.mdc](ui-kit-project.mdc) | `ui-kit/**/*` | Package vs showcase, build/export workflow |
 | [webonone-v2-project.mdc](webonone-v2-project.mdc) | `webonone-v2/**/*` | Scaffold, iframe login, JWT verify |
 | [media-project.mdc](media-project.mdc) | `media/**/*` | Media service ports, embed routes, storage |
+| [email-project.mdc](email-project.mdc) | `email/**/*` | Email service ports, platform shell nav, queue/SMTP |
 
 ## Deployment
 
@@ -35,6 +36,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
 | [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, stacked siblings, pointer fall-through dismiss guard, iframe embed footer + crop height chain, footer, sizing, wizard/tab |
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
+| [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, and any future `*/frontend` apps.
 
@@ -70,7 +72,8 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Topic | Authoritative rule |
 |-------|-------------------|
 | One DB per service, events, JWT, iframe/postMessage | `microservice-architecture.mdc` |
-| Identity ↔ WebOnOne integration | `microservice-architecture.mdc`, `identity-project.mdc` |
+| Identity ↔ WebOnOne integration | `microservice-architecture.mdc`, `identity-project.mdc`, [platform-shell-navigation.mdc](platform-shell-navigation.mdc) |
+| Core nav / auth-code handoff between services | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) — Profile is reference; all peers mirror same three layers |
 | Tables, migrations, nanoid `CHAR(21)` | `mysql-database-architecture.mdc` |
 | Express routes, JWT, HTTP errors | `nodejs-express.mdc` |
 | Feature folders, `@/shared` between features | `front-end-structure.mdc` |

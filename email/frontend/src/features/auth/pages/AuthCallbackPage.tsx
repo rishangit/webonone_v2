@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
-  AuthLayout,
   Button,
   PageShell,
   Spinner,
@@ -88,9 +87,9 @@ export function AuthCallbackPage() {
 
   return (
     <PageShell title="Email">
-      <AuthLayout title="Signing in" variant="minimal">
+      <div className="flex flex-col items-center gap-4 py-12">
         {error ? (
-          <div className="space-y-4">
+          <>
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -102,14 +101,14 @@ export function AuthCallbackPage() {
             >
               Back to sign in
             </Button>
-          </div>
+          </>
         ) : (
-          <div className="flex flex-col items-center gap-4 py-2">
+          <>
             <Spinner size="lg" />
             <p className="text-sm text-muted-foreground">Completing sign in…</p>
-          </div>
+          </>
         )}
-      </AuthLayout>
+      </div>
     </PageShell>
   )
 }

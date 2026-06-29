@@ -27,9 +27,27 @@ Backend loads only `identity/backend/.env` (not repo root or other services).
 - JWT **issuance**; redirect mode via `redirect_uri` + auth code exchange.
 - Database: `identity` (MySQL).
 
+## Platform shell — reference implementation (profile)
+
+Identity profile is the **canonical template** for all cross-service redirection. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
+
+| Role | Path |
+|------|------|
+| Inbound layout | `identity/frontend/src/app/AppLayout.tsx` |
+| Inbound home + bootstrap | `identity/frontend/src/features/profile/pages/ProfilePage.tsx` |
+| Bootstrap util | `identity/frontend/src/features/profile/utils/bootstrapProfileSession.ts` |
+| Return URL util | `identity/frontend/src/features/profile/utils/profileReturn.ts` |
+| Core nav | `identity/frontend/src/features/shell/config/navItems.ts` |
+| Outbound Email (consumer pattern) | `identity/frontend/src/app/AppLayout.tsx` `handleEmailClick`, `features/email/utils/redirectToEmail.ts` |
+
 ## Integration
 
-Redirect login: WebOnOne `/login` → Identity with `redirect_uri`; callback exchanges auth code for JWT. Reference: `webonone-v2/frontend/src/features/auth/utils/identityConfig.ts`, `identity/frontend` login embed mode. Cross-service rules: [microservice-architecture.mdc](microservice-architecture.mdc).
+- WebOnOne `/login` → Identity `redirect_uri`; `/callback` on WebOnOne for standalone OAuth only.
+- WebOnOne → Profile: `handleProfileClick` + `redirectToIdentityProfile.ts` (consumer).
+- Identity/ WebOnOne → Email: `handleEmailClick` + `redirectToEmail.ts` — **no** `/go/*` route.
+- Embed login: `identity/frontend` login embed mode; `webonone-v2/frontend/src/features/auth/utils/identityConfig.ts`.
+
+Cross-service rules: [microservice-architecture.mdc](microservice-architecture.mdc), [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
 
 ## Verification
 

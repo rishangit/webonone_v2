@@ -10,6 +10,10 @@ export function getIdentityApiBase(): string {
   return import.meta.env.VITE_IDENTITY_API_BASE_URL ?? 'http://localhost:4001/api/v1'
 }
 
+export function getIdentityProfileUrl(): string {
+  return `${getIdentityOrigin()}/profile`
+}
+
 export function getAuthCallbackUrl(): string {
   return `${window.location.origin}/callback`
 }

@@ -4,13 +4,31 @@ import { env } from '../config/env.js'
 
 let transporter: Transporter | null = null
 
+/** True when host is set and auth (if any) is complete. */
+export function isSmtpConfigured(): boolean {
+  if (!env.smtp.host.trim()) return false
+  if (env.smtp.user.trim() && !env.smtp.password) return false
+  return true
+}
+
+function smtpConfigIssue(): string | null {
+  if (!env.smtp.host.trim()) {
+    return 'SMTP_HOST not configured — outbound mail disabled'
+  }
+  if (env.smtp.user.trim() && !env.smtp.password) {
+    return 'SMTP_USER is set but SMTP_PASSWORD is missing — outbound mail disabled'
+  }
+  return null
+}
+
 function getTransporter(): Transporter {
   if (!transporter) {
+    const hasAuth = Boolean(env.smtp.user.trim())
     transporter = nodemailer.createTransport({
       host: env.smtp.host,
       port: env.smtp.port,
       secure: env.smtp.secure,
-      auth: env.smtp.user
+      auth: hasAuth
         ? {
             user: env.smtp.user,
             pass: env.smtp.password,
@@ -25,8 +43,9 @@ function getTransporter(): Transporter {
 }
 
 export async function verifySmtpConnection(): Promise<boolean> {
-  if (!env.smtp.host) {
-    console.warn('[mail] SMTP_HOST not configured — outbound mail disabled')
+  const issue = smtpConfigIssue()
+  if (issue) {
+    console.warn(`[mail] ${issue}`)
     return false
   }
   try {
@@ -48,8 +67,9 @@ export interface SendMailInput {
 }
 
 export async function sendMail(input: SendMailInput): Promise<{ messageId: string }> {
-  if (!env.smtp.host) {
-    throw new Error('SMTP is not configured')
+  const issue = smtpConfigIssue()
+  if (issue) {
+    throw new Error(issue)
   }
 
   const info = await getTransporter().sendMail({
@@ -71,7 +91,7 @@ export function getSmtpPublicConfig() {
     fromAddress: env.smtp.fromAddress,
     fromName: env.smtp.fromName,
     user: env.smtp.user ? redactSecret(env.smtp.user) : null,
-    configured: Boolean(env.smtp.host),
+    configured: isSmtpConfigured(),
   }
 }
 

@@ -74,6 +74,7 @@ function AppSidebar({
               to={item.to}
               label={item.label}
               icon={item.icon}
+              onClick={item.onClick}
               active={activePath === item.to || activePath?.startsWith(`${item.to}/`)}
               collapsed={collapsed}
               onNavigate={handleNavigate}
