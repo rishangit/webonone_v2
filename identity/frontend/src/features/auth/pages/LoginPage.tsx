@@ -4,6 +4,7 @@ import { AuthLayout, FeaturePage } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { LoginForm } from '../components/LoginForm'
+import { usePromptLoginSessionClear } from '../hooks/usePromptLoginSessionClear'
 import { useRedirectMode } from '../hooks/useRedirectMode'
 import { completeAuthRedirect } from '../utils/completeAuthRedirect'
 import { withRedirectQuery } from '../utils/redirectQuery'
@@ -13,9 +14,22 @@ export function LoginPage() {
   const { isRedirect, redirectUri, state } = useRedirectMode()
   const { accessToken, user, isLoading, error } = useAppSelector((s) => s.auth)
   const handledRef = useRef(false)
+  const promptLogin = searchParams.get('prompt') === 'login'
+  const freshLoginAllowedRef = useRef(!promptLogin)
+  const wasLoadingRef = useRef(false)
+
+  usePromptLoginSessionClear()
+
+  useEffect(() => {
+    if (wasLoadingRef.current && !isLoading && accessToken && user) {
+      freshLoginAllowedRef.current = true
+    }
+    wasLoadingRef.current = isLoading
+  }, [accessToken, isLoading, user])
 
   useEffect(() => {
     if (handledRef.current || isLoading || !accessToken || !user) return
+    if (!freshLoginAllowedRef.current) return
 
     if (isRedirect && redirectUri && state) {
       handledRef.current = true
@@ -72,7 +86,7 @@ export function LoginPage() {
         </div>
         <LoginForm />
       </div>
-      {isRedirect && accessToken && user ? (
+      {isRedirect && accessToken && user && freshLoginAllowedRef.current ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Signed in as {user.displayName}
         </p>

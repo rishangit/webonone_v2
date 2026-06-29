@@ -10,7 +10,10 @@ export function buildIdentityLoginUrl(returnPath = '/'): string {
     redirectUri: getAuthCallbackUrl(),
     returnPath,
     stateStorageKeyPrefix: STATE_STORAGE_PREFIX,
-    extraSearchParams: relayThemeQueryParams(new URLSearchParams(window.location.search)),
+    extraSearchParams: {
+      ...relayThemeQueryParams(new URLSearchParams(window.location.search)),
+      prompt: 'login',
+    },
   })
 }
 

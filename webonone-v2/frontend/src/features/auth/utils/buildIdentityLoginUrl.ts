@@ -27,7 +27,10 @@ export function buildIdentityLoginUrl(returnPath = '/'): string {
     redirectUri: getAuthCallbackUrl(),
     returnPath,
     stateStorageKeyPrefix: STATE_STORAGE_PREFIX,
-    extraSearchParams: serializeThemeQueryParams(payload),
+    extraSearchParams: {
+      ...serializeThemeQueryParams(payload),
+      prompt: 'login',
+    },
   })
 }
 
