@@ -30,7 +30,9 @@ export function AppLayout() {
     [returnUrl, searchParams],
   )
   const brand = returnUrl ? 'WebOnOne' : 'Identity'
-  const useShell = isIdentityShellRoute(location.pathname) && !isRedirectLogin
+  const isAuthenticated = Boolean(accessToken && user)
+  const useShell =
+    isAuthenticated && isIdentityShellRoute(location.pathname) && !isRedirectLogin
 
   const headerUser =
     accessToken && user

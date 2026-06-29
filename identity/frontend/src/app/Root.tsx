@@ -1,6 +1,7 @@
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { useRedirectThemeBootstrap } from '@webonone/theme'
 import { App } from '@/app/App'
+import { useAuthSessionBootstrap } from '@/features/auth/hooks/useAuthSessionBootstrap'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
 
@@ -9,10 +10,17 @@ function ThemeBootstrap({ children }: { children: React.ReactNode }) {
   return children
 }
 
+function AuthSessionBootstrap({ children }: { children: React.ReactNode }) {
+  useAuthSessionBootstrap()
+  return children
+}
+
 export function Root() {
   const app = (
     <ThemeBootstrap>
-      <App />
+      <AuthSessionBootstrap>
+        <App />
+      </AuthSessionBootstrap>
     </ThemeBootstrap>
   )
 

@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { UpdateProfileInput, UserProfile } from '../types/auth.types'
+import { loadStoredAuthSession, persistAuthSession } from '../utils/authStorage'
 
 interface AuthState {
   user: UserProfile | null
@@ -16,10 +17,24 @@ interface AuthState {
   profileSaveSuccess: boolean
 }
 
+const storedSession = loadStoredAuthSession()
+
+function syncPersistedSession(state: AuthState) {
+  if (state.accessToken && state.user) {
+    persistAuthSession({
+      accessToken: state.accessToken,
+      refreshToken: state.refreshToken,
+      user: state.user,
+    })
+  } else {
+    persistAuthSession(null)
+  }
+}
+
 const initialState: AuthState = {
-  user: null,
-  accessToken: null,
-  refreshToken: null,
+  user: storedSession?.user ?? null,
+  accessToken: storedSession?.accessToken ?? null,
+  refreshToken: storedSession?.refreshToken ?? null,
   isLoading: false,
   error: null,
   forgotPasswordResetToken: null,
@@ -51,6 +66,7 @@ export const authSlice = createSlice({
       state.accessToken = action.payload.accessToken
       state.refreshToken = action.payload.refreshToken ?? null
       state.user = action.payload.user
+      syncPersistedSession(state)
     },
     loginFailed(state, action: PayloadAction<string>) {
       state.isLoading = false
@@ -111,6 +127,7 @@ export const authSlice = createSlice({
     profileFetchSucceeded(state, action: PayloadAction<UserProfile>) {
       state.isProfileLoading = false
       state.user = action.payload
+      syncPersistedSession(state)
     },
     profileFetchFailed(state, action: PayloadAction<string>) {
       state.isProfileLoading = false
@@ -128,6 +145,7 @@ export const authSlice = createSlice({
       state.isProfileSaving = false
       state.user = action.payload
       state.profileSaveSuccess = true
+      syncPersistedSession(state)
     },
     profileUpdateFailed(state, action: PayloadAction<string>) {
       state.isProfileSaving = false
@@ -146,6 +164,7 @@ export const authSlice = createSlice({
       state.error = null
       state.profileError = null
       state.profileSaveSuccess = false
+      syncPersistedSession(state)
     },
   },
 })
