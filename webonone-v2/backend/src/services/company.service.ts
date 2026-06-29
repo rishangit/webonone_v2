@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
 import type { RegisterCompanyBody, UpdateCompanyStatusBody } from '../schemas/companySchemas.js'
 import * as repo from '../repositories/company.repository.js'
+import { sendTransactionalEmail, syncUserRole } from './emailClient.service.js'
 
 export type CompanyWithMembership = {
   company: {
@@ -113,7 +114,49 @@ export async function registerCompany(
     throw new Error('Failed to create company')
   }
 
+  sendCompanyEmail('company_registered', company)
+  syncCompanyMemberRole(userId, 'member', company)
+
   return toCompanyWithMembership(company, membership)
+}
+
+function sendCompanyEmail(
+  templateSlug: 'company_registered' | 'company_approved' | 'company_rejected',
+  company: repo.CompanyRow,
+  extraPayload: Record<string, string> = {},
+): void {
+  const toEmail = company.contact_email
+  if (!toEmail) return
+
+  void sendTransactionalEmail({
+    templateSlug,
+    toEmail,
+    payload: {
+      companyName: company.name,
+      userName: toEmail,
+      ...extraPayload,
+    },
+    companyId: company.id,
+    requestedByService: 'webonone',
+  }).catch((err) => {
+    console.error(`[company] failed to send ${templateSlug} email:`, err)
+  })
+}
+
+function syncCompanyMemberRole(
+  userId: string,
+  role: 'member' | 'company_admin',
+  company: repo.CompanyRow,
+): void {
+  void syncUserRole({
+    userId,
+    role,
+    companyId: company.id,
+    email: company.contact_email ?? undefined,
+    displayName: company.name,
+  }).catch((err) => {
+    console.error('[company] failed to sync user role to email service:', err)
+  })
 }
 
 export async function getSuperAdminProfile(email: string) {
@@ -172,6 +215,14 @@ export async function updateCompanyStatus(
   const membership = await repo.findMembershipByUserId(company.created_by_user_id)
   if (!membership) {
     throw new Error('Membership not found after status update')
+  }
+
+  if (input.status === 'approved') {
+    sendCompanyEmail('company_approved', company)
+    syncCompanyMemberRole(company.created_by_user_id, 'company_admin', company)
+  } else if (input.status === 'rejected') {
+    sendCompanyEmail('company_rejected', company)
+    syncCompanyMemberRole(company.created_by_user_id, 'member', company)
   }
 
   return toCompanyWithMembership(company, membership)

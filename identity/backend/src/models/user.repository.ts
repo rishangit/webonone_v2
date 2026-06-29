@@ -282,10 +282,48 @@ export async function createPasswordResetToken(input: {
   })
 }
 
+export async function invalidateUnusedPasswordResetTokens(userId: string): Promise<void> {
+  await db('password_reset_tokens').where({ user_id: userId }).whereNull('used_at').del()
+}
+
 export async function findPasswordResetTokenByHash(tokenHash: string) {
   return db('password_reset_tokens').where({ token_hash: tokenHash }).whereNull('used_at').first()
 }
 
 export async function markPasswordResetTokenUsed(id: string): Promise<void> {
   await db('password_reset_tokens').where({ id }).update({ used_at: new Date() })
+}
+
+export async function createEmailVerificationToken(input: {
+  id: string
+  userId: string
+  tokenHash: string
+  expiresAt: Date
+}): Promise<void> {
+  await db('email_verification_tokens').insert({
+    id: input.id,
+    user_id: input.userId,
+    token_hash: input.tokenHash,
+    expires_at: input.expiresAt,
+    created_at: new Date(),
+  })
+}
+
+export async function invalidateUnusedEmailVerificationTokens(userId: string): Promise<void> {
+  await db('email_verification_tokens').where({ user_id: userId }).whereNull('used_at').del()
+}
+
+export async function findEmailVerificationTokenByHash(tokenHash: string) {
+  return db('email_verification_tokens').where({ token_hash: tokenHash }).whereNull('used_at').first()
+}
+
+export async function markEmailVerificationTokenUsed(id: string): Promise<void> {
+  await db('email_verification_tokens').where({ id }).update({ used_at: new Date() })
+}
+
+export async function markUserEmailVerified(userId: string): Promise<void> {
+  await db('users').where({ id: userId }).update({
+    is_email_verified: true,
+    updated_at: new Date(),
+  })
 }

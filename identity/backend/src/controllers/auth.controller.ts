@@ -12,7 +12,9 @@ import {
   refreshAccessToken,
   registerUser,
   requestPasswordReset,
+  resendEmailVerification,
   resetPassword,
+  verifyEmail,
 } from '../services/auth.service.js'
 import { loginWithGoogle } from '../services/googleAuth.service.js'
 
@@ -59,6 +61,14 @@ const forgotPasswordSchema = z.object({
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
   newPassword: z.string().min(8),
+})
+
+const resendVerificationSchema = z.object({
+  email: z.string().email(),
+})
+
+const verifyEmailSchema = z.object({
+  token: z.string().min(1),
 })
 
 const refreshSchema = z.object({
@@ -126,6 +136,28 @@ export async function resetPasswordHandler(req: AuthenticatedRequest, res: Respo
     const body = resetPasswordSchema.parse(req.body)
     await resetPassword(body.token, body.newPassword)
     res.json({ message: 'Password updated successfully' })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function resendVerification(req: AuthenticatedRequest, res: Response) {
+  try {
+    const body = resendVerificationSchema.parse(req.body)
+    await resendEmailVerification(body.email)
+    res.json({ message: 'Verification email sent' })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function verifyEmailHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const body = verifyEmailSchema.parse(req.body)
+    await verifyEmail(body.token)
+    res.json({ message: 'Email verified successfully' })
   } catch (err) {
     if (handleAuthError(err, res)) return
     throw err

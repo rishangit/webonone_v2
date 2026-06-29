@@ -1,4 +1,4 @@
-import { Building2, Home, KeyRound, Palette, Settings, User, UserPlus } from 'lucide-react'
+import { Building2, Home, KeyRound, Mail, Palette, Settings, User, UserPlus } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   getCoreOriginFromReturnUrl,
@@ -14,6 +14,7 @@ export const IDENTITY_SHELL_ROUTES = ['/login', '/profile', '/register', '/reset
 const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
+  '/email': Mail,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
@@ -66,23 +67,33 @@ export function buildStandaloneNav(): NavConfigItem[] {
   return standaloneNav
 }
 
+const DEFAULT_EMAIL_ORIGIN = 'http://localhost:3004'
+
+function getCoreExternalOrigins(): Partial<Record<'email', string>> {
+  return {
+    email: import.meta.env.VITE_EMAIL_ORIGIN ?? DEFAULT_EMAIL_ORIGIN,
+  }
+}
+
 export function buildCoreNav(
   returnUrl: string,
   variant: PlatformNavVariant = 'main',
+  externalOrigins: Partial<Record<'email', string>> = getCoreExternalOrigins(),
 ): NavConfigItem[] {
   const origin = getCoreOriginFromReturnUrl(returnUrl)
   if (!origin) {
     return standaloneNav
   }
 
-  return toNavConfigItems(resolvePlatformNavUrls(origin, variant))
+  return toNavConfigItems(resolvePlatformNavUrls(origin, variant, externalOrigins))
 }
 
 export function buildCoreNavFromQuery(
   returnUrl: string,
   coreNavQuery: string | null,
+  externalOrigins: Partial<Record<'email', string>> = getCoreExternalOrigins(),
 ): NavConfigItem[] {
-  return buildCoreNav(returnUrl, parsePlatformNavVariant(coreNavQuery))
+  return buildCoreNav(returnUrl, parsePlatformNavVariant(coreNavQuery), externalOrigins)
 }
 
 export function isIdentityShellRoute(pathname: string): boolean {

@@ -33,6 +33,10 @@ const envSchema = z.object({
   REFRESH_TOKEN_EXPIRY_DAYS: z.coerce.number().default(7),
   GOOGLE_CLIENT_ID: z.string().optional(),
   ALLOWED_REDIRECT_URIS: z.string().default('http://localhost:*'),
+  EMAIL_API_BASE_URL: z.string().optional(),
+  EMAIL_SERVICE_API_KEY: z.string().optional(),
+  IDENTITY_FRONTEND_ORIGIN: z.string().default('http://localhost:3001'),
+  EMAIL_VERIFICATION_EXPIRY_HOURS: z.coerce.number().default(24),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -66,4 +70,8 @@ export const env = {
   allowedRedirectUris: parsed.ALLOWED_REDIRECT_URIS.split(',')
     .map((uri) => uri.trim())
     .filter(Boolean),
+  emailApiBaseUrl: parsed.EMAIL_API_BASE_URL ?? '',
+  emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
+  identityFrontendOrigin: parsed.IDENTITY_FRONTEND_ORIGIN.replace(/\/$/, ''),
+  emailVerificationExpiryHours: parsed.EMAIL_VERIFICATION_EXPIRY_HOURS,
 }

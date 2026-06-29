@@ -1,0 +1,13 @@
+{
+  "name": "email-root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n fe,be -c blue,green \"npm run dev -w @webonone/email-frontend\" \"npm run dev -w @webonone/email-backend\"",
+    "build": "npm run build:theme --prefix .. && npm run build:ui-kit --prefix .. && npm run build -w @webonone/email-frontend && npm run build -w @webonone/email-backend",
+    "type-check": "npm run type-check -w @webonone/email-frontend && npm run type-check -w @webonone/email-backend",
+    "migrate": "npm run migrate -w @webonone/email-backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,9 +1,12 @@
 export type PlatformNavVariant = 'main' | 'superAdmin'
 
+export type ExternalServiceId = 'email'
+
 export type CoreNavLeaf = {
   kind: 'item'
   path: string
   label: string
+  externalService?: ExternalServiceId
 }
 
 export type CoreNavGroup = {
@@ -30,6 +33,7 @@ export type ResolvedCoreNavDef = ResolvedCoreNavLeaf | ResolvedCoreNavGroup
 
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
+  { kind: 'item', path: '/email', label: 'Email', externalService: 'email' },
   {
     kind: 'group',
     label: 'Settings',
@@ -43,6 +47,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
 export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
   { kind: 'item', path: '/companies', label: 'Companies' },
+  { kind: 'item', path: '/email', label: 'Email', externalService: 'email' },
   {
     kind: 'group',
     label: 'Settings',
@@ -87,15 +92,30 @@ function resolvePath(origin: string, path: string): string {
   return `${origin}${path}`
 }
 
+function resolveLeafHref(
+  origin: string,
+  item: CoreNavLeaf,
+  externalOrigins?: Partial<Record<ExternalServiceId, string>>,
+): string {
+  if (item.externalService) {
+    const serviceOrigin = externalOrigins?.[item.externalService]
+    if (serviceOrigin) {
+      return `${serviceOrigin.replace(/\/$/, '')}/`
+    }
+  }
+  return resolvePath(origin, item.path)
+}
+
 export function resolvePlatformNavUrls(
   origin: string,
   variant: PlatformNavVariant,
+  externalOrigins?: Partial<Record<ExternalServiceId, string>>,
 ): ResolvedCoreNavDef[] {
   return getPlatformNavDefs(variant).map((item) => {
     if (item.kind === 'item') {
       return {
         kind: 'item',
-        href: resolvePath(origin, item.path),
+        href: resolveLeafHref(origin, item, externalOrigins),
         label: item.label,
       }
     }
@@ -105,7 +125,7 @@ export function resolvePlatformNavUrls(
       label: item.label,
       children: item.children.map((child) => ({
         kind: 'item' as const,
-        href: resolvePath(origin, child.path),
+        href: resolveLeafHref(origin, child, externalOrigins),
         label: child.label,
       })),
     }

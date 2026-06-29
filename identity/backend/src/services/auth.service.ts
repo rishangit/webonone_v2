@@ -4,11 +4,17 @@ import {
   createPasswordResetToken,
   createRefreshToken,
   createUser,
+  createEmailVerificationToken,
   findPasswordResetTokenByHash,
+  findEmailVerificationTokenByHash,
   findRefreshTokenByHash,
   findUserByEmail,
   findUserById,
+  invalidateUnusedEmailVerificationTokens,
+  invalidateUnusedPasswordResetTokens,
+  markEmailVerificationTokenUsed,
   markPasswordResetTokenUsed,
+  markUserEmailVerified,
   revokeRefreshToken,
   toUserProfile,
   updateUserPassword,
@@ -31,6 +37,7 @@ import {
 } from './token.service.js'
 import { matchesRedirectUri } from '@webonone/platform-nav'
 import { env } from '../config/env.js'
+import { sendTransactionalEmail } from './emailClient.service.js'
 
 export class AuthError extends Error {
   constructor(
@@ -60,6 +67,32 @@ async function issueAuthTokens(user: UserRow) {
   return buildAuthResponse(user, accessToken, expiresIn, refreshToken)
 }
 
+async function issueEmailVerification(user: UserRow): Promise<void> {
+  await invalidateUnusedEmailVerificationTokens(user.id)
+
+  const verificationToken = generatePasswordResetToken()
+  const tokenHash = hashToken(verificationToken)
+  const expiresAt = new Date()
+  expiresAt.setHours(expiresAt.getHours() + env.emailVerificationExpiryHours)
+
+  await createEmailVerificationToken({
+    id: nanoid(),
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  })
+
+  await sendTransactionalEmail({
+    templateSlug: 'email_verification',
+    toEmail: user.email,
+    payload: {
+      userName: user.display_name,
+      actionUrl: `${env.identityFrontendOrigin}/verify-email?token=${verificationToken}`,
+    },
+    requestedByService: 'identity',
+  })
+}
+
 export async function registerUser(input: {
   email: string
   password: string
@@ -80,6 +113,10 @@ export async function registerUser(input: {
     displayName,
     firstName: input.firstName,
     lastName: input.lastName,
+  })
+
+  void issueEmailVerification(user).catch((err) => {
+    console.error('[auth] failed to send verification email:', err)
   })
 
   return toUserProfile(user)
@@ -129,6 +166,8 @@ export async function requestPasswordReset(email: string): Promise<{ resetToken?
     return {}
   }
 
+  await invalidateUnusedPasswordResetTokens(user.id)
+
   const resetToken = generatePasswordResetToken()
   const tokenHash = hashToken(resetToken)
   const expiresAt = new Date()
@@ -141,10 +180,45 @@ export async function requestPasswordReset(email: string): Promise<{ resetToken?
     expiresAt,
   })
 
+  void sendTransactionalEmail({
+    templateSlug: 'password_reset',
+    toEmail: user.email,
+    payload: {
+      userName: user.display_name,
+      actionUrl: `${env.identityFrontendOrigin}/reset-password?token=${resetToken}`,
+    },
+    requestedByService: 'identity',
+  }).catch((err) => {
+    console.error('[auth] failed to send password reset email:', err)
+  })
+
   if (process.env.NODE_ENV !== 'production') {
     return { resetToken }
   }
   return {}
+}
+
+export async function resendEmailVerification(email: string): Promise<void> {
+  const user = await findUserByEmail(email)
+  if (!user) {
+    throw new AuthError('Email not found', 404, 'EMAIL_NOT_FOUND')
+  }
+  if (user.is_email_verified) {
+    throw new AuthError('Email already verified', 400, 'ALREADY_VERIFIED')
+  }
+
+  await issueEmailVerification(user)
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  const tokenHash = hashToken(token)
+  const stored = await findEmailVerificationTokenByHash(tokenHash)
+  if (!stored || new Date(stored.expires_at) < new Date()) {
+    throw new AuthError('Invalid or expired verification token', 400, 'INVALID_VERIFICATION_TOKEN')
+  }
+
+  await markUserEmailVerified(stored.user_id)
+  await markEmailVerificationTokenUsed(stored.id)
 }
 
 export async function resetPassword(token: string, newPassword: string) {

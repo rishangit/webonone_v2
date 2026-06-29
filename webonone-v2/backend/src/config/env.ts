@@ -29,6 +29,8 @@ const envSchema = z.object({
   IIS_NODE_HOSTED: z.string().optional(),
   SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
   SUPER_ADMIN_DISPLAY_NAME: z.string().default('Super Admin'),
+  EMAIL_API_BASE_URL: z.string().optional(),
+  EMAIL_SERVICE_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -57,4 +59,6 @@ export const env = {
   jwtAudience: 'webonone-api',
   superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
   superAdminDisplayName: parsed.SUPER_ADMIN_DISPLAY_NAME,
+  emailApiBaseUrl: parsed.EMAIL_API_BASE_URL ?? '',
+  emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
 }

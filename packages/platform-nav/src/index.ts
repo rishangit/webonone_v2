@@ -29,6 +29,7 @@ export type {
   CoreNavDef,
   CoreNavGroup,
   CoreNavLeaf,
+  ExternalServiceId,
   PlatformNavVariant,
   ResolvedCoreNavDef,
   ResolvedCoreNavGroup,
