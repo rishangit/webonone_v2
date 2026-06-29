@@ -1,0 +1,143 @@
+---
+description: Implementation plan for spec 1.9.0 — Email microservice scaffold, sending engine, admin UI, Identity/WebOnOne integration
+alwaysApply: false
+globs: email/**, identity/backend/**, webonone-v2/**, packages/platform-nav/**, package.json
+---
+
+# Implementation plan — Spec 1.9.0
+
+## Summary
+
+Spec 1.9.0 adds a standalone **Email microservice** (`email/`) with SMTP queue delivery, template/branding management, role-gated admin UI, WebOnOne nav entry, and Identity/WebOnOne internal send integration. See [01-overview.md](./01-overview.md) through [05-platform-integration.md](./05-platform-integration.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.9.0` |
+| Ports | FE :3004, BE :4004 |
+| DB | `webonone_email` |
+| Package builds | `npm run build:ui-kit`, `npm run build:platform-nav`, `npm run build:theme` before email prod build |
+| JWT | Same `JWT_SECRET` in email, identity, webonone backends |
+
+---
+
+## Phase 1 — Email scaffold
+
+**Goal:** Service shell, auth, migrations base, nav, root wiring, WebOnOne link.
+
+**Exit criteria:** `npm run dev:email` starts; `/health` ok; role nav renders.
+
+| Task | Paths |
+|------|-------|
+| Root workspace | `package.json` |
+| Service root | `email/package.json` |
+| Backend scaffold | `email/backend/src/**` (mirror media) |
+| Frontend scaffold | `email/frontend/src/**` |
+| Base migration | `email/backend/migrations/*_email_base.ts` |
+| Nav + layout | `email/frontend/src/features/shell/config/navItems.ts`, `AppLayout.tsx` |
+| Auth callback | `email/frontend/src/features/auth/**` |
+| WebOnOne email config | `webonone-v2/frontend/src/features/email/utils/emailConfig.ts` |
+| Platform nav Email item | `packages/platform-nav/src/coreNav.ts` (if used) |
+
+**Verify:** `npm run type-check -w email-root`
+
+---
+
+## Phase 2 — Sending engine
+
+**Goal:** Templates, queue, SMTP sender, internal API.
+
+**Exit criteria:** `POST /api/v1/internal/send` queues and processes mail.
+
+| Task | Paths |
+|------|-------|
+| Template/queue migration | `email/backend/migrations/*_email_engine.ts` |
+| Mail + queue services | `email/backend/src/services/mail.service.ts`, `queue.service.ts`, `template.service.ts` |
+| Worker | `email/backend/src/workers/queueWorker.ts` |
+| Internal routes | `email/backend/src/routes/internal.routes.ts` |
+| Public template/history routes | `email/backend/src/routes/templates.routes.ts`, `history.routes.ts` |
+
+**Verify:** Manual curl to internal send; check queue/history tables
+
+---
+
+## Phase 3 — Management screens
+
+**Goal:** Admin UI pages per spec.
+
+**Exit criteria:** Templates CRUD + dashboard + history/queue visible in UI.
+
+| Task | Paths |
+|------|-------|
+| Dashboard | `email/frontend/src/features/dashboard/pages/DashboardPage.tsx` |
+| Templates | `email/frontend/src/features/templates/**` |
+| History / Queue | `email/frontend/src/features/history/**`, `queue/**` |
+| Send / Test | `email/frontend/src/features/send/**`, `test/**` |
+| Providers / Settings | `email/frontend/src/features/providers/**`, `settings/**` |
+| Router | `email/frontend/src/app/router.tsx` |
+
+**Verify:** `npm run type-check -w email-root`
+
+---
+
+## Phase 4 — Platform integration
+
+**Goal:** Identity reset/verify + WebOnOne company emails + role sync.
+
+**Exit criteria:** Release checklist in [05-platform-integration.md](./05-platform-integration.md).
+
+| Task | Paths |
+|------|-------|
+| Email client helper | `identity/backend/src/services/emailClient.service.ts`, `webonone-v2/backend/src/services/emailClient.service.ts` |
+| Identity auth hooks | `identity/backend/src/services/auth.service.ts` |
+| WebOnOne company hooks | `webonone-v2/backend/src/services/company.service.ts` |
+| Role sync route | `email/backend/src/routes/internal.routes.ts` |
+| Env examples | `identity/backend/.env.example`, `webonone-v2/backend/.env.example` |
+
+**Verify:** `npm run type-check -w identity-root`, `npm run type-check -w webonone-v2-root`
+
+---
+
+## Cross-service integration
+
+| Channel | Use |
+|---------|-----|
+| Identity redirect | Email FE login via auth code |
+| JWT | Email BE verifies locally |
+| Internal HTTP | Identity/WebOnOne BE → Email `POST /api/v1/internal/send` with `X-Email-Service-Key` |
+| WebOnOne nav | Redirect to `VITE_EMAIL_ORIGIN` |
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec No 1.9.0 | 86ey30c9y | All |
+| Subtask 1 — Email service repo scaffold | 86ey38567 | 1 |
+| Subtask 2 — Transactional email sending engine | 86ey38852 | 2 |
+| Subtask 3 — Email management screens | 86ey3887z | 3 |
+| Subtask 4 — Platform integrations and release readiness | 86ey388eg | 4 |
+
+---
+
+## Risks and open items
+
+- Dev SMTP may be unavailable — queue should record failures without crashing service.
+- Role sync: lazy upsert on first JWT login acceptable if WebOnOne sync deferred.
+- Template editor is textarea-only for 1.9.0 (no rich HTML editor).
+
+---
+
+## Final verification
+
+```bash
+npm run migrate -w email-root
+npm run type-check -w email-root
+npm run type-check -w identity-root
+npm run type-check -w webonone-v2-root
+npm run build:platform-nav
+npm run build:ui-kit
+npm run build -w email-root
+```
