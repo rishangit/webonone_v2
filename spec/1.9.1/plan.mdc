@@ -1,0 +1,73 @@
+---
+description: Implementation plan for spec 1.9.1 — OTP password reset via Email, role-scoped History/Templates
+alwaysApply: false
+globs: identity/**, email/**
+---
+
+# Implementation plan — Spec 1.9.1
+
+## Summary
+
+Spec 1.9.1 replaces link-based password reset with a **4-digit OTP** (1-minute expiry) sent by the Email microservice, and clarifies **History** / **Templates** admin scoping for super admin vs company admin. See [01-overview.md](./01-overview.md) through [03-email-history-templates.md](./03-email-history-templates.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.9.1` |
+| Depends on | Merged **1.9.0** Email service + Identity Email integration |
+| Ports | Identity FE :3001 BE :4001; Email FE :3004 BE :4004 |
+
+---
+
+## Phase 1 — Email template and scope
+
+**Goal:** `password_reset_otp` seed; API scope for History/Templates.
+
+| Task | Paths |
+|------|-------|
+| Seed migration | `email/backend/migrations/*_password_reset_otp_template.ts` |
+| History controller scope | `email/backend/src/**/history*` |
+| Templates controller scope | `email/backend/src/**/template*` |
+| Editor placeholder help | `email/frontend/src/features/templates/**` |
+
+**Exit:** Super admin edits OTP template; scoped history API verified.
+
+---
+
+## Phase 2 — Identity OTP backend
+
+**Goal:** OTP lifecycle + Email trigger.
+
+| Task | Paths |
+|------|-------|
+| OTP migration | `identity/backend/migrations/` |
+| Auth service | `identity/backend/src/services/auth.service.ts` (or dedicated otp service) |
+| Routes/controllers | `identity/backend/src/controllers/auth.controller.ts`, routes |
+| Email client | Reuse existing internal send client from 1.9.0 |
+
+**Exit:** Three APIs work via curl/Postman.
+
+---
+
+## Phase 3 — Identity OTP frontend
+
+**Goal:** Three-step UI.
+
+| Task | Paths |
+|------|-------|
+| Verify OTP page | `identity/frontend/src/features/auth/pages/VerifyResetOtpPage.tsx` |
+| Forms | `ForgotPasswordForm`, `ResetPasswordForm` |
+| Router | `identity/frontend/src/app/App.tsx` |
+| API client | `identity/frontend/src/features/auth/services/authApi.ts` |
+
+**Exit:** Full browser reset flow.
+
+---
+
+## Phase 4 — Verification
+
+- [ ] E2E OTP reset
+- [ ] Role-scoped Email admin
+- [ ] `npm run type-check -w identity-root`
+- [ ] `npm run type-check -w email-root`
