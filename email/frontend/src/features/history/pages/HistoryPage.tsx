@@ -12,17 +12,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { emailApi } from '@/shared/services/emailApi'
 import type { HistoryItem } from '@/shared/types/email.types'
 import { HistoryList } from '../components/HistoryList'
 
 export function HistoryPage() {
   const { accessToken } = useAppSelector((s) => s.auth)
-  const { isBootstrapping, bootstrapError, hasCode } = usePlatformSessionBootstrap('/history')
   const userRole = useAppSelector((s) => s.auth.user?.role)
   const [items, setItems] = useState<HistoryItem[]>([])
   const [page, setPage] = useState(1)
@@ -61,30 +58,14 @@ export function HistoryPage() {
   }
 
   useEffect(() => {
-    if (!accessToken || hasCode) {
+    if (!accessToken) {
       return
     }
     void loadHistory(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change
-  }, [status, accessToken, hasCode])
+  }, [status, accessToken])
 
-  if (isBootstrapping) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-12">
-        <Spinner size="lg" />
-      </div>
-    )
-  }
-
-  if (bootstrapError) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>{bootstrapError}</AlertDescription>
-      </Alert>
-    )
-  }
-
-  if (!accessToken && !hasCode) {
+  if (!accessToken) {
     return <Navigate to="/login" replace />
   }
 

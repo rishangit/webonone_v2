@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
+import { syncEmailRoleBeforeHandoff } from '@/features/email/utils/syncEmailRole'
 import { isEmailNavSentinel, mainNav, superAdminNav } from '@/features/shell/config/navItems'
 import { useSuperAdminStatus } from '@/features/settings/basic/hooks/useSuperAdminStatus'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
@@ -60,6 +61,7 @@ export function AppLayout() {
           )
         : undefined
       try {
+        await syncEmailRoleBeforeHandoff()
         await redirect(
           getEmailRedirectOptions({
             accessToken,

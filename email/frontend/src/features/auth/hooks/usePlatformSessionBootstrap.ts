@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant } from '@webonone/platform-nav'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
@@ -7,49 +7,54 @@ import {
   bootstrapPlatformSession,
   getEmailRedirectUri,
 } from '@/features/auth/utils/bootstrapPlatformSession'
+import { fetchEmailRole } from '@/features/auth/utils/fetchEmailRole'
 import {
   buildPlatformSearchWithoutCode,
   hasPlatformHandoff,
   parsePlatformReturnUrl,
 } from '@/features/auth/utils/platformReturn'
-
-const exchangedCodes = new Set<string>()
+import { syncPlatformEmailRole } from '@/features/auth/utils/syncPlatformEmailRole'
 
 type PlatformBootstrapState = {
   isBootstrapping: boolean
   bootstrapError: string | null
-  hasCode: boolean
 }
 
-export function usePlatformSessionBootstrap(homePathname: string): PlatformBootstrapState {
+/** Survives React StrictMode remounts — one exchange per auth code. */
+const exchangedPlatformCodes = new Set<string>()
+
+export function usePlatformSessionBootstrap(): PlatformBootstrapState {
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
   const [isBootstrapping, setIsBootstrapping] = useState(false)
-  const bootstrapRef = useRef(false)
 
   const code = searchParams.get('code')
+  const isHandoff = hasPlatformHandoff(searchParams)
 
   useEffect(() => {
-    if (!code || !hasPlatformHandoff(searchParams) || bootstrapRef.current) {
-      return
-    }
-    if (exchangedCodes.has(code)) {
+    if (!code || !isHandoff || exchangedPlatformCodes.has(code)) {
       return
     }
 
-    bootstrapRef.current = true
-    exchangedCodes.add(code)
+    exchangedPlatformCodes.add(code)
     setIsBootstrapping(true)
     setBootstrapError(null)
 
     const validatedReturnUrl = parsePlatformReturnUrl(searchParams)
     const coreNavVariant = parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM))
-    const redirectUri = getEmailRedirectUri(homePathname)
+    const redirectUri = getEmailRedirectUri(location.pathname)
 
     bootstrapPlatformSession(code, redirectUri)
-      .then((result) => {
+      .then(async (result) => {
+        if (validatedReturnUrl) {
+          await syncPlatformEmailRole(result.accessToken, validatedReturnUrl)
+        }
+
+        const role = await fetchEmailRole(result.accessToken)
+
         if (validatedReturnUrl) {
           dispatch(
             authActions.setPlatformContext({
@@ -67,29 +72,27 @@ export function usePlatformSessionBootstrap(homePathname: string): PlatformBoots
               email: result.user.email,
               displayName: result.user.displayName,
               avatarUrl: result.user.avatarUrl ?? null,
-              role: 'member',
+              role,
             },
           }),
         )
 
         navigate(
-          { pathname: homePathname, search: buildPlatformSearchWithoutCode(searchParams) },
+          { pathname: location.pathname, search: buildPlatformSearchWithoutCode(searchParams) },
           { replace: true },
         )
       })
       .catch((err: Error) => {
-        bootstrapRef.current = false
-        exchangedCodes.delete(code)
+        exchangedPlatformCodes.delete(code)
         setBootstrapError(err.message)
       })
       .finally(() => {
         setIsBootstrapping(false)
       })
-  }, [code, dispatch, homePathname, navigate, searchParams])
+  }, [code, dispatch, isHandoff, location.pathname, navigate, searchParams])
 
   return {
-    isBootstrapping,
-    bootstrapError,
-    hasCode: Boolean(code),
+    isBootstrapping: isHandoff && isBootstrapping,
+    bootstrapError: isHandoff ? bootstrapError : null,
   }
 }

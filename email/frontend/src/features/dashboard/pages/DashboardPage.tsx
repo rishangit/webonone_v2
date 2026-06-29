@@ -16,7 +16,6 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
-import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { emailApi } from '@/shared/services/emailApi'
 import { apiClient } from '@/shared/services/apiClient'
@@ -42,7 +41,6 @@ function statusLabel(status: DashboardStats['recentActivity'][number]['status'])
 export function DashboardPage() {
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
-  const { isBootstrapping, bootstrapError, hasCode } = usePlatformSessionBootstrap('/')
 
   const role: EmailRole = user?.role ?? 'member'
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -50,7 +48,7 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!accessToken || hasCode) {
+    if (!accessToken) {
       return
     }
 
@@ -73,25 +71,9 @@ export function DashboardPage() {
     }
 
     void load()
-  }, [accessToken, hasCode, dispatch])
+  }, [accessToken, dispatch])
 
-  if (isBootstrapping) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-12">
-        <Spinner size="lg" />
-      </div>
-    )
-  }
-
-  if (bootstrapError) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>{bootstrapError}</AlertDescription>
-      </Alert>
-    )
-  }
-
-  if (!accessToken && !hasCode) {
+  if (!accessToken) {
     return <Navigate to="/login" replace />
   }
 

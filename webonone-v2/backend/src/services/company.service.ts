@@ -235,3 +235,44 @@ export async function seedSuperAdminFromEnv(): Promise<void> {
     displayName: env.superAdminDisplayName,
   })
 }
+
+export type SyncedEmailRole = {
+  role: 'super_admin' | 'company_admin' | 'member'
+  companyId: string | null
+}
+
+export async function syncEmailRoleForUser(
+  userId: string,
+  email: string,
+): Promise<SyncedEmailRole> {
+  const superAdmin = await getSuperAdminProfile(email)
+  if (superAdmin) {
+    await syncUserRole({
+      userId,
+      role: 'super_admin',
+      email,
+      displayName: superAdmin.displayName,
+    })
+    return { role: 'super_admin', companyId: null }
+  }
+
+  const company = await getMyCompany(userId)
+  if (company) {
+    const emailRole = company.membership.role === 'company_admin' ? 'company_admin' : 'member'
+    await syncUserRole({
+      userId,
+      role: emailRole,
+      companyId: company.company.id,
+      email,
+      displayName: company.company.name,
+    })
+    return { role: emailRole, companyId: company.company.id }
+  }
+
+  await syncUserRole({
+    userId,
+    role: 'member',
+    email,
+  })
+  return { role: 'member', companyId: null }
+}

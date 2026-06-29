@@ -3,6 +3,7 @@ import { cn } from '../lib/utils'
 import type { NavConfigItem } from '../types/nav'
 import { NavGroup } from '../components/nav/NavGroup'
 import { NavItem } from '../components/nav/NavItem'
+import { isNavPathActive } from '../components/nav/navTargetPath'
 import { SidebarCollapseButton } from '../components/nav/SidebarCollapseButton'
 
 interface AppSidebarProps {
@@ -75,7 +76,7 @@ function AppSidebar({
               label={item.label}
               icon={item.icon}
               onClick={item.onClick}
-              active={activePath === item.to || activePath?.startsWith(`${item.to}/`)}
+              active={isNavPathActive(activePath, item.to)}
               collapsed={collapsed}
               onNavigate={handleNavigate}
             />

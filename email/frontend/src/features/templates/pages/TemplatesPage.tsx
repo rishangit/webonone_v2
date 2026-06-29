@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, FeaturePage, Spinner } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
 import { TemplatesList } from '../components/TemplatesList'
 
 export function TemplatesPage() {
   const { accessToken } = useAppSelector((s) => s.auth)
-  const { isBootstrapping, bootstrapError, hasCode } = usePlatformSessionBootstrap('/templates')
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,29 +28,13 @@ export function TemplatesPage() {
   }
 
   useEffect(() => {
-    if (!accessToken || hasCode) {
+    if (!accessToken) {
       return
     }
     void loadTemplates()
-  }, [accessToken, hasCode])
+  }, [accessToken])
 
-  if (isBootstrapping) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-12">
-        <Spinner size="lg" />
-      </div>
-    )
-  }
-
-  if (bootstrapError) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>{bootstrapError}</AlertDescription>
-      </Alert>
-    )
-  }
-
-  if (!accessToken && !hasCode) {
+  if (!accessToken) {
     return <Navigate to="/login" replace />
   }
 

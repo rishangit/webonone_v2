@@ -4,26 +4,32 @@ import {
   type PlatformNavVariant,
 } from '@webonone/platform-nav'
 import type { EmailRole } from '@/features/auth/types/auth.types'
+import {
+  appendPlatformQueryToLocalNav,
+  buildPlatformSearchForNav,
+} from '@/features/auth/utils/platformNavLinks'
 import { buildCoreNavFromQuery } from '@/features/shell/config/coreNavItems'
-import { emailNavItems } from '@/features/shell/config/navItems'
+import { buildStandaloneNav } from '@/features/shell/config/navItems'
 
 export function buildAppNav(
   role: EmailRole,
-  platform: { returnUrl: string | null; coreNavVariant: PlatformNavVariant | null } | null,
+  platform: {
+    returnUrl: string | null
+    coreNavVariant: PlatformNavVariant | null
+    searchParams?: URLSearchParams
+  } | null,
 ): NavConfigItem[] {
   if (platform?.returnUrl) {
-    return buildCoreNavFromQuery(
+    const coreNav = buildCoreNavFromQuery(
       platform.returnUrl,
       platform.coreNavVariant ? toCoreNavQueryValue(platform.coreNavVariant) : null,
     )
+    const search = buildPlatformSearchForNav(platform.searchParams ?? new URLSearchParams(), {
+      returnUrl: platform.returnUrl,
+      coreNavVariant: platform.coreNavVariant,
+    })
+    return appendPlatformQueryToLocalNav(coreNav, search ? `?${search}` : '')
   }
 
-  return emailNavItems
-    .filter((item) => item.roles.includes(role))
-    .map((item) => ({
-      type: 'item' as const,
-      to: item.to,
-      label: item.label,
-      icon: item.icon,
-    }))
+  return buildStandaloneNav(role)
 }

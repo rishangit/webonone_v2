@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '../DropdownMenu'
 import { NavItem } from './NavItem'
+import { isNavPathActive } from './navTargetPath'
 
 interface NavGroupProps {
   label: string
@@ -22,7 +23,7 @@ interface NavGroupProps {
 
 function isChildActive(activePath: string | undefined, children: NavItemConfig[]): boolean {
   if (!activePath) return false
-  return children.some((child) => activePath === child.to || activePath.startsWith(`${child.to}/`))
+  return children.some((child) => isNavPathActive(activePath, child.to))
 }
 
 function NavGroup({
@@ -68,8 +69,7 @@ function NavGroup({
                 }}
                 className={cn(
                   'flex cursor-pointer items-center gap-2',
-                  (activePath === child.to || activePath?.startsWith(`${child.to}/`)) &&
-                    'text-primary',
+                  isNavPathActive(activePath, child.to) && 'text-primary',
                 )}
               >
                 <child.icon className="h-4 w-4" aria-hidden />
@@ -110,7 +110,7 @@ function NavGroup({
               icon={child.icon}
               onClick={child.onClick}
               nested
-              active={activePath === child.to || activePath?.startsWith(`${child.to}/`)}
+              active={isNavPathActive(activePath, child.to)}
               onNavigate={onNavigate}
             />
           ))}
