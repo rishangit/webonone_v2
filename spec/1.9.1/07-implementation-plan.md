@@ -76,6 +76,23 @@ git checkout -b spec/1.9.1
 
 ---
 
+## Phase 5 — Email platform nav sub-menus
+
+**Goal:** Email group in core left nav with **Email History** and **Templates** sub-items; no dashboard redirect.
+
+| Task | Detail |
+|------|--------|
+| `platform-nav` | Email `group` with `externalPath` `/history` and `/templates` |
+| WebOnOne + Identity | `onClick` per sub-item → auth-code redirect to target path |
+| Email FE | Rewrite core nav email URLs to local routes; bootstrap on `/history` and `/templates` |
+| Remove | Single **Email** item that opened dashboard `/` |
+
+**Exit criteria:** Super admin and company admin open History or Templates from core nav without visiting dashboard.
+
+Spec: [03-email-history-templates.md](./03-email-history-templates.md) — subtask **86ey3j67h**
+
+---
+
 ## Phase 4 — Integration verification
 
 | Task | Detail |
@@ -93,8 +110,8 @@ git checkout -b spec/1.9.1
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
-| Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | All |
-| (no subtasks) | — | Phases 1–4 map to parent scope |
+| Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | Phases 1–4 |
+| left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
 
 ---
 
@@ -108,6 +125,7 @@ git checkout -b spec/1.9.1
 - [ ] `password_reset_otp` template seeded and super-admin editable
 - [ ] Super admin: all history + platform templates
 - [ ] Company admin: company-scoped history + templates only
+- [ ] Core nav **Email** group opens **Email History** or **Templates** (not dashboard)
 - [ ] No email enumeration on forgot-password
 - [ ] `npm run type-check -w identity-root` and `email-root` pass
 

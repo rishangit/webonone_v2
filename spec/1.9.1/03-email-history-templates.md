@@ -4,14 +4,29 @@ Role-scoped **History** and **Templates** admin in the Email service, plus the *
 
 ## Navigation
 
-When a user opens the Email service (from WebOnOne core nav or direct Email origin), authenticated **super_admin** and **company_admin** users see service nav items including:
+### Platform shell (WebOnOne / Identity → Email)
+
+When **super_admin** or **company_admin** uses the core left nav (WebOnOne or Identity in platform shell), **Email** is a **nav group** (not a single link to the Email dashboard):
+
+| Sub-nav label | Email service route | Super admin | Company admin |
+|---------------|---------------------|-------------|---------------|
+| **Email History** | `/history` | All send history | Company-scoped history |
+| **Templates** | `/templates` | Platform system templates | Company templates only |
+
+**Remove** the prior behaviour where clicking **Email** redirected to the Email service **dashboard** (`/`). Auth-code handoff lands directly on `/history` or `/templates` per sub-item.
+
+Implementation: `@webonone/platform-nav` defines the Email group; WebOnOne and Identity attach `onClick` auth-code redirects per sub-item; Email service rewrites resolved URLs to local routes and bootstraps session on History/Templates pages.
+
+### Standalone Email service nav
+
+When opened without `return_url`, authenticated admins still see the full Email service nav (Dashboard, Send, History, Templates, etc.) from [1.9.0/04-management-screens.md](../1.9.0/04-management-screens.md).
 
 | Nav label | Route | Super admin | Company admin |
 |-----------|-------|-------------|---------------|
 | **History** | `/history` | All send history (platform + all companies) | Rows where `company_id` matches admin's company |
 | **Templates** | `/templates` | Platform (`scope=platform`) system templates | Company templates (`scope=company`, own `company_id`) |
 
-Existing routes from [1.9.0/04-management-screens.md](../1.9.0/04-management-screens.md) — 1.9.1 **tightens scope rules** and adds OTP template; no new top-level routes required unless labels are grouped under an "Email" section in core platform nav (consumer handoff unchanged).
+1.9.1 **tightens scope rules** and adds OTP template; platform shell uses the Email **group** above.
 
 **Super admin** must be able to **edit** system templates (including OTP template) from Templates list → editor.
 

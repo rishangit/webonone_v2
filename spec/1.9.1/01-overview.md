@@ -19,6 +19,7 @@ As a company admin, I want to see my company's email history and company email t
 3. **Email delivery** — Identity backend calls Email internal API; template `password_reset_otp`; no SMTP in Identity.
 4. **Template placeholders** — `userName`, `otp` (and optional body text); super admin editable in Email UI.
 5. **Role-scoped admin** — History and Templates lists filtered: super admin = platform/system; company admin = `company_id` scope.
+6. **Email platform nav group** — Core left nav **Email** expands to **Email History** and **Templates** (no dashboard redirect).
 
 ## Scope (1.9.1)
 
@@ -63,3 +64,4 @@ As a company admin, I want to see my company's email history and company email t
 | ClickUp | ID | Spec section |
 |---------|-----|----------------|
 | Parent — OTP reset + Email history/templates | 86ey3hef6 | All |
+| left navigation need to have the sub navigation | 86ey3j67h | [03-email-history-templates.md](./03-email-history-templates.md) |

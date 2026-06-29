@@ -13,7 +13,7 @@ Implementation branch: **`spec/1.9.1`**
 | Password reset | Email with **reset link** (1-hour token) | Email with **4-digit OTP**; 1-minute expiry; **3-attempt** lockout; multi-step Identity UI |
 | Reset validation | Single `/reset-password?token=` page | Email entry → OTP entry (countdown) → new password |
 | Email template | `password_reset` with `actionUrl` | `password_reset_otp` with `userName`, `otp` placeholders |
-| Email admin nav | History + Templates at service nav | Same routes; **role scoping** enforced — super admin sees all system history/templates; company admin sees company-scoped only |
+| Email admin nav | History + Templates at service nav | **Email** core nav **group** with **Email History** + **Templates** sub-items (no dashboard redirect); role scoping unchanged |
 
 ## Projects affected
 
@@ -33,11 +33,16 @@ Implementation branch: **`spec/1.9.1`**
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
+## Revision history
+
+- **Subtask 86ey3j67h** — Email left nav becomes an expandable group (**Email History**, **Templates**) in platform shell for super admin and company admin; remove dashboard as the Email nav target.
+
 ## ClickUp traceability
 
 | ClickUp | ID | Spec destination |
 |---------|-----|------------------|
 | Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | All docs |
+| left navigation need to have the sub navigation | 86ey3j67h | [03-email-history-templates.md](./03-email-history-templates.md), Phase 5 in [07-implementation-plan.md](./07-implementation-plan.md) |
 
 ## Inherited from earlier specs
 
