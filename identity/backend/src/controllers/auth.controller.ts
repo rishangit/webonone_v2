@@ -14,7 +14,9 @@ import {
   requestPasswordReset,
   resendEmailVerification,
   resetPassword,
+  resetPasswordWithSession,
   verifyEmail,
+  verifyResetOtp,
 } from '../services/auth.service.js'
 import { loginWithGoogle } from '../services/googleAuth.service.js'
 
@@ -58,9 +60,19 @@ const forgotPasswordSchema = z.object({
   email: z.string().email(),
 })
 
-const resetPasswordSchema = z.object({
-  token: z.string().min(1),
-  newPassword: z.string().min(8),
+const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1).optional(),
+    resetSessionToken: z.string().min(1).optional(),
+    newPassword: z.string().min(8),
+  })
+  .refine((data) => Boolean(data.token || data.resetSessionToken), {
+    message: 'Reset token or session token is required',
+  })
+
+const verifyResetOtpSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
 })
 
 const resendVerificationSchema = z.object({
@@ -86,7 +98,11 @@ const exchangeSchema = z.object({
 
 function handleAuthError(err: unknown, res: Response): boolean {
   if (err instanceof AuthError) {
-    res.status(err.statusCode).json({ message: err.message, code: err.code })
+    res.status(err.statusCode).json({
+      message: err.message,
+      code: err.code,
+      ...err.details,
+    })
     return true
   }
   return false
@@ -127,14 +143,29 @@ export async function googleLogin(req: AuthenticatedRequest, res: Response) {
 
 export async function forgotPassword(req: AuthenticatedRequest, res: Response) {
   const body = forgotPasswordSchema.parse(req.body)
-  const result = await requestPasswordReset(body.email)
-  res.json({ message: 'If the email exists, a reset link has been sent.', ...result })
+  await requestPasswordReset(body.email)
+  res.json({ message: 'If the email exists, a verification code has been sent.' })
+}
+
+export async function verifyResetOtpHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const body = verifyResetOtpSchema.parse(req.body)
+    const result = await verifyResetOtp(body.email, body.otp)
+    res.json(result)
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
 }
 
 export async function resetPasswordHandler(req: AuthenticatedRequest, res: Response) {
   try {
     const body = resetPasswordSchema.parse(req.body)
-    await resetPassword(body.token, body.newPassword)
+    if (body.resetSessionToken) {
+      await resetPasswordWithSession(body.resetSessionToken, body.newPassword)
+    } else {
+      await resetPassword(body.token!, body.newPassword)
+    }
     res.json({ message: 'Password updated successfully' })
   } catch (err) {
     if (handleAuthError(err, res)) return

@@ -294,6 +294,84 @@ export async function markPasswordResetTokenUsed(id: string): Promise<void> {
   await db('password_reset_tokens').where({ id }).update({ used_at: new Date() })
 }
 
+export interface PasswordResetOtpRow {
+  id: string
+  user_id: string
+  otp_hash: string
+  expires_at: Date
+  used_at: Date | null
+  attempt_count: number
+  created_at: Date
+}
+
+export async function invalidateUnusedPasswordResetOtps(userId: string): Promise<void> {
+  await db('password_reset_otps').where({ user_id: userId }).whereNull('used_at').del()
+}
+
+export async function createPasswordResetOtp(input: {
+  id: string
+  userId: string
+  otpHash: string
+  expiresAt: Date
+}): Promise<void> {
+  await db('password_reset_otps').insert({
+    id: input.id,
+    user_id: input.userId,
+    otp_hash: input.otpHash,
+    expires_at: input.expiresAt,
+    attempt_count: 0,
+    created_at: new Date(),
+  })
+}
+
+export async function findActivePasswordResetOtp(userId: string): Promise<PasswordResetOtpRow | undefined> {
+  return db<PasswordResetOtpRow>('password_reset_otps')
+    .where({ user_id: userId })
+    .whereNull('used_at')
+    .orderBy('created_at', 'desc')
+    .first()
+}
+
+export async function updatePasswordResetOtpAttemptCount(id: string, attemptCount: number): Promise<void> {
+  await db('password_reset_otps').where({ id }).update({ attempt_count: attemptCount })
+}
+
+export async function markPasswordResetOtpUsed(id: string): Promise<void> {
+  await db('password_reset_otps').where({ id }).update({ used_at: new Date() })
+}
+
+export async function createPasswordResetSession(input: {
+  id: string
+  userId: string
+  tokenHash: string
+  expiresAt: Date
+}): Promise<void> {
+  await db('password_reset_sessions').insert({
+    id: input.id,
+    user_id: input.userId,
+    token_hash: input.tokenHash,
+    expires_at: input.expiresAt,
+    created_at: new Date(),
+  })
+}
+
+export async function findPasswordResetSessionByHash(
+  tokenHash: string,
+): Promise<{ id: string; user_id: string; expires_at: Date; used_at: Date | null } | undefined> {
+  return db('password_reset_sessions')
+    .where({ token_hash: tokenHash })
+    .whereNull('used_at')
+    .first()
+}
+
+export async function markPasswordResetSessionUsed(id: string): Promise<void> {
+  await db('password_reset_sessions').where({ id }).update({ used_at: new Date() })
+}
+
+export async function invalidateUnusedPasswordResetSessions(userId: string): Promise<void> {
+  await db('password_reset_sessions').where({ user_id: userId }).whereNull('used_at').del()
+}
+
 export async function createEmailVerificationToken(input: {
   id: string
   userId: string

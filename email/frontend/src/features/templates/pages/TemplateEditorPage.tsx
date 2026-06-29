@@ -23,14 +23,15 @@ import {
 } from '../schemas/templateSchemas'
 
 const PLACEHOLDER_HELP = [
-  '{{user_name}}',
-  '{{reset_link}}',
-  '{{verify_link}}',
-  '{{company_name}}',
-  '{{logo_url}}',
-  '{{primary_color}}',
-  '{{contact_email}}',
-  '{{footer_html}}',
+  '{{userName}}',
+  '{{otp}}',
+  '{{actionUrl}}',
+  '{{companyName}}',
+  '{{logoUrl}}',
+  '{{primaryColor}}',
+  '{{contactEmail}}',
+  '{{footerHtml}}',
+  '{{year}}',
 ]
 
 export function TemplateEditorPage() {

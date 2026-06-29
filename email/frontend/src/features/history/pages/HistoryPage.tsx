@@ -12,11 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
+import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
 import type { HistoryItem } from '@/shared/types/email.types'
 import { HistoryList } from '../components/HistoryList'
 
 export function HistoryPage() {
+  const userRole = useAppSelector((s) => s.auth.user?.role)
   const [items, setItems] = useState<HistoryItem[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -68,7 +70,11 @@ export function HistoryPage() {
   return (
     <FeaturePage
       title="Send history"
-      description="Audit trail of sent and failed messages for your scope."
+      description={
+        userRole === 'company_admin'
+          ? 'Company-scoped send history. Platform system emails (such as password reset OTP) are not listed here.'
+          : 'Audit trail of sent and failed messages for your scope.'
+      }
     >
       {error ? (
         <Alert variant="destructive">

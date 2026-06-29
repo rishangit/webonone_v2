@@ -8,7 +8,6 @@ interface AuthState {
   refreshToken: string | null
   isLoading: boolean
   error: string | null
-  forgotPasswordResetToken: string | null
   registrationComplete: boolean
   resetPasswordComplete: boolean
   isProfileLoading: boolean
@@ -37,7 +36,6 @@ const initialState: AuthState = {
   refreshToken: storedSession?.refreshToken ?? null,
   isLoading: false,
   error: null,
-  forgotPasswordResetToken: null,
   registrationComplete: false,
   resetPasswordComplete: false,
   isProfileLoading: false,
@@ -94,11 +92,9 @@ export const authSlice = createSlice({
     forgotPasswordRequested(state, _action: PayloadAction<{ email: string }>) {
       state.isLoading = true
       state.error = null
-      state.forgotPasswordResetToken = null
     },
-    forgotPasswordSucceeded(state, action: PayloadAction<{ resetToken?: string }>) {
+    forgotPasswordSucceeded(state) {
       state.isLoading = false
-      state.forgotPasswordResetToken = action.payload.resetToken ?? null
     },
     forgotPasswordFailed(state, action: PayloadAction<string>) {
       state.isLoading = false
@@ -106,7 +102,7 @@ export const authSlice = createSlice({
     },
     resetPasswordRequested(
       state,
-      _action: PayloadAction<{ token: string; newPassword: string }>,
+      _action: PayloadAction<{ resetSessionToken: string; newPassword: string }>,
     ) {
       state.isLoading = true
       state.error = null
@@ -118,6 +114,13 @@ export const authSlice = createSlice({
     resetPasswordFailed(state, action: PayloadAction<string>) {
       state.isLoading = false
       state.error = action.payload
+    },
+    legacyResetPasswordRequested(
+      state,
+      _action: PayloadAction<{ token: string; newPassword: string }>,
+    ) {
+      state.isLoading = true
+      state.error = null
     },
     profileFetchRequested(state, _action: PayloadAction<{ accessToken: string }>) {
       state.isProfileLoading = true

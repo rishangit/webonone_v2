@@ -74,6 +74,7 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
 export async function listTemplates(filters: {
   companyId?: string | null
   scope?: TemplateScope
+  role?: string
 }): Promise<TemplateDto[]> {
   const query = db<EmailTemplateRow>('email_templates').orderBy('updated_at', 'desc')
 
@@ -81,11 +82,12 @@ export async function listTemplates(filters: {
     query.where({ scope: filters.scope })
   }
 
-  if (filters.companyId) {
-    query.where((builder) => {
-      builder.where({ scope: 'platform' }).whereNull('company_id')
-      builder.orWhere({ scope: 'company', company_id: filters.companyId })
-    })
+  if (filters.role === 'company_admin' && filters.companyId) {
+    query.where({ scope: 'company', company_id: filters.companyId })
+  } else if (filters.role === 'super_admin') {
+    query.where({ scope: 'platform' }).whereNull('company_id')
+  } else if (filters.companyId) {
+    query.where({ scope: 'company', company_id: filters.companyId })
   } else {
     query.where({ scope: 'platform' }).whereNull('company_id')
   }
@@ -242,6 +244,7 @@ export async function previewTemplate(
     userName: 'Sample User',
     companyName: 'Sample Company',
     actionUrl: `${env.frontendBaseUrl}/example`,
+    otp: '1234',
     message: 'Sample reviewer message',
     ...payload,
   }
@@ -256,7 +259,7 @@ export function canAccessTemplate(
 ): boolean {
   if (role === 'super_admin') return true
   if (role === 'company_admin') {
-    return template.scope === 'platform' || template.companyId === userCompanyId
+    return template.scope === 'company' && template.companyId === userCompanyId
   }
   return false
 }

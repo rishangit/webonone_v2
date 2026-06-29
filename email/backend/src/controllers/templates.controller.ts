@@ -19,7 +19,7 @@ function scopeCompanyId(req: AuthenticatedRequest): string | undefined {
 
 export async function getTemplates(req: AuthenticatedRequest, res: Response) {
   const companyId = scopeCompanyId(req)
-  const items = await listTemplates({ companyId })
+  const items = await listTemplates({ companyId, role: req.user?.role })
   res.json({ items })
 }
 

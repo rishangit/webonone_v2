@@ -10,6 +10,11 @@ const API_BASE =
   import.meta.env.VITE_IDENTITY_API_BASE_URL ??
   'http://localhost:4001/api/v1'
 
+export type AuthApiError = Error & {
+  code?: string
+  attemptsRemaining?: number
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const { headers, ...rest } = options ?? {}
   const res = await fetch(`${API_BASE}${path}`, {
@@ -21,7 +26,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    throw new Error(data.message ?? 'Request failed')
+    const err = new Error((data.message as string) ?? 'Request failed') as AuthApiError
+    err.code = data.code as string | undefined
+    if (typeof data.attemptsRemaining === 'number') {
+      err.attemptsRemaining = data.attemptsRemaining
+    }
+    throw err
   }
   return data as T
 }
@@ -56,12 +66,24 @@ export const authApi = {
     })
   },
   forgotPassword(body: { email: string }) {
-    return request<{ message: string; resetToken?: string }>('/auth/forgot-password', {
+    return request<{ message: string }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify(body),
     })
   },
-  resetPassword(body: { token: string; newPassword: string }) {
+  verifyResetOtp(body: { email: string; otp: string }) {
+    return request<{ resetSessionToken: string; expiresAt: string }>('/auth/verify-reset-otp', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  resetPassword(body: { resetSessionToken: string; newPassword: string }) {
+    return request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  resetPasswordWithToken(body: { token: string; newPassword: string }) {
     return request<{ message: string }>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify(body),

@@ -1,22 +1,30 @@
 import bcrypt from 'bcrypt'
 import { nanoid } from 'nanoid'
 import {
-  createPasswordResetToken,
+  createPasswordResetOtp,
+  createPasswordResetSession,
   createRefreshToken,
   createUser,
   createEmailVerificationToken,
+  findActivePasswordResetOtp,
+  findPasswordResetSessionByHash,
   findPasswordResetTokenByHash,
   findEmailVerificationTokenByHash,
   findRefreshTokenByHash,
   findUserByEmail,
   findUserById,
   invalidateUnusedEmailVerificationTokens,
+  invalidateUnusedPasswordResetOtps,
+  invalidateUnusedPasswordResetSessions,
   invalidateUnusedPasswordResetTokens,
   markEmailVerificationTokenUsed,
+  markPasswordResetOtpUsed,
+  markPasswordResetSessionUsed,
   markPasswordResetTokenUsed,
   markUserEmailVerified,
   revokeRefreshToken,
   toUserProfile,
+  updatePasswordResetOtpAttemptCount,
   updateUserPassword,
   updateUserProfile,
   type UpdateUserProfileInput,
@@ -30,6 +38,7 @@ import {
 import {
   buildAuthResponse,
   generateAuthCode,
+  generatePasswordResetOtp,
   generatePasswordResetToken,
   generateRefreshToken,
   hashToken,
@@ -44,11 +53,16 @@ export class AuthError extends Error {
     message: string,
     public statusCode: number = 400,
     public code?: string,
+    public details?: Record<string, unknown>,
   ) {
     super(message)
     this.name = 'AuthError'
   }
 }
+
+const OTP_MAX_ATTEMPTS = 3
+const OTP_EXPIRY_MS = 60 * 1000
+const RESET_SESSION_EXPIRY_MS = 10 * 60 * 1000
 
 async function issueAuthTokens(user: UserRow) {
   const { accessToken, expiresIn } = signAccessToken(user)
@@ -160,42 +174,91 @@ export async function logoutUser(refreshToken: string) {
   }
 }
 
-export async function requestPasswordReset(email: string): Promise<{ resetToken?: string }> {
-  const user = await findUserByEmail(email)
+export async function requestPasswordReset(_email: string): Promise<void> {
+  const user = await findUserByEmail(_email)
   if (!user) {
-    return {}
+    return
   }
 
+  await invalidateUnusedPasswordResetOtps(user.id)
   await invalidateUnusedPasswordResetTokens(user.id)
 
-  const resetToken = generatePasswordResetToken()
-  const tokenHash = hashToken(resetToken)
-  const expiresAt = new Date()
-  expiresAt.setHours(expiresAt.getHours() + env.passwordResetExpiryHours)
+  const otp = generatePasswordResetOtp()
+  const otpHash = hashToken(otp)
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS)
 
-  await createPasswordResetToken({
+  await createPasswordResetOtp({
     id: nanoid(),
     userId: user.id,
-    tokenHash,
+    otpHash,
     expiresAt,
   })
 
   void sendTransactionalEmail({
-    templateSlug: 'password_reset',
+    templateSlug: 'password_reset_otp',
     toEmail: user.email,
     payload: {
-      userName: user.display_name,
-      actionUrl: `${env.identityFrontendOrigin}/reset-password?token=${resetToken}`,
+      userName: user.display_name ?? user.email,
+      otp,
     },
     requestedByService: 'identity',
   }).catch((err) => {
-    console.error('[auth] failed to send password reset email:', err)
+    console.error('[auth] failed to send password reset OTP email:', err)
+  })
+}
+
+export async function verifyResetOtp(
+  email: string,
+  otp: string,
+): Promise<{ resetSessionToken: string; expiresAt: string }> {
+  const user = await findUserByEmail(email)
+  if (!user) {
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', { attemptsRemaining: 0 })
+  }
+
+  const record = await findActivePasswordResetOtp(user.id)
+  if (!record) {
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', { attemptsRemaining: 0 })
+  }
+
+  if (new Date(record.expires_at) < new Date()) {
+    throw new AuthError('Verification code expired', 401, 'OTP_EXPIRED')
+  }
+
+  if (record.attempt_count >= OTP_MAX_ATTEMPTS) {
+    throw new AuthError('Too many incorrect attempts', 403, 'OTP_MAX_ATTEMPTS')
+  }
+
+  const otpHash = hashToken(otp)
+  if (otpHash !== record.otp_hash) {
+    const nextAttempts = record.attempt_count + 1
+    if (nextAttempts >= OTP_MAX_ATTEMPTS) {
+      await markPasswordResetOtpUsed(record.id)
+      throw new AuthError('Too many incorrect attempts', 403, 'OTP_MAX_ATTEMPTS')
+    }
+    await updatePasswordResetOtpAttemptCount(record.id, nextAttempts)
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', {
+      attemptsRemaining: OTP_MAX_ATTEMPTS - nextAttempts,
+    })
+  }
+
+  await markPasswordResetOtpUsed(record.id)
+  await invalidateUnusedPasswordResetSessions(user.id)
+
+  const resetSessionToken = generatePasswordResetToken()
+  const sessionExpiresAt = new Date(Date.now() + RESET_SESSION_EXPIRY_MS)
+
+  await createPasswordResetSession({
+    id: nanoid(),
+    userId: user.id,
+    tokenHash: hashToken(resetSessionToken),
+    expiresAt: sessionExpiresAt,
   })
 
-  if (process.env.NODE_ENV !== 'production') {
-    return { resetToken }
+  return {
+    resetSessionToken,
+    expiresAt: sessionExpiresAt.toISOString(),
   }
-  return {}
 }
 
 export async function resendEmailVerification(email: string): Promise<void> {
@@ -231,6 +294,19 @@ export async function resetPassword(token: string, newPassword: string) {
   const passwordHash = await bcrypt.hash(newPassword, 12)
   await updateUserPassword(stored.user_id, passwordHash)
   await markPasswordResetTokenUsed(stored.id)
+}
+
+export async function resetPasswordWithSession(resetSessionToken: string, newPassword: string) {
+  const tokenHash = hashToken(resetSessionToken)
+  const stored = await findPasswordResetSessionByHash(tokenHash)
+  if (!stored || new Date(stored.expires_at) < new Date()) {
+    throw new AuthError('Invalid or expired reset session', 400, 'INVALID_RESET_SESSION')
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12)
+  await updateUserPassword(stored.user_id, passwordHash)
+  await markPasswordResetSessionUsed(stored.id)
+  await invalidateUnusedPasswordResetOtps(stored.user_id)
 }
 
 export async function getCurrentUser(userId: string) {

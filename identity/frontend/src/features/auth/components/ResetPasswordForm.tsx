@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   AlertDescription,
@@ -10,25 +10,65 @@ import {
   Spinner,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { resetPasswordSchema, type ResetPasswordFormValues } from '../schemas/authSchemas'
+import {
+  legacyResetPasswordSchema,
+  resetPasswordSchema,
+  type LegacyResetPasswordFormValues,
+  type ResetPasswordFormValues,
+} from '../schemas/authSchemas'
 import { authActions } from '../store'
+import { loadResetSessionToken } from '../utils/resetSessionStorage'
 
 interface ResetPasswordFormProps {
-  initialToken?: string
+  resetSessionToken?: string | null
+  legacyToken?: string
 }
 
-export function ResetPasswordForm({ initialToken = '' }: ResetPasswordFormProps) {
+export function ResetPasswordForm({ resetSessionToken, legacyToken = '' }: ResetPasswordFormProps) {
   const dispatch = useAppDispatch()
   const { isLoading, error } = useAppSelector((s) => s.auth)
-  const [values, setValues] = useState<ResetPasswordFormValues>({
-    token: initialToken,
+  const sessionToken = useMemo(
+    () => resetSessionToken ?? loadResetSessionToken(),
+    [resetSessionToken],
+  )
+  const isLegacyMode = !sessionToken && Boolean(legacyToken)
+
+  const [otpValues, setOtpValues] = useState<ResetPasswordFormValues>({
+    resetSessionToken: sessionToken ?? '',
     newPassword: '',
   })
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ResetPasswordFormValues, string>>>({})
+  const [legacyValues, setLegacyValues] = useState<LegacyResetPasswordFormValues>({
+    token: legacyToken,
+    newPassword: '',
+  })
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
+
+  useEffect(() => {
+    if (sessionToken) {
+      setOtpValues((v) => ({ ...v, resetSessionToken: sessionToken }))
+    }
+  }, [sessionToken])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const parsed = resetPasswordSchema.safeParse(values)
+    if (isLegacyMode) {
+      const parsed = legacyResetPasswordSchema.safeParse(legacyValues)
+      if (!parsed.success) {
+        setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
+        return
+      }
+      setFieldErrors({})
+      dispatch(authActions.clearAuthError())
+      dispatch(
+        authActions.legacyResetPasswordRequested({
+          token: parsed.data.token,
+          newPassword: parsed.data.newPassword,
+        }),
+      )
+      return
+    }
+
+    const parsed = resetPasswordSchema.safeParse(otpValues)
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
@@ -38,6 +78,16 @@ export function ResetPasswordForm({ initialToken = '' }: ResetPasswordFormProps)
     dispatch(authActions.resetPasswordRequested(parsed.data))
   }
 
+  if (!sessionToken && !legacyToken) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Your reset session expired. Request a new verification code from forgot password.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
   return (
     <Form onSubmit={handleSubmit}>
       {error ? (
@@ -45,18 +95,26 @@ export function ResetPasswordForm({ initialToken = '' }: ResetPasswordFormProps)
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Reset token" htmlFor="token" required error={fieldErrors.token}>
-        <Input
-          value={values.token}
-          onChange={(e) => setValues((v) => ({ ...v, token: e.target.value }))}
-        />
-      </FormField>
+      {isLegacyMode ? (
+        <FormField label="Reset token" htmlFor="token" required error={fieldErrors.token}>
+          <Input
+            id="token"
+            value={legacyValues.token}
+            onChange={(e) => setLegacyValues((v) => ({ ...v, token: e.target.value }))}
+          />
+        </FormField>
+      ) : null}
       <FormField label="New password" htmlFor="newPassword" required error={fieldErrors.newPassword}>
         <Input
+          id="newPassword"
           type="password"
           autoComplete="new-password"
-          value={values.newPassword}
-          onChange={(e) => setValues((v) => ({ ...v, newPassword: e.target.value }))}
+          value={isLegacyMode ? legacyValues.newPassword : otpValues.newPassword}
+          onChange={(e) =>
+            isLegacyMode
+              ? setLegacyValues((v) => ({ ...v, newPassword: e.target.value }))
+              : setOtpValues((v) => ({ ...v, newPassword: e.target.value }))
+          }
         />
       </FormField>
       <Button type="submit" className="w-full" disabled={isLoading}>

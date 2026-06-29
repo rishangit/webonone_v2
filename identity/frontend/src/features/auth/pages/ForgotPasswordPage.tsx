@@ -10,7 +10,7 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout
       title="Forgot password"
-      description="We'll send you a reset link if the email exists"
+      description="We'll send a 4-digit code if the email exists"
       variant="minimal"
       footer={
         <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">

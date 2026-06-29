@@ -1,19 +1,24 @@
 import { useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthLayout } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { ResetPasswordForm } from '../components/ResetPasswordForm'
+import { clearResetSessionToken } from '../utils/resetSessionStorage'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const { resetPasswordComplete } = useAppSelector((s) => s.auth)
   const tokenFromQuery = searchParams.get('token') ?? ''
+  const resetSessionToken =
+    (location.state as { resetSessionToken?: string } | null)?.resetSessionToken ?? null
   const loginLink = withRedirectQuery('/login', searchParams)
 
   useEffect(() => {
     if (resetPasswordComplete) {
+      clearResetSessionToken()
       navigate(loginLink, { replace: true })
     }
   }, [resetPasswordComplete, loginLink, navigate])
@@ -21,7 +26,7 @@ export function ResetPasswordPage() {
   return (
     <AuthLayout
       title="Reset password"
-      description="Enter your reset token and new password"
+      description="Choose a new password for your account"
       variant="minimal"
       footer={
         <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
@@ -29,7 +34,7 @@ export function ResetPasswordPage() {
         </Link>
       }
     >
-      <ResetPasswordForm initialToken={tokenFromQuery} />
+      <ResetPasswordForm resetSessionToken={resetSessionToken} legacyToken={tokenFromQuery} />
     </AuthLayout>
   )
 }
