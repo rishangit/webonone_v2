@@ -1,6 +1,6 @@
 # WebOnOne Platform — Specification (1.9.3)
 
-Adds a reusable **`UserSelectionDialog`** to `@webonone/ui-kit` — a scrollable `CustomDialog` modal with search, role filter, infinite-scroll user loading, and single-select return to the calling service.
+Adds a reusable **`UserSelectionDialog`** to `@webonone/ui-kit` and consolidates WebOnOne user permissions into a **`users_roles`** table (replacing `super_admins` and `company_memberships`).
 
 **Spec No:** 1.9.3
 
@@ -15,13 +15,14 @@ Implementation branch: **`spec/1.9.3`**
 | Search / filter | Per-screen | Built-in name search + optional role filter |
 | Dialog pattern | Custom per feature | Standard `CustomDialog` shell |
 | Cross-service reuse | — | Injectable `loadUsers` callback; showcase + reference consumer |
+| User permissions | `super_admins` + `company_memberships` | Single `users_roles` table; multi-company / multi-role |
 
 ## Projects affected
 
 | Project | Role in 1.9.3 |
 |---------|----------------|
 | **UI Kit** (`ui-kit/`) | `UserSelectionDialog` component; Dialogs tab demo |
-| **WebOnOne v2** (`webonone-v2/`) | Reference consumer (assign-member flow or settings demo) |
+| **WebOnOne v2** (`webonone-v2/`) | Reference consumer; **`users_roles`** migration and backend refactor |
 | **Email** (`email/`) | Optional second consumer when role assignment needs user pick |
 
 ## Documents
@@ -32,6 +33,7 @@ Implementation branch: **`spec/1.9.3`**
 | [02-ui-kit-user-selection-dialog.md](./02-ui-kit-user-selection-dialog.md) | Component API, infinite scroll, filters, selection |
 | [03-showcase-dialogs-demo.md](./03-showcase-dialogs-demo.md) | Dialogs tab demo with mock users |
 | [04-service-integration.md](./04-service-integration.md) | Consumer wiring pattern across services |
+| [05-webonone-users-roles.md](./05-webonone-users-roles.md) | `users_roles` schema, migration, backend refactor |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
@@ -39,7 +41,12 @@ Implementation branch: **`spec/1.9.3`**
 
 | ClickUp | ID | Spec destination |
 |---------|-----|------------------|
-| Parent: [User Story] Spec No.1.9.3 Need to have the user selection dialog box | 86ey40acd | All docs |
+| Parent: [User Story] Spec No.1.9.3 Need to have the user selection dialog box | 86ey40acd | Dialog docs |
+| need to have the user role table | 86ey40ya9 | [05-webonone-users-roles.md](./05-webonone-users-roles.md), Phase 6 |
+
+## Revision history
+
+- **2026-06-30** — Added `users_roles` consolidation (subtask 86ey40ya9); replaces `super_admins` / `company_memberships`.
 
 ## Inherited from earlier specs
 

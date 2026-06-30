@@ -4,6 +4,8 @@
 
 Admin and settings flows across WebOnOne, Email, and future services need to pick a user from a large directory without bespoke modals per screen. A single UI Kit **`UserSelectionDialog`** wraps the platform **`CustomDialog`** pattern, loads users on scroll, supports name search and role filtering, and returns the selected user to the caller on row click.
 
+Additionally, WebOnOne core permissions move from split **`super_admins`** / **`company_memberships`** tables into one **`users_roles`** table so users can hold multiple roles across companies while staying linked to Identity `user_id` copies.
+
 ## User story
 
 As a developer building admin features, I want a reusable user selection dialog, so that I can consistently search, filter, and pick users across services without reimplementing modal, scroll, and filter logic.
@@ -19,6 +21,7 @@ As a developer building admin features, I want a reusable user selection dialog,
 7. **Empty / error states** — `ItemListEmpty`, inline error alert, retry on failed fetch.
 8. **Showcase demo** — Dialogs tab with mock `loadUsers` (100+ fake users).
 9. **Reference consumer** — WebOnOne settings demo or company flow wires real or stub API via same callback contract.
+10. **`users_roles` table** — replace `super_admins` and `company_memberships`; support `super_admin`, `company_admin`, `member` with multi-company rows.
 
 ## Scope (1.9.3)
 
@@ -29,6 +32,8 @@ As a developer building admin features, I want a reusable user selection dialog,
 - Showcase demo on **Dialogs** tab (`DialogsPage.tsx` or equivalent).
 - WebOnOne reference page or dialog trigger demonstrating integration.
 - Agent guidance cross-link in `item-list` skill (selectable row variant).
+- Knex migration creating `users_roles`, migrating legacy data, dropping old tables.
+- Backend repository/service/middleware refactor for unified roles ([05-webonone-users-roles.md](./05-webonone-users-roles.md)).
 
 ### Out of scope (1.9.3)
 
@@ -56,12 +61,14 @@ As a developer building admin features, I want a reusable user selection dialog,
 5. Showcase Dialogs tab demonstrates full flow with mock data.
 6. WebOnOne reference consumer opens dialog and logs or displays selected user.
 7. `npm run type-check -w ui-kit-root` and `webonone-v2-root` pass.
+8. `users_roles` replaces legacy tables; super-admin and company flows work via new repository.
 
 ## ClickUp mapping
 
 | ClickUp | ID | Spec section |
 |---------|-----|----------------|
-| Parent — user selection dialog | 86ey40acd | All |
+| Parent — user selection dialog | 86ey40acd | Dialog goals |
+| need to have the user role table | 86ey40ya9 | [05-webonone-users-roles.md](./05-webonone-users-roles.md) |
 
 ### Acceptance criteria (from ClickUp parent)
 
