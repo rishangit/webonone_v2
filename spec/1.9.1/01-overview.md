@@ -21,14 +21,16 @@ As a company admin, I want to see my company's email history and company email t
 5. **Role-scoped admin** — History and Templates lists filtered: super admin = platform/system; company admin = `company_id` scope.
 6. **Email platform nav group** — Core left nav **Email** expands to **Email History** and **Templates** (no dashboard redirect).
 7. **OTP input control** — UI Kit `OtpInput` with configurable digit boxes; used on Identity verify-reset step.
+8. **Registration email OTP** — Four-step signup: email → OTP → profile → password; account created with verified email.
 
 ## Scope (1.9.1)
 
 ### In scope
 
 - Identity: `password_reset_otps` storage (or equivalent); APIs for request OTP, verify OTP, complete reset.
+- Identity: `registration_email_otps` + `registration_sessions`; registration wizard APIs; replace single-page register.
 - Identity FE: update forgot-password flow; new verify-OTP step; wire reset step after verification.
-- Email: seed `password_reset_otp` platform template; ensure History/Templates APIs enforce scope per role.
+- Email: seed `password_reset_otp` and **`email_verification_otp`** platform templates; ensure History/Templates APIs enforce scope per role.
 - UI Kit: `OtpInput` component (default 4 boxes, `length` prop); showcase demo; Identity consumer.
 - Deprecate link-based reset for the primary forgot-password path (keep or remove `password_reset` link template per implementation — OTP is the user-facing flow).
 

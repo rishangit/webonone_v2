@@ -110,6 +110,24 @@ Spec: [04-ui-kit-otp-input.md](./04-ui-kit-otp-input.md) — subtask **86ey3rq8b
 
 ---
 
+## Phase 7 — Registration email OTP wizard
+
+**Goal:** Four-step registration; email OTP before account creation.
+
+| Task | Detail |
+|------|--------|
+| Migration | `registration_email_otps`, `registration_sessions` |
+| Email template | `email_verification_otp` seed in Email service |
+| APIs | `request-email-otp`, `verify-email-otp`, `register/complete` |
+| FE wizard | `RegisterPage` + step components; `OtpInput` on step 2 |
+| Remove | Single-shot `POST /auth/register` |
+
+**Exit criteria:** E2E registration with OTP; user `is_email_verified: true`.
+
+Spec: [05-identity-registration-otp.md](./05-identity-registration-otp.md) — subtask **86ey3t18g**
+
+---
+
 ## Phase 4 — Integration verification
 
 | Task | Detail |
@@ -130,6 +148,7 @@ Spec: [04-ui-kit-otp-input.md](./04-ui-kit-otp-input.md) — subtask **86ey3rq8b
 | Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | Phases 1–4 |
 | left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
 | need to have the control for OTP | 86ey3rq8b | Phase 6 |
+| need to email virification for the user regitration | 86ey3t18g | Phase 7 |
 
 ---
 
@@ -145,6 +164,7 @@ Spec: [04-ui-kit-otp-input.md](./04-ui-kit-otp-input.md) — subtask **86ey3rq8b
 - [ ] Company admin: company-scoped history + templates only
 - [ ] Core nav **Email** group opens **Email History** or **Templates** (not dashboard)
 - [ ] `OtpInput` on Identity verify-reset step; showcased in UI Kit Controls tab
+- [ ] Four-step registration with email OTP; account created verified
 - [ ] No email enumeration on forgot-password
 - [ ] `npm run type-check -w identity-root` and `email-root` pass
 
