@@ -110,6 +110,7 @@ Spec: [02-identity-otp-reset.md](./02-identity-otp-reset.md)
 | Role UI | Super admin: all history + platform templates; company admin: scoped only |
 | Platform Email nav | Email group → History / Templates (not dashboard) |
 | OTP input UI | `OtpInput` on verify-reset step; showcased in UI Kit |
+| Registration wizard | Four-step signup with email OTP |
 | Security | No OTP in URL/logs; generic forgot-password response |
 | Type-check | `identity-root`, `email-root` |
 
@@ -171,6 +172,29 @@ Spec: [04-ui-kit-otp-input.md](./04-ui-kit-otp-input.md) — subtask **86ey3rq8b
 
 ---
 
+## Phase 7 — Registration email OTP wizard
+
+**Goal:** Four-step registration wizard; email OTP before account creation.
+
+**Exit criteria:** Register with OTP email → profile → password; user `is_email_verified: true`; Google signup unchanged.
+
+| Task | Paths |
+|------|-------|
+| Identity migration | `identity/backend/migrations/*_registration_email_otp.ts` |
+| Repository | `identity/backend/src/models/user.repository.ts` — registration OTP + session |
+| Auth service | `requestRegisterEmailOtp`, `verifyRegisterEmailOtp`, `completeRegistration` |
+| Routes + controller | `auth.routes.ts`, `auth.controller.ts` |
+| Email template seed | `email/backend/migrations/*_email_verification_otp_template.ts` |
+| Register wizard | `RegisterPage.tsx` + `RegisterEmailStep`, `RegisterVerifyOtpStep`, `RegisterProfileStep`, `RegisterPasswordStep` |
+| API client | `authApi.ts`, `authSchemas.ts`, `authEpics.ts` |
+| Storage utils | `registrationEmailStorage.ts`, `registrationSessionStorage.ts` |
+
+Spec: [05-identity-registration-otp.md](./05-identity-registration-otp.md) — subtask **86ey3t18g**
+
+**Verify:** `npm run migrate -w identity-root`; `npm run migrate -w email-root`; `npm run type-check -w identity-root`
+
+---
+
 ## ClickUp traceability
 
 | ClickUp | ID | Phase |
@@ -178,6 +202,7 @@ Spec: [04-ui-kit-otp-input.md](./04-ui-kit-otp-input.md) — subtask **86ey3rq8b
 | Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | Phases 1–4 |
 | left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
 | need to have the control for OTP | 86ey3rq8b | Phase 6 |
+| need to email virification for the user regitration | 86ey3t18g | Phase 7 |
 
 ---
 
