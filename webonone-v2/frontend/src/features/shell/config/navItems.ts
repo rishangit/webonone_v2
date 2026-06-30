@@ -9,6 +9,7 @@ import {
   type PlatformNavVariant,
 } from '@webonone/platform-nav'
 import type { NavConfigItem } from '@webonone/ui-kit'
+import type { SessionRole } from '@/features/session/types/sessionRole.types'
 
 const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/': Home,
@@ -63,7 +64,18 @@ export function buildPlatformNav(variant: PlatformNavVariant): NavConfigItem[] {
   return buildNavItems(getPlatformNavDefs(variant))
 }
 
+export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
+  if (role === 'super_admin') return 'superAdmin'
+  if (role === 'company_admin') return 'main'
+  return 'member'
+}
+
+export function buildNavForSessionRole(role: SessionRole): NavConfigItem[] {
+  return buildPlatformNav(sessionRoleToNavVariant(role))
+}
+
 export const mainNav = buildPlatformNav('main')
 export const superAdminNav = buildPlatformNav('superAdmin')
+export const memberNav = buildPlatformNav('member')
 
 export { isEmailNavSentinel }

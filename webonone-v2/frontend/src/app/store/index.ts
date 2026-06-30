@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { createEpicMiddleware } from 'redux-observable'
 import { authReducer } from '@/features/auth/store/authSlice'
+import { sessionRoleReducer } from '@/features/session/store/sessionRoleSlice'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { rootEpic } from '@/app/store/epics/rootEpic'
 import { initApiClient } from '@/shared/services/apiClient'
@@ -10,6 +11,7 @@ const epicMiddleware = createEpicMiddleware()
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    sessionRole: sessionRoleReducer,
     systemTheme: systemThemeReducer,
   },
   middleware: (getDefaultMiddleware) =>

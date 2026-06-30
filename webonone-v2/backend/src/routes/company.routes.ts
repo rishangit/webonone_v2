@@ -5,13 +5,20 @@ import { requireSuperAdmin } from '../middleware/requireSuperAdmin.js'
 import { validateBody } from '../middleware/validateBody.js'
 import {
   registerCompanyBodySchema,
+  syncEmailRoleBodySchema,
   updateCompanyStatusBodySchema,
 } from '../schemas/companySchemas.js'
 
 const router = Router()
 
 router.get('/company/me', requireAuth, companyController.getMyCompany)
-router.post('/company/me/sync-email-role', requireAuth, companyController.syncEmailRole)
+router.get('/company/me/assumable-roles', requireAuth, companyController.getAssumableRoles)
+router.post(
+  '/company/me/sync-email-role',
+  requireAuth,
+  validateBody(syncEmailRoleBodySchema),
+  companyController.syncEmailRole,
+)
 router.post('/company/register', requireAuth, validateBody(registerCompanyBodySchema), companyController.registerCompany)
 router.get('/company/admin/me', requireAuth, companyController.getSuperAdminMe)
 router.get('/company/admin/companies', requireSuperAdmin, companyController.listAllCompanies)

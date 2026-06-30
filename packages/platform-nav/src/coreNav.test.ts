@@ -46,9 +46,17 @@ describe('coreNav', () => {
   })
 
   it('round-trips nav variant query values', () => {
-    assert.equal(toCoreNavQueryValue('main'), 'main')
+    assert.equal(toCoreNavQueryValue('main'), 'company_admin')
+    assert.equal(toCoreNavQueryValue('member'), 'member')
     assert.equal(toCoreNavQueryValue('superAdmin'), CORE_NAV_VARIANT_SUPER_ADMIN)
     assert.equal(parsePlatformNavVariant(CORE_NAV_VARIANT_SUPER_ADMIN), 'superAdmin')
+    assert.equal(parsePlatformNavVariant('member'), 'member')
     assert.equal(parsePlatformNavVariant(null), 'main')
+  })
+
+  it('member nav omits Email group', () => {
+    const nav = resolvePlatformNavUrls('http://localhost:3000', 'member')
+    const emailGroup = nav.find((item) => item.kind === 'group' && item.label === 'Email')
+    assert.equal(emailGroup, undefined)
   })
 })

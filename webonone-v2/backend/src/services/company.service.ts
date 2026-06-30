@@ -237,12 +237,85 @@ export type SyncedEmailRole = {
   companyId: string | null
 }
 
-export async function syncEmailRoleForUser(
-  userId: string,
-  email: string,
-): Promise<SyncedEmailRole> {
+export type AssumableRoleOption = {
+  role: 'super_admin' | 'company_admin' | 'member'
+  companyId: string | null
+  label: string
+  companyName?: string
+}
+
+export type AssumableRolesResponse = {
+  roles: AssumableRoleOption[]
+  hasCompanyMembership: boolean
+}
+
+export async function getAssumableRoles(userId: string): Promise<AssumableRolesResponse> {
+  const primaryRole = await roleRepo.findPrimaryCompanyRole(userId)
+  if (!primaryRole?.company_id) {
+    return {
+      roles: [{ role: 'member', companyId: null, label: 'Default User' }],
+      hasCompanyMembership: false,
+    }
+  }
+
+  const company = await repo.findCompanyById(primaryRole.company_id)
+  const companyName = company?.name
+  const companyId = primaryRole.company_id
+  const roles: AssumableRoleOption[] = []
+
   const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
   if (superAdmin) {
+    roles.push({ role: 'super_admin', companyId: null, label: 'Super Admin' })
+  }
+
+  const companyRoles = await roleRepo.findCompanyRolesByUserId(userId)
+  const hasCompanyAdmin = companyRoles.some(
+    (row) => row.company_id === companyId && row.role === 'company_admin',
+  )
+  if (hasCompanyAdmin) {
+    roles.push({
+      role: 'company_admin',
+      companyId,
+      label: 'Company Admin',
+      companyName,
+    })
+  }
+
+  roles.push({
+    role: 'member',
+    companyId,
+    label: 'Default User',
+    companyName,
+  })
+
+  return { roles, hasCompanyMembership: true }
+}
+
+async function assertCanAssumeSessionRole(
+  userId: string,
+  sessionRole: 'super_admin' | 'company_admin' | 'member',
+  companyId?: string | null,
+): Promise<void> {
+  const assumable = await getAssumableRoles(userId)
+  const match = assumable.roles.find(
+    (option) =>
+      option.role === sessionRole &&
+      (sessionRole === 'super_admin' || option.companyId === (companyId ?? option.companyId)),
+  )
+  if (!match) {
+    const err = new Error('Invalid session role for this user') as Error & { statusCode?: number }
+    err.statusCode = 403
+    throw err
+  }
+}
+
+async function syncEmailRoleAs(
+  userId: string,
+  email: string,
+  role: 'super_admin' | 'company_admin' | 'member',
+  companyId: string | null,
+): Promise<SyncedEmailRole> {
+  if (role === 'super_admin') {
     await syncUserRole({
       userId,
       role: 'super_admin',
@@ -252,23 +325,50 @@ export async function syncEmailRoleForUser(
     return { role: 'super_admin', companyId: null }
   }
 
-  const company = await getMyCompany(userId)
-  if (company) {
-    const emailRole = company.membership.role === 'company_admin' ? 'company_admin' : 'member'
+  if (role === 'company_admin' && companyId) {
+    const company = await repo.findCompanyById(companyId)
     await syncUserRole({
       userId,
-      role: emailRole,
-      companyId: company.company.id,
+      role: 'company_admin',
+      companyId,
       email,
-      displayName: company.company.name,
+      displayName: company?.name ?? email,
     })
-    return { role: emailRole, companyId: company.company.id }
+    return { role: 'company_admin', companyId }
   }
 
   await syncUserRole({
     userId,
     role: 'member',
+    companyId: companyId ?? undefined,
     email,
   })
-  return { role: 'member', companyId: null }
+  return { role: 'member', companyId }
+}
+
+export async function syncEmailRoleForUser(
+  userId: string,
+  email: string,
+  sessionRole?: 'super_admin' | 'company_admin' | 'member',
+  companyId?: string | null,
+): Promise<SyncedEmailRole> {
+  if (sessionRole) {
+    await assertCanAssumeSessionRole(userId, sessionRole, companyId)
+    const effectiveCompanyId =
+      sessionRole === 'super_admin' ? null : (companyId ?? (await getMyCompany(userId))?.company.id ?? null)
+    return syncEmailRoleAs(userId, email, sessionRole, effectiveCompanyId)
+  }
+
+  const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
+  if (superAdmin) {
+    return syncEmailRoleAs(userId, email, 'super_admin', null)
+  }
+
+  const company = await getMyCompany(userId)
+  if (company) {
+    const emailRole = company.membership.role === 'company_admin' ? 'company_admin' : 'member'
+    return syncEmailRoleAs(userId, email, emailRole, company.company.id)
+  }
+
+  return syncEmailRoleAs(userId, email, 'member', null)
 }

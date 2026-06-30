@@ -5,15 +5,18 @@ import { useServiceRedirect } from '@webonone/platform-nav'
 import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { store } from '@/app/store'
 import { authActions } from '@/features/auth/store/authSlice'
+import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
+import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { syncEmailRoleBeforeHandoff } from '@/features/email/utils/syncEmailRole'
-import { isEmailNavSentinel, mainNav, superAdminNav } from '@/features/shell/config/navItems'
-import { useSuperAdminStatus } from '@/features/settings/basic/hooks/useSuperAdminStatus'
+import { buildNavForSessionRole, isEmailNavSentinel } from '@/features/shell/config/navItems'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
+import { SessionRoleGate } from '@/features/session/components/SessionRoleGate'
 
 function withEmailNavAction(
   items: NavConfigItem[],
@@ -43,10 +46,12 @@ export function AppLayout() {
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const preferences = useAppSelector((s) => s.systemTheme.preferences)
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const { redirect, error: navError, clearError } = useServiceRedirect()
 
   useIdentityUserRefresh()
-  const { isSuperAdmin } = useSuperAdminStatus()
+
+  const navVariant = useMemo(() => getNavVariantForSessionRole(activeRole), [activeRole])
 
   const handleEmailNavClick = useCallback(
     async (sentinel: string) => {
@@ -61,12 +66,12 @@ export function AppLayout() {
           )
         : undefined
       try {
-        await syncEmailRoleBeforeHandoff()
+        await syncEmailRoleBeforeHandoff(() => store.getState())
         await redirect(
           getEmailRedirectOptions({
             accessToken,
             extraSearchParams: themeParams,
-            navVariant: isSuperAdmin ? 'superAdmin' : 'main',
+            navVariant,
             emailNavSentinel: sentinel,
           }),
         )
@@ -74,16 +79,17 @@ export function AppLayout() {
         // surfaced via hook
       }
     },
-    [accessToken, clearError, isSuperAdmin, navigate, preferences, redirect],
+    [accessToken, clearError, navVariant, navigate, preferences, redirect],
   )
 
-  const nav = useMemo(
-    () => withEmailNavAction(isSuperAdmin ? superAdminNav : mainNav, handleEmailNavClick),
-    [handleEmailNavClick, isSuperAdmin],
-  )
+  const nav = useMemo(() => {
+    if (!activeRole) return []
+    return withEmailNavAction(buildNavForSessionRole(activeRole), handleEmailNavClick)
+  }, [activeRole, handleEmailNavClick])
 
   function handleLogout() {
     dispatch(authActions.logout())
+    dispatch(sessionRoleActions.reset())
     navigate('/login')
   }
 
@@ -103,7 +109,7 @@ export function AppLayout() {
         getIdentityProfileRedirectOptions({
           accessToken,
           extraSearchParams: themeParams,
-          navVariant: isSuperAdmin ? 'superAdmin' : 'main',
+          navVariant,
         }),
       )
     } catch {
@@ -113,25 +119,27 @@ export function AppLayout() {
 
   return (
     <ThemeProviderBridge>
-      <AppShell
-        nav={nav}
-        activePath={location.pathname}
-        logo={<BrandLogo>WebOnOne</BrandLogo>}
-        user={
-          user
-            ? {
-                displayName: user.displayName,
-                avatarUrl: user.avatarUrl,
-                email: user.email,
-              }
-            : null
-        }
-        onProfileClick={user ? handleProfileClick : undefined}
-        onLogout={handleLogout}
-      >
-        <Outlet />
-        {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
-      </AppShell>
+      <SessionRoleGate>
+        <AppShell
+          nav={nav}
+          activePath={location.pathname}
+          logo={<BrandLogo>WebOnOne</BrandLogo>}
+          user={
+            user
+              ? {
+                  displayName: user.displayName,
+                  avatarUrl: user.avatarUrl,
+                  email: user.email,
+                }
+              : null
+          }
+          onProfileClick={user ? handleProfileClick : undefined}
+          onLogout={handleLogout}
+        >
+          <Outlet />
+          {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
+        </AppShell>
+      </SessionRoleGate>
     </ThemeProviderBridge>
   )
 }

@@ -11,12 +11,15 @@ export { useServiceRedirect } from './useServiceRedirect'
 export { DEFAULT_OAUTH_STATE_PREFIX, QUERY } from './constants'
 export {
   CORE_NAV_QUERY_PARAM,
+  CORE_NAV_VARIANT_COMPANY_ADMIN,
   CORE_NAV_VARIANT_MAIN,
+  CORE_NAV_VARIANT_MEMBER,
   CORE_NAV_VARIANT_SUPER_ADMIN,
   EMAIL_NAV_SENTINELS,
   emailSentinelToExternalPath,
   isEmailNavSentinel,
   MAIN_PLATFORM_NAV,
+  MEMBER_PLATFORM_NAV,
   SUPER_ADMIN_PLATFORM_NAV,
   getCoreOriginFromReturnUrl,
   getPlatformNavDefs,

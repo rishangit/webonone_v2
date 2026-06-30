@@ -1,4 +1,4 @@
-export type PlatformNavVariant = 'main' | 'superAdmin'
+export type PlatformNavVariant = 'main' | 'superAdmin' | 'member'
 
 export type ExternalServiceId = 'email'
 
@@ -86,6 +86,18 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   },
 ]
 
+export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
+  { kind: 'item', path: '/', label: 'Home' },
+  {
+    kind: 'group',
+    label: 'Settings',
+    children: [
+      { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
+      { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
+    ],
+  },
+]
+
 export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
   { kind: 'item', path: '/companies', label: 'Companies' },
@@ -123,19 +135,28 @@ export const CORE_NAV_QUERY_PARAM = 'core_nav' as const
 
 export const CORE_NAV_VARIANT_MAIN = 'main' as const
 export const CORE_NAV_VARIANT_SUPER_ADMIN = 'super_admin' as const
+export const CORE_NAV_VARIANT_COMPANY_ADMIN = 'company_admin' as const
+export const CORE_NAV_VARIANT_MEMBER = 'member' as const
 
 export function getPlatformNavDefs(variant: PlatformNavVariant): CoreNavDef[] {
-  return variant === 'superAdmin' ? SUPER_ADMIN_PLATFORM_NAV : MAIN_PLATFORM_NAV
+  if (variant === 'superAdmin') return SUPER_ADMIN_PLATFORM_NAV
+  if (variant === 'member') return MEMBER_PLATFORM_NAV
+  return MAIN_PLATFORM_NAV
 }
 
 export function parsePlatformNavVariant(
   value: string | null | undefined,
 ): PlatformNavVariant {
-  return value === CORE_NAV_VARIANT_SUPER_ADMIN ? 'superAdmin' : 'main'
+  if (value === CORE_NAV_VARIANT_SUPER_ADMIN) return 'superAdmin'
+  if (value === CORE_NAV_VARIANT_MEMBER) return 'member'
+  if (value === CORE_NAV_VARIANT_COMPANY_ADMIN || value === CORE_NAV_VARIANT_MAIN) return 'main'
+  return 'main'
 }
 
 export function toCoreNavQueryValue(variant: PlatformNavVariant): string {
-  return variant === 'superAdmin' ? CORE_NAV_VARIANT_SUPER_ADMIN : CORE_NAV_VARIANT_MAIN
+  if (variant === 'superAdmin') return CORE_NAV_VARIANT_SUPER_ADMIN
+  if (variant === 'member') return CORE_NAV_VARIANT_MEMBER
+  return CORE_NAV_VARIANT_COMPANY_ADMIN
 }
 
 export function getCoreOriginFromReturnUrl(returnUrl: string): string | null {

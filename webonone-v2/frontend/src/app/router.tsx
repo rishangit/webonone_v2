@@ -16,6 +16,18 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return children
 }
 
+function SuperAdminRoute({ children }: { children: React.ReactNode }) {
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
+  if (!selectionComplete) {
+    return null
+  }
+  if (activeRole !== 'super_admin') {
+    return <Navigate to="/" replace />
+  }
+  return children
+}
+
 export function App() {
   return (
     <BrowserRouter>
@@ -30,7 +42,14 @@ export function App() {
           }
         >
           <Route index element={<HomePage />} />
-          <Route path="companies" element={<CompaniesPage />} />
+          <Route
+            path="companies"
+            element={
+              <SuperAdminRoute>
+                <CompaniesPage />
+              </SuperAdminRoute>
+            }
+          />
           <Route path="settings/basic" element={<BasicSettingsPage />} />
           <Route path="settings/system-theme" element={<SystemThemePage />} />
         </Route>
