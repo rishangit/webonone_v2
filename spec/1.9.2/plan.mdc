@@ -1,0 +1,100 @@
+---
+description: Implementation plan for spec 1.9.2 — UI Kit Pagination component and Email History consumer
+alwaysApply: false
+globs: ui-kit/**, email/frontend/**
+---
+
+# Implementation plan — Spec 1.9.2
+
+## Summary
+
+Spec 1.9.2 adds a reusable **`Pagination`** component to `@webonone/ui-kit` with first/previous/next/last controls, numbered pages with ellipsis, “Showing X–Y of Z” summary, and optional page-size selection. Showcase demo on Controls tab; **Email History** replaces inline prev/next as the reference consumer. See [01-overview.md](./01-overview.md), [02-ui-kit-pagination.md](./02-ui-kit-pagination.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.9.2` |
+| Package builds | `npm run build -w @webonone/ui-kit` before email prod build |
+| Vite alias | Email aliases ui-kit to `src/` in dev |
+
+---
+
+## Phase 1 — UI Kit Pagination component
+
+**Goal:** Export `Pagination` with full API from [02-ui-kit-pagination.md](./02-ui-kit-pagination.md).
+
+**Exit criteria:** Package builds; showcase demo; types exported.
+
+| Task | Paths |
+|------|-------|
+| Create `Pagination` | `ui-kit/package/src/components/Pagination.tsx` |
+| Export | `ui-kit/package/src/index.ts` |
+| Showcase demo | `ui-kit/showcase/src/pages/ControlsPage.tsx` |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 2 — Email History consumer
+
+**Goal:** Replace ad-hoc pagination on History with `Pagination`.
+
+**Exit criteria:** History paginates with filters preserved; type-check passes.
+
+| Task | Paths |
+|------|-------|
+| Wire `Pagination` | `email/frontend/src/features/history/pages/HistoryPage.tsx` |
+| Page size | Add `pageSize` state + `onPageSizeChange`; reset to page 1 on size change |
+
+**Verify:** `npm run type-check -w email-root`
+
+---
+
+## Phase 3 — Integration verification
+
+**Goal:** Manual smoke + final type-check.
+
+| Task | Detail |
+|------|--------|
+| Showcase | Pagination demo — page nav, size selector, single-page hide |
+| Email History | Apply filters → change page → filters unchanged |
+
+**Verify:** Commands in Final verification below.
+
+---
+
+## Cross-service integration
+
+None. UI Kit is a shared package; Email consumes it via workspace dependency. Pagination does not fetch data — parent owns API calls and filter state.
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec No 1.9.2 Add pagination to the UI-kit | 86ey3yh8p | 1–3 |
+| Define the pagination | 86ey3yjxz | 1 |
+
+---
+
+## Risks and open items
+
+- Ellipsis window logic must handle `totalPages` of 1–2 without duplicate buttons.
+- Email History currently uses fixed `pageSize: 20` — consider adding 20 to `pageSizeOptions` or default options `[10, 20, 25, 50]`.
+- Other services (WebOnOne lists) can adopt `Pagination` in a follow-up spec.
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
+npm run type-check -w email-root
+npm run lint -w @webonone/ui-kit-showcase
+npm run lint -w @webonone/email-frontend
+```
+
+Manual: UI Kit showcase Controls tab — exercise page buttons and page-size select. Email `:3004/history` — paginate with filters applied.
