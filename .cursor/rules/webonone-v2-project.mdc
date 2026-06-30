@@ -19,11 +19,11 @@ Agent skill: [.cursor/skills/webonone-agent/SKILL.md](../skills/webonone-agent/S
 | Frontend | 3000 | `webonone-v2/frontend/.env` |
 | Backend | 4000 | `webonone-v2/backend/.env` |
 
-`JWT_SECRET` must match Identity backend. Super-admin seed: `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_DISPLAY_NAME` (Identity account must use same email).
+`JWT_SECRET` must match Identity backend. Super-admin seed: `SUPER_ADMIN_USER_ID` (Identity `user_id`), `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_DISPLAY_NAME`.
 
 ## Database
 
-MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, and **company tables** (`companies`, `company_memberships`, `super_admins`). Migrations run via `npm run migrate -w @webonone/webonone-backend`. Seed super admin via `npm run seed -w @webonone/webonone-backend`.
+MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, **companies**, and **`users_roles`** (platform/company permissions linked to Identity `user_id`). Migrations run via `npm run migrate -w @webonone/webonone-backend`. Seed super admin via `npm run seed -w @webonone/webonone-backend` (requires `SUPER_ADMIN_USER_ID`).
 
 ## Ownership
 

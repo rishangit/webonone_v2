@@ -48,7 +48,7 @@ export async function getSuperAdminMe(req: AuthenticatedRequest, res: Response) 
   }
 
   try {
-    const profile = await companyService.getSuperAdminProfile(req.user.email)
+    const profile = await companyService.getSuperAdminProfile(req.user.id, req.user.email)
     if (!profile) {
       res.status(404).json({ message: 'Not a super admin', code: 'NOT_FOUND' })
       return

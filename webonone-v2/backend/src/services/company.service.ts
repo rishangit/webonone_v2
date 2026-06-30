@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
 import type { RegisterCompanyBody, UpdateCompanyStatusBody } from '../schemas/companySchemas.js'
 import * as repo from '../repositories/company.repository.js'
+import * as roleRepo from '../repositories/userRole.repository.js'
 import { sendTransactionalEmail, syncUserRole } from './emailClient.service.js'
 
 export type CompanyWithMembership = {
@@ -30,8 +31,9 @@ export type AdminCompanySummary = {
 
 function toCompanyWithMembership(
   company: repo.CompanyRow,
-  membership: repo.MembershipRow,
+  role: roleRepo.UserRoleRow,
 ): CompanyWithMembership {
+  const membershipRole = role.role === 'company_admin' ? 'company_admin' : 'member'
   return {
     company: {
       id: company.id,
@@ -42,7 +44,7 @@ function toCompanyWithMembership(
       approvedAt: company.approved_at ? company.approved_at.toISOString() : null,
     },
     membership: {
-      role: membership.role,
+      role: membershipRole,
     },
   }
 }
@@ -60,28 +62,21 @@ function toAdminCompanySummary(row: repo.CompanyRow): AdminCompanySummary {
 }
 
 export async function getMyCompany(userId: string): Promise<CompanyWithMembership | null> {
-  const membership = await repo.findMembershipByUserId(userId)
-  if (!membership) return null
+  const role = await roleRepo.findPrimaryCompanyRole(userId)
+  if (!role?.company_id) return null
 
-  const company = await repo.findCompanyById(membership.company_id)
+  const company = await repo.findCompanyById(role.company_id)
   if (!company) return null
 
-  return toCompanyWithMembership(company, membership)
+  return toCompanyWithMembership(company, role)
 }
 
 export async function registerCompany(
   userId: string,
   input: RegisterCompanyBody,
 ): Promise<CompanyWithMembership> {
-  const existing = await repo.findMembershipByUserId(userId)
-  if (existing) {
-    const err = new Error('User already belongs to a company')
-    ;(err as Error & { statusCode: number }).statusCode = 409
-    throw err
-  }
-
   const companyId = nanoid()
-  const membershipId = nanoid()
+  const roleId = nanoid()
 
   await repo.insertCompany({
     id: companyId,
@@ -101,23 +96,23 @@ export async function registerCompany(
     created_by_user_id: userId,
   })
 
-  await repo.insertMembership({
-    id: membershipId,
-    company_id: companyId,
+  await roleRepo.insertUserRole({
+    id: roleId,
     user_id: userId,
     role: 'member',
+    company_id: companyId,
   })
 
   const company = await repo.findCompanyById(companyId)
-  const membership = await repo.findMembershipByUserId(userId)
-  if (!company || !membership) {
+  const role = await roleRepo.findCompanyRole(userId, companyId)
+  if (!company || !role) {
     throw new Error('Failed to create company')
   }
 
   sendCompanyEmail('company_registered', company)
   syncCompanyMemberRole(userId, 'member', company)
 
-  return toCompanyWithMembership(company, membership)
+  return toCompanyWithMembership(company, role)
 }
 
 function sendCompanyEmail(
@@ -159,13 +154,13 @@ function syncCompanyMemberRole(
   })
 }
 
-export async function getSuperAdminProfile(email: string) {
-  const admin = await repo.findSuperAdminByEmail(email)
-  if (!admin) return null
+export async function getSuperAdminProfile(userId: string, email: string) {
+  const role = await roleRepo.findSuperAdminByUserId(userId)
+  if (!role) return null
   return {
-    id: admin.id,
-    email: admin.email,
-    displayName: admin.display_name,
+    id: userId,
+    email,
+    displayName: env.superAdminDisplayName,
   }
 }
 
@@ -179,14 +174,14 @@ export async function listPendingCompanies() {
   return rows.map(toAdminCompanySummary)
 }
 
-export async function approveCompany(companyId: string, superAdminId: string) {
-  return updateCompanyStatus(companyId, { status: 'approved' }, superAdminId)
+export async function approveCompany(companyId: string, superAdminUserId: string) {
+  return updateCompanyStatus(companyId, { status: 'approved' }, superAdminUserId)
 }
 
 export async function updateCompanyStatus(
   companyId: string,
   input: UpdateCompanyStatusBody,
-  superAdminId: string,
+  superAdminUserId: string,
 ) {
   const existing = await repo.findCompanyById(companyId)
   if (!existing) {
@@ -198,7 +193,7 @@ export async function updateCompanyStatus(
   const company = await repo.updateCompanyStatus(
     companyId,
     input.status,
-    input.status === 'approved' ? superAdminId : null,
+    input.status === 'approved' ? superAdminUserId : null,
   )
   if (!company) {
     const err = new Error('Company not found')
@@ -207,14 +202,14 @@ export async function updateCompanyStatus(
   }
 
   if (input.status === 'approved') {
-    await repo.promoteUserToCompanyAdmin(company.id, company.created_by_user_id)
+    await roleRepo.promoteUserToCompanyAdmin(company.id, company.created_by_user_id)
   } else {
-    await repo.demoteUserToMember(company.id, company.created_by_user_id)
+    await roleRepo.demoteUserToMember(company.id, company.created_by_user_id)
   }
 
-  const membership = await repo.findMembershipByUserId(company.created_by_user_id)
-  if (!membership) {
-    throw new Error('Membership not found after status update')
+  const role = await roleRepo.findCompanyRole(company.created_by_user_id, company.id)
+  if (!role) {
+    throw new Error('User role not found after status update')
   }
 
   if (input.status === 'approved') {
@@ -225,15 +220,16 @@ export async function updateCompanyStatus(
     syncCompanyMemberRole(company.created_by_user_id, 'member', company)
   }
 
-  return toCompanyWithMembership(company, membership)
+  return toCompanyWithMembership(company, role)
 }
 
 export async function seedSuperAdminFromEnv(): Promise<void> {
-  await repo.upsertSuperAdmin({
-    id: nanoid(),
-    email: env.superAdminEmail,
-    displayName: env.superAdminDisplayName,
-  })
+  if (!env.superAdminUserId) {
+    console.warn('[seed] SUPER_ADMIN_USER_ID not set — skipping super_admin role seed')
+    return
+  }
+
+  await roleRepo.upsertSuperAdminRole(env.superAdminUserId, nanoid())
 }
 
 export type SyncedEmailRole = {
@@ -245,13 +241,13 @@ export async function syncEmailRoleForUser(
   userId: string,
   email: string,
 ): Promise<SyncedEmailRole> {
-  const superAdmin = await getSuperAdminProfile(email)
+  const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
   if (superAdmin) {
     await syncUserRole({
       userId,
       role: 'super_admin',
       email,
-      displayName: superAdmin.displayName,
+      displayName: env.superAdminDisplayName,
     })
     return { role: 'super_admin', companyId: null }
   }

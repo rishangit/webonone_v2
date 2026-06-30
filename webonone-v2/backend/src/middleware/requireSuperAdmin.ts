@@ -1,7 +1,7 @@
 import type { NextFunction, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
-import * as repo from '../repositories/company.repository.js'
+import * as roleRepo from '../repositories/userRole.repository.js'
 import type { AuthenticatedRequest } from './auth.js'
 
 export interface SuperAdminRequest extends AuthenticatedRequest {
@@ -37,13 +37,17 @@ export async function requireSuperAdmin(
   }
 
   try {
-    const admin = await repo.findSuperAdminByEmail(email)
-    if (!admin) {
+    const role = await roleRepo.findSuperAdminByUserId(userId)
+    if (!role) {
       res.status(403).json({ message: 'Super admin access required', code: 'FORBIDDEN' })
       return
     }
 
-    req.superAdmin = { id: admin.id, email: admin.email, displayName: admin.display_name }
+    req.superAdmin = {
+      id: userId,
+      email,
+      displayName: env.superAdminDisplayName,
+    }
     next()
   } catch {
     res.status(500).json({ message: 'Internal server error', code: 'INTERNAL_ERROR' })
