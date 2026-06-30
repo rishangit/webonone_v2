@@ -4,27 +4,37 @@ import {
   createPasswordResetOtp,
   createPasswordResetSession,
   createRefreshToken,
+  createRegistrationEmailOtp,
+  createRegistrationSession,
   createUser,
   createEmailVerificationToken,
   findActivePasswordResetOtp,
+  findActiveRegistrationEmailOtp,
   findPasswordResetSessionByHash,
   findPasswordResetTokenByHash,
   findEmailVerificationTokenByHash,
   findRefreshTokenByHash,
+  findRegistrationSessionByHash,
   findUserByEmail,
   findUserById,
+  invalidateRegistrationDataForEmail,
   invalidateUnusedEmailVerificationTokens,
   invalidateUnusedPasswordResetOtps,
   invalidateUnusedPasswordResetSessions,
   invalidateUnusedPasswordResetTokens,
+  invalidateUnusedRegistrationEmailOtps,
+  invalidateUnusedRegistrationSessions,
   markEmailVerificationTokenUsed,
   markPasswordResetOtpUsed,
   markPasswordResetSessionUsed,
   markPasswordResetTokenUsed,
+  markRegistrationEmailOtpUsed,
+  markRegistrationSessionUsed,
   markUserEmailVerified,
   revokeRefreshToken,
   toUserProfile,
   updatePasswordResetOtpAttemptCount,
+  updateRegistrationEmailOtpAttemptCount,
   updateUserPassword,
   updateUserProfile,
   type UpdateUserProfileInput,
@@ -63,6 +73,7 @@ export class AuthError extends Error {
 const OTP_MAX_ATTEMPTS = 3
 const OTP_EXPIRY_MS = 60 * 1000
 const RESET_SESSION_EXPIRY_MS = 10 * 60 * 1000
+const REGISTRATION_SESSION_EXPIRY_MS = 30 * 60 * 1000
 
 async function issueAuthTokens(user: UserRow) {
   const { accessToken, expiresIn } = signAccessToken(user)
@@ -107,13 +118,113 @@ async function issueEmailVerification(user: UserRow): Promise<void> {
   })
 }
 
-export async function registerUser(input: {
-  email: string
-  password: string
+export async function requestRegisterEmailOtp(email: string): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase()
+  const existing = await findUserByEmail(normalizedEmail)
+  if (existing) {
+    throw new AuthError('Email already registered', 409, 'EMAIL_EXISTS')
+  }
+
+  await invalidateUnusedRegistrationEmailOtps(normalizedEmail)
+  await invalidateUnusedRegistrationSessions(normalizedEmail)
+
+  const otp = generatePasswordResetOtp()
+  const otpHash = hashToken(otp)
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS)
+
+  await createRegistrationEmailOtp({
+    id: nanoid(),
+    email: normalizedEmail,
+    otpHash,
+    expiresAt,
+  })
+
+  const localPart = normalizedEmail.split('@')[0] ?? normalizedEmail
+
+  void sendTransactionalEmail({
+    templateSlug: 'email_verification_otp',
+    toEmail: normalizedEmail,
+    payload: {
+      userName: localPart,
+      otp,
+    },
+    requestedByService: 'identity',
+  }).catch((err) => {
+    console.error('[auth] failed to send registration OTP email:', err)
+  })
+}
+
+export async function verifyRegisterEmailOtp(
+  email: string,
+  otp: string,
+): Promise<{ registrationSessionToken: string; expiresAt: string }> {
+  const normalizedEmail = email.trim().toLowerCase()
+  const normalizedOtp = otp.trim()
+
+  const existing = await findUserByEmail(normalizedEmail)
+  if (existing) {
+    throw new AuthError('Email already registered', 409, 'EMAIL_EXISTS')
+  }
+
+  const record = await findActiveRegistrationEmailOtp(normalizedEmail)
+  if (!record) {
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', { attemptsRemaining: 0 })
+  }
+
+  if (new Date(record.expires_at) < new Date()) {
+    throw new AuthError('Verification code expired', 401, 'OTP_EXPIRED')
+  }
+
+  if (record.attempt_count >= OTP_MAX_ATTEMPTS) {
+    throw new AuthError('Too many incorrect attempts', 403, 'OTP_MAX_ATTEMPTS')
+  }
+
+  const otpHash = hashToken(normalizedOtp)
+  if (otpHash !== record.otp_hash) {
+    const nextAttempts = record.attempt_count + 1
+    if (nextAttempts >= OTP_MAX_ATTEMPTS) {
+      await markRegistrationEmailOtpUsed(record.id)
+      throw new AuthError('Too many incorrect attempts', 403, 'OTP_MAX_ATTEMPTS')
+    }
+    await updateRegistrationEmailOtpAttemptCount(record.id, nextAttempts)
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', {
+      attemptsRemaining: OTP_MAX_ATTEMPTS - nextAttempts,
+    })
+  }
+
+  await markRegistrationEmailOtpUsed(record.id)
+  await invalidateUnusedRegistrationSessions(normalizedEmail)
+
+  const registrationSessionToken = generatePasswordResetToken()
+  const sessionExpiresAt = new Date(Date.now() + REGISTRATION_SESSION_EXPIRY_MS)
+
+  await createRegistrationSession({
+    id: nanoid(),
+    email: normalizedEmail,
+    tokenHash: hashToken(registrationSessionToken),
+    expiresAt: sessionExpiresAt,
+  })
+
+  return {
+    registrationSessionToken,
+    expiresAt: sessionExpiresAt.toISOString(),
+  }
+}
+
+export async function completeRegistration(input: {
+  registrationSessionToken: string
   firstName: string
   lastName: string
+  password: string
 }) {
-  const existing = await findUserByEmail(input.email)
+  const tokenHash = hashToken(input.registrationSessionToken)
+  const session = await findRegistrationSessionByHash(tokenHash)
+  if (!session || new Date(session.expires_at) < new Date()) {
+    throw new AuthError('Invalid or expired registration session', 400, 'INVALID_REGISTRATION_SESSION')
+  }
+
+  const email = session.email.trim().toLowerCase()
+  const existing = await findUserByEmail(email)
   if (existing) {
     throw new AuthError('Email already registered', 409, 'EMAIL_EXISTS')
   }
@@ -122,16 +233,16 @@ export async function registerUser(input: {
   const displayName = `${input.firstName} ${input.lastName}`.trim()
   const user = await createUser({
     id: nanoid(),
-    email: input.email,
+    email,
     passwordHash,
     displayName,
     firstName: input.firstName,
     lastName: input.lastName,
+    isEmailVerified: true,
   })
 
-  void issueEmailVerification(user).catch((err) => {
-    console.error('[auth] failed to send verification email:', err)
-  })
+  await markRegistrationSessionUsed(session.id)
+  await invalidateRegistrationDataForEmail(email)
 
   return toUserProfile(user)
 }

@@ -3,6 +3,8 @@ import { from, of } from 'rxjs'
 import { catchError, exhaustMap, map, mergeMap } from 'rxjs/operators'
 import { authApi } from '../services/authApi'
 import { clearResetSessionToken } from '../utils/resetSessionStorage'
+import { clearRegistrationEmail } from '../utils/registrationEmailStorage'
+import { clearRegistrationSessionToken } from '../utils/registrationSessionStorage'
 import { authActions } from './authSlice'
 
 type AuthEpic = Epic
@@ -28,8 +30,12 @@ const registerEpic: AuthEpic = (action$) =>
   action$.pipe(
     ofType(authActions.registerRequested.type),
     mergeMap((action: ReturnType<typeof authActions.registerRequested>) =>
-      from(authApi.register(action.payload)).pipe(
-        map(() => authActions.registerSucceeded()),
+      from(authApi.completeRegistration(action.payload)).pipe(
+        map(() => {
+          clearRegistrationEmail()
+          clearRegistrationSessionToken()
+          return authActions.registerSucceeded()
+        }),
         catchError((err: Error) => of(authActions.registerFailed(err.message))),
       ),
     ),

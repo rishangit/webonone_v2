@@ -47,8 +47,28 @@ async function authRequest<T>(path: string, accessToken: string, options?: Reque
 }
 
 export const authApi = {
-  register(body: { email: string; password: string; firstName: string; lastName: string }) {
-    return request<{ user: UserProfile }>('/auth/register', {
+  requestRegisterEmailOtp(body: { email: string }) {
+    return request<{ message: string }>('/auth/register/request-email-otp', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  verifyRegisterEmailOtp(body: { email: string; otp: string }) {
+    return request<{ registrationSessionToken: string; expiresAt: string }>(
+      '/auth/register/verify-email-otp',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    )
+  },
+  completeRegistration(body: {
+    registrationSessionToken: string
+    firstName: string
+    lastName: string
+    password: string
+  }) {
+    return request<{ user: UserProfile }>('/auth/register/complete', {
       method: 'POST',
       body: JSON.stringify(body),
     })

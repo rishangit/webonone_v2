@@ -123,10 +123,10 @@ export function VerifyResetOtpPage() {
           </Alert>
         ) : null}
         {!locked && !expired && attemptsRemaining !== null ? (
-          <p className="text-sm text-muted-foreground">{attemptsRemaining} attempt(s) remaining</p>
+          <p className="text-center text-sm text-muted-foreground">{attemptsRemaining} attempt(s) remaining</p>
         ) : null}
         {!locked && !expired ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             Code expires in {secondsLeft}s
           </p>
         ) : null}
@@ -140,7 +140,7 @@ export function VerifyResetOtpPage() {
             </AlertDescription>
           </Alert>
         ) : null}
-        <FormField label="4-digit code" htmlFor="otp" required error={fieldErrors.otp}>
+        <FormField label="4-digit code" htmlFor="otp" required error={fieldErrors.otp} className="text-center">
           <OtpInput
             id="otp"
             length={4}
@@ -148,6 +148,7 @@ export function VerifyResetOtpPage() {
             disabled={disabled}
             aria-invalid={Boolean(fieldErrors.otp)}
             autoFocus
+            className="justify-center"
             onChange={(otp) => setValues({ otp })}
           />
         </FormField>

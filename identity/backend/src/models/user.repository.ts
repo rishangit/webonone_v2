@@ -372,6 +372,94 @@ export async function invalidateUnusedPasswordResetSessions(userId: string): Pro
   await db('password_reset_sessions').where({ user_id: userId }).whereNull('used_at').del()
 }
 
+export interface RegistrationEmailOtpRow {
+  id: string
+  email: string
+  otp_hash: string
+  expires_at: Date
+  used_at: Date | null
+  attempt_count: number
+  created_at: Date
+}
+
+export async function invalidateUnusedRegistrationEmailOtps(email: string): Promise<void> {
+  await db('registration_email_otps').where({ email }).whereNull('used_at').del()
+}
+
+export async function createRegistrationEmailOtp(input: {
+  id: string
+  email: string
+  otpHash: string
+  expiresAt: Date
+}): Promise<void> {
+  await db('registration_email_otps').insert({
+    id: input.id,
+    email: input.email,
+    otp_hash: input.otpHash,
+    expires_at: input.expiresAt,
+    attempt_count: 0,
+    created_at: new Date(),
+  })
+}
+
+export async function findActiveRegistrationEmailOtp(
+  email: string,
+): Promise<RegistrationEmailOtpRow | undefined> {
+  return db<RegistrationEmailOtpRow>('registration_email_otps')
+    .where({ email })
+    .whereNull('used_at')
+    .orderBy('created_at', 'desc')
+    .first()
+}
+
+export async function updateRegistrationEmailOtpAttemptCount(
+  id: string,
+  attemptCount: number,
+): Promise<void> {
+  await db('registration_email_otps').where({ id }).update({ attempt_count: attemptCount })
+}
+
+export async function markRegistrationEmailOtpUsed(id: string): Promise<void> {
+  await db('registration_email_otps').where({ id }).update({ used_at: new Date() })
+}
+
+export async function invalidateUnusedRegistrationSessions(email: string): Promise<void> {
+  await db('registration_sessions').where({ email }).whereNull('used_at').del()
+}
+
+export async function createRegistrationSession(input: {
+  id: string
+  email: string
+  tokenHash: string
+  expiresAt: Date
+}): Promise<void> {
+  await db('registration_sessions').insert({
+    id: input.id,
+    email: input.email,
+    token_hash: input.tokenHash,
+    expires_at: input.expiresAt,
+    created_at: new Date(),
+  })
+}
+
+export async function findRegistrationSessionByHash(
+  tokenHash: string,
+): Promise<{ id: string; email: string; expires_at: Date; used_at: Date | null } | undefined> {
+  return db('registration_sessions')
+    .where({ token_hash: tokenHash })
+    .whereNull('used_at')
+    .first()
+}
+
+export async function markRegistrationSessionUsed(id: string): Promise<void> {
+  await db('registration_sessions').where({ id }).update({ used_at: new Date() })
+}
+
+export async function invalidateRegistrationDataForEmail(email: string): Promise<void> {
+  await invalidateUnusedRegistrationEmailOtps(email)
+  await invalidateUnusedRegistrationSessions(email)
+}
+
 export async function createEmailVerificationToken(input: {
   id: string
   userId: string

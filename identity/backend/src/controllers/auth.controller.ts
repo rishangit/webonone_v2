@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { AuthenticatedRequest } from '../middleware/validate.js'
 import {
   AuthError,
+  completeRegistration,
   createAuthCodeForUser,
   exchangeAuthCode,
   getCurrentUser,
@@ -10,21 +11,31 @@ import {
   logoutUser,
   patchCurrentUser,
   refreshAccessToken,
-  registerUser,
   requestPasswordReset,
+  requestRegisterEmailOtp,
   resendEmailVerification,
   resetPassword,
   resetPasswordWithSession,
   verifyEmail,
+  verifyRegisterEmailOtp,
   verifyResetOtp,
 } from '../services/auth.service.js'
 import { loginWithGoogle } from '../services/googleAuth.service.js'
 
-const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+const registerEmailOtpSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+})
+
+const verifyRegisterEmailOtpSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  otp: z.coerce.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
+})
+
+const completeRegistrationSchema = z.object({
+  registrationSessionToken: z.string().min(1),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
+  password: z.string().min(8),
 })
 
 const loginSchema = z.object({
@@ -108,10 +119,32 @@ function handleAuthError(err: unknown, res: Response): boolean {
   return false
 }
 
-export async function register(req: AuthenticatedRequest, res: Response) {
+export async function requestRegisterEmailOtpHandler(req: AuthenticatedRequest, res: Response) {
   try {
-    const body = registerSchema.parse(req.body)
-    const user = await registerUser(body)
+    const body = registerEmailOtpSchema.parse(req.body)
+    await requestRegisterEmailOtp(body.email)
+    res.json({ message: 'Verification code sent to your email.' })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function verifyRegisterEmailOtpHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const body = verifyRegisterEmailOtpSchema.parse(req.body)
+    const result = await verifyRegisterEmailOtp(body.email, body.otp)
+    res.json(result)
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function completeRegistrationHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const body = completeRegistrationSchema.parse(req.body)
+    const user = await completeRegistration(body)
     res.status(201).json({ user })
   } catch (err) {
     if (handleAuthError(err, res)) return

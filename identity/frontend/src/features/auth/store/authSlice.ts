@@ -76,7 +76,12 @@ export const authSlice = createSlice({
     },
     registerRequested(
       state,
-      _action: PayloadAction<{ email: string; password: string; firstName: string; lastName: string }>,
+      _action: PayloadAction<{
+        registrationSessionToken: string
+        firstName: string
+        lastName: string
+        password: string
+      }>,
     ) {
       state.isLoading = true
       state.error = null

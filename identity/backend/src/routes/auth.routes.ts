@@ -4,7 +4,9 @@ import { requireAuth } from '../middleware/validate.js'
 
 const router = Router()
 
-router.post('/register', authController.register)
+router.post('/register/request-email-otp', authController.requestRegisterEmailOtpHandler)
+router.post('/register/verify-email-otp', authController.verifyRegisterEmailOtpHandler)
+router.post('/register/complete', authController.completeRegistrationHandler)
 router.post('/login', authController.login)
 router.post('/google', authController.googleLogin)
 router.post('/forgot-password', authController.forgotPassword)
