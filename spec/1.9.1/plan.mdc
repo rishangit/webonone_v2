@@ -1,7 +1,7 @@
 ---
-description: Implementation plan for spec 1.9.1 — OTP password reset via Email, 3-attempt lockout, role-scoped History/Templates
+description: Implementation plan for spec 1.9.1 — OTP password reset via Email, 3-attempt lockout, role-scoped History/Templates, OtpInput control
 alwaysApply: false
-globs: identity/**, email/**, webonone-v2/**, packages/platform-nav/**
+globs: identity/**, email/**, webonone-v2/**, packages/platform-nav/**, ui-kit/**
 ---
 
 # Implementation plan — Spec 1.9.1
@@ -10,7 +10,7 @@ globs: identity/**, email/**, webonone-v2/**, packages/platform-nav/**
 
 Spec 1.9.1 replaces link-based password reset with a **4-digit OTP** (1-minute expiry, **max 3 failed attempts** per code) sent by the Email microservice. Identity owns a three-step UX (email → OTP with countdown → new password). Email seeds `password_reset_otp` and hardens **History** / **Templates** API scope for super admin vs company admin. See [01-overview.md](./01-overview.md), [02-identity-otp-reset.md](./02-identity-otp-reset.md), [03-email-history-templates.md](./03-email-history-templates.md).
 
-**Services:** `identity/` (FE + BE), `email/` (FE + BE), `webonone-v2/` (FE nav), `packages/platform-nav`. WebOnOne BE unchanged.
+**Services:** `identity/` (FE + BE), `email/` (FE + BE), `webonone-v2/` (FE nav), `packages/platform-nav`, `ui-kit/`. WebOnOne BE unchanged.
 
 ## Branch and prerequisites
 
@@ -109,6 +109,7 @@ Spec: [02-identity-otp-reset.md](./02-identity-otp-reset.md)
 | 1-min expiry | Server rejects expired OTP; UI countdown matches |
 | Role UI | Super admin: all history + platform templates; company admin: scoped only |
 | Platform Email nav | Email group → History / Templates (not dashboard) |
+| OTP input UI | `OtpInput` on verify-reset step; showcased in UI Kit |
 | Security | No OTP in URL/logs; generic forgot-password response |
 | Type-check | `identity-root`, `email-root` |
 
@@ -151,12 +152,32 @@ Spec: [03-email-history-templates.md](./03-email-history-templates.md) — subta
 
 ---
 
+## Phase 6 — UI Kit OTP input control
+
+**Goal:** `OtpInput` multi-box control; showcase; Identity verify-reset consumer.
+
+**Exit criteria:** 4-digit entry with paste/backspace; Identity uses `OtpInput`; Controls showcase demo.
+
+| Task | Paths |
+|------|-------|
+| `OtpInput` component | `ui-kit/package/src/components/OtpInput.tsx` — `length` prop default 4 |
+| Export | `ui-kit/package/src/index.ts` |
+| Showcase demo | `ui-kit/showcase/src/pages/ControlsPage.tsx` |
+| Identity consumer | `identity/frontend/src/features/auth/pages/VerifyResetOtpPage.tsx` |
+
+Spec: [04-ui-kit-otp-input.md](./04-ui-kit-otp-input.md) — subtask **86ey3rq8b**
+
+**Verify:** `npm run type-check -w ui-kit-root`; `npm run type-check -w identity-root`
+
+---
+
 ## ClickUp traceability
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | Phases 1–4 |
 | left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
+| need to have the control for OTP | 86ey3rq8b | Phase 6 |
 
 ---
 
@@ -181,6 +202,7 @@ npm run migrate -w email-root
 npm run type-check -w identity-root
 npm run type-check -w email-root
 npm run type-check -w webonone-v2-root
+npm run type-check -w ui-kit-root
 npm run dev:identity
 npm run dev:email
 ```
