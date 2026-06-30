@@ -12,6 +12,7 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  Pagination,
   mapZodIssuesToFieldErrors,
   Spinner,
   Textarea,
@@ -54,6 +55,13 @@ export function TemplateEditorPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [restoringId, setRestoringId] = useState<string | null>(null)
+  const [versionPage, setVersionPage] = useState(1)
+  const [versionPageSize, setVersionPageSize] = useState(10)
+
+  const visibleVersions = versions.slice(
+    (versionPage - 1) * versionPageSize,
+    versionPage * versionPageSize,
+  )
 
   useEffect(() => {
     if (!id) return
@@ -69,6 +77,7 @@ export function TemplateEditorPage() {
         ])
         setTemplate(tpl)
         setVersions(vers)
+        setVersionPage(1)
         setValues({
           name: tpl.name,
           subject: tpl.subject,
@@ -241,27 +250,40 @@ export function TemplateEditorPage() {
             {versions.length === 0 ? (
               <ItemListEmpty>No versions yet.</ItemListEmpty>
             ) : (
-              <ItemList>
-                {versions.map((version) => (
-                  <ItemListItem key={version.id}>
-                    <ItemListContent>
-                      <p className="font-medium">v{version.versionNumber}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {version.subject} · {new Date(version.createdAt).toLocaleString()}
-                      </p>
-                    </ItemListContent>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={restoringId === version.id}
-                      onClick={() => void handleRestoreVersion(version.id)}
-                    >
-                      Restore
-                    </Button>
-                  </ItemListItem>
-                ))}
-              </ItemList>
+              <>
+                <ItemList>
+                  {visibleVersions.map((version) => (
+                    <ItemListItem key={version.id}>
+                      <ItemListContent>
+                        <p className="font-medium">v{version.versionNumber}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {version.subject} · {new Date(version.createdAt).toLocaleString()}
+                        </p>
+                      </ItemListContent>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={restoringId === version.id}
+                        onClick={() => void handleRestoreVersion(version.id)}
+                      >
+                        Restore
+                      </Button>
+                    </ItemListItem>
+                  ))}
+                </ItemList>
+                <Pagination
+                  totalCount={versions.length}
+                  currentPage={versionPage}
+                  pageSize={versionPageSize}
+                  pageSizeOptions={[5, 10, 25]}
+                  onPageChange={setVersionPage}
+                  onPageSizeChange={(nextSize) => {
+                    setVersionPageSize(nextSize)
+                    setVersionPage(1)
+                  }}
+                />
+              </>
             )}
           </section>
         </div>

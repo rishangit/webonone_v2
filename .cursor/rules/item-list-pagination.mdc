@@ -43,7 +43,7 @@ setPage(data.page)
 />
 ```
 
-Reference: `email/frontend/src/features/history/pages/HistoryPage.tsx`, `queue/pages/QueuePage.tsx`, `media/.../ScopedFolderBrowser.tsx`.
+Reference: `email/frontend/src/features/history/pages/HistoryPage.tsx`, `queue/pages/QueuePage.tsx`, `dashboard/pages/DashboardPage.tsx`, `templates/pages/TemplateEditorPage.tsx`, `media/.../ScopedFolderBrowser.tsx`.
 
 ## Client pagination
 

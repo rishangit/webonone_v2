@@ -12,6 +12,7 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  Pagination,
   Spinner,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -19,7 +20,7 @@ import { authActions } from '@/features/auth/store/authSlice'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { emailApi } from '@/shared/services/emailApi'
 import { apiClient } from '@/shared/services/apiClient'
-import type { DashboardStats } from '@/shared/types/email.types'
+import type { DashboardStats, HistoryItem } from '@/shared/types/email.types'
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
@@ -44,6 +45,10 @@ export function DashboardPage() {
 
   const role: EmailRole = user?.role ?? 'member'
   const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [recentItems, setRecentItems] = useState<HistoryItem[]>([])
+  const [recentPage, setRecentPage] = useState(1)
+  const [recentTotal, setRecentTotal] = useState(0)
+  const [recentPageSize] = useState(10)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -56,29 +61,38 @@ export function DashboardPage() {
       setLoading(true)
       setError(null)
       try {
-        const [me, data] = await Promise.all([
+        const [me, data, history] = await Promise.all([
           apiClient<{ user: { role: EmailRole } }>('/me'),
           emailApi.getDashboardStats(),
+          emailApi.getHistory({ page: recentPage, pageSize: recentPageSize }),
         ])
         dispatch(authActions.setUserRole(me.user.role))
         setStats(data)
+        setRecentItems(history.items)
+        setRecentTotal(history.total)
+        setRecentPage(history.page)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard')
         setStats(null)
+        setRecentItems([])
+        setRecentTotal(0)
       } finally {
         setLoading(false)
       }
     }
 
     void load()
-  }, [accessToken, dispatch])
+  }, [accessToken, dispatch, recentPage, recentPageSize])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
   }
 
   const isMember = role === 'member'
-  const recent = stats?.recentActivity ?? []
+
+  function handleRecentPageChange(nextPage: number) {
+    setRecentPage(nextPage)
+  }
 
   return (
     <FeaturePage
@@ -117,13 +131,13 @@ export function DashboardPage() {
 
           <section className="space-y-3">
             <h2 className="text-lg font-medium">Recent activity</h2>
-            {recent.length === 0 ? (
+            {recentItems.length === 0 ? (
               <ItemListEmpty>
                 {isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
               </ItemListEmpty>
             ) : (
               <ItemList>
-                {recent.map((item) => (
+                {recentItems.map((item) => (
                   <ItemListItem key={item.id}>
                     <ItemListContent>
                       <p className="font-medium">{item.recipient}</p>
@@ -136,6 +150,12 @@ export function DashboardPage() {
                 ))}
               </ItemList>
             )}
+            <Pagination
+              totalCount={recentTotal}
+              currentPage={recentPage}
+              pageSize={recentPageSize}
+              onPageChange={handleRecentPageChange}
+            />
           </section>
         </>
       ) : null}
