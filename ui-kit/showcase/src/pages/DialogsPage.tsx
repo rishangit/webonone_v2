@@ -25,10 +25,51 @@ import {
   SelectTrigger,
   SelectValue,
   type DialogSizePreset,
+  type LoadUsersFn,
+  type UserOption,
+  UserSelectionDialog,
 } from '@webonone/ui-kit'
 import { DemoSection } from '@/components/DemoSection'
 
 const widthPresets: DialogSizePreset[] = ['small', 'medium', 'large', 'xlarge', 'auto']
+
+const USER_ROLE_OPTIONS = [
+  { value: 'member', label: 'Member' },
+  { value: 'company_admin', label: 'Company admin' },
+  { value: 'super_admin', label: 'Super admin' },
+]
+
+const MOCK_DIRECTORY_USERS: UserOption[] = Array.from({ length: 120 }, (_, index) => ({
+  id: `mock-user-${index + 1}`,
+  displayName: `Mock User ${index + 1}`,
+  email: `mock.user${index + 1}@example.com`,
+  role: USER_ROLE_OPTIONS[index % USER_ROLE_OPTIONS.length]!.value,
+}))
+
+async function mockLoadUsers(params: Parameters<LoadUsersFn>[0]) {
+  await new Promise((resolve) => window.setTimeout(resolve, 400))
+
+  let filtered = MOCK_DIRECTORY_USERS
+  const query = params.search.trim().toLowerCase()
+  if (query) {
+    filtered = filtered.filter(
+      (user) =>
+        user.displayName.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query),
+    )
+  }
+  if (params.role) {
+    filtered = filtered.filter((user) => user.role === params.role)
+  }
+
+  const start = (params.page - 1) * params.pageSize
+  const users = filtered.slice(start, start + params.pageSize)
+
+  return {
+    users,
+    hasMore: start + params.pageSize < filtered.length,
+  }
+}
 
 const mockItems = [
   { id: '1', name: 'Summer' },
@@ -120,6 +161,8 @@ export function DialogsPage() {
   const [formValues, setFormValues] = useState({ email: '', role: '' })
   const [formErrors, setFormErrors] = useState<Partial<Record<string, string>>>({})
   const [terms, setTerms] = useState(false)
+  const [userSelectOpen, setUserSelectOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<UserOption | null>(null)
 
   function openDelete(item: (typeof mockItems)[0]) {
     setDeleteTarget(item)
@@ -321,6 +364,32 @@ export function DialogsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      </DemoSection>
+
+      <DemoSection id="user-selection-dialog" title="UserSelectionDialog — search + infinite scroll">
+        <div className="space-y-3">
+          <Button variant="outline" onClick={() => setUserSelectOpen(true)}>
+            Open user selection
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Selected:{' '}
+            {selectedUser ? (
+              <span className="text-foreground">
+                {selectedUser.displayName} · {selectedUser.email}
+              </span>
+            ) : (
+              '(none)'
+            )}
+          </p>
+        </div>
+        <UserSelectionDialog
+          open={userSelectOpen}
+          onOpenChange={setUserSelectOpen}
+          onSelect={setSelectedUser}
+          loadUsers={mockLoadUsers}
+          roleOptions={USER_ROLE_OPTIONS}
+          description="Scroll to load more users. Click a row to select."
+        />
       </DemoSection>
 
       <DemoSection id="custom-dialog-nested" title="CustomDialog — stacked siblings">

@@ -51,6 +51,8 @@ If primitives are missing or need API changes, update **`ui-kit/package` first**
 
 Primary row click (select, navigate, toggle) may stay on the row body — only **secondary actions** go in the menu.
 
+For **single-select user pickers** in a modal (search + infinite scroll, no 3-dot menu), use **`UserSelectionDialog`** from `@webonone/ui-kit` instead of hand-rolling `ItemList` inside `CustomDialog`. See `ui-kit/package/src/components/UserSelectionDialog.tsx` and spec `1.9.3`.
+
 ## File layout
 
 ```text

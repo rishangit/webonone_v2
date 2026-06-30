@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, Callout, CalloutDescription, CalloutTitle, FeaturePage } from '@webonone/ui-kit'
 import { RegisterCompanyDialog } from '../components/RegisterCompanyDialog'
+import { UserSelectionDemo } from '../components/UserSelectionDemo'
 import { companyApi, type CompanySummary } from '../services/companyApi'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
 
@@ -118,6 +119,8 @@ export function BasicSettingsPage() {
           ) : null}
         </section>
       )}
+
+      <UserSelectionDemo />
 
       <RegisterCompanyDialog
         open={registerOpen}
