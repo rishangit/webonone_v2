@@ -40,7 +40,7 @@ Implementation branch: **`spec/1.9.2`**
 ## Revision history
 
 - **Subtask 86ey3ypk3** — Pagination demo on Components showcase tab (with ItemList); remove Controls duplicate.
-- **Subtask 86ey3ykth** — Roll out `Pagination` to Email Queue/Templates, WebOnOne Companies/Themes, Media browser; add `item-list-pagination.mdc`.
+- **Subtask 86ey3ykth (revision)** — Audit Email + WebOnOne for remaining list surfaces; Dashboard recent via `getHistory`; Template editor version pagination.
 
 ## ClickUp traceability
 

@@ -6,15 +6,17 @@ Adopt `@webonone/ui-kit` **`Pagination`** on every service list backed by server
 
 | Service | Page | API | Notes |
 |---------|------|-----|-------|
-| Email | `HistoryPage` | `getHistory` | Done in Phase 2 |
-| Email | `QueuePage` | `listQueue` | Pass `page`, `pageSize`; preserve tab filter on page change |
-| Media | `ScopedFolderBrowser` | `listMediaItems` | Paginate media files; folders always from current path |
+| Email | `HistoryPage` | `getHistory` | Full history with filters |
+| Email | `QueuePage` | `listQueue` | Tab filter preserved on page change |
+| Email | `DashboardPage` | `getHistory` | Recent activity list (stats cards stay on `getDashboardStats`) |
+| Media | `ScopedFolderBrowser` | `listMediaItems` | Media files per folder; folders from current path |
 
 ## Client-paginated lists (slice in page; `totalCount = items.length`)
 
 | Service | Page | List component |
 |---------|------|----------------|
 | Email | `TemplatesPage` | `TemplatesList` |
+| Email | `TemplateEditorPage` | Version history `ItemList` |
 | WebOnOne v2 | `CompaniesPage` | `CompaniesList` |
 | WebOnOne v2 | `SystemThemePage` | `ThemeList` |
 
@@ -39,16 +41,37 @@ FeaturePage
 
 Place `Pagination` **below** the list with `gap-6` from `FeaturePage` body spacing. Reset to page 1 when filters or tab change.
 
+## Audit — Email service
+
+| Surface | Pagination | Rationale |
+|---------|------------|-----------|
+| History | Yes — server | Primary audit trail |
+| Queue | Yes — server | Large job backlog |
+| Templates list | Yes — client | All templates loaded once |
+| Template editor versions | Yes — client | Version list can grow |
+| Dashboard recent activity | Yes — server (`getHistory`) | Replaces fixed 10-row snapshot from stats |
+| Dashboard stat cards | No | Aggregate counts only |
+| Providers | No | Single SMTP card |
+| Send / Test | No | Form + template picker, not collection list |
+
+## Audit — WebOnOne v2 (core app)
+
+| Surface | Pagination | Rationale |
+|---------|------------|-----------|
+| Companies (super admin) | Yes — client | `CompaniesList` |
+| System Theme list | Yes — client | `ThemeList` |
+| Basic Settings | No | Single company detail |
+| Home | No | Static welcome |
+
 ## Out of scope
 
-- Dashboard widgets showing a fixed recent subset (Email dashboard)
-- Template version history on editor (small list)
 - Identity (no item lists in 1.9.2)
+- Template picker dropdowns on Send page (not `ItemList` collections)
 
 ## Acceptance
 
-- [ ] Email Queue uses `Pagination`
-- [ ] Email Templates, WebOnOne Companies, WebOnOne Themes use client-side `Pagination`
+- [ ] Email Queue, Templates, Dashboard recent activity use `Pagination`
+- [ ] Email Template editor version history uses client `Pagination`
 - [ ] Media folder browser paginates media items via API
 - [ ] `item-list-pagination.mdc` indexed; item-list skill updated
 - [ ] Type-check passes for `ui-kit-root`, `email-root`, `webonone-v2-root`, `media-root`

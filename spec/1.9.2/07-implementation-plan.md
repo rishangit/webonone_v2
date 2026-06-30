@@ -98,6 +98,21 @@ Spec: subtask **86ey3ykth**
 
 ---
 
+## Phase 5 — Service pagination rollout (continued)
+
+**Goal:** Complete Email + core app audit per updated subtask **86ey3ykth**.
+
+| Task | Detail |
+|------|--------|
+| `DashboardPage.tsx` | Recent activity via `getHistory` + `Pagination` (keep stat cards from dashboard stats) |
+| `TemplateEditorPage.tsx` | Client pagination on version history `ItemList` |
+
+**Exit criteria:** Type-check email-root.
+
+Spec: [04-service-pagination-rollout.md](./04-service-pagination-rollout.md) — audit tables
+
+---
+
 ## Phase 3 — Verification
 
 | Task | Detail |
