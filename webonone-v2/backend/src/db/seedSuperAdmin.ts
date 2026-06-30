@@ -3,7 +3,13 @@ import { seedSuperAdminFromEnv } from '../services/company.service.js'
 
 async function main() {
   await seedSuperAdminFromEnv()
-  console.log(`Super admin seeded for ${env.superAdminEmail}`)
+  if (env.superAdminUserId) {
+    console.log(
+      `Super admin role seeded: user_id=${env.superAdminUserId} (${env.superAdminEmail})`,
+    )
+  } else {
+    console.warn('No SUPER_ADMIN_USER_ID set — super_admin role not seeded')
+  }
 }
 
 main().catch((err) => {

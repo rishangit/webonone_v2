@@ -99,7 +99,7 @@ export async function registerCompany(
   await roleRepo.insertUserRole({
     id: roleId,
     user_id: userId,
-    role: 'member',
+    role: 'company_admin',
     company_id: companyId,
   })
 
@@ -110,7 +110,7 @@ export async function registerCompany(
   }
 
   sendCompanyEmail('company_registered', company)
-  syncCompanyMemberRole(userId, 'member', company)
+  syncCompanyMemberRole(userId, 'company_admin', company)
 
   return toCompanyWithMembership(company, role)
 }
