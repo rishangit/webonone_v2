@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Alert, AlertDescription, FeaturePage, Pagination, Spinner } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
 import { TemplatesList } from '../components/TemplatesList'
 
 export function TemplatesPage() {
+  const handoffPending = usePlatformHandoffPending()
   const { accessToken } = useAppSelector((s) => s.auth)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [page, setPage] = useState(1)
@@ -35,6 +37,10 @@ export function TemplatesPage() {
     }
     void loadTemplates()
   }, [accessToken])
+
+  if (handoffPending) {
+    return <PlatformHandoffSpinner />
+  }
 
   if (!accessToken) {
     return <Navigate to="/login" replace />

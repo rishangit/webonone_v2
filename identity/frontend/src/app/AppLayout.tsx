@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant, resolvePlatformLogoutLoginUrl, useServiceRedirect } from '@webonone/platform-nav'
+import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { AppShell, BrandLogo, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store'
+import { useAppSelector } from '@/app/store/hooks'
+import { persistAuthSession } from '@/features/auth/utils/authStorage'
 import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { syncPlatformEmailRole } from '@/features/email/utils/syncEmailRole'
@@ -43,7 +43,6 @@ export function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { redirect, error: navError, clearError } = useServiceRedirect()
 
@@ -97,9 +96,8 @@ export function AppLayout() {
       : null
 
   function handleLogout() {
-    const parentLoginUrl = resolvePlatformLogoutLoginUrl(returnUrl)
-    dispatch(authActions.logout())
-    window.location.assign(parentLoginUrl)
+    persistAuthSession(null)
+    performPlatformLogout(returnUrl)
   }
 
   function handleProfileClick() {

@@ -17,6 +17,7 @@ import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { SessionRoleGate } from '@/features/session/components/SessionRoleGate'
+import { formatSessionRoleLabel } from '@/features/session/utils/formatSessionRoleLabel'
 
 function withEmailNavAction(
   items: NavConfigItem[],
@@ -47,6 +48,7 @@ export function AppLayout() {
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const preferences = useAppSelector((s) => s.systemTheme.preferences)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const roleLabel = formatSessionRoleLabel(activeRole)
   const { redirect, error: navError, clearError } = useServiceRedirect()
 
   useIdentityUserRefresh()
@@ -130,6 +132,7 @@ export function AppLayout() {
                   displayName: user.displayName,
                   avatarUrl: user.avatarUrl,
                   email: user.email,
+                  roleLabel,
                 }
               : null
           }

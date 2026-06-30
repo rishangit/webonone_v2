@@ -15,7 +15,11 @@ export async function syncPlatformEmailRole(accessToken: string, returnUrl: stri
 
   const res = await fetch(`${apiBase}/company/me/sync-email-role`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({}),
   })
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as { message?: string }

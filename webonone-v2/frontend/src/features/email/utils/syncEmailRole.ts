@@ -15,6 +15,6 @@ export async function syncEmailRoleBeforeHandoff(
 
   await apiClient('/company/me/sync-email-role', {
     method: 'POST',
-    body: body ? JSON.stringify(body) : undefined,
+    body: JSON.stringify(body ?? {}),
   })
 }

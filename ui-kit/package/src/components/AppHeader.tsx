@@ -16,6 +16,8 @@ export interface AppHeaderUser {
   displayName: string
   avatarUrl?: string | null
   email?: string
+  /** Shown below email in the user dropdown (e.g. platform role). */
+  roleLabel?: string
 }
 
 interface AppHeaderProps {
@@ -91,6 +93,9 @@ function AppHeader({
                     {user.email ? (
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     ) : null}
+                    {user.roleLabel ? (
+                      <p className="text-xs leading-none text-muted-foreground">{user.roleLabel}</p>
+                    ) : null}
                   </div>
                 </DropdownMenuItem>
               ) : (
@@ -99,6 +104,9 @@ function AppHeader({
                     <p className="text-sm font-medium leading-none">{user.displayName}</p>
                     {user.email ? (
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    ) : null}
+                    {user.roleLabel ? (
+                      <p className="text-xs leading-none text-muted-foreground">{user.roleLabel}</p>
                     ) : null}
                   </div>
                 </DropdownMenuLabel>

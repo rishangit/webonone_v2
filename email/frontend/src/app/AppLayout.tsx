@@ -3,13 +3,13 @@ import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-
 import {
   CORE_NAV_QUERY_PARAM,
   parsePlatformNavVariant,
-  resolvePlatformLogoutLoginUrl,
+  performPlatformLogout,
   useServiceRedirect,
 } from '@webonone/platform-nav'
 import { Alert, AlertDescription, AppShell, BrandLogo, PageShell, Spinner } from '@webonone/ui-kit'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store/authSlice'
+import { authActions, clearEmailAuthStorage } from '@/features/auth/store/authSlice'
 import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { useRefreshEmailRole } from '@/features/auth/hooks/useRefreshEmailRole'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
@@ -30,8 +30,8 @@ export function AppLayout() {
 
   const returnUrlFromQuery = parsePlatformReturnUrl(searchParams)
   const isPlatformHandoff = hasPlatformHandoff(searchParams)
-  const isPlatformMode = Boolean(returnUrlFromQuery || isPlatformHandoff)
-  const effectiveReturnUrl = isPlatformMode ? (returnUrlFromQuery ?? platform.returnUrl) : null
+  const effectiveReturnUrl = returnUrlFromQuery ?? platform.returnUrl
+  const isPlatformMode = Boolean(effectiveReturnUrl || isPlatformHandoff)
   const isAuthenticated = Boolean(accessToken && user)
   const usePlatformShell = isPlatformMode && (isAuthenticated || isPlatformHandoff)
 
@@ -58,7 +58,7 @@ export function AppLayout() {
   ])
 
   useEffect(() => {
-    if (!isPlatformMode) {
+    if (!isPlatformMode && !isPlatformHandoff) {
       dispatch(authActions.clearPlatformContext())
       return
     }
@@ -96,9 +96,9 @@ export function AppLayout() {
   }
 
   function handleLogout() {
-    const parentLoginUrl = resolvePlatformLogoutLoginUrl(effectiveReturnUrl)
-    dispatch(authActions.logout())
-    window.location.assign(parentLoginUrl)
+    const returnUrl = effectiveReturnUrl
+    clearEmailAuthStorage()
+    performPlatformLogout(returnUrl)
   }
 
   const headerUser =

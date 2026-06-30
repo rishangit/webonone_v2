@@ -13,7 +13,6 @@ import {
   hasPlatformHandoff,
   parsePlatformReturnUrl,
 } from '@/features/auth/utils/platformReturn'
-import { syncPlatformEmailRole } from '@/features/auth/utils/syncPlatformEmailRole'
 
 type PlatformBootstrapState = {
   isBootstrapping: boolean
@@ -28,14 +27,19 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [bootstrapError, setBootstrapError] = useState<string | null>(null)
-  const [isBootstrapping, setIsBootstrapping] = useState(false)
-
   const code = searchParams.get('code')
   const isHandoff = hasPlatformHandoff(searchParams)
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null)
+  const [isBootstrapping, setIsBootstrapping] = useState(() => Boolean(code && isHandoff))
 
   useEffect(() => {
-    if (!code || !isHandoff || exchangedPlatformCodes.has(code)) {
+    if (!code || !isHandoff) {
+      setIsBootstrapping(false)
+      return
+    }
+
+    if (exchangedPlatformCodes.has(code)) {
+      setIsBootstrapping(false)
       return
     }
 
@@ -49,10 +53,6 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
 
     bootstrapPlatformSession(code, redirectUri)
       .then(async (result) => {
-        if (validatedReturnUrl) {
-          await syncPlatformEmailRole(result.accessToken, validatedReturnUrl)
-        }
-
         const role = await fetchEmailRole(result.accessToken)
 
         if (validatedReturnUrl) {

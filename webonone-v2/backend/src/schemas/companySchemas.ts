@@ -25,9 +25,12 @@ export const updateCompanyStatusBodySchema = z.object({
 export type RegisterCompanyBody = z.infer<typeof registerCompanyBodySchema>
 export type UpdateCompanyStatusBody = z.infer<typeof updateCompanyStatusBodySchema>
 
-export const syncEmailRoleBodySchema = z.object({
-  sessionRole: z.enum(['super_admin', 'company_admin', 'member']).optional(),
-  companyId: z.string().trim().min(1).optional().nullable(),
-})
+export const syncEmailRoleBodySchema = z.preprocess(
+  (val) => (val === undefined || val === null ? {} : val),
+  z.object({
+    sessionRole: z.enum(['super_admin', 'company_admin', 'member']).optional(),
+    companyId: z.string().trim().min(1).optional().nullable(),
+  }),
+)
 
 export type SyncEmailRoleBody = z.infer<typeof syncEmailRoleBodySchema>

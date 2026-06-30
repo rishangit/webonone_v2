@@ -18,6 +18,7 @@ import {
   Spinner,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
 import { emailApi } from '@/shared/services/emailApi'
 import type { HistoryItem } from '@/shared/types/email.types'
 import { HistoryList } from '../components/HistoryList'
@@ -31,6 +32,7 @@ function endOfDayIso(date: Date): string {
 }
 
 export function HistoryPage() {
+  const handoffPending = usePlatformHandoffPending()
   const { accessToken } = useAppSelector((s) => s.auth)
   const userRole = useAppSelector((s) => s.auth.user?.role)
   const [items, setItems] = useState<HistoryItem[]>([])
@@ -76,6 +78,10 @@ export function HistoryPage() {
     void loadHistory(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change
   }, [status, accessToken])
+
+  if (handoffPending) {
+    return <PlatformHandoffSpinner />
+  }
 
   if (!accessToken) {
     return <Navigate to="/login" replace />

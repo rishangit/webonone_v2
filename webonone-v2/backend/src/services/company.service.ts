@@ -250,8 +250,16 @@ export type AssumableRolesResponse = {
 }
 
 export async function getAssumableRoles(userId: string): Promise<AssumableRolesResponse> {
+  const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
   const primaryRole = await roleRepo.findPrimaryCompanyRole(userId)
+
   if (!primaryRole?.company_id) {
+    if (superAdmin) {
+      return {
+        roles: [{ role: 'super_admin', companyId: null, label: 'Super Admin' }],
+        hasCompanyMembership: false,
+      }
+    }
     return {
       roles: [{ role: 'member', companyId: null, label: 'Default User' }],
       hasCompanyMembership: false,
@@ -263,7 +271,6 @@ export async function getAssumableRoles(userId: string): Promise<AssumableRolesR
   const companyId = primaryRole.company_id
   const roles: AssumableRoleOption[] = []
 
-  const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
   if (superAdmin) {
     roles.push({ role: 'super_admin', companyId: null, label: 'Super Admin' })
   }

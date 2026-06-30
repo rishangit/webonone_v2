@@ -16,6 +16,11 @@ interface AuthState {
 const STORAGE_KEY = 'email_auth'
 const PLATFORM_STORAGE_KEY = 'email_platform_context'
 
+export function clearEmailAuthStorage(): void {
+  sessionStorage.removeItem(STORAGE_KEY)
+  sessionStorage.removeItem(PLATFORM_STORAGE_KEY)
+}
+
 function loadStoredPlatform(): PlatformContext {
   try {
     const raw = sessionStorage.getItem(PLATFORM_STORAGE_KEY)
