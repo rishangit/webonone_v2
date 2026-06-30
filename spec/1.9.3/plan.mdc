@@ -1,100 +1,136 @@
----
-description: Implementation plan for spec 1.9.3 — UI Kit UserSelectionDialog, showcase demo, WebOnOne reference consumer
-alwaysApply: false
-globs: ui-kit/**, webonone-v2/frontend/**, .cursor/skills/item-list/**
----
-
-# Implementation plan — Spec 1.9.3
-
-## Summary
-
-Reusable **`UserSelectionDialog`** in `@webonone/ui-kit`: `CustomDialog` shell, debounced search, optional role filter, infinite scroll via injectable `loadUsers`, single-select `onSelect`. Showcase demo on Dialogs tab; WebOnOne reference consumer with mock loader. See [02-ui-kit-user-selection-dialog.md](./02-ui-kit-user-selection-dialog.md), [03-showcase-dialogs-demo.md](./03-showcase-dialogs-demo.md), [04-service-integration.md](./04-service-integration.md).
-
-## Branch and prerequisites
-
-| Item | Value |
-|------|--------|
-| Branch | `spec/1.9.3` |
-| Package builds | `npm run build -w @webonone/ui-kit` before consumer prod builds |
-
----
-
-## Phase 1 — UI Kit UserSelectionDialog
-
-**Goal:** Component + types + export.
-
-| Task | Paths |
-|------|-------|
-| Dialog component | `ui-kit/package/src/components/UserSelectionDialog.tsx` |
-| Export | `ui-kit/package/src/index.ts` |
-
-**Exit criteria:** Infinite scroll, search debounce, role filter, row select closes dialog.
-
-**Verify:** `npm run type-check -w ui-kit-root`
-
----
-
-## Phase 2 — Showcase Dialogs demo
-
-**Goal:** Mock `loadUsers` with 120 users.
-
-| Task | Paths |
-|------|-------|
-| Demo section | `ui-kit/showcase/src/pages/DialogsPage.tsx` |
-
-**Verify:** `npm run type-check -w ui-kit-root`
-
----
-
-## Phase 3 — WebOnOne reference consumer
-
-**Goal:** Service integration with mock `loadUsers`.
-
-| Task | Paths |
-|------|-------|
-| Demo component | `webonone-v2/frontend/src/features/settings/basic/components/UserSelectionDemo.tsx` |
-| Wire on Basic Settings | `webonone-v2/frontend/src/features/settings/basic/pages/BasicSettingsPage.tsx` (or equivalent) |
-
-**Verify:** `npm run type-check -w webonone-v2-root`
-
----
-
-## Phase 4 — Agent guidance
-
-| Task | Paths |
-|------|-------|
-| Skill cross-link | `.cursor/skills/item-list/SKILL.md` |
-
----
-
-## Cross-service integration
-
-- UI Kit stays data-agnostic; consumers implement `LoadUsersFn` against their API.
-- No Identity or cross-service HTTP from UI Kit.
-
----
-
-## ClickUp traceability
-
-| Subtask | ID | Phase |
-|---------|-----|-------|
-| [User Story] Spec No.1.9.3 Need to have the user selection dialog box | 86ey40acd | 1–4 |
-
----
-
-## Risks and open items
-
-- WebOnOne `GET /users` API deferred — mock loader acceptable for 1.9.3.
-- Avatar optional; use initials when `avatarUrl` absent.
-
----
-
-## Final verification
-
-```bash
-npm run build -w @webonone/ui-kit
-npm run type-check -w ui-kit-root
-npm run type-check -w webonone-v2-root
-npm run lint -w @webonone/ui-kit-showcase
-npm run lint -w @webonone/webonone-frontend
-```
+---
+description: Implementation plan for spec 1.9.3 — UserSelectionDialog, showcase demo, WebOnOne consumer, users_roles DB consolidation
+alwaysApply: false
+globs: ui-kit/**, webonone-v2/**, .cursor/skills/item-list/**
+---
+
+# Implementation plan — Spec 1.9.3
+
+## Summary
+
+Reusable **`UserSelectionDialog`** in `@webonone/ui-kit` plus WebOnOne **`users_roles`** table replacing `super_admins` / `company_memberships`. See [02-ui-kit-user-selection-dialog.md](./02-ui-kit-user-selection-dialog.md), [05-webonone-users-roles.md](./05-webonone-users-roles.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.9.3` |
+| Package builds | `npm run build -w @webonone/ui-kit` before consumer prod builds |
+| Super admin seed | Set `SUPER_ADMIN_USER_ID` (Identity `user_id`) in `webonone-v2/backend/.env` |
+
+---
+
+## Phase 1 — UI Kit UserSelectionDialog
+
+**Goal:** Component + types + export.
+
+| Task | Paths |
+|------|-------|
+| Dialog component | `ui-kit/package/src/components/UserSelectionDialog.tsx` |
+| Export | `ui-kit/package/src/index.ts` |
+
+**Exit criteria:** Infinite scroll, search debounce, role filter, row select closes dialog.
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 2 — Showcase Dialogs demo
+
+**Goal:** Mock `loadUsers` with 120 users.
+
+| Task | Paths |
+|------|-------|
+| Demo section | `ui-kit/showcase/src/pages/DialogsPage.tsx` |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 3 — WebOnOne reference consumer
+
+**Goal:** Service integration with mock `loadUsers`.
+
+| Task | Paths |
+|------|-------|
+| Demo component | `webonone-v2/frontend/src/features/settings/basic/components/UserSelectionDemo.tsx` |
+| Wire on Basic Settings | Basic Settings page |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 4 — Agent guidance
+
+| Task | Paths |
+|------|-------|
+| Skill cross-link | `.cursor/skills/item-list/SKILL.md` |
+
+---
+
+## Phase 5 — Dialog verification
+
+**Verify:**
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
+npm run type-check -w webonone-v2-root
+```
+
+---
+
+## Phase 6 — WebOnOne `users_roles` migration
+
+**Goal:** Single permission table per [05-webonone-users-roles.md](./05-webonone-users-roles.md).
+
+| Task | Paths |
+|------|-------|
+| Migration | `webonone-v2/backend/migrations/*_users_roles.ts` |
+| User role repo | `webonone-v2/backend/src/repositories/userRole.repository.ts` |
+| Refactor company repo/service | `company.repository.ts`, `company.service.ts` |
+| Super-admin middleware | `requireSuperAdmin.ts` |
+| Seed | `seedSuperAdmin.ts`, `env.ts`, `.env.example` |
+| Rule doc | `.cursor/rules/webonone-v2-project.mdc` (table names) |
+
+**Exit criteria:** Migration up succeeds; APIs unchanged externally; super-admin check uses `users_roles`.
+
+**Verify:** `npm run migrate -w @webonone/webonone-backend` then `npm run type-check -w webonone-v2-root`
+
+---
+
+## Cross-service integration
+
+- UI Kit stays data-agnostic; consumers implement `LoadUsersFn`.
+- `users_roles.user_id` is Identity copy only — no Identity DB queries.
+- Email `syncUserRole` calls unchanged.
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec No.1.9.3 — user selection dialog | 86ey40acd | 1–5 |
+| need to have the user role table | 86ey40ya9 | 6 |
+
+---
+
+## Risks and open items
+
+- `SUPER_ADMIN_USER_ID` required for seed after migration — document in `.env.example`.
+- Multi-company UI deferred; `getMyCompany` uses primary membership selection rule.
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run migrate -w @webonone/webonone-backend
+npm run type-check -w ui-kit-root
+npm run type-check -w webonone-v2-root
+npm run lint -w @webonone/ui-kit-showcase
+npm run lint -w @webonone/webonone-frontend
+```
+
