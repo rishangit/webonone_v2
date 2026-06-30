@@ -38,19 +38,22 @@ Completed: `Pagination.tsx`, export, History consumer.
 
 ---
 
-## Phase 5 — Service pagination rollout
+## Phase 5 — Service pagination rollout ✓
 
-**Goal:** `Pagination` on all in-scope list pages.
+Completed: Email Queue/Templates, WebOnOne Companies/Themes, Media browser.
+
+---
+
+## Phase 5b — Email + core app audit (delta)
+
+**Goal:** Remaining Email list surfaces per updated subtask **86ey3ykth**.
 
 | Task | Paths |
 |------|-------|
-| Email Queue | `email/frontend/src/features/queue/pages/QueuePage.tsx` |
-| Email Templates | `email/frontend/src/features/templates/pages/TemplatesPage.tsx` |
-| WebOnOne Companies | `webonone-v2/frontend/src/features/settings/basic/pages/CompaniesPage.tsx` |
-| WebOnOne Themes | `webonone-v2/frontend/src/features/settings/system-theme/pages/SystemThemePage.tsx` |
-| Media browser | `media/frontend/src/features/media/components/ScopedFolderBrowser.tsx` |
+| Dashboard recent activity | `email/frontend/src/features/dashboard/pages/DashboardPage.tsx` |
+| Template version history | `email/frontend/src/features/templates/pages/TemplateEditorPage.tsx` |
 
-**Verify:** `npm run type-check -w email-root`, `webonone-v2-root`, `media-root`
+**Verify:** `npm run type-check -w email-root`
 
 ---
 
@@ -71,7 +74,7 @@ Completed: `Pagination.tsx`, export, History consumer.
 | [User Story] Spec No 1.9.2 | 86ey3yh8p | 1–6 |
 | Define the pagination | 86ey3yjxz | 1 |
 | need to add the pagination to the ui-kit component show case | 86ey3ypk3 | 4 |
-| Implement the pagination to the services | 86ey3ykth | 5–6 |
+| Implement the pagination to the services | 86ey3ykth | 5–5b, 6 |
 
 ---
 
