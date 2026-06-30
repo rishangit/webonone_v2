@@ -9,6 +9,7 @@ import {
   Form,
   FormField,
   Input,
+  Pagination,
   Select,
   SelectContent,
   SelectItem,
@@ -35,7 +36,7 @@ export function HistoryPage() {
   const [items, setItems] = useState<HistoryItem[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const [pageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(20)
   const [status, setStatus] = useState<string>('all')
   const [from, setFrom] = useState<Date | undefined>()
   const [to, setTo] = useState<Date | undefined>()
@@ -43,7 +44,7 @@ export function HistoryPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  async function loadHistory(nextPage = page) {
+  async function loadHistory(nextPage = page, nextPageSize = pageSize) {
     setLoading(true)
     setError(null)
     try {
@@ -51,7 +52,7 @@ export function HistoryPage() {
       const toIso = to ? endOfDayIso(to) : undefined
       const data = await emailApi.getHistory({
         page: nextPage,
-        pageSize,
+        pageSize: nextPageSize,
         status: status === 'all' ? undefined : status,
         from: fromIso,
         to: toIso,
@@ -85,7 +86,14 @@ export function HistoryPage() {
     void loadHistory(1)
   }
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  function handlePageChange(nextPage: number) {
+    void loadHistory(nextPage, pageSize)
+  }
+
+  function handlePageSizeChange(nextPageSize: number) {
+    setPageSize(nextPageSize)
+    void loadHistory(1, nextPageSize)
+  }
 
   return (
     <FeaturePage
@@ -161,30 +169,15 @@ export function HistoryPage() {
 
       {!loading ? <HistoryList items={items} /> : null}
 
-      {!loading && total > pageSize ? (
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages} · {total} total
-          </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={page <= 1}
-              onClick={() => void loadHistory(page - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={page >= totalPages}
-              onClick={() => void loadHistory(page + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+      {!loading ? (
+        <Pagination
+          totalCount={total}
+          currentPage={page}
+          pageSize={pageSize}
+          pageSizeOptions={[10, 20, 25, 50]}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       ) : null}
     </FeaturePage>
   )

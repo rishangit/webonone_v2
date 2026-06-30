@@ -18,6 +18,8 @@ export { PhoneInput } from './components/PhoneInput'
 export type { PhoneInputProps } from './components/PhoneInput'
 export { OtpInput } from './components/OtpInput'
 export type { OtpInputProps } from './components/OtpInput'
+export { Pagination } from './components/Pagination'
+export type { PaginationProps } from './components/Pagination'
 export { CountrySelect } from './components/CountrySelect'
 export type { CountrySelectProps } from './components/CountrySelect'
 export {
