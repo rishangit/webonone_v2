@@ -7,7 +7,7 @@ import {
   AuthLayout,
   Form,
   FormField,
-  Input,
+  OtpInput,
   mapZodIssuesToFieldErrors,
   Spinner,
 } from '@webonone/ui-kit'
@@ -141,14 +141,14 @@ export function VerifyResetOtpPage() {
           </Alert>
         ) : null}
         <FormField label="4-digit code" htmlFor="otp" required error={fieldErrors.otp}>
-          <Input
+          <OtpInput
             id="otp"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={4}
+            length={4}
             value={values.otp}
             disabled={disabled}
-            onChange={(e) => setValues({ otp: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+            aria-invalid={Boolean(fieldErrors.otp)}
+            autoFocus
+            onChange={(otp) => setValues({ otp })}
           />
         </FormField>
         <Button type="submit" className="w-full" disabled={disabled}>

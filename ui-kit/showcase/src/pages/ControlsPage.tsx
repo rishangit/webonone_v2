@@ -10,6 +10,7 @@ import {
   Input,
   InputGroup,
   InputGroupIcon,
+  OtpInput,
   Label,
   MultiSelect,
   PasswordInput,
@@ -47,6 +48,8 @@ export function ControlsPage() {
   const [phoneNational, setPhoneNational] = useState('')
   const [phoneWithIconNational, setPhoneWithIconNational] = useState('')
   const [accentColor, setAccentColor] = useState('#2563EB')
+  const [otp4, setOtp4] = useState('')
+  const [otp6, setOtp6] = useState('')
   const browserDefaultCountry = useMemo(() => getBrowserDefaultCountryIso2(), [])
   const phoneE164 = formatPhoneE164(phoneCountry, phoneNational)
 
@@ -266,6 +269,22 @@ export function ControlsPage() {
         <div className="max-w-md space-y-4">
           <Textarea placeholder="Write a message…" />
           <Textarea placeholder="Disabled" disabled />
+        </div>
+      </DemoSection>
+
+      <DemoSection id="otp-input" title="OTP input">
+        <div className="max-w-md space-y-4">
+          <div className="space-y-2">
+            <Label>4-digit code (default)</Label>
+            <OtpInput value={otp4} onChange={setOtp4} />
+            <p className="text-sm text-muted-foreground">Value: {otp4 || '—'}</p>
+          </div>
+          <div className="space-y-2">
+            <Label>6-digit code</Label>
+            <OtpInput length={6} value={otp6} onChange={setOtp6} />
+            <p className="text-sm text-muted-foreground">Value: {otp6 || '—'}</p>
+          </div>
+          <OtpInput value="" onChange={() => undefined} disabled />
         </div>
       </DemoSection>
 
