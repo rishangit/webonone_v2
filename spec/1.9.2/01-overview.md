@@ -13,7 +13,7 @@ As a developer using the UI kit, I want a reusable pagination component, so that
 1. **`Pagination` component** — controlled props for `totalCount`, `currentPage`, `pageSize`, `onPageChange`, optional `onPageSizeChange`.
 2. **Full navigation bar** — first, previous, next, last, and individual page numbers with current page highlighted.
 3. **Record summary** — “Showing 21–40 of 156” (or empty-state copy when `totalCount === 0`).
-4. **Page size selector** — optional dropdown (e.g. 10, 25, 50) when `onPageSizeChange` is provided.
+4. **Page size selector** — optional dropdown (12, 24, 48) when `onPageSizeChange` is provided.
 5. **Single-page UX** — hide or disable controls when only one page exists.
 6. **Responsive** — usable on desktop and mobile (compact page list on narrow viewports).
 7. **Theme-aligned** — colors, spacing, typography per UI Kit design tokens (`Button`, `Select`).
@@ -28,7 +28,7 @@ As a developer using the UI kit, I want a reusable pagination component, so that
 - `ui-kit/package/src/components/Pagination.tsx` + export from `index.ts`.
 - Showcase demo section.
 - Email `HistoryPage` migration from inline Previous/Next to `Pagination`.
-- Optional `pageSizeOptions` prop (default `[10, 25, 50]`).
+- Optional `pageSizeOptions` prop (default `[12, 24, 48]`).
 
 ### Out of scope (1.9.2)
 

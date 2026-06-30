@@ -140,7 +140,7 @@ Spec: [04-service-pagination-rollout.md](./04-service-pagination-rollout.md) —
 - [ ] `Pagination` accepts `totalCount`, `currentPage`, `pageSize`, `onPageChange`
 - [ ] First, previous, next, last, and page numbers work
 - [ ] “Showing X–Y of Z” summary correct
-- [ ] Page size selector (10, 25, 50) when `onPageSizeChange` provided
+- [ ] Page size selector (12, 24, 48) when `onPageSizeChange` provided
 - [ ] Hidden when single page / zero results (default behavior)
 - [ ] Responsive layout on mobile width
 - [ ] Email History migrated to `Pagination`

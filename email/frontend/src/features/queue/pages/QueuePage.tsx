@@ -19,7 +19,7 @@ export function QueuePage() {
   const [items, setItems] = useState<QueueItem[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(12)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryingId, setRetryingId] = useState<string | null>(null)
@@ -114,7 +114,7 @@ export function QueuePage() {
             totalCount={total}
             currentPage={page}
             pageSize={pageSize}
-            pageSizeOptions={[10, 20, 50]}
+            pageSizeOptions={[12, 24, 48]}
             onPageChange={(nextPage) => void loadQueue(nextPage, pageSize)}
             onPageSizeChange={(nextPageSize) => {
               setPageSize(nextPageSize)

@@ -10,7 +10,7 @@ export function TemplatesPage() {
   const { accessToken } = useAppSelector((s) => s.auth)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(12)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -83,7 +83,7 @@ export function TemplatesPage() {
             totalCount={templates.length}
             currentPage={page}
             pageSize={pageSize}
-            pageSizeOptions={[10, 25, 50]}
+            pageSizeOptions={[12, 24, 48]}
             onPageChange={setPage}
             onPageSizeChange={(nextSize) => {
               setPageSize(nextSize)

@@ -243,7 +243,7 @@ function ImagePreviewDemo({ onEdit }: { onEdit: () => void }) {
 export function ComponentsPage() {
   const { toast } = useToast()
   const [listPage, setListPage] = useState(1)
-  const [listPageSize, setListPageSize] = useState(5)
+  const [listPageSize, setListPageSize] = useState(12)
   const demoListItems = useMemo(
     () =>
       Array.from({ length: 24 }, (_, index) => ({
@@ -400,7 +400,7 @@ export function ComponentsPage() {
             totalCount={demoListItems.length}
             currentPage={listPage}
             pageSize={listPageSize}
-            pageSizeOptions={[5, 10, 25]}
+            pageSizeOptions={[12, 24, 48]}
             onPageChange={setListPage}
             onPageSizeChange={(nextSize) => {
               setListPageSize(nextSize)

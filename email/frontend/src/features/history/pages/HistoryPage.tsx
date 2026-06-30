@@ -36,7 +36,7 @@ export function HistoryPage() {
   const [items, setItems] = useState<HistoryItem[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(12)
   const [status, setStatus] = useState<string>('all')
   const [from, setFrom] = useState<Date | undefined>()
   const [to, setTo] = useState<Date | undefined>()
@@ -167,17 +167,18 @@ export function HistoryPage() {
         </div>
       ) : null}
 
-      {!loading ? <HistoryList items={items} /> : null}
-
       {!loading ? (
-        <Pagination
-          totalCount={total}
-          currentPage={page}
-          pageSize={pageSize}
-          pageSizeOptions={[10, 20, 25, 50]}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
+        <>
+          <HistoryList items={items} />
+          <Pagination
+            totalCount={total}
+            currentPage={page}
+            pageSize={pageSize}
+            pageSizeOptions={[12, 24, 48]}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        </>
       ) : null}
     </FeaturePage>
   )

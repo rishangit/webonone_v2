@@ -8,7 +8,7 @@ Pagination demo belongs on the **Components** showcase tab (with `ItemList`), no
 |-------------|--------|
 | Location | `ui-kit/showcase/src/pages/ComponentsPage.tsx` — new `DemoSection` after Item list |
 | Demo | Interactive `Pagination` below a sample `ItemList` (paginated slice of mock themes) |
-| Page size | `onPageSizeChange` with options `[10, 25, 50]` |
+| Page size | `onPageSizeChange` with options `[12, 24, 48]` |
 | Remove duplicate | Remove Pagination section from `ControlsPage.tsx` (Controls = inputs; Components = composite patterns) |
 
 ## Acceptance

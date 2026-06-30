@@ -48,7 +48,7 @@ export function DashboardPage() {
   const [recentItems, setRecentItems] = useState<HistoryItem[]>([])
   const [recentPage, setRecentPage] = useState(1)
   const [recentTotal, setRecentTotal] = useState(0)
-  const [recentPageSize] = useState(10)
+  const [recentPageSize, setRecentPageSize] = useState(12)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -94,6 +94,11 @@ export function DashboardPage() {
     setRecentPage(nextPage)
   }
 
+  function handleRecentPageSizeChange(nextSize: number) {
+    setRecentPageSize(nextSize)
+    setRecentPage(1)
+  }
+
   return (
     <FeaturePage
       title="Dashboard"
@@ -131,31 +136,35 @@ export function DashboardPage() {
 
           <section className="space-y-3">
             <h2 className="text-lg font-medium">Recent activity</h2>
-            {recentItems.length === 0 ? (
-              <ItemListEmpty>
-                {isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
-              </ItemListEmpty>
-            ) : (
-              <ItemList>
-                {recentItems.map((item) => (
-                  <ItemListItem key={item.id}>
-                    <ItemListContent>
-                      <p className="font-medium">{item.recipient}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.templateSlug} · {statusLabel(item.status)}
-                        {item.sentAt ? ` · ${new Date(item.sentAt).toLocaleString()}` : ''}
-                      </p>
-                    </ItemListContent>
-                  </ItemListItem>
-                ))}
-              </ItemList>
-            )}
-            <Pagination
-              totalCount={recentTotal}
-              currentPage={recentPage}
-              pageSize={recentPageSize}
-              onPageChange={handleRecentPageChange}
-            />
+            <div className="space-y-4">
+              {recentItems.length === 0 ? (
+                <ItemListEmpty>
+                  {isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
+                </ItemListEmpty>
+              ) : (
+                <ItemList>
+                  {recentItems.map((item) => (
+                    <ItemListItem key={item.id}>
+                      <ItemListContent>
+                        <p className="font-medium">{item.recipient}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.templateSlug} · {statusLabel(item.status)}
+                          {item.sentAt ? ` · ${new Date(item.sentAt).toLocaleString()}` : ''}
+                        </p>
+                      </ItemListContent>
+                    </ItemListItem>
+                  ))}
+                </ItemList>
+              )}
+              <Pagination
+                totalCount={recentTotal}
+                currentPage={recentPage}
+                pageSize={recentPageSize}
+                pageSizeOptions={[12, 24, 48]}
+                onPageChange={handleRecentPageChange}
+                onPageSizeChange={handleRecentPageSizeChange}
+              />
+            </div>
           </section>
         </>
       ) : null}

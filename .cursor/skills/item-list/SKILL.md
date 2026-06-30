@@ -27,7 +27,7 @@ Import from `@webonone/ui-kit`:
 
 | Export | Role |
 |--------|------|
-| `ItemList` | `<ul>` with `gap-2` between rows |
+| `ItemList` | `<ul>` with `gap-2` between rows and **`py-4`** vertical padding |
 | `ItemListItem` | Single row — `glass-card item-list-row`, `px-3 py-2`, themed shadow on hover |
 | `ItemListContent` | Main label/metadata (`flex-1`, truncates) |
 | `ItemListMenu` | Vertical 3-dot trigger (`MoreVertical`) at **top-right** of row |
@@ -76,6 +76,7 @@ Primary row click (select, navigate, toggle) may stay on the row body — only *
 
 | Concern | Token / class |
 |---------|----------------|
+| List container (`<ul>`) | `itemListClassName` — `flex flex-col gap-2` **`py-4`** |
 | Gap between rows | `gap-2` on `ItemList` |
 | Row surface | `glass-card` — `hsl(var(--glass-bg))` + `backdrop-filter: blur(8px)` |
 | Row hover | `item-list-row:hover` → `box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22)` — **shadow only**, no border or background change |
@@ -102,6 +103,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 
 - [ ] Uses `ItemList`, `ItemListItem`, `ItemListContent`, `ItemListMenu`
 - [ ] Row actions in 3-dot menu, not inline button groups
+- [ ] `ItemList` uses default `py-4` on the `<ul>` — do not override with `py-0` unless embed layout requires it
 - [ ] `gap-2` between rows; same padding on every row
 - [ ] Row surface is `glass-card item-list-row` — no extra `bg-*` on rows
 - [ ] Hover is themed shadow only (`item-list-row`); no `hover:border-*` or `hover:bg-*`
@@ -111,7 +113,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Destructive action last in menu with destructive styling
 - [ ] Per-row `ariaLabel` on `ItemListMenu`
 - [ ] `@/` imports in service frontends ([code-cleanliness.mdc](../../rules/code-cleanliness.mdc))
-- [ ] Paginated collections use `Pagination` below the list ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
+- [ ] Paginated collections use `Pagination` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
 
 ## Rules
 
@@ -146,6 +148,7 @@ npm run lint
 
 **Manual**
 
+- Visible **`py-4`** padding on the list `<ul>` above and below rows
 - Visible small gap between each row
 - Row shows frosted glass surface
 - Hover any row → small shadow tinted with active theme accent; border unchanged

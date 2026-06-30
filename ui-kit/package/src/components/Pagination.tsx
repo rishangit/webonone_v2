@@ -29,7 +29,7 @@ export interface PaginationProps {
   id?: string
 }
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50]
+const DEFAULT_PAGE_SIZE_OPTIONS = [12, 24, 48]
 
 function range(start: number, end: number): number[] {
   const length = end - start + 1

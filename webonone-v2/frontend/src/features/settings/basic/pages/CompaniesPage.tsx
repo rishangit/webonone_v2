@@ -9,7 +9,7 @@ export function CompaniesPage() {
   const { isSuperAdmin, loading: roleLoading } = useSuperAdminStatus()
   const [items, setItems] = useState<AdminCompany[]>([])
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(12)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -86,7 +86,7 @@ export function CompaniesPage() {
             totalCount={items.length}
             currentPage={page}
             pageSize={pageSize}
-            pageSizeOptions={[10, 25, 50]}
+            pageSizeOptions={[12, 24, 48]}
             onPageChange={setPage}
             onPageSizeChange={(nextSize) => {
               setPageSize(nextSize)

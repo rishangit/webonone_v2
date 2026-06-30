@@ -56,7 +56,7 @@ export function TemplateEditorPage() {
   const [saving, setSaving] = useState(false)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [versionPage, setVersionPage] = useState(1)
-  const [versionPageSize, setVersionPageSize] = useState(10)
+  const [versionPageSize, setVersionPageSize] = useState(12)
 
   const visibleVersions = versions.slice(
     (versionPage - 1) * versionPageSize,
@@ -250,7 +250,7 @@ export function TemplateEditorPage() {
             {versions.length === 0 ? (
               <ItemListEmpty>No versions yet.</ItemListEmpty>
             ) : (
-              <>
+              <div className="space-y-4">
                 <ItemList>
                   {visibleVersions.map((version) => (
                     <ItemListItem key={version.id}>
@@ -276,14 +276,14 @@ export function TemplateEditorPage() {
                   totalCount={versions.length}
                   currentPage={versionPage}
                   pageSize={versionPageSize}
-                  pageSizeOptions={[5, 10, 25]}
+                  pageSizeOptions={[12, 24, 48]}
                   onPageChange={setVersionPage}
                   onPageSizeChange={(nextSize) => {
                     setVersionPageSize(nextSize)
                     setVersionPage(1)
                   }}
                 />
-              </>
+              </div>
             )}
           </section>
         </div>

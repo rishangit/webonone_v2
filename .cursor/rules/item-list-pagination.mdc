@@ -15,52 +15,79 @@ Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) — row
 - API returns `total` + `page` + `pageSize` (server pagination)
 - Full list loaded once but UI slices by page (client pagination) when row count can grow
 
-## Layout
+## Defaults
+
+| Setting | Value |
+|---------|--------|
+| Initial `pageSize` state | **12** |
+| `pageSizeOptions` (when `onPageSizeChange` is set) | **`[12, 24, 48]`** |
+
+Always initialize `useState(12)` for `pageSize`. Pass `pageSizeOptions={[12, 24, 48]}` so **12** is the default rows-per-page. Server requests must use the same `pageSize` (e.g. `list({ page: 1, pageSize: 12 })`).
+
+## Layout and spacing
 
 ```text
-FeaturePage
+FeaturePage                    ← gap-6 between direct children
   filters / tabs (optional)
-  ItemList → current page rows only
-  Pagination → below list (FeaturePage gap-6 applies)
+  ItemList                       ← current page rows only (`py-4` on `<ul>`)
+  Pagination                     ← sibling below list, not inside <ul>
+```
+
+| Rule | Detail |
+|------|--------|
+| Sibling order | `ItemList` then `Pagination` — nothing between them except loading spinner replacing the list |
+| Not inside list | Never render `Pagination` inside `ItemList` or between row items |
+| List padding | `ItemList` applies **`py-4`** on the `<ul>` via `itemListClassName` — do not strip with `py-0` |
+| FeaturePage | Rely on `FeaturePage` `gap-6` between list and pagination — **do not** add `mt-*` on `Pagination` |
+| Section wrapper | If the list lives in `<section className="space-y-3">`, use **`space-y-4`** on the inner block that wraps list + pagination together |
+| Filters | Filters/tabs stay **above** the list; pagination stays **below** the list |
+
+```tsx
+{!loading ? (
+  <>
+    <HistoryList items={items} />
+    <Pagination
+      totalCount={total}
+      currentPage={page}
+      pageSize={pageSize}
+      pageSizeOptions={[12, 24, 48]}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+    />
+  </>
+) : null}
 ```
 
 ## Server pagination
 
-Parent owns `page`, `pageSize`, `total` from API response. On filter/tab change → reset `page` to `1` then fetch.
+Parent owns `page`, `pageSize` (default **12**), `total` from API. On filter/tab change → reset `page` to `1` then fetch.
 
 ```typescript
+const [pageSize, setPageSize] = useState(12)
+
 const data = await api.list({ page: nextPage, pageSize, ...filters })
 setItems(data.items)
 setTotal(data.total)
 setPage(data.page)
-
-<Pagination
-  totalCount={total}
-  currentPage={page}
-  pageSize={pageSize}
-  onPageChange={(p) => void load(p, pageSize)}
-  onPageSizeChange={(size) => { setPageSize(size); setPage(1); void load(1, size) }}
-/>
 ```
 
-Reference: `email/frontend/src/features/history/pages/HistoryPage.tsx`, `queue/pages/QueuePage.tsx`, `dashboard/pages/DashboardPage.tsx`, `templates/pages/TemplateEditorPage.tsx`, `media/.../ScopedFolderBrowser.tsx`.
+Reference: `email/frontend/src/features/history/pages/HistoryPage.tsx`, `queue/pages/QueuePage.tsx`, `dashboard/pages/DashboardPage.tsx`, `media/.../ScopedFolderBrowser.tsx`.
 
 ## Client pagination
 
 Load full array once; slice before passing to list child:
 
 ```typescript
+const [pageSize, setPageSize] = useState(12)
 const visible = items.slice((page - 1) * pageSize, page * pageSize)
-<ItemList>…visible…</ItemList>
-<Pagination totalCount={items.length} currentPage={page} pageSize={pageSize} … />
 ```
 
-Reference: `TemplatesPage.tsx`, `CompaniesPage.tsx`, `SystemThemePage.tsx`.
+Reference: `TemplatesPage.tsx`, `CompaniesPage.tsx`, `SystemThemePage.tsx`, `TemplateEditorPage.tsx`.
 
 ## Rules
 
 - Import `Pagination` from `@webonone/ui-kit` — no ad-hoc Previous/Next button pairs
-- Do not put pagination inside `ItemList`
+- Default **12** rows per page unless a spec documents an exception
 - `Pagination` does not fetch — parent handles data and preserves filters on page change
 - Use `hideWhenSinglePage` default (`true`) unless product needs visible disabled controls
 

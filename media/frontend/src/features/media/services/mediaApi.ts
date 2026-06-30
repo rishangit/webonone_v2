@@ -28,7 +28,7 @@ export async function listMediaItems(params: {
     scope: params.scope,
     folderPath: params.folderPath ?? '/',
     page: String(params.page ?? 1),
-    pageSize: String(params.pageSize ?? 24),
+    pageSize: String(params.pageSize ?? 12),
   })
   if (params.mimeType) {
     search.set('mimeType', params.mimeType)

@@ -19,7 +19,7 @@ export function SystemThemePage() {
   const [deleteTarget, setDeleteTarget] = useState<ApiTheme | null>(null)
   const [pendingSave, setPendingSave] = useState<PendingSave>(null)
   const [themePage, setThemePage] = useState(1)
-  const [themePageSize, setThemePageSize] = useState(10)
+  const [themePageSize, setThemePageSize] = useState(12)
 
   const dialogOpen = createOpen || editing !== null
   const dialogMode = editing ? 'edit' : 'create'
@@ -114,27 +114,29 @@ export function SystemThemePage() {
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Themes</h2>
-          <ThemeList
-            themes={visibleThemes}
-            activeThemeId={preferences?.activeThemeId ?? null}
-            onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
-            onEdit={(theme) => setEditing(theme)}
-            onDelete={(id) => {
-              const theme = themes.find((t) => t.id === id)
-              if (theme) setDeleteTarget(theme)
-            }}
-          />
-          <Pagination
-            totalCount={themes.length}
-            currentPage={themePage}
-            pageSize={themePageSize}
-            pageSizeOptions={[10, 25, 50]}
-            onPageChange={setThemePage}
-            onPageSizeChange={(nextSize) => {
-              setThemePageSize(nextSize)
-              setThemePage(1)
-            }}
-          />
+          <div className="space-y-4">
+            <ThemeList
+              themes={visibleThemes}
+              activeThemeId={preferences?.activeThemeId ?? null}
+              onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
+              onEdit={(theme) => setEditing(theme)}
+              onDelete={(id) => {
+                const theme = themes.find((t) => t.id === id)
+                if (theme) setDeleteTarget(theme)
+              }}
+            />
+            <Pagination
+              totalCount={themes.length}
+              currentPage={themePage}
+              pageSize={themePageSize}
+              pageSizeOptions={[12, 24, 48]}
+              onPageChange={setThemePage}
+              onPageSizeChange={(nextSize) => {
+                setThemePageSize(nextSize)
+                setThemePage(1)
+              }}
+            />
+          </div>
         </section>
 
         {status === 'loading' ? <p className="text-sm text-muted-foreground">Loading…</p> : null}

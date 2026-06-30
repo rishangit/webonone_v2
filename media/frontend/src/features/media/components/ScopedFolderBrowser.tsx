@@ -72,7 +72,7 @@ export function ScopedFolderBrowser({
   const [items, setItems] = useState<MediaItemDto[]>([])
   const [mediaPage, setMediaPage] = useState(1)
   const [mediaTotal, setMediaTotal] = useState(0)
-  const [mediaPageSize, setMediaPageSize] = useState(24)
+  const [mediaPageSize, setMediaPageSize] = useState(12)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<BrowserViewMode>('thumb')

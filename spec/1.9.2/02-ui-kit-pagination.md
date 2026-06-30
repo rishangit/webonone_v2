@@ -9,7 +9,7 @@ Reusable list pagination for `@webonone/ui-kit`. Parent components own data fetc
 | Props | `totalCount`, `currentPage` (1-based), `pageSize`, `onPageChange(page)` |
 | Navigation | First, previous, next, last, individual page numbers; current page highlighted |
 | Summary | “Showing {start}–{end} of {total}” |
-| Page sizes | User-selectable 10, 25, 50 (configurable list) via `onPageSizeChange` |
+| Page sizes | User-selectable 12, 24, 48 (configurable list) via `onPageSizeChange` |
 | Filters/sort | Preserved by parent — pagination only changes page/size callbacks |
 | Single page | Hide controls when one page or no records (`hideWhenSinglePage`, default `true`) |
 | Responsive | Stack or wrap on narrow viewports; limit visible page buttons with ellipsis |
@@ -30,8 +30,9 @@ export interface PaginationProps {
   onPageChange: (page: number) => void
   /** When set, shows page-size selector */
   onPageSizeChange?: (pageSize: number) => void
-  /** Options for page-size dropdown; default [10, 25, 50] */
+  /** Options for page-size dropdown; default [12, 24, 48] */
   pageSizeOptions?: number[]
+  /** Default options when omitted: [12, 24, 48] */
   /** Hide bar when total pages ≤ 1; default true */
   hideWhenSinglePage?: boolean
   /** Max page number buttons before ellipsis; default 5 */

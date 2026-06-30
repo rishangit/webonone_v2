@@ -4,8 +4,8 @@ import { cn } from '../lib/utils'
 import { Button } from './Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from './DropdownMenu'
 
-/** List container — small vertical gap between separate row cards */
-export const itemListClassName = 'flex flex-col gap-2'
+/** List container — vertical padding and small gap between separate row cards */
+export const itemListClassName = 'flex flex-col gap-2 py-4'
 
 /** Shared row padding, glass surface, small themed shadow on hover */
 export const itemListRowClassName =
