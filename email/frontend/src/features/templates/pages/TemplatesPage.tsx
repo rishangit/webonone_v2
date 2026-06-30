@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, FeaturePage, Spinner } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage, Pagination, Spinner } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
@@ -9,6 +9,8 @@ import { TemplatesList } from '../components/TemplatesList'
 export function TemplatesPage() {
   const { accessToken } = useAppSelector((s) => s.auth)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -51,6 +53,8 @@ export function TemplatesPage() {
     }
   }
 
+  const visibleTemplates = templates.slice((page - 1) * pageSize, page * pageSize)
+
   return (
     <FeaturePage
       title="Templates"
@@ -69,11 +73,24 @@ export function TemplatesPage() {
       ) : null}
 
       {!loading ? (
-        <TemplatesList
-          templates={templates}
-          onToggleActive={handleToggleActive}
-          busyId={busyId}
-        />
+        <>
+          <TemplatesList
+            templates={visibleTemplates}
+            onToggleActive={handleToggleActive}
+            busyId={busyId}
+          />
+          <Pagination
+            totalCount={templates.length}
+            currentPage={page}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 25, 50]}
+            onPageChange={setPage}
+            onPageSizeChange={(nextSize) => {
+              setPageSize(nextSize)
+              setPage(1)
+            }}
+          />
+        </>
       ) : null}
     </FeaturePage>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import { Home, Image, MoreVertical, Palette, Settings, ClipboardPaste } from 'lucide-react'
 import {
@@ -46,6 +46,7 @@ import {
   ItemListMenu,
   itemListRowActiveClassName,
   Label,
+  Pagination,
   mapZodIssuesToFieldErrors,
   PageShell,
   PasswordInput,
@@ -241,6 +242,21 @@ function ImagePreviewDemo({ onEdit }: { onEdit: () => void }) {
 
 export function ComponentsPage() {
   const { toast } = useToast()
+  const [listPage, setListPage] = useState(1)
+  const [listPageSize, setListPageSize] = useState(5)
+  const demoListItems = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, index) => ({
+        id: String(index + 1),
+        name: `Theme palette ${index + 1}`,
+        active: index === 0,
+      })),
+    [],
+  )
+  const visibleListItems = demoListItems.slice(
+    (listPage - 1) * listPageSize,
+    listPage * listPageSize,
+  )
 
   return (
     <>
@@ -353,6 +369,44 @@ export function ComponentsPage() {
         </ItemList>
         <div className="mt-4">
           <ItemListEmpty>No items to show.</ItemListEmpty>
+        </div>
+      </DemoSection>
+
+      <DemoSection
+        id="pagination"
+        title="Pagination"
+        description="Place Pagination below ItemList on list pages. Parent owns page state and data fetching."
+      >
+        <div className="space-y-4">
+          <ItemList>
+            {visibleListItems.map((theme) => (
+              <ItemListItem
+                key={theme.id}
+                className={theme.active ? itemListRowActiveClassName : undefined}
+              >
+                <ItemListContent>
+                  <p className="font-medium">{theme.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {theme.active ? 'Currently applied' : 'Paginated row'}
+                  </p>
+                </ItemListContent>
+                <ItemListMenu ariaLabel={`Actions for ${theme.name}`}>
+                  <DropdownMenuItem>View</DropdownMenuItem>
+                </ItemListMenu>
+              </ItemListItem>
+            ))}
+          </ItemList>
+          <Pagination
+            totalCount={demoListItems.length}
+            currentPage={listPage}
+            pageSize={listPageSize}
+            pageSizeOptions={[5, 10, 25]}
+            onPageChange={setListPage}
+            onPageSizeChange={(nextSize) => {
+              setListPageSize(nextSize)
+              setListPage(1)
+            }}
+          />
         </div>
       </DemoSection>
 

@@ -1,0 +1,71 @@
+---
+description: Use Pagination with ItemList on paginated collection pages in service frontends
+alwaysApply: false
+globs: "**/frontend/src/features/**/*.{ts,tsx}"
+---
+
+# Item list pagination
+
+Use `@webonone/ui-kit` **`Pagination`** below **`ItemList`** (or equivalent list body) on any page that shows a pageable collection.
+
+Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) — row layout and menus.
+
+## When required
+
+- API returns `total` + `page` + `pageSize` (server pagination)
+- Full list loaded once but UI slices by page (client pagination) when row count can grow
+
+## Layout
+
+```text
+FeaturePage
+  filters / tabs (optional)
+  ItemList → current page rows only
+  Pagination → below list (FeaturePage gap-6 applies)
+```
+
+## Server pagination
+
+Parent owns `page`, `pageSize`, `total` from API response. On filter/tab change → reset `page` to `1` then fetch.
+
+```typescript
+const data = await api.list({ page: nextPage, pageSize, ...filters })
+setItems(data.items)
+setTotal(data.total)
+setPage(data.page)
+
+<Pagination
+  totalCount={total}
+  currentPage={page}
+  pageSize={pageSize}
+  onPageChange={(p) => void load(p, pageSize)}
+  onPageSizeChange={(size) => { setPageSize(size); setPage(1); void load(1, size) }}
+/>
+```
+
+Reference: `email/frontend/src/features/history/pages/HistoryPage.tsx`, `queue/pages/QueuePage.tsx`, `media/.../ScopedFolderBrowser.tsx`.
+
+## Client pagination
+
+Load full array once; slice before passing to list child:
+
+```typescript
+const visible = items.slice((page - 1) * pageSize, page * pageSize)
+<ItemList>…visible…</ItemList>
+<Pagination totalCount={items.length} currentPage={page} pageSize={pageSize} … />
+```
+
+Reference: `TemplatesPage.tsx`, `CompaniesPage.tsx`, `SystemThemePage.tsx`.
+
+## Rules
+
+- Import `Pagination` from `@webonone/ui-kit` — no ad-hoc Previous/Next button pairs
+- Do not put pagination inside `ItemList`
+- `Pagination` does not fetch — parent handles data and preserves filters on page change
+- Use `hideWhenSinglePage` default (`true`) unless product needs visible disabled controls
+
+## Verification
+
+```bash
+npm run type-check -w <service-root>
+```

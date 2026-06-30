@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Alert, AlertDescription, Button, FeaturePage, Spinner } from '@webonone/ui-kit'
+import { Alert, AlertDescription, Button, FeaturePage, Pagination, Spinner } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
 import type { QueueItem, QueueStatus } from '@/shared/types/email.types'
@@ -17,20 +17,26 @@ export function QueuePage() {
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
   const [tab, setTab] = useState<QueueStatus>('pending')
   const [items, setItems] = useState<QueueItem[]>([])
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [pageSize, setPageSize] = useState(20)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryingId, setRetryingId] = useState<string | null>(null)
 
   const canRetry = role === 'super_admin'
 
-  const loadQueue = useCallback(async () => {
+  const loadQueue = useCallback(async (nextPage = page, nextPageSize = pageSize) => {
     setError(null)
     try {
-      const data = await emailApi.listQueue({ status: tab, page: 1, pageSize: 50 })
+      const data = await emailApi.listQueue({ status: tab, page: nextPage, pageSize: nextPageSize })
       setItems(data.items)
+      setTotal(data.total)
+      setPage(data.page)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load queue')
       setItems([])
+      setTotal(0)
     } finally {
       setLoading(false)
     }
@@ -38,22 +44,23 @@ export function QueuePage() {
 
   useEffect(() => {
     setLoading(true)
-    void loadQueue()
-  }, [loadQueue])
+    setPage(1)
+    void loadQueue(1, pageSize)
+  }, [tab, pageSize, loadQueue])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      void loadQueue()
+      void loadQueue(page, pageSize)
     }, POLL_MS)
     return () => window.clearInterval(timer)
-  }, [loadQueue])
+  }, [loadQueue, page, pageSize])
 
   async function handleRetry(item: QueueItem) {
     setRetryingId(item.id)
     setError(null)
     try {
       await emailApi.retryQueueItem(item.id)
-      await loadQueue()
+      await loadQueue(page, pageSize)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Retry failed')
     } finally {
@@ -84,7 +91,7 @@ export function QueuePage() {
             {t.label}
           </Button>
         ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => void loadQueue()}>
+        <Button type="button" variant="outline" size="sm" onClick={() => void loadQueue(page, pageSize)}>
           Refresh now
         </Button>
       </div>
@@ -96,12 +103,25 @@ export function QueuePage() {
       ) : null}
 
       {!loading ? (
-        <QueueList
-          items={items}
-          canRetry={canRetry}
-          onRetry={handleRetry}
-          retryingId={retryingId}
-        />
+        <>
+          <QueueList
+            items={items}
+            canRetry={canRetry}
+            onRetry={handleRetry}
+            retryingId={retryingId}
+          />
+          <Pagination
+            totalCount={total}
+            currentPage={page}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20, 50]}
+            onPageChange={(nextPage) => void loadQueue(nextPage, pageSize)}
+            onPageSizeChange={(nextPageSize) => {
+              setPageSize(nextPageSize)
+              setPage(1)
+            }}
+          />
+        </>
       ) : null}
     </FeaturePage>
   )

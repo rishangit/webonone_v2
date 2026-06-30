@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, FeaturePage } from '@webonone/ui-kit'
+import { Button, FeaturePage, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { ColorModeToggle } from '../components/ColorModeToggle'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
@@ -18,6 +18,8 @@ export function SystemThemePage() {
   const [editing, setEditing] = useState<ApiTheme | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ApiTheme | null>(null)
   const [pendingSave, setPendingSave] = useState<PendingSave>(null)
+  const [themePage, setThemePage] = useState(1)
+  const [themePageSize, setThemePageSize] = useState(10)
 
   const dialogOpen = createOpen || editing !== null
   const dialogMode = editing ? 'edit' : 'create'
@@ -89,6 +91,8 @@ export function SystemThemePage() {
       }
     : undefined
 
+  const visibleThemes = themes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
+
   return (
     <FeaturePage
       title="System Theme"
@@ -111,13 +115,24 @@ export function SystemThemePage() {
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Themes</h2>
           <ThemeList
-            themes={themes}
+            themes={visibleThemes}
             activeThemeId={preferences?.activeThemeId ?? null}
             onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
             onEdit={(theme) => setEditing(theme)}
             onDelete={(id) => {
               const theme = themes.find((t) => t.id === id)
               if (theme) setDeleteTarget(theme)
+            }}
+          />
+          <Pagination
+            totalCount={themes.length}
+            currentPage={themePage}
+            pageSize={themePageSize}
+            pageSizeOptions={[10, 25, 50]}
+            onPageChange={setThemePage}
+            onPageSizeChange={(nextSize) => {
+              setThemePageSize(nextSize)
+              setThemePage(1)
             }}
           />
         </section>

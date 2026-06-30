@@ -11,7 +11,6 @@ import {
   InputGroup,
   InputGroupIcon,
   OtpInput,
-  Pagination,
   Label,
   MultiSelect,
   PasswordInput,
@@ -51,9 +50,6 @@ export function ControlsPage() {
   const [accentColor, setAccentColor] = useState('#2563EB')
   const [otp4, setOtp4] = useState('')
   const [otp6, setOtp6] = useState('')
-  const [paginationPage, setPaginationPage] = useState(1)
-  const [paginationPageSize, setPaginationPageSize] = useState(10)
-  const paginationTotal = 156
   const browserDefaultCountry = useMemo(() => getBrowserDefaultCountryIso2(), [])
   const phoneE164 = formatPhoneE164(phoneCountry, phoneNational)
 
@@ -289,23 +285,6 @@ export function ControlsPage() {
             <p className="text-sm text-muted-foreground">Value: {otp6 || '—'}</p>
           </div>
           <OtpInput value="" onChange={() => undefined} disabled />
-        </div>
-      </DemoSection>
-
-      <DemoSection id="pagination" title="Pagination">
-        <div className="space-y-6">
-          <Pagination
-            totalCount={paginationTotal}
-            currentPage={paginationPage}
-            pageSize={paginationPageSize}
-            pageSizeOptions={[10, 25, 50]}
-            onPageChange={setPaginationPage}
-            onPageSizeChange={(nextSize) => {
-              setPaginationPageSize(nextSize)
-              setPaginationPage(1)
-            }}
-          />
-          <Pagination totalCount={8} currentPage={1} pageSize={10} onPageChange={() => undefined} />
         </div>
       </DemoSection>
 

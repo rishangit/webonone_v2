@@ -13,6 +13,7 @@ import {
   ItemListItem,
   ItemListMenu,
   itemListRowActiveClassName,
+  Pagination,
   Spinner,
 } from '@webonone/ui-kit'
 import { CreateFolderDialog } from './CreateFolderDialog'
@@ -69,6 +70,9 @@ export function ScopedFolderBrowser({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [folders, setFolders] = useState<MediaFolderDto[]>([])
   const [items, setItems] = useState<MediaItemDto[]>([])
+  const [mediaPage, setMediaPage] = useState(1)
+  const [mediaTotal, setMediaTotal] = useState(0)
+  const [mediaPageSize, setMediaPageSize] = useState(24)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<BrowserViewMode>('thumb')
@@ -80,26 +84,32 @@ export function ScopedFolderBrowser({
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [mediaResult, folderResult] = await Promise.all([
-        listMediaItems({ scope, folderPath: currentPath, pageSize: 100 }),
-        listFolders(scope, currentPath),
-      ])
-      setItems(mediaResult.items)
-      setFolders(folderResult.folders)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load folder')
-    } finally {
-      setLoading(false)
-    }
-  }, [currentPath, refreshKey, scope])
+  const loadData = useCallback(
+    async (nextPage: number, nextPageSize: number) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const [mediaResult, folderResult] = await Promise.all([
+          listMediaItems({ scope, folderPath: currentPath, page: nextPage, pageSize: nextPageSize }),
+          listFolders(scope, currentPath),
+        ])
+        setItems(mediaResult.items)
+        setMediaTotal(mediaResult.total)
+        setMediaPage(mediaResult.page)
+        setFolders(folderResult.folders)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load folder')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [currentPath, scope],
+  )
 
   useEffect(() => {
-    void loadData()
-  }, [loadData])
+    setMediaPage(1)
+    void loadData(1, mediaPageSize)
+  }, [currentPath, refreshKey, loadData, mediaPageSize])
 
   useEffect(() => {
     onNavigate?.(currentPath)
@@ -127,7 +137,7 @@ export function ScopedFolderBrowser({
   async function handleCreateFolder(name: string) {
     const path = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`
     await createFolder(scope, path, name)
-    await loadData()
+    await loadData(mediaPage, mediaPageSize)
   }
 
   async function handleConfirmDeleteFile() {
@@ -136,7 +146,7 @@ export function ScopedFolderBrowser({
     try {
       await deleteMediaItem(deleteFileTarget.id)
       setDeleteFileTarget(null)
-      await loadData()
+      await loadData(mediaPage, mediaPageSize)
     } finally {
       setIsDeleting(false)
     }
@@ -148,7 +158,7 @@ export function ScopedFolderBrowser({
     try {
       await deleteFolder(deleteFolderTarget.id)
       setDeleteFolderTarget(null)
-      await loadData()
+      await loadData(mediaPage, mediaPageSize)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete folder')
     } finally {
@@ -489,6 +499,20 @@ export function ScopedFolderBrowser({
           renderListView()
         )}
       </div>
+
+      {!loading && !isUploading ? (
+        <Pagination
+          totalCount={mediaTotal}
+          currentPage={mediaPage}
+          pageSize={mediaPageSize}
+          pageSizeOptions={[12, 24, 48]}
+          onPageChange={(nextPage) => void loadData(nextPage, mediaPageSize)}
+          onPageSizeChange={(nextSize) => {
+            setMediaPageSize(nextSize)
+            setMediaPage(1)
+          }}
+        />
+      ) : null}
 
       <CreateFolderDialog
         open={createFolderOpen}

@@ -111,6 +111,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Destructive action last in menu with destructive styling
 - [ ] Per-row `ariaLabel` on `ItemListMenu`
 - [ ] `@/` imports in service frontends ([code-cleanliness.mdc](../../rules/code-cleanliness.mdc))
+- [ ] Paginated collections use `Pagination` below the list ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
 
 ## Rules
 
@@ -120,6 +121,7 @@ Cross-link only — do not duplicate:
 - [react-typescript.mdc](../../rules/react-typescript.mdc) — components, a11y
 - [front-end-structure.mdc](../../rules/front-end-structure.mdc) — feature folders
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc) — build and export workflow
+- [item-list-pagination.mdc](../../rules/item-list-pagination.mdc) — `Pagination` with `ItemList`
 - [form-creation skill](../form-creation/SKILL.md) — when the list is inside a form (orthogonal)
 
 ## Examples

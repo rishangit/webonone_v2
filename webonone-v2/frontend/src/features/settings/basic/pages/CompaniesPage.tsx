@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage, Pagination } from '@webonone/ui-kit'
 import { CompaniesList } from '../components/CompaniesList'
 import { useSuperAdminStatus } from '../hooks/useSuperAdminStatus'
 import { companyApi, type AdminCompany, type CompanyStatus } from '../services/companyApi'
@@ -8,6 +8,8 @@ import { companyApi, type AdminCompany, type CompanyStatus } from '../services/c
 export function CompaniesPage() {
   const { isSuperAdmin, loading: roleLoading } = useSuperAdminStatus()
   const [items, setItems] = useState<AdminCompany[]>([])
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -54,6 +56,8 @@ export function CompaniesPage() {
     }
   }
 
+  const visibleItems = items.slice((page - 1) * pageSize, page * pageSize)
+
   if (roleLoading) {
     return <p className="text-sm text-muted-foreground">Loading…</p>
   }
@@ -76,7 +80,20 @@ export function CompaniesPage() {
       {loading ? <p className="text-sm text-muted-foreground">Loading companies…</p> : null}
 
       {!loading ? (
-        <CompaniesList items={items} updatingId={updatingId} onStatusChange={handleStatusChange} />
+        <>
+          <CompaniesList items={visibleItems} updatingId={updatingId} onStatusChange={handleStatusChange} />
+          <Pagination
+            totalCount={items.length}
+            currentPage={page}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 25, 50]}
+            onPageChange={setPage}
+            onPageSizeChange={(nextSize) => {
+              setPageSize(nextSize)
+              setPage(1)
+            }}
+          />
+        </>
       ) : null}
     </FeaturePage>
   )
