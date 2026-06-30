@@ -111,6 +111,7 @@ Spec: [02-identity-otp-reset.md](./02-identity-otp-reset.md)
 | Platform Email nav | Email group → History / Templates (not dashboard) |
 | OTP input UI | `OtpInput` on verify-reset step; showcased in UI Kit |
 | Registration wizard | Four-step signup with email OTP |
+| Welcome email | `welcome` template after registration complete |
 | Security | No OTP in URL/logs; generic forgot-password response |
 | Type-check | `identity-root`, `email-root` |
 
@@ -195,6 +196,24 @@ Spec: [05-identity-registration-otp.md](./05-identity-registration-otp.md) — s
 
 ---
 
+## Phase 8 — Registration welcome email and success UX
+
+**Goal:** `welcome` email after signup; wizard form spacing; success screen.
+
+**Exit criteria:** Welcome email in Email history; success UI after registration; type-check passes.
+
+| Task | Paths |
+|------|-------|
+| Welcome send | `identity/backend/src/services/auth.service.ts` — `completeRegistration` → `welcome` template |
+| Success UI | `identity/frontend/src/features/auth/pages/RegisterPage.tsx` |
+| Form spacing | `RegisterEmailStep`, `RegisterVerifyOtpStep`, `RegisterProfileStep`, `RegisterPasswordStep` — `Form className="space-y-6"` |
+
+Spec: [06-registration-welcome-email.md](./06-registration-welcome-email.md) — subtask **86ey3tdg4**
+
+**Verify:** `npm run type-check -w identity-root`
+
+---
+
 ## ClickUp traceability
 
 | ClickUp | ID | Phase |
@@ -203,6 +222,7 @@ Spec: [05-identity-registration-otp.md](./05-identity-registration-otp.md) — s
 | left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
 | need to have the control for OTP | 86ey3rq8b | Phase 6 |
 | need to email virification for the user regitration | 86ey3t18g | Phase 7 |
+| need to send the regiration completed welcome email | 86ey3tdg4 | Phase 8 |
 
 ---
 
