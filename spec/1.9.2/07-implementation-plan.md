@@ -16,7 +16,7 @@ git checkout -b spec/1.9.2
 |------|--------|
 | Base branch | `master` |
 | Spec branch | `spec/1.9.2` |
-| Scope | `ui-kit/`, `email/frontend/` |
+| Scope | `ui-kit/`, `email/frontend/`, `webonone-v2/frontend/`, `media/frontend/`, `.cursor/rules/` |
 
 ---
 
@@ -56,6 +56,48 @@ Spec: subtask **86ey3yjxz**
 
 ---
 
+## Phase 4 — Components tab showcase
+
+**Goal:** Pagination demo on Components tab with ItemList ([03-showcase-components-pagination.md](./03-showcase-components-pagination.md)).
+
+| Task | Detail |
+|------|--------|
+| `ComponentsPage.tsx` | ItemList + `Pagination` demo section |
+| `ControlsPage.tsx` | Remove Pagination section |
+
+**Exit criteria:** Type-check ui-kit.
+
+Spec: subtask **86ey3ypk3**
+
+---
+
+## Phase 5 — Service pagination rollout
+
+**Goal:** All in-scope list pages use `Pagination` ([04-service-pagination-rollout.md](./04-service-pagination-rollout.md)).
+
+| Task | Detail |
+|------|--------|
+| Email `QueuePage` | Server pagination via `listQueue` |
+| Email `TemplatesPage` | Client-side slice + `Pagination` |
+| WebOnOne `CompaniesPage` | Client-side slice + `Pagination` |
+| WebOnOne `SystemThemePage` | Client-side slice on themes + `Pagination` |
+| Media `ScopedFolderBrowser` | API pagination for media items |
+
+**Exit criteria:** Type-check email-root, webonone-v2-root, media-root.
+
+Spec: subtask **86ey3ykth**
+
+---
+
+## Phase 6 — Cursor rule
+
+| Task | Detail |
+|------|--------|
+| `item-list-pagination.mdc` | New rule; index in README |
+| `item-list/SKILL.md` | Cross-link + checklist |
+
+---
+
 ## Phase 3 — Verification
 
 | Task | Detail |
@@ -73,6 +115,8 @@ Spec: subtask **86ey3yjxz**
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.9.2 Add pagination to the UI-kit | 86ey3yh8p | Phases 1–3 |
 | Define the pagination | 86ey3yjxz | Phase 1 |
+| need to add the pagination to the ui-kit component show case | 86ey3ypk3 | Phase 4 |
+| Implement the pagination to the services | 86ey3ykth | Phases 5–6 |
 
 ---
 
@@ -85,7 +129,12 @@ Spec: subtask **86ey3yjxz**
 - [ ] Hidden when single page / zero results (default behavior)
 - [ ] Responsive layout on mobile width
 - [ ] Email History migrated to `Pagination`
-- [ ] `npm run type-check -w ui-kit-root` and `email-root` pass
+- [ ] Components tab: ItemList + Pagination demo
+- [ ] Email Queue, Templates paginated
+- [ ] WebOnOne Companies and System Theme lists paginated
+- [ ] Media folder browser paginates media items
+- [ ] `item-list-pagination.mdc` rule added
+- [ ] `npm run type-check -w ui-kit-root`, `email-root`, `webonone-v2-root`, `media-root` pass
 
 ---
 
@@ -95,6 +144,8 @@ Spec: subtask **86ey3yjxz**
 npm run build -w @webonone/ui-kit
 npm run type-check -w ui-kit-root
 npm run type-check -w email-root
+npm run type-check -w webonone-v2-root
+npm run type-check -w media-root
 npm run dev:ui-kit
 npm run dev:email
 ```
