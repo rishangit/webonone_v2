@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { AuthLayout } from '@webonone/ui-kit'
+import { Alert, AlertDescription, AuthLayout, Button } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { RegisterEmailStep } from '../components/RegisterEmailStep'
@@ -63,7 +63,12 @@ export function RegisterPage() {
     }
   }, [accessToken, user, isLoading, isRedirect, redirectUri, state])
 
-  const { title, description } = STEP_TITLES[step]
+  const { title, description } = registrationComplete
+    ? {
+        title: 'Registration successful',
+        description: 'Your account is ready to use',
+      }
+    : STEP_TITLES[step]
 
   return (
     <AuthLayout
@@ -71,18 +76,31 @@ export function RegisterPage() {
       description={description}
       variant="minimal"
       footer={
-        <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
-          Already have an account? Sign in
-        </Link>
+        registrationComplete ? null : (
+          <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
+            Already have an account? Sign in
+          </Link>
+        )
       }
     >
       {registrationComplete ? (
-        <p className="text-center text-sm text-muted-foreground">
-          Account created.{' '}
-          <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
-            Sign in
-          </Link>
-        </p>
+        <div className="space-y-6">
+          <Alert>
+            <AlertDescription>
+              Your account has been created
+              {email ? (
+                <>
+                  {' '}
+                  and we&apos;ve sent a welcome email to <strong>{email}</strong>
+                </>
+              ) : null}
+              . You can sign in now.
+            </AlertDescription>
+          </Alert>
+          <Button asChild className="w-full">
+            <Link to={loginLink}>Sign in</Link>
+          </Button>
+        </div>
       ) : (
         <div className="space-y-4">
           {step === 1 ? (

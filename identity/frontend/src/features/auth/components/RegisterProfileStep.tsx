@@ -33,7 +33,7 @@ export function RegisterProfileStep({ initialValues, onSuccess, onBack }: Regist
   }
 
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form className="space-y-6" onSubmit={handleSubmit}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="First name" htmlFor="register-firstName" required error={fieldErrors.firstName}>
           <InputGroup>

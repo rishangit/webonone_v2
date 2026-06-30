@@ -56,7 +56,7 @@ export function RegisterPasswordStep({ firstName, lastName, onBack }: RegisterPa
   }
 
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form className="space-y-6" onSubmit={handleSubmit}>
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

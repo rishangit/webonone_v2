@@ -87,7 +87,7 @@ export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVeri
   }
 
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form className="space-y-6" onSubmit={handleSubmit}>
       <p className="text-center text-sm text-muted-foreground">
         We sent a 4-digit code to {maskEmail(email)}
       </p>

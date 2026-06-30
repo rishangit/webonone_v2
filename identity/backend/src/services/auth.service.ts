@@ -244,6 +244,17 @@ export async function completeRegistration(input: {
   await markRegistrationSessionUsed(session.id)
   await invalidateRegistrationDataForEmail(email)
 
+  void sendTransactionalEmail({
+    templateSlug: 'welcome',
+    toEmail: user.email,
+    payload: {
+      userName: displayName,
+    },
+    requestedByService: 'identity',
+  }).catch((err) => {
+    console.error('[auth] failed to send welcome email:', err)
+  })
+
   return toUserProfile(user)
 }
 
