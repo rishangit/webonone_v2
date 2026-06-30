@@ -1,0 +1,100 @@
+---
+description: Implementation plan for spec 1.9.3 — UI Kit UserSelectionDialog, showcase demo, WebOnOne reference consumer
+alwaysApply: false
+globs: ui-kit/**, webonone-v2/frontend/**, .cursor/skills/item-list/**
+---
+
+# Implementation plan — Spec 1.9.3
+
+## Summary
+
+Reusable **`UserSelectionDialog`** in `@webonone/ui-kit`: `CustomDialog` shell, debounced search, optional role filter, infinite scroll via injectable `loadUsers`, single-select `onSelect`. Showcase demo on Dialogs tab; WebOnOne reference consumer with mock loader. See [02-ui-kit-user-selection-dialog.md](./02-ui-kit-user-selection-dialog.md), [03-showcase-dialogs-demo.md](./03-showcase-dialogs-demo.md), [04-service-integration.md](./04-service-integration.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.9.3` |
+| Package builds | `npm run build -w @webonone/ui-kit` before consumer prod builds |
+
+---
+
+## Phase 1 — UI Kit UserSelectionDialog
+
+**Goal:** Component + types + export.
+
+| Task | Paths |
+|------|-------|
+| Dialog component | `ui-kit/package/src/components/UserSelectionDialog.tsx` |
+| Export | `ui-kit/package/src/index.ts` |
+
+**Exit criteria:** Infinite scroll, search debounce, role filter, row select closes dialog.
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 2 — Showcase Dialogs demo
+
+**Goal:** Mock `loadUsers` with 120 users.
+
+| Task | Paths |
+|------|-------|
+| Demo section | `ui-kit/showcase/src/pages/DialogsPage.tsx` |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 3 — WebOnOne reference consumer
+
+**Goal:** Service integration with mock `loadUsers`.
+
+| Task | Paths |
+|------|-------|
+| Demo component | `webonone-v2/frontend/src/features/settings/basic/components/UserSelectionDemo.tsx` |
+| Wire on Basic Settings | `webonone-v2/frontend/src/features/settings/basic/pages/BasicSettingsPage.tsx` (or equivalent) |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 4 — Agent guidance
+
+| Task | Paths |
+|------|-------|
+| Skill cross-link | `.cursor/skills/item-list/SKILL.md` |
+
+---
+
+## Cross-service integration
+
+- UI Kit stays data-agnostic; consumers implement `LoadUsersFn` against their API.
+- No Identity or cross-service HTTP from UI Kit.
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec No.1.9.3 Need to have the user selection dialog box | 86ey40acd | 1–4 |
+
+---
+
+## Risks and open items
+
+- WebOnOne `GET /users` API deferred — mock loader acceptable for 1.9.3.
+- Avatar optional; use initials when `avatarUrl` absent.
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
+npm run type-check -w webonone-v2-root
+npm run lint -w @webonone/ui-kit-showcase
+npm run lint -w @webonone/webonone-frontend
+```
