@@ -33,7 +33,7 @@ Implementation branch: **`spec/1.9.4`**
 | [03-nav-and-permissions.md](./03-nav-and-permissions.md) | Nav variants, route guards, Email visibility |
 | [04-email-role-handoff.md](./04-email-role-handoff.md) | Session-aware `sync-email-role` |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
-| [plan.mdc](./plan.mdc) | Agent implementation plan |
+| [plan.mdc](./plan.mdc) | Agent implementation plan (implementation) |
 
 ## ClickUp traceability
 

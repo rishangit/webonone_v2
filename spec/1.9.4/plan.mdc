@@ -1,0 +1,143 @@
+---
+description: Implementation plan for spec 1.9.4 — post-login session role selection, nav variants, Email sync
+alwaysApply: false
+globs: packages/platform-nav/**, webonone-v2/**
+---
+
+# Implementation plan — Spec 1.9.4
+
+## Summary
+
+Post-login **session role selection** for users with multiple platform roles. Extends `@webonone/platform-nav` with `companyAdmin` and `member` variants; WebOnOne frontend dialog + Redux session state; backend assumable-roles API and session-aware email sync. See [02-session-role-selection.md](./02-session-role-selection.md), [03-nav-and-permissions.md](./03-nav-and-permissions.md), [04-email-role-handoff.md](./04-email-role-handoff.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.9.4` |
+| Package builds | `npm run build -w @webonone/platform-nav` before WebOnOne prod build |
+| Depends on | Spec 1.9.3 `users_roles` migration applied |
+| Super admin seed | `SUPER_ADMIN_USER_ID` in `webonone-v2/backend/.env` |
+
+---
+
+## Phase 1 — Platform nav variants
+
+**Goal:** Nav defs for company admin and member (no Email).
+
+| Task | Paths |
+|------|-------|
+| Extend `PlatformNavVariant` | `packages/platform-nav/src/coreNav.ts` |
+| Add `COMPANY_ADMIN_PLATFORM_NAV`, `MEMBER_PLATFORM_NAV` | same |
+| Add `CORE_NAV_VARIANT_COMPANY_ADMIN`, update parsers | same |
+| Re-export types | `packages/platform-nav/src/index.ts` |
+
+**Exit criteria:** `companyAdmin` shows Email; `member` omits Email group.
+
+**Verify:** `npm run build -w @webonone/platform-nav`
+
+---
+
+## Phase 2 — Backend assumable roles + session sync
+
+**Goal:** Role picker API and validated email sync.
+
+| Task | Paths |
+|------|-------|
+| `getAssumableRoles(userId)` | `webonone-v2/backend/src/services/company.service.ts` |
+| Repository helpers | `webonone-v2/backend/src/repositories/userRole.repository.ts` |
+| `GET /company/me/assumable-roles` | `company.routes.ts`, `company.controller.ts` |
+| Sync body schema | `webonone-v2/backend/src/schemas/` (Zod) |
+| Session-aware `syncEmailRoleForUser` | `company.service.ts` — validate requested role against `users_roles` |
+
+**Exit criteria:** API returns roles list; sync respects `sessionRole` body.
+
+**Verify:** `npm run type-check -w @webonone/webonone-backend`
+
+---
+
+## Phase 3 — Frontend session role + dialog
+
+**Goal:** Redux slice, role dialog, auth gate.
+
+| Task | Paths |
+|------|-------|
+| `sessionRoleSlice.ts` | `webonone-v2/frontend/src/features/session/store/` |
+| Register in store | `webonone-v2/frontend/src/app/store/` |
+| `RoleSelectionDialog.tsx` | `webonone-v2/frontend/src/features/session/components/` |
+| `assumableRolesApi.ts` | `webonone-v2/frontend/src/features/session/services/` |
+| Gate in `PrivateRoute.tsx` | `webonone-v2/frontend/src/features/auth/` |
+| Clear on logout | `authSlice.ts` |
+
+**Exit criteria:** Multi-role user sees dialog once after login.
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 4 — AppLayout, nav, route guards
+
+**Goal:** Shell reflects session role; Email handoff sends sync body.
+
+| Task | Paths |
+|------|-------|
+| `sessionRoleToNavVariant` | `webonone-v2/frontend/src/features/shell/config/navItems.ts` |
+| Replace `useSuperAdminStatus` nav usage | `webonone-v2/frontend/src/app/AppLayout.tsx` |
+| Update `syncEmailRoleBeforeHandoff` | `webonone-v2/frontend/src/features/email/utils/syncEmailRole.ts` |
+| Super-admin route guard | `webonone-v2/frontend/src/app/router.tsx` or `SuperAdminRoute.tsx` |
+| `navVariant` in redirect helpers | `redirectToEmail.ts`, `redirectToIdentityProfile.ts` |
+
+**Exit criteria:** Three roles produce correct sidebar; `/companies` blocked for non–super-admin.
+
+**Verify:** Manual smoke with `npm run dev:webonone`
+
+---
+
+## Phase 5 — Final verification
+
+| Command | Purpose |
+|---------|---------|
+| `npm run build -w @webonone/platform-nav` | Package dist for consumers |
+| `npm run type-check -w webonone-v2-root` | FE + BE types |
+| `npm run dev:webonone` + `npm run dev:email` | Manual role paths |
+
+**Exit criteria:** All items in [07-implementation-plan.md](./07-implementation-plan.md) acceptance checklist pass.
+
+---
+
+## Cross-service integration
+
+| Integration | Detail |
+|-------------|--------|
+| Email handoff | Auth-code redirect unchanged; sync role **before** redirect with session body |
+| Identity profile | Pass `core_nav` matching session role via `toCoreNavQueryValue` |
+| JWT | Local verify only; no Identity per-request calls |
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No.1.9.4 | 86ey41tfh | 1–5 |
+
+---
+
+## Risks and open items
+
+| Risk | Mitigation |
+|------|------------|
+| User with super_admin row always synced as super_admin (pre-1.9.4) | Frontend always sends session body; validate server-side |
+| Multi-company users | Use primary company from existing `getMyCompany` rule |
+| Strict AC: dialog always when in company | Spec allows skip when only one assumable role — document in finish report |
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/platform-nav
+npm run type-check -w webonone-v2-root
+npm run dev:webonone
+npm run dev:email
+```
