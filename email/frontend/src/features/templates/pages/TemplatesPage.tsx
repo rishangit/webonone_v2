@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage, Spinner } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
@@ -62,7 +62,11 @@ export function TemplatesPage() {
         </Alert>
       ) : null}
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading templates…</p> : null}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : null}
 
       {!loading ? (
         <TemplatesList

@@ -94,6 +94,11 @@ export const authSlice = createSlice({
       state.isLoading = false
       state.error = action.payload
     },
+    resetRegistrationFlow(state) {
+      state.isLoading = false
+      state.error = null
+      state.registrationComplete = false
+    },
     forgotPasswordRequested(state, _action: PayloadAction<{ email: string }>) {
       state.isLoading = true
       state.error = null

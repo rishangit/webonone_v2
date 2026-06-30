@@ -30,6 +30,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 
 | Rule | Globs | Description |
 |------|-------|-------------|
+| [ui-kit-consumption.mdc](ui-kit-consumption.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Mandatory `@webonone/ui-kit` usage for all service frontends |
 | [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
 | [feature-page-layout.mdc](feature-page-layout.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}` | `FeaturePage` / `PageHeader` for AppShell feature pages |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
@@ -38,7 +39,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 
-Applies to `identity/frontend`, `webonone-v2/frontend`, and any future `*/frontend` apps.
+Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email/frontend`, and any future `*/frontend` apps.
 
 ## Backend (`backend/`)
 
@@ -80,7 +81,9 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Feature page layout (`FeaturePage`, `PageHeader`) | `feature-page-layout.mdc` |
 | Slices, epics, `rootEpic` | `redux-store-and-epics.mdc` |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
+| `@webonone/ui-kit` consumption (all service frontends) | `ui-kit-consumption.mdc` |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
+| Date fields (`DatePicker`, not `Input type="date"`) | `ui-kit-consumption.mdc`, [form-creation skill](../skills/form-creation/SKILL.md) |
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
 | Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |

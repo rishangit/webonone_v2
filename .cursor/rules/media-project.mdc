@@ -38,3 +38,5 @@ cd media && npm run dev
 ```
 
 Do not duplicate upload UI in consumers — embed Media routes via `@webonone/media-embed`.
+
+All interactive UI must use `@webonone/ui-kit` — see [ui-kit-consumption.mdc](ui-kit-consumption.mdc). Do not duplicate UI Kit primitives.

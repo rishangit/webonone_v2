@@ -40,14 +40,18 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 | Basic Settings | `webonone-v2/frontend/src/features/settings/basic/pages/BasicSettingsPage.tsx` |
 | Companies | `webonone-v2/frontend/src/features/settings/basic/pages/CompaniesPage.tsx` |
 | System Theme | `webonone-v2/frontend/src/features/settings/system-theme/pages/SystemThemePage.tsx` |
+| Email templates | `email/frontend/src/features/templates/pages/TemplatesPage.tsx` |
+| Email queue | `email/frontend/src/features/queue/pages/QueuePage.tsx` |
 | Showcase demo | `ui-kit/showcase/src/pages/ComponentsPage.tsx` — Layout section |
 | Components | `ui-kit/package/src/layouts/FeaturePage.tsx`, `PageHeader.tsx` |
 
 ## Verification
 
+From any service frontend workspace (e.g. `webonone-v2/frontend`, `email/frontend`):
+
 ```bash
-npm run type-check -w webonone-v2-root
-npm run lint -w webonone-v2-root
+npm run type-check
+npm run lint
 ```
 
 New feature pages under `features/*/pages/` must import `FeaturePage` unless listed in **Exceptions**.

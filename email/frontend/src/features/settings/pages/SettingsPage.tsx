@@ -9,6 +9,7 @@ import {
   FormField,
   Input,
   mapZodIssuesToFieldErrors,
+  Spinner,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -148,7 +149,11 @@ export function SettingsPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      {success ? <p className="text-sm text-primary">{success}</p> : null}
+      {success ? (
+        <Alert>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {tab === 'global' && isSuperAdmin ? (
         <section className="space-y-3 rounded-lg border border-border p-6">
@@ -167,7 +172,9 @@ export function SettingsPage() {
         !companyId ? (
           <p className="text-sm text-muted-foreground">No company is linked to your account.</p>
         ) : loading ? (
-          <p className="text-sm text-muted-foreground">Loading branding…</p>
+          <div className="flex justify-center py-8">
+            <Spinner size="lg" />
+          </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-2">
             <Form onSubmit={handleSaveBranding} className="space-y-4">

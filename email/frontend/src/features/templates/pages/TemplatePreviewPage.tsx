@@ -7,6 +7,7 @@ import {
   FeaturePage,
   FormField,
   Input,
+  Spinner,
   Textarea,
 } from '@webonone/ui-kit'
 import { emailApi } from '@/shared/services/emailApi'
@@ -99,7 +100,11 @@ export function TemplatePreviewPage() {
         </Alert>
       ) : null}
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading template…</p> : null}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : null}
 
       {!loading && template ? (
         <div className="space-y-6">

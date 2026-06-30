@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Alert, AlertDescription, Button, FeaturePage } from '@webonone/ui-kit'
+import { Alert, AlertDescription, Button, FeaturePage, Spinner } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
 import type { QueueItem, QueueStatus } from '@/shared/types/email.types'
@@ -89,7 +89,11 @@ export function QueuePage() {
         </Button>
       </div>
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading queue…</p> : null}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : null}
 
       {!loading ? (
         <QueueList

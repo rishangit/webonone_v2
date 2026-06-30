@@ -1,0 +1,73 @@
+---
+description: Mandatory @webonone/ui-kit usage for all service frontends
+globs: "**/frontend/src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# UI Kit consumption
+
+Every service frontend (`identity`, `webonone-v2`, `media`, `email`, and future `*/frontend`) must use **`@webonone/ui-kit`** for interactive UI — not raw HTML controls, not third-party component libraries, and not local copies of kit primitives.
+
+Related: [ui-kit-project.mdc](ui-kit-project.mdc) (package/build), [feature-page-layout.mdc](feature-page-layout.mdc), [dialog-windows.mdc](dialog-windows.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md).
+
+## Dependency and wiring
+
+| Requirement | Where |
+|-------------|-------|
+| `"@webonone/ui-kit": "*"` in dependencies | `<service>/frontend/package.json` |
+| Vite aliases: `@webonone/ui-kit`, `/styles`, `/tailwind` | `<service>/frontend/vite.config.ts` |
+| `import '@webonone/ui-kit/styles'` in entry | `<service>/frontend/src/main.tsx` |
+| `build:ui-kit` chained before frontend build | `<service>/package.json` |
+
+See [microservice-architecture.mdc](microservice-architecture.mdc) for production `dist/` build order.
+
+## Forbidden
+
+- Raw HTML `<button>`, `<input>`, `<select>`, `<textarea>` for interactive UI
+- Third-party component libraries (MUI, Ant Design, Chakra, etc.)
+- Copying kit source into `features/` or re-implementing kit primitives locally
+- Page-level loading as plain text (`<p>Loading…</p>`) — use `Spinner` instead
+- `Input` with `type="date"` — use `DatePicker` (native browser date UI is inconsistent and misaligns with other controls)
+
+## Required component mapping
+
+| UI need | Use from `@webonone/ui-kit` | Authoritative rule/skill |
+|---------|----------------------------|--------------------------|
+| App chrome | `AppShell`, `PageShell`, `AuthLayout`, `BrandLogo` | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) |
+| Feature pages | `FeaturePage`, `PageHeader` | [feature-page-layout.mdc](feature-page-layout.mdc) |
+| Forms | `Form`, `FormField`, `Input`, `mapZodIssuesToFieldErrors` | [form-creation skill](../skills/form-creation/SKILL.md) |
+| Date fields | `DatePicker` (prefer `withIcon`) inside `FormField` | [form-creation skill](../skills/form-creation/SKILL.md) |
+| Lists | `ItemList`, `ItemListMenu`, `DropdownMenuItem` | [item-list skill](../skills/item-list/SKILL.md) |
+| Modals | `CustomDialog`, `AlertDialog` | [dialog-windows.mdc](dialog-windows.mdc) |
+| Page/section loading | `Spinner` (`size="lg"` for full section; `size="sm"` inside `Button`) | This rule |
+| Errors | `Alert`, `AlertDescription` | This rule |
+| Success feedback | `Alert` or `useToast` / `ToastProvider` | This rule |
+
+When the kit lacks a component, extend ui-kit via [ui-kit-agent](../agents/ui-kit-agent.md) first — do not add a parallel primitive in a service.
+
+## Allowed exceptions
+
+- Domain preview: `<iframe sandbox srcDoc={…}>` for email/HTML previews
+- Semantic copy: `<p>` for list metadata, pagination text, descriptions inside `ItemListContent`
+- Routing shells (`router.tsx`, `PrivateRoute`) — no UI primitives needed
+- `lucide-react` icons in nav config only (paired with ui-kit shell)
+
+## Reference implementations
+
+| Service | Shell | Form | List | Feature page |
+|---------|-------|------|------|--------------|
+| Identity | `identity/frontend/src/app/AppLayout.tsx` | `features/auth/components/LoginForm.tsx` | — | `features/profile/pages/ProfilePage.tsx` |
+| WebOnOne | `webonone-v2/frontend/src/app/AppLayout.tsx` | `features/settings/system-theme/components/ThemeForm.tsx` | `features/settings/basic/components/CompaniesList.tsx` | `features/home/pages/HomePage.tsx` |
+| Media | `media/frontend/src/app/AppLayout.tsx` | `features/media/components/CreateFolderDialog.tsx` | `features/media/components/MediaGrid.tsx` | — |
+| Email | `email/frontend/src/app/AppLayout.tsx` | `features/history/pages/HistoryPage.tsx` (date filters) | `features/templates/components/TemplatesList.tsx` | `features/templates/pages/TemplatesPage.tsx` |
+
+Showcase: `ui-kit/showcase/src/pages/ControlsPage.tsx` — Date picker sections.
+
+## Verification
+
+From the service frontend workspace (e.g. `identity/frontend`, `email/frontend`):
+
+```bash
+npm run type-check
+npm run lint
+```

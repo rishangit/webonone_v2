@@ -22,10 +22,14 @@ Agent skill: [.cursor/skills/ui-kit-agent/SKILL.md](../skills/ui-kit-agent/SKILL
 
 ## Consumers
 
+Consumer requirements: [ui-kit-consumption.mdc](ui-kit-consumption.mdc).
+
 | Project | Usage |
 |---------|---------|
-| `identity/frontend` | Auth forms, AuthLayout |
-| `webonone-v2/frontend` | PageShell, layouts — not login forms |
+| `identity/frontend` | Auth forms, AuthLayout, AppShell, profile |
+| `webonone-v2/frontend` | AppShell, FeaturePage, settings forms and lists |
+| `media/frontend` | AppShell, embed chrome, media grid and dialogs |
+| `email/frontend` | AppShell, FeaturePage, templates, queue, send forms |
 
 Do not copy kit components into consumer apps.
 

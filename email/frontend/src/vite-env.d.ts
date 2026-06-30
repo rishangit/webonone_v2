@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_IDENTITY_ORIGIN?: string
   readonly VITE_IDENTITY_API_BASE_URL?: string
   readonly VITE_WEBONONE_ORIGIN?: string
+  readonly VITE_WEBONONE_API_BASE_URL?: string
   readonly VITE_ALLOWED_PARENT_ORIGINS?: string
 }
 

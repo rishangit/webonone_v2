@@ -47,4 +47,6 @@ npm run type-check -w webonone-v2-root
 
 Login flow requires Identity running (`npm run dev:identity`).
 
+All interactive UI must use `@webonone/ui-kit` — see [ui-kit-consumption.mdc](ui-kit-consumption.mdc). Do not duplicate UI Kit primitives.
+
 IIS production deploy: [iis-deployment.mdc](../rules/iis-deployment.mdc) · [webonone-v2/deploy/IIS.md](../../webonone-v2/deploy/IIS.md)

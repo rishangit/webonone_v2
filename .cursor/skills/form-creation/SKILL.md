@@ -77,7 +77,19 @@ If the task needs new `FormField` behavior or kit exports, change **`ui-kit/` fi
 3. **Required in Zod** — `.min(1, '… is required')`, `.email()`, etc.
 4. **Form state** — `useState<FormValues>` + `useState<Partial<Record<keyof FormValues, string>>>({})` for `fieldErrors`.
 5. **Submit** — `schema.safeParse(values)` → `mapZodIssuesToFieldErrors` → `setFieldErrors`; on success dispatch / API call.
-6. **Render** — `Form` → `FormField` → `Input` from `@webonone/ui-kit`.
+6. **Render** — `Form` → `FormField` → control from `@webonone/ui-kit` (`Input`, `Select`, `DatePicker`, etc.).
+
+### Date fields
+
+Use **`DatePicker`** — not `Input type="date"`. State as `Date | undefined`; convert to API strings with local start/end-of-day helpers.
+
+```tsx
+<FormField label="From date" htmlFor="history-from">
+  <DatePicker id="history-from" withIcon value={from} onChange={setFrom} placeholder="Start date" />
+</FormField>
+```
+
+Reference: `email/frontend/src/features/history/pages/HistoryPage.tsx`. Showcase: `ui-kit/showcase/src/pages/ControlsPage.tsx`.
 
 ## Backend workflow
 
@@ -113,7 +125,7 @@ Client validation runs **on submit**. Clear `fieldErrors` when client validation
 **Frontend:**
 
 ```typescript
-import { Form, FormField, Input, Button, Alert, AlertDescription, mapZodIssuesToFieldErrors } from '@webonone/ui-kit'
+import { Form, FormField, Input, DatePicker, Button, Alert, AlertDescription, mapZodIssuesToFieldErrors } from '@webonone/ui-kit'
 import { mySchema, type MyFormValues } from '@/features/<module>/schemas/mySchemas'
 ```
 
@@ -141,6 +153,7 @@ Use `@/` on frontend ([code-cleanliness.mdc](../../rules/code-cleanliness.mdc)).
 - [ ] Submit uses `safeParse` + `mapZodIssuesToFieldErrors`
 - [ ] API errors in `Alert variant="destructive"` when applicable
 - [ ] Submit button respects loading/disabled state
+- [ ] Date fields use `DatePicker` (not `Input type="date"`)
 
 **Backend**
 
@@ -161,6 +174,7 @@ Cross-link only — do not duplicate:
 - [tailwind-css.mdc](../../rules/tailwind-css.mdc) — utility styling
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports, dead code
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc) — kit build and export workflow
+- [ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc) — mandatory kit primitives including `DatePicker`
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — REST handlers, backend validation
 
 ## Examples

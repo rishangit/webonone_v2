@@ -98,6 +98,7 @@ Cross-service libraries live under [`packages/`](../../packages/) (`@webonone/pl
 | `identity/` | `platform-nav`, `theme`, `ui-kit` |
 | `webonone-v2/` | `platform-nav`, `theme`, `ui-kit` |
 | `media/` | `media-embed`, `theme`, `ui-kit` |
+| `email/` | `theme`, `ui-kit` |
 
 **Forbidden:** relying on Vite aliases alone for production; assuming `npm install` produces `dist/`; importing `packages/*/src` from service code outside Vite alias config.
 

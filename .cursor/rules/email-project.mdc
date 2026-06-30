@@ -40,6 +40,10 @@ Email must follow the **same three-layer pattern** as Identity profile. See [pla
 
 Consumers (WebOnOne, Identity): `handleEmailClick` in `AppLayout` + `redirectToEmail.ts` — **no** `/go/email` route or redirect page.
 
+## UI Kit
+
+All interactive UI must use `@webonone/ui-kit` — see [ui-kit-consumption.mdc](ui-kit-consumption.mdc). Do not duplicate UI Kit primitives.
+
 ## Verification
 
 ```bash

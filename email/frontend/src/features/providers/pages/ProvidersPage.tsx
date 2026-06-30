@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  Spinner,
 } from '@webonone/ui-kit'
 import { emailApi } from '@/shared/services/emailApi'
 import type { ProviderInfo } from '@/shared/types/email.types'
@@ -70,9 +71,17 @@ export function ProvidersPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      {testMessage ? <p className="text-sm text-primary">{testMessage}</p> : null}
+      {testMessage ? (
+        <Alert>
+          <AlertDescription>{testMessage}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading provider…</p> : null}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : null}
 
       {!loading && provider ? (
         <Card>

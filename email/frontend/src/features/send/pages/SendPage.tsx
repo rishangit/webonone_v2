@@ -13,6 +13,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
 } from '@webonone/ui-kit'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
@@ -128,9 +129,17 @@ export function SendEmailPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      {success ? <p className="text-sm text-primary">{success}</p> : null}
+      {success ? (
+        <Alert>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading templates…</p> : null}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : null}
 
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">

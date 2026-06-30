@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Alert, AlertDescription, AuthLayout, Button } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { RegisterEmailStep } from '../components/RegisterEmailStep'
 import { RegisterPasswordStep } from '../components/RegisterPasswordStep'
@@ -10,8 +10,8 @@ import { RegisterVerifyOtpStep } from '../components/RegisterVerifyOtpStep'
 import type { RegisterProfileFormValues } from '../schemas/authSchemas'
 import { useRedirectMode } from '../hooks/useRedirectMode'
 import { completeAuthRedirect } from '../utils/completeAuthRedirect'
-import { loadRegistrationEmail } from '../utils/registrationEmailStorage'
-import { loadRegistrationSessionToken } from '../utils/registrationSessionStorage'
+import { clearRegistrationWizardStorage } from '../utils/resetRegistrationWizard'
+import { authActions } from '../store'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 type RegisterStep = 1 | 2 | 3 | 4
@@ -36,6 +36,7 @@ const STEP_TITLES: Record<RegisterStep, { title: string; description: string }> 
 }
 
 export function RegisterPage() {
+  const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const { isRedirect, redirectUri, state } = useRedirectMode()
   const { registrationComplete, accessToken, user, isLoading, error } = useAppSelector((s) => s.auth)
@@ -43,14 +44,16 @@ export function RegisterPage() {
   const loginLink = withRedirectQuery('/login', searchParams)
 
   const [step, setStep] = useState<RegisterStep>(1)
-  const [email, setEmail] = useState(() => loadRegistrationEmail() ?? '')
+  const [email, setEmail] = useState('')
   const [profile, setProfile] = useState<RegisterProfileFormValues>({ firstName: '', lastName: '' })
 
-  useEffect(() => {
-    if (loadRegistrationSessionToken() && step < 3) {
-      setStep(3)
-    }
-  }, [step])
+  useLayoutEffect(() => {
+    clearRegistrationWizardStorage()
+    dispatch(authActions.resetRegistrationFlow())
+    setStep(1)
+    setEmail('')
+    setProfile({ firstName: '', lastName: '' })
+  }, [dispatch])
 
   useEffect(() => {
     if (handledRef.current || isLoading || !accessToken || !user) return
@@ -65,8 +68,8 @@ export function RegisterPage() {
 
   const { title, description } = registrationComplete
     ? {
-        title: 'Registration successful',
-        description: 'Your account is ready to use',
+        title: 'Welcome to WebOnOne',
+        description: 'Your account has been created successfully',
       }
     : STEP_TITLES[step]
 
@@ -86,16 +89,7 @@ export function RegisterPage() {
       {registrationComplete ? (
         <div className="space-y-6">
           <Alert>
-            <AlertDescription>
-              Your account has been created
-              {email ? (
-                <>
-                  {' '}
-                  and we&apos;ve sent a welcome email to <strong>{email}</strong>
-                </>
-              ) : null}
-              . You can sign in now.
-            </AlertDescription>
+            <AlertDescription>Welcome to WebOnOne. You can sign in now.</AlertDescription>
           </Alert>
           <Button asChild className="w-full">
             <Link to={loginLink}>Sign in</Link>

@@ -13,6 +13,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   mapZodIssuesToFieldErrors,
+  Spinner,
   Textarea,
 } from '@webonone/ui-kit'
 import { emailApi } from '@/shared/services/emailApi'
@@ -169,9 +170,17 @@ export function TemplateEditorPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      {success ? <p className="text-sm text-primary">{success}</p> : null}
+      {success ? (
+        <Alert>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading template…</p> : null}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : null}
 
       {!loading && template ? (
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">

@@ -4,7 +4,9 @@ import {
   Alert,
   AlertDescription,
   Button,
+  DatePicker,
   FeaturePage,
+  Form,
   FormField,
   Input,
   Select,
@@ -12,11 +14,20 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
 import type { HistoryItem } from '@/shared/types/email.types'
 import { HistoryList } from '../components/HistoryList'
+
+function startOfDayIso(date: Date): string {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0).toISOString()
+}
+
+function endOfDayIso(date: Date): string {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59).toISOString()
+}
 
 export function HistoryPage() {
   const { accessToken } = useAppSelector((s) => s.auth)
@@ -26,8 +37,8 @@ export function HistoryPage() {
   const [total, setTotal] = useState(0)
   const [pageSize] = useState(20)
   const [status, setStatus] = useState<string>('all')
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [from, setFrom] = useState<Date | undefined>()
+  const [to, setTo] = useState<Date | undefined>()
   const [templateSlug, setTemplateSlug] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,8 +47,8 @@ export function HistoryPage() {
     setLoading(true)
     setError(null)
     try {
-      const fromIso = from ? new Date(`${from}T00:00:00`).toISOString() : undefined
-      const toIso = to ? new Date(`${to}T23:59:59`).toISOString() : undefined
+      const fromIso = from ? startOfDayIso(from) : undefined
+      const toIso = to ? endOfDayIso(to) : undefined
       const data = await emailApi.getHistory({
         page: nextPage,
         pageSize,
@@ -91,7 +102,10 @@ export function HistoryPage() {
         </Alert>
       ) : null}
 
-      <form onSubmit={handleApplyFilters} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <Form
+        onSubmit={handleApplyFilters}
+        className="grid gap-4 space-y-0 sm:grid-cols-2 xl:grid-cols-5 xl:items-end"
+      >
         <FormField label="Status" htmlFor="history-status">
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger id="history-status">
@@ -106,11 +120,23 @@ export function HistoryPage() {
         </FormField>
 
         <FormField label="From date" htmlFor="history-from">
-          <Input id="history-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <DatePicker
+            id="history-from"
+            withIcon
+            value={from}
+            onChange={setFrom}
+            placeholder="Start date"
+          />
         </FormField>
 
         <FormField label="To date" htmlFor="history-to">
-          <Input id="history-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          <DatePicker
+            id="history-to"
+            withIcon
+            value={to}
+            onChange={setTo}
+            placeholder="End date"
+          />
         </FormField>
 
         <FormField label="Template slug" htmlFor="history-slug">
@@ -122,12 +148,16 @@ export function HistoryPage() {
           />
         </FormField>
 
-        <div className="sm:col-span-2 lg:col-span-4">
-          <Button type="submit">Apply filters</Button>
-        </div>
-      </form>
+        <Button type="submit" className="w-full sm:col-span-2 xl:col-span-1">
+          Apply filters
+        </Button>
+      </Form>
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading history…</p> : null}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : null}
 
       {!loading ? <HistoryList items={items} /> : null}
 
