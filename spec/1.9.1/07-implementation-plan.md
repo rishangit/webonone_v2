@@ -93,6 +93,23 @@ Spec: [03-email-history-templates.md](./03-email-history-templates.md) — subta
 
 ---
 
+## Phase 6 — UI Kit OTP input control
+
+**Goal:** Shared multi-box OTP entry; showcase demo; Identity verify-reset consumer.
+
+| Task | Detail |
+|------|--------|
+| `OtpInput` component | `ui-kit/package/src/components/OtpInput.tsx` — `length` prop (default 4) |
+| Export | `ui-kit/package/src/index.ts` |
+| Showcase | `ui-kit/showcase/src/pages/ControlsPage.tsx` — OTP input section |
+| Identity consumer | `VerifyResetOtpPage.tsx` — replace single `Input` with `OtpInput` |
+
+**Exit criteria:** 4-digit OTP entry works with paste/backspace; type-check ui-kit + identity.
+
+Spec: [04-ui-kit-otp-input.md](./04-ui-kit-otp-input.md) — subtask **86ey3rq8b**
+
+---
+
 ## Phase 4 — Integration verification
 
 | Task | Detail |
@@ -112,6 +129,7 @@ Spec: [03-email-history-templates.md](./03-email-history-templates.md) — subta
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.9.1 | 86ey3hef6 | Phases 1–4 |
 | left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
+| need to have the control for OTP | 86ey3rq8b | Phase 6 |
 
 ---
 
@@ -126,6 +144,7 @@ Spec: [03-email-history-templates.md](./03-email-history-templates.md) — subta
 - [ ] Super admin: all history + platform templates
 - [ ] Company admin: company-scoped history + templates only
 - [ ] Core nav **Email** group opens **Email History** or **Templates** (not dashboard)
+- [ ] `OtpInput` on Identity verify-reset step; showcased in UI Kit Controls tab
 - [ ] No email enumeration on forgot-password
 - [ ] `npm run type-check -w identity-root` and `email-root` pass
 
@@ -138,6 +157,7 @@ npm run migrate -w identity-root
 npm run migrate -w email-root
 npm run type-check -w identity-root
 npm run type-check -w email-root
+npm run type-check -w ui-kit-root
 npm run dev:identity
 npm run dev:email
 ```

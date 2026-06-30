@@ -42,7 +42,7 @@ Multi-step forgot-password flow owned by **Identity**. Email service sends the O
 **UI:**
 
 - Show masked email hint.
-- Single field: 4-digit OTP (numeric input, max length 4).
+- **OtpInput** from `@webonone/ui-kit` — `length={4}`, numeric cells with auto-advance and paste support.
 - **Countdown timer** — 60 seconds from page load or from server `expiresAt` in response; at zero disable submit and show "Code expired — request a new one" with link back to forgot-password.
 - **Attempt counter** — show remaining tries (e.g. "2 attempts left") from server `attemptsRemaining` on each failed verify.
 - Submit: `POST /api/v1/auth/verify-reset-otp` with `{ email, otp }`.
@@ -139,7 +139,7 @@ Zod validation on all bodies; `validateBody` middleware per `nodejs-express.mdc`
 |------|--------|
 | `ForgotPasswordPage.tsx` | Copy + navigation to verify step |
 | `ForgotPasswordForm.tsx` | Post-success navigate |
-| `VerifyResetOtpPage.tsx` | **New** — OTP + countdown |
+| `VerifyResetOtpPage.tsx` | **New** — `OtpInput` + countdown |
 | `ResetPasswordPage.tsx` | Accept session token from state |
 | `ResetPasswordForm.tsx` | Submit `resetSessionToken` |
 | `App.tsx` | Route `/verify-reset-otp` |
