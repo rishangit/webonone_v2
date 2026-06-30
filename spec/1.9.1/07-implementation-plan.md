@@ -128,6 +128,22 @@ Spec: [05-identity-registration-otp.md](./05-identity-registration-otp.md) — s
 
 ---
 
+## Phase 8 — Registration welcome email and success UX
+
+**Goal:** Send `welcome` email after registration; polish wizard spacing; success screen.
+
+| Task | Detail |
+|------|--------|
+| `completeRegistration` | Call Email internal API — template `welcome`, payload `{ userName }` |
+| `RegisterPage.tsx` | Success `Alert` + title; mention welcome email sent |
+| Wizard steps | `Form className="space-y-6"` on all four step components |
+
+**Exit criteria:** Welcome email in history; success UI after step 4; type-check passes.
+
+Spec: [06-registration-welcome-email.md](./06-registration-welcome-email.md) — subtask **86ey3tdg4**
+
+---
+
 ## Phase 4 — Integration verification
 
 | Task | Detail |
@@ -149,6 +165,7 @@ Spec: [05-identity-registration-otp.md](./05-identity-registration-otp.md) — s
 | left navigation need to have the sub navigation | 86ey3j67h | Phase 5 |
 | need to have the control for OTP | 86ey3rq8b | Phase 6 |
 | need to email virification for the user regitration | 86ey3t18g | Phase 7 |
+| need to send the regiration completed welcome email | 86ey3tdg4 | Phase 8 |
 
 ---
 
@@ -165,6 +182,8 @@ Spec: [05-identity-registration-otp.md](./05-identity-registration-otp.md) — s
 - [ ] Core nav **Email** group opens **Email History** or **Templates** (not dashboard)
 - [ ] `OtpInput` on Identity verify-reset step; showcased in UI Kit Controls tab
 - [ ] Four-step registration with email OTP; account created verified
+- [ ] Welcome email sent after registration (`welcome` template)
+- [ ] Registration success screen with clear confirmation message
 - [ ] No email enumeration on forgot-password
 - [ ] `npm run type-check -w identity-root` and `email-root` pass
 
