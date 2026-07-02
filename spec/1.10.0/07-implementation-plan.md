@@ -94,13 +94,27 @@ Spec: parent **86ey4yz5q**
 
 ---
 
+## Phase 6 — Cursor rules
+
+**Goal:** Document pattern for future agents ([03-cursor-rules.md](./03-cursor-rules.md)).
+
+| Task | Detail |
+|------|--------|
+| New rule | `.cursor/rules/frontend-vite-chunk-splitting.mdc` |
+| Index | `.cursor/rules/README.md` entry |
+
+**Exit criteria:** Rule lists lazy-route pattern, `manualChunks`, eager exceptions, verification command.
+
+Spec: subtask **86ey50q2u**
+
+---
+
 ## ClickUp subtask traceability
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.10.0 | 86ey4yz5q | Phases 1–5 |
-
-_No ready subtasks on parent at spec time — parent description drives all phases._
+| Subtask: update the rules | 86ey50q2u | Phase 6 |
 
 ---
 
@@ -113,6 +127,7 @@ _No ready subtasks on parent at spec time — parent description drives all phas
 - [ ] `manualChunks` present in all four `frontend/vite.config.ts`
 - [ ] `chunkSizeWarningLimit` not raised unless documented exception
 - [ ] `npm run type-check` passes for all four service roots
+- [ ] `.cursor/rules/frontend-vite-chunk-splitting.mdc` exists and is indexed
 
 ---
 

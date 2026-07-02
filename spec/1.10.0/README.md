@@ -32,6 +32,7 @@ UI Kit showcase (`ui-kit/showcase/`) is out of scope unless its build also excee
 |-----|-------|
 | [01-overview.md](./01-overview.md) | Vision, goals, scope, glossary, success criteria |
 | [02-frontend-chunk-splitting.md](./02-frontend-chunk-splitting.md) | `manualChunks`, route lazy-load, per-service checklist |
+| [03-cursor-rules.md](./03-cursor-rules.md) | `.cursor/rules/` documentation for future development |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
@@ -40,6 +41,11 @@ UI Kit showcase (`ui-kit/showcase/`) is out of scope unless its build also excee
 | ClickUp | ID | Spec destination |
 |---------|-----|------------------|
 | Parent: [User Story] Spec No 1.10.0 | 86ey4yz5q | All docs |
+| Subtask: update the rules | 86ey50q2u | `03-cursor-rules.md`, Phase 6 |
+
+## Revision history
+
+- **2026-07-02** — Added subtask `update the rules` (cursor rule for chunk-splitting pattern).
 
 ## Inherited from earlier specs
 
@@ -55,6 +61,7 @@ UI Kit showcase (`ui-kit/showcase/`) is out of scope unless its build also excee
 | Microservice boundaries | `microservice-architecture.mdc` |
 | Per-service env / build | `microservice-architecture.mdc` (package `dist/` before prod build) |
 | IIS deploy | `iis-deployment.mdc` |
+| Vite chunk splitting | `frontend-vite-chunk-splitting.mdc` (new in 1.10.0) |
 
 ## Local dev
 
