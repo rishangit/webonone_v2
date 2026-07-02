@@ -1,14 +1,14 @@
 ---
 description: Implementation plan for spec 1.10.0 — Vite production chunk splitting across service frontends
 alwaysApply: false
-globs: webonone-v2/frontend/**, identity/frontend/**, email/frontend/**, media/frontend/**
+globs: webonone-v2/frontend/**, identity/frontend/**, email/frontend/**, media/frontend/**, .cursor/rules/**
 ---
 
 # Implementation plan — Spec 1.10.0
 
 ## Summary
 
-Eliminate Rollup **>500 kB chunk** warnings on all four service SPAs by combining **route-level `React.lazy`** with **`build.rollupOptions.output.manualChunks`** in each `frontend/vite.config.ts`. See [02-frontend-chunk-splitting.md](./02-frontend-chunk-splitting.md).
+Eliminate Rollup **>500 kB chunk** warnings on all four service SPAs by combining **route-level `React.lazy`** with **`build.rollupOptions.output.manualChunks`** in each `frontend/vite.config.ts`. Add `.cursor/rules/frontend-vite-chunk-splitting.mdc` so future feature pages follow the same pattern. See [02-frontend-chunk-splitting.md](./02-frontend-chunk-splitting.md), [03-cursor-rules.md](./03-cursor-rules.md).
 
 ## Branch and prerequisites
 
@@ -26,18 +26,13 @@ Eliminate Rollup **>500 kB chunk** warnings on all four service SPAs by combinin
 
 | Task | Paths |
 |------|-------|
+| `LazyRoute` helper | `webonone-v2/frontend/src/app/LazyRoute.tsx` |
 | Lazy route imports | `webonone-v2/frontend/src/app/router.tsx` |
 | `manualChunks` | `webonone-v2/frontend/vite.config.ts` |
-| Suspense fallback | Same file or small `LazyRoute.tsx` helper |
 
 **Exit criteria:** `npm run build -w webonone-v2-root` — no 500 kB warning.
 
-**Verify:**
-
-```bash
-npm run build -w webonone-v2-root
-npm run type-check -w webonone-v2-root
-```
+**Verify:** `npm run build -w webonone-v2-root` · `npm run type-check -w webonone-v2-root`
 
 ---
 
@@ -45,10 +40,11 @@ npm run type-check -w webonone-v2-root
 
 | Task | Paths |
 |------|-------|
-| Lazy routes | `identity/frontend/src/app/router.tsx` |
-| manualChunks | `identity/frontend/vite.config.ts` |
+| `LazyRoute` | `identity/frontend/src/app/LazyRoute.tsx` |
+| Lazy routes | `identity/frontend/src/app/App.tsx` (profile + secondary auth pages) |
+| `manualChunks` | `identity/frontend/vite.config.ts` |
 
-**Verify:** `npm run build -w identity-root`
+**Verify:** `npm run build -w identity-root` · `npm run type-check -w identity-root`
 
 ---
 
@@ -56,10 +52,11 @@ npm run type-check -w webonone-v2-root
 
 | Task | Paths |
 |------|-------|
+| `LazyRoute` | `email/frontend/src/app/LazyRoute.tsx` |
 | Lazy routes | `email/frontend/src/app/router.tsx` |
-| manualChunks | `email/frontend/vite.config.ts` |
+| `manualChunks` | `email/frontend/vite.config.ts` |
 
-**Verify:** `npm run build -w email-root`
+**Verify:** `npm run build -w email-root` · `npm run type-check -w email-root`
 
 ---
 
@@ -67,23 +64,70 @@ npm run type-check -w webonone-v2-root
 
 | Task | Paths |
 |------|-------|
-| Lazy routes | `media/frontend/src/app/router.tsx` |
-| manualChunks | `media/frontend/vite.config.ts` |
+| `LazyRoute` | `media/frontend/src/app/LazyRoute.tsx` |
+| Lazy routes | `media/frontend/src/app/router.tsx` (`LibraryPage`, `ComponentShowcasePage` only) |
+| `manualChunks` | `media/frontend/vite.config.ts` |
 
-**Verify:** `npm run build -w media-root`; smoke picker embed from WebOnOne.
+Embed routes (`/picker`, `/upload`, dialog pages) stay **eager**.
+
+**Verify:** `npm run build -w media-root` · `npm run type-check -w media-root`
 
 ---
 
 ## Phase 5 — Cross-service verification
+
+Build all four services; confirm no `Some chunks are larger than 500 kB` in output.
+
+---
+
+## Phase 6 — Cursor rules
+
+| Task | Paths |
+|------|-------|
+| New rule | `.cursor/rules/frontend-vite-chunk-splitting.mdc` |
+| Index | `.cursor/rules/README.md` |
+
+**Verify:** Rule file under ~80 lines; index entry present.
+
+---
+
+## Cross-service integration
+
+No API, JWT, or iframe contract changes. Build-only optimization across independent service frontends.
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.10.0 | 86ey4yz5q | Phases 1–5 |
+| Subtask: update the rules | 86ey50q2u | Phase 6 |
+
+---
+
+## Risks and open items
+
+| Risk | Mitigation |
+|------|------------|
+| `vendor-misc` still >500 kB | Further split large deps (e.g. `zod`, `lucide-react`) in `manualChunks` |
+| Lazy flash on slow networks | Centered `Spinner` in `LazyRoute` |
+| Embed routes broken if lazy-loaded | Keep picker/upload/dialog routes eager in Media |
+
+---
+
+## Final verification
 
 ```bash
 npm run build -w webonone-v2-root
 npm run build -w identity-root
 npm run build -w email-root
 npm run build -w media-root
+npm run type-check -w webonone-v2-root
+npm run type-check -w identity-root
+npm run type-check -w email-root
+npm run type-check -w media-root
 ```
-
-Confirm no `Some chunks are larger than 500 kB` in any output.
 
 ---
 
