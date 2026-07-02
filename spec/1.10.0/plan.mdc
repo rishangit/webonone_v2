@@ -1,0 +1,94 @@
+---
+description: Implementation plan for spec 1.10.0 — Vite production chunk splitting across service frontends
+alwaysApply: false
+globs: webonone-v2/frontend/**, identity/frontend/**, email/frontend/**, media/frontend/**
+---
+
+# Implementation plan — Spec 1.10.0
+
+## Summary
+
+Eliminate Rollup **>500 kB chunk** warnings on all four service SPAs by combining **route-level `React.lazy`** with **`build.rollupOptions.output.manualChunks`** in each `frontend/vite.config.ts`. See [02-frontend-chunk-splitting.md](./02-frontend-chunk-splitting.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.10.0` |
+| Package builds | Chain existing `build:platform-nav`, `build:theme`, `build:ui-kit` per service root `build` script before frontend vite build |
+| Baseline | Single ~590–625 kB JS chunk per service (master) |
+
+---
+
+## Phase 1 — WebOnOne v2
+
+**Goal:** Reference implementation.
+
+| Task | Paths |
+|------|-------|
+| Lazy route imports | `webonone-v2/frontend/src/app/router.tsx` |
+| `manualChunks` | `webonone-v2/frontend/vite.config.ts` |
+| Suspense fallback | Same file or small `LazyRoute.tsx` helper |
+
+**Exit criteria:** `npm run build -w webonone-v2-root` — no 500 kB warning.
+
+**Verify:**
+
+```bash
+npm run build -w webonone-v2-root
+npm run type-check -w webonone-v2-root
+```
+
+---
+
+## Phase 2 — Identity
+
+| Task | Paths |
+|------|-------|
+| Lazy routes | `identity/frontend/src/app/router.tsx` |
+| manualChunks | `identity/frontend/vite.config.ts` |
+
+**Verify:** `npm run build -w identity-root`
+
+---
+
+## Phase 3 — Email
+
+| Task | Paths |
+|------|-------|
+| Lazy routes | `email/frontend/src/app/router.tsx` |
+| manualChunks | `email/frontend/vite.config.ts` |
+
+**Verify:** `npm run build -w email-root`
+
+---
+
+## Phase 4 — Media
+
+| Task | Paths |
+|------|-------|
+| Lazy routes | `media/frontend/src/app/router.tsx` |
+| manualChunks | `media/frontend/vite.config.ts` |
+
+**Verify:** `npm run build -w media-root`; smoke picker embed from WebOnOne.
+
+---
+
+## Phase 5 — Cross-service verification
+
+```bash
+npm run build -w webonone-v2-root
+npm run build -w identity-root
+npm run build -w email-root
+npm run build -w media-root
+```
+
+Confirm no `Some chunks are larger than 500 kB` in any output.
+
+---
+
+## Constraints
+
+- Do **not** use `chunkSizeWarningLimit` as the primary fix.
+- Keep `AppLayout` and auth entry routes eager.
+- Route guards wrap lazy children, not vice versa.
