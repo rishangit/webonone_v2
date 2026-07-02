@@ -1,5 +1,28 @@
 import { env } from '../config/env.js'
 
+/** Service origin only — strips trailing `/api/v1` if misconfigured in .env */
+function normalizeEmailApiBaseUrl(raw: string): string {
+  return raw.replace(/\/$/, '').replace(/\/api\/v1$/i, '')
+}
+
+function isPlaceholderServiceKey(key: string): boolean {
+  return key.includes('<') || key.includes('>')
+}
+
+function resolveInternalEmailUrl(path: string): string | null {
+  if (!env.emailApiBaseUrl || !env.emailServiceApiKey) {
+    console.error('[emailClient] EMAIL_API_BASE_URL or EMAIL_SERVICE_API_KEY not configured; cannot send email')
+    return null
+  }
+  if (isPlaceholderServiceKey(env.emailServiceApiKey)) {
+    console.error(
+      '[emailClient] EMAIL_SERVICE_API_KEY looks like a placeholder — set the real key in webonone-v2/backend/.env',
+    )
+    return null
+  }
+  return `${normalizeEmailApiBaseUrl(env.emailApiBaseUrl)}${path}`
+}
+
 type SendEmailParams = {
   templateSlug: string
   toEmail: string
@@ -9,13 +32,8 @@ type SendEmailParams = {
 }
 
 export async function sendTransactionalEmail(params: SendEmailParams): Promise<void> {
-  if (!env.emailApiBaseUrl || !env.emailServiceApiKey) {
-    console.warn('[emailClient] EMAIL_API_BASE_URL or EMAIL_SERVICE_API_KEY not configured; skipping send')
-    return
-  }
-
-  const baseUrl = env.emailApiBaseUrl.replace(/\/$/, '')
-  const url = `${baseUrl}/api/v1/internal/send`
+  const url = resolveInternalEmailUrl('/api/v1/internal/send')
+  if (!url) return
 
   try {
     const response = await fetch(url, {
@@ -49,13 +67,8 @@ export async function syncUserRole(params: {
   email?: string
   displayName?: string
 }): Promise<void> {
-  if (!env.emailApiBaseUrl || !env.emailServiceApiKey) {
-    console.warn('[emailClient] EMAIL_API_BASE_URL or EMAIL_SERVICE_API_KEY not configured; skipping role sync')
-    return
-  }
-
-  const baseUrl = env.emailApiBaseUrl.replace(/\/$/, '')
-  const url = `${baseUrl}/api/v1/internal/sync-user-role`
+  const url = resolveInternalEmailUrl('/api/v1/internal/sync-user-role')
+  if (!url) return
 
   try {
     const response = await fetch(url, {

@@ -10,5 +10,8 @@ build/
 coverage/
 *.tsbuildinfo
 
-# IIS deploy folders (all microservices)
-**/deploy/
+# IIS deploy generated output (keep web.config, stage-deploy.ps1, IIS.md committed)
+**/deploy/dist/
+**/deploy/public/
+**/deploy/logs/
+**/deploy/storage/
