@@ -1,21 +1,48 @@
+import { lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-router-dom'
 import { useRedirectThemeBootstrap } from '@webonone/theme'
 import { AppLayout } from '@/app/AppLayout'
+import { LazyRoute } from '@/app/LazyRoute'
 import { RoleRoute } from '@/app/RoleRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
-import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
-import { HistoryPage } from '@/features/history/pages/HistoryPage'
-import { ProvidersPage } from '@/features/providers/pages/ProvidersPage'
-import { QueuePage } from '@/features/queue/pages/QueuePage'
-import { SendEmailPage } from '@/features/send/pages/SendPage'
-import { SettingsPage } from '@/features/settings/pages/SettingsPage'
-import { TemplateEditorPage } from '@/features/templates/pages/TemplateEditorPage'
-import { TemplatePreviewPage } from '@/features/templates/pages/TemplatePreviewPage'
-import { TemplatesPage } from '@/features/templates/pages/TemplatesPage'
-import { TestEmailPage } from '@/features/test/pages/TestPage'
 import { useAppSelector } from '@/app/store/hooks'
 import { hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
+
+const DashboardPage = lazy(() =>
+  import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+)
+const SendEmailPage = lazy(() =>
+  import('@/features/send/pages/SendPage').then((m) => ({ default: m.SendEmailPage })),
+)
+const TemplatesPage = lazy(() =>
+  import('@/features/templates/pages/TemplatesPage').then((m) => ({ default: m.TemplatesPage })),
+)
+const TemplateEditorPage = lazy(() =>
+  import('@/features/templates/pages/TemplateEditorPage').then((m) => ({
+    default: m.TemplateEditorPage,
+  })),
+)
+const TemplatePreviewPage = lazy(() =>
+  import('@/features/templates/pages/TemplatePreviewPage').then((m) => ({
+    default: m.TemplatePreviewPage,
+  })),
+)
+const HistoryPage = lazy(() =>
+  import('@/features/history/pages/HistoryPage').then((m) => ({ default: m.HistoryPage })),
+)
+const QueuePage = lazy(() =>
+  import('@/features/queue/pages/QueuePage').then((m) => ({ default: m.QueuePage })),
+)
+const TestEmailPage = lazy(() =>
+  import('@/features/test/pages/TestPage').then((m) => ({ default: m.TestEmailPage })),
+)
+const ProvidersPage = lazy(() =>
+  import('@/features/providers/pages/ProvidersPage').then((m) => ({ default: m.ProvidersPage })),
+)
+const SettingsPage = lazy(() =>
+  import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+)
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -45,12 +72,21 @@ export function App() {
             </PrivateRoute>
           }
         >
-          <Route path="/" element={<DashboardPage />} />
+          <Route
+            path="/"
+            element={
+              <LazyRoute>
+                <DashboardPage />
+              </LazyRoute>
+            }
+          />
           <Route
             path="/send"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <SendEmailPage />
+                <LazyRoute>
+                  <SendEmailPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -58,7 +94,9 @@ export function App() {
             path="/templates"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <TemplatesPage />
+                <LazyRoute>
+                  <TemplatesPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -66,7 +104,9 @@ export function App() {
             path="/templates/:id"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <TemplateEditorPage />
+                <LazyRoute>
+                  <TemplateEditorPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -74,7 +114,9 @@ export function App() {
             path="/templates/:id/preview"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <TemplatePreviewPage />
+                <LazyRoute>
+                  <TemplatePreviewPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -82,7 +124,9 @@ export function App() {
             path="/history"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <HistoryPage />
+                <LazyRoute>
+                  <HistoryPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -90,7 +134,9 @@ export function App() {
             path="/queue"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <QueuePage />
+                <LazyRoute>
+                  <QueuePage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -98,7 +144,9 @@ export function App() {
             path="/test"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <TestEmailPage />
+                <LazyRoute>
+                  <TestEmailPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -106,7 +154,9 @@ export function App() {
             path="/providers"
             element={
               <RoleRoute roles={['super_admin']}>
-                <ProvidersPage />
+                <LazyRoute>
+                  <ProvidersPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -114,7 +164,9 @@ export function App() {
             path="/settings"
             element={
               <RoleRoute roles={[...adminRoles]}>
-                <SettingsPage />
+                <LazyRoute>
+                  <SettingsPage />
+                </LazyRoute>
               </RoleRoute>
             }
           />
@@ -123,4 +175,3 @@ export function App() {
     </BrowserRouter>
   )
 }
-

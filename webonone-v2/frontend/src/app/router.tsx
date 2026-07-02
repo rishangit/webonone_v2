@@ -1,12 +1,27 @@
+import { lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/app/AppLayout'
+import { LazyRoute } from '@/app/LazyRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
-import { HomePage } from '@/features/home/pages/HomePage'
-import { SystemThemePage } from '@/features/settings/system-theme/pages/SystemThemePage'
-import { BasicSettingsPage } from '@/features/settings/basic/pages/BasicSettingsPage'
-import { CompaniesPage } from '@/features/settings/basic/pages/CompaniesPage'
 import { useAppSelector } from '@/app/store/hooks'
+
+const HomePage = lazy(() =>
+  import('@/features/home/pages/HomePage').then((m) => ({ default: m.HomePage })),
+)
+const CompaniesPage = lazy(() =>
+  import('@/features/settings/basic/pages/CompaniesPage').then((m) => ({ default: m.CompaniesPage })),
+)
+const BasicSettingsPage = lazy(() =>
+  import('@/features/settings/basic/pages/BasicSettingsPage').then((m) => ({
+    default: m.BasicSettingsPage,
+  })),
+)
+const SystemThemePage = lazy(() =>
+  import('@/features/settings/system-theme/pages/SystemThemePage').then((m) => ({
+    default: m.SystemThemePage,
+  })),
+)
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -41,17 +56,40 @@ export function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<HomePage />} />
+          <Route
+            index
+            element={
+              <LazyRoute>
+                <HomePage />
+              </LazyRoute>
+            }
+          />
           <Route
             path="companies"
             element={
               <SuperAdminRoute>
-                <CompaniesPage />
+                <LazyRoute>
+                  <CompaniesPage />
+                </LazyRoute>
               </SuperAdminRoute>
             }
           />
-          <Route path="settings/basic" element={<BasicSettingsPage />} />
-          <Route path="settings/system-theme" element={<SystemThemePage />} />
+          <Route
+            path="settings/basic"
+            element={
+              <LazyRoute>
+                <BasicSettingsPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="settings/system-theme"
+            element={
+              <LazyRoute>
+                <SystemThemePage />
+              </LazyRoute>
+            }
+          />
         </Route>
         <Route path="admin/companies/login" element={<Navigate to="/login" replace />} />
         <Route path="admin/companies/pending" element={<Navigate to="/companies" replace />} />

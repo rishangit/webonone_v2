@@ -1,0 +1,48 @@
+---
+description: Vite production chunk splitting — lazy routes and manualChunks for service frontends
+globs: "**/frontend/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Frontend Vite chunk splitting
+
+Reference implementation: `webonone-v2/frontend/src/app/router.tsx`, `webonone-v2/frontend/vite.config.ts`.
+
+## When adding feature pages
+
+1. **Lazy-load** new feature pages with `React.lazy` and a local `LazyRoute` helper (`Suspense` + UI Kit `Spinner`).
+2. **Keep eager** — login, callback, and embed entry routes (`/picker`, `/upload`, media dialog paths).
+3. **Guards outside lazy** — `PrivateRoute` / `RoleRoute` wrap `LazyRoute`, not the reverse.
+
+```tsx
+const FeaturePage = lazy(() =>
+  import('@/features/foo/pages/FeaturePage').then((m) => ({ default: m.FeaturePage })),
+)
+
+<PrivateRoute>
+  <LazyRoute>
+    <FeaturePage />
+  </LazyRoute>
+</PrivateRoute>
+```
+
+## Vite config (every service `frontend/vite.config.ts`)
+
+Include `build.rollupOptions.output.manualChunks` with vendor splits:
+
+- `vendor-react-dom`, `vendor-router`, `vendor-redux`, `vendor-radix`, `vendor-react`, `vendor-misc`
+
+Copy the `viteManualChunks` function from an existing service config when scaffolding a new frontend.
+
+## Forbidden
+
+- Raising `build.chunkSizeWarningLimit` as the primary fix.
+- Lazy-loading `AppLayout` or embed-critical routes.
+
+## Verification
+
+```bash
+npm run build -w <service-root>
+```
+
+Build must **not** emit `Some chunks are larger than 500 kB after minification`. If `vendor-misc` still exceeds the limit, split additional large dependencies in `manualChunks`.

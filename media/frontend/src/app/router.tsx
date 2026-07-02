@@ -1,10 +1,10 @@
+import { lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useRedirectThemeBootstrap } from '@webonone/theme'
 import { AppLayout } from '@/app/AppLayout'
+import { LazyRoute } from '@/app/LazyRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
-import { LibraryPage } from '@/features/media/pages/LibraryPage'
-import { ComponentShowcasePage } from '@/features/media/pages/ComponentShowcasePage'
 import { PickerPage } from '@/features/media/pages/PickerPage'
 import { UploadPage } from '@/features/media/pages/UploadPage'
 import { UploadDialogPage } from '@/features/media/pages/UploadDialogPage'
@@ -13,6 +13,15 @@ import { ViewerPage } from '@/features/media/pages/ViewerPage'
 import { CropDialogPage } from '@/features/media/pages/CropDialogPage'
 import { FullDialogPage } from '@/features/media/pages/FullDialogPage'
 import { useAppSelector } from '@/app/store/hooks'
+
+const LibraryPage = lazy(() =>
+  import('@/features/media/pages/LibraryPage').then((m) => ({ default: m.LibraryPage })),
+)
+const ComponentShowcasePage = lazy(() =>
+  import('@/features/media/pages/ComponentShowcasePage').then((m) => ({
+    default: m.ComponentShowcasePage,
+  })),
+)
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -44,8 +53,22 @@ export function App() {
             </PrivateRoute>
           }
         >
-          <Route path="/library" element={<LibraryPage />} />
-          <Route path="/components" element={<ComponentShowcasePage />} />
+          <Route
+            path="/library"
+            element={
+              <LazyRoute>
+                <LibraryPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/components"
+            element={
+              <LazyRoute>
+                <ComponentShowcasePage />
+              </LazyRoute>
+            }
+          />
         </Route>
         <Route path="/" element={<Navigate to="/library" replace />} />
         <Route path="*" element={<Navigate to="/library" replace />} />

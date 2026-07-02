@@ -1,12 +1,27 @@
+import { lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@webonone/ui-kit'
 import { AppLayout } from '@/app/AppLayout'
+import { LazyRoute } from '@/app/LazyRoute'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
-import { RegisterPage } from '@/features/auth/pages/RegisterPage'
-import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
-import { VerifyResetOtpPage } from '@/features/auth/pages/VerifyResetOtpPage'
-import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage'
-import { ProfilePage } from '@/features/profile/pages/ProfilePage'
+
+const RegisterPage = lazy(() =>
+  import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })),
+)
+const ForgotPasswordPage = lazy(() =>
+  import('@/features/auth/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })),
+)
+const VerifyResetOtpPage = lazy(() =>
+  import('@/features/auth/pages/VerifyResetOtpPage').then((m) => ({
+    default: m.VerifyResetOtpPage,
+  })),
+)
+const ResetPasswordPage = lazy(() =>
+  import('@/features/auth/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })),
+)
+const ProfilePage = lazy(() =>
+  import('@/features/profile/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
+)
 
 export function App() {
   return (
@@ -15,11 +30,46 @@ export function App() {
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/verify-reset-otp" element={<VerifyResetOtpPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route
+              path="/register"
+              element={
+                <LazyRoute>
+                  <RegisterPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <LazyRoute>
+                  <ForgotPasswordPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/verify-reset-otp"
+              element={
+                <LazyRoute>
+                  <VerifyResetOtpPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <LazyRoute>
+                  <ResetPasswordPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <LazyRoute>
+                  <ProfilePage />
+                </LazyRoute>
+              }
+            />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Route>
         </Routes>

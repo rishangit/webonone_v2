@@ -39,6 +39,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, stacked siblings, pointer fall-through dismiss guard, iframe embed footer + crop height chain, footer, sizing, wizard/tab |
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
+| [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc) | `**/frontend/**/*.{ts,tsx}` | Route lazy-load + `manualChunks`; no 500 kB build warnings |
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email/frontend`, and any future `*/frontend` apps.
 
@@ -84,6 +85,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
 | `@webonone/ui-kit` consumption (all service frontends) | `ui-kit-consumption.mdc` |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
+| Vite chunk splitting (lazy routes, manualChunks) | `frontend-vite-chunk-splitting.mdc` |
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Date fields (`DatePicker`, not `Input type="date"`) | `ui-kit-consumption.mdc`, [form-creation skill](../skills/form-creation/SKILL.md) |
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
