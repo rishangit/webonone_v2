@@ -14,28 +14,29 @@ Reference implementation: `webonone-v2/frontend/src/app/router.tsx`, `webonone-v
 2. **Keep eager** — login, callback, and embed entry routes (`/picker`, `/upload`, media dialog paths).
 3. **Guards outside lazy** — `PrivateRoute` / `RoleRoute` wrap `LazyRoute`, not the reverse.
 
-```tsx
-const FeaturePage = lazy(() =>
-  import('@/features/foo/pages/FeaturePage').then((m) => ({ default: m.FeaturePage })),
-)
-
-<PrivateRoute>
-  <LazyRoute>
-    <FeaturePage />
-  </LazyRoute>
-</PrivateRoute>
-```
-
 ## Vite config (every service `frontend/vite.config.ts`)
 
-Include `build.rollupOptions.output.manualChunks` with vendor splits:
+Split only **stable, independent** vendor groups. Keep **react, react-dom, react-redux, and @reduxjs/toolkit in the main entry chunk** — never a separate `vendor-redux` or `vendor-react-dom` chunk (breaks `useLayoutEffect` in production).
 
-- `vendor-react-dom`, `vendor-router`, `vendor-redux`, `vendor-radix`, `vendor-react`, `vendor-misc`
+```ts
+build: {
+  rollupOptions: {
+    output: {
+      manualChunks(id) {
+        if (!id.includes('node_modules')) return
+        if (id.includes('react-router')) return 'vendor-router'
+        if (id.includes('@radix-ui')) return 'vendor-radix'
+      },
+    },
+  },
+},
+```
 
-Copy the `viteManualChunks` function from an existing service config when scaffolding a new frontend.
+Route-level `React.lazy` provides the remaining code-splitting; do not over-split the React ecosystem.
 
 ## Forbidden
 
+- Separate chunks for `react-redux`, `react-dom`, or `react` from each other.
 - Raising `build.chunkSizeWarningLimit` as the primary fix.
 - Lazy-loading `AppLayout` or embed-critical routes.
 
@@ -45,4 +46,4 @@ Copy the `viteManualChunks` function from an existing service config when scaffo
 npm run build -w <service-root>
 ```
 
-Build must **not** emit `Some chunks are larger than 500 kB after minification`. If `vendor-misc` still exceeds the limit, split additional large dependencies in `manualChunks`.
+Build must **not** emit `Some chunks are larger than 500 kB after minification`.

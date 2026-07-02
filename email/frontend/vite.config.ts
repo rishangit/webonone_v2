@@ -6,18 +6,6 @@ const uiKitRoot = path.resolve(__dirname, '../../ui-kit/package')
 const platformNavRoot = path.resolve(__dirname, '../../packages/platform-nav')
 const themeRoot = path.resolve(__dirname, '../../packages/theme')
 
-function viteManualChunks(id: string) {
-  if (!id.includes('node_modules')) return
-  if (id.includes('react-dom')) return 'vendor-react-dom'
-  if (id.includes('react-router')) return 'vendor-router'
-  if (id.includes('react-redux') || id.includes('@reduxjs/toolkit') || id.includes('/redux/')) {
-    return 'vendor-redux'
-  }
-  if (id.includes('@radix-ui')) return 'vendor-radix'
-  if (id.includes('react')) return 'vendor-react'
-  return 'vendor-misc'
-}
-
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -40,7 +28,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: viteManualChunks,
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('react-router')) return 'vendor-router'
+          if (id.includes('@radix-ui')) return 'vendor-radix'
+        },
       },
     },
   },
