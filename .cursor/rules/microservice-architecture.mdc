@@ -147,7 +147,7 @@ When a consumer embeds another service's UI or calls its public API from the bro
 | Per peer service | Env keys | Derived in code (do not add to `.env`) |
 |------------------|----------|----------------------------------------|
 | Identity | `VITE_IDENTITY_ORIGIN`, `VITE_IDENTITY_API_BASE_URL` | `/login`, `/profile`; API paths under API base |
-| Media | `VITE_MEDIA_ORIGIN`, `VITE_MEDIA_API_BASE_URL` | `/picker`, `/upload`; API paths under API base |
+| Media | `VITE_MEDIA_ORIGIN` | `/picker`, `/upload`; API base derived as `{origin}/api/v1` in production |
 | Own app | `VITE_API_BASE_URL` | Callback: `window.location.origin` + `/callback` |
 
 **Convention:** centralize in `frontend/src/features/<peer>/utils/<peer>Config.ts` with local-dev defaults.

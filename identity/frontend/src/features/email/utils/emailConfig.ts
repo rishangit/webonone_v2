@@ -11,11 +11,3 @@ export function getEmailAppUrl(path = '/history'): string {
   }
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
-
-export function getEmailHomeRedirectUri(): string {
-  return getEmailAppUrl('/')
-}
-
-export function getEmailCallbackUrl(): string {
-  return `${getEmailOrigin()}/callback`
-}

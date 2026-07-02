@@ -34,7 +34,6 @@ const envSchema = z.object({
   MEDIA_PUBLIC_BASE_URL: z.string().default('http://localhost:4003/api/v1'),
   MEDIA_MAX_FILE_SIZE_BYTES: z.coerce.number().default(26214400),
   MEDIA_ALLOWED_MIME_TYPES: z.string().default('image/*,video/*,application/pdf,text/plain'),
-  ALLOWED_PARENT_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -79,5 +78,4 @@ export const env = {
   publicBaseUrl: parsed.MEDIA_PUBLIC_BASE_URL.replace(/\/$/, ''),
   maxFileSizeBytes: parsed.MEDIA_MAX_FILE_SIZE_BYTES,
   allowedMimeTypes: parseMimeAllowlist(parsed.MEDIA_ALLOWED_MIME_TYPES),
-  allowedParentOrigins: parseAllowlist(parsed.ALLOWED_PARENT_ORIGINS),
 }

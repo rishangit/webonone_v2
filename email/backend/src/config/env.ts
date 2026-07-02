@@ -28,7 +28,6 @@ const envSchema = z.object({
   EMAIL_PORT: z.coerce.number().optional(),
   IIS_NODE_HOSTED: z.string().optional(),
   EMAIL_SERVICE_API_KEY: z.string().optional(),
-  ALLOWED_PARENT_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
   SMTP_HOST: z.string().default(''),
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_SECURE: z
@@ -57,13 +56,6 @@ if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')
 }
 
-function parseAllowlist(value: string): string[] {
-  return value
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-}
-
 export const env = {
   database: {
     host: parsed.DB_HOST,
@@ -79,7 +71,6 @@ export const env = {
   port,
   iisHosted,
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
-  allowedParentOrigins: parseAllowlist(parsed.ALLOWED_PARENT_ORIGINS),
   smtp: {
     host: parsed.SMTP_HOST,
     port: parsed.SMTP_PORT,

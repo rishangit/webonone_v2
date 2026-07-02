@@ -79,7 +79,6 @@ Edit `media\backend\.env` — set `DB_*`, `JWT_SECRET` (must match `identity\bac
 | `MEDIA_STORAGE_DRIVER` | `local` |
 | `MEDIA_LOCAL_STORAGE_PATH` | `./storage` |
 | `MEDIA_PUBLIC_BASE_URL` | `https://media.webonone.com/api/v1` |
-| `ALLOWED_PARENT_ORIGINS` | `https://app.webonone.com` |
 
 For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
 
@@ -97,11 +96,10 @@ Edit `media\frontend\.env.production` — production values:
 | `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
 | `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
 | `VITE_ALLOWED_PARENT_ORIGINS` | `https://app.webonone.com` |
-| `VITE_ALLOWED_FRAME_ANCESTORS` | `https://app.webonone.com` |
 
 Vite embeds these values during deploy build. Changes require redeploy.
 
-Keep **`ALLOWED_PARENT_ORIGINS`** (backend) and **`VITE_ALLOWED_PARENT_ORIGINS`** (frontend) in sync.
+Keep **`VITE_ALLOWED_PARENT_ORIGINS`** aligned with consumer app origins that embed Media routes.
 
 ---
 
@@ -186,7 +184,7 @@ If the site fails, check `media\deploy\logs\` for Node errors.
 
 ## Wire WebOnOne consumer
 
-After Media is verified, update `webonone-v2\frontend\.env.production` with `VITE_MEDIA_ORIGIN` and `VITE_MEDIA_API_BASE_URL` (see `webonone-v2\frontend\.env.example`), then:
+After Media is verified, update `webonone-v2\frontend\.env.production` with `VITE_MEDIA_ORIGIN` (see `webonone-v2\frontend\.env.example`), then:
 
 ```powershell
 npm run deploy:webonone
@@ -219,7 +217,7 @@ Recycle the IIS app pool or restart the site.
 | API 404 from SPA | Frontend must be built with `VITE_API_BASE_URL=/api/v1` in `frontend\.env.production` |
 | Upload fails | App pool needs **Write** on `media\backend\storage\` |
 | Login callback rejected | Identity `ALLOWED_REDIRECT_URIS` must include `https://*.webonone.com`; redeploy Identity |
-| Embed postMessage rejected | Keep `ALLOWED_PARENT_ORIGINS` and `VITE_ALLOWED_PARENT_ORIGINS` in sync with consumer origin |
+| Embed postMessage rejected | Set `VITE_ALLOWED_PARENT_ORIGINS` on Media FE to include the consumer origin |
 | DB errors | Run migrations; verify `DB_*` in `backend\.env` |
 
 ---
