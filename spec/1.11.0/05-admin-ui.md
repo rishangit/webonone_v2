@@ -30,14 +30,14 @@ Each collection page uses:
 
 ```text
 FeaturePage
-  title + actions: [Create button, ListFilterTrigger]
-  search Input (debounced → q param)
-  ItemList rows (glass-card, 3-dot menu: Edit, Delete)
-  Pagination (server total from API)
-ListFilterPanel
-  status Select (all | verified | pending)
-  entity-specific filters (e.g. value_type on Attributes; tag multi-select on Products)
+  actions: [Create (optional), ListSearchField, ListFilterTrigger] — flex row, justify-end
+  ListFilterPanel (status + entity filters)
+  ListPageBody
+    flex-1 wrapper → ItemList rows (glass-card, 3-dot menu: Edit, Delete)
+    Pagination (mt-auto, server total from API)
 ```
+
+See [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md) for pagination bottom-pin and header alignment requirements.
 
 ### Row display
 

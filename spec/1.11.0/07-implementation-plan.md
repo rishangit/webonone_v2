@@ -115,11 +115,30 @@ git checkout -b spec/1.11.0
 
 ---
 
+## Phase 7 — List page layout refinements (delta)
+
+**Goal:** Fix Data list UX per [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md).
+
+| Task | Detail |
+|------|--------|
+| Header actions | Move `ListSearchField` into `FeaturePage` `actions` with `ListFilterTrigger`; `justify-end` |
+| Pagination pin | `ListPageBody` + `flex-1` list wrapper + `Pagination className="mt-auto"` |
+| Cursor rules | Update `item-list-pagination.mdc`, `list-filter-panel.mdc` |
+| Item-list skill | Checklist bullets for header search and bottom pagination |
+
+**Exit criteria:** Data list pages match acceptance in doc 08.
+
+Spec: subtasks **86ey5g15b**, **86ey5g1t4**
+
+---
+
 ## ClickUp subtask traceability
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.11.0 Data microservice | 86ey5f6vq | Phases 1–6 |
+| Subtask: pagination position | 86ey5g15b | Phase 7 |
+| Subtask: search button and the filter button align to right | 86ey5g1t4 | Phase 7 |
 
 ---
 
@@ -135,6 +154,8 @@ git checkout -b spec/1.11.0
 - [ ] `npm run type-check -w data-root` passes
 - [ ] `data/deploy/IIS.md` documents data.webonone.com
 - [ ] Root `npm run dev` includes Data
+- [ ] Data list pages: search + filter in header actions (right-aligned)
+- [ ] Data list pages: pagination pinned to bottom via `ListPageBody` + `mt-auto`
 
 ---
 
