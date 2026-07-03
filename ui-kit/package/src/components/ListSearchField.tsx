@@ -43,51 +43,52 @@ function ListSearchField({
     requestAnimationFrame(() => inputRef.current?.focus())
   }
 
-  if (!expanded) {
-    return (
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        aria-label={ariaLabel}
-        className={className}
-        onClick={handleExpand}
-      >
-        <Search className="h-4 w-4" />
-      </Button>
-    )
-  }
-
   return (
-    <InputGroup className={cn('w-full max-w-xs', className)}>
-      <InputGroupIcon icon={Search} />
-      <Input
-        ref={inputRef}
-        inGroup
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        className={inputInGroupFieldClassName}
-        onBlur={() => {
-          if (!value.trim()) {
-            setExpanded(false)
-          }
-        }}
-      />
-      {value ? (
+    <div className={cn('relative h-10 w-10 shrink-0', className)}>
+      {!expanded ? (
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="h-8 w-8 shrink-0"
-          aria-label="Clear search"
-          onClick={handleClear}
+          aria-label={ariaLabel}
+          className="h-10 w-10"
+          onClick={handleExpand}
         >
-          <X className="h-4 w-4" />
+          <Search className="h-4 w-4" />
         </Button>
       ) : null}
-    </InputGroup>
+      {expanded ? (
+        <InputGroup className="absolute right-0 top-0 z-20 w-64 max-w-[min(16rem,calc(100vw-5rem))]">
+          <InputGroupIcon icon={Search} />
+          <Input
+            ref={inputRef}
+            inGroup
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            aria-label={ariaLabel}
+            className={inputInGroupFieldClassName}
+            onBlur={() => {
+              if (!value.trim()) {
+                setExpanded(false)
+              }
+            }}
+          />
+          {value ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              aria-label="Clear search"
+              onClick={handleClear}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          ) : null}
+        </InputGroup>
+      ) : null}
+    </div>
   )
 }
 

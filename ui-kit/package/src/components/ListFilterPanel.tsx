@@ -63,6 +63,16 @@ function ListFilterPanel({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [open, onOpenChange])
 
+  useEffect(() => {
+    if (!open) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
   if (!open) {
     return null
   }
@@ -85,7 +95,7 @@ function ListFilterPanel({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'glass-card fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col border-l shadow-lg transition-transform duration-200',
+          'glass-card fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col border-l shadow-lg transition-transform duration-200 overflow-hidden',
           className,
         )}
       >

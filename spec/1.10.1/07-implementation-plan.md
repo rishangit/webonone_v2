@@ -146,3 +146,4 @@ Spec: subtask **86ey5e4yu**
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.10.1 | 86ey58rda | Phases 1–6 |
 | Subtask: search icon left of filter | 86ey5e262 | Phase 7 |
+| Subtask: expand layout + scroll | 86ey5e4yu | Phase 8 |

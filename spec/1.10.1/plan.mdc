@@ -103,18 +103,37 @@ Completed.
 
 ---
 
+## Phase 8 — Search/filter layout fixes (delta)
+
+**Goal:** Subtask **86ey5e4yu** — fixed-width search expand; mobile actions right-align; panel body scroll lock.
+
+| Task | Paths |
+|------|-------|
+| Fixed-width search expand | `ui-kit/package/src/components/ListSearchField.tsx` |
+| Mobile actions align | `ui-kit/package/src/layouts/PageHeader.tsx` |
+| Body scroll lock | `ui-kit/package/src/components/ListFilterPanel.tsx` |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
 ## ClickUp traceability
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.10.1 | 86ey58rda | 1–6 |
 | Subtask: search icon left of filter | 86ey5e262 | 7 |
+| Subtask: expand layout + scroll | 86ey5e4yu | 8 |
+
+---
+
+## Cross-service integration
 
 No API, JWT, or iframe changes. Client-side filter UI only; wire existing list API query params where available.
 
 ---
 
-## Cross-service integration
+## Risks and open items
 
 | Risk | Mitigation |
 |------|------------|
