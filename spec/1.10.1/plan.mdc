@@ -134,6 +134,23 @@ Completed.
 
 ---
 
+## Phase 10 — Mobile shell polish (delta)
+
+**Goal:** Subtask **86ey5f2xt** — mobile body `px-2`, header alignment, nav touch targets.
+
+| Task | Paths |
+|------|-------|
+| Shared shell padding | `ui-kit/package/src/layouts/shellContentPadding.ts` |
+| AppShell + AppHeader | `AppShell.tsx`, `AppHeader.tsx` |
+| PageShell | `PageShell.tsx` |
+| Nav touch targets | `NavItem.tsx`, `NavGroup.tsx` |
+| Spec doc | `spec/1.10.1/05-ui-kit-mobile-shell.md` |
+| Rule | `.cursor/rules/feature-page-layout.mdc` |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
 ## ClickUp traceability
 
 | ClickUp | ID | Phase |
@@ -144,6 +161,7 @@ Completed.
 | Subtask: improve email history search | 86ey5ebgh | 9 |
 | Subtask: mobile pagination layout | 86ey5ebvu | 9 |
 | Subtask: pagination bottom alignment | 86ey5ecvm | 9 |
+| Subtask: mobile view improvement | 86ey5f2xt | 10 |
 
 ---
 
