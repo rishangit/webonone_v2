@@ -155,7 +155,7 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
       }
     >
       {loading ? (
-        <LoadingState label="Loading item…" />
+        <LoadingState overlay label="Loading item…" />
       ) : (
         <form className="mx-auto max-w-2xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (

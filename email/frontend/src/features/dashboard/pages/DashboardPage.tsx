@@ -208,7 +208,7 @@ export function DashboardPage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading dashboard…" /> : null}
+      {loading ? <LoadingState overlay label="Loading dashboard…" /> : null}
 
       {!loading && stats ? (
         <>

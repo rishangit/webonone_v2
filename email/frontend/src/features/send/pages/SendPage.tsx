@@ -135,7 +135,7 @@ export function SendEmailPage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading send form…" /> : null}
+      {loading ? <LoadingState overlay label="Loading send form…" /> : null}
 
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">

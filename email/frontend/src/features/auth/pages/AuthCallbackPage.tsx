@@ -103,7 +103,7 @@ export function AuthCallbackPage() {
             </Button>
           </>
         ) : (
-          <LoadingState label="Completing sign in…" />
+          <LoadingState overlay label="Completing sign in…" />
         )}
       </div>
     </PageShell>

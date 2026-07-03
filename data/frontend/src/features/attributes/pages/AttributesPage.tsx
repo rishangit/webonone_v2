@@ -108,7 +108,7 @@ export function AttributesPage() {
       <ListPageBody>
         <div className="flex-1">
           {list.loading ? (
-            <LoadingState label="Loading attributes…" />
+            <LoadingState overlay label="Loading attributes…" />
           ) : (
             <AttributesList
               items={list.items}

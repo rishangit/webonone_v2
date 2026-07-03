@@ -55,7 +55,7 @@ export function ProfilePage() {
   }, [accessToken, code, dispatch])
 
   if (isBootstrapping) {
-    return <LoadingState label="Loading your profile…" />
+    return <LoadingState overlay label="Loading your profile…" />
   }
 
   if (bootstrapError) {
@@ -71,7 +71,7 @@ export function ProfilePage() {
   }
 
   if (isProfileLoading && !user) {
-    return <LoadingState label="Loading profile…" />
+    return <LoadingState overlay label="Loading profile…" />
   }
 
   if (!user) {

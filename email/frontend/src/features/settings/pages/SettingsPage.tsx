@@ -172,7 +172,7 @@ export function SettingsPage() {
         !companyId ? (
           <p className="text-sm text-muted-foreground">No company is linked to your account.</p>
         ) : loading ? (
-          <LoadingState label="Loading settings…" />
+          <LoadingState overlay label="Loading settings…" />
         ) : (
           <div className="grid gap-8 lg:grid-cols-2">
             <Form onSubmit={handleSaveBranding} className="space-y-4">

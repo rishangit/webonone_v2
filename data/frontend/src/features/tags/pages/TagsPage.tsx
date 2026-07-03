@@ -93,7 +93,7 @@ export function TagsPage() {
       <ListPageBody>
         <div className="flex-1">
           {list.loading ? (
-            <LoadingState label="Loading tags…" />
+            <LoadingState overlay label="Loading tags…" />
           ) : (
             <TagsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
           )}

@@ -102,7 +102,7 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
       <ListPageBody>
         <div className="flex-1">
           {list.loading ? (
-            <LoadingState label={`Loading ${kind}…`} />
+            <LoadingState overlay label={`Loading ${kind}…`} />
           ) : (
             <CatalogList
               basePath={`/${kind}`}

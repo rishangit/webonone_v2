@@ -77,7 +77,7 @@ export function ProvidersPage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading providers…" /> : null}
+      {loading ? <LoadingState overlay label="Loading providers…" /> : null}
 
       {!loading && provider ? (
         <Card>

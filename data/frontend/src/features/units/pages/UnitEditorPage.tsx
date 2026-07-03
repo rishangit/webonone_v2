@@ -113,7 +113,7 @@ export function UnitEditorPage() {
       }
     >
       {loading ? (
-        <LoadingState label="Loading unit…" />
+        <LoadingState overlay label="Loading unit…" />
       ) : (
         <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (

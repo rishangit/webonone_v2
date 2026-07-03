@@ -89,7 +89,7 @@ export function UnitsPage() {
       <ListPageBody>
         <div className="flex-1">
           {list.loading ? (
-            <LoadingState label="Loading units…" />
+            <LoadingState overlay label="Loading units…" />
           ) : (
             <UnitsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
           )}

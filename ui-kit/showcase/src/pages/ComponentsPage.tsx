@@ -341,6 +341,7 @@ export function ComponentsPage() {
             Inline sizes above — use <code className="text-xs">size="sm"</code> inside buttons only.
           </p>
           <LoadingState label="Loading tags…" className="rounded-lg border border-border py-8" />
+          <LoadingState overlay label="Loading (overlay)…" />
           <ListEmptyState itemType="tags" />
           <ListEmptyState itemType="templates" message="No templates found for your scope." />
         </div>

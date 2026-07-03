@@ -16,9 +16,10 @@ Centered themed spinner + label for **page, section, route suspense, and session
 |------|---------|-------|
 | `label` | `"Loading…"` | Use page-specific copy: `"Loading tags…"`, `"Loading session…"` |
 | `size` | `'lg'` | Passed to inner `Spinner` |
-| `className` | optional | Wrapper (e.g. `min-h-[40vh] flex-1` on `LazyRoute`) |
+| `overlay` | `false` | Set **`true`** for page, route suspense, and session loads — viewport-centered overlay |
+| `className` | optional | Wrapper (e.g. on `LazyRoute` overlay) |
 
-**Use when:** list pages fetching data, dashboards, editors, `Suspense` fallbacks, auth callback, platform handoff.
+**Use when:** list pages fetching data, dashboards, editors, `Suspense` fallbacks, auth callback, platform handoff — pass **`overlay`** for viewport-centered loading.
 
 **Do not use when:** inline button loading — keep **`Spinner size="sm"`** inside the button.
 

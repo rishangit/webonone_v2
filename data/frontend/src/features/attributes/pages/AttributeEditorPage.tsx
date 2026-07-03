@@ -109,7 +109,7 @@ export function AttributeEditorPage() {
       }
     >
       {loading ? (
-        <LoadingState label="Loading attribute…" />
+        <LoadingState overlay label="Loading attribute…" />
       ) : (
         <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (

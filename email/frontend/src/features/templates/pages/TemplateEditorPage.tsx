@@ -185,7 +185,7 @@ export function TemplateEditorPage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading template…" /> : null}
+      {loading ? <LoadingState overlay label="Loading template…" /> : null}
 
       {!loading && template ? (
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">

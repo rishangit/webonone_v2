@@ -119,7 +119,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Paginated collections use `Pagination` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
 - [ ] Paginated pages wrap list + pagination in `ListPageBody`; list in `flex-1`; `Pagination` has `className="mt-auto"`
 - [ ] Filterable collections use `ListFilterTrigger` + `ListFilterPanel` ([list-filter-panel.mdc](../../rules/list-filter-panel.mdc))
-- [ ] Text search uses `ListSearchField` in `FeaturePage` `actions`, left of filter trigger, row `justify-end`
+- [ ] Page loads use `LoadingState overlay`; empty results use `ListEmptyState` with `itemType`
 
 ## Rules
 

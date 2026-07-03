@@ -89,7 +89,7 @@ function TestEmailForm() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading test page…" /> : null}
+      {loading ? <LoadingState overlay label="Loading test page…" /> : null}
 
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">

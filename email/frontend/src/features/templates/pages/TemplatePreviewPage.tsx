@@ -100,7 +100,7 @@ export function TemplatePreviewPage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading preview…" /> : null}
+      {loading ? <LoadingState overlay label="Loading preview…" /> : null}
 
       {!loading && template ? (
         <div className="space-y-6">

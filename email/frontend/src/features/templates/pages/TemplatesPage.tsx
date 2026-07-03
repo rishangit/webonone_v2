@@ -103,7 +103,7 @@ export function TemplatesPage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading templates…" /> : null}
+      {loading ? <LoadingState overlay label="Loading templates…" /> : null}
 
       {!loading ? (
         <ListPageBody>

@@ -112,7 +112,7 @@ export function TagEditorPage() {
       }
     >
       {loading ? (
-        <LoadingState label="Loading tag…" />
+        <LoadingState overlay label="Loading tag…" />
       ) : (
         <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (

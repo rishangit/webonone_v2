@@ -569,7 +569,7 @@ export function ScopedFolderBrowser({
       >
         {loading || isUploading ? (
           <LoadingState
-            className="flex-1"
+            overlay
             label={isUploading ? 'Uploading…' : 'Loading media…'}
           />
         ) : viewMode === 'thumb' && showIconToolbar ? (

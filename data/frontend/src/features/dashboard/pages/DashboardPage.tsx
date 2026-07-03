@@ -43,7 +43,7 @@ export function DashboardPage() {
         </Alert>
       ) : null}
       {loading ? (
-        <LoadingState label="Loading dashboard…" />
+        <LoadingState overlay label="Loading dashboard…" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ENTITY_LINKS.map((entity) => {

@@ -4,7 +4,7 @@ import { useAppSelector } from '@/app/store/hooks'
 import { hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
 
 export function PlatformHandoffSpinner() {
-  return <LoadingState label="Loading…" />
+  return <LoadingState overlay label="Loading…" />
 }
 
 /** True while auth-code exchange is in progress (return_url + code, no token yet). */

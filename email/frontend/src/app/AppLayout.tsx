@@ -115,7 +115,7 @@ export function AppLayout() {
   const mainContent =
     sessionLoading || bootstrapError ? (
       <div className="flex flex-col items-center gap-4 py-12">
-        {sessionLoading ? <LoadingState label="Loading session…" /> : null}
+        {sessionLoading ? <LoadingState overlay label="Loading session…" /> : null}
         {bootstrapError ? (
           <Alert variant="destructive">
             <AlertDescription>{bootstrapError}</AlertDescription>

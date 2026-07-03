@@ -138,7 +138,7 @@ export function QueuePage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading queue…" /> : null}
+      {loading ? <LoadingState overlay label="Loading queue…" /> : null}
 
       {!loading ? (
         <ListPageBody>

@@ -189,7 +189,7 @@ export function HistoryPage() {
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState label="Loading history…" /> : null}
+      {loading ? <LoadingState overlay label="Loading history…" /> : null}
 
       {!loading ? (
         <ListPageBody>
