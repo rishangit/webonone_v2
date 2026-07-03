@@ -1,14 +1,14 @@
 ---
 description: Implementation plan for spec 1.11.0 — Data microservice for tags, UOM, attributes, products, services, spaces
 alwaysApply: false
-globs: data/**, .cursor/rules/**, .cursor/skills/item-list/**, webonone-v2/frontend/**, packages/platform-nav/**, package.json, AGENTS.md
+globs: ui-kit/**, data/**, email/**, identity/frontend/**, webonone-v2/frontend/**, media/frontend/**, .cursor/rules/**, .cursor/skills/item-list/**
 ---
 
 # Implementation plan — Spec 1.11.0
 
 ## Summary
 
-Spec 1.11.0 adds a standalone **Data microservice** (`data/`) owning platform reference catalog. Phase 7 delta: list page layout — pagination pinned to bottom, search + filter right-aligned in header. See [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md).
+Spec 1.11.0 adds a standalone **Data microservice** (`data/`). Phase 8 delta: UI Kit **`LoadingState`** + **`ListEmptyState`** and rollout across services. See [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md).
 
 ## Branch and prerequisites
 
@@ -134,6 +134,27 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 
 ---
 
+## Phase 8 — UI Kit loading and empty states (delta)
+
+**Goal:** [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md).
+
+| Task | Paths |
+|------|-------|
+| `LoadingState` | `ui-kit/package/src/components/LoadingState.tsx` |
+| `ListEmptyState` | `ui-kit/package/src/components/ListEmptyState.tsx` |
+| Exports + showcase | `ui-kit/package/src/index.ts`, `ui-kit/showcase/src/pages/ComponentsPage.tsx` |
+| Cursor rule | `.cursor/rules/loading-empty-states.mdc`, `README.md` index |
+| Item-list skill | `.cursor/skills/item-list/SKILL.md` |
+| Data rollout | list pages, editors, dashboard, `LazyRoute`, handoff |
+| Email rollout | history, queue, templates, dashboard, editors, `LazyRoute` |
+| WebOnOne / Media / Identity | `LazyRoute`, loading pages |
+
+**Verify:** `npm run build -w @webonone/ui-kit` · type-check all touched service roots
+
+Spec: subtasks **86ey5g5r1**, **86ey5g845**
+
+---
+
 ## Cross-service integration
 
 | Channel | Use |
@@ -152,6 +173,8 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 | Parent: [User Story] Spec No 1.11.0 Data microservice | 86ey5f6vq | Phases 1–6 |
 | Subtask: pagination position | 86ey5g15b | Phase 7 |
 | Subtask: search button and the filter button align to right | 86ey5g1t4 | Phase 7 |
+| Subtask: need to add the loading component | 86ey5g5r1 | Phase 8 |
+| Subtask: need to have the no result found commpn component | 86ey5g845 | Phase 8 |
 
 ---
 
@@ -167,11 +190,11 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 ## Final verification
 
 ```bash
-npm run migrate -w data-root
-npm run build:platform-nav
-npm run build:theme
-npm run build:ui-kit
-npm run build -w data-root
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
 npm run type-check -w data-root
+npm run type-check -w email-root
 npm run type-check -w webonone-v2-root
+npm run type-check -w media-root
+npm run type-check -w identity-root
 ```
