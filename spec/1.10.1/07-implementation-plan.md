@@ -145,6 +145,22 @@ Spec: subtasks **86ey5ebgh**, **86ey5ebvu**, **86ey5ecvm**
 
 ---
 
+## Phase 10 — Mobile shell polish (subtask delta)
+
+**Goal:** Subtask **86ey5f2xt** — tighter mobile body padding, header/body alignment, larger nav touch targets.
+
+| Task | Detail |
+|------|--------|
+| `shellContentPadding.ts` | Shared `px-2 sm:px-6` for header + main |
+| `AppShell.tsx` / `AppHeader.tsx` | Mobile body + aligned header padding |
+| `PageShell.tsx` | Mobile `px-2` |
+| `NavItem.tsx` / `NavGroup.tsx` | `py-3 md:py-2` touch targets |
+| Rule | `feature-page-layout.mdc` — no extra horizontal padding on `FeaturePage` |
+
+Spec: [05-ui-kit-mobile-shell.md](./05-ui-kit-mobile-shell.md)
+
+---
+
 ## Acceptance checklist
 
 - [ ] UI Kit exports `ListFilterPanel` and `ListFilterTrigger`
@@ -166,3 +182,4 @@ Spec: subtasks **86ey5ebgh**, **86ey5ebvu**, **86ey5ecvm**
 | Subtask: improve email history search | 86ey5ebgh | Phase 9 |
 | Subtask: mobile pagination layout | 86ey5ebvu | Phase 9 |
 | Subtask: pagination bottom alignment | 86ey5ecvm | Phase 9 |
+| Subtask: mobile view improvement | 86ey5f2xt | Phase 10 |

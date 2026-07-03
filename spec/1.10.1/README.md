@@ -34,6 +34,7 @@ Identity has no in-scope collection list pages (see [03-service-filter-rollout.m
 | [02-ui-kit-list-filter-panel.md](./02-ui-kit-list-filter-panel.md) | Component API, slide panel, active indicator |
 | [03-service-filter-rollout.md](./03-service-filter-rollout.md) | Cross-service adoption inventory |
 | [04-cursor-rules.md](./04-cursor-rules.md) | `.cursor/rules/` documentation |
+| [05-ui-kit-mobile-shell.md](./05-ui-kit-mobile-shell.md) | Mobile shell padding, header alignment, nav touch targets |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
@@ -47,10 +48,11 @@ Identity has no in-scope collection list pages (see [03-service-filter-rollout.m
 | Subtask: improve email history search | 86ey5ebgh | `03-service-filter-rollout.md`, Phase 9 |
 | Subtask: mobile pagination layout | 86ey5ebvu | `02-ui-kit-list-filter-panel.md`, Phase 9 |
 | Subtask: pagination bottom alignment | 86ey5ecvm | `02-ui-kit-list-filter-panel.md`, Phase 9 |
+| Subtask: mobile view improvement | 86ey5f2xt | `05-ui-kit-mobile-shell.md`, Phase 10 |
 
 ## Revision history
 
-- **2026-07-03** — Subtasks `86ey5ebgh`, `86ey5ebvu`, `86ey5ecvm`: history search by recipient/template name; mobile pagination two-row layout; `ListPageBody` bottom alignment.
+- **2026-07-03** — Subtask `86ey5f2xt`: mobile shell `px-2` body padding, header alignment, nav touch targets.
 - **2026-07-03** — Subtask `86ey5e4yu`: fixed-width search expand; mobile actions right-align; panel body scroll lock.
 - **2026-07-03** — Subtask `86ey5e262`: expandable `ListSearchField` in header, left of filter trigger.
 - **2026-07-03** — Initial spec from parent user story (search/filter panel on list pages).
