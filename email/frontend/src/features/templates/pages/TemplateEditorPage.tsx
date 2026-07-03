@@ -11,7 +11,7 @@ import {
   ItemList,
   ItemListContent,
   ItemListItem,
-  ListEmptyState,
+  ItemListEmpty,
   Pagination,
   mapZodIssuesToFieldErrors,
   LoadingState,
@@ -244,7 +244,7 @@ export function TemplateEditorPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-medium">Version history</h2>
             {versions.length === 0 ? (
-              <ListEmptyState itemType="versions" message="No versions yet." />
+              <ItemListEmpty>No versions yet.</ItemListEmpty>
             ) : (
               <div className="space-y-4">
                 <ItemList>

@@ -3,7 +3,7 @@ import {
   DropdownMenuItem,
   ItemList,
   ItemListContent,
-  ListEmptyState,
+  ItemListEmpty,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -26,7 +26,7 @@ export function CatalogList({ basePath, itemType, items, onDelete, canMutate }: 
     await onDelete(id)
   }
 
-  if (items.length === 0) return <ListEmptyState itemType={itemType} />
+  if (items.length === 0) return <ItemListEmpty>No {itemType} found.</ItemListEmpty>
 
   return (
     <ItemList>

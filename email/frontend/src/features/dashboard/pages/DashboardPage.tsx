@@ -13,7 +13,7 @@ import {
   ItemList,
   ItemListContent,
   ItemListItem,
-  ListEmptyState,
+  ItemListEmpty,
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
@@ -232,10 +232,9 @@ export function DashboardPage() {
             <ListPageBody className="min-h-0 flex-1">
               <div className="flex-1">
                 {recentItems.length === 0 ? (
-                  <ListEmptyState
-                    itemType="activity"
-                    message={isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
-                  />
+                  <ItemListEmpty>
+                    {isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
+                  </ItemListEmpty>
                 ) : (
                   <ItemList>
                     {recentItems.map((item) => (

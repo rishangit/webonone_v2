@@ -40,7 +40,7 @@ Production host: **`data.webonone.com`**
 | [06-platform-integration.md](./06-platform-integration.md) | Nav handoff, consumer contract, deploy |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md) | Pagination bottom pin; search + filter header alignment (delta) |
-| [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md) | `LoadingState`, `ListEmptyState`, service rollout (delta) |
+| [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md) | `LoadingState`, `ItemListEmpty`, service rollout (delta) |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
@@ -56,7 +56,8 @@ Production host: **`data.webonone.com`**
 ## Revision history
 
 - **2026-07-04** — `LoadingState` overlay variant for viewport-centered page loads (subtask delta).
-- **2026-07-04** — Subtasks loading component + no-results `ListEmptyState` (UI Kit delta).
+- **2026-07-04** — Empty lists use `ItemListEmpty` only (removed `ListEmptyState`).
+- **2026-07-04** — Subtasks loading component + no-results `ItemListEmpty` (UI Kit delta).
 - **2026-07-04** — Subtasks `pagination position` and `search/filter header alignment` (list page layout delta).
 
 ## Inherited from earlier specs

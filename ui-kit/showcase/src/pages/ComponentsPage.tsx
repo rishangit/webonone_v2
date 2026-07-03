@@ -49,7 +49,6 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListSearchField,
-  ListEmptyState,
   LoadingState,
   Pagination,
   mapZodIssuesToFieldErrors,
@@ -245,6 +244,38 @@ function ImagePreviewDemo({ onEdit }: { onEdit: () => void }) {
   )
 }
 
+function LoadingStateDemo() {
+  const [overlayOpen, setOverlayOpen] = useState(false)
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-border py-8">
+        <LoadingState label="Loading tags…" />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Inline <code className="text-xs">LoadingState</code> — themed spinner and label (default for list
+        sections).
+      </p>
+      <Button type="button" variant="outline" onClick={() => setOverlayOpen(true)}>
+        Show loading overlay
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        Overlay mode uses <code className="text-xs">overlay</code> for page, route, and session loads.
+      </p>
+      {overlayOpen ? (
+        <LoadingState overlay label="Loading…" />
+      ) : null}
+      {overlayOpen ? (
+        <div className="fixed inset-x-0 bottom-6 z-[60] flex justify-center">
+          <Button type="button" onClick={() => setOverlayOpen(false)}>
+            Dismiss overlay
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function ComponentsPage() {
   const { toast } = useToast()
   const [listPage, setListPage] = useState(1)
@@ -340,10 +371,9 @@ export function ComponentsPage() {
           <p className="text-xs text-muted-foreground">
             Inline sizes above — use <code className="text-xs">size="sm"</code> inside buttons only.
           </p>
-          <LoadingState label="Loading tags…" className="rounded-lg border border-border py-8" />
-          <LoadingState overlay label="Loading (overlay)…" />
-          <ListEmptyState itemType="tags" />
-          <ListEmptyState itemType="templates" message="No templates found for your scope." />
+          <LoadingStateDemo />
+          <ItemListEmpty>No tags found.</ItemListEmpty>
+          <ItemListEmpty>No templates found for your scope.</ItemListEmpty>
         </div>
       </DemoSection>
 

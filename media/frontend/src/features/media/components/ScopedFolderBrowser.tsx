@@ -10,7 +10,7 @@ import {
   FormField,
   ItemList,
   ItemListContent,
-  ListEmptyState,
+  ItemListEmpty,
   ItemListItem,
   ItemListMenu,
   itemListRowActiveClassName,
@@ -352,14 +352,11 @@ export function ScopedFolderBrowser({
 
     if (!hasRows) {
       return (
-        <ListEmptyState
-          itemType="media files"
-          message={
-            enableUpload
-              ? 'This folder is empty. Drag files here or use Upload.'
-              : 'This folder is empty.'
-          }
-        />
+        <ItemListEmpty>
+          {enableUpload
+            ? 'This folder is empty. Drag files here or use Upload.'
+            : 'This folder is empty.'}
+        </ItemListEmpty>
       )
     }
 

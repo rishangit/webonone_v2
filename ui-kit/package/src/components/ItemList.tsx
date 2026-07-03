@@ -64,7 +64,9 @@ function ItemListMenu({
 }
 
 function ItemListEmpty({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('text-sm text-muted-foreground', className)} {...props} />
+  return (
+    <p role="status" className={cn('py-4 text-center text-sm text-muted-foreground', className)} {...props} />
+  )
 }
 
 export { ItemList, ItemListItem, ItemListContent, ItemListMenu, ItemListEmpty }

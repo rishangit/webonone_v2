@@ -139,7 +139,7 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 | Task | Detail |
 |------|--------|
 | `LoadingState` | `ui-kit/package/src/components/LoadingState.tsx` |
-| `ListEmptyState` | `ui-kit/package/src/components/ListEmptyState.tsx` |
+| `ItemListEmpty` | `ui-kit/package/src/components/ItemList.tsx` |
 | Showcase | Demo both components |
 | Service rollout | Data, Email, WebOnOne, Media, Identity loading + empty lists |
 | Cursor rule | `.cursor/rules/loading-empty-states.mdc` |
@@ -176,7 +176,7 @@ Spec: subtasks **86ey5g5r1**, **86ey5g845**
 - [ ] Root `npm run dev` includes Data
 - [ ] Data list pages: search + filter in header actions (right-aligned)
 - [ ] Data list pages: pagination pinned to bottom via `ListPageBody` + `mt-auto`
-- [ ] `LoadingState` + `ListEmptyState` in UI Kit; rolled out to all services
+- [ ] `LoadingState` + `ItemListEmpty` in UI Kit; rolled out to all services
 
 ---
 

@@ -1,6 +1,6 @@
 # 09 — UI Kit loading and empty states (1.11.0 delta)
 
-Shared **`LoadingState`** and **`ListEmptyState`** components in `@webonone/ui-kit`, rollout across service frontends, and cursor rule/skill updates.
+Shared **`LoadingState`** and **`ItemListEmpty`** (from `ItemList`) in `@webonone/ui-kit`, rollout across service frontends, and cursor rule/skill updates.
 
 Implements ClickUp subtasks **86ey5g5r1** (loading component) and **86ey5g845** (no results component).
 
@@ -61,34 +61,32 @@ Replace `<div className="flex justify-center py-12"><Spinner … /></div>` and e
 
 ## Subtask: no results component (`86ey5g845`)
 
-**Requirement:** Parameterized empty-list message; reuse instead of bespoke `ItemListEmpty` strings.
+**Requirement:** Common empty-list copy via **`ItemListEmpty`** — do not add a separate empty-state component.
 
-### `ListEmptyState`
+### `ItemListEmpty`
 
-| Prop | Type | Default | Purpose |
-|------|------|---------|---------|
-| `itemType` | `string` | required | Entity label for default message, e.g. `"tags"` → `No tags found.` |
-| `message` | `string` | optional | Full override (skips template) |
-| `className` | `string` | optional | Extra classes |
+Exported from `ItemList.tsx`. Pass message as **children**.
 
-**Default message:** `No {itemType} found.` (caller passes plural noun: `"tags"`, `"templates"`, `"companies"`).
+**Layout:**
 
-Renders centered muted text inside list body (same visual weight as `ItemListEmpty`).
+```text
+<p role="status" className="py-4 text-center text-sm text-muted-foreground">{children}</p>
+```
 
 | Rule | Detail |
 |------|--------|
-| Inside `ItemList` | Return as sole child when `items.length === 0` (replaces `ItemListEmpty` for search/filter empty results) |
-| Custom copy | Use `message` when default template does not fit (`"No queue items in this tab."`) |
-| Keep `ItemListEmpty` | Low-level primitive; `ListEmptyState` is the preferred app-level API |
+| Inside lists | Return when `items.length === 0` (before or instead of `ItemList` rows) |
+| Default copy | `No {entity} found.` — e.g. `<ItemListEmpty>No tags found.</ItemListEmpty>` |
+| Custom copy | Any string as children when default does not fit (`No queue items in this tab.`) |
 
 ### Rollout targets
 
-| Service | Component | `itemType` / `message` |
-|---------|-----------|------------------------|
-| Data | `TagsList`, `UnitsList`, `AttributesList`, `CatalogList` | tags, units, attributes, products/services/spaces |
-| Email | `TemplatesList`, `QueueList`, `HistoryList` | templates, queue items, history entries |
-| WebOnOne | `CompaniesList`, `ThemeList` | companies, themes |
-| Media | `MediaGrid`, `ScopedFolderBrowser` | media files |
+| Service | Component | Example copy |
+|---------|-----------|----------------|
+| Data | `TagsList`, `UnitsList`, `AttributesList`, `CatalogList` | `No tags found.`, `No units found.`, … |
+| Email | `TemplatesList`, `QueueList`, `HistoryList` | `No templates found for your scope.`, … |
+| WebOnOne | `CompaniesList`, `ThemeList` | `No companies registered yet.`, `No themes yet.` |
+| Media | `ScopedFolderBrowser` | `This folder is empty.` / upload hint |
 
 ---
 
@@ -96,7 +94,7 @@ Renders centered muted text inside list body (same visual weight as `ItemListEmp
 
 | File | Action |
 |------|--------|
-| `.cursor/rules/loading-empty-states.mdc` | **New** — when to use `LoadingState` vs `Spinner`; `ListEmptyState` with `itemType` |
+| `.cursor/rules/loading-empty-states.mdc` | **New** — when to use `LoadingState` vs `Spinner`; `ItemListEmpty` for empty lists |
 | `.cursor/skills/item-list/SKILL.md` | Checklist bullets |
 | `.cursor/rules/README.md` | Index entry |
 | `ui-kit/showcase` | Demo both components |
@@ -105,11 +103,11 @@ Renders centered muted text inside list body (same visual weight as `ItemListEmp
 
 ## Acceptance
 
-- [ ] `LoadingState` and `ListEmptyState` exported from `@webonone/ui-kit`
+- [ ] `LoadingState` exported from `@webonone/ui-kit`; `ItemListEmpty` used for empty lists
 - [ ] `LoadingState` supports `overlay` for viewport-centered loading
-- [ ] Showcase demonstrates both (inline + overlay)
+- [ ] Showcase demonstrates `LoadingState` (inline + overlay) and `ItemListEmpty`
 - [ ] Data, Email, WebOnOne, Media, Identity use `LoadingState overlay` for page/section loads
-- [ ] List components use `ListEmptyState` where empty = no results
+- [ ] List components use `ItemListEmpty` where empty = no results
 - [ ] `loading-empty-states.mdc` indexed; item-list skill updated
 - [ ] `npm run build -w @webonone/ui-kit` and `npm run type-check` on touched service roots pass
 
@@ -118,4 +116,4 @@ Renders centered muted text inside list body (same visual weight as `ItemListEmp
 | ClickUp | ID | Spec section |
 |---------|-----|--------------|
 | need to add the loading component | 86ey5g5r1 | `LoadingState`, rollout |
-| need to have the no result found commpn component | 86ey5g845 | `ListEmptyState`, rollout |
+| need to have the no result found commpn component | 86ey5g845 | `ItemListEmpty`, rollout |

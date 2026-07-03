@@ -31,7 +31,7 @@ Import from `@webonone/ui-kit`:
 | `ItemListItem` | Single row — `glass-card item-list-row`, `px-3 py-2`, themed shadow on hover |
 | `ItemListContent` | Main label/metadata (`flex-1`, truncates) |
 | `ItemListMenu` | Vertical 3-dot trigger (`MoreVertical`) at **top-right** of row |
-| `ItemListEmpty` | Low-level empty copy (`text-muted-foreground`); prefer **`ListEmptyState`** in feature lists |
+| `ItemListEmpty` | Empty list copy — centered `py-4 text-center text-muted-foreground`; pass message as children |
 | `itemListRowActiveClassName` | Active/selected row — `border-primary` (border only, no fill) |
 | `itemListMenuClassName` | Menu trigger — `shrink-0 self-start` (pins to top-right; row uses `items-start`) |
 | `DropdownMenuItem`, `DropdownMenuSeparator`, … | Menu entries inside `ItemListMenu` |
@@ -110,7 +110,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Row surface is `glass-card item-list-row` — no extra `bg-*` on rows
 - [ ] Hover is themed shadow only (`item-list-row`); no `hover:border-*` or `hover:bg-*`
 - [ ] Active state uses `border-primary` only
-- [ ] Empty state via **`ListEmptyState`** (`itemType` + optional `message`); use `ItemListEmpty` only for bespoke low-level markup
+- [ ] Empty state via **`ItemListEmpty`** with explicit copy as children
 - [ ] Page/section fetch loading via **`LoadingState`** with contextual `label` — not centered `Spinner size="lg"` blocks
 - [ ] `ItemListMenu` is last child of `ItemListItem` — 3-dot trigger at top-right
 - [ ] Destructive action last in menu with destructive styling
@@ -119,7 +119,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Paginated collections use `Pagination` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
 - [ ] Paginated pages wrap list + pagination in `ListPageBody`; list in `flex-1`; `Pagination` has `className="mt-auto"`
 - [ ] Filterable collections use `ListFilterTrigger` + `ListFilterPanel` ([list-filter-panel.mdc](../../rules/list-filter-panel.mdc))
-- [ ] Page loads use `LoadingState overlay`; empty results use `ListEmptyState` with `itemType`
+- [ ] Page loads use `LoadingState overlay`; empty results use `ItemListEmpty`
 
 ## Rules
 
@@ -131,7 +131,7 @@ Cross-link only — do not duplicate:
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc) — build and export workflow
 - [item-list-pagination.mdc](../../rules/item-list-pagination.mdc) — `Pagination` with `ItemList`
 - [list-filter-panel.mdc](../../rules/list-filter-panel.mdc) — `ListFilterPanel` on collection pages
-- [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — `LoadingState` vs button `Spinner`; `ListEmptyState`
+- [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — `LoadingState` vs button `Spinner`; `ItemListEmpty`
 - [form-creation skill](../form-creation/SKILL.md) — when the list is inside a form (orthogonal)
 
 ## Examples

@@ -3,7 +3,7 @@ import {
   DropdownMenuItem,
   ItemList,
   ItemListContent,
-  ListEmptyState,
+  ItemListEmpty,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -26,7 +26,7 @@ export function AttributesList({ items, onDeleted, canMutate }: AttributesListPr
     onDeleted()
   }
 
-  if (items.length === 0) return <ListEmptyState itemType="attributes" />
+  if (items.length === 0) return <ItemListEmpty>No attributes found.</ItemListEmpty>
 
   return (
     <ItemList>

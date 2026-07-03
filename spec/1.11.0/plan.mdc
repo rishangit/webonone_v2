@@ -8,7 +8,7 @@ globs: ui-kit/**, data/**, email/**, identity/frontend/**, webonone-v2/frontend/
 
 ## Summary
 
-Spec 1.11.0 adds a standalone **Data microservice** (`data/`). Phase 8 delta: UI Kit **`LoadingState`** + **`ListEmptyState`** and rollout across services. See [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md).
+Spec 1.11.0 adds a standalone **Data microservice** (`data/`). Phase 8 delta: UI Kit **`LoadingState`** + **`ItemListEmpty`** and rollout across services. See [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md).
 
 ## Branch and prerequisites
 
@@ -141,7 +141,7 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 | Task | Paths |
 |------|-------|
 | `LoadingState` + `overlay` prop | `ui-kit/package/src/components/LoadingState.tsx` |
-| `ListEmptyState` | `ui-kit/package/src/components/ListEmptyState.tsx` |
+| `ItemListEmpty` | `ui-kit/package/src/components/ItemList.tsx` |
 | Exports + showcase | `ui-kit/package/src/index.ts`, `ui-kit/showcase/src/pages/ComponentsPage.tsx` |
 | Cursor rule | `.cursor/rules/loading-empty-states.mdc`, `README.md` index |
 | Item-list skill | `.cursor/skills/item-list/SKILL.md` |

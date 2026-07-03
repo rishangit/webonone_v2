@@ -3,7 +3,7 @@ import {
   DropdownMenuItem,
   ItemList,
   ItemListContent,
-  ListEmptyState,
+  ItemListEmpty,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -26,7 +26,7 @@ export function UnitsList({ items, onDeleted, canMutate }: UnitsListProps) {
     onDeleted()
   }
 
-  if (items.length === 0) return <ListEmptyState itemType="units" />
+  if (items.length === 0) return <ItemListEmpty>No units found.</ItemListEmpty>
 
   return (
     <ItemList>

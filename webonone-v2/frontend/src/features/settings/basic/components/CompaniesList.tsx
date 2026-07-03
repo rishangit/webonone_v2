@@ -3,7 +3,7 @@ import {
   DropdownMenuSeparator,
   ItemList,
   ItemListContent,
-  ListEmptyState,
+  ItemListEmpty,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -31,7 +31,7 @@ export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesLi
   const rows = Array.isArray(items) ? items : []
 
   if (rows.length === 0) {
-    return <ListEmptyState itemType="companies" message="No companies registered yet." />
+    return <ItemListEmpty>No companies registered yet.</ItemListEmpty>
   }
 
   return (

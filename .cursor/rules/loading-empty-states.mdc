@@ -1,12 +1,12 @@
 ---
-description: LoadingState and ListEmptyState usage in service frontends
+description: LoadingState and ItemListEmpty usage in service frontends
 globs: "**/frontend/src/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 
 # Loading and empty states
 
-Import from `@webonone/ui-kit`: **`LoadingState`**, **`ListEmptyState`**.
+Import from `@webonone/ui-kit`: **`LoadingState`**, **`ItemListEmpty`**.
 
 ## LoadingState
 
@@ -25,19 +25,13 @@ Centered themed spinner + label for **page, section, route suspense, and session
 
 Reference: `data/frontend/src/features/tags/pages/TagsPage.tsx`, `LazyRoute.tsx`, `AppLayout.tsx`.
 
-## ListEmptyState
+## ItemListEmpty
 
-Parameterized empty-list message when **`items.length === 0`** inside or instead of `ItemList`.
+Centered empty-list message when **`items.length === 0`** inside or instead of `ItemList`.
 
-| Prop | Required | Notes |
-|------|----------|-------|
-| `itemType` | yes | Plural noun for default: `"tags"` → `No tags found.` |
-| `message` | no | Full override when default template does not fit |
-| `className` | no | Extra classes |
+Pass copy as children, e.g. `<ItemListEmpty>No tags found.</ItemListEmpty>`.
 
 **Use when:** collection lists, filtered search with no matches, dashboard activity sections.
-
-**Keep `ItemListEmpty`:** low-level primitive; prefer **`ListEmptyState`** at app/feature level.
 
 Reference: `data/frontend/src/features/tags/components/TagsList.tsx`.
 

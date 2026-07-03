@@ -3,7 +3,7 @@ import {
   DropdownMenuItem,
   ItemList,
   ItemListContent,
-  ListEmptyState,
+  ItemListEmpty,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -29,7 +29,7 @@ export function TemplatesList({ templates, onToggleActive, busyId }: TemplatesLi
 
   if (items.length === 0) {
     return (
-      <ListEmptyState itemType="templates" message="No templates found for your scope." />
+      <ItemListEmpty>No templates found for your scope.</ItemListEmpty>
     )
   }
 
