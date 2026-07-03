@@ -49,6 +49,9 @@ Reference: `ui-kit/package/src/components/ListSearchField.tsx`, `ListFilterPanel
 | Rule | Detail |
 |------|--------|
 | Search left of filter | `ListSearchField` always **before** `ListFilterTrigger` in `actions` |
+| Fixed-width expand | `ListSearchField` uses `w-10 shrink-0` anchor; expanded input is `absolute right-0` so the filter icon does not shift |
+| Mobile actions | `PageHeader` actions row uses `justify-end` on mobile |
+| Panel scroll lock | `ListFilterPanel` sets `body overflow: hidden` while open |
 | Text search in header | Use `ListSearchField` — collapsed search icon expands to input with left search icon + clear |
 | Panel filters only | Status, dates, MIME type, etc. — not primary text search |
 | No inline filter forms | Do not add full-width `<Form>` rows above lists |
