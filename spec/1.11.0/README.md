@@ -39,6 +39,7 @@ Production host: **`data.webonone.com`**
 | [05-admin-ui.md](./05-admin-ui.md) | Admin FE routes, list pages, forms |
 | [06-platform-integration.md](./06-platform-integration.md) | Nav handoff, consumer contract, deploy |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
+| [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
 

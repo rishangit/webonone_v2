@@ -1,0 +1,156 @@
+---
+description: Implementation plan for spec 1.11.0 — Data microservice for tags, UOM, attributes, products, services, spaces
+alwaysApply: false
+globs: data/**, webonone-v2/frontend/**, packages/platform-nav/**, package.json, AGENTS.md
+---
+
+# Implementation plan — Spec 1.11.0
+
+## Summary
+
+Spec 1.11.0 adds a standalone **Data microservice** (`data/`) owning platform reference catalog: tags, units of measure, attributes, products, services, and spaces — each with CRUD, search/filter, and server pagination. Admin SPA uses UI Kit patterns; WebOnOne gets a Data nav handoff. Deploy target: `data.webonone.com`. See [01-overview.md](./01-overview.md) through [06-platform-integration.md](./06-platform-integration.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.11.0` |
+| Ports | FE :3005, BE :4005 |
+| DB | `webonone_data` |
+| Package builds | `build:platform-nav`, `build:theme`, `build:ui-kit` before data prod build |
+| JWT | Same `JWT_SECRET` in data + identity backends |
+
+---
+
+## Phase 1 — Service scaffold
+
+**Goal:** Runnable `data/` with health, auth shell, base migrations.
+
+**Exit criteria:** `npm run dev:data` starts; `GET /health` 200.
+
+| Task | Paths |
+|------|-------|
+| Root workspace | `package.json` |
+| Service root | `data/package.json` |
+| Backend scaffold | `data/backend/src/**` (mirror `email/backend`) |
+| Frontend scaffold | `data/frontend/src/**` (mirror `email/frontend`) |
+| Base migration | `data/backend/migrations/*_data_base_tables.ts` |
+| Nav + layout | `data/frontend/src/features/shell/**`, `AppLayout.tsx` |
+| Auth callback | `data/frontend/src/features/auth/**` |
+| Deploy stub | `data/deploy/IIS.md`, `web.config` |
+
+**Verify:** `npm run migrate -w data-root` · `npm run type-check -w data-root`
+
+---
+
+## Phase 2 — Domain API
+
+**Goal:** CRUD + list APIs for all six entities.
+
+**Exit criteria:** List endpoints return `{ items, total, page, pageSize }`.
+
+| Task | Paths |
+|------|-------|
+| Junction migration | `data/backend/migrations/*_data_junction_tables.ts` |
+| Zod schemas | `data/backend/src/schemas/*.schema.ts` |
+| Services | `data/backend/src/services/*.service.ts` |
+| Routes | `data/backend/src/routes/*.routes.ts` |
+| Auth middleware | `requireSuperAdmin` on POST/PUT/PATCH/DELETE |
+
+**Verify:** curl/manual API smoke per entity
+
+---
+
+## Phase 3 — Admin UI lists
+
+**Goal:** Six list pages with search, filter panel, pagination.
+
+| Task | Paths |
+|------|-------|
+| API client | `data/frontend/src/shared/services/dataApi.ts` |
+| List pages | `data/frontend/src/features/{tags,units,attributes,products,services,spaces}/pages/*Page.tsx` |
+| List components | `*/components/*List.tsx` |
+| Router | `data/frontend/src/app/router.tsx` + `LazyRoute.tsx` |
+| Vite chunks | `data/frontend/vite.config.ts` |
+
+**Verify:** `npm run type-check -w data-root`
+
+---
+
+## Phase 4 — Admin UI editors
+
+**Goal:** Create/edit/delete forms for all entities.
+
+| Task | Paths |
+|------|-------|
+| Editor pages | `*/pages/*EditorPage.tsx` |
+| Zod form schemas | `*/schemas/*.ts` |
+| Dashboard | `data/frontend/src/features/dashboard/pages/DashboardPage.tsx` |
+
+**Verify:** Full CRUD smoke in dev
+
+---
+
+## Phase 5 — Platform integration
+
+**Goal:** WebOnOne nav + peer env.
+
+| Task | Paths |
+|------|-------|
+| Platform nav | `packages/platform-nav/src/coreNav.ts` |
+| WebOnOne config | `webonone-v2/frontend/src/features/data/utils/dataConfig.ts` |
+| WebOnOne nav hook | `webonone-v2/frontend/src/app/AppLayout.tsx` or shell |
+| Env examples | `webonone-v2/frontend/.env.example` |
+
+**Verify:** Data link opens Data origin with handoff
+
+---
+
+## Phase 6 — Documentation
+
+| Task | Paths |
+|------|-------|
+| AGENTS.md | Data service row |
+| Agent stub | `.cursor/agents/data-agent.md`, `.cursor/skills/data-agent/SKILL.md` |
+
+---
+
+## Cross-service integration
+
+| Channel | Use |
+|---------|-----|
+| Identity redirect | Data FE login via auth code |
+| JWT | Data BE verifies locally |
+| WebOnOne nav | Redirect to `VITE_DATA_ORIGIN` |
+| Public HTTP | Peers read `GET /api/v1/*` with user JWT (documented; no consumer impl required) |
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.11.0 Data microservice | 86ey5f6vq | Phases 1–6 |
+
+---
+
+## Risks and open items
+
+- Large scaffold — mirror Email closely to reduce drift.
+- Product attribute repeater UX — start with simple add/remove rows.
+- Role sync deferred — super_admin only for writes in 1.11.0.
+- Company-scoped data reserved for future spec.
+
+---
+
+## Final verification
+
+```bash
+npm run migrate -w data-root
+npm run build:platform-nav
+npm run build:theme
+npm run build:ui-kit
+npm run build -w data-root
+npm run type-check -w data-root
+npm run type-check -w webonone-v2-root
+```
