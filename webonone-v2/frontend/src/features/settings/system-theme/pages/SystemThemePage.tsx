@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, FeaturePage, ListSearchField, Pagination } from '@webonone/ui-kit'
+import { Button, FeaturePage, ListPageBody, ListSearchField, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { ColorModeToggle } from '../components/ColorModeToggle'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
@@ -131,20 +131,23 @@ export function SystemThemePage() {
           />
         </section>
 
-        <section className="space-y-3">
+        <section className="flex min-h-[calc(100dvh-20rem)] flex-col space-y-3">
           <h2 className="text-lg font-semibold">Themes</h2>
-          <div className="space-y-4">
-            <ThemeList
-              themes={visibleThemes}
-              activeThemeId={preferences?.activeThemeId ?? null}
-              onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
-              onEdit={(theme) => setEditing(theme)}
-              onDelete={(id) => {
-                const theme = themes.find((t) => t.id === id)
-                if (theme) setDeleteTarget(theme)
-              }}
-            />
+          <ListPageBody className="min-h-0 flex-1">
+            <div className="flex-1">
+              <ThemeList
+                themes={visibleThemes}
+                activeThemeId={preferences?.activeThemeId ?? null}
+                onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
+                onEdit={(theme) => setEditing(theme)}
+                onDelete={(id) => {
+                  const theme = themes.find((t) => t.id === id)
+                  if (theme) setDeleteTarget(theme)
+                }}
+              />
+            </div>
             <Pagination
+              className="mt-auto"
               totalCount={filteredThemes.length}
               currentPage={themePage}
               pageSize={themePageSize}
@@ -155,7 +158,7 @@ export function SystemThemePage() {
                 setThemePage(1)
               }}
             />
-          </div>
+          </ListPageBody>
         </section>
 
         {status === 'loading' ? <p className="text-sm text-muted-foreground">Loading…</p> : null}

@@ -8,6 +8,7 @@ import {
   FormField,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageBody,
   ListSearchField,
   Pagination,
   Select,
@@ -42,7 +43,7 @@ export function HistoryPage() {
   const [status, setStatus] = useState<string>('all')
   const [from, setFrom] = useState<Date | undefined>()
   const [to, setTo] = useState<Date | undefined>()
-  const [templateSlug, setTemplateSlug] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -61,7 +62,7 @@ export function HistoryPage() {
         status: status === 'all' ? undefined : status,
         from: fromIso,
         to: toIso,
-        templateSlug: templateSlug || undefined,
+        search: searchQuery.trim() || undefined,
       })
       setItems(data.items)
       setTotal(data.total)
@@ -83,7 +84,7 @@ export function HistoryPage() {
     }, 400)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when search/filters change
-  }, [status, templateSlug, accessToken])
+  }, [status, searchQuery, accessToken])
 
   if (handoffPending) {
     return <PlatformHandoffSpinner />
@@ -107,7 +108,7 @@ export function HistoryPage() {
   }
 
   function handleClearSearch() {
-    setTemplateSlug('')
+    setSearchQuery('')
     setPage(1)
     void loadHistory(1, pageSize)
   }
@@ -132,11 +133,11 @@ export function HistoryPage() {
       actions={
         <div className="flex items-center gap-2">
           <ListSearchField
-            value={templateSlug}
-            onChange={setTemplateSlug}
-            placeholder="Template slug"
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Email or template name"
             onClear={handleClearSearch}
-            aria-label="Search by template slug"
+            aria-label="Search by recipient email or template name"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
         </div>
@@ -195,9 +196,12 @@ export function HistoryPage() {
       ) : null}
 
       {!loading ? (
-        <>
-          <HistoryList items={items} />
+        <ListPageBody>
+          <div className="flex-1">
+            <HistoryList items={items} />
+          </div>
           <Pagination
+            className="mt-auto"
             totalCount={total}
             currentPage={page}
             pageSize={pageSize}
@@ -205,7 +209,7 @@ export function HistoryPage() {
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
           />
-        </>
+        </ListPageBody>
       ) : null}
     </FeaturePage>
   )

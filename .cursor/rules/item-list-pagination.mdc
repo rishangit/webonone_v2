@@ -29,24 +29,38 @@ Always initialize `useState(12)` for `pageSize`. Pass `pageSizeOptions={[12, 24,
 ```text
 FeaturePage                    ← gap-6 between direct children
   filters / tabs (optional)
-  ItemList                       ← current page rows only (`py-4` on `<ul>`)
-  Pagination                     ← sibling below list, not inside <ul>
+  ListPageBody                 ← min viewport height; flex column (Phase 9)
+    ItemList                   ← flex-1; current page rows only
+    Pagination                 ← mt-auto; sibling below list
 ```
 
 | Rule | Detail |
 |------|--------|
-| Sibling order | `ItemList` then `Pagination` — nothing between them except loading spinner replacing the list |
+| Sibling order | `ItemList` then `Pagination` inside `ListPageBody` — nothing between them except loading spinner replacing the list |
 | Not inside list | Never render `Pagination` inside `ItemList` or between row items |
 | List padding | `ItemList` applies **`py-4`** on the `<ul>` via `itemListClassName` — do not strip with `py-0` |
-| FeaturePage | Rely on `FeaturePage` `gap-6` between list and pagination — **do not** add `mt-*` on `Pagination` |
-| Section wrapper | If the list lives in `<section className="space-y-3">`, use **`space-y-4`** on the inner block that wraps list + pagination together |
+| Bottom alignment | Wrap list + pagination in **`ListPageBody`**; list in `flex-1` wrapper; **`Pagination`** gets `className="mt-auto"` so controls sit at the page bottom even with few rows |
+| FeaturePage | Rely on `FeaturePage` `gap-6` between header and body — **do not** add extra `mt-*` on `Pagination` beyond `mt-auto` inside `ListPageBody` |
+| Section wrapper | If the list lives in `<section>`, apply `ListPageBody` inside the section for paginated blocks |
 | Filters | Filters/tabs stay **above** the list; pagination stays **below** the list |
+
+## Mobile pagination
+
+On viewports below `sm`, `Pagination` renders two rows:
+
+1. **Row 1:** "Showing X–Y of Z" (left) and rows-per-page select (right)
+2. **Row 2:** page controls centered
+
+Desktop (`sm+`) keeps a single row: summary left, page size + nav right.
 
 ```tsx
 {!loading ? (
-  <>
-    <HistoryList items={items} />
+  <ListPageBody>
+    <div className="flex-1">
+      <HistoryList items={items} />
+    </div>
     <Pagination
+      className="mt-auto"
       totalCount={total}
       currentPage={page}
       pageSize={pageSize}
@@ -54,7 +68,7 @@ FeaturePage                    ← gap-6 between direct children
       onPageChange={handlePageChange}
       onPageSizeChange={handlePageSizeChange}
     />
-  </>
+  </ListPageBody>
 ) : null}
 ```
 

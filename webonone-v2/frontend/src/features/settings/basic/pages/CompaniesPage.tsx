@@ -4,6 +4,7 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ListPageBody,
   ListSearchField,
   Pagination,
 } from '@webonone/ui-kit'
@@ -105,9 +106,12 @@ export function CompaniesPage() {
       {loading ? <p className="text-sm text-muted-foreground">Loading companies…</p> : null}
 
       {!loading ? (
-        <>
-          <CompaniesList items={visibleItems} updatingId={updatingId} onStatusChange={handleStatusChange} />
+        <ListPageBody>
+          <div className="flex-1">
+            <CompaniesList items={visibleItems} updatingId={updatingId} onStatusChange={handleStatusChange} />
+          </div>
           <Pagination
+            className="mt-auto"
             totalCount={filteredItems.length}
             currentPage={page}
             pageSize={pageSize}
@@ -118,7 +122,7 @@ export function CompaniesPage() {
               setPage(1)
             }}
           />
-        </>
+        </ListPageBody>
       ) : null}
     </FeaturePage>
   )

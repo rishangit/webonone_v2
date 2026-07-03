@@ -264,6 +264,7 @@ export async function retryQueueItem(id: string): Promise<QueueItemDto> {
 export async function listHistory(filters: {
   status?: 'sent' | 'failed'
   templateSlug?: string
+  search?: string
   companyId?: string
   from?: string
   to?: string
@@ -273,6 +274,16 @@ export async function listHistory(filters: {
   const query = db<EmailHistoryRow>('email_history').orderBy('sent_at', 'desc')
   if (filters.status) query.where({ status: filters.status })
   if (filters.templateSlug) query.where({ template_slug: filters.templateSlug })
+  if (filters.search) {
+    const pattern = `%${filters.search}%`
+    query.where(function applyHistorySearch() {
+      this.where('recipient', 'like', pattern)
+        .orWhere('template_slug', 'like', pattern)
+        .orWhereIn('template_slug', function matchingTemplateNames() {
+          this.select('slug').from('email_templates').where('name', 'like', pattern)
+        })
+    })
+  }
   if (filters.companyId) query.where({ company_id: filters.companyId })
   if (filters.from) query.where('sent_at', '>=', new Date(filters.from))
   if (filters.to) query.where('sent_at', '<=', new Date(filters.to))

@@ -38,6 +38,7 @@ export type HistoryQuery = {
   from?: string
   to?: string
   templateSlug?: string
+  search?: string
 }
 
 export type QueueQuery = {

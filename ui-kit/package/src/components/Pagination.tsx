@@ -106,119 +106,128 @@ function Pagination({
 
   const showControls = !(hideWhenSinglePage && totalPages <= 1)
   const visiblePages = getVisiblePages(safeCurrentPage, totalPages, siblingCount)
+  const pageSizeId = id ? `${id}-page-size` : 'pagination-page-size'
+
+  const pageSizeControl = onPageSizeChange ? (
+    <div className="flex items-center gap-2">
+      <Label htmlFor={pageSizeId} className="shrink-0">
+        Rows per page
+      </Label>
+      <Select
+        value={String(safePageSize)}
+        onValueChange={(value) => onPageSizeChange(Number(value))}
+      >
+        <SelectTrigger id={pageSizeId} className="w-[5.5rem]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {pageSizeOptions.map((option) => (
+            <SelectItem key={option} value={String(option)}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  ) : null
+
+  const navControls = showControls ? (
+    <nav
+      aria-label="Pagination"
+      className="flex items-center justify-center gap-1 overflow-x-auto sm:justify-start"
+    >
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 shrink-0"
+        aria-label="First page"
+        disabled={safeCurrentPage <= 1}
+        onClick={() => onPageChange(1)}
+      >
+        <ChevronsLeft className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 shrink-0"
+        aria-label="Previous page"
+        disabled={safeCurrentPage <= 1}
+        onClick={() => onPageChange(safeCurrentPage - 1)}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+
+      {visiblePages.map((page, index) =>
+        page === 'ellipsis' ? (
+          <span
+            key={`ellipsis-${index}`}
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground"
+            aria-hidden
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </span>
+        ) : (
+          <Button
+            key={page}
+            type="button"
+            variant={page === safeCurrentPage ? 'default' : 'outline'}
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            aria-label={`Page ${page}`}
+            aria-current={page === safeCurrentPage ? 'page' : undefined}
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </Button>
+        ),
+      )}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 shrink-0"
+        aria-label="Next page"
+        disabled={safeCurrentPage >= totalPages}
+        onClick={() => onPageChange(safeCurrentPage + 1)}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 shrink-0"
+        aria-label="Last page"
+        disabled={safeCurrentPage >= totalPages}
+        onClick={() => onPageChange(totalPages)}
+      >
+        <ChevronsRight className="h-4 w-4" />
+      </Button>
+    </nav>
+  ) : null
 
   return (
-    <div
-      id={id}
-      className={cn(
-        'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
-        className,
-      )}
-    >
-      <p className="text-sm text-muted-foreground">{summary}</p>
-
-      {showControls ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          {onPageSizeChange ? (
-            <div className="flex items-center gap-2">
-              <Label htmlFor={id ? `${id}-page-size` : 'pagination-page-size'} className="shrink-0">
-                Rows per page
-              </Label>
-              <Select
-                value={String(safePageSize)}
-                onValueChange={(value) => onPageSizeChange(Number(value))}
-              >
-                <SelectTrigger
-                  id={id ? `${id}-page-size` : 'pagination-page-size'}
-                  className="w-[5.5rem]"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {pageSizeOptions.map((option) => (
-                    <SelectItem key={option} value={String(option)}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null}
-
-          <nav aria-label="Pagination" className="flex items-center gap-1 overflow-x-auto">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              aria-label="First page"
-              disabled={safeCurrentPage <= 1}
-              onClick={() => onPageChange(1)}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              aria-label="Previous page"
-              disabled={safeCurrentPage <= 1}
-              onClick={() => onPageChange(safeCurrentPage - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            {visiblePages.map((page, index) =>
-              page === 'ellipsis' ? (
-                <span
-                  key={`ellipsis-${index}`}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground"
-                  aria-hidden
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </span>
-              ) : (
-                <Button
-                  key={page}
-                  type="button"
-                  variant={page === safeCurrentPage ? 'default' : 'outline'}
-                  size="icon"
-                  className="h-9 w-9 shrink-0"
-                  aria-label={`Page ${page}`}
-                  aria-current={page === safeCurrentPage ? 'page' : undefined}
-                  onClick={() => onPageChange(page)}
-                >
-                  {page}
-                </Button>
-              ),
-            )}
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              aria-label="Next page"
-              disabled={safeCurrentPage >= totalPages}
-              onClick={() => onPageChange(safeCurrentPage + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              aria-label="Last page"
-              disabled={safeCurrentPage >= totalPages}
-              onClick={() => onPageChange(totalPages)}
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </nav>
+    <div id={id} className={cn('shrink-0', className)}>
+      <div className="flex flex-col gap-3 sm:hidden">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">{summary}</p>
+          {pageSizeControl}
         </div>
-      ) : null}
+        {navControls}
+      </div>
+
+      <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <p className="text-sm text-muted-foreground">{summary}</p>
+        {showControls ? (
+          <div className="flex flex-row items-center gap-4">
+            {pageSizeControl}
+            {navControls}
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

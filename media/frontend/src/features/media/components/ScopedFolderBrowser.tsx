@@ -577,6 +577,7 @@ export function ScopedFolderBrowser({
 
       {!loading && !isUploading ? (
         <Pagination
+          className="mt-auto shrink-0"
           totalCount={mediaTotal}
           currentPage={mediaPage}
           pageSize={mediaPageSize}

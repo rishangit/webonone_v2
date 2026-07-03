@@ -7,6 +7,7 @@ import {
   FormField,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageBody,
   Pagination,
   Select,
   SelectContent,
@@ -144,14 +145,17 @@ export function QueuePage() {
       ) : null}
 
       {!loading ? (
-        <>
-          <QueueList
-            items={items}
-            canRetry={canRetry}
-            onRetry={handleRetry}
-            retryingId={retryingId}
-          />
+        <ListPageBody>
+          <div className="flex-1">
+            <QueueList
+              items={items}
+              canRetry={canRetry}
+              onRetry={handleRetry}
+              retryingId={retryingId}
+            />
+          </div>
           <Pagination
+            className="mt-auto"
             totalCount={total}
             currentPage={page}
             pageSize={pageSize}
@@ -162,7 +166,7 @@ export function QueuePage() {
               setPage(1)
             }}
           />
-        </>
+        </ListPageBody>
       ) : null}
     </FeaturePage>
   )

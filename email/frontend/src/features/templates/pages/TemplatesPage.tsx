@@ -4,6 +4,7 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ListPageBody,
   ListSearchField,
   Pagination,
   Spinner,
@@ -109,13 +110,16 @@ export function TemplatesPage() {
       ) : null}
 
       {!loading ? (
-        <>
-          <TemplatesList
-            templates={visibleTemplates}
-            onToggleActive={handleToggleActive}
-            busyId={busyId}
-          />
+        <ListPageBody>
+          <div className="flex-1">
+            <TemplatesList
+              templates={visibleTemplates}
+              onToggleActive={handleToggleActive}
+              busyId={busyId}
+            />
+          </div>
           <Pagination
+            className="mt-auto"
             totalCount={filteredTemplates.length}
             currentPage={page}
             pageSize={pageSize}
@@ -126,7 +130,7 @@ export function TemplatesPage() {
               setPage(1)
             }}
           />
-        </>
+        </ListPageBody>
       ) : null}
     </FeaturePage>
   )

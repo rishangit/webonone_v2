@@ -5,6 +5,7 @@ export const historyQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(12),
   status: z.enum(['sent', 'failed']).optional(),
   templateSlug: z.string().max(64).optional(),
+  search: z.string().max(128).optional(),
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
   companyId: z.string().length(21).optional(),

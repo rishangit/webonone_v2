@@ -16,6 +16,7 @@ import {
   ItemListItem,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageBody,
   Pagination,
   Select,
   SelectContent,
@@ -227,32 +228,35 @@ export function DashboardPage() {
             </div>
           )}
 
-          <section className="space-y-3">
+          <section className="flex min-h-[calc(100dvh-24rem)] flex-col space-y-3">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg font-medium">Recent activity</h2>
               {recentSectionActions}
             </div>
-            <div className="space-y-4">
-              {recentItems.length === 0 ? (
-                <ItemListEmpty>
-                  {isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
-                </ItemListEmpty>
-              ) : (
-                <ItemList>
-                  {recentItems.map((item) => (
-                    <ItemListItem key={item.id}>
-                      <ItemListContent>
-                        <p className="font-medium">{item.recipient}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.templateSlug} · {statusLabel(item.status)}
-                          {item.sentAt ? ` · ${new Date(item.sentAt).toLocaleString()}` : ''}
-                        </p>
-                      </ItemListContent>
-                    </ItemListItem>
-                  ))}
-                </ItemList>
-              )}
+            <ListPageBody className="min-h-0 flex-1">
+              <div className="flex-1">
+                {recentItems.length === 0 ? (
+                  <ItemListEmpty>
+                    {isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
+                  </ItemListEmpty>
+                ) : (
+                  <ItemList>
+                    {recentItems.map((item) => (
+                      <ItemListItem key={item.id}>
+                        <ItemListContent>
+                          <p className="font-medium">{item.recipient}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.templateSlug} · {statusLabel(item.status)}
+                            {item.sentAt ? ` · ${new Date(item.sentAt).toLocaleString()}` : ''}
+                          </p>
+                        </ItemListContent>
+                      </ItemListItem>
+                    ))}
+                  </ItemList>
+                )}
+              </div>
               <Pagination
+                className="mt-auto"
                 totalCount={recentTotal}
                 currentPage={recentPage}
                 pageSize={recentPageSize}
@@ -260,7 +264,7 @@ export function DashboardPage() {
                 onPageChange={handleRecentPageChange}
                 onPageSizeChange={handleRecentPageSizeChange}
               />
-            </div>
+            </ListPageBody>
           </section>
         </>
       ) : null}
