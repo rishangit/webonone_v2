@@ -1,0 +1,132 @@
+---
+description: Implementation plan for spec 1.10.1 — UI Kit list filter panel and cross-service rollout
+alwaysApply: false
+globs: ui-kit/**, email/frontend/**, webonone-v2/frontend/**, media/frontend/**, .cursor/rules/**
+---
+
+# Implementation plan — Spec 1.10.1
+
+## Summary
+
+Add **`ListFilterPanel`** and **`ListFilterTrigger`** to `@webonone/ui-kit`, demo on Components showcase, roll out to all in-scope list pages (Email, WebOnOne, Media), and add **`list-filter-panel.mdc`**. See [02-ui-kit-list-filter-panel.md](./02-ui-kit-list-filter-panel.md), [03-service-filter-rollout.md](./03-service-filter-rollout.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.10.1` |
+| Package builds | `npm run build -w @webonone/ui-kit` before consumer prod builds |
+
+---
+
+## Phase 1 — UI Kit components
+
+**Goal:** Slide-over filter panel + header trigger.
+
+| Task | Paths |
+|------|-------|
+| `ListFilterPanel` | `ui-kit/package/src/components/ListFilterPanel.tsx` |
+| `ListFilterTrigger` | same file or sibling |
+| Export | `ui-kit/package/src/index.ts` |
+
+**Exit criteria:** Panel slides from right; overlay + Escape close; Apply/Clear footer.
+
+**Verify:** `npm run build -w @webonone/ui-kit` · `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 2 — Showcase demo
+
+| Task | Paths |
+|------|-------|
+| List filters section | `ui-kit/showcase/src/pages/ComponentsPage.tsx` |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 3 — Email rollout
+
+| Task | Paths |
+|------|-------|
+| History — replace inline form | `email/frontend/src/features/history/pages/HistoryPage.tsx` |
+| Queue — status in panel | `email/frontend/src/features/queue/pages/QueuePage.tsx` |
+| Templates — name search | `email/frontend/src/features/templates/pages/TemplatesPage.tsx` |
+| Dashboard recent filters | `email/frontend/src/features/dashboard/pages/DashboardPage.tsx` |
+
+**Verify:** `npm run type-check -w email-root`
+
+---
+
+## Phase 4 — WebOnOne v2 rollout
+
+| Task | Paths |
+|------|-------|
+| Companies name search | `webonone-v2/frontend/src/features/settings/basic/pages/CompaniesPage.tsx` |
+| System Theme name search | `webonone-v2/frontend/src/features/settings/system-theme/pages/SystemThemePage.tsx` |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 5 — Media rollout
+
+| Task | Paths |
+|------|-------|
+| Library browser filters | `media/frontend/src/features/media/components/ScopedFolderBrowser.tsx` |
+
+**Verify:** `npm run type-check -w media-root`
+
+---
+
+## Phase 6 — Cursor rules
+
+| Task | Paths |
+|------|-------|
+| New rule | `.cursor/rules/list-filter-panel.mdc` |
+| Index | `.cursor/rules/README.md` |
+| Skill cross-link | `.cursor/skills/item-list/SKILL.md` |
+
+---
+
+## Cross-service integration
+
+No API, JWT, or iframe changes. Client-side filter UI only; wire existing list API query params where available.
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.10.1 | 86ey58rda | Phases 1–6 |
+
+---
+
+## Risks and open items
+
+| Risk | Mitigation |
+|------|------------|
+| Queue tabs vs panel | Move status into panel; remove tab row for consistency |
+| Mobile panel width | Full-width panel on small screens (`max-w-sm` on `sm+`) |
+| Media API lacks search param | Client-filter current page slice; document limitation |
+
+---
+
+## Final verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w ui-kit-root
+npm run type-check -w email-root
+npm run type-check -w webonone-v2-root
+npm run type-check -w media-root
+```
+
+---
+
+## Constraints
+
+- Use `FeaturePage` `actions` for `ListFilterTrigger` — not ad-hoc header rows.
+- Reset pagination to page 1 on filter apply ([item-list-pagination.mdc](../../.cursor/rules/item-list-pagination.mdc)).
+- Do not add inline full-width filter forms above lists.

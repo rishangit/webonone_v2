@@ -35,6 +35,7 @@ Identity has no in-scope collection list pages (see [03-service-filter-rollout.m
 | [03-service-filter-rollout.md](./03-service-filter-rollout.md) | Cross-service adoption inventory |
 | [04-cursor-rules.md](./04-cursor-rules.md) | `.cursor/rules/` documentation |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
+| [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
 
