@@ -36,7 +36,7 @@ function PageShell({
         onProfileClick={onProfileClick}
         onLogout={onLogout}
       />
-      <main className="w-full px-4 py-8">{children}</main>
+      <main className="w-full px-2 py-8 sm:px-4">{children}</main>
     </div>
   )
 }

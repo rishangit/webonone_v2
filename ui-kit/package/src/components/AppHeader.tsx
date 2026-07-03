@@ -3,6 +3,7 @@ import { LogOut, Menu, User, X } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
+import { shellContentPaddingX } from '../layouts/shellContentPadding'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +56,7 @@ function AppHeader({
 
   return (
     <header className={cn('glass-card border-b', className)}>
-      <div className="flex h-14 w-full items-center justify-between px-4">
+      <div className={cn('flex h-14 w-full items-center justify-between', shellContentPaddingX)}>
         <div className="flex min-w-0 items-center gap-2">
           {showMenuButton ? (
             <button

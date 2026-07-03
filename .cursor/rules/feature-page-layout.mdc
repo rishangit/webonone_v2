@@ -17,6 +17,7 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 - **Title block:** `title` + optional `description` props, or a custom `header={<PageHeader … />}`.
 - **Header actions:** pass primary page actions via `actions` (e.g. “Create theme”).
 - **Spacing:** rely on `FeaturePage` **`gap-6`** between header and body — do not add extra top margin on the first child.
+- **Horizontal padding:** do not add `px-*` on `FeaturePage` — `AppShell` / `PageShell` own shell padding (`px-2 sm:px-6` on mobile/desktop). Page content should align with the app header automatically.
 
 ## Typography
 

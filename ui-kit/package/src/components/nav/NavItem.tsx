@@ -41,7 +41,7 @@ function NavItem({
       aria-label={collapsed ? label : undefined}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+        'flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:py-2',
         active && 'border-l-2 border-primary bg-accent/60',
         collapsed && 'justify-center px-2',
         nested && !collapsed && 'ml-6',

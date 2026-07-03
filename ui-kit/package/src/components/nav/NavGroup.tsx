@@ -47,7 +47,7 @@ function NavGroup({
             title={label}
             aria-label={label}
             className={cn(
-              'flex w-full items-center justify-center rounded-md px-2 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+              'flex w-full items-center justify-center rounded-md px-2 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:py-2',
               groupActive && 'border-l-2 border-primary bg-accent/60',
               className,
             )}
@@ -89,7 +89,7 @@ function NavGroup({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         className={cn(
-          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+          'flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:py-2',
           groupActive && 'border-l-2 border-primary bg-accent/60',
         )}
       >

@@ -4,6 +4,7 @@ import type { NavConfigItem } from '../types/nav'
 import { AppHeader, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
 import { AppSidebar } from './AppSidebar'
+import { shellContentPaddingX } from './shellContentPadding'
 
 const SIDEBAR_COLLAPSED_KEY = 'webonone:sidebar-collapsed'
 
@@ -116,7 +117,13 @@ function AppShell({
           mobileOpen={mobileOpen}
           onMobileClose={() => setMobileOpen(false)}
         />
-        <main id="main-content" className="min-h-[calc(100vh-3.5rem)] flex-1 p-6 scrollbar-themed">
+        <main
+          id="main-content"
+          className={cn(
+            'min-h-[calc(100vh-3.5rem)] flex-1 py-4 scrollbar-themed sm:py-6',
+            shellContentPaddingX,
+          )}
+        >
           {children}
         </main>
       </div>
