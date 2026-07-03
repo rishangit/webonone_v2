@@ -4,10 +4,7 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
-  FormField,
-  Input,
-  ListFilterPanel,
-  ListFilterTrigger,
+  ListSearchField,
   Pagination,
 } from '@webonone/ui-kit'
 import { CompaniesList } from '../components/CompaniesList'
@@ -20,12 +17,9 @@ export function CompaniesPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-
-  const hasActiveFilters = searchQuery.trim() !== ''
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -75,15 +69,6 @@ export function CompaniesPage() {
     }
   }
 
-  function handleApplyFilters() {
-    setPage(1)
-  }
-
-  function handleClearFilters() {
-    setSearchQuery('')
-    setPage(1)
-  }
-
   const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
 
   if (roleLoading) {
@@ -99,25 +84,18 @@ export function CompaniesPage() {
       title="Companies"
       description="Review registered companies and update approval status."
       actions={
-        <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+        <ListSearchField
+          value={searchQuery}
+          onChange={(value) => {
+            setSearchQuery(value)
+            setPage(1)
+          }}
+          placeholder="Company name"
+          onClear={() => setPage(1)}
+          aria-label="Search companies"
+        />
       }
     >
-      <ListFilterPanel
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        onApply={handleApplyFilters}
-        onClear={handleClearFilters}
-      >
-        <FormField label="Search" htmlFor="companies-search">
-          <Input
-            id="companies-search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Company name"
-          />
-        </FormField>
-      </ListFilterPanel>
-
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

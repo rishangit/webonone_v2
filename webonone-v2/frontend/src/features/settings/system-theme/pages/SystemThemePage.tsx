@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, FeaturePage, FormField, Input, ListFilterPanel, ListFilterTrigger, Pagination } from '@webonone/ui-kit'
+import { Button, FeaturePage, ListSearchField, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { ColorModeToggle } from '../components/ColorModeToggle'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
@@ -21,9 +21,6 @@ export function SystemThemePage() {
   const [themePage, setThemePage] = useState(1)
   const [themePageSize, setThemePageSize] = useState(12)
   const [themeSearchQuery, setThemeSearchQuery] = useState('')
-  const [filterOpen, setFilterOpen] = useState(false)
-
-  const hasActiveFilters = themeSearchQuery.trim() !== ''
 
   const filteredThemes = useMemo(() => {
     const query = themeSearchQuery.trim().toLowerCase()
@@ -103,43 +100,28 @@ export function SystemThemePage() {
 
   const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
 
-  function handleApplyFilters() {
-    setThemePage(1)
-  }
-
-  function handleClearFilters() {
-    setThemeSearchQuery('')
-    setThemePage(1)
-  }
-
   return (
     <FeaturePage
       title="System Theme"
       description="Create accent palettes and switch light or dark mode for the platform shell."
       actions={
         <div className="flex items-center gap-2">
-          <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          <ListSearchField
+            value={themeSearchQuery}
+            onChange={(value) => {
+              setThemeSearchQuery(value)
+              setThemePage(1)
+            }}
+            placeholder="Theme name"
+            onClear={() => setThemePage(1)}
+            aria-label="Search themes"
+          />
           <Button type="button" onClick={() => setCreateOpen(true)}>
             Create theme
           </Button>
         </div>
       }
     >
-      <ListFilterPanel
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        onApply={handleApplyFilters}
-        onClear={handleClearFilters}
-      >
-        <FormField label="Search" htmlFor="themes-search">
-          <Input
-            id="themes-search"
-            value={themeSearchQuery}
-            onChange={(e) => setThemeSearchQuery(e.target.value)}
-            placeholder="Theme name"
-          />
-        </FormField>
-      </ListFilterPanel>
       <div className="space-y-6">
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Color mode</h2>

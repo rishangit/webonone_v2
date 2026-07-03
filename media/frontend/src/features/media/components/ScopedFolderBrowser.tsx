@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   FormField,
-  Input,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -17,6 +16,7 @@ import {
   itemListRowActiveClassName,
   ListFilterPanel,
   ListFilterTrigger,
+  ListSearchField,
   Pagination,
   Select,
   SelectContent,
@@ -96,7 +96,7 @@ export function ScopedFolderBrowser({
   const [fileNameQuery, setFileNameQuery] = useState('')
   const [mimeFilter, setMimeFilter] = useState<'all' | 'image' | 'other'>('all')
 
-  const hasActiveFilters = fileNameQuery.trim() !== '' || mimeFilter !== 'all'
+  const hasActiveFilters = mimeFilter !== 'all'
 
   const filteredFolders = useMemo(() => {
     const query = fileNameQuery.trim().toLowerCase()
@@ -286,6 +286,12 @@ export function ScopedFolderBrowser({
   function renderToolbar() {
     return (
       <div className="flex shrink-0 items-center gap-1">
+        <ListSearchField
+          value={fileNameQuery}
+          onChange={setFileNameQuery}
+          placeholder="File or folder name"
+          aria-label="Search files and folders"
+        />
         <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
         {enableUpload ? (
           <>
@@ -495,19 +501,10 @@ export function ScopedFolderBrowser({
         onOpenChange={setFilterOpen}
         onApply={() => setMediaPage(1)}
         onClear={() => {
-          setFileNameQuery('')
           setMimeFilter('all')
           setMediaPage(1)
         }}
       >
-        <FormField label="File name" htmlFor="media-file-search">
-          <Input
-            id="media-file-search"
-            value={fileNameQuery}
-            onChange={(e) => setFileNameQuery(e.target.value)}
-            placeholder="Search files or folders"
-          />
-        </FormField>
         <FormField label="Type" htmlFor="media-mime-filter">
           <Select value={mimeFilter} onValueChange={(value) => setMimeFilter(value as 'all' | 'image' | 'other')}>
             <SelectTrigger id="media-mime-filter">
@@ -530,7 +527,15 @@ export function ScopedFolderBrowser({
       ) : (
         <div className="flex items-center justify-between gap-2">
           {renderBreadcrumb()}
-          <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          <div className="flex items-center gap-2">
+            <ListSearchField
+              value={fileNameQuery}
+              onChange={setFileNameQuery}
+              placeholder="File or folder name"
+              aria-label="Search files and folders"
+            />
+            <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          </div>
         </div>
       )}
 

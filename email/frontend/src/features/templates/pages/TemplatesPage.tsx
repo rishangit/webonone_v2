@@ -4,10 +4,7 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
-  FormField,
-  Input,
-  ListFilterPanel,
-  ListFilterTrigger,
+  ListSearchField,
   Pagination,
   Spinner,
 } from '@webonone/ui-kit'
@@ -24,12 +21,9 @@ export function TemplatesPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
-
-  const hasActiveFilters = searchQuery.trim() !== ''
 
   const filteredTemplates = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -83,15 +77,6 @@ export function TemplatesPage() {
     }
   }
 
-  function handleApplyFilters() {
-    setPage(1)
-  }
-
-  function handleClearFilters() {
-    setSearchQuery('')
-    setPage(1)
-  }
-
   const visibleTemplates = filteredTemplates.slice((page - 1) * pageSize, page * pageSize)
 
   return (
@@ -99,25 +84,18 @@ export function TemplatesPage() {
       title="Templates"
       description="Manage platform and company email templates."
       actions={
-        <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+        <ListSearchField
+          value={searchQuery}
+          onChange={(value) => {
+            setSearchQuery(value)
+            setPage(1)
+          }}
+          placeholder="Template name or slug"
+          onClear={() => setPage(1)}
+          aria-label="Search templates"
+        />
       }
     >
-      <ListFilterPanel
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        onApply={handleApplyFilters}
-        onClear={handleClearFilters}
-      >
-        <FormField label="Search" htmlFor="templates-search">
-          <Input
-            id="templates-search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Name or slug"
-          />
-        </FormField>
-      </ListFilterPanel>
-
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

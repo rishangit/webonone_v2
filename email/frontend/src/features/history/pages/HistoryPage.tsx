@@ -6,9 +6,9 @@ import {
   DatePicker,
   FeaturePage,
   FormField,
-  Input,
   ListFilterPanel,
   ListFilterTrigger,
+  ListSearchField,
   Pagination,
   Select,
   SelectContent,
@@ -47,8 +47,7 @@ export function HistoryPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const hasActiveFilters =
-    status !== 'all' || from !== undefined || to !== undefined || templateSlug.trim() !== ''
+  const hasActiveFilters = status !== 'all' || from !== undefined || to !== undefined
 
   async function loadHistory(nextPage = page, nextPageSize = pageSize) {
     setLoading(true)
@@ -79,9 +78,12 @@ export function HistoryPage() {
     if (!accessToken) {
       return
     }
-    void loadHistory(1)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change
-  }, [status, accessToken])
+    const timer = window.setTimeout(() => {
+      void loadHistory(1)
+    }, 400)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when search/filters change
+  }, [status, templateSlug, accessToken])
 
   if (handoffPending) {
     return <PlatformHandoffSpinner />
@@ -100,6 +102,11 @@ export function HistoryPage() {
     setStatus('all')
     setFrom(undefined)
     setTo(undefined)
+    setPage(1)
+    void loadHistory(1, pageSize)
+  }
+
+  function handleClearSearch() {
     setTemplateSlug('')
     setPage(1)
     void loadHistory(1, pageSize)
@@ -123,7 +130,16 @@ export function HistoryPage() {
           : 'Audit trail of sent and failed messages for your scope.'
       }
       actions={
-        <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+        <div className="flex items-center gap-2">
+          <ListSearchField
+            value={templateSlug}
+            onChange={setTemplateSlug}
+            placeholder="Template slug"
+            onClear={handleClearSearch}
+            aria-label="Search by template slug"
+          />
+          <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+        </div>
       }
     >
       <ListFilterPanel
@@ -162,15 +178,6 @@ export function HistoryPage() {
             value={to}
             onChange={setTo}
             placeholder="End date"
-          />
-        </FormField>
-
-        <FormField label="Template slug" htmlFor="history-slug">
-          <Input
-            id="history-slug"
-            value={templateSlug}
-            onChange={(e) => setTemplateSlug(e.target.value)}
-            placeholder="password_reset"
           />
         </FormField>
       </ListFilterPanel>

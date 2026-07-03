@@ -48,6 +48,7 @@ import {
   Label,
   ListFilterPanel,
   ListFilterTrigger,
+  ListSearchField,
   Pagination,
   mapZodIssuesToFieldErrors,
   PageShell,
@@ -248,6 +249,7 @@ export function ComponentsPage() {
   const [listPageSize, setListPageSize] = useState(12)
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const demoListItems = useMemo(
     () =>
       Array.from({ length: 24 }, (_, index) => ({
@@ -257,10 +259,14 @@ export function ComponentsPage() {
       })),
     [],
   )
-  const visibleListItems = demoListItems.slice(
-    (listPage - 1) * listPageSize,
-    listPage * listPageSize,
-  )
+  const visibleListItems = demoListItems
+    .filter((theme) => filterStatus === 'all' || theme.active)
+    .filter((theme) => {
+      const query = searchQuery.trim().toLowerCase()
+      if (!query) return true
+      return theme.name.toLowerCase().includes(query)
+    })
+    .slice((listPage - 1) * listPageSize, listPage * listPageSize)
   const hasActiveFilters = filterStatus !== 'all'
 
   return (
@@ -380,13 +386,25 @@ export function ComponentsPage() {
       <DemoSection
         id="list-filters"
         title="List filters"
-        description="ListFilterTrigger in page actions opens a right-side ListFilterPanel. Highlight the trigger when filters are active."
+        description="ListSearchField (left) expands from a search icon; ListFilterTrigger opens the panel. Highlight the filter trigger when panel filters are active."
       >
         <FeaturePage
           title="Filtered collection"
-          description="Demo list with filter panel."
+          description="Demo list with search and filter panel."
           actions={
-            <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+            <div className="flex items-center gap-2">
+              <ListSearchField
+                value={searchQuery}
+                onChange={(value) => {
+                  setSearchQuery(value)
+                  setListPage(1)
+                }}
+                placeholder="Theme name"
+                onClear={() => setListPage(1)}
+                aria-label="Search themes"
+              />
+              <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+            </div>
           }
         >
           <ListFilterPanel
@@ -412,9 +430,7 @@ export function ComponentsPage() {
           </ListFilterPanel>
 
           <ItemList>
-            {visibleListItems
-              .filter((theme) => filterStatus === 'all' || theme.active)
-              .map((theme) => (
+            {visibleListItems.map((theme) => (
                 <ItemListItem
                   key={theme.id}
                   className={theme.active ? itemListRowActiveClassName : undefined}

@@ -22,6 +22,8 @@ export { Pagination } from './components/Pagination'
 export type { PaginationProps } from './components/Pagination'
 export { ListFilterPanel, ListFilterTrigger } from './components/ListFilterPanel'
 export type { ListFilterPanelProps, ListFilterTriggerProps } from './components/ListFilterPanel'
+export { ListSearchField } from './components/ListSearchField'
+export type { ListSearchFieldProps } from './components/ListSearchField'
 export { UserSelectionDialog } from './components/UserSelectionDialog'
 export type {
   UserOption,
