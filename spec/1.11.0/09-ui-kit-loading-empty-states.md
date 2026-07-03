@@ -16,12 +16,22 @@ Implements ClickUp subtasks **86ey5g5r1** (loading component) and **86ey5g845** 
 |------|------|---------|---------|
 | `label` | `string` | `"Loading…"` | Text below spinner |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'lg'` | Passed to inner `Spinner` |
+| `overlay` | `boolean` | `false` | When `true`, full-viewport centered overlay (preferred for page loads) |
 | `className` | `string` | optional | Wrapper classes |
 
-**Layout:**
+**Inline layout** (`overlay={false}`):
 
 ```text
 <div role="status" className="flex flex-col items-center justify-center gap-3 py-12">
+  <Spinner size={size} />
+  <p className="text-sm text-muted-foreground">{label}</p>
+</div>
+```
+
+**Overlay layout** (`overlay={true}`) — required for page, route, and session loads per subtask:
+
+```text
+<div role="status" className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
   <Spinner size={size} />   ← border-primary (theme accent)
   <p className="text-sm text-muted-foreground">{label}</p>
 </div>
@@ -31,6 +41,7 @@ Implements ClickUp subtasks **86ey5g5r1** (loading component) and **86ey5g845** 
 |------|--------|
 | Theme | Reuse existing `Spinner` (`border-primary border-t-transparent`) |
 | Use when | List pages, dashboards, editors, route suspense, session bootstrap |
+| Overlay default | Page-level and route-level loads use **`overlay`** — same viewport center; do not embed spinners inside list rows or cards |
 | Do not use | Inline button loading — keep `Spinner size="sm"` inside buttons |
 | Context labels | Page-specific copy (`"Loading tags…"`, `"Loading dashboard…"`) |
 
@@ -95,8 +106,9 @@ Renders centered muted text inside list body (same visual weight as `ItemListEmp
 ## Acceptance
 
 - [ ] `LoadingState` and `ListEmptyState` exported from `@webonone/ui-kit`
-- [ ] Showcase demonstrates both
-- [ ] Data, Email, WebOnOne, Media, Identity use `LoadingState` for page/section loads
+- [ ] `LoadingState` supports `overlay` for viewport-centered loading
+- [ ] Showcase demonstrates both (inline + overlay)
+- [ ] Data, Email, WebOnOne, Media, Identity use `LoadingState overlay` for page/section loads
 - [ ] List components use `ListEmptyState` where empty = no results
 - [ ] `loading-empty-states.mdc` indexed; item-list skill updated
 - [ ] `npm run build -w @webonone/ui-kit` and `npm run type-check` on touched service roots pass

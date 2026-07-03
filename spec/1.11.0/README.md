@@ -55,6 +55,7 @@ Production host: **`data.webonone.com`**
 
 ## Revision history
 
+- **2026-07-04** — `LoadingState` overlay variant for viewport-centered page loads (subtask delta).
 - **2026-07-04** — Subtasks loading component + no-results `ListEmptyState` (UI Kit delta).
 - **2026-07-04** — Subtasks `pagination position` and `search/filter header alignment` (list page layout delta).
 
