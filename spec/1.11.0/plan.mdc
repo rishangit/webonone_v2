@@ -140,11 +140,12 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 
 | Task | Paths |
 |------|-------|
-| `LoadingState` | `ui-kit/package/src/components/LoadingState.tsx` |
+| `LoadingState` + `overlay` prop | `ui-kit/package/src/components/LoadingState.tsx` |
 | `ListEmptyState` | `ui-kit/package/src/components/ListEmptyState.tsx` |
 | Exports + showcase | `ui-kit/package/src/index.ts`, `ui-kit/showcase/src/pages/ComponentsPage.tsx` |
 | Cursor rule | `.cursor/rules/loading-empty-states.mdc`, `README.md` index |
 | Item-list skill | `.cursor/skills/item-list/SKILL.md` |
+| Overlay rollout | All page/route/session `LoadingState` usages → `overlay` |
 | Data rollout | list pages, editors, dashboard, `LazyRoute`, handoff |
 | Email rollout | history, queue, templates, dashboard, editors, `LazyRoute` |
 | WebOnOne / Media / Identity | `LazyRoute`, loading pages |
