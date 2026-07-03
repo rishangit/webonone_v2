@@ -97,6 +97,24 @@ Spec: [03-service-filter-rollout.md](./03-service-filter-rollout.md)
 
 ---
 
+## Phase 7 — ListSearchField (subtask delta)
+
+**Goal:** Expandable header search left of filter trigger per subtask **86ey5e262**.
+
+| Task | Detail |
+|------|--------|
+| `ListSearchField.tsx` | Collapsed search icon → expanded input with left search icon + clear |
+| Export | `ui-kit/package/src/index.ts` |
+| Rollout | Move text search from panels to header on all list pages |
+| Showcase | Update Components list-filters demo |
+| Rule | Update `list-filter-panel.mdc` |
+
+**Exit criteria:** Search icon left of filter icon on every in-scope list page; type-check all service roots.
+
+Spec: subtask **86ey5e262**
+
+---
+
 ## Acceptance checklist
 
 - [ ] UI Kit exports `ListFilterPanel` and `ListFilterTrigger`
@@ -113,3 +131,4 @@ Spec: [03-service-filter-rollout.md](./03-service-filter-rollout.md)
 | ClickUp | ID | Phase |
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.10.1 | 86ey58rda | Phases 1–6 |
+| Subtask: search icon left of filter | 86ey5e262 | Phase 7 |

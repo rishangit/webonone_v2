@@ -42,9 +42,11 @@ Identity has no in-scope collection list pages (see [03-service-filter-rollout.m
 | ClickUp | ID | Spec destination |
 |---------|-----|------------------|
 | Parent: [User Story] Spec No 1.10.1 | 86ey58rda | All docs |
+| Subtask: search icon left of filter icon | 86ey5e262 | `02-ui-kit-list-filter-panel.md`, Phase 7 |
 
 ## Revision history
 
+- **2026-07-03** — Subtask `86ey5e262`: expandable `ListSearchField` in header, left of filter trigger.
 - **2026-07-03** — Initial spec from parent user story (search/filter panel on list pages).
 
 ## Inherited from earlier specs

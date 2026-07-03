@@ -129,8 +129,47 @@ export type { ListFilterPanelProps, ListFilterTriggerProps } from './components/
 
 ---
 
+## `ListSearchField` (subtask delta)
+
+Expandable header search control — sits **left of** `ListFilterTrigger` in `FeaturePage` `actions`.
+
+| Prop | Type | Default | Purpose |
+|------|------|---------|---------|
+| `value` | `string` | required | Current search text |
+| `onChange` | `(value: string) => void` | required | Text change handler |
+| `placeholder` | `string` | required | Context-specific hint (e.g. `"Company name"`, `"Template name or slug"`) |
+| `onClear` | `() => void` | optional | Called when clear control used; default clears via `onChange('')` |
+| `className` | `string` | optional | Wrapper classes |
+
+**Behavior:**
+
+1. **Collapsed** — outline icon button with `Search` icon only (matches `ListFilterTrigger` size).
+2. **Expanded** — click icon or non-empty `value` shows input row: **search icon left**, text input, **clear (X) icon** when text present.
+3. Clear resets text; collapse when empty and blurred.
+4. Placeholder describes the list domain (per page).
+
+**Header layout:**
+
+```tsx
+actions={
+  <div className="flex items-center gap-2">
+    <ListSearchField
+      value={searchQuery}
+      onChange={setSearchQuery}
+      placeholder="Template name or slug"
+    />
+    <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+  </div>
+}
+```
+
+Move **text search** out of `ListFilterPanel` into `ListSearchField`. Panel retains status, dates, MIME type, etc.
+
+---
+
 ## ClickUp mapping
 
 | ClickUp | ID | Spec section |
 |---------|-----|--------------|
-| Parent — reusable UI kit panel | 86ey58rda | This doc |
+| Parent — reusable UI kit panel | 86ey58rda | Filter components |
+| Subtask: search icon left of filter | 86ey5e262 | `ListSearchField`, header layout |
