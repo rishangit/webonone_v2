@@ -115,6 +115,20 @@ Spec: subtask **86ey5e262**
 
 ---
 
+## Phase 8 — Search/filter layout fixes (subtask delta)
+
+**Goal:** No filter-icon shift on search expand; mobile actions right-aligned; stable filter panel when scrollbars toggle.
+
+| Task | Detail |
+|------|--------|
+| `ListSearchField.tsx` | Fixed `w-10` anchor; absolute expanded input |
+| `PageHeader.tsx` | Mobile `justify-end` on actions |
+| `ListFilterPanel.tsx` | Lock body overflow while open |
+
+Spec: subtask **86ey5e4yu**
+
+---
+
 ## Acceptance checklist
 
 - [ ] UI Kit exports `ListFilterPanel` and `ListFilterTrigger`

@@ -167,9 +167,26 @@ Move **text search** out of `ListFilterPanel` into `ListSearchField`. Panel reta
 
 ---
 
+## Layout fixes (subtask delta `86ey5e4yu`)
+
+### Search expand without shifting filter icon
+
+`ListSearchField` root wrapper stays **`h-10 w-10 shrink-0`**. Expanded input uses **`absolute right-0`** overlay so sibling `ListFilterTrigger` position is unchanged.
+
+### Mobile actions alignment
+
+`PageHeader` actions row: **`justify-end`** on mobile, **`sm:justify-start`** on wider breakpoints so search + filter icons sit on the right on small screens.
+
+### Filter panel scroll stability
+
+When `ListFilterPanel` is open, set **`document.body.style.overflow = 'hidden'`** (restore on close) so Select dropdowns inside the panel do not toggle the page scrollbar and shift the panel.
+
+---
+
 ## ClickUp mapping
 
 | ClickUp | ID | Spec section |
 |---------|-----|--------------|
 | Parent — reusable UI kit panel | 86ey58rda | Filter components |
 | Subtask: search icon left of filter | 86ey5e262 | `ListSearchField`, header layout |
+| Subtask: expand layout + scroll | 86ey5e4yu | Layout fixes above, Phase 8 |

@@ -43,9 +43,11 @@ Identity has no in-scope collection list pages (see [03-service-filter-rollout.m
 |---------|-----|------------------|
 | Parent: [User Story] Spec No 1.10.1 | 86ey58rda | All docs |
 | Subtask: search icon left of filter icon | 86ey5e262 | `02-ui-kit-list-filter-panel.md`, Phase 7 |
+| Subtask: search expand layout + panel scroll | 86ey5e4yu | `02-ui-kit-list-filter-panel.md`, Phase 8 |
 
 ## Revision history
 
+- **2026-07-03** — Subtask `86ey5e4yu`: fixed-width search expand; mobile actions right-align; panel body scroll lock.
 - **2026-07-03** — Subtask `86ey5e262`: expandable `ListSearchField` in header, left of filter trigger.
 - **2026-07-03** — Initial spec from parent user story (search/filter panel on list pages).
 
