@@ -1,14 +1,14 @@
 ---
 description: Implementation plan for spec 1.11.0 — Data microservice for tags, UOM, attributes, products, services, spaces
 alwaysApply: false
-globs: data/**, webonone-v2/frontend/**, packages/platform-nav/**, package.json, AGENTS.md
+globs: data/**, .cursor/rules/**, .cursor/skills/item-list/**, webonone-v2/frontend/**, packages/platform-nav/**, package.json, AGENTS.md
 ---
 
 # Implementation plan — Spec 1.11.0
 
 ## Summary
 
-Spec 1.11.0 adds a standalone **Data microservice** (`data/`) owning platform reference catalog: tags, units of measure, attributes, products, services, and spaces — each with CRUD, search/filter, and server pagination. Admin SPA uses UI Kit patterns; WebOnOne gets a Data nav handoff. Deploy target: `data.webonone.com`. See [01-overview.md](./01-overview.md) through [06-platform-integration.md](./06-platform-integration.md).
+Spec 1.11.0 adds a standalone **Data microservice** (`data/`) owning platform reference catalog. Phase 7 delta: list page layout — pagination pinned to bottom, search + filter right-aligned in header. See [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md).
 
 ## Branch and prerequisites
 
@@ -115,6 +115,25 @@ Spec 1.11.0 adds a standalone **Data microservice** (`data/`) owning platform re
 
 ---
 
+## Phase 7 — List page layout refinements (delta)
+
+**Goal:** [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md).
+
+**Exit criteria:** Data lists match header + pagination layout contract.
+
+| Task | Paths |
+|------|-------|
+| Move search to header | `data/frontend/src/features/tags/pages/TagsPage.tsx`, `units/...`, `attributes/...`, `catalog/pages/CatalogListPage.tsx` |
+| Pagination bottom pin | Same pages — `flex-1` list wrapper + `Pagination className="mt-auto"` |
+| Rules | `.cursor/rules/item-list-pagination.mdc`, `list-filter-panel.mdc` |
+| Skill | `.cursor/skills/item-list/SKILL.md` |
+
+**Verify:** `npm run type-check -w data-root`
+
+Spec: subtasks **86ey5g15b**, **86ey5g1t4**
+
+---
+
 ## Cross-service integration
 
 | Channel | Use |
@@ -131,6 +150,8 @@ Spec 1.11.0 adds a standalone **Data microservice** (`data/`) owning platform re
 | ClickUp | ID | Phase |
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.11.0 Data microservice | 86ey5f6vq | Phases 1–6 |
+| Subtask: pagination position | 86ey5g15b | Phase 7 |
+| Subtask: search button and the filter button align to right | 86ey5g1t4 | Phase 7 |
 
 ---
 
