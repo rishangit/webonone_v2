@@ -13,6 +13,7 @@ import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirec
 import { getDataRedirectOptions } from '@/features/data/utils/redirectToData'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { syncEmailRoleBeforeHandoff } from '@/features/email/utils/syncEmailRole'
+import { syncDataRoleBeforeHandoff } from '@/features/data/utils/syncDataRole'
 import { buildNavForSessionRole, isDataNavSentinel, isEmailNavSentinel } from '@/features/shell/config/navItems'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
@@ -108,6 +109,7 @@ export function AppLayout() {
           )
         : undefined
       try {
+        await syncDataRoleBeforeHandoff(() => store.getState())
         await redirect(
           getDataRedirectOptions({
             accessToken,

@@ -49,13 +49,13 @@ export function UnitsPage() {
       description="Manage units of measure."
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          {canMutate ? (
-            <Button asChild>
-              <Link to="/units/new">Create unit</Link>
-            </Button>
-          ) : null}
           <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search units…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
+          {canMutate ? (
+            <Button asChild>
+              <Link to="/units/new">Add new</Link>
+            </Button>
+          ) : null}
         </div>
       }
     >

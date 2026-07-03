@@ -51,13 +51,13 @@ export function TagsPage() {
       description="Manage catalog tags."
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          {canMutate ? (
-            <Button asChild>
-              <Link to="/tags/new">Create tag</Link>
-            </Button>
-          ) : null}
           <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search tags…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
+          {canMutate ? (
+            <Button asChild>
+              <Link to="/tags/new">Add new</Link>
+            </Button>
+          ) : null}
         </div>
       }
     >

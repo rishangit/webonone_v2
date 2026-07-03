@@ -93,6 +93,25 @@ export async function syncEmailRole(req: AuthenticatedRequest, res: Response) {
   }
 }
 
+export async function syncDataRole(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  try {
+    const body = req.body as { sessionRole?: string; companyId?: string | null }
+    const result = await companyService.syncDataRoleForUser(
+      req.user.id,
+      body.sessionRole as 'super_admin' | 'company_admin' | 'member' | undefined,
+      body.companyId,
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function listAllCompanies(_req: SuperAdminRequest, res: Response) {
   try {
     const result = await companyService.listAllCompanies()

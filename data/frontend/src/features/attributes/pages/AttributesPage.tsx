@@ -50,13 +50,13 @@ export function AttributesPage() {
       description="Manage catalog attributes."
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          {canMutate ? (
-            <Button asChild>
-              <Link to="/attributes/new">Create attribute</Link>
-            </Button>
-          ) : null}
           <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search attributes…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
+          {canMutate ? (
+            <Button asChild>
+              <Link to="/attributes/new">Add new</Link>
+            </Button>
+          ) : null}
         </div>
       }
     >

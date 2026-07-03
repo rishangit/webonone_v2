@@ -4,6 +4,7 @@ import type { RegisterCompanyBody, UpdateCompanyStatusBody } from '../schemas/co
 import * as repo from '../repositories/company.repository.js'
 import * as roleRepo from '../repositories/userRole.repository.js'
 import { sendTransactionalEmail, syncUserRole } from './emailClient.service.js'
+import { syncDataUserRole } from './dataClient.service.js'
 
 export type CompanyWithMembership = {
   company: {
@@ -378,4 +379,54 @@ export async function syncEmailRoleForUser(
   }
 
   return syncEmailRoleAs(userId, email, 'member', null)
+}
+
+export type SyncedDataRole = {
+  role: 'super_admin' | 'company_admin' | 'member'
+  companyId: string | null
+}
+
+async function syncDataRoleAs(
+  userId: string,
+  role: 'super_admin' | 'company_admin' | 'member',
+  companyId: string | null,
+): Promise<SyncedDataRole> {
+  if (role === 'super_admin') {
+    await syncDataUserRole({ userId, role: 'super_admin', companyId: null })
+    return { role: 'super_admin', companyId: null }
+  }
+
+  if (role === 'company_admin' && companyId) {
+    await syncDataUserRole({ userId, role: 'company_admin', companyId })
+    return { role: 'company_admin', companyId }
+  }
+
+  await syncDataUserRole({ userId, role: 'member', companyId: companyId ?? null })
+  return { role: 'member', companyId }
+}
+
+export async function syncDataRoleForUser(
+  userId: string,
+  sessionRole?: 'super_admin' | 'company_admin' | 'member',
+  companyId?: string | null,
+): Promise<SyncedDataRole> {
+  if (sessionRole) {
+    await assertCanAssumeSessionRole(userId, sessionRole, companyId)
+    const effectiveCompanyId =
+      sessionRole === 'super_admin' ? null : (companyId ?? (await getMyCompany(userId))?.company.id ?? null)
+    return syncDataRoleAs(userId, sessionRole, effectiveCompanyId)
+  }
+
+  const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
+  if (superAdmin) {
+    return syncDataRoleAs(userId, 'super_admin', null)
+  }
+
+  const company = await getMyCompany(userId)
+  if (company) {
+    const dataRole = company.membership.role === 'company_admin' ? 'company_admin' : 'member'
+    return syncDataRoleAs(userId, dataRole, company.company.id)
+  }
+
+  return syncDataRoleAs(userId, 'member', null)
 }

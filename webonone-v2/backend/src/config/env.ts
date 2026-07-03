@@ -32,6 +32,8 @@ const envSchema = z.object({
   SUPER_ADMIN_USER_ID: z.string().optional(),
   EMAIL_API_BASE_URL: z.string().optional(),
   EMAIL_SERVICE_API_KEY: z.string().optional(),
+  DATA_API_BASE_URL: z.string().optional(),
+  DATA_SERVICE_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -63,4 +65,6 @@ export const env = {
   superAdminUserId: parsed.SUPER_ADMIN_USER_ID?.trim() ?? '',
   emailApiBaseUrl: parsed.EMAIL_API_BASE_URL ?? '',
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
+  dataApiBaseUrl: parsed.DATA_API_BASE_URL ?? '',
+  dataServiceApiKey: parsed.DATA_SERVICE_API_KEY ?? '',
 }

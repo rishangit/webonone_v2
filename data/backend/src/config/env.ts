@@ -28,6 +28,7 @@ const envSchema = z.object({
   DATA_PORT: z.coerce.number().optional(),
   IIS_NODE_HOSTED: z.string().optional(),
   FRONTEND_BASE_URL: z.string().default('http://localhost:3005'),
+  DATA_SERVICE_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -55,4 +56,5 @@ export const env = {
   port,
   iisHosted,
   frontendBaseUrl: parsed.FRONTEND_BASE_URL,
+  dataServiceApiKey: parsed.DATA_SERVICE_API_KEY ?? '',
 }

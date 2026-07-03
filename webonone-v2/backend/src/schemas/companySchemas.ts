@@ -33,4 +33,7 @@ export const syncEmailRoleBodySchema = z.preprocess(
   }),
 )
 
+export const syncDataRoleBodySchema = syncEmailRoleBodySchema
+
 export type SyncEmailRoleBody = z.infer<typeof syncEmailRoleBodySchema>
+export type SyncDataRoleBody = z.infer<typeof syncDataRoleBodySchema>

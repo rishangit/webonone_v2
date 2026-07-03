@@ -6,6 +6,7 @@ import { validateBody } from '../middleware/validateBody.js'
 import {
   registerCompanyBodySchema,
   syncEmailRoleBodySchema,
+  syncDataRoleBodySchema,
   updateCompanyStatusBodySchema,
 } from '../schemas/companySchemas.js'
 
@@ -18,6 +19,12 @@ router.post(
   requireAuth,
   validateBody(syncEmailRoleBodySchema),
   companyController.syncEmailRole,
+)
+router.post(
+  '/company/me/sync-data-role',
+  requireAuth,
+  validateBody(syncDataRoleBodySchema),
+  companyController.syncDataRole,
 )
 router.post('/company/register', requireAuth, validateBody(registerCompanyBodySchema), companyController.registerCompany)
 router.get('/company/admin/me', requireAuth, companyController.getSuperAdminMe)
