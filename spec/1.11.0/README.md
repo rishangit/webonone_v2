@@ -40,6 +40,7 @@ Production host: **`data.webonone.com`**
 | [06-platform-integration.md](./06-platform-integration.md) | Nav handoff, consumer contract, deploy |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md) | Pagination bottom pin; search + filter header alignment (delta) |
+| [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md) | `LoadingState`, `ListEmptyState`, service rollout (delta) |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
@@ -49,9 +50,12 @@ Production host: **`data.webonone.com`**
 | Parent: [User Story] Spec No 1.11.0 Data microservice | 86ey5f6vq | All docs |
 | Subtask: pagination position | 86ey5g15b | [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md); Phase 7 |
 | Subtask: search button and the filter button align to right | 86ey5g1t4 | [08-list-page-layout-refinements.md](./08-list-page-layout-refinements.md); Phase 7 |
+| Subtask: need to add the loading component | 86ey5g5r1 | [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md); Phase 8 |
+| Subtask: need to have the no result found commpn component | 86ey5g845 | [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md); Phase 8 |
 
 ## Revision history
 
+- **2026-07-04** — Subtasks loading component + no-results `ListEmptyState` (UI Kit delta).
 - **2026-07-04** — Subtasks `pagination position` and `search/filter header alignment` (list page layout delta).
 
 ## Inherited from earlier specs

@@ -132,6 +132,24 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 
 ---
 
+## Phase 8 — UI Kit loading and empty states (delta)
+
+**Goal:** [09-ui-kit-loading-empty-states.md](./09-ui-kit-loading-empty-states.md).
+
+| Task | Detail |
+|------|--------|
+| `LoadingState` | `ui-kit/package/src/components/LoadingState.tsx` |
+| `ListEmptyState` | `ui-kit/package/src/components/ListEmptyState.tsx` |
+| Showcase | Demo both components |
+| Service rollout | Data, Email, WebOnOne, Media, Identity loading + empty lists |
+| Cursor rule | `.cursor/rules/loading-empty-states.mdc` |
+
+**Exit criteria:** Acceptance checklist in doc 09.
+
+Spec: subtasks **86ey5g5r1**, **86ey5g845**
+
+---
+
 ## ClickUp subtask traceability
 
 | ClickUp | ID | Phase |
@@ -139,6 +157,8 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 | Parent: [User Story] Spec No 1.11.0 Data microservice | 86ey5f6vq | Phases 1–6 |
 | Subtask: pagination position | 86ey5g15b | Phase 7 |
 | Subtask: search button and the filter button align to right | 86ey5g1t4 | Phase 7 |
+| Subtask: need to add the loading component | 86ey5g5r1 | Phase 8 |
+| Subtask: need to have the no result found commpn component | 86ey5g845 | Phase 8 |
 
 ---
 
@@ -156,6 +176,7 @@ Spec: subtasks **86ey5g15b**, **86ey5g1t4**
 - [ ] Root `npm run dev` includes Data
 - [ ] Data list pages: search + filter in header actions (right-aligned)
 - [ ] Data list pages: pagination pinned to bottom via `ListPageBody` + `mt-auto`
+- [ ] `LoadingState` + `ListEmptyState` in UI Kit; rolled out to all services
 
 ---
 
