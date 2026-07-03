@@ -23,7 +23,7 @@ Reference: `ui-kit/package/src/components/ListSearchField.tsx`, `ListFilterPanel
 <FeaturePage
   title="…"
   actions={
-    <div className="flex items-center gap-2">
+    <div className="flex w-full flex-wrap items-center justify-end gap-2">
       <ListSearchField
         value={searchQuery}
         onChange={setSearchQuery}
@@ -49,6 +49,8 @@ Reference: `ui-kit/package/src/components/ListSearchField.tsx`, `ListFilterPanel
 | Rule | Detail |
 |------|--------|
 | Search left of filter | `ListSearchField` always **before** `ListFilterTrigger` in `actions` |
+| Right-aligned row | Wrap actions in `flex w-full flex-wrap items-center justify-end gap-2` |
+| Forbidden body search | Do **not** place `ListSearchField` as a `FeaturePage` child above the list |
 | Fixed-width expand | `ListSearchField` uses `w-10 shrink-0` anchor; expanded input is `absolute right-0` so the filter icon does not shift |
 | Mobile actions | `PageHeader` actions row uses `justify-end` on mobile |
 | Panel scroll lock | `ListFilterPanel` sets `body overflow: hidden` while open |

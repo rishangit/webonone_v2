@@ -48,14 +48,15 @@ export function UnitsPage() {
       title="Units"
       description="Manage units of measure."
       actions={
-        <>
+        <div className="flex w-full flex-wrap items-center justify-end gap-2">
           {canMutate ? (
             <Button asChild>
               <Link to="/units/new">Create unit</Link>
             </Button>
           ) : null}
+          <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search units…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
-        </>
+        </div>
       }
     >
       <ListFilterPanel
@@ -80,24 +81,27 @@ export function UnitsPage() {
           </Select>
         </FormField>
       </ListFilterPanel>
-      <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search units…" />
       {list.error ? (
         <Alert variant="destructive">
           <AlertDescription>{list.error}</AlertDescription>
         </Alert>
       ) : null}
       <ListPageBody>
-        {list.loading ? (
-          <div className="flex justify-center py-12">
-            <Spinner size="lg" />
-          </div>
-        ) : (
-          <UnitsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
-        )}
+        <div className="flex-1">
+          {list.loading ? (
+            <div className="flex justify-center py-12">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <UnitsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
+          )}
+        </div>
         <Pagination
+          className="mt-auto"
           totalCount={list.total}
           currentPage={list.page}
           pageSize={list.pageSize}
+          pageSizeOptions={[12, 24, 48]}
           onPageChange={(p) => void list.load(p)}
           onPageSizeChange={(size) => {
             list.setPageSize(size)

@@ -116,8 +116,9 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Per-row `ariaLabel` on `ItemListMenu`
 - [ ] `@/` imports in service frontends ([code-cleanliness.mdc](../../rules/code-cleanliness.mdc))
 - [ ] Paginated collections use `Pagination` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
+- [ ] Paginated pages wrap list + pagination in `ListPageBody`; list in `flex-1`; `Pagination` has `className="mt-auto"`
 - [ ] Filterable collections use `ListFilterTrigger` + `ListFilterPanel` ([list-filter-panel.mdc](../../rules/list-filter-panel.mdc))
-- [ ] Text search uses `ListSearchField` left of the filter trigger when both are present
+- [ ] Text search uses `ListSearchField` in `FeaturePage` `actions`, left of filter trigger, row `justify-end`
 
 ## Rules
 
