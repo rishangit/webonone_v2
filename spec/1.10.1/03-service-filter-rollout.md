@@ -10,7 +10,7 @@ Aligns with pagination inventory from [../1.9.2/04-service-pagination-rollout.md
 
 | Page | Filters to move into panel | API / notes |
 |------|---------------------------|-------------|
-| `HistoryPage` | Status, from/to dates, template slug | `getHistory` — existing params |
+| `HistoryPage` | Status, from/to dates (panel); recipient + template name (header `ListSearchField`) | `getHistory` — `search` param matches `recipient`, `template_slug`, or template `name` |
 | `QueuePage` | Status (pending/processing/failed) | `listQueue` — replace tab row or duplicate in panel |
 | `TemplatesPage` | Search by name/slug (client filter) | Slice before `Pagination` |
 | `DashboardPage` | Status + date range on recent activity | `getHistory` subset |

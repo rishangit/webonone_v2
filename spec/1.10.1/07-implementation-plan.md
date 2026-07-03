@@ -129,6 +129,22 @@ Spec: subtask **86ey5e4yu**
 
 ---
 
+## Phase 9 — History search, mobile pagination, bottom alignment (subtask delta)
+
+**Goal:** Email history search by recipient email and template name; mobile pagination two-row layout; pagination pinned to page bottom via `ListPageBody`.
+
+| Task | Detail |
+|------|--------|
+| Email backend | `search` query param on `/history`; LIKE on `recipient`, `template_slug`, and template `name` |
+| Email History FE | `ListSearchField` placeholder "Email or template name"; pass `search` to API |
+| `Pagination.tsx` | Mobile: row 1 summary + rows per page; row 2 centered nav |
+| `ListPageBody.tsx` | Flex column with min viewport height; list `flex-1`; pagination `mt-auto` |
+| Rollout | History, Queue, Templates, Dashboard, Companies, SystemTheme, Media browser |
+
+Spec: subtasks **86ey5ebgh**, **86ey5ebvu**, **86ey5ecvm**
+
+---
+
 ## Acceptance checklist
 
 - [ ] UI Kit exports `ListFilterPanel` and `ListFilterTrigger`
@@ -147,3 +163,6 @@ Spec: subtask **86ey5e4yu**
 | Parent: [User Story] Spec No 1.10.1 | 86ey58rda | Phases 1–6 |
 | Subtask: search icon left of filter | 86ey5e262 | Phase 7 |
 | Subtask: expand layout + scroll | 86ey5e4yu | Phase 8 |
+| Subtask: improve email history search | 86ey5ebgh | Phase 9 |
+| Subtask: mobile pagination layout | 86ey5ebvu | Phase 9 |
+| Subtask: pagination bottom alignment | 86ey5ecvm | Phase 9 |
