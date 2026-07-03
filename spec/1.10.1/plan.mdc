@@ -79,19 +79,27 @@ Add **`ListFilterPanel`** and **`ListFilterTrigger`** to `@webonone/ui-kit`, dem
 
 ---
 
-## Phase 6 — Cursor rules
+## Phase 6 — Cursor rules ✓
 
-| Task | Paths |
-|------|-------|
-| New rule | `.cursor/rules/list-filter-panel.mdc` |
-| Index | `.cursor/rules/README.md` |
-| Skill cross-link | `.cursor/skills/item-list/SKILL.md` |
+Completed.
 
 ---
 
-## Cross-service integration
+## Phase 7 — ListSearchField (delta)
 
-No API, JWT, or iframe changes. Client-side filter UI only; wire existing list API query params where available.
+**Goal:** Expandable search in header, left of filter trigger (subtask **86ey5e262**).
+
+| Task | Paths |
+|------|-------|
+| `ListSearchField` | `ui-kit/package/src/components/ListSearchField.tsx` |
+| Export | `ui-kit/package/src/index.ts` |
+| Email pages | History, Templates (+ others with text search in panel) |
+| WebOnOne pages | Companies, SystemTheme |
+| Media | `ScopedFolderBrowser.tsx` |
+| Showcase | `ComponentsPage.tsx` list-filters section |
+| Rule | `.cursor/rules/list-filter-panel.mdc` |
+
+**Verify:** `npm run build -w @webonone/ui-kit` · type-check all service roots
 
 ---
 
@@ -99,11 +107,14 @@ No API, JWT, or iframe changes. Client-side filter UI only; wire existing list A
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
-| Parent: [User Story] Spec No 1.10.1 | 86ey58rda | Phases 1–6 |
+| Parent: [User Story] Spec No 1.10.1 | 86ey58rda | 1–6 |
+| Subtask: search icon left of filter | 86ey5e262 | 7 |
+
+No API, JWT, or iframe changes. Client-side filter UI only; wire existing list API query params where available.
 
 ---
 
-## Risks and open items
+## Cross-service integration
 
 | Risk | Mitigation |
 |------|------------|
