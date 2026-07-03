@@ -7,12 +7,21 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  DatePicker,
   FeaturePage,
+  FormField,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ListFilterPanel,
+  ListFilterTrigger,
   Pagination,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Spinner,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -40,6 +49,14 @@ function statusLabel(status: DashboardStats['recentActivity'][number]['status'])
   return status === 'sent' ? 'Sent' : 'Failed'
 }
 
+function startOfDayIso(date: Date): string {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0).toISOString()
+}
+
+function endOfDayIso(date: Date): string {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59).toISOString()
+}
+
 export function DashboardPage() {
   const handoffPending = usePlatformHandoffPending()
   const dispatch = useAppDispatch()
@@ -51,8 +68,15 @@ export function DashboardPage() {
   const [recentPage, setRecentPage] = useState(1)
   const [recentTotal, setRecentTotal] = useState(0)
   const [recentPageSize, setRecentPageSize] = useState(12)
+  const [recentStatus, setRecentStatus] = useState<string>('all')
+  const [recentFrom, setRecentFrom] = useState<Date | undefined>()
+  const [recentTo, setRecentTo] = useState<Date | undefined>()
+  const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const hasActiveFilters =
+    recentStatus !== 'all' || recentFrom !== undefined || recentTo !== undefined
 
   useEffect(() => {
     if (!accessToken) {
@@ -63,10 +87,18 @@ export function DashboardPage() {
       setLoading(true)
       setError(null)
       try {
+        const fromIso = recentFrom ? startOfDayIso(recentFrom) : undefined
+        const toIso = recentTo ? endOfDayIso(recentTo) : undefined
         const [me, data, history] = await Promise.all([
           apiClient<{ user: { role: EmailRole } }>('/me'),
           emailApi.getDashboardStats(),
-          emailApi.getHistory({ page: recentPage, pageSize: recentPageSize }),
+          emailApi.getHistory({
+            page: recentPage,
+            pageSize: recentPageSize,
+            status: recentStatus === 'all' ? undefined : recentStatus,
+            from: fromIso,
+            to: toIso,
+          }),
         ])
         dispatch(authActions.setUserRole(me.user.role))
         setStats(data)
@@ -84,7 +116,7 @@ export function DashboardPage() {
     }
 
     void load()
-  }, [accessToken, dispatch, recentPage, recentPageSize])
+  }, [accessToken, dispatch, recentPage, recentPageSize, recentStatus, recentFrom, recentTo])
 
   if (handoffPending) {
     return <PlatformHandoffSpinner />
@@ -105,6 +137,21 @@ export function DashboardPage() {
     setRecentPage(1)
   }
 
+  function handleApplyFilters() {
+    setRecentPage(1)
+  }
+
+  function handleClearFilters() {
+    setRecentStatus('all')
+    setRecentFrom(undefined)
+    setRecentTo(undefined)
+    setRecentPage(1)
+  }
+
+  const recentSectionActions = (
+    <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+  )
+
   return (
     <FeaturePage
       title="Dashboard"
@@ -114,6 +161,46 @@ export function DashboardPage() {
           : 'Email delivery summary and recent activity for your scope.'
       }
     >
+      <ListFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+      >
+        <FormField label="Status" htmlFor="dashboard-recent-status">
+          <Select value={recentStatus} onValueChange={setRecentStatus}>
+            <SelectTrigger id="dashboard-recent-status">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+
+        <FormField label="From date" htmlFor="dashboard-recent-from">
+          <DatePicker
+            id="dashboard-recent-from"
+            withIcon
+            value={recentFrom}
+            onChange={setRecentFrom}
+            placeholder="Start date"
+          />
+        </FormField>
+
+        <FormField label="To date" htmlFor="dashboard-recent-to">
+          <DatePicker
+            id="dashboard-recent-to"
+            withIcon
+            value={recentTo}
+            onChange={setRecentTo}
+            placeholder="End date"
+          />
+        </FormField>
+      </ListFilterPanel>
+
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -141,7 +228,10 @@ export function DashboardPage() {
           )}
 
           <section className="space-y-3">
-            <h2 className="text-lg font-medium">Recent activity</h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-medium">Recent activity</h2>
+              {recentSectionActions}
+            </div>
             <div className="space-y-4">
               {recentItems.length === 0 ? (
                 <ItemListEmpty>

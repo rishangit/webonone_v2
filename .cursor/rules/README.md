@@ -34,6 +34,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
 | [feature-page-layout.mdc](feature-page-layout.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}` | `FeaturePage` / `PageHeader` for AppShell feature pages |
 | [item-list-pagination.mdc](item-list-pagination.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `Pagination` below `ItemList` on collection pages |
+| [list-filter-panel.mdc](list-filter-panel.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `ListFilterPanel` + trigger on collection pages |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
 | [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, stacked siblings, pointer fall-through dismiss guard, iframe embed footer + crop height chain, footer, sizing, wizard/tab |

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Button, FeaturePage, Pagination } from '@webonone/ui-kit'
+import { useEffect, useMemo, useState } from 'react'
+import { Button, FeaturePage, FormField, Input, ListFilterPanel, ListFilterTrigger, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { ColorModeToggle } from '../components/ColorModeToggle'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
@@ -20,6 +20,16 @@ export function SystemThemePage() {
   const [pendingSave, setPendingSave] = useState<PendingSave>(null)
   const [themePage, setThemePage] = useState(1)
   const [themePageSize, setThemePageSize] = useState(12)
+  const [themeSearchQuery, setThemeSearchQuery] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
+
+  const hasActiveFilters = themeSearchQuery.trim() !== ''
+
+  const filteredThemes = useMemo(() => {
+    const query = themeSearchQuery.trim().toLowerCase()
+    if (!query) return themes
+    return themes.filter((theme) => theme.name.toLowerCase().includes(query))
+  }, [themes, themeSearchQuery])
 
   const dialogOpen = createOpen || editing !== null
   const dialogMode = editing ? 'edit' : 'create'
@@ -91,18 +101,45 @@ export function SystemThemePage() {
       }
     : undefined
 
-  const visibleThemes = themes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
+  const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
+
+  function handleApplyFilters() {
+    setThemePage(1)
+  }
+
+  function handleClearFilters() {
+    setThemeSearchQuery('')
+    setThemePage(1)
+  }
 
   return (
     <FeaturePage
       title="System Theme"
       description="Create accent palettes and switch light or dark mode for the platform shell."
       actions={
-        <Button type="button" onClick={() => setCreateOpen(true)}>
-          Create theme
-        </Button>
+        <div className="flex items-center gap-2">
+          <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          <Button type="button" onClick={() => setCreateOpen(true)}>
+            Create theme
+          </Button>
+        </div>
       }
     >
+      <ListFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+      >
+        <FormField label="Search" htmlFor="themes-search">
+          <Input
+            id="themes-search"
+            value={themeSearchQuery}
+            onChange={(e) => setThemeSearchQuery(e.target.value)}
+            placeholder="Theme name"
+          />
+        </FormField>
+      </ListFilterPanel>
       <div className="space-y-6">
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Color mode</h2>
@@ -126,7 +163,7 @@ export function SystemThemePage() {
               }}
             />
             <Pagination
-              totalCount={themes.length}
+              totalCount={filteredThemes.length}
               currentPage={themePage}
               pageSize={themePageSize}
               pageSizeOptions={[12, 24, 48]}

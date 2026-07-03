@@ -46,6 +46,8 @@ import {
   ItemListMenu,
   itemListRowActiveClassName,
   Label,
+  ListFilterPanel,
+  ListFilterTrigger,
   Pagination,
   mapZodIssuesToFieldErrors,
   PageShell,
@@ -244,6 +246,8 @@ export function ComponentsPage() {
   const { toast } = useToast()
   const [listPage, setListPage] = useState(1)
   const [listPageSize, setListPageSize] = useState(12)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterStatus, setFilterStatus] = useState('all')
   const demoListItems = useMemo(
     () =>
       Array.from({ length: 24 }, (_, index) => ({
@@ -257,6 +261,7 @@ export function ComponentsPage() {
     (listPage - 1) * listPageSize,
     listPage * listPageSize,
   )
+  const hasActiveFilters = filterStatus !== 'all'
 
   return (
     <>
@@ -370,6 +375,60 @@ export function ComponentsPage() {
         <div className="mt-4">
           <ItemListEmpty>No items to show.</ItemListEmpty>
         </div>
+      </DemoSection>
+
+      <DemoSection
+        id="list-filters"
+        title="List filters"
+        description="ListFilterTrigger in page actions opens a right-side ListFilterPanel. Highlight the trigger when filters are active."
+      >
+        <FeaturePage
+          title="Filtered collection"
+          description="Demo list with filter panel."
+          actions={
+            <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          }
+        >
+          <ListFilterPanel
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            onApply={() => setListPage(1)}
+            onClear={() => {
+              setFilterStatus('all')
+              setListPage(1)
+            }}
+          >
+            <FormField label="Status" htmlFor="demo-filter-status">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger id="demo-filter-status">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="active">Active only</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormField>
+          </ListFilterPanel>
+
+          <ItemList>
+            {visibleListItems
+              .filter((theme) => filterStatus === 'all' || theme.active)
+              .map((theme) => (
+                <ItemListItem
+                  key={theme.id}
+                  className={theme.active ? itemListRowActiveClassName : undefined}
+                >
+                  <ItemListContent>
+                    <p className="font-medium">{theme.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {theme.active ? 'Currently applied' : 'Filtered row'}
+                    </p>
+                  </ItemListContent>
+                </ItemListItem>
+              ))}
+          </ItemList>
+        </FeaturePage>
       </DemoSection>
 
       <DemoSection

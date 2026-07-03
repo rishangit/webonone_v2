@@ -1,0 +1,57 @@
+---
+description: List filter panel — slide-over filters and active trigger on collection pages
+globs: "**/frontend/src/features/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# List filter panel
+
+Use `@webonone/ui-kit` **`ListFilterTrigger`** and **`ListFilterPanel`** on any `FeaturePage` that displays a filterable collection (`ItemList` + `Pagination`).
+
+Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · pagination: [item-list-pagination.mdc](item-list-pagination.mdc).
+
+Reference: `ui-kit/package/src/components/ListFilterPanel.tsx`, `email/frontend/src/features/history/pages/HistoryPage.tsx`.
+
+## When required
+
+- Page shows a paginated or slice-paginated **collection list**
+- User can narrow results by status, date, search text, or similar criteria
+
+## Pattern
+
+```tsx
+<FeaturePage
+  title="…"
+  actions={<ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />}
+>
+  <ListFilterPanel
+    open={filterOpen}
+    onOpenChange={setFilterOpen}
+    onApply={handleApply}
+    onClear={handleClear}
+  >
+    {/* FormField + Select / Input / DatePicker */}
+  </ListFilterPanel>
+  <ItemList>…</ItemList>
+  <Pagination … />
+</FeaturePage>
+```
+
+| Rule | Detail |
+|------|--------|
+| No inline filter forms | Do not add full-width `<Form>` rows above lists — use the panel |
+| `active` trigger | `true` when any filter ≠ default (e.g. status not `all`, search non-empty) |
+| Apply | Reset pagination to page 1; refetch (server) or re-slice (client) |
+| Clear | Reset filter state to defaults and refresh list |
+
+## Exceptions
+
+- Auth, embed, and form-only pages (no collection list)
+- Single-card pages (e.g. Providers)
+- Media embed routes (`/picker`, `/upload`) — filter in `ScopedFolderBrowser` toolbar when list is shown
+
+## Verification
+
+```bash
+npm run type-check -w <service-root>
+```

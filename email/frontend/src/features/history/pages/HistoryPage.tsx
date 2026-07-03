@@ -3,12 +3,12 @@ import { Navigate } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
-  Button,
   DatePicker,
   FeaturePage,
-  Form,
   FormField,
   Input,
+  ListFilterPanel,
+  ListFilterTrigger,
   Pagination,
   Select,
   SelectContent,
@@ -43,8 +43,12 @@ export function HistoryPage() {
   const [from, setFrom] = useState<Date | undefined>()
   const [to, setTo] = useState<Date | undefined>()
   const [templateSlug, setTemplateSlug] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const hasActiveFilters =
+    status !== 'all' || from !== undefined || to !== undefined || templateSlug.trim() !== ''
 
   async function loadHistory(nextPage = page, nextPageSize = pageSize) {
     setLoading(true)
@@ -87,9 +91,18 @@ export function HistoryPage() {
     return <Navigate to="/login" replace />
   }
 
-  function handleApplyFilters(event: React.FormEvent) {
-    event.preventDefault()
-    void loadHistory(1)
+  function handleApplyFilters() {
+    setPage(1)
+    void loadHistory(1, pageSize)
+  }
+
+  function handleClearFilters() {
+    setStatus('all')
+    setFrom(undefined)
+    setTo(undefined)
+    setTemplateSlug('')
+    setPage(1)
+    void loadHistory(1, pageSize)
   }
 
   function handlePageChange(nextPage: number) {
@@ -109,16 +122,15 @@ export function HistoryPage() {
           ? 'Company-scoped send history. Platform system emails (such as password reset OTP) are not listed here.'
           : 'Audit trail of sent and failed messages for your scope.'
       }
+      actions={
+        <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+      }
     >
-      {error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      <Form
-        onSubmit={handleApplyFilters}
-        className="grid gap-4 space-y-0 sm:grid-cols-2 xl:grid-cols-5 xl:items-end"
+      <ListFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
       >
         <FormField label="Status" htmlFor="history-status">
           <Select value={status} onValueChange={setStatus}>
@@ -161,11 +173,13 @@ export function HistoryPage() {
             placeholder="password_reset"
           />
         </FormField>
+      </ListFilterPanel>
 
-        <Button type="submit" className="w-full sm:col-span-2 xl:col-span-1">
-          Apply filters
-        </Button>
-      </Form>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {loading ? (
         <div className="flex justify-center py-8">

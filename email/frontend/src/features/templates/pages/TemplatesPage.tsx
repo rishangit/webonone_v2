@@ -1,6 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, FeaturePage, Pagination, Spinner } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  FeaturePage,
+  FormField,
+  Input,
+  ListFilterPanel,
+  ListFilterTrigger,
+  Pagination,
+  Spinner,
+} from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
 import { emailApi } from '@/shared/services/emailApi'
@@ -13,9 +23,23 @@ export function TemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  const hasActiveFilters = searchQuery.trim() !== ''
+
+  const filteredTemplates = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return templates
+    return templates.filter(
+      (template) =>
+        template.name.toLowerCase().includes(query) ||
+        template.slug.toLowerCase().includes(query),
+    )
+  }, [templates, searchQuery])
 
   async function loadTemplates() {
     setLoading(true)
@@ -59,13 +83,41 @@ export function TemplatesPage() {
     }
   }
 
-  const visibleTemplates = templates.slice((page - 1) * pageSize, page * pageSize)
+  function handleApplyFilters() {
+    setPage(1)
+  }
+
+  function handleClearFilters() {
+    setSearchQuery('')
+    setPage(1)
+  }
+
+  const visibleTemplates = filteredTemplates.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <FeaturePage
       title="Templates"
       description="Manage platform and company email templates."
+      actions={
+        <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+      }
     >
+      <ListFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+      >
+        <FormField label="Search" htmlFor="templates-search">
+          <Input
+            id="templates-search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Name or slug"
+          />
+        </FormField>
+      </ListFilterPanel>
+
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -86,7 +138,7 @@ export function TemplatesPage() {
             busyId={busyId}
           />
           <Pagination
-            totalCount={templates.length}
+            totalCount={filteredTemplates.length}
             currentPage={page}
             pageSize={pageSize}
             pageSizeOptions={[12, 24, 48]}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FileIcon, Folder, FolderPlus, LayoutGrid, List, Upload } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
@@ -7,13 +7,22 @@ import {
   Button,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  FormField,
+  Input,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
   itemListRowActiveClassName,
+  ListFilterPanel,
+  ListFilterTrigger,
   Pagination,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Spinner,
 } from '@webonone/ui-kit'
 import { CreateFolderDialog } from './CreateFolderDialog'
@@ -83,6 +92,31 @@ export function ScopedFolderBrowser({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [fileNameQuery, setFileNameQuery] = useState('')
+  const [mimeFilter, setMimeFilter] = useState<'all' | 'image' | 'other'>('all')
+
+  const hasActiveFilters = fileNameQuery.trim() !== '' || mimeFilter !== 'all'
+
+  const filteredFolders = useMemo(() => {
+    const query = fileNameQuery.trim().toLowerCase()
+    if (!query) return folders
+    return folders.filter((folder) => folder.name.toLowerCase().includes(query))
+  }, [folders, fileNameQuery])
+
+  const filteredItems = useMemo(() => {
+    let result = items
+    const query = fileNameQuery.trim().toLowerCase()
+    if (query) {
+      result = result.filter((item) => item.fileName.toLowerCase().includes(query))
+    }
+    if (mimeFilter === 'image') {
+      result = result.filter((item) => item.mimeType.startsWith('image/'))
+    } else if (mimeFilter === 'other') {
+      result = result.filter((item) => !item.mimeType.startsWith('image/'))
+    }
+    return result
+  }, [items, fileNameQuery, mimeFilter])
 
   const loadData = useCallback(
     async (nextPage: number, nextPageSize: number) => {
@@ -252,6 +286,7 @@ export function ScopedFolderBrowser({
   function renderToolbar() {
     return (
       <div className="flex shrink-0 items-center gap-1">
+        <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
         {enableUpload ? (
           <>
             <input
@@ -307,7 +342,7 @@ export function ScopedFolderBrowser({
   }
 
   function renderListView() {
-    const hasRows = folders.length > 0 || items.length > 0
+    const hasRows = filteredFolders.length > 0 || filteredItems.length > 0
 
     if (!hasRows) {
       return (
@@ -321,7 +356,7 @@ export function ScopedFolderBrowser({
 
     return (
       <ItemList className="min-h-0 flex-1 overflow-auto scrollbar-themed">
-        {folders.map((folder) => (
+        {filteredFolders.map((folder) => (
           <ItemListItem key={folder.id}>
             <ItemListContent>
               <button
@@ -337,7 +372,7 @@ export function ScopedFolderBrowser({
             {showIconToolbar ? renderFolderMenu(folder) : null}
           </ItemListItem>
         ))}
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <ItemListItem
             key={item.id}
             className={selectedIds.has(item.id) ? itemListRowActiveClassName : undefined}
@@ -364,7 +399,7 @@ export function ScopedFolderBrowser({
   }
 
   function renderThumbView() {
-    const hasRows = folders.length > 0 || items.length > 0
+    const hasRows = filteredFolders.length > 0 || filteredItems.length > 0
 
     if (!hasRows) {
       return (
@@ -378,7 +413,7 @@ export function ScopedFolderBrowser({
 
     return (
       <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-auto scrollbar-themed sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6">
-        {folders.map((folder) => (
+        {filteredFolders.map((folder) => (
           <div
             key={folder.id}
             className="glass-card group relative overflow-hidden rounded-lg"
@@ -404,7 +439,7 @@ export function ScopedFolderBrowser({
             ) : null}
           </div>
         ))}
-        {items.map((item) => {
+        {filteredItems.map((item) => {
           const isImage = item.mimeType.startsWith('image/')
           const isSelected = selectedIds.has(item.id)
 
@@ -455,13 +490,48 @@ export function ScopedFolderBrowser({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
+      <ListFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={() => setMediaPage(1)}
+        onClear={() => {
+          setFileNameQuery('')
+          setMimeFilter('all')
+          setMediaPage(1)
+        }}
+      >
+        <FormField label="File name" htmlFor="media-file-search">
+          <Input
+            id="media-file-search"
+            value={fileNameQuery}
+            onChange={(e) => setFileNameQuery(e.target.value)}
+            placeholder="Search files or folders"
+          />
+        </FormField>
+        <FormField label="Type" htmlFor="media-mime-filter">
+          <Select value={mimeFilter} onValueChange={(value) => setMimeFilter(value as 'all' | 'image' | 'other')}>
+            <SelectTrigger id="media-mime-filter">
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="image">Images</SelectItem>
+              <SelectItem value="other">Other files</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+      </ListFilterPanel>
+
       {showIconToolbar ? (
         <header className="flex shrink-0 flex-col gap-2 border-b pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           {renderBreadcrumb()}
           {renderToolbar()}
         </header>
       ) : (
-        renderBreadcrumb()
+        <div className="flex items-center justify-between gap-2">
+          {renderBreadcrumb()}
+          <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+        </div>
       )}
 
       {uploadError ? <p className="shrink-0 text-sm text-destructive">{uploadError}</p> : null}

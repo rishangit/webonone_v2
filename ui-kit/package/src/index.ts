@@ -20,6 +20,8 @@ export { OtpInput } from './components/OtpInput'
 export type { OtpInputProps } from './components/OtpInput'
 export { Pagination } from './components/Pagination'
 export type { PaginationProps } from './components/Pagination'
+export { ListFilterPanel, ListFilterTrigger } from './components/ListFilterPanel'
+export type { ListFilterPanelProps, ListFilterTriggerProps } from './components/ListFilterPanel'
 export { UserSelectionDialog } from './components/UserSelectionDialog'
 export type {
   UserOption,

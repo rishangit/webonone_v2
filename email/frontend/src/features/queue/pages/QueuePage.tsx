@@ -1,11 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Alert, AlertDescription, Button, FeaturePage, Pagination, Spinner } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  FeaturePage,
+  FormField,
+  ListFilterPanel,
+  ListFilterTrigger,
+  Pagination,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Spinner,
+} from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
 import type { QueueItem, QueueStatus } from '@/shared/types/email.types'
 import { QueueList } from '../components/QueueList'
 
-const TABS: { key: QueueStatus; label: string }[] = [
+const STATUS_OPTIONS: { key: QueueStatus; label: string }[] = [
   { key: 'pending', label: 'Pending' },
   { key: 'processing', label: 'Processing' },
   { key: 'failed', label: 'Failed' },
@@ -20,11 +35,13 @@ export function QueuePage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [pageSize, setPageSize] = useState(12)
+  const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryingId, setRetryingId] = useState<string | null>(null)
 
   const canRetry = role === 'super_admin'
+  const hasActiveFilters = tab !== 'pending'
 
   const loadQueue = useCallback(async (nextPage = page, nextPageSize = pageSize) => {
     setError(null)
@@ -68,33 +85,57 @@ export function QueuePage() {
     }
   }
 
+  function handleApplyFilters() {
+    setPage(1)
+    void loadQueue(1, pageSize)
+  }
+
+  function handleClearFilters() {
+    setTab('pending')
+    setPage(1)
+    void loadQueue(1, pageSize)
+  }
+
   return (
     <FeaturePage
       title="Queue"
       description="Live queue status. Refreshes every 30 seconds."
+      actions={
+        <div className="flex items-center gap-2">
+          <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          <Button type="button" variant="outline" size="sm" onClick={() => void loadQueue(page, pageSize)}>
+            Refresh now
+          </Button>
+        </div>
+      }
     >
+      <ListFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+      >
+        <FormField label="Status" htmlFor="queue-status">
+          <Select value={tab} onValueChange={(value) => setTab(value as QueueStatus)}>
+            <SelectTrigger id="queue-status">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.key} value={option.key}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+      </ListFilterPanel>
+
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      <div className="flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <Button
-            key={t.key}
-            type="button"
-            variant={tab === t.key ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-          </Button>
-        ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => void loadQueue(page, pageSize)}>
-          Refresh now
-        </Button>
-      </div>
 
       {loading ? (
         <div className="flex justify-center py-8">

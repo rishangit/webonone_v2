@@ -1,6 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, FeaturePage, Pagination } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  FeaturePage,
+  FormField,
+  Input,
+  ListFilterPanel,
+  ListFilterTrigger,
+  Pagination,
+} from '@webonone/ui-kit'
 import { CompaniesList } from '../components/CompaniesList'
 import { useSuperAdminStatus } from '../hooks/useSuperAdminStatus'
 import { companyApi, type AdminCompany, type CompanyStatus } from '../services/companyApi'
@@ -10,9 +19,19 @@ export function CompaniesPage() {
   const [items, setItems] = useState<AdminCompany[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  const hasActiveFilters = searchQuery.trim() !== ''
+
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return items
+    return items.filter((item) => item.name.toLowerCase().includes(query))
+  }, [items, searchQuery])
 
   useEffect(() => {
     if (roleLoading || !isSuperAdmin) return
@@ -56,7 +75,16 @@ export function CompaniesPage() {
     }
   }
 
-  const visibleItems = items.slice((page - 1) * pageSize, page * pageSize)
+  function handleApplyFilters() {
+    setPage(1)
+  }
+
+  function handleClearFilters() {
+    setSearchQuery('')
+    setPage(1)
+  }
+
+  const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
 
   if (roleLoading) {
     return <p className="text-sm text-muted-foreground">Loading…</p>
@@ -70,7 +98,26 @@ export function CompaniesPage() {
     <FeaturePage
       title="Companies"
       description="Review registered companies and update approval status."
+      actions={
+        <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+      }
     >
+      <ListFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+      >
+        <FormField label="Search" htmlFor="companies-search">
+          <Input
+            id="companies-search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Company name"
+          />
+        </FormField>
+      </ListFilterPanel>
+
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -83,7 +130,7 @@ export function CompaniesPage() {
         <>
           <CompaniesList items={visibleItems} updatingId={updatingId} onStatusChange={handleStatusChange} />
           <Pagination
-            totalCount={items.length}
+            totalCount={filteredItems.length}
             currentPage={page}
             pageSize={pageSize}
             pageSizeOptions={[12, 24, 48]}
