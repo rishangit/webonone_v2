@@ -1,6 +1,6 @@
 export type PlatformNavVariant = 'main' | 'superAdmin' | 'member'
 
-export type ExternalServiceId = 'email'
+export type ExternalServiceId = 'email' | 'data'
 
 export type CoreNavLeaf = {
   kind: 'item'
@@ -54,8 +54,49 @@ export function emailSentinelToExternalPath(sentinel: string): string | null {
   }
 }
 
+/** Internal sentinels for Data sub-nav in consumer AppLayouts (not routed on core origin). */
+export const DATA_NAV_SENTINELS = {
+  dashboard: '/data/dashboard',
+  tags: '/data/tags',
+} as const
+
+export function isDataNavSentinel(to: string): boolean {
+  return to === DATA_NAV_SENTINELS.dashboard || to === DATA_NAV_SENTINELS.tags
+}
+
+export function dataSentinelToExternalPath(sentinel: string): string | null {
+  switch (sentinel) {
+    case DATA_NAV_SENTINELS.dashboard:
+      return '/'
+    case DATA_NAV_SENTINELS.tags:
+      return '/tags'
+    default:
+      return null
+  }
+}
+
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
+  {
+    kind: 'group',
+    label: 'Data',
+    children: [
+      {
+        kind: 'item',
+        path: DATA_NAV_SENTINELS.dashboard,
+        label: 'Data Catalog',
+        externalService: 'data',
+        externalPath: '/',
+      },
+      {
+        kind: 'item',
+        path: DATA_NAV_SENTINELS.tags,
+        label: 'Tags',
+        externalService: 'data',
+        externalPath: '/tags',
+      },
+    ],
+  },
   {
     kind: 'group',
     label: 'Email',
@@ -101,6 +142,26 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
 export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
   { kind: 'item', path: '/companies', label: 'Companies' },
+  {
+    kind: 'group',
+    label: 'Data',
+    children: [
+      {
+        kind: 'item',
+        path: DATA_NAV_SENTINELS.dashboard,
+        label: 'Data Catalog',
+        externalService: 'data',
+        externalPath: '/',
+      },
+      {
+        kind: 'item',
+        path: DATA_NAV_SENTINELS.tags,
+        label: 'Tags',
+        externalService: 'data',
+        externalPath: '/tags',
+      },
+    ],
+  },
   {
     kind: 'group',
     label: 'Email',

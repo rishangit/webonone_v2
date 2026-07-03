@@ -10,30 +10,41 @@ import { authActions } from '@/features/auth/store/authSlice'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
+import { getDataRedirectOptions } from '@/features/data/utils/redirectToData'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { syncEmailRoleBeforeHandoff } from '@/features/email/utils/syncEmailRole'
-import { buildNavForSessionRole, isEmailNavSentinel } from '@/features/shell/config/navItems'
+import { buildNavForSessionRole, isDataNavSentinel, isEmailNavSentinel } from '@/features/shell/config/navItems'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { SessionRoleGate } from '@/features/session/components/SessionRoleGate'
 import { formatSessionRoleLabel } from '@/features/session/utils/formatSessionRoleLabel'
 
-function withEmailNavAction(
+function withExternalNavActions(
   items: NavConfigItem[],
   onEmailNavClick: (sentinel: string) => void,
+  onDataNavClick: (sentinel: string) => void,
 ): NavConfigItem[] {
   return items.map((item) => {
     if (item.type === 'item' && isEmailNavSentinel(item.to)) {
       return { ...item, onClick: () => onEmailNavClick(item.to) }
     }
+    if (item.type === 'item' && isDataNavSentinel(item.to)) {
+      return { ...item, onClick: () => onDataNavClick(item.to) }
+    }
 
     if (item.type === 'group') {
       return {
         ...item,
-        children: item.children.map((child) =>
-          isEmailNavSentinel(child.to) ? { ...child, onClick: () => onEmailNavClick(child.to) } : child,
-        ),
+        children: item.children.map((child) => {
+          if (isEmailNavSentinel(child.to)) {
+            return { ...child, onClick: () => onEmailNavClick(child.to) }
+          }
+          if (isDataNavSentinel(child.to)) {
+            return { ...child, onClick: () => onDataNavClick(child.to) }
+          }
+          return child
+        }),
       }
     }
 
@@ -84,10 +95,42 @@ export function AppLayout() {
     [accessToken, clearError, navVariant, navigate, preferences, redirect],
   )
 
+  const handleDataNavClick = useCallback(
+    async (sentinel: string) => {
+      if (!accessToken) {
+        navigate('/login')
+        return
+      }
+      clearError()
+      const themeParams = preferences
+        ? serializeThemeQueryParams(
+            buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode),
+          )
+        : undefined
+      try {
+        await redirect(
+          getDataRedirectOptions({
+            accessToken,
+            extraSearchParams: themeParams,
+            navVariant,
+            dataNavSentinel: sentinel,
+          }),
+        )
+      } catch {
+        // surfaced via hook
+      }
+    },
+    [accessToken, clearError, navVariant, navigate, preferences, redirect],
+  )
+
   const nav = useMemo(() => {
     if (!activeRole) return []
-    return withEmailNavAction(buildNavForSessionRole(activeRole), handleEmailNavClick)
-  }, [activeRole, handleEmailNavClick])
+    return withExternalNavActions(
+      buildNavForSessionRole(activeRole),
+      handleEmailNavClick,
+      handleDataNavClick,
+    )
+  }, [activeRole, handleDataNavClick, handleEmailNavClick])
 
   function handleLogout() {
     dispatch(authActions.logout())

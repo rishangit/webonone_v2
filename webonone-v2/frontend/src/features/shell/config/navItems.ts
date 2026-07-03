@@ -1,8 +1,10 @@
 import { Building2, History, Home, Mail, Palette, Settings } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
+  DATA_NAV_SENTINELS,
   EMAIL_NAV_SENTINELS,
   getPlatformNavDefs,
+  isDataNavSentinel,
   isEmailNavSentinel,
   type CoreNavDef,
   type CoreNavLeaf,
@@ -16,6 +18,8 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/companies': Building2,
   [EMAIL_NAV_SENTINELS.history]: History,
   [EMAIL_NAV_SENTINELS.templates]: Mail,
+  [DATA_NAV_SENTINELS.dashboard]: Home,
+  [DATA_NAV_SENTINELS.tags]: Mail,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
@@ -23,6 +27,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
 const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings: Settings,
   Email: Mail,
+  Data: Mail,
 }
 
 function iconForPath(path: string): LucideIcon {
@@ -30,7 +35,7 @@ function iconForPath(path: string): LucideIcon {
 }
 
 function resolveItemPath(item: CoreNavLeaf): string {
-  if (item.externalService === 'email') {
+  if (item.externalService === 'email' || item.externalService === 'data') {
     return item.path
   }
   return item.path
@@ -78,4 +83,4 @@ export const mainNav = buildPlatformNav('main')
 export const superAdminNav = buildPlatformNav('superAdmin')
 export const memberNav = buildPlatformNav('member')
 
-export { isEmailNavSentinel }
+export { isEmailNavSentinel, isDataNavSentinel }
