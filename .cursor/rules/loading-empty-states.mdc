@@ -1,0 +1,50 @@
+---
+description: LoadingState and ListEmptyState usage in service frontends
+globs: "**/frontend/src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Loading and empty states
+
+Import from `@webonone/ui-kit`: **`LoadingState`**, **`ListEmptyState`**.
+
+## LoadingState
+
+Centered themed spinner + label for **page, section, route suspense, and session bootstrap** loads.
+
+| Prop | Default | Notes |
+|------|---------|-------|
+| `label` | `"Loading…"` | Use page-specific copy: `"Loading tags…"`, `"Loading session…"` |
+| `size` | `'lg'` | Passed to inner `Spinner` |
+| `className` | optional | Wrapper (e.g. `min-h-[40vh] flex-1` on `LazyRoute`) |
+
+**Use when:** list pages fetching data, dashboards, editors, `Suspense` fallbacks, auth callback, platform handoff.
+
+**Do not use when:** inline button loading — keep **`Spinner size="sm"`** inside the button.
+
+Reference: `data/frontend/src/features/tags/pages/TagsPage.tsx`, `LazyRoute.tsx`, `AppLayout.tsx`.
+
+## ListEmptyState
+
+Parameterized empty-list message when **`items.length === 0`** inside or instead of `ItemList`.
+
+| Prop | Required | Notes |
+|------|----------|-------|
+| `itemType` | yes | Plural noun for default: `"tags"` → `No tags found.` |
+| `message` | no | Full override when default template does not fit |
+| `className` | no | Extra classes |
+
+**Use when:** collection lists, filtered search with no matches, dashboard activity sections.
+
+**Keep `ItemListEmpty`:** low-level primitive; prefer **`ListEmptyState`** at app/feature level.
+
+Reference: `data/frontend/src/features/tags/components/TagsList.tsx`.
+
+## Verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run type-check -w <service-root>
+```
+
+Cross-links: [item-list skill](../skills/item-list/SKILL.md), [ui-kit-consumption.mdc](ui-kit-consumption.mdc).

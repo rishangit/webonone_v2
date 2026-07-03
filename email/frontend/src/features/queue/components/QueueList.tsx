@@ -3,7 +3,7 @@ import {
   DropdownMenuSeparator,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
+  ListEmptyState,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -30,7 +30,7 @@ export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListPro
   const rows = Array.isArray(items) ? items : []
 
   if (rows.length === 0) {
-    return <ItemListEmpty>No queue items in this tab.</ItemListEmpty>
+    return <ListEmptyState itemType="queue items" message="No queue items in this tab." />
   }
 
   return (

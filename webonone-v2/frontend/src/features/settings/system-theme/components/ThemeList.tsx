@@ -3,7 +3,7 @@ import {
   DropdownMenuSeparator,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
+  ListEmptyState,
   ItemListItem,
   ItemListMenu,
   itemListRowActiveClassName,
@@ -22,7 +22,7 @@ export function ThemeList({ themes, activeThemeId, onSelect, onEdit, onDelete }:
   const items = Array.isArray(themes) ? themes : []
 
   if (items.length === 0) {
-    return <ItemListEmpty>No themes yet.</ItemListEmpty>
+    return <ListEmptyState itemType="themes" message="No themes yet." />
   }
 
   return (

@@ -12,8 +12,8 @@ import {
   FormField,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
   ItemListItem,
+  ListEmptyState,
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
@@ -23,7 +23,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
+  LoadingState,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
@@ -208,11 +208,7 @@ export function DashboardPage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading dashboard…" /> : null}
 
       {!loading && stats ? (
         <>
@@ -236,9 +232,10 @@ export function DashboardPage() {
             <ListPageBody className="min-h-0 flex-1">
               <div className="flex-1">
                 {recentItems.length === 0 ? (
-                  <ItemListEmpty>
-                    {isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
-                  </ItemListEmpty>
+                  <ListEmptyState
+                    itemType="activity"
+                    message={isMember ? 'No recent email activity.' : 'No sends yet for your scope.'}
+                  />
                 ) : (
                   <ItemList>
                     {recentItems.map((item) => (

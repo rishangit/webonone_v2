@@ -49,6 +49,8 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListSearchField,
+  ListEmptyState,
+  LoadingState,
   Pagination,
   mapZodIssuesToFieldErrors,
   PageShell,
@@ -329,10 +331,18 @@ export function ComponentsPage() {
       </DemoSection>
 
       <DemoSection id="loadings" title="Loadings">
-        <div className="flex items-center gap-4">
-          <Spinner size="sm" />
-          <Spinner size="md" />
-          <Spinner size="lg" />
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Spinner size="sm" />
+            <Spinner size="md" />
+            <Spinner size="lg" />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Inline sizes above — use <code className="text-xs">size="sm"</code> inside buttons only.
+          </p>
+          <LoadingState label="Loading tags…" className="rounded-lg border border-border py-8" />
+          <ListEmptyState itemType="tags" />
+          <ListEmptyState itemType="templates" message="No templates found for your scope." />
         </div>
       </DemoSection>
 

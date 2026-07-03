@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
+  LoadingState,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
@@ -189,11 +189,7 @@ export function HistoryPage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading history…" /> : null}
 
       {!loading ? (
         <ListPageBody>

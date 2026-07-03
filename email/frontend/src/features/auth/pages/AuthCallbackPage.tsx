@@ -4,8 +4,8 @@ import {
   Alert,
   AlertDescription,
   Button,
+  LoadingState,
   PageShell,
-  Spinner,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
@@ -103,10 +103,7 @@ export function AuthCallbackPage() {
             </Button>
           </>
         ) : (
-          <>
-            <Spinner size="lg" />
-            <p className="text-sm text-muted-foreground">Completing sign in…</p>
-          </>
+          <LoadingState label="Completing sign in…" />
         )}
       </div>
     </PageShell>

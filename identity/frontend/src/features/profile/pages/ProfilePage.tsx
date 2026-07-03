@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { Alert, AlertDescription, Spinner } from '@webonone/ui-kit'
+import { Alert, AlertDescription, LoadingState } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
 import { ProfileForm } from '../components/ProfileForm'
@@ -55,12 +55,7 @@ export function ProfilePage() {
   }, [accessToken, code, dispatch])
 
   if (isBootstrapping) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-12">
-        <Spinner size="lg" />
-        <p className="text-sm text-muted-foreground">Loading your profile…</p>
-      </div>
-    )
+    return <LoadingState label="Loading your profile…" />
   }
 
   if (bootstrapError) {
@@ -76,12 +71,7 @@ export function ProfilePage() {
   }
 
   if (isProfileLoading && !user) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-12">
-        <Spinner size="lg" />
-        <p className="text-sm text-muted-foreground">Loading profile…</p>
-      </div>
-    )
+    return <LoadingState label="Loading profile…" />
   }
 
   if (!user) {

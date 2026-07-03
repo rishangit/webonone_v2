@@ -10,13 +10,13 @@ import {
   ListFilterTrigger,
   ListPageBody,
   ListSearchField,
+  LoadingState,
   Pagination,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
@@ -93,9 +93,7 @@ export function TagsPage() {
       <ListPageBody>
         <div className="flex-1">
           {list.loading ? (
-            <div className="flex justify-center py-12">
-              <Spinner size="lg" />
-            </div>
+            <LoadingState label="Loading tags…" />
           ) : (
             <TagsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
           )}

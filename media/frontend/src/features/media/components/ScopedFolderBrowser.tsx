@@ -10,20 +10,20 @@ import {
   FormField,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
+  ListEmptyState,
   ItemListItem,
   ItemListMenu,
   itemListRowActiveClassName,
   ListFilterPanel,
   ListFilterTrigger,
   ListSearchField,
+  LoadingState,
   Pagination,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
 } from '@webonone/ui-kit'
 import { CreateFolderDialog } from './CreateFolderDialog'
 import { MediaDeleteDialog } from './MediaDeleteDialog'
@@ -352,11 +352,14 @@ export function ScopedFolderBrowser({
 
     if (!hasRows) {
       return (
-        <ItemListEmpty>
-          {enableUpload
-            ? 'This folder is empty. Drag files here or use Upload.'
-            : 'This folder is empty'}
-        </ItemListEmpty>
+        <ListEmptyState
+          itemType="media files"
+          message={
+            enableUpload
+              ? 'This folder is empty. Drag files here or use Upload.'
+              : 'This folder is empty.'
+          }
+        />
       )
     }
 
@@ -565,9 +568,10 @@ export function ScopedFolderBrowser({
         }}
       >
         {loading || isUploading ? (
-          <div className="flex flex-1 items-center justify-center py-8">
-            <Spinner />
-          </div>
+          <LoadingState
+            className="flex-1"
+            label={isUploading ? 'Uploading…' : 'Loading media…'}
+          />
         ) : viewMode === 'thumb' && showIconToolbar ? (
           renderThumbView()
         ) : (

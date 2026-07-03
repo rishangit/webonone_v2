@@ -14,7 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
+  LoadingState,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { emailApi } from '@/shared/services/emailApi'
@@ -138,11 +138,7 @@ export function QueuePage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading queue…" /> : null}
 
       {!loading ? (
         <ListPageBody>

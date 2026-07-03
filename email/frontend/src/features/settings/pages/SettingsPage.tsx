@@ -9,7 +9,7 @@ import {
   FormField,
   Input,
   mapZodIssuesToFieldErrors,
-  Spinner,
+  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -172,9 +172,7 @@ export function SettingsPage() {
         !companyId ? (
           <p className="text-sm text-muted-foreground">No company is linked to your account.</p>
         ) : loading ? (
-          <div className="flex justify-center py-8">
-            <Spinner size="lg" />
-          </div>
+          <LoadingState label="Loading settings…" />
         ) : (
           <div className="grid gap-8 lg:grid-cols-2">
             <Form onSubmit={handleSaveBranding} className="space-y-4">

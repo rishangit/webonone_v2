@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, FeaturePage, Spinner } from '@webonone/ui-kit'
+import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, FeaturePage, LoadingState } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
 import { dataApi } from '@/shared/services/dataApi'
@@ -43,9 +43,7 @@ export function DashboardPage() {
         </Alert>
       ) : null}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
+        <LoadingState label="Loading dashboard…" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ENTITY_LINKS.map((entity) => {

@@ -13,7 +13,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
+  LoadingState,
 } from '@webonone/ui-kit'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
@@ -135,11 +135,7 @@ export function SendEmailPage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading send form…" /> : null}
 
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">

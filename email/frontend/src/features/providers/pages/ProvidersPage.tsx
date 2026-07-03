@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
-  Spinner,
+  LoadingState,
 } from '@webonone/ui-kit'
 import { emailApi } from '@/shared/services/emailApi'
 import type { ProviderInfo } from '@/shared/types/email.types'
@@ -77,11 +77,7 @@ export function ProvidersPage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading providers…" /> : null}
 
       {!loading && provider ? (
         <Card>

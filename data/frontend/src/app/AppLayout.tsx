@@ -6,7 +6,7 @@ import {
   performPlatformLogout,
   useServiceRedirect,
 } from '@webonone/platform-nav'
-import { Alert, AlertDescription, AppShell, BrandLogo, PageShell, Spinner } from '@webonone/ui-kit'
+import { Alert, AlertDescription, AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions, clearDataAuthStorage } from '@/features/auth/store/authSlice'
@@ -115,7 +115,7 @@ export function AppLayout() {
   const mainContent =
     sessionLoading || bootstrapError ? (
       <div className="flex flex-col items-center gap-4 py-12">
-        {sessionLoading ? <Spinner size="lg" /> : null}
+        {sessionLoading ? <LoadingState label="Loading session…" /> : null}
         {bootstrapError ? (
           <Alert variant="destructive">
             <AlertDescription>{bootstrapError}</AlertDescription>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { PageShell, Spinner } from '@webonone/ui-kit'
+import { PageShell, LoadingState } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
 import type { UserProfile } from '../types/auth.types'
@@ -92,10 +92,7 @@ export function AuthCallbackPage() {
             </button>
           </>
         ) : (
-          <>
-            <Spinner size="lg" />
-            <p className="text-sm text-muted-foreground">Completing sign in…</p>
-          </>
+          <LoadingState label="Completing sign in…" />
         )}
       </div>
     </PageShell>

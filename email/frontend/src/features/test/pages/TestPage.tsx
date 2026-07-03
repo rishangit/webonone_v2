@@ -13,7 +13,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
+  LoadingState,
   ToastProvider,
   useToast,
 } from '@webonone/ui-kit'
@@ -89,11 +89,7 @@ function TestEmailForm() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading test page…" /> : null}
 
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">

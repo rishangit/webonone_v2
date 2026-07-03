@@ -10,11 +10,11 @@ import {
   Input,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
   ItemListItem,
+  ListEmptyState,
   Pagination,
   mapZodIssuesToFieldErrors,
-  Spinner,
+  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
 import { emailApi } from '@/shared/services/emailApi'
@@ -185,11 +185,7 @@ export function TemplateEditorPage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading template…" /> : null}
 
       {!loading && template ? (
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
@@ -248,7 +244,7 @@ export function TemplateEditorPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-medium">Version history</h2>
             {versions.length === 0 ? (
-              <ItemListEmpty>No versions yet.</ItemListEmpty>
+              <ListEmptyState itemType="versions" message="No versions yet." />
             ) : (
               <div className="space-y-4">
                 <ItemList>

@@ -31,7 +31,7 @@ Import from `@webonone/ui-kit`:
 | `ItemListItem` | Single row — `glass-card item-list-row`, `px-3 py-2`, themed shadow on hover |
 | `ItemListContent` | Main label/metadata (`flex-1`, truncates) |
 | `ItemListMenu` | Vertical 3-dot trigger (`MoreVertical`) at **top-right** of row |
-| `ItemListEmpty` | Empty-state copy (`text-muted-foreground`) |
+| `ItemListEmpty` | Low-level empty copy (`text-muted-foreground`); prefer **`ListEmptyState`** in feature lists |
 | `itemListRowActiveClassName` | Active/selected row — `border-primary` (border only, no fill) |
 | `itemListMenuClassName` | Menu trigger — `shrink-0 self-start` (pins to top-right; row uses `items-start`) |
 | `DropdownMenuItem`, `DropdownMenuSeparator`, … | Menu entries inside `ItemListMenu` |
@@ -110,7 +110,8 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Row surface is `glass-card item-list-row` — no extra `bg-*` on rows
 - [ ] Hover is themed shadow only (`item-list-row`); no `hover:border-*` or `hover:bg-*`
 - [ ] Active state uses `border-primary` only
-- [ ] Empty state via `ItemListEmpty`
+- [ ] Empty state via **`ListEmptyState`** (`itemType` + optional `message`); use `ItemListEmpty` only for bespoke low-level markup
+- [ ] Page/section fetch loading via **`LoadingState`** with contextual `label` — not centered `Spinner size="lg"` blocks
 - [ ] `ItemListMenu` is last child of `ItemListItem` — 3-dot trigger at top-right
 - [ ] Destructive action last in menu with destructive styling
 - [ ] Per-row `ariaLabel` on `ItemListMenu`
@@ -130,6 +131,7 @@ Cross-link only — do not duplicate:
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc) — build and export workflow
 - [item-list-pagination.mdc](../../rules/item-list-pagination.mdc) — `Pagination` with `ItemList`
 - [list-filter-panel.mdc](../../rules/list-filter-panel.mdc) — `ListFilterPanel` on collection pages
+- [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — `LoadingState` vs button `Spinner`; `ListEmptyState`
 - [form-creation skill](../form-creation/SKILL.md) — when the list is inside a form (orthogonal)
 
 ## Examples

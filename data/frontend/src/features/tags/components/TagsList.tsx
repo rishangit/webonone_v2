@@ -3,7 +3,7 @@ import {
   DropdownMenuItem,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
+  ListEmptyState,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -27,7 +27,7 @@ export function TagsList({ items, onDeleted, canMutate }: TagsListProps) {
   }
 
   if (items.length === 0) {
-    return <ItemListEmpty>No tags found.</ItemListEmpty>
+    return <ListEmptyState itemType="tags" />
   }
 
   return (

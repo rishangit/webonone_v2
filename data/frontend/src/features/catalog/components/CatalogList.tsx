@@ -3,7 +3,7 @@ import {
   DropdownMenuItem,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
+  ListEmptyState,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -12,12 +12,13 @@ import type { CatalogItem } from '@/shared/types/data.types'
 
 interface CatalogListProps {
   basePath: string
+  itemType: string
   items: CatalogItem[]
   onDelete: (id: string) => Promise<void>
   canMutate: boolean
 }
 
-export function CatalogList({ basePath, items, onDelete, canMutate }: CatalogListProps) {
+export function CatalogList({ basePath, itemType, items, onDelete, canMutate }: CatalogListProps) {
   const navigate = useNavigate()
 
   async function handleDelete(id: string, name: string) {
@@ -25,7 +26,7 @@ export function CatalogList({ basePath, items, onDelete, canMutate }: CatalogLis
     await onDelete(id)
   }
 
-  if (items.length === 0) return <ItemListEmpty>No items found.</ItemListEmpty>
+  if (items.length === 0) return <ListEmptyState itemType={itemType} />
 
   return (
     <ItemList>

@@ -6,8 +6,8 @@ import {
   FeaturePage,
   ListPageBody,
   ListSearchField,
+  LoadingState,
   Pagination,
-  Spinner,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
@@ -103,11 +103,7 @@ export function TemplatesPage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : null}
+      {loading ? <LoadingState label="Loading templates…" /> : null}
 
       {!loading ? (
         <ListPageBody>

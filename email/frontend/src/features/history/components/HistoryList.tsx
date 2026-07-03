@@ -2,7 +2,7 @@ import {
   DropdownMenuItem,
   ItemList,
   ItemListContent,
-  ItemListEmpty,
+  ListEmptyState,
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
@@ -26,7 +26,9 @@ export function HistoryList({ items }: HistoryListProps) {
   const rows = Array.isArray(items) ? items : []
 
   if (rows.length === 0) {
-    return <ItemListEmpty>No send history for the selected filters.</ItemListEmpty>
+    return (
+      <ListEmptyState itemType="history entries" message="No send history for the selected filters." />
+    )
   }
 
   return (
