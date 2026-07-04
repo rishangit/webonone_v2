@@ -1,0 +1,159 @@
+---
+description: Implementation plan for spec 1.11.1 — consolidate users_roles in Identity; remove role tables from WebOnOne, Email, Data
+alwaysApply: false
+globs: identity/**, webonone-v2/**, email/**, data/**, .cursor/rules/**
+---
+
+# Implementation plan — Spec 1.11.1
+
+## Summary
+
+Move platform **`users_roles`** to Identity as the single source of truth. Remove `users_roles` (WebOnOne), `email_user_roles` (Email), and `data_user_roles` (Data). Session role flows via JWT claims (`platform_role`, `company_id`) — no consumer DB copies or per-request Identity calls.
+
+See [01-overview.md](./01-overview.md), [02-identity-user-roles.md](./02-identity-user-roles.md), [03-consumer-migration.md](./03-consumer-migration.md), [04-jwt-session-role.md](./04-jwt-session-role.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.11.1` |
+| JWT | Same `JWT_SECRET` in identity, webonone-v2, email, data backends |
+| New env | Identity: `SUPER_ADMIN_USER_ID`, `IDENTITY_SERVICE_API_KEY`; WebOnOne BE: `IDENTITY_API_BASE_URL`, `IDENTITY_SERVICE_API_KEY` |
+| Migrations | Run Identity first, then WebOnOne (drop), Email/Data (drop role tables) |
+
+---
+
+## Phase 1 — Identity `users_roles` + API
+
+**Goal:** Canonical role storage ([02-identity-user-roles.md](./02-identity-user-roles.md)).
+
+**Exit criteria:** `npm run migrate -w identity-root`; assumable-roles API returns data.
+
+| Task | Paths |
+|------|-------|
+| Migration | `identity/backend/migrations/*_create_users_roles.ts` |
+| Data copy | Migration step or `identity/backend/scripts/migrate-roles-from-webonone.ts` |
+| Repository | `identity/backend/src/repositories/userRole.repository.ts` (port from webonone) |
+| Service | `identity/backend/src/services/userRole.service.ts` |
+| Routes | `identity/backend/src/routes/roles.routes.ts` |
+| API key middleware | `identity/backend/src/middleware/requireServiceKey.ts` |
+| Seed | `identity/backend/src/seedSuperAdmin.ts` |
+| Env | `identity/backend/.env.example` |
+
+**Verify:** `npm run type-check -w identity-root` · `npm run migrate -w identity-root`
+
+---
+
+## Phase 2 — JWT session role + re-issue
+
+**Goal:** [04-jwt-session-role.md](./04-jwt-session-role.md).
+
+**Exit criteria:** Re-issue endpoint returns JWT with `platform_role` and `company_id`.
+
+| Task | Paths |
+|------|-------|
+| JWT payload type | `identity/backend/src/services/token.service.ts` (or auth service) |
+| Sign claims on login | Single-role auto-set in existing login/token flow |
+| Session-role route | `POST /api/v1/auth/session-role` in `identity/backend/src/routes/auth.routes.ts` |
+| Zod body | `identity/backend/src/schemas/auth.schema.ts` |
+
+**Verify:** `npm run type-check -w identity-root`
+
+---
+
+## Phase 3 — WebOnOne migration
+
+**Goal:** [03-consumer-migration.md](./03-consumer-migration.md) WebOnOne section.
+
+**Exit criteria:** Company flows work; local `users_roles` dropped; role dialog uses Identity.
+
+| Task | Paths |
+|------|-------|
+| Identity client | `webonone-v2/backend/src/clients/identityRoleClient.ts` |
+| Company service | `webonone-v2/backend/src/services/company.service.ts` — role assign via Identity |
+| Remove role repo usage | `webonone-v2/backend/src/repositories/userRole.repository.ts` — delete after client |
+| Drop migration | `webonone-v2/backend/migrations/*_drop_users_roles.ts` |
+| Auth middleware | `webonone-v2/backend/src/middleware/auth.ts` — JWT claims |
+| Remove sync routes | `webonone-v2/backend/src/routes/company.routes.ts`, `company.controller.ts` |
+| Frontend assumable | `webonone-v2/frontend/src/features/auth/` — Identity API for roles |
+| Role dialog | Call Identity `session-role` re-issue; update token storage |
+| Remove handoff sync | `webonone-v2/frontend/src/features/email/utils/syncEmailRole.ts`, `features/data/utils/syncDataRole.ts`, `AppLayout.tsx` |
+| Env | `webonone-v2/backend/.env.example` |
+
+**Verify:** `npm run type-check -w webonone-v2-root` · `npm run migrate -w webonone-v2-root`
+
+---
+
+## Phase 4 — Email + Data cleanup
+
+**Goal:** JWT-only auth in satellites.
+
+**Exit criteria:** No role tables; handoff works without sync POST.
+
+| Task | Paths |
+|------|-------|
+| Email drop migration | `email/backend/migrations/*_drop_email_user_roles.ts` |
+| Email auth | `email/backend/src/middleware/auth.ts` |
+| Delete email user.service | `email/backend/src/services/user.service.ts` |
+| Data drop migration | `data/backend/migrations/*_drop_data_user_roles.ts` |
+| Data auth | `data/backend/src/middleware/auth.ts` |
+| Delete data user.service + internal route | `data/backend/src/services/user.service.ts`, `internal.controller.ts`, `internal.routes.ts` |
+| WebOnOne data sync removal | `webonone-v2/backend/src/services/company.service.ts` `syncDataRole*` |
+
+**Verify:** `npm run type-check -w email-root` · `npm run type-check -w data-root`
+
+---
+
+## Phase 5 — Rules and docs
+
+| Task | Paths |
+|------|-------|
+| WebOnOne rule | `.cursor/rules/webonone-v2-project.mdc` |
+| Email rule | `.cursor/rules/email-project.mdc` |
+| Identity skill | `.cursor/skills/identity-agent/SKILL.md` |
+| AGENTS.md | Identity owns platform roles note |
+
+**Verify:** Grep — no stale `users_roles` / `email_user_roles` / `data_user_roles` in rules
+
+---
+
+## Cross-service integration
+
+| Channel | Use |
+|---------|-----|
+| Identity API | WebOnOne BE assigns/queries roles (service key) |
+| JWT claims | All BE middleware reads `platform_role`, `company_id` |
+| Auth-code handoff | Unchanged — JWT already carries session role |
+| Forbidden | Consumer role DB tables; per-request Identity HTTP in auth middleware |
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | Phases 1–5 |
+
+---
+
+## Risks and open items
+
+- Data migration order — Identity must receive WebOnOne rows before WebOnOne drops table.
+- `companyName` in assumable roles — WebOnOne FE may join company names from local `companies` table.
+- Identity profile Email handoff — update `identity/frontend` sync if it still calls WebOnOne sync endpoint.
+- Rollout: tokens without `platform_role` default to `member` during transition.
+
+---
+
+## Final verification
+
+```bash
+npm run type-check -w identity-root
+npm run type-check -w webonone-v2-root
+npm run type-check -w email-root
+npm run type-check -w data-root
+npm run migrate -w identity-root
+npm run migrate -w webonone-v2-root
+npm run migrate -w email-root
+npm run migrate -w data-root
+```

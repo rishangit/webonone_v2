@@ -34,6 +34,7 @@ Implementation branch: **`spec/1.11.1`**
 | [03-consumer-migration.md](./03-consumer-migration.md) | Remove local tables; middleware and handoff changes per service |
 | [04-jwt-session-role.md](./04-jwt-session-role.md) | JWT claims contract, token re-issue, handoff without DB duplication |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
+| [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
 
