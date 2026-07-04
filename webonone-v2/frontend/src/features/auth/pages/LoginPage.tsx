@@ -1,9 +1,16 @@
+import { useEffect } from 'react'
 import { PageShell, Button } from '@webonone/ui-kit'
 import { buildIdentityLoginUrl } from '../utils/buildIdentityLoginUrl'
 
+const LOGIN_RETURN_PATH = '/'
+
 export function LoginPage() {
+  useEffect(() => {
+    window.location.assign(buildIdentityLoginUrl(LOGIN_RETURN_PATH))
+  }, [])
+
   function handleSignIn() {
-    window.location.assign(buildIdentityLoginUrl('/'))
+    window.location.assign(buildIdentityLoginUrl(LOGIN_RETURN_PATH))
   }
 
   return (

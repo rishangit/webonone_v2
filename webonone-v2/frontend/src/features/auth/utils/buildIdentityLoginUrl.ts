@@ -29,7 +29,6 @@ export function buildIdentityLoginUrl(returnPath = '/'): string {
     stateStorageKeyPrefix: STATE_STORAGE_PREFIX,
     extraSearchParams: {
       ...serializeThemeQueryParams(payload),
-      prompt: 'login',
     },
   })
 }
