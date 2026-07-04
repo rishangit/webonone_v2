@@ -154,6 +154,27 @@ Spec: subtask **86ey5nqjw**
 
 ---
 
+## Phase 8 — Login response includes session role (delta)
+
+**Goal:** [08-login-role-in-response.md](./08-login-role-in-response.md).
+
+**Exit criteria:** Super-admin login returns `platform_role` in JWT and `platformRole` in auth JSON; Data permissions work immediately.
+
+| Task | Paths |
+|------|-------|
+| Auto-default super_admin | `identity/backend/src/services/userRole.service.ts` — `resolveDefaultSessionClaims` |
+| Auth response fields | `identity/backend/src/services/token.service.ts` — `buildAuthResponse` |
+| Wire session fields | `identity/backend/src/services/auth.service.ts` — login, exchange, refresh, reissue |
+| Data auth callback | `data/frontend/src/features/auth/pages/AuthCallbackPage.tsx` |
+| Platform bootstrap | `data/frontend/src/features/auth/hooks/usePlatformSessionBootstrap.ts` |
+| Env docs | `identity/backend/.env.example` — seed after migrate |
+
+**Verify:** `npm run type-check -w identity-root` · `npm run type-check -w data-root`
+
+Spec: subtask **86ey5pc30**
+
+---
+
 ## Cross-service integration
 
 | Channel | Use |
@@ -169,9 +190,10 @@ Spec: subtask **86ey5nqjw**
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
-| Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | Phases 1–7 |
+| Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | Phases 1–8 |
 | Subtask: issue in data sync | 86ey5nk8m | Phase 6 |
 | Subtask: login session need to increase | 86ey5nqjw | Phase 7 |
+| Subtask: in production super admin login user role not taken | 86ey5pc30 | Phase 8 |
 
 ---
 
