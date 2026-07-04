@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { performPlatformLogout, resolvePlatformLogoutLoginUrl } from './platformLogout'
+import {
+  buildIdentityLogoutUrl,
+  performPlatformLogout,
+  resolveAbsolutePostLogoutLoginUrl,
+  resolvePlatformLogoutLoginUrl,
+} from './platformLogout'
 
 describe('resolvePlatformLogoutLoginUrl', () => {
   it('returns local login path when returnUrl is absent', () => {
@@ -26,6 +31,25 @@ describe('resolvePlatformLogoutLoginUrl', () => {
 
   it('uses custom local login path when returnUrl is absent', () => {
     assert.equal(resolvePlatformLogoutLoginUrl(null, '/sign-in'), '/sign-in')
+  })
+})
+
+describe('buildIdentityLogoutUrl', () => {
+  it('builds logout URL with post_logout_redirect_uri', () => {
+    const url = buildIdentityLogoutUrl(
+      'http://localhost:3001',
+      'http://localhost:3000/login?prompt=login',
+    )
+    assert.equal(
+      url,
+      'http://localhost:3001/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin%3Fprompt%3Dlogin',
+    )
+  })
+})
+
+describe('resolveAbsolutePostLogoutLoginUrl', () => {
+  it('appends prompt=login to relative local login path', () => {
+    assert.equal(resolveAbsolutePostLogoutLoginUrl(null, '/login'), '/login?prompt=login')
   })
 })
 

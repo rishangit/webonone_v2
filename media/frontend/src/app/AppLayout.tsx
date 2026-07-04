@@ -1,18 +1,18 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { AppShell, BrandLogo } from '@webonone/ui-kit'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store/authSlice'
+import { performPlatformLogout } from '@webonone/platform-nav'
+import { useAppSelector } from '@/app/store/hooks'
+import { clearMediaAuthStorage } from '@/features/auth/store/authSlice'
+import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { mainNav } from '@/features/shell/config/navItems'
 
 export function AppLayout() {
-  const navigate = useNavigate()
   const location = useLocation()
-  const dispatch = useAppDispatch()
   const { user } = useAppSelector((s) => s.auth)
 
   function handleLogout() {
-    dispatch(authActions.logout())
-    navigate('/login')
+    clearMediaAuthStorage()
+    performPlatformLogout(null, { identityOrigin: getIdentityOrigin() })
   }
 
   return (

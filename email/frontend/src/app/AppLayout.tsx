@@ -13,6 +13,7 @@ import { authActions, clearEmailAuthStorage } from '@/features/auth/store/authSl
 import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { useRefreshEmailRole } from '@/features/auth/hooks/useRefreshEmailRole'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
+import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { parsePlatformReturnUrl, hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
@@ -98,7 +99,7 @@ export function AppLayout() {
   function handleLogout() {
     const returnUrl = effectiveReturnUrl
     clearEmailAuthStorage()
-    performPlatformLogout(returnUrl)
+    performPlatformLogout(returnUrl, { identityOrigin: getIdentityOrigin() })
   }
 
   const headerUser =

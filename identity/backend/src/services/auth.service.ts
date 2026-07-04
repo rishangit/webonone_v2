@@ -32,6 +32,7 @@ import {
   markRegistrationSessionUsed,
   markUserEmailVerified,
   revokeRefreshToken,
+  revokeAllRefreshTokensForUser,
   toUserProfile,
   updatePasswordResetOtpAttemptCount,
   updateRegistrationEmailOtpAttemptCount,
@@ -379,6 +380,10 @@ export async function logoutUser(refreshToken: string) {
   if (stored) {
     await revokeRefreshToken(stored.id)
   }
+}
+
+export async function logoutAllUserSessions(userId: string): Promise<void> {
+  await revokeAllRefreshTokensForUser(userId)
 }
 
 export async function requestPasswordReset(_email: string): Promise<void> {
