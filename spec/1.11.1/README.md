@@ -35,6 +35,7 @@ Implementation branch: **`spec/1.11.1`**
 | [04-jwt-session-role.md](./04-jwt-session-role.md) | JWT claims contract, token re-issue, handoff without DB duplication |
 | [05-fix-remove-sync-data-role.md](./05-fix-remove-sync-data-role.md) | Remove Data FE calls to deleted `sync-data-role` (delta) |
 | [06-platform-sso-session.md](./06-platform-sso-session.md) | SSO via Identity session + longer access token (delta) |
+| [08-login-role-in-response.md](./08-login-role-in-response.md) | Super-admin login includes session role in JWT + auth response (delta) |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
@@ -45,9 +46,11 @@ Implementation branch: **`spec/1.11.1`**
 | Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | All docs |
 | Subtask: issue in data sync | 86ey5nk8m | [05-fix-remove-sync-data-role.md](./05-fix-remove-sync-data-role.md); Phase 6 |
 | Subtask: login session need to increase | 86ey5nqjw | [06-platform-sso-session.md](./06-platform-sso-session.md); Phase 7 |
+| Subtask: in production super admin login user role not taken | 86ey5pc30 | [08-login-role-in-response.md](./08-login-role-in-response.md); Phase 8 |
 
 ## Revision history
 
+- **2026-07-04** — Subtask: super-admin login must include session role in JWT and auth response.
 - **2026-07-04** — Subtask: platform SSO + 7-day access token (remove `prompt=login` default).
 - **2026-07-04** — Subtask: remove Data FE `sync-data-role` calls (404 after endpoint removal).
 
