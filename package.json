@@ -54,6 +54,12 @@
     "deploy:email": "npm run deploy -w email-root",
     "deploy:media": "npm run deploy -w media-root",
     "deploy:webonone": "npm run deploy -w webonone-v2-root",
+    "migrate:identity": "npm run migrate -w identity-root",
+    "migrate:webonone": "npm run migrate -w webonone-v2-root",
+    "migrate:media": "npm run migrate -w media-root",
+    "migrate:email": "npm run migrate -w email-root",
+    "migrate:data": "npm run migrate -w data-root",
+    "migrate:all": "npm run migrate:identity && npm run migrate:webonone && npm run migrate:media && npm run migrate:email && npm run migrate:data",
     "type-check": "npm run type-check --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
