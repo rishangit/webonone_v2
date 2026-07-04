@@ -136,6 +136,24 @@ Spec: subtask **86ey5nk8m**
 
 ---
 
+## Phase 7 — Platform SSO + longer session (delta)
+
+**Goal:** [06-platform-sso-session.md](./06-platform-sso-session.md).
+
+**Exit criteria:** Cross-service login without re-entering credentials when Identity session exists; 7-day default access token.
+
+| Task | Paths |
+|------|-------|
+| Remove `prompt=login` | `webonone-v2/frontend/.../buildIdentityLoginUrl.ts`, `data/frontend/.../buildIdentityLoginUrl.ts`, `email/frontend/.../buildIdentityLoginUrl.ts`, `media/frontend/.../buildIdentityLoginUrl.ts` |
+| Auto-redirect login | `*/frontend/src/features/auth/pages/LoginPage.tsx` (same four services) |
+| Token expiry | `identity/backend/.env.example` → `ACCESS_TOKEN_EXPIRY_SECONDS=604800` |
+
+**Verify:** `npm run type-check -w identity-root` · `webonone-v2-root` · `data-root` · `email-root` · `media-root`
+
+Spec: subtask **86ey5nqjw**
+
+---
+
 ## Cross-service integration
 
 | Channel | Use |
@@ -151,8 +169,9 @@ Spec: subtask **86ey5nk8m**
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
-| Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | Phases 1–6 |
+| Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | Phases 1–7 |
 | Subtask: issue in data sync | 86ey5nk8m | Phase 6 |
+| Subtask: login session need to increase | 86ey5nqjw | Phase 7 |
 
 ---
 
@@ -172,6 +191,7 @@ npm run type-check -w identity-root
 npm run type-check -w webonone-v2-root
 npm run type-check -w email-root
 npm run type-check -w data-root
+npm run type-check -w media-root
 npm run migrate -w identity-root
 npm run migrate -w webonone-v2-root
 npm run migrate -w email-root
