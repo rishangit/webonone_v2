@@ -12,8 +12,7 @@ import { authActions } from '../store/authSlice'
 import type { UserProfile } from '../types/auth.types'
 import { consumeAuthState } from '../utils/buildIdentityLoginUrl'
 import { getAuthCallbackUrl, getIdentityApiBase } from '../utils/identityConfig'
-import { syncPlatformDataRole } from '../utils/syncPlatformDataRole'
-import { apiClient } from '@/shared/services/apiClient'
+import { fetchDataRole } from '../utils/fetchDataRole'
 
 const exchangedCodes = new Set<string>()
 
@@ -75,11 +74,9 @@ export function AuthCallbackPage() {
           }),
         )
 
-        return syncPlatformDataRole(data.accessToken)
-          .catch(() => undefined)
-          .then(() => apiClient<{ user: { role: UserProfile['role'] } }>('/me'))
-          .then((me) => {
-            dispatch(authActions.setUserRole(me.user.role))
+        return fetchDataRole(data.accessToken)
+          .then((role) => {
+            dispatch(authActions.setUserRole(role))
             navigate(stored.returnPath || '/', { replace: true })
           })
       })

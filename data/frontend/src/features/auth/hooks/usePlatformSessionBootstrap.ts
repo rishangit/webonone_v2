@@ -8,7 +8,6 @@ import {
   getDataRedirectUri,
 } from '@/features/auth/utils/bootstrapPlatformSession'
 import { fetchDataRole } from '@/features/auth/utils/fetchDataRole'
-import { syncPlatformDataRole } from '@/features/auth/utils/syncPlatformDataRole'
 import {
   buildPlatformSearchWithoutCode,
   hasPlatformHandoff,
@@ -54,9 +53,6 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
 
     bootstrapPlatformSession(code, redirectUri)
       .then(async (result) => {
-        if (validatedReturnUrl) {
-          await syncPlatformDataRole(result.accessToken, validatedReturnUrl)
-        }
         const role = await fetchDataRole(result.accessToken)
 
         if (validatedReturnUrl) {
