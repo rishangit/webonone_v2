@@ -33,6 +33,7 @@ Implementation branch: **`spec/1.11.1`**
 | [02-identity-user-roles.md](./02-identity-user-roles.md) | Canonical schema, Identity API, events |
 | [03-consumer-migration.md](./03-consumer-migration.md) | Remove local tables; middleware and handoff changes per service |
 | [04-jwt-session-role.md](./04-jwt-session-role.md) | JWT claims contract, token re-issue, handoff without DB duplication |
+| [05-fix-remove-sync-data-role.md](./05-fix-remove-sync-data-role.md) | Remove Data FE calls to deleted `sync-data-role` (delta) |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
 | [plan.mdc](./plan.mdc) | Agent implementation plan |
 
@@ -41,6 +42,11 @@ Implementation branch: **`spec/1.11.1`**
 | ClickUp | ID | Spec destination |
 |---------|-----|------------------|
 | Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | All docs |
+| Subtask: issue in data sync | 86ey5nk8m | [05-fix-remove-sync-data-role.md](./05-fix-remove-sync-data-role.md); Phase 6 |
+
+## Revision history
+
+- **2026-07-04** — Subtask: remove Data FE `sync-data-role` calls (404 after endpoint removal).
 
 ## Inherited from earlier specs
 

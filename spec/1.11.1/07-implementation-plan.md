@@ -106,6 +106,23 @@ Spec: parent **86ey5n9zt**
 
 ---
 
+## Phase 6 — Remove Data FE `sync-data-role` calls (delta)
+
+**Goal:** [05-fix-remove-sync-data-role.md](./05-fix-remove-sync-data-role.md).
+
+| Task | Detail |
+|------|--------|
+| Delete | `data/frontend/src/features/auth/utils/syncPlatformDataRole.ts` |
+| Auth callback | `AuthCallbackPage.tsx` — use `fetchDataRole` only |
+| Platform bootstrap | `usePlatformSessionBootstrap.ts` — remove sync POST |
+| Cleanup | Delete orphan `syncPlatformEmailRole.ts` / `syncEmailRole.ts` if unused |
+
+**Exit criteria:** Data login/handoff without 404; `npm run type-check -w data-root`.
+
+Spec: subtask **86ey5nk8m**
+
+---
+
 ## Acceptance checklist
 
 - [ ] Identity `users_roles` populated; WebOnOne/Email/Data role tables absent
@@ -123,6 +140,7 @@ Spec: parent **86ey5n9zt**
 | ClickUp | ID | Phase |
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | All phases |
+| Subtask: issue in data sync | 86ey5nk8m | Phase 6 |
 
 ---
 
