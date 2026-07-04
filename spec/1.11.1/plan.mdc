@@ -117,6 +117,25 @@ See [01-overview.md](./01-overview.md), [02-identity-user-roles.md](./02-identit
 
 ---
 
+## Phase 6 — Remove Data FE `sync-data-role` calls (delta)
+
+**Goal:** [05-fix-remove-sync-data-role.md](./05-fix-remove-sync-data-role.md).
+
+**Exit criteria:** Data login/handoff without 404; no `sync-data-role` references in `data/frontend/`.
+
+| Task | Paths |
+|------|-------|
+| Delete sync util | `data/frontend/src/features/auth/utils/syncPlatformDataRole.ts` |
+| Auth callback | `data/frontend/src/features/auth/pages/AuthCallbackPage.tsx` |
+| Platform bootstrap | `data/frontend/src/features/auth/hooks/usePlatformSessionBootstrap.ts` |
+| Orphan cleanup | `email/frontend/src/features/auth/utils/syncPlatformEmailRole.ts`, `identity/frontend/src/features/email/utils/syncEmailRole.ts` |
+
+**Verify:** `npm run type-check -w data-root`
+
+Spec: subtask **86ey5nk8m**
+
+---
+
 ## Cross-service integration
 
 | Channel | Use |
@@ -132,7 +151,8 @@ See [01-overview.md](./01-overview.md), [02-identity-user-roles.md](./02-identit
 
 | ClickUp | ID | Phase |
 |---------|-----|-------|
-| Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | Phases 1–5 |
+| Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | Phases 1–6 |
+| Subtask: issue in data sync | 86ey5nk8m | Phase 6 |
 
 ---
 
