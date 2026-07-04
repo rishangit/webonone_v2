@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { fileURLToPath } from 'node:url'
 
-const uiKitRoot = path.resolve(__dirname, '../../ui-kit/package')
-const platformNavRoot = path.resolve(__dirname, '../../packages/platform-nav')
-const themeRoot = path.resolve(__dirname, '../../packages/theme')
+const configDir = path.dirname(fileURLToPath(import.meta.url))
+const srcDir = path.resolve(configDir, 'src')
+const uiKitRoot = path.resolve(configDir, '../../ui-kit/package')
+const platformNavRoot = path.resolve(configDir, '../../packages/platform-nav')
+const themeRoot = path.resolve(configDir, '../../packages/theme')
 
 export default defineConfig({
   plugins: [react()],
@@ -15,7 +18,7 @@ export default defineConfig({
       { find: '@webonone/ui-kit', replacement: path.join(uiKitRoot, 'src/index.ts') },
       { find: '@webonone/platform-nav', replacement: path.join(platformNavRoot, 'src/index.ts') },
       { find: '@webonone/theme', replacement: path.join(themeRoot, 'src/index.ts') },
-      { find: '@', replacement: path.resolve(__dirname, './src') },
+      { find: /^@\//, replacement: `${srcDir}/` },
     ],
   },
   server: {
