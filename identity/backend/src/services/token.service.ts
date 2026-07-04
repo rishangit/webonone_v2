@@ -4,19 +4,35 @@ import { env } from '../config/env.js'
 import type { UserRow } from '../models/user.repository.js'
 import { toUserProfile } from '../models/user.repository.js'
 
+export type PlatformRole = 'super_admin' | 'company_admin' | 'member'
+
 export interface AccessTokenPayload {
   sub: string
   email: string
   iss: string
   aud: string
+  platform_role?: PlatformRole
+  company_id?: string | null
 }
 
-export function signAccessToken(user: UserRow): { accessToken: string; expiresIn: number } {
+export type SessionClaims = {
+  platformRole?: PlatformRole
+  companyId?: string | null
+}
+
+export function signAccessToken(
+  user: UserRow,
+  sessionClaims?: SessionClaims,
+): { accessToken: string; expiresIn: number } {
   const payload: AccessTokenPayload = {
     sub: user.id,
     email: user.email,
     iss: env.jwtIssuer,
     aud: env.jwtAudience,
+  }
+  if (sessionClaims?.platformRole) {
+    payload.platform_role = sessionClaims.platformRole
+    payload.company_id = sessionClaims.companyId ?? null
   }
   const accessToken = jwt.sign(payload, env.jwtSecret, {
     expiresIn: env.accessTokenExpirySeconds,

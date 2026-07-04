@@ -1,4 +1,4 @@
-import { db } from '../models/db.js'
+import { db } from '../models/user.repository.js'
 
 export type UserRoleType = 'super_admin' | 'company_admin' | 'member'
 
@@ -9,6 +9,10 @@ export type UserRoleRow = {
   company_id: string | null
   created_at: Date
   updated_at: Date
+}
+
+export async function listRolesByUserId(userId: string): Promise<UserRoleRow[]> {
+  return db<UserRoleRow>('users_roles').where({ user_id: userId }).orderBy('created_at', 'asc')
 }
 
 export async function findSuperAdminByUserId(userId: string): Promise<UserRoleRow | undefined> {
@@ -74,7 +78,6 @@ export async function promoteUserToCompanyAdmin(companyId: string, userId: strin
     await db('users_roles')
       .where({ id: memberRole.id })
       .update({ role: 'company_admin', updated_at: db.fn.now(3) })
-    return
   }
 }
 
@@ -82,16 +85,4 @@ export async function demoteUserToMember(companyId: string, userId: string): Pro
   await db('users_roles')
     .where({ company_id: companyId, user_id: userId, role: 'company_admin' })
     .update({ role: 'member', updated_at: db.fn.now(3) })
-}
-
-export async function updateCompanyRole(
-  companyId: string,
-  userId: string,
-  role: 'company_admin' | 'member',
-): Promise<void> {
-  if (role === 'company_admin') {
-    await promoteUserToCompanyAdmin(companyId, userId)
-  } else {
-    await demoteUserToMember(companyId, userId)
-  }
 }

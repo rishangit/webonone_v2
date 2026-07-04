@@ -9,7 +9,6 @@ import tagsRoutes from './routes/tags.routes.js'
 import unitsRoutes from './routes/units.routes.js'
 import attributesRoutes from './routes/attributes.routes.js'
 import catalogRoutes from './routes/catalog.routes.js'
-import internalRoutes from './routes/internal.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -30,7 +29,6 @@ export function createApp() {
   app.use('/api/v1', unitsRoutes)
   app.use('/api/v1', attributesRoutes)
   app.use('/api/v1', catalogRoutes)
-  app.use('/api/v1', internalRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

@@ -22,8 +22,7 @@ alwaysApply: false
 ## Ownership
 
 - Templates, queue, SMTP, send history, providers, branding — own DB `webonone_email`.
-- JWT verification locally on public routes; Identity issues tokens.
-- Role copy (`super_admin`, `company_admin`, `member`) in Email DB.
+- JWT verification locally on public routes; session role from JWT `platform_role` / `company_id` claims (no local role table).
 
 ## Platform shell — mirror Identity profile
 

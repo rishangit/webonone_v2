@@ -59,32 +59,3 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<v
     console.error('[emailClient] send error:', err)
   }
 }
-
-export async function syncUserRole(params: {
-  userId: string
-  role: string
-  companyId?: string
-  email?: string
-  displayName?: string
-}): Promise<void> {
-  const url = resolveInternalEmailUrl('/api/v1/internal/sync-user-role')
-  if (!url) return
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Email-Service-Key': env.emailServiceApiKey,
-      },
-      body: JSON.stringify(params),
-    })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error(`[emailClient] sync-user-role failed (${response.status}): ${text}`)
-    }
-  } catch (err) {
-    console.error('[emailClient] sync-user-role error:', err)
-  }
-}

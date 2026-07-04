@@ -23,15 +23,6 @@ export interface EmailCompanyRow {
   updated_at: Date
 }
 
-export interface EmailUserRoleRow {
-  id: string
-  user_id: string
-  role: EmailRole
-  company_id: string | null
-  created_at: Date
-  updated_at: Date
-}
-
 export type TemplateScope = 'platform' | 'company'
 export type QueueStatus = 'pending' | 'processing' | 'sent' | 'failed'
 export type HistoryStatus = 'sent' | 'failed'

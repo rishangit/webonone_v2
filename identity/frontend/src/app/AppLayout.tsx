@@ -8,7 +8,6 @@ import { useAppSelector } from '@/app/store/hooks'
 import { persistAuthSession } from '@/features/auth/utils/authStorage'
 import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
-import { syncPlatformEmailRole } from '@/features/email/utils/syncEmailRole'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
 import {
   buildCoreNavFromQuery,
@@ -57,7 +56,6 @@ export function AppLayout() {
       }
       clearError()
       try {
-        await syncPlatformEmailRole(accessToken, returnUrl)
         await redirect(
           getEmailRedirectOptions({
             accessToken,

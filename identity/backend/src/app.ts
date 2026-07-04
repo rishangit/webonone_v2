@@ -5,6 +5,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import authRoutes from './routes/auth.routes.js'
 import healthRoutes from './routes/health.routes.js'
+import rolesRoutes from './routes/roles.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -22,6 +23,7 @@ export function createApp() {
 
   app.use('/api/v1', healthRoutes)
   app.use('/api/v1/auth', authRoutes)
+  app.use('/api/v1', rolesRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

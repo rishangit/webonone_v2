@@ -5,15 +5,12 @@ import { useServiceRedirect } from '@webonone/platform-nav'
 import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { store } from '@/app/store'
 import { authActions } from '@/features/auth/store/authSlice'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
 import { getDataRedirectOptions } from '@/features/data/utils/redirectToData'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
-import { syncEmailRoleBeforeHandoff } from '@/features/email/utils/syncEmailRole'
-import { syncDataRoleBeforeHandoff } from '@/features/data/utils/syncDataRole'
 import { buildNavForSessionRole, isDataNavSentinel, isEmailNavSentinel } from '@/features/shell/config/navItems'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
@@ -80,7 +77,6 @@ export function AppLayout() {
           )
         : undefined
       try {
-        await syncEmailRoleBeforeHandoff(() => store.getState())
         await redirect(
           getEmailRedirectOptions({
             accessToken,
@@ -109,7 +105,6 @@ export function AppLayout() {
           )
         : undefined
       try {
-        await syncDataRoleBeforeHandoff(() => store.getState())
         await redirect(
           getDataRedirectOptions({
             accessToken,

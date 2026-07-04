@@ -34,6 +34,9 @@ const envSchema = z.object({
   EMAIL_SERVICE_API_KEY: z.string().optional(),
   DATA_API_BASE_URL: z.string().optional(),
   DATA_SERVICE_API_KEY: z.string().optional(),
+  IDENTITY_API_BASE_URL: z.string().optional(),
+  IDENTITY_SERVICE_API_KEY: z.string().optional(),
+  IDENTITY_DB_NAME: z.string().default('identity'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -67,4 +70,7 @@ export const env = {
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
   dataApiBaseUrl: parsed.DATA_API_BASE_URL ?? '',
   dataServiceApiKey: parsed.DATA_SERVICE_API_KEY ?? '',
+  identityApiBaseUrl: parsed.IDENTITY_API_BASE_URL ?? 'http://localhost:4001',
+  identityServiceApiKey: parsed.IDENTITY_SERVICE_API_KEY ?? 'dev-identity-service-key',
+  identityDbName: parsed.IDENTITY_DB_NAME,
 }

@@ -16,6 +16,7 @@ import {
   resendEmailVerification,
   resetPassword,
   resetPasswordWithSession,
+  reissueSessionRole,
   verifyEmail,
   verifyRegisterEmailOtp,
   verifyResetOtp,
@@ -294,6 +295,26 @@ export async function patchMe(req: AuthenticatedRequest, res: Response) {
     const body = patchMeSchema.parse(req.body)
     const user = await patchCurrentUser(req.user.id, body)
     res.json({ user })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+const sessionRoleSchema = z.object({
+  platformRole: z.enum(['super_admin', 'company_admin', 'member']),
+  companyId: z.string().nullable().optional(),
+})
+
+export async function sessionRoleHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    const body = sessionRoleSchema.parse(req.body)
+    const result = await reissueSessionRole(req.user.id, body.platformRole, body.companyId)
+    res.json(result)
   } catch (err) {
     if (handleAuthError(err, res)) return
     throw err

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Button, CustomDialog, cn } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { authActions } from '@/features/auth/store/authSlice'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
+import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
 import type { AssumableRoleOption } from '@/features/session/types/sessionRole.types'
 
 function roleDescription(option: AssumableRoleOption): string {
@@ -19,17 +21,30 @@ function roleDescription(option: AssumableRoleOption): string {
 
 export function RoleSelectionDialog() {
   const dispatch = useAppDispatch()
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
   const { dialogOpen, assumableRoles } = useAppSelector((s) => s.sessionRole)
   const [pendingRole, setPendingRole] = useState<AssumableRoleOption | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleContinue() {
-    if (!pendingRole) return
-    dispatch(
-      sessionRoleActions.roleSelected({
-        role: pendingRole.role,
-        companyId: pendingRole.companyId,
-      }),
-    )
+  async function handleContinue() {
+    if (!pendingRole || !accessToken) return
+    setSubmitting(true)
+    try {
+      const result = await sessionRoleApi.reissueSessionRole(
+        accessToken,
+        pendingRole.role,
+        pendingRole.companyId,
+      )
+      dispatch(authActions.tokenRefreshed({ accessToken: result.accessToken, user: result.user }))
+      dispatch(
+        sessionRoleActions.roleSelected({
+          role: pendingRole.role,
+          companyId: pendingRole.companyId,
+        }),
+      )
+    } catch {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -43,7 +58,7 @@ export function RoleSelectionDialog() {
       sizeWidth="medium"
       sizeHeight="auto"
       footer={
-        <Button type="button" disabled={!pendingRole} onClick={handleContinue}>
+        <Button type="button" disabled={!pendingRole || submitting} onClick={() => void handleContinue()}>
           Continue
         </Button>
       }

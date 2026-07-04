@@ -36,6 +36,10 @@ const envSchema = z.object({
   EMAIL_SERVICE_API_KEY: z.string().optional(),
   IDENTITY_FRONTEND_ORIGIN: z.string().default('http://localhost:3001'),
   EMAIL_VERIFICATION_EXPIRY_HOURS: z.coerce.number().default(24),
+  SUPER_ADMIN_USER_ID: z.string().optional(),
+  SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
+  SUPER_ADMIN_DISPLAY_NAME: z.string().default('Super Admin'),
+  IDENTITY_SERVICE_API_KEY: z.string().default('dev-identity-service-key'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -72,4 +76,8 @@ export const env = {
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
   identityFrontendOrigin: parsed.IDENTITY_FRONTEND_ORIGIN.replace(/\/$/, ''),
   emailVerificationExpiryHours: parsed.EMAIL_VERIFICATION_EXPIRY_HOURS,
+  superAdminUserId: parsed.SUPER_ADMIN_USER_ID?.trim() ?? '',
+  superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
+  superAdminDisplayName: parsed.SUPER_ADMIN_DISPLAY_NAME,
+  identityServiceApiKey: parsed.IDENTITY_SERVICE_API_KEY,
 }

@@ -10,13 +10,6 @@ export type DataRole = 'super_admin' | 'company_admin' | 'member'
 export type EntityStatus = 'verified' | 'pending'
 export type AttributeValueType = 'number' | 'text'
 
-export interface DataUserRoleRow {
-  user_id: string
-  role: DataRole
-  company_id: string | null
-  updated_at: Date
-}
-
 export interface TagRow {
   id: string
   name: string

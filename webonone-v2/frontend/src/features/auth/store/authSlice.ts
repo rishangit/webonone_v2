@@ -37,6 +37,13 @@ export const authSlice = createSlice({
       state.user = action.payload.user
       persistAuth(state)
     },
+    tokenRefreshed(state, action: PayloadAction<{ accessToken: string; user?: UserProfile }>) {
+      state.accessToken = action.payload.accessToken
+      if (action.payload.user) {
+        state.user = action.payload.user
+      }
+      persistAuth(state)
+    },
     userProfileUpdated(state, action: PayloadAction<UserProfile>) {
       if (!state.accessToken) return
       state.user = action.payload

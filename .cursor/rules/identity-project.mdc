@@ -25,7 +25,7 @@ Backend loads only `identity/backend/.env` (not repo root or other services).
 
 - Login, register, forgot/reset password UI + APIs.
 - JWT **issuance**; redirect mode via `redirect_uri` + auth code exchange.
-- Database: `identity` (MySQL).
+- Database: `identity` (MySQL) — includes canonical **`users_roles`** for platform permissions.
 
 ## Platform shell — reference implementation (profile)
 

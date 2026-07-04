@@ -53,7 +53,9 @@ import {
   generateRefreshToken,
   hashToken,
   signAccessToken,
+  type PlatformRole,
 } from './token.service.js'
+import { resolveDefaultSessionClaims, assertCanAssumeSessionRole } from './userRole.service.js'
 import { matchesRedirectUri } from '@webonone/platform-nav'
 import { env } from '../config/env.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
@@ -106,7 +108,13 @@ function mapRegistrationStorageError(err: unknown, operation: string): never {
 }
 
 async function issueAuthTokens(user: UserRow) {
-  const { accessToken, expiresIn } = signAccessToken(user)
+  const defaultClaims = await resolveDefaultSessionClaims(user.id)
+  const { accessToken, expiresIn } = signAccessToken(
+    user,
+    defaultClaims
+      ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
+      : undefined,
+  )
   const refreshToken = generateRefreshToken()
   const refreshTokenHash = hashToken(refreshToken)
   const expiresAt = new Date()
@@ -326,7 +334,32 @@ export async function refreshAccessToken(refreshToken: string) {
     throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
   }
 
-  const { accessToken, expiresIn } = signAccessToken(user)
+  const defaultClaims = await resolveDefaultSessionClaims(user.id)
+  const { accessToken, expiresIn } = signAccessToken(
+    user,
+    defaultClaims
+      ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
+      : undefined,
+  )
+  return { accessToken, expiresIn, user: toUserProfile(user) }
+}
+
+export async function reissueSessionRole(
+  userId: string,
+  platformRole: PlatformRole,
+  companyId?: string | null,
+) {
+  await assertCanAssumeSessionRole(userId, platformRole, companyId)
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  const effectiveCompanyId = platformRole === 'super_admin' ? null : (companyId ?? null)
+  const { accessToken, expiresIn } = signAccessToken(user, {
+    platformRole,
+    companyId: effectiveCompanyId,
+  })
   return { accessToken, expiresIn, user: toUserProfile(user) }
 }
 
@@ -542,7 +575,13 @@ export async function exchangeAuthCode(code: string, redirectUri: string) {
 
   await markAuthCodeUsed(stored.id)
 
-  const { accessToken, expiresIn } = signAccessToken(user)
+  const defaultClaims = await resolveDefaultSessionClaims(user.id)
+  const { accessToken, expiresIn } = signAccessToken(
+    user,
+    defaultClaims
+      ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
+      : undefined,
+  )
   return {
     accessToken,
     expiresIn,
