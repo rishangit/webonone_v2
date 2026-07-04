@@ -123,6 +123,22 @@ Spec: subtask **86ey5nk8m**
 
 ---
 
+## Phase 7 — Platform SSO + longer session (delta)
+
+**Goal:** [06-platform-sso-session.md](./06-platform-sso-session.md).
+
+| Task | Detail |
+|------|--------|
+| Consumer login URLs | Remove default `prompt=login` from `buildIdentityLoginUrl` (WebOnOne, Data, Email, Media) |
+| Login UX | Auto-redirect to Identity on consumer `LoginPage` mount |
+| Identity env | `ACCESS_TOKEN_EXPIRY_SECONDS=604800` in `.env.example` |
+
+**Exit criteria:** Cross-service login without re-entering credentials when Identity session exists.
+
+Spec: subtask **86ey5nqjw**
+
+---
+
 ## Acceptance checklist
 
 - [ ] Identity `users_roles` populated; WebOnOne/Email/Data role tables absent
@@ -141,6 +157,7 @@ Spec: subtask **86ey5nk8m**
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | All phases |
 | Subtask: issue in data sync | 86ey5nk8m | Phase 6 |
+| Subtask: login session need to increase | 86ey5nqjw | Phase 7 |
 
 ---
 
