@@ -53,7 +53,7 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
 
     bootstrapPlatformSession(code, redirectUri)
       .then(async (result) => {
-        const role = await fetchDataRole(result.accessToken)
+        const role = result.platformRole ?? (await fetchDataRole(result.accessToken))
 
         if (validatedReturnUrl) {
           dispatch(

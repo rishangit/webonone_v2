@@ -109,12 +109,10 @@ function mapRegistrationStorageError(err: unknown, operation: string): never {
 
 async function issueAuthTokens(user: UserRow) {
   const defaultClaims = await resolveDefaultSessionClaims(user.id)
-  const { accessToken, expiresIn } = signAccessToken(
-    user,
-    defaultClaims
-      ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
-      : undefined,
-  )
+  const sessionClaims = defaultClaims
+    ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
+    : undefined
+  const { accessToken, expiresIn } = signAccessToken(user, sessionClaims)
   const refreshToken = generateRefreshToken()
   const refreshTokenHash = hashToken(refreshToken)
   const expiresAt = new Date()
@@ -127,7 +125,7 @@ async function issueAuthTokens(user: UserRow) {
     expiresAt,
   })
 
-  return buildAuthResponse(user, accessToken, expiresIn, refreshToken)
+  return buildAuthResponse(user, accessToken, expiresIn, refreshToken, sessionClaims)
 }
 
 async function issueEmailVerification(user: UserRow): Promise<void> {
@@ -335,13 +333,21 @@ export async function refreshAccessToken(refreshToken: string) {
   }
 
   const defaultClaims = await resolveDefaultSessionClaims(user.id)
-  const { accessToken, expiresIn } = signAccessToken(
-    user,
-    defaultClaims
-      ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
-      : undefined,
-  )
-  return { accessToken, expiresIn, user: toUserProfile(user) }
+  const sessionClaims = defaultClaims
+    ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
+    : undefined
+  const { accessToken, expiresIn } = signAccessToken(user, sessionClaims)
+  return {
+    accessToken,
+    expiresIn,
+    user: toUserProfile(user),
+    ...(sessionClaims?.platformRole
+      ? {
+          platformRole: sessionClaims.platformRole,
+          companyId: sessionClaims.companyId ?? null,
+        }
+      : {}),
+  }
 }
 
 export async function reissueSessionRole(
@@ -356,11 +362,15 @@ export async function reissueSessionRole(
   }
 
   const effectiveCompanyId = platformRole === 'super_admin' ? null : (companyId ?? null)
-  const { accessToken, expiresIn } = signAccessToken(user, {
+  const sessionClaims = { platformRole, companyId: effectiveCompanyId }
+  const { accessToken, expiresIn } = signAccessToken(user, sessionClaims)
+  return {
+    accessToken,
+    expiresIn,
+    user: toUserProfile(user),
     platformRole,
     companyId: effectiveCompanyId,
-  })
-  return { accessToken, expiresIn, user: toUserProfile(user) }
+  }
 }
 
 export async function logoutUser(refreshToken: string) {
@@ -576,16 +586,20 @@ export async function exchangeAuthCode(code: string, redirectUri: string) {
   await markAuthCodeUsed(stored.id)
 
   const defaultClaims = await resolveDefaultSessionClaims(user.id)
-  const { accessToken, expiresIn } = signAccessToken(
-    user,
-    defaultClaims
-      ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
-      : undefined,
-  )
+  const sessionClaims = defaultClaims
+    ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
+    : undefined
+  const { accessToken, expiresIn } = signAccessToken(user, sessionClaims)
   return {
     accessToken,
     expiresIn,
     user: toUserProfile(user),
+    ...(sessionClaims?.platformRole
+      ? {
+          platformRole: sessionClaims.platformRole,
+          companyId: sessionClaims.companyId ?? null,
+        }
+      : {}),
   }
 }
 
