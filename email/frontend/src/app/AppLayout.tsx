@@ -13,6 +13,7 @@ import { authActions, clearEmailAuthStorage } from '@/features/auth/store/authSl
 import {
   PlatformLoadingProvider,
   usePlatformPageLabel,
+  usePlatformRouteLabel,
 } from '@/features/auth/context/PlatformLoadingContext'
 import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { useRefreshEmailRole } from '@/features/auth/hooks/useRefreshEmailRole'
@@ -43,6 +44,7 @@ function AppLayoutContent() {
   const { isBootstrapping, bootstrapError } = usePlatformSessionBootstrap()
   const roleReady = useRefreshEmailRole(isBootstrapping)
   const pageLabel = usePlatformPageLabel()
+  const routeLabel = usePlatformRouteLabel()
 
   const returnUrlFromQuery = parsePlatformReturnUrl(searchParams)
   const isPlatformHandoff = hasPlatformHandoff(searchParams)
@@ -160,7 +162,7 @@ function AppLayoutContent() {
       : null
 
   const sessionLoading = isBootstrapping || (Boolean(accessToken) && !roleReady)
-  const overlayLabel = sessionLoading ? 'Loading session…' : pageLabel
+  const overlayLabel = sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel
 
   const mainContent = (
     <>
@@ -170,7 +172,7 @@ function AppLayoutContent() {
           <AlertDescription>{bootstrapError}</AlertDescription>
         </Alert>
       ) : null}
-      {overlayLabel ? <LoadingState overlay label={overlayLabel} /> : null}
+      {overlayLabel ? <LoadingState key="platform-loading" overlay label={overlayLabel} /> : null}
     </>
   )
 
