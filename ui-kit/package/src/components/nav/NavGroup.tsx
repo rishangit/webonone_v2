@@ -8,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../DropdownMenu'
+import { handleNavItemClick } from './handleNavItemClick'
+import { isLocalNavPath } from './isLocalNavPath'
 import { NavItem } from './NavItem'
 import { isNavPathActive } from './navTargetPath'
 
@@ -17,6 +19,8 @@ interface NavGroupProps {
   children: NavItemConfig[]
   activePath?: string
   collapsed?: boolean
+  onNavItemNavigate?: (to: string) => void
+  onNavItemPrefetch?: (to: string) => void
   onNavigate?: () => void
   className?: string
 }
@@ -32,6 +36,8 @@ function NavGroup({
   children,
   activePath,
   collapsed = false,
+  onNavItemNavigate,
+  onNavItemPrefetch,
   onNavigate,
   className,
 }: NavGroupProps) {
@@ -56,27 +62,38 @@ function NavGroup({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="w-48">
-          {children.map((child) => (
-            <DropdownMenuItem key={child.to} asChild>
-              <a
-                href={child.onClick ? '#' : child.to}
-                onClick={(event) => {
-                  if (child.onClick) {
-                    event.preventDefault()
-                    child.onClick()
+          {children.map((child) => {
+            const useClientNav = Boolean(
+              child.onClick || (onNavItemNavigate && isLocalNavPath(child.to)),
+            )
+
+            return (
+              <DropdownMenuItem key={child.to} asChild>
+                <a
+                  href={useClientNav ? '#' : child.to}
+                  onClick={(event) =>
+                    handleNavItemClick(event, child.to, {
+                      onClick: child.onClick,
+                      onNavItemNavigate,
+                      onNavigate,
+                    })
                   }
-                  onNavigate?.()
-                }}
-                className={cn(
-                  'flex cursor-pointer items-center gap-2',
-                  isNavPathActive(activePath, child.to) && 'text-primary',
-                )}
-              >
-                <child.icon className="h-4 w-4" aria-hidden />
-                {child.label}
-              </a>
-            </DropdownMenuItem>
-          ))}
+                  onMouseEnter={() => {
+                    if (!child.onClick && onNavItemPrefetch && isLocalNavPath(child.to)) {
+                      onNavItemPrefetch(child.to)
+                    }
+                  }}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-2',
+                    isNavPathActive(activePath, child.to) && 'text-primary',
+                  )}
+                >
+                  <child.icon className="h-4 w-4" aria-hidden />
+                  {child.label}
+                </a>
+              </DropdownMenuItem>
+            )
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
     )
@@ -109,6 +126,8 @@ function NavGroup({
               label={child.label}
               icon={child.icon}
               onClick={child.onClick}
+              onNavItemNavigate={onNavItemNavigate}
+              onNavItemPrefetch={onNavItemPrefetch}
               nested
               active={isNavPathActive(activePath, child.to)}
               onNavigate={onNavigate}

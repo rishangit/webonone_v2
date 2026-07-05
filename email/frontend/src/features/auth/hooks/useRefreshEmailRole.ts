@@ -7,12 +7,32 @@ import { apiClient } from '@/shared/services/apiClient'
 export function useRefreshEmailRole(isBootstrapping: boolean): boolean {
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
-  const [roleReady, setRoleReady] = useState(!accessToken)
+  const userRole = useAppSelector((s) => s.auth.user?.role)
+  const [roleReady, setRoleReady] = useState(!accessToken || Boolean(userRole))
 
   useEffect(() => {
     if (!accessToken || isBootstrapping) {
-      setRoleReady(!accessToken)
+      setRoleReady(!accessToken || Boolean(userRole))
       return
+    }
+
+    if (userRole) {
+      setRoleReady(true)
+      let cancelled = false
+
+      apiClient<{ user: { role: EmailRole } }>('/me')
+        .then((me) => {
+          if (!cancelled) {
+            dispatch(authActions.setUserRole(me.user.role))
+          }
+        })
+        .catch(() => {
+          // keep role from bootstrap
+        })
+
+      return () => {
+        cancelled = true
+      }
     }
 
     let cancelled = false
@@ -34,7 +54,7 @@ export function useRefreshEmailRole(isBootstrapping: boolean): boolean {
     return () => {
       cancelled = true
     }
-  }, [accessToken, dispatch, isBootstrapping])
+  }, [accessToken, dispatch, isBootstrapping, userRole])
 
   return roleReady
 }

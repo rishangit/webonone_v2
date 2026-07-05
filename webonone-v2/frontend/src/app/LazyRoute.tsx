@@ -1,8 +1,8 @@
 import { Suspense, type ReactNode } from 'react'
-import { useRouteLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { useDelayedRouteLoading } from '@/features/shell/context/PlatformLoadingContext'
 
 function RouteChunkLoading() {
-  useRouteLoading('Loading page…')
+  useDelayedRouteLoading('Loading page…')
   return null
 }
 

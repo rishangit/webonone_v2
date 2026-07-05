@@ -13,6 +13,8 @@ interface AppSidebarProps {
   onCollapsedChange: (collapsed: boolean) => void
   mobileOpen: boolean
   onMobileClose: () => void
+  onNavItemNavigate?: (to: string) => void
+  onNavItemPrefetch?: (to: string) => void
   className?: string
 }
 
@@ -23,6 +25,8 @@ function AppSidebar({
   onCollapsedChange,
   mobileOpen,
   onMobileClose,
+  onNavItemNavigate,
+  onNavItemPrefetch,
   className,
 }: AppSidebarProps) {
   useEffect(() => {
@@ -64,6 +68,8 @@ function AppSidebar({
                 children={item.children}
                 activePath={activePath}
                 collapsed={collapsed}
+                onNavItemNavigate={onNavItemNavigate}
+                onNavItemPrefetch={onNavItemPrefetch}
                 onNavigate={handleNavigate}
               />
             )
@@ -76,6 +82,8 @@ function AppSidebar({
               label={item.label}
               icon={item.icon}
               onClick={item.onClick}
+              onNavItemNavigate={onNavItemNavigate}
+              onNavItemPrefetch={onNavItemPrefetch}
               active={isNavPathActive(activePath, item.to)}
               collapsed={collapsed}
               onNavigate={handleNavigate}

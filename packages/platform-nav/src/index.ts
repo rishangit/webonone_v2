@@ -1,4 +1,6 @@
 export { redirectWithAuthCode } from './authCodeRedirect'
+export { createNavItemNavigate, parseNavTarget } from './clientNav'
+export type { NavItemNavigateHandler, NavTarget } from './clientNav'
 export { buildLoginRedirectUrl, consumeOAuthState } from './loginRedirect'
 export { parseReturnUrl, stripAuthCodeFromSearch } from './returnUrl'
 export { resolvePlatformLogoutLoginUrl, resolveAbsolutePostLogoutLoginUrl, buildIdentityLogoutUrl, performPlatformLogout } from './platformLogout'

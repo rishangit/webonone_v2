@@ -1,6 +1,7 @@
-import type { MouseEvent } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { handleNavItemClick } from './handleNavItemClick'
+import { isLocalNavPath } from './isLocalNavPath'
 
 interface NavItemProps {
   to: string
@@ -10,6 +11,8 @@ interface NavItemProps {
   collapsed?: boolean
   nested?: boolean
   onClick?: () => void
+  onNavItemNavigate?: (to: string) => void
+  onNavItemPrefetch?: (to: string) => void
   onNavigate?: () => void
   className?: string
 }
@@ -22,21 +25,26 @@ function NavItem({
   collapsed = false,
   nested = false,
   onClick,
+  onNavItemNavigate,
+  onNavItemPrefetch,
   onNavigate,
   className,
 }: NavItemProps) {
-  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (onClick) {
-      event.preventDefault()
-      onClick()
+  const useClientNav = Boolean(onClick || (onNavItemNavigate && isLocalNavPath(to)))
+
+  function handleMouseEnter() {
+    if (!onClick && onNavItemPrefetch && isLocalNavPath(to)) {
+      onNavItemPrefetch(to)
     }
-    onNavigate?.()
   }
 
   return (
     <a
-      href={onClick ? '#' : to}
-      onClick={handleClick}
+      href={useClientNav ? '#' : to}
+      onClick={(event) =>
+        handleNavItemClick(event, to, { onClick, onNavItemNavigate, onNavigate })
+      }
+      onMouseEnter={handleMouseEnter}
       title={collapsed ? label : undefined}
       aria-label={collapsed ? label : undefined}
       aria-current={active ? 'page' : undefined}

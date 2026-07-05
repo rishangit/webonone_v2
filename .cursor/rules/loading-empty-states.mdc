@@ -1,84 +1,92 @@
----
-description: Unified platform loading overlay, LoadingState, and ItemListEmpty in service frontends
-globs: "**/frontend/src/**/*.{ts,tsx}"
-alwaysApply: false
----
-
-# Loading and empty states
-
-Import from `@webonone/ui-kit`: **`LoadingState`**, **`ItemListEmpty`**.
-
-## Unified platform loading overlay (required)
-
-**WebOnOne core, Data, Email, and new platform-shell satellites** must show **one** viewport overlay for session, lazy-route, and page/data loads — never stacked spinners on refresh.
-
-```text
-AppLayout
-  PlatformLoadingProvider
-  → always render <Outlet />
-  → single <LoadingState key="platform-loading" overlay label={…} />
-SessionRoleGate / session hooks → usePlatformLoading('Loading session…')
-LazyRoute Suspense fallback → useRouteLoading('Loading page…'); return null
-Pages / list fetches → usePlatformLoading(loading ? 'Loading …' : null)
-```
-
-| Hook / surface | Role |
-|----------------|------|
-| `PlatformLoadingProvider` | Wrap `AppLayout` content tree |
-| `usePlatformLoading(label)` | Session gate, page data fetch, editor load |
-| `useRouteLoading(label)` | Lazy route chunk (`LazyRoute` only) |
-| `AppLayout` overlay | Sole visible loading UI |
-
-Hooks use **`useLayoutEffect`** to set/clear labels (avoids one-frame overlay gaps).
-
-**Label priority**
-
-| App | `overlayLabel` |
-|-----|----------------|
-| Data / Email satellite | `sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel` |
-| WebOnOne core | `pageLabel ?? routeLabel` (session via `SessionRoleGate` → `usePlatformLoading`) |
-
-Context module (same API — copy per service):
-
-| Service | Path |
-|---------|------|
-| WebOnOne v2 | `webonone-v2/frontend/src/features/shell/context/PlatformLoadingContext.tsx` |
-| Data / Email | `<service>/frontend/src/features/auth/context/PlatformLoadingContext.tsx` |
-
-Reference: `data/frontend/src/app/AppLayout.tsx`, `data/frontend/src/app/LazyRoute.tsx`, `webonone-v2/frontend/src/app/AppLayout.tsx`, `webonone-v2/frontend/src/features/session/components/SessionRoleGate.tsx`.
-
-**Forbidden:** inline `"Loading…"` text in pages; per-page `<LoadingState overlay />`; `LazyRoute` fallback that renders visible `Spinner`/`LoadingState`; second overlay during `RoleRoute` handoff (return `null` — overlay handles it).
-
-**Exception:** platform inbound **`code` bootstrap** on the destination **home page** may show a page-content spinner during exchange only — not a second AppLayout overlay. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
-
-## LoadingState (AppLayout + buttons)
-
-Centered themed spinner + label.
-
-| Prop | Notes |
-|------|-------|
-| `label` | Contextual: `"Loading tags…"`, `"Loading session…"`, `"Loading page…"` |
-| `overlay` | **`true`** in **`AppLayout` only** — nowhere else |
-
-**Buttons:** **`Spinner size="sm"`** inside the button — not `LoadingState`.
-
-Page hook example: `data/frontend/src/features/tags/pages/TagsPage.tsx`.
-
-## ItemListEmpty
-
-Centered empty-list message when **`items.length === 0`** inside or instead of `ItemList`.
-
-Pass copy as children, e.g. `<ItemListEmpty>No tags found.</ItemListEmpty>`.
-
-Reference: `data/frontend/src/features/tags/components/TagsList.tsx`.
-
-## Verification
-
-```bash
-npm run build -w @webonone/ui-kit
-npm run type-check -w webonone-v2-root
-npm run type-check -w data-root
-npm run type-check -w email-root
-```
-
-Cross-links: [item-list skill](../skills/item-list/SKILL.md), [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc).
+---
+description: Unified platform loading overlay, LoadingState, and ItemListEmpty in service frontends
+globs: "**/frontend/src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Loading and empty states
+
+Import from `@webonone/ui-kit`: **`LoadingState`**, **`ItemListEmpty`**.
+
+## Unified platform loading overlay (required)
+
+**WebOnOne core, Data, Email, and new platform-shell satellites** must show **one content-area overlay** for session, lazy-route, and page/data loads — header and sidebar stay visible; never stacked spinners.
+
+```text
+AppLayout
+  PlatformLoadingProvider
+  AppShell (onNavItemNavigate + optional onNavItemPrefetch)
+  → <div className="relative min-h-full">
+      <Outlet />
+      <LoadingState overlay overlayScope="content" label={…} />
+SessionRoleGate / session hooks → usePlatformLoading('Loading session…')
+LazyRoute Suspense fallback → useDelayedRouteLoading('Loading page…'); return null
+Pages / list fetches → usePlatformLoading(loading ? 'Loading …' : null)
+```
+
+| Hook / surface | Role |
+|----------------|------|
+| `PlatformLoadingProvider` | Wrap `AppLayout` content tree |
+| `usePlatformLoading(label)` | Session gate, page data fetch, editor load |
+| `useDelayedRouteLoading(label)` | Lazy route chunk (`LazyRoute` only) — ~175ms delay |
+| `AppLayout` overlay | Sole visible loading UI; **`overlayScope="content"`** |
+
+Hooks use **`useLayoutEffect`** to set/clear labels (avoids one-frame overlay gaps).
+
+**Client-side local nav** — pass `onNavItemNavigate={createNavItemNavigate(...)}` on `AppShell` (from `@webonone/platform-nav`). Do not use per-service `withClientSideNavigation` on nav items. Optional `onNavItemPrefetch` from `<service>/app/routePrefetch.ts` for hover prefetch.
+
+**Label priority**
+
+| App | `overlayLabel` |
+|-----|----------------|
+| Data / Email satellite | `sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel` — **exclude** `isBootstrapping` from `sessionLoading` |
+| WebOnOne core | `pageLabel ?? routeLabel` (session via `SessionRoleGate` → `usePlatformLoading`) |
+
+Context module (same API — copy per service):
+
+| Service | Path |
+|---------|------|
+| WebOnOne v2 | `webonone-v2/frontend/src/features/shell/context/PlatformLoadingContext.tsx` |
+| Data / Email | `<service>/frontend/src/features/auth/context/PlatformLoadingContext.tsx` |
+
+Reference: `data/frontend/src/app/AppLayout.tsx`, `data/frontend/src/app/LazyRoute.tsx`, `webonone-v2/frontend/src/app/AppLayout.tsx`, `webonone-v2/frontend/src/features/session/components/SessionRoleGate.tsx`.
+
+**Forbidden:** inline `"Loading…"` text in pages; per-page `<LoadingState overlay />`; `LazyRoute` fallback that renders visible `Spinner`/`LoadingState`; second overlay during `code` bootstrap in satellite `AppLayout`; `overlayScope="viewport"` in `AppLayout` (use viewport only for login/logout full pages).
+
+**Exception:** platform inbound **`code` bootstrap** may use a page-content spinner during exchange only — not an AppLayout overlay. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
+
+**Cross-service nav:** full `window.location` navigation is expected per origin hop; destination must keep `AppShell` stable with content-scoped loading only.
+
+## LoadingState (AppLayout + buttons)
+
+Centered themed spinner + label.
+
+| Prop | Notes |
+|------|-------|
+| `label` | Contextual: `"Loading tags…"`, `"Loading session…"`, `"Loading page…"` |
+| `overlay` | **`true`** in **`AppLayout` only** — nowhere else |
+| `overlayScope` | **`content`** (default) in AppLayout; **`viewport`** for login/logout standalone pages |
+
+**Buttons:** **`Spinner size="sm"`** inside the button — not `LoadingState`.
+
+Page hook example: `data/frontend/src/features/tags/pages/TagsPage.tsx`.
+
+## ItemListEmpty
+
+Centered empty-list message when **`items.length === 0`** inside or instead of `ItemList`.
+
+Pass copy as children, e.g. `<ItemListEmpty>No tags found.</ItemListEmpty>`.
+
+Reference: `data/frontend/src/features/tags/components/TagsList.tsx`.
+
+## Verification
+
+```bash
+npm run build -w @webonone/ui-kit
+npm run build -w @webonone/platform-nav
+npm run type-check -w webonone-v2-root
+npm run type-check -w data-root
+npm run type-check -w email-root
+```
+
+Cross-links: [item-list skill](../skills/item-list/SKILL.md), [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc).

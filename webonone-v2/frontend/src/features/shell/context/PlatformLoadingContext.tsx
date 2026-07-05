@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
@@ -15,6 +16,8 @@ type PlatformLoadingContextValue = {
 }
 
 const PlatformLoadingContext = createContext<PlatformLoadingContextValue | null>(null)
+
+const DEFAULT_ROUTE_LOADING_DELAY_MS = 175
 
 export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
   const [pageLabel, setPageLabel] = useState<string | null>(null)
@@ -59,6 +62,24 @@ export function usePlatformLoading(label: string | null | false): void {
 /** Report lazy route chunk loading to AppLayout overlay. */
 export function useRouteLoading(label: string | null | false): void {
   useLoadingLabel('routeLabel', label)
+}
+
+/** Delay route overlay to avoid flash when lazy chunks are already cached. */
+export function useDelayedRouteLoading(
+  label: string,
+  delayMs = DEFAULT_ROUTE_LOADING_DELAY_MS,
+): void {
+  const [showLabel, setShowLabel] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowLabel(true), delayMs)
+    return () => {
+      clearTimeout(timer)
+      setShowLabel(false)
+    }
+  }, [delayMs, label])
+
+  useRouteLoading(showLabel ? label : null)
 }
 
 export function usePlatformPageLabel(): string | null {

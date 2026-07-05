@@ -1,15 +1,25 @@
 import { cn } from '../lib/utils'
 import { Spinner } from './Spinner'
 
+export type LoadingOverlayScope = 'content' | 'viewport'
+
 export interface LoadingStateProps {
   label?: string
   size?: 'sm' | 'md' | 'lg'
-  /** When true, viewport-centered overlay for page, route, and session loads. */
+  /** When true, centered overlay for page, route, and session loads. */
   overlay?: boolean
+  /** `content` anchors to a positioned parent; `viewport` covers the full screen. */
+  overlayScope?: LoadingOverlayScope
   className?: string
 }
 
-function LoadingState({ label = 'Loading…', size = 'lg', overlay = false, className }: LoadingStateProps) {
+function LoadingState({
+  label = 'Loading…',
+  size = 'lg',
+  overlay = false,
+  overlayScope = 'content',
+  className,
+}: LoadingStateProps) {
   const body = (
     <>
       <Spinner size={size} />
@@ -24,7 +34,8 @@ function LoadingState({ label = 'Loading…', size = 'lg', overlay = false, clas
         aria-live="polite"
         aria-busy="true"
         className={cn(
-          'fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm',
+          'z-50 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm',
+          overlayScope === 'viewport' ? 'fixed inset-0' : 'absolute inset-0',
           className,
         )}
       >

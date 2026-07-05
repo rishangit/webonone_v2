@@ -17,6 +17,8 @@ interface AppShellProps {
   user?: AppHeaderUser | null
   onProfileClick?: () => void
   onLogout?: () => void
+  onNavItemNavigate?: (to: string) => void
+  onNavItemPrefetch?: (to: string) => void
   defaultCollapsed?: boolean
   className?: string
 }
@@ -59,6 +61,8 @@ function AppShell({
   user,
   onProfileClick,
   onLogout,
+  onNavItemNavigate,
+  onNavItemPrefetch,
   defaultCollapsed = false,
   className,
 }: AppShellProps) {
@@ -116,11 +120,13 @@ function AppShell({
           onCollapsedChange={setCollapsed}
           mobileOpen={mobileOpen}
           onMobileClose={() => setMobileOpen(false)}
+          onNavItemNavigate={onNavItemNavigate}
+          onNavItemPrefetch={onNavItemPrefetch}
         />
         <main
           id="main-content"
           className={cn(
-            'min-h-[calc(100vh-3.5rem)] flex-1 py-4 scrollbar-themed sm:py-6',
+            'relative min-h-[calc(100vh-3.5rem)] flex-1 py-4 scrollbar-themed sm:py-6',
             shellContentPaddingX,
           )}
         >

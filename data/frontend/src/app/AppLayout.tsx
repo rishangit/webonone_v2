@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   CORE_NAV_QUERY_PARAM,
+  createNavItemNavigate,
   parsePlatformNavVariant,
   performPlatformLogout,
   useServiceRedirect,
 } from '@webonone/platform-nav'
 import { Alert, AlertDescription, AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import { relayThemeQueryParams } from '@webonone/theme'
+import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions, clearDataAuthStorage } from '@/features/auth/store/authSlice'
 import {
@@ -23,7 +25,6 @@ import { parsePlatformReturnUrl, hasPlatformHandoff } from '@/features/auth/util
 import type { DataRole } from '@/features/auth/types/auth.types'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
-import { withClientSideNavigation } from '@/features/shell/utils/clientNav'
 import { withEmailNavActions } from '@/features/shell/utils/externalNavActions'
 
 export function AppLayout() {
@@ -54,6 +55,14 @@ function AppLayoutContent() {
   const usePlatformShell = isPlatformMode && (isAuthenticated || isPlatformHandoff)
 
   const role: DataRole = user?.role ?? 'member'
+
+  const onNavItemNavigate = useMemo(
+    () =>
+      createNavItemNavigate((target) =>
+        navigate({ pathname: target.pathname, search: target.search || undefined }),
+      ),
+    [navigate],
+  )
 
   const handleEmailNavClick = useCallback(
     async (sentinel: string) => {
@@ -95,13 +104,11 @@ function AppLayoutContent() {
           : null),
       searchParams: isPlatformMode ? searchParams : undefined,
     })
-    const withPeerNav = effectiveReturnUrl ? withEmailNavActions(base, handleEmailNavClick) : base
-    return withClientSideNavigation(withPeerNav, navigate)
+    return effectiveReturnUrl ? withEmailNavActions(base, handleEmailNavClick) : base
   }, [
     effectiveReturnUrl,
     handleEmailNavClick,
     isPlatformMode,
-    navigate,
     platform.coreNavVariant,
     returnUrlFromQuery,
     role,
@@ -125,7 +132,7 @@ function AppLayoutContent() {
         coreNavVariant: parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM)),
       }),
     )
-  }, [accessToken, dispatch, isPlatformMode, searchParams])
+  }, [accessToken, dispatch, isPlatformHandoff, isPlatformMode, searchParams])
 
   async function handleProfileClick() {
     if (!accessToken || !effectiveReturnUrl) {
@@ -161,30 +168,38 @@ function AppLayoutContent() {
         }
       : null
 
-  const sessionLoading = isBootstrapping || (Boolean(accessToken) && !roleReady)
+  const sessionLoading = Boolean(accessToken) && !roleReady
   const overlayLabel = sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel
 
   const mainContent = (
-    <>
+    <div className="relative min-h-full">
       <Outlet />
       {bootstrapError ? (
         <Alert variant="destructive" className="mt-4">
           <AlertDescription>{bootstrapError}</AlertDescription>
         </Alert>
       ) : null}
-      {overlayLabel ? <LoadingState key="platform-loading" overlay label={overlayLabel} /> : null}
-    </>
+      {overlayLabel ? (
+        <LoadingState key="platform-loading" overlay overlayScope="content" label={overlayLabel} />
+      ) : null}
+    </div>
   )
+
+  const shellProps = {
+    nav,
+    activePath: location.pathname,
+    onNavItemNavigate,
+    onNavItemPrefetch: prefetchNavTarget,
+    user: headerUser,
+    onLogout: handleLogout,
+  }
 
   if (usePlatformShell) {
     return (
       <AppShell
-        nav={nav}
-        activePath={location.pathname}
+        {...shellProps}
         logo={<BrandLogo>WebOnOne</BrandLogo>}
-        user={headerUser}
         onProfileClick={handleProfileClick}
-        onLogout={handleLogout}
       >
         {mainContent}
         {profileError ? <p className="mt-4 text-sm text-destructive">{profileError}</p> : null}
@@ -194,13 +209,7 @@ function AppLayoutContent() {
 
   if (isAuthenticated && !isPlatformMode) {
     return (
-      <AppShell
-        nav={nav}
-        activePath={location.pathname}
-        logo={<BrandLogo>Data</BrandLogo>}
-        user={headerUser}
-        onLogout={handleLogout}
-      >
+      <AppShell {...shellProps} logo={<BrandLogo>Data</BrandLogo>}>
         {mainContent}
       </AppShell>
     )

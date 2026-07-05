@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
+import { CORE_NAV_QUERY_PARAM, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { AppShell, BrandLogo, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
@@ -47,6 +47,14 @@ export function AppLayout() {
   const returnUrl = parseProfileReturnUrl(searchParams)
   const { isRedirect } = useRedirectMode()
   const isRedirectLogin = location.pathname === '/login' && isRedirect
+
+  const onNavItemNavigate = useMemo(
+    () =>
+      createNavItemNavigate((target) =>
+        navigate({ pathname: target.pathname, search: target.search || undefined }),
+      ),
+    [navigate],
+  )
 
   const handleEmailNavClick = useCallback(
     async (sentinel: string) => {
@@ -109,6 +117,7 @@ export function AppLayout() {
         user={headerUser}
         onProfileClick={headerUser ? handleProfileClick : undefined}
         onLogout={headerUser ? handleLogout : undefined}
+        onNavItemNavigate={onNavItemNavigate}
       >
         <Outlet />
         {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}

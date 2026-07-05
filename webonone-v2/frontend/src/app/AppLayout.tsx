@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AppShell, BrandLogo, LoadingState } from '@webonone/ui-kit'
-import { performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
+import { createNavItemNavigate, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
 import type { NavConfigItem } from '@webonone/ui-kit'
+import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppSelector } from '@/app/store/hooks'
 import { clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
@@ -75,6 +76,14 @@ function AppLayoutContent() {
   useIdentityUserRefresh()
 
   const navVariant = useMemo(() => getNavVariantForSessionRole(activeRole), [activeRole])
+
+  const onNavItemNavigate = useMemo(
+    () =>
+      createNavItemNavigate((target) =>
+        navigate({ pathname: target.pathname, search: target.search || undefined }),
+      ),
+    [navigate],
+  )
 
   const handleEmailNavClick = useCallback(
     async (sentinel: string) => {
@@ -193,10 +202,16 @@ function AppLayoutContent() {
           }
           onProfileClick={user ? handleProfileClick : undefined}
           onLogout={handleLogout}
+          onNavItemNavigate={onNavItemNavigate}
+          onNavItemPrefetch={prefetchNavTarget}
         >
-          <Outlet />
-          {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
-          {overlayLabel ? <LoadingState key="platform-loading" overlay label={overlayLabel} /> : null}
+          <div className="relative min-h-full">
+            <Outlet />
+            {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
+            {overlayLabel ? (
+              <LoadingState key="platform-loading" overlay overlayScope="content" label={overlayLabel} />
+            ) : null}
+          </div>
         </AppShell>
       </SessionRoleGate>
     </ThemeProviderBridge>
