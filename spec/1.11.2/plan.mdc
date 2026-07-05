@@ -8,9 +8,9 @@ globs: data/frontend/**, email/frontend/**
 
 ## Summary
 
-Fix platform shell navigation when hopping between **Data** and **Email** satellites. Wire auth-code redirect handlers for peer nav sentinels (mirror WebOnOne `withExternalNavActions`).
+Fix platform shell navigation when hopping between **Data** and **Email** satellites, and unify the platform loading overlay on page refresh (single overlay, label updates in place).
 
-See [02-cross-service-nav-fix.md](./02-cross-service-nav-fix.md).
+See [02-cross-service-nav-fix.md](./02-cross-service-nav-fix.md), [03-loading-overlay-unification.md](./03-loading-overlay-unification.md).
 
 ## Branch and prerequisites
 
@@ -61,6 +61,24 @@ See [02-cross-service-nav-fix.md](./02-cross-service-nav-fix.md).
 
 ---
 
+## Phase 3 — Unified loading overlay (delta)
+
+**Goal:** One viewport overlay on refresh; label updates without remount ([03-loading-overlay-unification.md](./03-loading-overlay-unification.md)).
+
+**Exit criteria:** Refresh Data `/tags` or Email `/templates` — no double full-screen spinner.
+
+| Task | Paths |
+|------|-------|
+| Loading context | `data/frontend/src/features/auth/context/PlatformLoadingContext.tsx` (mirror in email) |
+| AppLayout | Always render `<Outlet />`; single overlay for session + page label |
+| LazyRoute | Non-overlay Suspense fallback |
+| List/home pages | `usePlatformLoading(label)` instead of `LoadingState overlay` |
+| Cleanup | Remove redundant `PlatformHandoffSpinner` early returns on list pages |
+
+**Verify:** `npm run type-check -w data-root` · `npm run type-check -w email-root`
+
+---
+
 ## Cross-service integration
 
 - Auth-code flow unchanged: `POST {identityApi}/auth/code` → peer home URL with `code`, `return_url`, `core_nav`
@@ -75,6 +93,7 @@ See [02-cross-service-nav-fix.md](./02-cross-service-nav-fix.md).
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.11.2 Bug fixing | 86ey5wdua | All |
 | Subtask: [Bug] issue in navigation with service | 86ey5we2u | Phase 1–2 |
+| Subtask: [Bug] Still can see the two loading when page refresh | 86ey5wf9a | Phase 3 |
 
 ---
 
@@ -94,4 +113,4 @@ npm run lint -w data-root
 npm run lint -w email-root
 ```
 
-Manual: WebOnOne → Data → Tags → Email → Templates; reverse Email → Data → Tags.
+Manual: WebOnOne → Data → Tags → Email → Templates; refresh `/tags` and `/templates` — single overlay only.
