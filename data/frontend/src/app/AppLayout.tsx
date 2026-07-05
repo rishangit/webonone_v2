@@ -13,6 +13,7 @@ import { authActions, clearDataAuthStorage } from '@/features/auth/store/authSli
 import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { useRefreshDataRole } from '@/features/auth/hooks/useRefreshDataRole'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
+import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { parsePlatformReturnUrl, hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
 import type { DataRole } from '@/features/auth/types/auth.types'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
@@ -98,7 +99,7 @@ export function AppLayout() {
   function handleLogout() {
     const returnUrl = effectiveReturnUrl
     clearDataAuthStorage()
-    performPlatformLogout(returnUrl)
+    performPlatformLogout(returnUrl, { identityOrigin: getIdentityOrigin() })
   }
 
   const headerUser =

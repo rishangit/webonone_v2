@@ -9,7 +9,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
-import type { UserProfile } from '../types/auth.types'
+import type { DataRole, UserProfile } from '../types/auth.types'
 import { consumeAuthState } from '../utils/buildIdentityLoginUrl'
 import { getAuthCallbackUrl, getIdentityApiBase } from '../utils/identityConfig'
 import { fetchDataRole } from '../utils/fetchDataRole'
@@ -55,11 +55,17 @@ export function AuthCallbackPage() {
         const data = (await res.json().catch(() => ({}))) as {
           accessToken?: string
           user?: UserProfile & { avatarUrl?: string | null }
+          platformRole?: DataRole
+          companyId?: string | null
           message?: string
         }
         if (!res.ok || !data.accessToken || !data.user) {
           throw new Error(data.message ?? `Token exchange failed (${res.status})`)
         }
+
+        const resolvedRolePromise = data.platformRole
+          ? Promise.resolve(data.platformRole)
+          : fetchDataRole(data.accessToken)
 
         dispatch(
           authActions.loginSuccess({
@@ -69,16 +75,15 @@ export function AuthCallbackPage() {
               email: data.user.email,
               displayName: data.user.displayName,
               avatarUrl: data.user.avatarUrl ?? null,
-              role: 'member',
+              role: data.platformRole ?? 'member',
             },
           }),
         )
 
-        return fetchDataRole(data.accessToken)
-          .then((role) => {
-            dispatch(authActions.setUserRole(role))
-            navigate(stored.returnPath || '/', { replace: true })
-          })
+        return resolvedRolePromise.then((role) => {
+          dispatch(authActions.setUserRole(role))
+          navigate(stored.returnPath || '/', { replace: true })
+        })
       })
       .catch((err: Error) => {
         exchangedCodes.delete(code)

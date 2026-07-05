@@ -7,7 +7,7 @@ interface IdentityMeResponse {
 }
 
 export async function fetchIdentityUser(accessToken: string): Promise<UserProfile> {
-  const res = await fetch(`${getIdentityApiBase()}/me`, {
+  const res = await fetch(`${getIdentityApiBase()}/auth/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
 

@@ -4,6 +4,7 @@ import { ToastProvider } from '@webonone/ui-kit'
 import { AppLayout } from '@/app/AppLayout'
 import { LazyRoute } from '@/app/LazyRoute'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { LogoutPage } from '@/features/auth/pages/LogoutPage'
 
 const RegisterPage = lazy(() =>
   import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })),
@@ -30,6 +31,7 @@ export function App() {
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/logout" element={<LogoutPage />} />
             <Route
               path="/register"
               element={

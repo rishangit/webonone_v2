@@ -23,7 +23,20 @@ Consumers must resolve permissions without local role tables or per-request Iden
 
 When user has **one** assumable role, Identity sets claims automatically in the first JWT (no dialog).
 
-When user has **multiple** assumable roles, initial JWT may omit `platform_role` or set a safe default (`member`); frontend **must** call session-role re-issue before accessing role-gated features.
+When user has assignable **`super_admin`**, Identity **always** auto-selects `super_admin` in the first JWT and auth JSON — even if other company-scoped roles exist (1.11.1 delta, subtask 86ey5pc30).
+
+When user has **multiple** non–super-admin assumable roles, initial JWT may omit `platform_role`; frontend **must** call session-role re-issue before accessing role-gated features.
+
+### Auth JSON response fields (1.11.1 delta)
+
+Login, refresh, auth-code exchange, and session-role re-issue responses include when session role is resolved:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `platformRole` | string | Same value as JWT `platform_role` claim |
+| `companyId` | string \| null | Same value as JWT `company_id` claim |
+
+Omitted when session role is not yet determined (multi-role without super-admin auto-default).
 
 ## Token re-issue flow
 

@@ -8,6 +8,10 @@ interface AuthState {
 
 const STORAGE_KEY = 'webonone_auth'
 
+export function clearWebOnOneAuthStorage(): void {
+  sessionStorage.removeItem(STORAGE_KEY)
+}
+
 function loadStoredAuth(): AuthState {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)

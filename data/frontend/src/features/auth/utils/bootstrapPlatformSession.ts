@@ -1,5 +1,5 @@
 import { getIdentityApiBase } from './identityConfig'
-import type { UserProfile } from '../types/auth.types'
+import type { DataRole, UserProfile } from '../types/auth.types'
 
 export function getDataRedirectUri(path = '/'): string {
   if (typeof window !== 'undefined') {
@@ -24,6 +24,8 @@ export async function bootstrapPlatformSession(
 ): Promise<{
   accessToken: string
   user: UserProfile & { avatarUrl?: string | null }
+  platformRole?: DataRole
+  companyId?: string | null
 }> {
   const uri = redirectUri ?? getDataRedirectUri('/')
 
@@ -36,6 +38,8 @@ export async function bootstrapPlatformSession(
   const data = (await res.json().catch(() => ({}))) as {
     accessToken?: string
     user?: UserProfile & { avatarUrl?: string | null }
+    platformRole?: DataRole
+    companyId?: string | null
     message?: string
   }
 
@@ -43,5 +47,10 @@ export async function bootstrapPlatformSession(
     throw new Error(data.message ?? `Token exchange failed (${res.status})`)
   }
 
-  return { accessToken: data.accessToken, user: data.user }
+  return {
+    accessToken: data.accessToken,
+    user: data.user,
+    platformRole: data.platformRole,
+    companyId: data.companyId,
+  }
 }

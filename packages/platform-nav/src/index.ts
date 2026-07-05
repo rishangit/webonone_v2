@@ -1,7 +1,8 @@
 export { redirectWithAuthCode } from './authCodeRedirect'
 export { buildLoginRedirectUrl, consumeOAuthState } from './loginRedirect'
 export { parseReturnUrl, stripAuthCodeFromSearch } from './returnUrl'
-export { resolvePlatformLogoutLoginUrl, performPlatformLogout } from './platformLogout'
+export { resolvePlatformLogoutLoginUrl, resolveAbsolutePostLogoutLoginUrl, buildIdentityLogoutUrl, performPlatformLogout } from './platformLogout'
+export type { PlatformLogoutOptions } from './platformLogout'
 export {
   matchesAllowedOrigin,
   matchesRedirectUri,

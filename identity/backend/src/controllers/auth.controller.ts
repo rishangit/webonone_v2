@@ -9,6 +9,7 @@ import {
   getCurrentUser,
   loginUser,
   logoutUser,
+  logoutAllUserSessions,
   patchCurrentUser,
   refreshAccessToken,
   requestPasswordReset,
@@ -243,6 +244,15 @@ export async function refresh(req: AuthenticatedRequest, res: Response) {
 export async function logout(req: AuthenticatedRequest, res: Response) {
   const body = refreshSchema.parse(req.body)
   await logoutUser(body.refreshToken)
+  res.json({ message: 'Logged out' })
+}
+
+export async function logoutAll(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  await logoutAllUserSessions(req.user.id)
   res.json({ message: 'Logged out' })
 }
 

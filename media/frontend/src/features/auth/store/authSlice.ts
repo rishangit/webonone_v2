@@ -8,6 +8,10 @@ interface AuthState {
 
 const STORAGE_KEY = 'media_auth'
 
+export function clearMediaAuthStorage(): void {
+  sessionStorage.removeItem(STORAGE_KEY)
+}
+
 function loadStoredAuth(): AuthState {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)

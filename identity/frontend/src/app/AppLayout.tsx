@@ -5,7 +5,6 @@ import { relayThemeQueryParams } from '@webonone/theme'
 import { AppShell, BrandLogo, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { persistAuthSession } from '@/features/auth/utils/authStorage'
 import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
@@ -94,8 +93,7 @@ export function AppLayout() {
       : null
 
   function handleLogout() {
-    persistAuthSession(null)
-    performPlatformLogout(returnUrl)
+    performPlatformLogout(returnUrl, { identityOrigin: window.location.origin })
   }
 
   function handleProfileClick() {

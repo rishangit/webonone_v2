@@ -1,12 +1,12 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AppShell, BrandLogo } from '@webonone/ui-kit'
-import { useServiceRedirect } from '@webonone/platform-nav'
+import { performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
 import type { NavConfigItem } from '@webonone/ui-kit'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store/authSlice'
-import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
+import { useAppSelector } from '@/app/store/hooks'
+import { clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
+import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
 import { getDataRedirectOptions } from '@/features/data/utils/redirectToData'
@@ -53,7 +53,6 @@ function withExternalNavActions(
 export function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const preferences = useAppSelector((s) => s.systemTheme.preferences)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
@@ -130,9 +129,8 @@ export function AppLayout() {
   }, [activeRole, handleDataNavClick, handleEmailNavClick])
 
   function handleLogout() {
-    dispatch(authActions.logout())
-    dispatch(sessionRoleActions.reset())
-    navigate('/login')
+    clearWebOnOneAuthStorage()
+    performPlatformLogout(null, { identityOrigin: getIdentityOrigin() })
   }
 
   async function handleProfileClick() {
