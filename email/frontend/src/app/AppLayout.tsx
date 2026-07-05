@@ -10,6 +10,10 @@ import { Alert, AlertDescription, AppShell, BrandLogo, LoadingState, PageShell }
 import { relayThemeQueryParams } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions, clearEmailAuthStorage } from '@/features/auth/store/authSlice'
+import {
+  PlatformLoadingProvider,
+  usePlatformPageLabel,
+} from '@/features/auth/context/PlatformLoadingContext'
 import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { useRefreshEmailRole } from '@/features/auth/hooks/useRefreshEmailRole'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
@@ -22,6 +26,14 @@ import { withClientSideNavigation } from '@/features/shell/utils/clientNav'
 import { withDataNavActions } from '@/features/shell/utils/externalNavActions'
 
 export function AppLayout() {
+  return (
+    <PlatformLoadingProvider>
+      <AppLayoutContent />
+    </PlatformLoadingProvider>
+  )
+}
+
+function AppLayoutContent() {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -30,6 +42,7 @@ export function AppLayout() {
   const { redirect, error: profileError, clearError } = useServiceRedirect()
   const { isBootstrapping, bootstrapError } = usePlatformSessionBootstrap()
   const roleReady = useRefreshEmailRole(isBootstrapping)
+  const pageLabel = usePlatformPageLabel()
 
   const returnUrlFromQuery = parsePlatformReturnUrl(searchParams)
   const isPlatformHandoff = hasPlatformHandoff(searchParams)
@@ -147,20 +160,19 @@ export function AppLayout() {
       : null
 
   const sessionLoading = isBootstrapping || (Boolean(accessToken) && !roleReady)
+  const overlayLabel = sessionLoading ? 'Loading session…' : pageLabel
 
-  const mainContent =
-    sessionLoading || bootstrapError ? (
-      <div className="flex flex-col items-center gap-4 py-12">
-        {sessionLoading ? <LoadingState overlay label="Loading session…" /> : null}
-        {bootstrapError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{bootstrapError}</AlertDescription>
-          </Alert>
-        ) : null}
-      </div>
-    ) : (
+  const mainContent = (
+    <>
       <Outlet />
-    )
+      {bootstrapError ? (
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{bootstrapError}</AlertDescription>
+        </Alert>
+      ) : null}
+      {overlayLabel ? <LoadingState overlay label={overlayLabel} /> : null}
+    </>
+  )
 
   if (usePlatformShell) {
     return (

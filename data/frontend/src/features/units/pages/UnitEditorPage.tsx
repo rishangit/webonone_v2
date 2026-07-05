@@ -13,10 +13,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { unitFormSchema, type UnitFormValues } from '@/features/units/schemas/unitSchemas'
 import { dataApi } from '@/shared/services/dataApi'
 import type { Unit } from '@/shared/types/data.types'
@@ -42,6 +42,7 @@ export function UnitEditorPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  usePlatformLoading(loading ? 'Loading unit…' : null)
 
   useEffect(() => {
     dataApi.listUnits({ is_base: 'true', pageSize: 100 }).then((res) => setBaseUnits(res.items))
@@ -112,9 +113,7 @@ export function UnitEditorPage() {
         </Button>
       }
     >
-      {loading ? (
-        <LoadingState overlay label="Loading unit…" />
-      ) : (
+      {!loading ? (
         <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (
             <Alert variant="destructive">
@@ -165,7 +164,7 @@ export function UnitEditorPage() {
             {saving ? 'Saving…' : isNew ? 'Create unit' : 'Save changes'}
           </Button>
         </form>
-      )}
+      ) : null}
     </FeaturePage>
   )
 }

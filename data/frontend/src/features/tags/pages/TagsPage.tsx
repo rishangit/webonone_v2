@@ -10,7 +10,6 @@ import {
   ListFilterTrigger,
   ListPageBody,
   ListSearchField,
-  LoadingState,
   Pagination,
   Select,
   SelectContent,
@@ -19,13 +18,12 @@ import {
   SelectValue,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { TagsList } from '@/features/tags/components/TagsList'
 import { usePaginatedList } from '@/shared/hooks/usePaginatedList'
 import { dataApi } from '@/shared/services/dataApi'
 
 export function TagsPage() {
-  const handoffPending = usePlatformHandoffPending()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
 
@@ -41,8 +39,8 @@ export function TagsPage() {
   )
 
   const list = usePaginatedList(loader)
+  usePlatformLoading(list.loading ? 'Loading tags…' : null)
 
-  if (handoffPending) return <PlatformHandoffSpinner />
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
@@ -92,11 +90,9 @@ export function TagsPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          {list.loading ? (
-            <LoadingState overlay label="Loading tags…" />
-          ) : (
+          {!list.loading ? (
             <TagsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
-          )}
+          ) : null}
         </div>
         <Pagination
           className="mt-auto"

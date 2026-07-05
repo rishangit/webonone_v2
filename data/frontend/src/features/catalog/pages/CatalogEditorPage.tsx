@@ -12,10 +12,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { dataApi } from '@/shared/services/dataApi'
 import type { Attribute, CatalogItem, Tag } from '@/shared/types/data.types'
 
@@ -66,6 +66,7 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  usePlatformLoading(loading ? `Loading ${api.label.toLowerCase()}…` : null)
 
   useEffect(() => {
     Promise.all([
@@ -154,9 +155,7 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
         </Button>
       }
     >
-      {loading ? (
-        <LoadingState overlay label="Loading item…" />
-      ) : (
+      {!loading ? (
         <form className="mx-auto max-w-2xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (
             <Alert variant="destructive">
@@ -262,7 +261,7 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
             {saving ? 'Saving…' : isNew ? `Create ${api.label.toLowerCase()}` : 'Save changes'}
           </Button>
         </form>
-      )}
+      ) : null}
     </FeaturePage>
   )
 }

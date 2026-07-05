@@ -9,10 +9,10 @@ import {
   FormField,
   Input,
   mapZodIssuesToFieldErrors,
-  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { CompanyBranding } from '@/shared/types/email.types'
 import { brandingSchema, type BrandingFormValues } from '../schemas/brandingSchemas'
@@ -47,6 +47,8 @@ export function SettingsPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  usePlatformLoading(loading ? 'Loading settings…' : null)
 
   useEffect(() => {
     if (tab !== 'branding' || !companyId) return
@@ -172,7 +174,7 @@ export function SettingsPage() {
         !companyId ? (
           <p className="text-sm text-muted-foreground">No company is linked to your account.</p>
         ) : loading ? (
-          <LoadingState overlay label="Loading settings…" />
+          null
         ) : (
           <div className="grid gap-8 lg:grid-cols-2">
             <Form onSubmit={handleSaveBranding} className="space-y-4">

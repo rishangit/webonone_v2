@@ -13,8 +13,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
 } from '@webonone/ui-kit'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
 import { sendEmailSchema, type SendEmailFormValues } from '../schemas/sendSchemas'
@@ -35,6 +35,8 @@ export function SendEmailPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [previewing, setPreviewing] = useState(false)
+
+  usePlatformLoading(loading ? 'Loading send form…' : null)
 
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.slug === values.templateSlug) ?? null,
@@ -134,9 +136,6 @@ export function SendEmailPage() {
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading send form…" /> : null}
-
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">
           <FormField label="Template" htmlFor="send-template" required error={fieldErrors.templateSlug}>

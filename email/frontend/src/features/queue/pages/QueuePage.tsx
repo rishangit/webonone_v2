@@ -14,9 +14,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { QueueItem, QueueStatus } from '@/shared/types/email.types'
 import { QueueList } from '../components/QueueList'
@@ -40,6 +40,8 @@ export function QueuePage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryingId, setRetryingId] = useState<string | null>(null)
+
+  usePlatformLoading(loading ? 'Loading queue…' : null)
 
   const canRetry = role === 'super_admin'
   const hasActiveFilters = tab !== 'pending'
@@ -137,9 +139,6 @@ export function QueuePage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading queue…" /> : null}
-
       {!loading ? (
         <ListPageBody>
           <div className="flex-1">

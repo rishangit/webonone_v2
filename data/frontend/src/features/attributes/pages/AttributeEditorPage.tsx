@@ -12,10 +12,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { attributeFormSchema, type AttributeFormValues } from '@/features/attributes/schemas/attributeSchemas'
 import { dataApi } from '@/shared/services/dataApi'
 import type { Unit } from '@/shared/types/data.types'
@@ -40,6 +40,7 @@ export function AttributeEditorPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  usePlatformLoading(loading ? 'Loading attribute…' : null)
 
   useEffect(() => {
     dataApi.listUnits({ pageSize: 100 }).then((res) => setUnits(res.items))
@@ -108,9 +109,7 @@ export function AttributeEditorPage() {
         </Button>
       }
     >
-      {loading ? (
-        <LoadingState overlay label="Loading attribute…" />
-      ) : (
+      {!loading ? (
         <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (
             <Alert variant="destructive">
@@ -165,7 +164,7 @@ export function AttributeEditorPage() {
             {saving ? 'Saving…' : isNew ? 'Create attribute' : 'Save changes'}
           </Button>
         </form>
-      )}
+      ) : null}
     </FeaturePage>
   )
 }

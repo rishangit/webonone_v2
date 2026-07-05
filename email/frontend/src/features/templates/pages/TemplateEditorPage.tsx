@@ -14,9 +14,9 @@ import {
   ItemListEmpty,
   Pagination,
   mapZodIssuesToFieldErrors,
-  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate, TemplateVersion } from '@/shared/types/email.types'
 import {
@@ -57,6 +57,8 @@ export function TemplateEditorPage() {
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [versionPage, setVersionPage] = useState(1)
   const [versionPageSize, setVersionPageSize] = useState(12)
+
+  usePlatformLoading(loading ? 'Loading template…' : null)
 
   const visibleVersions = versions.slice(
     (versionPage - 1) * versionPageSize,
@@ -184,9 +186,6 @@ export function TemplateEditorPage() {
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading template…" /> : null}
-
       {!loading && template ? (
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
           <Form onSubmit={handleSave} className="space-y-4">

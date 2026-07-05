@@ -13,11 +13,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
   ToastProvider,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
 import { testEmailSchema, type TestEmailFormValues } from '../schemas/testSchemas'
@@ -34,6 +34,8 @@ function TestEmailForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+
+  usePlatformLoading(loading ? 'Loading test page…' : null)
 
   useEffect(() => {
     if (user?.email && !values.toEmail) {
@@ -88,9 +90,6 @@ function TestEmailForm() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading test page…" /> : null}
-
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">
           <FormField label="Template" htmlFor="test-template" required error={fieldErrors.templateSlug}>

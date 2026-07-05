@@ -10,7 +10,6 @@ import {
   ListFilterTrigger,
   ListPageBody,
   ListSearchField,
-  LoadingState,
   Pagination,
   Select,
   SelectContent,
@@ -19,7 +18,7 @@ import {
   SelectValue,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { CatalogList } from '@/features/catalog/components/CatalogList'
 import { usePaginatedList } from '@/shared/hooks/usePaginatedList'
 import { dataApi } from '@/shared/services/dataApi'
@@ -38,7 +37,6 @@ const CONFIG: Record<
 
 export function CatalogListPage({ kind }: { kind: CatalogKind }) {
   const config = CONFIG[kind]
-  const handoffPending = usePlatformHandoffPending()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
   const loader = useCallback(
@@ -52,8 +50,8 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
     [config],
   )
   const list = usePaginatedList(loader)
+  usePlatformLoading(list.loading ? `Loading ${kind}…` : null)
 
-  if (handoffPending) return <PlatformHandoffSpinner />
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
@@ -101,9 +99,7 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
       ) : null}
       <ListPageBody>
         <div className="flex-1">
-          {list.loading ? (
-            <LoadingState overlay label={`Loading ${kind}…`} />
-          ) : (
+          {!list.loading ? (
             <CatalogList
               basePath={`/${kind}`}
               itemType={kind}
@@ -114,7 +110,7 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
               }}
               canMutate={canMutate}
             />
-          )}
+          ) : null}
         </div>
         <Pagination
           className="mt-auto"

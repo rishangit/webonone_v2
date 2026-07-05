@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
-  LoadingState,
 } from '@webonone/ui-kit'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { ProviderInfo } from '@/shared/types/email.types'
 
@@ -27,6 +27,8 @@ export function ProvidersPage() {
   const [testMessage, setTestMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [testing, setTesting] = useState(false)
+
+  usePlatformLoading(loading ? 'Loading providers…' : null)
 
   async function loadProvider() {
     setLoading(true)
@@ -76,9 +78,6 @@ export function ProvidersPage() {
           <AlertDescription>{testMessage}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading providers…" /> : null}
-
       {!loading && provider ? (
         <Card>
           <CardHeader>

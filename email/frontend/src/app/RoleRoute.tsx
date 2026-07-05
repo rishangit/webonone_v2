@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import { Alert, AlertDescription } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 
 interface RoleRouteProps {
@@ -15,7 +15,7 @@ export function RoleRoute({ roles, children }: RoleRouteProps) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
 
   if (handoffPending) {
-    return <PlatformHandoffSpinner />
+    return null
   }
 
   if (!accessToken) {

@@ -7,9 +7,9 @@ import {
   FeaturePage,
   FormField,
   Input,
-  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate, TemplatePreviewResult } from '@/shared/types/email.types'
 
@@ -29,6 +29,8 @@ export function TemplatePreviewPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [rendering, setRendering] = useState(false)
+
+  usePlatformLoading(loading ? 'Loading preview…' : null)
 
   useEffect(() => {
     if (!id) return
@@ -99,9 +101,6 @@ export function TemplatePreviewPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading preview…" /> : null}
-
       {!loading && template ? (
         <div className="space-y-6">
           <div className="grid gap-4 lg:grid-cols-2">

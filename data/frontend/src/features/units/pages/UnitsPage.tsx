@@ -10,7 +10,6 @@ import {
   ListFilterTrigger,
   ListPageBody,
   ListSearchField,
-  LoadingState,
   Pagination,
   Select,
   SelectContent,
@@ -19,13 +18,12 @@ import {
   SelectValue,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { UnitsList } from '@/features/units/components/UnitsList'
 import { usePaginatedList } from '@/shared/hooks/usePaginatedList'
 import { dataApi } from '@/shared/services/dataApi'
 
 export function UnitsPage() {
-  const handoffPending = usePlatformHandoffPending()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
   const loader = useCallback(
@@ -39,8 +37,8 @@ export function UnitsPage() {
     [],
   )
   const list = usePaginatedList(loader)
+  usePlatformLoading(list.loading ? 'Loading units…' : null)
 
-  if (handoffPending) return <PlatformHandoffSpinner />
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
@@ -88,11 +86,9 @@ export function UnitsPage() {
       ) : null}
       <ListPageBody>
         <div className="flex-1">
-          {list.loading ? (
-            <LoadingState overlay label="Loading units…" />
-          ) : (
+          {!list.loading ? (
             <UnitsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
-          )}
+          ) : null}
         </div>
         <Pagination
           className="mt-auto"

@@ -6,17 +6,15 @@ import {
   FeaturePage,
   ListPageBody,
   ListSearchField,
-  LoadingState,
   Pagination,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { EmailTemplate } from '@/shared/types/email.types'
 import { TemplatesList } from '../components/TemplatesList'
 
 export function TemplatesPage() {
-  const handoffPending = usePlatformHandoffPending()
   const { accessToken } = useAppSelector((s) => s.auth)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [page, setPage] = useState(1)
@@ -25,6 +23,8 @@ export function TemplatesPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  usePlatformLoading(loading ? 'Loading templates…' : null)
 
   const filteredTemplates = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -56,10 +56,6 @@ export function TemplatesPage() {
     }
     void loadTemplates()
   }, [accessToken])
-
-  if (handoffPending) {
-    return <PlatformHandoffSpinner />
-  }
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -102,9 +98,6 @@ export function TemplatesPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading templates…" /> : null}
-
       {!loading ? (
         <ListPageBody>
           <div className="flex-1">

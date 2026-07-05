@@ -23,11 +23,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { emailApi } from '@/shared/services/emailApi'
 import { apiClient } from '@/shared/services/apiClient'
@@ -59,7 +58,6 @@ function endOfDayIso(date: Date): string {
 }
 
 export function DashboardPage() {
-  const handoffPending = usePlatformHandoffPending()
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
 
@@ -75,6 +73,8 @@ export function DashboardPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  usePlatformLoading(loading ? 'Loading dashboard…' : null)
 
   const hasActiveFilters =
     recentStatus !== 'all' || recentFrom !== undefined || recentTo !== undefined
@@ -118,10 +118,6 @@ export function DashboardPage() {
 
     void load()
   }, [accessToken, dispatch, recentPage, recentPageSize, recentStatus, recentFrom, recentTo])
-
-  if (handoffPending) {
-    return <PlatformHandoffSpinner />
-  }
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -207,9 +203,6 @@ export function DashboardPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading dashboard…" /> : null}
-
       {!loading && stats ? (
         <>
           {isMember ? (

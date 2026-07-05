@@ -16,10 +16,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { emailApi } from '@/shared/services/emailApi'
 import type { HistoryItem } from '@/shared/types/email.types'
 import { HistoryList } from '../components/HistoryList'
@@ -33,7 +32,6 @@ function endOfDayIso(date: Date): string {
 }
 
 export function HistoryPage() {
-  const handoffPending = usePlatformHandoffPending()
   const { accessToken } = useAppSelector((s) => s.auth)
   const userRole = useAppSelector((s) => s.auth.user?.role)
   const [items, setItems] = useState<HistoryItem[]>([])
@@ -47,6 +45,8 @@ export function HistoryPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  usePlatformLoading(loading ? 'Loading history…' : null)
 
   const hasActiveFilters = status !== 'all' || from !== undefined || to !== undefined
 
@@ -85,10 +85,6 @@ export function HistoryPage() {
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when search/filters change
   }, [status, searchQuery, accessToken])
-
-  if (handoffPending) {
-    return <PlatformHandoffSpinner />
-  }
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -188,9 +184,6 @@ export function HistoryPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <LoadingState overlay label="Loading history…" /> : null}
-
       {!loading ? (
         <ListPageBody>
           <div className="flex-1">

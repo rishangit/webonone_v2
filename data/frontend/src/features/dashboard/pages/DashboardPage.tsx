@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, FeaturePage, LoadingState } from '@webonone/ui-kit'
+import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, FeaturePage } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { PlatformHandoffSpinner, usePlatformHandoffPending } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { dataApi } from '@/shared/services/dataApi'
 import type { DashboardStats } from '@/shared/types/data.types'
 
@@ -16,11 +16,11 @@ const ENTITY_LINKS: { key: string; label: string; path: string }[] = [
 ]
 
 export function DashboardPage() {
-  const handoffPending = usePlatformHandoffPending()
   const { accessToken } = useAppSelector((s) => s.auth)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  usePlatformLoading(loading ? 'Loading dashboard…' : null)
 
   useEffect(() => {
     if (!accessToken) return
@@ -32,7 +32,6 @@ export function DashboardPage() {
       .finally(() => setLoading(false))
   }, [accessToken])
 
-  if (handoffPending) return <PlatformHandoffSpinner />
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
@@ -42,9 +41,7 @@ export function DashboardPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      {loading ? (
-        <LoadingState overlay label="Loading dashboard…" />
-      ) : (
+      {!loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ENTITY_LINKS.map((entity) => {
             const counts = stats?.counts[entity.key] ?? { verified: 0, pending: 0 }
@@ -63,7 +60,7 @@ export function DashboardPage() {
             )
           })}
         </div>
-      )}
+      ) : null}
     </FeaturePage>
   )
 }

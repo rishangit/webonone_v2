@@ -3,7 +3,7 @@ import { LoadingState } from '@webonone/ui-kit'
 
 export function LazyRoute({ children }: { children: ReactNode }) {
   return (
-    <Suspense fallback={<LoadingState overlay label="Loading…" />}>
+    <Suspense fallback={<LoadingState label="Loading…" />}>
       {children}
     </Suspense>
   )

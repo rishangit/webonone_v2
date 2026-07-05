@@ -12,10 +12,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  LoadingState,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { tagFormSchema, type TagFormValues } from '@/features/tags/schemas/tagSchemas'
 import { dataApi } from '@/shared/services/dataApi'
 
@@ -37,6 +37,7 @@ export function TagEditorPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  usePlatformLoading(loading ? 'Loading tag…' : null)
 
   useEffect(() => {
     if (isNew || !id) return
@@ -111,9 +112,7 @@ export function TagEditorPage() {
         </Button>
       }
     >
-      {loading ? (
-        <LoadingState overlay label="Loading tag…" />
-      ) : (
+      {!loading ? (
         <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           {error ? (
             <Alert variant="destructive">
@@ -165,7 +164,7 @@ export function TagEditorPage() {
             {saving ? 'Saving…' : isNew ? 'Create tag' : 'Save changes'}
           </Button>
         </form>
-      )}
+      ) : null}
     </FeaturePage>
   )
 }
