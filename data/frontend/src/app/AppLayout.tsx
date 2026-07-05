@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   CORE_NAV_QUERY_PARAM,
@@ -16,8 +16,10 @@ import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirec
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { parsePlatformReturnUrl, hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
 import type { DataRole } from '@/features/auth/types/auth.types'
+import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
 import { withClientSideNavigation } from '@/features/shell/utils/clientNav'
+import { withEmailNavActions } from '@/features/shell/utils/externalNavActions'
 
 export function AppLayout() {
   const location = useLocation()
@@ -37,6 +39,37 @@ export function AppLayout() {
   const usePlatformShell = isPlatformMode && (isAuthenticated || isPlatformHandoff)
 
   const role: DataRole = user?.role ?? 'member'
+
+  const handleEmailNavClick = useCallback(
+    async (sentinel: string) => {
+      if (!accessToken || !effectiveReturnUrl) {
+        return
+      }
+      clearError()
+      try {
+        await redirect(
+          getEmailRedirectOptions({
+            accessToken,
+            returnUrl: effectiveReturnUrl,
+            extraSearchParams: relayThemeQueryParams(searchParams),
+            navVariant: platform.coreNavVariant ?? 'main',
+            emailNavSentinel: sentinel,
+          }),
+        )
+      } catch {
+        // surfaced via hook
+      }
+    },
+    [
+      accessToken,
+      clearError,
+      effectiveReturnUrl,
+      platform.coreNavVariant,
+      redirect,
+      searchParams,
+    ],
+  )
+
   const nav = useMemo(() => {
     const base = buildAppNav(role, {
       returnUrl: effectiveReturnUrl,
@@ -47,9 +80,11 @@ export function AppLayout() {
           : null),
       searchParams: isPlatformMode ? searchParams : undefined,
     })
-    return withClientSideNavigation(base, navigate)
+    const withPeerNav = effectiveReturnUrl ? withEmailNavActions(base, handleEmailNavClick) : base
+    return withClientSideNavigation(withPeerNav, navigate)
   }, [
     effectiveReturnUrl,
+    handleEmailNavClick,
     isPlatformMode,
     navigate,
     platform.coreNavVariant,
