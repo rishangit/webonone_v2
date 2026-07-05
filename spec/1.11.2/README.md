@@ -44,7 +44,7 @@ Implementation branch: **`spec/1.11.2`**
 
 ## Revision history
 
-- **2026-07-05** — Subtask: unify platform loading overlay on page refresh (no double spinner).
+- **2026-07-05 (refinement)** — Route chunk + data fetch must share one overlay; LazyRoute reports via context; `useLayoutEffect` for label sync.
 
 ## Inherited from earlier specs
 

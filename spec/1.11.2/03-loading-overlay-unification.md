@@ -9,6 +9,8 @@ On **page refresh** in Data or Email platform mode, users see **two sequential l
 
 Users also briefly see loading **text/layout shift** before the overlay spinner appears (LazyRoute `Suspense` + AppLayout swap).
 
+**Still failing after Phase 3 (delta refinement):** On refresh, users report **two distinct loading stages** — **page loading** (route chunk / inline Suspense fallback) and **data loading** (API fetch label). These must collapse into **one fixed overlay** whose label updates in place (`Loading page…` → `Loading session…` → `Loading tags…`).
+
 ## Root cause
 
 | Layer | Behaviour today |
@@ -42,7 +44,17 @@ Add `PlatformLoadingProvider` + `usePlatformLoading(label)` hook per satellite F
 
 ### LazyRoute
 
-Change `Suspense` fallback to **non-overlay** inline `LoadingState` (or null) so code-split does not add a competing full-screen overlay before AppLayout/page label takes over.
+Report route-chunk loading into the same AppLayout overlay via `useRouteLoading('Loading page…')` — **no visible Suspense fallback** (fallback renders `null` and only sets context).
+
+Use `useLayoutEffect` in loading hooks so labels are set before paint (avoids one-frame gap between session and data labels).
+
+### Overlay label priority (AppLayout)
+
+1. `Loading session…` — bootstrap or role refresh
+2. Page/data label — e.g. `Loading tags…`
+3. Route label — `Loading page…` while lazy chunk loads
+
+Show overlay when **any** stage is active; keep one `LoadingState overlay` mounted (stable `key`) and update `label` only.
 
 ### Remove redundant handoff spinners
 
