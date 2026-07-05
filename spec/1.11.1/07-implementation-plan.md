@@ -139,6 +139,42 @@ Spec: subtask **86ey5nqjw**
 
 ---
 
+## Phase 8 — Login response includes session role (delta)
+
+**Goal:** [08-login-role-in-response.md](./08-login-role-in-response.md).
+
+| Task | Detail |
+|------|--------|
+| Default claims | `resolveDefaultSessionClaims` — auto-select `super_admin` when assignable |
+| Auth response | `buildAuthResponse` — add `platformRole`, `companyId` |
+| Token flows | Login, exchange, refresh, session-role return session fields |
+| Data FE | Prefer `platformRole` from auth response when present |
+| Env docs | `SUPER_ADMIN_USER_ID` + seed step in `.env.example` |
+
+**Exit criteria:** Super-admin login returns `platform_role` in JWT and `platformRole` in JSON; Data permissions work without extra role step.
+
+Spec: subtask **86ey5pc30**
+
+---
+
+## Phase 9 — Platform global logout (delta)
+
+**Goal:** [09-platform-global-logout.md](./09-platform-global-logout.md).
+
+| Task | Detail |
+|------|--------|
+| Identity BE | `POST /auth/logout-all` revokes all refresh tokens for user |
+| Identity FE | `/logout` page clears session + redirects with `prompt=login` |
+| platform-nav | `buildIdentityLogoutUrl`; extend `performPlatformLogout` with `identityOrigin` |
+| WebOnOne, Data, Email, Media | Logout clears local storage then redirects through Identity `/logout` |
+| Identity AppLayout | Use `/logout` route for sign-out |
+
+**Exit criteria:** Sign out from any service prevents SSO on other services until re-login.
+
+Spec: subtask **86ey5pd32**
+
+---
+
 ## Acceptance checklist
 
 - [ ] Identity `users_roles` populated; WebOnOne/Email/Data role tables absent
@@ -158,6 +194,8 @@ Spec: subtask **86ey5nqjw**
 | Parent: [User Story] Spec No 1.11.1 | 86ey5n9zt | All phases |
 | Subtask: issue in data sync | 86ey5nk8m | Phase 6 |
 | Subtask: login session need to increase | 86ey5nqjw | Phase 7 |
+| Subtask: in production super admin login user role not taken | 86ey5pc30 | Phase 8 |
+| Subtask: when user sing out from the any service need to sing out from the all other misroservices | 86ey5pd32 | Phase 9 |
 
 ---
 

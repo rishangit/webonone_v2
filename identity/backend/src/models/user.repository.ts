@@ -267,6 +267,13 @@ export async function revokeRefreshToken(id: string): Promise<void> {
   await db('refresh_tokens').where({ id }).update({ revoked_at: new Date() })
 }
 
+export async function revokeAllRefreshTokensForUser(userId: string): Promise<void> {
+  await db('refresh_tokens')
+    .where({ user_id: userId })
+    .whereNull('revoked_at')
+    .update({ revoked_at: new Date() })
+}
+
 export async function createPasswordResetToken(input: {
   id: string
   userId: string

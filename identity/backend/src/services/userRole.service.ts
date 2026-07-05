@@ -72,6 +72,13 @@ export async function resolveDefaultSessionClaims(userId: string): Promise<{
   companyId: string | null
 } | null> {
   const assumable = await getAssumableRoles(userId)
+  const superAdminOption = assumable.roles.find((option) => option.role === 'super_admin')
+  if (superAdminOption) {
+    return {
+      platformRole: superAdminOption.role,
+      companyId: superAdminOption.companyId,
+    }
+  }
   if (assumable.roles.length === 1) {
     const only = assumable.roles[0]
     return {

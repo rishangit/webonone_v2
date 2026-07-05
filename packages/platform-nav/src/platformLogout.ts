@@ -1,5 +1,10 @@
 import { getCoreOriginFromReturnUrl } from './coreNav'
 
+export type PlatformLogoutOptions = {
+  localLoginPath?: string
+  identityOrigin?: string
+}
+
 export function resolvePlatformLogoutLoginUrl(
   returnUrl: string | null | undefined,
   localLoginPath = '/login',
@@ -16,14 +21,56 @@ export function resolvePlatformLogoutLoginUrl(
   return `${origin}/login`
 }
 
+function appendPromptLogin(url: string): string {
+  const parsed = new URL(url)
+  if (parsed.searchParams.get('prompt') !== 'login') {
+    parsed.searchParams.set('prompt', 'login')
+  }
+  return parsed.toString()
+}
+
+export function resolveAbsolutePostLogoutLoginUrl(
+  returnUrl: string | null | undefined,
+  localLoginPath = '/login',
+): string {
+  const pathOrUrl = resolvePlatformLogoutLoginUrl(returnUrl, localLoginPath)
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+    return appendPromptLogin(pathOrUrl)
+  }
+
+  if (typeof window === 'undefined') {
+    return appendPromptLogin(pathOrUrl)
+  }
+
+  const absolute = `${window.location.origin}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`
+  return appendPromptLogin(absolute)
+}
+
+export function buildIdentityLogoutUrl(
+  identityOrigin: string,
+  postLogoutRedirectUri: string,
+): string {
+  const base = identityOrigin.replace(/\/$/, '')
+  const url = new URL(`${base}/logout`)
+  url.searchParams.set('post_logout_redirect_uri', postLogoutRedirectUri)
+  return url.toString()
+}
+
 /**
- * Full-page redirect to core or local login. Does not touch React state — call instead of
- * dispatch(logout()) + navigate to avoid flashing the satellite login route.
+ * Full-page redirect to login after sign-out. When `identityOrigin` is set, routes through
+ * Identity `/logout` to revoke SSO sessions before landing on the target login URL.
  */
 export function performPlatformLogout(
   returnUrl: string | null | undefined,
-  localLoginPath = '/login',
+  options?: PlatformLogoutOptions,
 ): void {
-  const target = resolvePlatformLogoutLoginUrl(returnUrl, localLoginPath)
-  window.location.replace(target)
+  const localLoginPath = options?.localLoginPath ?? '/login'
+  const postLogoutTarget = resolveAbsolutePostLogoutLoginUrl(returnUrl, localLoginPath)
+
+  if (options?.identityOrigin) {
+    window.location.replace(buildIdentityLogoutUrl(options.identityOrigin, postLogoutTarget))
+    return
+  }
+
+  window.location.replace(postLogoutTarget)
 }

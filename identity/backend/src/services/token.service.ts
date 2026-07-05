@@ -61,12 +61,24 @@ export function generateAuthCode(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
-export function buildAuthResponse(user: UserRow, accessToken: string, expiresIn: number, refreshToken: string) {
+export function buildAuthResponse(
+  user: UserRow,
+  accessToken: string,
+  expiresIn: number,
+  refreshToken: string,
+  sessionClaims?: SessionClaims,
+) {
   return {
     accessToken,
     refreshToken,
     expiresIn,
     user: toUserProfile(user),
+    ...(sessionClaims?.platformRole
+      ? {
+          platformRole: sessionClaims.platformRole,
+          companyId: sessionClaims.companyId ?? null,
+        }
+      : {}),
   }
 }
 
