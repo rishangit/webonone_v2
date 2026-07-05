@@ -11,6 +11,12 @@ description: Data service agent for webonone-platform. Handles data/ frontend, b
 - WebOnOne consumer: `webonone-v2/frontend/src/features/data/`
 - Platform nav: `packages/platform-nav/src/coreNav.ts` (Data external service)
 
+## Rules
+
+- [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — platform handoff + satellite peer nav to Email
+- [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
+- [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
+
 ## Ports and env
 
 | Layer | Port | Env file |
@@ -19,6 +25,26 @@ description: Data service agent for webonone-platform. Handles data/ frontend, b
 | Backend | 4005 | `data/backend/.env` |
 
 `JWT_SECRET` must match Identity backend. Database: `webonone_data`.
+
+Peer env for core nav: `VITE_EMAIL_ORIGIN` — see `features/email/utils/emailConfig.ts`.
+
+## Platform loading overlay
+
+Same pattern as Email/WebOnOne — context at `features/auth/context/PlatformLoadingContext.tsx`:
+
+1. `PlatformLoadingProvider` in `app/AppLayout.tsx`.
+2. Single overlay; label = `sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel`.
+3. `LazyRoute` → `useRouteLoading`; pages → `usePlatformLoading`.
+
+Reference: `data/frontend/src/app/AppLayout.tsx`, `data/frontend/src/app/LazyRoute.tsx`, `features/tags/pages/TagsPage.tsx`.
+
+## Cross-service nav (Data → Email)
+
+When core nav includes Email items from Data satellite:
+
+- `features/email/utils/redirectToEmail.ts` + `getEmailRedirectOptions` with `emailNavSentinel`
+- `features/shell/utils/externalNavActions.ts` → `withEmailNavActions`
+- `AppLayout` `handleEmailNavClick`
 
 ## Key paths
 

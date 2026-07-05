@@ -22,7 +22,20 @@ description: >-
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [webonone-v2-project.mdc](../../rules/webonone-v2-project.mdc) — service globs
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — all peer redirects (Profile, Email) same three-layer pattern
+- [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
+
+## Platform loading overlay
+
+When adding pages or session gates in WebOnOne core:
+
+1. Wrap `AppLayout` in `PlatformLoadingProvider` (`features/shell/context/PlatformLoadingContext.tsx`).
+2. Render **one** `<LoadingState key="platform-loading" overlay />` in `AppLayout`; label = `pageLabel ?? routeLabel`.
+3. `SessionRoleGate` → `usePlatformLoading('Loading session…')` — always render children.
+4. `LazyRoute` → `useRouteLoading('Loading page…')`; Suspense fallback returns `null`.
+5. Pages → `usePlatformLoading(loading ? 'Loading …' : null)` — no inline loading text or per-page overlays.
+
+Reference: `webonone-v2/frontend/src/app/AppLayout.tsx`, `features/session/components/SessionRoleGate.tsx`, `app/LazyRoute.tsx`.
 
 ## Verification
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button, Callout, CalloutDescription, CalloutTitle, FeaturePage } from '@webonone/ui-kit'
+import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { RegisterCompanyDialog } from '../components/RegisterCompanyDialog'
 import { UserSelectionDemo } from '../components/UserSelectionDemo'
 import { companyApi, type CompanySummary } from '../services/companyApi'
@@ -55,8 +56,10 @@ export function BasicSettingsPage() {
     }
   }
 
+  usePlatformLoading(company === undefined ? 'Loading company settings…' : null)
+
   if (company === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading company settings…</p>
+    return null
   }
 
   return (

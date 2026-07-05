@@ -10,7 +10,7 @@ Reference implementation: `webonone-v2/frontend/src/app/router.tsx`, `webonone-v
 
 ## When adding feature pages
 
-1. **Lazy-load** new feature pages with `React.lazy` and a local `LazyRoute` helper (`Suspense` + UI Kit `Spinner`).
+1. **Lazy-load** new feature pages with `React.lazy` and a local `LazyRoute` helper — `Suspense` fallback calls `useRouteLoading('Loading page…')` and returns **`null`**; AppLayout owns the overlay ([loading-empty-states.mdc](loading-empty-states.mdc)).
 2. **Keep eager** — login, callback, and embed entry routes (`/picker`, `/upload`, media dialog paths).
 3. **Guards outside lazy** — `PrivateRoute` / `RoleRoute` wrap `LazyRoute`, not the reverse.
 

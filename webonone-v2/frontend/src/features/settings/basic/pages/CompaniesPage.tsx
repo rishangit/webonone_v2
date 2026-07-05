@@ -8,6 +8,7 @@ import {
   ListSearchField,
   Pagination,
 } from '@webonone/ui-kit'
+import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { CompaniesList } from '../components/CompaniesList'
 import { useSuperAdminStatus } from '../hooks/useSuperAdminStatus'
 import { companyApi, type AdminCompany, type CompanyStatus } from '../services/companyApi'
@@ -21,6 +22,10 @@ export function CompaniesPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  usePlatformLoading(
+    roleLoading ? 'Loading…' : loading ? 'Loading companies…' : null,
+  )
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -72,11 +77,7 @@ export function CompaniesPage() {
 
   const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
 
-  if (roleLoading) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>
-  }
-
-  if (!isSuperAdmin) {
+  if (!roleLoading && !isSuperAdmin) {
     return <Navigate to="/" replace />
   }
 
@@ -102,8 +103,6 @@ export function CompaniesPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-
-      {loading ? <p className="text-sm text-muted-foreground">Loading companies…</p> : null}
 
       {!loading ? (
         <ListPageBody>

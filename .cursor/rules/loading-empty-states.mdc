@@ -1,5 +1,5 @@
 ---
-description: LoadingState and ItemListEmpty usage in service frontends
+description: Unified platform loading overlay, LoadingState, and ItemListEmpty in service frontends
 globs: "**/frontend/src/**/*.{ts,tsx}"
 alwaysApply: false
 ---
@@ -8,22 +8,61 @@ alwaysApply: false
 
 Import from `@webonone/ui-kit`: **`LoadingState`**, **`ItemListEmpty`**.
 
-## LoadingState
+## Unified platform loading overlay (required)
 
-Centered themed spinner + label for **page, section, route suspense, and session bootstrap** loads.
+**WebOnOne core, Data, Email, and new platform-shell satellites** must show **one** viewport overlay for session, lazy-route, and page/data loads — never stacked spinners on refresh.
 
-| Prop | Default | Notes |
-|------|---------|-------|
-| `label` | `"Loading…"` | Use page-specific copy: `"Loading tags…"`, `"Loading session…"` |
-| `size` | `'lg'` | Passed to inner `Spinner` |
-| `overlay` | `false` | Set **`true`** for page, route suspense, and session loads — viewport-centered overlay |
-| `className` | optional | Wrapper (e.g. on `LazyRoute` overlay) |
+```text
+AppLayout
+  PlatformLoadingProvider
+  → always render <Outlet />
+  → single <LoadingState key="platform-loading" overlay label={…} />
+SessionRoleGate / session hooks → usePlatformLoading('Loading session…')
+LazyRoute Suspense fallback → useRouteLoading('Loading page…'); return null
+Pages / list fetches → usePlatformLoading(loading ? 'Loading …' : null)
+```
 
-**Use when:** list pages fetching data, dashboards, editors, `Suspense` fallbacks, auth callback, platform handoff — pass **`overlay`** for viewport-centered loading.
+| Hook / surface | Role |
+|----------------|------|
+| `PlatformLoadingProvider` | Wrap `AppLayout` content tree |
+| `usePlatformLoading(label)` | Session gate, page data fetch, editor load |
+| `useRouteLoading(label)` | Lazy route chunk (`LazyRoute` only) |
+| `AppLayout` overlay | Sole visible loading UI |
 
-**Do not use when:** inline button loading — keep **`Spinner size="sm"`** inside the button.
+Hooks use **`useLayoutEffect`** to set/clear labels (avoids one-frame overlay gaps).
 
-Reference: `data/frontend/src/features/tags/pages/TagsPage.tsx`, `LazyRoute.tsx`, `AppLayout.tsx`.
+**Label priority**
+
+| App | `overlayLabel` |
+|-----|----------------|
+| Data / Email satellite | `sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel` |
+| WebOnOne core | `pageLabel ?? routeLabel` (session via `SessionRoleGate` → `usePlatformLoading`) |
+
+Context module (same API — copy per service):
+
+| Service | Path |
+|---------|------|
+| WebOnOne v2 | `webonone-v2/frontend/src/features/shell/context/PlatformLoadingContext.tsx` |
+| Data / Email | `<service>/frontend/src/features/auth/context/PlatformLoadingContext.tsx` |
+
+Reference: `data/frontend/src/app/AppLayout.tsx`, `data/frontend/src/app/LazyRoute.tsx`, `webonone-v2/frontend/src/app/AppLayout.tsx`, `webonone-v2/frontend/src/features/session/components/SessionRoleGate.tsx`.
+
+**Forbidden:** inline `"Loading…"` text in pages; per-page `<LoadingState overlay />`; `LazyRoute` fallback that renders visible `Spinner`/`LoadingState`; second overlay during `RoleRoute` handoff (return `null` — overlay handles it).
+
+**Exception:** platform inbound **`code` bootstrap** on the destination **home page** may show a page-content spinner during exchange only — not a second AppLayout overlay. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
+
+## LoadingState (AppLayout + buttons)
+
+Centered themed spinner + label.
+
+| Prop | Notes |
+|------|-------|
+| `label` | Contextual: `"Loading tags…"`, `"Loading session…"`, `"Loading page…"` |
+| `overlay` | **`true`** in **`AppLayout` only** — nowhere else |
+
+**Buttons:** **`Spinner size="sm"`** inside the button — not `LoadingState`.
+
+Page hook example: `data/frontend/src/features/tags/pages/TagsPage.tsx`.
 
 ## ItemListEmpty
 
@@ -31,15 +70,15 @@ Centered empty-list message when **`items.length === 0`** inside or instead of `
 
 Pass copy as children, e.g. `<ItemListEmpty>No tags found.</ItemListEmpty>`.
 
-**Use when:** collection lists, filtered search with no matches, dashboard activity sections.
-
 Reference: `data/frontend/src/features/tags/components/TagsList.tsx`.
 
 ## Verification
 
 ```bash
 npm run build -w @webonone/ui-kit
-npm run type-check -w <service-root>
+npm run type-check -w webonone-v2-root
+npm run type-check -w data-root
+npm run type-check -w email-root
 ```
 
-Cross-links: [item-list skill](../skills/item-list/SKILL.md), [ui-kit-consumption.mdc](ui-kit-consumption.mdc).
+Cross-links: [item-list skill](../skills/item-list/SKILL.md), [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc).

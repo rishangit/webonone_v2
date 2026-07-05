@@ -39,6 +39,10 @@ Email must follow the **same three-layer pattern** as Identity profile. See [pla
 
 Consumers (WebOnOne, Identity): `handleEmailClick` in `AppLayout` + `redirectToEmail.ts` — **no** `/go/email` route or redirect page.
 
+**Satellite → Data peer nav:** `VITE_DATA_ORIGIN`, `features/data/utils/dataConfig.ts`, `redirectToData.ts`, `shell/utils/externalNavActions.ts` — see [platform-shell-navigation.mdc](platform-shell-navigation.mdc) satellite peer nav.
+
+**Unified loading overlay:** `features/auth/context/PlatformLoadingContext.tsx`, `app/LazyRoute.tsx`, single overlay in `app/AppLayout.tsx` — [loading-empty-states.mdc](loading-empty-states.mdc).
+
 ## UI Kit
 
 All interactive UI must use `@webonone/ui-kit` — see [ui-kit-consumption.mdc](ui-kit-consumption.mdc). Do not duplicate UI Kit primitives.

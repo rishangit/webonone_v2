@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, FeaturePage, ListPageBody, ListSearchField, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { ColorModeToggle } from '../components/ColorModeToggle'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
 import { ThemeDeleteDialog } from '../components/ThemeDeleteDialog'
@@ -31,6 +32,8 @@ export function SystemThemePage() {
   const dialogOpen = createOpen || editing !== null
   const dialogMode = editing ? 'edit' : 'create'
   const isSaving = status === 'saving' && pendingSave !== null
+
+  usePlatformLoading(status === 'loading' ? 'Loading themes…' : null)
 
   useEffect(() => {
     dispatch(systemThemeActions.loadThemesRequested())
@@ -161,7 +164,6 @@ export function SystemThemePage() {
           </ListPageBody>
         </section>
 
-        {status === 'loading' ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
         {!dialogOpen && !deleteTarget && error ? (
           <p className="text-sm text-destructive">{error}</p>
         ) : null}

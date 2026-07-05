@@ -53,7 +53,7 @@ Each prompt **must** include:
 
 Sequence cross-service work: Identity before WebOnOne.
 
-**Platform redirection (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). **Profile is the reference** — every peer uses the same three layers: (1) consumer `AppLayout` + `redirectTo<Peer>.ts` + `handle<Peer>Click`, (2) destination `AppLayout` PageShell→AppShell split, (3) destination home page bootstrap (never `/callback`, never `/go/*` redirect pages).
+**Platform redirection (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). **Profile is the reference** — every peer uses the same three layers: (1) consumer `AppLayout` + `redirectTo<Peer>.ts` + `handle<Peer>Click`, (2) destination `AppLayout` PageShell→AppShell split, (3) destination home page bootstrap (never `/callback`, never `/go/*` redirect pages). Satellites with core nav also wire peer outbound nav and unified loading — [loading-empty-states.mdc](../../rules/loading-empty-states.mdc).
 
 ## Prompt templates
 

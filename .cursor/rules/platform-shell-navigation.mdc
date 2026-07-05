@@ -26,7 +26,7 @@ Destination home PAGE (not AppLayout, not /callback)
   → read ?code
   → bootstrap<Peer>Session(code) → Identity POST /auth/exchange
   → dispatch login + strip code from URL (keep return_url / core_nav)
-  → spinner only in page content ("Loading …")
+  → code exchange spinner in page content only; AppLayout session via unified overlay
 ```
 
 ## Three layers — same structure every time
@@ -102,11 +102,29 @@ When the user signs out from a satellite opened with `return_url` (core shell mo
 1. `const code = searchParams.get('code')`
 2. `useRef` + `useEffect` → single bootstrap when `code` present (platform handoff: `code` without `state`)
 3. `bootstrap<Session>(code)` → dispatch login → `navigate({ pathname: home, search: stripAuthCodeFromSearch })`
-4. While bootstrapping: `<Spinner />` only in **page content** — no "Loading …" copy; never a full-page login or redirect screen.
+4. While bootstrapping **`code` exchange**: `<Spinner />` only in **page content** — no "Loading …" copy; never a full-page login or redirect screen. Session/page refresh loading uses the **unified AppLayout overlay** — see [loading-empty-states.mdc](loading-empty-states.mdc).
 5. `if (!accessToken && !code) return <Navigate to="/login" />`
 6. Then load page data (second `useEffect` when `accessToken && !code`)
 
 **Email reference:** `email/frontend/src/features/dashboard/pages/DashboardPage.tsx`
+
+## Satellite peer nav (cross-satellite core menu)
+
+When a satellite renders core nav, **peer service links** must not resolve to `{coreOrigin}/email/...` or `{coreOrigin}/data/...`.
+
+**Required on each satellite:**
+
+1. **Peer origin env** — one `VITE_<PEER>_ORIGIN` per connected satellite (Data: `VITE_EMAIL_ORIGIN`; Email: `VITE_DATA_ORIGIN`).
+2. **`resolvePlatformNavUrls`** — pass own origin for self in the peer map (`{ email: emailOrigin }` or `{ data: dataOrigin }`).
+3. **Rewrite own links** — `rewriteEmailOriginLinks` / `rewriteDataOriginLinks` so local routes use relative paths.
+4. **Outbound peer clicks** — `withEmailNavActions` / `withDataNavActions` on core nav + `handleEmailNavClick` / `handleDataNavClick` calling `getEmailRedirectOptions` / `getDataRedirectOptions` with nav sentinel (auth-code redirect — same as WebOnOne consumer).
+
+| Satellite | Peer config | Redirect | Nav wiring |
+|-----------|-------------|----------|------------|
+| Data | `features/email/utils/emailConfig.ts` | `redirectToEmail.ts` | `shell/utils/externalNavActions.ts`, `AppLayout` `handleEmailNavClick` |
+| Email | `features/data/utils/dataConfig.ts` | `redirectToData.ts` | `shell/utils/externalNavActions.ts`, `AppLayout` `handleDataNavClick` |
+
+**Forbidden:** core-origin hrefs for authenticated peer navigation from a satellite; `navigate()` to peer paths on the wrong origin.
 
 ## `PrivateRoute`
 
@@ -144,6 +162,8 @@ Copy Profile roles row-by-row from tables above:
 - [ ] `redirectToIdentityProfile.ts` on satellite for profile header
 - [ ] `packages/platform-nav/src/coreNav.ts` leaf + `externalService` if core menu item
 - [ ] Consumer `features/<peer>/utils/<peer>Config.ts` — origin only; derive home/callback in code
+- [ ] Satellite `VITE_<PEER>_ORIGIN` + outbound peer redirect when core nav includes other satellites
+- [ ] `PlatformLoadingProvider` + unified overlay in `AppLayout` — [loading-empty-states.mdc](loading-empty-states.mdc)
 
 ## Forbidden
 
@@ -153,6 +173,7 @@ Copy Profile roles row-by-row from tables above:
 - Raw `VITE_*_ORIGIN` hrefs for authenticated peers
 - `PrivateRoute` → `/login` during valid `code` + `return_url` handoff
 - Different flow for Email vs Profile vs the next service — **one pattern only**
+- Inline session/page `"Loading…"` text or per-route overlay spinners — use unified overlay instead
 
 ## Verification
 

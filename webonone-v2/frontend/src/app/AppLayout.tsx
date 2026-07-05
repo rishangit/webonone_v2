@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { AppShell, BrandLogo } from '@webonone/ui-kit'
+import { AppShell, BrandLogo, LoadingState } from '@webonone/ui-kit'
 import { performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
 import type { NavConfigItem } from '@webonone/ui-kit'
@@ -17,6 +17,11 @@ import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { SessionRoleGate } from '@/features/session/components/SessionRoleGate'
 import { formatSessionRoleLabel } from '@/features/session/utils/formatSessionRoleLabel'
+import {
+  PlatformLoadingProvider,
+  usePlatformPageLabel,
+  usePlatformRouteLabel,
+} from '@/features/shell/context/PlatformLoadingContext'
 
 function withExternalNavActions(
   items: NavConfigItem[],
@@ -51,6 +56,14 @@ function withExternalNavActions(
 }
 
 export function AppLayout() {
+  return (
+    <PlatformLoadingProvider>
+      <AppLayoutContent />
+    </PlatformLoadingProvider>
+  )
+}
+
+function AppLayoutContent() {
   const navigate = useNavigate()
   const location = useLocation()
   const { accessToken, user } = useAppSelector((s) => s.auth)
@@ -157,6 +170,10 @@ export function AppLayout() {
     }
   }
 
+  const pageLabel = usePlatformPageLabel()
+  const routeLabel = usePlatformRouteLabel()
+  const overlayLabel = pageLabel ?? routeLabel
+
   return (
     <ThemeProviderBridge>
       <SessionRoleGate>
@@ -179,6 +196,7 @@ export function AppLayout() {
         >
           <Outlet />
           {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
+          {overlayLabel ? <LoadingState key="platform-loading" overlay label={overlayLabel} /> : null}
         </AppShell>
       </SessionRoleGate>
     </ThemeProviderBridge>

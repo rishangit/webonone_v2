@@ -111,7 +111,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Hover is themed shadow only (`item-list-row`); no `hover:border-*` or `hover:bg-*`
 - [ ] Active state uses `border-primary` only
 - [ ] Empty state via **`ItemListEmpty`** with explicit copy as children
-- [ ] Page/section fetch loading via **`LoadingState`** with contextual `label` — not centered `Spinner size="lg"` blocks
+- [ ] Page/section fetch loading via **`usePlatformLoading('Loading …')`** — not inline text or per-page `LoadingState overlay`
 - [ ] `ItemListMenu` is last child of `ItemListItem` — 3-dot trigger at top-right
 - [ ] Destructive action last in menu with destructive styling
 - [ ] Per-row `ariaLabel` on `ItemListMenu`
@@ -119,7 +119,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Paginated collections use `Pagination` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
 - [ ] Paginated pages wrap list + pagination in `ListPageBody`; list in `flex-1`; `Pagination` has `className="mt-auto"`
 - [ ] Filterable collections use `ListFilterTrigger` + `ListFilterPanel` ([list-filter-panel.mdc](../../rules/list-filter-panel.mdc))
-- [ ] Page loads use `LoadingState overlay`; empty results use `ItemListEmpty`
+- [ ] Page loads use **`usePlatformLoading`** (AppLayout owns the overlay); empty results use `ItemListEmpty`
 
 ## Rules
 
@@ -131,7 +131,7 @@ Cross-link only — do not duplicate:
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc) — build and export workflow
 - [item-list-pagination.mdc](../../rules/item-list-pagination.mdc) — `Pagination` with `ItemList`
 - [list-filter-panel.mdc](../../rules/list-filter-panel.mdc) — `ListFilterPanel` on collection pages
-- [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — `LoadingState` vs button `Spinner`; `ItemListEmpty`
+- [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified platform overlay; `usePlatformLoading`; button `Spinner`
 - [form-creation skill](../form-creation/SKILL.md) — when the list is inside a form (orthogonal)
 
 ## Examples
