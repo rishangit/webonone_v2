@@ -47,11 +47,30 @@ Spec: subtask **86ey5we2u**
 
 ---
 
-## Fixes required (from bug subtask)
+## Phase 2 — Unified loading overlay (delta)
+
+**Goal:** [03-loading-overlay-unification.md](./03-loading-overlay-unification.md)
+
+| Task | Detail |
+|------|--------|
+| PlatformLoadingContext | Provider + `usePlatformLoading(label)` hook |
+| AppLayout | Single overlay over `<Outlet />`; session label then page label |
+| LazyRoute | Non-overlay Suspense fallback |
+| List/home pages | Replace `LoadingState overlay` with `usePlatformLoading` |
+| Cleanup | Remove redundant `PlatformHandoffSpinner` early returns where covered |
+
+**Exit criteria:** Refresh `/tags` or `/templates` shows one overlay; label updates without second mount.
+
+Spec: subtask **86ey5wf9a**
+
+---
+
+## Fixes required (from bug subtasks)
 
 - [ ] Data → Email nav redirects to Email sub-route, not core Home
 - [ ] Email → Data nav redirects to Data sub-route, not core Home
 - [ ] Platform query params (`return_url`, `core_nav`, theme) preserved on peer hops
+- [ ] Page refresh shows one viewport overlay; label updates in place (no double spinner)
 
 ---
 
@@ -60,6 +79,8 @@ Spec: subtask **86ey5we2u**
 - [ ] Data `/tags` → Email Templates → Email `/templates`
 - [ ] Email `/history` → Data Tags → Data `/tags`
 - [ ] Core Home / Settings links still work from both satellites
+- [ ] Refresh Data `/tags` — single overlay through session + data load
+- [ ] Refresh Email `/templates` — single overlay through session + data load
 - [ ] `npm run type-check -w data-root`
 - [ ] `npm run type-check -w email-root`
 
@@ -71,6 +92,7 @@ Spec: subtask **86ey5we2u**
 |---------|-----|-------|
 | Parent: [User Story] Spec No 1.11.2 Bug fixing | 86ey5wdua | All phases |
 | Subtask: [Bug] issue in navigation with service | 86ey5we2u | Phase 1 |
+| Subtask: [Bug] Still can see the two loading when page refresh | 86ey5wf9a | Phase 2 |
 
 ---
 
