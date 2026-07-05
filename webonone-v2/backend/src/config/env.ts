@@ -49,6 +49,21 @@ if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')
 }
 
+const identityApiBaseUrl = parsed.IDENTITY_API_BASE_URL?.trim() ?? ''
+const identityServiceApiKey = parsed.IDENTITY_SERVICE_API_KEY?.trim() ?? ''
+
+if (iisHosted) {
+  if (!identityApiBaseUrl) {
+    throw new Error('IDENTITY_API_BASE_URL is required when IIS_NODE_HOSTED=1')
+  }
+  if (/^https?:\/\/localhost(:\d+)?$/i.test(identityApiBaseUrl)) {
+    throw new Error('IDENTITY_API_BASE_URL must not point at localhost in production')
+  }
+  if (!identityServiceApiKey) {
+    throw new Error('IDENTITY_SERVICE_API_KEY is required when IIS_NODE_HOSTED=1')
+  }
+}
+
 export const env = {
   database: {
     host: parsed.DB_HOST,
@@ -70,7 +85,7 @@ export const env = {
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
   dataApiBaseUrl: parsed.DATA_API_BASE_URL ?? '',
   dataServiceApiKey: parsed.DATA_SERVICE_API_KEY ?? '',
-  identityApiBaseUrl: parsed.IDENTITY_API_BASE_URL ?? 'http://localhost:4001',
-  identityServiceApiKey: parsed.IDENTITY_SERVICE_API_KEY ?? 'dev-identity-service-key',
+  identityApiBaseUrl: identityApiBaseUrl || 'http://localhost:4001',
+  identityServiceApiKey: identityServiceApiKey || 'dev-identity-service-key',
   identityDbName: parsed.IDENTITY_DB_NAME,
 }
