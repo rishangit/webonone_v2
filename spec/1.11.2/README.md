@@ -30,7 +30,7 @@ Implementation branch: **`spec/1.11.2`**
 | [01-overview.md](./01-overview.md) | Vision, goals, scope, success criteria |
 | [02-cross-service-nav-fix.md](./02-cross-service-nav-fix.md) | Root cause, required handlers, acceptance |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
-| [plan.mdc](./plan.mdc) | Agent implementation plan |
+| [plan.mdc](./plan.mdc) | Agent implementation plan (implementation) |
 
 ## ClickUp traceability
 

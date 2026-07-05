@@ -1,0 +1,97 @@
+---
+description: Implementation plan for spec 1.11.2 — fix Data ↔ Email cross-satellite platform nav
+alwaysApply: false
+globs: data/frontend/**, email/frontend/**
+---
+
+# Implementation plan — Spec 1.11.2
+
+## Summary
+
+Fix platform shell navigation when hopping between **Data** and **Email** satellites. Wire auth-code redirect handlers for peer nav sentinels (mirror WebOnOne `withExternalNavActions`).
+
+See [02-cross-service-nav-fix.md](./02-cross-service-nav-fix.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.11.2` |
+| Services | Identity + WebOnOne + Data + Email running for manual test |
+| New env | Data FE: `VITE_EMAIL_ORIGIN`; Email FE: `VITE_DATA_ORIGIN` |
+| Packages | No build chain changes |
+
+---
+
+## Phase 1 — Data → Email outbound nav
+
+**Goal:** Clicking Email sentinels on Data triggers auth-code redirect to Email.
+
+**Exit criteria:** Data `/tags` → Email Templates lands on Email `/templates`.
+
+| Task | Paths |
+|------|-------|
+| Peer config | `data/frontend/src/features/email/utils/emailConfig.ts` |
+| Redirect options | `data/frontend/src/features/email/utils/redirectToEmail.ts` |
+| AppLayout handlers | `data/frontend/src/app/AppLayout.tsx` — `handleEmailNavClick`, attach `onClick` via `isEmailNavSentinel` |
+| Env example | `data/frontend/.env.example` — add `VITE_EMAIL_ORIGIN=http://localhost:3004` |
+
+**Reference:** `webonone-v2/frontend/src/features/email/utils/redirectToEmail.ts`, `identity/frontend/src/app/AppLayout.tsx` `withEmailNavAction`
+
+**Verify:** `npm run type-check -w data-root`
+
+---
+
+## Phase 2 — Email → Data outbound nav
+
+**Goal:** Clicking Data sentinels on Email triggers auth-code redirect to Data.
+
+**Exit criteria:** Email `/templates` → Data Tags lands on Data `/tags`.
+
+| Task | Paths |
+|------|-------|
+| Peer config | `email/frontend/src/features/data/utils/dataConfig.ts` |
+| Redirect options | `email/frontend/src/features/data/utils/redirectToData.ts` |
+| AppLayout handlers | `email/frontend/src/app/AppLayout.tsx` — `handleDataNavClick`, attach `onClick` via `isDataNavSentinel` |
+| Env example | `email/frontend/.env.example` — add `VITE_DATA_ORIGIN=http://localhost:3005` |
+
+**Reference:** `webonone-v2/frontend/src/features/data/utils/redirectToData.ts`
+
+**Verify:** `npm run type-check -w email-root`
+
+---
+
+## Cross-service integration
+
+- Auth-code flow unchanged: `POST {identityApi}/auth/code` → peer home URL with `code`, `return_url`, `core_nav`
+- Theme params: `relayThemeQueryParams(searchParams)` on outbound redirect
+- `returnUrl` on peer hop: current satellite origin + `/` (consumer home — same as WebOnOne outbound)
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.11.2 Bug fixing | 86ey5wdua | All |
+| Subtask: [Bug] issue in navigation with service | 86ey5we2u | Phase 1–2 |
+
+---
+
+## Risks and open items
+
+- Local `.env` files need peer origins added manually (document in `.env.example` only)
+- No automated E2E — manual cross-service nav test required
+
+---
+
+## Final verification
+
+```bash
+npm run type-check -w data-root
+npm run type-check -w email-root
+npm run lint -w data-root
+npm run lint -w email-root
+```
+
+Manual: WebOnOne → Data → Tags → Email → Templates; reverse Email → Data → Tags.
