@@ -70,7 +70,14 @@ Use the same env files as local development — no separate deploy templates.
 copy webonone-v2\backend\.env.example webonone-v2\backend\.env
 ```
 
-Edit `webonone-v2\backend\.env` — set `DB_*` and `JWT_SECRET` (must match `identity\backend\.env`).
+Edit `webonone-v2\backend\.env` — set `DB_*`, `JWT_SECRET` (must match `identity\backend\.env`), and Identity service keys:
+
+| Key | Value |
+|-----|-------|
+| `IDENTITY_API_BASE_URL` | `https://identity.webonone.com` |
+| `IDENTITY_SERVICE_API_KEY` | Same value as `identity\backend\.env` |
+
+`IDENTITY_SERVICE_API_KEY` must match on both WebOnOne and Identity backends. Without `IDENTITY_API_BASE_URL`, role APIs (e.g. `GET /company/me/assumable-roles`) fail with 500.
 
 For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
 
