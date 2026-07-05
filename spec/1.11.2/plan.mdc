@@ -69,9 +69,9 @@ See [02-cross-service-nav-fix.md](./02-cross-service-nav-fix.md), [03-loading-ov
 
 | Task | Paths |
 |------|-------|
-| Loading context | `data/frontend/src/features/auth/context/PlatformLoadingContext.tsx` (mirror in email) |
-| AppLayout | Always render `<Outlet />`; single overlay for session + page label |
-| LazyRoute | Non-overlay Suspense fallback |
+| Loading context | `data/frontend/src/features/auth/context/PlatformLoadingContext.tsx` (mirror in email) — add `useRouteLoading`, `useLayoutEffect` |
+| AppLayout | Single overlay when session **or** route **or** page loading; stable overlay `key` |
+| LazyRoute | Suspense fallback reports `Loading page…` via context (no visible fallback) |
 | List/home pages | `usePlatformLoading(label)` instead of `LoadingState overlay` |
 | Cleanup | Remove redundant `PlatformHandoffSpinner` early returns on list pages |
 
