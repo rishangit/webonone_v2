@@ -1,0 +1,86 @@
+---
+description: Implementation plan for spec 1.11.3 — fix Profile iframe mouse wheel scroll in platform embed
+alwaysApply: false
+globs: packages/platform-embed/**, identity/frontend/**, webonone-v2/frontend/**
+---
+
+# Implementation plan — Spec 1.11.3
+
+## Summary
+
+Fix mouse wheel scrolling on Identity Profile when embedded in WebOnOne core via `PlatformServiceFrame`. Scroll root is `.platform-embed-shell-main` inside `@webonone/platform-embed`.
+
+See [02-profile-embed-scroll-fix.md](./02-profile-embed-scroll-fix.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.11.3` |
+| Services | WebOnOne + Identity for manual test |
+| Packages | `platform-embed` — dev alias in consumer vite configs |
+| New env | None |
+
+---
+
+## Phase 1 — Embed shell wheel scroll
+
+**Goal:** Wheel deltas scroll `.platform-embed-shell-main` in embed iframes.
+
+**Exit criteria:** WebOnOne `/profile` — wheel scrolls profile; type-check passes.
+
+| Task | Paths |
+|------|-------|
+| Wheel hook | `packages/platform-embed/src/useEmbedMainWheelScroll.ts` |
+| Shell wiring | `packages/platform-embed/src/PlatformEmbedShell.tsx` |
+| Export | `packages/platform-embed/src/index.ts` |
+
+**Implementation notes:**
+
+- Only active in embed mode (`shouldUsePlatformEmbedCanvas` logic — iframe or `embed=platform` query).
+- Use `{ passive: false }` on `wheel`; clamp `scrollTop`; `preventDefault` when delta consumed.
+- Normalize `deltaMode` (pixel / line / page).
+
+**Verify:**
+
+```bash
+npm run type-check -w @webonone/platform-embed
+npm run type-check -w identity-root
+npm run type-check -w webonone-v2-root
+```
+
+Manual: WebOnOne → Profile → wheel scroll on long profile content.
+
+---
+
+## Cross-service integration
+
+- No JWT, auth-code, or postMessage contract changes.
+- Identity `PlatformEmbedLayout` already wraps content in `PlatformEmbedShell` — fix applies automatically.
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.11.3 Profile scroll wheel | 86ey61krq | Phase 1 |
+
+---
+
+## Risks and open items
+
+- Manual E2E only — no Playwright for cross-origin iframe wheel.
+- If browser fixes native behavior, hook should not double-scroll (clamp + boundary checks).
+
+---
+
+## Final verification
+
+```bash
+npm run type-check -w @webonone/platform-embed
+npm run type-check -w identity-root
+npm run type-check -w webonone-v2-root
+```
+
+Manual: WebOnOne → Profile — mouse wheel scrolls; scrollbar drag still works.
