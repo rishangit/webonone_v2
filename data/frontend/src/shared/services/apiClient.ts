@@ -14,7 +14,7 @@ export function getAccessToken(): string | null {
   return getToken()
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4005/api/v1'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4015/api/v1'
 
 export async function apiClient<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken()

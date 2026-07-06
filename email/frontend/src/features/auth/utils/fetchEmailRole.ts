@@ -1,6 +1,6 @@
 import type { EmailRole } from '@/features/auth/types/auth.types'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4004/api/v1'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4014/api/v1'
 
 export async function fetchEmailRole(accessToken: string): Promise<EmailRole> {
   const res = await fetch(`${API_BASE}/me`, {

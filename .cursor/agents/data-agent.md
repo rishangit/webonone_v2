@@ -15,8 +15,8 @@ Skill: [.cursor/skills/data-agent/SKILL.md](../skills/data-agent/SKILL.md)
 
 | Layer | Port |
 |-------|------|
-| Frontend | 3005 |
-| Backend | 4005 |
+| Frontend | 3015 |
+| Backend | 4015 |
 
 Database: `webonone_data`
 

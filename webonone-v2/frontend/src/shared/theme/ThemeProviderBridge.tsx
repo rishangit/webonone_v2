@@ -4,6 +4,7 @@ import {
   broadcastThemeToIframes,
   buildThemePayload,
   createPlatformDefaultThemeDto,
+  THEME_MESSAGE_TYPES,
 } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { systemThemeActions } from '@/features/settings/system-theme/store/systemThemeSlice'
@@ -52,6 +53,32 @@ export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
 
   useEffect(() => {
     broadcastToIframes()
+  }, [broadcastToIframes])
+
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      if (event.data?.type !== THEME_MESSAGE_TYPES.READY) {
+        return
+      }
+
+      const iframes = document.querySelectorAll('iframe')
+      for (const iframe of iframes) {
+        if (!iframe.src) {
+          continue
+        }
+        try {
+          if (new URL(iframe.src).origin === event.origin) {
+            broadcastToIframes()
+            return
+          }
+        } catch {
+          // ignore invalid iframe src
+        }
+      }
+    }
+
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
   }, [broadcastToIframes])
 
   return (

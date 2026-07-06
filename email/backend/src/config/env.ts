@@ -42,7 +42,7 @@ const envSchema = z.object({
     .string()
     .default('true')
     .transform((v) => v !== 'false' && v !== '0'),
-  FRONTEND_BASE_URL: z.string().default('http://localhost:3004'),
+  FRONTEND_BASE_URL: z.string().default('http://localhost:3014'),
   QUEUE_WORKER_INTERVAL_MS: z.coerce.number().default(5000),
 })
 
@@ -50,7 +50,7 @@ const parsed = envSchema.parse(process.env)
 
 const port = iisHosted
   ? Number(process.env.PORT)
-  : (parsed.PORT ?? parsed.EMAIL_PORT ?? 4004)
+  : (parsed.PORT ?? parsed.EMAIL_PORT ?? 4014)
 
 if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')

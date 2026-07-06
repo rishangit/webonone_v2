@@ -10,7 +10,7 @@ export function getEmailRedirectUri(path = '/'): string {
     return `${origin}${path.startsWith('/') ? path : `/${path}`}`
   }
 
-  return 'http://localhost:3004/'
+  return 'http://localhost:3014/'
 }
 
 /** @deprecated Use getEmailRedirectUri('/') */

@@ -15,5 +15,5 @@ export default defineConfig({
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },
-  server: { port: 3002 },
+  server: { port: 3012, strictPort: true },
 })

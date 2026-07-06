@@ -118,7 +118,7 @@ export function buildStandaloneNav(): NavConfigItem[] {
   return standaloneNav
 }
 
-const DEFAULT_EMAIL_ORIGIN = 'http://localhost:3004'
+const DEFAULT_EMAIL_ORIGIN = 'http://localhost:3014'
 
 function getCoreExternalOrigins(): Partial<Record<'email', string>> {
   return {

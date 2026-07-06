@@ -1,4 +1,4 @@
-const DEFAULT_DATA_ORIGIN = 'http://localhost:3005'
+const DEFAULT_DATA_ORIGIN = 'http://localhost:3015'
 
 export function getDataOrigin(): string {
   return import.meta.env.VITE_DATA_ORIGIN ?? DEFAULT_DATA_ORIGIN

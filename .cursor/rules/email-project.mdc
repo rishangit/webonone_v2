@@ -14,8 +14,8 @@ alwaysApply: false
 
 | Layer | Port | Env file |
 |-------|------|----------|
-| Frontend | 3004 | `email/frontend/.env` |
-| Backend | 4004 | `email/backend/.env` |
+| Frontend | 3014 | `email/frontend/.env` |
+| Backend | 4014 | `email/backend/.env` |
 
 `JWT_SECRET` must match Identity backend. `EMAIL_SERVICE_API_KEY` shared with Identity and WebOnOne backends for internal send API.
 

@@ -10,7 +10,7 @@ export function getDataRedirectUri(path = '/'): string {
     return `${origin}${path.startsWith('/') ? path : `/${path}`}`
   }
 
-  return 'http://localhost:3005/'
+  return 'http://localhost:3015/'
 }
 
 /** @deprecated Use getDataRedirectUri('/') */

@@ -16,8 +16,8 @@ Agent skill: [.cursor/skills/identity-agent/SKILL.md](../skills/identity-agent/S
 
 | Layer | Port | Env file |
 |-------|------|----------|
-| Frontend | 3001 | `identity/frontend/.env` (`VITE_*` only) |
-| Backend | 4001 | `identity/backend/.env` |
+| Frontend | 3011 | `identity/frontend/.env` (`VITE_*` only) |
+| Backend | 4011 | `identity/backend/.env` |
 
 Backend loads only `identity/backend/.env` (not repo root or other services).
 

@@ -18,8 +18,6 @@ import {
 
 } from '@webonone/platform-nav'
 
-import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
-
 import { useAppSelector } from '@/app/store/hooks'
 
 import { getIdentityApiBase, getIdentityOrigin } from '@/features/auth/utils/identityConfig'
@@ -31,8 +29,6 @@ import { getEmailOrigin } from '@/features/email/utils/emailConfig'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-
-import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 
 
 
@@ -108,8 +104,6 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
 
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
 
-  const preferences = useAppSelector((s) => s.systemTheme.preferences)
-
   const [frameError, setFrameError] = useState<string | null>(null)
 
   const [frameLoading, setFrameLoading] = useState(true)
@@ -131,38 +125,11 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
 
 
   const searchParams = useMemo(() => {
-
     const navVariant = getNavVariantForSessionRole(activeRole)
-
-    const params: Record<string, string> = {
-
+    return {
       [CORE_NAV_QUERY_PARAM]: toCoreNavQueryValue(navVariant),
-
     }
-
-
-
-    if (preferences) {
-
-      Object.assign(
-
-        params,
-
-        serializeThemeQueryParams(
-
-          buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode),
-
-        ),
-
-      )
-
-    }
-
-
-
-    return params
-
-  }, [activeRole, preferences])
+  }, [activeRole])
 
 
 

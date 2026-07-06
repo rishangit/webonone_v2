@@ -14,8 +14,8 @@ Skill: [.cursor/skills/media-agent/SKILL.md](../skills/media-agent/SKILL.md)
 
 | Layer | Port |
 |-------|------|
-| Frontend | 3003 |
-| Backend | 4003 |
+| Frontend | 3013 |
+| Backend | 4013 |
 
 ## Do not
 

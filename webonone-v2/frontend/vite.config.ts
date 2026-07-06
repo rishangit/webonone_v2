@@ -23,7 +23,7 @@ export default defineConfig({
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },
-  server: { port: 3000 },
+  server: { port: 3010, strictPort: true },
   build: {
     rollupOptions: {
       output: {

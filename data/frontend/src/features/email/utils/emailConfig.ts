@@ -1,4 +1,4 @@
-const DEFAULT_EMAIL_ORIGIN = 'http://localhost:3004'
+const DEFAULT_EMAIL_ORIGIN = 'http://localhost:3014'
 
 export function getEmailOrigin(): string {
   return import.meta.env.VITE_EMAIL_ORIGIN ?? DEFAULT_EMAIL_ORIGIN

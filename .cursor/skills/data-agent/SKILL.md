@@ -21,8 +21,8 @@ description: Data service agent for webonone-platform. Handles data/ frontend, b
 
 | Layer | Port | Env file |
 |-------|------|----------|
-| Frontend | 3005 | `data/frontend/.env` |
-| Backend | 4005 | `data/backend/.env` |
+| Frontend | 3015 | `data/frontend/.env` |
+| Backend | 4015 | `data/backend/.env` |
 
 `JWT_SECRET` must match Identity backend. Database: `webonone_data`.
 

@@ -9,8 +9,8 @@ const themeRoot = path.resolve(__dirname, '../../packages/theme')
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '')
-  const webononeOrigin = env.VITE_WEBONONE_ORIGIN ?? 'http://localhost:3000'
-  const identityOrigin = env.VITE_IDENTITY_ORIGIN ?? 'http://localhost:3001'
+  const webononeOrigin = env.VITE_WEBONONE_ORIGIN ?? 'http://localhost:3010'
+  const identityOrigin = env.VITE_IDENTITY_ORIGIN ?? 'http://localhost:3011'
 
   return {
     plugins: [react()],
@@ -26,7 +26,8 @@ export default defineConfig(({ mode }) => {
       ],
     },
     server: {
-      port: 3004,
+      port: 3014,
+      strictPort: true,
       headers: {
         'Content-Security-Policy': `frame-ancestors 'self' ${webononeOrigin} ${identityOrigin}`,
       },

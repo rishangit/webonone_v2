@@ -31,7 +31,7 @@ const envSchema = z.object({
   MEDIA_LOCAL_STORAGE_PATH: z.string().default('./storage'),
   MEDIA_S3_BUCKET: z.string().optional(),
   MEDIA_S3_REGION: z.string().optional(),
-  MEDIA_PUBLIC_BASE_URL: z.string().default('http://localhost:4003/api/v1'),
+  MEDIA_PUBLIC_BASE_URL: z.string().default('http://localhost:4013/api/v1'),
   MEDIA_MAX_FILE_SIZE_BYTES: z.coerce.number().default(26214400),
   MEDIA_ALLOWED_MIME_TYPES: z.string().default('image/*,video/*,application/pdf,text/plain'),
 })
@@ -40,7 +40,7 @@ const parsed = envSchema.parse(process.env)
 
 const port = iisHosted
   ? Number(process.env.PORT)
-  : (parsed.PORT ?? parsed.MEDIA_PORT ?? 4003)
+  : (parsed.PORT ?? parsed.MEDIA_PORT ?? 4013)
 
 if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')

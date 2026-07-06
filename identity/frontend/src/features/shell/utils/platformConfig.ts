@@ -1,11 +1,11 @@
 export function getWebOnOneOrigin(): string {
-  return import.meta.env.VITE_WEBONONE_ORIGIN ?? 'http://localhost:3000'
+  return import.meta.env.VITE_WEBONONE_ORIGIN ?? 'http://localhost:3010'
 }
 
 export function parseAllowedParentOrigins(): string[] {
   const raw =
     import.meta.env.VITE_ALLOWED_PARENT_ORIGINS ??
-    `${getWebOnOneOrigin()},http://localhost:3001`
+    `${getWebOnOneOrigin()},http://localhost:3011`
   return raw
     .split(',')
     .map((entry: string) => entry.trim())

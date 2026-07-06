@@ -1,4 +1,4 @@
-const DEFAULT_MEDIA_ORIGIN = 'http://localhost:3003'
+const DEFAULT_MEDIA_ORIGIN = 'http://localhost:3013'
 
 export function getMediaOrigin(): string {
   return import.meta.env.VITE_MEDIA_ORIGIN ?? DEFAULT_MEDIA_ORIGIN

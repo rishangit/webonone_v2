@@ -22,21 +22,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`rounded-md border px-4 py-3 shadow-lg ${
-              t.variant === 'destructive'
-                ? 'border-destructive bg-destructive text-destructive-foreground'
-                : 'bg-background'
-            }`}
-          >
-            <p className="text-sm font-medium">{t.title}</p>
-            {t.description ? <p className="text-sm opacity-90">{t.description}</p> : null}
-          </div>
-        ))}
-      </div>
+      {toasts.length > 0 ? (
+        <div
+          aria-live="polite"
+          className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2"
+        >
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className={`pointer-events-auto rounded-md border px-4 py-3 shadow-lg ${
+                t.variant === 'destructive'
+                  ? 'border-destructive bg-destructive text-destructive-foreground'
+                  : 'bg-background'
+              }`}
+            >
+              <p className="text-sm font-medium">{t.title}</p>
+              {t.description ? <p className="text-sm opacity-90">{t.description}</p> : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </ToastContext.Provider>
   )
 }

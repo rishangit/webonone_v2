@@ -17,8 +17,8 @@ import { redirectWithAuthCode } from '@webonone/platform-nav'
 
 await redirectWithAuthCode({
   accessToken,
-  authCodeEndpoint: 'http://localhost:4001/api/v1/auth/code',
-  targetUrl: 'http://localhost:3001/profile',
+  authCodeEndpoint: 'http://localhost:4011/api/v1/auth/code',
+  targetUrl: 'http://localhost:3011/profile',
   returnUrl: window.location.href,
 })
 ```

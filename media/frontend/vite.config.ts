@@ -21,10 +21,11 @@ export default defineConfig({
     ],
   },
   server: {
-    port: 3003,
+    port: 3013,
+    strictPort: true,
     headers: {
       'Content-Security-Policy':
-        "frame-ancestors 'self' http://localhost:3000 http://localhost:3001",
+        "frame-ancestors 'self' http://localhost:3010 http://localhost:3011",
     },
   },
   build: {

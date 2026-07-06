@@ -24,12 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store/authSlice'
+import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { emailApi } from '@/shared/services/emailApi'
-import { apiClient } from '@/shared/services/apiClient'
 import type { DashboardStats, HistoryItem } from '@/shared/types/email.types'
 
 function StatCard({ title, value }: { title: string; value: number }) {
@@ -58,7 +56,6 @@ function endOfDayIso(date: Date): string {
 }
 
 export function DashboardPage() {
-  const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
 
   const role: EmailRole = user?.role ?? 'member'
@@ -90,8 +87,7 @@ export function DashboardPage() {
       try {
         const fromIso = recentFrom ? startOfDayIso(recentFrom) : undefined
         const toIso = recentTo ? endOfDayIso(recentTo) : undefined
-        const [me, data, history] = await Promise.all([
-          apiClient<{ user: { role: EmailRole } }>('/me'),
+        const [data, history] = await Promise.all([
           emailApi.getDashboardStats(),
           emailApi.getHistory({
             page: recentPage,
@@ -101,7 +97,6 @@ export function DashboardPage() {
             to: toIso,
           }),
         ])
-        dispatch(authActions.setUserRole(me.user.role))
         setStats(data)
         setRecentItems(history.items)
         setRecentTotal(history.total)
@@ -117,7 +112,7 @@ export function DashboardPage() {
     }
 
     void load()
-  }, [accessToken, dispatch, recentPage, recentPageSize, recentStatus, recentFrom, recentTo])
+  }, [accessToken, recentPage, recentPageSize, recentStatus, recentFrom, recentTo])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />

@@ -40,10 +40,10 @@ describe('matchesRedirectUri', () => {
   })
 
   it('matches localhost dev ports and paths', () => {
-    assert.equal(matchesRedirectUri('http://localhost:3000/callback', devPatterns), true)
-    assert.equal(matchesRedirectUri('http://localhost:3001/profile', devPatterns), true)
+    assert.equal(matchesRedirectUri('http://localhost:3010/callback', devPatterns), true)
+    assert.equal(matchesRedirectUri('http://localhost:3011/profile', devPatterns), true)
     assert.equal(matchesRedirectUri('http://127.0.0.1:3000/callback', devPatterns), true)
-    assert.equal(matchesRedirectUri('https://localhost:3000/callback', devPatterns), false)
+    assert.equal(matchesRedirectUri('https://localhost:3010/callback', devPatterns), false)
   })
 })
 
@@ -54,7 +54,7 @@ describe('matchesAllowedOrigin', () => {
   })
 
   it('matches localhost origins in dev', () => {
-    assert.equal(matchesAllowedOrigin('http://localhost:3000', devPatterns), true)
+    assert.equal(matchesAllowedOrigin('http://localhost:3010', devPatterns), true)
   })
 
   it('matches exact pattern origins for legacy entries', () => {

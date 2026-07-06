@@ -16,8 +16,8 @@ Agent skill: [.cursor/skills/webonone-agent/SKILL.md](../skills/webonone-agent/S
 
 | Layer | Port | Env file |
 |-------|------|----------|
-| Frontend | 3000 | `webonone-v2/frontend/.env` |
-| Backend | 4000 | `webonone-v2/backend/.env` |
+| Frontend | 3010 | `webonone-v2/frontend/.env` |
+| Backend | 4010 | `webonone-v2/backend/.env` |
 
 `JWT_SECRET` must match Identity backend. Platform roles (`users_roles`) live in **Identity** — WebOnOne uses `IDENTITY_API_BASE_URL` + `IDENTITY_SERVICE_API_KEY` for role mutations. Super-admin seed: `npm run seed -w @webonone/identity-backend` with `SUPER_ADMIN_USER_ID` in Identity `backend/.env`.
 

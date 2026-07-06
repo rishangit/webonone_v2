@@ -43,7 +43,7 @@ const parsed = envSchema.parse(process.env)
 
 const port = iisHosted
   ? Number(process.env.PORT)
-  : (parsed.PORT ?? parsed.WEBONONE_PORT ?? 4000)
+  : (parsed.PORT ?? parsed.WEBONONE_PORT ?? 4010)
 
 if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')
@@ -85,7 +85,7 @@ export const env = {
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY ?? '',
   dataApiBaseUrl: parsed.DATA_API_BASE_URL ?? '',
   dataServiceApiKey: parsed.DATA_SERVICE_API_KEY ?? '',
-  identityApiBaseUrl: identityApiBaseUrl || 'http://localhost:4001',
+  identityApiBaseUrl: identityApiBaseUrl || 'http://localhost:4011',
   identityServiceApiKey: identityServiceApiKey || 'dev-identity-service-key',
   identityDbName: parsed.IDENTITY_DB_NAME,
 }

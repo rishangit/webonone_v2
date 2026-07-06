@@ -16,8 +16,8 @@ Specs: `spec/1.1.0/03-media-project.md`, `spec/1.1.0/08-media-consumer-integrati
 
 | Layer | Port | Env file |
 |-------|------|----------|
-| Frontend | 3003 | `media/frontend/.env` |
-| Backend | 4003 | `media/backend/.env` |
+| Frontend | 3013 | `media/frontend/.env` |
+| Backend | 4013 | `media/backend/.env` |
 
 `JWT_SECRET` must match Identity backend.
 

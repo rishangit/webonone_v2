@@ -34,7 +34,7 @@ const envSchema = z.object({
   ALLOWED_REDIRECT_URIS: z.string().default('http://localhost:*'),
   EMAIL_API_BASE_URL: z.string().optional(),
   EMAIL_SERVICE_API_KEY: z.string().optional(),
-  IDENTITY_FRONTEND_ORIGIN: z.string().default('http://localhost:3001'),
+  IDENTITY_FRONTEND_ORIGIN: z.string().default('http://localhost:3011'),
   EMAIL_VERIFICATION_EXPIRY_HOURS: z.coerce.number().default(24),
   SUPER_ADMIN_USER_ID: z.string().optional(),
   SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
@@ -46,7 +46,7 @@ const parsed = envSchema.parse(process.env)
 
 const port = iisHosted
   ? Number(process.env.PORT)
-  : (parsed.PORT ?? parsed.IDENTITY_PORT ?? 4001)
+  : (parsed.PORT ?? parsed.IDENTITY_PORT ?? 4011)
 
 if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')

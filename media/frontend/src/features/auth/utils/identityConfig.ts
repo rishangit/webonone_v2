@@ -1,5 +1,5 @@
 export function getIdentityOrigin(): string {
-  return import.meta.env.VITE_IDENTITY_ORIGIN ?? 'http://localhost:3001'
+  return import.meta.env.VITE_IDENTITY_ORIGIN ?? 'http://localhost:3011'
 }
 
 export function getIdentityLoginUrl(): string {
@@ -7,7 +7,7 @@ export function getIdentityLoginUrl(): string {
 }
 
 export function getIdentityApiBase(): string {
-  return import.meta.env.VITE_IDENTITY_API_BASE_URL ?? 'http://localhost:4001/api/v1'
+  return import.meta.env.VITE_IDENTITY_API_BASE_URL ?? 'http://localhost:4011/api/v1'
 }
 
 export function getAuthCallbackUrl(): string {
@@ -15,7 +15,7 @@ export function getAuthCallbackUrl(): string {
 }
 
 export function parseAllowedParentOrigins(): string[] {
-  const raw = import.meta.env.VITE_ALLOWED_PARENT_ORIGINS ?? 'http://localhost:3000,http://localhost:3001,http://localhost:3003'
+  const raw = import.meta.env.VITE_ALLOWED_PARENT_ORIGINS ?? 'http://localhost:3010,http://localhost:3011,http://localhost:3013'
   return raw
     .split(',')
     .map((entry) => entry.trim())

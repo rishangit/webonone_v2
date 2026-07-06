@@ -27,7 +27,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().optional(),
   DATA_PORT: z.coerce.number().optional(),
   IIS_NODE_HOSTED: z.string().optional(),
-  FRONTEND_BASE_URL: z.string().default('http://localhost:3005'),
+  FRONTEND_BASE_URL: z.string().default('http://localhost:3015'),
   DATA_SERVICE_API_KEY: z.string().optional(),
 })
 
@@ -35,7 +35,7 @@ const parsed = envSchema.parse(process.env)
 
 const port = iisHosted
   ? Number(process.env.PORT)
-  : (parsed.PORT ?? parsed.DATA_PORT ?? 4005)
+  : (parsed.PORT ?? parsed.DATA_PORT ?? 4015)
 
 if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')
