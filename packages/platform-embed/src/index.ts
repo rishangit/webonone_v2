@@ -28,5 +28,6 @@ export {
 
 export { PlatformEmbedShell } from './PlatformEmbedShell'
 export { PlatformServiceFrame, type PlatformServiceFrameProps } from './PlatformServiceFrame'
-export { usePlatformEmbedCanvas, ensurePlatformEmbedCanvas, PLATFORM_EMBED_APP_HOST_CLASS, PLATFORM_EMBED_CANVAS_CLASS, PLATFORM_EMBED_ROOT_CLASS } from './usePlatformEmbedCanvas'
+export { usePlatformEmbedCanvas, ensurePlatformEmbedCanvas, shouldUsePlatformEmbedCanvas, PLATFORM_EMBED_APP_HOST_CLASS, PLATFORM_EMBED_CANVAS_CLASS, PLATFORM_EMBED_ROOT_CLASS } from './usePlatformEmbedCanvas'
+export { useEmbedMainWheelScroll } from './useEmbedMainWheelScroll'
 export { usePlatformEmbedListener } from './usePlatformEmbedListener'

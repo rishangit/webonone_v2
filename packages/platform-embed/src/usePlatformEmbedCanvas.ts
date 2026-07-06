@@ -14,7 +14,7 @@ export const PLATFORM_EMBED_ROOT_CLASS = 'platform-embed-root'
 
 
 
-function shouldUsePlatformEmbedCanvas(): boolean {
+export function shouldUsePlatformEmbedCanvas(): boolean {
 
   if (typeof window === 'undefined') {
 
