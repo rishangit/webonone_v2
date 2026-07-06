@@ -185,7 +185,8 @@ Use the **right channel per layer**. Do not mix channels.
 | Layer | Channel | Passes | Example |
 |-------|---------|--------|---------|
 | **UI embed** | `<iframe>` + query params | Hosted UI from owning service | WebOnOne embeds Identity `/login?parentOrigin=...` |
-| **Browser handoff** | Auth-code redirect + `return_url` / `core_nav` | Session continuity across admin FEs | WebOnOne → Email via `AppLayout` `handleEmailClick`; profile → Identity `/profile` |
+| **Browser handoff** | Auth-code redirect + `return_url` / `core_nav` | Satellite → peer full page | Data → Email; Email/Data → Profile |
+| **Browser embed** | iframe in WebOnOne `#main-content` + `embed=platform` | Core shell peer nav + header profile | WebOnOne → Email, Data, Profile |
 | **Browser handoff** | `window.postMessage` + origin checks | JWT + public profile fields | Login success → parent app |
 | **API auth** | `Authorization: Bearer <JWT>` | Signed identity claims (`sub`, `email`, `iss`, `aud`, `exp`) | App FE → own service BE |
 | **Async sync** | Versioned events | Domain facts + foreign IDs (`user_id` CHAR(21)) | `UserRegistered` → local provisioning |

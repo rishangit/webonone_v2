@@ -8,14 +8,7 @@ interface ListPageBodyProps {
 
 function ListPageBody({ children, className }: ListPageBodyProps) {
   return (
-    <div
-      className={cn(
-        'flex min-h-[calc(100dvh-13rem)] flex-col gap-6',
-        className,
-      )}
-    >
-      {children}
-    </div>
+    <div className={cn('list-page-body flex flex-1 flex-col gap-6', className)}>{children}</div>
   )
 }
 

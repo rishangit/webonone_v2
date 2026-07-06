@@ -11,9 +11,10 @@ Cross-service libraries that are **not** UI Kit and **not** microservices. See [
 | Package | Purpose |
 |---------|---------|
 | `@webonone/platform-nav` | Cross-service redirect, auth-code handoff, return URL validation |
+| `@webonone/platform-embed` | Platform nav iframe embed URL builder, JWT postMessage, PlatformServiceFrame |
 | `@webonone/media-embed` | Media iframe embed URL builder, postMessage types, React hooks |
 
-Root: `npm run build:platform-nav`, `npm run build:media-embed`. Parent agent owns new entries under `packages/*`.
+Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run build:media-embed`. Parent agent owns new entries under `packages/*`.
 
 ### Cross-cutting skills
 
@@ -52,4 +53,5 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:media` | Media FE + BE |
 | `npm run dev:data` | Data FE + BE |
 | `npm run build:platform-nav` | Build `@webonone/platform-nav` |
+| `npm run build:platform-embed` | Build `@webonone/platform-embed` |
 | `npm run build:media-embed` | Build `@webonone/media-embed` |

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { Alert, AlertDescription, LoadingState } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
+import { hasPlatformEmbedHandoff } from '@/features/auth/utils/platformReturn'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { ProfileForm } from '../components/ProfileForm'
 import { bootstrapProfileSession } from '../utils/bootstrapProfileSession'
-import {
-  buildProfileSearchWithoutCode,
-} from '../utils/profileReturn'
+import { buildProfileSearchWithoutCode } from '../utils/profileReturn'
 
 export function ProfilePage() {
   const [searchParams] = useSearchParams()
@@ -19,9 +19,12 @@ export function ProfilePage() {
   const bootstrapRef = useRef(false)
 
   const code = searchParams.get('code')
+  const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
+
+  usePlatformLoading(isBootstrapping ? 'Loading your profile…' : isProfileLoading && !user ? 'Loading profile…' : null)
 
   useEffect(() => {
-    if (!code || bootstrapRef.current) return
+    if (!code || isEmbedHandoff || bootstrapRef.current) return
     bootstrapRef.current = true
     setIsBootstrapping(true)
     setBootstrapError(null)
@@ -46,7 +49,7 @@ export function ProfilePage() {
       .finally(() => {
         setIsBootstrapping(false)
       })
-  }, [code, dispatch, navigate, searchParams])
+  }, [code, dispatch, isEmbedHandoff, navigate, searchParams])
 
   useEffect(() => {
     if (accessToken && !code) {
@@ -55,14 +58,16 @@ export function ProfilePage() {
   }, [accessToken, code, dispatch])
 
   if (isBootstrapping) {
-    return <LoadingState overlay label="Loading your profile…" />
+    return null
   }
 
   if (bootstrapError) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{bootstrapError}</AlertDescription>
-      </Alert>
+      <FeaturePage title="Profile" description="Your account details.">
+        <Alert variant="destructive">
+          <AlertDescription>{bootstrapError}</AlertDescription>
+        </Alert>
+      </FeaturePage>
     )
   }
 
@@ -71,24 +76,23 @@ export function ProfilePage() {
   }
 
   if (isProfileLoading && !user) {
-    return <LoadingState overlay label="Loading profile…" />
+    return null
   }
 
   if (!user) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{profileError ?? 'Unable to load profile'}</AlertDescription>
-      </Alert>
+      <FeaturePage title="Profile" description="Your account details.">
+        <Alert variant="destructive">
+          <AlertDescription>{profileError ?? 'Unable to load profile'}</AlertDescription>
+        </Alert>
+      </FeaturePage>
     )
   }
 
   return (
-    <div className="w-full space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
-        <p className="text-sm text-muted-foreground">Your account details.</p>
-      </div>
+    <FeaturePage title="Profile" description="Your account details.">
       <ProfileForm user={user} />
-    </div>
+    </FeaturePage>
   )
 }
+

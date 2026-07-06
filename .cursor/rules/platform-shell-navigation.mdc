@@ -6,36 +6,93 @@ alwaysApply: false
 
 # Platform shell navigation
 
-All authenticated cross-origin navigation between **core (WebOnOne)** and **satellite FEs** (Identity profile, Email, future services) must follow **one pattern**. **Profile is the reference implementation** — copy its roles and flow exactly; only paths and feature names change.
+Cross-origin navigation between **WebOnOne (core shell)** and **peer microservice FEs** (Identity profile, Email, Data) uses **two channels**. Pick the channel by who owns the chrome.
 
-Authoritative reference: Identity profile inbound + WebOnOne `handleProfileClick` outbound.
+## Embed channel (WebOnOne — iframe in `#main-content`)
 
-## Canonical flow (every peer — no exceptions)
+When **WebOnOne** owns the shell (sidebar + header), load peer pages **in-place** via iframe — no full-page redirect.
+
+```text
+WebOnOne AppLayout (sidebar + header stay mounted; embedMain on AppShell)
+  → navigate(sentinel path: /email/*, /data/*, /profile)
+  → PlatformPeerFrame → PlatformServiceFrame
+  → POST /auth/code with redirectUri = {peerOrigin}{path} only (no embed query)
+  → iframe src = peer path + ?embed=platform&parentOrigin&core_nav&theme&code
+
+Peer AppLayout (embed=platform + validated parentOrigin, or iframe + session)
+  → ensurePlatformEmbedCanvas() in main.tsx (full-height #root before paint)
+  → PlatformEmbedLayout (chromeless Outlet — no AppShell)
+  → usePlatformSessionBootstrap (code exchange) + usePlatformEmbedListener (JWT sync)
+  → FeaturePage + ListPageBody flex fill; pagination mt-auto at bottom
+```
+
+| WebOnOne uses embed (local `navigate`) | Use redirect (auth-code `window.location.assign`) |
+|----------------------------------------|---------------------------------------------------|
+| Left-nav Email/Data sentinels | Satellite standalone bookmark / direct URL |
+| Header **Profile** (`/profile` sentinel) | Satellite-to-satellite hops (Data ↔ Email, satellite → Profile) |
+| Any new core-shell peer sentinel | Login / OAuth callback flows |
+
+**Package:** `@webonone/platform-embed` — `ensurePlatformEmbedCanvas`, `buildPlatformEmbedUrl`, `PlatformServiceFrame`, `PlatformEmbedShell`, `usePlatformEmbedListener`, `resolvePlatformEmbedParentOrigin`.
+
+**Consumer (WebOnOne):** `features/shell/pages/PlatformPeerFrame.tsx`; routes `email/*`, `data/*`, `profile/*` in `app/router.tsx`. Nav sentinels + header profile use `onNavItemNavigate` / `navigate` only — **no** `onClick` redirect on core shell.
+
+**Peers (Identity, Email, Data):** early `embed=platform` branch in `app/AppLayout.tsx` → `features/auth/components/PlatformEmbedLayout.tsx`. `hasAnyPlatformHandoff` allows embed (`code` + `embed=platform`) or redirect (`code` + `return_url`).
+
+**Layout / height (embed):** `ensurePlatformEmbedCanvas()` full-height `#root`. **`PlatformEmbedShell` `<main>`** scrolls (`overflow-y-auto scrollbar-themed`). Page chain uses **`min-h-full`** so short content fills the iframe and **`Pagination` `mt-auto`** stays at the bottom; tall content grows the page and scrolls on `<main>`.
+
+### Embed page content (required — all peer FEs)
+
+Every route inside `PlatformEmbedLayout` **must** use **`FeaturePage`** (`shellPagePadding`).
+
+| Concern | Rule |
+|---------|------|
+| **Fill height** | `platform-embed-outlet` → `FeaturePage` → `.feature-page-body` → `ListPageBody` — **`min-h-full` / `flex-1`** chain (embed CSS in `globals.css`) |
+| **Pagination bottom** | `ListPageBody` + list in `flex-1` + `Pagination className="mt-auto"` — same markup as standalone |
+| **Scroll** | **Only** on `.platform-embed-shell-main` when content exceeds iframe — **never** `overflow-auto` on list wrappers |
+
+```tsx
+<FeaturePage title="Tags" …>
+  <ListPageBody>
+    <div className="flex-1"><ItemList … /></div>
+    <Pagination className="mt-auto" … />
+  </ListPageBody>
+</FeaturePage>
+```
+
+**Forbidden in embed peers:** `overflow-auto` on list/table sub-regions; outlet/page roots without `min-h-full` flex chain; bare `<div>` instead of `FeaturePage`.
+
+**CSP:** peer `vite.config.ts` `frame-ancestors` includes `VITE_WEBONONE_ORIGIN`. Identity/Email/Data: `VITE_ALLOWED_PARENT_ORIGINS` for `parentOrigin` validation.
+
+**Auth-code `redirectUri`:** `{peerOrigin}{path}` only — embed query params are **not** part of `redirectUri`.
+
+## Redirect channel (satellite full-page handoff)
+
+When a **satellite** opens another service (or user bookmarks a peer URL), use auth-code redirect:
 
 ```text
 Consumer AppLayout
   → useServiceRedirect().redirect(get<Peer>RedirectOptions(...))
   → Identity POST /auth/code (Bearer JWT)
-  → window.location.assign(peerHomeUrl?code&return_url&core_nav)
+  → window.location.assign(peerUrl?code&return_url&core_nav)
 
 Destination AppLayout
   → PageShell + <Outlet /> while !authenticated (platform handoff)
   → AppShell + core nav when authenticated && return_url
 
 Destination home PAGE (not AppLayout, not /callback)
-  → read ?code
-  → bootstrap<Peer>Session(code) → Identity POST /auth/exchange
-  → dispatch login + strip code from URL (keep return_url / core_nav)
-  → code exchange spinner in page content only; AppLayout session via unified overlay
+  → read ?code (skip if hasPlatformEmbedHandoff — embed uses usePlatformSessionBootstrap in PlatformEmbedLayout)
+  → bootstrap session → dispatch login → strip code from URL
+  → unified AppLayout overlay for loading — [loading-empty-states.mdc](loading-empty-states.mdc)
 ```
 
 ## Three layers — same structure every time
 
-| Layer | Responsibility | Profile (reference) | Email (mirror) | New satellite `<name>` |
-|-------|----------------|---------------------|----------------|-------------------------|
-| **1. Consumer outbound** | Trigger + auth-code redirect | `webonone-v2/.../redirectToIdentityProfile.ts` + `AppLayout` `handleProfileClick` | `webonone-v2/.../redirectToEmail.ts` + `AppLayout` `handleEmailClick` | `redirectTo<Name>.ts` + `AppLayout` `handle<Name>Click` |
-| **2. Destination layout** | Shell split, core nav, profile outbound | `identity/.../app/AppLayout.tsx` | `email/.../app/AppLayout.tsx` | `<service>/.../app/AppLayout.tsx` |
-| **3. Destination home page** | Code bootstrap only | `identity/.../profile/pages/ProfilePage.tsx` | `email/.../dashboard/pages/DashboardPage.tsx` | `<service>/.../<home>/pages/<Home>Page.tsx` |
+| Layer | Responsibility | Profile | Email | Data |
+|-------|----------------|---------|-------|------|
+| **1. WebOnOne outbound (embed)** | Local navigate to sentinel | `AppLayout` `handleProfileClick` → `navigate('/profile')` | sentinels via `onNavItemNavigate` | sentinels via `onNavItemNavigate` |
+| **1b. Satellite outbound (redirect)** | Auth-code full page | `redirectToIdentityProfile.ts` | `redirectToEmail.ts` | `redirectToData.ts` |
+| **2. Peer layout** | Embed branch + shell split | `identity/.../app/AppLayout.tsx` | `email/.../app/AppLayout.tsx` | `data/.../app/AppLayout.tsx` |
+| **3. Peer page** | Redirect bootstrap only (not embed) | `ProfilePage.tsx` | `DashboardPage.tsx` | list pages |
 
 Supporting utils (same roles — mirror naming):
 
@@ -48,38 +105,40 @@ Supporting utils (same roles — mirror naming):
 | Outbound profile | — (is profile host) | `redirectToIdentityProfile.ts` | `redirectToIdentityProfile.ts` |
 | Consumer peer config | `identityConfig.ts` | `emailConfig.ts` | `<peer>Config.ts` |
 
-## Consumer `AppLayout` (WebOnOne + Identity when in core shell)
+## Consumer `AppLayout` (WebOnOne core shell)
 
-**Required — same for every outbound peer:**
+**Embed peers (Email, Data, Profile from WebOnOne):**
+
+1. Sentinel routes in `app/router.tsx` → `PlatformPeerFrame` (`peer`: `email` | `data` | `identity`).
+2. `isPlatformPeerEmbedPath` → `AppShell` `embedMain={true}` (iframe fills `#main-content`, parent scrolls).
+3. `createNavItemNavigate` for sidebar; `handleProfileClick` → `navigate('/profile')` — **no** `useServiceRedirect` on core shell.
+4. Sentinels in `@webonone/platform-nav`: `EMAIL_NAV_SENTINELS`, `DATA_NAV_SENTINELS`, `PROFILE_NAV_SENTINEL` (`/profile`).
+
+**Reference:** `webonone-v2/frontend/src/app/AppLayout.tsx`, `features/shell/pages/PlatformPeerFrame.tsx`.
+
+## Consumer `AppLayout` (satellite → peer redirect)
+
+**Required for satellite-to-satellite hops:**
 
 1. `useServiceRedirect()` hook.
-2. `get<Peer>RedirectOptions({ accessToken, returnUrl, navVariant, extraSearchParams? })` calling `redirectWithAuthCode` with:
-   - `authCodeEndpoint`: `{identityApi}/auth/code`
-   - `targetUrl`: peer **home URL** (not `/callback`)
-   - `returnUrl`: core origin + `/`
-   - `extraSearchParams.core_nav`: `toCoreNavQueryValue(variant)`
-   - `extraSearchParams` **theme**: WebOnOne passes `serializeThemeQueryParams(buildThemePayload(...))` from system theme (see `handleProfileClick`); satellites relay with `relayThemeQueryParams(searchParams)` (falls back to session after URL strip)
-3. Handler calls `redirect(options)` — **no** `navigate` to intermediate route, **no** redirect page component.
-4. Sidebar peers: nav sentinel (e.g. `PLATFORM_EMAIL_NAV = '/email'`) + `onClick` on nav item (ui-kit `NavConfigItem.onClick`). Header profile: `onProfileClick`.
+2. `get<Peer>RedirectOptions({ accessToken, returnUrl, navVariant, extraSearchParams? })` with `authCodeEndpoint`, peer home `targetUrl`, `returnUrl`, `core_nav`, theme params.
+3. Handler calls `redirect(options)` — nav `onClick` on peer items.
+4. Profile from satellite: `redirectToIdentityProfile` (full page — not embed).
 
-**Reference files:**
+**Reference:** `email/frontend/src/app/AppLayout.tsx` `handleProfileClick`; `data/frontend/src/app/AppLayout.tsx` `handleProfileClick`.
 
-- Profile: `webonone-v2/frontend/src/app/AppLayout.tsx` `handleProfileClick`, `redirectToIdentityProfile.ts`
-- Email: `webonone-v2/frontend/src/app/AppLayout.tsx` `handleEmailClick`, `redirectToEmail.ts`
-- Identity → Email: `identity/frontend/src/app/AppLayout.tsx` `handleEmailClick`, `features/email/utils/redirectToEmail.ts`
+## Destination `AppLayout` (peer FE — Identity, Email, Data)
 
-## Destination `AppLayout` (satellite FE)
+**Embed branch (first):** `resolvePlatformEmbedParentOrigin` → `PlatformEmbedLayout` + `PLATFORM_EMBED_APP_HOST_CLASS`. `ensurePlatformEmbedCanvas()` in `main.tsx`.
 
-**Required — match `identity/frontend/src/app/AppLayout.tsx`:**
+**Redirect / standalone branch:**
 
 1. Parse `return_url` from query (allowlisted).
-2. `useMemo` → core nav when `return_url` present (`buildCoreNavFromQuery` or equivalent).
-3. `usePlatformShell` / `useShell` = platform context **and** (`authenticated` **or** valid `hasPlatformHandoff` on home route) — show core `AppShell` + nav as soon as the user lands with `code` + `return_url`; bootstrap spinner lives in the home page `<Outlet />` only.
-4. **If platform shell:** `AppShell`, brand = core app name (`WebOnOne`), `onProfileClick` → `redirectToIdentityProfile`.
-5. **Else if authenticated standalone:** `AppShell` with service brand + service nav.
-6. **Else:** `PageShell` + centered `<Outlet />` (handoff / login routes).
+2. Core nav when `return_url` present.
+3. `AppShell` when platform context + authenticated (or handoff); else `PageShell`.
+4. Satellite platform shell: `onProfileClick` → `redirectToIdentityProfile` (full page).
 
-**Do not** bootstrap JWT in `AppLayout`. **Do not** show `AuthLayout` during platform handoff.
+**Do not** bootstrap JWT in non-embed `AppLayout` shell branch. Embed bootstrap lives in `PlatformEmbedLayout` → `usePlatformSessionBootstrap`.
 
 ## Logout (satellite FE in platform shell)
 
@@ -95,18 +154,16 @@ When the user signs out from a satellite opened with `return_url` (core shell mo
 
 **Reference:** `email/frontend/src/app/AppLayout.tsx`, `identity/frontend/src/app/AppLayout.tsx`.
 
-## Destination home page
+## Destination home page (redirect handoff only)
 
-**Required — match `identity/frontend/src/features/profile/pages/ProfilePage.tsx`:**
+When `hasPlatformEmbedHandoff` — **skip** page-level code bootstrap (handled in `PlatformEmbedLayout`).
 
-1. `const code = searchParams.get('code')`
-2. `useRef` + `useEffect` → single bootstrap when `code` present (platform handoff: `code` without `state`)
-3. `bootstrap<Session>(code)` → dispatch login → `navigate({ pathname: home, search: stripAuthCodeFromSearch })`
-4. While bootstrapping **`code` exchange**: `<Spinner />` only in **page content** — no "Loading …" copy; never a full-page login or redirect screen. Session/page refresh loading uses the **unified AppLayout overlay** — see [loading-empty-states.mdc](loading-empty-states.mdc).
-5. `if (!accessToken && !code) return <Navigate to="/login" />`
-6. Then load page data (second `useEffect` when `accessToken && !code`)
+**Redirect handoff — match `ProfilePage.tsx` pattern:**
 
-**Email reference:** `email/frontend/src/features/dashboard/pages/DashboardPage.tsx`
+1. `const code = searchParams.get('code')`; skip when `hasPlatformEmbedHandoff(searchParams)`.
+2. Single bootstrap `useEffect` when `code` + `return_url` handoff.
+3. `usePlatformLoading` for overlay — no inline `LoadingState` copy in page content.
+4. `if (!accessToken && !code) return <Navigate to="/login" />`
 
 ## Satellite peer nav (cross-satellite core menu)
 
@@ -128,7 +185,7 @@ When a satellite renders core nav, **peer service links** must not resolve to `{
 
 ## `PrivateRoute`
 
-Allow route when `accessToken` **or** `hasPlatformHandoff(searchParams)` (`code` + validated `return_url`, no `state`). Never flash `/login` during handoff.
+Allow route when `accessToken` **or** `hasAnyPlatformHandoff(searchParams)` — platform redirect (`code` + validated `return_url`) **or** iframe embed (`code` + `embed=platform` + validated `parentOrigin`), no `state`. Never flash `/login` during handoff.
 
 ## Routes
 
@@ -164,6 +221,8 @@ Copy Profile roles row-by-row from tables above:
 - [ ] Consumer `features/<peer>/utils/<peer>Config.ts` — origin only; derive home/callback in code
 - [ ] Satellite `VITE_<PEER>_ORIGIN` + outbound peer redirect when core nav includes other satellites
 - [ ] `PlatformLoadingProvider` + unified overlay in `AppLayout` — [loading-empty-states.mdc](loading-empty-states.mdc)
+- [ ] Embed channel: `PlatformEmbedLayout`, `ensurePlatformEmbedCanvas` in `main.tsx`, `VITE_WEBONONE_ORIGIN` + `frame-ancestors`, `@webonone/platform-embed` on consumer + peer
+- [ ] WebOnOne: sentinel route + `PlatformPeerFrame` peer id; `PROFILE_NAV_SENTINEL` in `platform-nav` if profile host
 
 ## Forbidden
 
@@ -183,4 +242,4 @@ npm run type-check -w identity-root
 npm run type-check -w email-root
 ```
 
-Manual: WebOnOne → Profile and WebOnOne → Email — same perceived flow (no consumer spinner, one destination spinner, then core `AppShell`).
+Manual: WebOnOne → Profile, Email, Data — shell persists, iframe loads peer, pagination at bottom on list pages. Satellite → Profile still full-page redirect.

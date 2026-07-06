@@ -7,7 +7,7 @@ import { RoleRoute } from '@/app/RoleRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { useAppSelector } from '@/app/store/hooks'
-import { hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
+import { hasAnyPlatformHandoff } from '@/features/auth/utils/platformReturn'
 
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
@@ -48,7 +48,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [searchParams] = useSearchParams()
 
-  if (!accessToken && !hasPlatformHandoff(searchParams)) {
+  if (!accessToken && !hasAnyPlatformHandoff(searchParams)) {
     return <Navigate to="/login" replace />
   }
 

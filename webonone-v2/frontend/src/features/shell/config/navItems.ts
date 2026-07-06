@@ -6,6 +6,7 @@ import {
   getPlatformNavDefs,
   isDataNavSentinel,
   isEmailNavSentinel,
+  isProfileNavSentinel,
   type CoreNavDef,
   type CoreNavLeaf,
   type PlatformNavVariant,
@@ -83,4 +84,4 @@ export const mainNav = buildPlatformNav('main')
 export const superAdminNav = buildPlatformNav('superAdmin')
 export const memberNav = buildPlatformNav('member')
 
-export { isEmailNavSentinel, isDataNavSentinel }
+export { isEmailNavSentinel, isDataNavSentinel, isProfileNavSentinel }

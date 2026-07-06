@@ -22,6 +22,9 @@ const SystemThemePage = lazy(() =>
     default: m.SystemThemePage,
   })),
 )
+const PlatformPeerFrame = lazy(() =>
+  import('@/features/shell/pages/PlatformPeerFrame').then((m) => ({ default: m.PlatformPeerFrame })),
+)
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -87,6 +90,30 @@ export function App() {
             element={
               <LazyRoute>
                 <SystemThemePage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="email/*"
+            element={
+              <LazyRoute>
+                <PlatformPeerFrame peer="email" />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="data/*"
+            element={
+              <LazyRoute>
+                <PlatformPeerFrame peer="data" />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="profile/*"
+            element={
+              <LazyRoute>
+                <PlatformPeerFrame peer="identity" />
               </LazyRoute>
             }
           />

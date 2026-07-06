@@ -93,6 +93,21 @@
     min-height: 100vh;
   }
 
+  /** AppShell owns scrolling on #main-content — keep viewport from double scrollbars. */
+  html.app-shell-active,
+  html.app-shell-active body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  html.app-shell-active body {
+    min-height: 0;
+  }
+
+  html.app-shell-active #root {
+    height: 100%;
+  }
+
   /**
    * Viewport + in-page scrollbars — must live in @layer base (not @apply) so
    * ::-webkit-scrollbar pseudo-elements apply. Dialogs use .scrollbar-themed class.
@@ -229,4 +244,114 @@
   .shell-glass {
     @apply glass-card;
   }
+}
+
+/** Standalone AppShell — fill #main-content so list pagination pins to bottom. */
+html.app-shell-active #main-content > * {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+html.app-shell-active:not(.platform-embed-canvas) .feature-page {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+html.app-shell-active:not(.platform-embed-canvas) .feature-page > .feature-page-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+html.app-shell-active:not(.platform-embed-canvas) .list-page-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/**
+ * Platform iframe embed — unlayered so rules win over Tailwind layers.
+ * ensurePlatformEmbedCanvas() also sets inline styles on html/body/#root before paint.
+ */
+html.platform-embed-canvas,
+html.platform-embed-canvas body {
+  background: transparent !important;
+  background-image: none !important;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html.platform-embed-canvas body {
+  display: flex;
+  flex-direction: column;
+}
+
+html.platform-embed-canvas #root,
+#root.platform-embed-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+html.platform-embed-canvas .platform-embed-app-host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+html.platform-embed-canvas #root > * {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+html.platform-embed-canvas .platform-embed-shell,
+html.platform-embed-canvas .platform-embed-shell-main {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/**
+ * Embed page fill — min-h-full chain so ListPageBody + Pagination mt-auto pin to bottom.
+ * Shell main scrolls when content exceeds iframe height (no inner list scroll).
+ */
+html.platform-embed-canvas .platform-embed-outlet {
+  min-height: 100%;
+}
+
+html.platform-embed-canvas .feature-page {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+html.platform-embed-canvas .feature-page > .feature-page-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+html.platform-embed-canvas .list-page-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+html.platform-embed-canvas,
+html.platform-embed-canvas body,
+html.platform-embed-canvas .scrollbar-themed {
+  scrollbar-color: hsl(var(--scrollbar-thumb)) transparent;
+}
+
+html.platform-embed-canvas::-webkit-scrollbar-track,
+html.platform-embed-canvas body::-webkit-scrollbar-track,
+html.platform-embed-canvas .scrollbar-themed::-webkit-scrollbar-track {
+  background: transparent;
 }

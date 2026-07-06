@@ -1,6 +1,6 @@
 export type PlatformNavVariant = 'main' | 'superAdmin' | 'member'
 
-export type ExternalServiceId = 'email' | 'data'
+export type ExternalServiceId = 'email' | 'data' | 'identity'
 
 export type CoreNavLeaf = {
   kind: 'item'
@@ -73,6 +73,21 @@ export function dataSentinelToExternalPath(sentinel: string): string | null {
     default:
       return null
   }
+}
+
+/** Internal sentinel for Identity profile in consumer AppLayouts (not routed on core origin). */
+export const PROFILE_NAV_SENTINEL = '/profile' as const
+
+export function isProfileNavSentinel(to: string): boolean {
+  return to === PROFILE_NAV_SENTINEL
+}
+
+export function profileSentinelToExternalPath(sentinel: string): string | null {
+  if (sentinel === PROFILE_NAV_SENTINEL || sentinel.startsWith(`${PROFILE_NAV_SENTINEL}/`)) {
+    const suffix = sentinel.slice(PROFILE_NAV_SENTINEL.length)
+    return suffix ? `/profile${suffix}` : '/profile'
+  }
+  return null
 }
 
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [

@@ -1,5 +1,6 @@
+import { hasPlatformEmbedHandoff as checkPlatformEmbedHandoff } from '@webonone/platform-embed'
 import { parseReturnUrl, stripAuthCodeFromSearch } from '@webonone/platform-nav'
-import { parseAllowedParentOrigins } from './identityConfig'
+import { isAllowedParentOrigin, parseAllowedParentOrigins } from './identityConfig'
 
 export function parsePlatformReturnUrl(searchParams: URLSearchParams): string | null {
   return parseReturnUrl(searchParams, parseAllowedParentOrigins())
@@ -13,6 +14,14 @@ export function isPlatformAuthCodeHandoff(searchParams: URLSearchParams): boolea
   return Boolean(searchParams.get('code') && !searchParams.get('state'))
 }
 
+export function hasPlatformEmbedHandoff(searchParams: URLSearchParams): boolean {
+  return checkPlatformEmbedHandoff(searchParams, isAllowedParentOrigin)
+}
+
 export function hasPlatformHandoff(searchParams: URLSearchParams): boolean {
   return isPlatformAuthCodeHandoff(searchParams) && Boolean(parsePlatformReturnUrl(searchParams))
+}
+
+export function hasAnyPlatformHandoff(searchParams: URLSearchParams): boolean {
+  return hasPlatformHandoff(searchParams) || hasPlatformEmbedHandoff(searchParams)
 }

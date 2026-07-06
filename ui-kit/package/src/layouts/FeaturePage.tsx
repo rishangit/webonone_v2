@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '../lib/utils'
 import { PageHeader } from './PageHeader'
+import { shellPagePadding } from './shellContentPadding'
 
 interface FeaturePageProps {
   children: ReactNode
@@ -26,9 +27,9 @@ function FeaturePage({
     ) : null)
 
   return (
-    <div className={cn('flex w-full flex-col gap-6', className)}>
+    <div className={cn('feature-page flex min-h-0 w-full flex-1 flex-col gap-6', shellPagePadding, className)}>
       {headerNode}
-      <div className="min-w-0">{children}</div>
+      <div className="feature-page-body flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
     </div>
   )
 }

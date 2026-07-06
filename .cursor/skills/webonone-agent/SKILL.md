@@ -21,7 +21,7 @@ description: >-
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [webonone-v2-project.mdc](../../rules/webonone-v2-project.mdc) — service globs
-- [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — all peer redirects (Profile, Email) same three-layer pattern
+- [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — WebOnOne loads Email, Data, Profile in `#main-content` iframe; satellites use redirect handoff
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
 

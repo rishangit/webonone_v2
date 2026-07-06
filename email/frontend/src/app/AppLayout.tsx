@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { PLATFORM_EMBED_APP_HOST_CLASS, resolvePlatformEmbedParentOrigin } from '@webonone/platform-embed'
 import {
   CORE_NAV_QUERY_PARAM,
   createNavItemNavigate,
@@ -20,7 +21,8 @@ import {
 import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { useRefreshEmailRole } from '@/features/auth/hooks/useRefreshEmailRole'
 import { getIdentityProfileRedirectOptions } from '@/features/auth/utils/redirectToIdentityProfile'
-import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
+import { isAllowedParentOrigin, getIdentityOrigin } from '@/features/auth/utils/identityConfig'
+import { PlatformEmbedLayout } from '@/features/auth/components/PlatformEmbedLayout'
 import { parsePlatformReturnUrl, hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { getDataRedirectOptions } from '@/features/data/utils/redirectToData'
@@ -36,6 +38,21 @@ export function AppLayout() {
 }
 
 function AppLayoutContent() {
+  const [searchParams] = useSearchParams()
+  const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+
+  if (embedParentOrigin) {
+    return (
+      <div className={PLATFORM_EMBED_APP_HOST_CLASS}>
+        <PlatformEmbedLayout parentOrigin={embedParentOrigin} />
+      </div>
+    )
+  }
+
+  return <AppLayoutShellContent />
+}
+
+function AppLayoutShellContent() {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -172,7 +189,7 @@ function AppLayoutContent() {
   const overlayLabel = sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel
 
   const mainContent = (
-    <div className="relative min-h-full">
+    <div className="relative flex min-h-full flex-col">
       <Outlet />
       {bootstrapError ? (
         <Alert variant="destructive" className="mt-4">

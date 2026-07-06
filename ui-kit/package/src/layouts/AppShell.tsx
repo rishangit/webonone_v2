@@ -4,7 +4,6 @@ import type { NavConfigItem } from '../types/nav'
 import { AppHeader, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
 import { AppSidebar } from './AppSidebar'
-import { shellContentPaddingX } from './shellContentPadding'
 
 const SIDEBAR_COLLAPSED_KEY = 'webonone:sidebar-collapsed'
 
@@ -20,6 +19,8 @@ interface AppShellProps {
   onNavItemNavigate?: (to: string) => void
   onNavItemPrefetch?: (to: string) => void
   defaultCollapsed?: boolean
+  /** When true, main does not scroll — embed content (e.g. iframe) fills main and scrolls internally. */
+  embedMain?: boolean
   className?: string
 }
 
@@ -64,6 +65,7 @@ function AppShell({
   onNavItemNavigate,
   onNavItemPrefetch,
   defaultCollapsed = false,
+  embedMain = false,
   className,
 }: AppShellProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -84,10 +86,15 @@ function AppShell({
     }
   }, [collapsed])
 
+  useEffect(() => {
+    document.documentElement.classList.add('app-shell-active')
+    return () => document.documentElement.classList.remove('app-shell-active')
+  }, [])
+
   const logoNode = logo ?? <BrandLogo href={logoHref} />
 
   return (
-    <div className={cn('min-h-screen', className)}>
+    <div className={cn('flex h-dvh flex-col overflow-hidden', className)}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:shadow-md"
@@ -95,7 +102,7 @@ function AppShell({
         Skip to main content
       </a>
       <AppHeader
-        className="sticky top-0 z-50"
+        className="z-50 shrink-0"
         logo={logoNode}
         user={user}
         onProfileClick={onProfileClick}
@@ -104,7 +111,7 @@ function AppShell({
         menuOpen={mobileOpen}
         onMenuClick={() => setMobileOpen((open) => !open)}
       />
-      <div className="flex">
+      <div className="flex min-h-0 flex-1">
         {mobileOpen && !isDesktop ? (
           <button
             type="button"
@@ -126,8 +133,8 @@ function AppShell({
         <main
           id="main-content"
           className={cn(
-            'relative min-h-[calc(100vh-3.5rem)] flex-1 py-4 scrollbar-themed sm:py-6',
-            shellContentPaddingX,
+            'relative min-h-0 min-w-0 flex-1',
+            embedMain ? 'overflow-hidden' : 'overflow-y-auto scrollbar-themed',
           )}
         >
           {children}

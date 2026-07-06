@@ -10,7 +10,8 @@ import {
 import { fetchEmailRole } from '@/features/auth/utils/fetchEmailRole'
 import {
   buildPlatformSearchWithoutCode,
-  hasPlatformHandoff,
+  hasAnyPlatformHandoff,
+  hasPlatformEmbedHandoff,
   parsePlatformReturnUrl,
 } from '@/features/auth/utils/platformReturn'
 
@@ -28,7 +29,8 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const code = searchParams.get('code')
-  const isHandoff = hasPlatformHandoff(searchParams)
+  const isHandoff = hasAnyPlatformHandoff(searchParams)
+  const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
   const [isBootstrapping, setIsBootstrapping] = useState(() => Boolean(code && isHandoff))
 
@@ -55,7 +57,7 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
       .then(async (result) => {
         const role = await fetchEmailRole(result.accessToken)
 
-        if (validatedReturnUrl) {
+        if (validatedReturnUrl && !isEmbedHandoff) {
           dispatch(
             authActions.setPlatformContext({
               returnUrl: validatedReturnUrl,

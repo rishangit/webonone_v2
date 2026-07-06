@@ -104,25 +104,25 @@ export function CompaniesPage() {
         </Alert>
       ) : null}
 
-      {!loading ? (
-        <ListPageBody>
-          <div className="flex-1">
+      <ListPageBody>
+        <div className="flex-1">
+          {!loading ? (
             <CompaniesList items={visibleItems} updatingId={updatingId} onStatusChange={handleStatusChange} />
-          </div>
-          <Pagination
-            className="mt-auto"
-            totalCount={filteredItems.length}
-            currentPage={page}
-            pageSize={pageSize}
-            pageSizeOptions={[12, 24, 48]}
-            onPageChange={setPage}
-            onPageSizeChange={(nextSize) => {
-              setPageSize(nextSize)
-              setPage(1)
-            }}
-          />
-        </ListPageBody>
-      ) : null}
+          ) : null}
+        </div>
+        <Pagination
+          className="mt-auto"
+          totalCount={filteredItems.length}
+          currentPage={page}
+          pageSize={pageSize}
+          pageSizeOptions={[12, 24, 48]}
+          onPageChange={setPage}
+          onPageSizeChange={(nextSize) => {
+            setPageSize(nextSize)
+            setPage(1)
+          }}
+        />
+      </ListPageBody>
     </FeaturePage>
   )
 }

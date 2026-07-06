@@ -22,7 +22,7 @@ description: >-
 - [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — store/epics
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [identity-project.mdc](../../rules/identity-project.mdc) — service globs
-- [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — Profile is reference; Email outbound must mirror `handleProfileClick` pattern
+- [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — embed mode from WebOnOne (`PlatformEmbedLayout`); redirect handoff from satellites
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
 
 ## Verification
