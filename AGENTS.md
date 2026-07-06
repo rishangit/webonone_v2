@@ -53,3 +53,23 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:data` | Data FE + BE |
 | `npm run build:platform-nav` | Build `@webonone/platform-nav` |
 | `npm run build:media-embed` | Build `@webonone/media-embed` |
+
+## Cursor Cloud specific instructions
+
+Environment is pre-provisioned in the VM snapshot; the startup update script only runs `npm install`. The notes below are non-obvious caveats for running/verifying the stack — see the tables above and each service's `.env.example` for standard values.
+
+### Database (MySQL)
+- MySQL 8 is installed with `root` / `Mysql123!@@` (TCP `127.0.0.1:3306`). All five databases (`identity`, `webonone_v2`, `webonone_media`, `webonone_email`, `webonone_data`) are already created and migrated; the datadir persists in the snapshot.
+- The daemon does **not** auto-start on boot. If any backend fails to connect, run `sudo service mysql start` (connect over TCP `127.0.0.1`; the unix socket dir is root-only).
+- To re-apply schema after adding migrations: `npm run migrate:all` (or `npm run migrate:<service>`).
+
+### Env files
+- Each `<service>/backend/.env` and `<service>/frontend/.env` already exists (copied from `.env.example`, gitignored). `media/email/data` backends had an empty `DB_PASSWORD` in their examples — the local `.env` copies set it to `Mysql123!@@` to match MySQL. Recreate any missing `.env` by copying its `.env.example`.
+
+### Verify / build gotchas
+- Run `npm run build:packages` before `npm run type-check`: `tsc` resolves `@webonone/*` via each package's `dist/*.d.ts`, so a missing `dist/` causes `TS2307` in service frontends. Dev servers do **not** need this (Vite aliases packages to `src/`).
+- Root `npm run type-check` and `npm run lint` fail only on **pre-existing** shared-package issues (`@webonone/platform-nav` `coreNav.test.ts` uses a `.ts` import extension; `@webonone/theme` has no `eslint.config.js`). All five runnable services pass both. Verify a single service with `npm run type-check -w <service>-root` / `npm run lint -w <service>-root`.
+
+### Auth / registration in dev
+- Login SSO: WebOnOne (`:3000`) redirects to Identity (`:3001/login`) and back. Test account: `founder@webonone.local` / `Password123!`.
+- Registration is a 3-step email-OTP flow. SMTP (`smtp.privateemail.com`) is reachable and actually sends, but the plaintext OTP is easiest to read from `webonone_email.email_queue.payload_json` (`$.otp`). OTPs expire quickly — verify immediately after requesting.
