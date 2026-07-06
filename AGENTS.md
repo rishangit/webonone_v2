@@ -53,3 +53,26 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:data` | Data FE + BE |
 | `npm run build:platform-nav` | Build `@webonone/platform-nav` |
 | `npm run build:media-embed` | Build `@webonone/media-embed` |
+
+## Cursor Cloud specific instructions
+
+The update script runs `npm install` only. Everything below is already provisioned in the VM snapshot; these are durable, non-obvious notes for running/testing the stack.
+
+### Database (MySQL) — must be started each session
+- MySQL is installed but not auto-started. Start it before any backend: `sudo service mysql start`.
+- Local root credentials: user `root`, password `Mysql123!@@`, over TCP `127.0.0.1:3306` (the socket dir is root-only, so use `-h127.0.0.1`). These match the committed `backend/.env.example` values.
+- Databases already created: `identity`, `webonone_v2`, `webonone_media`, `webonone_email`, `webonone_data`.
+- `.env` files (one per `*/backend` and `*/frontend`) are copied from each `.env.example` and persist in the snapshot. The three that ship with a blank `DB_PASSWORD` (`media`, `email`, `data` backends) were set to `Mysql123!@@`. `.env` files are gitignored — recreate with `cp <svc>/<layer>/.env.example <svc>/<layer>/.env` if missing.
+
+### Running / building
+- Dev does **not** require `npm run build:packages` — each service `vite.config.ts` aliases workspace packages to their `src/`. Only run `build:packages` for production builds / full `npm run build`.
+- Run `npm run migrate:all` after pulling changes that add new migrations (migrations are intentionally not in the update script). Migrations need the databases to already exist (they do).
+- Start the full stack with `npm run dev` (FE ports 3000/3001/3002/3003/3004/3005, BE ports 4000/4001/4003/4004/4005). Backend health is at `/api/v1/health` (e.g. `curl http://localhost:4001/api/v1/health`), not `/health`.
+- Login flow requires both Identity (`dev:identity`) and WebOnOne (`dev:webonone`); WebOnOne `/login` redirects to Identity and exchanges an auth code for a JWT.
+
+### Testing the auth flow without an email inbox
+- Registration uses a 4-digit email OTP with a **60-second** expiry, delivered via the Email service (real SMTP). To register end-to-end in dev without an inbox, read `otp_hash` from Identity DB table `registration_email_otps` (unsalted `sha256`) and reconstruct the 4-digit code, then call `/api/v1/auth/register/{request-email-otp,verify-email-otp,complete}`. Plain login (`/api/v1/auth/login`) needs no OTP.
+
+### Pre-existing (not env) issues
+- `npm run lint` fails only for `@webonone/theme` (has a `lint` script but no `eslint.config.js`).
+- `npm run type-check` fails only for `@webonone/platform-nav` (test file `src/coreNav.test.ts` uses a `.ts` import extension). All five runnable services + UI Kit pass both.
