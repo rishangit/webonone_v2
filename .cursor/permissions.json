@@ -1,5 +1,6 @@
 {
   // ClickUp pipeline automation — ONE-TIME IDE SETUP (per machine):
+  //   0. MCP: `.cursor/mcp.json` — ClickUp (OAuth on first connect) + GitHub (`GITHUB_TOKEN` env var).
   //   1. Cursor Settings → Agents → Run Mode → Allowlist (uses this file) OR Run Everything.
   //   2. Fully quit and restart Cursor (Cmd/Ctrl+Q) after editing this file — Reload Window is not enough.
   //   3. If prompts persist: Agents → Inline Editing & Terminal → enable Legacy Terminal Tool, then restart.
