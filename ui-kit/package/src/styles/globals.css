@@ -113,11 +113,16 @@
    * ::-webkit-scrollbar pseudo-elements apply. Dialogs use .scrollbar-themed class.
    */
   html,
-  body,
-  .scrollbar-themed {
+  body {
     scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--background-base));
     scrollbar-width: thin;
     overscroll-behavior: contain;
+  }
+
+  .scrollbar-themed {
+    scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--background-base));
+    scrollbar-width: thin;
+    touch-action: auto;
   }
 
   html::-webkit-scrollbar,
