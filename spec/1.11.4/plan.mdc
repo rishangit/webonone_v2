@@ -1,0 +1,92 @@
+---
+description: Implementation plan for spec 1.11.4 — UI Kit showcase Pages tab (List + Details)
+alwaysApply: false
+globs: ui-kit/showcase/**, ui-kit/package/**
+---
+
+# Implementation plan — Spec 1.11.4
+
+## Summary
+
+Add a **Pages** top-level tab to the UI Kit showcase with nested **List page** and **Details page** demos that compose existing `@webonone/ui-kit` primitives the way production admin screens do. Prefer reuse — no new package components unless a hard gap blocks the demo.
+
+See [01-overview.md](./01-overview.md), [02-pages-tab-showcase.md](./02-pages-tab-showcase.md).
+
+| Project | Touch |
+|---------|--------|
+| `ui-kit/showcase/` | Tab registry, `PagesPage`, List/Details compositions |
+| `ui-kit/package/` | Only if an export gap appears while composing |
+
+---
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.11.4` |
+| Dev | `npm run dev:ui-kit` (port **3012**) |
+| Package build | No new root `build:*` chain — package changes only if required |
+| Env / migrations | None |
+| Agent | ui-kit-agent; follow `ui-kit-project.mdc`, item-list skill, `feature-page-layout.mdc`, `item-list-pagination.mdc`, `list-filter-panel.mdc`, form-creation skill |
+
+---
+
+## Phase 1 — Pages tab + List / Details demos
+
+**Goal:** [02-pages-tab-showcase.md](./02-pages-tab-showcase.md) — register Pages; nested List / Details; full compositions with mock data.
+
+**Exit criteria:** `#pages` works; List and Details nested tabs work; list/details building-block checklists satisfied; type-check passes.
+
+| Task | Paths / detail |
+|------|----------------|
+| Register tab | `ui-kit/showcase/src/components/showcase-nav.ts` — add `{ id: 'pages', label: 'Pages' }` |
+| Wire host | `ui-kit/showcase/src/pages/ShowcaseApp.tsx` — `<Tabs.Content value="pages">` |
+| Pages host | `ui-kit/showcase/src/pages/PagesPage.tsx` — nested Radix Tabs `list` / `details` (default `list`) |
+| Optional modules | `ListPageDemo.tsx` / `DetailsPageDemo.tsx` under `showcase/src/pages/` or colocated |
+| Hash | Ensure `#pages`; extend `parseShowcaseTab` for `#pages-list` / `#pages-details` if straightforward |
+| List composition | `FeaturePage` + `ListSearchField` + `ListFilterTrigger`/`ListFilterPanel` + `ListPageBody` + `ItemList*` (menu, active, empty) + `Pagination` (`pageSize` 12, options `[12, 24, 48]`) |
+| List data | In-memory mock array (≥ enough rows to paginate); search/filter reset page to 1 |
+| Details composition | `FeaturePage` + Save/Cancel actions + `Form`/`FormField` + `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, `Button`; ≥1 inline field error |
+| Imports | `@webonone/ui-kit` + local `DemoSection` only — no service stores/APIs |
+
+**Reference:** Components tab sections in `ComponentsPage.tsx` (item-lists, list-filters, pagination, layout); production list pattern e.g. Email/Data FeaturePage + ListPageBody.
+
+**Verify:** `npm run type-check -w ui-kit-root` · manual `npm run dev:ui-kit` → Pages → List / Details
+
+ClickUp: **86ey9pkzn**
+
+---
+
+## Cross-service integration
+
+None. Showcase-only; no iframe, postMessage, JWT, events, or peer env. Consumers copy patterns manually — do not migrate service pages in this spec.
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.11.4 Ui-Kit improvement | 86ey9pkp2 | All |
+| Subtask: Need to have the pages tab in the UI kits show case | 86ey9pkzn | Phase 1 |
+
+---
+
+## Risks and open items
+
+- Nested deep-links (`#pages-list` / `#pages-details`) are nice-to-have; `#pages` + nested tab state is acceptable
+- Do not invent a new `DetailPage` layout unless composition proves a shared shell gap
+- Avoid thinning Components list demos unless Pages demos are complete and redundancy is clear
+- Status string for ClickUp is **`planed`** (list spelling)
+
+---
+
+## Final verification
+
+```bash
+npm run type-check -w ui-kit-root
+npm run build -w @webonone/ui-kit
+npm run lint -w ui-kit-root
+```
+
+Manual: open showcase → **Pages** → **List page** (search, filter, row menu, empty, pagination) → **Details page** (form controls + error state). Existing tabs unchanged.

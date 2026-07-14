@@ -29,6 +29,7 @@ Implementation branch: **`spec/1.11.4`**
 | [01-overview.md](./01-overview.md) | Vision, goals, scope, glossary, success criteria |
 | [02-pages-tab-showcase.md](./02-pages-tab-showcase.md) | Pages tab, nested List/Details demos, composition checklist |
 | [07-implementation-plan.md](./07-implementation-plan.md) | Phases, branch workflow, acceptance checklist |
+| [plan.mdc](./plan.mdc) | Agent implementation plan |
 
 ## ClickUp traceability
 
