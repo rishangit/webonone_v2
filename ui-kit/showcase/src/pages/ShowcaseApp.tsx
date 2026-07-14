@@ -2,11 +2,18 @@ import { useEffect, useState } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { PageShell } from '@webonone/ui-kit'
 import { ThemeToolbar } from '@/components/ThemeToolbar'
-import { DEFAULT_SHOWCASE_TAB, parseShowcaseTab, SHOWCASE_TABS, type ShowcaseTab } from '@/components/showcase-nav'
+import {
+  DEFAULT_SHOWCASE_TAB,
+  pagesNestedHash,
+  parseShowcaseTab,
+  SHOWCASE_TABS,
+  type ShowcaseTab,
+} from '@/components/showcase-nav'
 import { ControlsPage } from '@/pages/ControlsPage'
 import { ComponentsPage } from '@/pages/ComponentsPage'
 import { DialogsPage } from '@/pages/DialogsPage'
 import { IconsPage } from '@/pages/IconsPage'
+import { PagesPage } from '@/pages/PagesPage'
 import { TagsPage } from '@/pages/TagsPage'
 
 export function ShowcaseApp() {
@@ -24,8 +31,9 @@ export function ShowcaseApp() {
   }, [])
 
   function handleTabChange(value: string) {
-    window.location.hash = value
-    setTab(value as ShowcaseTab)
+    const next = value as ShowcaseTab
+    window.location.hash = next === 'pages' ? pagesNestedHash('list') : next
+    setTab(next)
   }
 
   return (
@@ -51,6 +59,9 @@ export function ShowcaseApp() {
         </Tabs.Content>
         <Tabs.Content value="components" className="space-y-10 outline-none">
           <ComponentsPage />
+        </Tabs.Content>
+        <Tabs.Content value="pages" className="space-y-10 outline-none">
+          <PagesPage />
         </Tabs.Content>
         <Tabs.Content value="dialogs" className="space-y-10 outline-none">
           <DialogsPage />
