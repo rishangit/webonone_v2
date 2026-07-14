@@ -1,6 +1,6 @@
 import { Globe, MapPin, User } from 'lucide-react'
 import { Button, ImagePreview } from '@webonone/ui-kit'
-import type { UserProfile } from '@/features/auth/types/auth.types'
+import type { UserProfile } from '@/shared/types/auth.types'
 
 function ReadOnlyField({
   label,

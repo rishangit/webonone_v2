@@ -1,11 +1,15 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { ColorMode } from '@webonone/theme'
+import { authActions } from '@/features/auth/store/authSlice'
+import { isFresh } from '@/shared/store/cacheUtils'
 import type { ThemeFormValues } from '../schemas/themeFormSchema'
 import type { ApiTheme, PreferencesResponse } from '../services/themeApi'
 
 interface SystemThemeState {
   themes: ApiTheme[]
   preferences: PreferencesResponse | null
+  themesFetchedAt: number | null
+  preferencesFetchedAt: number | null
   status: 'idle' | 'loading' | 'saving' | 'error'
   error: string | null
 }
@@ -13,6 +17,8 @@ interface SystemThemeState {
 const initialState: SystemThemeState = {
   themes: [],
   preferences: null,
+  themesFetchedAt: null,
+  preferencesFetchedAt: null,
   status: 'idle',
   error: null,
 }
@@ -21,24 +27,32 @@ export const systemThemeSlice = createSlice({
   name: 'systemTheme',
   initialState,
   reducers: {
-    loadThemesRequested(state) {
+    loadThemesRequested(state, action: PayloadAction<{ force?: boolean } | undefined>) {
+      if (!action.payload?.force && isFresh(state.themesFetchedAt)) {
+        return
+      }
       state.status = 'loading'
       state.error = null
     },
     loadThemesSucceeded(state, action: PayloadAction<ApiTheme[]>) {
       state.themes = action.payload
+      state.themesFetchedAt = Date.now()
       state.status = 'idle'
     },
     loadThemesFailed(state, action: PayloadAction<string>) {
       state.status = 'error'
       state.error = action.payload
     },
-    loadPreferencesRequested(state) {
+    loadPreferencesRequested(state, action: PayloadAction<{ force?: boolean } | undefined>) {
+      if (!action.payload?.force && isFresh(state.preferencesFetchedAt)) {
+        return
+      }
       state.status = 'loading'
       state.error = null
     },
     loadPreferencesSucceeded(state, action: PayloadAction<PreferencesResponse>) {
       state.preferences = action.payload
+      state.preferencesFetchedAt = Date.now()
       state.status = 'idle'
     },
     loadPreferencesFailed(state, action: PayloadAction<string>) {
@@ -63,6 +77,7 @@ export const systemThemeSlice = createSlice({
       } else {
         state.themes.push(action.payload)
       }
+      state.themesFetchedAt = Date.now()
       state.status = 'idle'
     },
     saveThemeFailed(state, action: PayloadAction<string>) {
@@ -75,6 +90,7 @@ export const systemThemeSlice = createSlice({
     },
     deleteThemeSucceeded(state, action: PayloadAction<string>) {
       state.themes = state.themes.filter((t) => t.id !== action.payload)
+      state.themesFetchedAt = Date.now()
       state.status = 'idle'
     },
     deleteThemeFailed(state, action: PayloadAction<string>) {
@@ -90,6 +106,7 @@ export const systemThemeSlice = createSlice({
     },
     patchPreferencesSucceeded(state, action: PayloadAction<PreferencesResponse>) {
       state.preferences = action.payload
+      state.preferencesFetchedAt = Date.now()
       state.status = 'idle'
     },
     patchPreferencesFailed(state, action: PayloadAction<string>) {
@@ -102,6 +119,9 @@ export const systemThemeSlice = createSlice({
         state.status = 'idle'
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(authActions.logout, () => initialState)
   },
 })
 

@@ -1,15 +1,19 @@
 import { LoadingState } from '@webonone/ui-kit'
 import { useSearchParams } from 'react-router-dom'
 import { useAppSelector } from '@/app/store/hooks'
-import { hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
+import { hasAnyPlatformHandoff } from '@/features/auth/utils/platformReturn'
 
 export function PlatformHandoffSpinner() {
   return <LoadingState overlay label="Loading…" />
 }
 
-/** True while auth-code exchange is in progress (return_url + code, no token yet). */
+/**
+ * True while a platform handoff has no token yet — redirect (return_url + code)
+ * or embed (embed=platform + parentOrigin, token arrives via postMessage).
+ * Gates RoleRoute so it waits for the token instead of flashing /login.
+ */
 export function usePlatformHandoffPending(): boolean {
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
-  return hasPlatformHandoff(searchParams) && !accessToken
+  return hasAnyPlatformHandoff(searchParams) && !accessToken
 }

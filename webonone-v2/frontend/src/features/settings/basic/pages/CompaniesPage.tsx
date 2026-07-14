@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import {
   Alert,
@@ -8,71 +8,45 @@ import {
   ListSearchField,
   Pagination,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { isFresh } from '@/shared/store/cacheUtils'
 import { CompaniesList } from '../components/CompaniesList'
 import { useSuperAdminStatus } from '../hooks/useSuperAdminStatus'
-import { companyApi, type AdminCompany, type CompanyStatus } from '../services/companyApi'
+import type { CompanyStatus } from '../services/companyApi'
+import { companiesActions } from '../store/companiesStore'
 
 export function CompaniesPage() {
+  const dispatch = useAppDispatch()
   const { isSuperAdmin, loading: roleLoading } = useSuperAdminStatus()
-  const [items, setItems] = useState<AdminCompany[]>([])
+  const { adminItems, adminListStatus, adminListError, updatingId, adminListFetchedAt } =
+    useAppSelector((s) => s.companies)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  const loading = adminListStatus === 'loading'
+  const error = adminListError
 
   usePlatformLoading(
     roleLoading ? 'Loading…' : loading ? 'Loading companies…' : null,
   )
 
-  const filteredItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
-    if (!query) return items
-    return items.filter((item) => item.name.toLowerCase().includes(query))
-  }, [items, searchQuery])
+  const filteredItems = searchQuery.trim()
+    ? adminItems.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+      )
+    : adminItems
 
   useEffect(() => {
     if (roleLoading || !isSuperAdmin) return
-
-    async function loadCompanies() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await companyApi.listAllCompanies()
-        setItems(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load companies')
-      } finally {
-        setLoading(false)
-      }
+    if (!isFresh(adminListFetchedAt)) {
+      dispatch(companiesActions.loadAdminCompaniesRequested())
     }
+  }, [dispatch, isSuperAdmin, roleLoading, adminListFetchedAt])
 
-    void loadCompanies()
-  }, [isSuperAdmin, roleLoading])
-
-  async function handleStatusChange(id: string, status: CompanyStatus) {
-    setUpdatingId(id)
-    setError(null)
-    try {
-      await companyApi.updateCompanyStatus(id, status)
-      setItems((current) =>
-        current.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                status,
-                approvedAt: status === 'approved' ? new Date().toISOString() : null,
-              }
-            : item,
-        ),
-      )
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Status update failed')
-    } finally {
-      setUpdatingId(null)
-    }
+  function handleStatusChange(id: string, status: CompanyStatus) {
+    dispatch(companiesActions.updateCompanyStatusRequested({ id, status }))
   }
 
   const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)

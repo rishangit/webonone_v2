@@ -1,44 +1,87 @@
+import { useCallback } from 'react'
 import { Outlet } from 'react-router-dom'
-import { PlatformEmbedShell, usePlatformEmbedListener } from '@webonone/platform-embed'
-import { Alert, AlertDescription, LoadingState } from '@webonone/ui-kit'
+import {
+  decodeJwtPayload,
+  PlatformEmbedShell,
+  usePlatformEmbedAuth,
+  usePlatformEmbedContentReady,
+  type PlatformRole,
+} from '@webonone/platform-embed'
+import { LoadingState } from '@webonone/ui-kit'
 import { useEmbedThemeListener } from '@webonone/theme'
-import { usePlatformPageLabel, usePlatformRouteLabel } from '@/features/auth/context/PlatformLoadingContext'
-import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { usePlatformOverlayLabel } from '@/features/auth/context/PlatformLoadingContext'
+import { authActions } from '@/features/auth/store/authSlice'
 import { useRefreshEmailRole } from '@/features/auth/hooks/useRefreshEmailRole'
-import { useAppSelector } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import type { EmailRole } from '@/features/auth/types/auth.types'
 
 type PlatformEmbedLayoutProps = {
   parentOrigin: string
 }
 
+function roleFromClaims(platformRole?: PlatformRole): EmailRole {
+  if (
+    platformRole === 'super_admin' ||
+    platformRole === 'company_admin' ||
+    platformRole === 'member'
+  ) {
+    return platformRole
+  }
+  return 'member'
+}
+
 export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) {
   useEmbedThemeListener(parentOrigin)
 
+  const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
-  const { isBootstrapping, bootstrapError } = usePlatformSessionBootstrap()
-  const roleReady = useRefreshEmailRole(isBootstrapping)
-  const pageLabel = usePlatformPageLabel()
-  const routeLabel = usePlatformRouteLabel()
+  const overlayLabel = usePlatformOverlayLabel()
 
-  usePlatformEmbedListener({
+  const handleAccessToken = useCallback(
+    (token: string) => {
+      const claims = decodeJwtPayload(token)
+      if (!claims) {
+        return
+      }
+
+      dispatch(
+        authActions.loginSuccess({
+          accessToken: token,
+          user: {
+            id: claims.sub,
+            email: claims.email,
+            displayName: claims.email,
+            avatarUrl: null,
+            role: roleFromClaims(claims.platform_role),
+          },
+        }),
+      )
+    },
+    [dispatch],
+  )
+
+  const { isAwaitingToken } = usePlatformEmbedAuth({
     parentOrigin,
-    accessToken,
+    isAllowedParentOrigin,
+    persistedAccessToken: accessToken,
+    onAccessToken: handleAccessToken,
   })
 
-  const sessionLoading = Boolean(accessToken) && !roleReady
-  const overlayLabel = isBootstrapping || sessionLoading ? null : pageLabel ?? routeLabel
+  useRefreshEmailRole(isAwaitingToken)
+
+  const { hasReported } = usePlatformEmbedContentReady({
+    parentOrigin,
+    isContentReady: !isAwaitingToken && overlayLabel === null,
+  })
+  const displayLabel = hasReported ? overlayLabel : null
 
   return (
     <PlatformEmbedShell className="min-h-0 flex-1">
       <div className="platform-embed-outlet relative flex min-h-full w-full flex-col">
         <Outlet />
-        {bootstrapError ? (
-          <Alert variant="destructive" className="mt-4">
-            <AlertDescription>{bootstrapError}</AlertDescription>
-          </Alert>
-        ) : null}
-        {overlayLabel ? (
-          <LoadingState key="platform-loading" overlay overlayScope="content" label={overlayLabel} />
+        {displayLabel ? (
+          <LoadingState key="platform-loading" overlay overlayScope="content" label={displayLabel} />
         ) : null}
       </div>
     </PlatformEmbedShell>

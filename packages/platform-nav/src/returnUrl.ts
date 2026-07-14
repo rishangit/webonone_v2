@@ -31,3 +31,15 @@ export function stripAuthCodeFromSearch(searchParams: URLSearchParams): string {
   params.delete(QUERY.CODE)
   return params.toString()
 }
+
+/** Full-page satellite handoff: auth code + validated return_url (not iframe embed). */
+export function hasPlatformRedirectHandoff(
+  searchParams: URLSearchParams,
+  allowedOriginPatterns: string[],
+): boolean {
+  const code = searchParams.get(QUERY.CODE)
+  if (!code || searchParams.get(QUERY.STATE)) {
+    return false
+  }
+  return Boolean(parseReturnUrl(searchParams, allowedOriginPatterns))
+}

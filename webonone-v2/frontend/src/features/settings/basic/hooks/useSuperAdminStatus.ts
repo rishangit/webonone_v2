@@ -1,36 +1,14 @@
-import { useEffect, useState } from 'react'
-import { companyApi } from '@/features/settings/basic/services/companyApi'
+import { useAppSelector } from '@/app/store/hooks'
 
+/**
+ * Super-admin status is already known from the session role in the store —
+ * derive it instead of calling `/company/admin/me` on every mount.
+ */
 export function useSuperAdminStatus() {
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const { activeRole, selectionComplete, loading } = useAppSelector((s) => s.sessionRole)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      setLoading(true)
-      try {
-        const profile = await companyApi.getSuperAdminMe()
-        if (!cancelled) {
-          setIsSuperAdmin(Boolean(profile))
-        }
-      } catch {
-        if (!cancelled) {
-          setIsSuperAdmin(false)
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void load()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { isSuperAdmin, loading }
+  return {
+    isSuperAdmin: activeRole === 'super_admin',
+    loading: loading || !selectionComplete,
+  }
 }

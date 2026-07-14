@@ -14,16 +14,16 @@ interface CatalogListProps {
   basePath: string
   itemType: string
   items: CatalogItem[]
-  onDelete: (id: string) => Promise<void>
+  onDeleted: (id: string) => void
   canMutate: boolean
 }
 
-export function CatalogList({ basePath, itemType, items, onDelete, canMutate }: CatalogListProps) {
+export function CatalogList({ basePath, itemType, items, onDeleted, canMutate }: CatalogListProps) {
   const navigate = useNavigate()
 
-  async function handleDelete(id: string, name: string) {
+  function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete "${name}"?`)) return
-    await onDelete(id)
+    onDeleted(id)
   }
 
   if (items.length === 0) return <ItemListEmpty>No {itemType} found.</ItemListEmpty>
@@ -53,7 +53,7 @@ export function CatalogList({ basePath, itemType, items, onDelete, canMutate }: 
               <DropdownMenuItem onClick={() => navigate(`${basePath}/${item.id}`)}>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => void handleDelete(item.id, item.name)}
+                onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete
               </DropdownMenuItem>

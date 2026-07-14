@@ -1,5 +1,5 @@
 import { hasPlatformEmbedHandoff as checkPlatformEmbedHandoff } from '@webonone/platform-embed'
-import { parseReturnUrl, stripAuthCodeFromSearch } from '@webonone/platform-nav'
+import { hasPlatformRedirectHandoff, parseReturnUrl, stripAuthCodeFromSearch } from '@webonone/platform-nav'
 import { isAllowedParentOrigin, parseAllowedParentOrigins } from './identityConfig'
 
 export function parsePlatformReturnUrl(searchParams: URLSearchParams): string | null {
@@ -10,16 +10,12 @@ export function buildPlatformSearchWithoutCode(searchParams: URLSearchParams): s
   return stripAuthCodeFromSearch(searchParams)
 }
 
-export function isPlatformAuthCodeHandoff(searchParams: URLSearchParams): boolean {
-  return Boolean(searchParams.get('code') && !searchParams.get('state'))
+export function hasPlatformHandoff(searchParams: URLSearchParams): boolean {
+  return hasPlatformRedirectHandoff(searchParams, parseAllowedParentOrigins())
 }
 
 export function hasPlatformEmbedHandoff(searchParams: URLSearchParams): boolean {
   return checkPlatformEmbedHandoff(searchParams, isAllowedParentOrigin)
-}
-
-export function hasPlatformHandoff(searchParams: URLSearchParams): boolean {
-  return isPlatformAuthCodeHandoff(searchParams) && Boolean(parsePlatformReturnUrl(searchParams))
 }
 
 export function hasAnyPlatformHandoff(searchParams: URLSearchParams): boolean {

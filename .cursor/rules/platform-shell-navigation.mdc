@@ -16,13 +16,13 @@ When **WebOnOne** owns the shell (sidebar + header), load peer pages **in-place*
 WebOnOne AppLayout (sidebar + header stay mounted; embedMain on AppShell)
   → navigate(sentinel path: /email/*, /data/*, /profile)
   → PlatformPeerFrame → PlatformServiceFrame
-  → POST /auth/code with redirectUri = {peerOrigin}{path} only (no embed query)
-  → iframe src = peer path + ?embed=platform&parentOrigin&core_nav&theme&code
+  → iframe src = peer path + ?embed=platform&parentOrigin&core_nav&theme (no auth code)
+  → postMessage webonone:platform:init { accessToken } to peer origin
 
-Peer AppLayout (embed=platform + validated parentOrigin, or iframe + session)
+Peer AppLayout (embed=platform + validated parentOrigin)
   → ensurePlatformEmbedCanvas() in main.tsx (full-height #root before paint)
   → PlatformEmbedLayout (chromeless Outlet — no AppShell)
-  → usePlatformSessionBootstrap (code exchange) + usePlatformEmbedListener (JWT sync)
+  → usePlatformEmbedAuth (JWT from postMessage; postMessage READY when token ready)
   → FeaturePage + ListPageBody flex fill; pagination mt-auto at bottom
 ```
 
@@ -32,11 +32,31 @@ Peer AppLayout (embed=platform + validated parentOrigin, or iframe + session)
 | Header **Profile** (`/profile` sentinel) | Satellite-to-satellite hops (Data ↔ Email, satellite → Profile) |
 | Any new core-shell peer sentinel | Login / OAuth callback flows |
 
-**Package:** `@webonone/platform-embed` — `ensurePlatformEmbedCanvas`, `buildPlatformEmbedUrl`, `PlatformServiceFrame`, `PlatformEmbedShell`, `usePlatformEmbedListener`, `resolvePlatformEmbedParentOrigin`.
+**Package:** `@webonone/platform-embed` — `ensurePlatformEmbedCanvas`, `buildPlatformEmbedUrl`, `PlatformServiceFrame`, `PlatformEmbedShell`, `usePlatformEmbedAuth`, `usePlatformEmbedContentReady`, `resolvePlatformEmbedParentOrigin`. Media embeds use the same `webonone:platform:init` / READY handshake via `@webonone/media-embed` parent frames.
+
+### Single overlay across the iframe seam (content-ready handshake)
+
+The shell overlay and the embedded app's own overlay must **never stack**. Three message types coordinate one continuous overlay:
+
+| Message | Direction | Meaning |
+|---------|-----------|---------|
+| `webonone:platform:ready` | peer → shell | Embed mounted, ready to receive the JWT (`sendPlatformInit`) |
+| `webonone:platform:init` | shell → peer | Access token payload |
+| `webonone:platform:content-ready` | peer → shell | First page fully loaded (nothing loading) — shell hides its overlay |
+
+Flow:
+
+1. **Shell** (`PlatformServiceFrame`): show overlay on iframe `src` change (`onLoadingChange(true)`); hide **only** on `content-ready` (or a `CONTENT_READY_FALLBACK_MS = 12000` safety timeout for older peers). Do not hide on `READY`.
+2. **Peer** (`PlatformEmbedLayout`): `usePlatformEmbedContentReady({ parentOrigin, isContentReady: !isAwaitingToken && overlayLabel === null })` emits `content-ready` once the first page has been idle for `settleMs` (250ms) and returns `{ hasReported }`.
+3. **Peer overlay gate:** `const displayLabel = hasReported ? overlayLabel : null`. Before the first `content-ready` the shell overlay covers the load, so the embed **suppresses its own overlay**; after it (shell overlay gone) the embed shows its overlay for later in-app loads (pagination, filters, save). A shell nav reloads the iframe → remount resets `hasReported` → shell owns the initial overlay again.
+
+**Forbidden:** rendering the peer overlay (`overlayLabel`) unconditionally in embed mode; hiding the shell overlay on `READY` instead of `content-ready`; adding a peer-side overlay that overlaps the shell overlay during initial load.
+
+**Redirect auth:** `@webonone/platform-nav` — `exchangeAuthCode`, `usePlatformRedirectBootstrap`, `redirectWithAuthCode`.
 
 **Consumer (WebOnOne):** `features/shell/pages/PlatformPeerFrame.tsx`; routes `email/*`, `data/*`, `profile/*` in `app/router.tsx`. Nav sentinels + header profile use `onNavItemNavigate` / `navigate` only — **no** `onClick` redirect on core shell.
 
-**Peers (Identity, Email, Data):** early `embed=platform` branch in `app/AppLayout.tsx` → `features/auth/components/PlatformEmbedLayout.tsx`. `hasAnyPlatformHandoff` allows embed (`code` + `embed=platform`) or redirect (`code` + `return_url`).
+**Peers (Identity, Email, Data):** early `embed=platform` branch in `app/AppLayout.tsx` → `features/auth/components/PlatformEmbedLayout.tsx`. `hasAnyPlatformHandoff` allows embed (`embed=platform`) or redirect (`code` + `return_url`).
 
 **Layout / height (embed):** `ensurePlatformEmbedCanvas()` full-height `#root`. **`PlatformEmbedShell` `<main>`** scrolls (`overflow-y-auto scrollbar-themed`). Page chain uses **`min-h-full`** so short content fills the iframe and **`Pagination` `mt-auto`** stays at the bottom; tall content grows the page and scrolls on `<main>`.
 
@@ -183,9 +203,14 @@ When a satellite renders core nav, **peer service links** must not resolve to `{
 
 **Forbidden:** core-origin hrefs for authenticated peer navigation from a satellite; `navigate()` to peer paths on the wrong origin.
 
-## `PrivateRoute`
+## `PrivateRoute` and `RoleRoute` (embed-aware gates)
 
-Allow route when `accessToken` **or** `hasAnyPlatformHandoff(searchParams)` — platform redirect (`code` + validated `return_url`) **or** iframe embed (`code` + `embed=platform` + validated `parentOrigin`), no `state`. Never flash `/login` during handoff.
+**Both** route gates must treat an **in-progress embed handoff** as valid, or the fresh-login embed will flash `/login` and land on the default home (losing the requested path). In embed mode the JWT arrives **asynchronously via `postMessage`**, so `accessToken` is `null` on first render.
+
+- **`PrivateRoute`**: allow when `accessToken` **or** `hasAnyPlatformHandoff(searchParams)` — redirect (`code` + validated `return_url`) **or** embed (`embed=platform` + validated `parentOrigin`). Never flash `/login` during handoff.
+- **`RoleRoute`**: gate on `usePlatformHandoffPending()` returning `true` while a handoff has no token yet, and **render `null` (wait)** — do **not** `Navigate to="/login"` on `!accessToken`. `usePlatformHandoffPending` must use **`hasAnyPlatformHandoff`** (redirect **and** embed), not `hasPlatformHandoff` (redirect only). Otherwise a role-gated embed page (e.g. Email `/history`, Data catalog) redirects before the postMessage token lands. Once the token arrives it carries `platform_role`, so the role check passes in the same store update.
+
+Reference: `email/frontend/src/features/auth/components/PlatformHandoffSpinner.tsx`, `email/frontend/src/app/RoleRoute.tsx`.
 
 ## Routes
 

@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import { Alert, AlertDescription, Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { mediaActions } from '@/features/media/store'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { MediaViewer } from '../components/MediaViewer'
 import { ScopedFolderBrowser } from '../components/ScopedFolderBrowser'
 import { useEmbedMode, type ViewerMode } from '../hooks/useEmbedMode'
-import { useMediaAuth } from '../hooks/useMediaAuth'
+import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
-import { getMediaItem } from '../services/mediaApi'
 
 export function ViewerPage() {
+  const dispatch = useAppDispatch()
   const embed = useEmbedMode()
-  const { accessToken } = useMediaAuth(embed.isEmbed)
+  const { accessToken } = useMediaEmbedAuth(embed)
   const { postViewerChanged } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const [item, setItem] = useState<MediaItemDto | null>(null)
   const [selectorOpen, setSelectorOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [externalError, setExternalError] = useState<string | null>(null)
+
+  const { detailItem, detailStatus, detailError, detailId } = useAppSelector((s) => s.media)
 
   const scope = embed.scope ?? 'media:library:default'
   const [activeMode, setActiveMode] = useState<ViewerMode>(embed.viewerMode)
@@ -29,36 +32,36 @@ export function ViewerPage() {
     setActiveMode((current) => (current === 'view' ? 'edit' : 'view'))
   }, [])
 
-  const loadItem = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      if (embed.mediaId) {
-        const result = await getMediaItem(embed.mediaId)
-        setItem(result.item)
-        return
-      }
-      if (embed.fileUrl) {
-        setItem({
-          id: embed.mediaId ?? 'external',
-          url: embed.fileUrl,
-          fileName: embed.fileUrl.split('/').pop() ?? 'file',
-          mimeType: embed.fileUrl.match(/\.(png|jpe?g|gif|webp)$/i) ? 'image/jpeg' : 'application/octet-stream',
-          sizeBytes: 0,
-        })
-        return
-      }
-      setError('fileUrl or mediaId is required')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load media')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (embed.mediaId) {
+      dispatch(mediaActions.fetchDetailRequested({ id: embed.mediaId }))
+      return
     }
-  }, [embed.fileUrl, embed.mediaId])
+    dispatch(mediaActions.resetDetail())
+    if (embed.fileUrl) {
+      setItem({
+        id: embed.mediaId ?? 'external',
+        url: embed.fileUrl,
+        fileName: embed.fileUrl.split('/').pop() ?? 'file',
+        mimeType: embed.fileUrl.match(/\.(png|jpe?g|gif|webp)$/i) ? 'image/jpeg' : 'application/octet-stream',
+        sizeBytes: 0,
+      })
+      setExternalError(null)
+      return
+    }
+    setItem(null)
+    setExternalError('fileUrl or mediaId is required')
+  }, [dispatch, embed.fileUrl, embed.mediaId])
 
   useEffect(() => {
-    void loadItem()
-  }, [loadItem])
+    if (embed.mediaId && detailId === embed.mediaId && detailItem) {
+      setItem(detailItem)
+      setExternalError(null)
+    }
+  }, [detailId, detailItem, embed.mediaId])
+
+  const loading = embed.mediaId ? detailStatus === 'loading' : false
+  const error = externalError ?? (embed.mediaId ? detailError : null)
 
   if (embed.isEmbed && !accessToken) {
     return (

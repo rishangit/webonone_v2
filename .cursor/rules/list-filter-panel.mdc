@@ -8,7 +8,7 @@ alwaysApply: false
 
 Use `@webonone/ui-kit` **`ListSearchField`**, **`ListFilterTrigger`**, and **`ListFilterPanel`** on any `FeaturePage` that displays a filterable collection (`ItemList` + `Pagination`).
 
-Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · pagination: [item-list-pagination.mdc](item-list-pagination.mdc).
+Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · pagination: [item-list-pagination.mdc](item-list-pagination.mdc) · data loading: [redux-store-and-epics.mdc](redux-store-and-epics.mdc).
 
 Reference: `ui-kit/package/src/components/ListSearchField.tsx`, `ListFilterPanel.tsx`, `email/frontend/src/features/history/pages/HistoryPage.tsx`.
 

@@ -1,19 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { usePlatformRedirectBootstrap, type ExchangeAuthCodeResult } from '@webonone/platform-nav'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
-import { bootstrapProfileSession } from '@/features/profile/utils/bootstrapProfileSession'
-import {
-  buildPlatformSearchWithoutCode,
-  hasAnyPlatformHandoff,
-} from '@/features/auth/utils/platformReturn'
+import type { UserProfile } from '@/shared/types/auth.types'
+import { getIdentityApiBase } from '@/features/auth/utils/identityConfig'
+import { hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
+import { getIdentityProfileRedirectUri } from '@/features/profile/utils/profileConfig'
 
 type PlatformBootstrapState = {
   isBootstrapping: boolean
   bootstrapError: string | null
 }
-
-const exchangedPlatformCodes = new Set<string>()
 
 export function usePlatformSessionBootstrap(): PlatformBootstrapState {
   const location = useLocation()
@@ -21,50 +19,30 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const code = searchParams.get('code')
-  const isHandoff = hasAnyPlatformHandoff(searchParams)
-  const [bootstrapError, setBootstrapError] = useState<string | null>(null)
-  const [isBootstrapping, setIsBootstrapping] = useState(() => Boolean(code && isHandoff))
+  const isRedirectHandoff = hasPlatformHandoff(searchParams)
 
-  useEffect(() => {
-    if (!code || !isHandoff) {
-      setIsBootstrapping(false)
-      return
-    }
+  const getRedirectUri = useCallback((_path: string) => getIdentityProfileRedirectUri(), [])
 
-    if (exchangedPlatformCodes.has(code)) {
-      setIsBootstrapping(false)
-      return
-    }
+  const onSuccess = useCallback(
+    (result: ExchangeAuthCodeResult) => {
+      dispatch(
+        authActions.loginSucceeded({
+          accessToken: result.accessToken,
+          user: result.user as UserProfile,
+        }),
+      )
+    },
+    [dispatch],
+  )
 
-    exchangedPlatformCodes.add(code)
-    setIsBootstrapping(true)
-    setBootstrapError(null)
-
-    bootstrapProfileSession(code)
-      .then((result) => {
-        dispatch(
-          authActions.loginSucceeded({
-            accessToken: result.accessToken,
-            user: result.user,
-          }),
-        )
-
-        navigate(
-          { pathname: location.pathname, search: buildPlatformSearchWithoutCode(searchParams) },
-          { replace: true },
-        )
-      })
-      .catch((err: Error) => {
-        exchangedPlatformCodes.delete(code)
-        setBootstrapError(err.message)
-      })
-      .finally(() => {
-        setIsBootstrapping(false)
-      })
-  }, [code, dispatch, isHandoff, location.pathname, navigate, searchParams])
-
-  return {
-    isBootstrapping: isHandoff && isBootstrapping,
-    bootstrapError: isHandoff ? bootstrapError : null,
-  }
+  return usePlatformRedirectBootstrap({
+    code,
+    isRedirectHandoff,
+    pathname: location.pathname,
+    searchParams,
+    identityApiBase: getIdentityApiBase(),
+    getRedirectUri,
+    onSuccess,
+    navigate: (to, options) => navigate(to, options),
+  })
 }

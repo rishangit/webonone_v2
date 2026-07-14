@@ -18,7 +18,7 @@ import {
   Spinner,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import type { UserProfile } from '@/features/auth/types/auth.types'
+import type { UserProfile } from '@/shared/types/auth.types'
 import { authActions } from '@/features/auth/store'
 import {
   profileFormToUpdateInput,
@@ -126,12 +126,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       ...(pendingAvatarUrl !== null ? { avatarUrl: pendingAvatarUrl } : {}),
     }
 
-    dispatch(
-      authActions.profileUpdateRequested({
-        accessToken,
-        body,
-      }),
-    )
+    dispatch(authActions.profileUpdateRequested({ body }))
   }
 
   if (mode === 'view') {
@@ -167,6 +162,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
             displayName={user.displayName}
             avatarUrl={displayAvatarUrl}
             onEditImage={() => {
+              if (!accessToken) {
+                return
+              }
               setSelectorOpenKey((key) => key + 1)
               setSelectorOpen(true)
             }}

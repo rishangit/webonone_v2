@@ -2,7 +2,7 @@
   "name": "identity-root",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n fe,be -c blue,green \"npm run dev -w @webonone/identity-frontend\" \"npm run dev -w @webonone/identity-backend\"",
+    "dev": "npm run build:platform-nav --prefix .. && concurrently -n fe,be,platform-nav -c blue,green,magenta \"npm run dev -w @webonone/identity-frontend\" \"npm run dev -w @webonone/identity-backend\" \"npm run dev -w @webonone/platform-nav\"",
     "build": "npm run build:platform-nav --prefix .. && npm run build:platform-embed --prefix .. && npm run build:theme --prefix .. && npm run build:ui-kit --prefix .. && npm run build:media-embed --prefix .. && npm run build -w @webonone/identity-frontend && npm run build -w @webonone/identity-backend",
     "deploy": "npm run build && npm run stage:deploy",
     "stage:deploy": "node ../tooling/stage-iis-deploy.mjs identity/deploy",

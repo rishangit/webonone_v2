@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Button, Callout, CalloutDescription, CalloutTitle, FeaturePage } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { isFresh } from '@/shared/store/cacheUtils'
 import { RegisterCompanyDialog } from '../components/RegisterCompanyDialog'
 import { UserSelectionDemo } from '../components/UserSelectionDemo'
-import { companyApi, type CompanySummary } from '../services/companyApi'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
+import type { CompanySummary } from '../services/companyApi'
+import { companiesActions } from '../store/companiesStore'
 
 function statusLabel(status: CompanySummary['company']['status']): string {
   if (status === 'approved') return 'Approved'
@@ -19,48 +22,53 @@ function statusClassName(status: CompanySummary['company']['status']): string {
 }
 
 export function BasicSettingsPage() {
-  const [company, setCompany] = useState<CompanySummary | null | undefined>(undefined)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const dispatch = useAppDispatch()
+  const { myCompany, myCompanyStatus, myCompanyError, myCompanyFetchedAt } = useAppSelector(
+    (s) => s.companies,
+  )
   const [registerOpen, setRegisterOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [pendingRegister, setPendingRegister] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  async function loadCompany() {
-    setLoadError(null)
-    try {
-      const data = await companyApi.getMyCompany()
-      setCompany(data)
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Failed to load company')
-      setCompany(null)
+  useEffect(() => {
+    if (!isFresh(myCompanyFetchedAt)) {
+      dispatch(companiesActions.loadMyCompanyRequested())
     }
-  }
+  }, [dispatch, myCompanyFetchedAt])
 
   useEffect(() => {
-    void loadCompany()
-  }, [])
+    if (!pendingRegister) return
 
-  async function handleRegister(values: RegisterCompanyFormValues) {
-    setIsSubmitting(true)
-    setSubmitError(null)
-    try {
-      const data = await companyApi.registerCompany(values)
-      setCompany(data)
+    if (myCompanyStatus === 'idle') {
       setRegisterOpen(false)
-      setSuccessMessage('Registration submitted. Admin approval is required before you can manage company details.')
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Registration failed')
-    } finally {
-      setIsSubmitting(false)
+      setSuccessMessage(
+        'Registration submitted. Admin approval is required before you can manage company details.',
+      )
+      setPendingRegister(false)
+    } else if (myCompanyStatus === 'error') {
+      setPendingRegister(false)
     }
+  }, [myCompanyStatus, pendingRegister])
+
+  const isSubmitting = myCompanyStatus === 'saving' && pendingRegister
+  const submitError = myCompanyStatus === 'error' && pendingRegister ? myCompanyError : null
+  const isInitialLoad = myCompany === undefined && myCompanyStatus === 'loading'
+
+  usePlatformLoading(isInitialLoad ? 'Loading company settings…' : null)
+
+  function handleRegister(values: RegisterCompanyFormValues) {
+    setSuccessMessage(null)
+    setPendingRegister(true)
+    dispatch(companiesActions.registerCompanyRequested(values))
   }
 
-  usePlatformLoading(company === undefined ? 'Loading company settings…' : null)
-
-  if (company === undefined) {
+  if (isInitialLoad) {
     return null
   }
+
+  const company = myCompany ?? null
+  const loadError =
+    myCompanyStatus === 'error' && !pendingRegister && company === null ? myCompanyError : null
 
   return (
     <FeaturePage

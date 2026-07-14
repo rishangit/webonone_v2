@@ -14,13 +14,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
-import type { EmailTemplate } from '@/shared/types/email.types'
+import { sendActions } from '@/features/send/store'
+import { templatesActions } from '@/features/templates/store'
 import { sendEmailSchema, type SendEmailFormValues } from '../schemas/sendSchemas'
 
 export function SendEmailPage() {
-  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const dispatch = useAppDispatch()
+  const { items: templates, listStatus, listError } = useAppSelector((s) => s.templates)
+  const {
+    sendStatus,
+    sendError,
+    sendSuccess,
+    preview,
+    previewStatus,
+    previewError,
+  } = useAppSelector((s) => s.send)
+
   const [values, setValues] = useState<SendEmailFormValues>({
     templateSlug: '',
     toEmail: '',
@@ -29,37 +40,24 @@ export function SendEmailPage() {
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof SendEmailFormValues | 'payload', string>>
   >({})
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [previewing, setPreviewing] = useState(false)
+
+  const loading = listStatus === 'loading' && templates.length === 0
+  const submitting = sendStatus === 'sending'
+  const previewing = previewStatus === 'loading'
+  const error = listError ?? sendError ?? previewError
 
   usePlatformLoading(loading ? 'Loading send form…' : null)
 
+  const activeTemplates = useMemo(() => templates.filter((t) => t.isActive), [templates])
+
   const selectedTemplate = useMemo(
-    () => templates.find((t) => t.slug === values.templateSlug) ?? null,
-    [templates, values.templateSlug],
+    () => activeTemplates.find((t) => t.slug === values.templateSlug) ?? null,
+    [activeTemplates, values.templateSlug],
   )
 
   useEffect(() => {
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await emailApi.listTemplates()
-        const active = data.filter((t) => t.isActive)
-        setTemplates(active)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load templates')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    void load()
-  }, [])
+    dispatch(templatesActions.loadListRequested())
+  }, [dispatch])
 
   useEffect(() => {
     if (!selectedTemplate) return
@@ -80,25 +78,14 @@ export function SendEmailPage() {
     }))
   }
 
-  async function handlePreview() {
-    if (!selectedTemplate) {
-      setError('Select a template first')
-      return
-    }
-    setPreviewing(true)
-    setError(null)
-    setPreviewHtml(null)
-    try {
-      const result = await emailApi.previewTemplate(selectedTemplate.id, values.payload)
-      setPreviewHtml(result.html)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Preview failed')
-    } finally {
-      setPreviewing(false)
-    }
+  function handlePreview() {
+    if (!selectedTemplate) return
+    dispatch(
+      sendActions.previewRequested({ id: selectedTemplate.id, payload: values.payload }),
+    )
   }
 
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     const result = sendEmailSchema.safeParse(values)
     if (!result.success) {
@@ -106,19 +93,7 @@ export function SendEmailPage() {
       return
     }
     setFieldErrors({})
-    setSubmitting(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      const response = await emailApi.sendEmail(result.data)
-      setSuccess(`Email queued (${response.queueId}).`)
-      setPreviewHtml(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Send failed')
-    } finally {
-      setSubmitting(false)
-    }
+    dispatch(sendActions.sendEmailRequested(result.data))
   }
 
   return (
@@ -131,9 +106,9 @@ export function SendEmailPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      {success ? (
+      {sendSuccess ? (
         <Alert>
-          <AlertDescription>{success}</AlertDescription>
+          <AlertDescription>{sendSuccess}</AlertDescription>
         </Alert>
       ) : null}
       {!loading ? (
@@ -147,7 +122,7 @@ export function SendEmailPage() {
                 <SelectValue placeholder="Select template" />
               </SelectTrigger>
               <SelectContent>
-                {templates.map((template) => (
+                {activeTemplates.map((template) => (
                   <SelectItem key={template.id} value={template.slug}>
                     {template.name}
                   </SelectItem>
@@ -176,7 +151,7 @@ export function SendEmailPage() {
           ))}
 
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => void handlePreview()} disabled={previewing}>
+            <Button type="button" variant="outline" onClick={handlePreview} disabled={previewing}>
               {previewing ? 'Previewing…' : 'Preview'}
             </Button>
             <Button type="submit" disabled={submitting}>
@@ -186,14 +161,14 @@ export function SendEmailPage() {
         </Form>
       ) : null}
 
-      {previewHtml ? (
+      {preview ? (
         <section className="space-y-2">
           <h2 className="text-lg font-medium">Preview</h2>
           <iframe
             title="Send preview"
             className="h-[360px] w-full rounded-lg border border-border bg-background"
             sandbox=""
-            srcDoc={previewHtml}
+            srcDoc={preview.html}
           />
         </section>
       ) : null}

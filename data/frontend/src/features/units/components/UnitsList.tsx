@@ -8,22 +8,20 @@ import {
   ItemListMenu,
 } from '@webonone/ui-kit'
 import { StatusBadge } from '@/shared/components/StatusBadge'
-import { dataApi } from '@/shared/services/dataApi'
 import type { Unit } from '@/shared/types/data.types'
 
 interface UnitsListProps {
   items: Unit[]
-  onDeleted: () => void
+  onDeleted: (id: string) => void
   canMutate: boolean
 }
 
 export function UnitsList({ items, onDeleted, canMutate }: UnitsListProps) {
   const navigate = useNavigate()
 
-  async function handleDelete(id: string, name: string) {
+  function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete unit "${name}"?`)) return
-    await dataApi.deleteUnit(id)
-    onDeleted()
+    onDeleted(id)
   }
 
   if (items.length === 0) return <ItemListEmpty>No units found.</ItemListEmpty>
@@ -48,7 +46,7 @@ export function UnitsList({ items, onDeleted, canMutate }: UnitsListProps) {
               <DropdownMenuItem onClick={() => navigate(`/units/${item.id}`)}>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => void handleDelete(item.id, item.name)}
+                onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete
               </DropdownMenuItem>

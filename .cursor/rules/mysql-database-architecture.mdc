@@ -68,6 +68,24 @@ export const createOrder = async (input: CreateOrderInput) => {
 - **Pool** per process (`DB_POOL_MAX`); **parameterized queries** only; **transactions** for multi-row writes.
 - Least-privilege DB user per service database.
 
+### Knex connection (mysql2) — required pool + keepalive
+
+The runtime `knex()` instance in `backend/src/models/db.ts` (Identity: `models/user.repository.ts`) **must** enable TCP keep-alive and use `pool.min: 0`. Without this, knex keeps idle connections (default `min: 2`) that MySQL/OS drops after `wait_timeout`, so the next query throws intermittent **`read ECONNRESET`** / `500`.
+
+```typescript
+export const db = knex({
+  client: 'mysql2',
+  connection: {
+    ...env.database,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
+  },
+  pool: { min: 0, max: 10 },
+})
+```
+
+**Forbidden:** `knex({ client: 'mysql2', connection: env.database })` with no `pool` / `enableKeepAlive` for a long-lived server instance. (Migration-only `knexfile.ts` configs are short-lived and do not need this.)
+
 ## Microservice data patterns
 
 - **Outbox table**: same transaction as business write; worker publishes events.

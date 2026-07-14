@@ -1,60 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
-import type { DataRole } from '@/features/auth/types/auth.types'
-import { apiClient } from '@/shared/services/apiClient'
 
 export function useRefreshDataRole(isBootstrapping: boolean): boolean {
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const userRole = useAppSelector((s) => s.auth.user?.role)
-  const [roleReady, setRoleReady] = useState(!accessToken || Boolean(userRole))
+  const isProfileLoading = useAppSelector((s) => s.auth.isProfileLoading)
 
   useEffect(() => {
-    if (!accessToken || isBootstrapping) {
-      setRoleReady(!accessToken || Boolean(userRole))
-      return
-    }
-
-    if (userRole) {
-      setRoleReady(true)
-      let cancelled = false
-
-      apiClient<{ user: { role: DataRole } }>('/me')
-        .then((me) => {
-          if (!cancelled) {
-            dispatch(authActions.setUserRole(me.user.role))
-          }
-        })
-        .catch(() => {
-          // keep role from bootstrap
-        })
-
-      return () => {
-        cancelled = true
-      }
-    }
-
-    let cancelled = false
-    setRoleReady(false)
-
-    apiClient<{ user: { role: DataRole } }>('/me')
-      .then((me) => {
-        if (!cancelled) {
-          dispatch(authActions.setUserRole(me.user.role))
-          setRoleReady(true)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setRoleReady(true)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
+    if (!accessToken || isBootstrapping) return
+    if (userRole) return
+    dispatch(authActions.profileFetchRequested())
   }, [accessToken, dispatch, isBootstrapping, userRole])
 
-  return roleReady
+  if (!accessToken) return true
+  if (isBootstrapping) return false
+  if (userRole) return true
+  return !isProfileLoading
 }

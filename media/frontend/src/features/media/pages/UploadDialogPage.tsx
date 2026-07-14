@@ -1,26 +1,63 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { mediaActions } from '@/features/media/store'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { ImageCropDialog } from '../components/ImageCropDialog'
 import { UploadDropzone } from '../components/UploadDropzone'
 import { mediaTypeToAccept, useEmbedMode } from '../hooks/useEmbedMode'
-import { useMediaAuth } from '../hooks/useMediaAuth'
+import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
-import { uploadMediaFile } from '../services/mediaApi'
 
 export function UploadDialogPage() {
+  const dispatch = useAppDispatch()
   const embed = useEmbedMode()
-  const { accessToken } = useMediaAuth(embed.isEmbed)
+  const { accessToken } = useMediaEmbedAuth(embed)
   const { postUploaded, postCancel } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [cropOpen, setCropOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const uploadPendingRef = useRef(false)
+
+  const { uploadStatus, lastUploadedItems, uploadError, lastUploadFailed } = useAppSelector(
+    (s) => s.media,
+  )
 
   const scope = embed.scope ?? 'media:library:default'
   const accept = mediaTypeToAccept(embed.mediaType, embed.accept)
   const maxFiles = embed.maxFiles || 1
   const cropEnabled =
     embed.crop && (embed.mediaType === 'image' || accept.includes('image'))
+
+  useEffect(() => {
+    if (!uploadPendingRef.current || uploadStatus === 'uploading') {
+      return
+    }
+    if (uploadStatus === 'error') {
+      setError(uploadError ?? 'Upload failed')
+      uploadPendingRef.current = false
+      dispatch(mediaActions.resetUpload())
+      return
+    }
+    if (lastUploadFailed.length) {
+      setError(lastUploadFailed.map((f) => `${f.fileName}: ${f.reason}`).join('; '))
+    }
+    if (lastUploadedItems.length) {
+      if (embed.isEmbed) {
+        postUploaded(lastUploadedItems)
+      }
+    }
+    uploadPendingRef.current = false
+    dispatch(mediaActions.resetUpload())
+  }, [
+    dispatch,
+    embed.isEmbed,
+    lastUploadFailed,
+    lastUploadedItems,
+    postUploaded,
+    uploadError,
+    uploadStatus,
+  ])
 
   if (embed.isEmbed && !accessToken) {
     return (
@@ -35,16 +72,16 @@ export function UploadDialogPage() {
     )
   }
 
-  async function uploadFile(file: File) {
+  function uploadFile(file: File) {
     setError(null)
-    try {
-      const result = await uploadMediaFile(file, scope, embed.folderPath)
-      if (embed.isEmbed) {
-        postUploaded([result.item])
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
-    }
+    uploadPendingRef.current = true
+    dispatch(
+      mediaActions.uploadRequested({
+        files: [file],
+        scope,
+        folderPath: embed.folderPath,
+      }),
+    )
   }
 
   async function handleFilesSelected(files: File[]) {
@@ -57,18 +94,21 @@ export function UploadDialogPage() {
       return
     }
 
-    await uploadFile(file)
+    uploadFile(file)
   }
 
   async function handleCropConfirm(cropped: File) {
     setCropOpen(false)
     setPendingFile(null)
-    await uploadFile(cropped)
+    uploadFile(cropped)
   }
 
   const content = (
     <div className="space-y-4">
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {uploadStatus === 'uploading' ? (
+        <p className="text-sm text-muted-foreground">Uploading…</p>
+      ) : null}
       <UploadDropzone
         accept={accept}
         multiple={maxFiles > 1}

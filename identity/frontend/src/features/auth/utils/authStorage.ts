@@ -1,4 +1,4 @@
-import type { UserProfile } from '../types/auth.types'
+import type { UserProfile } from '@/shared/types/auth.types'
 
 const STORAGE_KEY = 'identity_auth'
 

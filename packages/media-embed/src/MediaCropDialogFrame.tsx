@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef } from 'react'
-import { buildMediaCropDialogUrl, sendMediaCropInit, sendMediaInit } from './embedUrl'
+import { sendPlatformInit } from '@webonone/platform-embed'
+import { buildMediaCropDialogUrl, sendMediaCropInit } from './embedUrl'
 import type { BuildMediaCropDialogUrlOptions, CropAspectPreset } from './types'
 
 export interface MediaCropDialogFrameProps extends BuildMediaCropDialogUrlOptions {
@@ -41,7 +42,7 @@ export const MediaCropDialogFrame = forwardRef<HTMLIFrameElement, MediaCropDialo
       }
 
       function deliverInit() {
-        sendMediaInit(iframe!, mediaOrigin, accessToken!)
+        sendPlatformInit(iframe!, new URL(mediaOrigin).origin, accessToken!)
         sendMediaCropInit(iframe!, mediaOrigin, {
           file: cropFile!,
           defaultAspect,

@@ -8,13 +8,15 @@ import { ThemeDeleteDialog } from '../components/ThemeDeleteDialog'
 import { ThemeList } from '../components/ThemeList'
 import type { ThemeFormValues } from '../schemas/themeFormSchema'
 import type { ApiTheme } from '../services/themeApi'
+import { isFresh } from '@/shared/store/cacheUtils'
 import { systemThemeActions } from '../store/systemThemeSlice'
 
 type PendingSave = 'create' | 'edit' | 'delete' | null
 
 export function SystemThemePage() {
   const dispatch = useAppDispatch()
-  const { themes, preferences, status, error } = useAppSelector((s) => s.systemTheme)
+  const { themes, preferences, status, error, themesFetchedAt, preferencesFetchedAt } =
+    useAppSelector((s) => s.systemTheme)
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<ApiTheme | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ApiTheme | null>(null)
@@ -36,9 +38,13 @@ export function SystemThemePage() {
   usePlatformLoading(status === 'loading' ? 'Loading themes…' : null)
 
   useEffect(() => {
-    dispatch(systemThemeActions.loadThemesRequested())
-    dispatch(systemThemeActions.loadPreferencesRequested())
-  }, [dispatch])
+    if (!isFresh(themesFetchedAt)) {
+      dispatch(systemThemeActions.loadThemesRequested())
+    }
+    if (!isFresh(preferencesFetchedAt)) {
+      dispatch(systemThemeActions.loadPreferencesRequested())
+    }
+  }, [dispatch, themesFetchedAt, preferencesFetchedAt])
 
   useEffect(() => {
     if (createOpen || editing) {

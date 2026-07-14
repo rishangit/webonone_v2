@@ -11,9 +11,9 @@ import {
   mapZodIssuesToFieldErrors,
   Textarea,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
+import { settingsActions } from '@/features/settings/store'
 import type { CompanyBranding } from '@/shared/types/email.types'
 import { brandingSchema, type BrandingFormValues } from '../schemas/brandingSchemas'
 
@@ -30,8 +30,11 @@ function brandingToFormValues(branding: CompanyBranding): BrandingFormValues {
 }
 
 export function SettingsPage() {
+  const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
   const companyId = useAppSelector((s) => s.auth.user?.companyId ?? null)
+  const { branding, status, error } = useAppSelector((s) => s.settings)
+
   const isSuperAdmin = role === 'super_admin'
   const defaultTab: SettingsTab = isSuperAdmin ? 'global' : 'branding'
   const [tab, setTab] = useState<SettingsTab>(defaultTab)
@@ -43,43 +46,42 @@ export function SettingsPage() {
     footerHtml: '',
   })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof BrandingFormValues, string>>>({})
-  const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [awaitingSave, setAwaitingSave] = useState(false)
+
+  const loading = tab === 'branding' && status === 'loading' && !branding
+  const saving = status === 'saving'
 
   usePlatformLoading(loading ? 'Loading settings…' : null)
 
   useEffect(() => {
     if (tab !== 'branding' || !companyId) return
-    const brandingCompanyId = companyId
+    dispatch(settingsActions.loadBrandingRequested({ companyId }))
+  }, [tab, companyId, dispatch])
 
-    async function loadBranding() {
-      setLoading(true)
-      setError(null)
-      try {
-        const branding = await emailApi.getBranding(brandingCompanyId)
-        setValues(brandingToFormValues(branding))
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load branding')
-      } finally {
-        setLoading(false)
-      }
+  useEffect(() => {
+    if (branding && branding.companyId === companyId) {
+      setValues(brandingToFormValues(branding))
     }
+  }, [branding, companyId])
 
-    void loadBranding()
-  }, [tab, companyId])
+  useEffect(() => {
+    if (awaitingSave && status === 'idle' && !error) {
+      setSuccess('Branding saved.')
+      setAwaitingSave(false)
+    }
+    if (awaitingSave && status === 'error') {
+      setAwaitingSave(false)
+    }
+  }, [awaitingSave, error, status])
 
   function patchValues(patch: Partial<BrandingFormValues>) {
     setValues((prev) => ({ ...prev, ...patch }))
   }
 
-  async function handleSaveBranding(event: React.FormEvent) {
+  function handleSaveBranding(event: React.FormEvent) {
     event.preventDefault()
-    if (!companyId) {
-      setError('No company associated with your account')
-      return
-    }
+    if (!companyId) return
 
     const payload = {
       ...values,
@@ -93,25 +95,21 @@ export function SettingsPage() {
       return
     }
     setFieldErrors({})
-    setSaving(true)
-    setError(null)
     setSuccess(null)
+    setAwaitingSave(true)
 
-    try {
-      const updated = await emailApi.updateBranding(companyId, {
-        name: result.data.companyName,
-        logoUrl: result.data.logoUrl || null,
-        primaryColor: result.data.primaryColor,
-        contactEmail: result.data.contactEmail,
-        footerHtml: result.data.footerHtml || null,
-      })
-      setValues(brandingToFormValues(updated))
-      setSuccess('Branding saved.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save branding')
-    } finally {
-      setSaving(false)
-    }
+    dispatch(
+      settingsActions.saveBrandingRequested({
+        companyId,
+        body: {
+          name: result.data.companyName,
+          logoUrl: result.data.logoUrl || null,
+          primaryColor: result.data.primaryColor,
+          contactEmail: result.data.contactEmail,
+          footerHtml: result.data.footerHtml || null,
+        },
+      }),
+    )
   }
 
   return (

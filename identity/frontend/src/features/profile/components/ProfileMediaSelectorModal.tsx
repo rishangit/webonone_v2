@@ -157,21 +157,27 @@ export function ProfileMediaSelectorModal({
           </Button>
         }
       >
-        <MediaSelectorFrame
-          key={openKey}
-          isOpen={isOpen}
-          accessToken={accessToken}
-          mediaOrigin={getMediaOrigin()}
-          baseUrl={getMediaSelectorUrl()}
-          parentOrigin={window.location.origin}
-          scope={scope}
-          folderPath={profileFolderPath}
-          mode="single"
-          accept="image/*"
-          selectorUpload
-          cropAspectPresets={['1:1']}
-          className="h-full min-h-0 w-full border-0 bg-transparent"
-        />
+        {!accessToken ? (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
+          </div>
+        ) : (
+          <MediaSelectorFrame
+            key={openKey}
+            isOpen={isOpen}
+            accessToken={accessToken}
+            mediaOrigin={getMediaOrigin()}
+            baseUrl={getMediaSelectorUrl()}
+            parentOrigin={window.location.origin}
+            scope={scope}
+            folderPath={profileFolderPath}
+            mode="single"
+            accept="image/*"
+            selectorUpload
+            cropAspectPresets={['1:1']}
+            className="h-full min-h-0 w-full border-0 bg-transparent"
+          />
+        )}
       </CustomDialog>
       <CustomDialog
         open={cropOpen}

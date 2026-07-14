@@ -74,9 +74,13 @@ Desktop (`sm+`) keeps a single row: summary left, page size + nav right.
 ) : null}
 ```
 
+## Data loading (Redux epics)
+
+List pages **dispatch load actions** and **select from the feature store** — do not call `apiClient` or feature `*Api` from pages/hooks. See [redux-store-and-epics.mdc](redux-store-and-epics.mdc).
+
 ## Server pagination
 
-Parent owns `page`, `pageSize` (default **12**), `total` from API. On filter/tab change → reset `page` to `1` then fetch.
+Parent owns `page`, `pageSize` (default **12**), `total` from store (populated by epic). On filter/tab change → reset `page` to `1` then dispatch load.
 
 ```typescript
 const [pageSize, setPageSize] = useState(12)

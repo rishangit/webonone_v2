@@ -17,10 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
-import type { HistoryItem } from '@/shared/types/email.types'
+import { historyActions } from '@/features/history/store'
 import { HistoryList } from '../components/HistoryList'
 
 function startOfDayIso(date: Date): string {
@@ -32,90 +31,95 @@ function endOfDayIso(date: Date): string {
 }
 
 export function HistoryPage() {
+  const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const userRole = useAppSelector((s) => s.auth.user?.role)
-  const [items, setItems] = useState<HistoryItem[]>([])
-  const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
-  const [pageSize, setPageSize] = useState(12)
+  const { items, total, page, pageSize, listStatus, listError } = useAppSelector((s) => s.history)
+
   const [status, setStatus] = useState<string>('all')
   const [from, setFrom] = useState<Date | undefined>()
   const [to, setTo] = useState<Date | undefined>()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: 'all',
+    from: undefined as Date | undefined,
+    to: undefined as Date | undefined,
+    search: '',
+  })
 
+  const loading = listStatus === 'loading' && items.length === 0
   usePlatformLoading(loading ? 'Loading history…' : null)
 
-  const hasActiveFilters = status !== 'all' || from !== undefined || to !== undefined
-
-  async function loadHistory(nextPage = page, nextPageSize = pageSize) {
-    setLoading(true)
-    setError(null)
-    try {
-      const fromIso = from ? startOfDayIso(from) : undefined
-      const toIso = to ? endOfDayIso(to) : undefined
-      const data = await emailApi.getHistory({
-        page: nextPage,
-        pageSize: nextPageSize,
-        status: status === 'all' ? undefined : status,
-        from: fromIso,
-        to: toIso,
-        search: searchQuery.trim() || undefined,
-      })
-      setItems(data.items)
-      setTotal(data.total)
-      setPage(data.page)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load history')
-      setItems([])
-    } finally {
-      setLoading(false)
-    }
-  }
+  const hasActiveFilters =
+    appliedFilters.status !== 'all' ||
+    appliedFilters.from !== undefined ||
+    appliedFilters.to !== undefined
 
   useEffect(() => {
-    if (!accessToken) {
-      return
-    }
+    if (!accessToken) return
     const timer = window.setTimeout(() => {
-      void loadHistory(1)
+      dispatch(
+        historyActions.loadListRequested({
+          page: 1,
+          pageSize,
+          status: appliedFilters.status,
+          extra: {
+            from: appliedFilters.from ? startOfDayIso(appliedFilters.from) : undefined,
+            to: appliedFilters.to ? endOfDayIso(appliedFilters.to) : undefined,
+            search: appliedFilters.search.trim() || undefined,
+          },
+        }),
+      )
     }, 400)
     return () => window.clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when search/filters change
-  }, [status, searchQuery, accessToken])
+  }, [accessToken, appliedFilters, dispatch, pageSize])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
   }
 
+  function dispatchLoad(nextPage: number, nextPageSize: number, filters = appliedFilters) {
+    dispatch(
+      historyActions.loadListRequested({
+        page: nextPage,
+        pageSize: nextPageSize,
+        status: filters.status,
+        extra: {
+          from: filters.from ? startOfDayIso(filters.from) : undefined,
+          to: filters.to ? endOfDayIso(filters.to) : undefined,
+          search: filters.search.trim() || undefined,
+        },
+      }),
+    )
+  }
+
   function handleApplyFilters() {
-    setPage(1)
-    void loadHistory(1, pageSize)
+    const next = { status, from, to, search: searchQuery }
+    setAppliedFilters(next)
+    dispatchLoad(1, pageSize, next)
   }
 
   function handleClearFilters() {
     setStatus('all')
     setFrom(undefined)
     setTo(undefined)
-    setPage(1)
-    void loadHistory(1, pageSize)
+    const next = { status: 'all', from: undefined, to: undefined, search: searchQuery }
+    setAppliedFilters(next)
+    dispatchLoad(1, pageSize, next)
   }
 
   function handleClearSearch() {
     setSearchQuery('')
-    setPage(1)
-    void loadHistory(1, pageSize)
+    const next = { ...appliedFilters, search: '' }
+    setAppliedFilters(next)
+    dispatchLoad(1, pageSize, next)
   }
 
-  function handlePageChange(nextPage: number) {
-    void loadHistory(nextPage, pageSize)
-  }
-
-  function handlePageSizeChange(nextPageSize: number) {
-    setPageSize(nextPageSize)
-    void loadHistory(1, nextPageSize)
+  function handleSearchChange(value: string) {
+    setSearchQuery(value)
+    const next = { ...appliedFilters, search: value }
+    setAppliedFilters(next)
   }
 
   return (
@@ -130,7 +134,7 @@ export function HistoryPage() {
         <div className="flex items-center gap-2">
           <ListSearchField
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={handleSearchChange}
             placeholder="Email or template name"
             onClear={handleClearSearch}
             aria-label="Search by recipient email or template name"
@@ -179,9 +183,9 @@ export function HistoryPage() {
         </FormField>
       </ListFilterPanel>
 
-      {error ? (
+      {listError ? (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{listError}</AlertDescription>
         </Alert>
       ) : null}
       {!loading ? (
@@ -195,8 +199,8 @@ export function HistoryPage() {
             currentPage={page}
             pageSize={pageSize}
             pageSizeOptions={[12, 24, 48]}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
+            onPageChange={(nextPage) => dispatchLoad(nextPage, pageSize)}
+            onPageSizeChange={(nextPageSize) => dispatchLoad(1, nextPageSize)}
           />
         </ListPageBody>
       ) : null}

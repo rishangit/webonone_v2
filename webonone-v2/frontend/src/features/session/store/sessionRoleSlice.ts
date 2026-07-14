@@ -37,7 +37,7 @@ export const sessionRoleSlice = createSlice({
   name: 'sessionRole',
   initialState,
   reducers: {
-    bootstrapStarted(state) {
+    bootstrapRequested(state) {
       state.loading = true
     },
     rolesLoaded(

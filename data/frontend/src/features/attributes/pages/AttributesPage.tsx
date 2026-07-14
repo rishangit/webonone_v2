@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import {
   Alert,
@@ -17,27 +16,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { AttributesList } from '@/features/attributes/components/AttributesList'
-import { usePaginatedList } from '@/shared/hooks/usePaginatedList'
-import { dataApi } from '@/shared/services/dataApi'
+import { attributesActions } from '@/features/attributes/store'
+import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
 export function AttributesPage() {
+  const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
-  const loader = useCallback(
-    (query: { page: number; pageSize: number; q?: string; status?: string; extra?: Record<string, string> }) =>
-      dataApi.listAttributes({
-        page: query.page,
-        pageSize: query.pageSize,
-        q: query.q,
-        status: query.status,
-        value_type: query.extra?.value_type,
-      }),
-    [],
-  )
-  const list = usePaginatedList(loader)
+
+  const list = useEpicCatalogList((s) => s.attributes, attributesActions)
   usePlatformLoading(list.loading ? 'Loading attributes…' : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -61,17 +51,17 @@ export function AttributesPage() {
       <ListFilterPanel
         open={list.filterOpen}
         onOpenChange={list.setFilterOpen}
-        onApply={() => void list.load(1)}
+        onApply={() => list.load(1, list.pageSize, true)}
         onClear={() => {
           list.setStatus('all')
           list.setExtraFilters({})
-          void list.load(1)
+          list.load(1, list.pageSize, true)
         }}
       >
         <FormField label="Status" htmlFor="attributes-status">
           <Select value={list.status} onValueChange={list.setStatus}>
             <SelectTrigger id="attributes-status">
-              <SelectValue />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
@@ -83,12 +73,10 @@ export function AttributesPage() {
         <FormField label="Value type" htmlFor="attributes-value-type">
           <Select
             value={list.extraFilters.value_type ?? 'all'}
-            onValueChange={(v) =>
-              list.setExtraFilters(v === 'all' ? {} : { value_type: v })
-            }
+            onValueChange={(v) => list.setExtraFilters(v === 'all' ? {} : { value_type: v })}
           >
             <SelectTrigger id="attributes-value-type">
-              <SelectValue />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
@@ -98,17 +86,22 @@ export function AttributesPage() {
           </Select>
         </FormField>
       </ListFilterPanel>
+
       {list.error ? (
         <Alert variant="destructive">
           <AlertDescription>{list.error}</AlertDescription>
         </Alert>
       ) : null}
+
       <ListPageBody>
         <div className="flex-1">
           {!list.loading ? (
             <AttributesList
               items={list.items}
-              onDeleted={() => void list.load(list.page)}
+              onDeleted={(id) => {
+                dispatch(attributesActions.deleteRequested({ id }))
+                list.load(list.page, list.pageSize, true)
+              }}
               canMutate={canMutate}
             />
           ) : null}
@@ -119,11 +112,8 @@ export function AttributesPage() {
           currentPage={list.page}
           pageSize={list.pageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={(p) => void list.load(p)}
-          onPageSizeChange={(size) => {
-            list.setPageSize(size)
-            void list.load(1, size)
-          }}
+          onPageChange={(p) => list.load(p)}
+          onPageSizeChange={(size) => list.load(1, size, true)}
         />
       </ListPageBody>
     </FeaturePage>

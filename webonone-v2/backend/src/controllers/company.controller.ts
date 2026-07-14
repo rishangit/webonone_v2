@@ -17,11 +17,9 @@ export async function getMyCompany(req: AuthenticatedRequest, res: Response) {
 
   try {
     const result = await companyService.getMyCompany(req.user.id)
-    if (!result) {
-      res.status(404).json({ message: 'No company registered', code: 'NOT_FOUND' })
-      return
-    }
-    res.json(result)
+    // No company registered is a valid state, not an error: return null so the
+    // client does not see a noisy 404 on every load.
+    res.json(result ?? { company: null, membership: null })
   } catch (err) {
     handleServiceError(err, res)
   }

@@ -12,7 +12,7 @@ import {
   Spinner,
 } from '@webonone/ui-kit'
 import { verifyResetOtpSchema, type VerifyResetOtpFormValues } from '../schemas/authSchemas'
-import { authApi, type AuthApiError } from '../services/authApi'
+import { authApi, type AuthApiError } from '@/shared/services/authApi'
 import { saveResetSessionToken } from '../utils/resetSessionStorage'
 import { clearResetEmail, loadResetEmail } from '../utils/resetEmailStorage'
 import { withRedirectQuery } from '../utils/redirectQuery'

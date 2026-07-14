@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
@@ -11,14 +11,16 @@ import {
   Input,
   Spinner,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { mediaActions } from '@/features/media/store'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { EmbedToolbar } from '../components/EmbedToolbar'
 import { ScopedFolderBrowser } from '../components/ScopedFolderBrowser'
 import { UploadDropzone } from '../components/UploadDropzone'
 import { useEmbedMode } from '../hooks/useEmbedMode'
-import { useMediaAuth } from '../hooks/useMediaAuth'
+import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
-import { createFolder, uploadMediaBatch } from '../services/mediaApi'
+import { createFolder } from '../services/mediaApi'
 
 function validateFolderName(name: string): string | undefined {
   const trimmed = name.trim()
@@ -28,8 +30,9 @@ function validateFolderName(name: string): string | undefined {
 }
 
 export function FullDialogPage() {
+  const dispatch = useAppDispatch()
   const embed = useEmbedMode()
-  const { accessToken } = useMediaAuth(embed.isEmbed)
+  const { accessToken } = useMediaEmbedAuth(embed)
   const { postSelect, postCancel } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const [currentPath, setCurrentPath] = useState(embed.folderPath)
   const [selectedItems, setSelectedItems] = useState<MediaItemDto[]>([])
@@ -39,8 +42,31 @@ export function FullDialogPage() {
   const [folderError, setFolderError] = useState<string | undefined>()
   const [error, setError] = useState<string | null>(null)
   const [browserKey, setBrowserKey] = useState(0)
+  const uploadPendingRef = useRef(false)
+
+  const { uploadStatus, uploadError, lastUploadFailed } = useAppSelector((s) => s.media)
 
   const scope = embed.scope ?? 'media:library:default'
+
+  useEffect(() => {
+    if (!uploadPendingRef.current || uploadStatus === 'uploading') {
+      return
+    }
+    if (uploadStatus === 'error') {
+      setError(uploadError ?? 'Upload failed')
+      uploadPendingRef.current = false
+      dispatch(mediaActions.resetUpload())
+      return
+    }
+    if (lastUploadFailed.length) {
+      setError(lastUploadFailed.map((f) => `${f.fileName}: ${f.reason}`).join('; '))
+    } else {
+      setShowUpload(false)
+      setBrowserKey((k) => k + 1)
+    }
+    uploadPendingRef.current = false
+    dispatch(mediaActions.resetUpload())
+  }, [dispatch, lastUploadFailed, uploadError, uploadStatus])
 
   if (embed.isEmbed && !accessToken) {
     return (
@@ -96,15 +122,16 @@ export function FullDialogPage() {
     }
   }
 
-  async function handleUpload(files: File[]) {
+  function handleUpload(files: File[]) {
     setError(null)
-    try {
-      await uploadMediaBatch(files, scope, currentPath)
-      setShowUpload(false)
-      setBrowserKey((k) => k + 1)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
-    }
+    uploadPendingRef.current = true
+    dispatch(
+      mediaActions.uploadRequested({
+        files,
+        scope,
+        folderPath: currentPath,
+      }),
+    )
   }
 
   const selectedIds = new Set(selectedItems.map((item) => item.id))
@@ -153,6 +180,10 @@ export function FullDialogPage() {
           maxFiles={embed.maxFiles}
           onFilesSelected={handleUpload}
         />
+      ) : null}
+
+      {uploadStatus === 'uploading' ? (
+        <p className="text-sm text-muted-foreground">Uploading…</p>
       ) : null}
 
       <ScopedFolderBrowser

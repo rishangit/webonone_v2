@@ -13,7 +13,7 @@ import {
   Spinner,
 } from '@webonone/ui-kit'
 import { registerEmailSchema, type RegisterEmailFormValues } from '../schemas/authSchemas'
-import { authApi, type AuthApiError } from '../services/authApi'
+import { authApi, type AuthApiError } from '@/shared/services/authApi'
 import { saveRegistrationEmail } from '../utils/registrationEmailStorage'
 
 type RegisterEmailStepProps = {

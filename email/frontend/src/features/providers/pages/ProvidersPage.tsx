@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import {
   Alert,
   AlertDescription,
@@ -9,8 +9,9 @@ import {
   CardTitle,
   FeaturePage,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
+import { providersActions } from '@/features/providers/store'
 import type { ProviderInfo } from '@/shared/types/email.types'
 
 function statusLabel(status: ProviderInfo['connectionStatus']): string {
@@ -22,45 +23,20 @@ function statusClassName(status: ProviderInfo['connectionStatus']): string {
 }
 
 export function ProvidersPage() {
-  const [provider, setProvider] = useState<ProviderInfo | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [testMessage, setTestMessage] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [testing, setTesting] = useState(false)
+  const dispatch = useAppDispatch()
+  const { provider, status, error, testStatus, testMessage } = useAppSelector((s) => s.providers)
+
+  const loading = status === 'loading' && !provider
+  const testing = testStatus === 'testing'
 
   usePlatformLoading(loading ? 'Loading providers…' : null)
 
-  async function loadProvider() {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await emailApi.getProviders()
-      setProvider(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load provider')
-      setProvider(null)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    void loadProvider()
-  }, [])
+    dispatch(providersActions.loadRequested())
+  }, [dispatch])
 
-  async function handleTestConnection() {
-    setTesting(true)
-    setTestMessage(null)
-    setError(null)
-    try {
-      const result = await emailApi.testProviderConnection()
-      setTestMessage(result.ok ? 'Connection successful' : 'Connection failed')
-      await loadProvider()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connection test failed')
-    } finally {
-      setTesting(false)
-    }
+  function handleTestConnection() {
+    dispatch(providersActions.testConnectionRequested())
   }
 
   return (
@@ -103,7 +79,7 @@ export function ProvidersPage() {
               SMTP credentials are not shown here. Configure `SMTP_USER` and `SMTP_PASSWORD` in the
               backend `.env` file.
             </p>
-            <Button type="button" onClick={() => void handleTestConnection()} disabled={testing}>
+            <Button type="button" onClick={handleTestConnection} disabled={testing}>
               {testing ? 'Testing…' : 'Test connection'}
             </Button>
           </CardContent>

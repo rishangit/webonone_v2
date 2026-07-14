@@ -40,9 +40,7 @@ import {
 
   PlatformLoadingProvider,
 
-  usePlatformPageLabel,
-
-  usePlatformRouteLabel,
+  usePlatformOverlayLabel,
 
 } from '@/features/shell/context/PlatformLoadingContext'
 
@@ -142,11 +140,7 @@ function AppLayoutContent() {
 
 
 
-  const pageLabel = usePlatformPageLabel()
-
-  const routeLabel = usePlatformRouteLabel()
-
-  const overlayLabel = pageLabel ?? routeLabel
+  const overlayLabel = usePlatformOverlayLabel()
 
   const embedMain = isPlatformPeerEmbedPath(location.pathname)
 

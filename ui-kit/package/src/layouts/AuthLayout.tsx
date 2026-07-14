@@ -22,7 +22,7 @@ function AuthLayout({
   if (variant === 'minimal') {
     return (
       <div className={cn('flex min-h-0 w-full items-center justify-center p-4', className)}>
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-2xl">
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl">{title}</CardTitle>
             {description ? <CardDescription>{description}</CardDescription> : null}
@@ -40,7 +40,7 @@ function AuthLayout({
         <h1 className="text-2xl font-bold tracking-tight">WebOnOne Identity</h1>
         <p className="text-sm text-muted-foreground">Secure authentication</p>
       </div>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">{title}</CardTitle>
           {description ? <CardDescription>{description}</CardDescription> : null}

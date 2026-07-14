@@ -1,61 +1,132 @@
 ---
-description: Redux Toolkit global store, feature slices/actions, redux-observable epics
-globs: "**/frontend/**/store/**/*.ts"
+description: Redux Toolkit global store, feature slices/actions, redux-observable epics — mandatory for all API I/O
+globs: "**/frontend/src/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 
 # Redux store, actions, and epics
 
-Related: [front-end-structure.mdc](front-end-structure.mdc) (feature folders and cross-module boundaries via `shared/`).
+Related: [front-end-structure.mdc](front-end-structure.mdc), [item-list-pagination.mdc](item-list-pagination.mdc), [list-filter-panel.mdc](list-filter-panel.mdc).
 
-## Key Principles
+## Key principles
 
-- **Single store**: Keep one `configureStore` in each app's `frontend/src/app/store/` (or `store.ts` per existing layout).
-- **Feature ownership**: Keep slices and epics inside `frontend/src/features/<domain>/store/`.
-- **Pure reducers**: Reducers stay synchronous and side-effect free.
-- **Epics for async**: Use `redux-observable` epics plus feature services for async flows.
-- **Single epic composition**: Combine all epics only in `front-end/src/app/store/epics/rootEpic.ts`.
+- **Single store**: One `configureStore` per service in `frontend/src/app/store/index.ts`.
+- **Feature ownership**: Slices and epics live in `frontend/src/features/<domain>/store/`.
+- **Pure reducers**: Reducers are synchronous; no fetch/dispatch in reducers.
+- **Epics for all async API I/O**: Every backend read/write goes **actions → epics → services**.
+- **Dependencies required**: All service frontends must declare `redux-observable` and `rxjs` in `frontend/package.json`.
+- **Single epic composition**: Combine epics only in `app/store/epics/rootEpic.ts`.
 
-## Store and File Structure
+## Per-feature store contract (required)
 
-- **Global store**: Register all reducers and run `epicMiddleware.run(rootEpic)` in `app/store/index.ts`.
-- **Typed hooks**: Define `useAppDispatch` and `useAppSelector` in `app/store/hooks.ts`.
-- **Feature store contract**: Each domain `store/` should expose `*Slice.ts`, `*Epics.ts`, and `index.ts`.
-- **Service boundary**: Network and side effects belong in `features/<domain>/services/`, not reducers.
-- **Bootstrap**: Wire `Provider` in `front-end/src/main.tsx` using `store` from `./app/store`.
+Any feature that reads or writes backend data **must** have:
 
-## Imports and Boundaries
+```text
+features/<domain>/
+  store/
+    <domain>Slice.ts    # *Requested / *Succeeded / *Failed + cached state
+    <domain>Epics.ts    # ofType + from(service) + RxJS operators
+    index.ts
+  services/
+    <domain>Api.ts      # HTTP only — no dispatch, no useEffect
+  pages/
+    *Page.tsx           # dispatch + useAppSelector only
+```
 
-- **`@/store/hooks`**: Use for `useAppDispatch` and `useAppSelector` in React code.
-- **`@/store`**: Use for `store`, `RootState`, and `AppDispatch` outside React when needed.
-- **`@/features/<domain>/store`**: Import actions/reducers/epics from the domain barrel.
-- **No deep cross-feature imports**: Route cross-feature store APIs through `@/shared/store/...` (see front-end-structure boundary rules).
+Register reducer in `app/store/index.ts` and epic in `app/store/epics/rootEpic.ts`.
 
-## Slices and Actions
+## Forbidden
 
-- **Slice style**: Use RTK `createSlice` with one primary slice per concern.
-- **State updates**: Store loading, error, and normalized state in reducers.
-- **Barrel exports**: Export slice, reducer, and actions from `features/<domain>/store/index.ts`.
+- **`apiClient()` or `*Api.*()` in `pages/`, `hooks/`, or `components/`** — HTTP belongs in `features/<domain>/services/` and is called from epics only.
+- **`useEffect(() => { fetch... }, [])` for domain data** — dispatch `*Requested` instead; epic performs the fetch.
+- **A dedicated endpoint to recompute a value the store already holds** — derive role/permission/session flags from existing store state, don't fetch them per mount. Example: `isSuperAdmin = s.sessionRole.activeRole === 'super_admin'` (a store selector), **not** a `/company/admin/me` call in a hook. Re-fetching on every navigation (even a `304`) is a redundant round-trip.
+- **`createAsyncThunk`** — keep `thunk: false` project-wide; use epics.
+- **Second `configureStore` or root epic** per app.
 
-## Epics and Async Flows
+**Allowed exceptions:** hooks may dispatch actions (e.g. bootstrap dispatching `profileFetchRequested`); they must not call API services directly.
 
-- **Epic naming**: Name files `*Epics.ts` (for example `authEpics.ts`).
-- **Operator usage**: Use `ofType` + `from` and choose `switchMap`, `exhaustMap`, or `mergeMap` intentionally.
-- **Error handling**: `catchError` must return `of(failureAction)` (or equivalent observable action).
-- **Async policy**: Keep `thunk: false`; do not add `createAsyncThunk` unless middleware strategy is changed project-wide.
-- **No duplicate wiring**: Do not add another `configureStore` or another root epic composition.
+## Store wiring
 
-## Checklist
+```typescript
+// app/store/index.ts
+const epicMiddleware = createEpicMiddleware()
+export const store = configureStore({
+  reducer: { /* all feature reducers */ },
+  middleware: (getDefault) => getDefault({ thunk: false }).concat(epicMiddleware),
+})
+epicMiddleware.run(rootEpic)
+```
 
-1. Add or update `*Slice.ts`, then export through `features/<domain>/store/index.ts`.
-2. Add or update `*Epics.ts`, then export through the same store barrel.
-3. Register the feature reducer in `app/store/index.ts`.
-4. Register the feature epic in `app/store/epics/rootEpic.ts`.
+- **Typed hooks**: `useAppDispatch` / `useAppSelector` in `app/store/hooks.ts` — import as `@/app/store/hooks`.
+- **Bootstrap**: `Provider` in `main.tsx` with `store` from `./app/store`.
+
+## Cache contract (reduce duplicate API calls)
+
+List/detail slices should include:
+
+- `lastFetchedAt: number | null` — set on `*Succeeded`
+- `force?: boolean` on `*Requested` payloads — bypass cache when true
+- Default TTL **5 minutes** — epics skip network when fresh unless `force`
+- Clear feature caches on `authActions.logout`
+
+## RxJS operator matrix
+
+| Scenario | Operators | Why |
+|----------|-----------|-----|
+| List / search / filter load | `debounceTime(400)` → `distinctUntilChanged` → `switchMap` | Cancel stale; ignore duplicate query keys |
+| Mount-triggered single-view load (dashboard stats, settings/branding, providers, themes/preferences, unkeyed lists) | `exhaustMap` | Coalesce duplicate `*Requested` (StrictMode double-mount) into one in-flight request |
+| GET by id (detail / versions) | `debounceTime(300)` → `switchMap` | Drop the immediate StrictMode duplicate; still cancel stale on id change |
+| Login / create / update / delete | `exhaustMap` | Ignore double-submit while in flight |
+| Chained dispatches after mutation | `mergeMap(() => of(a, b))` inner only | Never on user-triggered submits |
+| Skip when cache fresh | `withLatestFrom(state$)` → `filter` → `switchMap` | No network when TTL valid |
+| All epics | `catchError` → `of(*Failed)` | Required |
+
+### Why not plain `switchMap` on mount loads
+
+`switchMap(() => from(promise))` does **not** abort the underlying HTTP request (fetch/axios promises aren't cancelled by unsubscription). Under React 18 StrictMode the mount effect runs twice, dispatching `*Requested` twice, so `switchMap` fires **two** real network calls. Use `exhaustMap` for unkeyed mount loads (ignores the second while the first is in flight) and `debounceTime(300)` before `switchMap` for id-keyed detail loads (collapses the duplicate but still cancels when the id actually changes). Prefer the cache `filter` (below) as the first line of defense; these operators handle the same-tick duplicate the TTL check can't.
+
+## Epics pattern
+
+```typescript
+const loadEpic: FeatureEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(featureActions.loadRequested.type),
+    debounceTime(400),
+    withLatestFrom(state$),
+    filter(([action, state]) => action.payload.force || !isFresh(state.feature.lastFetchedAt)),
+    switchMap(([action]) =>
+      from(featureApi.list(action.payload)).pipe(
+        map((result) => featureActions.loadSucceeded(result)),
+        catchError((err: Error) => of(featureActions.loadFailed(err.message))),
+      ),
+    ),
+  )
+```
+
+## List pages
+
+Collection pages dispatch load actions and read from store — do not call loaders directly. See [item-list-pagination.mdc](item-list-pagination.mdc).
+
+## Checklist (new API-facing feature)
+
+1. Add `*Slice.ts` with Requested/Succeeded/Failed + cache fields.
+2. Add `*Epics.ts` with operator matrix applied.
+3. Export through `features/<domain>/store/index.ts`.
+4. Register reducer in `app/store/index.ts`.
+5. Register epic in `app/store/epics/rootEpic.ts`.
+6. Pages/hooks dispatch only — no direct `apiClient`.
 
 ## Verification
 
 ```bash
-cd front-end
+cd <service>/frontend
 npm run type-check
 npm run lint
+```
+
+Anti-pattern audit (should trend to zero in pages/hooks after migration):
+
+```bash
+rg "apiClient\(|\.getMe\(|\.list\(" **/frontend/src/features/**/pages/
+rg "apiClient\(|\.getMe\(|\.list\(" **/frontend/src/features/**/hooks/
 ```

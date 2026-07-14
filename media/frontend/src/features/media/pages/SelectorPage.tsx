@@ -1,28 +1,66 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import { Button, Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { mediaActions } from '@/features/media/store'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { ImageCropDialog } from '../components/ImageCropDialog'
 import { ScopedFolderBrowser } from '../components/ScopedFolderBrowser'
 import { useEmbedMode } from '../hooks/useEmbedMode'
-import { useMediaAuth } from '../hooks/useMediaAuth'
+import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
 import { useScopedNavigation } from '../hooks/useScopedNavigation'
-import { uploadMediaFile } from '../services/mediaApi'
 
 export function SelectorPage() {
+  const dispatch = useAppDispatch()
   const embed = useEmbedMode()
-  const { accessToken } = useMediaAuth(embed.isEmbed)
+  const { accessToken } = useMediaEmbedAuth(embed)
   const { postSelect, postCropRequest } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const [selectedItems, setSelectedItems] = useState<MediaItemDto[]>([])
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [cropOpen, setCropOpen] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const uploadPendingRef = useRef(false)
   const { currentPath } = useScopedNavigation(embed.folderPath)
+
+  const { uploadStatus, lastUploadedItems, uploadError: storeUploadError, lastUploadFailed } =
+    useAppSelector((s) => s.media)
 
   const scope = embed.scope ?? 'media:library:default'
   const showUpload = embed.enableSelectorUpload
+
+  useEffect(() => {
+    if (!uploadPendingRef.current || uploadStatus === 'uploading') {
+      return
+    }
+    if (uploadStatus === 'error') {
+      setUploadError(storeUploadError ?? 'Upload failed')
+      uploadPendingRef.current = false
+      dispatch(mediaActions.resetUpload())
+      return
+    }
+    if (lastUploadFailed.length) {
+      setUploadError(lastUploadFailed.map((f) => `${f.fileName}: ${f.reason}`).join('; '))
+    } else {
+      setUploadError(null)
+      setRefreshKey((key) => key + 1)
+      if (embed.mode === 'single' && embed.isEmbed && lastUploadedItems.length) {
+        postSelect(lastUploadedItems)
+      }
+    }
+    uploadPendingRef.current = false
+    dispatch(mediaActions.resetUpload())
+  }, [
+    dispatch,
+    embed.isEmbed,
+    embed.mode,
+    lastUploadFailed,
+    lastUploadedItems,
+    postSelect,
+    storeUploadError,
+    uploadStatus,
+  ])
 
   if (embed.isEmbed && !accessToken) {
     return (
@@ -69,17 +107,16 @@ export function SelectorPage() {
     }
   }
 
-  async function uploadFile(file: File) {
+  function uploadFile(file: File) {
     setUploadError(null)
-    try {
-      const result = await uploadMediaFile(file, scope, currentPath)
-      setRefreshKey((key) => key + 1)
-      if (embed.mode === 'single' && embed.isEmbed) {
-        postSelect([result.item])
-      }
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Upload failed')
-    }
+    uploadPendingRef.current = true
+    dispatch(
+      mediaActions.uploadRequested({
+        files: [file],
+        scope,
+        folderPath: currentPath,
+      }),
+    )
   }
 
   async function handleFilesSelected(files: File[]) {
@@ -100,13 +137,13 @@ export function SelectorPage() {
       return
     }
 
-    await uploadFile(file)
+    uploadFile(file)
   }
 
   async function handleCropConfirm(cropped: File) {
     setCropOpen(false)
     setPendingFile(null)
-    await uploadFile(cropped)
+    uploadFile(cropped)
   }
 
   const selectedIds = new Set(selectedItems.map((item) => item.id))

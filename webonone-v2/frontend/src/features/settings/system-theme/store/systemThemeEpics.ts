@@ -1,7 +1,7 @@
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, exhaustMap, map, mergeMap, switchMap } from 'rxjs/operators'
-import { authActions } from '@/features/auth/store/authSlice'
+import { catchError, exhaustMap, filter, map, mergeMap, withLatestFrom } from 'rxjs/operators'
+import { isFresh } from '@/shared/store/cacheUtils'
 import { themeApi } from '../services/themeApi'
 import { systemThemeActions } from './systemThemeSlice'
 
@@ -42,7 +42,7 @@ const deleteThemeEpic: SystemThemeEpic = (action$) =>
         mergeMap(() =>
           of(
             systemThemeActions.deleteThemeSucceeded(action.payload),
-            systemThemeActions.loadPreferencesRequested(),
+            systemThemeActions.loadPreferencesRequested({ force: true }),
           ),
         ),
         catchError((err: Error) => of(systemThemeActions.deleteThemeFailed(err.message))),
@@ -61,10 +61,16 @@ const patchPreferencesEpic: SystemThemeEpic = (action$) =>
     ),
   )
 
-const loadThemesEpic: SystemThemeEpic = (action$) =>
+const loadThemesEpic: SystemThemeEpic = (action$, state$) =>
   action$.pipe(
     ofType(systemThemeActions.loadThemesRequested.type),
-    switchMap(() =>
+    withLatestFrom(state$),
+    filter(([action, state]) => {
+      const payload = (action as ReturnType<typeof systemThemeActions.loadThemesRequested>).payload
+      const themeState = (state as unknown as { systemTheme: { themesFetchedAt: number | null } }).systemTheme
+      return Boolean(payload?.force) || !isFresh(themeState.themesFetchedAt)
+    }),
+    exhaustMap(() =>
       from(themeApi.listThemes()).pipe(
         map((themes) => systemThemeActions.loadThemesSucceeded(themes)),
         catchError((err: Error) => of(systemThemeActions.loadThemesFailed(err.message))),
@@ -72,10 +78,16 @@ const loadThemesEpic: SystemThemeEpic = (action$) =>
     ),
   )
 
-const loadPreferencesEpic: SystemThemeEpic = (action$) =>
+const loadPreferencesEpic: SystemThemeEpic = (action$, state$) =>
   action$.pipe(
     ofType(systemThemeActions.loadPreferencesRequested.type),
-    switchMap(() =>
+    withLatestFrom(state$),
+    filter(([action, state]) => {
+      const payload = (action as ReturnType<typeof systemThemeActions.loadPreferencesRequested>).payload
+      const themeState = (state as unknown as { systemTheme: { preferencesFetchedAt: number | null } }).systemTheme
+      return Boolean(payload?.force) || !isFresh(themeState.preferencesFetchedAt)
+    }),
+    exhaustMap(() =>
       from(themeApi.getPreferences()).pipe(
         map((preferences) => systemThemeActions.loadPreferencesSucceeded(preferences)),
         catchError((err: Error) => of(systemThemeActions.loadPreferencesFailed(err.message))),
@@ -83,16 +95,9 @@ const loadPreferencesEpic: SystemThemeEpic = (action$) =>
     ),
   )
 
-const loadOnLoginEpic: SystemThemeEpic = (action$) =>
-  action$.pipe(
-    ofType(authActions.loginSuccess.type),
-    mergeMap(() => of(systemThemeActions.loadPreferencesRequested())),
-  )
-
 export const systemThemeEpics = combineEpics(
   loadThemesEpic,
   loadPreferencesEpic,
-  loadOnLoginEpic,
   createThemeEpic,
   updateThemeEpic,
   deleteThemeEpic,

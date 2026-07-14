@@ -18,6 +18,7 @@ description: >-
 
 ## Rules
 
+- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — all API I/O via epics; feature store per domain
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [webonone-v2-project.mdc](../../rules/webonone-v2-project.mdc) — service globs
@@ -29,8 +30,8 @@ description: >-
 
 When adding pages or session gates in WebOnOne core:
 
-1. Wrap `AppLayout` in `PlatformLoadingProvider` (`features/shell/context/PlatformLoadingContext.tsx`).
-2. Render **one** `<LoadingState key="platform-loading" overlay />` in `AppLayout`; label = `pageLabel ?? routeLabel`.
+1. Wrap `AppLayout` in `PlatformLoadingProvider` (`features/shell/context/PlatformLoadingContext.tsx`) — ref-counted loader registry with 200ms hide-linger.
+2. Render **one** `<LoadingState key="platform-loading" overlay />` in `AppLayout`; label = `usePlatformOverlayLabel()` (do not `??`-chain page/route/session by hand).
 3. `SessionRoleGate` → `usePlatformLoading('Loading session…')` — always render children.
 4. `LazyRoute` → `useRouteLoading('Loading page…')`; Suspense fallback returns `null`.
 5. Pages → `usePlatformLoading(loading ? 'Loading …' : null)` — no inline loading text or per-page overlays.

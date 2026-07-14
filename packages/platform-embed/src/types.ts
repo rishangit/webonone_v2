@@ -8,6 +8,7 @@ export const PLATFORM_EMBED_QUERY = {
 export const PLATFORM_MESSAGE_TYPES = {
   INIT: 'webonone:platform:init',
   READY: 'webonone:platform:ready',
+  CONTENT_READY: 'webonone:platform:content-ready',
 } as const
 
 export type PlatformInitMessage = {
@@ -19,7 +20,14 @@ export type PlatformReadyMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.READY
 }
 
-export type PlatformEmbedMessage = PlatformInitMessage | PlatformReadyMessage
+export type PlatformContentReadyMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.CONTENT_READY
+}
+
+export type PlatformEmbedMessage =
+  | PlatformInitMessage
+  | PlatformReadyMessage
+  | PlatformContentReadyMessage
 
 export type BuildPlatformEmbedUrlOptions = {
   peerOrigin: string
@@ -44,4 +52,14 @@ export function isPlatformReadyMessage(data: unknown): data is PlatformReadyMess
   }
 
   return (data as PlatformReadyMessage).type === PLATFORM_MESSAGE_TYPES.READY
+}
+
+export function isPlatformContentReadyMessage(
+  data: unknown,
+): data is PlatformContentReadyMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  return (data as PlatformContentReadyMessage).type === PLATFORM_MESSAGE_TYPES.CONTENT_READY
 }

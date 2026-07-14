@@ -15,8 +15,8 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions, clearDataAuthStorage } from '@/features/auth/store/authSlice'
 import {
   PlatformLoadingProvider,
-  usePlatformPageLabel,
-  usePlatformRouteLabel,
+  usePlatformLoading,
+  usePlatformOverlayLabel,
 } from '@/features/auth/context/PlatformLoadingContext'
 import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { useRefreshDataRole } from '@/features/auth/hooks/useRefreshDataRole'
@@ -61,8 +61,6 @@ function AppLayoutShellContent() {
   const { redirect, error: profileError, clearError } = useServiceRedirect()
   const { isBootstrapping, bootstrapError } = usePlatformSessionBootstrap()
   const roleReady = useRefreshDataRole(isBootstrapping)
-  const pageLabel = usePlatformPageLabel()
-  const routeLabel = usePlatformRouteLabel()
 
   const returnUrlFromQuery = parsePlatformReturnUrl(searchParams)
   const isPlatformHandoff = hasPlatformHandoff(searchParams)
@@ -186,7 +184,8 @@ function AppLayoutShellContent() {
       : null
 
   const sessionLoading = Boolean(accessToken) && !roleReady
-  const overlayLabel = sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel
+  usePlatformLoading(sessionLoading ? 'Loading session…' : null)
+  const overlayLabel = usePlatformOverlayLabel()
 
   const mainContent = (
     <div className="relative flex min-h-full flex-col">

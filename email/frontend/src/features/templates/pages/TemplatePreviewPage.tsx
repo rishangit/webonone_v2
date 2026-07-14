@@ -9,9 +9,10 @@ import {
   Input,
   Textarea,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
-import type { EmailTemplate, TemplatePreviewResult } from '@/shared/types/email.types'
+import { templatesActions } from '@/features/templates/store'
+import type { EmailTemplate } from '@/shared/types/email.types'
 
 function buildSamplePayload(template: EmailTemplate): Record<string, string> {
   const payload: Record<string, string> = {}
@@ -23,61 +24,53 @@ function buildSamplePayload(template: EmailTemplate): Record<string, string> {
 
 export function TemplatePreviewPage() {
   const { id } = useParams<{ id: string }>()
-  const [template, setTemplate] = useState<EmailTemplate | null>(null)
+  const dispatch = useAppDispatch()
+  const {
+    detail: template,
+    detailStatus,
+    detailError,
+    preview,
+    previewStatus,
+    previewError,
+  } = useAppSelector((s) => s.templates)
   const [payloadJson, setPayloadJson] = useState('{}')
-  const [preview, setPreview] = useState<TemplatePreviewResult | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [rendering, setRendering] = useState(false)
+
+  const loading = detailStatus === 'loading' && !template
+  const rendering = previewStatus === 'loading'
+  const error = detailError ?? previewError
 
   usePlatformLoading(loading ? 'Loading preview…' : null)
 
   useEffect(() => {
     if (!id) return
-    const templateId = id
+    dispatch(templatesActions.fetchDetailRequested({ id }))
+  }, [dispatch, id])
 
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const tpl = await emailApi.getTemplate(templateId)
-        setTemplate(tpl)
-        setPayloadJson(JSON.stringify(buildSamplePayload(tpl), null, 2))
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load template')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    void load()
-  }, [id])
-
-  async function handleRender() {
-    if (!id) return
-    setRendering(true)
-    setError(null)
-    try {
-      const payload = JSON.parse(payloadJson) as Record<string, string>
-      const result = await emailApi.previewTemplate(id, payload)
-      setPreview(result)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to render preview. Check sample payload JSON.',
-      )
-      setPreview(null)
-    } finally {
-      setRendering(false)
-    }
-  }
+  useEffect(() => {
+    if (!template) return
+    setPayloadJson(JSON.stringify(buildSamplePayload(template), null, 2))
+  }, [template])
 
   useEffect(() => {
     if (!template || !id) return
-    void handleRender()
+    try {
+      const payload = JSON.parse(payloadJson) as Record<string, string>
+      dispatch(templatesActions.previewRequested({ id, payload }))
+    } catch {
+      // invalid JSON — user must fix before render
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- initial render when template loads
   }, [template?.id])
+
+  function handleRender() {
+    if (!id) return
+    try {
+      const payload = JSON.parse(payloadJson) as Record<string, string>
+      dispatch(templatesActions.previewRequested({ id, payload }))
+    } catch {
+      dispatch(templatesActions.previewFailed('Failed to render preview. Check sample payload JSON.'))
+    }
+  }
 
   return (
     <FeaturePage
@@ -116,7 +109,7 @@ export function TemplatePreviewPage() {
               <FormField label="Rendered subject" htmlFor="preview-subject">
                 <Input id="preview-subject" readOnly value={preview?.subject ?? ''} />
               </FormField>
-              <Button type="button" onClick={() => void handleRender()} disabled={rendering}>
+              <Button type="button" onClick={handleRender} disabled={rendering}>
                 {rendering ? 'Rendering…' : 'Render preview'}
               </Button>
             </div>

@@ -6,7 +6,7 @@ import { authActions } from '@/features/auth/store/authSlice'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { MediaPicker } from '../components/MediaPicker'
 import { useEmbedMode } from '../hooks/useEmbedMode'
-import { useMediaAuth } from '../hooks/useMediaAuth'
+import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaParentCommands } from '../hooks/useMediaParentCommands'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
 import type { MediaItemDto } from '@webonone/media-embed'
@@ -15,7 +15,7 @@ const DEFAULT_STANDALONE_SCOPE = 'media:library:default'
 
 export function PickerPage() {
   const embed = useEmbedMode()
-  const { accessToken } = useMediaAuth(embed.isEmbed)
+  const { accessToken } = useMediaEmbedAuth(embed)
   const { postSelect, postSelectionChange } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const [selectedItems, setSelectedItems] = useState<MediaItemDto[]>([])
   const dispatch = useAppDispatch()

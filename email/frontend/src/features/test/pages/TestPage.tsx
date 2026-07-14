@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   AlertDescription,
@@ -16,26 +16,35 @@ import {
   ToastProvider,
   useToast,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
-import type { EmailTemplate } from '@/shared/types/email.types'
+import { sendActions } from '@/features/send/store'
+import { templatesActions } from '@/features/templates/store'
 import { testEmailSchema, type TestEmailFormValues } from '../schemas/testSchemas'
 
 function TestEmailForm() {
+  const dispatch = useAppDispatch()
   const { user } = useAppSelector((s) => s.auth)
+  const { items: templates, listStatus, listError } = useAppSelector((s) => s.templates)
+  const { testStatus, testError } = useAppSelector((s) => s.send)
   const { toast } = useToast()
-  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+
   const [values, setValues] = useState<TestEmailFormValues>({
     templateSlug: '',
     toEmail: user?.email ?? '',
   })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof TestEmailFormValues, string>>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
+  const lastTestStatus = useRef(testStatus)
+
+  const loading = listStatus === 'loading' && templates.length === 0
+  const submitting = testStatus === 'sending'
+  const activeTemplates = templates.filter((t) => t.isActive)
 
   usePlatformLoading(loading ? 'Loading test page…' : null)
+
+  useEffect(() => {
+    dispatch(templatesActions.loadListRequested())
+  }, [dispatch])
 
   useEffect(() => {
     if (user?.email && !values.toEmail) {
@@ -44,23 +53,16 @@ function TestEmailForm() {
   }, [user?.email, values.toEmail])
 
   useEffect(() => {
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await emailApi.listTemplates()
-        setTemplates(data.filter((t) => t.isActive))
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load templates')
-      } finally {
-        setLoading(false)
-      }
+    if (lastTestStatus.current === 'sending' && testStatus === 'idle') {
+      toast({ title: 'Test email queued', description: `Sending to ${values.toEmail}` })
     }
+    if (testError) {
+      toast({ title: 'Test send failed', description: testError, variant: 'destructive' })
+    }
+    lastTestStatus.current = testStatus
+  }, [testError, testStatus, toast, values.toEmail])
 
-    void load()
-  }, [])
-
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     const result = testEmailSchema.safeParse(values)
     if (!result.success) {
@@ -68,26 +70,14 @@ function TestEmailForm() {
       return
     }
     setFieldErrors({})
-    setSubmitting(true)
-    setError(null)
-
-    try {
-      await emailApi.sendTestEmail(result.data)
-      toast({ title: 'Test email queued', description: `Sending to ${result.data.toEmail}` })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Test send failed'
-      setError(message)
-      toast({ title: 'Test send failed', description: message, variant: 'destructive' })
-    } finally {
-      setSubmitting(false)
-    }
+    dispatch(sendActions.sendTestEmailRequested(result.data))
   }
 
   return (
     <>
-      {error ? (
+      {listError || testError ? (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{listError ?? testError}</AlertDescription>
         </Alert>
       ) : null}
       {!loading ? (
@@ -101,7 +91,7 @@ function TestEmailForm() {
                 <SelectValue placeholder="Select template" />
               </SelectTrigger>
               <SelectContent>
-                {templates.map((template) => (
+                {activeTemplates.map((template) => (
                   <SelectItem key={template.id} value={template.slug}>
                     {template.name}
                   </SelectItem>

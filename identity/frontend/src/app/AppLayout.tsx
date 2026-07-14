@@ -10,8 +10,7 @@ import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { PlatformEmbedLayout } from '@/features/auth/components/PlatformEmbedLayout'
 import {
   PlatformLoadingProvider,
-  usePlatformPageLabel,
-  usePlatformRouteLabel,
+  usePlatformOverlayLabel,
 } from '@/features/auth/context/PlatformLoadingContext'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
@@ -74,9 +73,7 @@ function AppLayoutShellContent() {
   const [searchParams] = useSearchParams()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { redirect, error: navError, clearError } = useServiceRedirect()
-  const pageLabel = usePlatformPageLabel()
-  const routeLabel = usePlatformRouteLabel()
-  const overlayLabel = pageLabel ?? routeLabel
+  const overlayLabel = usePlatformOverlayLabel()
 
   const returnUrl = parseProfileReturnUrl(searchParams)
   const { isRedirect } = useRedirectMode()
@@ -143,7 +140,7 @@ function AppLayoutShellContent() {
   }
 
   const mainContent = (
-    <div className="relative flex min-h-full flex-col">
+    <div className="relative flex min-h-full w-full flex-col">
       <Outlet />
       {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
       {overlayLabel ? (

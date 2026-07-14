@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import {
   Alert,
@@ -17,39 +16,55 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import type { RootState } from '@/app/store'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { CatalogList } from '@/features/catalog/components/CatalogList'
-import { usePaginatedList } from '@/shared/hooks/usePaginatedList'
-import { dataApi } from '@/shared/services/dataApi'
-import type { CatalogItem, PaginatedResult } from '@/shared/types/data.types'
+import { productsActions } from '@/features/products/store'
+import { servicesActions } from '@/features/services/store'
+import { spacesActions } from '@/features/spaces/store'
+import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
+import type { CatalogFeatureState } from '@/shared/store/createCatalogFeatureStore'
+import type { CatalogItem } from '@/shared/types/data.types'
 
 type CatalogKind = 'products' | 'services' | 'spaces'
 
 const CONFIG: Record<
   CatalogKind,
-  { title: string; singular: string; list: (q: Record<string, unknown>) => Promise<PaginatedResult<CatalogItem>>; delete: (id: string) => Promise<void> }
+  {
+    title: string
+    select: (s: RootState) => CatalogFeatureState<CatalogItem>
+    actions: typeof productsActions
+    deleteAction: (id: string) => ReturnType<typeof productsActions.deleteRequested>
+  }
 > = {
-  products: { title: 'Products', singular: 'product', list: (q) => dataApi.listProducts(q), delete: (id) => dataApi.deleteProduct(id) },
-  services: { title: 'Services', singular: 'service', list: (q) => dataApi.listServices(q), delete: (id) => dataApi.deleteService(id) },
-  spaces: { title: 'Spaces', singular: 'space', list: (q) => dataApi.listSpaces(q), delete: (id) => dataApi.deleteSpace(id) },
+  products: {
+    title: 'Products',
+    select: (s) => s.products,
+    actions: productsActions,
+    deleteAction: (id) => productsActions.deleteRequested({ id }),
+  },
+  services: {
+    title: 'Services',
+    select: (s) => s.services,
+    actions: servicesActions,
+    deleteAction: (id) => servicesActions.deleteRequested({ id }),
+  },
+  spaces: {
+    title: 'Spaces',
+    select: (s) => s.spaces,
+    actions: spacesActions,
+    deleteAction: (id) => spacesActions.deleteRequested({ id }),
+  },
 }
 
 export function CatalogListPage({ kind }: { kind: CatalogKind }) {
   const config = CONFIG[kind]
+  const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
-  const loader = useCallback(
-    (query: { page: number; pageSize: number; q?: string; status?: string }) =>
-      config.list({
-        page: query.page,
-        pageSize: query.pageSize,
-        q: query.q,
-        status: query.status,
-      }),
-    [config],
-  )
-  const list = usePaginatedList(loader)
+
+  const list = useEpicCatalogList(config.select, config.actions)
   usePlatformLoading(list.loading ? `Loading ${kind}…` : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -73,16 +88,16 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
       <ListFilterPanel
         open={list.filterOpen}
         onOpenChange={list.setFilterOpen}
-        onApply={() => void list.load(1)}
+        onApply={() => list.load(1, list.pageSize, true)}
         onClear={() => {
           list.setStatus('all')
-          void list.load(1)
+          list.load(1, list.pageSize, true)
         }}
       >
         <FormField label="Status" htmlFor={`${kind}-status`}>
           <Select value={list.status} onValueChange={list.setStatus}>
             <SelectTrigger id={`${kind}-status`}>
-              <SelectValue />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
@@ -92,11 +107,13 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
           </Select>
         </FormField>
       </ListFilterPanel>
+
       {list.error ? (
         <Alert variant="destructive">
           <AlertDescription>{list.error}</AlertDescription>
         </Alert>
       ) : null}
+
       <ListPageBody>
         <div className="flex-1">
           {!list.loading ? (
@@ -104,9 +121,9 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
               basePath={`/${kind}`}
               itemType={kind}
               items={list.items}
-              onDelete={async (itemId) => {
-                await config.delete(itemId)
-                await list.load(list.page)
+              onDeleted={(id) => {
+                dispatch(config.deleteAction(id))
+                list.load(list.page, list.pageSize, true)
               }}
               canMutate={canMutate}
             />
@@ -118,11 +135,8 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
           currentPage={list.page}
           pageSize={list.pageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={(p) => void list.load(p)}
-          onPageSizeChange={(size) => {
-            list.setPageSize(size)
-            void list.load(1, size)
-          }}
+          onPageChange={(p) => list.load(p)}
+          onPageSizeChange={(size) => list.load(1, size, true)}
         />
       </ListPageBody>
     </FeaturePage>

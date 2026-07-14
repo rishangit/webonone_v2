@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import {
   Alert,
@@ -17,28 +16,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { TagsList } from '@/features/tags/components/TagsList'
-import { usePaginatedList } from '@/shared/hooks/usePaginatedList'
-import { dataApi } from '@/shared/services/dataApi'
+import { tagsActions } from '@/features/tags/store'
+import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
 export function TagsPage() {
+  const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
 
-  const loader = useCallback(
-    (query: { page: number; pageSize: number; q?: string; status?: string }) =>
-      dataApi.listTags({
-        page: query.page,
-        pageSize: query.pageSize,
-        q: query.q,
-        status: query.status,
-      }),
-    [],
-  )
-
-  const list = usePaginatedList(loader)
+  const list = useEpicCatalogList((s) => s.tags, tagsActions)
   usePlatformLoading(list.loading ? 'Loading tags…' : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -62,10 +51,10 @@ export function TagsPage() {
       <ListFilterPanel
         open={list.filterOpen}
         onOpenChange={list.setFilterOpen}
-        onApply={() => void list.load(1)}
+        onApply={() => list.load(1, list.pageSize, true)}
         onClear={() => {
           list.setStatus('all')
-          void list.load(1)
+          list.load(1, list.pageSize, true)
         }}
       >
         <FormField label="Status" htmlFor="tags-status">
@@ -91,7 +80,14 @@ export function TagsPage() {
       <ListPageBody>
         <div className="flex-1">
           {!list.loading ? (
-            <TagsList items={list.items} onDeleted={() => void list.load(list.page)} canMutate={canMutate} />
+            <TagsList
+              items={list.items}
+              onDeleted={(id) => {
+                dispatch(tagsActions.deleteRequested({ id }))
+                list.load(list.page, list.pageSize, true)
+              }}
+              canMutate={canMutate}
+            />
           ) : null}
         </div>
         <Pagination
@@ -100,11 +96,8 @@ export function TagsPage() {
           currentPage={list.page}
           pageSize={list.pageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={(p) => void list.load(p)}
-          onPageSizeChange={(size) => {
-            list.setPageSize(size)
-            void list.load(1, size)
-          }}
+          onPageChange={(p) => list.load(p)}
+          onPageSizeChange={(size) => list.load(1, size, true)}
         />
       </ListPageBody>
     </FeaturePage>

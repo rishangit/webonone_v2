@@ -5,14 +5,14 @@ import { authActions } from '@/features/auth/store/authSlice'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { MediaPicker } from '../components/MediaPicker'
 import { useEmbedMode } from '../hooks/useEmbedMode'
-import { useMediaAuth } from '../hooks/useMediaAuth'
+import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
 
 const DEFAULT_STANDALONE_SCOPE = 'media:library:default'
 
 export function UploadPage() {
   const embed = useEmbedMode()
-  const { accessToken } = useMediaAuth(embed.isEmbed)
+  const { accessToken } = useMediaEmbedAuth(embed)
   const { postUploaded } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const dispatch = useAppDispatch()
   const user = useAppSelector((s) => s.auth.user)

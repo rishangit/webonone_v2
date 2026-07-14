@@ -1,25 +1,30 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { mediaActions } from '@/features/media/store'
 import { EmbedLayout } from '../components/EmbedLayout'
 import { ImageCropDialog, type ImageCropDialogHandle } from '../components/ImageCropDialog'
 import { useEmbedDocumentFill } from '../hooks/useEmbedDocumentFill'
 import { useEmbedMode } from '../hooks/useEmbedMode'
-import { useMediaAuth } from '../hooks/useMediaAuth'
+import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaCropInit } from '../hooks/useMediaCropInit'
 import { useMediaParentCommands } from '../hooks/useMediaParentCommands'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
-import { uploadMediaFile } from '../services/mediaApi'
 
 export function CropDialogPage() {
+  const dispatch = useAppDispatch()
   const embed = useEmbedMode()
   const cropRef = useRef<ImageCropDialogHandle>(null)
   useEmbedDocumentFill(embed.isEmbed)
-  const { accessToken } = useMediaAuth(embed.isEmbed)
+  const { accessToken } = useMediaEmbedAuth(embed)
   const { postSelect, postCancel } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const { pendingFile, defaultAspect, aspectPresets, clearPending } = useMediaCropInit(
     embed.isEmbed,
     embed.parentOrigin,
   )
+  const uploadPendingRef = useRef(false)
+
+  const { uploadStatus, lastUploadedItems } = useAppSelector((s) => s.media)
 
   const scope = embed.scope ?? 'media:library:default'
   const folderPath = embed.folderPath ?? '/root'
@@ -27,6 +32,17 @@ export function CropDialogPage() {
   useMediaParentCommands(embed.isEmbed, embed.parentOrigin, () => {
     void cropRef.current?.confirm()
   })
+
+  useEffect(() => {
+    if (!uploadPendingRef.current || uploadStatus === 'uploading') {
+      return
+    }
+    if (lastUploadedItems.length && embed.isEmbed) {
+      postSelect(lastUploadedItems)
+    }
+    uploadPendingRef.current = false
+    dispatch(mediaActions.resetUpload())
+  }, [dispatch, embed.isEmbed, lastUploadedItems, postSelect, uploadStatus])
 
   if (embed.isEmbed && !accessToken) {
     return (
@@ -41,16 +57,20 @@ export function CropDialogPage() {
     )
   }
 
-  async function uploadFile(file: File) {
-    const result = await uploadMediaFile(file, scope, folderPath)
-    if (embed.isEmbed) {
-      postSelect([result.item])
-    }
+  function uploadFile(file: File) {
+    uploadPendingRef.current = true
+    dispatch(
+      mediaActions.uploadRequested({
+        files: [file],
+        scope,
+        folderPath,
+      }),
+    )
   }
 
   async function handleCropConfirm(cropped: File) {
     clearPending()
-    await uploadFile(cropped)
+    uploadFile(cropped)
   }
 
   function handleCropCancel() {

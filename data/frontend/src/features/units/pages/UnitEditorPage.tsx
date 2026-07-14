@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
@@ -15,10 +15,11 @@ import {
   SelectValue,
   Textarea,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { unitFormSchema, type UnitFormValues } from '@/features/units/schemas/unitSchemas'
-import { dataApi } from '@/shared/services/dataApi'
+import { unitsActions } from '@/features/units/store'
+import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
 import type { Unit } from '@/shared/types/data.types'
 
 const defaultValues: UnitFormValues = {
@@ -34,43 +35,44 @@ export function UnitEditorPage() {
   const { id } = useParams()
   const isNew = !id || id === 'new'
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const baseUnits = useAppSelector((s) => s.units.items)
   const [values, setValues] = useState<UnitFormValues>(defaultValues)
-  const [baseUnits, setBaseUnits] = useState<Unit[]>([])
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(!isNew)
-  const [saving, setSaving] = useState(false)
-  usePlatformLoading(loading ? 'Loading unit…' : null)
+  const submittedRef = useRef(false)
+
+  const editor = useEpicCatalogEditor<Unit>(id, isNew, (s) => s.units, unitsActions)
+  usePlatformLoading(editor.loading ? 'Loading unit…' : null)
 
   useEffect(() => {
-    dataApi.listUnits({ is_base: 'true', pageSize: 100 }).then((res) => setBaseUnits(res.items))
-  }, [])
+    dispatch(unitsActions.loadListRequested({ pageSize: 100, extra: { is_base: 'true' }, force: true }))
+  }, [dispatch])
 
   useEffect(() => {
-    if (isNew || !id) return
-    setLoading(true)
-    dataApi
-      .getUnit(id)
-      .then((unit) => {
-        setValues({
-          name: unit.name,
-          description: unit.description ?? '',
-          symbol: unit.symbol,
-          isBase: unit.isBase,
-          baseUnitId: unit.baseUnitId ?? '',
-          status: unit.status,
-        })
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [id, isNew])
+    if (!editor.detail || isNew) return
+    const unit = editor.detail
+    setValues({
+      name: unit.name,
+      description: unit.description ?? '',
+      symbol: unit.symbol,
+      isBase: unit.isBase,
+      baseUnitId: unit.baseUnitId ?? '',
+      status: unit.status,
+    })
+  }, [editor.detail, isNew])
+
+  useEffect(() => {
+    if (!submittedRef.current || editor.saving) return
+    submittedRef.current = false
+    if (!editor.error) navigate('/units')
+  }, [editor.saving, editor.error, navigate])
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (role !== 'super_admin') return <Navigate to="/units" replace />
 
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     const parsed = unitFormSchema.safeParse(values)
     if (!parsed.success) {
@@ -83,25 +85,15 @@ export function UnitEditorPage() {
       return
     }
 
-    setSaving(true)
-    setError(null)
-    try {
-      const body = {
-        name: parsed.data.name,
-        description: parsed.data.description || null,
-        symbol: parsed.data.symbol,
-        is_base: parsed.data.isBase,
-        base_unit_id: parsed.data.isBase ? null : parsed.data.baseUnitId || null,
-        status: parsed.data.status,
-      }
-      if (isNew) await dataApi.createUnit(body)
-      else await dataApi.updateUnit(id!, body)
-      navigate('/units')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
+    submittedRef.current = true
+    editor.save({
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+      symbol: parsed.data.symbol,
+      is_base: parsed.data.isBase,
+      base_unit_id: parsed.data.isBase ? null : parsed.data.baseUnitId || null,
+      status: parsed.data.status,
+    })
   }
 
   return (
@@ -113,11 +105,11 @@ export function UnitEditorPage() {
         </Button>
       }
     >
-      {!loading ? (
-        <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
-          {error ? (
+      {!editor.loading ? (
+        <form className="mx-auto max-w-xl space-y-4" onSubmit={handleSubmit}>
+          {editor.error ? (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{editor.error}</AlertDescription>
             </Alert>
           ) : null}
           <FormField label="Name" htmlFor="unit-name" required error={fieldErrors.name}>
@@ -160,8 +152,8 @@ export function UnitEditorPage() {
               </SelectContent>
             </Select>
           </FormField>
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : isNew ? 'Create unit' : 'Save changes'}
+          <Button type="submit" disabled={editor.saving}>
+            {editor.saving ? 'Saving…' : isNew ? 'Create unit' : 'Save changes'}
           </Button>
         </form>
       ) : null}

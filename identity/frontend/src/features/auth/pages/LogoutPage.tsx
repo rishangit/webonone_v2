@@ -6,6 +6,7 @@ import {
   clearStoredAuthSession,
   loadStoredAuthSession,
 } from '@/features/auth/utils/authStorage'
+import { API_BASE } from '@/shared/services/apiClient'
 
 const POST_LOGOUT_PARAM = 'post_logout_redirect_uri'
 
@@ -36,8 +37,7 @@ function parsePostLogoutRedirectUri(raw: string | null): string | null {
 }
 
 async function revokeIdentitySessions(accessToken: string): Promise<void> {
-  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4011/api/v1'
-  await fetch(`${apiBase}/auth/logout-all`, {
+  await fetch(`${API_BASE}/auth/logout-all`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}` },
   }).catch(() => {

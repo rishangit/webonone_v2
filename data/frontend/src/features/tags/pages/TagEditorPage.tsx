@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
@@ -17,7 +17,9 @@ import {
 import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { tagFormSchema, type TagFormValues } from '@/features/tags/schemas/tagSchemas'
-import { dataApi } from '@/shared/services/dataApi'
+import { tagsActions } from '@/features/tags/store'
+import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
+import type { Tag } from '@/shared/types/data.types'
 
 const defaultValues: TagFormValues = {
   name: '',
@@ -34,27 +36,27 @@ export function TagEditorPage() {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [values, setValues] = useState<TagFormValues>(defaultValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(!isNew)
-  const [saving, setSaving] = useState(false)
-  usePlatformLoading(loading ? 'Loading tag…' : null)
+  const submittedRef = useRef(false)
+
+  const editor = useEpicCatalogEditor<Tag>(id, isNew, (s) => s.tags, tagsActions)
+  usePlatformLoading(editor.loading ? 'Loading tag…' : null)
 
   useEffect(() => {
-    if (isNew || !id) return
-    setLoading(true)
-    dataApi
-      .getTag(id)
-      .then((tag) => {
-        setValues({
-          name: tag.name,
-          description: tag.description ?? '',
-          color: tag.color,
-          status: tag.status,
-        })
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [id, isNew])
+    if (!editor.detail || isNew) return
+    const tag = editor.detail
+    setValues({
+      name: tag.name,
+      description: tag.description ?? '',
+      color: tag.color,
+      status: tag.status,
+    })
+  }, [editor.detail, isNew])
+
+  useEffect(() => {
+    if (!submittedRef.current || editor.saving) return
+    submittedRef.current = false
+    if (!editor.error) navigate('/tags')
+  }, [editor.saving, editor.error, navigate])
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (role !== 'super_admin') return <Navigate to="/tags" replace />
@@ -68,7 +70,7 @@ export function TagEditorPage() {
     })
   }
 
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     const parsed = tagFormSchema.safeParse(values)
     if (!parsed.success) {
@@ -81,26 +83,13 @@ export function TagEditorPage() {
       return
     }
 
-    setSaving(true)
-    setError(null)
-    try {
-      const body = {
-        name: parsed.data.name,
-        description: parsed.data.description || null,
-        color: parsed.data.color,
-        status: parsed.data.status,
-      }
-      if (isNew) {
-        await dataApi.createTag(body)
-      } else {
-        await dataApi.updateTag(id!, body)
-      }
-      navigate('/tags')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
+    submittedRef.current = true
+    editor.save({
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+      color: parsed.data.color,
+      status: parsed.data.status,
+    })
   }
 
   return (
@@ -112,11 +101,11 @@ export function TagEditorPage() {
         </Button>
       }
     >
-      {!loading ? (
-        <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
-          {error ? (
+      {!editor.loading ? (
+        <form className="mx-auto max-w-xl space-y-4" onSubmit={handleSubmit}>
+          {editor.error ? (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{editor.error}</AlertDescription>
             </Alert>
           ) : null}
 
@@ -160,8 +149,8 @@ export function TagEditorPage() {
             </Select>
           </FormField>
 
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : isNew ? 'Create tag' : 'Save changes'}
+          <Button type="submit" disabled={editor.saving}>
+            {editor.saving ? 'Saving…' : isNew ? 'Create tag' : 'Save changes'}
           </Button>
         </form>
       ) : null}

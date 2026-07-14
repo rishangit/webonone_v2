@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Alert,
   AlertDescription,
@@ -15,9 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
+import { queueActions } from '@/features/queue/store'
 import type { QueueItem, QueueStatus } from '@/shared/types/email.types'
 import { QueueList } from '../components/QueueList'
 
@@ -30,73 +30,56 @@ const STATUS_OPTIONS: { key: QueueStatus; label: string }[] = [
 const POLL_MS = 30_000
 
 export function QueuePage() {
+  const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
-  const [tab, setTab] = useState<QueueStatus>('pending')
-  const [items, setItems] = useState<QueueItem[]>([])
-  const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
-  const [pageSize, setPageSize] = useState(12)
+  const {
+    items,
+    total,
+    page,
+    pageSize,
+    status: tab,
+    listStatus,
+    listError,
+    retryingId,
+    retryError,
+  } = useAppSelector((s) => s.queue)
+
   const [filterOpen, setFilterOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [retryingId, setRetryingId] = useState<string | null>(null)
+  const [pendingTab, setPendingTab] = useState<QueueStatus>(tab)
+
+  const loading = listStatus === 'loading' && items.length === 0
+  const canRetry = role === 'super_admin'
+  const hasActiveFilters = tab !== 'pending'
+  const error = listError ?? retryError
 
   usePlatformLoading(loading ? 'Loading queue…' : null)
 
-  const canRetry = role === 'super_admin'
-  const hasActiveFilters = tab !== 'pending'
-
-  const loadQueue = useCallback(async (nextPage = page, nextPageSize = pageSize) => {
-    setError(null)
-    try {
-      const data = await emailApi.listQueue({ status: tab, page: nextPage, pageSize: nextPageSize })
-      setItems(data.items)
-      setTotal(data.total)
-      setPage(data.page)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load queue')
-      setItems([])
-      setTotal(0)
-    } finally {
-      setLoading(false)
-    }
-  }, [tab])
-
   useEffect(() => {
-    setLoading(true)
-    setPage(1)
-    void loadQueue(1, pageSize)
-  }, [tab, pageSize, loadQueue])
+    dispatch(queueActions.loadListRequested({ status: tab, page: 1, pageSize }))
+  }, [dispatch, tab, pageSize])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      void loadQueue(page, pageSize)
+      dispatch(queueActions.loadListRequested({ status: tab, page, pageSize, force: true }))
     }, POLL_MS)
     return () => window.clearInterval(timer)
-  }, [loadQueue, page, pageSize])
+  }, [dispatch, tab, page, pageSize])
 
-  async function handleRetry(item: QueueItem) {
-    setRetryingId(item.id)
-    setError(null)
-    try {
-      await emailApi.retryQueueItem(item.id)
-      await loadQueue(page, pageSize)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Retry failed')
-    } finally {
-      setRetryingId(null)
-    }
+  function handleRetry(item: QueueItem) {
+    dispatch(queueActions.retryRequested({ id: item.id }))
   }
 
   function handleApplyFilters() {
-    setPage(1)
-    void loadQueue(1, pageSize)
+    dispatch(queueActions.loadListRequested({ status: pendingTab, page: 1, pageSize }))
   }
 
   function handleClearFilters() {
-    setTab('pending')
-    setPage(1)
-    void loadQueue(1, pageSize)
+    setPendingTab('pending')
+    dispatch(queueActions.loadListRequested({ status: 'pending', page: 1, pageSize }))
+  }
+
+  function handleRefresh() {
+    dispatch(queueActions.loadListRequested({ status: tab, page, pageSize, force: true }))
   }
 
   return (
@@ -106,7 +89,7 @@ export function QueuePage() {
       actions={
         <div className="flex items-center gap-2">
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
-          <Button type="button" variant="outline" size="sm" onClick={() => void loadQueue(page, pageSize)}>
+          <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
             Refresh now
           </Button>
         </div>
@@ -119,7 +102,7 @@ export function QueuePage() {
         onClear={handleClearFilters}
       >
         <FormField label="Status" htmlFor="queue-status">
-          <Select value={tab} onValueChange={(value) => setTab(value as QueueStatus)}>
+          <Select value={pendingTab} onValueChange={(value) => setPendingTab(value as QueueStatus)}>
             <SelectTrigger id="queue-status">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -155,10 +138,13 @@ export function QueuePage() {
             currentPage={page}
             pageSize={pageSize}
             pageSizeOptions={[12, 24, 48]}
-            onPageChange={(nextPage) => void loadQueue(nextPage, pageSize)}
+            onPageChange={(nextPage) =>
+              dispatch(queueActions.loadListRequested({ status: tab, page: nextPage, pageSize }))
+            }
             onPageSizeChange={(nextPageSize) => {
-              setPageSize(nextPageSize)
-              setPage(1)
+              dispatch(
+                queueActions.loadListRequested({ status: tab, page: 1, pageSize: nextPageSize }),
+              )
             }}
           />
         </ListPageBody>

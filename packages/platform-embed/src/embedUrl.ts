@@ -1,4 +1,4 @@
-import { PLATFORM_EMBED_QUERY } from './types'
+import { PLATFORM_EMBED_QUERY, PLATFORM_MESSAGE_TYPES } from './types'
 import type { BuildPlatformEmbedUrlOptions } from './types'
 
 export function buildPlatformRedirectUri(peerOrigin: string, path = '/'): string {
@@ -37,9 +37,17 @@ export function sendPlatformInit(
   accessToken: string,
 ): void {
   iframe.contentWindow?.postMessage(
-    { type: 'webonone:platform:init', accessToken },
+    { type: PLATFORM_MESSAGE_TYPES.INIT, accessToken },
     peerOrigin,
   )
+}
+
+/** Embedded app -> parent shell: first page content is fully loaded. */
+export function sendPlatformContentReady(parentOrigin: string): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+  window.parent.postMessage({ type: PLATFORM_MESSAGE_TYPES.CONTENT_READY }, parentOrigin)
 }
 
 export function isPlatformEmbedMode(
@@ -65,10 +73,10 @@ export function getPlatformEmbedParentOrigin(
   return searchParams.get(PLATFORM_EMBED_QUERY.PARENT_ORIGIN)
 }
 
+/** True when loaded as a platform embed iframe (auth via postMessage, not auth-code). */
 export function hasPlatformEmbedHandoff(
   searchParams: URLSearchParams,
   isAllowedParentOrigin: (origin: string) => boolean,
 ): boolean {
-  const code = searchParams.get('code')
-  return Boolean(code && !searchParams.get('state') && isPlatformEmbedMode(searchParams, isAllowedParentOrigin))
+  return isPlatformEmbedMode(searchParams, isAllowedParentOrigin)
 }

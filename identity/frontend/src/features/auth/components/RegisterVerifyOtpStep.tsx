@@ -10,7 +10,7 @@ import {
   Spinner,
 } from '@webonone/ui-kit'
 import { verifyRegisterOtpSchema, type VerifyRegisterOtpFormValues } from '../schemas/authSchemas'
-import { authApi, type AuthApiError } from '../services/authApi'
+import { authApi, type AuthApiError } from '@/shared/services/authApi'
 import { saveRegistrationSessionToken } from '../utils/registrationSessionStorage'
 
 const OTP_COUNTDOWN_SECONDS = 60

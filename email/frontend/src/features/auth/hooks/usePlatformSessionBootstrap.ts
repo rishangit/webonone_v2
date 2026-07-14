@@ -1,27 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { CORE_NAV_QUERY_PARAM, parsePlatformNavVariant } from '@webonone/platform-nav'
+import {
+  CORE_NAV_QUERY_PARAM,
+  parsePlatformNavVariant,
+  usePlatformRedirectBootstrap,
+  type ExchangeAuthCodeResult,
+} from '@webonone/platform-nav'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
-import {
-  bootstrapPlatformSession,
-  getEmailRedirectUri,
-} from '@/features/auth/utils/bootstrapPlatformSession'
+import type { EmailRole } from '@/features/auth/types/auth.types'
 import { fetchEmailRole } from '@/features/auth/utils/fetchEmailRole'
+import { getIdentityApiBase } from '@/features/auth/utils/identityConfig'
 import {
-  buildPlatformSearchWithoutCode,
-  hasAnyPlatformHandoff,
-  hasPlatformEmbedHandoff,
+  hasPlatformHandoff,
   parsePlatformReturnUrl,
 } from '@/features/auth/utils/platformReturn'
+
+export function getEmailRedirectUri(path = '/'): string {
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin.replace(/\/$/, '')
+    if (path === '/' || path === '') {
+      return `${origin}/`
+    }
+    return `${origin}${path.startsWith('/') ? path : `/${path}`}`
+  }
+
+  return 'http://localhost:3014/'
+}
 
 type PlatformBootstrapState = {
   isBootstrapping: boolean
   bootstrapError: string | null
 }
-
-/** Survives React StrictMode remounts — one exchange per auth code. */
-const exchangedPlatformCodes = new Set<string>()
 
 export function usePlatformSessionBootstrap(): PlatformBootstrapState {
   const location = useLocation()
@@ -29,72 +39,49 @@ export function usePlatformSessionBootstrap(): PlatformBootstrapState {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const code = searchParams.get('code')
-  const isHandoff = hasAnyPlatformHandoff(searchParams)
-  const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
-  const [bootstrapError, setBootstrapError] = useState<string | null>(null)
-  const [isBootstrapping, setIsBootstrapping] = useState(() => Boolean(code && isHandoff))
+  const isRedirectHandoff = hasPlatformHandoff(searchParams)
 
-  useEffect(() => {
-    if (!code || !isHandoff) {
-      setIsBootstrapping(false)
-      return
-    }
+  const getRedirectUri = useCallback((path: string) => getEmailRedirectUri(path), [])
 
-    if (exchangedPlatformCodes.has(code)) {
-      setIsBootstrapping(false)
-      return
-    }
+  const onSuccess = useCallback(
+    async (result: ExchangeAuthCodeResult) => {
+      const validatedReturnUrl = parsePlatformReturnUrl(searchParams)
+      const coreNavVariant = parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM))
+      const role: EmailRole = await fetchEmailRole(result.accessToken)
 
-    exchangedPlatformCodes.add(code)
-    setIsBootstrapping(true)
-    setBootstrapError(null)
-
-    const validatedReturnUrl = parsePlatformReturnUrl(searchParams)
-    const coreNavVariant = parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM))
-    const redirectUri = getEmailRedirectUri(location.pathname)
-
-    bootstrapPlatformSession(code, redirectUri)
-      .then(async (result) => {
-        const role = await fetchEmailRole(result.accessToken)
-
-        if (validatedReturnUrl && !isEmbedHandoff) {
-          dispatch(
-            authActions.setPlatformContext({
-              returnUrl: validatedReturnUrl,
-              coreNavVariant,
-            }),
-          )
-        }
-
+      if (validatedReturnUrl) {
         dispatch(
-          authActions.loginSuccess({
-            accessToken: result.accessToken,
-            user: {
-              id: result.user.id,
-              email: result.user.email,
-              displayName: result.user.displayName,
-              avatarUrl: result.user.avatarUrl ?? null,
-              role,
-            },
+          authActions.setPlatformContext({
+            returnUrl: validatedReturnUrl,
+            coreNavVariant,
           }),
         )
+      }
 
-        navigate(
-          { pathname: location.pathname, search: buildPlatformSearchWithoutCode(searchParams) },
-          { replace: true },
-        )
-      })
-      .catch((err: Error) => {
-        exchangedPlatformCodes.delete(code)
-        setBootstrapError(err.message)
-      })
-      .finally(() => {
-        setIsBootstrapping(false)
-      })
-  }, [code, dispatch, isHandoff, location.pathname, navigate, searchParams])
+      dispatch(
+        authActions.loginSuccess({
+          accessToken: result.accessToken,
+          user: {
+            id: result.user.id,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            avatarUrl: result.user.avatarUrl ?? null,
+            role,
+          },
+        }),
+      )
+    },
+    [dispatch, searchParams],
+  )
 
-  return {
-    isBootstrapping: isHandoff && isBootstrapping,
-    bootstrapError: isHandoff ? bootstrapError : null,
-  }
+  return usePlatformRedirectBootstrap({
+    code,
+    isRedirectHandoff,
+    pathname: location.pathname,
+    searchParams,
+    identityApiBase: getIdentityApiBase(),
+    getRedirectUri,
+    onSuccess,
+    navigate: (to, options) => navigate(to, options),
+  })
 }

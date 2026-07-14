@@ -8,6 +8,7 @@ import {
 } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { systemThemeActions } from '@/features/settings/system-theme/store/systemThemeSlice'
+import { isFresh } from '@/shared/store/cacheUtils'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 
 type ThemeBridgeContextValue = {
@@ -32,12 +33,13 @@ export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const preferences = useAppSelector((s) => s.systemTheme.preferences)
+  const preferencesFetchedAt = useAppSelector((s) => s.systemTheme.preferencesFetchedAt)
 
   useEffect(() => {
-    if (accessToken) {
+    if (accessToken && !isFresh(preferencesFetchedAt)) {
       dispatch(systemThemeActions.loadPreferencesRequested())
     }
-  }, [accessToken, dispatch])
+  }, [accessToken, preferencesFetchedAt, dispatch])
 
   useEffect(() => {
     if (!preferences) return

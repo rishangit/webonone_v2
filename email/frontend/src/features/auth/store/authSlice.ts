@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { parsePlatformNavVariant, toCoreNavQueryValue, type PlatformNavVariant } from '@webonone/platform-nav'
+import { isFresh } from '@/shared/store/cacheUtils'
 import type { EmailRole, UserProfile } from '../types/auth.types'
 
 interface PlatformContext {
@@ -11,6 +12,8 @@ interface AuthState {
   accessToken: string | null
   user: UserProfile | null
   platform: PlatformContext
+  isProfileLoading: boolean
+  lastProfileFetchedAt: number | null
 }
 
 const STORAGE_KEY = 'email_auth'
@@ -83,6 +86,8 @@ function persistAuth(state: Pick<AuthState, 'accessToken' | 'user'>) {
 const initialState: AuthState = {
   ...loadStoredAuth(),
   platform: loadStoredPlatform(),
+  isProfileLoading: false,
+  lastProfileFetchedAt: null,
 }
 
 export const authSlice = createSlice({
@@ -111,8 +116,27 @@ export const authSlice = createSlice({
       state.accessToken = null
       state.user = null
       state.platform = { returnUrl: null, coreNavVariant: null }
+      state.isProfileLoading = false
+      state.lastProfileFetchedAt = null
       persistAuth(state)
       persistPlatform(state.platform)
+    },
+    profileFetchRequested(state, action: PayloadAction<{ force?: boolean } | undefined>) {
+      if (!action.payload?.force && isFresh(state.lastProfileFetchedAt) && state.user?.role) {
+        return
+      }
+      state.isProfileLoading = true
+    },
+    profileFetchSucceeded(state, action: PayloadAction<EmailRole>) {
+      state.isProfileLoading = false
+      state.lastProfileFetchedAt = Date.now()
+      if (state.user) {
+        state.user.role = action.payload
+        persistAuth(state)
+      }
+    },
+    profileFetchSkipped(state) {
+      state.isProfileLoading = false
     },
     setPlatformContext(
       state,

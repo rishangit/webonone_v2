@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { UpdateProfileInput, UserProfile } from '../types/auth.types'
+import type { UpdateProfileInput, UserProfile } from '@/shared/types/auth.types'
 import { loadStoredAuthSession, persistAuthSession } from '../utils/authStorage'
 
 interface AuthState {
@@ -132,7 +132,7 @@ export const authSlice = createSlice({
       state.isLoading = true
       state.error = null
     },
-    profileFetchRequested(state, _action: PayloadAction<{ accessToken: string }>) {
+    profileFetchRequested(state, _action: PayloadAction<{ force?: boolean } | undefined>) {
       state.isProfileLoading = true
       state.profileError = null
       state.profileSaveSuccess = false
@@ -146,10 +146,7 @@ export const authSlice = createSlice({
       state.isProfileLoading = false
       state.profileError = action.payload
     },
-    profileUpdateRequested(
-      state,
-      _action: PayloadAction<{ accessToken: string; body: UpdateProfileInput }>,
-    ) {
+    profileUpdateRequested(state, _action: PayloadAction<{ body: UpdateProfileInput }>) {
       state.isProfileSaving = true
       state.profileError = null
       state.profileSaveSuccess = false

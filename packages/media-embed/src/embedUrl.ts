@@ -107,17 +107,6 @@ export function buildMediaDialogUrl(options: BuildMediaDialogUrlOptions): string
   return url.toString()
 }
 
-export function sendMediaInit(
-  iframe: HTMLIFrameElement,
-  mediaOrigin: string,
-  accessToken: string,
-): void {
-  iframe.contentWindow?.postMessage(
-    { type: MEDIA_MESSAGE_TYPES.INIT, accessToken },
-    mediaOrigin,
-  )
-}
-
 export function sendMediaCropInit(
   iframe: HTMLIFrameElement,
   mediaOrigin: string,
@@ -146,9 +135,5 @@ export function isMediaParentMessage(data: unknown): data is MediaParentMessage 
     return false
   }
   const type = (data as { type: string }).type
-  return (
-    type === MEDIA_MESSAGE_TYPES.INIT ||
-    type === MEDIA_MESSAGE_TYPES.CONFIRM ||
-    type === MEDIA_MESSAGE_TYPES.CROP_INIT
-  )
+  return type === MEDIA_MESSAGE_TYPES.CONFIRM || type === MEDIA_MESSAGE_TYPES.CROP_INIT
 }

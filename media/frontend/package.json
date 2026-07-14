@@ -20,7 +20,9 @@
     "react-easy-crop": "^5.5.7",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
-    "redux": "^5.0.1"
+    "redux": "^5.0.1",
+    "redux-observable": "3.0.0-rc.3",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@types/react": "^19.1.6",

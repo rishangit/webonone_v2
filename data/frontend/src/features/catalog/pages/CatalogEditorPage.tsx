@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
@@ -14,33 +14,32 @@ import {
   SelectValue,
   Textarea,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import type { RootState } from '@/app/store'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { dataApi } from '@/shared/services/dataApi'
-import type { Attribute, CatalogItem, Tag } from '@/shared/types/data.types'
+import { attributesActions } from '@/features/attributes/store'
+import { productsActions } from '@/features/products/store'
+import { servicesActions } from '@/features/services/store'
+import { spacesActions } from '@/features/spaces/store'
+import { tagsActions } from '@/features/tags/store'
+import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
+import type { CatalogFeatureState } from '@/shared/store/createCatalogFeatureStore'
+import type { CatalogItem } from '@/shared/types/data.types'
 
 type CatalogKind = 'products' | 'services' | 'spaces'
 
-const API = {
-  products: {
-    get: dataApi.getProduct,
-    create: dataApi.createProduct,
-    update: dataApi.updateProduct,
-    label: 'Product',
-  },
-  services: {
-    get: dataApi.getService,
-    create: dataApi.createService,
-    update: dataApi.updateService,
-    label: 'Service',
-  },
-  spaces: {
-    get: dataApi.getSpace,
-    create: dataApi.createSpace,
-    update: dataApi.updateSpace,
-    label: 'Space',
-  },
-} as const
+const CONFIG: Record<
+  CatalogKind,
+  {
+    label: string
+    select: (s: RootState) => CatalogFeatureState<CatalogItem>
+    actions: typeof productsActions
+  }
+> = {
+  products: { label: 'Product', select: (s) => s.products, actions: productsActions },
+  services: { label: 'Service', select: (s) => s.services, actions: servicesActions },
+  spaces: { label: 'Space', select: (s) => s.spaces, actions: spacesActions },
+}
 
 type AttributeRow = {
   attributeId: string
@@ -49,117 +48,105 @@ type AttributeRow = {
 }
 
 export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
-  const api = API[kind]
+  const config = CONFIG[kind]
   const { id } = useParams()
   const isNew = !id || id === 'new'
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const tags = useAppSelector((s) => s.tags.items)
+  const attributes = useAppSelector((s) => s.attributes.items)
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<'verified' | 'pending'>('pending')
   const [tagIds, setTagIds] = useState<string[]>([])
   const [attributeRows, setAttributeRows] = useState<AttributeRow[]>([])
-  const [tags, setTags] = useState<Tag[]>([])
-  const [attributes, setAttributes] = useState<Attribute[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(!isNew)
-  const [saving, setSaving] = useState(false)
-  usePlatformLoading(loading ? `Loading ${api.label.toLowerCase()}…` : null)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const submittedRef = useRef(false)
+
+  const editor = useEpicCatalogEditor(id, isNew, config.select, config.actions)
+  usePlatformLoading(editor.loading ? `Loading ${config.label.toLowerCase()}…` : null)
 
   useEffect(() => {
-    Promise.all([
-      dataApi.listTags({ pageSize: 100 }),
-      dataApi.listAttributes({ pageSize: 100 }),
-    ]).then(([tagRes, attrRes]) => {
-      setTags(tagRes.items)
-      setAttributes(attrRes.items)
-    })
-  }, [])
+    dispatch(tagsActions.loadListRequested({ pageSize: 100, force: true }))
+    dispatch(attributesActions.loadListRequested({ pageSize: 100, force: true }))
+  }, [dispatch])
 
   useEffect(() => {
-    if (isNew || !id) return
-    setLoading(true)
-    api
-      .get(id)
-      .then((item: CatalogItem) => {
-        setName(item.name)
-        setDescription(item.description ?? '')
-        setStatus(item.status)
-        setTagIds(item.tags.map((t) => t.id))
-        setAttributeRows(
-          item.attributes.map((a) => ({
-            attributeId: a.attributeId,
-            valueText: a.valueText ?? '',
-            valueNumber: a.valueNumber != null ? String(a.valueNumber) : '',
-          })),
-        )
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [api, id, isNew])
+    if (!editor.detail || isNew) return
+    const item = editor.detail
+    setName(item.name)
+    setDescription(item.description ?? '')
+    setStatus(item.status)
+    setTagIds(item.tags.map((t) => t.id))
+    setAttributeRows(
+      item.attributes.map((a) => ({
+        attributeId: a.attributeId,
+        valueText: a.valueText ?? '',
+        valueNumber: a.valueNumber != null ? String(a.valueNumber) : '',
+      })),
+    )
+  }, [editor.detail, isNew])
+
+  useEffect(() => {
+    if (!submittedRef.current || editor.saving) return
+    submittedRef.current = false
+    if (!editor.error) navigate(`/${kind}`)
+  }, [editor.saving, editor.error, kind, navigate])
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (role !== 'super_admin') return <Navigate to={`/${kind}`} replace />
 
   function toggleTag(tagId: string) {
-    setTagIds((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]))
+    setTagIds((prev) => (prev.includes(tagId) ? prev.filter((tid) => tid !== tagId) : [...prev, tagId]))
   }
 
   function addAttributeRow() {
     setAttributeRows((prev) => [...prev, { attributeId: '', valueText: '', valueNumber: '' }])
   }
 
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!name.trim()) {
-      setError('Name is required')
+      setNameError('Name is required')
       return
     }
+    setNameError(null)
 
-    setSaving(true)
-    setError(null)
-    try {
-      const body = {
-        name: name.trim(),
-        description: description.trim() || null,
-        status,
-        tag_ids: tagIds,
-        attributes: attributeRows
-          .filter((row) => row.attributeId)
-          .map((row) => {
-            const attr = attributes.find((a) => a.id === row.attributeId)
-            if (attr?.valueType === 'number') {
-              return { attribute_id: row.attributeId, value_number: Number(row.valueNumber) }
-            }
-            return { attribute_id: row.attributeId, value_text: row.valueText }
-          }),
-      }
-      if (isNew) await api.create(body)
-      else await api.update(id!, body)
-      navigate(`/${kind}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
+    submittedRef.current = true
+    editor.save({
+      name: name.trim(),
+      description: description.trim() || null,
+      status,
+      tag_ids: tagIds,
+      attributes: attributeRows
+        .filter((row) => row.attributeId)
+        .map((row) => {
+          const attr = attributes.find((a) => a.id === row.attributeId)
+          if (attr?.valueType === 'number') {
+            return { attribute_id: row.attributeId, value_number: Number(row.valueNumber) }
+          }
+          return { attribute_id: row.attributeId, value_text: row.valueText }
+        }),
+    })
   }
 
   return (
     <FeaturePage
-      title={isNew ? `Create ${api.label.toLowerCase()}` : `Edit ${api.label.toLowerCase()}`}
+      title={isNew ? `Create ${config.label.toLowerCase()}` : `Edit ${config.label.toLowerCase()}`}
       actions={
         <Button variant="outline" asChild>
           <Link to={`/${kind}`}>Back to list</Link>
         </Button>
       }
     >
-      {!loading ? (
-        <form className="mx-auto max-w-2xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
-          {error ? (
+      {!editor.loading ? (
+        <form className="mx-auto max-w-2xl space-y-4" onSubmit={handleSubmit}>
+          {editor.error || nameError ? (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{editor.error ?? nameError}</AlertDescription>
             </Alert>
           ) : null}
           <FormField label="Name" htmlFor="catalog-name" required>
@@ -257,8 +244,8 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
               )
             })}
           </div>
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : isNew ? `Create ${api.label.toLowerCase()}` : 'Save changes'}
+          <Button type="submit" disabled={editor.saving}>
+            {editor.saving ? 'Saving…' : isNew ? `Create ${config.label.toLowerCase()}` : 'Save changes'}
           </Button>
         </form>
       ) : null}

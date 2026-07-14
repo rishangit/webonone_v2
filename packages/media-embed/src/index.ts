@@ -62,7 +62,6 @@ export {
   isMediaParentMessage,
   sendMediaConfirm,
   sendMediaCropInit,
-  sendMediaInit,
 } from './embedUrl'
 export { useMediaEmbedMessage } from './useMediaEmbedMessage'
 export { useMediaPickerFrame } from './useMediaPickerFrame'

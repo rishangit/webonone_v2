@@ -8,22 +8,20 @@ import {
   ItemListMenu,
 } from '@webonone/ui-kit'
 import { StatusBadge } from '@/shared/components/StatusBadge'
-import { dataApi } from '@/shared/services/dataApi'
 import type { Attribute } from '@/shared/types/data.types'
 
 interface AttributesListProps {
   items: Attribute[]
-  onDeleted: () => void
+  onDeleted: (id: string) => void
   canMutate: boolean
 }
 
 export function AttributesList({ items, onDeleted, canMutate }: AttributesListProps) {
   const navigate = useNavigate()
 
-  async function handleDelete(id: string, name: string) {
+  function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete attribute "${name}"?`)) return
-    await dataApi.deleteAttribute(id)
-    onDeleted()
+    onDeleted(id)
   }
 
   if (items.length === 0) return <ItemListEmpty>No attributes found.</ItemListEmpty>
@@ -47,7 +45,7 @@ export function AttributesList({ items, onDeleted, canMutate }: AttributesListPr
               <DropdownMenuItem onClick={() => navigate(`/attributes/${item.id}`)}>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => void handleDelete(item.id, item.name)}
+                onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete
               </DropdownMenuItem>

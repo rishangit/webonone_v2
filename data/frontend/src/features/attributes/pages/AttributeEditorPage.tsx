@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
@@ -14,11 +14,13 @@ import {
   SelectValue,
   Textarea,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { attributeFormSchema, type AttributeFormValues } from '@/features/attributes/schemas/attributeSchemas'
-import { dataApi } from '@/shared/services/dataApi'
-import type { Unit } from '@/shared/types/data.types'
+import { attributesActions } from '@/features/attributes/store'
+import { unitsActions } from '@/features/units/store'
+import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
+import type { Attribute } from '@/shared/types/data.types'
 
 const defaultValues: AttributeFormValues = {
   name: '',
@@ -32,42 +34,43 @@ export function AttributeEditorPage() {
   const { id } = useParams()
   const isNew = !id || id === 'new'
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const units = useAppSelector((s) => s.units.items)
   const [values, setValues] = useState<AttributeFormValues>(defaultValues)
-  const [units, setUnits] = useState<Unit[]>([])
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(!isNew)
-  const [saving, setSaving] = useState(false)
-  usePlatformLoading(loading ? 'Loading attribute…' : null)
+  const submittedRef = useRef(false)
+
+  const editor = useEpicCatalogEditor<Attribute>(id, isNew, (s) => s.attributes, attributesActions)
+  usePlatformLoading(editor.loading ? 'Loading attribute…' : null)
 
   useEffect(() => {
-    dataApi.listUnits({ pageSize: 100 }).then((res) => setUnits(res.items))
-  }, [])
+    dispatch(unitsActions.loadListRequested({ pageSize: 100, force: true }))
+  }, [dispatch])
 
   useEffect(() => {
-    if (isNew || !id) return
-    setLoading(true)
-    dataApi
-      .getAttribute(id)
-      .then((attr) => {
-        setValues({
-          name: attr.name,
-          description: attr.description ?? '',
-          valueType: attr.valueType,
-          unitId: attr.unitId ?? '',
-          status: attr.status,
-        })
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [id, isNew])
+    if (!editor.detail || isNew) return
+    const attr = editor.detail
+    setValues({
+      name: attr.name,
+      description: attr.description ?? '',
+      valueType: attr.valueType,
+      unitId: attr.unitId ?? '',
+      status: attr.status,
+    })
+  }, [editor.detail, isNew])
+
+  useEffect(() => {
+    if (!submittedRef.current || editor.saving) return
+    submittedRef.current = false
+    if (!editor.error) navigate('/attributes')
+  }, [editor.saving, editor.error, navigate])
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (role !== 'super_admin') return <Navigate to="/attributes" replace />
 
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     const parsed = attributeFormSchema.safeParse(values)
     if (!parsed.success) {
@@ -80,24 +83,14 @@ export function AttributeEditorPage() {
       return
     }
 
-    setSaving(true)
-    setError(null)
-    try {
-      const body = {
-        name: parsed.data.name,
-        description: parsed.data.description || null,
-        value_type: parsed.data.valueType,
-        unit_id: parsed.data.valueType === 'number' ? parsed.data.unitId || null : null,
-        status: parsed.data.status,
-      }
-      if (isNew) await dataApi.createAttribute(body)
-      else await dataApi.updateAttribute(id!, body)
-      navigate('/attributes')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
+    submittedRef.current = true
+    editor.save({
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+      value_type: parsed.data.valueType,
+      unit_id: parsed.data.valueType === 'number' ? parsed.data.unitId || null : null,
+      status: parsed.data.status,
+    })
   }
 
   return (
@@ -109,11 +102,11 @@ export function AttributeEditorPage() {
         </Button>
       }
     >
-      {!loading ? (
-        <form className="mx-auto max-w-xl space-y-4" onSubmit={(e) => void handleSubmit(e)}>
-          {error ? (
+      {!editor.loading ? (
+        <form className="mx-auto max-w-xl space-y-4" onSubmit={handleSubmit}>
+          {editor.error ? (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{editor.error}</AlertDescription>
             </Alert>
           ) : null}
           <FormField label="Name" htmlFor="attr-name" required error={fieldErrors.name}>
@@ -160,8 +153,8 @@ export function AttributeEditorPage() {
               </SelectContent>
             </Select>
           </FormField>
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : isNew ? 'Create attribute' : 'Save changes'}
+          <Button type="submit" disabled={editor.saving}>
+            {editor.saving ? 'Saving…' : isNew ? 'Create attribute' : 'Save changes'}
           </Button>
         </form>
       ) : null}

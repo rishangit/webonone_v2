@@ -1,30 +1,93 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
 
+type LoadingKind = 'page' | 'route'
+
 type PlatformLoadingContextValue = {
-  pageLabel: string | null
-  routeLabel: string | null
-  setPageLabel: (label: string | null) => void
-  setRouteLabel: (label: string | null) => void
+  register: (id: string, kind: LoadingKind, label: string) => void
+  unregister: (id: string) => void
+  overlayLabel: string | null
 }
 
 const PlatformLoadingContext = createContext<PlatformLoadingContextValue | null>(null)
 
 const DEFAULT_ROUTE_LOADING_DELAY_MS = 175
+/** Keep the overlay up briefly after the last loader clears to bridge hand-off gaps. */
+const HIDE_LINGER_MS = 200
 
 export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
-  const [pageLabel, setPageLabel] = useState<string | null>(null)
-  const [routeLabel, setRouteLabel] = useState<string | null>(null)
+  const pageLoaders = useRef(new Map<string, string>())
+  const routeLoaders = useRef(new Map<string, string>())
+  const [activeLabel, setActiveLabel] = useState<string | null>(null)
+  const [overlayLabel, setOverlayLabel] = useState<string | null>(null)
+  const hideTimer = useRef<number | null>(null)
+
+  const recompute = useCallback(() => {
+    const page = pageLoaders.current
+    const route = routeLoaders.current
+    let next: string | null = null
+    if (page.size > 0) {
+      next = Array.from(page.values()).pop() ?? null
+    } else if (route.size > 0) {
+      next = Array.from(route.values()).pop() ?? null
+    }
+    setActiveLabel(next)
+  }, [])
+
+  const register = useCallback(
+    (id: string, kind: LoadingKind, label: string) => {
+      const target = kind === 'page' ? pageLoaders.current : routeLoaders.current
+      target.set(id, label)
+      recompute()
+    },
+    [recompute],
+  )
+
+  const unregister = useCallback(
+    (id: string) => {
+      pageLoaders.current.delete(id)
+      routeLoaders.current.delete(id)
+      recompute()
+    },
+    [recompute],
+  )
+
+  useEffect(() => {
+    if (activeLabel) {
+      if (hideTimer.current !== null) {
+        window.clearTimeout(hideTimer.current)
+        hideTimer.current = null
+      }
+      setOverlayLabel(activeLabel)
+      return
+    }
+
+    hideTimer.current = window.setTimeout(() => {
+      setOverlayLabel(null)
+      hideTimer.current = null
+    }, HIDE_LINGER_MS)
+
+    return () => {
+      if (hideTimer.current !== null) {
+        window.clearTimeout(hideTimer.current)
+        hideTimer.current = null
+      }
+    }
+  }, [activeLabel])
+
   const value = useMemo(
-    () => ({ pageLabel, routeLabel, setPageLabel, setRouteLabel }),
-    [pageLabel, routeLabel],
+    () => ({ register, unregister, overlayLabel }),
+    [register, unregister, overlayLabel],
   )
 
   return <PlatformLoadingContext.Provider value={value}>{children}</PlatformLoadingContext.Provider>
@@ -38,30 +101,31 @@ function usePlatformLoadingContext(): PlatformLoadingContextValue {
   return context
 }
 
-function useLoadingLabel(
-  field: 'pageLabel' | 'routeLabel',
-  label: string | null | false,
-): void {
-  const context = usePlatformLoadingContext()
-  const setter = field === 'pageLabel' ? context.setPageLabel : context.setRouteLabel
+function useLoadingLabel(kind: LoadingKind, label: string | null | false): void {
+  const { register, unregister } = usePlatformLoadingContext()
+  const id = useId()
   const nextLabel = label || null
 
   useLayoutEffect(() => {
-    setter(nextLabel)
-    return () => {
-      setter(null)
+    if (nextLabel) {
+      register(id, kind, nextLabel)
+    } else {
+      unregister(id)
     }
-  }, [nextLabel, setter])
+    return () => {
+      unregister(id)
+    }
+  }, [id, kind, nextLabel, register, unregister])
 }
 
 /** Report page data loading to AppLayout overlay. */
 export function usePlatformLoading(label: string | null | false): void {
-  useLoadingLabel('pageLabel', label)
+  useLoadingLabel('page', label)
 }
 
 /** Report lazy route chunk loading to AppLayout overlay. */
 export function useRouteLoading(label: string | null | false): void {
-  useLoadingLabel('routeLabel', label)
+  useLoadingLabel('route', label)
 }
 
 /** Delay route overlay to avoid flash when lazy chunks are already cached. */
@@ -82,10 +146,7 @@ export function useDelayedRouteLoading(
   useRouteLoading(showLabel ? label : null)
 }
 
-export function usePlatformPageLabel(): string | null {
-  return usePlatformLoadingContext().pageLabel
-}
-
-export function usePlatformRouteLabel(): string | null {
-  return usePlatformLoadingContext().routeLabel
+/** Single, flicker-free overlay label (lingers briefly after the last loader clears). */
+export function usePlatformOverlayLabel(): string | null {
+  return usePlatformLoadingContext().overlayLabel
 }

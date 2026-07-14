@@ -25,6 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { getMediaListQueryKey, mediaActions } from '@/features/media/store'
 import { CreateFolderDialog } from './CreateFolderDialog'
 import { MediaDeleteDialog } from './MediaDeleteDialog'
 import { MediaPreviewDialog } from './MediaPreviewDialog'
@@ -33,8 +35,6 @@ import {
   createFolder,
   deleteFolder,
   deleteMediaItem,
-  listFolders,
-  listMediaItems,
   type MediaFolderDto,
 } from '../services/mediaApi'
 import { formatFileSize, formatMediaDate } from '../utils/formatMedia'
@@ -75,15 +75,11 @@ export function ScopedFolderBrowser({
   uploadError = null,
   onUploadFiles,
 }: ScopedFolderBrowserProps) {
+  const dispatch = useAppDispatch()
   const { currentPath, navigateTo, breadcrumbSegments } = useScopedNavigation(scopedRoot)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [folders, setFolders] = useState<MediaFolderDto[]>([])
-  const [items, setItems] = useState<MediaItemDto[]>([])
   const [mediaPage, setMediaPage] = useState(1)
-  const [mediaTotal, setMediaTotal] = useState(0)
   const [mediaPageSize, setMediaPageSize] = useState(12)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<BrowserViewMode>('thumb')
   const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [previewItem, setPreviewItem] = useState<MediaItemDto | null>(null)
@@ -92,20 +88,42 @@ export function ScopedFolderBrowser({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [fileNameQuery, setFileNameQuery] = useState('')
   const [mimeFilter, setMimeFilter] = useState<'all' | 'image' | 'other'>('all')
+
+  const listQueryKey = getMediaListQueryKey({
+    scope,
+    folderPath: currentPath,
+    page: mediaPage,
+    pageSize: mediaPageSize,
+  })
+
+  const {
+    items,
+    folders,
+    total,
+    listError,
+    listStatus,
+    listQueryKey: storeQueryKey,
+  } = useAppSelector((s) => s.media)
+
+  const listReady = storeQueryKey === listQueryKey
+  const loading = !listReady || listStatus === 'loading'
+  const error = localError ?? (listReady ? listError : null)
+  const mediaTotal = listReady ? total : 0
 
   const hasActiveFilters = mimeFilter !== 'all'
 
   const filteredFolders = useMemo(() => {
     const query = fileNameQuery.trim().toLowerCase()
-    if (!query) return folders
+    if (!query) return listReady ? folders : []
     return folders.filter((folder) => folder.name.toLowerCase().includes(query))
-  }, [folders, fileNameQuery])
+  }, [folders, fileNameQuery, listReady])
 
   const filteredItems = useMemo(() => {
-    let result = items
+    let result = listReady ? items : []
     const query = fileNameQuery.trim().toLowerCase()
     if (query) {
       result = result.filter((item) => item.fileName.toLowerCase().includes(query))
@@ -116,34 +134,26 @@ export function ScopedFolderBrowser({
       result = result.filter((item) => !item.mimeType.startsWith('image/'))
     }
     return result
-  }, [items, fileNameQuery, mimeFilter])
+  }, [items, fileNameQuery, listReady, mimeFilter])
 
-  const loadData = useCallback(
-    async (nextPage: number, nextPageSize: number) => {
-      setLoading(true)
-      setError(null)
-      try {
-        const [mediaResult, folderResult] = await Promise.all([
-          listMediaItems({ scope, folderPath: currentPath, page: nextPage, pageSize: nextPageSize }),
-          listFolders(scope, currentPath),
-        ])
-        setItems(mediaResult.items)
-        setMediaTotal(mediaResult.total)
-        setMediaPage(mediaResult.page)
-        setFolders(folderResult.folders)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load folder')
-      } finally {
-        setLoading(false)
-      }
+  const loadList = useCallback(
+    (nextPage: number, nextPageSize: number) => {
+      dispatch(
+        mediaActions.loadListRequested({
+          scope,
+          folderPath: currentPath,
+          page: nextPage,
+          pageSize: nextPageSize,
+        }),
+      )
     },
-    [currentPath, scope],
+    [currentPath, dispatch, scope],
   )
 
   useEffect(() => {
     setMediaPage(1)
-    void loadData(1, mediaPageSize)
-  }, [currentPath, refreshKey, loadData, mediaPageSize])
+    loadList(1, mediaPageSize)
+  }, [currentPath, refreshKey, loadList, mediaPageSize])
 
   useEffect(() => {
     onNavigate?.(currentPath)
@@ -171,7 +181,15 @@ export function ScopedFolderBrowser({
   async function handleCreateFolder(name: string) {
     const path = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`
     await createFolder(scope, path, name)
-    await loadData(mediaPage, mediaPageSize)
+    dispatch(
+      mediaActions.loadListRequested({
+        scope,
+        folderPath: currentPath,
+        page: mediaPage,
+        pageSize: mediaPageSize,
+        force: true,
+      }),
+    )
   }
 
   async function handleConfirmDeleteFile() {
@@ -180,7 +198,15 @@ export function ScopedFolderBrowser({
     try {
       await deleteMediaItem(deleteFileTarget.id)
       setDeleteFileTarget(null)
-      await loadData(mediaPage, mediaPageSize)
+      dispatch(
+        mediaActions.loadListRequested({
+          scope,
+          folderPath: currentPath,
+          page: mediaPage,
+          pageSize: mediaPageSize,
+          force: true,
+        }),
+      )
     } finally {
       setIsDeleting(false)
     }
@@ -192,9 +218,17 @@ export function ScopedFolderBrowser({
     try {
       await deleteFolder(deleteFolderTarget.id)
       setDeleteFolderTarget(null)
-      await loadData(mediaPage, mediaPageSize)
+      dispatch(
+        mediaActions.loadListRequested({
+          scope,
+          folderPath: currentPath,
+          page: mediaPage,
+          pageSize: mediaPageSize,
+          force: true,
+        }),
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete folder')
+      setLocalError(err instanceof Error ? err.message : 'Failed to delete folder')
     } finally {
       setIsDeleting(false)
     }
@@ -583,7 +617,10 @@ export function ScopedFolderBrowser({
           currentPage={mediaPage}
           pageSize={mediaPageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={(nextPage) => void loadData(nextPage, mediaPageSize)}
+          onPageChange={(nextPage) => {
+            setMediaPage(nextPage)
+            loadList(nextPage, mediaPageSize)
+          }}
           onPageSizeChange={(nextSize) => {
             setMediaPageSize(nextSize)
             setMediaPage(1)

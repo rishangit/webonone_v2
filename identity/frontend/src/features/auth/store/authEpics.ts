@@ -1,17 +1,18 @@
 import { combineEpics, ofType, type Epic } from 'redux-observable'
-import { from, of } from 'rxjs'
-import { catchError, exhaustMap, map, mergeMap } from 'rxjs/operators'
-import { authApi } from '../services/authApi'
+import { from, of, type Observable } from 'rxjs'
+import { catchError, exhaustMap, filter, map, mergeMap, withLatestFrom } from 'rxjs/operators'
+import { authApi } from '@/shared/services/authApi'
 import { clearResetSessionToken } from '../utils/resetSessionStorage'
 import { clearRegistrationWizardStorage } from '../utils/resetRegistrationWizard'
 import { authActions } from './authSlice'
+import type { RootState } from '@/app/store'
 
 type AuthEpic = Epic
 
 const loginEpic: AuthEpic = (action$) =>
   action$.pipe(
     ofType(authActions.loginRequested.type),
-    mergeMap((action: ReturnType<typeof authActions.loginRequested>) =>
+    exhaustMap((action: ReturnType<typeof authActions.loginRequested>) =>
       from(authApi.login(action.payload)).pipe(
         map((result) =>
           authActions.loginSucceeded({
@@ -28,7 +29,7 @@ const loginEpic: AuthEpic = (action$) =>
 const registerEpic: AuthEpic = (action$) =>
   action$.pipe(
     ofType(authActions.registerRequested.type),
-    mergeMap((action: ReturnType<typeof authActions.registerRequested>) =>
+    exhaustMap((action: ReturnType<typeof authActions.registerRequested>) =>
       from(authApi.completeRegistration(action.payload)).pipe(
         map(() => {
           clearRegistrationWizardStorage()
@@ -78,7 +79,7 @@ const legacyResetPasswordEpic: AuthEpic = (action$) =>
 const googleLoginEpic: AuthEpic = (action$) =>
   action$.pipe(
     ofType(authActions.googleLoginRequested.type),
-    mergeMap((action: ReturnType<typeof authActions.googleLoginRequested>) =>
+    exhaustMap((action: ReturnType<typeof authActions.googleLoginRequested>) =>
       from(authApi.googleLogin(action.payload)).pipe(
         map((result) =>
           authActions.loginSucceeded({
@@ -95,19 +96,27 @@ const googleLoginEpic: AuthEpic = (action$) =>
 const profileFetchEpic: AuthEpic = (action$) =>
   action$.pipe(
     ofType(authActions.profileFetchRequested.type),
-    exhaustMap((action: ReturnType<typeof authActions.profileFetchRequested>) =>
-      from(authApi.getMe(action.payload.accessToken)).pipe(
+    exhaustMap(() =>
+      from(authApi.getMe()).pipe(
         map((result) => authActions.profileFetchSucceeded(result.user)),
         catchError((err: Error) => of(authActions.profileFetchFailed(err.message))),
       ),
     ),
   )
 
+const profileFetchLogoutEpic: AuthEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(authActions.profileFetchFailed.type),
+    withLatestFrom(state$ as unknown as Observable<RootState>),
+    filter(([, state]) => Boolean(state.auth.accessToken) && !state.auth.user),
+    map(() => authActions.logout()),
+  )
+
 const profileUpdateEpic: AuthEpic = (action$) =>
   action$.pipe(
     ofType(authActions.profileUpdateRequested.type),
     exhaustMap((action: ReturnType<typeof authActions.profileUpdateRequested>) =>
-      from(authApi.patchMe(action.payload.accessToken, action.payload.body)).pipe(
+      from(authApi.patchMe(action.payload.body)).pipe(
         map((result) => authActions.profileUpdateSucceeded(result.user)),
         catchError((err: Error) => of(authActions.profileUpdateFailed(err.message))),
       ),
@@ -122,5 +131,6 @@ export const authEpics = combineEpics(
   resetPasswordEpic,
   legacyResetPasswordEpic,
   profileFetchEpic,
+  profileFetchLogoutEpic,
   profileUpdateEpic,
 )

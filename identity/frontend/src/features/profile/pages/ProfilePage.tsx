@@ -3,10 +3,13 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
+import type { UserProfile } from '@/shared/types/auth.types'
 import { hasPlatformEmbedHandoff } from '@/features/auth/utils/platformReturn'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { ProfileForm } from '../components/ProfileForm'
-import { bootstrapProfileSession } from '../utils/bootstrapProfileSession'
+import { exchangeAuthCode } from '@webonone/platform-nav'
+import { getIdentityApiBase } from '@/features/auth/utils/identityConfig'
+import { getIdentityProfileRedirectUri } from '../utils/profileConfig'
 import { buildProfileSearchWithoutCode } from '../utils/profileReturn'
 
 export function ProfilePage() {
@@ -29,12 +32,16 @@ export function ProfilePage() {
     setIsBootstrapping(true)
     setBootstrapError(null)
 
-    bootstrapProfileSession(code)
+    exchangeAuthCode({
+      identityApiBase: getIdentityApiBase(),
+      code,
+      redirectUri: getIdentityProfileRedirectUri(),
+    })
       .then((result) => {
         dispatch(
           authActions.loginSucceeded({
             accessToken: result.accessToken,
-            user: result.user,
+            user: result.user as UserProfile,
           }),
         )
         navigate(
@@ -52,10 +59,10 @@ export function ProfilePage() {
   }, [code, dispatch, isEmbedHandoff, navigate, searchParams])
 
   useEffect(() => {
-    if (accessToken && !code) {
-      dispatch(authActions.profileFetchRequested({ accessToken }))
+    if (accessToken && !code && !user) {
+      dispatch(authActions.profileFetchRequested())
     }
-  }, [accessToken, code, dispatch])
+  }, [accessToken, code, dispatch, user])
 
   if (isBootstrapping) {
     return null
@@ -71,8 +78,12 @@ export function ProfilePage() {
     )
   }
 
-  if (!accessToken && !code) {
+  if (!accessToken && !code && !isEmbedHandoff) {
     return <Navigate to="/login" replace />
+  }
+
+  if (isEmbedHandoff && !accessToken) {
+    return null
   }
 
   if (isProfileLoading && !user) {
@@ -95,4 +106,4 @@ export function ProfilePage() {
     </FeaturePage>
   )
 }
-
+

@@ -1,8 +1,9 @@
 export { redirectWithAuthCode } from './authCodeRedirect'
+export { exchangeAuthCode, type ExchangeAuthCodeOptions, type ExchangeAuthCodeResult, type ExchangeAuthCodeUser, type PlatformRole as ExchangePlatformRole } from './exchangeAuthCode'
 export { createNavItemNavigate, parseNavTarget } from './clientNav'
 export type { NavItemNavigateHandler, NavTarget } from './clientNav'
 export { buildLoginRedirectUrl, consumeOAuthState } from './loginRedirect'
-export { parseReturnUrl, stripAuthCodeFromSearch } from './returnUrl'
+export { parseReturnUrl, stripAuthCodeFromSearch, hasPlatformRedirectHandoff } from './returnUrl'
 export { resolvePlatformLogoutLoginUrl, resolveAbsolutePostLogoutLoginUrl, buildIdentityLogoutUrl, performPlatformLogout } from './platformLogout'
 export type { PlatformLogoutOptions } from './platformLogout'
 export {
@@ -11,6 +12,11 @@ export {
   parseAllowlistPatterns,
 } from './redirectAllowlist'
 export { useServiceRedirect } from './useServiceRedirect'
+export {
+  usePlatformRedirectBootstrap,
+  type PlatformRedirectBootstrapState,
+  type UsePlatformRedirectBootstrapOptions,
+} from './usePlatformRedirectBootstrap'
 export { DEFAULT_OAUTH_STATE_PREFIX, QUERY } from './constants'
 export {
   CORE_NAV_QUERY_PARAM,

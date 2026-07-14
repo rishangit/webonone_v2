@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef } from 'react'
-import { buildMediaEmbedUrl, sendMediaInit } from './embedUrl'
+import { isPlatformReadyMessage, sendPlatformInit } from '@webonone/platform-embed'
+import { buildMediaEmbedUrl } from './embedUrl'
 import type { BuildMediaEmbedUrlOptions } from './types'
 
 export interface MediaPickerFrameProps extends BuildMediaEmbedUrlOptions {
@@ -37,13 +38,37 @@ export const MediaPickerFrame = forwardRef<HTMLIFrameElement, MediaPickerFramePr
         return
       }
 
+      const origin = new URL(mediaOrigin).origin
+
+      function deliverInit() {
+        sendPlatformInit(iframe!, origin, accessToken!)
+      }
+
       function handleLoad() {
-        sendMediaInit(iframe!, mediaOrigin, accessToken!)
+        deliverInit()
         onLoad?.()
       }
 
+      function onMessage(event: MessageEvent) {
+        if (event.origin !== origin) {
+          return
+        }
+        if (isPlatformReadyMessage(event.data)) {
+          deliverInit()
+        }
+      }
+
       iframe.addEventListener('load', handleLoad)
-      return () => iframe.removeEventListener('load', handleLoad)
+      window.addEventListener('message', onMessage)
+
+      if (iframe.contentDocument?.readyState === 'complete') {
+        deliverInit()
+      }
+
+      return () => {
+        iframe.removeEventListener('load', handleLoad)
+        window.removeEventListener('message', onMessage)
+      }
     }, [accessToken, isOpen, mediaOrigin, onLoad, ref, src])
 
     if (!isOpen) {

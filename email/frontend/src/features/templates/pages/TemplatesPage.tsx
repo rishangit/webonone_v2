@@ -8,22 +8,20 @@ import {
   ListSearchField,
   Pagination,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
-import type { EmailTemplate } from '@/shared/types/email.types'
+import { templatesActions } from '@/features/templates/store'
 import { TemplatesList } from '../components/TemplatesList'
 
 export function TemplatesPage() {
+  const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
-  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const { items: templates, listStatus, listError, togglingId } = useAppSelector((s) => s.templates)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [busyId, setBusyId] = useState<string | null>(null)
 
+  const loading = listStatus === 'loading' && templates.length === 0
   usePlatformLoading(loading ? 'Loading templates…' : null)
 
   const filteredTemplates = useMemo(() => {
@@ -36,42 +34,19 @@ export function TemplatesPage() {
     )
   }, [templates, searchQuery])
 
-  async function loadTemplates() {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await emailApi.listTemplates()
-      setTemplates(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load templates')
-      setTemplates([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    if (!accessToken) {
-      return
-    }
-    void loadTemplates()
-  }, [accessToken])
+    if (!accessToken) return
+    dispatch(templatesActions.loadListRequested())
+  }, [accessToken, dispatch])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
   }
 
-  async function handleToggleActive(template: EmailTemplate) {
-    setBusyId(template.id)
-    setError(null)
-    try {
-      const updated = await emailApi.setTemplateActive(template.id, !template.isActive)
-      setTemplates((current) => current.map((t) => (t.id === updated.id ? updated : t)))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update template')
-    } finally {
-      setBusyId(null)
-    }
+  function handleToggleActive(template: (typeof templates)[number]) {
+    dispatch(
+      templatesActions.setActiveRequested({ id: template.id, isActive: !template.isActive }),
+    )
   }
 
   const visibleTemplates = filteredTemplates.slice((page - 1) * pageSize, page * pageSize)
@@ -93,9 +68,9 @@ export function TemplatesPage() {
         />
       }
     >
-      {error ? (
+      {listError ? (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{listError}</AlertDescription>
         </Alert>
       ) : null}
       {!loading ? (
@@ -104,7 +79,7 @@ export function TemplatesPage() {
             <TemplatesList
               templates={visibleTemplates}
               onToggleActive={handleToggleActive}
-              busyId={busyId}
+              busyId={togglingId}
             />
           </div>
           <Pagination

@@ -16,6 +16,20 @@ description: >-
 
 **Do not edit:** `ui-kit/`, `webonone-v2/`, or another service's `.env`.
 
+## Frontend layout (match data/email)
+
+```text
+identity/frontend/src/
+  app/           # store, router, AppLayout
+  features/      # auth, profile, shell — domain UI + store/epics per feature
+  shared/
+    services/    # apiClient.ts, authApi.ts — HTTP only; called from epics
+    store/       # cacheUtils.ts, shared store factories
+    types/       # auth.types.ts and cross-feature DTOs
+```
+
+Wire `initApiClient(store)` in `app/store/index.ts`. Epics import `@/shared/services/authApi`; pages dispatch actions only.
+
 ## Rules
 
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports

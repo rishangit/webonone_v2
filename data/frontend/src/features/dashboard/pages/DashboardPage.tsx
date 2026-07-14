@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, FeaturePage } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { dataApi } from '@/shared/services/dataApi'
-import type { DashboardStats } from '@/shared/types/data.types'
+import { dashboardActions } from '@/features/dashboard/store'
 
 const ENTITY_LINKS: { key: string; label: string; path: string }[] = [
   { key: 'tags', label: 'Tags', path: '/tags' },
@@ -16,21 +15,16 @@ const ENTITY_LINKS: { key: string; label: string; path: string }[] = [
 ]
 
 export function DashboardPage() {
+  const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { stats, status, error } = useAppSelector((s) => s.dashboard)
+  const loading = status === 'loading' && !stats
   usePlatformLoading(loading ? 'Loading dashboard…' : null)
 
   useEffect(() => {
     if (!accessToken) return
-    setLoading(true)
-    dataApi
-      .getDashboardStats()
-      .then(setStats)
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [accessToken])
+    dispatch(dashboardActions.loadStatsRequested())
+  }, [accessToken, dispatch])
 
   if (!accessToken) return <Navigate to="/login" replace />
 

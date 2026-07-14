@@ -13,6 +13,7 @@ description: Data service agent for webonone-platform. Handles data/ frontend, b
 
 ## Rules
 
+- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — **required**: each catalog feature has `store/*Slice.ts` + `*Epics.ts`; pages dispatch actions only
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — platform handoff + satellite peer nav to Email
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
@@ -32,9 +33,10 @@ Peer env for core nav: `VITE_EMAIL_ORIGIN` — see `features/email/utils/emailCo
 
 Same pattern as Email/WebOnOne — context at `features/auth/context/PlatformLoadingContext.tsx`:
 
-1. `PlatformLoadingProvider` in `app/AppLayout.tsx`.
-2. Single overlay; label = `sessionLoading ? 'Loading session…' : pageLabel ?? routeLabel`.
+1. `PlatformLoadingProvider` in `app/AppLayout.tsx` — ref-counted registry + 200ms hide-linger.
+2. Single overlay; label = `usePlatformOverlayLabel()`. Feed session in via `usePlatformLoading(sessionLoading ? 'Loading session…' : null)` — do not compose the label by hand.
 3. `LazyRoute` → `useRouteLoading`; pages → `usePlatformLoading`.
+4. Embedded in WebOnOne: `PlatformEmbedLayout` gates its overlay on `usePlatformEmbedContentReady().hasReported` so it never stacks with the shell overlay — see [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc).
 
 Reference: `data/frontend/src/app/AppLayout.tsx`, `data/frontend/src/app/LazyRoute.tsx`, `features/tags/pages/TagsPage.tsx`.
 

@@ -24,11 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import type { EmailRole } from '@/features/auth/types/auth.types'
-import { emailApi } from '@/shared/services/emailApi'
-import type { DashboardStats, HistoryItem } from '@/shared/types/email.types'
+import { dashboardActions } from '@/features/dashboard/store'
+import { historyActions } from '@/features/history/store'
+import type { DashboardStats } from '@/shared/types/email.types'
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
@@ -56,63 +57,58 @@ function endOfDayIso(date: Date): string {
 }
 
 export function DashboardPage() {
+  const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
+  const { stats, status: statsStatus, error: statsError } = useAppSelector((s) => s.dashboard)
+  const {
+    items: recentItems,
+    total: recentTotal,
+    page: recentPage,
+    pageSize: recentPageSize,
+    listStatus: recentListStatus,
+    listError: recentListError,
+  } = useAppSelector((s) => s.history)
 
   const role: EmailRole = user?.role ?? 'member'
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [recentItems, setRecentItems] = useState<HistoryItem[]>([])
-  const [recentPage, setRecentPage] = useState(1)
-  const [recentTotal, setRecentTotal] = useState(0)
-  const [recentPageSize, setRecentPageSize] = useState(12)
   const [recentStatus, setRecentStatus] = useState<string>('all')
   const [recentFrom, setRecentFrom] = useState<Date | undefined>()
   const [recentTo, setRecentTo] = useState<Date | undefined>()
   const [filterOpen, setFilterOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: 'all',
+    from: undefined as Date | undefined,
+    to: undefined as Date | undefined,
+  })
+
+  const loading =
+    (statsStatus === 'loading' && !stats) || (recentListStatus === 'loading' && recentItems.length === 0)
+  const error = statsError ?? recentListError
 
   usePlatformLoading(loading ? 'Loading dashboard…' : null)
 
   const hasActiveFilters =
-    recentStatus !== 'all' || recentFrom !== undefined || recentTo !== undefined
+    appliedFilters.status !== 'all' ||
+    appliedFilters.from !== undefined ||
+    appliedFilters.to !== undefined
 
   useEffect(() => {
-    if (!accessToken) {
-      return
-    }
+    if (!accessToken) return
+    dispatch(dashboardActions.loadStatsRequested())
+  }, [accessToken, dispatch])
 
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const fromIso = recentFrom ? startOfDayIso(recentFrom) : undefined
-        const toIso = recentTo ? endOfDayIso(recentTo) : undefined
-        const [data, history] = await Promise.all([
-          emailApi.getDashboardStats(),
-          emailApi.getHistory({
-            page: recentPage,
-            pageSize: recentPageSize,
-            status: recentStatus === 'all' ? undefined : recentStatus,
-            from: fromIso,
-            to: toIso,
-          }),
-        ])
-        setStats(data)
-        setRecentItems(history.items)
-        setRecentTotal(history.total)
-        setRecentPage(history.page)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard')
-        setStats(null)
-        setRecentItems([])
-        setRecentTotal(0)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    void load()
-  }, [accessToken, recentPage, recentPageSize, recentStatus, recentFrom, recentTo])
+  useEffect(() => {
+    if (!accessToken) return
+    const fromIso = appliedFilters.from ? startOfDayIso(appliedFilters.from) : undefined
+    const toIso = appliedFilters.to ? endOfDayIso(appliedFilters.to) : undefined
+    dispatch(
+      historyActions.loadListRequested({
+        page: recentPage,
+        pageSize: recentPageSize,
+        status: appliedFilters.status,
+        extra: { from: fromIso, to: toIso },
+      }),
+    )
+  }, [accessToken, appliedFilters, dispatch, recentPage, recentPageSize])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -121,23 +117,60 @@ export function DashboardPage() {
   const isMember = role === 'member'
 
   function handleRecentPageChange(nextPage: number) {
-    setRecentPage(nextPage)
+    dispatch(
+      historyActions.loadListRequested({
+        page: nextPage,
+        pageSize: recentPageSize,
+        status: appliedFilters.status,
+        extra: {
+          from: appliedFilters.from ? startOfDayIso(appliedFilters.from) : undefined,
+          to: appliedFilters.to ? endOfDayIso(appliedFilters.to) : undefined,
+        },
+      }),
+    )
   }
 
   function handleRecentPageSizeChange(nextSize: number) {
-    setRecentPageSize(nextSize)
-    setRecentPage(1)
+    dispatch(
+      historyActions.loadListRequested({
+        page: 1,
+        pageSize: nextSize,
+        status: appliedFilters.status,
+        extra: {
+          from: appliedFilters.from ? startOfDayIso(appliedFilters.from) : undefined,
+          to: appliedFilters.to ? endOfDayIso(appliedFilters.to) : undefined,
+        },
+      }),
+    )
   }
 
   function handleApplyFilters() {
-    setRecentPage(1)
+    setAppliedFilters({ status: recentStatus, from: recentFrom, to: recentTo })
+    dispatch(
+      historyActions.loadListRequested({
+        page: 1,
+        pageSize: recentPageSize,
+        status: recentStatus,
+        extra: {
+          from: recentFrom ? startOfDayIso(recentFrom) : undefined,
+          to: recentTo ? endOfDayIso(recentTo) : undefined,
+        },
+      }),
+    )
   }
 
   function handleClearFilters() {
     setRecentStatus('all')
     setRecentFrom(undefined)
     setRecentTo(undefined)
-    setRecentPage(1)
+    setAppliedFilters({ status: 'all', from: undefined, to: undefined })
+    dispatch(
+      historyActions.loadListRequested({
+        page: 1,
+        pageSize: recentPageSize,
+        status: 'all',
+      }),
+    )
   }
 
   const recentSectionActions = (

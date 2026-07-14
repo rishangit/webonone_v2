@@ -8,22 +8,20 @@ import {
   ItemListMenu,
 } from '@webonone/ui-kit'
 import { StatusBadge } from '@/shared/components/StatusBadge'
-import { dataApi } from '@/shared/services/dataApi'
 import type { Tag } from '@/shared/types/data.types'
 
 interface TagsListProps {
   items: Tag[]
-  onDeleted: () => void
+  onDeleted: (id: string) => void
   canMutate: boolean
 }
 
 export function TagsList({ items, onDeleted, canMutate }: TagsListProps) {
   const navigate = useNavigate()
 
-  async function handleDelete(id: string, name: string) {
+  function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete tag "${name}"?`)) return
-    await dataApi.deleteTag(id)
-    onDeleted()
+    onDeleted(id)
   }
 
   if (items.length === 0) {
@@ -52,7 +50,7 @@ export function TagsList({ items, onDeleted, canMutate }: TagsListProps) {
               <DropdownMenuItem onClick={() => navigate(`/tags/${item.id}`)}>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => void handleDelete(item.id, item.name)}
+                onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete
               </DropdownMenuItem>

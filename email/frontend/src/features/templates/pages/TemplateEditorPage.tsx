@@ -16,9 +16,9 @@ import {
   mapZodIssuesToFieldErrors,
   Textarea,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { emailApi } from '@/shared/services/emailApi'
-import type { EmailTemplate, TemplateVersion } from '@/shared/types/email.types'
+import { templatesActions } from '@/features/templates/store'
 import {
   templateEditorSchema,
   type TemplateEditorFormValues,
@@ -39,8 +39,14 @@ const PLACEHOLDER_HELP = [
 export function TemplateEditorPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [template, setTemplate] = useState<EmailTemplate | null>(null)
-  const [versions, setVersions] = useState<TemplateVersion[]>([])
+  const dispatch = useAppDispatch()
+  const {
+    detail: template,
+    detailStatus,
+    detailError,
+    versions,
+    versionsStatus,
+  } = useAppSelector((s) => s.templates)
   const [values, setValues] = useState<TemplateEditorFormValues>({
     name: '',
     subject: '',
@@ -50,13 +56,14 @@ export function TemplateEditorPage() {
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof TemplateEditorFormValues, string>>
   >({})
-  const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [versionPage, setVersionPage] = useState(1)
   const [versionPageSize, setVersionPageSize] = useState(12)
+  const [awaitingSave, setAwaitingSave] = useState(false)
+
+  const loading = detailStatus === 'loading' && !template
+  const saving = detailStatus === 'saving'
 
   usePlatformLoading(loading ? 'Loading template…' : null)
 
@@ -67,40 +74,35 @@ export function TemplateEditorPage() {
 
   useEffect(() => {
     if (!id) return
-    const templateId = id
+    dispatch(templatesActions.fetchDetailRequested({ id }))
+    dispatch(templatesActions.loadVersionsRequested({ id }))
+  }, [dispatch, id])
 
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const [tpl, vers] = await Promise.all([
-          emailApi.getTemplate(templateId),
-          emailApi.listTemplateVersions(templateId),
-        ])
-        setTemplate(tpl)
-        setVersions(vers)
-        setVersionPage(1)
-        setValues({
-          name: tpl.name,
-          subject: tpl.subject,
-          htmlBody: tpl.htmlBody,
-          textBody: tpl.textBody,
-        })
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load template')
-      } finally {
-        setLoading(false)
-      }
+  useEffect(() => {
+    if (!template || template.id !== id) return
+    setValues({
+      name: template.name,
+      subject: template.subject,
+      htmlBody: template.htmlBody,
+      textBody: template.textBody,
+    })
+  }, [id, template])
+
+  useEffect(() => {
+    if (awaitingSave && detailStatus === 'idle' && !detailError) {
+      setSuccess('Template saved. A new version was recorded.')
+      setAwaitingSave(false)
     }
-
-    void load()
-  }, [id])
+    if (awaitingSave && detailStatus === 'error') {
+      setAwaitingSave(false)
+    }
+  }, [awaitingSave, detailError, detailStatus])
 
   function patchValues(patch: Partial<TemplateEditorFormValues>) {
     setValues((prev) => ({ ...prev, ...patch }))
   }
 
-  async function handleSave(event: React.FormEvent) {
+  function handleSave(event: React.FormEvent) {
     event.preventDefault()
     if (!id) return
 
@@ -110,46 +112,24 @@ export function TemplateEditorPage() {
       return
     }
     setFieldErrors({})
-    setSaving(true)
-    setError(null)
     setSuccess(null)
-
-    try {
-      const updated = await emailApi.updateTemplate(id, result.data)
-      setTemplate(updated)
-      const vers = await emailApi.listTemplateVersions(id)
-      setVersions(vers)
-      setSuccess('Template saved. A new version was recorded.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save template')
-    } finally {
-      setSaving(false)
-    }
+    setAwaitingSave(true)
+    dispatch(templatesActions.updateRequested({ id, body: result.data }))
   }
 
-  async function handleRestoreVersion(versionId: string) {
+  function handleRestoreVersion(versionId: string) {
     if (!id) return
     setRestoringId(versionId)
-    setError(null)
     setSuccess(null)
-    try {
-      const updated = await emailApi.restoreTemplateVersion(id, versionId)
-      setTemplate(updated)
-      setValues({
-        name: updated.name,
-        subject: updated.subject,
-        htmlBody: updated.htmlBody,
-        textBody: updated.textBody,
-      })
-      const vers = await emailApi.listTemplateVersions(id)
-      setVersions(vers)
-      setSuccess('Version restored into the editor.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to restore version')
-    } finally {
-      setRestoringId(null)
-    }
+    dispatch(templatesActions.restoreVersionRequested({ id, versionId }))
   }
+
+  useEffect(() => {
+    if (restoringId && detailStatus === 'idle' && template) {
+      setRestoringId(null)
+      setSuccess('Version restored into the editor.')
+    }
+  }, [detailStatus, restoringId, template])
 
   if (!id) {
     return (
@@ -176,9 +156,9 @@ export function TemplateEditorPage() {
         </div>
       }
     >
-      {error ? (
+      {detailError ? (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{detailError}</AlertDescription>
         </Alert>
       ) : null}
       {success ? (
@@ -242,7 +222,9 @@ export function TemplateEditorPage() {
 
           <section className="space-y-3">
             <h2 className="text-lg font-medium">Version history</h2>
-            {versions.length === 0 ? (
+            {versionsStatus === 'loading' && versions.length === 0 ? (
+              <ItemListEmpty>Loading versions…</ItemListEmpty>
+            ) : versions.length === 0 ? (
               <ItemListEmpty>No versions yet.</ItemListEmpty>
             ) : (
               <div className="space-y-4">
@@ -260,7 +242,7 @@ export function TemplateEditorPage() {
                         variant="outline"
                         size="sm"
                         disabled={restoringId === version.id}
-                        onClick={() => void handleRestoreVersion(version.id)}
+                        onClick={() => handleRestoreVersion(version.id)}
                       >
                         Restore
                       </Button>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
@@ -8,17 +8,12 @@ import {
   FormField,
   Input,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { getMediaListQueryKey, mediaActions } from '@/features/media/store'
 import { FolderTree } from './FolderTree'
 import { MediaGrid } from './MediaGrid'
 import { UploadDropzone } from './UploadDropzone'
-import {
-  createFolder,
-  deleteMediaItem,
-  listFolders,
-  listMediaItems,
-  uploadMediaBatch,
-  type MediaFolderDto,
-} from '../services/mediaApi'
+import { createFolder, deleteMediaItem, type MediaFolderDto } from '../services/mediaApi'
 
 interface MediaPickerProps {
   scope: string
@@ -54,31 +49,34 @@ export function MediaPicker({
   onDeleted,
   showUpload = true,
 }: MediaPickerProps) {
+  const dispatch = useAppDispatch()
   const [folderPath, setFolderPath] = useState(initialFolderPath)
-  const [folders, setFolders] = useState<MediaFolderDto[]>([])
-  const [items, setItems] = useState<MediaItemDto[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [newFolderName, setNewFolderName] = useState('')
   const [folderError, setFolderError] = useState<string | undefined>()
 
-  const loadData = useCallback(async () => {
-    setError(null)
-    try {
-      const [mediaResult, folderResult] = await Promise.all([
-        listMediaItems({ scope, folderPath }),
-        listFolders(scope, folderPath),
-      ])
-      setItems(mediaResult.items)
-      setFolders(folderResult.folders)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load media')
-    }
-  }, [folderPath, scope])
+  const listQueryKey = getMediaListQueryKey({ scope, folderPath })
+  const {
+    items,
+    folders,
+    listError,
+    listStatus,
+    listQueryKey: storeQueryKey,
+    uploadStatus,
+    lastUploadedItems,
+    lastUploadFailed,
+    uploadError,
+  } = useAppSelector((s) => s.media)
+
+  const listReady = storeQueryKey === listQueryKey
+  const displayItems = listReady ? items : []
+  const displayFolders: MediaFolderDto[] = listReady ? folders : []
+  const loading = !listReady || listStatus === 'loading' || uploadStatus === 'uploading'
 
   useEffect(() => {
-    void loadData()
-  }, [loadData])
+    dispatch(mediaActions.loadListRequested({ scope, folderPath }))
+  }, [dispatch, folderPath, scope])
 
   useEffect(() => {
     setFolderPath(initialFolderPath)
@@ -89,9 +87,38 @@ export function MediaPicker({
     if (!onSelectionChange) {
       return
     }
-    const selectedItems = items.filter((item) => selectedIds.has(item.id))
+    const selectedItems = displayItems.filter((item) => selectedIds.has(item.id))
     onSelectionChange(selectedItems)
-  }, [items, onSelectionChange, selectedIds])
+  }, [displayItems, onSelectionChange, selectedIds])
+
+  useEffect(() => {
+    if (uploadStatus === 'uploading') {
+      return
+    }
+    if (uploadStatus === 'error') {
+      return
+    }
+    if (!lastUploadedItems.length && !lastUploadFailed.length) {
+      return
+    }
+    if (lastUploadedItems.length) {
+      onUploaded?.(lastUploadedItems)
+    }
+    dispatch(mediaActions.resetUpload())
+  }, [dispatch, lastUploadFailed, lastUploadedItems, onUploaded, uploadStatus])
+
+  useEffect(() => {
+    if (!lastUploadFailed.length) {
+      return
+    }
+    setError(lastUploadFailed.map((f) => `${f.fileName}: ${f.reason}`).join('; '))
+  }, [lastUploadFailed])
+
+  useEffect(() => {
+    if (uploadError) {
+      setError(uploadError)
+    }
+  }, [uploadError])
 
   function toggleSelect(item: MediaItemDto) {
     setSelectedIds((prev) => {
@@ -108,15 +135,15 @@ export function MediaPicker({
     })
   }
 
-  async function handleUpload(files: File[]) {
-    const result = await uploadMediaBatch(files.slice(0, maxFiles), scope, folderPath)
-    if (result.failed.length) {
-      setError(result.failed.map((f) => `${f.fileName}: ${f.reason}`).join('; '))
-    }
-    if (result.items.length) {
-      onUploaded?.(result.items)
-      await loadData()
-    }
+  function handleUpload(files: File[]) {
+    setError(null)
+    dispatch(
+      mediaActions.uploadRequested({
+        files: files.slice(0, maxFiles),
+        scope,
+        folderPath,
+      }),
+    )
   }
 
   async function handleDelete(id: string) {
@@ -127,7 +154,7 @@ export function MediaPicker({
       return next
     })
     onDeleted?.([id])
-    await loadData()
+    dispatch(mediaActions.loadListRequested({ scope, folderPath, force: true }))
   }
 
   async function handleCreateFolder(e: React.FormEvent) {
@@ -146,16 +173,18 @@ export function MediaPicker({
       const path = folderPath === '/' ? `/${name}` : `${folderPath}/${name}`
       await createFolder(scope, path, name)
       setNewFolderName('')
-      await loadData()
+      dispatch(mediaActions.loadListRequested({ scope, folderPath, force: true }))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create folder')
     }
   }
 
+  const displayError = error ?? listError
+
   return (
     <div className="flex h-full min-h-[400px] gap-4">
       <aside className="w-48 shrink-0 border-r pr-3">
-        <FolderTree folders={folders} currentPath={folderPath} onSelectFolder={setFolderPath} />
+        <FolderTree folders={displayFolders} currentPath={folderPath} onSelectFolder={setFolderPath} />
         <Form className="mt-4 space-y-2" onSubmit={(e) => void handleCreateFolder(e)}>
           <FormField label="New folder" htmlFor="new-folder" error={folderError}>
             <Input
@@ -176,9 +205,9 @@ export function MediaPicker({
         </Form>
       </aside>
       <div className="min-w-0 flex-1 space-y-4">
-        {error ? (
+        {displayError ? (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{displayError}</AlertDescription>
           </Alert>
         ) : null}
         {showUpload ? (
@@ -188,12 +217,16 @@ export function MediaPicker({
             onFilesSelected={handleUpload}
           />
         ) : null}
-        <MediaGrid
-          items={items}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onDelete={handleDelete}
-        />
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading media…</p>
+        ) : (
+          <MediaGrid
+            items={displayItems}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onDelete={handleDelete}
+          />
+        )}
       </div>
     </div>
   )

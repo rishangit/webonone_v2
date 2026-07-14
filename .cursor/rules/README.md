@@ -39,7 +39,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
 | [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, stacked siblings, pointer fall-through dismiss guard, iframe embed footer + crop height chain, footer, sizing, wizard/tab |
-| [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/**/store/**/*.ts` | RTK slices, redux-observable epics, store wiring |
+| [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/src/**/*.{ts,tsx}` | RTK slices, redux-observable epics, mandatory for all API I/O |
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 | [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc) | `**/frontend/**/*.{ts,tsx}` | Route lazy-load + `manualChunks`; no 500 kB build warnings |
 
