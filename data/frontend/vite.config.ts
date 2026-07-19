@@ -48,15 +48,15 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (!id.includes('node_modules')) {
-              if (id.includes('/features/tags/')) return 'feature-tags'
-              if (id.includes('/features/units/')) return 'feature-units'
-              if (id.includes('/features/attributes/')) return 'feature-attributes'
-              if (id.includes('/features/products/') || id.includes('/features/catalog/')) return 'feature-catalog'
-              if (id.includes('/features/services/')) return 'feature-services'
-              if (id.includes('/features/spaces/')) return 'feature-spaces'
-              if (id.includes('/features/dashboard/')) return 'feature-dashboard'
-              return
+            if (!id.includes('node_modules')) return
+            // Keep React in its own stable chunk so it always initializes before
+            // router/radix chunks that call React APIs (chunk eval order matters).
+            if (
+              id.includes('/node_modules/react/') ||
+              id.includes('/node_modules/react-dom/') ||
+              id.includes('/node_modules/scheduler/')
+            ) {
+              return 'vendor-react'
             }
             if (id.includes('react-router')) return 'vendor-router'
             if (id.includes('@radix-ui')) return 'vendor-radix'
