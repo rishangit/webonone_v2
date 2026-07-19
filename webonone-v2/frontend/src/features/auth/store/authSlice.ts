@@ -1,4 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import {
+  clearServiceAuthSession,
+  readServiceAuthSession,
+  writeServiceAuthSession,
+} from '@webonone/platform-embed'
 import { isFresh } from '@/shared/store/cacheUtils'
 import type { UserProfile } from '../types/auth.types'
 
@@ -8,32 +13,32 @@ interface AuthState {
   lastProfileFetchedAt: number | null
 }
 
-const STORAGE_KEY = 'webonone_auth'
+export const WEBONONE_AUTH_STORAGE_KEY = 'webonone_auth'
 
 export function clearWebOnOneAuthStorage(): void {
-  sessionStorage.removeItem(STORAGE_KEY)
+  clearServiceAuthSession(WEBONONE_AUTH_STORAGE_KEY)
 }
 
 function loadStoredAuth(): AuthState {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return { accessToken: null, user: null, lastProfileFetchedAt: null }
-    const parsed = JSON.parse(raw) as Pick<AuthState, 'accessToken' | 'user'>
-    return {
-      accessToken: parsed.accessToken ?? null,
-      user: parsed.user ?? null,
-      lastProfileFetchedAt: null,
-    }
-  } catch {
+  const stored = readServiceAuthSession<UserProfile>(WEBONONE_AUTH_STORAGE_KEY)
+  if (!stored) {
     return { accessToken: null, user: null, lastProfileFetchedAt: null }
+  }
+  return {
+    accessToken: stored.accessToken,
+    user: stored.user,
+    lastProfileFetchedAt: null,
   }
 }
 
 function persistAuth(state: Pick<AuthState, 'accessToken' | 'user'>) {
   if (state.accessToken && state.user) {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    writeServiceAuthSession(WEBONONE_AUTH_STORAGE_KEY, {
+      accessToken: state.accessToken,
+      user: state.user,
+    })
   } else {
-    sessionStorage.removeItem(STORAGE_KEY)
+    clearWebOnOneAuthStorage()
   }
 }
 

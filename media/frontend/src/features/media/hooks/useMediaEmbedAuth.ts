@@ -1,9 +1,23 @@
 import { useCallback } from 'react'
-import { usePlatformEmbedAuth } from '@webonone/platform-embed'
+import {
+  decodeJwtPayload,
+  usePlatformEmbedAuth,
+  type ServiceAuthSession,
+} from '@webonone/platform-embed'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store/authSlice'
+import { authActions, MEDIA_AUTH_STORAGE_KEY } from '@/features/auth/store/authSlice'
+import type { UserProfile } from '@/features/auth/types/auth.types'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import type { EmbedModeState } from './useEmbedMode'
+
+function userFromClaims(claims: NonNullable<ReturnType<typeof decodeJwtPayload>>): UserProfile {
+  return {
+    id: claims.sub,
+    email: claims.email,
+    displayName: claims.email,
+    avatarUrl: null,
+  }
+}
 
 export function useMediaEmbedAuth(embed: Pick<EmbedModeState, 'isEmbed' | 'parentOrigin'>) {
   const dispatch = useAppDispatch()
@@ -11,21 +25,40 @@ export function useMediaEmbedAuth(embed: Pick<EmbedModeState, 'isEmbed' | 'paren
 
   const handleAccessToken = useCallback(
     (token: string) => {
-      dispatch(authActions.setAccessToken(token))
+      const claims = decodeJwtPayload(token)
+      if (!claims) {
+        return
+      }
+      dispatch(
+        authActions.loginSuccess({
+          accessToken: token,
+          user: userFromClaims(claims),
+        }),
+      )
     },
     [dispatch],
   )
 
-  const { isAwaitingToken } = usePlatformEmbedAuth({
+  const handlePersistedSession = useCallback(
+    (session: ServiceAuthSession) => {
+      dispatch(
+        authActions.loginSuccess({
+          accessToken: session.accessToken,
+          user: session.user as UserProfile,
+        }),
+      )
+    },
+    [dispatch],
+  )
+
+  usePlatformEmbedAuth({
     parentOrigin: embed.isEmbed ? embed.parentOrigin : null,
     isAllowedParentOrigin,
     persistedAccessToken: accessToken,
     onAccessToken: handleAccessToken,
+    authStorageKey: MEDIA_AUTH_STORAGE_KEY,
+    onPersistedSession: handlePersistedSession,
   })
 
-  return {
-    accessToken,
-    isAuthenticated: Boolean(accessToken),
-    isAwaitingToken: embed.isEmbed && isAwaitingToken,
-  }
+  return { accessToken }
 }

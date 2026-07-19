@@ -1,4 +1,4 @@
-import { createCatalogFeatureStore } from '@/shared/store/createCatalogFeatureStore'
+import { createCatalogFeatureStore } from '@webonone/store-kit'
 import { dataApi } from '@/shared/services/dataApi'
 import type { Unit } from '@/shared/types/data.types'
 

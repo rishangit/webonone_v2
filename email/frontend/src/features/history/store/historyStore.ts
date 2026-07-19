@@ -1,4 +1,4 @@
-import { createPaginatedFeatureStore } from '@/shared/store/createPaginatedFeatureStore'
+import { createPaginatedFeatureStore } from '@webonone/store-kit'
 import { emailApi, type HistoryQuery } from '@/shared/services/emailApi'
 import type { HistoryItem } from '@/shared/types/email.types'
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import { Button, Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -8,6 +8,7 @@ import { ImageCropDialog } from '../components/ImageCropDialog'
 import { ScopedFolderBrowser } from '../components/ScopedFolderBrowser'
 import { useEmbedMode } from '../hooks/useEmbedMode'
 import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
+import { useMediaParentCommands } from '../hooks/useMediaParentCommands'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
 import { useScopedNavigation } from '../hooks/useScopedNavigation'
 
@@ -15,7 +16,10 @@ export function SelectorPage() {
   const dispatch = useAppDispatch()
   const embed = useEmbedMode()
   const { accessToken } = useMediaEmbedAuth(embed)
-  const { postSelect, postCropRequest } = useMediaPostMessage(embed.parentOrigin, embed.scope)
+  const { postSelect, postSelectionChange, postCropRequest } = useMediaPostMessage(
+    embed.parentOrigin,
+    embed.scope,
+  )
   const [selectedItems, setSelectedItems] = useState<MediaItemDto[]>([])
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [cropOpen, setCropOpen] = useState(false)
@@ -29,6 +33,24 @@ export function SelectorPage() {
 
   const scope = embed.scope ?? 'media:library:default'
   const showUpload = embed.enableSelectorUpload
+  // Parent CustomDialog owns Done when embedded.
+  const showInlineConfirm = !embed.isEmbed && embed.mode === 'multiple'
+
+  const handleConfirm = useCallback(() => {
+    if (selectedItems.length === 0) {
+      return
+    }
+    postSelect(selectedItems)
+  }, [postSelect, selectedItems])
+
+  useMediaParentCommands(embed.isEmbed, embed.parentOrigin, handleConfirm)
+
+  useEffect(() => {
+    if (!embed.isEmbed) {
+      return
+    }
+    postSelectionChange(selectedItems)
+  }, [embed.isEmbed, postSelectionChange, selectedItems])
 
   useEffect(() => {
     if (!uploadPendingRef.current || uploadStatus === 'uploading') {
@@ -45,8 +67,11 @@ export function SelectorPage() {
     } else {
       setUploadError(null)
       setRefreshKey((key) => key + 1)
-      if (embed.mode === 'single' && embed.isEmbed && lastUploadedItems.length) {
-        postSelect(lastUploadedItems)
+      if (embed.mode === 'single' && lastUploadedItems.length) {
+        setSelectedItems(lastUploadedItems)
+        if (embed.isEmbed) {
+          postSelect(lastUploadedItems)
+        }
       }
     }
     uploadPendingRef.current = false
@@ -75,36 +100,22 @@ export function SelectorPage() {
     )
   }
 
+  function toggleItem(item: MediaItemDto) {
+    setSelectedItems((prev) => {
+      const exists = prev.some((entry) => entry.id === item.id)
+      if (exists) {
+        return prev.filter((entry) => entry.id !== item.id)
+      }
+      return [...prev, item]
+    })
+  }
+
   function handleSelectFile(item: MediaItemDto) {
     if (embed.mode === 'single') {
-      if (embed.isEmbed) {
-        postSelect([item])
-      }
+      setSelectedItems([item])
       return
     }
-    setSelectedItems((prev) => {
-      const exists = prev.some((p) => p.id === item.id)
-      if (exists) {
-        return prev.filter((p) => p.id !== item.id)
-      }
-      return [...prev, item]
-    })
-  }
-
-  function handleToggleSelect(item: MediaItemDto) {
-    setSelectedItems((prev) => {
-      const exists = prev.some((p) => p.id === item.id)
-      if (exists) {
-        return prev.filter((p) => p.id !== item.id)
-      }
-      return [...prev, item]
-    })
-  }
-
-  function handleConfirmMultiple() {
-    if (embed.isEmbed && selectedItems.length) {
-      postSelect(selectedItems)
-    }
+    toggleItem(item)
   }
 
   function uploadFile(file: File) {
@@ -157,7 +168,7 @@ export function SelectorPage() {
         selectedIds={selectedIds}
         refreshKey={refreshKey}
         onSelectFile={handleSelectFile}
-        onToggleSelect={handleToggleSelect}
+        onToggleSelect={toggleItem}
         showIconToolbar
         allowDelete
         enableUpload={showUpload}
@@ -165,12 +176,12 @@ export function SelectorPage() {
         uploadError={uploadError}
         onUploadFiles={showUpload ? handleFilesSelected : undefined}
       />
-      {embed.mode === 'multiple' ? (
+      {showInlineConfirm ? (
         <div className="flex shrink-0 justify-end border-t pt-3">
           <Button
             type="button"
             disabled={!selectedItems.length}
-            onClick={handleConfirmMultiple}
+            onClick={handleConfirm}
           >
             Confirm ({selectedItems.length})
           </Button>

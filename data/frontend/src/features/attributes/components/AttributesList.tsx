@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
+  DropdownMenuSeparator,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -12,13 +12,12 @@ import type { Attribute } from '@/shared/types/data.types'
 
 interface AttributesListProps {
   items: Attribute[]
+  onEdit: (id: string) => void
   onDeleted: (id: string) => void
   canMutate: boolean
 }
 
-export function AttributesList({ items, onDeleted, canMutate }: AttributesListProps) {
-  const navigate = useNavigate()
-
+export function AttributesList({ items, onEdit, onDeleted, canMutate }: AttributesListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete attribute "${name}"?`)) return
     onDeleted(id)
@@ -42,9 +41,10 @@ export function AttributesList({ items, onDeleted, canMutate }: AttributesListPr
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
-              <DropdownMenuItem onClick={() => navigate(`/attributes/${item.id}`)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-destructive"
+                className="text-destructive focus:text-destructive"
                 onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete

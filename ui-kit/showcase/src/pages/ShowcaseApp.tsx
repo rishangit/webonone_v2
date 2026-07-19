@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { PageShell } from '@webonone/ui-kit'
 import { ThemeToolbar } from '@/components/ThemeToolbar'
 import {
   DEFAULT_SHOWCASE_TAB,
-  pagesNestedHash,
+  parsePagesNestedTab,
   parseShowcaseTab,
+  showcaseTabHash,
   SHOWCASE_TABS,
+  type PagesNestedTab,
   type ShowcaseTab,
 } from '@/components/showcase-nav'
+import { useLocationHash } from '@/hooks/useLocationHash'
+import { ComplexControlsPage } from '@/pages/ComplexControlsPage'
 import { ControlsPage } from '@/pages/ControlsPage'
 import { ComponentsPage } from '@/pages/ComponentsPage'
 import { DialogsPage } from '@/pages/DialogsPage'
@@ -17,23 +21,35 @@ import { PagesPage } from '@/pages/PagesPage'
 import { TagsPage } from '@/pages/TagsPage'
 
 export function ShowcaseApp() {
-  const [tab, setTab] = useState<ShowcaseTab>(() => parseShowcaseTab(window.location.hash))
+  const [hash, setHash] = useLocationHash()
+  const tab = parseShowcaseTab(hash)
+  const pagesNested = parsePagesNestedTab(hash)
 
   useEffect(() => {
-    function onHashChange() {
-      setTab(parseShowcaseTab(window.location.hash))
-    }
-    window.addEventListener('hashchange', onHashChange)
     if (!window.location.hash) {
-      window.location.hash = DEFAULT_SHOWCASE_TAB
+      setHash(DEFAULT_SHOWCASE_TAB)
+      return
     }
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+    if (window.location.hash.replace(/^#/, '').trim().toLowerCase() === 'pages') {
+      setHash(showcaseTabHash('pages', 'list'))
+    }
+  }, [hash, setHash])
 
   function handleTabChange(value: string) {
     const next = value as ShowcaseTab
-    window.location.hash = next === 'pages' ? pagesNestedHash('list') : next
-    setTab(next)
+    if (next === 'pages') {
+      const current = hash.replace(/^#/, '').trim().toLowerCase()
+      if (current === 'pages-list' || current === 'pages-details') {
+        return
+      }
+      setHash(showcaseTabHash('pages', 'list'))
+      return
+    }
+    setHash(showcaseTabHash(next))
+  }
+
+  function handlePagesNestedChange(nested: PagesNestedTab) {
+    setHash(showcaseTabHash('pages', nested))
   }
 
   return (
@@ -57,11 +73,14 @@ export function ShowcaseApp() {
         <Tabs.Content value="controls" className="space-y-10 outline-none">
           <ControlsPage />
         </Tabs.Content>
+        <Tabs.Content value="complex-controls" className="space-y-10 outline-none">
+          <ComplexControlsPage />
+        </Tabs.Content>
         <Tabs.Content value="components" className="space-y-10 outline-none">
           <ComponentsPage />
         </Tabs.Content>
         <Tabs.Content value="pages" className="space-y-10 outline-none">
-          <PagesPage />
+          <PagesPage nested={pagesNested} onNestedChange={handlePagesNestedChange} />
         </Tabs.Content>
         <Tabs.Content value="dialogs" className="space-y-10 outline-none">
           <DialogsPage />

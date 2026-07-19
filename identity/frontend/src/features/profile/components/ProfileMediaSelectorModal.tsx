@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   MediaCropDialogFrame,
   MediaSelectorFrame,
@@ -6,8 +7,16 @@ import {
   useMediaEmbedMessage,
   type CropAspectPreset,
   type MediaCropRequestMessage,
+  type MediaItemDto,
 } from '@webonone/media-embed'
+import {
+  getPlatformEmbedParentOrigin,
+  isPlatformMediaDialogCancelMessage,
+  isPlatformMediaDialogResultMessage,
+  sendPlatformMediaDialogRequest,
+} from '@webonone/platform-embed'
 import { Button, CustomDialog } from '@webonone/ui-kit'
+import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
 import {
   buildProfileFolderPath,
   buildProfileMediaScope,
@@ -27,7 +36,15 @@ interface ProfileMediaSelectorModalProps {
   accessToken: string | null
   userId: string
   openKey: number
+  onSelect: (items: MediaItemDto[]) => void
   onClose: () => void
+}
+
+function createMediaDialogRequestId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return `media-dialog-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
 export function ProfileMediaSelectorModal({
@@ -35,8 +52,10 @@ export function ProfileMediaSelectorModal({
   accessToken,
   userId,
   openKey,
+  onSelect,
   onClose,
 }: ProfileMediaSelectorModalProps) {
+  const [searchParams] = useSearchParams()
   const [cropOpen, setCropOpen] = useState(false)
   const [cropContext, setCropContext] = useState<CropContext | null>(null)
   const [cropOpenKey, setCropOpenKey] = useState(0)
@@ -46,6 +65,10 @@ export function ProfileMediaSelectorModal({
   const blockOuterDismissTimerRef = useRef<number | null>(null)
   const innerOpenRef = useRef(false)
   const cropIframeRef = useRef<HTMLIFrameElement>(null)
+  const hostRequestIdRef = useRef<string | null>(null)
+  const hostParentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const scope = buildProfileMediaScope(userId)
+  const profileFolderPath = buildProfileFolderPath(userId)
 
   useEffect(() => {
     innerOpenRef.current = cropOpen
@@ -74,6 +97,64 @@ export function ProfileMediaSelectorModal({
       setBlockOuterDismiss(false)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || !hostParentOrigin) {
+      hostRequestIdRef.current = null
+      return
+    }
+
+    const requestId = createMediaDialogRequestId()
+    hostRequestIdRef.current = requestId
+    sendPlatformMediaDialogRequest(hostParentOrigin, {
+      requestId,
+      title: 'Select profile photo',
+      scope,
+      folderPath: profileFolderPath,
+      mode: 'single',
+      accept: 'image/*',
+      selectorUpload: true,
+      cropAspectPresets: ['1:1'],
+    })
+  }, [hostParentOrigin, isOpen, openKey, profileFolderPath, scope])
+
+  useEffect(() => {
+    if (!hostParentOrigin) {
+      return
+    }
+
+    function handleHostMessage(event: MessageEvent) {
+      if (event.origin !== hostParentOrigin || event.source !== window.parent) {
+        return
+      }
+
+      const requestId = hostRequestIdRef.current
+      if (!requestId) {
+        return
+      }
+
+      if (
+        isPlatformMediaDialogResultMessage(event.data) &&
+        event.data.requestId === requestId
+      ) {
+        hostRequestIdRef.current = null
+        onSelect(event.data.items)
+        onClose()
+        return
+      }
+
+      if (
+        isPlatformMediaDialogCancelMessage(event.data) &&
+        event.data.requestId === requestId
+      ) {
+        hostRequestIdRef.current = null
+        onClose()
+      }
+    }
+
+    window.addEventListener('message', handleHostMessage)
+    return () => window.removeEventListener('message', handleHostMessage)
+  }, [hostParentOrigin, onClose, onSelect])
 
   const closeCropDialog = useCallback(() => {
     setCropContext(null)
@@ -104,8 +185,9 @@ export function ProfileMediaSelectorModal({
   useMediaEmbedMessage({
     mediaOrigin: getMediaOrigin(),
     onCropRequest: handleCropRequest,
-    onSelect: () => {
+    onSelect: (message) => {
       closeCropDialog()
+      onSelect(message.items)
     },
     onCancel: () => {
       if (innerOpenRef.current) {
@@ -136,8 +218,9 @@ export function ProfileMediaSelectorModal({
     setCropOpen(true)
   }
 
-  const scope = buildProfileMediaScope(userId)
-  const profileFolderPath = buildProfileFolderPath(userId)
+  if (hostParentOrigin) {
+    return null
+  }
 
   return (
     <>

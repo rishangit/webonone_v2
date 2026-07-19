@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
   Button,
-  FeaturePage,
+  ColorInput,
+  CustomDialog,
   FormField,
   Input,
   Select,
@@ -12,10 +12,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
   Textarea,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
-import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { tagFormSchema, type TagFormValues } from '@/features/tags/schemas/tagSchemas'
 import { tagsActions } from '@/features/tags/store'
 import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
@@ -28,18 +27,20 @@ const defaultValues: TagFormValues = {
   status: 'pending',
 }
 
-export function TagEditorPage() {
-  const { id } = useParams()
-  const isNew = !id || id === 'new'
-  const navigate = useNavigate()
-  const role = useAppSelector((s) => s.auth.user?.role)
-  const accessToken = useAppSelector((s) => s.auth.accessToken)
+interface TagFormDialogProps {
+  open: boolean
+  id?: string
+  onOpenChange: (open: boolean) => void
+  onSaved: () => void
+}
+
+export function TagFormDialog({ open, id, onOpenChange, onSaved }: TagFormDialogProps) {
+  const isNew = !id
   const [values, setValues] = useState<TagFormValues>(defaultValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const submittedRef = useRef(false)
 
   const editor = useEpicCatalogEditor<Tag>(id, isNew, (s) => s.tags, tagsActions)
-  usePlatformLoading(editor.loading ? 'Loading tag…' : null)
 
   useEffect(() => {
     if (!editor.detail || isNew) return
@@ -55,11 +56,8 @@ export function TagEditorPage() {
   useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
-    if (!editor.error) navigate('/tags')
-  }, [editor.saving, editor.error, navigate])
-
-  if (!accessToken) return <Navigate to="/login" replace />
-  if (role !== 'super_admin') return <Navigate to="/tags" replace />
+    if (!editor.error) onSaved()
+  }, [editor.saving, editor.error, onSaved])
 
   function updateField<K extends keyof TagFormValues>(key: K, value: TagFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }))
@@ -93,16 +91,29 @@ export function TagEditorPage() {
   }
 
   return (
-    <FeaturePage
+    <CustomDialog
+      open={open}
+      onOpenChange={onOpenChange}
       title={isNew ? 'Create tag' : 'Edit tag'}
-      actions={
-        <Button variant="outline" asChild>
-          <Link to="/tags">Back to list</Link>
-        </Button>
+      sizeWidth="small"
+      sizeHeight="auto"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={editor.saving}>
+            Cancel
+          </Button>
+          <Button type="submit" form="tag-form" disabled={editor.saving || editor.loading}>
+            {editor.saving ? 'Saving…' : isNew ? 'Create tag' : 'Save changes'}
+          </Button>
+        </>
       }
     >
-      {!editor.loading ? (
-        <form className="mx-auto max-w-xl space-y-4" onSubmit={handleSubmit}>
+      {editor.loading ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <form id="tag-form" className="space-y-4" onSubmit={handleSubmit}>
           {editor.error ? (
             <Alert variant="destructive">
               <AlertDescription>{editor.error}</AlertDescription>
@@ -122,19 +133,11 @@ export function TagEditorPage() {
           </FormField>
 
           <FormField label="Color" htmlFor="tag-color" required error={fieldErrors.color}>
-            <div className="flex items-center gap-2">
-              <Input
-                id="tag-color"
-                value={values.color}
-                onChange={(e) => updateField('color', e.target.value)}
-              />
-              <input
-                type="color"
-                aria-label="Pick color"
-                value={values.color}
-                onChange={(e) => updateField('color', e.target.value)}
-              />
-            </div>
+            <ColorInput
+              id="tag-color"
+              value={values.color}
+              onChange={(color) => updateField('color', color)}
+            />
           </FormField>
 
           <FormField label="Status" htmlFor="tag-status" required error={fieldErrors.status}>
@@ -148,12 +151,8 @@ export function TagEditorPage() {
               </SelectContent>
             </Select>
           </FormField>
-
-          <Button type="submit" disabled={editor.saving}>
-            {editor.saving ? 'Saving…' : isNew ? 'Create tag' : 'Save changes'}
-          </Button>
         </form>
-      ) : null}
-    </FeaturePage>
+      )}
+    </CustomDialog>
   )
 }

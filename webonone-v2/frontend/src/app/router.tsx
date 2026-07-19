@@ -117,6 +117,16 @@ export function App() {
               </LazyRoute>
             }
           />
+          <Route
+            path="identity/*"
+            element={
+              <SuperAdminRoute>
+                <LazyRoute>
+                  <PlatformPeerFrame peer="identity" />
+                </LazyRoute>
+              </SuperAdminRoute>
+            }
+          />
         </Route>
         <Route path="admin/companies/login" element={<Navigate to="/login" replace />} />
         <Route path="admin/companies/pending" element={<Navigate to="/companies" replace />} />

@@ -1,4 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import {
+  clearServiceAuthSession,
+  readServiceAuthSession,
+  writeServiceAuthSession,
+} from '@webonone/platform-embed'
 import { parsePlatformNavVariant, toCoreNavQueryValue, type PlatformNavVariant } from '@webonone/platform-nav'
 import { isFresh } from '@/shared/store/cacheUtils'
 import type { DataRole, UserProfile } from '../types/auth.types'
@@ -16,11 +21,11 @@ interface AuthState {
   lastProfileFetchedAt: number | null
 }
 
-const STORAGE_KEY = 'data_auth'
+export const DATA_AUTH_STORAGE_KEY = 'data_auth'
 const PLATFORM_STORAGE_KEY = 'data_platform_context'
 
 export function clearDataAuthStorage(): void {
-  sessionStorage.removeItem(STORAGE_KEY)
+  clearServiceAuthSession(DATA_AUTH_STORAGE_KEY)
   sessionStorage.removeItem(PLATFORM_STORAGE_KEY)
 }
 
@@ -59,27 +64,24 @@ function persistPlatform(platform: PlatformContext) {
 }
 
 function loadStoredAuth(): Pick<AuthState, 'accessToken' | 'user'> {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return { accessToken: null, user: null }
-    const parsed = JSON.parse(raw) as Pick<AuthState, 'accessToken' | 'user'>
-    return {
-      accessToken: parsed.accessToken ?? null,
-      user: parsed.user ?? null,
-    }
-  } catch {
+  const stored = readServiceAuthSession<UserProfile>(DATA_AUTH_STORAGE_KEY)
+  if (!stored) {
     return { accessToken: null, user: null }
+  }
+  return {
+    accessToken: stored.accessToken,
+    user: stored.user,
   }
 }
 
 function persistAuth(state: Pick<AuthState, 'accessToken' | 'user'>) {
   if (state.accessToken && state.user) {
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ accessToken: state.accessToken, user: state.user }),
-    )
+    writeServiceAuthSession(DATA_AUTH_STORAGE_KEY, {
+      accessToken: state.accessToken,
+      user: state.user,
+    })
   } else {
-    sessionStorage.removeItem(STORAGE_KEY)
+    clearServiceAuthSession(DATA_AUTH_STORAGE_KEY)
   }
 }
 
@@ -104,13 +106,6 @@ export const authSlice = createSlice({
         state.user.role = action.payload
         persistAuth(state)
       }
-    },
-    setAccessToken(state, action: PayloadAction<string | null>) {
-      state.accessToken = action.payload
-      if (!action.payload) {
-        state.user = null
-      }
-      persistAuth(state)
     },
     logout(state) {
       state.accessToken = null

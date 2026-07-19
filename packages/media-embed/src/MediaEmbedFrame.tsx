@@ -30,7 +30,7 @@ export function createMediaEmbedFrame<T extends object>(defaultTitle: string) {
     const src = buildSrc(urlOptions)
 
     useEffect(() => {
-      if (!isOpen || !accessToken) {
+      if (!isOpen) {
         return
       }
 
@@ -42,7 +42,10 @@ export function createMediaEmbedFrame<T extends object>(defaultTitle: string) {
       const origin = new URL(mediaOrigin).origin
 
       function deliverInit() {
-        sendPlatformInit(iframe!, origin, accessToken!)
+        if (!accessToken) {
+          return
+        }
+        sendPlatformInit(iframe!, origin, accessToken)
       }
 
       function handleLoad() {

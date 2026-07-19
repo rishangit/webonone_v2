@@ -5,6 +5,7 @@ import {
   CORE_NAV_QUERY_PARAM,
   dataSentinelToExternalPath,
   emailSentinelToExternalPath,
+  identitySentinelToExternalPath,
   profileSentinelToExternalPath,
   toCoreNavQueryValue,
 } from '@webonone/platform-nav'
@@ -13,6 +14,7 @@ import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
 import { getEmailOrigin } from '@/features/email/utils/emailConfig'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
+import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 
 const PEER_LABELS: Record<PlatformPeerId, string> = {
@@ -32,7 +34,11 @@ function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
     return emailSentinelToExternalPath(pathname) ?? '/history'
   }
   if (peer === 'identity') {
-    return profileSentinelToExternalPath(pathname) ?? '/profile'
+    return (
+      identitySentinelToExternalPath(pathname) ??
+      profileSentinelToExternalPath(pathname) ??
+      '/profile'
+    )
   }
   return dataSentinelToExternalPath(pathname) ?? '/'
 }
@@ -52,6 +58,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const [frameLoading, setFrameLoading] = useState(true)
+  const { openMediaDialog } = usePlatformMediaDialog()
 
   const peerPath = useMemo(
     () => resolvePeerPath(peer, location.pathname),
@@ -87,6 +94,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         title={`${PEER_LABELS[peer]} workspace`}
         className="block h-full min-h-0 w-full flex-1 border-0 bg-transparent"
         onLoadingChange={handleLoadingChange}
+        onMediaDialogRequest={openMediaDialog}
       />
     </div>
   )

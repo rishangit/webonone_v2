@@ -4,14 +4,17 @@ import {
   Alert,
   AlertDescription,
   Button,
+  DropdownMenuItem,
   FeaturePage,
   Form,
   FormField,
   Input,
   ItemList,
   ItemListContent,
-  ItemListItem,
   ItemListEmpty,
+  ItemListItem,
+  ItemListMenu,
+  ListPageBody,
   Pagination,
   mapZodIssuesToFieldErrors,
   Textarea,
@@ -64,8 +67,9 @@ export function TemplateEditorPage() {
 
   const loading = detailStatus === 'loading' && !template
   const saving = detailStatus === 'saving'
+  const versionsLoading = versionsStatus === 'loading' && versions.length === 0
 
-  usePlatformLoading(loading ? 'Loading template…' : null)
+  usePlatformLoading(loading ? 'Loading template…' : versionsLoading ? 'Loading versions…' : null)
 
   const visibleVersions = versions.slice(
     (versionPage - 1) * versionPageSize,
@@ -222,34 +226,36 @@ export function TemplateEditorPage() {
 
           <section className="space-y-3">
             <h2 className="text-lg font-medium">Version history</h2>
-            {versionsStatus === 'loading' && versions.length === 0 ? (
-              <ItemListEmpty>Loading versions…</ItemListEmpty>
-            ) : versions.length === 0 ? (
-              <ItemListEmpty>No versions yet.</ItemListEmpty>
-            ) : (
-              <div className="space-y-4">
-                <ItemList>
-                  {visibleVersions.map((version) => (
-                    <ItemListItem key={version.id}>
-                      <ItemListContent>
-                        <p className="font-medium">v{version.versionNumber}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {version.subject} · {new Date(version.createdAt).toLocaleString()}
-                        </p>
-                      </ItemListContent>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={restoringId === version.id}
-                        onClick={() => handleRestoreVersion(version.id)}
-                      >
-                        Restore
-                      </Button>
-                    </ItemListItem>
-                  ))}
-                </ItemList>
+            <ListPageBody>
+              <div className="flex-1">
+                {versions.length === 0 ? (
+                  <ItemListEmpty>No versions yet.</ItemListEmpty>
+                ) : (
+                  <ItemList>
+                    {visibleVersions.map((version) => (
+                      <ItemListItem key={version.id}>
+                        <ItemListContent>
+                          <p className="font-medium">v{version.versionNumber}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {version.subject} · {new Date(version.createdAt).toLocaleString()}
+                          </p>
+                        </ItemListContent>
+                        <ItemListMenu ariaLabel={`Actions for version ${version.versionNumber}`}>
+                          <DropdownMenuItem
+                            disabled={restoringId === version.id}
+                            onClick={() => handleRestoreVersion(version.id)}
+                          >
+                            Restore
+                          </DropdownMenuItem>
+                        </ItemListMenu>
+                      </ItemListItem>
+                    ))}
+                  </ItemList>
+                )}
+              </div>
+              {versions.length > 0 ? (
                 <Pagination
+                  className="mt-auto"
                   totalCount={versions.length}
                   currentPage={versionPage}
                   pageSize={versionPageSize}
@@ -260,8 +266,8 @@ export function TemplateEditorPage() {
                     setVersionPage(1)
                   }}
                 />
-              </div>
-            )}
+              ) : null}
+            </ListPageBody>
           </section>
         </div>
       ) : null}

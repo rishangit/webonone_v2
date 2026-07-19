@@ -10,36 +10,12 @@ import {
   switchMap,
   withLatestFrom,
 } from 'rxjs/operators'
+import type { PaginatedFeatureState, PaginatedListQuery, PaginatedResult } from './types'
 import { isFresh, serializeQuery } from './cacheUtils'
 
-export type PaginatedListQuery = {
-  page?: number
-  pageSize?: number
-  status?: string
-  force?: boolean
-  extra?: Record<string, string | undefined>
-}
-
-export interface PaginatedFeatureState<T> {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
-  status: string
-  queryKey: string
-  lastFetchedAt: number | null
-  listStatus: 'idle' | 'loading' | 'error'
-  listError: string | null
-}
-
-type PaginatedResult<T> = {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
-}
-
-type ListLoader<T> = (query: PaginatedListQuery & { page: number; pageSize: number }) => Promise<PaginatedResult<T>>
+type ListLoader<T> = (
+  query: PaginatedListQuery & { page: number; pageSize: number },
+) => Promise<PaginatedResult<T>>
 
 export interface PaginatedFeatureConfig<T> {
   name: string

@@ -1,4 +1,6 @@
-import { Link, Navigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -18,6 +20,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { TagFormDialog } from '@/features/tags/components/TagFormDialog'
 import { TagsList } from '@/features/tags/components/TagsList'
 import { tagsActions } from '@/features/tags/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
@@ -26,6 +29,7 @@ export function TagsPage() {
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
+  const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList((s) => s.tags, tagsActions)
   usePlatformLoading(list.loading ? 'Loading tags…' : null)
@@ -41,8 +45,9 @@ export function TagsPage() {
           <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search tags…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
           {canMutate ? (
-            <Button asChild>
-              <Link to="/tags/new">Add new</Link>
+            <Button type="button" size="sm" onClick={() => setDialog({})}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add tag
             </Button>
           ) : null}
         </div>
@@ -82,6 +87,7 @@ export function TagsPage() {
           {!list.loading ? (
             <TagsList
               items={list.items}
+              onEdit={(id) => setDialog({ id })}
               onDeleted={(id) => {
                 dispatch(tagsActions.deleteRequested({ id }))
                 list.load(list.page, list.pageSize, true)
@@ -100,6 +106,20 @@ export function TagsPage() {
           onPageSizeChange={(size) => list.load(1, size, true)}
         />
       </ListPageBody>
+
+      {dialog !== null ? (
+        <TagFormDialog
+          open
+          id={dialog.id}
+          onOpenChange={(o) => {
+            if (!o) setDialog(null)
+          }}
+          onSaved={() => {
+            list.load(list.page, list.pageSize, true)
+            setDialog(null)
+          }}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

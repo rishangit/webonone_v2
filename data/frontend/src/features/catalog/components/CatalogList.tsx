@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
+  DropdownMenuSeparator,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -11,16 +11,14 @@ import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 interface CatalogListProps {
-  basePath: string
   itemType: string
   items: CatalogItem[]
+  onEdit: (id: string) => void
   onDeleted: (id: string) => void
   canMutate: boolean
 }
 
-export function CatalogList({ basePath, itemType, items, onDeleted, canMutate }: CatalogListProps) {
-  const navigate = useNavigate()
-
+export function CatalogList({ itemType, items, onEdit, onDeleted, canMutate }: CatalogListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete "${name}"?`)) return
     onDeleted(id)
@@ -50,9 +48,10 @@ export function CatalogList({ basePath, itemType, items, onDeleted, canMutate }:
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
-              <DropdownMenuItem onClick={() => navigate(`${basePath}/${item.id}`)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-destructive"
+                className="text-destructive focus:text-destructive"
                 onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete

@@ -596,7 +596,13 @@ export function ComponentsPage() {
           <div className="border-b bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
             Narrow container simulates mobile; resize viewport for hamburger vs fixed sidebar.
           </div>
-          <AppShell nav={showcaseNav} activePath="#home" user={{ displayName: 'Demo User', email: 'demo@example.com' }}>
+          <AppShell
+            className="h-[28rem]"
+            lockDocumentScroll={false}
+            nav={showcaseNav}
+            activePath="#home"
+            user={{ displayName: 'Demo User', email: 'demo@example.com' }}
+          >
             <h1 className="text-2xl font-semibold">Home</h1>
             <p className="mt-2 text-muted-foreground">Main content area.</p>
           </AppShell>

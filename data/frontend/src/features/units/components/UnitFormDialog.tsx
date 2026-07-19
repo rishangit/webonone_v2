@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
   Button,
   Checkbox,
-  FeaturePage,
+  CustomDialog,
   FormField,
   Input,
   Select,
@@ -13,10 +12,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { unitFormSchema, type UnitFormValues } from '@/features/units/schemas/unitSchemas'
 import { unitsActions } from '@/features/units/store'
 import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
@@ -31,20 +30,22 @@ const defaultValues: UnitFormValues = {
   status: 'pending',
 }
 
-export function UnitEditorPage() {
-  const { id } = useParams()
-  const isNew = !id || id === 'new'
-  const navigate = useNavigate()
+interface UnitFormDialogProps {
+  open: boolean
+  id?: string
+  onOpenChange: (open: boolean) => void
+  onSaved: () => void
+}
+
+export function UnitFormDialog({ open, id, onOpenChange, onSaved }: UnitFormDialogProps) {
+  const isNew = !id
   const dispatch = useAppDispatch()
-  const role = useAppSelector((s) => s.auth.user?.role)
-  const accessToken = useAppSelector((s) => s.auth.accessToken)
   const baseUnits = useAppSelector((s) => s.units.items)
   const [values, setValues] = useState<UnitFormValues>(defaultValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const submittedRef = useRef(false)
 
   const editor = useEpicCatalogEditor<Unit>(id, isNew, (s) => s.units, unitsActions)
-  usePlatformLoading(editor.loading ? 'Loading unit…' : null)
 
   useEffect(() => {
     dispatch(unitsActions.loadListRequested({ pageSize: 100, extra: { is_base: 'true' }, force: true }))
@@ -66,11 +67,8 @@ export function UnitEditorPage() {
   useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
-    if (!editor.error) navigate('/units')
-  }, [editor.saving, editor.error, navigate])
-
-  if (!accessToken) return <Navigate to="/login" replace />
-  if (role !== 'super_admin') return <Navigate to="/units" replace />
+    if (!editor.error) onSaved()
+  }, [editor.saving, editor.error, onSaved])
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -97,16 +95,29 @@ export function UnitEditorPage() {
   }
 
   return (
-    <FeaturePage
+    <CustomDialog
+      open={open}
+      onOpenChange={onOpenChange}
       title={isNew ? 'Create unit' : 'Edit unit'}
-      actions={
-        <Button variant="outline" asChild>
-          <Link to="/units">Back to list</Link>
-        </Button>
+      sizeWidth="small"
+      sizeHeight="auto"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={editor.saving}>
+            Cancel
+          </Button>
+          <Button type="submit" form="unit-form" disabled={editor.saving || editor.loading}>
+            {editor.saving ? 'Saving…' : isNew ? 'Create unit' : 'Save changes'}
+          </Button>
+        </>
       }
     >
-      {!editor.loading ? (
-        <form className="mx-auto max-w-xl space-y-4" onSubmit={handleSubmit}>
+      {editor.loading ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <form id="unit-form" className="space-y-4" onSubmit={handleSubmit}>
           {editor.error ? (
             <Alert variant="destructive">
               <AlertDescription>{editor.error}</AlertDescription>
@@ -152,11 +163,8 @@ export function UnitEditorPage() {
               </SelectContent>
             </Select>
           </FormField>
-          <Button type="submit" disabled={editor.saving}>
-            {editor.saving ? 'Saving…' : isNew ? 'Create unit' : 'Save changes'}
-          </Button>
         </form>
-      ) : null}
-    </FeaturePage>
+      )}
+    </CustomDialog>
   )
 }

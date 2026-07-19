@@ -13,6 +13,7 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@webonone/platform-embed": "*",
     "@webonone/platform-nav": "*",
+    "@webonone/store-kit": "*",
     "@webonone/theme": "*",
     "@webonone/ui-kit": "*",
     "react": "^19.1.0",

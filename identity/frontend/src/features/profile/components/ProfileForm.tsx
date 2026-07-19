@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Globe, MapPin, User } from 'lucide-react'
-import { useMediaEmbedMessage } from '@webonone/media-embed'
+import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
   AlertDescription,
@@ -26,7 +26,6 @@ import {
   type ProfileFormValues,
   userToProfileFormValues,
 } from '../schemas/profileSchemas'
-import { getMediaOrigin } from '../utils/mediaConfig'
 import { ProfileAvatarEditor } from './ProfileAvatarEditor'
 import { ProfileMediaSelectorModal } from './ProfileMediaSelectorModal'
 import { ProfileView } from './ProfileView'
@@ -53,18 +52,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
   const displayAvatarUrl = pendingAvatarUrl ?? user.avatarUrl
 
-  const handleMediaSelect = useCallback((items: { url: string }[]) => {
+  const handleMediaSelect = useCallback((items: MediaItemDto[]) => {
     const item = items[0]
     if (item) {
       setPendingAvatarUrl(item.url)
       setSelectorOpen(false)
     }
   }, [])
-
-  useMediaEmbedMessage({
-    mediaOrigin: getMediaOrigin(),
-    onSelect: (message) => handleMediaSelect(message.items),
-  })
 
   useEffect(() => {
     setValues(userToProfileFormValues(user))
@@ -347,6 +341,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         accessToken={accessToken}
         userId={user.id}
         openKey={selectorOpenKey}
+        onSelect={handleMediaSelect}
         onClose={() => setSelectorOpen(false)}
       />
     </>

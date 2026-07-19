@@ -32,6 +32,12 @@ export type {
   LoadUsersFn,
   UserSelectionDialogProps,
 } from './components/UserSelectionDialog'
+export { SelectUser } from './components/SelectUser'
+export type { SelectUserValue, SelectUserProps } from './components/SelectUser'
+export { SelectMedia } from './components/SelectMedia'
+export type { SelectMediaValue, SelectMediaProps } from './components/SelectMedia'
+export { SelectTag } from './components/SelectTag'
+export type { SelectTagValue, SelectTagProps } from './components/SelectTag'
 export { CountrySelect } from './components/CountrySelect'
 export type { CountrySelectProps } from './components/CountrySelect'
 export {

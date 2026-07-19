@@ -55,3 +55,5 @@ export function requireRole(...roles: DataRole[]) {
 }
 
 export const requireSuperAdmin = requireRole('super_admin')
+
+export const requireCompanyAdminOrSuperAdmin = requireRole('company_admin', 'super_admin')

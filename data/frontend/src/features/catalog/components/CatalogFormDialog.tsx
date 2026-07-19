@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
   Button,
-  FeaturePage,
+  CustomDialog,
   FormField,
   Input,
   Select,
@@ -12,18 +11,18 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
   Textarea,
 } from '@webonone/ui-kit'
 import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { attributesActions } from '@/features/attributes/store'
 import { productsActions } from '@/features/products/store'
 import { servicesActions } from '@/features/services/store'
 import { spacesActions } from '@/features/spaces/store'
 import { tagsActions } from '@/features/tags/store'
 import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
-import type { CatalogFeatureState } from '@/shared/store/createCatalogFeatureStore'
+import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 type CatalogKind = 'products' | 'services' | 'spaces'
@@ -47,14 +46,18 @@ type AttributeRow = {
   valueNumber: string
 }
 
-export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
+interface CatalogFormDialogProps {
+  kind: CatalogKind
+  open: boolean
+  id?: string
+  onOpenChange: (open: boolean) => void
+  onSaved: () => void
+}
+
+export function CatalogFormDialog({ kind, open, id, onOpenChange, onSaved }: CatalogFormDialogProps) {
   const config = CONFIG[kind]
-  const { id } = useParams()
-  const isNew = !id || id === 'new'
-  const navigate = useNavigate()
+  const isNew = !id
   const dispatch = useAppDispatch()
-  const role = useAppSelector((s) => s.auth.user?.role)
-  const accessToken = useAppSelector((s) => s.auth.accessToken)
   const tags = useAppSelector((s) => s.tags.items)
   const attributes = useAppSelector((s) => s.attributes.items)
 
@@ -67,7 +70,6 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
   const submittedRef = useRef(false)
 
   const editor = useEpicCatalogEditor(id, isNew, config.select, config.actions)
-  usePlatformLoading(editor.loading ? `Loading ${config.label.toLowerCase()}…` : null)
 
   useEffect(() => {
     dispatch(tagsActions.loadListRequested({ pageSize: 100, force: true }))
@@ -93,11 +95,8 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
   useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
-    if (!editor.error) navigate(`/${kind}`)
-  }, [editor.saving, editor.error, kind, navigate])
-
-  if (!accessToken) return <Navigate to="/login" replace />
-  if (role !== 'super_admin') return <Navigate to={`/${kind}`} replace />
+    if (!editor.error) onSaved()
+  }, [editor.saving, editor.error, onSaved])
 
   function toggleTag(tagId: string) {
     setTagIds((prev) => (prev.includes(tagId) ? prev.filter((tid) => tid !== tagId) : [...prev, tagId]))
@@ -133,17 +132,32 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
     })
   }
 
+  const lowerLabel = config.label.toLowerCase()
+
   return (
-    <FeaturePage
-      title={isNew ? `Create ${config.label.toLowerCase()}` : `Edit ${config.label.toLowerCase()}`}
-      actions={
-        <Button variant="outline" asChild>
-          <Link to={`/${kind}`}>Back to list</Link>
-        </Button>
+    <CustomDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isNew ? `Create ${lowerLabel}` : `Edit ${lowerLabel}`}
+      sizeWidth="small"
+      sizeHeight="auto"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={editor.saving}>
+            Cancel
+          </Button>
+          <Button type="submit" form="catalog-form" disabled={editor.saving || editor.loading}>
+            {editor.saving ? 'Saving…' : isNew ? `Create ${lowerLabel}` : 'Save changes'}
+          </Button>
+        </>
       }
     >
-      {!editor.loading ? (
-        <form className="mx-auto max-w-2xl space-y-4" onSubmit={handleSubmit}>
+      {editor.loading ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <form id="catalog-form" className="space-y-4" onSubmit={handleSubmit}>
           {editor.error || nameError ? (
             <Alert variant="destructive">
               <AlertDescription>{editor.error ?? nameError}</AlertDescription>
@@ -244,11 +258,8 @@ export function CatalogEditorPage({ kind }: { kind: CatalogKind }) {
               )
             })}
           </div>
-          <Button type="submit" disabled={editor.saving}>
-            {editor.saving ? 'Saving…' : isNew ? `Create ${config.label.toLowerCase()}` : 'Save changes'}
-          </Button>
         </form>
-      ) : null}
-    </FeaturePage>
+      )}
+    </CustomDialog>
   )
 }

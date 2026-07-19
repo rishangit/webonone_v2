@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react'
+import { forwardRef, type ComponentProps } from 'react'
 import { createMediaEmbedFrame } from './MediaEmbedFrame'
 import { buildMediaSelectorUrl } from './embedUrl'
 import type { BuildMediaSelectorUrlOptions } from './types'
@@ -13,35 +13,41 @@ export const MediaSelectorFrameBase = createMediaEmbedFrame<BuildMediaSelectorUr
   'Media selector',
 )
 
-export function MediaSelectorFrame({
-  baseUrl,
-  parentOrigin,
-  scope,
-  folderPath,
-  mode,
-  accept,
-  maxFiles,
-  maxSizeBytes,
-  selectorUpload,
-  cropAspectPresets,
-  ...rest
-}: SelectorFrameProps) {
-  return (
-    <MediaSelectorFrameBase
-      {...rest}
-      buildSrc={buildMediaSelectorUrl}
-      urlOptions={{
-        baseUrl,
-        parentOrigin,
-        scope,
-        folderPath,
-        mode,
-        accept,
-        maxFiles,
-        maxSizeBytes,
-        selectorUpload,
-        cropAspectPresets,
-      }}
-    />
-  )
-}
+export const MediaSelectorFrame = forwardRef<HTMLIFrameElement, SelectorFrameProps>(
+  function MediaSelectorFrame(
+    {
+      baseUrl,
+      parentOrigin,
+      scope,
+      folderPath,
+      mode,
+      accept,
+      maxFiles,
+      maxSizeBytes,
+      selectorUpload,
+      cropAspectPresets,
+      ...rest
+    },
+    ref,
+  ) {
+    return (
+      <MediaSelectorFrameBase
+        {...rest}
+        ref={ref}
+        buildSrc={buildMediaSelectorUrl}
+        urlOptions={{
+          baseUrl,
+          parentOrigin,
+          scope,
+          folderPath,
+          mode,
+          accept,
+          maxFiles,
+          maxSizeBytes,
+          selectorUpload,
+          cropAspectPresets,
+        }}
+      />
+    )
+  },
+)

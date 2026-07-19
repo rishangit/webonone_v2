@@ -1,10 +1,28 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { buildPlatformEmbedUrl, sendPlatformInit } from './embedUrl'
-import { isPlatformContentReadyMessage, isPlatformReadyMessage } from './types'
-import type { BuildPlatformEmbedUrlOptions } from './types'
+import {
+  buildPlatformEmbedUrl,
+  sendPlatformInit,
+  sendPlatformMediaDialogCancel,
+  sendPlatformMediaDialogResult,
+} from './embedUrl'
+import {
+  isPlatformContentReadyMessage,
+  isPlatformMediaDialogRequestMessage,
+  isPlatformReadyMessage,
+} from './types'
+import type {
+  BuildPlatformEmbedUrlOptions,
+  PlatformMediaDialogItem,
+  PlatformMediaDialogRequestMessage,
+} from './types'
 
 /** Fallback hide if an embedded app never reports content-ready (older build). */
 const CONTENT_READY_FALLBACK_MS = 12000
+
+export type PlatformMediaDialogResponder = {
+  resolve: (items: PlatformMediaDialogItem[]) => void
+  cancel: (reason?: string) => void
+}
 
 export type PlatformServiceFrameProps = {
   peerOrigin: string
@@ -16,6 +34,10 @@ export type PlatformServiceFrameProps = {
   title: string
   className?: string
   onLoadingChange?: (loading: boolean) => void
+  onMediaDialogRequest?: (
+    request: PlatformMediaDialogRequestMessage,
+    responder: PlatformMediaDialogResponder,
+  ) => void
 }
 
 export function PlatformServiceFrame({
@@ -28,6 +50,7 @@ export function PlatformServiceFrame({
   title,
   className,
   onLoadingChange,
+  onMediaDialogRequest,
 }: PlatformServiceFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const peerOriginNormalized = useMemo(() => new URL(peerOrigin).origin, [peerOrigin])
@@ -60,6 +83,40 @@ export function PlatformServiceFrame({
         return
       }
 
+      if (isPlatformMediaDialogRequestMessage(event.data)) {
+        const iframe = iframeRef.current
+        if (!iframe || event.source !== iframe.contentWindow) {
+          return
+        }
+
+        const targetWindow = iframe.contentWindow
+        const request = event.data
+        const responder: PlatformMediaDialogResponder = {
+          resolve: (items) =>
+            sendPlatformMediaDialogResult(
+              targetWindow,
+              peerOriginNormalized,
+              request.requestId,
+              items,
+            ),
+          cancel: (reason) =>
+            sendPlatformMediaDialogCancel(
+              targetWindow,
+              peerOriginNormalized,
+              request.requestId,
+              reason,
+            ),
+        }
+
+        if (!onMediaDialogRequest) {
+          responder.cancel('unsupported')
+          return
+        }
+
+        onMediaDialogRequest(request, responder)
+        return
+      }
+
       // Send auth as soon as the embedded app is ready to receive it.
       if (isPlatformReadyMessage(event.data)) {
         const iframe = iframeRef.current
@@ -77,7 +134,7 @@ export function PlatformServiceFrame({
 
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [accessToken, onLoadingChange, peerOriginNormalized])
+  }, [accessToken, onLoadingChange, onMediaDialogRequest, peerOriginNormalized])
 
   useEffect(() => {
     const iframe = iframeRef.current

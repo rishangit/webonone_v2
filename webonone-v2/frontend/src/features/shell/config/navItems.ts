@@ -1,11 +1,13 @@
-import { Building2, History, Home, Mail, Palette, Settings } from 'lucide-react'
+import { Building2, History, Home, Mail, Palette, Settings, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   DATA_NAV_SENTINELS,
   EMAIL_NAV_SENTINELS,
+  IDENTITY_NAV_SENTINELS,
   getPlatformNavDefs,
   isDataNavSentinel,
   isEmailNavSentinel,
+  isIdentityNavSentinel,
   isProfileNavSentinel,
   type CoreNavDef,
   type CoreNavLeaf,
@@ -17,6 +19,7 @@ import type { SessionRole } from '@/features/session/types/sessionRole.types'
 const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
+  [IDENTITY_NAV_SENTINELS.users]: Users,
   [EMAIL_NAV_SENTINELS.history]: History,
   [EMAIL_NAV_SENTINELS.templates]: Mail,
   [DATA_NAV_SENTINELS.dashboard]: Home,
@@ -27,6 +30,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
 
 const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings: Settings,
+  Identity: Users,
   Email: Mail,
   Data: Mail,
 }
@@ -84,4 +88,4 @@ export const mainNav = buildPlatformNav('main')
 export const superAdminNav = buildPlatformNav('superAdmin')
 export const memberNav = buildPlatformNav('member')
 
-export { isEmailNavSentinel, isDataNavSentinel, isProfileNavSentinel }
+export { isEmailNavSentinel, isDataNavSentinel, isIdentityNavSentinel, isProfileNavSentinel }

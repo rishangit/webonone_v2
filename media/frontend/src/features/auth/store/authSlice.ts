@@ -1,4 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import {
+  clearServiceAuthSession,
+  readServiceAuthSession,
+  writeServiceAuthSession,
+} from '@webonone/platform-embed'
 import type { UserProfile } from '../types/auth.types'
 
 interface AuthState {
@@ -6,27 +11,31 @@ interface AuthState {
   user: UserProfile | null
 }
 
-const STORAGE_KEY = 'media_auth'
+export const MEDIA_AUTH_STORAGE_KEY = 'media_auth'
 
 export function clearMediaAuthStorage(): void {
-  sessionStorage.removeItem(STORAGE_KEY)
+  clearServiceAuthSession(MEDIA_AUTH_STORAGE_KEY)
 }
 
 function loadStoredAuth(): AuthState {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return { accessToken: null, user: null }
-    return JSON.parse(raw) as AuthState
-  } catch {
+  const stored = readServiceAuthSession<UserProfile>(MEDIA_AUTH_STORAGE_KEY)
+  if (!stored) {
     return { accessToken: null, user: null }
+  }
+  return {
+    accessToken: stored.accessToken,
+    user: stored.user,
   }
 }
 
 function persistAuth(state: AuthState) {
   if (state.accessToken && state.user) {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    writeServiceAuthSession(MEDIA_AUTH_STORAGE_KEY, {
+      accessToken: state.accessToken,
+      user: state.user,
+    })
   } else {
-    sessionStorage.removeItem(STORAGE_KEY)
+    clearMediaAuthStorage()
   }
 }
 
@@ -39,13 +48,6 @@ export const authSlice = createSlice({
     loginSuccess(state, action: PayloadAction<{ accessToken: string; user: UserProfile }>) {
       state.accessToken = action.payload.accessToken
       state.user = action.payload.user
-      persistAuth(state)
-    },
-    setAccessToken(state, action: PayloadAction<string | null>) {
-      state.accessToken = action.payload
-      if (!action.payload) {
-        state.user = null
-      }
       persistAuth(state)
     },
     logout(state) {

@@ -15,6 +15,7 @@ import {
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
 import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
+import { isSessionSuperAdmin } from '@/features/users/utils/currentRole'
 import {
   buildCoreNavFromQuery,
   buildStandaloneNav,
@@ -110,12 +111,14 @@ function AppLayoutShellContent() {
     [accessToken, clearError, redirect, returnUrl, searchParams],
   )
 
+  const isSuperAdmin = isSessionSuperAdmin(accessToken)
+
   const nav = useMemo(() => {
     const base = returnUrl
       ? buildCoreNavFromQuery(returnUrl, searchParams.get(CORE_NAV_QUERY_PARAM))
-      : buildStandaloneNav()
+      : buildStandaloneNav({ isSuperAdmin })
     return returnUrl ? withEmailNavAction(base, handleEmailNavClick) : base
-  }, [handleEmailNavClick, returnUrl, searchParams])
+  }, [handleEmailNavClick, isSuperAdmin, returnUrl, searchParams])
 
   const brand = returnUrl ? 'WebOnOne' : 'Identity'
   const isAuthenticated = Boolean(accessToken && user)

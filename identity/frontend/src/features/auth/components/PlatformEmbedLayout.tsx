@@ -5,12 +5,14 @@ import {
   PlatformEmbedShell,
   usePlatformEmbedAuth,
   usePlatformEmbedContentReady,
+  type ServiceAuthSession,
 } from '@webonone/platform-embed'
 import { LoadingState } from '@webonone/ui-kit'
 import { useEmbedThemeListener } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformOverlayLabel } from '@/features/auth/context/PlatformLoadingContext'
 import { authActions } from '@/features/auth/store'
+import { IDENTITY_AUTH_STORAGE_KEY } from '@/features/auth/utils/authStorage'
 import type { UserProfile } from '@/shared/types/auth.types'
 import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
 
@@ -63,11 +65,26 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
     [dispatch],
   )
 
+  const handlePersistedSession = useCallback(
+    (session: ServiceAuthSession) => {
+      dispatch(
+        authActions.loginSucceeded({
+          accessToken: session.accessToken,
+          refreshToken: typeof session.refreshToken === 'string' ? session.refreshToken : null,
+          user: session.user as UserProfile,
+        }),
+      )
+    },
+    [dispatch],
+  )
+
   const { isAwaitingToken } = usePlatformEmbedAuth({
     parentOrigin,
     isAllowedParentOrigin,
     persistedAccessToken: accessToken,
     onAccessToken: handleAccessToken,
+    authStorageKey: IDENTITY_AUTH_STORAGE_KEY,
+    onPersistedSession: handlePersistedSession,
   })
 
   useEffect(() => {

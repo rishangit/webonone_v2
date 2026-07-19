@@ -3,12 +3,36 @@ export const PLATFORM_EMBED_QUERY = {
   EMBED_VALUE: 'platform',
   PARENT_ORIGIN: 'parentOrigin',
   SCOPE: 'scope',
+  MODE: 'mode',
 } as const
+
+export type IdentityUserPickerMode = 'single' | 'multiple'
 
 export const PLATFORM_MESSAGE_TYPES = {
   INIT: 'webonone:platform:init',
   READY: 'webonone:platform:ready',
   CONTENT_READY: 'webonone:platform:content-ready',
+  MEDIA_DIALOG_REQUEST: 'webonone:platform:media-dialog-request',
+  MEDIA_DIALOG_RESULT: 'webonone:platform:media-dialog-result',
+  MEDIA_DIALOG_CANCEL: 'webonone:platform:media-dialog-cancel',
+} as const
+
+export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
+  SELECT: 'webonone:identity:user-picker-select',
+  SELECTION_CHANGE: 'webonone:identity:user-picker-selection-change',
+  SET_SELECTION: 'webonone:identity:user-picker-set-selection',
+  CANCEL: 'webonone:identity:user-picker-cancel',
+} as const
+
+export type DataTagPickerMode = 'single' | 'multiple'
+
+export const DATA_TAG_PICKER_MESSAGE_TYPES = {
+  SELECTION_CHANGE: 'webonone:data:tag-picker-selection-change',
+  SET_SELECTION: 'webonone:data:tag-picker-set-selection',
+  CANCEL: 'webonone:data:tag-picker-cancel',
+  CREATE_REQUEST: 'webonone:data:tag-picker-create-request',
+  CREATE_SUBMIT: 'webonone:data:tag-picker-create-submit',
+  CREATED: 'webonone:data:tag-picker-created',
 } as const
 
 export type PlatformInitMessage = {
@@ -24,10 +48,148 @@ export type PlatformContentReadyMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.CONTENT_READY
 }
 
+export type IdentityUserPickerUser = {
+  id: string
+  displayName: string
+  email: string
+  role?: string
+  avatarUrl?: string | null
+}
+
+export type IdentityUserPickerSelectMessage = {
+  type: typeof IDENTITY_USER_PICKER_MESSAGE_TYPES.SELECT
+  scope: string
+  user: IdentityUserPickerUser
+}
+
+export type IdentityUserPickerSelectionChangeMessage = {
+  type: typeof IDENTITY_USER_PICKER_MESSAGE_TYPES.SELECTION_CHANGE
+  scope: string
+  users: IdentityUserPickerUser[]
+}
+
+/** Parent -> Identity picker: seed currently selected users when the dialog opens. */
+export type IdentityUserPickerSetSelectionMessage = {
+  type: typeof IDENTITY_USER_PICKER_MESSAGE_TYPES.SET_SELECTION
+  scope: string
+  users: IdentityUserPickerUser[]
+}
+
+export type IdentityUserPickerCancelMessage = {
+  type: typeof IDENTITY_USER_PICKER_MESSAGE_TYPES.CANCEL
+  scope: string
+  reason?: string
+}
+
+export type DataTagPickerTag = {
+  id: string
+  name: string
+  color: string
+}
+
+export type DataTagPickerSelectionChangeMessage = {
+  type: typeof DATA_TAG_PICKER_MESSAGE_TYPES.SELECTION_CHANGE
+  scope: string
+  tags: DataTagPickerTag[]
+}
+
+/** Parent -> Data picker: seed currently selected tags when the dialog opens. */
+export type DataTagPickerSetSelectionMessage = {
+  type: typeof DATA_TAG_PICKER_MESSAGE_TYPES.SET_SELECTION
+  scope: string
+  tags: DataTagPickerTag[]
+}
+
+export type DataTagPickerCancelMessage = {
+  type: typeof DATA_TAG_PICKER_MESSAGE_TYPES.CANCEL
+  scope: string
+  reason?: string
+}
+
+/** Data picker -> parent: user asked to open the stacked "Add new tag" dialog. */
+export type DataTagPickerCreateRequestMessage = {
+  type: typeof DATA_TAG_PICKER_MESSAGE_TYPES.CREATE_REQUEST
+  scope: string
+}
+
+/** Parent -> Data create form: submit the form (footer "Create" button). */
+export type DataTagPickerCreateSubmitMessage = {
+  type: typeof DATA_TAG_PICKER_MESSAGE_TYPES.CREATE_SUBMIT
+  scope: string
+}
+
+/** Data create form -> parent: a new tag was created. */
+export type DataTagPickerCreatedMessage = {
+  type: typeof DATA_TAG_PICKER_MESSAGE_TYPES.CREATED
+  scope: string
+  tag: DataTagPickerTag
+}
+
+export type PlatformMediaDialogMode = 'single' | 'multiple'
+
+export type PlatformMediaCropAspectPreset =
+  | '1:1'
+  | '1:2'
+  | '2:1'
+  | '3:2'
+  | '4:3'
+  | '16:9'
+  | 'free'
+
+export type PlatformMediaDialogItem = {
+  id: string
+  url: string
+  fileName: string
+  mimeType: string
+  sizeBytes: number
+  width?: number | null
+  height?: number | null
+  folderPath?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type PlatformMediaDialogRequestMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_REQUEST
+  requestId: string
+  title?: string
+  scope: string
+  folderPath: string
+  mode?: PlatformMediaDialogMode
+  accept?: string
+  selectorUpload?: boolean
+  cropAspectPresets?: PlatformMediaCropAspectPreset[]
+}
+
+export type PlatformMediaDialogResultMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_RESULT
+  requestId: string
+  items: PlatformMediaDialogItem[]
+}
+
+export type PlatformMediaDialogCancelMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_CANCEL
+  requestId: string
+  reason?: string
+}
+
 export type PlatformEmbedMessage =
   | PlatformInitMessage
   | PlatformReadyMessage
   | PlatformContentReadyMessage
+  | IdentityUserPickerSelectMessage
+  | IdentityUserPickerSelectionChangeMessage
+  | IdentityUserPickerSetSelectionMessage
+  | IdentityUserPickerCancelMessage
+  | DataTagPickerSelectionChangeMessage
+  | DataTagPickerSetSelectionMessage
+  | DataTagPickerCancelMessage
+  | DataTagPickerCreateRequestMessage
+  | DataTagPickerCreateSubmitMessage
+  | DataTagPickerCreatedMessage
+  | PlatformMediaDialogRequestMessage
+  | PlatformMediaDialogResultMessage
+  | PlatformMediaDialogCancelMessage
 
 export type BuildPlatformEmbedUrlOptions = {
   peerOrigin: string
@@ -62,4 +224,251 @@ export function isPlatformContentReadyMessage(
   }
 
   return (data as PlatformContentReadyMessage).type === PLATFORM_MESSAGE_TYPES.CONTENT_READY
+}
+
+function hasStringProperty(data: Record<string, unknown>, property: string): boolean {
+  return typeof data[property] === 'string' && data[property].length > 0
+}
+
+function isIdentityUserPickerUser(data: unknown): data is IdentityUserPickerUser {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+
+  const user = data as Record<string, unknown>
+  return (
+    hasStringProperty(user, 'id') &&
+    hasStringProperty(user, 'displayName') &&
+    hasStringProperty(user, 'email') &&
+    (user.role === undefined || typeof user.role === 'string') &&
+    (user.avatarUrl === undefined ||
+      user.avatarUrl === null ||
+      typeof user.avatarUrl === 'string')
+  )
+}
+
+export function isIdentityUserPickerSelectMessage(
+  data: unknown,
+): data is IdentityUserPickerSelectMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === IDENTITY_USER_PICKER_MESSAGE_TYPES.SELECT &&
+    hasStringProperty(message, 'scope') &&
+    isIdentityUserPickerUser(message.user)
+  )
+}
+
+export function isIdentityUserPickerSelectionChangeMessage(
+  data: unknown,
+): data is IdentityUserPickerSelectionChangeMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === IDENTITY_USER_PICKER_MESSAGE_TYPES.SELECTION_CHANGE &&
+    hasStringProperty(message, 'scope') &&
+    Array.isArray(message.users) &&
+    message.users.every(isIdentityUserPickerUser)
+  )
+}
+
+export function isIdentityUserPickerSetSelectionMessage(
+  data: unknown,
+): data is IdentityUserPickerSetSelectionMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === IDENTITY_USER_PICKER_MESSAGE_TYPES.SET_SELECTION &&
+    hasStringProperty(message, 'scope') &&
+    Array.isArray(message.users) &&
+    message.users.every(isIdentityUserPickerUser)
+  )
+}
+
+export function isIdentityUserPickerCancelMessage(
+  data: unknown,
+): data is IdentityUserPickerCancelMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === IDENTITY_USER_PICKER_MESSAGE_TYPES.CANCEL &&
+    hasStringProperty(message, 'scope') &&
+    (message.reason === undefined || typeof message.reason === 'string')
+  )
+}
+
+function isDataTagPickerTag(data: unknown): data is DataTagPickerTag {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+
+  const tag = data as Record<string, unknown>
+  return (
+    hasStringProperty(tag, 'id') &&
+    hasStringProperty(tag, 'name') &&
+    hasStringProperty(tag, 'color')
+  )
+}
+
+export function isDataTagPickerSelectionChangeMessage(
+  data: unknown,
+): data is DataTagPickerSelectionChangeMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === DATA_TAG_PICKER_MESSAGE_TYPES.SELECTION_CHANGE &&
+    hasStringProperty(message, 'scope') &&
+    Array.isArray(message.tags) &&
+    message.tags.every(isDataTagPickerTag)
+  )
+}
+
+export function isDataTagPickerSetSelectionMessage(
+  data: unknown,
+): data is DataTagPickerSetSelectionMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === DATA_TAG_PICKER_MESSAGE_TYPES.SET_SELECTION &&
+    hasStringProperty(message, 'scope') &&
+    Array.isArray(message.tags) &&
+    message.tags.every(isDataTagPickerTag)
+  )
+}
+
+export function isDataTagPickerCancelMessage(
+  data: unknown,
+): data is DataTagPickerCancelMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === DATA_TAG_PICKER_MESSAGE_TYPES.CANCEL &&
+    hasStringProperty(message, 'scope') &&
+    (message.reason === undefined || typeof message.reason === 'string')
+  )
+}
+
+export function isDataTagPickerCreateRequestMessage(
+  data: unknown,
+): data is DataTagPickerCreateRequestMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === DATA_TAG_PICKER_MESSAGE_TYPES.CREATE_REQUEST &&
+    hasStringProperty(message, 'scope')
+  )
+}
+
+export function isDataTagPickerCreateSubmitMessage(
+  data: unknown,
+): data is DataTagPickerCreateSubmitMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === DATA_TAG_PICKER_MESSAGE_TYPES.CREATE_SUBMIT &&
+    hasStringProperty(message, 'scope')
+  )
+}
+
+export function isDataTagPickerCreatedMessage(
+  data: unknown,
+): data is DataTagPickerCreatedMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === DATA_TAG_PICKER_MESSAGE_TYPES.CREATED &&
+    hasStringProperty(message, 'scope') &&
+    isDataTagPickerTag(message.tag)
+  )
+}
+
+function isPlatformMediaDialogItem(data: unknown): data is PlatformMediaDialogItem {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+
+  const item = data as Record<string, unknown>
+  return (
+    hasStringProperty(item, 'id') &&
+    hasStringProperty(item, 'url') &&
+    hasStringProperty(item, 'fileName') &&
+    hasStringProperty(item, 'mimeType') &&
+    typeof item.sizeBytes === 'number'
+  )
+}
+
+export function isPlatformMediaDialogRequestMessage(
+  data: unknown,
+): data is PlatformMediaDialogRequestMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_REQUEST &&
+    hasStringProperty(message, 'requestId') &&
+    hasStringProperty(message, 'scope') &&
+    hasStringProperty(message, 'folderPath')
+  )
+}
+
+export function isPlatformMediaDialogResultMessage(
+  data: unknown,
+): data is PlatformMediaDialogResultMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_RESULT &&
+    hasStringProperty(message, 'requestId') &&
+    Array.isArray(message.items) &&
+    message.items.every(isPlatformMediaDialogItem)
+  )
+}
+
+export function isPlatformMediaDialogCancelMessage(
+  data: unknown,
+): data is PlatformMediaDialogCancelMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_CANCEL &&
+    hasStringProperty(message, 'requestId')
+  )
 }

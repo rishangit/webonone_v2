@@ -75,7 +75,9 @@ Do not replace per-service `dev` with a root-only script — standalone and all-
 
 ## Shared packages — production build order
 
-Cross-service libraries live under [`packages/`](../../packages/) (`@webonone/platform-nav`, `@webonone/theme`, `@webonone/media-embed`, future packages). `@webonone/ui-kit` is separate but follows the same `dist/` rule. See [packages/README.md](../../packages/README.md).
+Cross-service libraries live under [`packages/`](../../packages/) (`@webonone/platform-nav`, `@webonone/theme`, `@webonone/media-embed`, `@webonone/store-kit`, future packages). `@webonone/ui-kit` is separate but follows the same `dist/` rule. See [packages/README.md](../../packages/README.md).
+
+`@webonone/store-kit` is **state plumbing** (Redux Toolkit slice + redux-observable epics factories + cache utils + hooks), not business logic — the same shareable category as logging. It carries no domain knowledge (each service injects its own API client and types) and no store instance (each service keeps its own `configureStore`), so it does not create a runtime dependency and standalone is preserved. Use it for standard list/detail CRUD features — see [redux-store-and-epics.mdc](redux-store-and-epics.mdc) and the [feature-store skill](../skills/feature-store/SKILL.md).
 
 **Dev vs prod resolution:**
 
@@ -95,10 +97,11 @@ Cross-service libraries live under [`packages/`](../../packages/) (`@webonone/pl
 
 | Service root | Chained package builds (in order) |
 |--------------|-------------------------------------|
-| `identity/` | `platform-nav`, `theme`, `ui-kit` |
-| `webonone-v2/` | `platform-nav`, `theme`, `ui-kit` |
-| `media/` | `media-embed`, `theme`, `ui-kit` |
-| `email/` | `theme`, `ui-kit` |
+| `identity/` | `platform-nav`, `platform-embed`, `theme`, `store-kit`, `ui-kit`, `media-embed` |
+| `webonone-v2/` | `platform-nav`, `platform-embed`, `theme`, `store-kit`, `ui-kit` |
+| `media/` | `platform-embed`, `media-embed`, `theme`, `store-kit`, `ui-kit` |
+| `email/` | `platform-embed`, `theme`, `store-kit`, `ui-kit` |
+| `data/` | `platform-nav`, `platform-embed`, `theme`, `store-kit`, `ui-kit` |
 
 **Forbidden:** relying on Vite aliases alone for production; assuming `npm install` produces `dist/`; importing `packages/*/src` from service code outside Vite alias config.
 

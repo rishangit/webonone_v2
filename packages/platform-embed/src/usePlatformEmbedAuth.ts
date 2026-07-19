@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { isAccessTokenExpired } from './jwtClaims'
 import { isPlatformInitMessage, PLATFORM_MESSAGE_TYPES } from './types'
+import type { ServiceAuthSession } from './serviceAuthStorage'
+import { useServiceAuthStorageSync } from './useServiceAuthStorageSync'
 
 export type UsePlatformEmbedAuthOptions = {
   parentOrigin: string | null
   isAllowedParentOrigin: (origin: string) => boolean
   persistedAccessToken?: string | null
   onAccessToken: (accessToken: string) => void
+  authStorageKey?: string
+  /** Called when a full session is read from `authStorageKey` (cross-tab sync). */
+  onPersistedSession?: (session: ServiceAuthSession) => void
 }
 
 export type UsePlatformEmbedAuthResult = {
@@ -18,6 +23,8 @@ export function usePlatformEmbedAuth({
   isAllowedParentOrigin,
   persistedAccessToken,
   onAccessToken,
+  authStorageKey,
+  onPersistedSession,
 }: UsePlatformEmbedAuthOptions): UsePlatformEmbedAuthResult {
   const onAccessTokenRef = useRef(onAccessToken)
   onAccessTokenRef.current = onAccessToken
@@ -41,6 +48,27 @@ export function usePlatformEmbedAuth({
     setHasToken(true)
     onAccessTokenRef.current(accessToken)
   }, [])
+
+  const handlePersistedSession = useCallback(
+    (session: ServiceAuthSession) => {
+      if (isAccessTokenExpired(session.accessToken)) {
+        return
+      }
+      setHasToken(true)
+      if (onPersistedSession) {
+        onPersistedSession(session)
+        return
+      }
+      onAccessTokenRef.current(session.accessToken)
+    },
+    [onPersistedSession],
+  )
+
+  useServiceAuthStorageSync({
+    storageKey: authStorageKey ?? '',
+    currentAccessToken: persistedAccessToken,
+    onPersistedSession: handlePersistedSession,
+  })
 
   useEffect(() => {
     if (!parentOrigin || !isAllowedParentOrigin(parentOrigin)) {

@@ -1,4 +1,4 @@
-import { Building2, History, Home, KeyRound, Mail, Palette, Settings, User, UserPlus } from 'lucide-react'
+import { Building2, History, Home, KeyRound, Mail, Palette, Settings, User, UserPlus, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   EMAIL_NAV_SENTINELS,
@@ -11,7 +11,7 @@ import {
 } from '@webonone/platform-nav'
 import type { NavConfigItem } from '@webonone/ui-kit'
 
-export const IDENTITY_SHELL_ROUTES = ['/login', '/profile', '/register', '/reset-password'] as const
+export const IDENTITY_SHELL_ROUTES = ['/login', '/profile', '/register', '/reset-password', '/users'] as const
 
 const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/': Home,
@@ -114,8 +114,11 @@ function toNavConfigItems(defs: ResolvedCoreNavDef[], emailOrigin: string): NavC
   return rewriteEmailLinksForIdentityNav(items, emailOrigin)
 }
 
-export function buildStandaloneNav(): NavConfigItem[] {
-  return standaloneNav
+export function buildStandaloneNav({ isSuperAdmin }: { isSuperAdmin: boolean } = { isSuperAdmin: false }): NavConfigItem[] {
+  if (!isSuperAdmin) {
+    return standaloneNav
+  }
+  return [...standaloneNav, { type: 'item', to: '/users', label: 'Users', icon: Users }]
 }
 
 const DEFAULT_EMAIL_ORIGIN = 'http://localhost:3014'

@@ -69,6 +69,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 |-------|-------------|
 | [form-creation](../skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
 | [item-list](../skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
+| [feature-store](../skills/feature-store/SKILL.md) | Standard list/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
@@ -84,6 +85,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Feature folders, `@/shared` between features | `front-end-structure.mdc` |
 | Feature page layout (`FeaturePage`, `PageHeader`) | `feature-page-layout.mdc` |
 | Slices, epics, `rootEpic` | `redux-store-and-epics.mdc` |
+| Shared CRUD store factories (`@webonone/store-kit`) | `redux-store-and-epics.mdc`, [feature-store skill](../skills/feature-store/SKILL.md) |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
 | `@webonone/ui-kit` consumption (all service frontends) | `ui-kit-consumption.mdc` |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |

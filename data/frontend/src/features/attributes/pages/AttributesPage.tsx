@@ -1,4 +1,6 @@
-import { Link, Navigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -18,6 +20,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { AttributeFormDialog } from '@/features/attributes/components/AttributeFormDialog'
 import { AttributesList } from '@/features/attributes/components/AttributesList'
 import { attributesActions } from '@/features/attributes/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
@@ -26,6 +29,7 @@ export function AttributesPage() {
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
+  const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList((s) => s.attributes, attributesActions)
   usePlatformLoading(list.loading ? 'Loading attributes…' : null)
@@ -41,8 +45,9 @@ export function AttributesPage() {
           <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search attributes…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
           {canMutate ? (
-            <Button asChild>
-              <Link to="/attributes/new">Add new</Link>
+            <Button type="button" size="sm" onClick={() => setDialog({})}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add attribute
             </Button>
           ) : null}
         </div>
@@ -98,6 +103,7 @@ export function AttributesPage() {
           {!list.loading ? (
             <AttributesList
               items={list.items}
+              onEdit={(id) => setDialog({ id })}
               onDeleted={(id) => {
                 dispatch(attributesActions.deleteRequested({ id }))
                 list.load(list.page, list.pageSize, true)
@@ -116,6 +122,20 @@ export function AttributesPage() {
           onPageSizeChange={(size) => list.load(1, size, true)}
         />
       </ListPageBody>
+
+      {dialog !== null ? (
+        <AttributeFormDialog
+          open
+          id={dialog.id}
+          onOpenChange={(o) => {
+            if (!o) setDialog(null)
+          }}
+          onSaved={() => {
+            list.load(list.page, list.pageSize, true)
+            setDialog(null)
+          }}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

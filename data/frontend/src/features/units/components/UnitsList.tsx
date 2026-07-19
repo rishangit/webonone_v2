@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
+  DropdownMenuSeparator,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -12,13 +12,12 @@ import type { Unit } from '@/shared/types/data.types'
 
 interface UnitsListProps {
   items: Unit[]
+  onEdit: (id: string) => void
   onDeleted: (id: string) => void
   canMutate: boolean
 }
 
-export function UnitsList({ items, onDeleted, canMutate }: UnitsListProps) {
-  const navigate = useNavigate()
-
+export function UnitsList({ items, onEdit, onDeleted, canMutate }: UnitsListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete unit "${name}"?`)) return
     onDeleted(id)
@@ -43,9 +42,10 @@ export function UnitsList({ items, onDeleted, canMutate }: UnitsListProps) {
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
-              <DropdownMenuItem onClick={() => navigate(`/units/${item.id}`)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-destructive"
+                className="text-destructive focus:text-destructive"
                 onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete

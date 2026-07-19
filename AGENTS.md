@@ -13,8 +13,9 @@ Cross-service libraries that are **not** UI Kit and **not** microservices. See [
 | `@webonone/platform-nav` | Cross-service redirect, auth-code handoff, return URL validation |
 | `@webonone/platform-embed` | Platform nav iframe embed URL builder, JWT postMessage, PlatformServiceFrame |
 | `@webonone/media-embed` | Media iframe embed URL builder, postMessage types, React hooks |
+| `@webonone/store-kit` | Redux slice + redux-observable epics factories for list/detail CRUD (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), cache utils, catalog hooks |
 
-Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run build:media-embed`. Parent agent owns new entries under `packages/*`.
+Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run build:media-embed`, `npm run build:store-kit`. Parent agent owns new entries under `packages/*`.
 
 ### Cross-cutting skills
 
@@ -22,6 +23,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 |-------|-------------|
 | [form-creation](.cursor/skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
 | [item-list](.cursor/skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
+| [feature-store](.cursor/skills/feature-store/SKILL.md) | List/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 
 ## Service agents
 

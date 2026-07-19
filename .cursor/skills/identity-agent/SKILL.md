@@ -33,11 +33,17 @@ Wire `initApiClient(store)` in `app/store/index.ts`. Epics import `@/shared/serv
 ## Rules
 
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
-- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — store/epics
+- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — store/epics. Standard list/detail CRUD uses `@webonone/store-kit` — see [feature-store skill](../feature-store/SKILL.md) (bespoke `users` search/role list stays hand-written)
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [identity-project.mdc](../../rules/identity-project.mdc) — service globs
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — embed mode from WebOnOne (`PlatformEmbedLayout`); redirect handoff from satellites
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
+
+## Embedded peer dialogs
+
+When Identity runs embedded in WebOnOne and needs a dialog to feel core-owned, do not render `CustomDialog` inside the Identity iframe. Send a typed platform dialog request to `parentOrigin` and handle result/cancel by `requestId`; keep the iframe-local `CustomDialog` only as standalone fallback.
+
+Reference: `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
 
 ## Verification
 

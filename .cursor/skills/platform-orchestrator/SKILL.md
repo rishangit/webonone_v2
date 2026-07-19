@@ -22,7 +22,7 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `webonone-v2/` | `.cursor/agents/webonone-agent.md` | `.cursor/skills/webonone-agent/SKILL.md` |
 | `media/`, `packages/media-embed/` | `.cursor/agents/media-agent.md` | `.cursor/skills/media-agent/SKILL.md` |
 
-Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**.
+Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Embedded-peer dialogs that should feel core-owned → **platform-embed contract + WebOnOne host dialog + requesting peer**.
 
 **Parent handles directly:** root `package.json`, workspace wiring, non-service `.cursor/` config.
 
@@ -54,6 +54,8 @@ Each prompt **must** include:
 Sequence cross-service work: Identity before WebOnOne.
 
 **Platform navigation (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). Embed peers: **`FeaturePage`** + scroll on **`PlatformEmbedShell` `<main>`** (whole page, not inner lists). Satellites use auth-code redirect for cross-service hops.
+
+**Core-hosted dialogs:** If an embedded peer needs a dialog to dim/cover the whole WebOnOne shell, route through [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc): typed `postMessage` request with `requestId`, `PlatformServiceFrame` origin/source validation, WebOnOne host-rendered `CustomDialog`, result/cancel back to the iframe.
 
 ## Prompt templates
 

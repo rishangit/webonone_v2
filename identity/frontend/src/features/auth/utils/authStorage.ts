@@ -1,6 +1,11 @@
+import {
+  clearServiceAuthSession,
+  readServiceAuthSession,
+  writeServiceAuthSession,
+} from '@webonone/platform-embed'
 import type { UserProfile } from '@/shared/types/auth.types'
 
-const STORAGE_KEY = 'identity_auth'
+export const IDENTITY_AUTH_STORAGE_KEY = 'identity_auth'
 
 export interface StoredAuthSession {
   accessToken: string
@@ -17,11 +22,7 @@ export function isPromptLoginRequest(): boolean {
 }
 
 export function clearStoredAuthSession(): void {
-  try {
-    sessionStorage.removeItem(STORAGE_KEY)
-  } catch {
-    // ignore sessionStorage errors
-  }
+  clearServiceAuthSession(IDENTITY_AUTH_STORAGE_KEY)
 }
 
 export function loadStoredAuthSession(): StoredAuthSession | null {
@@ -30,27 +31,26 @@ export function loadStoredAuthSession(): StoredAuthSession | null {
     return null
   }
 
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-
-    const parsed = JSON.parse(raw) as StoredAuthSession
-    if (!parsed.accessToken || !parsed.user) return null
-
-    return parsed
-  } catch {
+  const stored = readServiceAuthSession<UserProfile>(IDENTITY_AUTH_STORAGE_KEY)
+  if (!stored) {
     return null
+  }
+
+  return {
+    accessToken: stored.accessToken,
+    refreshToken: typeof stored.refreshToken === 'string' ? stored.refreshToken : null,
+    user: stored.user,
   }
 }
 
 export function persistAuthSession(session: StoredAuthSession | null): void {
-  try {
-    if (session?.accessToken && session.user) {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
-    } else {
-      clearStoredAuthSession()
-    }
-  } catch {
-    // ignore sessionStorage errors
+  if (session?.accessToken && session.user) {
+    writeServiceAuthSession(IDENTITY_AUTH_STORAGE_KEY, {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      user: session.user,
+    })
+  } else {
+    clearStoredAuthSession()
   }
 }

@@ -200,6 +200,30 @@
     backdrop-filter: blur(8px);
   }
 
+  /** Dialog surface — opaque page-body colors + glass border/blur. */
+  .glass-card-solid {
+    background-color: hsl(var(--background-base));
+    background-image:
+      radial-gradient(
+        ellipse 120% 70% at 50% -15%,
+        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 1.4)),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 70% 55% at 100% 40%,
+        hsl(var(--background-tint) / var(--background-tint-opacity)),
+        transparent 52%
+      ),
+      radial-gradient(
+        ellipse 65% 50% at 0% 85%,
+        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
+        transparent 50%
+      );
+    border: 1px solid hsl(var(--glass-border));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
   .glass-card-elevate {
     transition: box-shadow 0.3s ease;
   }

@@ -12,6 +12,8 @@ import {
 
   isEmailNavSentinel,
 
+  isIdentityNavSentinel,
+
   isProfileNavSentinel,
 
   performPlatformLogout,
@@ -36,6 +38,8 @@ import { SessionRoleGate } from '@/features/session/components/SessionRoleGate'
 
 import { formatSessionRoleLabel } from '@/features/session/utils/formatSessionRoleLabel'
 
+import { PlatformMediaDialogProvider } from '@/features/media/PlatformMediaDialogHost'
+
 import {
 
   PlatformLoadingProvider,
@@ -48,7 +52,12 @@ import {
 
 function isPlatformPeerEmbedPath(pathname: string): boolean {
 
-  return isEmailNavSentinel(pathname) || isDataNavSentinel(pathname) || isProfileNavSentinel(pathname)
+  return (
+    isEmailNavSentinel(pathname) ||
+    isDataNavSentinel(pathname) ||
+    isIdentityNavSentinel(pathname) ||
+    isProfileNavSentinel(pathname)
+  )
 
 }
 
@@ -60,7 +69,11 @@ export function AppLayout() {
 
     <PlatformLoadingProvider>
 
-      <AppLayoutContent />
+      <PlatformMediaDialogProvider>
+
+        <AppLayoutContent />
+
+      </PlatformMediaDialogProvider>
 
     </PlatformLoadingProvider>
 

@@ -15,7 +15,7 @@ export function getAuthCallbackUrl(): string {
 }
 
 export function parseAllowedParentOrigins(): string[] {
-  const raw = import.meta.env.VITE_ALLOWED_PARENT_ORIGINS ?? 'http://localhost:3010,http://localhost:3011,http://localhost:3013'
+  const raw = import.meta.env.VITE_ALLOWED_PARENT_ORIGINS ?? 'http://localhost:3010,http://127.0.0.1:3010,http://localhost:3011,http://127.0.0.1:3011,http://localhost:3012,http://127.0.0.1:3012,http://localhost:3013,http://127.0.0.1:3013'
   return raw
     .split(',')
     .map((entry) => entry.trim())

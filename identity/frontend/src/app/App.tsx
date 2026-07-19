@@ -23,6 +23,12 @@ const ResetPasswordPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import('@/features/profile/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 )
+const UserPickerPage = lazy(() =>
+  import('@/features/users/pages/UserPickerPage').then((m) => ({ default: m.UserPickerPage })),
+)
+const UsersPage = lazy(() =>
+  import('@/features/users/pages/UsersPage').then((m) => ({ default: m.UsersPage })),
+)
 
 export function App() {
   return (
@@ -69,6 +75,22 @@ export function App() {
               element={
                 <LazyRoute>
                   <ProfilePage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/user-picker"
+              element={
+                <LazyRoute>
+                  <UserPickerPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <LazyRoute>
+                  <UsersPage />
                 </LazyRoute>
               }
             />

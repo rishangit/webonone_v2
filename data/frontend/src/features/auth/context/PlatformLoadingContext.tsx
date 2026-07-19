@@ -25,6 +25,31 @@ const DEFAULT_ROUTE_LOADING_DELAY_MS = 175
 /** Keep the overlay up briefly after the last loader clears to bridge hand-off gaps. */
 const HIDE_LINGER_MS = 200
 
+/** Dev diagnostic: trace loader register/unregister and warn when overlays stack. */
+function logLoaders(
+  action: 'register' | 'unregister',
+  id: string,
+  page: Map<string, string>,
+  route: Map<string, string>,
+): void {
+  if (!import.meta.env.DEV) return
+  const total = page.size + route.size
+  const snapshot = {
+    id,
+    total,
+    page: Array.from(page.values()),
+    route: Array.from(route.values()),
+  }
+  if (total > 1) {
+    console.warn(
+      `[PlatformLoading] ${action} → ${total} concurrent loaders (possible stacked loading)`,
+      snapshot,
+    )
+  } else {
+    console.debug(`[PlatformLoading] ${action} → ${total} active`, snapshot)
+  }
+}
+
 export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
   const pageLoaders = useRef(new Map<string, string>())
   const routeLoaders = useRef(new Map<string, string>())
@@ -48,6 +73,7 @@ export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
     (id: string, kind: LoadingKind, label: string) => {
       const target = kind === 'page' ? pageLoaders.current : routeLoaders.current
       target.set(id, label)
+      logLoaders('register', id, pageLoaders.current, routeLoaders.current)
       recompute()
     },
     [recompute],
@@ -57,6 +83,7 @@ export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
     (id: string) => {
       pageLoaders.current.delete(id)
       routeLoaders.current.delete(id)
+      logLoaders('unregister', id, pageLoaders.current, routeLoaders.current)
       recompute()
     },
     [recompute],

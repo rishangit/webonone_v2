@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
   Button,
-  FeaturePage,
+  CustomDialog,
   FormField,
   Input,
   Select,
@@ -12,10 +11,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
   Textarea,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { attributeFormSchema, type AttributeFormValues } from '@/features/attributes/schemas/attributeSchemas'
 import { attributesActions } from '@/features/attributes/store'
 import { unitsActions } from '@/features/units/store'
@@ -30,20 +29,22 @@ const defaultValues: AttributeFormValues = {
   status: 'pending',
 }
 
-export function AttributeEditorPage() {
-  const { id } = useParams()
-  const isNew = !id || id === 'new'
-  const navigate = useNavigate()
+interface AttributeFormDialogProps {
+  open: boolean
+  id?: string
+  onOpenChange: (open: boolean) => void
+  onSaved: () => void
+}
+
+export function AttributeFormDialog({ open, id, onOpenChange, onSaved }: AttributeFormDialogProps) {
+  const isNew = !id
   const dispatch = useAppDispatch()
-  const role = useAppSelector((s) => s.auth.user?.role)
-  const accessToken = useAppSelector((s) => s.auth.accessToken)
   const units = useAppSelector((s) => s.units.items)
   const [values, setValues] = useState<AttributeFormValues>(defaultValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const submittedRef = useRef(false)
 
   const editor = useEpicCatalogEditor<Attribute>(id, isNew, (s) => s.attributes, attributesActions)
-  usePlatformLoading(editor.loading ? 'Loading attribute…' : null)
 
   useEffect(() => {
     dispatch(unitsActions.loadListRequested({ pageSize: 100, force: true }))
@@ -64,11 +65,8 @@ export function AttributeEditorPage() {
   useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
-    if (!editor.error) navigate('/attributes')
-  }, [editor.saving, editor.error, navigate])
-
-  if (!accessToken) return <Navigate to="/login" replace />
-  if (role !== 'super_admin') return <Navigate to="/attributes" replace />
+    if (!editor.error) onSaved()
+  }, [editor.saving, editor.error, onSaved])
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -94,16 +92,29 @@ export function AttributeEditorPage() {
   }
 
   return (
-    <FeaturePage
+    <CustomDialog
+      open={open}
+      onOpenChange={onOpenChange}
       title={isNew ? 'Create attribute' : 'Edit attribute'}
-      actions={
-        <Button variant="outline" asChild>
-          <Link to="/attributes">Back to list</Link>
-        </Button>
+      sizeWidth="small"
+      sizeHeight="auto"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={editor.saving}>
+            Cancel
+          </Button>
+          <Button type="submit" form="attribute-form" disabled={editor.saving || editor.loading}>
+            {editor.saving ? 'Saving…' : isNew ? 'Create attribute' : 'Save changes'}
+          </Button>
+        </>
       }
     >
-      {!editor.loading ? (
-        <form className="mx-auto max-w-xl space-y-4" onSubmit={handleSubmit}>
+      {editor.loading ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <form id="attribute-form" className="space-y-4" onSubmit={handleSubmit}>
           {editor.error ? (
             <Alert variant="destructive">
               <AlertDescription>{editor.error}</AlertDescription>
@@ -153,11 +164,8 @@ export function AttributeEditorPage() {
               </SelectContent>
             </Select>
           </FormField>
-          <Button type="submit" disabled={editor.saving}>
-            {editor.saving ? 'Saving…' : isNew ? 'Create attribute' : 'Save changes'}
-          </Button>
         </form>
-      ) : null}
-    </FeaturePage>
+      )}
+    </CustomDialog>
   )
 }

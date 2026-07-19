@@ -32,7 +32,22 @@ Peer AppLayout (embed=platform + validated parentOrigin)
 | Header **Profile** (`/profile` sentinel) | Satellite-to-satellite hops (Data ↔ Email, satellite → Profile) |
 | Any new core-shell peer sentinel | Login / OAuth callback flows |
 
-**Package:** `@webonone/platform-embed` — `ensurePlatformEmbedCanvas`, `buildPlatformEmbedUrl`, `PlatformServiceFrame`, `PlatformEmbedShell`, `usePlatformEmbedAuth`, `usePlatformEmbedContentReady`, `resolvePlatformEmbedParentOrigin`. Media embeds use the same `webonone:platform:init` / READY handshake via `@webonone/media-embed` parent frames.
+**Package:** `@webonone/platform-embed` — `ensurePlatformEmbedCanvas`, `buildPlatformEmbedUrl`, `PlatformServiceFrame`, `PlatformEmbedShell`, `usePlatformEmbedAuth`, `usePlatformEmbedContentReady`, `resolvePlatformEmbedParentOrigin`, `readServiceAuthSession` / `writeServiceAuthSession`. Media embeds use the same `webonone:platform:init` / READY handshake via `@webonone/media-embed` parent frames.
+
+### Service JWT persistence (all microservices)
+
+Every service SPA persists its JWT with the **same** helpers from `@webonone/platform-embed`:
+
+| Helper | Role |
+|--------|------|
+| `writeServiceAuthSession(key, session)` | Persist `{ accessToken, user, … }` to **localStorage** |
+| `readServiceAuthSession(key)` | Load session (falls back to legacy sessionStorage once) |
+| `clearServiceAuthSession(key)` | Clear on logout |
+| `usePlatformEmbedAuth({ authStorageKey, onPersistedSession })` | Cross-tab / iframe rehydrate when user signs in separately |
+
+Per-service keys only: `identity_auth`, `webonone_auth`, `media_auth`, `email_auth`, `data_auth`. Do **not** invent per-service storage sync hooks — pass `authStorageKey` into `usePlatformEmbedAuth`.
+
+OAuth CSRF state and platform nav context may still use **sessionStorage** (tab-scoped). JWT sessions must not.
 
 ### Single overlay across the iframe seam (content-ready handshake)
 
@@ -51,6 +66,22 @@ Flow:
 3. **Peer overlay gate:** `const displayLabel = hasReported ? overlayLabel : null`. Before the first `content-ready` the shell overlay covers the load, so the embed **suppresses its own overlay**; after it (shell overlay gone) the embed shows its overlay for later in-app loads (pagination, filters, save). A shell nav reloads the iframe → remount resets `hasReported` → shell owns the initial overlay again.
 
 **Forbidden:** rendering the peer overlay (`overlayLabel`) unconditionally in embed mode; hiding the shell overlay on `READY` instead of `content-ready`; adding a peer-side overlay that overlaps the shell overlay during initial load.
+
+### Core-hosted dialogs from embedded peers
+
+When an embedded peer needs a dialog to feel opened by **WebOnOne core** (dim sidebar + header + main together, avoid iframe clipping, or present platform-level UI), the peer must **request a host dialog** instead of rendering `CustomDialog` inside its iframe.
+
+Required flow:
+
+1. **Peer iframe** sends a typed `postMessage` request to `parentOrigin` with a `requestId` and serializable options.
+2. **Shell** (`PlatformServiceFrame`) accepts the request only after validating `event.origin === peerOrigin` and `event.source === iframe.contentWindow`.
+3. **WebOnOne host** renders the `CustomDialog` at shell level and mounts the owning service iframe/content inside it (for media: `MediaSelectorFrame` / `MediaCropDialogFrame`).
+4. **Host** sends result/cancel back to the requesting iframe using the same `requestId` and exact peer origin.
+5. **Peer** applies the result locally (e.g. selected `MediaItemDto`) and keeps standalone fallback behavior when not embedded.
+
+Use this for Media picker/upload/crop dialogs and any future microservice dialog that should feel core-owned. Iframe-local dialogs are allowed only when the dialog is intentionally scoped to the embedded page.
+
+Reference paths: `packages/platform-embed/src/PlatformServiceFrame.tsx`, `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`, `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
 
 **Redirect auth:** `@webonone/platform-nav` — `exchangeAuthCode`, `usePlatformRedirectBootstrap`, `redirectWithAuthCode`.
 

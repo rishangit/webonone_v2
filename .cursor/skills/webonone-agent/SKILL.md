@@ -18,7 +18,7 @@ description: >-
 
 ## Rules
 
-- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — all API I/O via epics; feature store per domain
+- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — all API I/O via epics; feature store per domain. Standard list/detail CRUD uses `@webonone/store-kit` factories — see [feature-store skill](../feature-store/SKILL.md) (bespoke flows like `companies` stay hand-written)
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [webonone-v2-project.mdc](../../rules/webonone-v2-project.mdc) — service globs
@@ -37,6 +37,12 @@ When adding pages or session gates in WebOnOne core:
 5. Pages → `usePlatformLoading(loading ? 'Loading …' : null)` — no inline loading text or per-page overlays.
 
 Reference: `webonone-v2/frontend/src/app/AppLayout.tsx`, `features/session/components/SessionRoleGate.tsx`, `app/LazyRoute.tsx`.
+
+## Core-hosted peer dialogs
+
+When an embedded peer requests a dialog that should feel opened by WebOnOne core, WebOnOne owns the host-level `CustomDialog`. Use the platform bridge from [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc): `PlatformServiceFrame` validates `event.origin` and `event.source`, then a WebOnOne host/provider renders the dialog and sends result/cancel back by `requestId`.
+
+Reference: `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`.
 
 ## Verification
 

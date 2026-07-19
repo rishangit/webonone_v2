@@ -1,4 +1,6 @@
-import { Link, Navigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -18,6 +20,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { UnitFormDialog } from '@/features/units/components/UnitFormDialog'
 import { UnitsList } from '@/features/units/components/UnitsList'
 import { unitsActions } from '@/features/units/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
@@ -26,6 +29,7 @@ export function UnitsPage() {
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canMutate = user?.role === 'super_admin'
+  const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList((s) => s.units, unitsActions)
   usePlatformLoading(list.loading ? 'Loading units…' : null)
@@ -41,8 +45,9 @@ export function UnitsPage() {
           <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search units…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
           {canMutate ? (
-            <Button asChild>
-              <Link to="/units/new">Add new</Link>
+            <Button type="button" size="sm" onClick={() => setDialog({})}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add unit
             </Button>
           ) : null}
         </div>
@@ -82,6 +87,7 @@ export function UnitsPage() {
           {!list.loading ? (
             <UnitsList
               items={list.items}
+              onEdit={(id) => setDialog({ id })}
               onDeleted={(id) => {
                 dispatch(unitsActions.deleteRequested({ id }))
                 list.load(list.page, list.pageSize, true)
@@ -100,6 +106,20 @@ export function UnitsPage() {
           onPageSizeChange={(size) => list.load(1, size, true)}
         />
       </ListPageBody>
+
+      {dialog !== null ? (
+        <UnitFormDialog
+          open
+          id={dialog.id}
+          onOpenChange={(o) => {
+            if (!o) setDialog(null)
+          }}
+          onSaved={() => {
+            list.load(list.page, list.pageSize, true)
+            setDialog(null)
+          }}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

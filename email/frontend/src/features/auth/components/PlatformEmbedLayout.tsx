@@ -6,15 +6,16 @@ import {
   usePlatformEmbedAuth,
   usePlatformEmbedContentReady,
   type PlatformRole,
+  type ServiceAuthSession,
 } from '@webonone/platform-embed'
 import { LoadingState } from '@webonone/ui-kit'
 import { useEmbedThemeListener } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformOverlayLabel } from '@/features/auth/context/PlatformLoadingContext'
-import { authActions } from '@/features/auth/store/authSlice'
+import { authActions, EMAIL_AUTH_STORAGE_KEY } from '@/features/auth/store/authSlice'
 import { useRefreshEmailRole } from '@/features/auth/hooks/useRefreshEmailRole'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import type { EmailRole } from '@/features/auth/types/auth.types'
+import type { EmailRole, UserProfile } from '@/features/auth/types/auth.types'
 
 type PlatformEmbedLayoutProps = {
   parentOrigin: string
@@ -61,11 +62,25 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
     [dispatch],
   )
 
+  const handlePersistedSession = useCallback(
+    (session: ServiceAuthSession) => {
+      dispatch(
+        authActions.loginSuccess({
+          accessToken: session.accessToken,
+          user: session.user as UserProfile,
+        }),
+      )
+    },
+    [dispatch],
+  )
+
   const { isAwaitingToken } = usePlatformEmbedAuth({
     parentOrigin,
     isAllowedParentOrigin,
     persistedAccessToken: accessToken,
     onAccessToken: handleAccessToken,
+    authStorageKey: EMAIL_AUTH_STORAGE_KEY,
+    onPersistedSession: handlePersistedSession,
   })
 
   useRefreshEmailRole(isAwaitingToken)

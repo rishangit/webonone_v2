@@ -35,6 +35,36 @@ features/<domain>/
 
 Register reducer in `app/store/index.ts` and epic in `app/store/epics/rootEpic.ts`.
 
+## Shared feature-store factories (`@webonone/store-kit`) — default for CRUD/list features
+
+Standard list/detail resources **must not** hand-roll the slice + epics. Use the shared factories from `@webonone/store-kit` (build-time package; each service still owns its store instance, so standalone is preserved). See [microservice-architecture.mdc](microservice-architecture.mdc) shared-package build order and the [feature-store skill](../skills/feature-store/SKILL.md).
+
+| Factory | Use for | Generates |
+|---|---|---|
+| `createCatalogFeatureStore<T>` | List **+ detail + create/update/delete** (paginated `q`/`status`/`extra`) | reducer, actions, epics (`loadList`, `fetchDetail`, `saveDetail`, `delete`) with cache/debounce/dedup |
+| `createPaginatedFeatureStore<T>` | **List-only** paginated read (`status`/`extra`, optional `cacheTtlMs`) | reducer, actions, epics (`loadList`) |
+
+```ts
+// features/<domain>/store/<domain>Store.ts — the WHOLE store for a CRUD feature
+import { createCatalogFeatureStore } from '@webonone/store-kit'
+export const tagsStore = createCatalogFeatureStore<Tag>({
+  name: 'tags', list: dataApi.listTags, get: dataApi.getTag,
+  create: dataApi.createTag, update: dataApi.updateTag, delete: dataApi.deleteTag,
+})
+export const { reducer: tagsReducer, actions: tagsActions, epics: tagsEpics } = tagsStore
+```
+
+Pages/dialogs consume via the shared hooks `useEpicCatalogList` / `useEpicCatalogEditor` (re-export or thin `RootState`-typed wrapper under `@/shared/hooks/`). Cache utils (`isFresh`, `serializeQuery`) come from `@webonone/store-kit` — a service `@/shared/store/cacheUtils.ts` may only re-export them, never redefine.
+
+**Tier-2 composition** (feature has extra behavior on top of CRUD): build the base store, then compose extra epics — do **not** fork the factory.
+
+```ts
+export const fooStore = createCatalogFeatureStore<Foo>({ name: 'foo', /* base CRUD */ })
+export const fooEpics = combineEpics(fooStore.epics, previewEpic, versionsEpic)
+```
+
+**Stay hand-written** only when the feature does not fit the list/detail contract: bespoke query models (e.g. Identity `users` `search`/`role`), single-object settings (Email `providers`), dual-list/wizard flows (WebOnOne `companies`), unpaginated lists (Email `templates`), and `auth`. Do **not** copy a `createCatalogFeatureStore`/`createPaginatedFeatureStore` into a service — import from the package.
+
 ## Forbidden
 
 - **`apiClient()` or `*Api.*()` in `pages/`, `hooks/`, or `components/`** — HTTP belongs in `features/<domain>/services/` and is called from epics only.
@@ -42,6 +72,8 @@ Register reducer in `app/store/index.ts` and epic in `app/store/epics/rootEpic.t
 - **A dedicated endpoint to recompute a value the store already holds** — derive role/permission/session flags from existing store state, don't fetch them per mount. Example: `isSuperAdmin = s.sessionRole.activeRole === 'super_admin'` (a store selector), **not** a `/company/admin/me` call in a hook. Re-fetching on every navigation (even a `304`) is a redundant round-trip.
 - **`createAsyncThunk`** — keep `thunk: false` project-wide; use epics.
 - **Second `configureStore` or root epic** per app.
+- **Hand-rolling a slice + epics for a standard list/detail CRUD feature** — use `@webonone/store-kit` factories instead.
+- **Copying `createCatalogFeatureStore` / `createPaginatedFeatureStore` / `cacheUtils` into a service** — import from `@webonone/store-kit` (service `cacheUtils.ts` may only re-export).
 
 **Allowed exceptions:** hooks may dispatch actions (e.g. bootstrap dispatching `profileFetchRequested`); they must not call API services directly.
 
@@ -109,8 +141,8 @@ Collection pages dispatch load actions and read from store — do not call loade
 
 ## Checklist (new API-facing feature)
 
-1. Add `*Slice.ts` with Requested/Succeeded/Failed + cache fields.
-2. Add `*Epics.ts` with operator matrix applied.
+1. Is it a standard paginated list/detail CRUD resource? If yes, use `@webonone/store-kit` (`createCatalogFeatureStore` for list+detail+CRUD, `createPaginatedFeatureStore` for list-only) — a ~12-line config `*Store.ts`; skip steps 2. See [feature-store skill](../skills/feature-store/SKILL.md).
+2. Otherwise (bespoke) add `*Slice.ts` (Requested/Succeeded/Failed + cache fields) and `*Epics.ts` with the operator matrix applied; use Tier-2 compose (`combineEpics(baseStore.epics, extraEpic)`) when adding behavior on top of a base factory store.
 3. Export through `features/<domain>/store/index.ts`.
 4. Register reducer in `app/store/index.ts`.
 5. Register epic in `app/store/epics/rootEpic.ts`.

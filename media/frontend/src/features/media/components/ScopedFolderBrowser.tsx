@@ -16,6 +16,7 @@ import {
   itemListRowActiveClassName,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageBody,
   ListSearchField,
   LoadingState,
   Pagination,
@@ -38,6 +39,7 @@ import {
   type MediaFolderDto,
 } from '../services/mediaApi'
 import { formatFileSize, formatMediaDate } from '../utils/formatMedia'
+import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 
 type BrowserViewMode = 'list' | 'thumb'
 
@@ -57,6 +59,8 @@ interface ScopedFolderBrowserProps {
   uploadAccept?: string
   uploadError?: string | null
   onUploadFiles?: (files: File[]) => void | Promise<void>
+  /** When true, report loading via AppLayout overlay instead of inline LoadingState. */
+  hostLoading?: boolean
 }
 
 export function ScopedFolderBrowser({
@@ -74,6 +78,7 @@ export function ScopedFolderBrowser({
   uploadAccept = 'image/*',
   uploadError = null,
   onUploadFiles,
+  hostLoading = false,
 }: ScopedFolderBrowserProps) {
   const dispatch = useAppDispatch()
   const { currentPath, navigateTo, breadcrumbSegments } = useScopedNavigation(scopedRoot)
@@ -113,6 +118,11 @@ export function ScopedFolderBrowser({
   const loading = !listReady || listStatus === 'loading'
   const error = localError ?? (listReady ? listError : null)
   const mediaTotal = listReady ? total : 0
+  const loadingLabel = isUploading ? 'Uploading…' : loading ? 'Loading media…' : null
+
+  usePlatformLoading(loadingLabel, hostLoading)
+
+  const showListContent = !loading && !isUploading
 
   const hasActiveFilters = mimeFilter !== 'all'
 
@@ -529,7 +539,7 @@ export function ScopedFolderBrowser({
   const dropZoneEnabled = enableUpload && Boolean(onUploadFiles)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
       <ListFilterPanel
         open={filterOpen}
         onOpenChange={setFilterOpen}
@@ -581,52 +591,54 @@ export function ScopedFolderBrowser({
         </Alert>
       ) : null}
 
-      <div
-        className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-md transition-colors ${
-          dropZoneEnabled && isDragging ? 'bg-primary/5 ring-2 ring-primary/30' : ''
-        }`}
-        onDragOver={(e) => {
-          if (!dropZoneEnabled || isUploading) return
-          e.preventDefault()
-          setIsDragging(true)
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => {
-          if (!dropZoneEnabled || isUploading) return
-          e.preventDefault()
-          setIsDragging(false)
-          void handleFilesSelected(e.dataTransfer.files)
-        }}
-      >
-        {loading || isUploading ? (
-          <LoadingState
-            overlay
-            label={isUploading ? 'Uploading…' : 'Loading media…'}
-          />
-        ) : viewMode === 'thumb' && showIconToolbar ? (
-          renderThumbView()
-        ) : (
-          renderListView()
-        )}
-      </div>
+      <ListPageBody className="min-h-0 flex-1">
+        <div
+          className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-md transition-colors ${
+            dropZoneEnabled && isDragging ? 'bg-primary/5 ring-2 ring-primary/30' : ''
+          }`}
+          onDragOver={(e) => {
+            if (!dropZoneEnabled || isUploading) return
+            e.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            if (!dropZoneEnabled || isUploading) return
+            e.preventDefault()
+            setIsDragging(false)
+            void handleFilesSelected(e.dataTransfer.files)
+          }}
+        >
+          {!hostLoading && (loading || isUploading) ? (
+            <LoadingState
+              overlay
+              label={isUploading ? 'Uploading…' : 'Loading media…'}
+            />
+          ) : null}
+          {showListContent ? (
+            viewMode === 'thumb' && showIconToolbar ? renderThumbView() : renderListView()
+          ) : null}
+        </div>
 
-      {!loading && !isUploading ? (
-        <Pagination
-          className="mt-auto shrink-0"
-          totalCount={mediaTotal}
-          currentPage={mediaPage}
-          pageSize={mediaPageSize}
-          pageSizeOptions={[12, 24, 48]}
-          onPageChange={(nextPage) => {
-            setMediaPage(nextPage)
-            loadList(nextPage, mediaPageSize)
-          }}
-          onPageSizeChange={(nextSize) => {
-            setMediaPageSize(nextSize)
-            setMediaPage(1)
-          }}
-        />
-      ) : null}
+        {showListContent ? (
+          <Pagination
+            className="mt-auto shrink-0"
+            totalCount={mediaTotal}
+            currentPage={mediaPage}
+            pageSize={mediaPageSize}
+            pageSizeOptions={[12, 24, 48]}
+            onPageChange={(nextPage) => {
+              setMediaPage(nextPage)
+              loadList(nextPage, mediaPageSize)
+            }}
+            onPageSizeChange={(nextSize) => {
+              setMediaPageSize(nextSize)
+              setMediaPage(1)
+              loadList(1, nextSize)
+            }}
+          />
+        ) : null}
+      </ListPageBody>
 
       <CreateFolderDialog
         open={createFolderOpen}

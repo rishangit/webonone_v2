@@ -21,6 +21,12 @@ interface AppShellProps {
   defaultCollapsed?: boolean
   /** When true, main does not scroll — embed content (e.g. iframe) fills main and scrolls internally. */
   embedMain?: boolean
+  /**
+   * When false, skips `html.app-shell-active` (document overflow lock).
+   * Use for nested demos (e.g. UI Kit showcase) so the parent page can scroll.
+   * @default true
+   */
+  lockDocumentScroll?: boolean
   className?: string
 }
 
@@ -66,6 +72,7 @@ function AppShell({
   onNavItemPrefetch,
   defaultCollapsed = false,
   embedMain = false,
+  lockDocumentScroll = true,
   className,
 }: AppShellProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -87,9 +94,10 @@ function AppShell({
   }, [collapsed])
 
   useEffect(() => {
+    if (!lockDocumentScroll) return
     document.documentElement.classList.add('app-shell-active')
     return () => document.documentElement.classList.remove('app-shell-active')
-  }, [])
+  }, [lockDocumentScroll])
 
   const logoNode = logo ?? <BrandLogo href={logoHref} />
 

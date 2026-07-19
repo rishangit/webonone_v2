@@ -23,7 +23,7 @@ Specs: `spec/1.1.0/03-media-project.md`, `spec/1.1.0/08-media-consumer-integrati
 
 ## Rules
 
-- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — media features use slice + epics for folder/picker/upload API I/O
+- [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — media features use slice + epics for folder/picker/upload API I/O. For any standard list/detail CRUD, prefer `@webonone/store-kit` — see [feature-store skill](../feature-store/SKILL.md)
 
 ## Key paths
 
@@ -31,6 +31,20 @@ Specs: `spec/1.1.0/03-media-project.md`, `spec/1.1.0/08-media-consumer-integrati
 - API routes: `media/backend/src/routes/`
 - Storage: `media/backend/src/services/storage.service.ts`
 - Shared contract: `packages/media-embed/src/`
+- Standalone library list page: `media/frontend/src/features/media/pages/LibraryPage.tsx`
+- Reusable folder browser: `media/frontend/src/features/media/components/ScopedFolderBrowser.tsx`
+
+## List pages
+
+Standalone Media collection pages use the UI Kit list page composition (`FeaturePage` + `ListPageBody` + `ItemList` + `Pagination`). `LibraryPage` is the reference; embed routes (`/selector`, `/picker`) keep `EmbedLayout` and may use inline loading overlays.
+
+Rule: [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) · Skill: [item-list](../item-list/SKILL.md).
+
+## Host-level consumer dialogs
+
+Media owns picker/upload/crop UI and postMessage contracts, but the consumer owns where the dialog chrome renders. When the consumer is an embedded peer under WebOnOne and the dialog should feel core-owned, use the platform host-dialog bridge from `platform-shell-navigation.mdc`: WebOnOne renders the host `CustomDialog`, Media runs inside its iframe, and the requesting peer receives result/cancel by `requestId`.
+
+Reference: `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`.
 
 ## Verification
 

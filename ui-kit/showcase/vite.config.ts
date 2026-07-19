@@ -11,9 +11,12 @@ export default defineConfig({
       { find: '@webonone/ui-kit/styles', replacement: path.join(uiKitRoot, 'src/styles/globals.css') },
       { find: '@webonone/ui-kit/tailwind', replacement: path.join(uiKitRoot, 'tailwind.config.ts') },
       { find: '@webonone/ui-kit', replacement: path.join(uiKitRoot, 'src/index.ts') },
+      { find: '@webonone/platform-embed', replacement: path.resolve(__dirname, '../../packages/platform-embed/src/index.ts') },
+      { find: '@webonone/platform-nav', replacement: path.resolve(__dirname, '../../packages/platform-nav/src/index.ts') },
+      { find: '@webonone/media-embed', replacement: path.resolve(__dirname, '../../packages/media-embed/src/index.ts') },
       { find: '@webonone/theme', replacement: path.resolve(__dirname, '../../packages/theme/src/index.ts') },
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },
-  server: { port: 3012, strictPort: true },
+  server: { host: '127.0.0.1', port: 3012, strictPort: true },
 })

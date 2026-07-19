@@ -6,6 +6,7 @@ const uiKitRoot = path.resolve(__dirname, '../../ui-kit/package')
 const platformNavRoot = path.resolve(__dirname, '../../packages/platform-nav')
 const platformEmbedRoot = path.resolve(__dirname, '../../packages/platform-embed')
 const themeRoot = path.resolve(__dirname, '../../packages/theme')
+const storeKitRoot = path.resolve(__dirname, '../../packages/store-kit')
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '')
@@ -22,6 +23,7 @@ export default defineConfig(({ mode }) => {
         { find: '@webonone/platform-nav', replacement: path.join(platformNavRoot, 'src/index.ts') },
         { find: '@webonone/platform-embed', replacement: path.join(platformEmbedRoot, 'src/index.ts') },
         { find: '@webonone/theme', replacement: path.join(themeRoot, 'src/index.ts') },
+        { find: '@webonone/store-kit', replacement: path.join(storeKitRoot, 'src/index.ts') },
         { find: '@', replacement: path.resolve(__dirname, './src') },
       ],
     },

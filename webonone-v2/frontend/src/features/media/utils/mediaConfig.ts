@@ -8,6 +8,14 @@ export function getUploadDialogUrl(): string {
   return `${getMediaOrigin()}/upload-dialog`
 }
 
+export function getMediaSelectorUrl(): string {
+  return `${getMediaOrigin()}/selector`
+}
+
+export function getMediaCropDialogUrl(): string {
+  return `${getMediaOrigin()}/crop-dialog`
+}
+
 export function buildCompanyLogoScope(userId: string): string {
   return `webonone:company:pending:${userId}`
 }

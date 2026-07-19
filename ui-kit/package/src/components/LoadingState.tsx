@@ -34,7 +34,7 @@ function LoadingState({
         aria-live="polite"
         aria-busy="true"
         className={cn(
-          'z-50 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm',
+          'z-50 flex flex-col items-center justify-center gap-3 bg-background/80',
           overlayScope === 'viewport' ? 'fixed inset-0' : 'absolute inset-0',
           className,
         )}

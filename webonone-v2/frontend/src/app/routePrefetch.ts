@@ -1,6 +1,6 @@
 import { parseNavTarget } from '@webonone/platform-nav'
 
-import { isDataNavSentinel, isEmailNavSentinel, isProfileNavSentinel } from '@/features/shell/config/navItems'
+import { isDataNavSentinel, isEmailNavSentinel, isIdentityNavSentinel, isProfileNavSentinel } from '@/features/shell/config/navItems'
 
 
 
@@ -40,7 +40,12 @@ export function prefetchRoutePath(pathname: string): void {
 
 
 
-  if (isEmailNavSentinel(pathname) || isDataNavSentinel(pathname) || isProfileNavSentinel(pathname)) {
+  if (
+    isEmailNavSentinel(pathname) ||
+    isDataNavSentinel(pathname) ||
+    isIdentityNavSentinel(pathname) ||
+    isProfileNavSentinel(pathname)
+  ) {
 
     prefetchPlatformPeerFrame()
 

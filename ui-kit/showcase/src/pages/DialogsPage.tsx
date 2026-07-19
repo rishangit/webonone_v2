@@ -366,13 +366,16 @@ export function DialogsPage() {
         </AlertDialog>
       </DemoSection>
 
-      <DemoSection id="user-selection-dialog" title="UserSelectionDialog — search + infinite scroll">
+      <DemoSection
+        id="user-selection-dialog"
+        title="UserSelectionDialog (local mock data) — search + infinite scroll"
+      >
         <div className="space-y-3">
           <Button variant="outline" onClick={() => setUserSelectOpen(true)}>
-            Open user selection
+            Open local-data user selection
           </Button>
           <p className="text-sm text-muted-foreground">
-            Selected:{' '}
+            Selected (mock):{' '}
             {selectedUser ? (
               <span className="text-foreground">
                 {selectedUser.displayName} · {selectedUser.email}

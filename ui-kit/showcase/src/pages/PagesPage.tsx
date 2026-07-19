@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
-import { pagesNestedHash, parsePagesNestedTab, type PagesNestedTab } from '@/components/showcase-nav'
+import { pagesNestedHash, type PagesNestedTab } from '@/components/showcase-nav'
 import { DetailsPageDemo, ListPageDemo } from '@/pages/pages/PageDemos'
 
 const PAGES_NESTED_TABS: { id: PagesNestedTab; label: string }[] = [
@@ -8,32 +7,19 @@ const PAGES_NESTED_TABS: { id: PagesNestedTab; label: string }[] = [
   { id: 'details', label: 'Details page' },
 ]
 
-export function PagesPage() {
-  const [nested, setNested] = useState<PagesNestedTab>(() =>
-    parsePagesNestedTab(window.location.hash),
-  )
+interface PagesPageProps {
+  nested: PagesNestedTab
+  onNestedChange: (nested: PagesNestedTab) => void
+}
 
-  useEffect(() => {
-    function onHashChange() {
-      setNested(parsePagesNestedTab(window.location.hash))
-    }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
-
-  function handleNestedChange(value: string) {
-    const next = value as PagesNestedTab
-    window.location.hash = pagesNestedHash(next)
-    setNested(next)
-  }
-
+export function PagesPage({ nested, onNestedChange }: PagesPageProps) {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         Page-level compositions that mirror production FeaturePage screens. Prefer copying these
         patterns over the isolated Components demos.
       </p>
-      <Tabs.Root value={nested} onValueChange={handleNestedChange}>
+      <Tabs.Root value={nested} onValueChange={(value) => onNestedChange(value as PagesNestedTab)}>
         <Tabs.List className="mb-6 flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1">
           {PAGES_NESTED_TABS.map((t) => (
             <Tabs.Trigger
@@ -45,10 +31,10 @@ export function PagesPage() {
             </Tabs.Trigger>
           ))}
         </Tabs.List>
-        <Tabs.Content value="list" className="outline-none">
+        <Tabs.Content id={pagesNestedHash('list')} value="list" className="outline-none">
           <ListPageDemo />
         </Tabs.Content>
-        <Tabs.Content value="details" className="outline-none">
+        <Tabs.Content id={pagesNestedHash('details')} value="details" className="outline-none">
           <DetailsPageDemo />
         </Tabs.Content>
       </Tabs.Root>

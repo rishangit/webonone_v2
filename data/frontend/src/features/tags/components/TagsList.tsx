@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
+  DropdownMenuSeparator,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -12,13 +12,12 @@ import type { Tag } from '@/shared/types/data.types'
 
 interface TagsListProps {
   items: Tag[]
+  onEdit: (id: string) => void
   onDeleted: (id: string) => void
   canMutate: boolean
 }
 
-export function TagsList({ items, onDeleted, canMutate }: TagsListProps) {
-  const navigate = useNavigate()
-
+export function TagsList({ items, onEdit, onDeleted, canMutate }: TagsListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete tag "${name}"?`)) return
     onDeleted(id)
@@ -47,9 +46,10 @@ export function TagsList({ items, onDeleted, canMutate }: TagsListProps) {
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
-              <DropdownMenuItem onClick={() => navigate(`/tags/${item.id}`)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-destructive"
+                className="text-destructive focus:text-destructive"
                 onClick={() => handleDelete(item.id, item.name)}
               >
                 Delete

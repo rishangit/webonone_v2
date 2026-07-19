@@ -11,35 +11,8 @@ import {
   switchMap,
   withLatestFrom,
 } from 'rxjs/operators'
-import type { PaginatedResult } from '@/shared/types/data.types'
+import type { CatalogFeatureState, CatalogListQuery, PaginatedResult } from './types'
 import { isFresh, serializeQuery } from './cacheUtils'
-
-export type CatalogListQuery = {
-  page?: number
-  pageSize?: number
-  q?: string
-  status?: string
-  force?: boolean
-  extra?: Record<string, string>
-}
-
-export interface CatalogFeatureState<T> {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
-  q: string
-  status: string
-  queryKey: string
-  lastFetchedAt: number | null
-  listStatus: 'idle' | 'loading' | 'error'
-  listError: string | null
-  detail: T | null
-  detailId: string | null
-  detailLastFetchedAt: number | null
-  detailStatus: 'idle' | 'loading' | 'saving' | 'error'
-  detailError: string | null
-}
 
 type ListLoader<T> = (query: CatalogListQuery) => Promise<PaginatedResult<T>>
 type GetLoader<T> = (id: string) => Promise<T>

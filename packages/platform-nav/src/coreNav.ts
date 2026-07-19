@@ -90,6 +90,24 @@ export function profileSentinelToExternalPath(sentinel: string): string | null {
   return null
 }
 
+/** Internal sentinels for Identity sub-nav in consumer AppLayouts (not routed on core origin). */
+export const IDENTITY_NAV_SENTINELS = {
+  users: '/identity/users',
+} as const
+
+export function isIdentityNavSentinel(to: string): boolean {
+  return to === IDENTITY_NAV_SENTINELS.users
+}
+
+export function identitySentinelToExternalPath(sentinel: string): string | null {
+  switch (sentinel) {
+    case IDENTITY_NAV_SENTINELS.users:
+      return '/users'
+    default:
+      return null
+  }
+}
+
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
   {
@@ -157,6 +175,19 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
 export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
   { kind: 'item', path: '/companies', label: 'Companies' },
+  {
+    kind: 'group',
+    label: 'Identity',
+    children: [
+      {
+        kind: 'item',
+        path: IDENTITY_NAV_SENTINELS.users,
+        label: 'Users',
+        externalService: 'identity',
+        externalPath: '/users',
+      },
+    ],
+  },
   {
     kind: 'group',
     label: 'Data',

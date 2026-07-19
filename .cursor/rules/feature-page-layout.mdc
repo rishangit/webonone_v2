@@ -33,6 +33,41 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 - Auth forms (`AuthLayout` card — intentional narrow login/register UI)
 - Showcase demo pages that intentionally preview other layouts
 
+## List collection pages (required)
+
+Paginated collection pages inside `FeaturePage` must follow the UI Kit **list page** composition:
+
+```text
+FeaturePage (title, description, actions: ListSearchField + ListFilterTrigger + CTA)
+  ListFilterPanel (panel filters only — not text search)
+  Alert (optional errors)
+  ListPageBody
+    div.flex-1 → ItemList | ItemListEmpty (row actions in ItemListMenu)
+    Pagination className="mt-auto" pageSizeOptions={[12, 24, 48]}
+```
+
+| Rule | Detail |
+|------|--------|
+| Search | `ListSearchField` in `FeaturePage` `actions` — never in page body |
+| Filters | `ListFilterTrigger` + `ListFilterPanel` for status/date/MIME filters |
+| Primary CTA | `Button type="button" size="sm"` with a leading `Plus` icon (`h-4 w-4`, `aria-hidden`) **and** a visible label (e.g. `Add tag`) — icon **+ text**, not icon-only; last in `actions`, gated on permission |
+| Loading | `usePlatformLoading('Loading …')` — AppLayout owns overlay; hide list body while loading |
+| Row actions | `ItemListMenu` — no inline row `Button` groups; destructive item last, after `DropdownMenuSeparator`, styled `text-destructive focus:text-destructive` |
+| Embed peers | Same markup + `min-h-full` flex chain — [platform-shell-navigation.mdc](platform-shell-navigation.mdc) |
+
+Header CTA reference:
+
+```tsx
+<Button type="button" size="sm" onClick={() => setDialog({})}>
+  <Plus className="h-4 w-4" aria-hidden />
+  Add tag
+</Button>
+```
+
+Canonical demo: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` (`ListPageDemo`). Production references: `data/.../CatalogListPage.tsx`, `email/.../HistoryPage.tsx`, `media/.../LibraryPage.tsx`.
+
+Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · Rules: [item-list-pagination.mdc](item-list-pagination.mdc), [list-filter-panel.mdc](list-filter-panel.mdc), [loading-empty-states.mdc](loading-empty-states.mdc).
+
 ## Reference implementations
 
 | Consumer | Path |
@@ -43,7 +78,9 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 | System Theme | `webonone-v2/frontend/src/features/settings/system-theme/pages/SystemThemePage.tsx` |
 | Email templates | `email/frontend/src/features/templates/pages/TemplatesPage.tsx` |
 | Email queue | `email/frontend/src/features/queue/pages/QueuePage.tsx` |
-| Showcase demo | `ui-kit/showcase/src/pages/ComponentsPage.tsx` — Layout section |
+| Data catalog | `data/frontend/src/features/catalog/pages/CatalogListPage.tsx` |
+| Media library | `media/frontend/src/features/media/pages/LibraryPage.tsx` |
+| Showcase list demo | `ui-kit/showcase/src/pages/pages/PageDemos.tsx` — `ListPageDemo` |
 | Components | `ui-kit/package/src/layouts/FeaturePage.tsx`, `PageHeader.tsx` |
 
 ## Verification
