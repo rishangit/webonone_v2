@@ -63,7 +63,7 @@
     "deploy:data": "npm run deploy -w data-root",
     "build:sms": "npm run build -w sms-root",
     "deploy:sms": "npm run deploy -w sms-root",
-    "deploy:all": "npm run build:all && npm run stage:deploy -w identity-root && npm run stage:deploy -w webonone-v2-root && npm run stage:deploy -w media-root && npm run stage:deploy -w email-root && npm run stage:deploy -w data-root",
+    "deploy:all": "npm run build:all && npm run stage:deploy -w identity-root && npm run stage:deploy -w webonone-v2-root && npm run stage:deploy -w media-root && npm run stage:deploy -w email-root && npm run stage:deploy -w data-root && npm run stage:deploy -w sms-root",
     "deploy:email": "npm run deploy -w email-root",
     "deploy:media": "npm run deploy -w media-root",
     "deploy:webonone": "npm run deploy -w webonone-v2-root",
