@@ -1,0 +1,151 @@
+---
+description: Implementation plan for spec 1.12.0 — SMS microservice + Android SMS gateway mobile app (v1 SMS-only)
+alwaysApply: false
+globs: sms/**, mobile/**, identity/backend/**, webonone-v2/**
+---
+
+# Implementation plan — Spec 1.12.0
+
+## Summary
+
+Add a standalone **`sms/`** microservice (cloned from `email/`) that queues text/OTP messages and exposes a **device API**, plus a new **`mobile/`** Expo app (React Native + React Native Web) whose v1 scope is **login + configure this phone as an SMS gateway**. The phone SIM is the transport: devices poll for scoped pending messages and send them via `SmsManager`. Super admins register **platform** devices (system SMS); company owners register **company** devices (their SMS).
+
+See [01-overview.md](./01-overview.md), [02-sms-service-scaffold.md](./02-sms-service-scaffold.md), [03-gateway-and-sending-engine.md](./03-gateway-and-sending-engine.md), [04-mobile-app.md](./04-mobile-app.md), [05-platform-integration.md](./05-platform-integration.md), [06-sms-templates.md](./06-sms-templates.md).
+
+| Project | Touch |
+|---------|--------|
+| `sms/` | New FE (admin) + BE + migrations; primary scope |
+| `mobile/` | New Expo app — login + gateway config |
+| `identity/backend/` | Optional `smsClient.service.ts` phone OTP |
+| `webonone-v2/` | Optional SMS nav / company send |
+| root `package.json` | `sms/` + `mobile/` workspaces, `dev:sms`, `build:sms`, `mobile*` |
+
+---
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.12.0` |
+| Dev (service) | `npm run dev:sms` (FE **3016** / BE **4016**) |
+| Dev (mobile) | `npm run mobile` / `mobile:android` / `mobile:web` |
+| Package build | Chain shared builds in `sms/` `build` like `email/` (store-kit, ui-kit, theme, platform-embed) |
+| Env / migrations | `sms/backend/.env` (`webonone_sms`, `JWT_SECRET`, `SMS_SERVICE_API_KEY`, OTP/worker vars); `mobile/.env` (`IDENTITY_API_BASE_URL`, `SMS_API_BASE_URL`) |
+| Agent | Add `sms-agent` + skill (copy `data-agent`); follow `microservice-architecture.mdc`, `nodejs-express.mdc`, feature-store + form-creation skills |
+
+---
+
+## Phase 1 — SMS service scaffold
+
+**Goal:** [02-sms-service-scaffold.md](./02-sms-service-scaffold.md) — standalone shell, auth, roles, device scope, root wiring.
+
+**Exit criteria:** `dev:sms` login shell + `/health`; own DB `webonone_sms`.
+
+| Task | Paths / detail |
+|------|----------------|
+| Clone service | Copy `email/` → `sms/`; rename package + ports (3016/4016); DB `webonone_sms` |
+| Middleware | `auth.ts` (local JWT verify), `internalAuth.ts` (`X-Sms-Service-Key`), `deviceAuth.ts` (`X-Sms-Device-Key`), `validateBody.ts`, `errorHandler.ts` |
+| Base migrations | `sms_users`, `sms_companies` |
+| Root wiring | workspaces `sms`, `sms/frontend`, `sms/backend`, `mobile`; `dev:sms`, `build:sms`, `migrate:sms`; append `dev:sms` to root `dev` |
+
+**Verify:** `npm run type-check -w sms-root` · `npm run dev:sms`
+
+---
+
+## Phase 2 — Gateway + sending engine
+
+**Goal:** [03-gateway-and-sending-engine.md](./03-gateway-and-sending-engine.md) — queue, OTP, device API, scope routing, reaper, internal API.
+
+**Exit criteria:** scoped claim works via `FOR UPDATE SKIP LOCKED`; status writes `sms_history`; OTP verify enforces expiry + attempts.
+
+| Task | Paths / detail |
+|------|----------------|
+| Domain migrations | `sms_devices` (scope/company_id/device_key_hash/status/sim_slots), `sms_templates`(+versions), `sms_queue` (scope, assigned_device_id), `sms_history`, `sms_otps`, `sms_audit_log`; seed platform `otp`/`phone_verification`/`password_reset`/`generic` |
+| Templates (system + company) | scope/override resolution, role-scoped CRUD (server-derived scope/company_id), char/segment counter — [06-sms-templates.md](./06-sms-templates.md) |
+| Queue service | enqueue → resolve template (company override → platform) → render `{{key}}` → insert `pending` with scope |
+| Device routes | `POST /device/register` (scope from user JWT), `/heartbeat`, `GET /device/messages` (scoped claim), `POST /device/messages/:id/status` |
+| OTP service | 6-digit, SHA-256 hash, `OTP_TTL_SECONDS`, attempt limit; send via `otp` template |
+| Reaper | `workers/reaper.ts`: un-stick processing, retry backoff `[60s,300s,900s]`, offline devices, expire OTPs |
+| Internal API | `POST /internal/send`, `/internal/otp/send`, `/internal/otp/verify` |
+| Public API | send/test, otp send/verify, devices admin (approve/revoke), queue/history, templates, dashboard |
+
+**Verify:** `npm run migrate -w sms-root`; simulate a device claim with a curl using a device key.
+
+---
+
+## Phase 3 — Mobile app (login + gateway)
+
+**Goal:** [04-mobile-app.md](./04-mobile-app.md) — Expo app; login + configure gateway; Android send.
+
+**Exit criteria:** physical Android: login → register → approve in admin → test send → SMS received → `sent` history.
+
+| Task | Paths / detail |
+|------|----------------|
+| Expo scaffold | `mobile/` TS + Expo Router + RN Web; `metro.config.js` watchFolders/nodeModulesPaths |
+| UI layer | NativeWind + gluestack; `tailwind.config.js` extends `@webonone/theme`; `mobile/src/ui/` wrappers |
+| Auth | Identity login; JWT in `expo-secure-store`; `apiClient` Bearer + 401 |
+| Native module | `modules/sms-sender` — `SmsManager` + `SubscriptionManager`; `SEND_SMS` via `app.config.ts` plugin |
+| Gateway feature | register (+approval-pending), SIM select, foreground service poll→send→status, heartbeat; status/log screens |
+| Admin devices | `sms/frontend` Devices screen: approve/revoke, live status |
+| iOS | Android-only gateway state; login still works |
+
+**Verify:** `npm run mobile:web` renders login; `npm run type-check -w @webonone/mobile`; Android dev build end-to-end.
+
+---
+
+## Phase 4 — Platform integration and release
+
+**Goal:** [05-platform-integration.md](./05-platform-integration.md).
+
+| Task | Detail |
+|------|--------|
+| Identity phone OTP | `smsClient.service.ts` → `/internal/otp/send` + verify; `SMS_API_BASE_URL`/`SMS_SERVICE_API_KEY` env |
+| WebOnOne (optional) | SMS nav redirect + company internal send |
+| Security | device key hashing, server-derived scope, company isolation, OTP protection, audit |
+| Release | run [05](./05-platform-integration.md) checklist |
+
+**Verify:** release checklist; type-check affected workspaces.
+
+---
+
+## Cross-service integration
+
+- **Auth:** mobile + SMS admin verify Identity JWT locally (shared `JWT_SECRET`, `iss=webonone-identity`, `aud=webonone-api`). No per-request Identity call.
+- **Internal:** Identity/WebOnOne → SMS via `X-Sms-Service-Key` HTTP (no event bus in this repo).
+- **Device:** phone → SMS via `X-Sms-Device-Key`; scope server-derived at register.
+- **No shared DB**; `company_id`/`user_id` are CHAR(21) copies.
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec No 1.12.0 | TBD | All |
+| SMS service repo scaffold | TBD | Phase 1 |
+| SMS gateway + sending engine | TBD | Phase 2 |
+| Mobile app (login + gateway) | TBD | Phase 3 |
+| Platform integration and release | TBD | Phase 4 |
+
+---
+
+## Risks and open items
+
+- **Battery/doze:** Android may kill the foreground service; document battery-optimization exemption; consider WorkManager fallback.
+- **Carrier limits:** SIMs throttle bulk SMS; add per-device rate limiting (future) and surface failures.
+- **Expo Go unsupported:** native SMS module needs a dev/prebuild build — not Expo Go.
+- **Monorepo Metro:** workspace hoisting can break Metro resolution; pin `metro.config.js` watchFolders/nodeModulesPaths.
+- **ClickUp IDs:** placeholders `TBD` until the 1.12.0 user story + subtasks are created.
+
+---
+
+## Final verification
+
+```bash
+npm run migrate -w sms-root
+npm run type-check -w sms-root
+npm run build -w sms-root
+npm run type-check -w @webonone/mobile
+```
+
+Manual: physical Android → login → register gateway → approve in SMS admin → test send → SMS delivered → `sent` in history; verify platform vs company scope isolation.

@@ -20,22 +20,31 @@
     "data",
     "data/frontend",
     "data/backend",
+    "sms",
+    "sms/frontend",
+    "sms/backend",
+    "mobile",
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n ui-kit,identity,webonone,media,email,data -c magenta,blue,cyan,yellow,green,white \"npm run dev:ui-kit\" \"npm run dev:identity\" \"npm run dev:webonone\" \"npm run dev:media\" \"npm run dev:email\" \"npm run dev:data\"",
+    "dev": "concurrently -n ui-kit,identity,webonone,media,email,data,sms -c magenta,blue,cyan,yellow,green,white,red \"npm run dev:ui-kit\" \"npm run dev:identity\" \"npm run dev:webonone\" \"npm run dev:media\" \"npm run dev:email\" \"npm run dev:data\" \"npm run dev:sms\"",
     "dev:ui-kit": "npm run dev -w ui-kit-root",
     "dev:identity": "npm run dev -w identity-root",
     "dev:webonone": "npm run dev -w webonone-v2-root",
     "dev:media": "npm run dev -w media-root",
     "dev:email": "npm run dev -w email-root",
     "dev:data": "npm run dev -w data-root",
+    "dev:sms": "npm run dev -w sms-root",
+    "mobile": "npm run start -w @webonone/mobile",
+    "mobile:android": "npm run android -w @webonone/mobile",
+    "mobile:web": "npm run web -w @webonone/mobile",
     "install:packages": "npm install -w @webonone/platform-nav -w @webonone/platform-embed -w @webonone/theme -w @webonone/ui-kit -w @webonone/media-embed -w @webonone/store-kit",
     "install:identity": "npm install -w @webonone/identity-frontend -w @webonone/identity-backend",
     "install:webonone": "npm install -w @webonone/webonone-frontend -w @webonone/webonone-backend",
     "install:media": "npm install -w @webonone/media-frontend -w @webonone/media-backend",
     "install:email": "npm install -w @webonone/email-frontend -w @webonone/email-backend",
     "install:data": "npm install -w @webonone/data-frontend -w @webonone/data-backend",
+    "install:sms": "npm install -w @webonone/sms-frontend -w @webonone/sms-backend",
     "install:all": "npm install && npm run install:packages && npm run install:identity && npm run install:webonone && npm run install:media && npm run install:email && npm run install:data && npm ls --workspaces --depth=0",
     "build:ui-kit": "npm run build -w @webonone/ui-kit",
     "build:platform-nav": "npm run build -w @webonone/platform-nav",
@@ -52,6 +61,8 @@
     "build:email": "npm run build -w email-root",
     "build:data": "npm run build -w data-root",
     "deploy:data": "npm run deploy -w data-root",
+    "build:sms": "npm run build -w sms-root",
+    "deploy:sms": "npm run deploy -w sms-root",
     "deploy:all": "npm run build:all && npm run stage:deploy -w identity-root && npm run stage:deploy -w webonone-v2-root && npm run stage:deploy -w media-root && npm run stage:deploy -w email-root && npm run stage:deploy -w data-root",
     "deploy:email": "npm run deploy -w email-root",
     "deploy:media": "npm run deploy -w media-root",
@@ -61,12 +72,14 @@
     "migrate:media": "npm run migrate -w media-root",
     "migrate:email": "npm run migrate -w email-root",
     "migrate:data": "npm run migrate -w data-root",
-    "migrate:all": "npm run migrate:identity && npm run migrate:webonone && npm run migrate:media && npm run migrate:email && npm run migrate:data",
+    "migrate:sms": "npm run migrate -w sms-root",
+    "migrate:all": "npm run migrate:identity && npm run migrate:webonone && npm run migrate:media && npm run migrate:email && npm run migrate:data && npm run migrate:sms",
     "type-check": "npm run type-check --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
+    "ajv": "^8.20.0",
     "concurrently": "^9.1.2",
     "eslint": "^9.28.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -75,5 +88,10 @@
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.33.1"
+  },
+  "overrides": {
+    "eslint": {
+      "ajv": "^6.14.0"
+    }
   }
 }
