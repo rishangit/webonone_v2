@@ -28,11 +28,19 @@ async function request<T>(baseUrl: string, path: string, options: RequestOptions
     ...extraHeaders,
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...rest,
-    headers: finalHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  let response: Response
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...rest,
+      headers: finalHeaders,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Network request failed'
+    throw new Error(
+      `${reason}. Check that Identity/SMS backends are running and reachable from this device (use your PC's LAN IP in mobile/.env, not localhost).`,
+    )
+  }
 
   if (response.status === 401) {
     onUnauthorized?.()

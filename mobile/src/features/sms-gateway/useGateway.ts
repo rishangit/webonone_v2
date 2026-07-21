@@ -14,6 +14,7 @@ import {
 import type { GatewayLogEntry, GatewayState } from './gatewayTypes'
 
 const POLL_INTERVAL_MS = 5_000
+const APPROVAL_POLL_INTERVAL_MS = 10_000
 const HEARTBEAT_EVERY_TICKS = 6 // ~30s at 5s cadence
 const MAX_BATCH = 5
 const MAX_LOG = 50
@@ -40,6 +41,7 @@ export function useGateway() {
   })
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const approvalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tickRef = useRef(0)
   const runningRef = useRef(false)
   const selectedSubRef = useRef<number | null>(null)
@@ -51,6 +53,29 @@ export function useGateway() {
   const appendLog = useCallback((entry: GatewayLogEntry) => {
     setState((prev) => ({ ...prev, log: [entry, ...prev.log].slice(0, MAX_LOG) }))
   }, [])
+
+  /** Sync device + approval from the server (works while pending; does not require Start). */
+  const syncStatus = useCallback(async (): Promise<boolean> => {
+    const key = await secureStorage.getDeviceKey()
+    if (!key) return false
+    try {
+      const slots = await getSimSlots()
+      const { device, approved } = await smsApi.heartbeat({
+        appVersion,
+        simSlots: toSimSlotInfo(slots),
+      })
+      patch({
+        registered: true,
+        device: device as SmsDevice,
+        approved,
+        error: null,
+      })
+      return approved
+    } catch (err) {
+      patch({ error: err instanceof Error ? err.message : 'Status check failed' })
+      return false
+    }
+  }, [patch])
 
   const loadSims = useCallback(async () => {
     const slots = await getSimSlots()
@@ -167,6 +192,7 @@ export function useGateway() {
     }, POLL_INTERVAL_MS)
   }, [patch, requestPermission, runTick, state.permissionGranted])
 
+  // Bootstrap: restore registration + sync approval from server (heartbeat works while pending).
   useEffect(() => {
     let active = true
     void (async () => {
@@ -179,13 +205,38 @@ export function useGateway() {
       if (state.supported) {
         await loadSims()
       }
+      if (deviceId !== null && active) {
+        await syncStatus()
+      }
     })()
     return () => {
       active = false
       if (timerRef.current) clearInterval(timerRef.current)
+      if (approvalTimerRef.current) clearInterval(approvalTimerRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // While registered but not yet approved, poll heartbeat so Start unlocks after admin approval.
+  useEffect(() => {
+    if (!state.registered || state.approved || state.running) {
+      if (approvalTimerRef.current) {
+        clearInterval(approvalTimerRef.current)
+        approvalTimerRef.current = null
+      }
+      return
+    }
+    void syncStatus()
+    approvalTimerRef.current = setInterval(() => {
+      void syncStatus()
+    }, APPROVAL_POLL_INTERVAL_MS)
+    return () => {
+      if (approvalTimerRef.current) {
+        clearInterval(approvalTimerRef.current)
+        approvalTimerRef.current = null
+      }
+    }
+  }, [state.registered, state.approved, state.running, syncStatus])
 
   return {
     state,

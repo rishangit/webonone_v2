@@ -38,7 +38,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     typedRoutes: true,
   },
   extra: {
-    identityApiBaseUrl: process.env.IDENTITY_API_BASE_URL ?? 'http://localhost:4011',
-    smsApiBaseUrl: process.env.SMS_API_BASE_URL ?? 'http://localhost:4016',
+    identityApiBaseUrl: process.env.IDENTITY_API_BASE_URL ?? 'http://localhost:4011/api/v1',
+    smsApiBaseUrl: process.env.SMS_API_BASE_URL ?? 'http://localhost:4016/api/v1',
   },
 })

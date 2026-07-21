@@ -2,8 +2,8 @@ import { env } from '@/shared/config/env'
 import { createApiClient } from '@/shared/services/apiClient'
 import type { DeviceScope, SmsRole, UserProfile } from '@/shared/types'
 
-const identityClient = createApiClient(`${env.identityApiBaseUrl}/api/v1`)
-const smsClient = createApiClient(`${env.smsApiBaseUrl}/api/v1`)
+const identityClient = createApiClient(env.identityApiBaseUrl)
+const smsClient = createApiClient(env.smsApiBaseUrl)
 
 interface IdentityLoginResponse {
   accessToken: string

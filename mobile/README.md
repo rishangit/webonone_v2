@@ -24,13 +24,16 @@ This is a new workspace. Install dependencies from the repo root once:
 npm install
 ```
 
-Copy env and point the base URLs at your machine's LAN IP (not `localhost`) so a
-physical phone can reach the dev backends:
+Copy env and point the API base URLs at your machine's LAN IP (not `localhost`) so a
+physical phone can reach the dev backends. Include `/api/v1` — same convention as
+`VITE_IDENTITY_API_BASE_URL` / `VITE_API_BASE_URL` in other services. Set
+`HOST=0.0.0.0` in `identity/backend/.env` and `sms/backend/.env`, then restart
+those backends:
 
 ```bash
 cp .env.example .env
-# IDENTITY_API_BASE_URL=http://<lan-ip>:4010
-# SMS_API_BASE_URL=http://<lan-ip>:4016
+# IDENTITY_API_BASE_URL=http://<lan-ip>:4011/api/v1
+# SMS_API_BASE_URL=http://<lan-ip>:4016/api/v1
 ```
 
 ## Run

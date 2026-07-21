@@ -3,7 +3,7 @@ import { createApiClient } from './apiClient'
 import { secureStorage } from './secureStorage'
 import type { DeviceMessage, DeviceStatusReport, SmsDevice } from '@/shared/types'
 
-const client = createApiClient(`${env.smsApiBaseUrl}/api/v1`)
+const client = createApiClient(env.smsApiBaseUrl)
 
 const DEVICE_KEY_HEADER = 'X-Sms-Device-Key'
 
