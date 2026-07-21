@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
+import { ensureLocalUser } from './user.service.js'
 
 export async function logAudit(input: {
   userId?: string | null
@@ -8,6 +9,10 @@ export async function logAudit(input: {
   entityId?: string | null
   metadata?: Record<string, unknown>
 }) {
+  if (input.userId) {
+    await ensureLocalUser({ userId: input.userId })
+  }
+
   await db('sms_audit_log').insert({
     id: nanoid(),
     user_id: input.userId ?? null,
