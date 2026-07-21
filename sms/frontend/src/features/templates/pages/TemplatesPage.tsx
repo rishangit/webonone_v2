@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -13,13 +14,14 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { templatesActions } from '@/features/templates/store'
 import type { SmsTemplate } from '@/shared/types/sms.types'
-import type { CreateTemplateBody } from '@/shared/services/smsApi'
+import type { CreateTemplateBody, UpdateTemplateBody } from '@/shared/services/smsApi'
 import { TemplatesList } from '../components/TemplatesList'
-import { TemplateCreateDialog } from '../components/TemplateCreateDialog'
+import { TemplateFormDialog } from '../components/TemplateFormDialog'
+
+type DialogMode = 'create' | 'edit'
 
 export function TemplatesPage() {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
   const { accessToken } = useAppSelector((s) => s.auth)
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
   const {
@@ -31,11 +33,16 @@ export function TemplatesPage() {
     createStatus,
     createError,
     createdId,
+    detailStatus,
+    detailError,
   } = useAppSelector((s) => s.templates)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
-  const [createOpen, setCreateOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<DialogMode>('create')
+  const [editingTemplate, setEditingTemplate] = useState<SmsTemplate | null>(null)
+  const [awaitingUpdate, setAwaitingUpdate] = useState(false)
 
   const canManageCompany = role === 'super_admin' || role === 'company_admin'
   const loading = listStatus === 'loading' && templates.length === 0
@@ -58,13 +65,24 @@ export function TemplatesPage() {
 
   useEffect(() => {
     if (createStatus === 'idle' && createdId) {
-      setCreateOpen(false)
-      const newId = createdId
+      setDialogOpen(false)
       dispatch(templatesActions.clearCreate())
       dispatch(templatesActions.loadListRequested({ force: true }))
-      navigate(`/templates/${newId}`)
     }
-  }, [createStatus, createdId, dispatch, navigate])
+  }, [createStatus, createdId, dispatch])
+
+  useEffect(() => {
+    if (!awaitingUpdate) return
+    if (detailStatus === 'idle' && !detailError) {
+      setAwaitingUpdate(false)
+      setDialogOpen(false)
+      setEditingTemplate(null)
+      dispatch(templatesActions.loadListRequested({ force: true }))
+    }
+    if (detailStatus === 'error') {
+      setAwaitingUpdate(false)
+    }
+  }, [awaitingUpdate, detailError, detailStatus, dispatch])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -78,18 +96,49 @@ export function TemplatesPage() {
     dispatch(templatesActions.deleteRequested({ id: template.id }))
   }
 
+  function handleOpenCreate() {
+    setDialogMode('create')
+    setEditingTemplate(null)
+    dispatch(templatesActions.clearCreate())
+    setDialogOpen(true)
+  }
+
+  function handleOpenEdit(template: SmsTemplate) {
+    setDialogMode('edit')
+    setEditingTemplate(template)
+    setDialogOpen(true)
+  }
+
   function handleCreate(values: CreateTemplateBody) {
     dispatch(templatesActions.createRequested(values))
   }
 
+  function handleUpdate(values: UpdateTemplateBody) {
+    if (!editingTemplate) return
+    setAwaitingUpdate(true)
+    dispatch(templatesActions.updateRequested({ id: editingTemplate.id, body: values }))
+  }
+
+  function handleDialogOpenChange(open: boolean) {
+    setDialogOpen(open)
+    if (!open) {
+      setEditingTemplate(null)
+      setAwaitingUpdate(false)
+      dispatch(templatesActions.clearCreate())
+    }
+  }
+
   const visibleTemplates = filteredTemplates.slice((page - 1) * pageSize, page * pageSize)
+  const isSaving =
+    dialogMode === 'create' ? createStatus === 'saving' : detailStatus === 'saving'
+  const dialogError = dialogMode === 'create' ? createError : awaitingUpdate ? detailError : null
 
   return (
     <FeaturePage
       title="Templates"
       description="Manage platform and company SMS templates. Company templates override platform defaults."
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <ListSearchField
             value={searchQuery}
             onChange={(value) => {
@@ -101,8 +150,9 @@ export function TemplatesPage() {
             aria-label="Search templates"
           />
           {canManageCompany ? (
-            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-              New template
+            <Button type="button" size="sm" onClick={handleOpenCreate}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add template
             </Button>
           ) : null}
         </div>
@@ -118,6 +168,7 @@ export function TemplatesPage() {
           <div className="flex-1">
             <TemplatesList
               templates={visibleTemplates}
+              onEdit={handleOpenEdit}
               onToggleActive={handleToggleActive}
               onDelete={handleDelete}
               busyId={togglingId ?? deletingId}
@@ -139,12 +190,21 @@ export function TemplatesPage() {
         </ListPageBody>
       ) : null}
 
-      <TemplateCreateDialog
-        open={createOpen}
-        isSaving={createStatus === 'saving'}
-        error={createError}
-        onOpenChange={setCreateOpen}
-        onSubmit={handleCreate}
+      <TemplateFormDialog
+        open={dialogOpen}
+        mode={dialogMode}
+        template={editingTemplate}
+        isSaving={isSaving}
+        error={dialogError}
+        onOpenChange={handleDialogOpenChange}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
+        onHostedSaved={() => {
+          setEditingTemplate(null)
+          setAwaitingUpdate(false)
+          dispatch(templatesActions.clearCreate())
+          dispatch(templatesActions.loadListRequested({ force: true }))
+        }}
       />
     </FeaturePage>
   )

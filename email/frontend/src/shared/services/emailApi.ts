@@ -11,6 +11,14 @@ import type {
   TemplateVersion,
 } from '@/shared/types/email.types'
 
+export type CreateTemplateBody = {
+  slug: string
+  name: string
+  subject: string
+  htmlBody: string
+  textBody: string
+}
+
 export type UpdateTemplateBody = {
   name?: string
   subject?: string
@@ -69,6 +77,13 @@ export const emailApi = {
 
   getTemplate(id: string) {
     return apiClient<EmailTemplate>(`/templates/${id}`)
+  },
+
+  createTemplate(body: CreateTemplateBody) {
+    return apiClient<EmailTemplate>('/templates', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
   },
 
   updateTemplate(id: string, body: UpdateTemplateBody) {

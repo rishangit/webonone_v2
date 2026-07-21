@@ -101,6 +101,62 @@ export async function getTemplateById(id: string): Promise<TemplateDto | null> {
   return row ? rowToDto(row) : null
 }
 
+export async function createTemplate(
+  input: {
+    slug: string
+    name: string
+    subject: string
+    htmlBody: string
+    textBody: string
+    scope: TemplateScope
+    companyId: string | null
+    requiredKeys?: string[]
+    isActive?: boolean
+  },
+  userId?: string,
+): Promise<TemplateDto> {
+  const existing = await db<EmailTemplateRow>('email_templates')
+    .where({ slug: input.slug, scope: input.scope })
+    .modify((qb) => {
+      if (input.companyId) qb.where({ company_id: input.companyId })
+      else qb.whereNull('company_id')
+    })
+    .first()
+  if (existing) {
+    throw new Error(`A template with slug "${input.slug}" already exists in this scope`)
+  }
+
+  const id = nanoid()
+  await db('email_templates').insert({
+    id,
+    slug: input.slug,
+    name: input.name,
+    subject: input.subject,
+    html_body: input.htmlBody,
+    text_body: input.textBody,
+    scope: input.scope,
+    company_id: input.companyId,
+    is_active: input.isActive ?? true,
+    required_keys: JSON.stringify(input.requiredKeys ?? []),
+    created_at: db.fn.now(3),
+    updated_at: db.fn.now(3),
+  })
+
+  await db('email_template_versions').insert({
+    id: nanoid(),
+    template_id: id,
+    subject: input.subject,
+    html_body: input.htmlBody,
+    text_body: input.textBody,
+    version_number: 1,
+    created_by: userId ?? null,
+    created_at: db.fn.now(3),
+  })
+
+  const created = await db<EmailTemplateRow>('email_templates').where({ id }).first()
+  return rowToDto(created!)
+}
+
 export async function validateTemplatePayload(
   template: EmailTemplateRow,
   payload: Record<string, string>,

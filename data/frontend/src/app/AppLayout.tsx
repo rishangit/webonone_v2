@@ -26,8 +26,9 @@ import { PlatformEmbedLayout } from '@/features/auth/components/PlatformEmbedLay
 import { parsePlatformReturnUrl, hasPlatformHandoff } from '@/features/auth/utils/platformReturn'
 import type { DataRole } from '@/features/auth/types/auth.types'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
+import { getSmsRedirectOptions } from '@/features/sms/utils/redirectToSms'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
-import { withEmailNavActions } from '@/features/shell/utils/externalNavActions'
+import { withEmailNavActions, withSmsNavActions } from '@/features/shell/utils/externalNavActions'
 
 export function AppLayout() {
   return (
@@ -109,6 +110,36 @@ function AppLayoutShellContent() {
     ],
   )
 
+  const handleSmsNavClick = useCallback(
+    async (sentinel: string) => {
+      if (!accessToken || !effectiveReturnUrl) {
+        return
+      }
+      clearError()
+      try {
+        await redirect(
+          getSmsRedirectOptions({
+            accessToken,
+            returnUrl: effectiveReturnUrl,
+            extraSearchParams: relayThemeQueryParams(searchParams),
+            navVariant: platform.coreNavVariant ?? 'main',
+            smsNavSentinel: sentinel,
+          }),
+        )
+      } catch {
+        // surfaced via hook
+      }
+    },
+    [
+      accessToken,
+      clearError,
+      effectiveReturnUrl,
+      platform.coreNavVariant,
+      redirect,
+      searchParams,
+    ],
+  )
+
   const nav = useMemo(() => {
     const base = buildAppNav(role, {
       returnUrl: effectiveReturnUrl,
@@ -119,10 +150,14 @@ function AppLayoutShellContent() {
           : null),
       searchParams: isPlatformMode ? searchParams : undefined,
     })
-    return effectiveReturnUrl ? withEmailNavActions(base, handleEmailNavClick) : base
+    if (!effectiveReturnUrl) {
+      return base
+    }
+    return withSmsNavActions(withEmailNavActions(base, handleEmailNavClick), handleSmsNavClick)
   }, [
     effectiveReturnUrl,
     handleEmailNavClick,
+    handleSmsNavClick,
     isPlatformMode,
     platform.coreNavVariant,
     returnUrlFromQuery,

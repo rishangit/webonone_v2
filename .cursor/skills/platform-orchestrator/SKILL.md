@@ -55,7 +55,12 @@ Sequence cross-service work: Identity before WebOnOne.
 
 **Platform navigation (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). Embed peers: **`FeaturePage`** + scroll on **`PlatformEmbedShell` `<main>`** (whole page, not inner lists). Satellites use auth-code redirect for cross-service hops.
 
-**Core-hosted dialogs:** If an embedded peer needs a dialog to dim/cover the whole WebOnOne shell, route through [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc): typed `postMessage` request with `requestId`, `PlatformServiceFrame` origin/source validation, WebOnOne host-rendered `CustomDialog`, result/cancel back to the iframe.
+**Core-hosted dialogs:** If an embedded peer needs a dialog to dim/cover the whole WebOnOne shell, follow [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc):
+
+- **Media picker/crop** → `media-dialog-*` + `PlatformMediaDialogHost` (Media agent + WebOnOne).
+- **Peer form/CRUD dialogs** → `peer-dialog-*` + `PlatformPeerDialogHost`: host owns **sizes + header + footer**; peer owns `/embed/dialogs/…` **body only** (`useRequestPlatformPeerDialog` / `usePlatformPeerDialogSubmit`). New dialogs are **peer-only** (no WebOnOne change). Also see [dialog-windows.mdc](../../rules/dialog-windows.mdc).
+
+Delegate: peer FE agent for the form + route; webonone-agent only if changing the one-time host.
 
 ## Prompt templates
 

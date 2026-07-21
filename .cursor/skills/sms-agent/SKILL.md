@@ -25,6 +25,8 @@ description: SMS service agent for webonone-platform. Handles sms/ frontend, bac
 - [feature-store skill](../feature-store/SKILL.md) — catalog CRUD via `@webonone/store-kit` factories
 - [form-creation skill](../form-creation/SKILL.md) — matching Zod validation FE + BE
 - [item-list skill](../item-list/SKILL.md) — device/queue/history list rows
+- [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — embed in WebOnOne; core-hosted peer dialogs
+- [dialog-windows.mdc](../../rules/dialog-windows.mdc) — CustomDialog header/body/footer; peer-dialog chrome split
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
 
 ## Ports and env
@@ -36,6 +38,12 @@ description: SMS service agent for webonone-platform. Handles sms/ frontend, bac
 
 `JWT_SECRET` must match Identity backend. Database: `webonone_sms`.
 Key backend env: `SMS_SERVICE_API_KEY`, `OTP_TTL_SECONDS`, `OTP_MAX_ATTEMPTS`, `DEVICE_STALE_MS`, `PROCESSING_TIMEOUT_MS`.
+
+## Core-hosted form dialogs
+
+Template create/edit dialogs use **peer-dialog** when embedded in WebOnOne: host owns sizes/header/footer; `/embed/dialogs/templates/…` is body-only. See [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) future recipe.
+
+Reference: `sms/frontend/src/features/templates/components/TemplateFormDialog.tsx`, `…/pages/TemplateFormEmbedPage.tsx`.
 
 ## Key paths
 

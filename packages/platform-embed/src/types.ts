@@ -4,7 +4,14 @@ export const PLATFORM_EMBED_QUERY = {
   PARENT_ORIGIN: 'parentOrigin',
   SCOPE: 'scope',
   MODE: 'mode',
+  DIALOG_REQUEST_ID: 'dialogRequestId',
 } as const
+
+/** Peer dialog routes must live under this prefix (host allowlist). */
+export const PLATFORM_PEER_DIALOG_PATH_PREFIX = '/embed/dialogs/' as const
+
+/** Mirrors `@webonone/ui-kit` CustomDialog size presets — kept local to avoid a ui-kit dependency. */
+export type PlatformDialogSizePreset = 'small' | 'medium' | 'large' | 'xlarge' | 'auto'
 
 export type IdentityUserPickerMode = 'single' | 'multiple'
 
@@ -15,6 +22,15 @@ export const PLATFORM_MESSAGE_TYPES = {
   MEDIA_DIALOG_REQUEST: 'webonone:platform:media-dialog-request',
   MEDIA_DIALOG_RESULT: 'webonone:platform:media-dialog-result',
   MEDIA_DIALOG_CANCEL: 'webonone:platform:media-dialog-cancel',
+  PEER_DIALOG_REQUEST: 'webonone:platform:peer-dialog-request',
+  PEER_DIALOG_RESULT: 'webonone:platform:peer-dialog-result',
+  PEER_DIALOG_CANCEL: 'webonone:platform:peer-dialog-cancel',
+  /** Dialog iframe → shell: form saved successfully. */
+  PEER_DIALOG_COMPLETE: 'webonone:platform:peer-dialog-complete',
+  /** Shell → dialog iframe: footer primary button clicked. */
+  PEER_DIALOG_SUBMIT: 'webonone:platform:peer-dialog-submit',
+  /** Dialog iframe → shell: disable/enable host footer while saving. */
+  PEER_DIALOG_BUSY: 'webonone:platform:peer-dialog-busy',
 } as const
 
 export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
@@ -173,6 +189,53 @@ export type PlatformMediaDialogCancelMessage = {
   reason?: string
 }
 
+export type PlatformPeerDialogRequestMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_REQUEST
+  requestId: string
+  path: string
+  title: string
+  sizeWidth: PlatformDialogSizePreset
+  sizeHeight: PlatformDialogSizePreset
+  description?: string
+  /** Host CustomDialog footer Cancel label (default Cancel). */
+  cancelLabel?: string
+  /** Host CustomDialog footer primary action label. */
+  submitLabel: string
+}
+
+export type PlatformPeerDialogResultMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_RESULT
+  requestId: string
+  payload?: unknown
+}
+
+export type PlatformPeerDialogCancelMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_CANCEL
+  requestId: string
+  reason?: string
+}
+
+/** Dialog iframe → WebOnOne shell after a successful save. */
+export type PlatformPeerDialogCompleteMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_COMPLETE
+  requestId: string
+  payload?: unknown
+}
+
+/** Shell → dialog iframe when the host footer primary button is clicked. */
+export type PlatformPeerDialogSubmitMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_SUBMIT
+  requestId: string
+}
+
+/** Dialog iframe → shell to sync footer busy / label while saving. */
+export type PlatformPeerDialogBusyMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_BUSY
+  requestId: string
+  busy: boolean
+  submitLabel?: string
+}
+
 export type PlatformEmbedMessage =
   | PlatformInitMessage
   | PlatformReadyMessage
@@ -190,6 +253,12 @@ export type PlatformEmbedMessage =
   | PlatformMediaDialogRequestMessage
   | PlatformMediaDialogResultMessage
   | PlatformMediaDialogCancelMessage
+  | PlatformPeerDialogRequestMessage
+  | PlatformPeerDialogResultMessage
+  | PlatformPeerDialogCancelMessage
+  | PlatformPeerDialogCompleteMessage
+  | PlatformPeerDialogSubmitMessage
+  | PlatformPeerDialogBusyMessage
 
 export type BuildPlatformEmbedUrlOptions = {
   peerOrigin: string
@@ -470,5 +539,123 @@ export function isPlatformMediaDialogCancelMessage(
   return (
     message.type === PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_CANCEL &&
     hasStringProperty(message, 'requestId')
+  )
+}
+
+const PLATFORM_DIALOG_SIZE_PRESETS: ReadonlySet<string> = new Set([
+  'small',
+  'medium',
+  'large',
+  'xlarge',
+  'auto',
+])
+
+export function isPlatformDialogSizePreset(value: unknown): value is PlatformDialogSizePreset {
+  return typeof value === 'string' && PLATFORM_DIALOG_SIZE_PRESETS.has(value)
+}
+
+/** Relative path under `/embed/dialogs/` with no traversal. */
+export function isAllowedPlatformPeerDialogPath(path: string): boolean {
+  if (typeof path !== 'string' || !path.startsWith(PLATFORM_PEER_DIALOG_PATH_PREFIX)) {
+    return false
+  }
+  if (path.includes('..') || path.includes('//') || path.includes('\\')) {
+    return false
+  }
+  return path.length > PLATFORM_PEER_DIALOG_PATH_PREFIX.length
+}
+
+export function isPlatformPeerDialogRequestMessage(
+  data: unknown,
+): data is PlatformPeerDialogRequestMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_REQUEST &&
+    hasStringProperty(message, 'requestId') &&
+    hasStringProperty(message, 'path') &&
+    hasStringProperty(message, 'title') &&
+    hasStringProperty(message, 'submitLabel') &&
+    isAllowedPlatformPeerDialogPath(message.path as string) &&
+    isPlatformDialogSizePreset(message.sizeWidth) &&
+    isPlatformDialogSizePreset(message.sizeHeight) &&
+    (message.description === undefined || typeof message.description === 'string') &&
+    (message.cancelLabel === undefined || typeof message.cancelLabel === 'string')
+  )
+}
+
+export function isPlatformPeerDialogResultMessage(
+  data: unknown,
+): data is PlatformPeerDialogResultMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_RESULT &&
+    hasStringProperty(message, 'requestId')
+  )
+}
+
+export function isPlatformPeerDialogCancelMessage(
+  data: unknown,
+): data is PlatformPeerDialogCancelMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_CANCEL &&
+    hasStringProperty(message, 'requestId') &&
+    (message.reason === undefined || typeof message.reason === 'string')
+  )
+}
+
+export function isPlatformPeerDialogCompleteMessage(
+  data: unknown,
+): data is PlatformPeerDialogCompleteMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_COMPLETE &&
+    hasStringProperty(message, 'requestId')
+  )
+}
+
+export function isPlatformPeerDialogSubmitMessage(
+  data: unknown,
+): data is PlatformPeerDialogSubmitMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_SUBMIT &&
+    hasStringProperty(message, 'requestId')
+  )
+}
+
+export function isPlatformPeerDialogBusyMessage(
+  data: unknown,
+): data is PlatformPeerDialogBusyMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_BUSY &&
+    hasStringProperty(message, 'requestId') &&
+    typeof message.busy === 'boolean' &&
+    (message.submitLabel === undefined || typeof message.submitLabel === 'string')
   )
 }

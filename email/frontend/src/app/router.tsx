@@ -28,6 +28,11 @@ const TemplatePreviewPage = lazy(() =>
     default: m.TemplatePreviewPage,
   })),
 )
+const TemplateFormEmbedPage = lazy(() =>
+  import('@/features/templates/pages/TemplateFormEmbedPage').then((m) => ({
+    default: m.TemplateFormEmbedPage,
+  })),
+)
 const HistoryPage = lazy(() =>
   import('@/features/history/pages/HistoryPage').then((m) => ({ default: m.HistoryPage })),
 )
@@ -96,6 +101,26 @@ export function App() {
               <RoleRoute roles={[...adminRoles]}>
                 <LazyRoute>
                   <TemplatesPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/embed/dialogs/templates/create"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
+                  <TemplateFormEmbedPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/embed/dialogs/templates/:id/edit"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
+                  <TemplateFormEmbedPage />
                 </LazyRoute>
               </RoleRoute>
             }

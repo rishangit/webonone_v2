@@ -23,7 +23,7 @@ Read [AGENTS.md](../../AGENTS.md) for the delegation map.
 
 Before coding, list which roots the task affects.
 
-Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login` → often **Identity + WebOnOne** (see `.cursor/rules/microservice-architecture.mdc`).
+Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `peer-dialog` → often **Identity/Email/Data/SMS + WebOnOne** (see `.cursor/rules/platform-shell-navigation.mdc` and `.cursor/skills/platform-orchestrator/SKILL.md`).
 
 **Parent handles directly (no subagent):** root `package.json`, workspace wiring, `.cursor/` config that is not service-specific.
 

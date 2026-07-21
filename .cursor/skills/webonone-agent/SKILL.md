@@ -40,9 +40,18 @@ Reference: `webonone-v2/frontend/src/app/AppLayout.tsx`, `features/session/compo
 
 ## Core-hosted peer dialogs
 
-When an embedded peer requests a dialog that should feel opened by WebOnOne core, WebOnOne owns the host-level `CustomDialog`. Use the platform bridge from [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc): `PlatformServiceFrame` validates `event.origin` and `event.source`, then a WebOnOne host/provider renders the dialog and sends result/cancel back by `requestId`.
+WebOnOne owns host-level `CustomDialog` chrome for embedded peers. See [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc).
 
-Reference: `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`.
+| Kind | Host | When |
+|------|------|------|
+| **Media** | `PlatformMediaDialogHost` | Media picker/crop (`media-dialog-*`) |
+| **Peer forms** | `PlatformPeerDialogHost` | Email/Data/SMS (and future) CRUD forms (`peer-dialog-*`) |
+
+**Peer forms — chrome split:** host = sizes + header + footer (Cancel/`submitLabel`); iframe body = form fields only. Footer Submit → `sendPlatformPeerDialogSubmit`; peer completes via `sendPlatformPeerDialogComplete` / busy via `sendPlatformPeerDialogBusy`.
+
+**New peer dialogs:** no WebOnOne code — peer adds `/embed/dialogs/…` + `useRequestPlatformPeerDialog` (prefix allowlist already on host). Wire `onPeerDialogRequest={openPeerDialog}` on `PlatformPeerFrame` (already done).
+
+Reference: `features/shell/PlatformPeerDialogHost.tsx`, `features/media/PlatformMediaDialogHost.tsx`, `features/shell/pages/PlatformPeerFrame.tsx`.
 
 ## Verification
 

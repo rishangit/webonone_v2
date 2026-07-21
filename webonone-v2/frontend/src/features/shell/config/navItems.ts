@@ -1,14 +1,35 @@
-import { Building2, History, Home, Mail, Palette, Settings, Users } from 'lucide-react'
+import {
+  Building2,
+  Database,
+  History,
+  Home,
+  Layers,
+  Mail,
+  MessageSquare,
+  Package,
+  Palette,
+  Rows3,
+  Ruler,
+  Send,
+  Settings,
+  Shapes,
+  Smartphone,
+  Tag,
+  Users,
+  Wrench,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   DATA_NAV_SENTINELS,
   EMAIL_NAV_SENTINELS,
   IDENTITY_NAV_SENTINELS,
+  SMS_NAV_SENTINELS,
   getPlatformNavDefs,
   isDataNavSentinel,
   isEmailNavSentinel,
   isIdentityNavSentinel,
   isProfileNavSentinel,
+  isSmsNavSentinel,
   type CoreNavDef,
   type CoreNavLeaf,
   type PlatformNavVariant,
@@ -20,10 +41,21 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
   [IDENTITY_NAV_SENTINELS.users]: Users,
+  [EMAIL_NAV_SENTINELS.send]: Send,
+  [EMAIL_NAV_SENTINELS.queue]: Rows3,
   [EMAIL_NAV_SENTINELS.history]: History,
   [EMAIL_NAV_SENTINELS.templates]: Mail,
-  [DATA_NAV_SENTINELS.dashboard]: Home,
-  [DATA_NAV_SENTINELS.tags]: Mail,
+  [DATA_NAV_SENTINELS.tags]: Tag,
+  [DATA_NAV_SENTINELS.units]: Ruler,
+  [DATA_NAV_SENTINELS.attributes]: Shapes,
+  [DATA_NAV_SENTINELS.products]: Package,
+  [DATA_NAV_SENTINELS.services]: Wrench,
+  [DATA_NAV_SENTINELS.spaces]: Layers,
+  [SMS_NAV_SENTINELS.send]: Send,
+  [SMS_NAV_SENTINELS.devices]: Smartphone,
+  [SMS_NAV_SENTINELS.queue]: Rows3,
+  [SMS_NAV_SENTINELS.history]: History,
+  [SMS_NAV_SENTINELS.templates]: MessageSquare,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
@@ -32,7 +64,8 @@ const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings: Settings,
   Identity: Users,
   Email: Mail,
-  Data: Mail,
+  Data: Database,
+  SMS: MessageSquare,
 }
 
 function iconForPath(path: string): LucideIcon {
@@ -40,7 +73,11 @@ function iconForPath(path: string): LucideIcon {
 }
 
 function resolveItemPath(item: CoreNavLeaf): string {
-  if (item.externalService === 'email' || item.externalService === 'data') {
+  if (
+    item.externalService === 'email' ||
+    item.externalService === 'data' ||
+    item.externalService === 'sms'
+  ) {
     return item.path
   }
   return item.path
@@ -88,4 +125,10 @@ export const mainNav = buildPlatformNav('main')
 export const superAdminNav = buildPlatformNav('superAdmin')
 export const memberNav = buildPlatformNav('member')
 
-export { isEmailNavSentinel, isDataNavSentinel, isIdentityNavSentinel, isProfileNavSentinel }
+export {
+  isEmailNavSentinel,
+  isDataNavSentinel,
+  isIdentityNavSentinel,
+  isProfileNavSentinel,
+  isSmsNavSentinel,
+}

@@ -16,6 +16,8 @@ import {
 
   isProfileNavSentinel,
 
+  isSmsNavSentinel,
+
   performPlatformLogout,
 
 } from '@webonone/platform-nav'
@@ -40,6 +42,8 @@ import { formatSessionRoleLabel } from '@/features/session/utils/formatSessionRo
 
 import { PlatformMediaDialogProvider } from '@/features/media/PlatformMediaDialogHost'
 
+import { PlatformPeerDialogProvider } from '@/features/shell/PlatformPeerDialogHost'
+
 import {
 
   PlatformLoadingProvider,
@@ -54,6 +58,7 @@ function isPlatformPeerEmbedPath(pathname: string): boolean {
 
   return (
     isEmailNavSentinel(pathname) ||
+    isSmsNavSentinel(pathname) ||
     isDataNavSentinel(pathname) ||
     isIdentityNavSentinel(pathname) ||
     isProfileNavSentinel(pathname)
@@ -71,7 +76,11 @@ export function AppLayout() {
 
       <PlatformMediaDialogProvider>
 
-        <AppLayoutContent />
+        <PlatformPeerDialogProvider>
+
+          <AppLayoutContent />
+
+        </PlatformPeerDialogProvider>
 
       </PlatformMediaDialogProvider>
 
@@ -202,6 +211,8 @@ function AppLayoutContent() {
           onNavItemNavigate={onNavItemNavigate}
 
           onNavItemPrefetch={prefetchNavTarget}
+
+          accordionNavGroups
 
         >
 

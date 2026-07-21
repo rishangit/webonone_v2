@@ -11,6 +11,7 @@ import type { EmailTemplate } from '@/shared/types/email.types'
 
 interface TemplatesListProps {
   templates: EmailTemplate[]
+  onEdit: (template: EmailTemplate) => void
   onToggleActive: (template: EmailTemplate) => void
   busyId: string | null
 }
@@ -23,14 +24,12 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleString()
 }
 
-export function TemplatesList({ templates, onToggleActive, busyId }: TemplatesListProps) {
+export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: TemplatesListProps) {
   const navigate = useNavigate()
   const items = Array.isArray(templates) ? templates : []
 
   if (items.length === 0) {
-    return (
-      <ItemListEmpty>No templates found for your scope.</ItemListEmpty>
-    )
+    return <ItemListEmpty>No templates found for your scope.</ItemListEmpty>
   }
 
   return (
@@ -48,7 +47,7 @@ export function TemplatesList({ templates, onToggleActive, busyId }: TemplatesLi
               </p>
             </ItemListContent>
             <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
-              <DropdownMenuItem onClick={() => navigate(`/templates/${template.id}`)} disabled={isBusy}>
+              <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -60,7 +59,10 @@ export function TemplatesList({ templates, onToggleActive, busyId }: TemplatesLi
               <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
                 {template.isActive ? 'Deactivate' : 'Activate'}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/templates/${template.id}`)} disabled={isBusy}>
+              <DropdownMenuItem
+                onClick={() => navigate(`/templates/${template.id}`)}
+                disabled={isBusy}
+              >
                 Version history
               </DropdownMenuItem>
             </ItemListMenu>

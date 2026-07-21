@@ -43,6 +43,12 @@ Consumers (WebOnOne, Identity): `handleEmailClick` in `AppLayout` + `redirectToE
 
 **Unified loading overlay:** `features/auth/context/PlatformLoadingContext.tsx`, `app/LazyRoute.tsx`, single overlay in `app/AppLayout.tsx` — [loading-empty-states.mdc](loading-empty-states.mdc).
 
+## Core-hosted form dialogs
+
+When Email is embedded in WebOnOne, form dialogs (e.g. templates) must use the **peer-dialog** bridge — host `CustomDialog` header/footer + `/embed/dialogs/…` body — not an iframe-local `CustomDialog`. Recipe: [platform-shell-navigation.mdc](platform-shell-navigation.mdc); sizing/footer rules: [dialog-windows.mdc](dialog-windows.mdc).
+
+Reference: `email/frontend/src/features/templates/components/TemplateFormDialog.tsx`.
+
 ## UI Kit
 
 All interactive UI must use `@webonone/ui-kit` — see [ui-kit-consumption.mdc](ui-kit-consumption.mdc). Do not duplicate UI Kit primitives.

@@ -1,0 +1,97 @@
+---
+description: Implementation plan for spec 1.12.1 — WebOnOne SMS left nav (embed like Email)
+alwaysApply: false
+globs: packages/platform-nav/**, webonone-v2/frontend/**, sms/frontend/**, email/frontend/**, data/frontend/**, identity/frontend/**
+---
+
+# Implementation plan — Spec 1.12.1
+
+## Summary
+
+Add an **SMS** group to the WebOnOne left nav (**Send SMS**, **Devices**, **Queue**, **History**, **Templates**) using the same **iframe embed** channel as Email/Data. Extend `@webonone/platform-nav` sentinels; host peer in WebOnOne; verify SMS embed; wire satellite outbound redirects.
+
+See [02-webonone-sms-nav.md](./02-webonone-sms-nav.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.12.1` |
+| Prerequisite | SMS service from 1.12.0 runnable (`dev:sms`) |
+| Services for manual test | Identity + WebOnOne + SMS (+ Data/Email for satellite hops) |
+| New env | WebOnOne FE: `VITE_SMS_ORIGIN`; satellites: same when adding outbound |
+| Packages | Rebuild / type-check `@webonone/platform-nav` before consumer type-check if needed |
+
+---
+
+## Phase 1 — platform-nav
+
+**Goal:** SMS sentinels + nav group.
+
+**Exit criteria:** Member nav has no SMS; main/superAdmin resolve five SMS hrefs when `externalOrigins.sms` set.
+
+| Task | Paths |
+|------|-------|
+| Types + sentinels + helpers | `packages/platform-nav/src/coreNav.ts` |
+| Exports | `packages/platform-nav/src/index.ts` |
+| Tests | `packages/platform-nav/src/coreNav.test.ts` |
+
+**Verify:** package tests + type-check for platform-nav.
+
+---
+
+## Phase 2 — WebOnOne host
+
+**Goal:** Left-nav clicks embed SMS in `#main-content`.
+
+**Exit criteria:** All five SMS children load correct iframe paths; `embedMain` active.
+
+| Task | Paths |
+|------|-------|
+| Peer config | `webonone-v2/frontend/src/features/sms/utils/smsConfig.ts` |
+| Env example | `webonone-v2/frontend/.env.example` |
+| Peer frame | `webonone-v2/frontend/src/features/shell/pages/PlatformPeerFrame.tsx` |
+| Router | `webonone-v2/frontend/src/app/router.tsx` — `sms/*` |
+| Nav icons / resolve | `webonone-v2/frontend/src/features/shell/config/navItems.ts` |
+| Embed path + prefetch | `webonone-v2/frontend/src/app/AppLayout.tsx`, `routePrefetch.ts` |
+
+**Reference:** Email peer wiring in the same files.
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 3 — SMS peer + satellite outbound
+
+**Goal:** Embed works end-to-end; satellites hop to SMS correctly.
+
+**Exit criteria:** WebOnOne embed content-ready; Data/Email → SMS Templates does not land on core Home.
+
+| Task | Paths |
+|------|-------|
+| Embed verify | `sms/frontend` AppLayout / PlatformEmbedLayout / FeaturePages for five routes |
+| CSP / parents | `sms/frontend` vite CSP + `.env.example` |
+| Outbound (per satellite) | `features/sms/utils/smsConfig.ts`, `redirectToSms.ts`, `AppLayout.tsx`, `.env.example` |
+
+**Reference:** `webonone-v2/.../email/utils/redirectToEmail.ts`, [1.11.2](../1.11.2/02-cross-service-nav-fix.md)
+
+**Verify:** `npm run type-check -w sms-root` (+ email-root / data-root / identity-root as touched)
+
+---
+
+## Forbidden
+
+- Reimplementing SMS admin pages inside `webonone-v2`
+- Auth-code full-page redirect for WebOnOne left-nav SMS clicks (use embed)
+- Per-route `VITE_SMS_*_URL` env keys
+- Showing SMS group to `member` nav variant
+- Putting Dashboard/Test in the **core** SMS group in this spec
+
+---
+
+## Acceptance (quick)
+
+1. WebOnOne admin → SMS → each of five items embeds correct SMS route.
+2. Member → no SMS menu.
+3. Satellite → SMS sub-item → correct SMS path.
+4. Type-checks green for touched packages/services.

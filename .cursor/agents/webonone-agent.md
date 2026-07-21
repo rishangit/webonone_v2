@@ -22,6 +22,7 @@ Follow the user's task and existing code in `webonone-v2/`. Use `.cursor/rules/`
 - Express/JWT: `.cursor/rules/nodejs-express.mdc`
 - Service boundaries: `.cursor/rules/microservice-architecture.mdc`
 - WebOnOne globs: `.cursor/rules/webonone-v2-project.mdc`
+- Platform shell / peer dialogs: `.cursor/rules/platform-shell-navigation.mdc` · skill § Core-hosted peer dialogs
 
 ## Verification
 

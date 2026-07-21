@@ -7,23 +7,27 @@ import {
   emailSentinelToExternalPath,
   identitySentinelToExternalPath,
   profileSentinelToExternalPath,
+  smsSentinelToExternalPath,
   toCoreNavQueryValue,
 } from '@webonone/platform-nav'
 import { useAppSelector } from '@/app/store/hooks'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
 import { getEmailOrigin } from '@/features/email/utils/emailConfig'
+import { getSmsOrigin } from '@/features/sms/utils/smsConfig'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
 
 const PEER_LABELS: Record<PlatformPeerId, string> = {
   email: 'Email',
   data: 'Data',
   identity: 'Profile',
+  sms: 'SMS',
 }
 
-export type PlatformPeerId = 'email' | 'data' | 'identity'
+export type PlatformPeerId = 'email' | 'data' | 'identity' | 'sms'
 
 type PlatformPeerFrameProps = {
   peer: PlatformPeerId
@@ -31,7 +35,10 @@ type PlatformPeerFrameProps = {
 
 function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
   if (peer === 'email') {
-    return emailSentinelToExternalPath(pathname) ?? '/history'
+    return emailSentinelToExternalPath(pathname) ?? '/send'
+  }
+  if (peer === 'sms') {
+    return smsSentinelToExternalPath(pathname) ?? '/send'
   }
   if (peer === 'identity') {
     return (
@@ -40,12 +47,15 @@ function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
       '/profile'
     )
   }
-  return dataSentinelToExternalPath(pathname) ?? '/'
+  return dataSentinelToExternalPath(pathname) ?? '/tags'
 }
 
 function resolvePeerOrigin(peer: PlatformPeerId): string {
   if (peer === 'email') {
     return getEmailOrigin()
+  }
+  if (peer === 'sms') {
+    return getSmsOrigin()
   }
   if (peer === 'identity') {
     return getIdentityOrigin()
@@ -59,6 +69,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const [frameLoading, setFrameLoading] = useState(true)
   const { openMediaDialog } = usePlatformMediaDialog()
+  const { openPeerDialog } = usePlatformPeerDialog()
 
   const peerPath = useMemo(
     () => resolvePeerPath(peer, location.pathname),
@@ -95,6 +106,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         className="block h-full min-h-0 w-full flex-1 border-0 bg-transparent"
         onLoadingChange={handleLoadingChange}
         onMediaDialogRequest={openMediaDialog}
+        onPeerDialogRequest={openPeerDialog}
       />
     </div>
   )

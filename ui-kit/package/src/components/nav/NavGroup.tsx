@@ -19,6 +19,9 @@ interface NavGroupProps {
   children: NavItemConfig[]
   activePath?: string
   collapsed?: boolean
+  /** Controlled open state. When set, local toggle state is ignored. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   onNavItemNavigate?: (to: string) => void
   onNavItemPrefetch?: (to: string) => void
   onNavigate?: () => void
@@ -36,13 +39,25 @@ function NavGroup({
   children,
   activePath,
   collapsed = false,
+  open: openProp,
+  onOpenChange,
   onNavItemNavigate,
   onNavItemPrefetch,
   onNavigate,
   className,
 }: NavGroupProps) {
-  const [open, setOpen] = useState(isChildActive(activePath, children))
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(isChildActive(activePath, children))
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : uncontrolledOpen
   const groupActive = isChildActive(activePath, children)
+
+  function handleToggle() {
+    const next = !open
+    if (!isControlled) {
+      setUncontrolledOpen(next)
+    }
+    onOpenChange?.(next)
+  }
 
   if (collapsed) {
     return (
@@ -103,7 +118,7 @@ function NavGroup({
     <div className={className}>
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={handleToggle}
         aria-expanded={open}
         className={cn(
           'flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:py-2',

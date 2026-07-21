@@ -95,3 +95,4 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
 | Loading and empty states (unified overlay, `LoadingState`, `ItemListEmpty`) | [loading-empty-states.mdc](loading-empty-states.mdc) |
 | Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |
+| Core-hosted peer dialogs (header/body/footer on WebOnOne shell) | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”), `dialog-windows.mdc` |

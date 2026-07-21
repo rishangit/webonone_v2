@@ -41,9 +41,16 @@ Wire `initApiClient(store)` in `app/store/index.ts`. Epics import `@/shared/serv
 
 ## Embedded peer dialogs
 
-When Identity runs embedded in WebOnOne and needs a dialog to feel core-owned, do not render `CustomDialog` inside the Identity iframe. Send a typed platform dialog request to `parentOrigin` and handle result/cancel by `requestId`; keep the iframe-local `CustomDialog` only as standalone fallback.
+When Identity is embedded in WebOnOne and a dialog must feel core-owned, do **not** render `CustomDialog` inside the Identity page iframe.
 
-Reference: `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
+| Dialog type | Contract | Notes |
+|-------------|----------|-------|
+| **Media** (profile photo, etc.) | `media-dialog-*` | Host mounts Media frames — see `ProfileMediaSelectorModal.tsx` |
+| **Peer-owned forms** (future Identity CRUD modals) | `peer-dialog-*` | Host header/footer + `/embed/dialogs/…` body — same recipe as Email/Data in [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) |
+
+Standalone: keep local `CustomDialog` (header / body / footer) when `parentOrigin` is absent.
+
+Reference: `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx` (media); Email `TemplateFormDialog.tsx` (peer form pattern).
 
 ## Verification
 

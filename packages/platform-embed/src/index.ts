@@ -3,6 +3,8 @@ export {
   IDENTITY_USER_PICKER_MESSAGE_TYPES,
   PLATFORM_EMBED_QUERY,
   PLATFORM_MESSAGE_TYPES,
+  PLATFORM_PEER_DIALOG_PATH_PREFIX,
+  isAllowedPlatformPeerDialogPath,
   isDataTagPickerCancelMessage,
   isDataTagPickerCreatedMessage,
   isDataTagPickerCreateRequestMessage,
@@ -14,10 +16,17 @@ export {
   isIdentityUserPickerSelectMessage,
   isIdentityUserPickerSetSelectionMessage,
   isPlatformContentReadyMessage,
+  isPlatformDialogSizePreset,
   isPlatformInitMessage,
   isPlatformMediaDialogCancelMessage,
   isPlatformMediaDialogRequestMessage,
   isPlatformMediaDialogResultMessage,
+  isPlatformPeerDialogBusyMessage,
+  isPlatformPeerDialogCancelMessage,
+  isPlatformPeerDialogCompleteMessage,
+  isPlatformPeerDialogRequestMessage,
+  isPlatformPeerDialogResultMessage,
+  isPlatformPeerDialogSubmitMessage,
   isPlatformReadyMessage,
   type BuildPlatformEmbedUrlOptions,
   type DataTagPickerCancelMessage,
@@ -35,6 +44,7 @@ export {
   type IdentityUserPickerSetSelectionMessage,
   type IdentityUserPickerUser,
   type PlatformContentReadyMessage,
+  type PlatformDialogSizePreset,
   type PlatformEmbedMessage,
   type PlatformInitMessage,
   type PlatformMediaCropAspectPreset,
@@ -43,6 +53,12 @@ export {
   type PlatformMediaDialogMode,
   type PlatformMediaDialogRequestMessage,
   type PlatformMediaDialogResultMessage,
+  type PlatformPeerDialogBusyMessage,
+  type PlatformPeerDialogCancelMessage,
+  type PlatformPeerDialogCompleteMessage,
+  type PlatformPeerDialogRequestMessage,
+  type PlatformPeerDialogResultMessage,
+  type PlatformPeerDialogSubmitMessage,
   type PlatformReadyMessage,
 } from './types'
 
@@ -70,6 +86,13 @@ export {
   sendPlatformMediaDialogCancel,
   sendPlatformMediaDialogRequest,
   sendPlatformMediaDialogResult,
+  sendPlatformPeerDialogBusy,
+  sendPlatformPeerDialogCancel,
+  sendPlatformPeerDialogComplete,
+  sendPlatformPeerDialogDismiss,
+  sendPlatformPeerDialogRequest,
+  sendPlatformPeerDialogResult,
+  sendPlatformPeerDialogSubmit,
   type BuildDataTagCreateUrlOptions,
   type BuildDataTagPickerUrlOptions,
   type BuildIdentityUserPickerUrlOptions,
@@ -100,9 +123,16 @@ export { DataTagCreateFrame, type DataTagCreateFrameProps } from './DataTagCreat
 export {
   PlatformServiceFrame,
   type PlatformMediaDialogResponder,
+  type PlatformPeerDialogResponder,
   type PlatformServiceFrameProps,
 } from './PlatformServiceFrame'
-export { usePlatformEmbedCanvas, ensurePlatformEmbedCanvas, PLATFORM_EMBED_APP_HOST_CLASS, PLATFORM_EMBED_CANVAS_CLASS, PLATFORM_EMBED_ROOT_CLASS } from './usePlatformEmbedCanvas'
+export {
+  usePlatformEmbedCanvas,
+  ensurePlatformEmbedCanvas,
+  PLATFORM_EMBED_APP_HOST_CLASS,
+  PLATFORM_EMBED_CANVAS_CLASS,
+  PLATFORM_EMBED_ROOT_CLASS,
+} from './usePlatformEmbedCanvas'
 export {
   clearServiceAuthSession,
   readServiceAuthSession,
@@ -113,9 +143,22 @@ export {
   useServiceAuthStorageSync,
   type UseServiceAuthStorageSyncOptions,
 } from './useServiceAuthStorageSync'
-export { usePlatformEmbedAuth, type UsePlatformEmbedAuthOptions, type UsePlatformEmbedAuthResult } from './usePlatformEmbedAuth'
+export {
+  usePlatformEmbedAuth,
+  type UsePlatformEmbedAuthOptions,
+  type UsePlatformEmbedAuthResult,
+} from './usePlatformEmbedAuth'
 export {
   usePlatformEmbedContentReady,
   type UsePlatformEmbedContentReadyOptions,
   type UsePlatformEmbedContentReadyResult,
 } from './usePlatformEmbedContentReady'
+export {
+  useRequestPlatformPeerDialog,
+  type UseRequestPlatformPeerDialogOptions,
+  type UseRequestPlatformPeerDialogResult,
+} from './useRequestPlatformPeerDialog'
+export {
+  usePlatformPeerDialogSubmit,
+  type UsePlatformPeerDialogSubmitOptions,
+} from './usePlatformPeerDialogSubmit'

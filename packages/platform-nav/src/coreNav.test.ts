@@ -2,9 +2,18 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
   CORE_NAV_VARIANT_SUPER_ADMIN,
+  DATA_NAV_SENTINELS,
+  dataSentinelToExternalPath,
+  EMAIL_NAV_SENTINELS,
+  emailSentinelToExternalPath,
   getCoreOriginFromReturnUrl,
+  isDataNavSentinel,
+  isEmailNavSentinel,
+  isSmsNavSentinel,
   parsePlatformNavVariant,
   resolvePlatformNavUrls,
+  SMS_NAV_SENTINELS,
+  smsSentinelToExternalPath,
   toCoreNavQueryValue,
 } from './coreNav.ts'
 
@@ -39,10 +48,25 @@ describe('coreNav', () => {
     const emailGroup = nav.find((item) => item.kind === 'group' && item.label === 'Email')
     assert.ok(emailGroup?.kind === 'group')
     if (emailGroup?.kind === 'group') {
-      assert.equal(emailGroup.children.length, 2)
-      assert.equal(emailGroup.children[0]?.href, 'http://localhost:3014/history')
-      assert.equal(emailGroup.children[1]?.href, 'http://localhost:3014/templates')
+      assert.equal(emailGroup.children.length, 4)
+      assert.equal(emailGroup.children[0]?.href, 'http://localhost:3014/send')
+      assert.equal(emailGroup.children[0]?.label, 'Send Email')
+      assert.equal(emailGroup.children[1]?.href, 'http://localhost:3014/queue')
+      assert.equal(emailGroup.children[1]?.label, 'Queue')
+      assert.equal(emailGroup.children[2]?.href, 'http://localhost:3014/history')
+      assert.equal(emailGroup.children[3]?.href, 'http://localhost:3014/templates')
     }
+  })
+
+  it('maps Email sentinels to external paths', () => {
+    assert.equal(isEmailNavSentinel(EMAIL_NAV_SENTINELS.send), true)
+    assert.equal(isEmailNavSentinel(EMAIL_NAV_SENTINELS.queue), true)
+    assert.equal(isEmailNavSentinel('/sms/send'), false)
+    assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.send), '/send')
+    assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.queue), '/queue')
+    assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.history), '/history')
+    assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.templates), '/templates')
+    assert.equal(emailSentinelToExternalPath('/unknown'), null)
   })
 
   it('round-trips nav variant query values', () => {
@@ -58,5 +82,78 @@ describe('coreNav', () => {
     const nav = resolvePlatformNavUrls('http://localhost:3010', 'member')
     const emailGroup = nav.find((item) => item.kind === 'group' && item.label === 'Email')
     assert.equal(emailGroup, undefined)
+  })
+
+  it('resolves SMS sub-nav URLs with external paths', () => {
+    const nav = resolvePlatformNavUrls('http://localhost:3010', 'main', {
+      sms: 'http://localhost:3016',
+    })
+    const smsGroup = nav.find((item) => item.kind === 'group' && item.label === 'SMS')
+    assert.ok(smsGroup?.kind === 'group')
+    if (smsGroup?.kind === 'group') {
+      assert.equal(smsGroup.children.length, 5)
+      assert.equal(smsGroup.children[0]?.href, 'http://localhost:3016/send')
+      assert.equal(smsGroup.children[0]?.label, 'Send SMS')
+      assert.equal(smsGroup.children[1]?.href, 'http://localhost:3016/devices')
+      assert.equal(smsGroup.children[2]?.href, 'http://localhost:3016/queue')
+      assert.equal(smsGroup.children[3]?.href, 'http://localhost:3016/history')
+      assert.equal(smsGroup.children[4]?.href, 'http://localhost:3016/templates')
+    }
+  })
+
+  it('member nav omits SMS group', () => {
+    const nav = resolvePlatformNavUrls('http://localhost:3010', 'member')
+    const smsGroup = nav.find((item) => item.kind === 'group' && item.label === 'SMS')
+    assert.equal(smsGroup, undefined)
+  })
+
+  it('maps SMS sentinels to external paths', () => {
+    assert.equal(isSmsNavSentinel(SMS_NAV_SENTINELS.send), true)
+    assert.equal(isSmsNavSentinel('/email/history'), false)
+    assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.send), '/send')
+    assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.devices), '/devices')
+    assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.queue), '/queue')
+    assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.history), '/history')
+    assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.templates), '/templates')
+    assert.equal(smsSentinelToExternalPath('/unknown'), null)
+  })
+
+  it('resolves Data sub-nav URLs with external paths', () => {
+    const nav = resolvePlatformNavUrls('http://localhost:3010', 'main', {
+      data: 'http://localhost:3005',
+    })
+    const dataGroup = nav.find((item) => item.kind === 'group' && item.label === 'Data')
+    assert.ok(dataGroup?.kind === 'group')
+    if (dataGroup?.kind === 'group') {
+      assert.equal(dataGroup.children.length, 6)
+      assert.equal(dataGroup.children[0]?.href, 'http://localhost:3005/tags')
+      assert.equal(dataGroup.children[0]?.label, 'Tags')
+      assert.equal(dataGroup.children[1]?.href, 'http://localhost:3005/units')
+      assert.equal(dataGroup.children[1]?.label, 'Units')
+      assert.equal(dataGroup.children[2]?.href, 'http://localhost:3005/attributes')
+      assert.equal(dataGroup.children[3]?.href, 'http://localhost:3005/products')
+      assert.equal(dataGroup.children[4]?.href, 'http://localhost:3005/services')
+      assert.equal(dataGroup.children[5]?.href, 'http://localhost:3005/spaces')
+    }
+  })
+
+  it('member nav omits Data group', () => {
+    const nav = resolvePlatformNavUrls('http://localhost:3010', 'member')
+    const dataGroup = nav.find((item) => item.kind === 'group' && item.label === 'Data')
+    assert.equal(dataGroup, undefined)
+  })
+
+  it('maps Data sentinels to external paths', () => {
+    assert.equal(isDataNavSentinel(DATA_NAV_SENTINELS.tags), true)
+    assert.equal(isDataNavSentinel(DATA_NAV_SENTINELS.units), true)
+    assert.equal(isDataNavSentinel('/data/dashboard'), false)
+    assert.equal(isDataNavSentinel('/email/history'), false)
+    assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.tags), '/tags')
+    assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.units), '/units')
+    assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.attributes), '/attributes')
+    assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.products), '/products')
+    assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.services), '/services')
+    assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.spaces), '/spaces')
+    assert.equal(dataSentinelToExternalPath('/unknown'), null)
   })
 })

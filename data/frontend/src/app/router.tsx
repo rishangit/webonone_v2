@@ -20,11 +20,22 @@ const TagPickerPage = lazy(() =>
 const TagCreatePage = lazy(() =>
   import('@/features/tags/pages/TagCreatePage').then((m) => ({ default: m.TagCreatePage })),
 )
+const TagFormEmbedPage = lazy(() =>
+  import('@/features/tags/pages/TagFormEmbedPage').then((m) => ({ default: m.TagFormEmbedPage })),
+)
 const UnitsPage = lazy(() =>
   import('@/features/units/pages/UnitsPage').then((m) => ({ default: m.UnitsPage })),
 )
+const UnitFormEmbedPage = lazy(() =>
+  import('@/features/units/pages/UnitFormEmbedPage').then((m) => ({ default: m.UnitFormEmbedPage })),
+)
 const AttributesPage = lazy(() =>
   import('@/features/attributes/pages/AttributesPage').then((m) => ({ default: m.AttributesPage })),
+)
+const AttributeFormEmbedPage = lazy(() =>
+  import('@/features/attributes/pages/AttributeFormEmbedPage').then((m) => ({
+    default: m.AttributeFormEmbedPage,
+  })),
 )
 const ProductsPage = lazy(() =>
   import('@/features/products/pages/ProductsPage').then((m) => ({ default: m.ProductsPage })),
@@ -34,6 +45,11 @@ const ServicesPage = lazy(() =>
 )
 const SpacesPage = lazy(() =>
   import('@/features/spaces/pages/SpacesPage').then((m) => ({ default: m.SpacesPage })),
+)
+const CatalogFormEmbedPage = lazy(() =>
+  import('@/features/catalog/pages/CatalogFormEmbedPage').then((m) => ({
+    default: m.CatalogFormEmbedPage,
+  })),
 )
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -57,6 +73,22 @@ function entityRoutes(
       element={
         <LazyRoute>
           <ListPage />
+        </LazyRoute>
+      }
+    />
+  )
+}
+
+function embedDialogRoute(
+  path: string,
+  Page: React.LazyExoticComponent<() => React.JSX.Element>,
+) {
+  return (
+    <Route
+      path={path}
+      element={
+        <LazyRoute>
+          <Page />
         </LazyRoute>
       }
     />
@@ -102,6 +134,14 @@ export function App() {
               </LazyRoute>
             }
           />
+          {embedDialogRoute('/embed/dialogs/tags/create', TagFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/tags/:id/edit', TagFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/units/create', UnitFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/units/:id/edit', UnitFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/attributes/create', AttributeFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/attributes/:id/edit', AttributeFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/:kind/create', CatalogFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/:kind/:id/edit', CatalogFormEmbedPage)}
           {entityRoutes('/tags', TagsPage)}
           {entityRoutes('/units', UnitsPage)}
           {entityRoutes('/attributes', AttributesPage)}
