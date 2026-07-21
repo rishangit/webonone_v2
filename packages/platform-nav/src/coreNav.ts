@@ -1,6 +1,6 @@
 export type PlatformNavVariant = 'main' | 'superAdmin' | 'member'
 
-export type ExternalServiceId = 'email' | 'data' | 'identity'
+export type ExternalServiceId = 'email' | 'data' | 'identity' | 'sms'
 
 export type CoreNavLeaf = {
   kind: 'item'
@@ -35,16 +35,27 @@ export type ResolvedCoreNavDef = ResolvedCoreNavLeaf | ResolvedCoreNavGroup
 
 /** Internal sentinels for Email sub-nav in consumer AppLayouts (not routed on core origin). */
 export const EMAIL_NAV_SENTINELS = {
+  send: '/email/send',
+  queue: '/email/queue',
   history: '/email/history',
   templates: '/email/templates',
 } as const
 
 export function isEmailNavSentinel(to: string): boolean {
-  return to === EMAIL_NAV_SENTINELS.history || to === EMAIL_NAV_SENTINELS.templates
+  return (
+    to === EMAIL_NAV_SENTINELS.send ||
+    to === EMAIL_NAV_SENTINELS.queue ||
+    to === EMAIL_NAV_SENTINELS.history ||
+    to === EMAIL_NAV_SENTINELS.templates
+  )
 }
 
 export function emailSentinelToExternalPath(sentinel: string): string | null {
   switch (sentinel) {
+    case EMAIL_NAV_SENTINELS.send:
+      return '/send'
+    case EMAIL_NAV_SENTINELS.queue:
+      return '/queue'
     case EMAIL_NAV_SENTINELS.history:
       return '/history'
     case EMAIL_NAV_SENTINELS.templates:
@@ -56,20 +67,39 @@ export function emailSentinelToExternalPath(sentinel: string): string | null {
 
 /** Internal sentinels for Data sub-nav in consumer AppLayouts (not routed on core origin). */
 export const DATA_NAV_SENTINELS = {
-  dashboard: '/data/dashboard',
   tags: '/data/tags',
+  units: '/data/units',
+  attributes: '/data/attributes',
+  products: '/data/products',
+  services: '/data/services',
+  spaces: '/data/spaces',
 } as const
 
 export function isDataNavSentinel(to: string): boolean {
-  return to === DATA_NAV_SENTINELS.dashboard || to === DATA_NAV_SENTINELS.tags
+  return (
+    to === DATA_NAV_SENTINELS.tags ||
+    to === DATA_NAV_SENTINELS.units ||
+    to === DATA_NAV_SENTINELS.attributes ||
+    to === DATA_NAV_SENTINELS.products ||
+    to === DATA_NAV_SENTINELS.services ||
+    to === DATA_NAV_SENTINELS.spaces
+  )
 }
 
 export function dataSentinelToExternalPath(sentinel: string): string | null {
   switch (sentinel) {
-    case DATA_NAV_SENTINELS.dashboard:
-      return '/'
     case DATA_NAV_SENTINELS.tags:
       return '/tags'
+    case DATA_NAV_SENTINELS.units:
+      return '/units'
+    case DATA_NAV_SENTINELS.attributes:
+      return '/attributes'
+    case DATA_NAV_SENTINELS.products:
+      return '/products'
+    case DATA_NAV_SENTINELS.services:
+      return '/services'
+    case DATA_NAV_SENTINELS.spaces:
+      return '/spaces'
     default:
       return null
   }
@@ -108,32 +138,154 @@ export function identitySentinelToExternalPath(sentinel: string): string | null 
   }
 }
 
+/** Internal sentinels for SMS sub-nav in consumer AppLayouts (not routed on core origin). */
+export const SMS_NAV_SENTINELS = {
+  send: '/sms/send',
+  devices: '/sms/devices',
+  queue: '/sms/queue',
+  history: '/sms/history',
+  templates: '/sms/templates',
+} as const
+
+export function isSmsNavSentinel(to: string): boolean {
+  return (
+    to === SMS_NAV_SENTINELS.send ||
+    to === SMS_NAV_SENTINELS.devices ||
+    to === SMS_NAV_SENTINELS.queue ||
+    to === SMS_NAV_SENTINELS.history ||
+    to === SMS_NAV_SENTINELS.templates
+  )
+}
+
+export function smsSentinelToExternalPath(sentinel: string): string | null {
+  switch (sentinel) {
+    case SMS_NAV_SENTINELS.send:
+      return '/send'
+    case SMS_NAV_SENTINELS.devices:
+      return '/devices'
+    case SMS_NAV_SENTINELS.queue:
+      return '/queue'
+    case SMS_NAV_SENTINELS.history:
+      return '/history'
+    case SMS_NAV_SENTINELS.templates:
+      return '/templates'
+    default:
+      return null
+  }
+}
+
+const SMS_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'SMS',
+  children: [
+    {
+      kind: 'item',
+      path: SMS_NAV_SENTINELS.send,
+      label: 'Send SMS',
+      externalService: 'sms',
+      externalPath: '/send',
+    },
+    {
+      kind: 'item',
+      path: SMS_NAV_SENTINELS.devices,
+      label: 'Devices',
+      externalService: 'sms',
+      externalPath: '/devices',
+    },
+    {
+      kind: 'item',
+      path: SMS_NAV_SENTINELS.queue,
+      label: 'Queue',
+      externalService: 'sms',
+      externalPath: '/queue',
+    },
+    {
+      kind: 'item',
+      path: SMS_NAV_SENTINELS.history,
+      label: 'History',
+      externalService: 'sms',
+      externalPath: '/history',
+    },
+    {
+      kind: 'item',
+      path: SMS_NAV_SENTINELS.templates,
+      label: 'Templates',
+      externalService: 'sms',
+      externalPath: '/templates',
+    },
+  ],
+}
+
+const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Data',
+  children: [
+    {
+      kind: 'item',
+      path: DATA_NAV_SENTINELS.tags,
+      label: 'Tags',
+      externalService: 'data',
+      externalPath: '/tags',
+    },
+    {
+      kind: 'item',
+      path: DATA_NAV_SENTINELS.units,
+      label: 'Units',
+      externalService: 'data',
+      externalPath: '/units',
+    },
+    {
+      kind: 'item',
+      path: DATA_NAV_SENTINELS.attributes,
+      label: 'Attributes',
+      externalService: 'data',
+      externalPath: '/attributes',
+    },
+    {
+      kind: 'item',
+      path: DATA_NAV_SENTINELS.products,
+      label: 'Products',
+      externalService: 'data',
+      externalPath: '/products',
+    },
+    {
+      kind: 'item',
+      path: DATA_NAV_SENTINELS.services,
+      label: 'Services',
+      externalService: 'data',
+      externalPath: '/services',
+    },
+    {
+      kind: 'item',
+      path: DATA_NAV_SENTINELS.spaces,
+      label: 'Spaces',
+      externalService: 'data',
+      externalPath: '/spaces',
+    },
+  ],
+}
+
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
-  {
-    kind: 'group',
-    label: 'Data',
-    children: [
-      {
-        kind: 'item',
-        path: DATA_NAV_SENTINELS.dashboard,
-        label: 'Data Catalog',
-        externalService: 'data',
-        externalPath: '/',
-      },
-      {
-        kind: 'item',
-        path: DATA_NAV_SENTINELS.tags,
-        label: 'Tags',
-        externalService: 'data',
-        externalPath: '/tags',
-      },
-    ],
-  },
+  DATA_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Email',
     children: [
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.send,
+        label: 'Send Email',
+        externalService: 'email',
+        externalPath: '/send',
+      },
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.queue,
+        label: 'Queue',
+        externalService: 'email',
+        externalPath: '/queue',
+      },
       {
         kind: 'item',
         path: EMAIL_NAV_SENTINELS.history,
@@ -150,6 +302,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
       },
     ],
   },
+  SMS_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Settings',
@@ -188,30 +341,25 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
       },
     ],
   },
-  {
-    kind: 'group',
-    label: 'Data',
-    children: [
-      {
-        kind: 'item',
-        path: DATA_NAV_SENTINELS.dashboard,
-        label: 'Data Catalog',
-        externalService: 'data',
-        externalPath: '/',
-      },
-      {
-        kind: 'item',
-        path: DATA_NAV_SENTINELS.tags,
-        label: 'Tags',
-        externalService: 'data',
-        externalPath: '/tags',
-      },
-    ],
-  },
+  DATA_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Email',
     children: [
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.send,
+        label: 'Send Email',
+        externalService: 'email',
+        externalPath: '/send',
+      },
+      {
+        kind: 'item',
+        path: EMAIL_NAV_SENTINELS.queue,
+        label: 'Queue',
+        externalService: 'email',
+        externalPath: '/queue',
+      },
       {
         kind: 'item',
         path: EMAIL_NAV_SENTINELS.history,
@@ -228,6 +376,7 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
       },
     ],
   },
+  SMS_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Settings',

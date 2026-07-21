@@ -41,6 +41,18 @@ Same pattern as Email/WebOnOne — context at `features/auth/context/PlatformLoa
 
 Reference: `data/frontend/src/app/AppLayout.tsx`, `data/frontend/src/app/LazyRoute.tsx`, `features/tags/pages/TagsPage.tsx`.
 
+## Core-hosted form dialogs
+
+Catalog create/edit dialogs must use the **peer-dialog** bridge when embedded in WebOnOne (host header + footer; iframe body only). Do not open `CustomDialog` inside `#main-content`.
+
+Follow [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) + [dialog-windows.mdc](../../rules/dialog-windows.mdc):
+
+1. Standalone: local `CustomDialog` with matching sizes and footer labels.
+2. Embed: `useRequestPlatformPeerDialog` + route under `/embed/dialogs/…` (e.g. tags/units/attributes/catalog).
+3. Embed page: `usePlatformPeerDialogSubmit` + `sendPlatformPeerDialogBusy` / `Complete` — **no** Cancel/Save in the iframe body.
+
+Reference: `features/tags/components/TagFormDialog.tsx`, `features/tags/pages/TagFormEmbedPage.tsx`.
+
 ## Cross-service nav (Data → Email)
 
 When core nav includes Email items from Data satellite:

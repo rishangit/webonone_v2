@@ -181,6 +181,14 @@ Cross-link only — do not duplicate:
 
 Full copy-paste templates: [examples.md](examples.md)
 
+## Core-hosted dialog forms (platform embed)
+
+If the form lives in a `CustomDialog` that must open at WebOnOne shell level when the service is embedded:
+
+- Follow [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) peer-dialog recipe and [dialog-windows.mdc](../../rules/dialog-windows.mdc).
+- Standalone: full `CustomDialog` (header / body / footer) with Zod + `FormField` in the **body**.
+- Embedded: same Zod body on `/embed/dialogs/…`; Cancel/Save stay on the **host** footer (`submitLabel` on the request). Do not put footer buttons in the embed page.
+
 ## Verification
 
 **UI Kit** (when changing `FormField` or exports):

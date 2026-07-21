@@ -27,6 +27,8 @@ interface AppShellProps {
    * @default true
    */
   lockDocumentScroll?: boolean
+  /** When true, only one left-nav group can be expanded at a time. */
+  accordionNavGroups?: boolean
   className?: string
 }
 
@@ -73,6 +75,7 @@ function AppShell({
   defaultCollapsed = false,
   embedMain = false,
   lockDocumentScroll = true,
+  accordionNavGroups = false,
   className,
 }: AppShellProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -137,6 +140,7 @@ function AppShell({
           onMobileClose={() => setMobileOpen(false)}
           onNavItemNavigate={onNavItemNavigate}
           onNavItemPrefetch={onNavItemPrefetch}
+          accordionNavGroups={accordionNavGroups}
         />
         <main
           id="main-content"

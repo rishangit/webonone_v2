@@ -102,6 +102,14 @@ export function App() {
             }
           />
           <Route
+            path="sms/*"
+            element={
+              <LazyRoute>
+                <PlatformPeerFrame peer="sms" />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="data/*"
             element={
               <LazyRoute>

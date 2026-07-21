@@ -6,9 +6,6 @@ import {
   Button,
   DropdownMenuItem,
   FeaturePage,
-  Form,
-  FormField,
-  Input,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -16,28 +13,10 @@ import {
   ItemListMenu,
   ListPageBody,
   Pagination,
-  mapZodIssuesToFieldErrors,
-  Textarea,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { templatesActions } from '@/features/templates/store'
-import {
-  templateEditorSchema,
-  type TemplateEditorFormValues,
-} from '../schemas/templateSchemas'
-
-const PLACEHOLDER_HELP = [
-  '{{userName}}',
-  '{{otp}}',
-  '{{actionUrl}}',
-  '{{companyName}}',
-  '{{logoUrl}}',
-  '{{primaryColor}}',
-  '{{contactEmail}}',
-  '{{footerHtml}}',
-  '{{year}}',
-]
 
 export function TemplateEditorPage() {
   const { id } = useParams<{ id: string }>()
@@ -50,23 +29,12 @@ export function TemplateEditorPage() {
     versions,
     versionsStatus,
   } = useAppSelector((s) => s.templates)
-  const [values, setValues] = useState<TemplateEditorFormValues>({
-    name: '',
-    subject: '',
-    htmlBody: '',
-    textBody: '',
-  })
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<keyof TemplateEditorFormValues, string>>
-  >({})
   const [success, setSuccess] = useState<string | null>(null)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [versionPage, setVersionPage] = useState(1)
   const [versionPageSize, setVersionPageSize] = useState(12)
-  const [awaitingSave, setAwaitingSave] = useState(false)
 
   const loading = detailStatus === 'loading' && !template
-  const saving = detailStatus === 'saving'
   const versionsLoading = versionsStatus === 'loading' && versions.length === 0
 
   usePlatformLoading(loading ? 'Loading template…' : versionsLoading ? 'Loading versions…' : null)
@@ -83,43 +51,12 @@ export function TemplateEditorPage() {
   }, [dispatch, id])
 
   useEffect(() => {
-    if (!template || template.id !== id) return
-    setValues({
-      name: template.name,
-      subject: template.subject,
-      htmlBody: template.htmlBody,
-      textBody: template.textBody,
-    })
-  }, [id, template])
-
-  useEffect(() => {
-    if (awaitingSave && detailStatus === 'idle' && !detailError) {
-      setSuccess('Template saved. A new version was recorded.')
-      setAwaitingSave(false)
+    if (restoringId && detailStatus === 'idle' && template) {
+      setRestoringId(null)
+      setSuccess('Version restored.')
+      dispatch(templatesActions.loadVersionsRequested({ id: template.id, force: true }))
     }
-    if (awaitingSave && detailStatus === 'error') {
-      setAwaitingSave(false)
-    }
-  }, [awaitingSave, detailError, detailStatus])
-
-  function patchValues(patch: Partial<TemplateEditorFormValues>) {
-    setValues((prev) => ({ ...prev, ...patch }))
-  }
-
-  function handleSave(event: React.FormEvent) {
-    event.preventDefault()
-    if (!id) return
-
-    const result = templateEditorSchema.safeParse(values)
-    if (!result.success) {
-      setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
-      return
-    }
-    setFieldErrors({})
-    setSuccess(null)
-    setAwaitingSave(true)
-    dispatch(templatesActions.updateRequested({ id, body: result.data }))
-  }
+  }, [detailStatus, dispatch, restoringId, template])
 
   function handleRestoreVersion(versionId: string) {
     if (!id) return
@@ -128,16 +65,9 @@ export function TemplateEditorPage() {
     dispatch(templatesActions.restoreVersionRequested({ id, versionId }))
   }
 
-  useEffect(() => {
-    if (restoringId && detailStatus === 'idle' && template) {
-      setRestoringId(null)
-      setSuccess('Version restored into the editor.')
-    }
-  }, [detailStatus, restoringId, template])
-
   if (!id) {
     return (
-      <FeaturePage title="Template editor" description="Missing template id.">
+      <FeaturePage title="Version history" description="Missing template id.">
         <Button type="button" variant="outline" onClick={() => navigate('/templates')}>
           Back to templates
         </Button>
@@ -147,8 +77,8 @@ export function TemplateEditorPage() {
 
   return (
     <FeaturePage
-      title={template ? `Edit: ${template.name}` : 'Template editor'}
-      description="Update subject and body content. Saving creates a new version."
+      title={template ? `Versions: ${template.name}` : 'Version history'}
+      description="Restore a previous version of this template."
       actions={
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" asChild>
@@ -170,106 +100,49 @@ export function TemplateEditorPage() {
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       ) : null}
-      {!loading && template ? (
-        <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
-          <Form onSubmit={handleSave} className="space-y-4">
-            <FormField label="Name" htmlFor="template-name" required error={fieldErrors.name}>
-              <Input
-                id="template-name"
-                value={values.name}
-                onChange={(e) => patchValues({ name: e.target.value })}
-              />
-            </FormField>
-
-            <FormField label="Subject" htmlFor="template-subject" required error={fieldErrors.subject}>
-              <Input
-                id="template-subject"
-                value={values.subject}
-                onChange={(e) => patchValues({ subject: e.target.value })}
-              />
-            </FormField>
-
-            <FormField label="HTML body" htmlFor="template-html" required error={fieldErrors.htmlBody}>
-              <Textarea
-                id="template-html"
-                rows={12}
-                value={values.htmlBody}
-                onChange={(e) => patchValues({ htmlBody: e.target.value })}
-              />
-            </FormField>
-
-            <FormField
-              label="Plain text body"
-              htmlFor="template-text"
-              required
-              error={fieldErrors.textBody}
-            >
-              <Textarea
-                id="template-text"
-                rows={8}
-                value={values.textBody}
-                onChange={(e) => patchValues({ textBody: e.target.value })}
-              />
-            </FormField>
-
-            <p className="text-sm text-muted-foreground">
-              Allowed placeholders: {PLACEHOLDER_HELP.join(', ')}
-              {template.requiredKeys.length > 0
-                ? ` · Template-specific: ${template.requiredKeys.map((p) => `{{${p}}}`).join(', ')}`
-                : ''}
-            </p>
-
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving…' : 'Save template'}
-            </Button>
-          </Form>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium">Version history</h2>
-            <ListPageBody>
-              <div className="flex-1">
-                {versions.length === 0 ? (
-                  <ItemListEmpty>No versions yet.</ItemListEmpty>
-                ) : (
-                  <ItemList>
-                    {visibleVersions.map((version) => (
-                      <ItemListItem key={version.id}>
-                        <ItemListContent>
-                          <p className="font-medium">v{version.versionNumber}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {version.subject} · {new Date(version.createdAt).toLocaleString()}
-                          </p>
-                        </ItemListContent>
-                        <ItemListMenu ariaLabel={`Actions for version ${version.versionNumber}`}>
-                          <DropdownMenuItem
-                            disabled={restoringId === version.id}
-                            onClick={() => handleRestoreVersion(version.id)}
-                          >
-                            Restore
-                          </DropdownMenuItem>
-                        </ItemListMenu>
-                      </ItemListItem>
-                    ))}
-                  </ItemList>
-                )}
-              </div>
-              {versions.length > 0 ? (
-                <Pagination
-                  className="mt-auto"
-                  totalCount={versions.length}
-                  currentPage={versionPage}
-                  pageSize={versionPageSize}
-                  pageSizeOptions={[12, 24, 48]}
-                  onPageChange={setVersionPage}
-                  onPageSizeChange={(nextSize) => {
-                    setVersionPageSize(nextSize)
-                    setVersionPage(1)
-                  }}
-                />
-              ) : null}
-            </ListPageBody>
-          </section>
-        </div>
+      {!loading ? (
+        <ListPageBody>
+          <div className="flex-1">
+            {versions.length === 0 ? (
+              <ItemListEmpty>No versions yet.</ItemListEmpty>
+            ) : (
+              <ItemList>
+                {visibleVersions.map((version) => (
+                  <ItemListItem key={version.id}>
+                    <ItemListContent>
+                      <p className="font-medium">v{version.versionNumber}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {version.subject} · {new Date(version.createdAt).toLocaleString()}
+                      </p>
+                    </ItemListContent>
+                    <ItemListMenu ariaLabel={`Actions for version ${version.versionNumber}`}>
+                      <DropdownMenuItem
+                        disabled={restoringId === version.id || detailStatus === 'saving'}
+                        onClick={() => handleRestoreVersion(version.id)}
+                      >
+                        Restore
+                      </DropdownMenuItem>
+                    </ItemListMenu>
+                  </ItemListItem>
+                ))}
+              </ItemList>
+            )}
+          </div>
+          {versions.length > 0 ? (
+            <Pagination
+              className="mt-auto"
+              totalCount={versions.length}
+              currentPage={versionPage}
+              pageSize={versionPageSize}
+              pageSizeOptions={[12, 24, 48]}
+              onPageChange={setVersionPage}
+              onPageSizeChange={(nextSize) => {
+                setVersionPageSize(nextSize)
+                setVersionPage(1)
+              }}
+            />
+          ) : null}
+        </ListPageBody>
       ) : null}
     </FeaturePage>
   )

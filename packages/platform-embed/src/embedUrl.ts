@@ -24,6 +24,12 @@ import type {
   PlatformMediaDialogItem,
   PlatformMediaDialogRequestMessage,
   PlatformMediaDialogResultMessage,
+  PlatformPeerDialogCancelMessage,
+  PlatformPeerDialogCompleteMessage,
+  PlatformPeerDialogBusyMessage,
+  PlatformPeerDialogRequestMessage,
+  PlatformPeerDialogResultMessage,
+  PlatformPeerDialogSubmitMessage,
 } from './types'
 
 export type BuildIdentityUserPickerUrlOptions = {
@@ -345,6 +351,125 @@ export function sendPlatformMediaDialogCancel(
   }
 
   targetWindow?.postMessage(message, targetOrigin)
+}
+
+export function sendPlatformPeerDialogRequest(
+  parentOrigin: string,
+  request: Omit<PlatformPeerDialogRequestMessage, 'type'>,
+): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.parent.postMessage(
+    {
+      ...request,
+      type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_REQUEST,
+    },
+    parentOrigin,
+  )
+}
+
+export function sendPlatformPeerDialogResult(
+  targetWindow: WindowProxy | null,
+  targetOrigin: string,
+  requestId: string,
+  payload?: unknown,
+): void {
+  const message: PlatformPeerDialogResultMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_RESULT,
+    requestId,
+    payload,
+  }
+
+  targetWindow?.postMessage(message, targetOrigin)
+}
+
+export function sendPlatformPeerDialogCancel(
+  targetWindow: WindowProxy | null,
+  targetOrigin: string,
+  requestId: string,
+  reason?: string,
+): void {
+  const message: PlatformPeerDialogCancelMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_CANCEL,
+    requestId,
+    reason,
+  }
+
+  targetWindow?.postMessage(message, targetOrigin)
+}
+
+/** Dialog iframe → WebOnOne shell after successful save. */
+export function sendPlatformPeerDialogComplete(
+  parentOrigin: string,
+  requestId: string,
+  payload?: unknown,
+): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const message: PlatformPeerDialogCompleteMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_COMPLETE,
+    requestId,
+    payload,
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/**
+ * Dialog iframe → WebOnOne shell when the user cancels from inside the form.
+ * Host maps this to the page-iframe cancel responder.
+ */
+export function sendPlatformPeerDialogDismiss(
+  parentOrigin: string,
+  requestId: string,
+  reason = 'cancelled',
+): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const message: PlatformPeerDialogCancelMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_CANCEL,
+    requestId,
+    reason,
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/** Shell → dialog iframe: footer primary button clicked. */
+export function sendPlatformPeerDialogSubmit(
+  targetWindow: WindowProxy | null,
+  targetOrigin: string,
+  requestId: string,
+): void {
+  const message: PlatformPeerDialogSubmitMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_SUBMIT,
+    requestId,
+  }
+  targetWindow?.postMessage(message, targetOrigin)
+}
+
+/** Dialog iframe → shell: sync host footer busy state / submit label. */
+export function sendPlatformPeerDialogBusy(
+  parentOrigin: string,
+  requestId: string,
+  busy: boolean,
+  submitLabel?: string,
+): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const message: PlatformPeerDialogBusyMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_BUSY,
+    requestId,
+    busy,
+    submitLabel,
+  }
+  window.parent.postMessage(message, parentOrigin)
 }
 
 export function isPlatformEmbedMode(

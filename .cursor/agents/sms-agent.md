@@ -12,6 +12,7 @@ Skill: [.cursor/skills/sms-agent/SKILL.md](../skills/sms-agent/SKILL.md)
 - Admin SPA using `@webonone/ui-kit` list and form patterns.
 - `mobile/` Expo app (React Native + RN Web): Identity login + gateway configuration.
 - JWT verification locally (same `JWT_SECRET` as Identity/WebOnOne).
+- Core-hosted template dialogs when embedded: peer-dialog recipe in skill + `platform-shell-navigation.mdc`.
 
 ## Ports
 

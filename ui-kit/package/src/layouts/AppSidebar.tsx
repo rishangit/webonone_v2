@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '../lib/utils'
 import type { NavConfigItem } from '../types/nav'
 import { NavGroup } from '../components/nav/NavGroup'
@@ -15,7 +15,19 @@ interface AppSidebarProps {
   onMobileClose: () => void
   onNavItemNavigate?: (to: string) => void
   onNavItemPrefetch?: (to: string) => void
+  /** When true, only one nav group can be expanded at a time. */
+  accordionNavGroups?: boolean
   className?: string
+}
+
+function findActiveGroupLabel(nav: NavConfigItem[], activePath: string | undefined): string | null {
+  if (!activePath) return null
+  for (const item of nav) {
+    if (item.type === 'group' && item.children.some((child) => isNavPathActive(activePath, child.to))) {
+      return item.label
+    }
+  }
+  return null
 }
 
 function AppSidebar({
@@ -27,8 +39,13 @@ function AppSidebar({
   onMobileClose,
   onNavItemNavigate,
   onNavItemPrefetch,
+  accordionNavGroups = false,
   className,
 }: AppSidebarProps) {
+  const [expandedGroupLabel, setExpandedGroupLabel] = useState<string | null>(() =>
+    accordionNavGroups ? findActiveGroupLabel(nav, activePath) : null,
+  )
+
   useEffect(() => {
     if (!mobileOpen) return
 
@@ -41,6 +58,14 @@ function AppSidebar({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileOpen, onMobileClose])
+
+  useEffect(() => {
+    if (!accordionNavGroups) return
+    const activeGroup = findActiveGroupLabel(nav, activePath)
+    if (activeGroup) {
+      setExpandedGroupLabel(activeGroup)
+    }
+  }, [accordionNavGroups, nav, activePath])
 
   const handleNavigate = () => {
     onMobileClose()
@@ -68,6 +93,12 @@ function AppSidebar({
                 children={item.children}
                 activePath={activePath}
                 collapsed={collapsed}
+                open={accordionNavGroups ? expandedGroupLabel === item.label : undefined}
+                onOpenChange={
+                  accordionNavGroups
+                    ? (nextOpen) => setExpandedGroupLabel(nextOpen ? item.label : null)
+                    : undefined
+                }
                 onNavItemNavigate={onNavItemNavigate}
                 onNavItemPrefetch={onNavItemPrefetch}
                 onNavigate={handleNavigate}

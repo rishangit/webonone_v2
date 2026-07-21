@@ -12,6 +12,7 @@ import type { SmsTemplate } from '@/shared/types/sms.types'
 
 interface TemplatesListProps {
   templates: SmsTemplate[]
+  onEdit: (template: SmsTemplate) => void
   onToggleActive: (template: SmsTemplate) => void
   onDelete: (template: SmsTemplate) => void
   busyId: string | null
@@ -28,6 +29,7 @@ function formatDate(iso: string): string {
 
 export function TemplatesList({
   templates,
+  onEdit,
   onToggleActive,
   onDelete,
   busyId,
@@ -56,11 +58,14 @@ export function TemplatesList({
               </p>
             </ItemListContent>
             <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
+              <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => navigate(`/templates/${template.id}`)}
                 disabled={isBusy}
               >
-                Edit
+                Version history
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
                 {template.isActive ? 'Deactivate' : 'Activate'}

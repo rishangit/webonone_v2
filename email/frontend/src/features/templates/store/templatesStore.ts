@@ -10,7 +10,7 @@ import {
   switchMap,
   withLatestFrom,
 } from 'rxjs/operators'
-import { emailApi, type UpdateTemplateBody } from '@/shared/services/emailApi'
+import { emailApi, type CreateTemplateBody, type UpdateTemplateBody } from '@/shared/services/emailApi'
 import type { EmailTemplate, TemplatePreviewResult, TemplateVersion } from '@/shared/types/email.types'
 import { isFresh } from '@/shared/store/cacheUtils'
 
@@ -30,6 +30,9 @@ interface TemplatesState {
   versionsStatus: 'idle' | 'loading' | 'error'
   versionsError: string | null
   togglingId: string | null
+  createStatus: 'idle' | 'saving' | 'error'
+  createError: string | null
+  createdId: string | null
   preview: TemplatePreviewResult | null
   previewStatus: 'idle' | 'loading' | 'error'
   previewError: string | null
@@ -51,6 +54,9 @@ const initialState: TemplatesState = {
   versionsStatus: 'idle',
   versionsError: null,
   togglingId: null,
+  createStatus: 'idle',
+  createError: null,
+  createdId: null,
   preview: null,
   previewStatus: 'idle',
   previewError: null,
@@ -101,6 +107,25 @@ export const templatesSlice = createSlice({
     loadVersionsFailed(state, action: PayloadAction<string>) {
       state.versionsStatus = 'error'
       state.versionsError = action.payload
+    },
+    createRequested(state, _action: PayloadAction<CreateTemplateBody>) {
+      state.createStatus = 'saving'
+      state.createError = null
+      state.createdId = null
+    },
+    createSucceeded(state, action: PayloadAction<EmailTemplate>) {
+      state.createStatus = 'idle'
+      state.createdId = action.payload.id
+      state.lastFetchedAt = null
+    },
+    createFailed(state, action: PayloadAction<string>) {
+      state.createStatus = 'error'
+      state.createError = action.payload
+    },
+    clearCreate(state) {
+      state.createStatus = 'idle'
+      state.createError = null
+      state.createdId = null
     },
     updateRequested(state, _action: PayloadAction<{ id: string; body: UpdateTemplateBody }>) {
       state.detailStatus = 'saving'
@@ -243,6 +268,18 @@ const loadVersionsEpic: Epic = (action$, state$) =>
     }),
   )
 
+const createEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(templatesActions.createRequested.type),
+    exhaustMap((action) => {
+      const body = (action as ReturnType<typeof templatesActions.createRequested>).payload
+      return from(emailApi.createTemplate(body)).pipe(
+        map((template) => templatesActions.createSucceeded(template)),
+        catchError((err: Error) => of(templatesActions.createFailed(err.message))),
+      )
+    }),
+  )
+
 const updateEpic: Epic = (action$) =>
   action$.pipe(
     ofType(templatesActions.updateRequested.type),
@@ -317,6 +354,7 @@ export const templatesEpics = combineEpics(
   loadListEpic,
   fetchDetailEpic,
   loadVersionsEpic,
+  createEpic,
   updateEpic,
   reloadVersionsAfterUpdateEpic,
   reloadVersionsAfterRestoreEpic,

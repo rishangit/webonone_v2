@@ -1,4 +1,4 @@
-import { Building2, History, Home, Mail, Palette, Settings } from 'lucide-react'
+import { Building2, History, Home, Mail, Palette, Rows3, Send, Settings } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   getCoreOriginFromReturnUrl,
@@ -12,6 +12,8 @@ import type { NavConfigItem } from '@webonone/ui-kit'
 const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
+  '/send': Send,
+  '/queue': Rows3,
   '/history': History,
   '/templates': Mail,
   '/settings/basic': Building2,
@@ -21,6 +23,7 @@ const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
 const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings,
   Email: Mail,
+  SMS: Mail,
 }
 
 function iconForCoreHref(href: string): LucideIcon {

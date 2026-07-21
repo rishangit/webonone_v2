@@ -1,9 +1,16 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
-import type { PreviewTemplateBody, RestoreTemplateBody, UpdateTemplateBody } from '../schemas/template.schema.js'
+import type { TemplateScope } from '../models/db.js'
+import type {
+  CreateTemplateBody,
+  PreviewTemplateBody,
+  RestoreTemplateBody,
+  UpdateTemplateBody,
+} from '../schemas/template.schema.js'
 import { logAudit } from '../services/audit.service.js'
 import {
   canAccessTemplate,
+  createTemplate,
   getTemplateById,
   listTemplateVersions,
   listTemplates,
@@ -35,6 +42,45 @@ export async function getTemplate(req: AuthenticatedRequest, res: Response) {
     return
   }
   res.json(template)
+}
+
+/** Scope and company_id are derived from the JWT role, never taken from the body. */
+export async function postTemplate(req: AuthenticatedRequest, res: Response) {
+  const user = req.user!
+  const scope: TemplateScope = user.role === 'super_admin' ? 'platform' : 'company'
+  const companyId = scope === 'company' ? user.companyId : null
+  if (scope === 'company' && !companyId) {
+    res.status(400).json({ message: 'Company admin has no company assigned', code: 'BAD_REQUEST' })
+    return
+  }
+
+  const body = req.body as CreateTemplateBody
+  try {
+    const created = await createTemplate(
+      {
+        slug: body.slug,
+        name: body.name,
+        subject: body.subject,
+        htmlBody: body.htmlBody,
+        textBody: body.textBody,
+        scope,
+        companyId,
+        requiredKeys: body.requiredKeys,
+        isActive: body.isActive,
+      },
+      user.id,
+    )
+    await logAudit({
+      userId: user.id,
+      action: 'template_create',
+      entityType: 'email_template',
+      entityId: created.id,
+    })
+    res.status(201).json(created)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Create failed'
+    res.status(400).json({ message, code: 'BAD_REQUEST' })
+  }
 }
 
 export async function putTemplate(req: AuthenticatedRequest, res: Response) {

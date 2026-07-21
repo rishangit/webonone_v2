@@ -42,7 +42,7 @@ Rule: [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) · Skill: [
 
 ## Host-level consumer dialogs
 
-Media owns picker/upload/crop UI and postMessage contracts, but the consumer owns where the dialog chrome renders. When the consumer is an embedded peer under WebOnOne and the dialog should feel core-owned, use the platform host-dialog bridge from `platform-shell-navigation.mdc`: WebOnOne renders the host `CustomDialog`, Media runs inside its iframe, and the requesting peer receives result/cancel by `requestId`.
+Media owns picker/upload/crop UI and postMessage contracts; the **consumer** owns dialog chrome (header/footer). When that consumer is an embedded peer under WebOnOne, use **`media-dialog-*`** so WebOnOne’s `PlatformMediaDialogHost` renders the shell — not the peer-form `peer-dialog-*` path (that is for Email/Data/SMS CRUD forms). See [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) and [dialog-windows.mdc](../../rules/dialog-windows.mdc) (iframe embed bodies).
 
 Reference: `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`.
 

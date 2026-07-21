@@ -71,17 +71,57 @@ Flow:
 
 When an embedded peer needs a dialog to feel opened by **WebOnOne core** (dim sidebar + header + main together, avoid iframe clipping, or present platform-level UI), the peer must **request a host dialog** instead of rendering `CustomDialog` inside its iframe.
 
+#### Media dialogs (specialized)
+
+Use `webonone:platform:media-dialog-*` when the host already mounts Media frames (`MediaSelectorFrame` / `MediaCropDialogFrame`).
+
+Reference: `packages/platform-embed/src/PlatformServiceFrame.tsx`, `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`, `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
+
+#### Peer form dialogs (generic — preferred for new dialogs)
+
+Use `webonone:platform:peer-dialog-*` for peer-owned CRUD forms. Host never imports peer form components.
+
+**Chrome split (matches standalone CustomDialog):**
+
+| Region | Owner |
+|--------|--------|
+| sizeWidth / sizeHeight | Host (from request) |
+| Header (title, description, close) | Host |
+| Body | Peer iframe (`/embed/dialogs/…` form fields only) |
+| Footer (Cancel + primary) | Host — labels from request; Submit posts `peer-dialog-submit` into the iframe |
+
+| Message | Direction |
+|---------|-----------|
+| `peer-dialog-request` | page iframe → shell (`requestId`, `path`, `title`, sizes, `submitLabel`, optional `cancelLabel` / `description`) |
+| `peer-dialog-result` / `peer-dialog-cancel` | shell → page iframe |
+| `peer-dialog-submit` | shell → dialog iframe (footer primary clicked) |
+| `peer-dialog-busy` | dialog iframe → shell (disable footer / update submit label while saving) |
+| `peer-dialog-complete` / `peer-dialog-cancel` | dialog iframe → shell |
+
 Required flow:
 
-1. **Peer iframe** sends a typed `postMessage` request to `parentOrigin` with a `requestId` and serializable options.
-2. **Shell** (`PlatformServiceFrame`) accepts the request only after validating `event.origin === peerOrigin` and `event.source === iframe.contentWindow`.
-3. **WebOnOne host** renders the `CustomDialog` at shell level and mounts the owning service iframe/content inside it (for media: `MediaSelectorFrame` / `MediaCropDialogFrame`).
-4. **Host** sends result/cancel back to the requesting iframe using the same `requestId` and exact peer origin.
-5. **Peer** applies the result locally (e.g. selected `MediaItemDto`) and keeps standalone fallback behavior when not embedded.
+1. Peer page calls `useRequestPlatformPeerDialog` with path under `/embed/dialogs/`, sizes, and footer labels matching the standalone dialog.
+2. `PlatformServiceFrame` validates origin/source → `PlatformPeerDialogHost`.
+3. Host opens `CustomDialog` with header + footer; body is the peer dialog iframe (no action buttons in the iframe).
+4. Footer Submit → `sendPlatformPeerDialogSubmit`; dialog listens via `usePlatformPeerDialogSubmit`, saves, then `sendPlatformPeerDialogComplete` (and `sendPlatformPeerDialogBusy` while saving).
+5. Standalone: local `CustomDialog` with the same header/body/footer layout.
 
-Use this for Media picker/upload/crop dialogs and any future microservice dialog that should feel core-owned. Iframe-local dialogs are allowed only when the dialog is intentionally scoped to the embedded page.
+**Future recipe (peer only — no WebOnOne change):**
 
-Reference paths: `packages/platform-embed/src/PlatformServiceFrame.tsx`, `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`, `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
+1. Extract form **body** (fields only) shared by standalone + embed.
+2. Standalone: `CustomDialog` with same `title` / `description` / `sizeWidth` / `sizeHeight` / `footer` (Cancel + primary).
+3. Add route `/embed/dialogs/<feature>/…` (slim layout; **no** `FeaturePage`; **no** footer buttons in the iframe).
+4. List opener: `useRequestPlatformPeerDialog({ path, title, description?, sizeWidth, sizeHeight, submitLabel, cancelLabel? })` when `parentOrigin` is set; else local dialog.
+5. Embed page: `usePlatformPeerDialogSubmit` → validate/save; `sendPlatformPeerDialogBusy` while saving; `sendPlatformPeerDialogComplete` / `Dismiss` on done/cancel.
+6. On hosted result: refresh list / close local open state.
+
+**Forbidden:** rendering `CustomDialog` (or faux footer buttons) inside the peer page iframe when embedded; putting Cancel/Save in the embed-page body; per-dialog WebOnOne code (host already allowlists `/embed/dialogs/`).
+
+**Embed dialog routes** are exempt from `FeaturePage` (form body only).
+
+Reference: `packages/platform-embed/src/useRequestPlatformPeerDialog.ts`, `packages/platform-embed/src/usePlatformPeerDialogSubmit.ts`, `webonone-v2/frontend/src/features/shell/PlatformPeerDialogHost.tsx`, `email/frontend/src/features/templates/components/TemplateFormDialog.tsx`, `data/frontend/src/features/tags/components/TagFormDialog.tsx`.
+
+Iframe-local dialogs are allowed only when the dialog is intentionally scoped to the embedded page.
 
 **Redirect auth:** `@webonone/platform-nav` — `exchangeAuthCode`, `usePlatformRedirectBootstrap`, `redirectWithAuthCode`.
 

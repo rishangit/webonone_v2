@@ -26,6 +26,17 @@ Reference implementations: `DialogsPage.tsx` (`NestedDialogDemo` — stacked sib
 - This applies to **stacked inner dialogs** and **consumer-hosted embed dialogs** — if the consumer renders `CustomDialog`, the iframe/embed child must not duplicate footer actions.
 - `CustomDialog` footer is already `flex justify-end gap-2`. Pass buttons as a fragment. No `w-full` / `flex-1` on footer buttons unless explicitly required.
 
+### Core-hosted peer form dialogs (WebOnOne shell)
+
+When a satellite (Email, Data, SMS, …) runs inside WebOnOne `#main-content` and the dialog must dim the **whole** shell, do **not** open `CustomDialog` inside the page iframe. Use the **peer-dialog** bridge — host owns header + sizes + footer; peer iframe is **body only**. Full recipe: [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”).
+
+| Standalone | Embedded in WebOnOne |
+|------------|----------------------|
+| Local `CustomDialog` (header / body / footer) | `useRequestPlatformPeerDialog` + `/embed/dialogs/…` body route |
+| Footer Cancel/Save on `CustomDialog` | Same labels on host footer; Submit → `peer-dialog-submit` |
+
+Media picker/crop stays on `media-dialog-*` (not peer-dialog). See **Iframe embed bodies** below.
+
 ## Footer buttons
 
 - Uniform height: **`h-10`** on all footer actions in the same dialog.

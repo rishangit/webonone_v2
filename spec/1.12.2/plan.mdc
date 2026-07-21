@@ -1,0 +1,65 @@
+---
+description: Implementation plan for spec 1.12.2 — WebOnOne Email Send + Queue left nav
+alwaysApply: false
+globs: packages/platform-nav/**, webonone-v2/frontend/**, email/frontend/**, data/frontend/**, identity/frontend/**
+---
+
+# Implementation plan — Spec 1.12.2
+
+## Summary
+
+Add **Send Email** and **Queue** to the WebOnOne **Email** left-nav group (alongside History and Templates) using the existing **iframe embed** channel. Extend `@webonone/platform-nav` Email sentinels; update WebOnOne icons + peer default; extend Identity/Data path→sentinel maps.
+
+See [02-webonone-email-send-queue-nav.md](./02-webonone-email-send-queue-nav.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.12.2` |
+| Prerequisite | Email History/Templates embed from 1.9.x; SMS nav from 1.12.1 optional |
+| Services for manual test | Identity + WebOnOne + Email |
+| New env | None (`VITE_EMAIL_ORIGIN` already present) |
+| Packages | Rebuild / type-check `@webonone/platform-nav` before consumer type-check if needed |
+
+---
+
+## Phase 1 — platform-nav
+
+**Goal:** Email send + queue sentinels + four-child group.
+
+**Exit criteria:** Member nav has no Email; main/superAdmin resolve four Email hrefs when `externalOrigins.email` set (order: send, queue, history, templates).
+
+| Task | Paths |
+|------|-------|
+| Sentinels + helpers + nav defs | `packages/platform-nav/src/coreNav.ts` |
+| Tests | `packages/platform-nav/src/coreNav.test.ts` |
+
+**Verify:** package tests + type-check for platform-nav.
+
+---
+
+## Phase 2 — WebOnOne + satellites
+
+**Goal:** Icons, default peer path, Identity/Data maps.
+
+**Exit criteria:** Send Email and Queue load correct iframe paths; satellite redirects work.
+
+| Task | Paths |
+|------|-------|
+| Peer default | `webonone-v2/frontend/src/features/shell/pages/PlatformPeerFrame.tsx` |
+| Nav icons | `webonone-v2/frontend/src/features/shell/config/navItems.ts` |
+| Identity rewrite | `identity/frontend/src/features/shell/config/navItems.ts` |
+| Data parse | `data/frontend/src/features/shell/utils/externalNavActions.ts` |
+| Email icons (optional) | `email/frontend/src/features/shell/config/coreNavItems.ts` |
+
+**Verify:** `npm run type-check -w webonone-v2-root` (+ touched satellites)
+
+---
+
+## Do not
+
+- Add Dashboard / Test / Providers / Settings to core Email group
+- Duplicate Send/Queue UI in WebOnOne
+- Add per-route `VITE_EMAIL_*_URL` env keys
+- Use auth-code redirect for WebOnOne left-nav Email clicks

@@ -13,6 +13,7 @@ import {
   usePlatformOverlayLabel,
 } from '@/features/auth/context/PlatformLoadingContext'
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
+import { getSmsRedirectOptions } from '@/features/sms/utils/redirectToSms'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
 import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
 import { isSessionSuperAdmin } from '@/features/users/utils/currentRole'
@@ -21,23 +22,37 @@ import {
   buildStandaloneNav,
   isEmailNavSentinel,
   isIdentityShellRoute,
+  isSmsNavSentinel,
 } from '@/features/shell/config/navItems'
 
-function withEmailNavAction(
+function withPeerNavActions(
   items: NavConfigItem[],
   onEmailNavClick: (sentinel: string) => void,
+  onSmsNavClick: (sentinel: string) => void,
 ): NavConfigItem[] {
   return items.map((item) => {
-    if (item.type === 'item' && isEmailNavSentinel(item.to)) {
-      return { ...item, onClick: () => onEmailNavClick(item.to) }
+    if (item.type === 'item') {
+      if (isEmailNavSentinel(item.to)) {
+        return { ...item, onClick: () => onEmailNavClick(item.to) }
+      }
+      if (isSmsNavSentinel(item.to)) {
+        return { ...item, onClick: () => onSmsNavClick(item.to) }
+      }
+      return item
     }
 
     if (item.type === 'group') {
       return {
         ...item,
-        children: item.children.map((child) =>
-          isEmailNavSentinel(child.to) ? { ...child, onClick: () => onEmailNavClick(child.to) } : child,
-        ),
+        children: item.children.map((child) => {
+          if (isEmailNavSentinel(child.to)) {
+            return { ...child, onClick: () => onEmailNavClick(child.to) }
+          }
+          if (isSmsNavSentinel(child.to)) {
+            return { ...child, onClick: () => onSmsNavClick(child.to) }
+          }
+          return child
+        }),
       }
     }
 
@@ -111,14 +126,37 @@ function AppLayoutShellContent() {
     [accessToken, clearError, redirect, returnUrl, searchParams],
   )
 
+  const handleSmsNavClick = useCallback(
+    async (sentinel: string) => {
+      if (!accessToken || !returnUrl) {
+        return
+      }
+      clearError()
+      try {
+        await redirect(
+          getSmsRedirectOptions({
+            accessToken,
+            returnUrl,
+            extraSearchParams: relayThemeQueryParams(searchParams),
+            navVariant: parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM)),
+            smsNavSentinel: sentinel,
+          }),
+        )
+      } catch {
+        // surfaced via hook
+      }
+    },
+    [accessToken, clearError, redirect, returnUrl, searchParams],
+  )
+
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
 
   const nav = useMemo(() => {
     const base = returnUrl
       ? buildCoreNavFromQuery(returnUrl, searchParams.get(CORE_NAV_QUERY_PARAM))
       : buildStandaloneNav({ isSuperAdmin })
-    return returnUrl ? withEmailNavAction(base, handleEmailNavClick) : base
-  }, [handleEmailNavClick, isSuperAdmin, returnUrl, searchParams])
+    return returnUrl ? withPeerNavActions(base, handleEmailNavClick, handleSmsNavClick) : base
+  }, [handleEmailNavClick, handleSmsNavClick, isSuperAdmin, returnUrl, searchParams])
 
   const brand = returnUrl ? 'WebOnOne' : 'Identity'
   const isAuthenticated = Boolean(accessToken && user)

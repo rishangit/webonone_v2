@@ -1,4 +1,16 @@
-import { Building2, Database, Home, Palette, Settings, Tag } from 'lucide-react'
+import {
+  Building2,
+  Database,
+  Home,
+  Layers,
+  Package,
+  Palette,
+  Ruler,
+  Settings,
+  Shapes,
+  Tag,
+  Wrench,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   getCoreOriginFromReturnUrl,
@@ -13,6 +25,11 @@ const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
   '/tags': Tag,
+  '/units': Ruler,
+  '/attributes': Shapes,
+  '/products': Package,
+  '/services': Wrench,
+  '/spaces': Layers,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
@@ -21,6 +38,7 @@ const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings,
   Data: Database,
   Email: Database,
+  SMS: Database,
 }
 
 function iconForCoreHref(href: string): LucideIcon {

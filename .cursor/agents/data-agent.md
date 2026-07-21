@@ -10,6 +10,7 @@ Skill: [.cursor/skills/data-agent/SKILL.md](../skills/data-agent/SKILL.md)
 - CRUD APIs with search, filter, and pagination.
 - Admin SPA using `@webonone/ui-kit` list and form patterns.
 - JWT verification locally (same `JWT_SECRET` as Identity/WebOnOne).
+- Core-hosted form dialogs when embedded: peer-dialog recipe in skill + `platform-shell-navigation.mdc`.
 
 ## Ports
 
