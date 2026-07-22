@@ -28,14 +28,80 @@ export type AdminCompany = {
   approvedAt: string | null
 }
 
+export type MyCompanySummary = {
+  id: string
+  name: string
+  logoUrl: string | null
+  status: CompanyStatus
+  role: 'member' | 'company_admin'
+  createdAt: string
+  approvedAt: string | null
+}
+
+export type CompanyDetail = {
+  id: string
+  name: string
+  description: string | null
+  companySize: string | null
+  logoUrl: string | null
+  contactEmail: string | null
+  contactPhone: string | null
+  addressLine1: string | null
+  addressLine2: string | null
+  city: string | null
+  stateRegion: string | null
+  postalCode: string | null
+  country: string | null
+  latitude: number | null
+  longitude: number | null
+  mapPlaceId: string | null
+  mapFormattedAddress: string | null
+  status: CompanyStatus
+  createdByUserId: string
+  createdAt: string
+  updatedAt: string
+  approvedAt: string | null
+  role?: 'member' | 'company_admin'
+}
+
+export type UpdateCompanyBody = {
+  name?: string
+  description?: string | null
+  companySize?: string | null
+  logoUrl?: string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  addressLine1?: string | null
+  addressLine2?: string | null
+  city?: string | null
+  stateRegion?: string | null
+  postalCode?: string | null
+  country?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  mapPlaceId?: string | null
+  mapFormattedAddress?: string | null
+}
+
 function toRegisterApiBody(values: RegisterCompanyFormValues) {
-  const { countryIso2, stateRegion, postalCode, ...rest } = values
-  const country = getPhoneCountryByIso2(countryIso2)?.name ?? countryIso2
+  const { countryIso2, stateRegion, postalCode, description, companySize, ...rest } = values
+  const country =
+    countryIso2.trim().length > 0
+      ? (getPhoneCountryByIso2(countryIso2)?.name ?? countryIso2)
+      : undefined
+
   return {
-    ...rest,
-    country,
-    stateRegion: stateRegion.trim() || undefined,
-    postalCode: postalCode.trim() || undefined,
+    name: rest.name,
+    ...(description.trim() ? { description: description.trim() } : {}),
+    ...(companySize ? { companySize } : {}),
+    ...(rest.addressLine1.trim() ? { addressLine1: rest.addressLine1.trim() } : {}),
+    ...(rest.addressLine2.trim() ? { addressLine2: rest.addressLine2.trim() } : {}),
+    ...(rest.city.trim() ? { city: rest.city.trim() } : {}),
+    ...(stateRegion.trim() ? { stateRegion: stateRegion.trim() } : {}),
+    ...(postalCode.trim() ? { postalCode: postalCode.trim() } : {}),
+    ...(country ? { country } : {}),
+    ...(rest.contactEmail.trim() ? { contactEmail: rest.contactEmail.trim() } : {}),
+    ...(rest.contactPhone.trim() ? { contactPhone: rest.contactPhone.trim() } : {}),
   }
 }
 
@@ -45,6 +111,11 @@ export const companyApi = {
       '/company/me',
     )
     return data.company ? (data as CompanySummary) : null
+  },
+
+  async listMyCompanies() {
+    const data = await apiClient<{ items: MyCompanySummary[] }>('/company/me/companies')
+    return data.items
   },
 
   async registerCompany(body: RegisterCompanyFormValues) {
@@ -63,6 +134,17 @@ export const companyApi = {
     return apiClient<CompanySummary>(`/company/admin/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    })
+  },
+
+  async getCompany(id: string) {
+    return apiClient<CompanyDetail>(`/company/${id}`)
+  },
+
+  async updateCompany(id: string, body: UpdateCompanyBody) {
+    return apiClient<CompanyDetail>(`/company/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
     })
   },
 }

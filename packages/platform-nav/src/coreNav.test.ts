@@ -41,6 +41,20 @@ describe('coreNav', () => {
     }
   })
 
+  it('includes My Companies first under Settings for member, main, and superAdmin', () => {
+    for (const variant of ['member', 'main', 'superAdmin'] as const) {
+      const nav = resolvePlatformNavUrls('http://localhost:3010', variant)
+      const settings = nav.find((item) => item.kind === 'group' && item.label === 'Settings')
+      assert.ok(settings?.kind === 'group', `Settings missing for ${variant}`)
+      if (settings?.kind === 'group') {
+        assert.equal(settings.children[0]?.label, 'My Companies')
+        assert.equal(settings.children[0]?.href, 'http://localhost:3010/settings/companies')
+        assert.equal(settings.children[1]?.label, 'Basic Settings')
+        assert.equal(settings.children[2]?.label, 'System Theme')
+      }
+    }
+  })
+
   it('resolves email sub-nav URLs with external paths', () => {
     const nav = resolvePlatformNavUrls('http://localhost:3010', 'main', {
       email: 'http://localhost:3014',

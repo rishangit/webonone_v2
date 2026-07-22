@@ -42,21 +42,20 @@ export function RegisterWizardStepBasics({
       <FormField
         label="Company description"
         htmlFor="register-company-description"
-        required
         error={fieldErrors.description}
       >
         <Textarea
           id="register-company-description"
           value={values.description}
           onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="What does your company do?"
+          placeholder="What does your company do? (optional — you can finish this on the company profile)"
           disabled={isSubmitting}
           rows={4}
           className="w-full resize-none"
         />
       </FormField>
 
-      <FormField label="Company size" htmlFor="register-company-size" required error={fieldErrors.companySize}>
+      <FormField label="Company size" htmlFor="register-company-size" error={fieldErrors.companySize}>
         <Select
           value={values.companySize || undefined}
           onValueChange={(companySize) =>
@@ -65,7 +64,7 @@ export function RegisterWizardStepBasics({
           disabled={isSubmitting}
         >
           <SelectTrigger id="register-company-size" className="w-full">
-            <SelectValue placeholder="Select company size" />
+            <SelectValue placeholder="Select company size (optional)" />
           </SelectTrigger>
           <SelectContent>
             {COMPANY_SIZE_OPTIONS.map((size) => (

@@ -307,6 +307,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
     kind: 'group',
     label: 'Settings',
     children: [
+      { kind: 'item', path: '/settings/companies', label: 'My Companies' },
       { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
       { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
     ],
@@ -319,6 +320,7 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
     kind: 'group',
     label: 'Settings',
     children: [
+      { kind: 'item', path: '/settings/companies', label: 'My Companies' },
       { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
       { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
     ],
@@ -381,6 +383,7 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
     kind: 'group',
     label: 'Settings',
     children: [
+      { kind: 'item', path: '/settings/companies', label: 'My Companies' },
       { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
       { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
     ],

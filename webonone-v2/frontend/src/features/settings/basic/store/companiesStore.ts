@@ -1,37 +1,54 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, exhaustMap, filter, map, withLatestFrom } from 'rxjs/operators'
+import { catchError, exhaustMap, filter, map, mergeMap, withLatestFrom } from 'rxjs/operators'
 import { authActions } from '@/features/auth/store/authSlice'
 import { isFresh } from '@/shared/store/cacheUtils'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
 import {
   companyApi,
   type AdminCompany,
+  type CompanyDetail,
   type CompanyStatus,
   type CompanySummary,
+  type MyCompanySummary,
+  type UpdateCompanyBody,
 } from '../services/companyApi'
 
 interface CompaniesState {
   myCompany: CompanySummary | null | undefined
+  myCompanies: MyCompanySummary[]
   adminItems: AdminCompany[]
+  detail: CompanyDetail | null
   myCompanyStatus: 'idle' | 'loading' | 'saving' | 'error'
+  myCompaniesStatus: 'idle' | 'loading' | 'error'
   adminListStatus: 'idle' | 'loading' | 'saving' | 'error'
+  detailStatus: 'idle' | 'loading' | 'saving' | 'error'
   myCompanyError: string | null
+  myCompaniesError: string | null
   adminListError: string | null
+  detailError: string | null
   myCompanyFetchedAt: number | null
+  myCompaniesFetchedAt: number | null
   adminListFetchedAt: number | null
   updatingId: string | null
 }
 
 const initialState: CompaniesState = {
   myCompany: undefined,
+  myCompanies: [],
   adminItems: [],
+  detail: null,
   myCompanyStatus: 'idle',
+  myCompaniesStatus: 'idle',
   adminListStatus: 'idle',
+  detailStatus: 'idle',
   myCompanyError: null,
+  myCompaniesError: null,
   adminListError: null,
+  detailError: null,
   myCompanyFetchedAt: null,
+  myCompaniesFetchedAt: null,
   adminListFetchedAt: null,
   updatingId: null,
 }
@@ -57,6 +74,22 @@ const companiesSlice = createSlice({
       state.myCompanyStatus = 'error'
       state.myCompanyError = action.payload
     },
+    loadMyCompaniesRequested(state, action: PayloadAction<{ force?: boolean } | undefined>) {
+      if (!action.payload?.force && isFresh(state.myCompaniesFetchedAt)) {
+        return
+      }
+      state.myCompaniesStatus = 'loading'
+      state.myCompaniesError = null
+    },
+    loadMyCompaniesSucceeded(state, action: PayloadAction<MyCompanySummary[]>) {
+      state.myCompanies = action.payload
+      state.myCompaniesFetchedAt = Date.now()
+      state.myCompaniesStatus = 'idle'
+    },
+    loadMyCompaniesFailed(state, action: PayloadAction<string>) {
+      state.myCompaniesStatus = 'error'
+      state.myCompaniesError = action.payload
+    },
     registerCompanyRequested(state, _action: PayloadAction<RegisterCompanyFormValues>) {
       state.myCompanyStatus = 'saving'
       state.myCompanyError = null
@@ -65,6 +98,7 @@ const companiesSlice = createSlice({
       state.myCompany = action.payload
       state.myCompanyFetchedAt = Date.now()
       state.myCompanyStatus = 'idle'
+      state.myCompaniesFetchedAt = null
     },
     registerCompanyFailed(state, action: PayloadAction<string>) {
       state.myCompanyStatus = 'error'
@@ -101,11 +135,56 @@ const companiesSlice = createSlice({
       state.adminItems = state.adminItems.map((item) =>
         item.id === id ? { ...item, status, approvedAt } : item,
       )
+      state.myCompanies = state.myCompanies.map((item) =>
+        item.id === id ? { ...item, status, approvedAt } : item,
+      )
       state.updatingId = null
     },
     updateCompanyStatusFailed(state, action: PayloadAction<string>) {
       state.adminListError = action.payload
       state.updatingId = null
+    },
+    loadCompanyDetailRequested(state, _action: PayloadAction<{ id: string }>) {
+      state.detailStatus = 'loading'
+      state.detailError = null
+    },
+    loadCompanyDetailSucceeded(state, action: PayloadAction<CompanyDetail>) {
+      state.detail = action.payload
+      state.detailStatus = 'idle'
+      state.detailError = null
+    },
+    loadCompanyDetailFailed(state, action: PayloadAction<string>) {
+      state.detail = null
+      state.detailStatus = 'error'
+      state.detailError = action.payload
+    },
+    updateCompanyDetailRequested(
+      state,
+      _action: PayloadAction<{ id: string; body: UpdateCompanyBody }>,
+    ) {
+      state.detailStatus = 'saving'
+      state.detailError = null
+    },
+    updateCompanyDetailSucceeded(state, action: PayloadAction<CompanyDetail>) {
+      state.detail = action.payload
+      state.detailStatus = 'idle'
+      state.detailError = null
+      const { id, name, logoUrl, status, approvedAt } = action.payload
+      state.myCompanies = state.myCompanies.map((item) =>
+        item.id === id ? { ...item, name, logoUrl, status, approvedAt } : item,
+      )
+      state.adminItems = state.adminItems.map((item) =>
+        item.id === id ? { ...item, name, logoUrl, status, approvedAt } : item,
+      )
+    },
+    updateCompanyDetailFailed(state, action: PayloadAction<string>) {
+      state.detailStatus = 'error'
+      state.detailError = action.payload
+    },
+    clearCompanyDetail(state) {
+      state.detail = null
+      state.detailStatus = 'idle'
+      state.detailError = null
     },
   },
   extraReducers: (builder) => {
@@ -135,12 +214,36 @@ const loadMyCompanyEpic: CompaniesEpic = (action$, state$) =>
     ),
   )
 
+const loadMyCompaniesEpic: CompaniesEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(companiesActions.loadMyCompaniesRequested.type),
+    withLatestFrom(state$),
+    filter(([action, state]) => {
+      const payload = (action as ReturnType<typeof companiesActions.loadMyCompaniesRequested>).payload
+      const companies = (
+        state as unknown as { companies: { myCompaniesFetchedAt: number | null } }
+      ).companies
+      return Boolean(payload?.force) || !isFresh(companies.myCompaniesFetchedAt)
+    }),
+    exhaustMap(() =>
+      from(companyApi.listMyCompanies()).pipe(
+        map((items) => companiesActions.loadMyCompaniesSucceeded(items)),
+        catchError((err: Error) => of(companiesActions.loadMyCompaniesFailed(err.message))),
+      ),
+    ),
+  )
+
 const registerCompanyEpic: CompaniesEpic = (action$) =>
   action$.pipe(
     ofType(companiesActions.registerCompanyRequested.type),
     exhaustMap((action: ReturnType<typeof companiesActions.registerCompanyRequested>) =>
       from(companyApi.registerCompany(action.payload)).pipe(
-        map((company) => companiesActions.registerCompanySucceeded(company)),
+        mergeMap((company) =>
+          of(
+            companiesActions.registerCompanySucceeded(company),
+            companiesActions.loadMyCompaniesRequested({ force: true }),
+          ),
+        ),
         catchError((err: Error) => of(companiesActions.registerCompanyFailed(err.message))),
       ),
     ),
@@ -181,9 +284,34 @@ const updateCompanyStatusEpic: CompaniesEpic = (action$) =>
     ),
   )
 
+const loadCompanyDetailEpic: CompaniesEpic = (action$) =>
+  action$.pipe(
+    ofType(companiesActions.loadCompanyDetailRequested.type),
+    exhaustMap((action: ReturnType<typeof companiesActions.loadCompanyDetailRequested>) =>
+      from(companyApi.getCompany(action.payload.id)).pipe(
+        map((detail) => companiesActions.loadCompanyDetailSucceeded(detail)),
+        catchError((err: Error) => of(companiesActions.loadCompanyDetailFailed(err.message))),
+      ),
+    ),
+  )
+
+const updateCompanyDetailEpic: CompaniesEpic = (action$) =>
+  action$.pipe(
+    ofType(companiesActions.updateCompanyDetailRequested.type),
+    exhaustMap((action: ReturnType<typeof companiesActions.updateCompanyDetailRequested>) =>
+      from(companyApi.updateCompany(action.payload.id, action.payload.body)).pipe(
+        map((detail) => companiesActions.updateCompanyDetailSucceeded(detail)),
+        catchError((err: Error) => of(companiesActions.updateCompanyDetailFailed(err.message))),
+      ),
+    ),
+  )
+
 export const companiesEpics = combineEpics(
   loadMyCompanyEpic,
+  loadMyCompaniesEpic,
   registerCompanyEpic,
   loadAdminCompaniesEpic,
   updateCompanyStatusEpic,
+  loadCompanyDetailEpic,
+  updateCompanyDetailEpic,
 )

@@ -1,5 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { AssumableRoleOption, SessionRole } from '../types/sessionRole.types'
+import type {
+  AssumableRoleOption,
+  AssumableRolesResponse,
+  SessionRole,
+} from '../types/sessionRole.types'
 
 export type { SessionRole } from '../types/sessionRole.types'
 
@@ -40,15 +44,12 @@ export const sessionRoleSlice = createSlice({
     bootstrapRequested(state) {
       state.loading = true
     },
-    rolesLoaded(
-      state,
-      action: PayloadAction<{ roles: AssumableRoleOption[]; hasCompanyMembership: boolean }>,
-    ) {
-      const { roles, hasCompanyMembership } = action.payload
+    rolesLoaded(state, action: PayloadAction<AssumableRolesResponse>) {
+      const { roles, requiresAccountSelection } = action.payload
       state.loading = false
       state.assumableRoles = roles
 
-      if (!hasCompanyMembership || roles.length === 1) {
+      if (!requiresAccountSelection) {
         const only = roles[0]
         if (only) {
           applyRole(state, only.role, only.companyId)

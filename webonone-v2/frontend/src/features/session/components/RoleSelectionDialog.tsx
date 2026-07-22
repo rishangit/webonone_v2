@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, CustomDialog, cn } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
@@ -6,17 +6,21 @@ import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
 import type { AssumableRoleOption } from '@/features/session/types/sessionRole.types'
 
-function roleDescription(option: AssumableRoleOption): string {
+function accountDescription(option: AssumableRoleOption): string {
   switch (option.role) {
     case 'super_admin':
       return 'Platform operator — Companies nav and system-wide Email access.'
     case 'company_admin':
       return option.companyName
-        ? `Manage ${option.companyName} — company Email history and templates.`
-        : 'Company administrator — company Email history and templates.'
+        ? `Company Owner — manage ${option.companyName} (Email history and templates).`
+        : 'Company Owner — company Email history and templates.'
     default:
-      return 'Standard user — no Email menu in WebOnOne.'
+      return 'Standard user account for this session.'
   }
+}
+
+function findDefaultUser(roles: AssumableRoleOption[]): AssumableRoleOption | null {
+  return roles.find((r) => r.role === 'member' && r.companyId === null) ?? null
 }
 
 export function RoleSelectionDialog() {
@@ -25,6 +29,17 @@ export function RoleSelectionDialog() {
   const { dialogOpen, assumableRoles } = useAppSelector((s) => s.sessionRole)
   const [pendingRole, setPendingRole] = useState<AssumableRoleOption | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      setPendingRole(null)
+      setSubmitting(false)
+      return
+    }
+    // Pre-select Default User only when nothing is selected yet — do not
+    // overwrite the user's choice if assumableRoles identity changes.
+    setPendingRole((current) => current ?? findDefaultUser(assumableRoles))
+  }, [dialogOpen, assumableRoles])
 
   async function handleContinue() {
     if (!pendingRole || !accessToken) return
@@ -53,8 +68,8 @@ export function RoleSelectionDialog() {
       onOpenChange={() => {
         /* selection required — ignore dismiss */
       }}
-      title="Choose your role"
-      description="Select how you want to use WebOnOne for this login session. Your choice stays active until you log out."
+      title="Choose account"
+      description="Select which account to use for this WebOnOne session. Your choice stays active until you log out."
       sizeWidth="medium"
       sizeHeight="auto"
       footer={
@@ -63,7 +78,7 @@ export function RoleSelectionDialog() {
         </Button>
       }
     >
-      <ul className="flex flex-col gap-2">
+      <ul className="flex max-h-[min(24rem,50vh)] flex-col gap-2 overflow-y-auto">
         {assumableRoles.map((option) => {
           const selected =
             pendingRole?.role === option.role && pendingRole.companyId === option.companyId
@@ -81,7 +96,7 @@ export function RoleSelectionDialog() {
               >
                 <span className="block font-medium text-foreground">{option.label}</span>
                 <span className="mt-1 block text-sm text-muted-foreground">
-                  {roleDescription(option)}
+                  {accountDescription(option)}
                 </span>
               </button>
             </li>

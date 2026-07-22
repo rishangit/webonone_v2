@@ -40,6 +40,7 @@ import type { SessionRole } from '@/features/session/types/sessionRole.types'
 const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/': Home,
   '/companies': Building2,
+  '/settings/companies': Building2,
   [IDENTITY_NAV_SENTINELS.users]: Users,
   [EMAIL_NAV_SENTINELS.send]: Send,
   [EMAIL_NAV_SENTINELS.queue]: Rows3,

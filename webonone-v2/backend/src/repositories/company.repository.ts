@@ -16,6 +16,10 @@ export type CompanyRow = {
   country: string | null
   contact_email: string | null
   contact_phone: string | null
+  latitude: string | number | null
+  longitude: string | number | null
+  map_place_id: string | null
+  map_formatted_address: string | null
   status: CompanyStatus
   created_by_user_id: string
   created_at: Date
@@ -24,11 +28,37 @@ export type CompanyRow = {
   approved_by_user_id: string | null
 }
 
+export type CompanyProfilePatch = {
+  name?: string
+  description?: string | null
+  company_size?: string | null
+  logo_url?: string | null
+  address_line1?: string | null
+  address_line2?: string | null
+  city?: string | null
+  state_region?: string | null
+  postal_code?: string | null
+  country?: string | null
+  contact_email?: string | null
+  contact_phone?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  map_place_id?: string | null
+  map_formatted_address?: string | null
+}
+
 export async function findCompanyById(id: string): Promise<CompanyRow | undefined> {
   return db<CompanyRow>('companies').where({ id }).first()
 }
 
-export async function insertCompany(row: Omit<CompanyRow, 'created_at' | 'updated_at' | 'approved_at' | 'approved_by_user_id'>): Promise<void> {
+export async function findCompaniesByIds(ids: string[]): Promise<CompanyRow[]> {
+  if (ids.length === 0) return []
+  return db<CompanyRow>('companies').whereIn('id', ids)
+}
+
+export async function insertCompany(
+  row: Omit<CompanyRow, 'created_at' | 'updated_at' | 'approved_at' | 'approved_by_user_id'>,
+): Promise<void> {
   await db('companies').insert({
     ...row,
     approved_at: null,
@@ -42,6 +72,25 @@ export async function listPendingCompanies(): Promise<CompanyRow[]> {
 
 export async function listAllCompanies(): Promise<CompanyRow[]> {
   return db<CompanyRow>('companies').orderBy('created_at', 'desc')
+}
+
+export async function updateCompanyProfile(
+  companyId: string,
+  patch: CompanyProfilePatch,
+): Promise<CompanyRow | undefined> {
+  if (Object.keys(patch).length === 0) {
+    return findCompanyById(companyId)
+  }
+
+  const updated = await db<CompanyRow>('companies')
+    .where({ id: companyId })
+    .update({
+      ...patch,
+      updated_at: db.fn.now(3) as unknown as Date,
+    })
+
+  if (!updated) return undefined
+  return findCompanyById(companyId)
 }
 
 export async function updateCompanyStatus(

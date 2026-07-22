@@ -10,18 +10,16 @@ import {
 import {
   registerCompanyFormSchema,
   registerWizardStep1Schema,
-  registerWizardStep2Schema,
   type RegisterCompanyFormValues,
 } from '../schemas/companySchemas'
 import { RegisterWizardProgress } from './register-wizard/RegisterWizardProgress'
 import { RegisterWizardStepBasics } from './register-wizard/RegisterWizardStepBasics'
-import { RegisterWizardStepLocationContact } from './register-wizard/RegisterWizardStepLocationContact'
 import { RegisterWizardStepSummary } from './register-wizard/RegisterWizardStepSummary'
 
 const EMPTY_VALUES: RegisterCompanyFormValues = {
   name: '',
   description: '',
-  companySize: '' as RegisterCompanyFormValues['companySize'],
+  companySize: '',
   addressLine1: '',
   addressLine2: '',
   city: '',
@@ -32,10 +30,9 @@ const EMPTY_VALUES: RegisterCompanyFormValues = {
   contactPhone: '',
 }
 
-const STEP_TITLES = ['Company basics', 'Location & contact', 'Summary'] as const
+const STEP_TITLES = ['Company basics', 'Summary'] as const
 const STEP_DESCRIPTIONS = [
-  'Tell us about your company.',
-  'Where is your company located and how can we reach you?',
+  'Tell us about your company. You can add contact and location later on the company profile.',
   'Review your details before submitting.',
 ] as const
 
@@ -56,7 +53,9 @@ export function RegisterCompanyDialog({
 }: RegisterCompanyDialogProps) {
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<RegisterCompanyFormValues>(EMPTY_VALUES)
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterCompanyFormValues, string>>>({})
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof RegisterCompanyFormValues, string>>
+  >({})
 
   useEffect(() => {
     if (!open) return
@@ -69,25 +68,19 @@ export function RegisterCompanyDialog({
     setValues((prev) => ({ ...prev, ...patch }))
   }
 
-  function validateStep(currentStep: number): boolean {
-    const schema = currentStep === 1 ? registerWizardStep1Schema : registerWizardStep2Schema
-    const result = schema.safeParse(values)
+  function handleNext() {
+    const result = registerWizardStep1Schema.safeParse(values)
     if (!result.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
-      return false
+      return
     }
     setFieldErrors({})
-    return true
-  }
-
-  function handleNext() {
-    if (!validateStep(step)) return
-    setStep((s) => Math.min(s + 1, 3))
+    setStep(2)
   }
 
   function handlePrevious() {
     setFieldErrors({})
-    setStep((s) => Math.max(s - 1, 1))
+    setStep(1)
   }
 
   function handleSubmit() {
@@ -109,7 +102,7 @@ export function RegisterCompanyDialog({
       title="Register Company"
       description={STEP_DESCRIPTIONS[stepIndex]}
       sizeWidth="large"
-      sizeHeight="xlarge"
+      sizeHeight="large"
       footer={
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
@@ -133,7 +126,7 @@ export function RegisterCompanyDialog({
               Previous
             </Button>
           ) : null}
-          {step < 3 ? (
+          {step < 2 ? (
             <Button type="button" className="h-10 px-4" onClick={handleNext} disabled={isSubmitting}>
               Next
               <ChevronRight className="ml-2 h-4 w-4" />
@@ -150,9 +143,9 @@ export function RegisterCompanyDialog({
       <div className="space-y-6">
         <div className="space-y-2 text-center">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Step {step} of 3 — {STEP_TITLES[stepIndex]}
+            Step {step} of 2 — {STEP_TITLES[stepIndex]}
           </p>
-          <RegisterWizardProgress currentStep={step} />
+          <RegisterWizardProgress currentStep={step} totalSteps={2} />
         </div>
 
         {error ? (
@@ -170,16 +163,7 @@ export function RegisterCompanyDialog({
           />
         ) : null}
 
-        {step === 2 ? (
-          <RegisterWizardStepLocationContact
-            values={values}
-            fieldErrors={fieldErrors}
-            isSubmitting={isSubmitting}
-            onChange={patchValues}
-          />
-        ) : null}
-
-        {step === 3 ? <RegisterWizardStepSummary values={values} /> : null}
+        {step === 2 ? <RegisterWizardStepSummary values={values} /> : null}
       </div>
     </CustomDialog>
   )

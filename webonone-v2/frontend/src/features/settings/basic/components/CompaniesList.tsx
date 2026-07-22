@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -6,6 +7,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  StatusTag,
 } from '@webonone/ui-kit'
 import type { AdminCompany, CompanyStatus } from '../services/companyApi'
 
@@ -15,23 +17,16 @@ type CompaniesListProps = {
   onStatusChange: (id: string, status: CompanyStatus) => void
 }
 
-function statusLabel(status: CompanyStatus): string {
-  if (status === 'approved') return 'Approved'
-  if (status === 'rejected') return 'Rejected'
-  return 'Pending'
-}
-
-function statusClassName(status: CompanyStatus): string {
-  if (status === 'approved') return 'bg-primary/15 text-primary'
-  if (status === 'rejected') return 'bg-destructive/15 text-destructive'
-  return 'bg-muted text-muted-foreground'
-}
-
 export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesListProps) {
+  const navigate = useNavigate()
   const rows = Array.isArray(items) ? items : []
 
   if (rows.length === 0) {
     return <ItemListEmpty>No companies registered yet.</ItemListEmpty>
+  }
+
+  function openProfile(id: string) {
+    navigate(`/companies/${id}`)
   }
 
   return (
@@ -39,28 +34,37 @@ export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesLi
       {rows.map((item) => (
         <ItemListItem key={item.id}>
           <ItemListContent>
-            <div className="flex items-start gap-3">
-              {item.logoUrl ? (
-                <img src={item.logoUrl} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
-              ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-xs">
-                  No logo
+            <button
+              type="button"
+              className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => openProfile(item.id)}
+            >
+              <div className="flex items-start gap-3">
+                {item.logoUrl ? (
+                  <img
+                    src={item.logoUrl}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-xs">
+                    No logo
+                  </div>
+                )}
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate font-medium">{item.name}</p>
+                    <StatusTag variant={item.status} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Registrant: {item.createdByUserId} · {new Date(item.createdAt).toLocaleString()}
+                  </p>
                 </div>
-              )}
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate font-medium">{item.name}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusClassName(item.status)}`}>
-                    {statusLabel(item.status)}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Registrant: {item.createdByUserId} · {new Date(item.createdAt).toLocaleString()}
-                </p>
               </div>
-            </div>
+            </button>
           </ItemListContent>
           <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+            <DropdownMenuItem onClick={() => openProfile(item.id)}>View details</DropdownMenuItem>
             <DropdownMenuItem
               disabled={updatingId === item.id || item.status === 'approved'}
               onClick={() => onStatusChange(item.id, 'approved')}

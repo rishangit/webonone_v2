@@ -1,0 +1,78 @@
+---
+description: Implementation plan for spec 1.13.2 — company profile three cards (profile, contact, location+map); slim register; progressive details
+alwaysApply: false
+globs: webonone-v2/frontend/src/features/settings/companies/**, webonone-v2/frontend/src/features/settings/basic/**, webonone-v2/backend/src/services/company.service.ts, webonone-v2/backend/src/routes/company.routes.ts, webonone-v2/backend/src/controllers/company.controller.ts, webonone-v2/backend/src/repositories/company.repository.ts, webonone-v2/backend/migrations/**
+---
+
+# Implementation plan — Spec 1.13.2
+
+## Summary
+
+Add a **Company profile** page with **three cards**: Company profile, Contact information, Location information (Google Map + address). Clicking a company on **All Companies** or SA **Companies** opens the profile. Registration is **slim** (name required); remaining contact/location details are completed on the profile. Backend: `GET` / partial `PATCH /company/:id`, map columns, relaxed register validation.
+
+See [02](./02-company-profile-page.md), [03](./03-list-navigation.md), [04](./04-company-detail-api.md), [05](./05-registration-and-progressive-details.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.13.2` |
+| Prerequisite | 1.13.0 All Companies + SA Companies lists |
+| Services | WebOnOne (+ Identity for JWT / roles) |
+| New env | `VITE_GOOGLE_MAPS_API_KEY` (frontend `.env.example`) |
+
+---
+
+## Phase 1 — Backend
+
+**Goal:** Detail DTO, partial PATCH, map columns, slim register.
+
+| Task | Paths |
+|------|-------|
+| Migration | `latitude`, `longitude`, `map_place_id`, `map_formatted_address` |
+| Schemas | register (name required); update (partial) |
+| Repo / service / routes | `updateCompanyProfile`; `GET`/`PATCH /company/:id` |
+
+---
+
+## Phase 2 — Frontend profile
+
+**Goal:** Three cards + map; routes; store/API.
+
+| Task | Paths |
+|------|-------|
+| Page + cards | `CompanyProfilePage`, profile/contact/location cards, map picker |
+| Router | `router.tsx`, `routePrefetch.ts` |
+| API / schemas / store | `companyApi`, schemas, companies store |
+| Env | `.env.example` Maps key |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 3 — Lists + slim register UI
+
+| Task | Paths |
+|------|-------|
+| Navigation | `MyCompaniesList`, `CompaniesList` |
+| Register wizard | Minimal required fields; contact/location not blocking |
+
+---
+
+## Forbidden
+
+- Single flat form without the three cards
+- Editing `status` on profile / detail PATCH
+- Requiring contact/address/map at register
+- Breaking Login or SA Approve/Reject
+- Hand-rolled page header instead of `FeaturePage`
+- Tokens in URLs; Maps secret keys in backend unless a proxy is added later
+
+---
+
+## Acceptance (quick)
+
+1. Three cards including Location with map + address.
+2. Slim register → complete contact/location on profile.
+3. List row → profile; PATCH persists (including map).
+4. Type-check green.

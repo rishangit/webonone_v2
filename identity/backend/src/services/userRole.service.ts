@@ -54,17 +54,32 @@ export async function assertCanAssumeSessionRole(
   sessionRole: PlatformRole,
   companyId?: string | null,
 ): Promise<void> {
-  const assumable = await getAssumableRoles(userId)
-  const match = assumable.roles.find(
-    (option) =>
-      option.role === sessionRole &&
-      (sessionRole === 'super_admin' || option.companyId === (companyId ?? option.companyId)),
-  )
-  if (!match) {
-    const err = new Error('Invalid session role for this user') as Error & { statusCode?: number }
-    err.statusCode = 403
-    throw err
+  // Default User is always allowed (no company scope)
+  if (sessionRole === 'member' && (companyId == null || companyId === '')) {
+    return
   }
+
+  if (sessionRole === 'super_admin') {
+    const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
+    if (superAdmin) return
+  }
+
+  if (sessionRole === 'company_admin' && companyId) {
+    const companyRoles = await roleRepo.findCompanyRolesByUserId(userId)
+    const ownsCompany = companyRoles.some(
+      (row) => row.company_id === companyId && row.role === 'company_admin',
+    )
+    if (ownsCompany) return
+  }
+
+  if (sessionRole === 'member' && companyId) {
+    const companyRole = await roleRepo.findCompanyRole(userId, companyId)
+    if (companyRole) return
+  }
+
+  const err = new Error('Invalid session role for this user') as Error & { statusCode?: number }
+  err.statusCode = 403
+  throw err
 }
 
 export async function resolveDefaultSessionClaims(userId: string): Promise<{

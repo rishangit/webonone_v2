@@ -1,5 +1,11 @@
 // Metro config for the monorepo: watch the repo root so workspace packages
 // (@webonone/theme, @webonone/store-kit) resolve from the hoisted node_modules.
+//
+// Keep Metro's server root at this app (not the npm workspace root). Otherwise
+// Android release bundling relativizes entry to `./index.js` and resolves it
+// from the monorepo root, which fails. Watch folders below still cover the repo.
+process.env.EXPO_NO_METRO_WORKSPACE_ROOT = '1'
+
 const { getDefaultConfig } = require('expo/metro-config')
 const { withNativeWind } = require('nativewind/metro')
 const path = require('path')

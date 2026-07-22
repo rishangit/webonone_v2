@@ -25,6 +25,20 @@ export async function getMyCompany(req: AuthenticatedRequest, res: Response) {
   }
 }
 
+export async function listMyCompanies(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  try {
+    const items = await companyService.listMyCompanies(req.user.id)
+    res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function registerCompany(req: AuthenticatedRequest, res: Response) {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
@@ -114,6 +128,38 @@ export async function updateCompanyStatus(req: SuperAdminRequest, res: Response)
       String(req.params.id),
       req.body,
       req.superAdmin.id,
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getCompanyById(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  try {
+    const result = await companyService.getCompanyDetail(req.user.id, String(req.params.id))
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function updateCompanyById(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  try {
+    const result = await companyService.updateCompanyProfile(
+      req.user.id,
+      String(req.params.id),
+      req.body,
     )
     res.json(result)
   } catch (err) {

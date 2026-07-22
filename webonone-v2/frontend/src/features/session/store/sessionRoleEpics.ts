@@ -3,11 +3,13 @@ import { from, of } from 'rxjs'
 import { catchError, exhaustMap, map } from 'rxjs/operators'
 import { sessionRoleApi } from '../services/sessionRoleApi'
 import { sessionRoleActions } from './sessionRoleSlice'
+import type { AssumableRolesResponse } from '../types/sessionRole.types'
 
 type SessionRoleEpic = Epic
 
-const defaultRolesPayload = {
-  roles: [{ role: 'member' as const, companyId: null, label: 'Default User' }],
+const defaultRolesPayload: AssumableRolesResponse = {
+  roles: [{ role: 'member', companyId: null, label: 'Default User' }],
+  requiresAccountSelection: false,
   hasCompanyMembership: false,
 }
 

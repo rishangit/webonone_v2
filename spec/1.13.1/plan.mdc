@@ -1,0 +1,73 @@
+---
+description: Implementation plan for spec 1.13.1 — post-login Choose account dialog (Default User / Super Admin / owned companies)
+alwaysApply: false
+globs: webonone-v2/frontend/src/features/session/**, webonone-v2/backend/src/services/company.service.ts, webonone-v2/backend/src/controllers/company.controller.ts
+---
+
+# Implementation plan — Spec 1.13.1
+
+## Summary
+
+After WebOnOne login succeeds, before the dashboard loads, show a **Choose account** dialog when the user is Super Admin and/or owns companies. List **Default User** (pre-selected), **Super Admin** (if any), and **each owned company**. Skip the dialog when the user only has Default User. Continue reissues Identity session role. Mid-session All Companies Login from 1.13.0 stays unchanged.
+
+See [02-account-selection-dialog.md](./02-account-selection-dialog.md), [03-assumable-roles-for-selection.md](./03-assumable-roles-for-selection.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.13.1` |
+| Prerequisite | 1.13.0 session role + Company Owner Login |
+| Services | Identity + WebOnOne |
+| New env | None |
+
+---
+
+## Phase 1 — Backend assumable roles
+
+**Goal:** Selection payload for the gate.
+
+**Exit criteria:** `requiresAccountSelection` correct; Default User always present when true; no rejected / no per-company member rows.
+
+| Task | Paths |
+|------|-------|
+| Service | `webonone-v2/backend/src/services/company.service.ts` — `getAssumableRoles` |
+| Types / controller | Ensure response includes `requiresAccountSelection` |
+
+---
+
+## Phase 2 — Frontend gate + dialog
+
+**Goal:** Show/hide dialog; pre-select Default User; Continue reissue.
+
+**Exit criteria:** Manual cases in 07-implementation-plan acceptance.
+
+| Task | Paths |
+|------|-------|
+| Slice | `sessionRoleSlice.ts` — gate on `requiresAccountSelection` |
+| Dialog | `RoleSelectionDialog.tsx` (retitle Choose account) |
+| Gate | `SessionRoleGate.tsx` / bootstrap epic |
+| Types | `sessionRole.types.ts` |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Forbidden
+
+- Showing dialog for Default-User-only accounts
+- Auto-selecting Super Admin or a company when multi-account
+- Omitting Default User from a multi-account dialog
+- Listing rejected companies or non-owner member companies
+- Dismissing the dialog without Continue
+- Loading role-aware dashboard before `selectionComplete`
+- New Identity role enums or tokens in URLs
+
+---
+
+## Acceptance (quick)
+
+1. Default only → no dialog.
+2. Company owner → Default User selected + company cards → Continue works.
+3. Super Admin → Default User + Super Admin cards.
+4. Type-check green.

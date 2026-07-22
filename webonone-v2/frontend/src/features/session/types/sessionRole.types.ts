@@ -9,5 +9,8 @@ export type AssumableRoleOption = {
 
 export type AssumableRolesResponse = {
   roles: AssumableRoleOption[]
+  /** True when Super Admin and/or owned companies — show Choose account dialog */
+  requiresAccountSelection: boolean
+  /** Compat: true when user owns ≥1 pending/approved company */
   hasCompanyMembership: boolean
 }

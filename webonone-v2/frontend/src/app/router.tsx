@@ -12,6 +12,21 @@ const HomePage = lazy(() =>
 const CompaniesPage = lazy(() =>
   import('@/features/settings/basic/pages/CompaniesPage').then((m) => ({ default: m.CompaniesPage })),
 )
+const AllCompaniesPage = lazy(() =>
+  import('@/features/settings/companies/pages/AllCompaniesPage').then((m) => ({
+    default: m.AllCompaniesPage,
+  })),
+)
+const MemberCompanyProfilePage = lazy(() =>
+  import('@/features/settings/companies/pages/CompanyProfilePage').then((m) => ({
+    default: m.MemberCompanyProfilePage,
+  })),
+)
+const AdminCompanyProfilePage = lazy(() =>
+  import('@/features/settings/companies/pages/CompanyProfilePage').then((m) => ({
+    default: m.AdminCompanyProfilePage,
+  })),
+)
 const BasicSettingsPage = lazy(() =>
   import('@/features/settings/basic/pages/BasicSettingsPage').then((m) => ({
     default: m.BasicSettingsPage,
@@ -75,6 +90,32 @@ export function App() {
                   <CompaniesPage />
                 </LazyRoute>
               </SuperAdminRoute>
+            }
+          />
+          <Route
+            path="companies/:companyId"
+            element={
+              <SuperAdminRoute>
+                <LazyRoute>
+                  <AdminCompanyProfilePage />
+                </LazyRoute>
+              </SuperAdminRoute>
+            }
+          />
+          <Route
+            path="settings/companies"
+            element={
+              <LazyRoute>
+                <AllCompaniesPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="settings/companies/:companyId"
+            element={
+              <LazyRoute>
+                <MemberCompanyProfilePage />
+              </LazyRoute>
             }
           />
           <Route

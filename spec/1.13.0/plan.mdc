@@ -1,0 +1,117 @@
+---
+description: Implementation plan for spec 1.13.0 — Settings All Companies list + Company Owner Login + multi-company registration + UI Kit StatusTag
+alwaysApply: false
+globs: packages/platform-nav/**, ui-kit/**, webonone-v2/frontend/**, webonone-v2/backend/**
+---
+
+# Implementation plan — Spec 1.13.0
+
+## Summary
+
+Add **Settings → All Companies** (`/settings/companies`) for normal WebOnOne users. Page is a standard UI Kit list (`FeaturePage` + `ListPageBody` + ItemList). Users register **one or multiple** companies via the existing 3-step wizard. Every registration is created with status **`pending`** and Identity role **`company_admin` (Company Owner)** for that company. Only a super admin may set **`approved`** or **`rejected`** from top-level **Companies**. Each list row has a **3-dot menu** with **Login** — enabled for **approved** companies the user owns — which reissues the session as company owner for that `companyId`. Upgrade UI Kit **Tags** tab with **company status tags** (`StatusTag`) and use them on All Companies + super-admin Companies lists. Backend adds `GET /company/me/companies`; register must allow additional companies. Migrate register UX off Basic Settings.
+
+See [02](./02-settings-all-companies-nav.md), [03](./03-my-companies-list-ui.md), [04](./04-multi-company-api.md), [05](./05-ui-kit-company-status-tags.md), [06-company-owner-login.md](./06-company-owner-login.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.13.0` |
+| Prerequisite | Company feature from 1.6.0; Identity `users_roles` multi `(user_id, company_id, role)`; session-role reissue |
+| Services for manual test | Identity + WebOnOne + UI Kit showcase |
+| New env | None |
+| Skills | `.cursor/skills/item-list/SKILL.md`, form-creation, ui-kit-agent |
+
+---
+
+## Phase 1 — Backend list + multi register
+
+**Goal:** `GET /api/v1/company/me/companies`; register never blocked solely because user already has a company; register always persists `status = pending` and `company_admin` (Company Owner).
+
+**Exit criteria:** 0 / 1 / 2+ companies returned correctly; second POST register succeeds; both rows `pending` with role `company_admin` until super-admin status PATCH.
+
+| Task | Paths |
+|------|-------|
+| Service + controller | `webonone-v2/backend/src/services/company.service.ts`, `controllers/company.controller.ts` |
+| Route | `webonone-v2/backend/src/routes/company.routes.ts` |
+| Repo helper | `webonone-v2/backend/src/repositories/company.repository.ts` |
+| Identity roles | Reuse `findCompanyRolesByUserId` via `identityRoleClient.ts` |
+| Assumable roles | Prefer only **approved** companies as assumable `company_admin` |
+
+**Verify:** manual HTTP with JWT; Identity + WebOnOne running.
+
+---
+
+## Phase 2 — UI Kit company status tags
+
+**Goal:** Tags showcase + `StatusTag` contract for company approval.
+
+**Exit criteria:** Showcase Tags → Company status tags shows Pending / Approved / Rejected; package exports ready for consumers.
+
+| Task | Paths |
+|------|-------|
+| Component | `ui-kit/package/src/components/StatusTag.tsx` (+ `index.ts` export) |
+| Showcase | `ui-kit/showcase/src/pages/TagsPage.tsx` |
+
+**Verify:** `npm run build -w @webonone/ui-kit`; `npm run type-check -w ui-kit-root`
+
+---
+
+## Phase 3 — platform-nav
+
+**Goal:** Settings child **All Companies** on member / main / superAdmin.
+
+**Exit criteria:** Tests assert `/settings/companies` first under Settings; `/companies` unchanged for super admin.
+
+| Task | Paths |
+|------|-------|
+| Nav defs + tests | `packages/platform-nav/src/coreNav.ts`, `coreNav.test.ts` |
+
+---
+
+## Phase 4 — Frontend list page + StatusTag + Login
+
+**Goal:** All Companies page + MyCompaniesList with 3-dot **Login**; wire route; Basic Settings cleanup; migrate status chips to `StatusTag`.
+
+**Exit criteria:** Item-list skill compliance; multi rows after multi register; Login works for approved owner companies; both company lists use `StatusTag`; Basic Settings not primary register path.
+
+| Task | Paths |
+|------|-------|
+| Page + list | `webonone-v2/frontend/src/features/settings/…` — `ItemListMenu` + **Login** |
+| Session | Reuse `sessionRoleApi.reissueSessionRole` + `sessionRole` slice |
+| Super-admin list | `CompaniesList.tsx` — replace hand-rolled status spans |
+| Store / API | `companiesStore`, `companyApi` |
+| Shell | `navItems.ts`, `router.tsx`, `routePrefetch.ts` |
+| Wizard reuse | `RegisterCompanyDialog` |
+| Cleanup | `BasicSettingsPage.tsx` |
+
+**Reference:** [05](./05-ui-kit-company-status-tags.md), [06](./06-company-owner-login.md); item-list skill.
+
+**Verify:** `npm run type-check -w webonone-v2-root`; platform-nav tests.
+
+---
+
+## Forbidden
+
+- Merging user All Companies with super-admin approval list into one page
+- Hand-rolled list row chrome (must use `@webonone/ui-kit` ItemList*)
+- Hand-rolled company status pills (must use `StatusTag`)
+- Icon-only Add button (must be Plus + text label)
+- Rows without a 3-dot menu when Login (or other row actions) are in scope
+- Reintroducing one-company-per-user unique constraint
+- Auto-approving on client register, or any client path that sets `approved` / `rejected`
+- Granting company-owner session for **pending** / **rejected** companies via Login or assumable roles
+- New Identity role enum (`company_owner`) — keep `company_admin`
+- Status values other than `pending` | `approved` | `rejected`
+- New microservice or Identity schema migration for this feature
+- Tokens in URLs; calling Identity DB from WebOnOne (service API only)
+
+---
+
+## Acceptance (quick)
+
+1. Showcase Tags → Company status tags (three variants).
+2. Settings → All Companies visible to normal users; rows use `StatusTag` + 3-dot menu.
+3. Add company → wizard → **Pending** + **Company Owner**; add second company → second **Pending** row.
+4. Super admin Approve → user **Login** → session has company-owner rights for that company; Login disabled while Pending.
+5. Type-check / nav tests green.
