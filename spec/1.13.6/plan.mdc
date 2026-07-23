@@ -1,0 +1,89 @@
+---
+description: Implementation plan for spec 1.13.6 — Company owners add customers (Identity Users, welcome email/SMS, default templates)
+alwaysApply: false
+globs: identity/frontend/src/features/users/**, identity/backend/src/**, webonone-v2/backend/src/services/company.service.ts, email/backend/src/**, sms/backend/src/**
+---
+
+# Implementation plan — Spec 1.13.6
+
+## Summary
+
+Company owners manage **customers** under **Identity → Users**: list company `member` roles, **Add** via `UserSelectionDialog`, assign Identity `users_roles`. On add, send **welcome email** always and **welcome SMS** if SMS gateway configured. On **company registration**, seed company-scoped Email + SMS **`welcome`** templates.
+
+See [02-company-customers-list.md](./02-company-customers-list.md), [03-add-customer-user-selection.md](./03-add-customer-user-selection.md), [04-welcome-notifications.md](./04-welcome-notifications.md), [05-default-welcome-templates.md](./05-default-welcome-templates.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.13.6` |
+| Prerequisite | Identity Users SA list; `users_roles` in Identity; UserSelectionDialog; Email/SMS internal send |
+| Services | Identity, WebOnOne BE, Email, SMS |
+| New env | Identity: `EMAIL_*`, `SMS_*` API base + keys |
+
+---
+
+## Phase 1 — Identity customers API
+
+**Goal:** List + add company customers; exclude filter for picker.
+
+**Exit criteria:** Owner JWT can list/add; duplicate member idempotent.
+
+| Task | Paths |
+|------|-------|
+| Routes/controllers/services | `identity/backend/src/routes/*`, `services/*`, `repositories/userRole*` |
+| Users excludeCompanyId | `users.repository.ts` / list users |
+
+**Verify:** `npm run type-check -w identity-root`
+
+---
+
+## Phase 2 — Identity Users UI
+
+**Goal:** Company mode list + Add dialog.
+
+| Task | Paths |
+|------|-------|
+| UsersPage dual mode | `identity/frontend/src/features/users/pages/UsersPage.tsx` |
+| API + store | `usersApi.ts`, `usersStore.ts` |
+| Nav access | `navItems.ts` / role gates |
+
+---
+
+## Phase 3 — Welcome notify
+
+**Goal:** Email always; SMS if gateway + phone.
+
+| Task | Paths |
+|------|-------|
+| Gateway status internal | `sms/backend` |
+| Identity notify clients | `identity/backend` after add |
+| Soft-fail warnings | add-customer response |
+
+---
+
+## Phase 4 — Template seed on register
+
+**Goal:** Ensure company welcome Email + SMS on register.
+
+| Task | Paths |
+|------|-------|
+| Email ensure-welcome | `email/backend` internal |
+| SMS ensure-welcome + platform seed | `sms/backend` |
+| registerCompany hook | `webonone-v2/backend/src/services/company.service.ts` |
+
+**Verify:** type-check Email, SMS, WebOnOne
+
+---
+
+## Forbidden
+
+- Rolling back membership when email/SMS fail
+- Sending SMS when company has no gateway
+- Inviting non-registered emails in this release
+- New bespoke user picker (must use `UserSelectionDialog`)
+- Cross-service DB reads (Identity must not query Email/SMS MySQL)
+
+## Done when
+
+Acceptance checklist in [07-implementation-plan.md](./07-implementation-plan.md) is complete.
