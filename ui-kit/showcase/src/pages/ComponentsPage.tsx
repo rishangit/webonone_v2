@@ -48,12 +48,12 @@ import {
   Label,
   ListFilterPanel,
   ListFilterTrigger,
-  ListSearchField,
   LoadingState,
   Pagination,
   mapZodIssuesToFieldErrors,
   PageShell,
   PasswordInput,
+  SearchInput,
   Select,
   SelectContent,
   SelectItem,
@@ -427,22 +427,23 @@ export function ComponentsPage() {
       <DemoSection
         id="list-filters"
         title="List filters"
-        description="ListSearchField (left) expands from a search icon; ListFilterTrigger opens the panel. Highlight the filter trigger when panel filters are active."
+        description="SearchInput filters the list; ListFilterTrigger opens the panel. Highlight the filter trigger when panel filters are active."
       >
         <FeaturePage
           title="Filtered collection"
           description="Demo list with search and filter panel."
           actions={
             <div className="flex items-center gap-2">
-              <ListSearchField
+              <SearchInput
                 value={searchQuery}
-                onChange={(value) => {
-                  setSearchQuery(value)
+                onChange={(event) => {
+                  setSearchQuery(event.target.value)
                   setListPage(1)
                 }}
                 placeholder="Theme name"
                 onClear={() => setListPage(1)}
                 aria-label="Search themes"
+                className="w-64"
               />
               <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
             </div>

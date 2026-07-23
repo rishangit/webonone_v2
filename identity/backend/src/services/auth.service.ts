@@ -144,6 +144,10 @@ async function issueEmailVerification(user: UserRow): Promise<void> {
     expiresAt,
   })
 
+  if (!user.email) {
+    throw new AuthError('User has no email address', 400, 'EMAIL_REQUIRED')
+  }
+
   await sendTransactionalEmail({
     templateSlug: 'email_verification',
     toEmail: user.email,
@@ -292,7 +296,7 @@ export async function completeRegistration(input: {
 
     void sendTransactionalEmail({
       templateSlug: 'welcome',
-      toEmail: user.email,
+      toEmail: email,
       payload: {
         userName: displayName,
       },
@@ -388,7 +392,7 @@ export async function logoutAllUserSessions(userId: string): Promise<void> {
 
 export async function requestPasswordReset(_email: string): Promise<void> {
   const user = await findUserByEmail(_email)
-  if (!user) {
+  if (!user?.email) {
     return
   }
 
@@ -508,6 +512,11 @@ export async function resetPassword(token: string, newPassword: string) {
   const passwordHash = await bcrypt.hash(newPassword, 12)
   await updateUserPassword(stored.user_id, passwordHash)
   await markPasswordResetTokenUsed(stored.id)
+
+  const user = await findUserById(stored.user_id)
+  if (user?.email && !user.is_email_verified) {
+    await markUserEmailVerified(stored.user_id)
+  }
 }
 
 export async function resetPasswordWithSession(resetSessionToken: string, newPassword: string) {

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
   Avatar,
+  Button,
   FeaturePage,
   FormField,
   ItemList,
@@ -13,18 +15,26 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  ListSearchField,
+  SearchInput,
   Pagination,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  useToast,
+  type UserOption,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { hasPlatformEmbedHandoff } from '@/features/auth/utils/platformReturn'
-import { isSessionSuperAdmin } from '@/features/users/utils/currentRole'
+import { AddCompanyUserDialog } from '@/features/users/components/AddCompanyUserDialog'
+import {
+  getSessionCompanyId,
+  isSessionCompanyAdmin,
+  isSessionSuperAdmin,
+} from '@/features/users/utils/currentRole'
+import { addCompanyCustomer } from '@/features/users/services/usersApi'
 import { usersActions } from '@/features/users/store'
 import type { UserPickerRole } from '@/features/users/types'
 
@@ -49,10 +59,14 @@ function formatRoleLabel(role: string): string {
 
 export function UsersPage() {
   const dispatch = useAppDispatch()
+  const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
+  const isCompanyAdmin = isSessionCompanyAdmin(accessToken)
+  const companyId = getSessionCompanyId(accessToken)
   const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
+  const companyMode = isCompanyAdmin && Boolean(companyId)
 
   const { items, total, page, pageSize, listStatus, listError } = useAppSelector((s) => s.users)
 
@@ -61,8 +75,9 @@ export function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>(ALL_ROLES_VALUE)
   const [appliedRole, setAppliedRole] = useState<UserPickerRole | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
 
-  const canQuery = Boolean(accessToken) && isSuperAdmin
+  const canQuery = Boolean(accessToken) && (isSuperAdmin || companyMode)
   const loading = listStatus === 'loading' && items.length === 0
   usePlatformLoading(loading ? 'Loading users…' : null)
 
@@ -81,79 +96,137 @@ export function UsersPage() {
       usersActions.loadListRequested({
         page: 1,
         pageSize,
-        extra: { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
+        extra: companyMode
+          ? { search: debouncedSearch || undefined, companyId: companyId! }
+          : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
       }),
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canQuery, debouncedSearch, appliedRole])
+  }, [canQuery, debouncedSearch, appliedRole, companyMode, companyId])
 
-  const hasActiveFilters = roleFilter !== ALL_ROLES_VALUE
+  const hasActiveFilters = !companyMode && roleFilter !== ALL_ROLES_VALUE
 
   const emptyLabel = useMemo(() => {
     if (loading) {
       return null
     }
     if (items.length === 0) {
-      return 'No users found.'
+      return companyMode
+        ? 'No users yet. Use Add user to select someone for this company.'
+        : 'No users found.'
     }
     return null
-  }, [loading, items.length])
+  }, [loading, items.length, companyMode])
+
+  async function handleSelectUser(user: UserOption) {
+    if (!companyId) {
+      return
+    }
+    try {
+      await addCompanyCustomer({
+        companyId,
+        userId: user.id,
+      })
+      setAddOpen(false)
+      toast({ title: 'User added' })
+      dispatch(
+        usersActions.loadListRequested({
+          page: 1,
+          pageSize,
+          extra: { search: debouncedSearch || undefined, companyId },
+        }),
+      )
+    } catch (err) {
+      toast({
+        title: 'Failed to add user',
+        description: err instanceof Error ? err.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  function handleCreatedUser(_user: UserOption) {
+    setAddOpen(false)
+    toast({ title: 'User added' })
+    if (!companyId) {
+      return
+    }
+    dispatch(
+      usersActions.loadListRequested({
+        page: 1,
+        pageSize,
+        extra: { search: debouncedSearch || undefined, companyId },
+      }),
+    )
+  }
 
   if (!accessToken) {
-    // In embed mode the JWT arrives asynchronously via postMessage — wait for it
-    // instead of bouncing to /login (which the shell overlay would cover, reading
-    // as a stuck second loading layer).
     if (isEmbedHandoff) {
       return null
     }
     return <Navigate to="/login" replace />
   }
 
-  if (!isSuperAdmin) {
+  if (!isSuperAdmin && !companyMode) {
     return <Navigate to="/profile" replace />
   }
 
   return (
     <FeaturePage
       title="Users"
-      description="Browse all registered platform users."
+      description={
+        companyMode
+          ? 'Users belonging to your company. Add a registered user from the directory.'
+          : 'Browse all registered platform users.'
+      }
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <ListSearchField
+          <SearchInput
             value={searchInput}
-            onChange={setSearchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Search by name or email…"
             aria-label="Search users"
+            className="w-64"
           />
-          <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          {!companyMode ? (
+            <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          ) : null}
+          {companyMode ? (
+            <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add user
+            </Button>
+          ) : null}
         </div>
       }
     >
-      <ListFilterPanel
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        onApply={() =>
-          setAppliedRole(roleFilter === ALL_ROLES_VALUE ? null : (roleFilter as UserPickerRole))
-        }
-        onClear={() => {
-          setRoleFilter(ALL_ROLES_VALUE)
-          setAppliedRole(null)
-        }}
-      >
-        <FormField label="Role" htmlFor="users-role">
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger id="users-role">
-              <SelectValue placeholder="All roles" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_ROLES_VALUE}>All roles</SelectItem>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
-              <SelectItem value="company_admin">Company Admin</SelectItem>
-              <SelectItem value="member">Member</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-      </ListFilterPanel>
+      {!companyMode ? (
+        <ListFilterPanel
+          open={filterOpen}
+          onOpenChange={setFilterOpen}
+          onApply={() =>
+            setAppliedRole(roleFilter === ALL_ROLES_VALUE ? null : (roleFilter as UserPickerRole))
+          }
+          onClear={() => {
+            setRoleFilter(ALL_ROLES_VALUE)
+            setAppliedRole(null)
+          }}
+        >
+          <FormField label="Role" htmlFor="users-role">
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger id="users-role">
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_ROLES_VALUE}>All roles</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
+                <SelectItem value="company_admin">Company Admin</SelectItem>
+                <SelectItem value="member">Member</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+        </ListFilterPanel>
+      ) : null}
 
       {listError ? (
         <Alert variant="destructive">
@@ -179,7 +252,9 @@ export function UsersPage() {
                     />
                     <ItemListContent>
                       <p className="truncate font-medium">{user.displayName}</p>
-                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email?.trim() ? user.email : 'No email'}
+                      </p>
                     </ItemListContent>
                     {user.role ? (
                       <span className="shrink-0 self-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -203,7 +278,9 @@ export function UsersPage() {
               usersActions.loadListRequested({
                 page: p,
                 pageSize,
-                extra: { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
+                extra: companyMode
+                  ? { search: debouncedSearch || undefined, companyId: companyId! }
+                  : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
               }),
             )
           }
@@ -212,12 +289,25 @@ export function UsersPage() {
               usersActions.loadListRequested({
                 page: 1,
                 pageSize: size,
-                extra: { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
+                extra: companyMode
+                  ? { search: debouncedSearch || undefined, companyId: companyId! }
+                  : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
               }),
             )
           }
         />
       </ListPageBody>
+
+      {companyMode ? (
+        <AddCompanyUserDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          onSelect={(user) => {
+            void handleSelectUser(user)
+          }}
+          onCreated={handleCreatedUser}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

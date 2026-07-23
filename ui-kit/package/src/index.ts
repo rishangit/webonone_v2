@@ -14,6 +14,8 @@ export type { ColorInputProps } from './components/ColorInput'
 export { normalizeHexColor, isValidHexColor } from './lib/normalizeHexColor'
 export { PasswordInput } from './components/PasswordInput'
 export type { PasswordInputProps } from './components/PasswordInput'
+export { SearchInput } from './components/SearchInput'
+export type { SearchInputProps } from './components/SearchInput'
 export { PhoneInput } from './components/PhoneInput'
 export type { PhoneInputProps } from './components/PhoneInput'
 export { OtpInput } from './components/OtpInput'
@@ -22,9 +24,10 @@ export { Pagination } from './components/Pagination'
 export type { PaginationProps } from './components/Pagination'
 export { ListFilterPanel, ListFilterTrigger } from './components/ListFilterPanel'
 export type { ListFilterPanelProps, ListFilterTriggerProps } from './components/ListFilterPanel'
-export { ListSearchField } from './components/ListSearchField'
-export type { ListSearchFieldProps } from './components/ListSearchField'
-export { UserSelectionDialog } from './components/UserSelectionDialog'
+export {
+  UserSelectionDialog,
+  USER_SELECTION_DIALOG_SIZE,
+} from './components/UserSelectionDialog'
 export type {
   UserOption,
   UserSelectionLoadParams,

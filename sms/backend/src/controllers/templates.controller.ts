@@ -10,6 +10,7 @@ import type {
 import { logAudit } from '../services/audit.service.js'
 import {
   canAccessTemplate,
+  createCompanyOverrideFromPlatform,
   createTemplate,
   deleteTemplate,
   getTemplateById,
@@ -84,6 +85,35 @@ export async function putTemplate(req: AuthenticatedRequest, res: Response) {
   }
 
   const body = req.body as UpdateTemplateBody
+
+  if (req.user!.role === 'company_admin' && existing.scope === 'platform') {
+    const companyId = req.user!.companyId
+    if (!companyId) {
+      res.status(400).json({ message: 'Company admin has no company assigned', code: 'BAD_REQUEST' })
+      return
+    }
+    try {
+      const created = await createCompanyOverrideFromPlatform(id, companyId, body, req.user?.id)
+      await logAudit({
+        userId: req.user?.id,
+        action: 'template_create',
+        entityType: 'sms_template',
+        entityId: created.id,
+        metadata: { overriddenFrom: id },
+      })
+      res.json(created)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Override failed'
+      res.status(400).json({ message, code: 'BAD_REQUEST' })
+    }
+    return
+  }
+
+  if (req.user!.role === 'company_admin' && existing.scope !== 'company') {
+    res.status(403).json({ message: 'Forbidden', code: 'FORBIDDEN' })
+    return
+  }
+
   const updated = await updateTemplate(id, body, req.user?.id)
   await logAudit({ userId: req.user?.id, action: 'template_update', entityType: 'sms_template', entityId: updated.id })
   res.json(updated)

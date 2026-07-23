@@ -10,7 +10,7 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  ListSearchField,
+  SearchInput,
   Pagination,
   Select,
   SelectContent,
@@ -43,7 +43,12 @@ export function AttributesPage() {
       description="Manage catalog attributes."
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search attributes…" />
+          <SearchInput
+            value={list.q}
+            onChange={(event) => list.setQ(event.target.value)}
+            placeholder="Search attributes…"
+            className="w-64"
+          />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
           {canCreate ? (
             <Button type="button" size="sm" onClick={() => setDialog({})}>

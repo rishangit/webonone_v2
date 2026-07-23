@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import type { SmsTemplateRow, SmsTemplateVersionRow, TemplateScope } from '../models/db.js'
 import { estimateSegments, findMissingPlaceholders, renderPlaceholders } from '../utils/renderPlaceholders.js'
+import { ensureLocalCompany } from './user.service.js'
 
 export interface TemplateDto {
   id: string
@@ -14,6 +15,8 @@ export interface TemplateDto {
   requiredKeys: string[]
   createdAt: string
   updatedAt: string
+  /** Platform template shown to company admins until they save a company override. */
+  isDefault?: boolean
 }
 
 function parseRequiredKeys(row: SmsTemplateRow): string[] {
@@ -59,15 +62,31 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
   return platformTemplate ?? null
 }
 
-export async function listTemplates(filters: { companyId?: string | null; role?: string }): Promise<TemplateDto[]> {
-  const query = db<SmsTemplateRow>('sms_templates').orderBy('updated_at', 'desc')
+/** Platform slugs company owners may see/customize as defaults (1.13.6). */
+const COMPANY_DEFAULT_PLATFORM_SLUGS = new Set(['welcome'])
 
+export async function listTemplates(filters: { companyId?: string | null; role?: string }): Promise<TemplateDto[]> {
   if (filters.role === 'company_admin' && filters.companyId) {
-    query.where({ scope: 'company', company_id: filters.companyId })
-  } else {
-    query.where({ scope: 'platform' }).whereNull('company_id')
+    const companyRows = await db<SmsTemplateRow>('sms_templates')
+      .where({ scope: 'company', company_id: filters.companyId })
+      .orderBy('updated_at', 'desc')
+
+    const platformRows = await db<SmsTemplateRow>('sms_templates')
+      .where({ scope: 'platform', is_active: true })
+      .whereNull('company_id')
+      .whereIn('slug', [...COMPANY_DEFAULT_PLATFORM_SLUGS])
+      .orderBy('updated_at', 'desc')
+
+    const overriddenSlugs = new Set(companyRows.map((row) => row.slug))
+    const defaults = platformRows
+      .filter((row) => !overriddenSlugs.has(row.slug))
+      .map((row) => ({ ...rowToDto(row), isDefault: true }))
+
+    return [...companyRows.map(rowToDto), ...defaults]
   }
 
+  const query = db<SmsTemplateRow>('sms_templates').orderBy('updated_at', 'desc')
+  query.where({ scope: 'platform' }).whereNull('company_id')
   const rows = await query
   return rows.map(rowToDto)
 }
@@ -233,7 +252,90 @@ export async function previewTemplate(templateId: string, payload: Record<string
 export function canAccessTemplate(template: TemplateDto, role: string, userCompanyId: string | null): boolean {
   if (role === 'super_admin') return template.scope === 'platform'
   if (role === 'company_admin') {
-    return template.scope === 'company' && template.companyId === userCompanyId
+    if (template.scope === 'company' && template.companyId === userCompanyId) return true
+    if (
+      template.scope === 'platform' &&
+      !template.companyId &&
+      COMPANY_DEFAULT_PLATFORM_SLUGS.has(template.slug)
+    ) {
+      return true
+    }
+    return false
   }
   return false
+}
+
+/** Create a company override from a platform template (first company edit of a default). */
+export async function createCompanyOverrideFromPlatform(
+  platformTemplateId: string,
+  companyId: string,
+  input: {
+    name?: string
+    body?: string
+    requiredKeys?: string[]
+    isActive?: boolean
+  },
+  userId?: string,
+): Promise<TemplateDto> {
+  await ensureLocalCompany({ companyId })
+
+  const platform = await db<SmsTemplateRow>('sms_templates').where({ id: platformTemplateId }).first()
+  if (!platform || platform.scope !== 'platform') {
+    throw new Error('Platform template not found')
+  }
+
+  const existing = await db<SmsTemplateRow>('sms_templates')
+    .where({ slug: platform.slug, scope: 'company', company_id: companyId })
+    .first()
+  if (existing) {
+    return updateTemplate(existing.id, input, userId)
+  }
+
+  return createTemplate(
+    {
+      slug: platform.slug,
+      name: input.name ?? platform.name,
+      body: input.body ?? platform.body,
+      scope: 'company',
+      companyId,
+      requiredKeys: input.requiredKeys ?? parseRequiredKeys(platform),
+      isActive: input.isActive ?? platform.is_active,
+    },
+    userId,
+  )
+}
+
+const DEFAULT_WELCOME_BODY = 'Welcome to {{companyName}}, {{userName}}!'
+const DEFAULT_WELCOME_KEYS = ['userName', 'companyName']
+
+export async function ensureWelcomeTemplate(
+  companyId: string,
+  companyName?: string,
+): Promise<{ status: 'created' | 'exists'; templateId: string }> {
+  await ensureLocalCompany({ companyId, name: companyName })
+
+  const existing = await db<SmsTemplateRow>('sms_templates')
+    .where({ slug: 'welcome', scope: 'company', company_id: companyId })
+    .first()
+
+  if (existing) {
+    return { status: 'exists', templateId: existing.id }
+  }
+
+  const platform = await db<SmsTemplateRow>('sms_templates')
+    .where({ slug: 'welcome', scope: 'platform' })
+    .whereNull('company_id')
+    .first()
+
+  const created = await createTemplate({
+    slug: 'welcome',
+    name: platform?.name ?? 'Welcome',
+    body: platform?.body ?? DEFAULT_WELCOME_BODY,
+    scope: 'company',
+    companyId,
+    requiredKeys: platform ? parseRequiredKeys(platform) : [...DEFAULT_WELCOME_KEYS],
+    isActive: true,
+  })
+
+  return { status: 'created', templateId: created.id }
 }

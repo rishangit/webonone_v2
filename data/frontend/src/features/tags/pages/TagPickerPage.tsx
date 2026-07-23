@@ -14,7 +14,7 @@ import {
   Alert,
   AlertDescription,
   Button,
-  Input,
+  SearchInput,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -246,7 +246,7 @@ export function TagPickerPage() {
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col p-6">
       <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
+        <SearchInput
           value={searchInput}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchInput(event.target.value)}
           placeholder="Search tags"

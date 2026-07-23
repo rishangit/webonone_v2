@@ -13,6 +13,7 @@ const usersQuerySchema = z.object({
     .optional()
     .transform((value) => value ?? ''),
   role: z.enum(['super_admin', 'company_admin', 'member']).optional().nullable(),
+  excludeCompanyId: z.string().min(1).optional().nullable(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(20),
 })
@@ -23,6 +24,7 @@ export async function listUsers(req: AuthenticatedRequest, res: Response) {
   const result = await listIdentityUsers({
     search: query.search,
     role: query.role ?? null,
+    excludeCompanyId: query.excludeCompanyId ?? null,
     page: query.page,
     pageSize: query.pageSize,
   })

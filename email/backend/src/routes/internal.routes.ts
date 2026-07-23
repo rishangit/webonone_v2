@@ -8,4 +8,10 @@ const router = Router()
 
 router.post('/internal/send', requireInternalAuth, validateBody(internalSendBodySchema), internalController.internalSend)
 
+router.post(
+  '/internal/companies/:companyId/templates/ensure-welcome',
+  requireInternalAuth,
+  internalController.internalEnsureWelcome,
+)
+
 export default router

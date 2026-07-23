@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { Alert, AlertDescription } from './Alert'
 import { Avatar } from './Avatar'
 import { Button } from './Button'
 import { CustomDialog } from './CustomDialog'
-import { Input } from './Input'
+import { SearchInput } from './SearchInput'
 import {
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  itemListRowActiveClassName,
 } from './ItemList'
 import {
   Select,
@@ -18,11 +20,12 @@ import {
   SelectValue,
 } from './Select'
 import { Spinner } from './Spinner'
+import { cn } from '../lib/utils'
 
 export interface UserOption {
   id: string
   displayName: string
-  email: string
+  email: string | null
   role?: string
   avatarUrl?: string | null
 }
@@ -41,6 +44,11 @@ export interface UserSelectionLoadResult {
 
 export type LoadUsersFn = (params: UserSelectionLoadParams) => Promise<UserSelectionLoadResult>
 
+export const USER_SELECTION_DIALOG_SIZE = {
+  sizeWidth: 'large' as const,
+  sizeHeight: 'large' as const,
+}
+
 export interface UserSelectionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -52,7 +60,19 @@ export interface UserSelectionDialogProps {
   roleOptions?: { value: string; label: string }[]
   emptyMessage?: string
   id?: string
+  /**
+   * `dialog` — full CustomDialog with Cancel/Done footer (standalone).
+   * `body` — list UI only for core-hosted peer-dialog iframe bodies.
+   */
+  chrome?: 'dialog' | 'body'
+  /** Fires when the pending row selection changes (used by embed hosts for Done enablement). */
+  onPendingChange?: (user: UserOption | null) => void
+  /** When set, shows an Add user control to the right of the search field. */
+  onAddUser?: () => void
+  /** Blocks overlay/Escape dismiss while a sibling dialog is open. */
+  nestedDismissGuard?: boolean
 }
+
 
 const ALL_ROLES_VALUE = '__all__'
 const SEARCH_DEBOUNCE_MS = 300
@@ -83,6 +103,10 @@ export function UserSelectionDialog({
   roleOptions,
   emptyMessage = 'No users found',
   id = 'user-selection-dialog',
+  chrome = 'dialog',
+  onPendingChange,
+  onAddUser,
+  nestedDismissGuard = false,
 }: UserSelectionDialogProps) {
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -94,6 +118,7 @@ export function UserSelectionDialog({
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [openGeneration, setOpenGeneration] = useState(0)
+  const [pendingSelection, setPendingSelection] = useState<UserOption | null>(null)
 
   const scrollRootRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -169,6 +194,7 @@ export function UserSelectionDialog({
       setPage(1)
       setHasMore(false)
       setError(null)
+      setPendingSelection(null)
       setInitialLoading(false)
       setLoadingMore(false)
       requestIdRef.current += 1
@@ -176,6 +202,10 @@ export function UserSelectionDialog({
     }
     prevOpenRef.current = open
   }, [open])
+
+  useEffect(() => {
+    onPendingChange?.(pendingSelection)
+  }, [onPendingChange, pendingSelection])
 
   useEffect(() => {
     if (!open) {
@@ -218,8 +248,15 @@ export function UserSelectionDialog({
     return () => observer.disconnect()
   }, [open, hasMore, initialLoading, loadingMore, error, page, fetchPage])
 
-  function handleSelect(user: UserOption) {
-    onSelect(user)
+  function handleRowActivate(user: UserOption) {
+    setPendingSelection(user)
+  }
+
+  function handleDone() {
+    if (!pendingSelection) {
+      return
+    }
+    onSelect(pendingSelection)
     onOpenChange(false)
   }
 
@@ -229,86 +266,82 @@ export function UserSelectionDialog({
 
   const showEmpty = !initialLoading && !error && users.length === 0
 
-  return (
-    <CustomDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      description={description}
-      sizeWidth="large"
-      sizeHeight="large"
-      disableContentScroll
-      noContentPadding
-      id={id}
-      footer={
-        <Button variant="outline" className="h-10 px-4" onClick={() => onOpenChange(false)}>
-          Cancel
-        </Button>
-      }
-    >
-      <div className="flex h-full min-h-0 flex-col p-6">
-        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search by name or email"
-            aria-label="Search users"
-            className="flex-1"
-          />
-          {roleOptions && roleOptions.length > 0 ? (
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full sm:w-48" aria-label="Filter by role">
-                <SelectValue placeholder="All roles" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_ROLES_VALUE}>All roles</SelectItem>
-                {roleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : null}
-        </div>
+  const body = (
+    <div className="flex h-full min-h-0 flex-col p-6">
+      <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
+        <SearchInput
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+          placeholder="Search by name or email"
+          aria-label="Search users"
+          className="flex-1"
+        />
+        {onAddUser ? (
+          <Button type="button" variant="outline" className="h-10 shrink-0 px-3" onClick={onAddUser}>
+            <Plus className="mr-2 h-4 w-4" aria-hidden />
+            Add user
+          </Button>
+        ) : null}
+        {roleOptions && roleOptions.length > 0 ? (
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full sm:w-48" aria-label="Filter by role">
+              <SelectValue placeholder="All roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ROLES_VALUE}>All roles</SelectItem>
+              {roleOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+      </div>
 
-        <div
-          ref={scrollRootRef}
-          className="mt-4 min-h-[280px] flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed"
-        >
-          {error ? (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span>{error}</span>
-                <Button variant="outline" size="sm" onClick={handleRetry}>
-                  Retry
-                </Button>
-              </AlertDescription>
-            </Alert>
-          ) : null}
+      <div
+        ref={scrollRootRef}
+        className="mt-4 min-h-[280px] flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed"
+      >
+        {error ? (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>{error}</span>
+              <Button variant="outline" size="sm" onClick={handleRetry}>
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-          {initialLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Spinner size="lg" />
-            </div>
-          ) : null}
+        {initialLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        ) : null}
 
-          {showEmpty ? <ItemListEmpty>{emptyMessage}</ItemListEmpty> : null}
+        {showEmpty ? <ItemListEmpty>{emptyMessage}</ItemListEmpty> : null}
 
-          {!initialLoading && users.length > 0 ? (
-            <ItemList className="py-2">
-              {users.map((user) => (
+        {!initialLoading && users.length > 0 ? (
+          <ItemList className="py-2">
+            {users.map((user) => {
+              const isSelected = pendingSelection?.id === user.id
+              return (
                 <ItemListItem
                   key={user.id}
-                  role="button"
+                  role="option"
                   tabIndex={0}
-                  className="cursor-pointer transition-colors hover:border-primary/40"
+                  aria-selected={isSelected}
+                  className={cn(
+                    'cursor-pointer transition-colors hover:border-primary/40',
+                    isSelected && itemListRowActiveClassName,
+                  )}
                   aria-label={`Select ${user.displayName}`}
-                  onClick={() => handleSelect(user)}
+                  onClick={() => handleRowActivate(user)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault()
-                      handleSelect(user)
+                      handleRowActivate(user)
                     }
                   }}
                 >
@@ -321,7 +354,9 @@ export function UserSelectionDialog({
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email?.trim() ? user.email : 'No email'}
+                    </p>
                   </ItemListContent>
                   {user.role ? (
                     <span className="shrink-0 self-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -329,19 +364,58 @@ export function UserSelectionDialog({
                     </span>
                   ) : null}
                 </ItemListItem>
-              ))}
-            </ItemList>
-          ) : null}
+              )
+            })}
+          </ItemList>
+        ) : null}
 
-          {loadingMore ? (
-            <div className="flex justify-center py-3">
-              <Spinner size="sm" />
-            </div>
-          ) : null}
+        {loadingMore ? (
+          <div className="flex justify-center py-3">
+            <Spinner size="sm" />
+          </div>
+        ) : null}
 
-          <div ref={sentinelRef} className="h-1" aria-hidden />
-        </div>
+        <div ref={sentinelRef} className="h-1" aria-hidden />
       </div>
+    </div>
+  )
+
+  if (chrome === 'body') {
+    if (!open) {
+      return null
+    }
+    return body
+  }
+
+  return (
+    <CustomDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      sizeWidth={USER_SELECTION_DIALOG_SIZE.sizeWidth}
+      sizeHeight={USER_SELECTION_DIALOG_SIZE.sizeHeight}
+      disableContentScroll
+      noContentPadding
+      nestedDismissGuard={nestedDismissGuard}
+      id={id}
+      footer={
+        <>
+          <Button variant="outline" className="h-10 px-4" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="h-10 px-4"
+            onClick={handleDone}
+            disabled={!pendingSelection}
+          >
+            Done
+          </Button>
+        </>
+      }
+    >
+      {body}
     </CustomDialog>
   )
 }

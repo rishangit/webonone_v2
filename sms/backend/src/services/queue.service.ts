@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import type { DeviceScope, QueueStatus, SmsDeviceRow, SmsHistoryRow, SmsQueueRow } from '../models/db.js'
 import { renderBody, resolveTemplate, validateTemplatePayload } from './template.service.js'
+import { ensureLocalCompany } from './user.service.js'
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 900_000]
 
@@ -94,6 +95,12 @@ function historyRowToDto(row: SmsHistoryRow): HistoryItemDto {
 
 /** Resolve final body (raw or templated) and enqueue a pending row scoped by companyId. */
 export async function enqueue(input: EnqueueInput): Promise<{ queueId: string; status: 'queued' }> {
+  if (input.companyId) {
+    const companyName =
+      typeof input.payload?.companyName === 'string' ? input.payload.companyName : undefined
+    await ensureLocalCompany({ companyId: input.companyId, name: companyName })
+  }
+
   const payload = input.payload ?? {}
   let body = input.body ?? ''
   let templateSlug: string | null = input.templateSlug ?? null

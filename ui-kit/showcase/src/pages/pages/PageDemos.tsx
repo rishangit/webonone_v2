@@ -26,7 +26,7 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  ListSearchField,
+  SearchInput,
   mapZodIssuesToFieldErrors,
   Pagination,
   Select,
@@ -76,15 +76,16 @@ export function ListPageDemo() {
       description="Production list composition: FeaturePage actions, ListFilterPanel, ListPageBody, ItemList, and Pagination."
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <ListSearchField
+          <SearchInput
             value={searchQuery}
-            onChange={(value) => {
-              setSearchQuery(value)
+            onChange={(event) => {
+              setSearchQuery(event.target.value)
               setPage(1)
             }}
             placeholder="Item name"
             onClear={() => setPage(1)}
             aria-label="Search catalog items"
+            className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           <Button type="button" size="sm">

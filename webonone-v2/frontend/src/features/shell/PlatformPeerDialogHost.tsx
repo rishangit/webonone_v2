@@ -12,10 +12,14 @@ import {
   isPlatformPeerDialogBusyMessage,
   isPlatformPeerDialogCancelMessage,
   isPlatformPeerDialogCompleteMessage,
+  isPlatformPeerDialogNestedRequestMessage,
   isPlatformReadyMessage,
   PLATFORM_EMBED_QUERY,
   sendPlatformInit,
+  sendPlatformPeerDialogNestedCancel,
+  sendPlatformPeerDialogNestedResult,
   sendPlatformPeerDialogSubmit,
+  type PlatformPeerDialogNestedRequestMessage,
   type PlatformPeerDialogRequestMessage,
   type PlatformPeerDialogResponder,
 } from '@webonone/platform-embed'
@@ -25,6 +29,12 @@ import { PlatformPeerDialogContext } from '@/features/shell/PlatformPeerDialogCo
 
 type ActivePeerDialog = {
   request: PlatformPeerDialogRequestMessage
+  peerOrigin: string
+  openKey: number
+}
+
+type NestedPeerDialog = {
+  request: PlatformPeerDialogNestedRequestMessage
   peerOrigin: string
   openKey: number
 }
@@ -48,11 +58,19 @@ function iframeHeightClass(sizeHeight: string, sizeWidth: string): string {
 export function PlatformPeerDialogProvider({ children }: { children: ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [active, setActive] = useState<ActivePeerDialog | null>(null)
+  const [nested, setNested] = useState<NestedPeerDialog | null>(null)
   const [footerBusy, setFooterBusy] = useState(false)
   const [submitLabel, setSubmitLabel] = useState('Save')
+  const [nestedFooterBusy, setNestedFooterBusy] = useState(false)
+  const [nestedSubmitLabel, setNestedSubmitLabel] = useState('Create')
+  const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
   const activeResponderRef = useRef<PlatformPeerDialogResponder | null>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const nestedIframeRef = useRef<HTMLIFrameElement>(null)
   const openSequenceRef = useRef(0)
+  const nestedOpenRef = useRef(false)
+  const blockOuterDismissRef = useRef(false)
+  const blockTimerRef = useRef<number | null>(null)
 
   const hostOrigin = typeof window !== 'undefined' ? window.location.origin : ''
   const peerOriginNormalized = useMemo(
@@ -78,15 +96,42 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     })
   }, [active, hostOrigin])
 
+  const nestedIframeSrc = useMemo(() => {
+    if (!nested) {
+      return null
+    }
+    if (!isAllowedPlatformPeerDialogPath(nested.request.path)) {
+      return null
+    }
+    return buildPlatformEmbedUrl({
+      peerOrigin: nested.peerOrigin,
+      path: nested.request.path,
+      parentOrigin: hostOrigin,
+      scope: 'peer-dialog-nested',
+      searchParams: {
+        [PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID]: nested.request.requestId,
+      },
+    })
+  }, [hostOrigin, nested])
+
+  useEffect(() => {
+    nestedOpenRef.current = Boolean(nested)
+  }, [nested])
+
   useEffect(() => {
     return () => {
       activeResponderRef.current?.cancel('unmounted')
+      if (blockTimerRef.current !== null) {
+        window.clearTimeout(blockTimerRef.current)
+      }
     }
   }, [])
 
   const clearActive = useCallback(() => {
     activeResponderRef.current = null
     setFooterBusy(false)
+    setNested(null)
+    setNestedFooterBusy(false)
     setActive(null)
   }, [])
 
@@ -106,6 +151,68 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     [clearActive],
   )
 
+  const closeNestedDialog = useCallback(
+    (reason = 'cancelled') => {
+      const current = nested
+      setNested(null)
+      setNestedFooterBusy(false)
+      nestedOpenRef.current = false
+      blockOuterDismissRef.current = true
+      setBlockOuterDismiss(true)
+      if (blockTimerRef.current !== null) {
+        window.clearTimeout(blockTimerRef.current)
+      }
+      blockTimerRef.current = window.setTimeout(() => {
+        blockOuterDismissRef.current = false
+        setBlockOuterDismiss(false)
+        blockTimerRef.current = null
+      }, 150)
+
+      const outer = iframeRef.current?.contentWindow
+      if (current && outer && peerOriginNormalized) {
+        sendPlatformPeerDialogNestedCancel(
+          outer,
+          peerOriginNormalized,
+          current.request.parentRequestId,
+          current.request.requestId,
+          reason,
+        )
+      }
+    },
+    [nested, peerOriginNormalized],
+  )
+
+  const completeNestedDialog = useCallback(
+    (payload?: unknown) => {
+      const current = nested
+      setNested(null)
+      setNestedFooterBusy(false)
+      nestedOpenRef.current = false
+      blockOuterDismissRef.current = true
+      setBlockOuterDismiss(true)
+      if (blockTimerRef.current !== null) {
+        window.clearTimeout(blockTimerRef.current)
+      }
+      blockTimerRef.current = window.setTimeout(() => {
+        blockOuterDismissRef.current = false
+        setBlockOuterDismiss(false)
+        blockTimerRef.current = null
+      }, 150)
+
+      const outer = iframeRef.current?.contentWindow
+      if (current && outer && peerOriginNormalized) {
+        sendPlatformPeerDialogNestedResult(
+          outer,
+          peerOriginNormalized,
+          current.request.parentRequestId,
+          current.request.requestId,
+          payload,
+        )
+      }
+    },
+    [nested, peerOriginNormalized],
+  )
+
   const openPeerDialog = useCallback(
     (
       request: PlatformPeerDialogRequestMessage,
@@ -122,6 +229,8 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       activeResponderRef.current = responder
       setFooterBusy(false)
       setSubmitLabel(request.submitLabel)
+      setNested(null)
+      setNestedFooterBusy(false)
       setActive({
         request,
         peerOrigin,
@@ -152,20 +261,50 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
 
     function handleMessage(event: MessageEvent) {
       const iframe = iframeRef.current
-      if (
-        !iframe ||
-        event.origin !== peerOriginNormalized ||
-        event.source !== iframe.contentWindow
-      ) {
+      const nestedIframe = nestedIframeRef.current
+      const fromOuter =
+        iframe &&
+        event.origin === peerOriginNormalized &&
+        event.source === iframe.contentWindow
+      const fromNested =
+        nestedIframe &&
+        event.origin === peerOriginNormalized &&
+        event.source === nestedIframe.contentWindow
+
+      if (!fromOuter && !fromNested) {
         return
       }
 
       if (isPlatformReadyMessage(event.data)) {
-        deliverInit()
+        if (fromOuter) {
+          deliverInit()
+        } else if (fromNested && nestedIframe && accessToken) {
+          sendPlatformInit(nestedIframe, peerOriginNormalized, accessToken)
+        }
+        return
+      }
+
+      if (fromOuter && isPlatformPeerDialogNestedRequestMessage(event.data)) {
+        if (event.data.parentRequestId !== requestId) {
+          return
+        }
+        if (!isAllowedPlatformPeerDialogPath(event.data.path)) {
+          return
+        }
+        openSequenceRef.current += 1
+        nestedOpenRef.current = true
+        setNestedSubmitLabel(event.data.submitLabel)
+        setNestedFooterBusy(false)
+        setNested({
+          request: event.data,
+          peerOrigin: active!.peerOrigin,
+          openKey: openSequenceRef.current,
+        })
         return
       }
 
       if (
+        fromOuter &&
         isPlatformPeerDialogBusyMessage(event.data) &&
         event.data.requestId === requestId
       ) {
@@ -177,6 +316,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       }
 
       if (
+        fromOuter &&
         isPlatformPeerDialogCompleteMessage(event.data) &&
         event.data.requestId === requestId
       ) {
@@ -185,10 +325,47 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       }
 
       if (
+        fromOuter &&
         isPlatformPeerDialogCancelMessage(event.data) &&
         event.data.requestId === requestId
       ) {
         cancelActive(event.data.reason ?? 'cancelled')
+        return
+      }
+
+      if (!nested) {
+        return
+      }
+
+      const nestedRequestId = nested.request.requestId
+
+      if (
+        fromNested &&
+        isPlatformPeerDialogBusyMessage(event.data) &&
+        event.data.requestId === nestedRequestId
+      ) {
+        setNestedFooterBusy(event.data.busy)
+        if (event.data.submitLabel) {
+          setNestedSubmitLabel(event.data.submitLabel)
+        }
+        return
+      }
+
+      if (
+        fromNested &&
+        isPlatformPeerDialogCompleteMessage(event.data) &&
+        event.data.requestId === nestedRequestId
+      ) {
+        completeNestedDialog(event.data.payload)
+        return
+      }
+
+      if (
+        fromNested &&
+        isPlatformPeerDialogCancelMessage(event.data) &&
+        event.data.requestId === nestedRequestId
+      ) {
+        closeNestedDialog(event.data.reason ?? 'cancelled')
       }
     }
 
@@ -204,18 +381,52 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     accessToken,
     active,
     cancelActive,
+    closeNestedDialog,
+    completeNestedDialog,
     iframeSrc,
+    nested,
     peerOriginNormalized,
     resolveActive,
   ])
 
+  useEffect(() => {
+    if (!nested || !nestedIframeSrc || !peerOriginNormalized || !accessToken) {
+      return
+    }
+
+    function deliverNestedInit() {
+      const iframe = nestedIframeRef.current
+      if (!iframe || !accessToken) {
+        return
+      }
+      sendPlatformInit(iframe, peerOriginNormalized, accessToken)
+    }
+
+    function handleLoad() {
+      deliverNestedInit()
+    }
+
+    const iframe = nestedIframeRef.current
+    iframe?.addEventListener('load', handleLoad)
+    return () => iframe?.removeEventListener('load', handleLoad)
+  }, [accessToken, nested, nestedIframeSrc, peerOriginNormalized])
+
   function handleOpenChange(next: boolean) {
     if (!next) {
+      if (nestedOpenRef.current || blockOuterDismissRef.current || blockOuterDismiss) {
+        if (nestedOpenRef.current || nested) {
+          closeNestedDialog('cancelled')
+        }
+        return
+      }
       cancelActive('cancelled')
     }
   }
 
   function handleFooterSubmit() {
+    if (nestedOpenRef.current || nested) {
+      return
+    }
     const iframe = iframeRef.current
     if (!active || !iframe?.contentWindow) {
       return
@@ -227,7 +438,21 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     )
   }
 
+  function handleNestedFooterSubmit() {
+    const iframe = nestedIframeRef.current
+    if (!nested || !iframe?.contentWindow) {
+      return
+    }
+    sendPlatformPeerDialogSubmit(
+      iframe.contentWindow,
+      peerOriginNormalized,
+      nested.request.requestId,
+    )
+  }
+
   const cancelLabel = active?.request.cancelLabel ?? 'Cancel'
+  const nestedCancelLabel = nested?.request.cancelLabel ?? 'Cancel'
+  const nestedOpen = Boolean(nested)
 
   return (
     <PlatformPeerDialogContext.Provider value={{ openPeerDialog }}>
@@ -242,19 +467,20 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           sizeHeight={active.request.sizeHeight}
           noContentPadding
           disableContentScroll={active.request.sizeHeight !== 'auto'}
+          nestedDismissGuard={nestedOpen || blockOuterDismiss}
           footer={
             <>
               <Button
                 type="button"
                 variant="outline"
-                disabled={footerBusy}
+                disabled={footerBusy || nestedOpen}
                 onClick={() => cancelActive('cancelled')}
               >
                 {cancelLabel}
               </Button>
               <Button
                 type="button"
-                disabled={!accessToken || footerBusy}
+                disabled={!accessToken || footerBusy || nestedOpen}
                 onClick={handleFooterSubmit}
               >
                 {submitLabel}
@@ -278,6 +504,59 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
               )}`}
             />
           )}
+        </CustomDialog>
+      ) : null}
+
+      {nested && nestedIframeSrc ? (
+        <CustomDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) {
+              closeNestedDialog('cancelled')
+            }
+          }}
+          title={nested.request.title}
+          description={nested.request.description}
+          sizeWidth={nested.request.sizeWidth}
+          sizeHeight={nested.request.sizeHeight}
+          noContentPadding
+          disableContentScroll={nested.request.sizeHeight !== 'auto'}
+          stackLevel={1}
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 px-4"
+                disabled={nestedFooterBusy}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  closeNestedDialog('cancelled')
+                }}
+              >
+                {nestedCancelLabel}
+              </Button>
+              <Button
+                type="button"
+                className="h-10 px-4"
+                disabled={!accessToken || nestedFooterBusy}
+                onClick={handleNestedFooterSubmit}
+              >
+                {nestedSubmitLabel}
+              </Button>
+            </>
+          }
+        >
+          <iframe
+            key={nested.openKey}
+            ref={nestedIframeRef}
+            src={nestedIframeSrc}
+            title={nested.request.title}
+            className={`block w-full border-0 bg-transparent ${iframeHeightClass(
+              nested.request.sizeHeight,
+              nested.request.sizeWidth,
+            )}`}
+          />
         </CustomDialog>
       ) : null}
     </PlatformPeerDialogContext.Provider>

@@ -16,7 +16,7 @@ import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { getSmsRedirectOptions } from '@/features/sms/utils/redirectToSms'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
 import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
-import { isSessionSuperAdmin } from '@/features/users/utils/currentRole'
+import { isSessionCompanyAdmin, isSessionSuperAdmin } from '@/features/users/utils/currentRole'
 import {
   buildCoreNavFromQuery,
   buildStandaloneNav,
@@ -150,13 +150,14 @@ function AppLayoutShellContent() {
   )
 
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
+  const isCompanyAdmin = isSessionCompanyAdmin(accessToken)
 
   const nav = useMemo(() => {
     const base = returnUrl
       ? buildCoreNavFromQuery(returnUrl, searchParams.get(CORE_NAV_QUERY_PARAM))
-      : buildStandaloneNav({ isSuperAdmin })
+      : buildStandaloneNav({ isSuperAdmin, isCompanyAdmin })
     return returnUrl ? withPeerNavActions(base, handleEmailNavClick, handleSmsNavClick) : base
-  }, [handleEmailNavClick, handleSmsNavClick, isSuperAdmin, returnUrl, searchParams])
+  }, [handleEmailNavClick, handleSmsNavClick, isCompanyAdmin, isSuperAdmin, returnUrl, searchParams])
 
   const brand = returnUrl ? 'WebOnOne' : 'Identity'
   const isAuthenticated = Boolean(accessToken && user)
@@ -168,7 +169,7 @@ function AppLayoutShellContent() {
       ? {
           displayName: user.displayName,
           avatarUrl: user.avatarUrl,
-          email: user.email,
+          email: user.email ?? undefined,
         }
       : null
 

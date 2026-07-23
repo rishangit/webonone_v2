@@ -42,7 +42,9 @@ Key backend env: `SMS_SERVICE_API_KEY`, `OTP_TTL_SECONDS`, `OTP_MAX_ATTEMPTS`, `
 
 ## Core-hosted form dialogs
 
-Template create/edit dialogs use **peer-dialog** when embedded in WebOnOne: host owns sizes/header/footer; `/embed/dialogs/templates/…` is body-only. See [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) future recipe.
+Template create/edit dialogs use **peer-dialog** when embedded in WebOnOne: host owns sizes/header/footer; `/embed/dialogs/templates/…` is body-only.
+
+**Follow:** [core-hosted-peer-dialog skill](../core-hosted-peer-dialog/SKILL.md) · [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc)
 
 Reference: `sms/frontend/src/features/templates/components/TemplateFormDialog.tsx`, `…/pages/TemplateFormEmbedPage.tsx`.
 

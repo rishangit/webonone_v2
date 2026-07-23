@@ -16,8 +16,9 @@ interface TemplatesListProps {
   busyId: string | null
 }
 
-function formatScope(scope: EmailTemplate['scope']): string {
-  return scope === 'platform' ? 'Platform' : 'Company'
+function formatScope(template: EmailTemplate): string {
+  if (template.isDefault) return 'Default'
+  return template.scope === 'platform' ? 'Platform' : 'Company'
 }
 
 function formatDate(iso: string): string {
@@ -36,19 +37,20 @@ export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: Tem
     <ItemList>
       {items.map((template) => {
         const isBusy = busyId === template.id
+        const isDefault = Boolean(template.isDefault)
 
         return (
           <ItemListItem key={template.id}>
             <ItemListContent>
               <p className="font-medium">{template.name}</p>
               <p className="text-xs text-muted-foreground">
-                {template.slug} · {formatScope(template.scope)} ·{' '}
+                {template.slug} · {formatScope(template)} ·{' '}
                 {template.isActive ? 'Active' : 'Inactive'} · Updated {formatDate(template.updatedAt)}
               </p>
             </ItemListContent>
             <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
               <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
-                Edit
+                {isDefault ? 'Customize' : 'Edit'}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => navigate(`/templates/${template.id}/preview`)}
@@ -56,15 +58,19 @@ export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: Tem
               >
                 Preview
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
-                {template.isActive ? 'Deactivate' : 'Activate'}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigate(`/templates/${template.id}`)}
-                disabled={isBusy}
-              >
-                Version history
-              </DropdownMenuItem>
+              {!isDefault ? (
+                <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
+                  {template.isActive ? 'Deactivate' : 'Activate'}
+                </DropdownMenuItem>
+              ) : null}
+              {!isDefault ? (
+                <DropdownMenuItem
+                  onClick={() => navigate(`/templates/${template.id}`)}
+                  disabled={isBusy}
+                >
+                  Version history
+                </DropdownMenuItem>
+              ) : null}
             </ItemListMenu>
           </ItemListItem>
         )

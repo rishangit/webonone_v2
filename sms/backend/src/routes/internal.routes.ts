@@ -24,4 +24,16 @@ router.post(
   internalController.internalOtpVerify,
 )
 
+router.get(
+  '/internal/companies/:companyId/gateway-status',
+  requireInternalAuth,
+  internalController.internalGatewayStatus,
+)
+
+router.post(
+  '/internal/companies/:companyId/templates/ensure-welcome',
+  requireInternalAuth,
+  internalController.internalEnsureWelcome,
+)
+
 export default router

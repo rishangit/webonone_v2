@@ -27,6 +27,9 @@ import type {
   PlatformPeerDialogCancelMessage,
   PlatformPeerDialogCompleteMessage,
   PlatformPeerDialogBusyMessage,
+  PlatformPeerDialogNestedCancelMessage,
+  PlatformPeerDialogNestedRequestMessage,
+  PlatformPeerDialogNestedResultMessage,
   PlatformPeerDialogRequestMessage,
   PlatformPeerDialogResultMessage,
   PlatformPeerDialogSubmitMessage,
@@ -470,6 +473,58 @@ export function sendPlatformPeerDialogBusy(
     submitLabel,
   }
   window.parent.postMessage(message, parentOrigin)
+}
+
+/** Outer dialog iframe → shell: open stacked sibling create/form dialog. */
+export function sendPlatformPeerDialogNestedRequest(
+  parentOrigin: string,
+  request: Omit<PlatformPeerDialogNestedRequestMessage, 'type'>,
+): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.parent.postMessage(
+    {
+      ...request,
+      type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_REQUEST,
+    },
+    parentOrigin,
+  )
+}
+
+/** Shell → outer dialog iframe: nested sibling cancelled. */
+export function sendPlatformPeerDialogNestedCancel(
+  targetWindow: WindowProxy | null,
+  targetOrigin: string,
+  parentRequestId: string,
+  requestId: string,
+  reason?: string,
+): void {
+  const message: PlatformPeerDialogNestedCancelMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_CANCEL,
+    parentRequestId,
+    requestId,
+    reason,
+  }
+  targetWindow?.postMessage(message, targetOrigin)
+}
+
+/** Shell → outer dialog iframe: nested sibling completed. */
+export function sendPlatformPeerDialogNestedResult(
+  targetWindow: WindowProxy | null,
+  targetOrigin: string,
+  parentRequestId: string,
+  requestId: string,
+  payload?: unknown,
+): void {
+  const message: PlatformPeerDialogNestedResultMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_RESULT,
+    parentRequestId,
+    requestId,
+    payload,
+  }
+  targetWindow?.postMessage(message, targetOrigin)
 }
 
 export function isPlatformEmbedMode(

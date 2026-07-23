@@ -55,12 +55,12 @@ Sequence cross-service work: Identity before WebOnOne.
 
 **Platform navigation (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). Embed peers: **`FeaturePage`** + scroll on **`PlatformEmbedShell` `<main>`** (whole page, not inner lists). Satellites use auth-code redirect for cross-service hops. Multi-section **details / profile** pages: [details-page-cards.mdc](../../rules/details-page-cards.mdc) · [details-page-cards skill](../details-page-cards/SKILL.md).
 
-**Core-hosted dialogs:** If an embedded peer needs a dialog to dim/cover the whole WebOnOne shell, follow [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc):
+**Core-hosted dialogs (mandatory pick):** When the task adds or fixes **any dialog** that opens while a peer is embedded in WebOnOne (`#main-content`), read and follow [core-hosted-peer-dialog](../core-hosted-peer-dialog/SKILL.md) plus [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc):
 
 - **Media picker/crop** → `media-dialog-*` + `PlatformMediaDialogHost` (Media agent + WebOnOne).
-- **Peer form/CRUD dialogs** → `peer-dialog-*` + `PlatformPeerDialogHost`: host owns **sizes + header + footer**; peer owns `/embed/dialogs/…` **body only** (`useRequestPlatformPeerDialog` / `usePlatformPeerDialogSubmit`). New dialogs are **peer-only** (no WebOnOne change). Also see [dialog-windows.mdc](../../rules/dialog-windows.mdc).
+- **Peer form / selection / CRUD dialogs** → `peer-dialog-*` + `PlatformPeerDialogHost`: host owns **sizes + header + footer**; peer owns `/embed/dialogs/…` **body only**. New dialogs are **peer-only** (no WebOnOne change). Also [dialog-windows.mdc](../../rules/dialog-windows.mdc).
 
-Delegate: peer FE agent for the form + route; webonone-agent only if changing the one-time host.
+Delegate: peer FE agent for the dialog + route; webonone-agent only if changing the one-time host.
 
 ## Prompt templates
 

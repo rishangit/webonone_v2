@@ -26,7 +26,7 @@ export function signAccessToken(
 ): { accessToken: string; expiresIn: number } {
   const payload: AccessTokenPayload = {
     sub: user.id,
-    email: user.email,
+    email: user.email ?? '',
     iss: env.jwtIssuer,
     aud: env.jwtAudience,
   }

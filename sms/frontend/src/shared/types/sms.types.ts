@@ -39,6 +39,8 @@ export interface SmsTemplate {
   isActive: boolean
   requiredKeys: string[]
   updatedAt: string
+  /** True when this is a platform default shown until the company saves an override. */
+  isDefault?: boolean
 }
 
 export interface TemplateVersion {

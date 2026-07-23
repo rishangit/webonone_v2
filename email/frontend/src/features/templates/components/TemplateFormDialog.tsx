@@ -83,7 +83,10 @@ function templateDialogPath(mode: TemplateFormMode, templateId?: string | null):
   return `/embed/dialogs/templates/${templateId ?? 'unknown'}/edit`
 }
 
-export function getTemplateFormCopy(mode: TemplateFormMode): {
+export function getTemplateFormCopy(
+  mode: TemplateFormMode,
+  template?: EmailTemplate | null,
+): {
   title: string
   description: string
 } {
@@ -94,8 +97,10 @@ export function getTemplateFormCopy(mode: TemplateFormMode): {
     }
   }
   return {
-    title: 'Edit template',
-    description: 'Update subject and body content. Saving creates a new version.',
+    title: template?.isDefault ? 'Customize default template' : 'Edit template',
+    description: template?.isDefault
+      ? 'Saving creates your company copy of this default. Until then, the platform default is used.'
+      : 'Update subject and body content. Saving creates a new version.',
   }
 }
 
@@ -117,7 +122,7 @@ export function TemplateFormDialog({
   const [editValues, setEditValues] = useState<TemplateEditorFormValues>({ ...EMPTY_EDIT })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
 
-  const copy = getTemplateFormCopy(mode)
+  const copy = getTemplateFormCopy(mode, template)
   const dialogPath = templateDialogPath(mode, template?.id)
   const idleSubmitLabel = mode === 'create' ? 'Create template' : 'Save'
   const dialogRequestId =

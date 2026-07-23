@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
-import { Button, FeaturePage, ListPageBody, ListSearchField, Pagination } from '@webonone/ui-kit'
+import { Button, FeaturePage, ListPageBody, SearchInput, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
@@ -119,15 +119,16 @@ export function SystemThemePage() {
       description="Create accent palettes for the platform shell. Change light or dark appearance in Basic Settings."
       actions={
         <div className="flex items-center gap-2">
-          <ListSearchField
+          <SearchInput
             value={themeSearchQuery}
-            onChange={(value) => {
-              setThemeSearchQuery(value)
+            onChange={(event) => {
+              setThemeSearchQuery(event.target.value)
               setThemePage(1)
             }}
             placeholder="Theme name"
             onClear={() => setThemePage(1)}
             aria-label="Search themes"
+            className="w-64"
           />
           <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden />

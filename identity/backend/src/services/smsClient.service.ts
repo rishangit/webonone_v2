@@ -57,8 +57,8 @@ type SendSmsParams = {
 }
 
 /** Enqueue a transactional SMS via the SMS service internal API. Best-effort. */
-export async function sendTransactionalSms(params: SendSmsParams): Promise<void> {
-  await postInternal('/api/v1/internal/send', {
+export async function sendTransactionalSms(params: SendSmsParams): Promise<boolean> {
+  const response = await postInternal('/api/v1/internal/send', {
     toNumber: params.toNumber,
     templateSlug: params.templateSlug,
     body: params.body,
@@ -66,6 +66,42 @@ export async function sendTransactionalSms(params: SendSmsParams): Promise<void>
     companyId: params.companyId,
     requestedByService: params.requestedByService,
   })
+  return Boolean(response?.ok)
+}
+
+export type GatewayStatus = {
+  configured: boolean
+  activeDeviceCount: number
+}
+
+/** Best-effort gateway status; returns null when unconfigured or request fails. */
+export async function getGatewayStatus(companyId: string): Promise<GatewayStatus | null> {
+  const url = resolveInternalSmsUrl(
+    `/api/v1/internal/companies/${encodeURIComponent(companyId)}/gateway-status`,
+  )
+  if (!url) return null
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Sms-Service-Key': env.smsServiceApiKey,
+      },
+    })
+    if (!response.ok) {
+      const text = await response.text()
+      console.error(`[smsClient] gateway-status failed (${response.status}): ${text}`)
+      return null
+    }
+    const data = (await response.json()) as GatewayStatus
+    return {
+      configured: Boolean(data.configured),
+      activeDeviceCount: Number(data.activeDeviceCount ?? 0),
+    }
+  } catch (err) {
+    console.error('[smsClient] gateway-status error:', err)
+    return null
+  }
 }
 
 type SendPhoneOtpParams = {

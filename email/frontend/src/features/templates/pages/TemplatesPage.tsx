@@ -7,7 +7,7 @@ import {
   Button,
   FeaturePage,
   ListPageBody,
-  ListSearchField,
+  SearchInput,
   Pagination,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -136,15 +136,16 @@ export function TemplatesPage() {
       description="Manage platform and company email templates."
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <ListSearchField
+          <SearchInput
             value={searchQuery}
-            onChange={(value) => {
-              setSearchQuery(value)
+            onChange={(event) => {
+              setSearchQuery(event.target.value)
               setPage(1)
             }}
             placeholder="Template name or slug"
             onClear={() => setPage(1)}
             aria-label="Search templates"
+            className="w-64"
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={handleOpenCreate}>

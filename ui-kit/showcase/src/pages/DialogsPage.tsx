@@ -55,7 +55,7 @@ async function mockLoadUsers(params: Parameters<LoadUsersFn>[0]) {
     filtered = filtered.filter(
       (user) =>
         user.displayName.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query),
+        (user.email ?? '').toLowerCase().includes(query),
     )
   }
   if (params.role) {
@@ -391,7 +391,7 @@ export function DialogsPage() {
           onSelect={setSelectedUser}
           loadUsers={mockLoadUsers}
           roleOptions={USER_ROLE_OPTIONS}
-          description="Scroll to load more users. Click a row to select."
+          description="Scroll to load more users. Select a row, then click Done."
         />
       </DemoSection>
 

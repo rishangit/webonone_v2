@@ -17,7 +17,7 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  ListSearchField,
+  SearchInput,
   LoadingState,
   Pagination,
   Select,
@@ -330,11 +330,12 @@ export function ScopedFolderBrowser({
   function renderToolbar() {
     return (
       <div className="flex shrink-0 items-center gap-1">
-        <ListSearchField
+        <SearchInput
           value={fileNameQuery}
-          onChange={setFileNameQuery}
+          onChange={(event) => setFileNameQuery(event.target.value)}
           placeholder="File or folder name"
           aria-label="Search files and folders"
+          className="w-64"
         />
         <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
         {enableUpload ? (
@@ -572,11 +573,12 @@ export function ScopedFolderBrowser({
         <div className="flex items-center justify-between gap-2">
           {renderBreadcrumb()}
           <div className="flex items-center gap-2">
-            <ListSearchField
+            <SearchInput
               value={fileNameQuery}
-              onChange={setFileNameQuery}
+              onChange={(event) => setFileNameQuery(event.target.value)}
               placeholder="File or folder name"
               aria-label="Search files and folders"
+              className="w-64"
             />
             <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           </div>

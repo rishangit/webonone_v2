@@ -31,9 +31,9 @@ type SendEmailParams = {
   companyId?: string
 }
 
-export async function sendTransactionalEmail(params: SendEmailParams): Promise<void> {
+export async function sendTransactionalEmail(params: SendEmailParams): Promise<boolean> {
   const url = resolveInternalEmailUrl('/api/v1/internal/send')
-  if (!url) return
+  if (!url) return false
 
   try {
     const response = await fetch(url, {
@@ -54,8 +54,11 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<v
     if (!response.ok) {
       const text = await response.text()
       console.error(`[emailClient] send failed (${response.status}): ${text}`)
+      return false
     }
+    return true
   } catch (err) {
     console.error('[emailClient] send error:', err)
+    return false
   }
 }

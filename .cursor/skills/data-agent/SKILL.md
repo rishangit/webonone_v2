@@ -47,7 +47,7 @@ Reference: `data/frontend/src/app/AppLayout.tsx`, `data/frontend/src/app/LazyRou
 
 Catalog create/edit dialogs must use the **peer-dialog** bridge when embedded in WebOnOne (host header + footer; iframe body only). Do not open `CustomDialog` inside `#main-content`.
 
-Follow [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) + [dialog-windows.mdc](../../rules/dialog-windows.mdc):
+**Follow:** [core-hosted-peer-dialog skill](../core-hosted-peer-dialog/SKILL.md) · [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) · [dialog-windows.mdc](../../rules/dialog-windows.mdc)
 
 1. Standalone: local `CustomDialog` with matching sizes and footer labels.
 2. Embed: `useRequestPlatformPeerDialog` + route under `/embed/dialogs/…` (e.g. tags/units/attributes/catalog).

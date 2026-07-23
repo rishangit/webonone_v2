@@ -31,6 +31,15 @@ export const PLATFORM_MESSAGE_TYPES = {
   PEER_DIALOG_SUBMIT: 'webonone:platform:peer-dialog-submit',
   /** Dialog iframe → shell: disable/enable host footer while saving. */
   PEER_DIALOG_BUSY: 'webonone:platform:peer-dialog-busy',
+  /**
+   * Outer dialog iframe → shell: open a stacked sibling create/form dialog
+   * (SelectTag / media-crop pattern — chrome in parent document).
+   */
+  PEER_DIALOG_NESTED_REQUEST: 'webonone:platform:peer-dialog-nested-request',
+  /** Shell → outer dialog iframe: nested sibling closed without completing. */
+  PEER_DIALOG_NESTED_CANCEL: 'webonone:platform:peer-dialog-nested-cancel',
+  /** Shell → outer dialog iframe: nested sibling completed with payload. */
+  PEER_DIALOG_NESTED_RESULT: 'webonone:platform:peer-dialog-nested-result',
 } as const
 
 export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
@@ -236,6 +245,38 @@ export type PlatformPeerDialogBusyMessage = {
   submitLabel?: string
 }
 
+/** Outer dialog iframe → shell: open stacked sibling dialog (create-from-picker). */
+export type PlatformPeerDialogNestedRequestMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_REQUEST
+  /** Outer (parent) peer-dialog requestId currently open on the host. */
+  parentRequestId: string
+  /** Nested dialog requestId (used for submit/complete/busy). */
+  requestId: string
+  path: string
+  title: string
+  sizeWidth: PlatformDialogSizePreset
+  sizeHeight: PlatformDialogSizePreset
+  description?: string
+  cancelLabel?: string
+  submitLabel: string
+}
+
+/** Shell → outer dialog iframe when nested sibling is cancelled. */
+export type PlatformPeerDialogNestedCancelMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_CANCEL
+  parentRequestId: string
+  requestId: string
+  reason?: string
+}
+
+/** Shell → outer dialog iframe when nested sibling completes. */
+export type PlatformPeerDialogNestedResultMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_RESULT
+  parentRequestId: string
+  requestId: string
+  payload?: unknown
+}
+
 export type PlatformEmbedMessage =
   | PlatformInitMessage
   | PlatformReadyMessage
@@ -259,6 +300,9 @@ export type PlatformEmbedMessage =
   | PlatformPeerDialogCompleteMessage
   | PlatformPeerDialogSubmitMessage
   | PlatformPeerDialogBusyMessage
+  | PlatformPeerDialogNestedRequestMessage
+  | PlatformPeerDialogNestedCancelMessage
+  | PlatformPeerDialogNestedResultMessage
 
 export type BuildPlatformEmbedUrlOptions = {
   peerOrigin: string
@@ -657,5 +701,59 @@ export function isPlatformPeerDialogBusyMessage(
     hasStringProperty(message, 'requestId') &&
     typeof message.busy === 'boolean' &&
     (message.submitLabel === undefined || typeof message.submitLabel === 'string')
+  )
+}
+
+export function isPlatformPeerDialogNestedRequestMessage(
+  data: unknown,
+): data is PlatformPeerDialogNestedRequestMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_REQUEST &&
+    hasStringProperty(message, 'parentRequestId') &&
+    hasStringProperty(message, 'requestId') &&
+    hasStringProperty(message, 'path') &&
+    hasStringProperty(message, 'title') &&
+    hasStringProperty(message, 'submitLabel') &&
+    isAllowedPlatformPeerDialogPath(message.path as string) &&
+    isPlatformDialogSizePreset(message.sizeWidth) &&
+    isPlatformDialogSizePreset(message.sizeHeight) &&
+    (message.description === undefined || typeof message.description === 'string') &&
+    (message.cancelLabel === undefined || typeof message.cancelLabel === 'string')
+  )
+}
+
+export function isPlatformPeerDialogNestedCancelMessage(
+  data: unknown,
+): data is PlatformPeerDialogNestedCancelMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_CANCEL &&
+    hasStringProperty(message, 'parentRequestId') &&
+    hasStringProperty(message, 'requestId') &&
+    (message.reason === undefined || typeof message.reason === 'string')
+  )
+}
+
+export function isPlatformPeerDialogNestedResultMessage(
+  data: unknown,
+): data is PlatformPeerDialogNestedResultMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_NESTED_RESULT &&
+    hasStringProperty(message, 'parentRequestId') &&
+    hasStringProperty(message, 'requestId')
   )
 }

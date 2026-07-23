@@ -8,7 +8,7 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  ListSearchField,
+  SearchInput,
   Pagination,
   Select,
   SelectContent,
@@ -110,12 +110,13 @@ export function HistoryPage() {
       }
       actions={
         <div className="flex items-center gap-2">
-          <ListSearchField
+          <SearchInput
             value={searchQuery}
-            onChange={handleSearchChange}
+            onChange={(event) => handleSearchChange(event.target.value)}
             placeholder="Phone number or template"
             onClear={handleClearSearch}
             aria-label="Search by recipient number or template name"
+            className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
         </div>

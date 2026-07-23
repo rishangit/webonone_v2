@@ -179,11 +179,14 @@ function toNavConfigItems(
   return rewritePeerLinksForIdentityNav(items, emailOrigin, smsOrigin)
 }
 
-export function buildStandaloneNav({ isSuperAdmin }: { isSuperAdmin: boolean } = { isSuperAdmin: false }): NavConfigItem[] {
-  if (!isSuperAdmin) {
-    return standaloneNav
+export function buildStandaloneNav({
+  isSuperAdmin,
+  isCompanyAdmin,
+}: { isSuperAdmin?: boolean; isCompanyAdmin?: boolean } = {}): NavConfigItem[] {
+  if (isSuperAdmin || isCompanyAdmin) {
+    return [...standaloneNav, { type: 'item', to: '/users', label: 'Users', icon: Users }]
   }
-  return [...standaloneNav, { type: 'item', to: '/users', label: 'Users', icon: Users }]
+  return standaloneNav
 }
 
 const DEFAULT_EMAIL_ORIGIN = 'http://localhost:3014'

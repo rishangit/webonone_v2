@@ -45,7 +45,7 @@ Consumers (WebOnOne, Identity): `handleEmailClick` in `AppLayout` + `redirectToE
 
 ## Core-hosted form dialogs
 
-When Email is embedded in WebOnOne, form dialogs (e.g. templates) must use the **peer-dialog** bridge — host `CustomDialog` header/footer + `/embed/dialogs/…` body — not an iframe-local `CustomDialog`. Recipe: [platform-shell-navigation.mdc](platform-shell-navigation.mdc); sizing/footer rules: [dialog-windows.mdc](dialog-windows.mdc).
+When Email is embedded in WebOnOne, **any** dialog (e.g. templates) must use the **peer-dialog** bridge — host `CustomDialog` header/footer + `/embed/dialogs/…` body — not an iframe-local `CustomDialog`. Follow [core-hosted-peer-dialog skill](../skills/core-hosted-peer-dialog/SKILL.md); contract: [platform-shell-navigation.mdc](platform-shell-navigation.mdc); sizing/footer: [dialog-windows.mdc](dialog-windows.mdc).
 
 Reference: `email/frontend/src/features/templates/components/TemplateFormDialog.tsx`.
 

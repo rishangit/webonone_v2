@@ -123,3 +123,24 @@ export async function setDeviceStatus(id: string, status: 'approved' | 'revoked'
   if (!row) throw new Error('Device not found')
   return deviceRowToDto(row)
 }
+
+/** True when the company has at least one approved gateway device. */
+export async function getGatewayStatus(companyId: string): Promise<{
+  configured: boolean
+  activeDeviceCount: number
+}> {
+  const row = await db<SmsDeviceRow>('sms_devices')
+    .where({
+      scope: 'company',
+      company_id: companyId,
+      status: 'approved',
+    })
+    .count<{ count: number | string }>({ count: '*' })
+    .first()
+
+  const activeDeviceCount = Number(row?.count ?? 0)
+  return {
+    configured: activeDeviceCount > 0,
+    activeDeviceCount,
+  }
+}

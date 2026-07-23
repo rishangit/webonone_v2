@@ -1,6 +1,6 @@
 export interface UserProfile {
   id: string
-  email: string
+  email: string | null
   displayName: string
   firstName: string
   lastName: string

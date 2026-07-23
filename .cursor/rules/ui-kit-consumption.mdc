@@ -8,7 +8,7 @@ alwaysApply: false
 
 Every service frontend (`identity`, `webonone-v2`, `media`, `email`, and future `*/frontend`) must use **`@webonone/ui-kit`** for interactive UI — not raw HTML controls, not third-party component libraries, and not local copies of kit primitives.
 
-Related: [ui-kit-project.mdc](ui-kit-project.mdc) (package/build), [feature-page-layout.mdc](feature-page-layout.mdc), [details-page-cards.mdc](details-page-cards.mdc), [dialog-windows.mdc](dialog-windows.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md).
+Related: [ui-kit-project.mdc](ui-kit-project.mdc) (package/build), [feature-page-layout.mdc](feature-page-layout.mdc), [details-page-cards.mdc](details-page-cards.mdc), [dialog-windows.mdc](dialog-windows.mdc), [toast-notifications.mdc](toast-notifications.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md), [toast-notifications skill](../skills/toast-notifications/SKILL.md).
 
 ## Dependency and wiring
 
@@ -41,8 +41,8 @@ See [microservice-architecture.mdc](microservice-architecture.mdc) for productio
 | Lists | `ItemList`, `ItemListMenu`, `DropdownMenuItem` | [item-list skill](../skills/item-list/SKILL.md) |
 | Modals | `CustomDialog`, `AlertDialog` | [dialog-windows.mdc](dialog-windows.mdc) |
 | Page/section loading | `Spinner` (`size="lg"` for full section; `size="sm"` inside `Button`) | This rule |
-| Errors | `Alert`, `AlertDescription` | This rule |
-| Success feedback | `Alert` or `useToast` / `ToastProvider` | This rule |
+| Errors (page/list load, form banner) | `Alert`, `AlertDescription` | This rule |
+| Mutation success / fail | `useToast` / `ToastProvider` | [toast-notifications skill](../skills/toast-notifications/SKILL.md) · [toast-notifications.mdc](toast-notifications.mdc) |
 
 When the kit lacks a component, extend ui-kit via [ui-kit-agent](../agents/ui-kit-agent.md) first — do not add a parallel primitive in a service.
 

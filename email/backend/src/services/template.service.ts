@@ -19,6 +19,8 @@ export interface TemplateDto {
   requiredKeys: string[]
   createdAt: string
   updatedAt: string
+  /** Platform template shown to company admins until they save a company override. */
+  isDefault?: boolean
 }
 
 export interface RenderedEmail {
@@ -71,20 +73,40 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
   return platformTemplate ?? null
 }
 
+/** Platform slugs company owners may see/customize as defaults (1.13.6). */
+const COMPANY_DEFAULT_PLATFORM_SLUGS = new Set(['welcome'])
+
 export async function listTemplates(filters: {
   companyId?: string | null
   scope?: TemplateScope
   role?: string
 }): Promise<TemplateDto[]> {
+  if (filters.role === 'company_admin' && filters.companyId) {
+    const companyRows = await db<EmailTemplateRow>('email_templates')
+      .where({ scope: 'company', company_id: filters.companyId })
+      .orderBy('updated_at', 'desc')
+
+    const platformRows = await db<EmailTemplateRow>('email_templates')
+      .where({ scope: 'platform', is_active: true })
+      .whereNull('company_id')
+      .whereIn('slug', [...COMPANY_DEFAULT_PLATFORM_SLUGS])
+      .orderBy('updated_at', 'desc')
+
+    const overriddenSlugs = new Set(companyRows.map((row) => row.slug))
+    const defaults = platformRows
+      .filter((row) => !overriddenSlugs.has(row.slug))
+      .map((row) => ({ ...rowToDto(row), isDefault: true }))
+
+    return [...companyRows.map(rowToDto), ...defaults]
+  }
+
   const query = db<EmailTemplateRow>('email_templates').orderBy('updated_at', 'desc')
 
   if (filters.scope) {
     query.where({ scope: filters.scope })
   }
 
-  if (filters.role === 'company_admin' && filters.companyId) {
-    query.where({ scope: 'company', company_id: filters.companyId })
-  } else if (filters.role === 'super_admin') {
+  if (filters.role === 'super_admin') {
     query.where({ scope: 'platform' }).whereNull('company_id')
   } else if (filters.companyId) {
     query.where({ scope: 'company', company_id: filters.companyId })
@@ -315,7 +337,139 @@ export function canAccessTemplate(
 ): boolean {
   if (role === 'super_admin') return true
   if (role === 'company_admin') {
-    return template.scope === 'company' && template.companyId === userCompanyId
+    if (template.scope === 'company' && template.companyId === userCompanyId) return true
+    // Company owners may view only allowed platform defaults (e.g. welcome).
+    if (
+      template.scope === 'platform' &&
+      !template.companyId &&
+      COMPANY_DEFAULT_PLATFORM_SLUGS.has(template.slug)
+    ) {
+      return true
+    }
+    return false
   }
   return false
+}
+
+/** Create a company override from a platform template (first company edit of a default). */
+export async function createCompanyOverrideFromPlatform(
+  platformTemplateId: string,
+  companyId: string,
+  input: {
+    name?: string
+    subject?: string
+    htmlBody?: string
+    textBody?: string
+    requiredKeys?: string[]
+    isActive?: boolean
+  },
+  userId?: string,
+): Promise<TemplateDto> {
+  await ensureEmailCompany(companyId)
+
+  const platform = await db<EmailTemplateRow>('email_templates').where({ id: platformTemplateId }).first()
+  if (!platform || platform.scope !== 'platform') {
+    throw new Error('Platform template not found')
+  }
+
+  const existing = await db<EmailTemplateRow>('email_templates')
+    .where({ slug: platform.slug, scope: 'company', company_id: companyId })
+    .first()
+  if (existing) {
+    return updateTemplate(existing.id, input, userId)
+  }
+
+  return createTemplate(
+    {
+      slug: platform.slug,
+      name: input.name ?? platform.name,
+      subject: input.subject ?? platform.subject,
+      htmlBody: input.htmlBody ?? platform.html_body,
+      textBody: input.textBody ?? platform.text_body,
+      scope: 'company',
+      companyId,
+      requiredKeys: input.requiredKeys ?? parseRequiredKeys(platform),
+      isActive: input.isActive ?? platform.is_active,
+    },
+    userId,
+  )
+}
+
+async function ensureEmailCompany(companyId: string, name?: string): Promise<void> {
+  const existing = await db('email_companies').where({ id: companyId }).first()
+  if (existing) return
+
+  try {
+    await db('email_companies').insert({
+      id: companyId,
+      name: name?.trim() || companyId,
+      created_at: db.fn.now(3),
+      updated_at: db.fn.now(3),
+    })
+  } catch (err) {
+    const again = await db('email_companies').where({ id: companyId }).first()
+    if (again) return
+    throw err
+  }
+}
+
+/** Upsert local company copy so FK inserts (queue, company templates) succeed. */
+export async function ensureLocalCompany(companyId: string, name?: string): Promise<void> {
+  await ensureEmailCompany(companyId, name)
+}
+
+const DEFAULT_WELCOME = {
+  name: 'Welcome',
+  subject: 'Welcome to {{companyName}}',
+  htmlBody: `<p>Hi {{userName}},</p>
+<p>Welcome to <strong>{{companyName}}</strong>!</p>
+{{footerHtml}}`,
+  textBody: `Hi {{userName}},
+
+Welcome to {{companyName}}!
+
+{{footerHtml}}`,
+  requiredKeys: ['userName', 'companyName'],
+}
+
+export async function ensureWelcomeTemplate(
+  companyId: string,
+  companyName?: string,
+): Promise<{ status: 'created' | 'exists'; templateId: string }> {
+  await ensureEmailCompany(companyId, companyName)
+
+  const existing = await db<EmailTemplateRow>('email_templates')
+    .where({ slug: 'welcome', scope: 'company', company_id: companyId })
+    .first()
+
+  if (existing) {
+    return { status: 'exists', templateId: existing.id }
+  }
+
+  const platform = await db<EmailTemplateRow>('email_templates')
+    .where({ slug: 'welcome', scope: 'platform' })
+    .whereNull('company_id')
+    .first()
+
+  const created = await createTemplate({
+    slug: 'welcome',
+    name: platform?.name ?? DEFAULT_WELCOME.name,
+    subject: platform?.subject?.includes('{{companyName}}')
+      ? platform.subject
+      : DEFAULT_WELCOME.subject,
+    htmlBody: platform?.html_body?.includes('{{companyName}}')
+      ? platform.html_body
+      : DEFAULT_WELCOME.htmlBody,
+    textBody: platform?.text_body?.includes('{{companyName}}')
+      ? platform.text_body
+      : DEFAULT_WELCOME.textBody,
+    scope: 'company',
+    companyId,
+    requiredKeys: platform
+      ? Array.from(new Set([...parseRequiredKeys(platform), 'companyName']))
+      : [...DEFAULT_WELCOME.requiredKeys],
+    isActive: true,
+  })
+
+  return { status: 'created', templateId: created.id }
 }

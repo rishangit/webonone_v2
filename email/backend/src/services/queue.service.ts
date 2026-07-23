@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import type { EmailHistoryRow, EmailQueueRow, QueueStatus } from '../models/db.js'
 import { sendMail } from './mail.service.js'
-import { renderEmail, resolveTemplate, validateTemplatePayload } from './template.service.js'
+import { renderEmail, resolveTemplate, validateTemplatePayload, ensureLocalCompany } from './template.service.js'
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 900_000]
 
@@ -87,6 +87,12 @@ function historyRowToDto(row: EmailHistoryRow): HistoryItemDto {
 }
 
 export async function enqueue(input: EnqueueInput): Promise<{ queueId: string; status: 'queued' }> {
+  if (input.companyId) {
+    const companyName =
+      typeof input.payload?.companyName === 'string' ? input.payload.companyName : undefined
+    await ensureLocalCompany(input.companyId, companyName)
+  }
+
   const template = await resolveTemplate(input.templateSlug, input.companyId)
   if (!template) {
     throw new Error(`Template not found: ${input.templateSlug}`)

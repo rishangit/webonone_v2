@@ -53,6 +53,10 @@ WebOnOne owns host-level `CustomDialog` chrome for embedded peers. See [platform
 
 **New peer dialogs:** no WebOnOne code — peer adds `/embed/dialogs/…` + `useRequestPlatformPeerDialog` (prefix allowlist already on host). Wire `onPeerDialogRequest={openPeerDialog}` on `PlatformPeerFrame` (already done).
 
+**Any dialog from an embedded peer:** agents must follow [core-hosted-peer-dialog](../core-hosted-peer-dialog/SKILL.md) — do not open `CustomDialog` inside `#main-content`.
+
+**Selection + Add new:** host stacks a sibling create dialog via `peer-dialog-nested-request` (`PlatformPeerDialogHost`) — same idea as SelectTag / DataTagCreateFrame. Do not nest create chrome in the picker iframe.
+
 Reference: `features/shell/PlatformPeerDialogHost.tsx`, `features/media/PlatformMediaDialogHost.tsx`, `features/shell/pages/PlatformPeerFrame.tsx`.
 
 ## Verification

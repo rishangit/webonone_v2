@@ -1,4 +1,5 @@
 import { db } from '../models/user.repository.js'
+import type { Knex } from 'knex'
 
 export type UserRoleType = 'super_admin' | 'company_admin' | 'member'
 
@@ -47,8 +48,10 @@ export async function findCompanyRole(
 
 export async function insertUserRole(
   row: Omit<UserRoleRow, 'created_at' | 'updated_at'>,
+  trx?: Knex.Transaction,
 ): Promise<void> {
-  await db('users_roles').insert(row)
+  const query = trx ?? db
+  await query('users_roles').insert(row)
 }
 
 export async function upsertSuperAdminRole(userId: string, roleId: string): Promise<void> {
@@ -85,4 +88,22 @@ export async function demoteUserToMember(companyId: string, userId: string): Pro
   await db('users_roles')
     .where({ company_id: companyId, user_id: userId, role: 'company_admin' })
     .update({ role: 'member', updated_at: db.fn.now(3) })
+}
+
+export async function findCompanyMemberRole(
+  userId: string,
+  companyId: string,
+): Promise<UserRoleRow | undefined> {
+  return db<UserRoleRow>('users_roles')
+    .where({ user_id: userId, company_id: companyId, role: 'member' })
+    .first()
+}
+
+export async function findCompanyAdminRole(
+  userId: string,
+  companyId: string,
+): Promise<UserRoleRow | undefined> {
+  return db<UserRoleRow>('users_roles')
+    .where({ user_id: userId, company_id: companyId, role: 'company_admin' })
+    .first()
 }

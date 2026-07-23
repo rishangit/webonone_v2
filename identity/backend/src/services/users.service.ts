@@ -7,6 +7,7 @@ import {
 export type ListUsersQuery = {
   search: string
   role: IdentityUserRole | null
+  excludeCompanyId?: string | null
   page: number
   pageSize: number
 }
@@ -15,7 +16,7 @@ export type ListUsersResponse = {
   items: Array<{
     id: string
     displayName: string
-    email: string
+    email: string | null
     role?: IdentityUserRole
     avatarUrl: string | null
   }>
@@ -28,6 +29,7 @@ export async function listIdentityUsers(query: ListUsersQuery): Promise<ListUser
   const params: FindIdentityUsersParams = {
     search: query.search,
     role: query.role,
+    excludeCompanyId: query.excludeCompanyId ?? null,
     page: query.page,
     pageSize: query.pageSize,
   }
@@ -38,7 +40,7 @@ export async function listIdentityUsers(query: ListUsersQuery): Promise<ListUser
     items: result.items.map((item) => ({
       id: item.id,
       displayName: item.display_name,
-      email: item.email,
+      email: item.email ?? null,
       role: item.role,
       avatarUrl: item.avatar_url,
     })),

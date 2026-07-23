@@ -14,7 +14,7 @@ import {
   AlertDescription,
   Avatar,
   Button,
-  Input,
+  SearchInput,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -56,7 +56,7 @@ function toPickerUser(user: UserPickerUser): IdentityUserPickerUser {
   return {
     id: user.id,
     displayName: user.displayName,
-    email: user.email,
+    email: user.email ?? '',
     role: user.role,
     avatarUrl: user.avatarUrl,
   }
@@ -288,7 +288,7 @@ export function UserPickerPage() {
   return (
     <div className="mx-auto flex min-h-full w-full max-w-4xl flex-1 flex-col p-4 sm:p-6">
       <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
+        <SearchInput
           value={searchInput}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchInput(event.target.value)}
           placeholder="Search by name or email"
@@ -363,7 +363,9 @@ export function UserPickerPage() {
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email?.trim() ? user.email : 'No email'}
+                    </p>
                   </ItemListContent>
                   {user.role ? (
                     <span className="shrink-0 self-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">

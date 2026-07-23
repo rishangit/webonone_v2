@@ -26,14 +26,29 @@ Reference implementations: `DialogsPage.tsx` (`NestedDialogDemo` — stacked sib
 - This applies to **stacked inner dialogs** and **consumer-hosted embed dialogs** — if the consumer renders `CustomDialog`, the iframe/embed child must not duplicate footer actions.
 - `CustomDialog` footer is already `flex justify-end gap-2`. Pass buttons as a fragment. No `w-full` / `flex-1` on footer buttons unless explicitly required.
 
-### Core-hosted peer form dialogs (WebOnOne shell)
+### Core-hosted peer dialogs (WebOnOne shell) — mandatory
 
-When a satellite (Email, Data, SMS, …) runs inside WebOnOne `#main-content` and the dialog must dim the **whole** shell, do **not** open `CustomDialog` inside the page iframe. Use the **peer-dialog** bridge — host owns header + sizes + footer; peer iframe is **body only**. Full recipe: [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”).
+When a satellite (Identity, Email, Data, SMS, …) runs inside WebOnOne `#main-content`, **any** dialog that should cover the shell (forms, selection lists, wizards) must use the **peer-dialog** bridge — not a local `CustomDialog` in the page iframe. Host owns header + sizes + footer; peer iframe is **body only**.
+
+**Skill (follow when adding/fixing):** [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md). Contract detail: [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
 
 | Standalone | Embedded in WebOnOne |
 |------------|----------------------|
 | Local `CustomDialog` (header / body / footer) | `useRequestPlatformPeerDialog` + `/embed/dialogs/…` body route |
-| Footer Cancel/Save on `CustomDialog` | Same labels on host footer; Submit → `peer-dialog-submit` |
+| Footer Cancel/Save/Done on `CustomDialog` | Same labels on host footer; primary → `peer-dialog-submit` |
+
+### Stacked create from a selection dialog (SelectTag pattern)
+
+When a **selection** dialog needs **Add new / create** as a second dialog:
+
+| Owner | What |
+|-------|------|
+| **Parent document** | Both `CustomDialog`s — outer picker + inner create (`stackLevel={1}`, `nestedDismissGuard`) |
+| **Body iframes** (when embedded) | Picker body + create body only — **no** create `CustomDialog` inside the picker iframe |
+
+**References:** `SelectTagDemo.tsx` / `CompanyTagsCard.tsx` + `DataTagCreateFrame`; peer-dialog host nested sibling via `peer-dialog-nested-request` (`PlatformPeerDialogHost`).
+
+**Forbidden:** mounting create `CustomDialog` inside a peer-dialog / picker iframe (cannot overlay the host chrome). Follow skill [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) § Nested create from selection.
 
 Media picker/crop stays on `media-dialog-*` (not peer-dialog). See **Iframe embed bodies** below.
 

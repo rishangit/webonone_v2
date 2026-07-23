@@ -1,0 +1,63 @@
+---
+description: Use UI Kit useToast for mutation API success and failure feedback
+globs: "**/frontend/src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Toast notifications
+
+Mutation API outcomes (create, update, delete, add, send) must use **`useToast`** from `@webonone/ui-kit` — not page-level success/warning Alerts and not hand-rolled toast DOM.
+
+Authoritative workflow: [toast-notifications skill](../skills/toast-notifications/SKILL.md). Related: [ui-kit-consumption.mdc](ui-kit-consumption.mdc), [form-creation skill](../skills/form-creation/SKILL.md).
+
+## Provider
+
+Wrap the app once at the service root (`App.tsx`) with `ToastProvider`. Do **not** wrap individual pages or dialogs.
+
+Reference: `identity/frontend/src/app/App.tsx`.
+
+## Feedback mapping
+
+| Feedback | Use |
+|----------|-----|
+| Mutation success | `toast({ title: '…' })` |
+| Mutation fail | `toast({ title: '…', description?, variant: 'destructive' })` |
+| Soft / non-blocking API warnings (e.g. `invite_delivery_failed`) | Do **not** show |
+| Field validation | Inline `FormField` errors — [form-creation](../skills/form-creation/SKILL.md) |
+| Page / list load error | `Alert` + `AlertDescription` |
+
+## Required usage
+
+```tsx
+import { useToast } from '@webonone/ui-kit'
+
+const { toast } = useToast()
+
+toast({ title: 'User added' })
+toast({
+  title: 'Failed to add user',
+  description: err instanceof Error ? err.message : undefined,
+  variant: 'destructive',
+})
+```
+
+## Forbidden
+
+- Hand-rolled fixed toast markup outside `ToastProvider`
+- Per-page `ToastProvider` wrappers
+- Showing raw soft-warning codes (`invite_delivery_failed`, `invite_email_failed`, `invite_sms_failed`, etc.) in Alert or toast
+- Using page `Alert` for mutation success or soft warnings after a successful HTTP response
+
+## Reference
+
+- Identity Users add flow: `identity/frontend/src/features/users/pages/UsersPage.tsx`
+- Showcase: `ui-kit/showcase/src/pages/ComponentsPage.tsx` (Toast section)
+
+## Verification
+
+From the service frontend workspace:
+
+```bash
+npm run type-check
+npm run lint
+```

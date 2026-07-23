@@ -43,6 +43,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/src/**/*.{ts,tsx}` | RTK slices, redux-observable epics, mandatory for all API I/O |
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 | [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc) | `**/frontend/**/*.{ts,tsx}` | Route lazy-load + `manualChunks`; no 500 kB build warnings |
+| [toast-notifications.mdc](toast-notifications.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `useToast` for mutation API success/fail; ignore soft warnings |
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email/frontend`, and any future `*/frontend` apps.
 
@@ -68,10 +69,12 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 
 | Skill | Description |
 |-------|-------------|
+| [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) | Any dialog opened from a peer inside WebOnOne `#main-content` — host chrome + `/embed/dialogs/…` body |
 | [form-creation](../skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
 | [item-list](../skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
 | [details-page-cards](../skills/details-page-cards/SKILL.md) | Profile/details pages: `Card` sections in 3-col left(2)+right(1) stacks, equal `gap-6` |
 | [feature-store](../skills/feature-store/SKILL.md) | Standard list/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
+| [toast-notifications](../skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
@@ -100,3 +103,4 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Loading and empty states (unified overlay, `LoadingState`, `ItemListEmpty`) | [loading-empty-states.mdc](loading-empty-states.mdc) |
 | Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |
 | Core-hosted peer dialogs (header/body/footer on WebOnOne shell) | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”), `dialog-windows.mdc` |
+| Mutation toast feedback (`useToast`) | [toast-notifications.mdc](toast-notifications.mdc), [toast-notifications skill](../skills/toast-notifications/SKILL.md) |

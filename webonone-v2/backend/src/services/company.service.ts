@@ -291,6 +291,9 @@ export async function registerCompany(
 
   sendCompanyEmail('company_registered', company)
 
+  // Welcome templates are shown as platform defaults until the company customizes them.
+  // Sending resolves company override → platform fallback (no eager company seed).
+
   return toCompanyWithMembership(company, role)
 }
 

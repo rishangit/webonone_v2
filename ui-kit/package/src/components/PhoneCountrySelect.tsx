@@ -7,7 +7,7 @@ import {
   getPhoneCountryByIso2,
   type PhoneCountry,
 } from '../data/phoneCountries'
-import { Input } from './Input'
+import { SearchInput } from './SearchInput'
 import { Popover, PopoverContent, PopoverTrigger } from './Popover'
 
 export interface PhoneCountrySelectProps {
@@ -111,7 +111,7 @@ function PhoneCountrySelect({ value, onValueChange, disabled, id }: PhoneCountry
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-2" align="start">
-        <Input
+        <SearchInput
           ref={searchInputRef}
           value={search}
           onChange={(event) => {

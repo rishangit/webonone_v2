@@ -169,11 +169,9 @@ export function App() {
           <Route
             path="identity/*"
             element={
-              <SuperAdminRoute>
-                <LazyRoute>
-                  <PlatformPeerFrame peer="identity" />
-                </LazyRoute>
-              </SuperAdminRoute>
+              <LazyRoute>
+                <PlatformPeerFrame peer="identity" />
+              </LazyRoute>
             }
           />
         </Route>

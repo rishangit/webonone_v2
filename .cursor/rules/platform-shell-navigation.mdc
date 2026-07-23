@@ -69,7 +69,9 @@ Flow:
 
 ### Core-hosted dialogs from embedded peers
 
-When an embedded peer needs a dialog to feel opened by **WebOnOne core** (dim sidebar + header + main together, avoid iframe clipping, or present platform-level UI), the peer must **request a host dialog** instead of rendering `CustomDialog` inside its iframe.
+**Mandatory:** Any dialog (form, selection, wizard, confirm with sized chrome) that opens from a peer page inside WebOnOne `#main-content` must open via a **host dialog** — never a local `CustomDialog` inside the page iframe. Overlay must dim sidebar + header + main together. Follow skill [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) whenever adding or fixing such a dialog.
+
+**Exception:** intentionally page-scoped UI that must not cover the shell (rare; document why).
 
 #### Media dialogs (specialized)
 
@@ -77,9 +79,9 @@ Use `webonone:platform:media-dialog-*` when the host already mounts Media frames
 
 Reference: `packages/platform-embed/src/PlatformServiceFrame.tsx`, `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`, `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
 
-#### Peer form dialogs (generic — preferred for new dialogs)
+#### Peer form / selection dialogs (generic — default for new dialogs)
 
-Use `webonone:platform:peer-dialog-*` for peer-owned CRUD forms. Host never imports peer form components.
+Use `webonone:platform:peer-dialog-*` for peer-owned CRUD forms **and** selection dialogs (e.g. Add user). Host never imports peer form/list components.
 
 **Chrome split (matches standalone CustomDialog):**
 
@@ -106,22 +108,20 @@ Required flow:
 4. Footer Submit → `sendPlatformPeerDialogSubmit`; dialog listens via `usePlatformPeerDialogSubmit`, saves, then `sendPlatformPeerDialogComplete` (and `sendPlatformPeerDialogBusy` while saving).
 5. Standalone: local `CustomDialog` with the same header/body/footer layout.
 
-**Future recipe (peer only — no WebOnOne change):**
+**Recipe (peer only — no WebOnOne change):** skill [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md).
 
-1. Extract form **body** (fields only) shared by standalone + embed.
+1. Extract **body** (fields or selection list only) shared by standalone + embed.
 2. Standalone: `CustomDialog` with same `title` / `description` / `sizeWidth` / `sizeHeight` / `footer` (Cancel + primary).
 3. Add route `/embed/dialogs/<feature>/…` (slim layout; **no** `FeaturePage`; **no** footer buttons in the iframe).
-4. List opener: `useRequestPlatformPeerDialog({ path, title, description?, sizeWidth, sizeHeight, submitLabel, cancelLabel? })` when `parentOrigin` is set; else local dialog.
-5. Embed page: `usePlatformPeerDialogSubmit` → validate/save; `sendPlatformPeerDialogBusy` while saving; `sendPlatformPeerDialogComplete` / `Dismiss` on done/cancel.
-6. On hosted result: refresh list / close local open state.
+4. List opener: `useRequestPlatformPeerDialog({ path, title, description?, sizeWidth, sizeHeight, submitLabel, cancelLabel? })` when `parentOrigin` is set; else local dialog. If `isHosted`, render `null`.
+5. Embed page: `usePlatformPeerDialogSubmit` → validate/save or confirm selection; `sendPlatformPeerDialogBusy` while saving or while primary must stay disabled; `sendPlatformPeerDialogComplete` (optional payload) / `Dismiss` on done/cancel.
+6. On hosted result: refresh list / apply payload / close local open state.
 
-**Forbidden:** rendering `CustomDialog` (or faux footer buttons) inside the peer page iframe when embedded; putting Cancel/Save in the embed-page body; per-dialog WebOnOne code (host already allowlists `/embed/dialogs/`).
+**Forbidden:** rendering `CustomDialog` (or faux footer buttons) inside the peer page iframe when embedded; putting Cancel/Save/Done in the embed-page body; nesting a create `CustomDialog` inside a peer-dialog picker iframe (use host sibling / `peer-dialog-nested-request` — SelectTag pattern); per-dialog WebOnOne code for simple forms (host already allowlists `/embed/dialogs/` and nested create).
 
-**Embed dialog routes** are exempt from `FeaturePage` (form body only).
+**Embed dialog routes** are exempt from `FeaturePage` (body only).
 
-Reference: `packages/platform-embed/src/useRequestPlatformPeerDialog.ts`, `packages/platform-embed/src/usePlatformPeerDialogSubmit.ts`, `webonone-v2/frontend/src/features/shell/PlatformPeerDialogHost.tsx`, `email/frontend/src/features/templates/components/TemplateFormDialog.tsx`, `data/frontend/src/features/tags/components/TagFormDialog.tsx`.
-
-Iframe-local dialogs are allowed only when the dialog is intentionally scoped to the embedded page.
+Reference: `packages/platform-embed/src/useRequestPlatformPeerDialog.ts`, `packages/platform-embed/src/usePlatformPeerDialogSubmit.ts`, `webonone-v2/frontend/src/features/shell/PlatformPeerDialogHost.tsx`, `email/frontend/src/features/templates/components/TemplateFormDialog.tsx`, `data/frontend/src/features/tags/components/TagFormDialog.tsx`, `identity/frontend/src/features/users/components/AddCompanyUserDialog.tsx`.
 
 **Redirect auth:** `@webonone/platform-nav` — `exchangeAuthCode`, `usePlatformRedirectBootstrap`, `redirectWithAuthCode`.
 

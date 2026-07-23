@@ -59,3 +59,31 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<v
     console.error('[emailClient] send error:', err)
   }
 }
+
+export async function ensureWelcomeTemplate(
+  companyId: string,
+  companyName?: string,
+): Promise<void> {
+  const url = resolveInternalEmailUrl(
+    `/api/v1/internal/companies/${encodeURIComponent(companyId)}/templates/ensure-welcome`,
+  )
+  if (!url) return
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Email-Service-Key': env.emailServiceApiKey,
+      },
+      body: JSON.stringify({ name: companyName }),
+    })
+
+    if (!response.ok) {
+      const text = await response.text()
+      console.error(`[emailClient] ensure-welcome failed (${response.status}): ${text}`)
+    }
+  } catch (err) {
+    console.error('[emailClient] ensure-welcome error:', err)
+  }
+}

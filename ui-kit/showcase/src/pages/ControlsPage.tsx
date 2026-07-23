@@ -1,4 +1,4 @@
-import { ArrowRight, Mail, Plus, RefreshCw, Search, Tags, User } from 'lucide-react'
+import { ArrowRight, Mail, Plus, RefreshCw, Tags, User } from 'lucide-react'
 import {
   Button,
   Checkbox,
@@ -15,6 +15,7 @@ import {
   MultiSelect,
   PasswordInput,
   PhoneInput,
+  SearchInput,
   RadioGroup,
   RadioGroupItem,
   Select,
@@ -50,6 +51,7 @@ export function ControlsPage() {
   const [accentColor, setAccentColor] = useState('#2563EB')
   const [otp4, setOtp4] = useState('')
   const [otp6, setOtp6] = useState('')
+  const [searchDemo, setSearchDemo] = useState('Glass')
   const browserDefaultCountry = useMemo(() => getBrowserDefaultCountryIso2(), [])
   const phoneE164 = formatPhoneE164(phoneCountry, phoneNational)
 
@@ -93,13 +95,32 @@ export function ControlsPage() {
       <DemoSection id="input-text-with-icon" title="Input text (with icon)">
         <div className="grid max-w-md gap-4">
           <InputGroup>
-            <InputGroupIcon icon={Search} />
-            <Input placeholder="Search…" inGroup />
-          </InputGroup>
-          <InputGroup>
             <InputGroupIcon icon={User} />
             <Input placeholder="Username" inGroup />
           </InputGroup>
+          <InputGroup>
+            <InputGroupIcon icon={Mail} />
+            <Input placeholder="Email" inGroup />
+          </InputGroup>
+        </div>
+      </DemoSection>
+
+      <DemoSection id="search-input" title="Search">
+        <div className="grid max-w-md gap-4">
+          <SearchInput
+            value=""
+            onChange={() => undefined}
+            placeholder="Search…"
+            aria-label="Search empty demo"
+            readOnly
+          />
+          <SearchInput
+            value={searchDemo}
+            onChange={(event) => setSearchDemo(event.target.value)}
+            placeholder="Search themes…"
+            aria-label="Search filled demo"
+          />
+          <SearchInput placeholder="Disabled" disabled />
         </div>
       </DemoSection>
 

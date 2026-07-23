@@ -24,7 +24,7 @@ Follow the user's task and existing code in `identity/`. Use `.cursor/rules/` fo
 - Express/JWT: `.cursor/rules/nodejs-express.mdc`
 - Service boundaries: `.cursor/rules/microservice-architecture.mdc`
 - Identity globs: `.cursor/rules/identity-project.mdc`
-- Platform embed / core dialogs: `.cursor/rules/platform-shell-navigation.mdc` · skill § Embedded peer dialogs
+- Platform embed / core dialogs: `.cursor/rules/platform-shell-navigation.mdc` · `.cursor/skills/core-hosted-peer-dialog/SKILL.md` · identity skill § Embedded peer dialogs
 
 ## Verification
 

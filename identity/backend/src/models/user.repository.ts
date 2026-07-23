@@ -1,4 +1,4 @@
-import knex from 'knex'
+import knex, { type Knex } from 'knex'
 import { env } from '../config/env.js'
 
 export const db = knex({
@@ -16,7 +16,7 @@ export const db = knex({
 
 export interface UserRow {
   id: string
-  email: string
+  email: string | null
   password_hash: string | null
   google_sub: string | null
   display_name: string
@@ -38,7 +38,7 @@ export interface UserRow {
 
 export interface UserProfile {
   id: string
-  email: string
+  email: string | null
   displayName: string
   firstName: string
   lastName: string
@@ -57,7 +57,7 @@ export interface UserProfile {
 
 export interface CreateUserInput {
   id: string
-  email: string
+  email?: string | null
   passwordHash?: string | null
   googleSub?: string | null
   displayName: string
@@ -66,6 +66,9 @@ export interface CreateUserInput {
   isEmailVerified?: boolean
   avatarUrl?: string | null
   locale?: string | null
+  phoneNumber?: string | null
+  /** Admin-provisioned customer with no password yet (invite set-password). */
+  passwordless?: boolean
 }
 
 export interface UpdateUserProfileInput {
@@ -113,6 +116,10 @@ export async function findUserByEmail(email: string): Promise<UserRow | undefine
   return db<UserRow>('users').where({ email: email.toLowerCase() }).first()
 }
 
+export async function findUserByPhoneNumber(phoneNumber: string): Promise<UserRow | undefined> {
+  return db<UserRow>('users').where({ phone_number: phoneNumber }).first()
+}
+
 export async function findUserById(id: string): Promise<UserRow | undefined> {
   return db<UserRow>('users').where({ id }).first()
 }
@@ -121,18 +128,26 @@ export async function findUserByGoogleSub(googleSub: string): Promise<UserRow | 
   return db<UserRow>('users').where({ google_sub: googleSub }).first()
 }
 
-export async function createUser(input: CreateUserInput): Promise<UserRow> {
-  if (!input.passwordHash && !input.googleSub) {
-    throw new Error('User must have password_hash or google_sub')
+export async function createUser(
+  input: CreateUserInput,
+  trx?: Knex.Transaction,
+): Promise<UserRow> {
+  if (!input.passwordHash && !input.googleSub && !input.passwordless) {
+    throw new Error('User must have password_hash, google_sub, or passwordless provision')
   }
 
   const now = new Date()
   const displayName =
     input.displayName.trim() || `${input.firstName} ${input.lastName}`.trim() || input.firstName
+  const email =
+    typeof input.email === 'string' && input.email.trim()
+      ? input.email.trim().toLowerCase()
+      : null
 
-  await db('users').insert({
+  const query = trx ?? db
+  await query('users').insert({
     id: input.id,
-    email: input.email.toLowerCase(),
+    email,
     password_hash: input.passwordHash ?? null,
     google_sub: input.googleSub ?? null,
     display_name: displayName,
@@ -141,11 +156,12 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
     is_email_verified: input.isEmailVerified ?? false,
     avatar_url: input.avatarUrl ?? null,
     locale: input.locale ?? null,
+    phone_number: input.phoneNumber ?? null,
     created_at: now,
     updated_at: now,
   })
 
-  const user = await findUserById(input.id)
+  const user = await query<UserRow>('users').where({ id: input.id }).first()
   if (!user) throw new Error('Failed to create user')
   return user
 }

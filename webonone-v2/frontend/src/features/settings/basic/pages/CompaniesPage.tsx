@@ -5,7 +5,7 @@ import {
   AlertDescription,
   FeaturePage,
   ListPageBody,
-  ListSearchField,
+  SearchInput,
   Pagination,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -60,15 +60,16 @@ export function CompaniesPage() {
       title="Companies"
       description="Review registered companies and update approval status."
       actions={
-        <ListSearchField
+        <SearchInput
           value={searchQuery}
-          onChange={(value) => {
-            setSearchQuery(value)
+          onChange={(event) => {
+            setSearchQuery(event.target.value)
             setPage(1)
           }}
           placeholder="Company name"
           onClear={() => setPage(1)}
           aria-label="Search companies"
+          className="w-64"
         />
       }
     >

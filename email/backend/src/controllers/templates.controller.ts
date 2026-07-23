@@ -10,6 +10,7 @@ import type {
 import { logAudit } from '../services/audit.service.js'
 import {
   canAccessTemplate,
+  createCompanyOverrideFromPlatform,
   createTemplate,
   getTemplateById,
   listTemplateVersions,
@@ -94,12 +95,33 @@ export async function putTemplate(req: AuthenticatedRequest, res: Response) {
     res.status(403).json({ message: 'Forbidden', code: 'FORBIDDEN' })
     return
   }
+
+  const body = req.body as UpdateTemplateBody
+
+  // Company admin editing a platform default → save as company override.
   if (req.user!.role === 'company_admin' && existing.scope === 'platform') {
-    res.status(403).json({ message: 'Company admins cannot edit platform templates', code: 'FORBIDDEN' })
+    const companyId = req.user!.companyId
+    if (!companyId) {
+      res.status(400).json({ message: 'Company admin has no company assigned', code: 'BAD_REQUEST' })
+      return
+    }
+    try {
+      const created = await createCompanyOverrideFromPlatform(id, companyId, body, req.user?.id)
+      await logAudit({
+        userId: req.user?.id,
+        action: 'template_create',
+        entityType: 'email_template',
+        entityId: created.id,
+        metadata: { overriddenFrom: id },
+      })
+      res.json(created)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Override failed'
+      res.status(400).json({ message, code: 'BAD_REQUEST' })
+    }
     return
   }
 
-  const body = req.body as UpdateTemplateBody
   const updated = await updateTemplate(id, body, req.user?.id)
   await logAudit({
     userId: req.user?.id,

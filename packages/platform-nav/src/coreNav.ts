@@ -267,6 +267,19 @@ const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
 
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
+  {
+    kind: 'group',
+    label: 'Identity',
+    children: [
+      {
+        kind: 'item',
+        path: IDENTITY_NAV_SENTINELS.users,
+        label: 'Users',
+        externalService: 'identity',
+        externalPath: '/users',
+      },
+    ],
+  },
   DATA_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
