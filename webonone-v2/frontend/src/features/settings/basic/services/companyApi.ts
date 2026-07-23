@@ -38,12 +38,18 @@ export type MyCompanySummary = {
   approvedAt: string | null
 }
 
+export type CompanyGalleryImage = {
+  mediaId: string
+  url: string
+}
+
 export type CompanyDetail = {
   id: string
   name: string
   description: string | null
   companySize: string | null
   logoUrl: string | null
+  galleryImages: CompanyGalleryImage[]
   contactEmail: string | null
   contactPhone: string | null
   addressLine1: string | null
@@ -69,6 +75,7 @@ export type UpdateCompanyBody = {
   description?: string | null
   companySize?: string | null
   logoUrl?: string | null
+  galleryImages?: CompanyGalleryImage[] | null
   contactEmail?: string | null
   contactPhone?: string | null
   addressLine1?: string | null

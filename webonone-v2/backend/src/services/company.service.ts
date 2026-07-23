@@ -21,12 +21,18 @@ function toNumberOrNull(value: string | number | null | undefined): number | nul
   return Number.isFinite(n) ? n : null
 }
 
+export type CompanyGalleryImage = {
+  mediaId: string
+  url: string
+}
+
 export type CompanyDetail = {
   id: string
   name: string
   description: string | null
   companySize: string | null
   logoUrl: string | null
+  galleryImages: CompanyGalleryImage[]
   contactEmail: string | null
   contactPhone: string | null
   addressLine1: string | null
@@ -47,6 +53,30 @@ export type CompanyDetail = {
   role?: 'member' | 'company_admin'
 }
 
+function parseGalleryImages(
+  value: string | repo.CompanyGalleryImageRef[] | null | undefined,
+): CompanyGalleryImage[] {
+  if (value == null) return []
+  let parsed: unknown = value
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(parsed)) return []
+  return parsed
+    .filter(
+      (item): item is CompanyGalleryImage =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as CompanyGalleryImage).mediaId === 'string' &&
+        typeof (item as CompanyGalleryImage).url === 'string',
+    )
+    .slice(0, 24)
+}
+
 function toCompanyDetail(
   row: repo.CompanyRow,
   role?: 'member' | 'company_admin',
@@ -57,6 +87,7 @@ function toCompanyDetail(
     description: row.description,
     companySize: row.company_size,
     logoUrl: row.logo_url,
+    galleryImages: parseGalleryImages(row.gallery_images),
     contactEmail: row.contact_email,
     contactPhone: row.contact_phone,
     addressLine1: row.address_line1,
@@ -202,6 +233,7 @@ export async function registerCompany(
     description: input.description?.trim() || null,
     company_size: input.companySize ?? null,
     logo_url: input.logoUrl ?? null,
+    gallery_images: null,
     address_line1: input.addressLine1?.trim() || null,
     address_line2: input.addressLine2?.trim() || null,
     city: input.city?.trim() || null,
@@ -279,6 +311,7 @@ export async function updateCompanyProfile(
   if (input.description !== undefined) patch.description = input.description
   if (input.companySize !== undefined) patch.company_size = input.companySize
   if (input.logoUrl !== undefined) patch.logo_url = input.logoUrl
+  if (input.galleryImages !== undefined) patch.gallery_images = input.galleryImages
   if (input.contactEmail !== undefined) patch.contact_email = input.contactEmail
   if (input.contactPhone !== undefined) patch.contact_phone = input.contactPhone
   if (input.addressLine1 !== undefined) patch.address_line1 = input.addressLine1

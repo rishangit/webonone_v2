@@ -1,0 +1,89 @@
+---
+description: Implementation plan for spec 1.13.4 — Company profile Profile/Gallery tabs + Media paths
+alwaysApply: false
+globs: webonone-v2/frontend/src/features/settings/companies/**, webonone-v2/frontend/src/features/media/**, webonone-v2/backend/src/**/company*, webonone-v2/backend/migrations/**
+---
+
+# Implementation plan — Spec 1.13.4
+
+## Summary
+
+Add **Profile** and **Gallery** tabs to the Company profile page. **Profile** keeps the current three cards (company / contact / location). **Gallery** adds a logo card and a multi-image gallery card, using Media paths `/companies/{companyId}/profile` and `/companies/{companyId}/gallery` under scope `webonone:company:{companyId}`.
+
+See [02-company-profile-tabs.md](./02-company-profile-tabs.md), [03-profile-tab.md](./03-profile-tab.md), [04-gallery-tab.md](./04-gallery-tab.md), [05-media-paths-and-integration.md](./05-media-paths-and-integration.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.13.4` |
+| Prerequisite | 1.13.2 Company profile page |
+| Services | WebOnOne FE + BE; Media running for upload smoke |
+| New env | None (`VITE_MEDIA_ORIGIN` already) |
+| Media / Identity code changes | None required |
+
+---
+
+## Phase 1 — Tabs + Profile panel
+
+**Goal:** Shell tabs; Profile content = current page body.
+
+**Exit criteria:** No regression on three-card edit/save.
+
+| Task | Paths |
+|------|-------|
+| Tabs on page | `CompanyProfilePage.tsx` |
+| Keep cards | `CompanyProfileCard.tsx`, `CompanyContactCard.tsx`, `CompanyLocationCard.tsx` |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 2 — Gallery persistence + Media helpers
+
+**Goal:** `galleryImages` on company; path builders.
+
+**Exit criteria:** GET/PATCH round-trip; helpers return required paths.
+
+| Task | Paths |
+|------|-------|
+| Migration + repo/service/schema | `webonone-v2/backend/migrations/*`, `company.*` |
+| FE API/types/store | `companyApi.ts`, `companiesStore.ts`, schemas |
+| Path helpers | `features/media/utils/mediaConfig.ts` |
+
+---
+
+## Phase 3 — Gallery tab cards + Media dialog
+
+**Goal:** Logo + gallery UI wired to Media + PATCH.
+
+**Exit criteria:** Manual checklist in [07-implementation-plan.md](./07-implementation-plan.md).
+
+| Task | Paths |
+|------|-------|
+| Logo / gallery cards | `…/companies/components/CompanyLogoCard.tsx`, `CompanyGalleryCard.tsx` |
+| Media open | Platform Media dialog host / selector hook under companies or media feature |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Forbidden
+
+- Changing Profile tab card fields or map behavior beyond tab wrapping
+- Writing post-create company media into `webonone:company:pending:*` / `/logo`
+- Hard-coding folder paths outside `mediaConfig` helpers
+- Tokens in Media iframe URLs
+- `postMessage('*')`
+- Letting members open upload selectors
+- Storing image blobs in WebOnOne DB
+
+---
+
+## Acceptance (quick)
+
+1. Tabs: Profile \| Gallery.
+2. Profile = current three cards.
+3. Logo → `/companies/{id}/profile` + `logoUrl`.
+4. Gallery multi → `/companies/{id}/gallery` + persisted refs.
+5. Type-check green.

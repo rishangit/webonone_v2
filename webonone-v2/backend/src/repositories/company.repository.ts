@@ -8,6 +8,7 @@ export type CompanyRow = {
   description: string | null
   company_size: string | null
   logo_url: string | null
+  gallery_images: string | CompanyGalleryImageRef[] | null
   address_line1: string | null
   address_line2: string | null
   city: string | null
@@ -28,11 +29,17 @@ export type CompanyRow = {
   approved_by_user_id: string | null
 }
 
+export type CompanyGalleryImageRef = {
+  mediaId: string
+  url: string
+}
+
 export type CompanyProfilePatch = {
   name?: string
   description?: string | null
   company_size?: string | null
   logo_url?: string | null
+  gallery_images?: CompanyGalleryImageRef[] | null
   address_line1?: string | null
   address_line2?: string | null
   city?: string | null
@@ -82,12 +89,20 @@ export async function updateCompanyProfile(
     return findCompanyById(companyId)
   }
 
+  // Knex/mysql treat JS arrays as special bindings — stringify JSON columns explicitly.
+  const { gallery_images: galleryImages, ...rest } = patch
+  const updatePayload: Record<string, unknown> = {
+    ...rest,
+    updated_at: db.fn.now(3),
+  }
+  if (galleryImages !== undefined) {
+    updatePayload.gallery_images =
+      galleryImages === null ? null : JSON.stringify(galleryImages)
+  }
+
   const updated = await db<CompanyRow>('companies')
     .where({ id: companyId })
-    .update({
-      ...patch,
-      updated_at: db.fn.now(3) as unknown as Date,
-    })
+    .update(updatePayload)
 
   if (!updated) return undefined
   return findCompanyById(companyId)

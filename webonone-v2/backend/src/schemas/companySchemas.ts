@@ -43,12 +43,18 @@ const nullableEmail = z
   .union([z.string().trim().email().max(255), z.literal('').transform(() => null), z.null()])
   .optional()
 
+const galleryImageSchema = z.object({
+  mediaId: z.string().trim().min(1).max(64),
+  url: z.string().url().max(2048),
+})
+
 export const updateCompanyBodySchema = z
   .object({
     name: z.string().trim().min(1).max(255).optional(),
     description: nullableString(2000),
     companySize: z.union([companySizeSchema, z.null()]).optional(),
     logoUrl: z.union([z.string().url().max(2048), z.null()]).optional(),
+    galleryImages: z.union([z.array(galleryImageSchema).max(24), z.null()]).optional(),
     contactEmail: nullableEmail,
     contactPhone: nullableString(64),
     addressLine1: nullableString(255),

@@ -7,6 +7,7 @@ import {
   Button,
   FeaturePage,
   Form,
+  cn,
   formatPhoneE164,
   getBrowserDefaultCountryIso2,
   mapZodIssuesToFieldErrors,
@@ -26,13 +27,22 @@ import {
 } from '@/features/settings/basic/schemas/companySchemas'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
 import { CompanyContactCard } from '../components/CompanyContactCard'
+import { CompanyGalleryCard } from '../components/CompanyGalleryCard'
 import { CompanyLocationCard } from '../components/CompanyLocationCard'
+import { CompanyLogoCard } from '../components/CompanyLogoCard'
 import { CompanyProfileCard } from '../components/CompanyProfileCard'
 
 type CompanyProfilePageProps = {
   backTo: string
   backLabel: string
 }
+
+type CompanyProfileTab = 'profile' | 'gallery'
+
+const TABS: { id: CompanyProfileTab; label: string }[] = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'gallery', label: 'Gallery' },
+]
 
 function profileFromDetail(detail: CompanyDetail): CompanyProfileCardValues {
   return {
@@ -73,6 +83,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
   const detailError = useAppSelector((s) => s.companies.detailError)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
 
+  const [tab, setTab] = useState<CompanyProfileTab>('profile')
   const [mode, setMode] = useState<'view' | 'edit'>('view')
   const [profileValues, setProfileValues] = useState<CompanyProfileCardValues | null>(null)
   const [locationValues, setLocationValues] = useState<CompanyLocationCardValues | null>(null)
@@ -192,7 +203,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
     return (
       <FeaturePage
         title="Company profile"
-        description="View and update this company’s profile, contact, and location."
+        description="Update company details and gallery images."
         actions={
           <Button type="button" variant="outline" size="sm" onClick={() => navigate(backTo)}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -207,7 +218,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
     )
   }
 
-  if (!detail || !profileValues || !locationValues) {
+  if (!detail || !profileValues || !locationValues || !companyId) {
     return null
   }
 
@@ -245,17 +256,19 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
     </>
   )
 
+  const showProfileEditActions = tab === 'profile' && canEdit
+
   return (
     <FeaturePage
       title={detail.name}
-      description="Complete and update this company’s profile, contact, and location."
+      description="Update company details and gallery images."
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => navigate(backTo)}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
             {backLabel}
           </Button>
-          {canEdit ? (
+          {showProfileEditActions ? (
             mode === 'view' ? (
               <Button type="button" size="sm" onClick={() => setMode('edit')}>
                 <Edit3 className="h-4 w-4" aria-hidden />
@@ -287,17 +300,65 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
             <AlertDescription>{detailError}</AlertDescription>
           </Alert>
         ) : null}
-        {mode === 'edit' ? (
-          <Form
-            id="company-profile-form"
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 items-start gap-6 space-y-0 lg:grid-cols-3"
-          >
-            {cards}
-          </Form>
-        ) : (
-          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">{cards}</div>
-        )}
+
+        <div
+          role="tablist"
+          aria-label="Company profile sections"
+          className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
+        >
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              id={`company-profile-tab-${item.id}`}
+              aria-selected={tab === item.id}
+              aria-controls={`company-profile-panel-${item.id}`}
+              className={cn(
+                'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
+                tab === item.id && 'bg-background text-foreground shadow-sm',
+              )}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          role="tabpanel"
+          id={`company-profile-panel-${tab}`}
+          aria-labelledby={`company-profile-tab-${tab}`}
+        >
+          {tab === 'profile' ? (
+            mode === 'edit' ? (
+              <Form
+                id="company-profile-form"
+                onSubmit={handleSubmit}
+                className="grid grid-cols-1 items-start gap-6 space-y-0 lg:grid-cols-3"
+              >
+                {cards}
+              </Form>
+            ) : (
+              <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">{cards}</div>
+            )
+          ) : (
+            <div className="flex flex-col gap-6">
+              <CompanyLogoCard
+                companyId={companyId}
+                logoUrl={detail.logoUrl}
+                canEdit={canEdit}
+                saving={saving}
+              />
+              <CompanyGalleryCard
+                companyId={companyId}
+                galleryImages={detail.galleryImages ?? []}
+                canEdit={canEdit}
+                saving={saving}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </FeaturePage>
   )

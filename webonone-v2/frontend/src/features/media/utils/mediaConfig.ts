@@ -16,10 +16,14 @@ export function getMediaCropDialogUrl(): string {
   return `${getMediaOrigin()}/crop-dialog`
 }
 
-export function buildCompanyLogoScope(userId: string): string {
-  return `webonone:company:pending:${userId}`
+export function buildCompanyMediaScope(companyId: string): string {
+  return `webonone:company:${companyId}`
 }
 
-export function buildCompanyLogoFolderPath(): string {
-  return '/logo'
+export function buildCompanyProfileFolderPath(companyId: string): string {
+  return `/companies/${companyId}/profile`
+}
+
+export function buildCompanyGalleryFolderPath(companyId: string): string {
+  return `/companies/${companyId}/gallery`
 }
