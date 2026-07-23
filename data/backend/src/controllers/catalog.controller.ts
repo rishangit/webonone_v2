@@ -39,7 +39,7 @@ export function createCatalogController(kind: CatalogKind) {
 
     async create(req: AuthenticatedRequest, res: Response) {
       try {
-        const item = await service.create(req.body as CreateCatalogBody)
+        const item = await service.create(req.body as CreateCatalogBody, req.user?.role)
         res.status(201).json(item)
       } catch (err) {
         if (!handleServiceError(err, res)) throw err

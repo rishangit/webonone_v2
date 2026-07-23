@@ -20,7 +20,10 @@ export async function getAttribute(req: AuthenticatedRequest, res: Response) {
 
 export async function createAttribute(req: AuthenticatedRequest, res: Response) {
   try {
-    const item = await attributesService.createAttribute(req.body as CreateAttributeBody)
+    const item = await attributesService.createAttribute(
+      req.body as CreateAttributeBody,
+      req.user?.role,
+    )
     res.status(201).json(item)
   } catch (err) {
     if (!handleServiceError(err, res)) throw err

@@ -1,0 +1,92 @@
+---
+description: Implementation plan for spec 1.13.5 — Company owner Data catalog create, Unverified status, SA verify, reference counts
+alwaysApply: false
+globs: data/frontend/src/features/**, data/backend/src/**, data/backend/migrations/**
+---
+
+# Implementation plan — Spec 1.13.5
+
+## Summary
+
+Enable **company owners** to **Add** Data catalog items on all six entities. Owner creates always store status **`pending`** (UI: **Unverified**). Only **super admin** can **Verify**. Expose **`referenceCount`** on list/detail for usage visibility.
+
+See [02-company-owner-create.md](./02-company-owner-create.md), [03-super-admin-verify.md](./03-super-admin-verify.md), [04-reference-counts.md](./04-reference-counts.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.13.5` |
+| Prerequisite | Data catalog CRUD (1.11.0); company_admin Data nav (1.12.3) |
+| Services | Data FE + BE |
+| New env | None |
+| WebOnOne / Identity code | None required |
+
+---
+
+## Phase 1 — Backend create + status rules
+
+**Goal:** Company admin POST all entities; forced `pending`.
+
+**Exit criteria:** Spoofed `status: verified` from company_admin still saves `pending`.
+
+| Task | Paths |
+|------|-------|
+| Widen POST middleware | `data/backend/src/routes/units.routes.ts`, `attributes.routes.ts`, `catalog.routes.ts` |
+| Force status in create | `tags.service.ts`, `units.service.ts`, `attributes.service.ts`, `catalog.service.ts` (pass role from controller) |
+
+**Verify:** `npm run type-check -w data-root`
+
+---
+
+## Phase 2 — Frontend Add + owner create UX
+
+**Goal:** Add button for company_admin; status locked Unverified.
+
+| Task | Paths |
+|------|-------|
+| `canCreate` vs `canMutate` | `TagsPage`, `UnitsPage`, `AttributesPage`, `CatalogListPage`, Tag picker |
+| Forms | Tag/Unit/Attribute/Catalog form dialogs — hide status for company_admin |
+
+---
+
+## Phase 3 — Verify + Unverified labels
+
+**Goal:** SA Verify; badge/filter say Unverified.
+
+| Task | Paths |
+|------|-------|
+| Badge / filters / dashboard | `StatusBadge.tsx`, list filter selects, `DashboardPage` |
+| Verify menu | Entity list row menus (SA only) |
+
+---
+
+## Phase 4 — referenceCount
+
+**Goal:** Count helpers + DTO + list UI.
+
+| Task | Paths |
+|------|-------|
+| Count helpers + list/get mapping | `data/backend/src/services/*` |
+| FE types + row UI | `data.types.ts`, `*List.tsx`, `CatalogList.tsx` |
+
+**Verify:** `npm run type-check -w data-root`
+
+---
+
+## Forbidden
+
+- Allowing `company_admin` to PATCH/PUT/DELETE catalog rows
+- Allowing `company_admin` to persist `verified`
+- Renaming DB ENUM `pending` → `unverified` in this release
+- Adding `company_id` partition columns
+- Counting references outside Data DB
+- Changing Identity JWT claims
+
+## Final verification
+
+```bash
+npm run type-check -w data-root
+```
+
+Manual: company owner Add × 6 → Unverified + Refs 0 → SA Verify → Verified; link tag to product → tag Refs ≥ 1.

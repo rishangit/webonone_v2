@@ -26,6 +26,12 @@ export type CompanyGalleryImage = {
   url: string
 }
 
+export type CompanyTag = {
+  id: string
+  name: string
+  color: string
+}
+
 export type CompanyDetail = {
   id: string
   name: string
@@ -45,6 +51,7 @@ export type CompanyDetail = {
   longitude: number | null
   mapPlaceId: string | null
   mapFormattedAddress: string | null
+  tags: CompanyTag[]
   status: repo.CompanyStatus
   createdByUserId: string
   createdAt: string
@@ -79,6 +86,7 @@ function parseGalleryImages(
 
 function toCompanyDetail(
   row: repo.CompanyRow,
+  tags: CompanyTag[] = [],
   role?: 'member' | 'company_admin',
 ): CompanyDetail {
   return {
@@ -100,6 +108,7 @@ function toCompanyDetail(
     longitude: toNumberOrNull(row.longitude),
     mapPlaceId: row.map_place_id,
     mapFormattedAddress: row.map_formatted_address,
+    tags,
     status: row.status,
     createdByUserId: row.created_by_user_id,
     createdAt: row.created_at.toISOString(),
@@ -107,6 +116,23 @@ function toCompanyDetail(
     approvedAt: row.approved_at ? row.approved_at.toISOString() : null,
     ...(role ? { role } : {}),
   }
+}
+
+async function loadCompanyTags(companyId: string): Promise<CompanyTag[]> {
+  const rows = await repo.listCompanyTags(companyId)
+  return rows.map((row) => ({
+    id: row.tag_id,
+    name: row.name,
+    color: row.color,
+  }))
+}
+
+async function toCompanyDetailWithTags(
+  row: repo.CompanyRow,
+  role?: 'member' | 'company_admin',
+): Promise<CompanyDetail> {
+  const tags = await loadCompanyTags(row.id)
+  return toCompanyDetail(row, tags, role)
 }
 
 export type CompanyWithMembership = {
@@ -276,7 +302,7 @@ export async function getCompanyDetail(userId: string, companyId: string): Promi
 
   const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
   if (superAdmin) {
-    return toCompanyDetail(company)
+    return toCompanyDetailWithTags(company)
   }
 
   const membership = await roleRepo.findCompanyRole(userId, companyId)
@@ -285,7 +311,7 @@ export async function getCompanyDetail(userId: string, companyId: string): Promi
   }
 
   const role = membership.role === 'company_admin' ? 'company_admin' : 'member'
-  return toCompanyDetail(company, role)
+  return toCompanyDetailWithTags(company, role)
 }
 
 export async function updateCompanyProfile(
@@ -327,17 +353,30 @@ export async function updateCompanyProfile(
     patch.map_formatted_address = input.mapFormattedAddress
   }
 
-  const updated = await repo.updateCompanyProfile(companyId, patch)
+  const tags =
+    input.tags !== undefined
+      ? input.tags.map((tag) => ({ id: tag.id, name: tag.name, color: tag.color }))
+      : undefined
+
+  let updated: repo.CompanyRow | undefined
+  try {
+    updated = await repo.updateCompanyProfile(companyId, patch, tags)
+  } catch (err) {
+    if (err instanceof Error && err.message === 'COMPANY_NOT_FOUND') {
+      throw httpError('Company not found', 404)
+    }
+    throw err
+  }
   if (!updated) {
     throw httpError('Company not found', 404)
   }
 
   if (superAdmin && !membership) {
-    return toCompanyDetail(updated)
+    return toCompanyDetailWithTags(updated)
   }
 
   const role = membership?.role === 'company_admin' ? 'company_admin' : 'member'
-  return toCompanyDetail(updated, role)
+  return toCompanyDetailWithTags(updated, role)
 }
 
 function sendCompanyEmail(

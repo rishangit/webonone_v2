@@ -82,6 +82,8 @@ export function AttributeFormDialog({
   })
 
   const dispatch = useAppDispatch()
+  const userRole = useAppSelector((s) => s.auth.user?.role)
+  const canSetStatus = userRole === 'super_admin'
   const units = useAppSelector((s) => s.units.items)
   const [values, setValues] = useState<AttributeFormValues>(defaultValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -148,7 +150,7 @@ export function AttributeFormDialog({
       description: parsed.data.description || null,
       value_type: parsed.data.valueType,
       unit_id: parsed.data.valueType === 'number' ? parsed.data.unitId || null : null,
-      status: parsed.data.status,
+      status: canSetStatus ? parsed.data.status : 'pending',
     })
   }
 
@@ -216,17 +218,19 @@ export function AttributeFormDialog({
           </Select>
         </FormField>
       ) : null}
-      <FormField label="Status" htmlFor="attr-status" required>
-        <Select value={values.status} onValueChange={(v) => setValues((prev) => ({ ...prev, status: v as AttributeFormValues['status'] }))}>
-          <SelectTrigger id="attr-status">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="verified">Verified</SelectItem>
-          </SelectContent>
-        </Select>
-      </FormField>
+      {canSetStatus ? (
+        <FormField label="Status" htmlFor="attr-status" required>
+          <Select value={values.status} onValueChange={(v) => setValues((prev) => ({ ...prev, status: v as AttributeFormValues['status'] }))}>
+            <SelectTrigger id="attr-status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Unverified</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+      ) : null}
     </form>
   )
 

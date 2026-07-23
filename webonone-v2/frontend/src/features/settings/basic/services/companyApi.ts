@@ -43,6 +43,12 @@ export type CompanyGalleryImage = {
   url: string
 }
 
+export type CompanyTag = {
+  id: string
+  name: string
+  color: string
+}
+
 export type CompanyDetail = {
   id: string
   name: string
@@ -62,6 +68,7 @@ export type CompanyDetail = {
   longitude: number | null
   mapPlaceId: string | null
   mapFormattedAddress: string | null
+  tags: CompanyTag[]
   status: CompanyStatus
   createdByUserId: string
   createdAt: string
@@ -88,6 +95,7 @@ export type UpdateCompanyBody = {
   longitude?: number | null
   mapPlaceId?: string | null
   mapFormattedAddress?: string | null
+  tags?: CompanyTag[]
 }
 
 function toRegisterApiBody(values: RegisterCompanyFormValues) {

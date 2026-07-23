@@ -103,6 +103,8 @@ export function CatalogFormDialog({
   })
 
   const dispatch = useAppDispatch()
+  const userRole = useAppSelector((s) => s.auth.user?.role)
+  const canSetStatus = userRole === 'super_admin'
   const tags = useAppSelector((s) => s.tags.items)
   const attributes = useAppSelector((s) => s.attributes.items)
 
@@ -181,7 +183,7 @@ export function CatalogFormDialog({
     editor.save({
       name: name.trim(),
       description: description.trim() || null,
-      status,
+      status: canSetStatus ? status : 'pending',
       tag_ids: tagIds,
       attributes: attributeRows
         .filter((row) => row.attributeId)
@@ -232,17 +234,19 @@ export function CatalogFormDialog({
       <FormField label="Description" htmlFor="catalog-description">
         <Textarea id="catalog-description" value={description} onChange={(e) => setDescription(e.target.value)} />
       </FormField>
-      <FormField label="Status" htmlFor="catalog-status" required>
-        <Select value={status} onValueChange={(v) => setStatus(v as 'verified' | 'pending')}>
-          <SelectTrigger id="catalog-status">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="verified">Verified</SelectItem>
-          </SelectContent>
-        </Select>
-      </FormField>
+      {canSetStatus ? (
+        <FormField label="Status" htmlFor="catalog-status" required>
+          <Select value={status} onValueChange={(v) => setStatus(v as 'verified' | 'pending')}>
+            <SelectTrigger id="catalog-status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Unverified</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+      ) : null}
       <FormField label="Tags" htmlFor="catalog-tags">
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (

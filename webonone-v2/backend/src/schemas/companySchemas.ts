@@ -48,6 +48,12 @@ const galleryImageSchema = z.object({
   url: z.string().url().max(2048),
 })
 
+const companyTagSchema = z.object({
+  id: z.string().trim().min(1).max(21),
+  name: z.string().trim().min(1).max(255),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+})
+
 export const updateCompanyBodySchema = z
   .object({
     name: z.string().trim().min(1).max(255).optional(),
@@ -67,6 +73,7 @@ export const updateCompanyBodySchema = z
     longitude: z.union([z.number().min(-180).max(180), z.null()]).optional(),
     mapPlaceId: nullableString(255),
     mapFormattedAddress: nullableString(512),
+    tags: z.array(companyTagSchema).max(50).optional(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })

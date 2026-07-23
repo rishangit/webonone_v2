@@ -37,6 +37,8 @@ const defaultValues: TagFormValues = {
 export function TagCreatePage() {
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const userRole = useAppSelector((s) => s.auth.user?.role)
+  const canSetStatus = userRole === 'super_admin'
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isEmbed = searchParams.get(PLATFORM_EMBED_QUERY.EMBED) === PLATFORM_EMBED_QUERY.EMBED_VALUE
   const scope = (searchParams.get(PLATFORM_EMBED_QUERY.SCOPE) ?? '').trim()
@@ -72,7 +74,7 @@ export function TagCreatePage() {
         name: parsed.data.name,
         description: parsed.data.description || null,
         color: parsed.data.color,
-        status: parsed.data.status,
+        status: canSetStatus ? parsed.data.status : 'pending',
       })
       sendDataTagCreated(parentOrigin, scope, {
         id: tag.id,
@@ -85,7 +87,7 @@ export function TagCreatePage() {
       savingRef.current = false
       setSaving(false)
     }
-  }, [parentOrigin, scope, values])
+  }, [canSetStatus, parentOrigin, scope, values])
 
   useEffect(() => {
     if (!parentOrigin || !scope) {
@@ -143,7 +145,7 @@ export function TagCreatePage() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-      <form id={TAG_CREATE_FORM_ID} className="mx-auto max-w-md space-y-4" onSubmit={handleSubmit}>
+      <form id={TAG_CREATE_FORM_ID} className="space-y-4" onSubmit={handleSubmit}>
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>
@@ -186,20 +188,22 @@ export function TagCreatePage() {
           </div>
         </FormField>
 
-        <FormField label="Status" htmlFor="tag-status" required error={fieldErrors.status}>
-          <Select
-            value={values.status}
-            onValueChange={(v) => updateField('status', v as TagFormValues['status'])}
-          >
-            <SelectTrigger id="tag-status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
+        {canSetStatus ? (
+          <FormField label="Status" htmlFor="tag-status" required error={fieldErrors.status}>
+            <Select
+              value={values.status}
+              onValueChange={(v) => updateField('status', v as TagFormValues['status'])}
+            >
+              <SelectTrigger id="tag-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Unverified</SelectItem>
+                <SelectItem value="verified">Verified</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+        ) : null}
       </form>
     </div>
   )

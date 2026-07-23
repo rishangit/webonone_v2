@@ -15,6 +15,17 @@ export function TagsPage() {
           <StatusTag variant="rejected" />
         </div>
       </DemoSection>
+
+      <DemoSection
+        id="verification-status-tags"
+        title="Verification status tags"
+        description="Catalog verification labels (Unverified, Verified). Orange = awaiting super-admin review; teal = approved reference data. Map API status pending → unverified, verified → verified."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <StatusTag variant="unverified" />
+          <StatusTag variant="verified" />
+        </div>
+      </DemoSection>
     </div>
   )
 }

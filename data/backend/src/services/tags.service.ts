@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
-import { db, type TagRow } from '../models/db.js'
+import { db, type DataRole, type TagRow } from '../models/db.js'
 import type { CreateTagBody, UpdateTagBody } from '../schemas/tags.schema.js'
+import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
   applySearchFilter,
   applyStatusFilter,
@@ -8,6 +9,7 @@ import {
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
+import { countTagReferences } from '../utils/referenceCounts.js'
 
 export interface TagDto {
   id: string
@@ -15,17 +17,19 @@ export interface TagDto {
   description: string | null
   color: string
   status: string
+  referenceCount: number
   createdAt: string
   updatedAt: string
 }
 
-function rowToDto(row: TagRow): TagDto {
+async function rowToDto(row: TagRow): Promise<TagDto> {
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     color: row.color,
     status: row.status,
+    referenceCount: await countTagReferences(row.id),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
@@ -47,7 +51,7 @@ export async function listTags(query: ListQueryInput) {
     .limit(parsed.pageSize)
 
   return {
-    items: rows.map(rowToDto),
+    items: await Promise.all(rows.map(rowToDto)),
     total,
     page: parsed.page,
     pageSize: parsed.pageSize,
@@ -59,7 +63,7 @@ export async function getTagById(id: string): Promise<TagDto | null> {
   return row ? rowToDto(row) : null
 }
 
-export async function createTag(body: CreateTagBody): Promise<TagDto> {
+export async function createTag(body: CreateTagBody, role?: DataRole): Promise<TagDto> {
   await assertUniqueName('data_tags', body.name)
   const id = nanoid()
   const now = db.fn.now(3)
@@ -68,7 +72,7 @@ export async function createTag(body: CreateTagBody): Promise<TagDto> {
     name: body.name,
     description: body.description ?? null,
     color: body.color,
-    status: body.status ?? 'pending',
+    status: resolveCreateStatus(role, body.status),
     created_at: now,
     updated_at: now,
   })
@@ -98,6 +102,8 @@ export async function updateTag(id: string, body: UpdateTagBody): Promise<TagDto
 }
 
 export async function deleteTag(id: string): Promise<void> {
+  const refs = await countTagReferences(id)
+  if (refs > 0) throw new Error('FK_CONSTRAINT')
   const deleted = await db('data_tags').where({ id }).delete()
   if (!deleted) throw new Error('NOT_FOUND')
 }

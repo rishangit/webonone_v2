@@ -21,7 +21,7 @@ export async function getTag(req: AuthenticatedRequest, res: Response) {
 export async function createTag(req: AuthenticatedRequest, res: Response) {
   try {
     const body = req.body as CreateTagBody
-    const item = await tagsService.createTag(body)
+    const item = await tagsService.createTag(body, req.user?.role)
     res.status(201).json(item)
   } catch (err) {
     if (!handleServiceError(err, res)) throw err

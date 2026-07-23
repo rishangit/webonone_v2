@@ -14,10 +14,17 @@ interface AttributesListProps {
   items: Attribute[]
   onEdit: (id: string) => void
   onDeleted: (id: string) => void
+  onVerify?: (id: string) => void
   canMutate: boolean
 }
 
-export function AttributesList({ items, onEdit, onDeleted, canMutate }: AttributesListProps) {
+export function AttributesList({
+  items,
+  onEdit,
+  onDeleted,
+  onVerify,
+  canMutate,
+}: AttributesListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete attribute "${name}"?`)) return
     onDeleted(id)
@@ -33,6 +40,7 @@ export function AttributesList({ items, onEdit, onDeleted, canMutate }: Attribut
             <div className="flex items-center gap-2">
               <p className="font-medium">{item.name}</p>
               <StatusBadge status={item.status} />
+              <span className="text-xs text-muted-foreground">Refs: {item.referenceCount ?? 0}</span>
             </div>
             <p className="text-xs text-muted-foreground">
               {item.valueType}
@@ -41,6 +49,9 @@ export function AttributesList({ items, onEdit, onDeleted, canMutate }: Attribut
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+              {item.status === 'pending' && onVerify ? (
+                <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

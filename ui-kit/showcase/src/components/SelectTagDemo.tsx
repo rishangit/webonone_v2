@@ -134,8 +134,8 @@ function DataTagPickerField({
         description={
           multiple ? 'Choose one or more tags, then click Done.' : 'Choose a tag, then click Done.'
         }
-        sizeWidth="large"
-        sizeHeight="xlarge"
+        sizeWidth="small"
+        sizeHeight="large"
         noContentPadding
         disableContentScroll
         nestedDismissGuard={createOpen}
@@ -167,7 +167,7 @@ function DataTagPickerField({
               scope={scope}
               mode={pickerMode}
               selectedTags={selectedTags}
-              className="block h-full min-h-[420px] w-full border-0 bg-transparent"
+              className="block h-full min-h-0 w-full border-0 bg-transparent"
               onSelectionChange={setPendingSelection}
               onCreateRequest={openCreateDialog}
               onCancel={() => setPickerOpen(false)}

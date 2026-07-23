@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import * as attributesController from '../controllers/attributes.controller.js'
-import { requireAuth, requireSuperAdmin } from '../middleware/auth.js'
+import { requireAuth, requireCompanyAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/auth.js'
 import { validateBody } from '../middleware/validateBody.js'
 import { createAttributeBodySchema, updateAttributeBodySchema } from '../schemas/attributes.schema.js'
 
@@ -11,7 +11,7 @@ router.get('/attributes/:id', requireAuth, attributesController.getAttribute)
 router.post(
   '/attributes',
   requireAuth,
-  requireSuperAdmin,
+  requireCompanyAdminOrSuperAdmin,
   validateBody(createAttributeBodySchema),
   attributesController.createAttribute,
 )

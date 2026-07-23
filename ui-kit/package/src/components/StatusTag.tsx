@@ -2,7 +2,10 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../lib/utils'
 
-/** Company registration approval status chip (`pending` | `approved` | `rejected`). */
+/**
+ * Status chip for company approval (`pending` | `approved` | `rejected`)
+ * and catalog verification (`unverified` | `verified`).
+ */
 const statusTagVariants = cva(
   'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm',
   {
@@ -14,6 +17,10 @@ const statusTagVariants = cva(
           'border-red-600/55 bg-red-500/15 text-red-900 dark:border-red-400/50 dark:bg-red-500/20 dark:text-red-200',
         approved:
           'border-emerald-600/55 bg-emerald-500/15 text-emerald-900 dark:border-emerald-400/50 dark:bg-emerald-500/20 dark:text-emerald-200',
+        unverified:
+          'border-orange-600/55 bg-orange-500/15 text-orange-900 dark:border-orange-400/50 dark:bg-orange-500/20 dark:text-orange-200',
+        verified:
+          'border-teal-600/55 bg-teal-500/15 text-teal-900 dark:border-teal-400/50 dark:bg-teal-500/20 dark:text-teal-200',
       },
     },
     defaultVariants: {
@@ -26,6 +33,8 @@ const DEFAULT_LABELS: Record<NonNullable<VariantProps<typeof statusTagVariants>[
   pending: 'Pending',
   rejected: 'Rejected',
   approved: 'Approved',
+  unverified: 'Unverified',
+  verified: 'Verified',
 }
 
 export type StatusTagVariant = NonNullable<VariantProps<typeof statusTagVariants>['variant']>

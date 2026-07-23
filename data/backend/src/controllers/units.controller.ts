@@ -20,7 +20,7 @@ export async function getUnit(req: AuthenticatedRequest, res: Response) {
 
 export async function createUnit(req: AuthenticatedRequest, res: Response) {
   try {
-    const item = await unitsService.createUnit(req.body as CreateUnitBody)
+    const item = await unitsService.createUnit(req.body as CreateUnitBody, req.user?.role)
     res.status(201).json(item)
   } catch (err) {
     if (!handleServiceError(err, res)) throw err

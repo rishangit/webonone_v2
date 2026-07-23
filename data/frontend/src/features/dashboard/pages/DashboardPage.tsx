@@ -47,7 +47,7 @@ export function DashboardPage() {
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm text-muted-foreground">
                     <p>Verified: {counts.verified}</p>
-                    <p>Pending: {counts.pending}</p>
+                    <p>Unverified: {counts.pending}</p>
                   </CardContent>
                 </Card>
               </Link>

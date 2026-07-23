@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
-import { db, type AttributeRow } from '../models/db.js'
+import { db, type AttributeRow, type DataRole } from '../models/db.js'
 import type { CreateAttributeBody, UpdateAttributeBody } from '../schemas/attributes.schema.js'
+import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
   applySearchFilter,
   applyStatusFilter,
@@ -8,6 +9,7 @@ import {
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
+import { countAttributeReferences } from '../utils/referenceCounts.js'
 
 export interface AttributeDto {
   id: string
@@ -16,11 +18,12 @@ export interface AttributeDto {
   valueType: string
   unitId: string | null
   status: string
+  referenceCount: number
   createdAt: string
   updatedAt: string
 }
 
-function rowToDto(row: AttributeRow): AttributeDto {
+async function rowToDto(row: AttributeRow): Promise<AttributeDto> {
   return {
     id: row.id,
     name: row.name,
@@ -28,6 +31,7 @@ function rowToDto(row: AttributeRow): AttributeDto {
     valueType: row.value_type,
     unitId: row.unit_id,
     status: row.status,
+    referenceCount: await countAttributeReferences(row.id),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
@@ -53,7 +57,7 @@ export async function listAttributes(query: ListQueryInput & { value_type?: stri
     .limit(parsed.pageSize)
 
   return {
-    items: rows.map(rowToDto),
+    items: await Promise.all(rows.map(rowToDto)),
     total,
     page: parsed.page,
     pageSize: parsed.pageSize,
@@ -65,7 +69,10 @@ export async function getAttributeById(id: string): Promise<AttributeDto | null>
   return row ? rowToDto(row) : null
 }
 
-export async function createAttribute(body: CreateAttributeBody): Promise<AttributeDto> {
+export async function createAttribute(
+  body: CreateAttributeBody,
+  role?: DataRole,
+): Promise<AttributeDto> {
   await assertUniqueName('data_attributes', body.name)
   const id = nanoid()
   const now = db.fn.now(3)
@@ -75,7 +82,7 @@ export async function createAttribute(body: CreateAttributeBody): Promise<Attrib
     description: body.description ?? null,
     value_type: body.value_type,
     unit_id: body.value_type === 'number' ? (body.unit_id ?? null) : (body.unit_id ?? null),
-    status: body.status ?? 'pending',
+    status: resolveCreateStatus(role, body.status),
     created_at: now,
     updated_at: now,
   })
@@ -84,7 +91,10 @@ export async function createAttribute(body: CreateAttributeBody): Promise<Attrib
   return created
 }
 
-export async function updateAttribute(id: string, body: UpdateAttributeBody): Promise<AttributeDto> {
+export async function updateAttribute(
+  id: string,
+  body: UpdateAttributeBody,
+): Promise<AttributeDto> {
   const existing = await db<AttributeRow>('data_attributes').where({ id }).first()
   if (!existing) throw new Error('NOT_FOUND')
   if (body.name) await assertUniqueName('data_attributes', body.name, id)
@@ -109,11 +119,8 @@ export async function updateAttribute(id: string, body: UpdateAttributeBody): Pr
 }
 
 export async function deleteAttribute(id: string): Promise<void> {
-  const tables = ['data_product_attributes', 'data_service_attributes', 'data_space_attributes']
-  for (const table of tables) {
-    const ref = await db(table).where({ attribute_id: id }).first()
-    if (ref) throw new Error('FK_CONSTRAINT')
-  }
+  const refs = await countAttributeReferences(id)
+  if (refs > 0) throw new Error('FK_CONSTRAINT')
   const deleted = await db('data_attributes').where({ id }).delete()
   if (!deleted) throw new Error('NOT_FOUND')
 }

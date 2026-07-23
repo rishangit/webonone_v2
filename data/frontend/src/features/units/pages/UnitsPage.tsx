@@ -28,6 +28,7 @@ import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 export function UnitsPage() {
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
+  const canCreate = user?.role === 'super_admin' || user?.role === 'company_admin'
   const canMutate = user?.role === 'super_admin'
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
@@ -44,7 +45,7 @@ export function UnitsPage() {
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <ListSearchField value={list.q} onChange={list.setQ} placeholder="Search units…" />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
-          {canMutate ? (
+          {canCreate ? (
             <Button type="button" size="sm" onClick={() => setDialog({})}>
               <Plus className="h-4 w-4" aria-hidden />
               Add unit
@@ -70,7 +71,7 @@ export function UnitsPage() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="pending">Unverified</SelectItem>
             </SelectContent>
           </Select>
         </FormField>
@@ -90,6 +91,10 @@ export function UnitsPage() {
               onEdit={(id) => setDialog({ id })}
               onDeleted={(id) => {
                 dispatch(unitsActions.deleteRequested({ id }))
+                list.load(list.page, list.pageSize, true)
+              }}
+              onVerify={(id) => {
+                dispatch(unitsActions.saveDetailRequested({ id, body: { status: 'verified' } }))
                 list.load(list.page, list.pageSize, true)
               }}
               canMutate={canMutate}

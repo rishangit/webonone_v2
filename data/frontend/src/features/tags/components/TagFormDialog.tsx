@@ -23,6 +23,7 @@ import {
   Spinner,
   Textarea,
 } from '@webonone/ui-kit'
+import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { tagFormSchema, type TagFormValues } from '@/features/tags/schemas/tagSchemas'
 import { tagsActions } from '@/features/tags/store'
@@ -77,6 +78,8 @@ export function TagFormDialog({
     onCancel: () => onOpenChange(false),
   })
 
+  const userRole = useAppSelector((s) => s.auth.user?.role)
+  const canSetStatus = userRole === 'super_admin'
   const [values, setValues] = useState<TagFormValues>(defaultValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const submittedRef = useRef(false)
@@ -145,7 +148,7 @@ export function TagFormDialog({
       name: parsed.data.name,
       description: parsed.data.description || null,
       color: parsed.data.color,
-      status: parsed.data.status,
+      status: canSetStatus ? parsed.data.status : 'pending',
     })
   }
 
@@ -201,17 +204,19 @@ export function TagFormDialog({
         />
       </FormField>
 
-      <FormField label="Status" htmlFor="tag-status" required error={fieldErrors.status}>
-        <Select value={values.status} onValueChange={(v) => updateField('status', v as TagFormValues['status'])}>
-          <SelectTrigger id="tag-status">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="verified">Verified</SelectItem>
-          </SelectContent>
-        </Select>
-      </FormField>
+      {canSetStatus ? (
+        <FormField label="Status" htmlFor="tag-status" required error={fieldErrors.status}>
+          <Select value={values.status} onValueChange={(v) => updateField('status', v as TagFormValues['status'])}>
+            <SelectTrigger id="tag-status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Unverified</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+      ) : null}
     </form>
   )
 

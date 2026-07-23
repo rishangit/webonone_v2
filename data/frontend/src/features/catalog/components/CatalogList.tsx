@@ -15,10 +15,18 @@ interface CatalogListProps {
   items: CatalogItem[]
   onEdit: (id: string) => void
   onDeleted: (id: string) => void
+  onVerify?: (id: string) => void
   canMutate: boolean
 }
 
-export function CatalogList({ itemType, items, onEdit, onDeleted, canMutate }: CatalogListProps) {
+export function CatalogList({
+  itemType,
+  items,
+  onEdit,
+  onDeleted,
+  onVerify,
+  canMutate,
+}: CatalogListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete "${name}"?`)) return
     onDeleted(id)
@@ -34,6 +42,7 @@ export function CatalogList({ itemType, items, onEdit, onDeleted, canMutate }: C
             <div className="flex items-center gap-2">
               <p className="font-medium">{item.name}</p>
               <StatusBadge status={item.status} />
+              <span className="text-xs text-muted-foreground">Refs: {item.referenceCount ?? 0}</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {item.tags.slice(0, 3).map((tag) => (
@@ -48,6 +57,9 @@ export function CatalogList({ itemType, items, onEdit, onDeleted, canMutate }: C
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+              {item.status === 'pending' && onVerify ? (
+                <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

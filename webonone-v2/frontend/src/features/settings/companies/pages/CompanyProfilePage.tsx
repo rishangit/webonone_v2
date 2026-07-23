@@ -25,12 +25,13 @@ import {
   type CompanyLocationCardValues,
   type CompanyProfileCardValues,
 } from '@/features/settings/basic/schemas/companySchemas'
-import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
+import type { CompanyDetail, CompanyTag } from '@/features/settings/basic/services/companyApi'
 import { CompanyContactCard } from '../components/CompanyContactCard'
 import { CompanyGalleryCard } from '../components/CompanyGalleryCard'
 import { CompanyLocationCard } from '../components/CompanyLocationCard'
 import { CompanyLogoCard } from '../components/CompanyLogoCard'
 import { CompanyProfileCard } from '../components/CompanyProfileCard'
+import { CompanyTagsCard } from '../components/CompanyTagsCard'
 
 type CompanyProfilePageProps = {
   backTo: string
@@ -90,6 +91,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
   const [email, setEmail] = useState('')
   const [phoneCountry, setPhoneCountry] = useState(() => getBrowserDefaultCountryIso2())
   const [phoneNational, setPhoneNational] = useState('')
+  const [tags, setTags] = useState<CompanyTag[]>([])
   const [profileErrors, setProfileErrors] = useState<
     Partial<Record<keyof CompanyProfileCardValues, string>>
   >({})
@@ -121,6 +123,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
     const phone = phoneFromDetail(detail)
     setPhoneCountry(phone.phoneCountry)
     setPhoneNational(phone.phoneNational)
+    setTags(detail.tags ?? [])
     setProfileErrors({})
     setContactErrors({})
     setLocationErrors({})
@@ -139,6 +142,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
     const phone = phoneFromDetail(detail)
     setPhoneCountry(phone.phoneCountry)
     setPhoneNational(phone.phoneNational)
+    setTags(detail.tags ?? [])
     setProfileErrors({})
     setContactErrors({})
     setLocationErrors({})
@@ -190,6 +194,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
           longitude: locationParsed.data.longitude,
           mapPlaceId: locationParsed.data.mapPlaceId,
           mapFormattedAddress: locationParsed.data.mapFormattedAddress,
+          tags,
         },
       }),
     )
@@ -252,6 +257,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
           onPhoneCountryChange={(country: PhoneCountry) => setPhoneCountry(country.iso2)}
           onPhoneNationalChange={setPhoneNational}
         />
+        <CompanyTagsCard mode={mode} tags={tags} onChange={setTags} />
       </div>
     </>
   )

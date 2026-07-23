@@ -13,6 +13,7 @@ export interface Tag {
   description: string | null
   color: string
   status: EntityStatus
+  referenceCount: number
   createdAt: string
   updatedAt: string
 }
@@ -25,6 +26,7 @@ export interface Unit {
   baseUnitId: string | null
   isBase: boolean
   status: EntityStatus
+  referenceCount: number
   createdAt: string
   updatedAt: string
 }
@@ -36,6 +38,7 @@ export interface Attribute {
   valueType: 'number' | 'text'
   unitId: string | null
   status: EntityStatus
+  referenceCount: number
   createdAt: string
   updatedAt: string
 }
@@ -58,6 +61,7 @@ export interface CatalogItem {
   name: string
   description: string | null
   status: EntityStatus
+  referenceCount: number
   tags: TagSummary[]
   attributes: CatalogAttributeValue[]
   createdAt: string

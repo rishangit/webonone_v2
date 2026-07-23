@@ -244,7 +244,7 @@ export function TagPickerPage() {
   const showEmpty = !initialLoading && !error && visibleTags.length === 0
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-4xl flex-1 flex-col p-4 sm:p-6">
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col p-6">
       <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           value={searchInput}
@@ -263,7 +263,7 @@ export function TagPickerPage() {
 
       <div
         ref={scrollRootRef}
-        className="mt-4 min-h-[320px] flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed"
+        className="mt-4 min-h-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed"
       >
         {error ? (
           <Alert variant="destructive" className="mb-4">
@@ -285,7 +285,7 @@ export function TagPickerPage() {
         {showEmpty ? <ItemListEmpty>No tags found.</ItemListEmpty> : null}
 
         {!initialLoading && visibleTags.length > 0 ? (
-          <ItemList className="py-2">
+          <ItemList>
             {visibleTags.map((tag) => {
               const isSelected = selectedTagIds.has(tag.id)
               return (

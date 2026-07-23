@@ -14,10 +14,11 @@ interface TagsListProps {
   items: Tag[]
   onEdit: (id: string) => void
   onDeleted: (id: string) => void
+  onVerify?: (id: string) => void
   canMutate: boolean
 }
 
-export function TagsList({ items, onEdit, onDeleted, canMutate }: TagsListProps) {
+export function TagsList({ items, onEdit, onDeleted, onVerify, canMutate }: TagsListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete tag "${name}"?`)) return
     onDeleted(id)
@@ -39,6 +40,7 @@ export function TagsList({ items, onEdit, onDeleted, canMutate }: TagsListProps)
               />
               <p className="font-medium">{item.name}</p>
               <StatusBadge status={item.status} />
+              <span className="text-xs text-muted-foreground">Refs: {item.referenceCount ?? 0}</span>
             </div>
             {item.description ? (
               <p className="truncate text-xs text-muted-foreground">{item.description}</p>
@@ -46,6 +48,9 @@ export function TagsList({ items, onEdit, onDeleted, canMutate }: TagsListProps)
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+              {item.status === 'pending' && onVerify ? (
+                <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

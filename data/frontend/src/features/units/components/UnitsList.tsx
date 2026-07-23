@@ -14,10 +14,11 @@ interface UnitsListProps {
   items: Unit[]
   onEdit: (id: string) => void
   onDeleted: (id: string) => void
+  onVerify?: (id: string) => void
   canMutate: boolean
 }
 
-export function UnitsList({ items, onEdit, onDeleted, canMutate }: UnitsListProps) {
+export function UnitsList({ items, onEdit, onDeleted, onVerify, canMutate }: UnitsListProps) {
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete unit "${name}"?`)) return
     onDeleted(id)
@@ -35,6 +36,7 @@ export function UnitsList({ items, onEdit, onDeleted, canMutate }: UnitsListProp
                 {item.name} ({item.symbol})
               </p>
               <StatusBadge status={item.status} />
+              <span className="text-xs text-muted-foreground">Refs: {item.referenceCount ?? 0}</span>
             </div>
             <p className="text-xs text-muted-foreground">
               {item.isBase ? 'Base unit' : item.baseUnitId ? `Derived · base ${item.baseUnitId}` : 'Derived'}
@@ -42,6 +44,9 @@ export function UnitsList({ items, onEdit, onDeleted, canMutate }: UnitsListProp
           </ItemListContent>
           {canMutate ? (
             <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+              {item.status === 'pending' && onVerify ? (
+                <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

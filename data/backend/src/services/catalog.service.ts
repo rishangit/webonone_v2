@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid'
-import { db, type CatalogRow } from '../models/db.js'
+import { db, type CatalogRow, type DataRole } from '../models/db.js'
 import type { CreateCatalogBody, UpdateCatalogBody } from '../schemas/catalog.schema.js'
-import { getTagById } from './tags.service.js'
+import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
   applySearchFilter,
   applyStatusFilter,
@@ -54,6 +54,7 @@ export interface CatalogDto {
   name: string
   description: string | null
   status: string
+  referenceCount: number
   tags: TagSummary[]
   attributes: CatalogAttributeValue[]
   createdAt: string
@@ -66,14 +67,14 @@ async function loadTagsForEntity(
 ): Promise<TagSummary[]> {
   const { tags, idCol } = TABLE_MAP[kind]
   const links = await db(tags).where({ [idCol]: entityId }).select('tag_id')
-  const summaries: TagSummary[] = []
-  for (const link of links) {
-    const tag = await getTagById(link.tag_id as string)
-    if (tag) {
-      summaries.push({ id: tag.id, name: tag.name, color: tag.color })
-    }
-  }
-  return summaries
+  if (links.length === 0) return []
+  const tagIds = links.map((link) => link.tag_id as string)
+  const rows = await db('data_tags').whereIn('id', tagIds).select('id', 'name', 'color')
+  return rows.map((tag) => ({
+    id: tag.id as string,
+    name: tag.name as string,
+    color: tag.color as string,
+  }))
 }
 
 async function loadAttributesForEntity(
@@ -106,6 +107,7 @@ async function rowToDto(kind: CatalogKind, row: CatalogRow): Promise<CatalogDto>
     name: row.name,
     description: row.description,
     status: row.status,
+    referenceCount: 0,
     tags,
     attributes,
     createdAt: row.created_at.toISOString(),
@@ -154,7 +156,7 @@ export function createCatalogService(kind: CatalogKind) {
       return row ? rowToDto(kind, row) : null
     },
 
-    async create(body: CreateCatalogBody): Promise<CatalogDto> {
+    async create(body: CreateCatalogBody, role?: DataRole): Promise<CatalogDto> {
       await assertUniqueName(main, body.name)
       const id = nanoid()
       const now = db.fn.now(3)
@@ -164,7 +166,7 @@ export function createCatalogService(kind: CatalogKind) {
           id,
           name: body.name,
           description: body.description ?? null,
-          status: body.status ?? 'pending',
+          status: resolveCreateStatus(role, body.status),
           created_at: now,
           updated_at: now,
         })

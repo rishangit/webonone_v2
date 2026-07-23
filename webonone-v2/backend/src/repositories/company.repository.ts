@@ -81,30 +81,80 @@ export async function listAllCompanies(): Promise<CompanyRow[]> {
   return db<CompanyRow>('companies').orderBy('created_at', 'desc')
 }
 
+export type CompanyTagRow = {
+  id: number
+  company_id: string
+  tag_id: string
+  name: string
+  color: string
+  sort_order: number
+  created_at: Date
+}
+
+export type CompanyTagSnapshot = {
+  id: string
+  name: string
+  color: string
+}
+
+export async function listCompanyTags(companyId: string): Promise<CompanyTagRow[]> {
+  return db<CompanyTagRow>('company_tags')
+    .where({ company_id: companyId })
+    .orderBy([
+      { column: 'sort_order', order: 'asc' },
+      { column: 'id', order: 'asc' },
+    ])
+}
+
 export async function updateCompanyProfile(
   companyId: string,
   patch: CompanyProfilePatch,
+  tags?: CompanyTagSnapshot[],
 ): Promise<CompanyRow | undefined> {
-  if (Object.keys(patch).length === 0) {
+  const hasPatch = Object.keys(patch).length > 0
+  const hasTags = tags !== undefined
+
+  if (!hasPatch && !hasTags) {
     return findCompanyById(companyId)
   }
 
-  // Knex/mysql treat JS arrays as special bindings — stringify JSON columns explicitly.
-  const { gallery_images: galleryImages, ...rest } = patch
-  const updatePayload: Record<string, unknown> = {
-    ...rest,
-    updated_at: db.fn.now(3),
-  }
-  if (galleryImages !== undefined) {
-    updatePayload.gallery_images =
-      galleryImages === null ? null : JSON.stringify(galleryImages)
-  }
+  await db.transaction(async (trx) => {
+    if (hasPatch) {
+      // Knex/mysql treat JS arrays as special bindings — stringify JSON columns explicitly.
+      const { gallery_images: galleryImages, ...rest } = patch
+      const updatePayload: Record<string, unknown> = {
+        ...rest,
+        updated_at: db.fn.now(3),
+      }
+      if (galleryImages !== undefined) {
+        updatePayload.gallery_images =
+          galleryImages === null ? null : JSON.stringify(galleryImages)
+      }
 
-  const updated = await db<CompanyRow>('companies')
-    .where({ id: companyId })
-    .update(updatePayload)
+      const updated = await trx<CompanyRow>('companies')
+        .where({ id: companyId })
+        .update(updatePayload)
+      if (!updated) {
+        throw new Error('COMPANY_NOT_FOUND')
+      }
+    }
 
-  if (!updated) return undefined
+    if (hasTags) {
+      await trx('company_tags').where({ company_id: companyId }).delete()
+      if (tags.length > 0) {
+        await trx('company_tags').insert(
+          tags.map((tag, index) => ({
+            company_id: companyId,
+            tag_id: tag.id,
+            name: tag.name,
+            color: tag.color,
+            sort_order: index,
+          })),
+        )
+      }
+    }
+  })
+
   return findCompanyById(companyId)
 }
 

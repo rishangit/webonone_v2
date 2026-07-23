@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
-import { db, type UnitRow } from '../models/db.js'
+import { db, type DataRole, type UnitRow } from '../models/db.js'
 import type { CreateUnitBody, UpdateUnitBody } from '../schemas/units.schema.js'
+import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
   applySearchFilter,
   applyStatusFilter,
@@ -8,6 +9,7 @@ import {
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
+import { countUnitReferences } from '../utils/referenceCounts.js'
 
 export interface UnitDto {
   id: string
@@ -17,11 +19,12 @@ export interface UnitDto {
   baseUnitId: string | null
   isBase: boolean
   status: string
+  referenceCount: number
   createdAt: string
   updatedAt: string
 }
 
-function rowToDto(row: UnitRow): UnitDto {
+async function rowToDto(row: UnitRow): Promise<UnitDto> {
   return {
     id: row.id,
     name: row.name,
@@ -30,6 +33,7 @@ function rowToDto(row: UnitRow): UnitDto {
     baseUnitId: row.base_unit_id,
     isBase: row.is_base,
     status: row.status,
+    referenceCount: await countUnitReferences(row.id),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
@@ -54,7 +58,7 @@ export async function listUnits(query: ListQueryInput & { is_base?: string }) {
     .limit(parsed.pageSize)
 
   return {
-    items: rows.map(rowToDto),
+    items: await Promise.all(rows.map(rowToDto)),
     total,
     page: parsed.page,
     pageSize: parsed.pageSize,
@@ -66,7 +70,7 @@ export async function getUnitById(id: string): Promise<UnitDto | null> {
   return row ? rowToDto(row) : null
 }
 
-export async function createUnit(body: CreateUnitBody): Promise<UnitDto> {
+export async function createUnit(body: CreateUnitBody, role?: DataRole): Promise<UnitDto> {
   await assertUniqueName('data_units', body.name)
   const isBase = body.is_base ?? false
   const id = nanoid()
@@ -78,7 +82,7 @@ export async function createUnit(body: CreateUnitBody): Promise<UnitDto> {
     symbol: body.symbol,
     base_unit_id: isBase ? null : (body.base_unit_id ?? null),
     is_base: isBase,
-    status: body.status ?? 'pending',
+    status: resolveCreateStatus(role, body.status),
     created_at: now,
     updated_at: now,
   })
@@ -113,8 +117,8 @@ export async function updateUnit(id: string, body: UpdateUnitBody): Promise<Unit
 }
 
 export async function deleteUnit(id: string): Promise<void> {
-  const referenced = await db('data_attributes').where({ unit_id: id }).first()
-  if (referenced) throw new Error('FK_CONSTRAINT')
+  const refs = await countUnitReferences(id)
+  if (refs > 0) throw new Error('FK_CONSTRAINT')
   const deleted = await db('data_units').where({ id }).delete()
   if (!deleted) throw new Error('NOT_FOUND')
 }
