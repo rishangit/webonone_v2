@@ -44,14 +44,14 @@ function ListSearchField({
   }
 
   return (
-    <div className={cn('relative h-10 w-10 shrink-0', className)}>
+    <div className={cn('relative h-9 w-9 shrink-0', className)}>
       {!expanded ? (
         <Button
           type="button"
           variant="outline"
           size="icon"
           aria-label={ariaLabel}
-          className="h-10 w-10"
+          className="h-9 w-9"
           onClick={handleExpand}
         >
           <Search className="h-4 w-4" />

@@ -8,7 +8,7 @@ alwaysApply: false
 
 Every service frontend (`identity`, `webonone-v2`, `media`, `email`, and future `*/frontend`) must use **`@webonone/ui-kit`** for interactive UI — not raw HTML controls, not third-party component libraries, and not local copies of kit primitives.
 
-Related: [ui-kit-project.mdc](ui-kit-project.mdc) (package/build), [feature-page-layout.mdc](feature-page-layout.mdc), [dialog-windows.mdc](dialog-windows.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md).
+Related: [ui-kit-project.mdc](ui-kit-project.mdc) (package/build), [feature-page-layout.mdc](feature-page-layout.mdc), [details-page-cards.mdc](details-page-cards.mdc), [dialog-windows.mdc](dialog-windows.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md).
 
 ## Dependency and wiring
 
@@ -35,6 +35,7 @@ See [microservice-architecture.mdc](microservice-architecture.mdc) for productio
 |---------|----------------------------|--------------------------|
 | App chrome | `AppShell`, `PageShell`, `AuthLayout`, `BrandLogo` | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) |
 | Feature pages | `FeaturePage`, `PageHeader` | [feature-page-layout.mdc](feature-page-layout.mdc) |
+| Details / profile sections | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` in 3-col stacks | [details-page-cards.mdc](details-page-cards.mdc) |
 | Forms | `Form`, `FormField`, `Input`, `mapZodIssuesToFieldErrors` | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Date fields | `DatePicker` (prefer `withIcon`) inside `FormField` | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Lists | `ItemList`, `ItemListMenu`, `DropdownMenuItem` | [item-list skill](../skills/item-list/SKILL.md) |

@@ -29,7 +29,17 @@ After breaking API or style changes, note consumer impact for the parent agent. 
 
 - [tailwind-css.mdc](../../rules/tailwind-css.mdc)
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc)
+- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — showcase `DetailsPageDemo` is the canonical card details pattern
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc)
+
+## Showcase page demos
+
+| Demo | Hash | Pattern |
+|------|------|---------|
+| `ListPageDemo` | `#pages-list` | [item-list](../item-list/SKILL.md) |
+| `DetailsPageDemo` | `#pages-details` | [details-page-cards](../details-page-cards/SKILL.md) |
+
+Keep both demos aligned with the rules above when changing Pages tab layouts.
 
 ## Verification
 

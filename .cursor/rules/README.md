@@ -33,6 +33,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [ui-kit-consumption.mdc](ui-kit-consumption.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Mandatory `@webonone/ui-kit` usage for all service frontends |
 | [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
 | [feature-page-layout.mdc](feature-page-layout.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}` | `FeaturePage` / `PageHeader` for AppShell feature pages |
+| [details-page-cards.mdc](details-page-cards.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `ui-kit/showcase/src/pages/**/*.{ts,tsx}` | Card-based details/profile pages — 3-col stacks, equal `gap-6` |
 | [item-list-pagination.mdc](item-list-pagination.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `Pagination` below `ItemList` on collection pages |
 | [list-filter-panel.mdc](list-filter-panel.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `ListFilterPanel` + trigger on collection pages |
 | [loading-empty-states.mdc](loading-empty-states.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Unified platform loading overlay; `LoadingState`; `ItemListEmpty` |
@@ -69,6 +70,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 |-------|-------------|
 | [form-creation](../skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
 | [item-list](../skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
+| [details-page-cards](../skills/details-page-cards/SKILL.md) | Profile/details pages: `Card` sections in 3-col left(2)+right(1) stacks, equal `gap-6` |
 | [feature-store](../skills/feature-store/SKILL.md) | Standard list/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
@@ -84,6 +86,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Express routes, JWT, HTTP errors | `nodejs-express.mdc` |
 | Feature folders, `@/shared` between features | `front-end-structure.mdc` |
 | Feature page layout (`FeaturePage`, `PageHeader`) | `feature-page-layout.mdc` |
+| Details / profile card grid (`Card` 2+1 stacks) | `details-page-cards.mdc` |
 | Slices, epics, `rootEpic` | `redux-store-and-epics.mdc` |
 | Shared CRUD store factories (`@webonone/store-kit`) | `redux-store-and-epics.mdc`, [feature-store skill](../skills/feature-store/SKILL.md) |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
@@ -93,6 +96,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Date fields (`DatePicker`, not `Input type="date"`) | `ui-kit-consumption.mdc`, [form-creation skill](../skills/form-creation/SKILL.md) |
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
+| Details / profile card pages (3-col Card stacks) | [details-page-cards skill](../skills/details-page-cards/SKILL.md), `details-page-cards.mdc` |
 | Loading and empty states (unified overlay, `LoadingState`, `ItemListEmpty`) | [loading-empty-states.mdc](loading-empty-states.mdc) |
 | Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |
 | Core-hosted peer dialogs (header/body/footer on WebOnOne shell) | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”), `dialog-windows.mdc` |

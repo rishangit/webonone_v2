@@ -1,0 +1,82 @@
+---
+description: Card-based details pages — 3-column stacks, Back + page-level Edit
+globs: "**/frontend/src/features/**/pages/**/*.{ts,tsx},ui-kit/showcase/src/pages/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Details page cards
+
+Related: [feature-page-layout.mdc](feature-page-layout.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc).
+
+Use this pattern for **profile / entity details** pages (view and edit) inside `FeaturePage` — not for paginated list pages ([item-list-pagination.mdc](item-list-pagination.mdc)).
+
+## Required composition
+
+```text
+FeaturePage
+  actions: Back (always) + Edit | Cancel + Save (page-level — not per card)
+  Outer grid: grid grid-cols-1 items-start gap-6 lg:grid-cols-3
+              (Form wrap in edit → also space-y-0)
+    Left stack:  flex flex-col gap-6 lg:col-span-2   ← wide cards
+    Right stack: flex flex-col gap-6 lg:col-span-1   ← narrow cards
+      Each section → Card > CardHeader > CardContent (no Edit in header)
+```
+
+| Piece | Requirement |
+|-------|-------------|
+| Shell | `FeaturePage` — full width; no `max-w-*` on body |
+| Back | Always in `actions`: `Button variant="outline" size="sm"` + `ArrowLeft` + label (e.g. list name) |
+| Edit | **One** page-level `Edit` in `actions` (view). Edit toggles **all** cards to fields |
+| Save / Cancel | Page-level in `actions` while editing; `Save` uses `form="<id>"` on the page `Form` |
+| Cards | Presentational only — no per-card Edit / Save / Cancel |
+| Title density | `CardTitle className="text-lg"` |
+| Gap | Same **`gap-6`** on outer grid and both stacks |
+| Top align | Outer `items-start`; independent column stacks |
+| Edit `Form` | Include **`space-y-0`** — `Form` defaults to `space-y-4` |
+
+## Page actions skeleton
+
+```tsx
+actions={
+  <div className="flex flex-wrap items-center gap-2">
+    <Button type="button" variant="outline" size="sm" onClick={onBack}>
+      <ArrowLeft className="h-4 w-4" aria-hidden />
+      Back
+    </Button>
+    {mode === 'view' ? (
+      <Button type="button" size="sm" onClick={() => setMode('edit')}>
+        <Edit3 className="h-4 w-4" aria-hidden />
+        Edit
+      </Button>
+    ) : (
+      <>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" size="sm" form="details-form">Save</Button>
+      </>
+    )}
+  </div>
+}
+```
+
+## Forbidden
+
+- Per-card Edit / Save / Cancel in `CardHeader`
+- Flat `<section>` + bare `<h3>` instead of `Card`
+- Single full-width card column when sections can split 2+1 at `lg`
+- `Form` without `space-y-0` on a multi-column details layout
+- `max-w-xl` / centered narrow form wrappers on details pages
+
+## Reference
+
+- Showcase: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` — `DetailsPageDemo`
+- Identity: `identity/frontend/src/features/profile/pages/ProfilePage.tsx`
+- WebOnOne: `webonone-v2/.../companies/pages/CompanyProfilePage.tsx`
+
+## Verification
+
+```bash
+npm run type-check
+npm run lint
+```
+
+Confirm: Back always visible; one Edit toggles all cards; Cancel/Save only in page header; equal `gap-6`; columns top-aligned.

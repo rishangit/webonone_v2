@@ -40,6 +40,8 @@ Standalone Media collection pages use the UI Kit list page composition (`Feature
 
 Rule: [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) · Skill: [item-list](../item-list/SKILL.md).
 
+Multi-section **details / profile** pages use Card stacks — [details-page-cards](../details-page-cards/SKILL.md).
+
 ## Host-level consumer dialogs
 
 Media owns picker/upload/crop UI and postMessage contracts; the **consumer** owns dialog chrome (header/footer). When that consumer is an embedded peer under WebOnOne, use **`media-dialog-*`** so WebOnOne’s `PlatformMediaDialogHost` renders the shell — not the peer-form `peer-dialog-*` path (that is for Email/Data/SMS CRUD forms). See [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) and [dialog-windows.mdc](../../rules/dialog-windows.mdc) (iframe embed bodies).

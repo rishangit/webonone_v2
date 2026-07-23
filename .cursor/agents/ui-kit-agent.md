@@ -27,6 +27,7 @@ Follow the user's task and existing code in `ui-kit/`. Use `.cursor/rules/` for 
 
 - Styling: `.cursor/rules/tailwind-css.mdc`
 - UI Kit globs: `.cursor/rules/ui-kit-project.mdc`
+- Details card pages: `.cursor/rules/details-page-cards.mdc` (`DetailsPageDemo`)
 - `@/` imports in showcase: `.cursor/rules/code-cleanliness.mdc`
 
 ## Verification

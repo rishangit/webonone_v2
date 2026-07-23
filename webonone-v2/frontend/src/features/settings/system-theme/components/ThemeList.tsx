@@ -16,13 +16,21 @@ interface ThemeListProps {
   onSelect: (id: string) => void
   onEdit: (theme: ApiTheme) => void
   onDelete: (id: string) => void
+  emptyMessage?: string
 }
 
-export function ThemeList({ themes, activeThemeId, onSelect, onEdit, onDelete }: ThemeListProps) {
+export function ThemeList({
+  themes,
+  activeThemeId,
+  onSelect,
+  onEdit,
+  onDelete,
+  emptyMessage = 'No themes yet.',
+}: ThemeListProps) {
   const items = Array.isArray(themes) ? themes : []
 
   if (items.length === 0) {
-    return <ItemListEmpty>No themes yet.</ItemListEmpty>
+    return <ItemListEmpty>{emptyMessage}</ItemListEmpty>
   }
 
   return (

@@ -1,11 +1,19 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { authActions } from '@/features/auth/store/authSlice'
 import type {
   AssumableRoleOption,
   AssumableRolesResponse,
   SessionRole,
 } from '../types/sessionRole.types'
+import {
+  clearSessionRoleStorage,
+  readSessionRoleStorage,
+  writeSessionRoleStorage,
+} from '../utils/sessionRoleStorage'
 
 export type { SessionRole } from '../types/sessionRole.types'
+
+export type SessionRoleDialogMode = 'gate' | 'settings'
 
 interface SessionRoleState {
   activeRole: SessionRole | null
@@ -13,16 +21,40 @@ interface SessionRoleState {
   selectionComplete: boolean
   assumableRoles: AssumableRoleOption[]
   dialogOpen: boolean
+  dialogMode: SessionRoleDialogMode
   loading: boolean
 }
 
-const initialState: SessionRoleState = {
+const emptyState: SessionRoleState = {
   activeRole: null,
   activeCompanyId: null,
   selectionComplete: false,
   assumableRoles: [],
   dialogOpen: false,
+  dialogMode: 'gate',
   loading: false,
+}
+
+function loadInitialState(): SessionRoleState {
+  const stored = readSessionRoleStorage()
+  if (!stored) {
+    return { ...emptyState }
+  }
+
+  return {
+    ...emptyState,
+    activeRole: stored.activeRole,
+    activeCompanyId: stored.activeCompanyId,
+    selectionComplete: true,
+  }
+}
+
+function persistSelection(role: SessionRole, companyId: string | null): void {
+  writeSessionRoleStorage({
+    selectionComplete: true,
+    activeRole: role,
+    activeCompanyId: companyId,
+  })
 }
 
 function applyRole(
@@ -34,12 +66,19 @@ function applyRole(
   state.activeCompanyId = companyId
   state.selectionComplete = true
   state.dialogOpen = false
+  state.dialogMode = 'gate'
   state.loading = false
+  persistSelection(role, companyId)
+}
+
+function clearSelectionState(): SessionRoleState {
+  clearSessionRoleStorage()
+  return { ...emptyState }
 }
 
 export const sessionRoleSlice = createSlice({
   name: 'sessionRole',
-  initialState,
+  initialState: loadInitialState(),
   reducers: {
     bootstrapRequested(state) {
       state.loading = true
@@ -48,6 +87,11 @@ export const sessionRoleSlice = createSlice({
       const { roles, requiresAccountSelection } = action.payload
       state.loading = false
       state.assumableRoles = roles
+
+      // Sticky selection already restored — refresh labels only; never re-open gate.
+      if (state.selectionComplete) {
+        return
+      }
 
       if (!requiresAccountSelection) {
         const only = roles[0]
@@ -58,6 +102,7 @@ export const sessionRoleSlice = createSlice({
       }
 
       state.dialogOpen = true
+      state.dialogMode = 'gate'
     },
     roleSelected(
       state,
@@ -65,9 +110,24 @@ export const sessionRoleSlice = createSlice({
     ) {
       applyRole(state, action.payload.role, action.payload.companyId)
     },
-    reset() {
-      return initialState
+    openChangeDialog(state) {
+      if (!state.selectionComplete) {
+        return
+      }
+      state.dialogOpen = true
+      state.dialogMode = 'settings'
     },
+    closeDialog(state) {
+      state.dialogOpen = false
+      state.dialogMode = 'gate'
+    },
+    reset() {
+      return clearSelectionState()
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(authActions.loginSuccess, () => clearSelectionState())
+    builder.addCase(authActions.logout, () => clearSelectionState())
   },
 })
 

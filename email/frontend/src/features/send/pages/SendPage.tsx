@@ -3,6 +3,11 @@ import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   FeaturePage,
   Form,
   FormField,
@@ -112,65 +117,101 @@ export function SendEmailPage() {
         </Alert>
       ) : null}
       {!loading ? (
-        <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">
-          <FormField label="Template" htmlFor="send-template" required error={fieldErrors.templateSlug}>
-            <Select
-              value={values.templateSlug}
-              onValueChange={(templateSlug) => setValues((prev) => ({ ...prev, templateSlug }))}
-            >
-              <SelectTrigger id="send-template">
-                <SelectValue placeholder="Select template" />
-              </SelectTrigger>
-              <SelectContent>
-                {activeTemplates.map((template) => (
-                  <SelectItem key={template.id} value={template.slug}>
-                    {template.name}
-                  </SelectItem>
+        <Form onSubmit={handleSubmit} className="space-y-0">
+          <div className="grid items-start gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Compose</CardTitle>
+                <CardDescription>Choose a template, recipient, and payload values.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  label="Template"
+                  htmlFor="send-template"
+                  required
+                  error={fieldErrors.templateSlug}
+                >
+                  <Select
+                    value={values.templateSlug}
+                    onValueChange={(templateSlug) =>
+                      setValues((prev) => ({ ...prev, templateSlug }))
+                    }
+                  >
+                    <SelectTrigger id="send-template">
+                      <SelectValue placeholder="Select template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {activeTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.slug}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+
+                <FormField
+                  label="Recipient email"
+                  htmlFor="send-to"
+                  required
+                  error={fieldErrors.toEmail}
+                >
+                  <Input
+                    id="send-to"
+                    type="email"
+                    value={values.toEmail}
+                    onChange={(e) => setValues((prev) => ({ ...prev, toEmail: e.target.value }))}
+                  />
+                </FormField>
+
+                {selectedTemplate?.requiredKeys.map((key) => (
+                  <FormField key={key} label={key} htmlFor={`send-payload-${key}`} required>
+                    <Input
+                      id={`send-payload-${key}`}
+                      value={values.payload[key] ?? ''}
+                      onChange={(e) => patchPayload(key, e.target.value)}
+                    />
+                  </FormField>
                 ))}
-              </SelectContent>
-            </Select>
-          </FormField>
 
-          <FormField label="Recipient email" htmlFor="send-to" required error={fieldErrors.toEmail}>
-            <Input
-              id="send-to"
-              type="email"
-              value={values.toEmail}
-              onChange={(e) => setValues((prev) => ({ ...prev, toEmail: e.target.value }))}
-            />
-          </FormField>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handlePreview}
+                    disabled={previewing}
+                  >
+                    {previewing ? 'Previewing…' : 'Preview'}
+                  </Button>
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? 'Sending…' : 'Confirm send'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-          {selectedTemplate?.requiredKeys.map((key) => (
-            <FormField key={key} label={key} htmlFor={`send-payload-${key}`} required>
-              <Input
-                id={`send-payload-${key}`}
-                value={values.payload[key] ?? ''}
-                onChange={(e) => patchPayload(key, e.target.value)}
-              />
-            </FormField>
-          ))}
-
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={handlePreview} disabled={previewing}>
-              {previewing ? 'Previewing…' : 'Preview'}
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Sending…' : 'Confirm send'}
-            </Button>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Preview</CardTitle>
+                <CardDescription>Rendered HTML from the selected template.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {preview ? (
+                  <iframe
+                    title="Send preview"
+                    className="h-[360px] w-full rounded-lg border border-border bg-background"
+                    sandbox=""
+                    srcDoc={preview.html}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Click Preview to render the email here.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </Form>
-      ) : null}
-
-      {preview ? (
-        <section className="space-y-2">
-          <h2 className="text-lg font-medium">Preview</h2>
-          <iframe
-            title="Send preview"
-            className="h-[360px] w-full rounded-lg border border-border bg-background"
-            sandbox=""
-            srcDoc={preview.html}
-          />
-        </section>
       ) : null}
     </FeaturePage>
   )

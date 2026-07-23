@@ -16,6 +16,8 @@ description: Data service agent for webonone-platform. Handles data/ frontend, b
 - [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — **required**: pages dispatch actions only
 - [feature-store skill](../feature-store/SKILL.md) — **required for catalog CRUD**: build each `store/*Store.ts` with `createCatalogFeatureStore` from `@webonone/store-kit` (not hand-written slice + epics); consume via `useEpicCatalogList` / `useEpicCatalogEditor`
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — platform handoff + satellite peer nav to Email
+- [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) — `FeaturePage` for collection and details routes
+- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — multi-section details pages ([details-page-cards skill](../details-page-cards/SKILL.md))
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
 

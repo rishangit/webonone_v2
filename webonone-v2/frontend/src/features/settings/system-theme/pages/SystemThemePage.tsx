@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { Button, FeaturePage, ListPageBody, ListSearchField, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { ColorModeToggle } from '../components/ColorModeToggle'
 import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
 import { ThemeDeleteDialog } from '../components/ThemeDeleteDialog'
 import { ThemeList } from '../components/ThemeList'
@@ -34,8 +34,9 @@ export function SystemThemePage() {
   const dialogOpen = createOpen || editing !== null
   const dialogMode = editing ? 'edit' : 'create'
   const isSaving = status === 'saving' && pendingSave !== null
+  const loading = status === 'loading'
 
-  usePlatformLoading(status === 'loading' ? 'Loading themes…' : null)
+  usePlatformLoading(loading ? 'Loading themes…' : null)
 
   useEffect(() => {
     if (!isFresh(themesFetchedAt)) {
@@ -108,11 +109,14 @@ export function SystemThemePage() {
     : undefined
 
   const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
+  const emptyMessage = themeSearchQuery.trim()
+    ? 'No themes match your search.'
+    : 'No themes yet.'
 
   return (
     <FeaturePage
       title="System Theme"
-      description="Create accent palettes and switch light or dark mode for the platform shell."
+      description="Create accent palettes for the platform shell. Change light or dark appearance in Basic Settings."
       actions={
         <div className="flex items-center gap-2">
           <ListSearchField
@@ -125,55 +129,46 @@ export function SystemThemePage() {
             onClear={() => setThemePage(1)}
             aria-label="Search themes"
           />
-          <Button type="button" onClick={() => setCreateOpen(true)}>
+          <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
             Create theme
           </Button>
         </div>
       }
     >
-      <div className="space-y-6">
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Color mode</h2>
-          <ColorModeToggle
-            value={preferences?.colorMode ?? 'light'}
-            onChange={(colorMode) => dispatch(systemThemeActions.patchPreferencesRequested({ colorMode }))}
-          />
-        </section>
+      {!dialogOpen && !deleteTarget && error ? (
+        <p className="text-sm text-destructive">{error}</p>
+      ) : null}
 
-        <section className="flex min-h-[calc(100dvh-20rem)] flex-col space-y-3">
-          <h2 className="text-lg font-semibold">Themes</h2>
-          <ListPageBody className="min-h-0 flex-1">
-            <div className="flex-1">
-              <ThemeList
-                themes={visibleThemes}
-                activeThemeId={preferences?.activeThemeId ?? null}
-                onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
-                onEdit={(theme) => setEditing(theme)}
-                onDelete={(id) => {
-                  const theme = themes.find((t) => t.id === id)
-                  if (theme) setDeleteTarget(theme)
-                }}
-              />
-            </div>
-            <Pagination
-              className="mt-auto"
-              totalCount={filteredThemes.length}
-              currentPage={themePage}
-              pageSize={themePageSize}
-              pageSizeOptions={[12, 24, 48]}
-              onPageChange={setThemePage}
-              onPageSizeChange={(nextSize) => {
-                setThemePageSize(nextSize)
-                setThemePage(1)
+      <ListPageBody>
+        <div className="flex-1">
+          {!loading ? (
+            <ThemeList
+              themes={visibleThemes}
+              activeThemeId={preferences?.activeThemeId ?? null}
+              emptyMessage={emptyMessage}
+              onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
+              onEdit={(theme) => setEditing(theme)}
+              onDelete={(id) => {
+                const theme = themes.find((t) => t.id === id)
+                if (theme) setDeleteTarget(theme)
               }}
             />
-          </ListPageBody>
-        </section>
-
-        {!dialogOpen && !deleteTarget && error ? (
-          <p className="text-sm text-destructive">{error}</p>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+        <Pagination
+          className="mt-auto"
+          totalCount={filteredThemes.length}
+          currentPage={themePage}
+          pageSize={themePageSize}
+          pageSizeOptions={[12, 24, 48]}
+          onPageChange={setThemePage}
+          onPageSizeChange={(nextSize) => {
+            setThemePageSize(nextSize)
+            setThemePage(1)
+          }}
+        />
+      </ListPageBody>
 
       <ThemeCreateDialog
         mode={dialogMode}

@@ -1,21 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Edit3 } from 'lucide-react'
+import { useCallback } from 'react'
 import {
-  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Form,
   FormField,
   Input,
-  mapZodIssuesToFieldErrors,
 } from '@webonone/ui-kit'
-import {
-  companyLocationCardSchema,
-  type CompanyLocationCardValues,
-} from '@/features/settings/basic/schemas/companySchemas'
+import type { CompanyLocationCardValues } from '@/features/settings/basic/schemas/companySchemas'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
 import { CompanyMapPicker } from './CompanyMapPicker'
 
@@ -28,39 +21,21 @@ function ReadOnlyField({ label, value }: { label: string; value?: string | null 
   )
 }
 
-function fromDetail(detail: CompanyDetail): CompanyLocationCardValues {
-  return {
-    addressLine1: detail.addressLine1 ?? '',
-    addressLine2: detail.addressLine2 ?? '',
-    city: detail.city ?? '',
-    stateRegion: detail.stateRegion ?? '',
-    postalCode: detail.postalCode ?? '',
-    country: detail.country ?? '',
-    latitude: detail.latitude,
-    longitude: detail.longitude,
-    mapPlaceId: detail.mapPlaceId,
-    mapFormattedAddress: detail.mapFormattedAddress,
-  }
-}
-
 type CompanyLocationCardProps = {
   detail: CompanyDetail
-  canEdit: boolean
-  saving: boolean
-  onSave: (values: CompanyLocationCardValues) => void
+  mode: 'view' | 'edit'
+  values: CompanyLocationCardValues
+  errors: Partial<Record<keyof CompanyLocationCardValues, string>>
+  onChange: (values: CompanyLocationCardValues) => void
 }
 
-export function CompanyLocationCard({ detail, canEdit, saving, onSave }: CompanyLocationCardProps) {
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
-  const [values, setValues] = useState<CompanyLocationCardValues>(() => fromDetail(detail))
-  const [errors, setErrors] = useState<Partial<Record<keyof CompanyLocationCardValues, string>>>({})
-
-  useEffect(() => {
-    setValues(fromDetail(detail))
-    setErrors({})
-    setMode('view')
-  }, [detail])
-
+export function CompanyLocationCard({
+  detail,
+  mode,
+  values,
+  errors,
+  onChange,
+}: CompanyLocationCardProps) {
   const handlePlaceSelected = useCallback(
     (place: {
       latitude: number
@@ -73,8 +48,8 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
       postalCode?: string
       country?: string
     }) => {
-      setValues((v) => ({
-        ...v,
+      onChange({
+        ...values,
         latitude: place.latitude,
         longitude: place.longitude,
         mapPlaceId: place.mapPlaceId,
@@ -84,27 +59,10 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
         ...(place.stateRegion ? { stateRegion: place.stateRegion } : {}),
         ...(place.postalCode ? { postalCode: place.postalCode } : {}),
         ...(place.country ? { country: place.country } : {}),
-      }))
+      })
     },
-    [],
+    [onChange, values],
   )
-
-  function handleCancel() {
-    setValues(fromDetail(detail))
-    setErrors({})
-    setMode('view')
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const parsed = companyLocationCardSchema.safeParse(values)
-    if (!parsed.success) {
-      setErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
-      return
-    }
-    setErrors({})
-    onSave(parsed.data)
-  }
 
   const isEmpty =
     !detail.addressLine1 &&
@@ -115,28 +73,9 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
 
   return (
     <Card>
-      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 space-y-0">
-        <div className="space-y-1.5">
-          <CardTitle>Location information</CardTitle>
-          <CardDescription>Map pin and postal / street address</CardDescription>
-        </div>
-        {canEdit ? (
-          mode === 'view' ? (
-            <Button type="button" size="sm" variant="outline" onClick={() => setMode('edit')}>
-              <Edit3 className="h-4 w-4" aria-hidden />
-              {isEmpty ? 'Set location' : 'Edit'}
-            </Button>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" variant="outline" onClick={handleCancel} disabled={saving}>
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" form="company-location-card-form" disabled={saving}>
-                {saving ? 'Saving…' : 'Save'}
-              </Button>
-            </div>
-          )
-        ) : null}
+      <CardHeader>
+        <CardTitle className="text-lg">Location information</CardTitle>
+        <CardDescription>Map pin and postal / street address</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <CompanyMapPicker
@@ -168,7 +107,7 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
             </div>
           </div>
         ) : (
-          <Form id="company-location-card-form" onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <FormField
               label="Address line 1"
               htmlFor="company-location-line1"
@@ -179,7 +118,7 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
                 id="company-location-line1"
                 value={values.addressLine1}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setValues((v) => ({ ...v, addressLine1: e.target.value }))
+                  onChange({ ...values, addressLine1: e.target.value })
                 }
               />
             </FormField>
@@ -188,7 +127,7 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
                 id="company-location-line2"
                 value={values.addressLine2}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setValues((v) => ({ ...v, addressLine2: e.target.value }))
+                  onChange({ ...values, addressLine2: e.target.value })
                 }
               />
             </FormField>
@@ -198,7 +137,7 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
                   id="company-location-city"
                   value={values.city}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setValues((v) => ({ ...v, city: e.target.value }))
+                    onChange({ ...values, city: e.target.value })
                   }
                 />
               </FormField>
@@ -207,7 +146,7 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
                   id="company-location-state"
                   value={values.stateRegion}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setValues((v) => ({ ...v, stateRegion: e.target.value }))
+                    onChange({ ...values, stateRegion: e.target.value })
                   }
                 />
               </FormField>
@@ -218,7 +157,7 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
                   id="company-location-postal"
                   value={values.postalCode}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setValues((v) => ({ ...v, postalCode: e.target.value }))
+                    onChange({ ...values, postalCode: e.target.value })
                   }
                 />
               </FormField>
@@ -227,12 +166,12 @@ export function CompanyLocationCard({ detail, canEdit, saving, onSave }: Company
                   id="company-location-country"
                   value={values.country}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setValues((v) => ({ ...v, country: e.target.value }))
+                    onChange({ ...values, country: e.target.value })
                   }
                 />
               </FormField>
             </div>
-          </Form>
+          </div>
         )}
       </CardContent>
     </Card>

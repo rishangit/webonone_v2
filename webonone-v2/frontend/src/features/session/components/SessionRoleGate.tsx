@@ -9,14 +9,10 @@ export function SessionRoleGate({ children }: { children: React.ReactNode }) {
 
   usePlatformLoading(!selectionComplete && loading && !dialogOpen ? 'Loading session…' : null)
 
-  if (!selectionComplete) {
-    return (
-      <>
-        {dialogOpen ? <RoleSelectionDialog /> : null}
-        {children}
-      </>
-    )
-  }
-
-  return children
+  return (
+    <>
+      {dialogOpen ? <RoleSelectionDialog /> : null}
+      {children}
+    </>
+  )
 }

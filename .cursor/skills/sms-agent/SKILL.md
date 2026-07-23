@@ -25,6 +25,7 @@ description: SMS service agent for webonone-platform. Handles sms/ frontend, bac
 - [feature-store skill](../feature-store/SKILL.md) — catalog CRUD via `@webonone/store-kit` factories
 - [form-creation skill](../form-creation/SKILL.md) — matching Zod validation FE + BE
 - [item-list skill](../item-list/SKILL.md) — device/queue/history list rows
+- [details-page-cards skill](../details-page-cards/SKILL.md) — multi-section details/profile pages
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — embed in WebOnOne; core-hosted peer dialogs
 - [dialog-windows.mdc](../../rules/dialog-windows.mdc) — CustomDialog header/body/footer; peer-dialog chrome split
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports

@@ -35,7 +35,7 @@ export function PagesPage({ nested, onNestedChange }: PagesPageProps) {
           <ListPageDemo />
         </Tabs.Content>
         <Tabs.Content id={pagesNestedHash('details')} value="details" className="outline-none">
-          <DetailsPageDemo />
+          <DetailsPageDemo onBack={() => onNestedChange('list')} />
         </Tabs.Content>
       </Tabs.Root>
     </div>

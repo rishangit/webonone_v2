@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Feature page layout
 
-Related: [front-end-structure.mdc](front-end-structure.mdc), [ui-kit-project.mdc](ui-kit-project.mdc).
+Related: [front-end-structure.mdc](front-end-structure.mdc), [ui-kit-project.mdc](ui-kit-project.mdc), [details-page-cards.mdc](details-page-cards.mdc).
 
 Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-level pages rendered inside a product shell main content area (e.g. WebOnOne `AppShell` `<Outlet />`).
 
@@ -68,6 +68,19 @@ Canonical demo: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` (`ListPageDemo`)
 
 Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · Rules: [item-list-pagination.mdc](item-list-pagination.mdc), [list-filter-panel.mdc](list-filter-panel.mdc), [loading-empty-states.mdc](loading-empty-states.mdc).
 
+## Details / profile pages (required)
+
+Multi-section entity or profile pages (view/edit) must use the **card grid** composition with **Back** + **one page-level Edit** — not bare stacked sections or per-card Edit:
+
+```text
+FeaturePage actions: Back + Edit | Cancel + Save
+  grid gap-6 lg:grid-cols-3 (Form → also space-y-0 items-start)
+    left flex-col gap-6 lg:col-span-2  → wide Cards
+    right flex-col gap-6 lg:col-span-1 → narrow Cards
+```
+
+Full rules: [details-page-cards.mdc](details-page-cards.mdc). Skill: [.cursor/skills/details-page-cards/SKILL.md](../skills/details-page-cards/SKILL.md). Canonical demos: `DetailsPageDemo`, Identity `ProfilePage`, `CompanyProfilePage`.
+
 ## Reference implementations
 
 | Consumer | Path |
@@ -81,6 +94,7 @@ Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · Rule
 | Data catalog | `data/frontend/src/features/catalog/pages/CatalogListPage.tsx` |
 | Media library | `media/frontend/src/features/media/pages/LibraryPage.tsx` |
 | Showcase list demo | `ui-kit/showcase/src/pages/pages/PageDemos.tsx` — `ListPageDemo` |
+| Showcase details demo | `ui-kit/showcase/src/pages/pages/PageDemos.tsx` — `DetailsPageDemo` |
 | Components | `ui-kit/package/src/layouts/FeaturePage.tsx`, `PageHeader.tsx` |
 
 ## Verification

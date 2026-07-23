@@ -53,7 +53,7 @@ Each prompt **must** include:
 
 Sequence cross-service work: Identity before WebOnOne.
 
-**Platform navigation (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). Embed peers: **`FeaturePage`** + scroll on **`PlatformEmbedShell` `<main>`** (whole page, not inner lists). Satellites use auth-code redirect for cross-service hops.
+**Platform navigation (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). Embed peers: **`FeaturePage`** + scroll on **`PlatformEmbedShell` `<main>`** (whole page, not inner lists). Satellites use auth-code redirect for cross-service hops. Multi-section **details / profile** pages: [details-page-cards.mdc](../../rules/details-page-cards.mdc) · [details-page-cards skill](../details-page-cards/SKILL.md).
 
 **Core-hosted dialogs:** If an embedded peer needs a dialog to dim/cover the whole WebOnOne shell, follow [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc):
 

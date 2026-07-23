@@ -5,7 +5,7 @@ import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 export function useSessionRoleBootstrap() {
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
-  const { selectionComplete, loading } = useAppSelector((s) => s.sessionRole)
+  const { selectionComplete, loading, assumableRoles } = useAppSelector((s) => s.sessionRole)
 
   useEffect(() => {
     if (!accessToken) {
@@ -13,10 +13,18 @@ export function useSessionRoleBootstrap() {
       return
     }
 
-    if (selectionComplete || loading) {
+    if (loading) {
+      return
+    }
+
+    // Sticky selection restored — still load assumable roles for Change / Account tab.
+    if (selectionComplete) {
+      if (assumableRoles.length === 0) {
+        dispatch(sessionRoleActions.bootstrapRequested())
+      }
       return
     }
 
     dispatch(sessionRoleActions.bootstrapRequested())
-  }, [accessToken, dispatch, loading, selectionComplete])
+  }, [accessToken, dispatch, loading, selectionComplete, assumableRoles.length])
 }

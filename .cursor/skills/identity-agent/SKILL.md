@@ -37,6 +37,7 @@ Wire `initApiClient(store)` in `app/store/index.ts`. Epics import `@/shared/serv
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [identity-project.mdc](../../rules/identity-project.mdc) — service globs
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — embed mode from WebOnOne (`PlatformEmbedLayout`); redirect handoff from satellites
+- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — profile/details multi-section pages ([details-page-cards skill](../details-page-cards/SKILL.md))
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
 
 ## Embedded peer dialogs

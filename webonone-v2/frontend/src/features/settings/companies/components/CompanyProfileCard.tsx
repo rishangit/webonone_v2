@@ -1,13 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Edit3 } from 'lucide-react'
 import {
-  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Form,
   FormField,
   Input,
   Select,
@@ -17,11 +13,9 @@ import {
   SelectValue,
   StatusTag,
   Textarea,
-  mapZodIssuesToFieldErrors,
 } from '@webonone/ui-kit'
 import {
   COMPANY_SIZE_OPTIONS,
-  companyProfileCardSchema,
   type CompanyProfileCardValues,
 } from '@/features/settings/basic/schemas/companySchemas'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
@@ -37,75 +31,24 @@ function ReadOnlyField({ label, value }: { label: string; value?: string | null 
 
 type CompanyProfileCardProps = {
   detail: CompanyDetail
-  canEdit: boolean
-  saving: boolean
-  onSave: (values: CompanyProfileCardValues) => void
+  mode: 'view' | 'edit'
+  values: CompanyProfileCardValues
+  errors: Partial<Record<keyof CompanyProfileCardValues, string>>
+  onChange: (values: CompanyProfileCardValues) => void
 }
 
-export function CompanyProfileCard({ detail, canEdit, saving, onSave }: CompanyProfileCardProps) {
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
-  const [values, setValues] = useState<CompanyProfileCardValues>({
-    name: detail.name,
-    description: detail.description ?? '',
-    companySize: (detail.companySize as CompanyProfileCardValues['companySize']) || '1-10',
-  })
-  const [errors, setErrors] = useState<Partial<Record<keyof CompanyProfileCardValues, string>>>({})
-
-  useEffect(() => {
-    setValues({
-      name: detail.name,
-      description: detail.description ?? '',
-      companySize: (detail.companySize as CompanyProfileCardValues['companySize']) || '1-10',
-    })
-    setErrors({})
-    setMode('view')
-  }, [detail])
-
-  function handleCancel() {
-    setValues({
-      name: detail.name,
-      description: detail.description ?? '',
-      companySize: (detail.companySize as CompanyProfileCardValues['companySize']) || '1-10',
-    })
-    setErrors({})
-    setMode('view')
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const parsed = companyProfileCardSchema.safeParse(values)
-    if (!parsed.success) {
-      setErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
-      return
-    }
-    setErrors({})
-    onSave(parsed.data)
-  }
-
+export function CompanyProfileCard({
+  detail,
+  mode,
+  values,
+  errors,
+  onChange,
+}: CompanyProfileCardProps) {
   return (
     <Card>
-      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 space-y-0">
-        <div className="space-y-1.5">
-          <CardTitle>Company profile</CardTitle>
-          <CardDescription>Identity of the company on the platform</CardDescription>
-        </div>
-        {canEdit ? (
-          mode === 'view' ? (
-            <Button type="button" size="sm" variant="outline" onClick={() => setMode('edit')}>
-              <Edit3 className="h-4 w-4" aria-hidden />
-              Edit
-            </Button>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" variant="outline" onClick={handleCancel} disabled={saving}>
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" form="company-profile-card-form" disabled={saving}>
-                {saving ? 'Saving…' : 'Save'}
-              </Button>
-            </div>
-          )
-        ) : null}
+      <CardHeader>
+        <CardTitle className="text-lg">Company profile</CardTitle>
+        <CardDescription>Identity of the company on the platform</CardDescription>
       </CardHeader>
       <CardContent>
         {mode === 'view' ? (
@@ -125,13 +68,13 @@ export function CompanyProfileCard({ detail, canEdit, saving, onSave }: CompanyP
             <ReadOnlyField label="Company size" value={detail.companySize} />
           </div>
         ) : (
-          <Form id="company-profile-card-form" onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <FormField label="Company name" htmlFor="company-profile-name" required error={errors.name}>
               <Input
                 id="company-profile-name"
                 value={values.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setValues((v) => ({ ...v, name: e.target.value }))
+                  onChange({ ...values, name: e.target.value })
                 }
               />
             </FormField>
@@ -145,7 +88,7 @@ export function CompanyProfileCard({ detail, canEdit, saving, onSave }: CompanyP
                 id="company-profile-description"
                 value={values.description}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setValues((v) => ({ ...v, description: e.target.value }))
+                  onChange({ ...values, description: e.target.value })
                 }
               />
             </FormField>
@@ -158,10 +101,10 @@ export function CompanyProfileCard({ detail, canEdit, saving, onSave }: CompanyP
               <Select
                 value={values.companySize}
                 onValueChange={(companySize: string) =>
-                  setValues((v) => ({
-                    ...v,
+                  onChange({
+                    ...values,
                     companySize: companySize as CompanyProfileCardValues['companySize'],
-                  }))
+                  })
                 }
               >
                 <SelectTrigger id="company-profile-size">
@@ -176,7 +119,7 @@ export function CompanyProfileCard({ detail, canEdit, saving, onSave }: CompanyP
                 </SelectContent>
               </Select>
             </FormField>
-          </Form>
+          </div>
         )}
       </CardContent>
     </Card>

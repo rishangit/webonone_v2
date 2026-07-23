@@ -1,0 +1,78 @@
+---
+description: Implementation plan for spec 1.13.3 — sticky Choose account + Basic Settings Account/Theme tabs
+alwaysApply: false
+globs: webonone-v2/frontend/src/features/session/**, webonone-v2/frontend/src/features/settings/basic/**, webonone-v2/frontend/src/features/settings/system-theme/**, webonone-v2/frontend/src/features/auth/**
+---
+
+# Implementation plan — Spec 1.13.3
+
+## Summary
+
+Persist the post-login **Choose account** selection for the WebOnOne auth session so page refresh does **not** reopen the dialog. Fill **Settings → Basic Settings** with **Account** (show selected account + Change) and **Theme** (Appearance Light/Dark selectable cards). Reuse session-role reissue and preferences `colorMode`. Remove duplicate color-mode control from System Theme.
+
+See [02-account-selection-persistence.md](./02-account-selection-persistence.md), [03-basic-settings-page.md](./03-basic-settings-page.md), [04-account-tab.md](./04-account-tab.md), [05-theme-tab-appearance.md](./05-theme-tab-appearance.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.13.3` |
+| Prerequisite | 1.13.1 Choose account gate |
+| Services | Identity + WebOnOne (FE) |
+| New env | None |
+| Backend / Identity changes | None |
+
+---
+
+## Phase 1 — Sticky session selection
+
+**Goal:** Once-per-login dialog; restore on refresh.
+
+**Exit criteria:** Hard refresh after Continue keeps account; no dialog.
+
+| Task | Paths |
+|------|-------|
+| Persist / hydrate | `sessionRoleSlice.ts`, auth storage helper or sibling key next to `webonone_auth` |
+| Reset on login/logout | `authSlice.ts` / listeners coupling to `sessionRoleActions.reset` |
+| Bootstrap | `useSessionRoleBootstrap.ts`, `SessionRoleGate.tsx` — skip dialog when sticky complete |
+| Dialog modes | `RoleSelectionDialog.tsx` — gate vs settings (dismissible + pre-select current) |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 2 — Basic Settings Account + Theme
+
+**Goal:** Tabs; Account summary + Change; Appearance cards.
+
+**Exit criteria:** Manual acceptance in 07-implementation-plan.
+
+| Task | Paths |
+|------|-------|
+| Page tabs | `features/settings/basic/pages/BasicSettingsPage.tsx` |
+| Account panel | New components under `features/settings/basic/` |
+| Theme appearance | Light/Dark selectable cards; wire `systemThemeActions.patchPreferencesRequested` |
+| System Theme cleanup | `SystemThemePage.tsx` — remove duplicate `ColorModeToggle` |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Forbidden
+
+- Re-opening Choose account on every refresh when selection is already complete
+- Skipping first-login dialog only because JWT has `platform_role` (Identity may default Super Admin)
+- Persisting selection past logout / across a new `loginSuccess`
+- Non-dismissible dialog when opened from Basic Settings Change
+- Moving accent palette CRUD onto Basic Settings
+- New Identity APIs or role enums
+- Tokens in URLs
+
+---
+
+## Acceptance (quick)
+
+1. Multi-account → choose once → refresh → no dialog.
+2. Basic Settings Account shows selection; Change works.
+3. Theme tab Light/Dark cards switch appearance.
+4. Type-check green.

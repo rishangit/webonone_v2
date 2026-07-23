@@ -4,6 +4,11 @@ import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   FeaturePage,
   Form,
   FormField,
@@ -132,109 +137,134 @@ export function SendPage() {
         </Alert>
       ) : null}
       {!loading ? (
-        <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">
-          <FormField label="Mode" htmlFor="send-mode">
-            <Select value={mode} onValueChange={(value) => setMode(value as SendMode)}>
-              <SelectTrigger id="send-mode">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="template">Template</SelectItem>
-                <SelectItem value="freeform">Freeform</SelectItem>
-              </SelectContent>
-            </Select>
-          </FormField>
+        <Form onSubmit={handleSubmit} className="space-y-0">
+          <div className="grid items-start gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Compose</CardTitle>
+                <CardDescription>
+                  Choose template or freeform, recipient, and message values.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField label="Mode" htmlFor="send-mode">
+                  <Select value={mode} onValueChange={(value) => setMode(value as SendMode)}>
+                    <SelectTrigger id="send-mode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="template">Template</SelectItem>
+                      <SelectItem value="freeform">Freeform</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormField>
 
-          <FormField
-            label="Recipient number"
-            htmlFor="send-to"
-            required
-            error={fieldErrors.toNumber}
-          >
-            <Input
-              id="send-to"
-              type="tel"
-              placeholder="+94771234567"
-              value={toNumber}
-              onChange={(e) => setToNumber(e.target.value)}
-            />
-          </FormField>
-
-          {mode === 'template' ? (
-            <>
-              <FormField
-                label="Template"
-                htmlFor="send-template"
-                required
-                error={fieldErrors.templateSlug}
-              >
-                <Select value={templateSlug} onValueChange={setTemplateSlug}>
-                  <SelectTrigger id="send-template">
-                    <SelectValue placeholder="Select template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.slug}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-
-              {selectedTemplate?.requiredKeys.map((key) => (
-                <FormField key={key} label={key} htmlFor={`send-payload-${key}`} required>
+                <FormField
+                  label="Recipient number"
+                  htmlFor="send-to"
+                  required
+                  error={fieldErrors.toNumber}
+                >
                   <Input
-                    id={`send-payload-${key}`}
-                    value={payload[key] ?? ''}
-                    onChange={(e) => patchPayload(key, e.target.value)}
+                    id="send-to"
+                    type="tel"
+                    placeholder="+94771234567"
+                    value={toNumber}
+                    onChange={(e) => setToNumber(e.target.value)}
                   />
                 </FormField>
-              ))}
-            </>
-          ) : (
-            <FormField label="Message" htmlFor="send-body" required error={fieldErrors.body}>
-              <Textarea
-                id="send-body"
-                rows={4}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                {freeformInfo.chars} chars · {freeformInfo.segments} segment(s) ·{' '}
-                {freeformInfo.encoding}
-              </p>
-            </FormField>
-          )}
 
-          <div className="flex flex-wrap gap-2">
-            {mode === 'template' ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePreview}
-                disabled={previewing || !selectedTemplate}
-              >
-                {previewing ? 'Previewing…' : 'Preview'}
-              </Button>
-            ) : null}
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Sending…' : 'Confirm send'}
-            </Button>
+                {mode === 'template' ? (
+                  <>
+                    <FormField
+                      label="Template"
+                      htmlFor="send-template"
+                      required
+                      error={fieldErrors.templateSlug}
+                    >
+                      <Select value={templateSlug} onValueChange={setTemplateSlug}>
+                        <SelectTrigger id="send-template">
+                          <SelectValue placeholder="Select template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.slug}>
+                              {template.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormField>
+
+                    {selectedTemplate?.requiredKeys.map((key) => (
+                      <FormField key={key} label={key} htmlFor={`send-payload-${key}`} required>
+                        <Input
+                          id={`send-payload-${key}`}
+                          value={payload[key] ?? ''}
+                          onChange={(e) => patchPayload(key, e.target.value)}
+                        />
+                      </FormField>
+                    ))}
+                  </>
+                ) : (
+                  <FormField label="Message" htmlFor="send-body" required error={fieldErrors.body}>
+                    <Textarea
+                      id="send-body"
+                      rows={4}
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {freeformInfo.chars} chars · {freeformInfo.segments} segment(s) ·{' '}
+                      {freeformInfo.encoding}
+                    </p>
+                  </FormField>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  {mode === 'template' ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handlePreview}
+                      disabled={previewing || !selectedTemplate}
+                    >
+                      {previewing ? 'Previewing…' : 'Preview'}
+                    </Button>
+                  ) : null}
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? 'Sending…' : 'Confirm send'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Preview</CardTitle>
+                <CardDescription>Rendered message from the selected template.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {preview ? (
+                  <>
+                    <p className="whitespace-pre-wrap rounded-lg border border-border bg-background p-4 text-sm">
+                      {preview.body}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {preview.chars} chars · {preview.segments} segment(s) · {preview.encoding}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {mode === 'template'
+                      ? 'Click Preview to render the SMS here.'
+                      : 'Preview is available for template messages.'}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </Form>
-      ) : null}
-
-      {preview ? (
-        <section className="space-y-2">
-          <h2 className="text-lg font-medium">Preview</h2>
-          <p className="whitespace-pre-wrap rounded-lg border border-border bg-background p-4 text-sm">
-            {preview.body}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {preview.chars} chars · {preview.segments} segment(s) · {preview.encoding}
-          </p>
-        </section>
       ) : null}
     </FeaturePage>
   )

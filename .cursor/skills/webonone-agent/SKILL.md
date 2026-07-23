@@ -23,6 +23,8 @@ description: >-
 - [nodejs-express.mdc](../../rules/nodejs-express.mdc) — Express/JWT
 - [webonone-v2-project.mdc](../../rules/webonone-v2-project.mdc) — service globs
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — WebOnOne loads Email, Data, Profile in `#main-content` iframe; satellites use redirect handoff
+- [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) — `FeaturePage` for routes
+- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — multi-section profile/details pages use Card 2+1 stacks ([details-page-cards skill](../details-page-cards/SKILL.md))
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
 
