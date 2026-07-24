@@ -3,7 +3,7 @@ import { cn } from '../lib/utils'
 import type { NavConfigItem } from '../types/nav'
 import { AppHeader, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
-import { AppSidebar } from './AppSidebar'
+import { AppSidebar, type SidebarSession } from './AppSidebar'
 
 const SIDEBAR_COLLAPSED_KEY = 'webonone:sidebar-collapsed'
 
@@ -29,6 +29,11 @@ interface AppShellProps {
   lockDocumentScroll?: boolean
   /** When true, only one left-nav group can be expanded at a time. */
   accordionNavGroups?: boolean
+  /**
+   * Optional session/context card at the bottom of the left nav (above collapse).
+   * Hidden when the sidebar is collapsed; shown in the mobile drawer when open.
+   */
+  sidebarSession?: SidebarSession | null
   className?: string
 }
 
@@ -76,6 +81,7 @@ function AppShell({
   embedMain = false,
   lockDocumentScroll = true,
   accordionNavGroups = false,
+  sidebarSession,
   className,
 }: AppShellProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -141,6 +147,7 @@ function AppShell({
           onNavItemNavigate={onNavItemNavigate}
           onNavItemPrefetch={onNavItemPrefetch}
           accordionNavGroups={accordionNavGroups}
+          sidebarSession={sidebarSession}
         />
         <main
           id="main-content"

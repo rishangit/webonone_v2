@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -40,17 +41,12 @@ export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesLi
               onClick={() => openProfile(item.id)}
             >
               <div className="flex items-start gap-3">
-                {item.logoUrl ? (
-                  <img
-                    src={item.logoUrl}
-                    alt=""
-                    className="h-10 w-10 shrink-0 rounded-md object-cover"
-                  />
-                ) : (
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-xs">
-                    No logo
-                  </div>
-                )}
+                <ImagePreview
+                  src={item.logoUrl}
+                  alt={item.name}
+                  mode="view"
+                  className="h-10 w-10 rounded-md"
+                />
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate font-medium">{item.name}</p>

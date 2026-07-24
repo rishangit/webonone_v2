@@ -11,12 +11,12 @@ const DialogClose = DialogPrimitive.Close
 export type DialogSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
 
 const dialogSizeClasses: Record<DialogSize, string> = {
-  sm: 'max-w-sm max-h-[min(24rem,85vh)]',
-  md: 'max-w-md max-h-[min(28rem,85vh)]',
-  lg: 'max-w-lg max-h-[min(32rem,85vh)]',
-  xl: 'max-w-xl max-h-[min(36rem,85vh)]',
-  '2xl': 'max-w-2xl max-h-[min(42rem,90vh)]',
-  '3xl': 'max-w-3xl max-h-[min(48rem,90vh)]',
+  sm: 'sm:max-w-sm max-h-[min(24rem,85vh)]',
+  md: 'sm:max-w-md max-h-[min(28rem,85vh)]',
+  lg: 'sm:max-w-lg max-h-[min(32rem,85vh)]',
+  xl: 'sm:max-w-xl max-h-[min(36rem,85vh)]',
+  '2xl': 'sm:max-w-2xl max-h-[min(42rem,90vh)]',
+  '3xl': 'sm:max-w-3xl max-h-[min(48rem,90vh)]',
 }
 
 function DialogOverlay({

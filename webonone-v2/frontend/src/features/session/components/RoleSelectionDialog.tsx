@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, CustomDialog, cn } from '@webonone/ui-kit'
+import { Button, CustomDialog, cn, isStatusTagVariant, StatusTag } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
@@ -125,7 +125,14 @@ export function RoleSelectionDialog() {
                 )}
                 onClick={() => setPendingRole(option)}
               >
-                <span className="block font-medium text-foreground">{option.label}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-foreground">{option.label}</span>
+                  {isStatusTagVariant(option.role) ? (
+                    <StatusTag variant={option.role} className="shrink-0" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{option.role}</span>
+                  )}
+                </span>
                 <span className="mt-1 block text-sm text-muted-foreground">
                   {accountDescription(option)}
                 </span>

@@ -25,6 +25,8 @@ export type UseRequestPlatformPeerDialogOptions = {
   sizeWidth: PlatformDialogSizePreset
   sizeHeight: PlatformDialogSizePreset
   cancelLabel?: string
+  /** Optional host footer secondary (e.g. wizard Previous). */
+  secondaryLabel?: string
   submitLabel: string
   onResult?: (payload?: unknown) => void
   onCancel?: (reason?: string) => void
@@ -52,6 +54,7 @@ export function useRequestPlatformPeerDialog(
     sizeWidth,
     sizeHeight,
     cancelLabel,
+    secondaryLabel,
     submitLabel,
     onResult,
     onCancel,
@@ -83,6 +86,7 @@ export function useRequestPlatformPeerDialog(
       sizeWidth,
       sizeHeight,
       cancelLabel,
+      secondaryLabel,
       submitLabel,
     })
   }, [
@@ -92,6 +96,7 @@ export function useRequestPlatformPeerDialog(
     openKey,
     parentOrigin,
     path,
+    secondaryLabel,
     sizeHeight,
     sizeWidth,
     submitLabel,

@@ -1,6 +1,12 @@
 ---
 name: sms-agent
-description: SMS service agent for webonone-platform. Handles sms/ frontend, backend, migrations and the mobile/ Expo gateway app — OTP, SMS templates, queue, and device gateway API. SMS is sent by a phone SIM (Android), not a server provider. Use when tasks touch sms/, mobile/, the SMS API, or WebOnOne/Identity SMS integration.
+description: >-
+  SMS service agent for webonone-platform. Handles sms/ frontend, backend,
+  migrations and the mobile/ Expo gateway app — OTP, SMS templates, queue, and
+  device gateway API. SMS is sent by a phone SIM (Android), not a server
+  provider. Use when tasks touch sms/, mobile/, the SMS API, WebOnOne/Identity
+  SMS integration, or SMS template/create/edit dialog boxes — also read
+  core-hosted-peer-dialog and dialog-windows for any dialog or modal.
 ---
 
 # SMS agent skill

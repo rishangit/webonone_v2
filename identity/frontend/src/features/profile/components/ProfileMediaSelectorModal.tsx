@@ -10,9 +10,9 @@ import {
   type MediaItemDto,
 } from '@webonone/media-embed'
 import {
-  getPlatformEmbedParentOrigin,
   isPlatformMediaDialogCancelMessage,
   isPlatformMediaDialogResultMessage,
+  resolvePlatformEmbedParentOrigin,
   sendPlatformMediaDialogRequest,
 } from '@webonone/platform-embed'
 import { Button, CustomDialog } from '@webonone/ui-kit'
@@ -66,7 +66,7 @@ export function ProfileMediaSelectorModal({
   const innerOpenRef = useRef(false)
   const cropIframeRef = useRef<HTMLIFrameElement>(null)
   const hostRequestIdRef = useRef<string | null>(null)
-  const hostParentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const hostParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const scope = buildProfileMediaScope(userId)
   const profileFolderPath = buildProfileFolderPath(userId)
 

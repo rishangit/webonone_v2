@@ -29,6 +29,7 @@ export {
   isPlatformPeerDialogNestedResultMessage,
   isPlatformPeerDialogRequestMessage,
   isPlatformPeerDialogResultMessage,
+  isPlatformPeerDialogSecondaryMessage,
   isPlatformPeerDialogSubmitMessage,
   isPlatformReadyMessage,
   type BuildPlatformEmbedUrlOptions,
@@ -64,6 +65,7 @@ export {
   type PlatformPeerDialogNestedResultMessage,
   type PlatformPeerDialogRequestMessage,
   type PlatformPeerDialogResultMessage,
+  type PlatformPeerDialogSecondaryMessage,
   type PlatformPeerDialogSubmitMessage,
   type PlatformReadyMessage,
 } from './types'
@@ -101,10 +103,12 @@ export {
   sendPlatformPeerDialogNestedResult,
   sendPlatformPeerDialogRequest,
   sendPlatformPeerDialogResult,
+  sendPlatformPeerDialogSecondary,
   sendPlatformPeerDialogSubmit,
   type BuildDataTagCreateUrlOptions,
   type BuildDataTagPickerUrlOptions,
   type BuildIdentityUserPickerUrlOptions,
+  type PlatformPeerDialogBusyOptions,
 } from './embedUrl'
 
 export {

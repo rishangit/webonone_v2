@@ -3,8 +3,10 @@ name: platform-orchestrator
 description: >-
   Routes monorepo tasks to Identity, UI Kit, WebOnOne v2, or Media sub-agents via
   Cursor Task tool. Use for any work in this repo touching identity/, ui-kit/,
-  webonone-v2/, media/, microservice boundaries, or cross-service auth/media integration.
-  Delegates automatically instead of editing all services in the parent agent.
+  webonone-v2/, media/, microservice boundaries, cross-service auth/media
+  integration, or dialog box / dialog window work that must use core-hosted
+  peer-dialog (or media-dialog) when a peer is embedded. Delegates automatically
+  instead of editing all services in the parent agent.
 ---
 
 # Platform orchestrator
@@ -22,7 +24,7 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `webonone-v2/` | `.cursor/agents/webonone-agent.md` | `.cursor/skills/webonone-agent/SKILL.md` |
 | `media/`, `packages/media-embed/` | `.cursor/agents/media-agent.md` | `.cursor/skills/media-agent/SKILL.md` |
 
-Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Embedded-peer dialogs that should feel core-owned → **platform-embed contract + WebOnOne host dialog + requesting peer**.
+Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop).
 
 **Parent handles directly:** root `package.json`, workspace wiring, non-service `.cursor/` config.
 

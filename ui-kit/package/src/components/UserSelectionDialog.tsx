@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from './Select'
 import { Spinner } from './Spinner'
+import { isStatusTagVariant, StatusTag } from './StatusTag'
 import { cn } from '../lib/utils'
 
 export interface UserOption {
@@ -359,9 +360,13 @@ export function UserSelectionDialog({
                     </p>
                   </ItemListContent>
                   {user.role ? (
-                    <span className="shrink-0 self-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {formatRoleLabel(user.role)}
-                    </span>
+                    isStatusTagVariant(user.role) ? (
+                      <StatusTag variant={user.role} className="shrink-0 self-center" />
+                    ) : (
+                      <span className="shrink-0 self-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                        {formatRoleLabel(user.role)}
+                      </span>
+                    )
                   ) : null}
                 </ItemListItem>
               )

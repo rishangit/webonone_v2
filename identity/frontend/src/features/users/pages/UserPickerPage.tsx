@@ -26,7 +26,9 @@ import {
   SelectTrigger,
   SelectValue,
   Spinner,
+  StatusTag,
   cn,
+  isStatusTagVariant,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
@@ -368,9 +370,13 @@ export function UserPickerPage() {
                     </p>
                   </ItemListContent>
                   {user.role ? (
-                    <span className="shrink-0 self-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {formatRoleLabel(user.role)}
-                    </span>
+                    isStatusTagVariant(user.role) ? (
+                      <StatusTag className="shrink-0 self-center" variant={user.role} />
+                    ) : (
+                      <StatusTag className="shrink-0 self-center" variant="member">
+                        {formatRoleLabel(user.role)}
+                      </StatusTag>
+                    )
                   ) : null}
                   {isSelected ? (
                     <Check

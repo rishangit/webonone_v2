@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
+  resolvePlatformEmbedParentOrigin,
   sendPlatformPeerDialogBusy,
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
@@ -56,7 +56,7 @@ export function UnitFormDialog({
   chrome = 'dialog',
 }: UnitFormDialogProps) {
   const [searchParams] = useSearchParams()
-  const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isNew = !id
   const title = isNew ? 'Create unit' : 'Edit unit'
   const path = isNew ? '/embed/dialogs/units/create' : `/embed/dialogs/units/${id}/edit`

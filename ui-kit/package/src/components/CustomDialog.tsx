@@ -6,10 +6,10 @@ import { cn } from '../lib/utils'
 export type DialogSizePreset = 'small' | 'medium' | 'large' | 'xlarge' | 'auto'
 
 const widthClasses: Record<Exclude<DialogSizePreset, 'auto'>, string> = {
-  small: 'w-1/2',
-  medium: 'w-2/3',
-  large: 'w-3/4',
-  xlarge: 'w-5/6',
+  small: 'w-full sm:w-1/2',
+  medium: 'w-full sm:w-2/3',
+  large: 'w-full sm:w-3/4',
+  xlarge: 'w-full sm:w-5/6',
 }
 
 const heightClasses: Record<Exclude<DialogSizePreset, 'auto'>, string> = {
@@ -35,7 +35,7 @@ function buildSizeClasses(
 ): string {
   const widthPart =
     sizeWidth === 'auto'
-      ? cn('w-fit', maxWidth)
+      ? cn('w-full sm:w-fit', maxWidth.startsWith('max-w-') ? `sm:${maxWidth}` : maxWidth)
       : maxWidth !== 'max-w-lg'
         ? `w-full sm:${maxWidth}`
         : widthClasses[sizeWidth]

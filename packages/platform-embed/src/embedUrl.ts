@@ -32,6 +32,7 @@ import type {
   PlatformPeerDialogNestedResultMessage,
   PlatformPeerDialogRequestMessage,
   PlatformPeerDialogResultMessage,
+  PlatformPeerDialogSecondaryMessage,
   PlatformPeerDialogSubmitMessage,
 } from './types'
 
@@ -455,12 +456,32 @@ export function sendPlatformPeerDialogSubmit(
   targetWindow?.postMessage(message, targetOrigin)
 }
 
-/** Dialog iframe → shell: sync host footer busy state / submit label. */
+/** Shell → dialog iframe: footer secondary button clicked (e.g. Previous). */
+export function sendPlatformPeerDialogSecondary(
+  targetWindow: WindowProxy | null,
+  targetOrigin: string,
+  requestId: string,
+): void {
+  const message: PlatformPeerDialogSecondaryMessage = {
+    type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_SECONDARY,
+    requestId,
+  }
+  targetWindow?.postMessage(message, targetOrigin)
+}
+
+export type PlatformPeerDialogBusyOptions = {
+  description?: string
+  /** `null` hides the secondary button; omit to leave unchanged. */
+  secondaryLabel?: string | null
+}
+
+/** Dialog iframe → shell: sync host footer busy state / chrome. */
 export function sendPlatformPeerDialogBusy(
   parentOrigin: string,
   requestId: string,
   busy: boolean,
   submitLabel?: string,
+  options?: PlatformPeerDialogBusyOptions,
 ): void {
   if (typeof window === 'undefined') {
     return
@@ -471,6 +492,8 @@ export function sendPlatformPeerDialogBusy(
     requestId,
     busy,
     submitLabel,
+    description: options?.description,
+    secondaryLabel: options?.secondaryLabel,
   }
   window.parent.postMessage(message, parentOrigin)
 }

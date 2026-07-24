@@ -25,15 +25,18 @@ export function ImagePreview({
   return (
     <div
       className={cn(
-        'relative h-40 w-40 shrink-0 overflow-hidden border border-border bg-muted',
+        'relative h-40 w-40 shrink-0 overflow-hidden rounded-lg border border-border bg-muted',
         className,
       )}
     >
       {src ? (
         <img src={src} alt={alt} className="h-full w-full object-cover" />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-muted">
-          <ImageIcon className="h-10 w-10 text-muted-foreground" aria-hidden />
+        <div className="flex h-full w-full items-center justify-center bg-muted" aria-label={alt}>
+          <ImageIcon
+            className="h-[40%] w-[40%] max-h-10 max-w-10 text-muted-foreground"
+            aria-hidden
+          />
         </div>
       )}
       {showEditOverlay ? (

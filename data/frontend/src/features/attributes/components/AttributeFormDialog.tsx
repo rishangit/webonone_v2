@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
+  resolvePlatformEmbedParentOrigin,
   sendPlatformPeerDialogBusy,
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
@@ -55,7 +55,7 @@ export function AttributeFormDialog({
   chrome = 'dialog',
 }: AttributeFormDialogProps) {
   const [searchParams] = useSearchParams()
-  const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isNew = !id
   const title = isNew ? 'Create attribute' : 'Edit attribute'
   const path = isNew

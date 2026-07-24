@@ -32,6 +32,7 @@ Standard workflow for **multi-section details / profile** pages. Sections are **
 | `FeaturePage` | Page shell; owns Back + Edit / Cancel / Save |
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` | Section surface (view + edit content only) |
 | `Form`, `FormField` | One page `Form` wrapping the card grid in edit mode |
+| `ImagePreview` | Logos / avatars — `src={null}` shows first-upload empty state ([image-preview.mdc](../../rules/image-preview.mdc)) |
 | `ArrowLeft`, `Edit3` (lucide) | Back and Edit icons in `actions` |
 
 `CardTitle` → `className="text-lg"`.

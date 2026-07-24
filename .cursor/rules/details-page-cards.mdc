@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Details page cards
 
-Related: [feature-page-layout.mdc](feature-page-layout.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc).
+Related: [feature-page-layout.mdc](feature-page-layout.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc), [image-preview.mdc](image-preview.mdc).
 
 Use this pattern for **profile / entity details** pages (view and edit) inside `FeaturePage` — not for paginated list pages ([item-list-pagination.mdc](item-list-pagination.mdc)).
 
@@ -65,6 +65,7 @@ actions={
 - Single full-width card column when sections can split 2+1 at `lg`
 - `Form` without `space-y-0` on a multi-column details layout
 - `max-w-xl` / centered narrow form wrappers on details pages
+- Custom “No logo” / empty-image tiles — use `ImagePreview` with `src={null}` ([image-preview.mdc](image-preview.mdc))
 
 ## Reference
 

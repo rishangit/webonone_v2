@@ -35,7 +35,15 @@ export function TagFormEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSaved={() => sendPlatformPeerDialogComplete(parentOrigin, requestId)}
+      onSaved={(tag) =>
+        sendPlatformPeerDialogComplete(
+          parentOrigin,
+          requestId,
+          tag
+            ? { id: tag.id, name: tag.name, color: tag.color }
+            : undefined,
+        )
+      }
     />
   )
 }

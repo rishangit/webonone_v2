@@ -94,10 +94,11 @@ Use `webonone:platform:peer-dialog-*` for peer-owned CRUD forms **and** selectio
 
 | Message | Direction |
 |---------|-----------|
-| `peer-dialog-request` | page iframe → shell (`requestId`, `path`, `title`, sizes, `submitLabel`, optional `cancelLabel` / `description`) |
+| `peer-dialog-request` | page iframe → shell (`requestId`, `path`, `title`, sizes, `submitLabel`, optional `cancelLabel` / `description` / `secondaryLabel`) |
 | `peer-dialog-result` / `peer-dialog-cancel` | shell → page iframe |
 | `peer-dialog-submit` | shell → dialog iframe (footer primary clicked) |
-| `peer-dialog-busy` | dialog iframe → shell (disable footer / update submit label while saving) |
+| `peer-dialog-secondary` | shell → dialog iframe (footer secondary clicked, e.g. Previous) |
+| `peer-dialog-busy` | dialog iframe → shell (disable footer / update submit label, description, secondaryLabel) |
 | `peer-dialog-complete` / `peer-dialog-cancel` | dialog iframe → shell |
 
 Required flow:
@@ -113,11 +114,11 @@ Required flow:
 1. Extract **body** (fields or selection list only) shared by standalone + embed.
 2. Standalone: `CustomDialog` with same `title` / `description` / `sizeWidth` / `sizeHeight` / `footer` (Cancel + primary).
 3. Add route `/embed/dialogs/<feature>/…` (slim layout; **no** `FeaturePage`; **no** footer buttons in the iframe).
-4. List opener: `useRequestPlatformPeerDialog({ path, title, description?, sizeWidth, sizeHeight, submitLabel, cancelLabel? })` when `parentOrigin` is set; else local dialog. If `isHosted`, render `null`.
+4. List opener: resolve `parentOrigin` with **`resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)`** (not URL-only `getPlatformEmbedParentOrigin` — client nav often drops embed query while AppLayout stays embedded via session). Then `useRequestPlatformPeerDialog({ path, title, description?, sizeWidth, sizeHeight, submitLabel, cancelLabel? })` when set; else local dialog. If `isHosted`, render `null`.
 5. Embed page: `usePlatformPeerDialogSubmit` → validate/save or confirm selection; `sendPlatformPeerDialogBusy` while saving or while primary must stay disabled; `sendPlatformPeerDialogComplete` (optional payload) / `Dismiss` on done/cancel.
 6. On hosted result: refresh list / apply payload / close local open state.
 
-**Forbidden:** rendering `CustomDialog` (or faux footer buttons) inside the peer page iframe when embedded; putting Cancel/Save/Done in the embed-page body; nesting a create `CustomDialog` inside a peer-dialog picker iframe (use host sibling / `peer-dialog-nested-request` — SelectTag pattern); per-dialog WebOnOne code for simple forms (host already allowlists `/embed/dialogs/` and nested create).
+**Forbidden:** rendering `CustomDialog` (or faux footer buttons) inside the peer page iframe when embedded; resolving opener `parentOrigin` with **`getPlatformEmbedParentOrigin` alone** (dialog opens inside `#main-content` after query drop); putting Cancel/Save/Done in the embed-page body; nesting a create `CustomDialog` inside a peer-dialog picker iframe (use host sibling / `peer-dialog-nested-request` — SelectTag pattern); per-dialog WebOnOne code for simple forms (host already allowlists `/embed/dialogs/` and nested create).
 
 **Embed dialog routes** are exempt from `FeaturePage` (body only).
 

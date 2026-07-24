@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import {
@@ -34,12 +34,14 @@ export function AllCompaniesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [registerOpen, setRegisterOpen] = useState(false)
   const [pendingRegister, setPendingRegister] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const registerStatusRef = useRef(myCompanyStatus)
 
-  const loading = myCompaniesStatus === 'loading'
-  const awaitingFirstLoad = myCompaniesFetchedAt === null && myCompaniesStatus !== 'error'
+  const awaitingFirstLoad =
+    myCompaniesFetchedAt === null && myCompanies.length === 0 && myCompaniesStatus !== 'error'
 
-  usePlatformLoading(awaitingFirstLoad || loading ? 'Loading companies…' : null)
+  usePlatformLoading(awaitingFirstLoad ? 'Loading companies…' : null)
 
   useEffect(() => {
     if (!isFresh(myCompaniesFetchedAt)) {
@@ -48,18 +50,26 @@ export function AllCompaniesPage() {
   }, [dispatch, myCompaniesFetchedAt])
 
   useEffect(() => {
+    const previousStatus = registerStatusRef.current
+    registerStatusRef.current = myCompanyStatus
+
     if (!pendingRegister) return
 
-    if (myCompanyStatus === 'idle') {
+    if (previousStatus === 'saving' && myCompanyStatus === 'idle') {
       setRegisterOpen(false)
+      setPendingRegister(false)
+      setSubmitError(null)
       setSuccessMessage(
         'Registration submitted. Admin approval is required — the company stays Pending until a super admin approves or rejects it.',
       )
-      setPendingRegister(false)
-    } else if (myCompanyStatus === 'error') {
-      setPendingRegister(false)
+      return
     }
-  }, [myCompanyStatus, pendingRegister])
+
+    if (myCompanyStatus === 'error') {
+      setPendingRegister(false)
+      setSubmitError(myCompanyError)
+    }
+  }, [myCompanyStatus, myCompanyError, pendingRegister])
 
   const filteredItems = searchQuery.trim()
     ? myCompanies.filter((item) =>
@@ -69,12 +79,20 @@ export function AllCompaniesPage() {
 
   const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
   const isSubmitting = myCompanyStatus === 'saving' && pendingRegister
-  const submitError = myCompanyStatus === 'error' && pendingRegister ? myCompanyError : null
 
   function handleRegister(values: RegisterCompanyFormValues) {
     setSuccessMessage(null)
+    setSubmitError(null)
     setPendingRegister(true)
     dispatch(companiesActions.registerCompanyRequested(values))
+  }
+
+  function handleRegisterOpenChange(open: boolean) {
+    setRegisterOpen(open)
+    if (!open) {
+      setPendingRegister(false)
+      setSubmitError(null)
+    }
   }
 
   if (awaitingFirstLoad) {
@@ -87,10 +105,6 @@ export function AllCompaniesPage() {
       description="View and register companies you belong to on the platform."
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <Button type="button" size="sm" onClick={() => setRegisterOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Add company
-          </Button>
           <SearchInput
             value={searchQuery}
             onChange={(event) => {
@@ -102,6 +116,10 @@ export function AllCompaniesPage() {
             aria-label="Search companies"
             className="w-64"
           />
+          <Button type="button" size="sm" onClick={() => setRegisterOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Add company
+          </Button>
         </div>
       }
     >
@@ -115,7 +133,7 @@ export function AllCompaniesPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          {!loading ? <MyCompaniesList items={visibleItems} /> : null}
+          <MyCompaniesList items={visibleItems} />
         </div>
         <Pagination
           className="mt-auto"
@@ -142,7 +160,7 @@ export function AllCompaniesPage() {
         open={registerOpen}
         isSubmitting={isSubmitting}
         error={submitError}
-        onOpenChange={setRegisterOpen}
+        onOpenChange={handleRegisterOpenChange}
         onSubmit={handleRegister}
       />
     </FeaturePage>

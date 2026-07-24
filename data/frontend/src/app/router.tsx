@@ -23,6 +23,16 @@ const TagCreatePage = lazy(() =>
 const TagFormEmbedPage = lazy(() =>
   import('@/features/tags/pages/TagFormEmbedPage').then((m) => ({ default: m.TagFormEmbedPage })),
 )
+const ConfirmDeleteEmbedPage = lazy(() =>
+  import('@/shared/components/ConfirmDeleteDialog').then((m) => ({
+    default: m.ConfirmDeleteEmbedPage,
+  })),
+)
+const TagSelectEmbedPage = lazy(() =>
+  import('@/features/tags/pages/TagSelectEmbedPage').then((m) => ({
+    default: m.TagSelectEmbedPage,
+  })),
+)
 const UnitsPage = lazy(() =>
   import('@/features/units/pages/UnitsPage').then((m) => ({ default: m.UnitsPage })),
 )
@@ -42,6 +52,11 @@ const ProductsPage = lazy(() =>
 )
 const ServicesPage = lazy(() =>
   import('@/features/services/pages/ServicesPage').then((m) => ({ default: m.ServicesPage })),
+)
+const ServiceDetailsPage = lazy(() =>
+  import('@/features/services/pages/ServiceDetailsPage').then((m) => ({
+    default: m.ServiceDetailsPage,
+  })),
 )
 const SpacesPage = lazy(() =>
   import('@/features/spaces/pages/SpacesPage').then((m) => ({ default: m.SpacesPage })),
@@ -134,6 +149,8 @@ export function App() {
               </LazyRoute>
             }
           />
+          {embedDialogRoute('/embed/dialogs/confirm-delete', ConfirmDeleteEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/tags/select', TagSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/tags/create', TagFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/tags/:id/edit', TagFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/units/create', UnitFormEmbedPage)}
@@ -147,6 +164,14 @@ export function App() {
           {entityRoutes('/attributes', AttributesPage)}
           {entityRoutes('/products', ProductsPage)}
           {entityRoutes('/services', ServicesPage)}
+          <Route
+            path="/services/:serviceId"
+            element={
+              <LazyRoute>
+                <ServiceDetailsPage />
+              </LazyRoute>
+            }
+          />
           {entityRoutes('/spaces', SpacesPage)}
         </Route>
       </Routes>

@@ -39,11 +39,12 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [loading-empty-states.mdc](loading-empty-states.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Unified platform loading overlay; `LoadingState`; `ItemListEmpty` |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
-| [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | CustomDialog / AlertDialog layout, stacked siblings, pointer fall-through dismiss guard, iframe embed footer + crop height chain, footer, sizing, wizard/tab |
+| [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | Dialog box / dialog window standards; CustomDialog chrome; **check** [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) for satellite create/edit/wizard dialogs |
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/src/**/*.{ts,tsx}` | RTK slices, redux-observable epics, mandatory for all API I/O |
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 | [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc) | `**/frontend/**/*.{ts,tsx}` | Route lazy-load + `manualChunks`; no 500 kB build warnings |
 | [toast-notifications.mdc](toast-notifications.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `useToast` for mutation API success/fail; ignore soft warnings |
+| [image-preview.mdc](image-preview.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/**/*.{ts,tsx}` | `ImagePreview` for logos/avatars; null `src` = first-upload empty state |
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email/frontend`, and any future `*/frontend` apps.
 
@@ -69,7 +70,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 
 | Skill | Description |
 |-------|-------------|
-| [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) | Any dialog opened from a peer inside WebOnOne `#main-content` — host chrome + `/embed/dialogs/…` body |
+| [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) | Any dialog box / dialog window (create/edit/wizard/selection) in a peer FE — host chrome + `/embed/dialogs/…` body when embedded; start with this + `dialog-windows.mdc` (unless Media picker/crop) |
 | [form-creation](../skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
 | [item-list](../skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
 | [details-page-cards](../skills/details-page-cards/SKILL.md) | Profile/details pages: `Card` sections in 3-col left(2)+right(1) stacks, equal `gap-6` |
@@ -101,6 +102,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
 | Details / profile card pages (3-col Card stacks) | [details-page-cards skill](../skills/details-page-cards/SKILL.md), `details-page-cards.mdc` |
 | Loading and empty states (unified overlay, `LoadingState`, `ItemListEmpty`) | [loading-empty-states.mdc](loading-empty-states.mdc) |
+| Dialog box / dialog window (any create/edit/wizard/selection) | `dialog-windows.mdc` + [core-hosted-peer-dialog skill](../skills/core-hosted-peer-dialog/SKILL.md) (unless Media picker/crop) |
 | Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |
-| Core-hosted peer dialogs (header/body/footer on WebOnOne shell) | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”), `dialog-windows.mdc` |
+| Core-hosted peer dialogs (header/body/footer on WebOnOne shell) | [core-hosted-peer-dialog skill](../skills/core-hosted-peer-dialog/SKILL.md), [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”), `dialog-windows.mdc` |
 | Mutation toast feedback (`useToast`) | [toast-notifications.mdc](toast-notifications.mdc), [toast-notifications skill](../skills/toast-notifications/SKILL.md) |

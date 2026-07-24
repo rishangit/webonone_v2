@@ -1,25 +1,33 @@
 import { useEffect, useRef } from 'react'
-import { isPlatformPeerDialogSubmitMessage } from './types'
+import {
+  isPlatformPeerDialogSecondaryMessage,
+  isPlatformPeerDialogSubmitMessage,
+} from './types'
 
 export type UsePlatformPeerDialogSubmitOptions = {
   parentOrigin: string | null | undefined
   requestId: string | null | undefined
   onSubmit: () => void
+  /** Host footer secondary (e.g. wizard Previous). */
+  onSecondary?: () => void
 }
 
 /**
- * Embed dialog routes: listen for host footer Submit → run local form submit.
+ * Embed dialog routes: listen for host footer Submit / Secondary → run local handlers.
  */
 export function usePlatformPeerDialogSubmit({
   parentOrigin,
   requestId,
   onSubmit,
+  onSecondary,
 }: UsePlatformPeerDialogSubmitOptions): void {
   const onSubmitRef = useRef(onSubmit)
+  const onSecondaryRef = useRef(onSecondary)
 
   useEffect(() => {
     onSubmitRef.current = onSubmit
-  }, [onSubmit])
+    onSecondaryRef.current = onSecondary
+  }, [onSecondary, onSubmit])
 
   useEffect(() => {
     if (!parentOrigin || !requestId) {
@@ -31,12 +39,18 @@ export function usePlatformPeerDialogSubmit({
         return
       }
       if (
-        !isPlatformPeerDialogSubmitMessage(event.data) ||
-        event.data.requestId !== requestId
+        isPlatformPeerDialogSubmitMessage(event.data) &&
+        event.data.requestId === requestId
       ) {
+        onSubmitRef.current()
         return
       }
-      onSubmitRef.current()
+      if (
+        isPlatformPeerDialogSecondaryMessage(event.data) &&
+        event.data.requestId === requestId
+      ) {
+        onSecondaryRef.current?.()
+      }
     }
 
     window.addEventListener('message', handleMessage)

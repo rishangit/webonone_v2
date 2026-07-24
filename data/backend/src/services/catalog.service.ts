@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
-import { db, type CatalogRow, type DataRole } from '../models/db.js'
+import { db, type CatalogRow, type DataRole, type ServiceRow, type ServiceTimeMode } from '../models/db.js'
 import type { CreateCatalogBody, UpdateCatalogBody } from '../schemas/catalog.schema.js'
+import type { CreateServiceBody, UpdateServiceBody } from '../schemas/services.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
   applySearchFilter,
@@ -59,6 +60,43 @@ export interface CatalogDto {
   attributes: CatalogAttributeValue[]
   createdAt: string
   updatedAt: string
+  timeMode?: ServiceTimeMode
+  durationMinutes?: number | null
+  startTime?: string | null
+  endTime?: string | null
+}
+
+type CatalogWriteBody = CreateCatalogBody | CreateServiceBody | UpdateCatalogBody | UpdateServiceBody
+
+function toHhMm(value: string | Date | null | undefined): string | null {
+  if (value == null) return null
+  if (typeof value === 'string') return value.slice(0, 5)
+  const hours = String(value.getUTCHours()).padStart(2, '0')
+  const minutes = String(value.getUTCMinutes()).padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+function serviceTimeColumns(body: CatalogWriteBody): {
+  time_mode: ServiceTimeMode
+  duration_minutes: number | null
+  start_time: string | null
+  end_time: string | null
+} | null {
+  if (!('time_mode' in body) || body.time_mode == null) return null
+  if (body.time_mode === 'duration') {
+    return {
+      time_mode: 'duration',
+      duration_minutes: body.duration_minutes ?? null,
+      start_time: null,
+      end_time: null,
+    }
+  }
+  return {
+    time_mode: 'window',
+    duration_minutes: null,
+    start_time: body.start_time ?? null,
+    end_time: body.end_time ?? null,
+  }
 }
 
 async function loadTagsForEntity(
@@ -97,12 +135,12 @@ async function loadAttributesForEntity(
   return result
 }
 
-async function rowToDto(kind: CatalogKind, row: CatalogRow): Promise<CatalogDto> {
+async function rowToDto(kind: CatalogKind, row: CatalogRow | ServiceRow): Promise<CatalogDto> {
   const [tags, attributes] = await Promise.all([
     loadTagsForEntity(kind, row.id),
     loadAttributesForEntity(kind, row.id),
   ])
-  return {
+  const dto: CatalogDto = {
     id: row.id,
     name: row.name,
     description: row.description,
@@ -113,6 +151,14 @@ async function rowToDto(kind: CatalogKind, row: CatalogRow): Promise<CatalogDto>
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
+  if (kind === 'services') {
+    const service = row as ServiceRow
+    dto.timeMode = service.time_mode
+    dto.durationMinutes = service.duration_minutes
+    dto.startTime = toHhMm(service.start_time)
+    dto.endTime = toHhMm(service.end_time)
+  }
+  return dto
 }
 
 export function createCatalogService(kind: CatalogKind) {
@@ -156,20 +202,26 @@ export function createCatalogService(kind: CatalogKind) {
       return row ? rowToDto(kind, row) : null
     },
 
-    async create(body: CreateCatalogBody, role?: DataRole): Promise<CatalogDto> {
-      await assertUniqueName(main, body.name)
+    async create(body: CatalogWriteBody, role?: DataRole): Promise<CatalogDto> {
+      await assertUniqueName(main, body.name!)
       const id = nanoid()
       const now = db.fn.now(3)
 
       await db.transaction(async (trx) => {
-        await trx(main).insert({
+        const insert: Record<string, unknown> = {
           id,
           name: body.name,
           description: body.description ?? null,
           status: resolveCreateStatus(role, body.status),
           created_at: now,
           updated_at: now,
-        })
+        }
+        if (kind === 'services') {
+          const timeCols = serviceTimeColumns(body)
+          if (timeCols) Object.assign(insert, timeCols)
+        }
+
+        await trx(main).insert(insert)
 
         const { tags, attributes, idCol } = TABLE_MAP[kind]
         if (body.tag_ids?.length) {
@@ -192,20 +244,24 @@ export function createCatalogService(kind: CatalogKind) {
       return created
     },
 
-    async update(id: string, body: UpdateCatalogBody): Promise<CatalogDto> {
+    async update(id: string, body: CatalogWriteBody): Promise<CatalogDto> {
       const existing = await db<CatalogRow>(main).where({ id }).first()
       if (!existing) throw new Error('NOT_FOUND')
       if (body.name) await assertUniqueName(main, body.name, id)
 
       await db.transaction(async (trx) => {
-        await trx(main)
-          .where({ id })
-          .update({
-            ...(body.name !== undefined ? { name: body.name } : {}),
-            ...(body.description !== undefined ? { description: body.description } : {}),
-            ...(body.status !== undefined ? { status: body.status } : {}),
-            updated_at: trx.fn.now(3),
-          })
+        const patch: Record<string, unknown> = {
+          ...(body.name !== undefined ? { name: body.name } : {}),
+          ...(body.description !== undefined ? { description: body.description } : {}),
+          ...(body.status !== undefined ? { status: body.status } : {}),
+          updated_at: trx.fn.now(3),
+        }
+        if (kind === 'services') {
+          const timeCols = serviceTimeColumns(body)
+          if (timeCols) Object.assign(patch, timeCols)
+        }
+
+        await trx(main).where({ id }).update(patch)
 
         const { tags, attributes, idCol } = TABLE_MAP[kind]
         if (body.tag_ids !== undefined) {

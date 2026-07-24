@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
+  ImagePreview,
+  isStatusTagVariant,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -78,26 +80,27 @@ export function MyCompaniesList({ items }: MyCompaniesListProps) {
                   onClick={() => openProfile(item.id)}
                 >
                   <div className="flex items-start gap-3">
-                    {item.logoUrl ? (
-                      <img
-                        src={item.logoUrl}
-                        alt=""
-                        className="h-10 w-10 shrink-0 rounded-md object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-xs">
-                        No logo
-                      </div>
-                    )}
+                    <ImagePreview
+                      src={item.logoUrl}
+                      alt={item.name}
+                      mode="view"
+                      className="h-10 w-10 rounded-md"
+                    />
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate font-medium">{item.name}</p>
                         <StatusTag variant={item.status} />
+                        {isStatusTagVariant(item.role) ? (
+                          <StatusTag variant={item.role} className="shrink-0" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{item.role}</span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {item.role === 'company_admin' ? 'Company Owner' : 'Member'}
-                        {item.createdAt ? ` · ${new Date(item.createdAt).toLocaleString()}` : null}
-                      </p>
+                      {item.createdAt ? (
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </button>

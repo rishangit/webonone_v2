@@ -1,5 +1,9 @@
 ---
-description: Dialog window standards with CustomDialog, AlertDialog, wizard and tab patterns
+description: >-
+  Dialog box / dialog window standards for CustomDialog, AlertDialog, wizard and
+  tab patterns. Use for any create/edit/selection/wizard dialog or modal. Always
+  check core-hosted-peer-dialog when the dialog opens from an embedded peer
+  (Identity, Email, Data, SMS) inside WebOnOne #main-content.
 globs: "**/frontend/src/**/*.{ts,tsx},ui-kit/showcase/**/*.{ts,tsx}"
 alwaysApply: false
 ---
@@ -9,6 +13,12 @@ alwaysApply: false
 Related: [tailwind-css.mdc](tailwind-css.mdc) (mobile-first, tokens), [front-end-structure.mdc](front-end-structure.mdc) (feature folders). Implementation: [`CustomDialog.tsx`](../../ui-kit/package/src/components/CustomDialog.tsx).
 
 Reference implementations: `DialogsPage.tsx` (`NestedDialogDemo` — stacked siblings), `ProfileMediaSelectorModal.tsx` (consumer + iframe crop), `CreateFolderDialog.tsx`, `ThemeDeleteDialog.tsx`.
+
+## Mandatory check
+
+Any **create / edit / selection / wizard** dialog box or dialog window in a satellite FE (Identity, Email, Data, SMS, …) must also follow [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) so the overlay is hosted by WebOnOne when embedded — not a local `CustomDialog` inside `#main-content`. Contract: [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
+
+**Exception:** Media picker/crop stays on `media-dialog-*` + `PlatformMediaDialogHost` (see **Iframe embed bodies** below).
 
 ## Which dialog to use
 
@@ -37,6 +47,8 @@ When a satellite (Identity, Email, Data, SMS, …) runs inside WebOnOne `#main-c
 | Local `CustomDialog` (header / body / footer) | `useRequestPlatformPeerDialog` + `/embed/dialogs/…` body route |
 | Footer Cancel/Save/Done on `CustomDialog` | Same labels on host footer; primary → `peer-dialog-submit` |
 
+List/page openers must resolve embed with **`resolvePlatformEmbedParentOrigin`** (URL + session). Do not use URL-only `getPlatformEmbedParentOrigin` on openers — after in-iframe client nav drops query params, a local dialog would open inside `#main-content`. Details: skill [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md).
+
 ### Stacked create from a selection dialog (SelectTag pattern)
 
 When a **selection** dialog needs **Add new / create** as a second dialog:
@@ -46,7 +58,23 @@ When a **selection** dialog needs **Add new / create** as a second dialog:
 | **Parent document** | Both `CustomDialog`s — outer picker + inner create (`stackLevel={1}`, `nestedDismissGuard`) |
 | **Body iframes** (when embedded) | Picker body + create body only — **no** create `CustomDialog` inside the picker iframe |
 
-**References:** `SelectTagDemo.tsx` / `CompanyTagsCard.tsx` + `DataTagCreateFrame`; peer-dialog host nested sibling via `peer-dialog-nested-request` (`PlatformPeerDialogHost`).
+**UX contract (same everywhere):** multi-select picker → **Add new tag** → stacked create → new tag auto-selected → Done.
+
+#### Strict — do not duplicate tag selection
+
+**One behaviour, one shared stack. Never fork a second tag-select UI.**
+
+| Need | Must use | Forbidden |
+|------|----------|-----------|
+| Trigger control | UI Kit `SelectTag` (Data: `TagSelectTrigger` from `TagSelectField.tsx`) | Custom chip/button row, local “tag picker trigger”, copied `SelectTag` |
+| Picker list + **Add new tag** | Data `TagPickerPanel` (company gets it via `TagPickerPage` iframe) | Parallel list UI, second “Add new tag” with different UX |
+| Standalone Data stacked dialogs | `TagSelectStackedDialogs` | New stacked `CustomDialog` pair for tags in another feature |
+| Consumer outside Data (e.g. company) | `SelectTag` + `DataTagPickerFrame` + `DataTagCreateFrame` | Reimplementing picker/create inside WebOnOne |
+| Embed peer-dialog select | `TagSelectEmbedPage` + nested create to `/embed/dialogs/tags/create` | Local create `CustomDialog` inside the select iframe; a second embed picker page |
+
+**Cross-service:** do not import Data React components into WebOnOne. Share via UI Kit + platform-embed + Data-owned `TagPickerPanel` behind the iframe. Do not copy `CompanyTagsCard` into Data (or the reverse).
+
+**References:** `SelectTagDemo.tsx` / `CompanyTagsCard.tsx` + `DataTagCreateFrame`; Data `TagSelectField.tsx` / `TagSelectEmbedPage.tsx`; peer-dialog host nested sibling via `peer-dialog-nested-request` (`PlatformPeerDialogHost`, including nested-from-nested create at `stackLevel={2}`).
 
 **Forbidden:** mounting create `CustomDialog` inside a peer-dialog / picker iframe (cannot overlay the host chrome). Follow skill [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) § Nested create from selection.
 
@@ -70,7 +98,7 @@ Media picker/crop stays on `media-dialog-*` (not peer-dialog). See **Iframe embe
 | Wizard | `large` × `xlarge` |
 | Delete / short confirm | `auto` + `maxWidth="max-w-md"` |
 
-**Width presets:** `small` 50%, `medium` 66%, `large` 75%, `xlarge` 83%, `auto` + `maxWidth`. **Height presets:** `small` 33%, `medium` 50%, `large` 75%, `xlarge` 90%, `auto` content-sized. Shell always `max-h-[calc(100vh-1rem)]`. Omitted `sizeHeight` defaults to `sizeWidth` (or `auto` when `sizeWidth="auto"`).
+**Width presets:** `small` 50%, `medium` 66%, `large` 75%, `xlarge` 83%, `auto` + `maxWidth` — percent/`max-w-*` apply from `sm:` up; below `sm` the shell is `w-full`. **Height presets:** `small` 33%, `medium` 50%, `large` 75%, `xlarge` 90%, `auto` content-sized. Shell always `max-h-[calc(100vh-1rem)]`. Omitted `sizeHeight` defaults to `sizeWidth` (or `auto` when `sizeWidth="auto"`).
 
 **Scroll:** fixed height → body `flex-1 min-h-0 overflow-y-auto`; `disableContentScroll` → `overflow-hidden` for internal scroll (iframes, crop).
 
@@ -205,9 +233,9 @@ Reference: [`ProfileMediaSelectorModal.tsx`](identity/frontend/src/features/prof
 
 ## Responsive / mobile-first
 
-**Shell (built into `CustomDialog` — do not override):** outer padding `px-2 py-2` → `sm:px-4 sm:py-4`; `max-h-[calc(100vh-1rem)]`; `maxWidth` overrides use `w-full sm:{maxWidth}`; body scroll per height preset.
+**Shell (built into `CustomDialog` — do not override):** outer padding `px-2 py-2` → `sm:px-4 sm:py-4`; `max-h-[calc(100vh-1rem)]`; width is `w-full` below `sm`; percent presets and `maxWidth` / `max-w-*` apply from `sm:` up; body scroll per height preset.
 
-**Sizing on mobile:** prefer `auto` + `maxWidth` for short confirms; percent presets apply at all breakpoints — do not assume desktop-only widths; no fixed `px` shell widths.
+**Sizing on mobile:** shell fills the padded content area below `sm` (640px); from `sm:` up, percent presets (`sm:w-1/2` …) and `max-w-*` caps apply. Prefer `auto` + `maxWidth` for short confirms; no fixed `px` shell widths.
 
 **Body content:** mobile-first single column; columns at `md:` / `lg:` only (e.g. `grid grid-cols-1 gap-6 lg:grid-cols-2`). No horizontal overflow; `min-w-0` on flex/grid children. Full-width inputs on phone. Wizard bar stays `w-1/2 mx-auto`.
 

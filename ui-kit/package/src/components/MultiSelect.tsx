@@ -43,7 +43,8 @@ function MultiSelect({
     }
   }
 
-  function removeChip(optionValue: string, e: React.MouseEvent) {
+  function removeChip(optionValue: string, e: React.SyntheticEvent) {
+    e.preventDefault()
     e.stopPropagation()
     onValueChange(value.filter((v) => v !== optionValue))
   }
@@ -65,14 +66,21 @@ function MultiSelect({
               className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs"
             >
               {opt.label}
-              <button
-                type="button"
+              {/* span, not button — trigger is already a <button>; nested buttons are invalid HTML */}
+              <span
+                role="button"
+                tabIndex={disabled ? -1 : 0}
                 className="rounded-sm hover:bg-accent"
                 onClick={(e) => removeChip(opt.value, e)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    removeChip(opt.value, e)
+                  }
+                }}
                 aria-label={`Remove ${opt.label}`}
               >
                 <X className="h-3 w-3" />
-              </button>
+              </span>
             </span>
           ))
         )}

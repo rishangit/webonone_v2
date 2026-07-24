@@ -1,10 +1,48 @@
 import { useEffect, useState } from 'react'
 import { cn } from '../lib/utils'
 import type { NavConfigItem } from '../types/nav'
+import { Card } from '../components/Card'
+import { isStatusTagVariant, StatusTag } from '../components/StatusTag'
 import { NavGroup } from '../components/nav/NavGroup'
 import { NavItem } from '../components/nav/NavItem'
 import { isNavPathActive } from '../components/nav/navTargetPath'
 import { SidebarCollapseButton } from '../components/nav/SidebarCollapseButton'
+
+/** Presentation-only company/context line for the sidebar footer. */
+interface SidebarSession {
+  title: string
+  /**
+   * Platform role key (`super_admin` | `company_admin` | `member`) shown as a
+   * StatusTag under the company title.
+   */
+  role?: string
+  /**
+   * Plain-text fallback when `role` is omitted. Prefer `role` for StatusTag styling.
+   * @deprecated Prefer `role`
+   */
+  subtitle?: string
+  /** Optional company/brand image URL shown in the card */
+  imageUrl?: string | null
+}
+
+function SessionRoleTag({ role, subtitle }: { role?: string; subtitle?: string }) {
+  if (role && isStatusTagVariant(role)) {
+    return <StatusTag variant={role} className="mt-0.5 w-fit max-w-full truncate" />
+  }
+  if (role) {
+    return (
+      <StatusTag variant="member" className="mt-0.5 w-fit max-w-full truncate">
+        {subtitle ?? role}
+      </StatusTag>
+    )
+  }
+  if (subtitle) {
+    return (
+      <p className="mt-0.5 truncate text-xs leading-snug text-muted-foreground">{subtitle}</p>
+    )
+  }
+  return null
+}
 
 interface AppSidebarProps {
   nav: NavConfigItem[]
@@ -17,7 +55,55 @@ interface AppSidebarProps {
   onNavItemPrefetch?: (to: string) => void
   /** When true, only one nav group can be expanded at a time. */
   accordionNavGroups?: boolean
+  /**
+   * Optional session/context card above the collapse control.
+   * Full text card is hidden when the sidebar is collapsed; a logo-only
+   * square may still show above the collapse strip when collapsed.
+   * Shown in the mobile drawer when open (and not collapsed).
+   */
+  sidebarSession?: SidebarSession | null
   className?: string
+}
+
+function sessionInitials(title: string): string {
+  const parts = title.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
+  return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
+}
+
+function SessionLogo({
+  title,
+  imageUrl,
+  className,
+}: {
+  title: string
+  imageUrl?: string | null
+  className?: string
+}) {
+  const initials = sessionInitials(title)
+
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt=""
+        className={cn('h-9 w-9 shrink-0 rounded-md object-cover', className)}
+      />
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium text-muted-foreground',
+        className,
+      )}
+      aria-hidden
+    >
+      {initials}
+    </div>
+  )
 }
 
 function findActiveGroupLabel(nav: NavConfigItem[], activePath: string | undefined): string | null {
@@ -40,6 +126,7 @@ function AppSidebar({
   onNavItemNavigate,
   onNavItemPrefetch,
   accordionNavGroups = false,
+  sidebarSession,
   className,
 }: AppSidebarProps) {
   const [expandedGroupLabel, setExpandedGroupLabel] = useState<string | null>(() =>
@@ -70,6 +157,9 @@ function AppSidebar({
   const handleNavigate = () => {
     onMobileClose()
   }
+
+  const showSessionCard = Boolean(sidebarSession && !collapsed)
+  const showCollapsedLogo = Boolean(sidebarSession && collapsed)
 
   return (
     <aside
@@ -122,7 +212,26 @@ function AppSidebar({
           )
         })}
       </nav>
-      <div className="hidden border-t p-2 md:block">
+
+      {showSessionCard && sidebarSession ? (
+        <div className="shrink-0 border-t p-2">
+          <Card className="flex items-center gap-2.5 px-3 py-2 shadow-none">
+            <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium leading-snug">{sidebarSession.title}</p>
+              <SessionRoleTag role={sidebarSession.role} subtitle={sidebarSession.subtitle} />
+            </div>
+          </Card>
+        </div>
+      ) : null}
+
+      {showCollapsedLogo && sidebarSession ? (
+        <div className="hidden shrink-0 border-t p-2 md:flex md:justify-center">
+          <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
+        </div>
+      ) : null}
+
+      <div className="hidden shrink-0 border-t p-2 md:block">
         <SidebarCollapseButton
           collapsed={collapsed}
           onClick={() => onCollapsedChange(!collapsed)}
@@ -133,4 +242,4 @@ function AppSidebar({
 }
 
 export { AppSidebar }
-export type { AppSidebarProps }
+export type { AppSidebarProps, SidebarSession }

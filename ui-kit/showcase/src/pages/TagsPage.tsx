@@ -26,6 +26,18 @@ export function TagsPage() {
           <StatusTag variant="verified" />
         </div>
       </DemoSection>
+
+      <DemoSection
+        id="user-role-tags"
+        title="User role tags"
+        description="Platform membership roles (Super Admin, Company Admin, Member). Violet / sky / slate glass chips. Map API role strings to StatusTag variant; use isStatusTagVariant for unknown roles."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <StatusTag variant="super_admin" />
+          <StatusTag variant="company_admin" />
+          <StatusTag variant="member" />
+        </div>
+      </DemoSection>
     </div>
   )
 }

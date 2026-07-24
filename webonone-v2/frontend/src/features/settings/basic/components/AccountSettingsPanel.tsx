@@ -1,4 +1,13 @@
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@webonone/ui-kit'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  isStatusTagVariant,
+  StatusTag,
+} from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import {
@@ -17,6 +26,7 @@ export function AccountSettingsPanel() {
   const description = matched
     ? accountDescription(matched)
     : accountDescription({ role: activeRole ?? 'member', companyName: undefined })
+  const roleForTag = activeRole ?? matched?.role
 
   const canChange = assumableRoles.length > 1
   const changeDisabled = !selectionComplete || loading || !canChange
@@ -41,7 +51,16 @@ export function AccountSettingsPanel() {
         ) : null}
       </CardHeader>
       <CardContent>
-        <p className="font-medium text-foreground">{label}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-medium text-foreground">{label}</p>
+          {roleForTag ? (
+            isStatusTagVariant(roleForTag) ? (
+              <StatusTag variant={roleForTag} className="shrink-0" />
+            ) : (
+              <span className="text-xs text-muted-foreground">{roleForTag}</span>
+            )
+          ) : null}
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         {!canChange && selectionComplete ? (
           <p className="mt-3 text-sm text-muted-foreground">Only one account is available.</p>

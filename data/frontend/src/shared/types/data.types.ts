@@ -56,6 +56,8 @@ export interface CatalogAttributeValue {
   valueNumber: number | null
 }
 
+export type ServiceTimeMode = 'duration' | 'window'
+
 export interface CatalogItem {
   id: string
   name: string
@@ -66,6 +68,11 @@ export interface CatalogItem {
   attributes: CatalogAttributeValue[]
   createdAt: string
   updatedAt: string
+  /** Services only */
+  timeMode?: ServiceTimeMode
+  durationMinutes?: number | null
+  startTime?: string | null
+  endTime?: string | null
 }
 
 export interface DashboardStats {

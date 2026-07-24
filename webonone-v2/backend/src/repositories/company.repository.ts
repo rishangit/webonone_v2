@@ -63,6 +63,16 @@ export async function findCompaniesByIds(ids: string[]): Promise<CompanyRow[]> {
   return db<CompanyRow>('companies').whereIn('id', ids)
 }
 
+export async function findCompaniesCreatedByUserId(userId: string): Promise<CompanyRow[]> {
+  return db<CompanyRow>('companies')
+    .where({ created_by_user_id: userId })
+    .orderBy('created_at', 'desc')
+}
+
+export async function deleteCompanyById(id: string): Promise<void> {
+  await db('companies').where({ id }).delete()
+}
+
 export async function insertCompany(
   row: Omit<CompanyRow, 'created_at' | 'updated_at' | 'approved_at' | 'approved_by_user_id'>,
 ): Promise<void> {

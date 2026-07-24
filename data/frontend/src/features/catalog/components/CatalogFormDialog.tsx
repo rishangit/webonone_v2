@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  getPlatformEmbedParentOrigin,
+  isPlatformPeerDialogNestedCancelMessage,
+  isPlatformPeerDialogNestedResultMessage,
   PLATFORM_EMBED_QUERY,
+  resolvePlatformEmbedParentOrigin,
   sendPlatformPeerDialogBusy,
+  sendPlatformPeerDialogNestedRequest,
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
 } from '@webonone/platform-embed'
@@ -21,21 +24,27 @@ import {
   SelectValue,
   Spinner,
   Textarea,
+  type SelectTagValue,
 } from '@webonone/ui-kit'
 import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { attributesActions } from '@/features/attributes/store'
 import { productsActions } from '@/features/products/store'
-import { servicesActions } from '@/features/services/store'
 import { spacesActions } from '@/features/spaces/store'
 import { DATA_FORM_DIALOG_SIZE } from '@/shared/utils/dataFormDialogSize'
-import { tagsActions } from '@/features/tags/store'
+import {
+  createNestedRequestId,
+  TAG_SELECT_EMBED_PATH,
+  TagSelectStackedDialogs,
+  TagSelectTrigger,
+  writeTagSelectSession,
+} from '@/features/tags/components/TagSelectField'
 import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
 import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
 
-type CatalogKind = 'products' | 'services' | 'spaces'
+type CatalogKind = 'products' | 'spaces'
 
 const CONFIG: Record<
   CatalogKind,
@@ -46,14 +55,36 @@ const CONFIG: Record<
   }
 > = {
   products: { label: 'Product', select: (s) => s.products, actions: productsActions },
-  services: { label: 'Service', select: (s) => s.services, actions: servicesActions },
   spaces: { label: 'Space', select: (s) => s.spaces, actions: spacesActions },
+}
+
+const TAG_PICKER_PEER_SIZE = {
+  sizeWidth: 'small' as const,
+  sizeHeight: 'large' as const,
 }
 
 type AttributeRow = {
   attributeId: string
   valueText: string
   valueNumber: string
+}
+
+function isSelectTagValue(value: unknown): value is SelectTagValue {
+  if (!value || typeof value !== 'object') return false
+  const tag = value as Record<string, unknown>
+  return (
+    typeof tag.id === 'string' &&
+    typeof tag.name === 'string' &&
+    typeof tag.color === 'string'
+  )
+}
+
+function parseTagsPayload(payload: unknown): SelectTagValue[] | null {
+  if (!payload || typeof payload !== 'object') return null
+  const record = payload as Record<string, unknown>
+  if (!Array.isArray(record.tags)) return null
+  const tags = record.tags.filter(isSelectTagValue)
+  return tags
 }
 
 interface CatalogFormDialogProps {
@@ -74,7 +105,7 @@ export function CatalogFormDialog({
   chrome = 'dialog',
 }: CatalogFormDialogProps) {
   const [searchParams] = useSearchParams()
-  const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const config = CONFIG[kind]
   const isNew = !id
   const lowerLabel = config.label.toLowerCase()
@@ -104,40 +135,149 @@ export function CatalogFormDialog({
 
   const dispatch = useAppDispatch()
   const userRole = useAppSelector((s) => s.auth.user?.role)
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
   const canSetStatus = userRole === 'super_admin'
-  const tags = useAppSelector((s) => s.tags.items)
   const attributes = useAppSelector((s) => s.attributes.items)
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<'verified' | 'pending'>('pending')
-  const [tagIds, setTagIds] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<SelectTagValue[]>([])
+  const [tagPickerOpen, setTagPickerOpen] = useState(false)
+  const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
   const [attributeRows, setAttributeRows] = useState<AttributeRow[]>([])
   const [nameError, setNameError] = useState<string | null>(null)
   const submittedRef = useRef(false)
+  const tagPickerOpenRef = useRef(false)
+  const blockOuterDismissRef = useRef(false)
+  const blockTimerRef = useRef<number | null>(null)
+  const nestedTagRequestIdRef = useRef<string | null>(null)
 
   const editor = useEpicCatalogEditor(id, isNew, config.select, config.actions)
+
+  useEffect(() => {
+    tagPickerOpenRef.current = tagPickerOpen
+  }, [tagPickerOpen])
+
+  useEffect(() => {
+    return () => {
+      if (blockTimerRef.current !== null) {
+        window.clearTimeout(blockTimerRef.current)
+      }
+    }
+  }, [])
+
+  const closeTagPicker = useCallback(() => {
+    setTagPickerOpen(false)
+    tagPickerOpenRef.current = false
+    nestedTagRequestIdRef.current = null
+    blockOuterDismissRef.current = true
+    setBlockOuterDismiss(true)
+    if (blockTimerRef.current !== null) {
+      window.clearTimeout(blockTimerRef.current)
+    }
+    blockTimerRef.current = window.setTimeout(() => {
+      blockOuterDismissRef.current = false
+      setBlockOuterDismiss(false)
+      blockTimerRef.current = null
+    }, 150)
+  }, [])
+
+  const openTagPicker = useCallback(() => {
+    if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {
+      const nestedRequestId = createNestedRequestId()
+      nestedTagRequestIdRef.current = nestedRequestId
+      writeTagSelectSession(nestedRequestId, selectedTags)
+      tagPickerOpenRef.current = true
+      setTagPickerOpen(true)
+      sendPlatformPeerDialogNestedRequest(parentOrigin, {
+        parentRequestId: dialogRequestId,
+        requestId: nestedRequestId,
+        path: TAG_SELECT_EMBED_PATH,
+        title: 'Select tags',
+        description: 'Choose one or more tags, then click Done.',
+        submitLabel: 'Done',
+        ...TAG_PICKER_PEER_SIZE,
+      })
+      return
+    }
+    tagPickerOpenRef.current = true
+    setTagPickerOpen(true)
+  }, [chrome, dialogRequestId, parentOrigin, selectedTags])
+
+  useEffect(() => {
+    if (chrome !== 'embed-page' || !parentOrigin || !dialogRequestId) {
+      return
+    }
+
+    function handleMessage(event: MessageEvent) {
+      if (event.origin !== parentOrigin || event.source !== window.parent) {
+        return
+      }
+      const nestedId = nestedTagRequestIdRef.current
+      if (!nestedId) {
+        return
+      }
+
+      if (
+        isPlatformPeerDialogNestedResultMessage(event.data) &&
+        event.data.parentRequestId === dialogRequestId &&
+        event.data.requestId === nestedId
+      ) {
+        const tags = parseTagsPayload(event.data.payload)
+        if (tags) {
+          setSelectedTags(tags)
+        }
+        closeTagPicker()
+        return
+      }
+
+      if (
+        isPlatformPeerDialogNestedCancelMessage(event.data) &&
+        event.data.parentRequestId === dialogRequestId &&
+        event.data.requestId === nestedId
+      ) {
+        closeTagPicker()
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [chrome, closeTagPicker, dialogRequestId, parentOrigin])
 
   usePlatformPeerDialogSubmit({
     parentOrigin: chrome === 'embed-page' ? parentOrigin : null,
     requestId: dialogRequestId,
     onSubmit: () => {
+      if (tagPickerOpenRef.current) {
+        return
+      }
       handleSubmit()
     },
   })
 
   useEffect(() => {
     if (chrome !== 'embed-page' || !parentOrigin || !dialogRequestId) return
+    if (tagPickerOpen) {
+      sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, true, idleSubmitLabel)
+      return
+    }
     sendPlatformPeerDialogBusy(
       parentOrigin,
       dialogRequestId,
       editor.saving,
       editor.saving ? 'Saving…' : idleSubmitLabel,
     )
-  }, [chrome, dialogRequestId, editor.saving, idleSubmitLabel, parentOrigin])
+  }, [
+    chrome,
+    dialogRequestId,
+    editor.saving,
+    idleSubmitLabel,
+    parentOrigin,
+    tagPickerOpen,
+  ])
 
   useEffect(() => {
-    dispatch(tagsActions.loadListRequested({ pageSize: 100, force: true }))
     dispatch(attributesActions.loadListRequested({ pageSize: 100, force: true }))
   }, [dispatch])
 
@@ -147,7 +287,9 @@ export function CatalogFormDialog({
     setName(item.name)
     setDescription(item.description ?? '')
     setStatus(item.status)
-    setTagIds(item.tags.map((t) => t.id))
+    setSelectedTags(
+      item.tags.map((t) => ({ id: t.id, name: t.name, color: t.color })),
+    )
     setAttributeRows(
       item.attributes.map((a) => ({
         attributeId: a.attributeId,
@@ -158,14 +300,20 @@ export function CatalogFormDialog({
   }, [editor.detail, isNew])
 
   useEffect(() => {
+    if (!open) {
+      setTagPickerOpen(false)
+      tagPickerOpenRef.current = false
+      nestedTagRequestIdRef.current = null
+      setBlockOuterDismiss(false)
+      blockOuterDismissRef.current = false
+    }
+  }, [open])
+
+  useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
     if (!editor.error) onSaved()
   }, [editor.saving, editor.error, onSaved])
-
-  function toggleTag(tagId: string) {
-    setTagIds((prev) => (prev.includes(tagId) ? prev.filter((tid) => tid !== tagId) : [...prev, tagId]))
-  }
 
   function addAttributeRow() {
     setAttributeRows((prev) => [...prev, { attributeId: '', valueText: '', valueNumber: '' }])
@@ -184,7 +332,7 @@ export function CatalogFormDialog({
       name: name.trim(),
       description: description.trim() || null,
       status: canSetStatus ? status : 'pending',
-      tag_ids: tagIds,
+      tag_ids: selectedTags.map((tag) => tag.id),
       attributes: attributeRows
         .filter((row) => row.attributeId)
         .map((row) => {
@@ -197,20 +345,34 @@ export function CatalogFormDialog({
     })
   }
 
+  function handleFormOpenChange(next: boolean) {
+    if (next) return
+    if (tagPickerOpenRef.current || tagPickerOpen) {
+      closeTagPicker()
+      return
+    }
+    if (blockOuterDismissRef.current || blockOuterDismiss) {
+      return
+    }
+    onOpenChange(false)
+  }
+
   const actions = (
     <>
       <Button
         type="button"
         variant="outline"
-        onClick={() => onOpenChange(false)}
+        className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+        onClick={() => handleFormOpenChange(false)}
         disabled={editor.saving}
       >
         Cancel
       </Button>
       <Button
         type="button"
+        className="h-10 px-4"
         onClick={() => handleSubmit()}
-        disabled={editor.saving || editor.loading}
+        disabled={editor.saving || editor.loading || tagPickerOpen}
       >
         {editor.saving ? 'Saving…' : idleSubmitLabel}
       </Button>
@@ -248,19 +410,11 @@ export function CatalogFormDialog({
         </FormField>
       ) : null}
       <FormField label="Tags" htmlFor="catalog-tags">
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Button
-              key={tag.id}
-              type="button"
-              size="sm"
-              variant={tagIds.includes(tag.id) ? 'default' : 'outline'}
-              onClick={() => toggleTag(tag.id)}
-            >
-              {tag.name}
-            </Button>
-          ))}
-        </div>
+        <TagSelectTrigger
+          selectedTags={selectedTags}
+          onOpen={openTagPicker}
+          disabled={!accessToken || editor.saving}
+        />
       </FormField>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -337,15 +491,28 @@ export function CatalogFormDialog({
   }
 
   return (
-    <CustomDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      sizeWidth={DATA_FORM_DIALOG_SIZE.sizeWidth}
-      sizeHeight={DATA_FORM_DIALOG_SIZE.sizeHeight}
-      footer={actions}
-    >
-      {body}
-    </CustomDialog>
+    <>
+      <CustomDialog
+        open={open}
+        onOpenChange={handleFormOpenChange}
+        title={title}
+        sizeWidth={DATA_FORM_DIALOG_SIZE.sizeWidth}
+        sizeHeight={DATA_FORM_DIALOG_SIZE.sizeHeight}
+        nestedDismissGuard={tagPickerOpen || blockOuterDismiss}
+        footer={actions}
+      >
+        {body}
+      </CustomDialog>
+      <TagSelectStackedDialogs
+        pickerOpen={tagPickerOpen}
+        selectedTags={selectedTags}
+        onDone={(tags) => {
+          setSelectedTags(tags)
+          closeTagPicker()
+        }}
+        onClosePicker={closeTagPicker}
+        pickerStackLevel={1}
+      />
+    </>
   )
 }

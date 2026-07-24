@@ -24,6 +24,8 @@ Specs: `spec/1.1.0/03-media-project.md`, `spec/1.1.0/08-media-consumer-integrati
 ## Rules
 
 - [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — media features use slice + epics for folder/picker/upload API I/O. For any standard list/detail CRUD, prefer `@webonone/store-kit` — see [feature-store skill](../feature-store/SKILL.md)
+- [image-preview.mdc](../../rules/image-preview.mdc) — consumers display selected media with `ImagePreview`; missing image uses the kit first-upload empty state (not custom “No image” UI)
+- [media-project.mdc](../../rules/media-project.mdc)
 
 ## Key paths
 

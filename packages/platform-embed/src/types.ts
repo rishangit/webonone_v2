@@ -29,6 +29,8 @@ export const PLATFORM_MESSAGE_TYPES = {
   PEER_DIALOG_COMPLETE: 'webonone:platform:peer-dialog-complete',
   /** Shell → dialog iframe: footer primary button clicked. */
   PEER_DIALOG_SUBMIT: 'webonone:platform:peer-dialog-submit',
+  /** Shell → dialog iframe: footer secondary button clicked (e.g. Previous). */
+  PEER_DIALOG_SECONDARY: 'webonone:platform:peer-dialog-secondary',
   /** Dialog iframe → shell: disable/enable host footer while saving. */
   PEER_DIALOG_BUSY: 'webonone:platform:peer-dialog-busy',
   /**
@@ -208,6 +210,11 @@ export type PlatformPeerDialogRequestMessage = {
   description?: string
   /** Host CustomDialog footer Cancel label (default Cancel). */
   cancelLabel?: string
+  /**
+   * Optional host footer secondary action (e.g. wizard Previous).
+   * Shown between Cancel and primary when set.
+   */
+  secondaryLabel?: string
   /** Host CustomDialog footer primary action label. */
   submitLabel: string
 }
@@ -237,12 +244,25 @@ export type PlatformPeerDialogSubmitMessage = {
   requestId: string
 }
 
-/** Dialog iframe → shell to sync footer busy / label while saving. */
+/** Shell → dialog iframe when the host footer secondary button is clicked. */
+export type PlatformPeerDialogSecondaryMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_SECONDARY
+  requestId: string
+}
+
+/** Dialog iframe → shell to sync footer busy / chrome while saving or stepping. */
 export type PlatformPeerDialogBusyMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.PEER_DIALOG_BUSY
   requestId: string
   busy: boolean
   submitLabel?: string
+  /** Update host description (wizard step copy). */
+  description?: string
+  /**
+   * Update host secondary footer label.
+   * `null` hides the secondary button; omit to leave unchanged.
+   */
+  secondaryLabel?: string | null
 }
 
 /** Outer dialog iframe → shell: open stacked sibling dialog (create-from-picker). */
@@ -258,6 +278,7 @@ export type PlatformPeerDialogNestedRequestMessage = {
   sizeHeight: PlatformDialogSizePreset
   description?: string
   cancelLabel?: string
+  secondaryLabel?: string
   submitLabel: string
 }
 
@@ -299,6 +320,7 @@ export type PlatformEmbedMessage =
   | PlatformPeerDialogCancelMessage
   | PlatformPeerDialogCompleteMessage
   | PlatformPeerDialogSubmitMessage
+  | PlatformPeerDialogSecondaryMessage
   | PlatformPeerDialogBusyMessage
   | PlatformPeerDialogNestedRequestMessage
   | PlatformPeerDialogNestedCancelMessage
@@ -627,7 +649,8 @@ export function isPlatformPeerDialogRequestMessage(
     isPlatformDialogSizePreset(message.sizeWidth) &&
     isPlatformDialogSizePreset(message.sizeHeight) &&
     (message.description === undefined || typeof message.description === 'string') &&
-    (message.cancelLabel === undefined || typeof message.cancelLabel === 'string')
+    (message.cancelLabel === undefined || typeof message.cancelLabel === 'string') &&
+    (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string')
   )
 }
 
@@ -688,6 +711,20 @@ export function isPlatformPeerDialogSubmitMessage(
   )
 }
 
+export function isPlatformPeerDialogSecondaryMessage(
+  data: unknown,
+): data is PlatformPeerDialogSecondaryMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_SECONDARY &&
+    hasStringProperty(message, 'requestId')
+  )
+}
+
 export function isPlatformPeerDialogBusyMessage(
   data: unknown,
 ): data is PlatformPeerDialogBusyMessage {
@@ -700,7 +737,11 @@ export function isPlatformPeerDialogBusyMessage(
     message.type === PLATFORM_MESSAGE_TYPES.PEER_DIALOG_BUSY &&
     hasStringProperty(message, 'requestId') &&
     typeof message.busy === 'boolean' &&
-    (message.submitLabel === undefined || typeof message.submitLabel === 'string')
+    (message.submitLabel === undefined || typeof message.submitLabel === 'string') &&
+    (message.description === undefined || typeof message.description === 'string') &&
+    (message.secondaryLabel === undefined ||
+      message.secondaryLabel === null ||
+      typeof message.secondaryLabel === 'string')
   )
 }
 
@@ -723,7 +764,8 @@ export function isPlatformPeerDialogNestedRequestMessage(
     isPlatformDialogSizePreset(message.sizeWidth) &&
     isPlatformDialogSizePreset(message.sizeHeight) &&
     (message.description === undefined || typeof message.description === 'string') &&
-    (message.cancelLabel === undefined || typeof message.cancelLabel === 'string')
+    (message.cancelLabel === undefined || typeof message.cancelLabel === 'string') &&
+    (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string')
   )
 }
 

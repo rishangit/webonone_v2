@@ -103,9 +103,19 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
         state.listError = action.payload
       },
       fetchDetailRequested(state, action: PayloadAction<{ id: string; force?: boolean }>) {
-        state.detailStatus = 'loading'
+        const { id, force } = action.payload
         state.detailError = null
-        state.detailId = action.payload.id
+        if (
+          !force &&
+          state.detailId === id &&
+          state.detail &&
+          isFresh(state.detailLastFetchedAt)
+        ) {
+          state.detailId = id
+          return
+        }
+        state.detailId = id
+        state.detailStatus = 'loading'
       },
       fetchDetailSucceeded(state, action: PayloadAction<T>) {
         state.detail = action.payload as typeof state.detail

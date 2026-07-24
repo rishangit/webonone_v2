@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
+  resolvePlatformEmbedParentOrigin,
   sendPlatformPeerDialogBusy,
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
@@ -117,7 +117,7 @@ export function TemplateFormDialog({
   chrome = 'dialog',
 }: TemplateFormDialogProps) {
   const [searchParams] = useSearchParams()
-  const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [createValues, setCreateValues] = useState<TemplateCreateFormValues>({ ...EMPTY_CREATE })
   const [editValues, setEditValues] = useState<TemplateEditorFormValues>({ ...EMPTY_EDIT })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})

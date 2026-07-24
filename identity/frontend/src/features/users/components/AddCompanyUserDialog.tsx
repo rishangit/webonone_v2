@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Save } from 'lucide-react'
 import {
-  getPlatformEmbedParentOrigin,
   isPlatformPeerDialogNestedCancelMessage,
   isPlatformPeerDialogNestedResultMessage,
   PLATFORM_EMBED_QUERY,
+  resolvePlatformEmbedParentOrigin,
   sendPlatformPeerDialogBusy,
   sendPlatformPeerDialogComplete,
   sendPlatformPeerDialogDismiss,
@@ -92,7 +92,7 @@ export function AddCompanyUserDialog({
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const companyId = getSessionCompanyId(accessToken)
-  const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)

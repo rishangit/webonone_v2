@@ -213,25 +213,26 @@ export async function getMyCompany(userId: string): Promise<CompanyWithMembershi
 
 export async function listMyCompanies(userId: string): Promise<MyCompanySummary[]> {
   const roles = await roleRepo.findCompanyRolesByUserId(userId)
-  const companyIds = [
+  const ownedCompanies = await repo.findCompaniesCreatedByUserId(userId)
+  const byId = new Map<string, MyCompanySummary>()
+
+  const roleCompanyIds = [
     ...new Set(
       roles
         .map((row) => row.company_id)
         .filter((id): id is string => typeof id === 'string' && id.length > 0),
     ),
   ]
-  if (companyIds.length === 0) return []
+  const companiesFromRoles =
+    roleCompanyIds.length > 0 ? await repo.findCompaniesByIds(roleCompanyIds) : []
+  const companyById = new Map(companiesFromRoles.map((row) => [row.id, row]))
 
-  const companies = await repo.findCompaniesByIds(companyIds)
-  const companyById = new Map(companies.map((row) => [row.id, row]))
-
-  const items: MyCompanySummary[] = []
   for (const role of roles) {
     if (!role.company_id) continue
     const company = companyById.get(role.company_id)
     if (!company) continue
 
-    items.push({
+    byId.set(company.id, {
       id: company.id,
       name: company.name,
       logoUrl: company.logo_url,
@@ -242,8 +243,33 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
     })
   }
 
-  items.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  return items
+  // Creator fallback + heal: company rows can exist when Identity role insert timed out.
+  for (const company of ownedCompanies) {
+    if (byId.has(company.id)) continue
+
+    try {
+      await roleRepo.insertUserRole({
+        id: nanoid(),
+        user_id: userId,
+        role: 'company_admin',
+        company_id: company.id,
+      })
+    } catch {
+      // Keep listing via created_by even if Identity is temporarily unavailable.
+    }
+
+    byId.set(company.id, {
+      id: company.id,
+      name: company.name,
+      logoUrl: company.logo_url,
+      status: company.status,
+      role: 'company_admin',
+      createdAt: company.created_at.toISOString(),
+      approvedAt: company.approved_at ? company.approved_at.toISOString() : null,
+    })
+  }
+
+  return [...byId.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
 export async function registerCompany(
@@ -276,16 +302,24 @@ export async function registerCompany(
     created_by_user_id: userId,
   })
 
-  await roleRepo.insertUserRole({
-    id: roleId,
-    user_id: userId,
-    role: 'company_admin',
-    company_id: companyId,
-  })
+  try {
+    await roleRepo.insertUserRole({
+      id: roleId,
+      user_id: userId,
+      role: 'company_admin',
+      company_id: companyId,
+    })
+  } catch (err) {
+    await repo.deleteCompanyById(companyId)
+    throw err
+  }
 
   const company = await repo.findCompanyById(companyId)
   const role = await roleRepo.findCompanyRole(userId, companyId)
   if (!company || !role) {
+    if (company) {
+      await repo.deleteCompanyById(companyId)
+    }
     throw new Error('Failed to create company')
   }
 
@@ -486,6 +520,7 @@ export type AssumableRoleOption = {
   companyId: string | null
   label: string
   companyName?: string
+  companyLogoUrl?: string | null
 }
 
 export type AssumableRolesResponse = {
@@ -549,6 +584,7 @@ export async function getAssumableRoles(userId: string): Promise<AssumableRolesR
       companyId: company.id,
       label: company.name,
       companyName: company.name,
+      companyLogoUrl: company.logo_url,
     })
   }
 

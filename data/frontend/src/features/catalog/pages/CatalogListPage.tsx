@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -24,6 +24,7 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
 import { CatalogList } from '@/features/catalog/components/CatalogList'
 import { productsActions } from '@/features/products/store'
+import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
 import { servicesActions } from '@/features/services/store'
 import { spacesActions } from '@/features/spaces/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
@@ -67,10 +68,13 @@ const CONFIG: Record<
 
 export function CatalogListPage({ kind }: { kind: CatalogKind }) {
   const config = CONFIG[kind]
+  const navigate = useNavigate()
+  const location = useLocation()
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canCreate = user?.role === 'super_admin' || user?.role === 'company_admin'
-  const canMutate = user?.role === 'super_admin'
+  const canEdit = canCreate
+  const canDelete = user?.role === 'super_admin'
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList(config.select, config.actions)
@@ -144,7 +148,17 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
                 dispatch(config.actions.saveDetailRequested({ id, body: { status: 'verified' } }))
                 list.load(list.page, list.pageSize, true)
               }}
-              canMutate={canMutate}
+              onView={
+                kind === 'services'
+                  ? (id) =>
+                      navigate({
+                        pathname: `/services/${id}`,
+                        search: location.search,
+                      })
+                  : undefined
+              }
+              canEdit={canEdit}
+              canDelete={canDelete}
             />
           ) : null}
         </div>
@@ -159,7 +173,21 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
         />
       </ListPageBody>
 
-      {dialog !== null ? (
+      {dialog !== null && kind === 'services' ? (
+        <ServiceFormDialog
+          open
+          id={dialog.id}
+          onOpenChange={(o) => {
+            if (!o) setDialog(null)
+          }}
+          onSaved={() => {
+            list.load(list.page, list.pageSize, true)
+            setDialog(null)
+          }}
+        />
+      ) : null}
+
+      {dialog !== null && (kind === 'products' || kind === 'spaces') ? (
         <CatalogFormDialog
           kind={kind}
           open

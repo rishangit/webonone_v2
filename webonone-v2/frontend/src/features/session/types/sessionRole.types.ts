@@ -5,6 +5,7 @@ export type AssumableRoleOption = {
   companyId: string | null
   label: string
   companyName?: string
+  companyLogoUrl?: string | null
 }
 
 export type AssumableRolesResponse = {

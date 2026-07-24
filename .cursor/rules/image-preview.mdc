@@ -1,0 +1,61 @@
+---
+description: Use UI Kit ImagePreview for logos/avatars; empty src shows first-upload icon
+globs: "**/frontend/src/**/*.{ts,tsx},ui-kit/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Image preview
+
+Entity images (logos, avatars, profile photos) must use **`ImagePreview`** from `@webonone/ui-kit`. When there is no image (`src={null}`), show the kit **first-upload empty state** (centered image icon on `bg-muted`) — never custom “No logo” / “No image” text boxes or hand-rolled muted squares.
+
+Related: [ui-kit-consumption.mdc](ui-kit-consumption.mdc), [media-project.mdc](media-project.mdc), [dialog-windows.mdc](dialog-windows.mdc) (Media picker embed), [item-list skill](../skills/item-list/SKILL.md), [details-page-cards skill](../skills/details-page-cards/SKILL.md).
+
+## Required
+
+```tsx
+import { ImagePreview } from '@webonone/ui-kit'
+
+// Default preview (h-40 w-40) — profile / logo cards
+<ImagePreview src={logoUrl} alt="Company logo" mode="view" />
+
+// Missing image → kit empty state (do not branch on logoUrl for a custom placeholder)
+<ImagePreview src={null} alt="Company logo" mode="view" />
+
+// List row thumbnail
+<ImagePreview src={item.logoUrl} alt={item.name} mode="view" className="h-10 w-10 rounded-md" />
+
+// Editable (opens Media via consumer onEdit)
+<ImagePreview src={url} alt={name} mode="edit" onEdit={openMediaPicker} />
+```
+
+| Concern | Rule |
+|---------|------|
+| Empty / first upload | `src={null}` — kit shows centered `Image` icon; **no** “No logo” text tiles |
+| Has image | Pass URL in `src`; kit uses `object-cover` |
+| List thumbs | Override size with `className` (e.g. `h-10 w-10 rounded-md`); empty icon scales with box |
+| Profile / logo cards | Default `h-40 w-40`; `mode="edit"` + `onEdit` when user can change the image |
+| Upload source | Media embed / platform media dialog — UI Kit does **not** host upload |
+
+## Forbidden
+
+- Custom empty placeholders (`No logo`, grey boxes with text, initials-only tiles) instead of `ImagePreview` when `src` is null
+- Raw `<img>` + separate empty-state markup for logos/avatars that `ImagePreview` covers
+- Embedding Media picker UI inside UI Kit
+
+## References
+
+| Surface | Path |
+|---------|------|
+| Component | `ui-kit/package/src/components/ImagePreview.tsx` |
+| Showcase | Components → “Without image (first upload)” |
+| Profile | `identity/.../ProfileAvatarEditor.tsx`, `ProfileView.tsx` |
+| Company lists / logo | `webonone-v2/.../MyCompaniesList.tsx`, `CompaniesList.tsx`, `CompanyLogoCard.tsx` |
+
+## Verification
+
+```bash
+npm run type-check -w webonone-v2-root   # or identity-root / ui-kit-root
+npm run build -w @webonone/ui-kit        # when changing ImagePreview
+```
+
+Manual: open a company with no logo — list and logo card show the image-icon empty state, not “No logo” text.

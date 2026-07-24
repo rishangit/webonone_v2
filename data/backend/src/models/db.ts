@@ -51,6 +51,8 @@ export interface AttributeRow {
   updated_at: Date
 }
 
+export type ServiceTimeMode = 'duration' | 'window'
+
 export interface CatalogRow {
   id: string
   name: string
@@ -58,4 +60,11 @@ export interface CatalogRow {
   status: EntityStatus
   created_at: Date
   updated_at: Date
+}
+
+export interface ServiceRow extends CatalogRow {
+  time_mode: ServiceTimeMode
+  duration_minutes: number | null
+  start_time: string | Date | null
+  end_time: string | Date | null
 }

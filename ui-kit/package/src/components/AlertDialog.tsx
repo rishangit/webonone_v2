@@ -33,7 +33,7 @@ function AlertDialogContent({
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4">
         <AlertDialogPrimitive.Content
           className={cn(
-            'glass-card-solid grid w-full max-w-lg gap-4 rounded-lg p-6 text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+            'glass-card-solid grid w-full sm:max-w-lg gap-4 rounded-lg p-6 text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
             className,
           )}
           {...props}

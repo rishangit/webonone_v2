@@ -1,6 +1,11 @@
 ---
 name: data-agent
-description: Data service agent for webonone-platform. Handles data/ frontend, backend, migrations — catalog CRUD for tags, units, attributes, products, services, spaces. Use when tasks touch data/, Data API, or WebOnOne Data nav handoff.
+description: >-
+  Data service agent for webonone-platform. Handles data/ frontend, backend,
+  migrations — catalog CRUD for tags, units, attributes, products, services,
+  spaces. Use when tasks touch data/, Data API, WebOnOne Data nav handoff, or
+  Data create/edit/wizard dialog boxes — also read core-hosted-peer-dialog and
+  dialog-windows for any dialog or modal.
 ---
 
 # Data agent skill
@@ -15,6 +20,7 @@ description: Data service agent for webonone-platform. Handles data/ frontend, b
 
 - [redux-store-and-epics.mdc](../../rules/redux-store-and-epics.mdc) — **required**: pages dispatch actions only
 - [feature-store skill](../feature-store/SKILL.md) — **required for catalog CRUD**: build each `store/*Store.ts` with `createCatalogFeatureStore` from `@webonone/store-kit` (not hand-written slice + epics); consume via `useEpicCatalogList` / `useEpicCatalogEditor`
+- [core-hosted-peer-dialog skill](../core-hosted-peer-dialog/SKILL.md) — **required for any dialog box / dialog window** (create/edit/wizard/selection): host chrome when embedded; also [dialog-windows.mdc](../../rules/dialog-windows.mdc) and [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc)
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — platform handoff + satellite peer nav to Email
 - [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) — `FeaturePage` for collection and details routes
 - [details-page-cards.mdc](../../rules/details-page-cards.mdc) — multi-section details pages ([details-page-cards skill](../details-page-cards/SKILL.md))
@@ -50,7 +56,7 @@ Catalog create/edit dialogs must use the **peer-dialog** bridge when embedded in
 **Follow:** [core-hosted-peer-dialog skill](../core-hosted-peer-dialog/SKILL.md) · [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) · [dialog-windows.mdc](../../rules/dialog-windows.mdc)
 
 1. Standalone: local `CustomDialog` with matching sizes and footer labels.
-2. Embed: `useRequestPlatformPeerDialog` + route under `/embed/dialogs/…` (e.g. tags/units/attributes/catalog).
+2. Embed: `resolvePlatformEmbedParentOrigin` + `useRequestPlatformPeerDialog` + route under `/embed/dialogs/…` (e.g. tags/units/attributes/catalog). Do **not** use URL-only `getPlatformEmbedParentOrigin` on list openers.
 3. Embed page: `usePlatformPeerDialogSubmit` + `sendPlatformPeerDialogBusy` / `Complete` — **no** Cancel/Save in the iframe body.
 
 Reference: `features/tags/components/TagFormDialog.tsx`, `features/tags/pages/TagFormEmbedPage.tsx`.

@@ -3,7 +3,9 @@ name: identity-agent
 description: >-
   Identity service agent for webonone-platform. Handles identity/ frontend,
   backend, and migrations — auth UI, JWT issuance, embed mode. Use when tasks
-  touch identity/, auth routes, login/register/reset, or JWT signing.
+  touch identity/, auth routes, login/register/reset, JWT signing, or Identity
+  create/edit/selection dialog boxes — also read core-hosted-peer-dialog and
+  dialog-windows for any dialog or modal.
 ---
 
 # Identity service agent

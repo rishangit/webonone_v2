@@ -1,4 +1,4 @@
-import { ImagePlus, Trash2, Upload } from 'lucide-react'
+import { Trash2, Upload } from 'lucide-react'
 import { PLATFORM_MESSAGE_TYPES } from '@webonone/platform-embed'
 import {
   Button,
@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ImagePreview,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
@@ -73,27 +74,17 @@ export function CompanyLogoCard({ companyId, logoUrl, canEdit, saving }: Company
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-start gap-4">
-          <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border bg-muted/40">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Company logo" className="h-full w-full object-cover" />
-            ) : (
-              <span className="px-2 text-center text-xs text-muted-foreground">No logo yet</span>
-            )}
-          </div>
+          <ImagePreview
+            src={logoUrl}
+            alt="Company logo"
+            mode={canEdit ? 'edit' : 'view'}
+            onEdit={canEdit && !saving ? openLogoPicker : undefined}
+          />
           {canEdit ? (
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" onClick={openLogoPicker} disabled={saving}>
-                {logoUrl ? (
-                  <>
-                    <Upload className="h-4 w-4" aria-hidden />
-                    Replace
-                  </>
-                ) : (
-                  <>
-                    <ImagePlus className="h-4 w-4" aria-hidden />
-                    Upload
-                  </>
-                )}
+                <Upload className="h-4 w-4" aria-hidden />
+                {logoUrl ? 'Replace' : 'Upload'}
               </Button>
               {logoUrl ? (
                 <Button

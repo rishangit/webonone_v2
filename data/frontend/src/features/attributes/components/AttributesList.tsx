@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -7,6 +8,7 @@ import {
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
+import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { Attribute } from '@/shared/types/data.types'
 
@@ -25,45 +27,59 @@ export function AttributesList({
   onVerify,
   canMutate,
 }: AttributesListProps) {
-  function handleDelete(id: string, name: string) {
-    if (!window.confirm(`Delete attribute "${name}"?`)) return
-    onDeleted(id)
-  }
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
 
   if (items.length === 0) return <ItemListEmpty>No attributes found.</ItemListEmpty>
 
   return (
-    <ItemList>
-      {items.map((item) => (
-        <ItemListItem key={item.id}>
-          <ItemListContent>
-            <div className="flex items-center gap-2">
-              <p className="font-medium">{item.name}</p>
-              <StatusBadge status={item.status} />
-              <span className="text-xs text-muted-foreground">Refs: {item.referenceCount ?? 0}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {item.valueType}
-              {item.unitId ? ' · has unit' : ''}
-            </p>
-          </ItemListContent>
-          {canMutate ? (
-            <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
-              {item.status === 'pending' && onVerify ? (
-                <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
-              ) : null}
-              <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => handleDelete(item.id, item.name)}
-              >
-                Delete
-              </DropdownMenuItem>
-            </ItemListMenu>
-          ) : null}
-        </ItemListItem>
-      ))}
-    </ItemList>
+    <>
+      <ItemList>
+        {items.map((item) => (
+          <ItemListItem key={item.id}>
+            <ItemListContent>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{item.name}</p>
+                <StatusBadge status={item.status} />
+                <span className="text-xs text-muted-foreground">Refs: {item.referenceCount ?? 0}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {item.valueType}
+                {item.unitId ? ' · has unit' : ''}
+              </p>
+            </ItemListContent>
+            {canMutate ? (
+              <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+                {item.status === 'pending' && onVerify ? (
+                  <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
+                ) : null}
+                <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </ItemListMenu>
+            ) : null}
+          </ItemListItem>
+        ))}
+      </ItemList>
+      <ConfirmDeleteDialog
+        open={pendingDelete !== null}
+        title="Delete attribute"
+        description={
+          pendingDelete
+            ? `Delete attribute "${pendingDelete.name}"? This cannot be undone.`
+            : 'Delete this attribute? This cannot be undone.'
+        }
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        onConfirm={() => {
+          if (pendingDelete) onDeleted(pendingDelete.id)
+        }}
+      />
+    </>
   )
 }

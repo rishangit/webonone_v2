@@ -11,6 +11,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  isStatusTagVariant,
   StatusTag,
   Textarea,
 } from '@webonone/ui-kit'
@@ -58,9 +59,11 @@ export function CompanyProfileCard({
               <StatusTag variant={detail.status} />
             </div>
             {detail.role ? (
-              <p className="text-sm text-muted-foreground">
-                {detail.role === 'company_admin' ? 'Company Owner' : 'Member'}
-              </p>
+              isStatusTagVariant(detail.role) ? (
+                <StatusTag variant={detail.role} className="shrink-0" />
+              ) : (
+                <span className="text-sm text-muted-foreground">{detail.role}</span>
+              )
             ) : (
               <p className="text-sm text-muted-foreground">Super admin view</p>
             )}

@@ -8,6 +8,8 @@ import {
 import { Alert, AlertDescription } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
+import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
+import { parseServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
 
 const CATALOG_KINDS = new Set(['products', 'services', 'spaces'])
 
@@ -16,6 +18,7 @@ export function CatalogFormEmbedPage() {
   const [searchParams] = useSearchParams()
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
+  const initialStep = parseServiceWizardStep(searchParams.get('step'))
 
   if (!kind || !CATALOG_KINDS.has(kind) || !parentOrigin || !requestId) {
     return (
@@ -29,10 +32,25 @@ export function CatalogFormEmbedPage() {
     )
   }
 
+  if (kind === 'services') {
+    return (
+      <ServiceFormDialog
+        chrome="embed-page"
+        open
+        id={id}
+        initialStep={initialStep}
+        onOpenChange={(next) => {
+          if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
+        }}
+        onSaved={() => sendPlatformPeerDialogComplete(parentOrigin, requestId)}
+      />
+    )
+  }
+
   return (
     <CatalogFormDialog
       chrome="embed-page"
-      kind={kind as 'products' | 'services' | 'spaces'}
+      kind={kind as 'products' | 'spaces'}
       open
       id={id}
       onOpenChange={(next) => {

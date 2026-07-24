@@ -30,6 +30,7 @@ After breaking API or style changes, note consumer impact for the parent agent. 
 - [tailwind-css.mdc](../../rules/tailwind-css.mdc)
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc)
 - [details-page-cards.mdc](../../rules/details-page-cards.mdc) — showcase `DetailsPageDemo` is the canonical card details pattern
+- [image-preview.mdc](../../rules/image-preview.mdc) — `ImagePreview` empty state is the first-upload icon; showcase “Without image (first upload)”
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc)
 
 ## Showcase page demos

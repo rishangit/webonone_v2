@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, exhaustMap, filter, map, mergeMap, withLatestFrom } from 'rxjs/operators'
+import { catchError, exhaustMap, filter, map, mergeMap, switchMap, withLatestFrom } from 'rxjs/operators'
 import { authActions } from '@/features/auth/store/authSlice'
 import { isFresh } from '@/shared/store/cacheUtils'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
@@ -99,6 +99,18 @@ const companiesSlice = createSlice({
       state.myCompanyFetchedAt = Date.now()
       state.myCompanyStatus = 'idle'
       state.myCompaniesFetchedAt = null
+
+      const summary: MyCompanySummary = {
+        id: action.payload.company.id,
+        name: action.payload.company.name,
+        logoUrl: action.payload.company.logoUrl,
+        status: action.payload.company.status,
+        role: action.payload.membership.role,
+        createdAt: action.payload.company.createdAt,
+        approvedAt: action.payload.company.approvedAt,
+      }
+      const withoutDuplicate = state.myCompanies.filter((item) => item.id !== summary.id)
+      state.myCompanies = [summary, ...withoutDuplicate]
     },
     registerCompanyFailed(state, action: PayloadAction<string>) {
       state.myCompanyStatus = 'error'
@@ -225,7 +237,8 @@ const loadMyCompaniesEpic: CompaniesEpic = (action$, state$) =>
       ).companies
       return Boolean(payload?.force) || !isFresh(companies.myCompaniesFetchedAt)
     }),
-    exhaustMap(() =>
+    // switchMap so a post-register force refresh is not dropped while an earlier list load is in flight
+    switchMap(() =>
       from(companyApi.listMyCompanies()).pipe(
         map((items) => companiesActions.loadMyCompaniesSucceeded(items)),
         catchError((err: Error) => of(companiesActions.loadMyCompaniesFailed(err.message))),

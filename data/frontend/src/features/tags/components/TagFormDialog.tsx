@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
+  resolvePlatformEmbedParentOrigin,
   sendPlatformPeerDialogBusy,
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
@@ -42,7 +42,7 @@ interface TagFormDialogProps {
   open: boolean
   id?: string
   onOpenChange: (open: boolean) => void
-  onSaved: () => void
+  onSaved: (tag?: Tag) => void
   chrome?: 'dialog' | 'embed-page'
 }
 
@@ -54,7 +54,7 @@ export function TagFormDialog({
   chrome = 'dialog',
 }: TagFormDialogProps) {
   const [searchParams] = useSearchParams()
-  const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isNew = !id
   const title = isNew ? 'Create tag' : 'Edit tag'
   const path = isNew ? '/embed/dialogs/tags/create' : `/embed/dialogs/tags/${id}/edit`
@@ -71,8 +71,16 @@ export function TagFormDialog({
     title,
     submitLabel: idleSubmitLabel,
     ...DATA_FORM_DIALOG_SIZE,
-    onResult: () => {
-      onSaved()
+    onResult: (payload) => {
+      const tag =
+        payload &&
+        typeof payload === 'object' &&
+        typeof (payload as Tag).id === 'string' &&
+        typeof (payload as Tag).name === 'string' &&
+        typeof (payload as Tag).color === 'string'
+          ? (payload as Tag)
+          : undefined
+      onSaved(tag)
       onOpenChange(false)
     },
     onCancel: () => onOpenChange(false),
@@ -118,8 +126,8 @@ export function TagFormDialog({
   useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
-    if (!editor.error) onSaved()
-  }, [editor.saving, editor.error, onSaved])
+    if (!editor.error) onSaved(editor.detail ?? undefined)
+  }, [editor.detail, editor.saving, editor.error, onSaved])
 
   function updateField<K extends keyof TagFormValues>(key: K, value: TagFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }))

@@ -39,4 +39,6 @@ cd media && npm run dev
 
 Do not duplicate upload UI in consumers — embed Media routes via `@webonone/media-embed`.
 
+For **displaying** logos/avatars (including missing image), consumers use UI Kit **`ImagePreview`** — [image-preview.mdc](image-preview.mdc). Do not hand-roll “No logo” placeholders.
+
 All interactive UI must use `@webonone/ui-kit` — see [ui-kit-consumption.mdc](ui-kit-consumption.mdc). Do not duplicate UI Kit primitives.

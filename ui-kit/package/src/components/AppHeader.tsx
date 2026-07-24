@@ -3,6 +3,7 @@ import { LogOut, Menu, User, X } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
+import { isStatusTagVariant, StatusTag } from './StatusTag'
 import { shellContentPaddingX } from '../layouts/shellContentPadding'
 import {
   DropdownMenu,
@@ -17,8 +18,37 @@ export interface AppHeaderUser {
   displayName: string
   avatarUrl?: string | null
   email?: string
-  /** Shown below email in the user dropdown (e.g. platform role). */
+  /**
+   * Platform role key (`super_admin` | `company_admin` | `member`) shown as a
+   * StatusTag below email in the user dropdown.
+   */
+  role?: string
+  /**
+   * Plain-text fallback when `role` is omitted. Prefer `role` for StatusTag styling.
+   * @deprecated Prefer `role`
+   */
   roleLabel?: string
+}
+
+function HeaderRoleTag({ role, roleLabel }: { role?: string; roleLabel?: string }) {
+  if (role && isStatusTagVariant(role)) {
+    return <StatusTag variant={role} className="w-fit" />
+  }
+  if (role) {
+    return (
+      <StatusTag variant="member" className="w-fit">
+        {roleLabel ?? role}
+      </StatusTag>
+    )
+  }
+  if (roleLabel) {
+    return (
+      <StatusTag variant="member" className="w-fit">
+        {roleLabel}
+      </StatusTag>
+    )
+  }
+  return null
 }
 
 interface AppHeaderProps {
@@ -89,26 +119,22 @@ function AppHeader({
             <DropdownMenuContent align="end" className="w-56 shadow-lg">
               {onProfileClick ? (
                 <DropdownMenuItem onClick={onProfileClick} className="cursor-pointer p-0">
-                  <div className="flex w-full flex-col space-y-1 px-2 py-1.5">
+                  <div className="flex w-full flex-col space-y-1.5 px-2 py-1.5">
                     <p className="text-sm font-medium leading-none">{user.displayName}</p>
                     {user.email ? (
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     ) : null}
-                    {user.roleLabel ? (
-                      <p className="text-xs leading-none text-muted-foreground">{user.roleLabel}</p>
-                    ) : null}
+                    <HeaderRoleTag role={user.role} roleLabel={user.roleLabel} />
                   </div>
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
+                  <div className="flex flex-col space-y-1.5">
                     <p className="text-sm font-medium leading-none">{user.displayName}</p>
                     {user.email ? (
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     ) : null}
-                    {user.roleLabel ? (
-                      <p className="text-xs leading-none text-muted-foreground">{user.roleLabel}</p>
-                    ) : null}
+                    <HeaderRoleTag role={user.role} roleLabel={user.roleLabel} />
                   </div>
                 </DropdownMenuLabel>
               )}

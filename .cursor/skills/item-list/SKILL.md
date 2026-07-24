@@ -88,7 +88,7 @@ For **single-select user pickers** in a modal (search + infinite scroll, no 3-do
 
 1. **Guard** — `const rows = Array.isArray(items) ? items : []`; early return with `ItemListEmpty` when `rows.length === 0`.
 2. **Structure** — `ItemList` → map → `ItemListItem` per entity.
-3. **Content** — `ItemListContent` for title, subtitle, badges, thumbnails (left side).
+3. **Content** — `ItemListContent` for title, subtitle, badges, thumbnails (left side). Entity logos/avatars use **`ImagePreview`** (`src={item.logoUrl}`; `src={null}` shows the kit first-upload icon — never a custom “No logo” tile). Size list thumbs with `className="h-10 w-10 rounded-md"`. See [image-preview.mdc](../../rules/image-preview.mdc).
 4. **Menu** — `ItemListMenu` as the **last** child of `ItemListItem` (renders top-right via `items-start` on the row + `self-start` on the trigger). Menu items call parent handlers.
 5. **Destructive** — `DropdownMenuItem className="text-destructive focus:text-destructive"`.
 6. **Selection** — highlight active row with `itemListRowActiveClassName` (`border-primary`) on `ItemListItem`. **Never** add `bg-accent`, `bg-primary`, `bg-background`, or palette fills on top of the glass row.

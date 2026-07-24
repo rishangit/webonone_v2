@@ -22,6 +22,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  StatusTag,
+  isStatusTagVariant,
   useToast,
   type UserOption,
 } from '@webonone/ui-kit'
@@ -257,9 +259,13 @@ export function UsersPage() {
                       </p>
                     </ItemListContent>
                     {user.role ? (
-                      <span className="shrink-0 self-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {formatRoleLabel(user.role)}
-                      </span>
+                      isStatusTagVariant(user.role) ? (
+                        <StatusTag className="shrink-0 self-center" variant={user.role} />
+                      ) : (
+                        <StatusTag className="shrink-0 self-center" variant="member">
+                          {formatRoleLabel(user.role)}
+                        </StatusTag>
+                      )
                     ) : null}
                   </ItemListItem>
                 ))}

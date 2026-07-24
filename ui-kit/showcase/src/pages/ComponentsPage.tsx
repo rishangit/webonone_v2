@@ -585,6 +585,7 @@ export function ComponentsPage() {
               displayName: 'Jane Doe',
               email: 'jane@example.com',
               avatarUrl: demoAvatarUsers[1].src,
+              role: 'company_admin',
             }}
             onProfileClick={() => toast({ title: 'Open profile' })}
             onLogout={() => toast({ title: 'Logged out' })}
@@ -602,7 +603,16 @@ export function ComponentsPage() {
             lockDocumentScroll={false}
             nav={showcaseNav}
             activePath="#home"
-            user={{ displayName: 'Demo User', email: 'demo@example.com' }}
+            user={{
+              displayName: 'Demo User',
+              email: 'demo@example.com',
+              role: 'company_admin',
+            }}
+            sidebarSession={{
+              title: 'Acme Corp',
+              role: 'company_admin',
+              imageUrl: 'https://placehold.co/72x72/1e293b/f8fafc/png?text=AC',
+            }}
           >
             <h1 className="text-2xl font-semibold">Home</h1>
             <p className="mt-2 text-muted-foreground">Main content area.</p>

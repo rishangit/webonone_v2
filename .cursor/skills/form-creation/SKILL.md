@@ -5,7 +5,9 @@ description: >-
   required-field asterisks, and inline field errors using @webonone/ui-kit.
   Use when adding or editing forms, form fields, Zod schemas, API body validation,
   validateBody middleware, FormField, validation messages, or required indicators
-  in any service frontend or backend that handles the same user input.
+  in any service frontend or backend that handles the same user input. When the
+  form lives in a dialog box, dialog window, modal, or wizard, also read
+  core-hosted-peer-dialog and dialog-windows.
 ---
 
 # Form creation
@@ -18,6 +20,7 @@ Standard workflow for forms that submit to the **same service's API**. Validate 
 - Adding Zod schemas for user input (frontend or backend)
 - Wiring validation errors or required-field indicators
 - Adding or changing API routes that accept form payloads
+- **Also read** when the form is in a dialog/modal/wizard: [core-hosted-peer-dialog](../core-hosted-peer-dialog/SKILL.md) · [dialog-windows.mdc](../../rules/dialog-windows.mdc)
 
 ## Validation approach
 
