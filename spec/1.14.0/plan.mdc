@@ -1,0 +1,100 @@
+---
+description: Implementation plan for spec 1.14.0 — WebOnOne iframe Identity login (no top-level redirect)
+alwaysApply: false
+globs: webonone-v2/frontend/src/features/auth/**, identity/frontend/src/features/auth/**, packages/platform-embed/src/**, .cursor/rules/webonone-v2-project.mdc, .cursor/rules/identity-project.mdc
+---
+
+# Implementation plan — Spec 1.14.0
+
+## Summary
+
+Keep WebOnOne **`/login`**. Load Identity **`/login?parentOrigin=…`** in an **iframe**. On success, Identity **`postMessage`s** `webonone:auth:success` (JWT + user); WebOnOne stores the session and navigates home. **No** top-level redirect to Identity. Retain `/callback` auth-code exchange for redirect consumers.
+
+See [02-webonone-login-iframe-host.md](./02-webonone-login-iframe-host.md), [03-identity-embed-login.md](./03-identity-embed-login.md), [04-auth-postmessage-contract.md](./04-auth-postmessage-contract.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.14.0` |
+| Prerequisite | Identity login/register APIs; WebOnOne auth slice + `/callback`; peer iframe pattern; theme channel A |
+| Services | WebOnOne FE, Identity FE; optional `packages/platform-embed` |
+| New env | None required (`VITE_IDENTITY_ORIGIN`, `VITE_ALLOWED_PARENT_ORIGINS` already exist) |
+
+---
+
+## Phase 1 — Contract helpers
+
+**Goal:** Shared auth message types / sender.
+
+**Exit criteria:** Both FEs can import or mirror `webonone:auth:success` safely.
+
+| Task | Paths |
+|------|-------|
+| Types + guards | `packages/platform-embed/src/types.ts` and/or `webonone-v2/.../embed.types.ts` |
+| Optional sender | `packages/platform-embed/src/embedUrl.ts` or `sendAuthSuccess.ts` |
+
+**Verify:** build/type-check platform-embed if changed
+
+---
+
+## Phase 2 — Identity embed success
+
+**Goal:** postMessage on login when `parentOrigin` set; skip redirect completion.
+
+| Task | Paths |
+|------|-------|
+| Embed branch | `identity/frontend/src/features/auth/pages/LoginPage.tsx` |
+| Query preserve | `redirectQuery.ts` / embed query helper |
+| Skip redirect | Do not call `completeAuthRedirect` in embed mode |
+
+**Verify:** `npm run type-check -w identity-root`
+
+---
+
+## Phase 3 — WebOnOne host
+
+**Goal:** `/login` iframe + listener; remove `location.assign`.
+
+| Task | Paths |
+|------|-------|
+| LoginPage | `webonone-v2/frontend/src/features/auth/pages/LoginPage.tsx` |
+| Frame + hook | `features/auth/components/IdentityLoginFrame.tsx` (new) |
+| Config URL | `identityConfig.ts` / embed URL builder |
+| Theme on load | postMessage `webonone:theme:apply` into iframe |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+---
+
+## Phase 4 — Rules
+
+| Task | Paths |
+|------|-------|
+| WebOnOne rule | `.cursor/rules/webonone-v2-project.mdc` |
+| Identity rule | `.cursor/rules/identity-project.mdc` |
+
+---
+
+## ClickUp traceability
+
+| ClickUp | ID |
+|---------|-----|
+| Parent | 86eydjav3 |
+| WebOnOne host | 86eydjavt |
+| Identity embed | 86eydjavx |
+| Contract + theme | 86eydjaw3 |
+| Rules | 86eydjaw5 |
+
+## Forbidden
+
+- Top-level redirect from WebOnOne `/login` as primary path
+- Local WebOnOne credential forms
+- JWT in URL
+- Removing `/callback` or auth-code APIs
+- `postMessage('*')`
+- Using authenticated `PlatformServiceFrame` for guest login
+
+## Done when
+
+Acceptance checklist in [07-implementation-plan.md](./07-implementation-plan.md) is complete.
