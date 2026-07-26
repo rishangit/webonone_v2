@@ -24,7 +24,8 @@ description: >-
 - [webonone-v2-project.mdc](../../rules/webonone-v2-project.mdc) — service globs
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — WebOnOne loads Email, Data, Profile in `#main-content` iframe; satellites use redirect handoff
 - [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) — `FeaturePage` for routes
-- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — multi-section profile/details pages use Card 2+1 stacks ([details-page-cards skill](../details-page-cards/SKILL.md))
+- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — inline page-level Edit profile/details ([details-page-cards skill](../details-page-cards/SKILL.md))
+- [details-page-wizard-edit.mdc](../../rules/details-page-wizard-edit.mdc) — company profile (and similar): per-card Edit → shared create/edit wizard ([skill](../details-page-wizard-edit/SKILL.md))
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
 

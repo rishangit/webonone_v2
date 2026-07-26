@@ -1,5 +1,5 @@
 ---
-description: WebOnOne v2 scaffold, redirect login, JWT verify, and DB scope
+description: WebOnOne v2 scaffold, iframe login host, JWT verify, and DB scope
 globs: webonone-v2/**/*
 alwaysApply: false
 ---
@@ -27,8 +27,8 @@ MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, **
 
 ## Ownership
 
-- `/login` redirects to Identity — **no local login forms**.
-- `/callback` exchanges auth code for JWT via Identity API (standalone OAuth only).
+- `/login` **embeds** Identity `/login?parentOrigin=…` in an iframe — **no** local login forms and **no** auto top-level redirect to Identity. On `webonone:auth:success` postMessage, store JWT + user and navigate home. See `IdentityLoginFrame`, `useIdentityAuthMessage`, `buildIdentityEmbedLoginUrl`.
+- `/callback` exchanges auth code for JWT via Identity API (**redirect OAuth / satellites only** — not the primary WebOnOne login path).
 - **All peer redirection** uses the same pattern — see [platform-shell-navigation.mdc](platform-shell-navigation.mdc):
   - **Profile:** `handleProfileClick` + `redirectToIdentityProfile.ts`
   - **Email:** `handleEmailClick` + nav `onClick` on `PLATFORM_EMAIL_NAV` + `redirectToEmail.ts`
@@ -39,7 +39,7 @@ MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, **
 - **Unified loading overlay** — one AppLayout overlay for session (`SessionRoleGate`), lazy routes (`LazyRoute`), and page fetches (`usePlatformLoading`). See [loading-empty-states.mdc](loading-empty-states.mdc).
 - **Core-hosted peer dialogs** — `PlatformPeerDialogHost` + `PlatformMediaDialogHost` in `AppLayout`; peer form dialogs use `peer-dialog-*` (host header/footer, peer `/embed/dialogs/…` body). New peer dialogs need **no** WebOnOne changes. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
 
-Key paths: `features/settings/basic/`, `features/shell/context/PlatformLoadingContext.tsx`, `features/shell/PlatformPeerDialogHost.tsx`, `features/media/PlatformMediaDialogHost.tsx`, `features/session/components/SessionRoleGate.tsx`, `app/LazyRoute.tsx`, `backend/src/routes/company.routes.ts`, `backend/src/services/company.service.ts`, `backend/src/middleware/auth.ts`, `backend/src/middleware/requireSuperAdmin.ts`.
+Key paths: `features/auth/pages/LoginPage.tsx`, `features/auth/components/IdentityLoginFrame.tsx`, `features/settings/basic/`, `features/shell/context/PlatformLoadingContext.tsx`, `features/shell/PlatformPeerDialogHost.tsx`, `features/media/PlatformMediaDialogHost.tsx`, `features/session/components/SessionRoleGate.tsx`, `app/LazyRoute.tsx`, `backend/src/routes/company.routes.ts`, `backend/src/services/company.service.ts`, `backend/src/middleware/auth.ts`, `backend/src/middleware/requireSuperAdmin.ts`.
 
 ## Verification
 

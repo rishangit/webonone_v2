@@ -63,6 +63,27 @@ export function applyStatusFilter(query: Knex.QueryBuilder, status?: 'verified' 
   return query
 }
 
+/** Accepts repeated `ids=` query params and/or comma-separated values. */
+export function parseIdsParam(ids?: string | string[]): string[] {
+  if (ids == null) return []
+  const raw = Array.isArray(ids) ? ids : [ids]
+  const out: string[] = []
+  for (const value of raw) {
+    for (const part of value.split(',')) {
+      const trimmed = part.trim()
+      if (trimmed) out.push(trimmed)
+    }
+  }
+  return [...new Set(out)]
+}
+
+export function applyIdsFilter(query: Knex.QueryBuilder, ids: string[]) {
+  if (ids.length > 0) {
+    query.whereIn('id', ids)
+  }
+  return query
+}
+
 export async function assertUniqueName(
   table: string,
   name: string,

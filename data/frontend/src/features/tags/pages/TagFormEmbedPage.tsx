@@ -40,7 +40,7 @@ export function TagFormEmbedPage() {
           parentOrigin,
           requestId,
           tag
-            ? { id: tag.id, name: tag.name, color: tag.color }
+            ? { id: tag.id, name: tag.name, color: tag.color, description: tag.description }
             : undefined,
         )
       }

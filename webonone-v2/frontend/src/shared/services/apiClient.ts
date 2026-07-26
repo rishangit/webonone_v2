@@ -26,6 +26,12 @@ export async function apiClient<T>(path: string, options?: RequestInit): Promise
   }
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+  if (res.status === 204) {
+    if (!res.ok) {
+      throw new Error('Request failed')
+    }
+    return undefined as T
+  }
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(data.message ?? 'Request failed')

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import healthRoutes from './routes/health.routes.js'
 import preferencesRoutes from './routes/preferences.routes.js'
 import companyRoutes from './routes/company.routes.js'
+import companyCatalogRoutes from './routes/companyCatalog.routes.js'
 import siteMediaRefsRoutes from './routes/siteMediaRefs.routes.js'
 import themesRoutes from './routes/themes.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -26,6 +27,7 @@ export function createApp() {
   app.use('/api/v1', siteMediaRefsRoutes)
   app.use('/api/v1', themesRoutes)
   app.use('/api/v1', preferencesRoutes)
+  app.use('/api/v1', companyCatalogRoutes)
   app.use('/api/v1', companyRoutes)
 
   if (fs.existsSync(publicDir)) {

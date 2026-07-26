@@ -1,11 +1,15 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { PLATFORM_EMBED_APP_HOST_CLASS, resolvePlatformEmbedParentOrigin } from '@webonone/platform-embed'
+import {
+  PLATFORM_EMBED_APP_HOST_CLASS,
+  resolvePlatformEmbedParentOrigin,
+} from '@webonone/platform-embed'
 import { CORE_NAV_QUERY_PARAM, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { useEmbedLoginMode } from '@/features/auth/hooks/useEmbedLoginMode'
 import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { PlatformEmbedLayout } from '@/features/auth/components/PlatformEmbedLayout'
 import {
@@ -24,6 +28,19 @@ import {
   isIdentityShellRoute,
   isSmsNavSentinel,
 } from '@/features/shell/config/navItems'
+
+const GUEST_AUTH_PATHS = new Set([
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-reset-otp',
+  '/logout',
+])
+
+function isGuestAuthPath(pathname: string): boolean {
+  return GUEST_AUTH_PATHS.has(pathname)
+}
 
 function withPeerNavActions(
   items: NavConfigItem[],
@@ -69,15 +86,21 @@ export function AppLayout() {
 }
 
 function AppLayoutContent() {
+  const location = useLocation()
   const [searchParams] = useSearchParams()
-  const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
 
-  if (embedParentOrigin) {
-    return (
-      <div className={PLATFORM_EMBED_APP_HOST_CLASS}>
-        <PlatformEmbedLayout parentOrigin={embedParentOrigin} />
-      </div>
-    )
+  // Guest auth (WebOnOne login iframe uses parentOrigin without embed=platform) must
+  // never use PlatformEmbedLayout — that layout waits for webonone:platform:init.
+  // Skip stale platform-embed sessionStorage restore on these routes.
+  if (!isGuestAuthPath(location.pathname)) {
+    const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+    if (embedParentOrigin) {
+      return (
+        <div className={PLATFORM_EMBED_APP_HOST_CLASS}>
+          <PlatformEmbedLayout parentOrigin={embedParentOrigin} />
+        </div>
+      )
+    }
   }
 
   return <AppLayoutShellContent />
@@ -93,7 +116,9 @@ function AppLayoutShellContent() {
 
   const returnUrl = parseProfileReturnUrl(searchParams)
   const { isRedirect } = useRedirectMode()
-  const isRedirectLogin = location.pathname === '/login' && isRedirect
+  const { isEmbed } = useEmbedLoginMode()
+  const isHandoffLogin =
+    location.pathname === '/login' && (isRedirect || isEmbed)
 
   const onNavItemNavigate = useMemo(
     () =>
@@ -162,7 +187,7 @@ function AppLayoutShellContent() {
   const brand = returnUrl ? 'WebOnOne' : 'Identity'
   const isAuthenticated = Boolean(accessToken && user)
   const useShell =
-    isAuthenticated && isIdentityShellRoute(location.pathname) && !isRedirectLogin
+    isAuthenticated && isIdentityShellRoute(location.pathname) && !isHandoffLogin
 
   const headerUser =
     accessToken && user
@@ -204,6 +229,19 @@ function AppLayoutShellContent() {
       >
         {mainContent}
       </AppShell>
+    )
+  }
+
+  // Embed login iframe / logout hop: fill the frame with no AppHeader.
+  if (isEmbed || location.pathname === '/logout') {
+    return (
+      <div className="relative flex h-dvh w-full items-center justify-center overflow-y-auto p-4">
+        <Outlet />
+        {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
+        {overlayLabel ? (
+          <LoadingState key="platform-loading" overlay overlayScope="content" label={overlayLabel} />
+        ) : null}
+      </div>
     )
   }
 

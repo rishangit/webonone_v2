@@ -1,8 +1,10 @@
 import { apiClient } from '@/shared/services/apiClient'
-import { getPhoneCountryByIso2 } from '@webonone/ui-kit'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
+import type { DataEntityKey } from '@webonone/platform-nav'
 
 export type CompanyStatus = 'pending' | 'approved' | 'rejected'
+
+export type CompanyDataEntity = DataEntityKey
 
 export type CompanySummary = {
   company: {
@@ -34,6 +36,7 @@ export type MyCompanySummary = {
   logoUrl: string | null
   status: CompanyStatus
   role: 'member' | 'company_admin'
+  dataEntities: CompanyDataEntity[]
   createdAt: string
   approvedAt: string | null
 }
@@ -69,6 +72,7 @@ export type CompanyDetail = {
   mapPlaceId: string | null
   mapFormattedAddress: string | null
   tags: CompanyTag[]
+  dataEntities: CompanyDataEntity[]
   status: CompanyStatus
   createdByUserId: string
   createdAt: string
@@ -96,14 +100,11 @@ export type UpdateCompanyBody = {
   mapPlaceId?: string | null
   mapFormattedAddress?: string | null
   tags?: CompanyTag[]
+  dataEntities?: CompanyDataEntity[]
 }
 
 function toRegisterApiBody(values: RegisterCompanyFormValues) {
-  const { countryIso2, stateRegion, postalCode, description, companySize, ...rest } = values
-  const country =
-    countryIso2.trim().length > 0
-      ? (getPhoneCountryByIso2(countryIso2)?.name ?? countryIso2)
-      : undefined
+  const { country, stateRegion, postalCode, description, companySize, ...rest } = values
 
   return {
     name: rest.name,
@@ -114,7 +115,7 @@ function toRegisterApiBody(values: RegisterCompanyFormValues) {
     ...(rest.city.trim() ? { city: rest.city.trim() } : {}),
     ...(stateRegion.trim() ? { stateRegion: stateRegion.trim() } : {}),
     ...(postalCode.trim() ? { postalCode: postalCode.trim() } : {}),
-    ...(country ? { country } : {}),
+    ...(country.trim() ? { country: country.trim() } : {}),
     ...(rest.contactEmail.trim() ? { contactEmail: rest.contactEmail.trim() } : {}),
     ...(rest.contactPhone.trim() ? { contactPhone: rest.contactPhone.trim() } : {}),
   }

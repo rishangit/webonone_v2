@@ -17,6 +17,10 @@ const ROUTE_PREFETCHERS: Record<string, () => Promise<unknown>> = {
     import('@/features/settings/system-theme/pages/SystemThemePage'),
 }
 
+function prefetchThemeDetail(): void {
+  void import('@/features/settings/system-theme/pages/ThemeDetailPage')
+}
+
 function prefetchPlatformPeerFrame(): void {
   void import('@/features/shell/pages/PlatformPeerFrame')
 }
@@ -40,13 +44,23 @@ export function prefetchRoutePath(pathname: string): void {
     return
   }
 
+  if (/^\/settings\/system-theme\/[^/]+$/.test(pathname)) {
+    prefetchThemeDetail()
+    return
+  }
+
   if (
     isEmailNavSentinel(pathname) ||
     isSmsNavSentinel(pathname) ||
-    isDataNavSentinel(pathname) ||
     isIdentityNavSentinel(pathname) ||
     isProfileNavSentinel(pathname)
   ) {
+    prefetchPlatformPeerFrame()
+    return
+  }
+
+  if (isDataNavSentinel(pathname) || pathname.startsWith('/data/')) {
+    void import('@/features/company-catalog/pages/DataCatalogRoutes')
     prefetchPlatformPeerFrame()
   }
 }

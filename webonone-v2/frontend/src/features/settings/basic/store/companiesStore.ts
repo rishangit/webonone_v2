@@ -106,6 +106,7 @@ const companiesSlice = createSlice({
         logoUrl: action.payload.company.logoUrl,
         status: action.payload.company.status,
         role: action.payload.membership.role,
+        dataEntities: [],
         createdAt: action.payload.company.createdAt,
         approvedAt: action.payload.company.approvedAt,
       }
@@ -181,9 +182,11 @@ const companiesSlice = createSlice({
       state.detail = action.payload
       state.detailStatus = 'idle'
       state.detailError = null
-      const { id, name, logoUrl, status, approvedAt } = action.payload
+      const { id, name, logoUrl, status, approvedAt, dataEntities } = action.payload
       state.myCompanies = state.myCompanies.map((item) =>
-        item.id === id ? { ...item, name, logoUrl, status, approvedAt } : item,
+        item.id === id
+          ? { ...item, name, logoUrl, status, approvedAt, dataEntities: dataEntities ?? [] }
+          : item,
       )
       state.adminItems = state.adminItems.map((item) =>
         item.id === id ? { ...item, name, logoUrl, status, approvedAt } : item,

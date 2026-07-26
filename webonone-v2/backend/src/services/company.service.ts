@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
 import type {
+  CompanyDataEntity,
   RegisterCompanyBody,
   UpdateCompanyBody,
   UpdateCompanyStatusBody,
@@ -52,12 +53,48 @@ export type CompanyDetail = {
   mapPlaceId: string | null
   mapFormattedAddress: string | null
   tags: CompanyTag[]
+  dataEntities: CompanyDataEntity[]
   status: repo.CompanyStatus
   createdByUserId: string
   createdAt: string
   updatedAt: string
   approvedAt: string | null
   role?: 'member' | 'company_admin'
+}
+
+const ALLOWED_DATA_ENTITIES = new Set<CompanyDataEntity>([
+  'tags',
+  'units',
+  'attributes',
+  'products',
+  'services',
+  'spaces',
+])
+
+function parseDataEntities(
+  value: string | CompanyDataEntity[] | null | undefined,
+): CompanyDataEntity[] {
+  if (value == null) return []
+  let parsed: unknown = value
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(parsed)) return []
+  const seen = new Set<CompanyDataEntity>()
+  const result: CompanyDataEntity[] = []
+  for (const item of parsed) {
+    if (typeof item !== 'string') continue
+    if (!ALLOWED_DATA_ENTITIES.has(item as CompanyDataEntity)) continue
+    const key = item as CompanyDataEntity
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push(key)
+  }
+  return result
 }
 
 function parseGalleryImages(
@@ -109,6 +146,7 @@ function toCompanyDetail(
     mapPlaceId: row.map_place_id,
     mapFormattedAddress: row.map_formatted_address,
     tags,
+    dataEntities: parseDataEntities(row.data_entities),
     status: row.status,
     createdByUserId: row.created_by_user_id,
     createdAt: row.created_at.toISOString(),
@@ -165,6 +203,7 @@ export type MyCompanySummary = {
   logoUrl: string | null
   status: repo.CompanyStatus
   role: 'member' | 'company_admin'
+  dataEntities: CompanyDataEntity[]
   createdAt: string
   approvedAt: string | null
 }
@@ -238,6 +277,7 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
       logoUrl: company.logo_url,
       status: company.status,
       role: role.role === 'company_admin' ? 'company_admin' : 'member',
+      dataEntities: parseDataEntities(company.data_entities),
       createdAt: company.created_at.toISOString(),
       approvedAt: company.approved_at ? company.approved_at.toISOString() : null,
     })
@@ -264,6 +304,7 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
       logoUrl: company.logo_url,
       status: company.status,
       role: 'company_admin',
+      dataEntities: parseDataEntities(company.data_entities),
       createdAt: company.created_at.toISOString(),
       approvedAt: company.approved_at ? company.approved_at.toISOString() : null,
     })
@@ -286,6 +327,7 @@ export async function registerCompany(
     company_size: input.companySize ?? null,
     logo_url: input.logoUrl ?? null,
     gallery_images: null,
+    data_entities: [],
     address_line1: input.addressLine1?.trim() || null,
     address_line2: input.addressLine2?.trim() || null,
     city: input.city?.trim() || null,
@@ -388,6 +430,9 @@ export async function updateCompanyProfile(
   if (input.mapPlaceId !== undefined) patch.map_place_id = input.mapPlaceId
   if (input.mapFormattedAddress !== undefined) {
     patch.map_formatted_address = input.mapFormattedAddress
+  }
+  if (input.dataEntities !== undefined) {
+    patch.data_entities = [...new Set(input.dataEntities)]
   }
 
   const tags =
@@ -521,6 +566,7 @@ export type AssumableRoleOption = {
   label: string
   companyName?: string
   companyLogoUrl?: string | null
+  dataEntities?: CompanyDataEntity[]
 }
 
 export type AssumableRolesResponse = {
@@ -585,6 +631,7 @@ export async function getAssumableRoles(userId: string): Promise<AssumableRolesR
       label: company.name,
       companyName: company.name,
       companyLogoUrl: company.logo_url,
+      dataEntities: parseDataEntities(company.data_entities),
     })
   }
 

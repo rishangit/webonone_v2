@@ -24,3 +24,11 @@ export function getAuthCallbackUrl(): string {
 
   return `${window.location.origin}/callback`
 }
+
+/** Iframe login src for WebOnOne `/login` — parentOrigin + returnPath only. */
+export function buildIdentityEmbedLoginUrl(returnPath = '/'): string {
+  const url = new URL(getIdentityLoginUrl())
+  url.searchParams.set('parentOrigin', window.location.origin)
+  url.searchParams.set('returnPath', returnPath)
+  return url.toString()
+}

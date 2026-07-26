@@ -1,17 +1,29 @@
 import { useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AuthLayout, FeaturePage } from '@webonone/ui-kit'
+import { decodeJwtPayload, sendAuthSuccess } from '@webonone/platform-embed'
+import { useEmbedThemeListener } from '@webonone/theme'
 import { useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { LoginForm } from '../components/LoginForm'
+import { useEmbedLoginMode } from '../hooks/useEmbedLoginMode'
 import { usePromptLoginSessionClear } from '../hooks/usePromptLoginSessionClear'
 import { useRedirectMode } from '../hooks/useRedirectMode'
 import { completeAuthRedirect } from '../utils/completeAuthRedirect'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
+function resolveExpiresIn(accessToken: string): number {
+  const claims = decodeJwtPayload(accessToken)
+  if (claims?.exp) {
+    return Math.max(0, claims.exp - Math.floor(Date.now() / 1000))
+  }
+  return 900
+}
+
 export function LoginPage() {
   const [searchParams] = useSearchParams()
   const { isRedirect, redirectUri, state } = useRedirectMode()
+  const { isEmbed, parentOrigin } = useEmbedLoginMode()
   const { accessToken, user, isLoading, error } = useAppSelector((s) => s.auth)
   const handledRef = useRef(false)
   const promptLogin = searchParams.get('prompt') === 'login'
@@ -19,6 +31,7 @@ export function LoginPage() {
   const wasLoadingRef = useRef(false)
 
   usePromptLoginSessionClear()
+  useEmbedThemeListener(isEmbed ? parentOrigin : null)
 
   useEffect(() => {
     if (wasLoadingRef.current && !isLoading && accessToken && user) {
@@ -31,18 +44,43 @@ export function LoginPage() {
     if (handledRef.current || isLoading || !accessToken || !user) return
     if (!freshLoginAllowedRef.current) return
 
+    // Embed wins over redirect when framed with allowlisted parentOrigin.
+    if (isEmbed && parentOrigin) {
+      handledRef.current = true
+      sendAuthSuccess(parentOrigin, {
+        accessToken,
+        expiresIn: resolveExpiresIn(accessToken),
+        user: {
+          id: user.id,
+          email: user.email ?? '',
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+        },
+      })
+      return
+    }
+
     if (isRedirect && redirectUri && state) {
       handledRef.current = true
       completeAuthRedirect(accessToken, redirectUri, state).catch(() => {
         handledRef.current = false
       })
     }
-  }, [accessToken, user, isLoading, isRedirect, redirectUri, state])
+  }, [
+    accessToken,
+    user,
+    isLoading,
+    isEmbed,
+    parentOrigin,
+    isRedirect,
+    redirectUri,
+    state,
+  ])
 
   const registerLink = withRedirectQuery('/register', searchParams)
   const forgotLink = withRedirectQuery('/forgot-password', searchParams)
 
-  if (!isRedirect && accessToken && user) {
+  if (!isRedirect && !isEmbed && accessToken && user) {
     return (
       <FeaturePage
         title={`Welcome, ${user.displayName}!`}
@@ -56,6 +94,10 @@ export function LoginPage() {
       </FeaturePage>
     )
   }
+
+  const handoffInProgress =
+    (isEmbed || isRedirect) &&
+    Boolean(accessToken && user && freshLoginAllowedRef.current)
 
   return (
     <AuthLayout
@@ -86,9 +128,9 @@ export function LoginPage() {
         </div>
         <LoginForm />
       </div>
-      {isRedirect && accessToken && user && freshLoginAllowedRef.current ? (
+      {handoffInProgress ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Signed in as {user.displayName}
+          Signed in as {user!.displayName}
         </p>
       ) : null}
       {error ? <p className="mt-2 text-center text-sm text-destructive">{error}</p> : null}

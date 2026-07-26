@@ -1,3 +1,5 @@
+import type { DataEntityKey } from '@webonone/platform-nav'
+
 export type SessionRole = 'super_admin' | 'company_admin' | 'member'
 
 export type AssumableRoleOption = {
@@ -6,6 +8,7 @@ export type AssumableRoleOption = {
   label: string
   companyName?: string
   companyLogoUrl?: string | null
+  dataEntities?: DataEntityKey[]
 }
 
 export type AssumableRolesResponse = {

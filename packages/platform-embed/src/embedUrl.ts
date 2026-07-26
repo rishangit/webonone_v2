@@ -1,10 +1,14 @@
 import {
+  AUTH_MESSAGE_TYPES,
   DATA_TAG_PICKER_MESSAGE_TYPES,
   IDENTITY_USER_PICKER_MESSAGE_TYPES,
   PLATFORM_EMBED_QUERY,
   PLATFORM_MESSAGE_TYPES,
 } from './types'
 import type {
+  AuthCancelMessage,
+  AuthSuccessMessage,
+  AuthSuccessUser,
   BuildPlatformEmbedUrlOptions,
   DataTagPickerCancelMessage,
   DataTagPickerCreatedMessage,
@@ -579,4 +583,40 @@ export function hasPlatformEmbedHandoff(
   isAllowedParentOrigin: (origin: string) => boolean,
 ): boolean {
   return isPlatformEmbedMode(searchParams, isAllowedParentOrigin)
+}
+
+export type SendAuthSuccessPayload = {
+  accessToken: string
+  expiresIn: number
+  user: AuthSuccessUser
+  embedId?: string
+}
+
+/** Identity login iframe → parent: JWT + public profile after successful sign-in. */
+export function sendAuthSuccess(parentOrigin: string, payload: SendAuthSuccessPayload): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: AuthSuccessMessage = {
+    type: AUTH_MESSAGE_TYPES.SUCCESS,
+    accessToken: payload.accessToken,
+    expiresIn: payload.expiresIn,
+    user: payload.user,
+    ...(payload.embedId !== undefined ? { embedId: payload.embedId } : {}),
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/** Identity login iframe → parent: user cancelled (optional). */
+export function sendAuthCancel(parentOrigin: string, embedId?: string): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: AuthCancelMessage = {
+    type: AUTH_MESSAGE_TYPES.CANCEL,
+    ...(embedId !== undefined ? { embedId } : {}),
+  }
+  window.parent.postMessage(message, parentOrigin)
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { LoadingState, PageShell } from '@webonone/ui-kit'
+import { LoadingState } from '@webonone/ui-kit'
 import { matchesAllowedOrigin, parseAllowlistPatterns } from '@webonone/platform-nav'
 import {
   clearStoredAuthSession,
@@ -26,10 +26,6 @@ function parsePostLogoutRedirectUri(raw: string | null): string | null {
       return null
     }
 
-    if (parsed.searchParams.get('prompt') !== 'login') {
-      parsed.searchParams.set('prompt', 'login')
-    }
-
     return parsed.toString()
   } catch {
     return null
@@ -53,7 +49,7 @@ export function LogoutPage() {
     if (startedRef.current) return
     startedRef.current = true
 
-    const fallbackTarget = `${window.location.origin}/login?prompt=login`
+    const fallbackTarget = `${window.location.origin}/login`
     const postLogout =
       parsePostLogoutRedirectUri(searchParams.get(POST_LOGOUT_PARAM)) ?? fallbackTarget
 
@@ -69,11 +65,10 @@ export function LogoutPage() {
     void run()
   }, [searchParams])
 
+  // No PageShell / AppHeader — logout is a transient hop back to the consumer login.
   return (
-    <PageShell title="Identity">
-      <div className="flex flex-col items-center py-12">
-        <LoadingState overlay label="Signing out…" />
-      </div>
-    </PageShell>
+    <div className="relative flex h-dvh w-full items-center justify-center">
+      <LoadingState overlay label="Signing out…" />
+    </div>
   )
 }

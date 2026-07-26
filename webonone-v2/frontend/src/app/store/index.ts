@@ -3,6 +3,8 @@ import { createEpicMiddleware } from 'redux-observable'
 import { authReducer } from '@/features/auth/store/authSlice'
 import { sessionRoleReducer } from '@/features/session/store/sessionRoleSlice'
 import { companiesReducer } from '@/features/settings/basic/store/companiesStore'
+import { companyCatalogReducer } from '@/features/company-catalog/store/companyCatalogStore'
+import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { rootEpic } from '@/app/store/epics/rootEpic'
 import { initApiClient } from '@/shared/services/apiClient'
@@ -14,6 +16,7 @@ export const store = configureStore({
     auth: authReducer,
     sessionRole: sessionRoleReducer,
     companies: companiesReducer,
+    companyCatalog: companyCatalogReducer,
     systemTheme: systemThemeReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -21,6 +24,7 @@ export const store = configureStore({
 })
 
 initApiClient(store)
+setDataLibraryTokenGetter(() => store.getState().auth.accessToken)
 
 epicMiddleware.run(rootEpic)
 

@@ -1,0 +1,57 @@
+import { Navigate, useParams } from 'react-router-dom'
+import { useAppSelector } from '@/app/store/hooks'
+import { CompanyCatalogDetailPage } from '@/features/company-catalog/pages/CompanyCatalogDetailPage'
+import { CompanyCatalogListPage } from '@/features/company-catalog/pages/CompanyCatalogListPage'
+import { PlatformPeerFrame } from '@/features/shell/pages/PlatformPeerFrame'
+import {
+  CATALOG_ENTITY_KINDS,
+  type CatalogEntityKind,
+} from '@/features/company-catalog/types/companyCatalog.types'
+
+function isCatalogEntityKind(value: string): value is CatalogEntityKind {
+  return (CATALOG_ENTITY_KINDS as readonly string[]).includes(value)
+}
+
+/** company_admin company catalog list; super_admin Data library embed. */
+export function DataCatalogListRoute() {
+  const { kind: kindParam = '' } = useParams()
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+
+  if (activeRole === 'super_admin') {
+    return <PlatformPeerFrame peer="data" />
+  }
+
+  if (activeRole !== 'company_admin') {
+    return <Navigate to="/" replace />
+  }
+
+  if (!isCatalogEntityKind(kindParam)) {
+    return <Navigate to="/" replace />
+  }
+
+  return <CompanyCatalogListPage kind={kindParam} />
+}
+
+/** company_admin company catalog detail; super_admin Data library embed. */
+export function DataCatalogDetailRoute() {
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+
+  if (activeRole === 'super_admin') {
+    return <PlatformPeerFrame peer="data" />
+  }
+
+  if (activeRole !== 'company_admin') {
+    return <Navigate to="/" replace />
+  }
+
+  return <CompanyCatalogDetailPage />
+}
+
+/** Catch-all Data paths (e.g. unknown) — super_admin library; others home. */
+export function DataLibraryCatchAllRoute() {
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  if (activeRole === 'super_admin') {
+    return <PlatformPeerFrame peer="data" />
+  }
+  return <Navigate to="/" replace />
+}

@@ -11,17 +11,21 @@ description: >-
 
 # Details page cards
 
-Standard workflow for **multi-section details / profile** pages. Sections are **`Card`** surfaces in a **3-column** grid (left **2-col** stack, right **1-col** stack). **Back** and a single **Edit** live in `FeaturePage` `actions` — cards have no per-card edit chrome.
+Standard workflow for **profile / company / simple multi-field** details pages with **inline** edit. Sections are **`Card`** surfaces in a **3-column** grid (left **2-col** stack, right **1-col** stack). **Back** and a single **Edit** live in `FeaturePage` `actions` — cards have no per-card edit chrome.
+
+**Wizard-backed entities** (create is a multi-step dialog): use [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md) instead (read-only cards + per-card Edit → shared wizard).
 
 ## When to apply
 
-- New or updated profile / company / entity details route
-- Replacing flat sections or per-card Edit buttons with page-level edit
+- New or updated profile / company / simple multi-field details route
+- Replacing flat sections with page-level inline edit
 - Showcase Pages → Details (`DetailsPageDemo`)
-- Any service frontend details page
+
+Collection lists that lead to this page must wire **row body click → detail route** per [item-list](../item-list/SKILL.md) (**Detail page navigation**).
 
 ## Do not use for
 
+- Entities whose create flow is a multi-step wizard — [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md)
 - Paginated collection lists — use [item-list](../item-list/SKILL.md)
 - Auth / embed chrome — [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) exceptions
 
@@ -63,11 +67,13 @@ FeaturePage
 2. Split sections: wide → left; compact → right.
 3. Cards render view or fields from page `mode` / draft state — no local edit mode.
 4. View: outer `<div className="grid …">`. Edit: same classes on `<Form id=… space-y-0>`.
-5. Match `DetailsPageDemo`, Identity `ProfilePage`, and `CompanyProfilePage`.
+5. Match `DetailsPageDemo`.
 
-## Forbidden
+Wizard-backed details (Identity profile, company, services): [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md).
 
-- Per-card Edit / Save / Cancel
+## Forbidden (this pattern)
+
+- Per-card Edit / Save / Cancel (wizard-backed details use [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md))
 - Flat section lists without `Card`
 - `Form` default `space-y-4` on multi-column details
 - Unequal horizontal vs vertical gaps

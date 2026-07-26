@@ -29,14 +29,20 @@ import {
   usePlatformOverlayLabel,
 } from '@/features/shell/context/PlatformLoadingContext'
 
-function isPlatformPeerEmbedPath(pathname: string): boolean {
-  return (
+function isPlatformPeerEmbedPath(pathname: string, activeRole: string | null): boolean {
+  if (
     isEmailNavSentinel(pathname) ||
     isSmsNavSentinel(pathname) ||
-    isDataNavSentinel(pathname) ||
     isIdentityNavSentinel(pathname) ||
     isProfileNavSentinel(pathname)
-  )
+  ) {
+    return true
+  }
+  // Data library embed is only for super_admin; company_admin uses native catalog pages.
+  if (isDataNavSentinel(pathname) || pathname.startsWith('/data/')) {
+    return activeRole === 'super_admin'
+  }
+  return false
 }
 
 export function AppLayout() {
@@ -71,8 +77,12 @@ function AppLayoutContent() {
 
   const nav = useMemo(() => {
     if (!activeRole) return []
+    if (activeRole === 'company_admin') {
+      const matched = findMatchingRole(assumableRoles, activeRole, activeCompanyId)
+      return buildNavForSessionRole(activeRole, matched?.dataEntities ?? [])
+    }
     return buildNavForSessionRole(activeRole)
-  }, [activeRole])
+  }, [activeRole, activeCompanyId, assumableRoles])
 
   const sidebarSession = useMemo(() => {
     if (!user || !selectionComplete || !activeRole) {
@@ -102,7 +112,7 @@ function AppLayoutContent() {
   }
 
   const overlayLabel = usePlatformOverlayLabel()
-  const embedMain = isPlatformPeerEmbedPath(location.pathname)
+  const embedMain = isPlatformPeerEmbedPath(location.pathname, activeRole)
 
   return (
     <ThemeProviderBridge>

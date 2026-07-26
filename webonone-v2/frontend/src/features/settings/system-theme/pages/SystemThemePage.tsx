@@ -1,26 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { Button, FeaturePage, ListPageBody, SearchInput, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { ThemeCreateDialog } from '../components/ThemeCreateDialog'
 import { ThemeDeleteDialog } from '../components/ThemeDeleteDialog'
+import { ThemeFormDialog } from '../components/ThemeFormDialog'
 import { ThemeList } from '../components/ThemeList'
-import type { ThemeFormValues } from '../schemas/themeFormSchema'
 import type { ApiTheme } from '../services/themeApi'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { systemThemeActions } from '../store/systemThemeSlice'
 
-type PendingSave = 'create' | 'edit' | 'delete' | null
+type PendingDelete = boolean
+type DialogState = { id?: string } | null
 
 export function SystemThemePage() {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const { themes, preferences, status, error, themesFetchedAt, preferencesFetchedAt } =
     useAppSelector((s) => s.systemTheme)
-  const [createOpen, setCreateOpen] = useState(false)
-  const [editing, setEditing] = useState<ApiTheme | null>(null)
+  const [dialog, setDialog] = useState<DialogState>(null)
   const [deleteTarget, setDeleteTarget] = useState<ApiTheme | null>(null)
-  const [pendingSave, setPendingSave] = useState<PendingSave>(null)
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete>(false)
   const [themePage, setThemePage] = useState(1)
   const [themePageSize, setThemePageSize] = useState(12)
   const [themeSearchQuery, setThemeSearchQuery] = useState('')
@@ -31,9 +32,7 @@ export function SystemThemePage() {
     return themes.filter((theme) => theme.name.toLowerCase().includes(query))
   }, [themes, themeSearchQuery])
 
-  const dialogOpen = createOpen || editing !== null
-  const dialogMode = editing ? 'edit' : 'create'
-  const isSaving = status === 'saving' && pendingSave !== null
+  const isDeleting = status === 'saving' && pendingDelete
   const loading = status === 'loading'
 
   usePlatformLoading(loading ? 'Loading themes…' : null)
@@ -48,65 +47,27 @@ export function SystemThemePage() {
   }, [dispatch, themesFetchedAt, preferencesFetchedAt])
 
   useEffect(() => {
-    if (createOpen || editing) {
-      dispatch(systemThemeActions.clearError())
-    }
-  }, [createOpen, editing, dispatch])
-
-  useEffect(() => {
     if (deleteTarget) {
       dispatch(systemThemeActions.clearError())
     }
   }, [deleteTarget, dispatch])
 
   useEffect(() => {
-    if (!pendingSave) return
+    if (!pendingDelete) return
 
     if (status === 'idle') {
-      if (pendingSave === 'create') setCreateOpen(false)
-      if (pendingSave === 'edit') setEditing(null)
-      if (pendingSave === 'delete') setDeleteTarget(null)
-      setPendingSave(null)
+      setDeleteTarget(null)
+      setPendingDelete(false)
     } else if (status === 'error') {
-      // Keep pendingSave so the open dialog can show the error; user retries or cancels.
+      // Keep dialog open so the user can retry or cancel.
     }
-  }, [status, pendingSave])
-
-  function handleDialogOpenChange(open: boolean) {
-    if (!open) {
-      setCreateOpen(false)
-      setEditing(null)
-      setPendingSave(null)
-    }
-  }
-
-  function handleSubmit(values: ThemeFormValues) {
-    if (editing) {
-      setPendingSave('edit')
-      dispatch(systemThemeActions.updateThemeRequested({ id: editing.id, values }))
-      return
-    }
-
-    setPendingSave('create')
-    dispatch(systemThemeActions.createThemeRequested(values))
-  }
+  }, [status, pendingDelete])
 
   function handleDeleteConfirm() {
     if (!deleteTarget) return
-    setPendingSave('delete')
+    setPendingDelete(true)
     dispatch(systemThemeActions.deleteThemeRequested(deleteTarget.id))
   }
-
-  const editInitialValues: ThemeFormValues | undefined = editing
-    ? {
-        name: editing.name,
-        color1: editing.color1,
-        color2: editing.color2,
-        color3: editing.color3,
-        color4: editing.color4,
-        color5: editing.color5,
-      }
-    : undefined
 
   const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
   const emptyMessage = themeSearchQuery.trim()
@@ -130,14 +91,14 @@ export function SystemThemePage() {
             aria-label="Search themes"
             className="w-64"
           />
-          <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+          <Button type="button" size="sm" onClick={() => setDialog({})}>
             <Plus className="h-4 w-4" aria-hidden />
             Create theme
           </Button>
         </div>
       }
     >
-      {!dialogOpen && !deleteTarget && error ? (
+      {!dialog && !deleteTarget && error ? (
         <p className="text-sm text-destructive">{error}</p>
       ) : null}
 
@@ -148,8 +109,11 @@ export function SystemThemePage() {
               themes={visibleThemes}
               activeThemeId={preferences?.activeThemeId ?? null}
               emptyMessage={emptyMessage}
-              onSelect={(id) => dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))}
-              onEdit={(theme) => setEditing(theme)}
+              onOpen={(id) => navigate(`/settings/system-theme/${id}`)}
+              onApply={(id) =>
+                dispatch(systemThemeActions.patchPreferencesRequested({ activeThemeId: id }))
+              }
+              onEdit={(theme) => setDialog({ id: theme.id })}
               onDelete={(id) => {
                 const theme = themes.find((t) => t.id === id)
                 if (theme) setDeleteTarget(theme)
@@ -171,25 +135,28 @@ export function SystemThemePage() {
         />
       </ListPageBody>
 
-      <ThemeCreateDialog
-        mode={dialogMode}
-        open={dialogOpen}
-        initialValues={editInitialValues}
-        colorMode={preferences?.colorMode ?? 'light'}
-        isSaving={isSaving && pendingSave !== 'delete'}
-        error={dialogOpen && error ? error : null}
-        onOpenChange={handleDialogOpenChange}
-        onSubmit={handleSubmit}
-      />
+      {dialog ? (
+        <ThemeFormDialog
+          open
+          id={dialog.id}
+          onOpenChange={(open) => {
+            if (!open) setDialog(null)
+          }}
+          onSaved={() => {
+            dispatch(systemThemeActions.loadThemesRequested({ force: true }))
+            setDialog(null)
+          }}
+        />
+      ) : null}
 
       <ThemeDeleteDialog
         open={deleteTarget !== null}
         themeName={deleteTarget?.name ?? null}
-        isDeleting={isSaving && pendingSave === 'delete'}
+        isDeleting={isDeleting}
         onOpenChange={(open) => {
           if (!open) {
             setDeleteTarget(null)
-            setPendingSave(null)
+            setPendingDelete(false)
           }
         }}
         onConfirm={handleDeleteConfirm}

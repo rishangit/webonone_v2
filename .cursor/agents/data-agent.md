@@ -11,6 +11,7 @@ Skill: [.cursor/skills/data-agent/SKILL.md](../skills/data-agent/SKILL.md)
 - Admin SPA using `@webonone/ui-kit` list and form patterns.
 - JWT verification locally (same `JWT_SECRET` as Identity/WebOnOne).
 - Core-hosted form dialogs when embedded: peer-dialog recipe in skill + `platform-shell-navigation.mdc`.
+- Wizard-backed catalog details (e.g. services): per-card Edit → shared create/edit wizard — [details-page-wizard-edit](../skills/details-page-wizard-edit/SKILL.md).
 
 ## Ports
 

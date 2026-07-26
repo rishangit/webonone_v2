@@ -1,13 +1,8 @@
 import { Globe, MapPin, User } from 'lucide-react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  ImagePreview,
-} from '@webonone/ui-kit'
+import { ImagePreview } from '@webonone/ui-kit'
 import type { UserProfile } from '@/shared/types/auth.types'
+import type { ProfileWizardStep } from '../schemas/profileSchemas'
+import { EditableSectionCard } from './EditableSectionCard'
 
 function ReadOnlyField({
   label,
@@ -33,87 +28,86 @@ function ReadOnlyField({
 interface ProfileViewProps {
   user: UserProfile
   avatarUrl: string | null
+  canEdit?: boolean
+  onEditSection?: (step: ProfileWizardStep) => void
 }
 
-export function ProfileView({ user, avatarUrl }: ProfileViewProps) {
+export function ProfileView({ user, avatarUrl, canEdit = true, onEditSection }: ProfileViewProps) {
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Account</CardTitle>
-            <CardDescription>Identity and photo for this account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-              <ImagePreview
-                src={avatarUrl}
-                alt={user.displayName}
-                mode="view"
-                className="rounded-full"
-              />
-              <div className="min-w-0 flex-1 space-y-2">
-                <h2 className="text-xl font-semibold">{user.displayName}</h2>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
-                <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
-                  {user.isEmailVerified ? <span>Email verified</span> : null}
-                  {user.isGoogleUser ? <span>Signed in with Google</span> : null}
-                </div>
-                {user.isGoogleUser ? (
-                  <p className="text-sm text-muted-foreground">
-                    Name and photo were imported from Google. You can update your profile below.
-                  </p>
-                ) : null}
+        <EditableSectionCard
+          title="Account"
+          description="Identity and photo for this account"
+          canEdit={canEdit}
+          onEdit={onEditSection ? () => onEditSection(1) : undefined}
+        >
+          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+            <ImagePreview
+              src={avatarUrl}
+              alt={user.displayName}
+              mode="view"
+              className="rounded-full"
+            />
+            <div className="min-w-0 flex-1 space-y-2">
+              <h2 className="text-xl font-semibold">{user.displayName}</h2>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
+                {user.isEmailVerified ? <span>Email verified</span> : null}
+                {user.isGoogleUser ? <span>Signed in with Google</span> : null}
               </div>
+              {user.isGoogleUser ? (
+                <p className="text-sm text-muted-foreground">
+                  Name and photo were imported from Google. You can update your profile with Edit on
+                  each section.
+                </p>
+              ) : null}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </EditableSectionCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Address</CardTitle>
-            <CardDescription>Postal / street address</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ReadOnlyField label="Address line 1" value={user.addressLine1} icon={MapPin} />
-            <ReadOnlyField label="Address line 2" value={user.addressLine2} icon={MapPin} />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ReadOnlyField label="City" value={user.city} icon={MapPin} />
-              <ReadOnlyField label="State / region" value={user.stateRegion} icon={MapPin} />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ReadOnlyField label="Postal code" value={user.postalCode} icon={MapPin} />
-              <ReadOnlyField label="Country" value={user.country} icon={Globe} />
-            </div>
-          </CardContent>
-        </Card>
+        <EditableSectionCard
+          title="Address"
+          description="Postal / street address"
+          canEdit={canEdit}
+          onEdit={onEditSection ? () => onEditSection(2) : undefined}
+        >
+          <ReadOnlyField label="Address line 1" value={user.addressLine1} icon={MapPin} />
+          <ReadOnlyField label="Address line 2" value={user.addressLine2} icon={MapPin} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ReadOnlyField label="City" value={user.city} icon={MapPin} />
+            <ReadOnlyField label="State / region" value={user.stateRegion} icon={MapPin} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ReadOnlyField label="Postal code" value={user.postalCode} icon={MapPin} />
+            <ReadOnlyField label="Country" value={user.country} icon={Globe} />
+          </div>
+        </EditableSectionCard>
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Contact</CardTitle>
-            <CardDescription>How others can reach you</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ReadOnlyField label="Phone number" value={user.phoneNumber} />
-            <ReadOnlyField label="Locale" value={user.locale} icon={Globe} />
-          </CardContent>
-        </Card>
+        <EditableSectionCard
+          title="Contact"
+          description="How others can reach you"
+          canEdit={canEdit}
+          onEdit={onEditSection ? () => onEditSection(3) : undefined}
+        >
+          <ReadOnlyField label="Phone number" value={user.phoneNumber} />
+          <ReadOnlyField label="Locale" value={user.locale} icon={Globe} />
+        </EditableSectionCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Name</CardTitle>
-            <CardDescription>Legal and display names</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ReadOnlyField label="First name" value={user.firstName} icon={User} />
-              <ReadOnlyField label="Last name" value={user.lastName} icon={User} />
-            </div>
-            <ReadOnlyField label="Display name" value={user.displayName} icon={User} />
-          </CardContent>
-        </Card>
+        <EditableSectionCard
+          title="Name"
+          description="Legal and display names"
+          canEdit={canEdit}
+          onEdit={onEditSection ? () => onEditSection(4) : undefined}
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ReadOnlyField label="First name" value={user.firstName} icon={User} />
+            <ReadOnlyField label="Last name" value={user.lastName} icon={User} />
+          </div>
+          <ReadOnlyField label="Display name" value={user.displayName} icon={User} />
+        </EditableSectionCard>
       </div>
     </div>
   )

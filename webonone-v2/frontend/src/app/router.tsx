@@ -37,8 +37,28 @@ const SystemThemePage = lazy(() =>
     default: m.SystemThemePage,
   })),
 )
+const ThemeDetailPage = lazy(() =>
+  import('@/features/settings/system-theme/pages/ThemeDetailPage').then((m) => ({
+    default: m.ThemeDetailPage,
+  })),
+)
 const PlatformPeerFrame = lazy(() =>
   import('@/features/shell/pages/PlatformPeerFrame').then((m) => ({ default: m.PlatformPeerFrame })),
+)
+const DataCatalogListRoute = lazy(() =>
+  import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
+    default: m.DataCatalogListRoute,
+  })),
+)
+const DataCatalogDetailRoute = lazy(() =>
+  import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
+    default: m.DataCatalogDetailRoute,
+  })),
+)
+const DataLibraryCatchAllRoute = lazy(() =>
+  import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
+    default: m.DataLibraryCatchAllRoute,
+  })),
 )
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -135,6 +155,14 @@ export function App() {
             }
           />
           <Route
+            path="settings/system-theme/:themeId"
+            element={
+              <LazyRoute>
+                <ThemeDetailPage />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="email/*"
             element={
               <LazyRoute>
@@ -151,10 +179,26 @@ export function App() {
             }
           />
           <Route
+            path="data/:kind/:id"
+            element={
+              <LazyRoute>
+                <DataCatalogDetailRoute />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="data/:kind"
+            element={
+              <LazyRoute>
+                <DataCatalogListRoute />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="data/*"
             element={
               <LazyRoute>
-                <PlatformPeerFrame peer="data" />
+                <DataLibraryCatchAllRoute />
               </LazyRoute>
             }
           />

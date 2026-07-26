@@ -23,7 +23,8 @@ description: >-
 - [core-hosted-peer-dialog skill](../core-hosted-peer-dialog/SKILL.md) — **required for any dialog box / dialog window** (create/edit/wizard/selection): host chrome when embedded; also [dialog-windows.mdc](../../rules/dialog-windows.mdc) and [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc)
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — platform handoff + satellite peer nav to Email
 - [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) — `FeaturePage` for collection and details routes
-- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — multi-section details pages ([details-page-cards skill](../details-page-cards/SKILL.md))
+- [details-page-cards.mdc](../../rules/details-page-cards.mdc) — profile / inline page-level Edit details ([details-page-cards skill](../details-page-cards/SKILL.md))
+- [details-page-wizard-edit.mdc](../../rules/details-page-wizard-edit.mdc) — catalog wizard-backed details (per-card Edit → shared create/edit wizard); [skill](../details-page-wizard-edit/SKILL.md) — **required** for services-style detail + Add dialogs
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
 
@@ -58,6 +59,7 @@ Catalog create/edit dialogs must use the **peer-dialog** bridge when embedded in
 1. Standalone: local `CustomDialog` with matching sizes and footer labels.
 2. Embed: `resolvePlatformEmbedParentOrigin` + `useRequestPlatformPeerDialog` + route under `/embed/dialogs/…` (e.g. tags/units/attributes/catalog). Do **not** use URL-only `getPlatformEmbedParentOrigin` on list openers.
 3. Embed page: `usePlatformPeerDialogSubmit` + `sendPlatformPeerDialogBusy` / `Complete` — **no** Cancel/Save in the iframe body.
+4. Entities with a details page + multi-step create: one dual-use wizard (`id?` + `initialStep`) for list Add/Edit and detail section Edit — [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md). Reference: `ServiceFormDialog` + `ServiceDetailsPage`.
 
 Reference: `features/tags/components/TagFormDialog.tsx`, `features/tags/pages/TagFormEmbedPage.tsx`.
 

@@ -1,10 +1,13 @@
 export {
+  AUTH_MESSAGE_TYPES,
   DATA_TAG_PICKER_MESSAGE_TYPES,
   IDENTITY_USER_PICKER_MESSAGE_TYPES,
   PLATFORM_EMBED_QUERY,
   PLATFORM_MESSAGE_TYPES,
   PLATFORM_PEER_DIALOG_PATH_PREFIX,
   isAllowedPlatformPeerDialogPath,
+  isAuthCancelMessage,
+  isAuthSuccessMessage,
   isDataTagPickerCancelMessage,
   isDataTagPickerCreatedMessage,
   isDataTagPickerCreateRequestMessage,
@@ -32,6 +35,9 @@ export {
   isPlatformPeerDialogSecondaryMessage,
   isPlatformPeerDialogSubmitMessage,
   isPlatformReadyMessage,
+  type AuthCancelMessage,
+  type AuthSuccessMessage,
+  type AuthSuccessUser,
   type BuildPlatformEmbedUrlOptions,
   type DataTagPickerCancelMessage,
   type DataTagPickerCreatedMessage,
@@ -85,6 +91,8 @@ export {
   sendDataTagPickerCreateSubmit,
   sendDataTagPickerSelectionChange,
   sendDataTagPickerSetSelection,
+  sendAuthCancel,
+  sendAuthSuccess,
   sendPlatformContentReady,
   sendIdentityUserPickerCancel,
   sendIdentityUserPickerSelect,
@@ -109,6 +117,7 @@ export {
   type BuildDataTagPickerUrlOptions,
   type BuildIdentityUserPickerUrlOptions,
   type PlatformPeerDialogBusyOptions,
+  type SendAuthSuccessPayload,
 } from './embedUrl'
 
 export {

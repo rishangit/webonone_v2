@@ -42,7 +42,7 @@ export function CatalogFormEmbedPage() {
         onOpenChange={(next) => {
           if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
         }}
-        onSaved={() => sendPlatformPeerDialogComplete(parentOrigin, requestId)}
+        onSaved={(item) => sendPlatformPeerDialogComplete(parentOrigin, requestId, item)}
       />
     )
   }
@@ -56,7 +56,7 @@ export function CatalogFormEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSaved={() => sendPlatformPeerDialogComplete(parentOrigin, requestId)}
+      onSaved={(item) => sendPlatformPeerDialogComplete(parentOrigin, requestId, item)}
     />
   )
 }

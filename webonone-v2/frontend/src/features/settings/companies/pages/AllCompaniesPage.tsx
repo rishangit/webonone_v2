@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import {
@@ -11,11 +11,10 @@ import {
   Pagination,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { RegisterCompanyDialog } from '@/features/settings/basic/components/RegisterCompanyDialog'
-import type { RegisterCompanyFormValues } from '@/features/settings/basic/schemas/companySchemas'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { isFresh } from '@/shared/store/cacheUtils'
+import { CompanyFormDialog } from '../components/CompanyFormDialog'
 import { MyCompaniesList } from '../components/MyCompaniesList'
 
 export function AllCompaniesPage() {
@@ -25,18 +24,13 @@ export function AllCompaniesPage() {
     myCompaniesStatus,
     myCompaniesError,
     myCompaniesFetchedAt,
-    myCompanyStatus,
-    myCompanyError,
   } = useAppSelector((s) => s.companies)
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
   const [registerOpen, setRegisterOpen] = useState(false)
-  const [pendingRegister, setPendingRegister] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const registerStatusRef = useRef(myCompanyStatus)
 
   const awaitingFirstLoad =
     myCompaniesFetchedAt === null && myCompanies.length === 0 && myCompaniesStatus !== 'error'
@@ -49,28 +43,6 @@ export function AllCompaniesPage() {
     }
   }, [dispatch, myCompaniesFetchedAt])
 
-  useEffect(() => {
-    const previousStatus = registerStatusRef.current
-    registerStatusRef.current = myCompanyStatus
-
-    if (!pendingRegister) return
-
-    if (previousStatus === 'saving' && myCompanyStatus === 'idle') {
-      setRegisterOpen(false)
-      setPendingRegister(false)
-      setSubmitError(null)
-      setSuccessMessage(
-        'Registration submitted. Admin approval is required — the company stays Pending until a super admin approves or rejects it.',
-      )
-      return
-    }
-
-    if (myCompanyStatus === 'error') {
-      setPendingRegister(false)
-      setSubmitError(myCompanyError)
-    }
-  }, [myCompanyStatus, myCompanyError, pendingRegister])
-
   const filteredItems = searchQuery.trim()
     ? myCompanies.filter((item) =>
         item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
@@ -78,22 +50,6 @@ export function AllCompaniesPage() {
     : myCompanies
 
   const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
-  const isSubmitting = myCompanyStatus === 'saving' && pendingRegister
-
-  function handleRegister(values: RegisterCompanyFormValues) {
-    setSuccessMessage(null)
-    setSubmitError(null)
-    setPendingRegister(true)
-    dispatch(companiesActions.registerCompanyRequested(values))
-  }
-
-  function handleRegisterOpenChange(open: boolean) {
-    setRegisterOpen(open)
-    if (!open) {
-      setPendingRegister(false)
-      setSubmitError(null)
-    }
-  }
 
   if (awaitingFirstLoad) {
     return null
@@ -156,12 +112,14 @@ export function AllCompaniesPage() {
         </Link>
       </p>
 
-      <RegisterCompanyDialog
+      <CompanyFormDialog
         open={registerOpen}
-        isSubmitting={isSubmitting}
-        error={submitError}
-        onOpenChange={handleRegisterOpenChange}
-        onSubmit={handleRegister}
+        onOpenChange={setRegisterOpen}
+        onSaved={() => {
+          setSuccessMessage(
+            'Registration submitted. Admin approval is required — the company stays Pending until a super admin approves or rejects it.',
+          )
+        }}
       />
     </FeaturePage>
   )

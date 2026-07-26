@@ -1,0 +1,118 @@
+import { Globe, MapPin } from 'lucide-react'
+import { FormField, Input, InputGroup, InputGroupIcon } from '@webonone/ui-kit'
+import type { ProfileFormValues } from '../../schemas/profileSchemas'
+
+interface ProfileWizardStepAddressProps {
+  values: ProfileFormValues
+  fieldErrors: Partial<Record<keyof ProfileFormValues, string>>
+  isSubmitting: boolean
+  onChange: (patch: Partial<ProfileFormValues>) => void
+}
+
+export function ProfileWizardStepAddress({
+  values,
+  fieldErrors,
+  isSubmitting,
+  onChange,
+}: ProfileWizardStepAddressProps) {
+  return (
+    <div className="space-y-4">
+      <FormField label="Address line 1" htmlFor="profile-wizard-line1" error={fieldErrors.addressLine1}>
+        <InputGroup>
+          <InputGroupIcon icon={MapPin} />
+          <Input
+            id="profile-wizard-line1"
+            inGroup
+            autoComplete="address-line1"
+            value={values.addressLine1 ?? ''}
+            onChange={(e) => onChange({ addressLine1: e.target.value || null })}
+            disabled={isSubmitting}
+          />
+        </InputGroup>
+      </FormField>
+      <FormField label="Address line 2" htmlFor="profile-wizard-line2" error={fieldErrors.addressLine2}>
+        <InputGroup>
+          <InputGroupIcon icon={MapPin} />
+          <Input
+            id="profile-wizard-line2"
+            inGroup
+            autoComplete="address-line2"
+            value={values.addressLine2 ?? ''}
+            onChange={(e) => onChange({ addressLine2: e.target.value || null })}
+            disabled={isSubmitting}
+          />
+        </InputGroup>
+      </FormField>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="City" htmlFor="profile-wizard-city" error={fieldErrors.city}>
+          <InputGroup>
+            <InputGroupIcon icon={MapPin} />
+            <Input
+              id="profile-wizard-city"
+              inGroup
+              autoComplete="address-level2"
+              value={values.city ?? ''}
+              onChange={(e) => onChange({ city: e.target.value || null })}
+              disabled={isSubmitting}
+            />
+          </InputGroup>
+        </FormField>
+        <FormField
+          label="State / region"
+          htmlFor="profile-wizard-state"
+          error={fieldErrors.stateRegion}
+        >
+          <InputGroup>
+            <InputGroupIcon icon={MapPin} />
+            <Input
+              id="profile-wizard-state"
+              inGroup
+              autoComplete="address-level1"
+              value={values.stateRegion ?? ''}
+              onChange={(e) => onChange({ stateRegion: e.target.value || null })}
+              disabled={isSubmitting}
+            />
+          </InputGroup>
+        </FormField>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField
+          label="Postal code"
+          htmlFor="profile-wizard-postal"
+          error={fieldErrors.postalCode}
+        >
+          <InputGroup>
+            <InputGroupIcon icon={MapPin} />
+            <Input
+              id="profile-wizard-postal"
+              inGroup
+              autoComplete="postal-code"
+              value={values.postalCode ?? ''}
+              onChange={(e) => onChange({ postalCode: e.target.value || null })}
+              disabled={isSubmitting}
+            />
+          </InputGroup>
+        </FormField>
+        <FormField
+          label="Country (2-letter code)"
+          htmlFor="profile-wizard-country"
+          error={fieldErrors.country}
+        >
+          <InputGroup>
+            <InputGroupIcon icon={Globe} />
+            <Input
+              id="profile-wizard-country"
+              inGroup
+              autoComplete="country"
+              placeholder="US"
+              maxLength={2}
+              value={values.country ?? ''}
+              onChange={(e) => onChange({ country: e.target.value.toUpperCase() })}
+              disabled={isSubmitting}
+            />
+          </InputGroup>
+        </FormField>
+      </div>
+    </div>
+  )
+}

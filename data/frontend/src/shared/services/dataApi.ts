@@ -17,6 +17,7 @@ export type ListQuery = {
   value_type?: string
   is_base?: string
   tag_id?: string | string[]
+  ids?: string | string[]
 }
 
 function toQueryString(params: Record<string, string | number | string[] | undefined>): string {

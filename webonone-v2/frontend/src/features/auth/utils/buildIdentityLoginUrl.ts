@@ -4,13 +4,14 @@ import {
   createPlatformDefaultThemeDto,
   serializeThemeQueryParams,
   type ColorMode,
+  type ThemePayload,
 } from '@webonone/theme'
 import { getAuthCallbackUrl, getIdentityLoginUrl } from './identityConfig'
 
 const STATE_STORAGE_PREFIX = 'webonone_oauth_state:'
 const GUEST_COLOR_MODE_KEY = 'webonone:guest-color-mode'
 
-function readGuestColorMode(): ColorMode {
+export function readGuestColorMode(): ColorMode {
   try {
     const stored = localStorage.getItem(GUEST_COLOR_MODE_KEY)
     if (stored === 'dark' || stored === 'light') return stored
@@ -20,8 +21,13 @@ function readGuestColorMode(): ColorMode {
   return 'light'
 }
 
+export function getGuestThemePayload(): ThemePayload {
+  return buildThemePayload(createPlatformDefaultThemeDto(), readGuestColorMode())
+}
+
+/** Full-page OAuth redirect to Identity (satellites / legacy). Not used by WebOnOne `/login`. */
 export function buildIdentityLoginUrl(returnPath = '/'): string {
-  const payload = buildThemePayload(createPlatformDefaultThemeDto(), readGuestColorMode())
+  const payload = getGuestThemePayload()
   return buildLoginRedirectUrl({
     loginUrl: getIdentityLoginUrl(),
     redirectUri: getAuthCallbackUrl(),

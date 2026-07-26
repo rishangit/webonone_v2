@@ -55,7 +55,7 @@ Each prompt **must** include:
 
 Sequence cross-service work: Identity before WebOnOne.
 
-**Platform navigation (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). Embed peers: **`FeaturePage`** + scroll on **`PlatformEmbedShell` `<main>`** (whole page, not inner lists). Satellites use auth-code redirect for cross-service hops. Multi-section **details / profile** pages: [details-page-cards.mdc](../../rules/details-page-cards.mdc) · [details-page-cards skill](../details-page-cards/SKILL.md).
+**Platform navigation (mandatory):** Read [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc). Embed peers: **`FeaturePage`** + scroll on **`PlatformEmbedShell` `<main>`** (whole page, not inner lists). Satellites use auth-code redirect for cross-service hops. Multi-section **details / profile** pages: inline page-level Edit → [details-page-cards.mdc](../../rules/details-page-cards.mdc) · [details-page-cards skill](../details-page-cards/SKILL.md); wizard-backed catalog details (per-card Edit → shared wizard) → [details-page-wizard-edit.mdc](../../rules/details-page-wizard-edit.mdc) · [details-page-wizard-edit skill](../details-page-wizard-edit/SKILL.md).
 
 **Core-hosted dialogs (mandatory pick):** When the task adds or fixes **any dialog** that opens while a peer is embedded in WebOnOne (`#main-content`), read and follow [core-hosted-peer-dialog](../core-hosted-peer-dialog/SKILL.md) plus [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc):
 

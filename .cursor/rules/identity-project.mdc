@@ -24,7 +24,10 @@ Backend loads only `identity/backend/.env` (not repo root or other services).
 ## Ownership
 
 - Login, register, forgot/reset password UI + APIs.
-- JWT **issuance**; redirect mode via `redirect_uri` + auth code exchange.
+- JWT **issuance**.
+- **Embed login** (`parentOrigin` allowlisted): after sign-in, `sendAuthSuccess` / `webonone:auth:success` postMessage to parent — **no** top-window redirect. Theme via `useEmbedThemeListener`. See `useEmbedLoginMode`, `LoginPage`.
+- **Redirect login** (`redirect_uri` + `state`): auth-code exchange via `completeAuthRedirect` for OAuth / satellite consumers.
+- When both present in an iframe, **embed wins**.
 - Database: `identity` (MySQL) — includes canonical **`users_roles`** for platform permissions.
 
 ## Platform shell — reference implementation (profile)
@@ -42,10 +45,10 @@ Identity profile is the **canonical template** for all cross-service redirection
 
 ## Integration
 
-- WebOnOne `/login` → Identity `redirect_uri`; `/callback` on WebOnOne for standalone OAuth only.
+- WebOnOne `/login` embeds Identity `/login?parentOrigin=…&returnPath=…` (iframe + postMessage); `/callback` on WebOnOne for redirect OAuth only.
 - WebOnOne → Profile: `handleProfileClick` + `redirectToIdentityProfile.ts` (consumer).
 - Identity/ WebOnOne → Email: `handleEmailClick` + `redirectToEmail.ts` — **no** `/go/*` route.
-- Embed login: `identity/frontend` login embed mode; `webonone-v2/frontend/src/features/auth/utils/identityConfig.ts`.
+- Auth message helpers: `@webonone/platform-embed` (`sendAuthSuccess`, `isAuthSuccessMessage`); config: `webonone-v2/frontend/src/features/auth/utils/identityConfig.ts`.
 
 Cross-service rules: [microservice-architecture.mdc](microservice-architecture.mdc), [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
 

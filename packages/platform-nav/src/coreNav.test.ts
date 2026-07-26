@@ -3,10 +3,13 @@ import { describe, it } from 'node:test'
 import {
   CORE_NAV_VARIANT_SUPER_ADMIN,
   DATA_NAV_SENTINELS,
+  dataEntityKeyFromSentinel,
   dataSentinelToExternalPath,
   EMAIL_NAV_SENTINELS,
   emailSentinelToExternalPath,
+  filterPlatformNavDataEntities,
   getCoreOriginFromReturnUrl,
+  getPlatformNavDefs,
   isDataNavSentinel,
   isEmailNavSentinel,
   isSmsNavSentinel,
@@ -169,5 +172,32 @@ describe('coreNav', () => {
     assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.services), '/services')
     assert.equal(dataSentinelToExternalPath(DATA_NAV_SENTINELS.spaces), '/spaces')
     assert.equal(dataSentinelToExternalPath('/unknown'), null)
+  })
+
+  it('maps Data sentinels to entity keys', () => {
+    assert.equal(dataEntityKeyFromSentinel(DATA_NAV_SENTINELS.tags), 'tags')
+    assert.equal(dataEntityKeyFromSentinel(DATA_NAV_SENTINELS.products), 'products')
+    assert.equal(dataEntityKeyFromSentinel('/unknown'), null)
+  })
+
+  it('filters Data nav children by enabled entity keys', () => {
+    const defs = getPlatformNavDefs('main')
+    const filtered = filterPlatformNavDataEntities(defs, ['tags', 'products'])
+    const dataGroup = filtered.find((item) => item.kind === 'group' && item.label === 'Data')
+    assert.ok(dataGroup?.kind === 'group')
+    if (dataGroup?.kind === 'group') {
+      assert.deepEqual(
+        dataGroup.children.map((child) => child.label),
+        ['Tags', 'Products'],
+      )
+    }
+    assert.ok(filtered.some((item) => item.kind === 'group' && item.label === 'Email'))
+  })
+
+  it('drops Data group when no entities are enabled', () => {
+    const defs = getPlatformNavDefs('main')
+    const filtered = filterPlatformNavDataEntities(defs, [])
+    const dataGroup = filtered.find((item) => item.kind === 'group' && item.label === 'Data')
+    assert.equal(dataGroup, undefined)
   })
 })

@@ -35,7 +35,7 @@ export function AttributeFormEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSaved={() => sendPlatformPeerDialogComplete(parentOrigin, requestId)}
+      onSaved={(attribute) => sendPlatformPeerDialogComplete(parentOrigin, requestId, attribute)}
     />
   )
 }

@@ -5,6 +5,7 @@ import type {
   AssumableRolesResponse,
   SessionRole,
 } from '../types/sessionRole.types'
+import type { DataEntityKey } from '@webonone/platform-nav'
 import {
   clearSessionRoleStorage,
   readSessionRoleStorage,
@@ -109,6 +110,16 @@ export const sessionRoleSlice = createSlice({
       action: PayloadAction<{ role: SessionRole; companyId: string | null }>,
     ) {
       applyRole(state, action.payload.role, action.payload.companyId)
+    },
+    companyDataEntitiesUpdated(
+      state,
+      action: PayloadAction<{ companyId: string; dataEntities: DataEntityKey[] }>,
+    ) {
+      state.assumableRoles = state.assumableRoles.map((role) =>
+        role.companyId === action.payload.companyId
+          ? { ...role, dataEntities: action.payload.dataEntities }
+          : role,
+      )
     },
     openChangeDialog(state) {
       if (!state.selectionComplete) {

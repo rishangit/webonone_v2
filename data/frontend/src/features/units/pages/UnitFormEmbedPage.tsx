@@ -35,7 +35,7 @@ export function UnitFormEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSaved={() => sendPlatformPeerDialogComplete(parentOrigin, requestId)}
+      onSaved={(unit) => sendPlatformPeerDialogComplete(parentOrigin, requestId, unit)}
     />
   )
 }

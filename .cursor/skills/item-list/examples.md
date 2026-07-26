@@ -70,6 +70,93 @@ export function ThemeList({ themes, activeId, onSelect, onEdit, onDelete }: Them
 }
 ```
 
+## List row opens detail page
+
+When the entity has a details/profile route, row body click must navigate there. Menu may duplicate View details; other actions stay menu-only.
+
+```tsx
+import { useNavigate } from 'react-router-dom'
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  ImagePreview,
+  ItemList,
+  ItemListContent,
+  ItemListEmpty,
+  ItemListItem,
+  ItemListMenu,
+  StatusTag,
+} from '@webonone/ui-kit'
+
+interface Company {
+  id: string
+  name: string
+  logoUrl: string | null
+  status: 'pending' | 'approved' | 'rejected'
+}
+
+interface CompaniesListProps {
+  items: Company[]
+  onApprove: (id: string) => void
+  onReject: (id: string) => void
+}
+
+export function CompaniesList({ items, onApprove, onReject }: CompaniesListProps) {
+  const navigate = useNavigate()
+  const rows = Array.isArray(items) ? items : []
+
+  if (rows.length === 0) {
+    return <ItemListEmpty>No companies yet.</ItemListEmpty>
+  }
+
+  function openProfile(id: string) {
+    navigate(`/companies/${id}`)
+  }
+
+  return (
+    <ItemList>
+      {rows.map((item) => (
+        <ItemListItem key={item.id}>
+          <ItemListContent>
+            <button
+              type="button"
+              className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => openProfile(item.id)}
+            >
+              <div className="flex items-start gap-3">
+                <ImagePreview
+                  src={item.logoUrl}
+                  alt={item.name}
+                  mode="view"
+                  className="h-10 w-10 rounded-md"
+                />
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate font-medium">{item.name}</p>
+                    <StatusTag variant={item.status} />
+                  </div>
+                </div>
+              </div>
+            </button>
+          </ItemListContent>
+          <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+            <DropdownMenuItem onClick={() => openProfile(item.id)}>View details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onApprove(item.id)}>Approve</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => onReject(item.id)}
+            >
+              Reject
+            </DropdownMenuItem>
+          </ItemListMenu>
+        </ItemListItem>
+      ))}
+    </ItemList>
+  )
+}
+```
+
 ## Row with metadata
 
 ```tsx

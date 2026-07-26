@@ -21,29 +21,24 @@ export function resolvePlatformLogoutLoginUrl(
   return `${origin}/login`
 }
 
-function appendPromptLogin(url: string): string {
-  const parsed = new URL(url)
-  if (parsed.searchParams.get('prompt') !== 'login') {
-    parsed.searchParams.set('prompt', 'login')
-  }
-  return parsed.toString()
-}
-
+/**
+ * Absolute consumer (or local) login URL after logout.
+ * Does not append `prompt=login` — Identity `/logout` already clears SSO sessions.
+ */
 export function resolveAbsolutePostLogoutLoginUrl(
   returnUrl: string | null | undefined,
   localLoginPath = '/login',
 ): string {
   const pathOrUrl = resolvePlatformLogoutLoginUrl(returnUrl, localLoginPath)
   if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
-    return appendPromptLogin(pathOrUrl)
+    return pathOrUrl
   }
 
   if (typeof window === 'undefined') {
-    return appendPromptLogin(pathOrUrl)
+    return pathOrUrl
   }
 
-  const absolute = `${window.location.origin}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`
-  return appendPromptLogin(absolute)
+  return `${window.location.origin}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`
 }
 
 export function buildIdentityLogoutUrl(

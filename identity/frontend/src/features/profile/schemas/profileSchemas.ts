@@ -6,6 +6,16 @@ const phoneNumberSchema = z
   .nullable()
   .refine((value) => !value || /^\+\d{7,15}$/.test(value), 'Enter a valid phone number with country code')
 
+export const PROFILE_WIZARD_TOTAL_STEPS = 5 as const
+
+export type ProfileWizardStep = 1 | 2 | 3 | 4 | 5
+
+export function parseProfileWizardStep(raw: string | null | undefined): ProfileWizardStep {
+  const n = Number(raw)
+  if (n === 2 || n === 3 || n === 4 || n === 5) return n
+  return 1
+}
+
 export const profileSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
@@ -23,6 +33,31 @@ export const profileSchema = z.object({
 })
 
 export type ProfileFormValues = z.infer<typeof profileSchema>
+
+/** Step 2 — Address (soft validation). */
+export const profileWizardAddressSchema = z.object({
+  addressLine1: z.string().max(255).nullable(),
+  addressLine2: z.string().max(255).nullable(),
+  city: z.string().max(100).nullable(),
+  stateRegion: z.string().max(100).nullable(),
+  postalCode: z.string().max(20).nullable(),
+  country: z
+    .string()
+    .refine((value) => value === '' || value.length === 2, 'Use a 2-letter country code'),
+})
+
+/** Step 3 — Contact. */
+export const profileWizardContactSchema = z.object({
+  phoneNumber: phoneNumberSchema,
+  locale: z.string().max(20).nullable(),
+})
+
+/** Step 4 — Name (required). */
+export const profileWizardNameSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
+  displayName: z.string().min(1, 'Display name is required').max(255),
+})
 
 export function userToProfileFormValues(user: {
   firstName: string

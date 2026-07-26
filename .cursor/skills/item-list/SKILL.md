@@ -72,6 +72,33 @@ Primary row click (select, navigate, toggle) may stay on the row body — only *
 
 For **single-select user pickers** in a modal (search + infinite scroll, no 3-dot menu), use **`UserSelectionDialog`** from `@webonone/ui-kit` instead of hand-rolling `ItemList` inside `CustomDialog`. See `ui-kit/package/src/components/UserSelectionDialog.tsx` and spec `1.9.3`.
 
+## Detail page navigation
+
+When the entity has a details / profile route ([details-page-cards skill](../details-page-cards/SKILL.md)), **row body click must open that page**. Do not rely on the 3-dot menu alone for open.
+
+| When | Required behavior |
+|------|-------------------|
+| Entity has a details/profile route | Row body click **must** `navigate` (or call `onOpen` that navigates) to that route |
+| No detail page (apply / select / toggle-only lists) | Row click may select or toggle; keep existing behavior |
+
+**Pattern** (canonical: `MyCompaniesList`, `CompaniesList`):
+
+```tsx
+<ItemListContent>
+  <button
+    type="button"
+    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    onClick={() => navigate(`/settings/companies/${id}`)}
+  >
+    {/* title, subtitle, ImagePreview, StatusTag */}
+  </button>
+</ItemListContent>
+```
+
+- Put the navigable `<button>` **inside** `ItemListContent` — never put `onClick` on `ItemListItem` (`<li>`) when the row also has `ItemListMenu` (nested interactive elements).
+- Optional: duplicate **View details** as a `DropdownMenuItem` in the menu; Edit / Delete / Approve stay menu-only.
+- Do not open the detail page only from the menu when a detail route exists.
+
 ## File layout
 
 ```text
@@ -89,9 +116,10 @@ For **single-select user pickers** in a modal (search + infinite scroll, no 3-do
 1. **Guard** — `const rows = Array.isArray(items) ? items : []`; early return with `ItemListEmpty` when `rows.length === 0`.
 2. **Structure** — `ItemList` → map → `ItemListItem` per entity.
 3. **Content** — `ItemListContent` for title, subtitle, badges, thumbnails (left side). Entity logos/avatars use **`ImagePreview`** (`src={item.logoUrl}`; `src={null}` shows the kit first-upload icon — never a custom “No logo” tile). Size list thumbs with `className="h-10 w-10 rounded-md"`. See [image-preview.mdc](../../rules/image-preview.mdc).
-4. **Menu** — `ItemListMenu` as the **last** child of `ItemListItem` (renders top-right via `items-start` on the row + `self-start` on the trigger). Menu items call parent handlers.
-5. **Destructive** — `DropdownMenuItem className="text-destructive focus:text-destructive"`.
-6. **Selection** — highlight active row with `itemListRowActiveClassName` (`border-primary`) on `ItemListItem`. **Never** add `bg-accent`, `bg-primary`, `bg-background`, or palette fills on top of the glass row.
+4. **Detail open** — if a details/profile route exists, wrap row content in a `<button>` that navigates (or calls `onOpen`). See **Detail page navigation**.
+5. **Menu** — `ItemListMenu` as the **last** child of `ItemListItem` (renders top-right via `items-start` on the row + `self-start` on the trigger). Menu items call parent handlers.
+6. **Destructive** — `DropdownMenuItem className="text-destructive focus:text-destructive"`.
+7. **Selection** — highlight active row with `itemListRowActiveClassName` (`border-primary`) on `ItemListItem`. **Never** add `bg-accent`, `bg-primary`, `bg-background`, or palette fills on top of the glass row.
 
 ## Visual tokens (mandatory)
 
@@ -118,12 +146,13 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - `ItemList` sets `role="list"`.
 - `ItemListMenu` trigger must have a descriptive `ariaLabel` per row.
 - Menu items are keyboard-reachable via Radix `DropdownMenu`.
-- If the row is clickable, use a `<button>` inside `ItemListContent` or an explicit `onClick` with clear focus styles — do not nest interactive elements incorrectly.
+- If the row is clickable (including detail navigation), use a `<button>` inside `ItemListContent` with clear focus styles (`focus-visible:ring-2 focus-visible:ring-ring`). Do **not** put `onClick` on the `<li>` (`ItemListItem`) when the row also has `ItemListMenu` — that nests interactive controls incorrectly.
 
 ## Checklist
 
 - [ ] Uses `ItemList`, `ItemListItem`, `ItemListContent`, `ItemListMenu`
 - [ ] Row actions in 3-dot menu, not inline button groups
+- [ ] Detail route exists → row body click opens it (button inside `ItemListContent`); menu may duplicate View details — do not open details from the menu alone
 - [ ] `ItemList` uses default `py-4` on the `<ul>` — do not override with `py-0` unless embed layout requires it
 - [ ] `gap-2` between rows; same padding on every row
 - [ ] Row surface is `glass-card item-list-row` — no extra `bg-*` on rows
@@ -152,6 +181,7 @@ Cross-link only — do not duplicate:
 - [item-list-pagination.mdc](../../rules/item-list-pagination.mdc) — `Pagination` with `ItemList`
 - [list-filter-panel.mdc](../../rules/list-filter-panel.mdc) — `ListFilterPanel` on collection pages
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified platform overlay; `usePlatformLoading`; button `Spinner`
+- [details-page-cards skill](../details-page-cards/SKILL.md) — when row click opens a details/profile page
 - [form-creation skill](../form-creation/SKILL.md) — when the list is inside a form (orthogonal)
 
 ## Examples
@@ -183,4 +213,5 @@ npm run lint
 - Active row → `border-primary` without extra background fill
 - 3-dot menu sits at the **top-right** of each row (not vertically centered)
 - Tab to 3-dot trigger → menu opens; Escape closes
+- When a detail route exists: click row body → detail page; 3-dot menu still works without navigating
 - All rows align; padding matches other lists in the app

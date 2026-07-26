@@ -1,12 +1,12 @@
-interface RegisterWizardProgressProps {
+interface ProfileWizardProgressProps {
   currentStep: number
   totalSteps?: number
 }
 
-export function RegisterWizardProgress({
+export function ProfileWizardProgress({
   currentStep,
-  totalSteps = 2,
-}: RegisterWizardProgressProps) {
+  totalSteps = 5,
+}: ProfileWizardProgressProps) {
   const progress = (currentStep / totalSteps) * 100
 
   return (

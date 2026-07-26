@@ -1,0 +1,133 @@
+---
+description: >-
+  Wizard-backed entity details — read-only section cards with per-card Edit
+  opening a shared create/edit wizard at the mapped step
+globs: "**/frontend/src/features/**/pages/**/*.{ts,tsx},**/frontend/src/features/**/components/**/*Dialog*.{ts,tsx},ui-kit/showcase/src/pages/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Details page wizard edit
+
+Related: [details-page-cards.mdc](details-page-cards.mdc) (inline page-level Edit), [dialog-windows.mdc](dialog-windows.mdc), [feature-page-layout.mdc](feature-page-layout.mdc), [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md), [form-creation](../skills/form-creation/SKILL.md), [item-list](../skills/item-list/SKILL.md).
+
+Use when the entity’s create/edit flow is a **multi-step wizard** (catalog services, company registration, Identity profile, and similar). Do **not** use for showcase/simple demos that keep **inline** page-level Edit — those stay on [details-page-cards.mdc](details-page-cards.mdc).
+
+Self-edit-only wizards (no list Add) are allowed when there is no create list — e.g. Identity profile: edit-only dialog with `initialStep` from section cards.
+
+## Flow
+
+```text
+List Add / Edit  ──┐
+                   ├──► same *FormDialog wizard (id? + initialStep?)
+Detail card Edit ──┘         create: no id, step 1
+                             edit:   id set, step = card map
+```
+
+## Required composition
+
+```text
+FeaturePage
+  actions: Back only (no page-level Edit / Cancel / Save)
+  Outer: grid items-start gap-6 lg:grid-cols-3
+    Left:  flex flex-col gap-6 lg:col-span-2
+    Right: flex flex-col gap-6 lg:col-span-1
+      Editable sections → EditableSectionCard (hover Edit3 → openWizard(step))
+      Meta / audit → plain Card (no edit)
+```
+
+| Piece | Requirement |
+|-------|-------------|
+| Shell | `FeaturePage` — full width; same 3-col grid as details-page-cards |
+| Back | Always in `actions`: outline `size="sm"` + `ArrowLeft` → parent list |
+| Cards | View-only content; no inline fields on the details page |
+| Per-card Edit | `EditableSectionCard` with `canEdit` + `onEdit` → `openWizard(n)` |
+| Meta cards | Plain `Card` — timestamps / references stay non-editable |
+| Dialog | **One** shared wizard for list Add/Edit and detail section Edit (or edit-only when there is no create list) |
+| Mode | `isNew = !id` when create is supported — no separate `mode` prop; self-edit may omit `id` |
+| Step jump | `initialStep` (standalone) / `?step=` on embed path |
+
+## Dual-use wizard (mandatory when create exists)
+
+List **Add** and detail/list **Edit** must share the same `*FormDialog`:
+
+| Opener | Props |
+|--------|-------|
+| List Add | `open`, no `id`, `initialStep` default `1` |
+| List Edit | `open`, `id`, step `1` |
+| Detail card | `open`, `id` (when applicable), `initialStep` = section → step map |
+| Self-edit only | `open`, `initialStep` — e.g. Identity profile |
+
+Embed routes: `/embed/dialogs/<kind>/create` and `/embed/dialogs/<kind>/:id/edit` (or `/embed/dialogs/profile/edit`) with optional `?step=N`. Hosted chrome: [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md).
+
+On save from the details page: refresh detail when needed and close the dialog.
+
+## EditableSectionCard
+
+Copy the Data `EditableSectionCard` shape per feature (not in UI Kit yet). **Do not invent different Edit chrome.**
+
+| Requirement | Exact chrome |
+|-------------|--------------|
+| Placement | Top-right of `CardHeader`, beside title/description (`flex items-start justify-between gap-3`) |
+| Visibility | Hover-reveal on the card (`Card className="group"`) |
+| Control | Outline **icon-only** `Button` — `variant="outline"` `size="icon"` — **no** visible “Edit” text label |
+| Icon | Lucide `Edit3` with `className="h-4 w-4"` `aria-hidden` |
+| Classes | `shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100` |
+| A11y | `aria-label={`Edit ${title}`}` |
+| Gate | Render only when `canEdit && onEdit` |
+
+```tsx
+<Card className="group">
+  <CardHeader>
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <CardTitle className="text-lg">{title}</CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
+      </div>
+      {canEdit && onEdit ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+          onClick={onEdit}
+          aria-label={`Edit ${title}`}
+        >
+          <Edit3 className="h-4 w-4" aria-hidden />
+        </Button>
+      ) : null}
+    </div>
+  </CardHeader>
+  <CardContent className="space-y-4">{children}</CardContent>
+</Card>
+```
+
+Forbidden Edit chrome: `size="sm"` with text “Edit”, always-visible labeled buttons, page-level Edit in `FeaturePage` actions.
+
+## Forbidden (this pattern)
+
+- Page-level Edit / Cancel / Save on the details page
+- Separate create-only vs edit-only dialogs for the same entity
+- Section-only save APIs (wizard still submits the full entity)
+- Local `CustomDialog` inside `#main-content` when embedded — use peer-dialog
+- Using this pattern for showcase/simple **inline** page-level Edit ([details-page-cards.mdc](details-page-cards.mdc))
+- Per-card Edit that does not match the hover icon chrome above
+
+## Reference
+
+- Data: `data/frontend/src/features/services/pages/ServiceDetailsPage.tsx`
+- Card chrome: `data/frontend/src/features/services/components/EditableSectionCard.tsx` (canonical)
+- Wizard: `…/services/components/ServiceFormDialog.tsx`
+- WebOnOne company: `webonone-v2/.../companies/pages/CompanyProfilePage.tsx` · `CompanyFormDialog.tsx` · `EditableSectionCard.tsx`
+- WebOnOne theme: `webonone-v2/.../system-theme/pages/ThemeDetailPage.tsx` · `ThemeFormDialog.tsx` · `EditableSectionCard.tsx`
+- Identity profile: `identity/.../profile/pages/ProfilePage.tsx` · `ProfileFormDialog.tsx` · `/embed/dialogs/profile/edit`
+
+Skill: [details-page-wizard-edit](../skills/details-page-wizard-edit/SKILL.md).
+
+## Verification
+
+```bash
+npm run type-check
+npm run lint
+```
+
+Confirm: Back only in header; each editable card uses hover icon-only Edit3 (same as Data/company/profile); card Edit opens the shared wizard at the mapped step; list Add uses the same dialog without `id`; after save, detail refreshes.

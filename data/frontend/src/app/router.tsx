@@ -61,6 +61,11 @@ const ServiceDetailsPage = lazy(() =>
 const SpacesPage = lazy(() =>
   import('@/features/spaces/pages/SpacesPage').then((m) => ({ default: m.SpacesPage })),
 )
+const CatalogLibrarySelectEmbedPage = lazy(() =>
+  import('@/features/catalog/pages/CatalogLibrarySelectEmbedPage').then((m) => ({
+    default: m.CatalogLibrarySelectEmbedPage,
+  })),
+)
 const CatalogFormEmbedPage = lazy(() =>
   import('@/features/catalog/pages/CatalogFormEmbedPage').then((m) => ({
     default: m.CatalogFormEmbedPage,
@@ -157,6 +162,7 @@ export function App() {
           {embedDialogRoute('/embed/dialogs/units/:id/edit', UnitFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/attributes/create', AttributeFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/attributes/:id/edit', AttributeFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/catalog/:kind/select', CatalogLibrarySelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/create', CatalogFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/:id/edit', CatalogFormEmbedPage)}
           {entityRoutes('/tags', TagsPage)}

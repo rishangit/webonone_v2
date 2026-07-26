@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Feature page layout
 
-Related: [front-end-structure.mdc](front-end-structure.mdc), [ui-kit-project.mdc](ui-kit-project.mdc), [details-page-cards.mdc](details-page-cards.mdc).
+Related: [front-end-structure.mdc](front-end-structure.mdc), [ui-kit-project.mdc](ui-kit-project.mdc), [details-page-cards.mdc](details-page-cards.mdc), [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc).
 
 Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-level pages rendered inside a product shell main content area (e.g. WebOnOne `AppShell` `<Outlet />`).
 
@@ -70,16 +70,21 @@ Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · Rule
 
 ## Details / profile pages (required)
 
-Multi-section entity or profile pages (view/edit) must use the **card grid** composition with **Back** + **one page-level Edit** — not bare stacked sections or per-card Edit:
+Multi-section details pages must use the **card grid** (`gap-6`, left span-2 / right span-1) — not bare stacked sections. Pick the edit pattern by create UX:
+
+| Create UX | Details chrome | Docs |
+|-----------|----------------|------|
+| Inline / single form | Back + **one page-level Edit** → Cancel/Save; cards become fields | [details-page-cards.mdc](details-page-cards.mdc) · [skill](../skills/details-page-cards/SKILL.md) |
+| Multi-step wizard | Back only; **per-card Edit** → shared create/edit wizard | [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) · [skill](../skills/details-page-wizard-edit/SKILL.md) |
 
 ```text
-FeaturePage actions: Back + Edit | Cancel + Save
+FeaturePage actions: Back (+ Edit | Cancel + Save when inline)
   grid gap-6 lg:grid-cols-3 (Form → also space-y-0 items-start)
     left flex-col gap-6 lg:col-span-2  → wide Cards
     right flex-col gap-6 lg:col-span-1 → narrow Cards
 ```
 
-Full rules: [details-page-cards.mdc](details-page-cards.mdc). Skill: [.cursor/skills/details-page-cards/SKILL.md](../skills/details-page-cards/SKILL.md). Canonical demos: `DetailsPageDemo`, Identity `ProfilePage`, `CompanyProfilePage`.
+Inline demos: `DetailsPageDemo`. Wizard-backed: Data `ServiceDetailsPage`, WebOnOne `CompanyProfilePage`, Identity `ProfilePage`.
 
 ## Reference implementations
 

@@ -44,7 +44,7 @@ interface UnitFormDialogProps {
   open: boolean
   id?: string
   onOpenChange: (open: boolean) => void
-  onSaved: () => void
+  onSaved: (unit?: Unit) => void
   chrome?: 'dialog' | 'embed-page'
 }
 
@@ -128,8 +128,8 @@ export function UnitFormDialog({
   useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
-    if (!editor.error) onSaved()
-  }, [editor.saving, editor.error, onSaved])
+    if (!editor.error) onSaved(editor.detail ?? undefined)
+  }, [editor.saving, editor.error, editor.detail, onSaved])
 
   function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault()

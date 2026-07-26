@@ -4,9 +4,11 @@ import type { CreateCatalogBody, UpdateCatalogBody } from '../schemas/catalog.sc
 import type { CreateServiceBody, UpdateServiceBody } from '../schemas/services.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
+  applyIdsFilter,
   applySearchFilter,
   applyStatusFilter,
   assertUniqueName,
+  parseIdsParam,
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
@@ -165,11 +167,13 @@ export function createCatalogService(kind: CatalogKind) {
   const { main } = TABLE_MAP[kind]
 
   return {
-    async list(query: ListQueryInput & { tag_id?: string | string[] }) {
+    async list(query: ListQueryInput & { tag_id?: string | string[]; ids?: string | string[] }) {
       const parsed = parseListQuery(query)
       const base = db<CatalogRow>(main)
       applyStatusFilter(base, parsed.status)
       applySearchFilter(base, parsed.q)
+      const ids = parseIdsParam(query.ids)
+      applyIdsFilter(base, ids)
 
       const tagIds = query.tag_id
         ? Array.isArray(query.tag_id)
@@ -186,15 +190,18 @@ export function createCatalogService(kind: CatalogKind) {
       const countResult = await base.clone().count<{ count: number }[]>('* as count')
       const total = Number(countResult[0]?.count ?? 0)
 
+      const pageSize = ids.length > 0 ? Math.min(100, Math.max(parsed.pageSize, ids.length)) : parsed.pageSize
+      const page = ids.length > 0 ? 1 : parsed.page
+
       const rows = await base
         .clone()
         .orderBy(parsed.sortField, parsed.sortDir)
-        .offset((parsed.page - 1) * parsed.pageSize)
-        .limit(parsed.pageSize)
+        .offset((page - 1) * pageSize)
+        .limit(pageSize)
 
       const items = await Promise.all(rows.map((row) => rowToDto(kind, row)))
 
-      return { items, total, page: parsed.page, pageSize: parsed.pageSize }
+      return { items, total, page, pageSize }
     },
 
     async getById(id: string): Promise<CatalogDto | null> {

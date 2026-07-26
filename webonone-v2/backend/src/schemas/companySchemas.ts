@@ -54,6 +54,15 @@ const companyTagSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
 })
 
+export const companyDataEntitySchema = z.enum([
+  'tags',
+  'units',
+  'attributes',
+  'products',
+  'services',
+  'spaces',
+])
+
 export const updateCompanyBodySchema = z
   .object({
     name: z.string().trim().min(1).max(255).optional(),
@@ -74,6 +83,7 @@ export const updateCompanyBodySchema = z
     mapPlaceId: nullableString(255),
     mapFormattedAddress: nullableString(512),
     tags: z.array(companyTagSchema).max(50).optional(),
+    dataEntities: z.array(companyDataEntitySchema).max(6).optional(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })
@@ -81,3 +91,4 @@ export const updateCompanyBodySchema = z
 export type RegisterCompanyBody = z.infer<typeof registerCompanyBodySchema>
 export type UpdateCompanyStatusBody = z.infer<typeof updateCompanyStatusBodySchema>
 export type UpdateCompanyBody = z.infer<typeof updateCompanyBodySchema>
+export type CompanyDataEntity = z.infer<typeof companyDataEntitySchema>

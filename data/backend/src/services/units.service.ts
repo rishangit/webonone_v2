@@ -3,9 +3,11 @@ import { db, type DataRole, type UnitRow } from '../models/db.js'
 import type { CreateUnitBody, UpdateUnitBody } from '../schemas/units.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
+  applyIdsFilter,
   applySearchFilter,
   applyStatusFilter,
   assertUniqueName,
+  parseIdsParam,
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
@@ -39,11 +41,13 @@ async function rowToDto(row: UnitRow): Promise<UnitDto> {
   }
 }
 
-export async function listUnits(query: ListQueryInput & { is_base?: string }) {
+export async function listUnits(query: ListQueryInput & { is_base?: string; ids?: string | string[] }) {
   const parsed = parseListQuery(query)
   const base = db<UnitRow>('data_units')
   applyStatusFilter(base, parsed.status)
   applySearchFilter(base, parsed.q, ['name', 'description', 'symbol'])
+  const ids = parseIdsParam(query.ids)
+  applyIdsFilter(base, ids)
 
   if (query.is_base === 'true') base.where({ is_base: true })
   if (query.is_base === 'false') base.where({ is_base: false })
@@ -51,17 +55,20 @@ export async function listUnits(query: ListQueryInput & { is_base?: string }) {
   const countResult = await base.clone().count<{ count: number }[]>('* as count')
   const total = Number(countResult[0]?.count ?? 0)
 
+  const pageSize = ids.length > 0 ? Math.min(100, Math.max(parsed.pageSize, ids.length)) : parsed.pageSize
+  const page = ids.length > 0 ? 1 : parsed.page
+
   const rows = await base
     .clone()
     .orderBy(parsed.sortField, parsed.sortDir)
-    .offset((parsed.page - 1) * parsed.pageSize)
-    .limit(parsed.pageSize)
+    .offset((page - 1) * pageSize)
+    .limit(pageSize)
 
   return {
     items: await Promise.all(rows.map(rowToDto)),
     total,
-    page: parsed.page,
-    pageSize: parsed.pageSize,
+    page,
+    pageSize,
   }
 }
 

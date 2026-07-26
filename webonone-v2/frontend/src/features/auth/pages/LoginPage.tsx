@@ -1,27 +1,20 @@
-import { useEffect } from 'react'
-import { PageShell, Button } from '@webonone/ui-kit'
-import { buildIdentityLoginUrl } from '../utils/buildIdentityLoginUrl'
+import { Navigate } from 'react-router-dom'
+import { useAppSelector } from '@/app/store/hooks'
+import { IdentityLoginFrame } from '../components/IdentityLoginFrame'
 
 const LOGIN_RETURN_PATH = '/'
 
 export function LoginPage() {
-  useEffect(() => {
-    window.location.assign(buildIdentityLoginUrl(LOGIN_RETURN_PATH))
-  }, [])
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
 
-  function handleSignIn() {
-    window.location.assign(buildIdentityLoginUrl(LOGIN_RETURN_PATH))
+  if (accessToken) {
+    return <Navigate to="/" replace />
   }
 
+  // No PageShell — Identity iframe owns the auth chrome; avoid double headers.
   return (
-    <PageShell title="WebOnOne">
-      <div className="flex flex-col items-center gap-4 py-12">
-        <h1 className="text-2xl font-semibold">Sign in to WebOnOne</h1>
-        <p className="text-sm text-muted-foreground">
-          You will be redirected to Identity to sign in securely.
-        </p>
-        <Button onClick={handleSignIn}>Continue to sign in</Button>
-      </div>
-    </PageShell>
+    <div className="flex h-dvh min-h-0 w-full flex-col overflow-hidden">
+      <IdentityLoginFrame returnPath={LOGIN_RETURN_PATH} />
+    </div>
   )
 }

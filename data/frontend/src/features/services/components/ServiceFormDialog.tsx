@@ -113,7 +113,7 @@ export interface ServiceFormDialogProps {
   id?: string
   initialStep?: ServiceWizardStep
   onOpenChange: (open: boolean) => void
-  onSaved: () => void
+  onSaved: (item?: CatalogItem) => void
   chrome?: 'dialog' | 'embed-page'
 }
 
@@ -242,8 +242,8 @@ export function ServiceFormDialog({
   useEffect(() => {
     if (!submittedRef.current || editor.saving) return
     submittedRef.current = false
-    if (!editor.error) onSaved()
-  }, [editor.saving, editor.error, onSaved])
+    if (!editor.error) onSaved(editor.detail ?? undefined)
+  }, [editor.saving, editor.error, editor.detail, onSaved])
 
   const closeTagPicker = useCallback(() => {
     setTagPickerOpen(false)

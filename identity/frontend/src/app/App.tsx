@@ -39,6 +39,11 @@ const UserCreateEmbedPage = lazy(() =>
     default: m.UserCreateEmbedPage,
   })),
 )
+const ProfileFormEmbedPage = lazy(() =>
+  import('@/features/profile/pages/ProfileFormEmbedPage').then((m) => ({
+    default: m.ProfileFormEmbedPage,
+  })),
+)
 
 export function App() {
   return (
@@ -117,6 +122,14 @@ export function App() {
               element={
                 <LazyRoute>
                   <UserCreateEmbedPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/profile/edit"
+              element={
+                <LazyRoute>
+                  <ProfileFormEmbedPage />
                 </LazyRoute>
               }
             />

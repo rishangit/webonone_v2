@@ -13,7 +13,8 @@ import type { ApiTheme } from '../services/themeApi'
 interface ThemeListProps {
   themes: ApiTheme[]
   activeThemeId: string | null
-  onSelect: (id: string) => void
+  onOpen: (id: string) => void
+  onApply: (id: string) => void
   onEdit: (theme: ApiTheme) => void
   onDelete: (id: string) => void
   emptyMessage?: string
@@ -22,7 +23,8 @@ interface ThemeListProps {
 export function ThemeList({
   themes,
   activeThemeId,
-  onSelect,
+  onOpen,
+  onApply,
   onEdit,
   onDelete,
   emptyMessage = 'No themes yet.',
@@ -43,30 +45,33 @@ export function ThemeList({
             <ItemListContent>
               <button
                 type="button"
-                className="w-full text-left font-medium"
-                onClick={() => onSelect(theme.id)}
+                className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => onOpen(theme.id)}
               >
-                {theme.name}
+                <p className="font-medium">{theme.name}</p>
+                {theme.isSystem ? (
+                  <p className="text-xs text-muted-foreground">System theme</p>
+                ) : null}
+                <div className="mt-2 flex gap-1">
+                  {[theme.color1, theme.color2, theme.color3, theme.color4, theme.color5].map(
+                    (c) => (
+                      <span
+                        key={`${theme.id}-${c}`}
+                        className="h-6 w-6 rounded border border-border"
+                        style={{ backgroundColor: c }}
+                        title={c}
+                      />
+                    ),
+                  )}
+                </div>
               </button>
-              {theme.isSystem ? (
-                <p className="text-xs text-muted-foreground">System theme</p>
-              ) : null}
-              <div className="mt-2 flex gap-1">
-                {[theme.color1, theme.color2, theme.color3, theme.color4, theme.color5].map((c) => (
-                  <span
-                    key={c}
-                    className="h-6 w-6 rounded border border-border"
-                    style={{ backgroundColor: c }}
-                    title={c}
-                  />
-                ))}
-              </div>
             </ItemListContent>
             <ItemListMenu ariaLabel={`Actions for ${theme.name}`}>
+              <DropdownMenuItem onClick={() => onOpen(theme.id)}>View details</DropdownMenuItem>
               {isActive ? (
                 <DropdownMenuItem disabled>Active</DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => onSelect(theme.id)}>Apply</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onApply(theme.id)}>Apply</DropdownMenuItem>
               )}
               {!theme.isSystem ? (
                 <>

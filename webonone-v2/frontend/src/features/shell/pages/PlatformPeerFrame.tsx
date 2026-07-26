@@ -47,7 +47,13 @@ function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
       '/profile'
     )
   }
-  return dataSentinelToExternalPath(pathname) ?? '/tags'
+  const dataMapped = dataSentinelToExternalPath(pathname)
+  if (dataMapped) return dataMapped
+  if (pathname.startsWith('/data/')) {
+    const suffix = pathname.slice('/data'.length)
+    return suffix || '/tags'
+  }
+  return '/tags'
 }
 
 function resolvePeerOrigin(peer: PlatformPeerId): string {

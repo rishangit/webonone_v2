@@ -3,9 +3,11 @@ import { db, type DataRole, type TagRow } from '../models/db.js'
 import type { CreateTagBody, UpdateTagBody } from '../schemas/tags.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
+  applyIdsFilter,
   applySearchFilter,
   applyStatusFilter,
   assertUniqueName,
+  parseIdsParam,
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
@@ -35,26 +37,31 @@ async function rowToDto(row: TagRow): Promise<TagDto> {
   }
 }
 
-export async function listTags(query: ListQueryInput) {
+export async function listTags(query: ListQueryInput & { ids?: string | string[] }) {
   const parsed = parseListQuery(query)
   const base = db<TagRow>('data_tags')
   applyStatusFilter(base, parsed.status)
   applySearchFilter(base, parsed.q)
+  const ids = parseIdsParam(query.ids)
+  applyIdsFilter(base, ids)
 
   const countResult = await base.clone().count<{ count: number }[]>('* as count')
   const total = Number(countResult[0]?.count ?? 0)
 
+  const pageSize = ids.length > 0 ? Math.min(100, Math.max(parsed.pageSize, ids.length)) : parsed.pageSize
+  const page = ids.length > 0 ? 1 : parsed.page
+
   const rows = await base
     .clone()
     .orderBy(parsed.sortField, parsed.sortDir)
-    .offset((parsed.page - 1) * parsed.pageSize)
-    .limit(parsed.pageSize)
+    .offset((page - 1) * pageSize)
+    .limit(pageSize)
 
   return {
     items: await Promise.all(rows.map(rowToDto)),
     total,
-    page: parsed.page,
-    pageSize: parsed.pageSize,
+    page,
+    pageSize,
   }
 }
 

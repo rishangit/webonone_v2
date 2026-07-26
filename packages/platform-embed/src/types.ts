@@ -62,6 +62,32 @@ export const DATA_TAG_PICKER_MESSAGE_TYPES = {
   CREATED: 'webonone:data:tag-picker-created',
 } as const
 
+/** Identity login iframe → parent (e.g. WebOnOne `/login` host). */
+export const AUTH_MESSAGE_TYPES = {
+  SUCCESS: 'webonone:auth:success',
+  CANCEL: 'webonone:auth:cancel',
+} as const
+
+export type AuthSuccessUser = {
+  id: string
+  email: string
+  displayName: string
+  avatarUrl?: string | null
+}
+
+export type AuthSuccessMessage = {
+  type: typeof AUTH_MESSAGE_TYPES.SUCCESS
+  accessToken: string
+  expiresIn: number
+  user: AuthSuccessUser
+  embedId?: string
+}
+
+export type AuthCancelMessage = {
+  type: typeof AUTH_MESSAGE_TYPES.CANCEL
+  embedId?: string
+}
+
 export type PlatformInitMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.INIT
   accessToken: string
@@ -302,6 +328,8 @@ export type PlatformEmbedMessage =
   | PlatformInitMessage
   | PlatformReadyMessage
   | PlatformContentReadyMessage
+  | AuthSuccessMessage
+  | AuthCancelMessage
   | IdentityUserPickerSelectMessage
   | IdentityUserPickerSelectionChangeMessage
   | IdentityUserPickerSetSelectionMessage
@@ -359,6 +387,53 @@ export function isPlatformContentReadyMessage(
   }
 
   return (data as PlatformContentReadyMessage).type === PLATFORM_MESSAGE_TYPES.CONTENT_READY
+}
+
+function isAuthSuccessUser(data: unknown): data is AuthSuccessUser {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+  const user = data as Record<string, unknown>
+  return (
+    typeof user.id === 'string' &&
+    user.id.length > 0 &&
+    typeof user.email === 'string' &&
+    user.email.length > 0 &&
+    typeof user.displayName === 'string' &&
+    user.displayName.length > 0 &&
+    (user.avatarUrl === undefined ||
+      user.avatarUrl === null ||
+      typeof user.avatarUrl === 'string')
+  )
+}
+
+export function isAuthSuccessMessage(data: unknown): data is AuthSuccessMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === AUTH_MESSAGE_TYPES.SUCCESS &&
+    typeof message.accessToken === 'string' &&
+    message.accessToken.length > 0 &&
+    typeof message.expiresIn === 'number' &&
+    Number.isFinite(message.expiresIn) &&
+    isAuthSuccessUser(message.user) &&
+    (message.embedId === undefined || typeof message.embedId === 'string')
+  )
+}
+
+export function isAuthCancelMessage(data: unknown): data is AuthCancelMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === AUTH_MESSAGE_TYPES.CANCEL &&
+    (message.embedId === undefined || typeof message.embedId === 'string')
+  )
 }
 
 function hasStringProperty(data: Record<string, unknown>, property: string): boolean {

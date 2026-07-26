@@ -2,6 +2,14 @@ import { db } from '../models/db.js'
 
 export type CompanyStatus = 'pending' | 'approved' | 'rejected'
 
+export type CompanyDataEntity =
+  | 'tags'
+  | 'units'
+  | 'attributes'
+  | 'products'
+  | 'services'
+  | 'spaces'
+
 export type CompanyRow = {
   id: string
   name: string
@@ -9,6 +17,7 @@ export type CompanyRow = {
   company_size: string | null
   logo_url: string | null
   gallery_images: string | CompanyGalleryImageRef[] | null
+  data_entities: string | CompanyDataEntity[] | null
   address_line1: string | null
   address_line2: string | null
   city: string | null
@@ -40,6 +49,7 @@ export type CompanyProfilePatch = {
   company_size?: string | null
   logo_url?: string | null
   gallery_images?: CompanyGalleryImageRef[] | null
+  data_entities?: CompanyDataEntity[]
   address_line1?: string | null
   address_line2?: string | null
   city?: string | null
@@ -76,8 +86,21 @@ export async function deleteCompanyById(id: string): Promise<void> {
 export async function insertCompany(
   row: Omit<CompanyRow, 'created_at' | 'updated_at' | 'approved_at' | 'approved_by_user_id'>,
 ): Promise<void> {
+  const { gallery_images: galleryImages, data_entities: dataEntities, ...rest } = row
   await db('companies').insert({
-    ...row,
+    ...rest,
+    gallery_images:
+      galleryImages === null || galleryImages === undefined
+        ? null
+        : typeof galleryImages === 'string'
+          ? galleryImages
+          : JSON.stringify(galleryImages),
+    data_entities:
+      dataEntities === null || dataEntities === undefined
+        ? JSON.stringify([])
+        : typeof dataEntities === 'string'
+          ? dataEntities
+          : JSON.stringify(dataEntities),
     approved_at: null,
     approved_by_user_id: null,
   })
@@ -131,7 +154,11 @@ export async function updateCompanyProfile(
   await db.transaction(async (trx) => {
     if (hasPatch) {
       // Knex/mysql treat JS arrays as special bindings — stringify JSON columns explicitly.
-      const { gallery_images: galleryImages, ...rest } = patch
+      const {
+        gallery_images: galleryImages,
+        data_entities: dataEntities,
+        ...rest
+      } = patch
       const updatePayload: Record<string, unknown> = {
         ...rest,
         updated_at: db.fn.now(3),
@@ -139,6 +166,9 @@ export async function updateCompanyProfile(
       if (galleryImages !== undefined) {
         updatePayload.gallery_images =
           galleryImages === null ? null : JSON.stringify(galleryImages)
+      }
+      if (dataEntities !== undefined) {
+        updatePayload.data_entities = JSON.stringify(dataEntities)
       }
 
       const updated = await trx<CompanyRow>('companies')

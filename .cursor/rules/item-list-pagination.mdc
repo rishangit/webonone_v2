@@ -8,7 +8,7 @@ globs: "**/frontend/src/features/**/*.{ts,tsx}"
 
 Use `@webonone/ui-kit` **`Pagination`** below **`ItemList`** (or equivalent list body) on any page that shows a pageable collection.
 
-Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) — row layout and menus.
+Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) — row layout, menus, and detail-page navigation (row click opens details when a details route exists).
 
 ## When required
 

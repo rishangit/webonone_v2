@@ -1,27 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Edit3 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Alert, AlertDescription, Button, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
 import type { UserProfile } from '@/shared/types/auth.types'
 import { hasPlatformEmbedHandoff } from '@/features/auth/utils/platformReturn'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { ProfileForm, PROFILE_FORM_ID } from '../components/ProfileForm'
 import { exchangeAuthCode } from '@webonone/platform-nav'
 import { getIdentityApiBase } from '@/features/auth/utils/identityConfig'
 import { getIdentityProfileRedirectUri } from '../utils/profileConfig'
 import { buildProfileSearchWithoutCode, parseProfileReturnUrl } from '../utils/profileReturn'
+import type { ProfileWizardStep } from '../schemas/profileSchemas'
+import { ProfileFormDialog } from '../components/ProfileFormDialog'
+import { ProfileView } from '../components/ProfileView'
 
 export function ProfilePage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { accessToken, user, isProfileLoading, profileError, isProfileSaving, profileSaveSuccess } =
-    useAppSelector((s) => s.auth)
+  const { accessToken, user, isProfileLoading, profileError, profileSaveSuccess } = useAppSelector(
+    (s) => s.auth,
+  )
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
   const [isBootstrapping, setIsBootstrapping] = useState(false)
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
+  const [dialog, setDialog] = useState<{ initialStep: ProfileWizardStep } | null>(null)
   const bootstrapRef = useRef(false)
 
   const code = searchParams.get('code')
@@ -76,9 +79,12 @@ export function ProfilePage() {
 
   useEffect(() => {
     if (profileSaveSuccess) {
-      setMode('view')
+      const timer = window.setTimeout(() => {
+        dispatch(authActions.clearProfileSaveSuccess())
+      }, 3000)
+      return () => window.clearTimeout(timer)
     }
-  }, [profileSaveSuccess])
+  }, [profileSaveSuccess, dispatch])
 
   function handleBack() {
     if (returnUrl) {
@@ -90,6 +96,10 @@ export function ProfilePage() {
       return
     }
     navigate('/', { replace: true })
+  }
+
+  function openWizard(initialStep: ProfileWizardStep) {
+    setDialog({ initialStep })
   }
 
   if (isBootstrapping) {
@@ -156,31 +166,35 @@ export function ProfilePage() {
             <ArrowLeft className="h-4 w-4" aria-hidden />
             Back
           </Button>
-          {mode === 'view' ? (
-            <Button type="button" size="sm" onClick={() => setMode('edit')}>
-              <Edit3 className="h-4 w-4" aria-hidden />
-              Edit
-            </Button>
-          ) : (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('view')}
-                disabled={isProfileSaving}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" form={PROFILE_FORM_ID} disabled={isProfileSaving}>
-                {isProfileSaving ? 'Saving…' : 'Save'}
-              </Button>
-            </>
-          )}
         </div>
       }
     >
-      <ProfileForm user={user} mode={mode} />
+      <div className="flex flex-col gap-6">
+        {profileError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{profileError}</AlertDescription>
+          </Alert>
+        ) : null}
+        {profileSaveSuccess ? (
+          <Alert>
+            <AlertDescription>Profile saved successfully.</AlertDescription>
+          </Alert>
+        ) : null}
+        <ProfileView user={user} avatarUrl={user.avatarUrl} onEditSection={openWizard} />
+      </div>
+
+      {dialog ? (
+        <ProfileFormDialog
+          open
+          initialStep={dialog.initialStep}
+          onOpenChange={(open) => {
+            if (!open) setDialog(null)
+          }}
+          onSaved={() => {
+            setDialog(null)
+          }}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

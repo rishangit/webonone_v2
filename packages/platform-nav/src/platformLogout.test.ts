@@ -36,20 +36,17 @@ describe('resolvePlatformLogoutLoginUrl', () => {
 
 describe('buildIdentityLogoutUrl', () => {
   it('builds logout URL with post_logout_redirect_uri', () => {
-    const url = buildIdentityLogoutUrl(
-      'http://localhost:3011',
-      'http://localhost:3010/login?prompt=login',
-    )
+    const url = buildIdentityLogoutUrl('http://localhost:3011', 'http://localhost:3010/login')
     assert.equal(
       url,
-      'http://localhost:3011/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3010%2Flogin%3Fprompt%3Dlogin',
+      'http://localhost:3011/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3010%2Flogin',
     )
   })
 })
 
 describe('resolveAbsolutePostLogoutLoginUrl', () => {
-  it('appends prompt=login to relative local login path', () => {
-    assert.equal(resolveAbsolutePostLogoutLoginUrl(null, '/login'), '/login?prompt=login')
+  it('returns relative local login path without prompt=login', () => {
+    assert.equal(resolveAbsolutePostLogoutLoginUrl(null, '/login'), '/login')
   })
 })
 

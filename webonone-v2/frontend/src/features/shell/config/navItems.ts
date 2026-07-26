@@ -24,6 +24,7 @@ import {
   EMAIL_NAV_SENTINELS,
   IDENTITY_NAV_SENTINELS,
   SMS_NAV_SENTINELS,
+  filterPlatformNavDataEntities,
   getPlatformNavDefs,
   isDataNavSentinel,
   isEmailNavSentinel,
@@ -32,6 +33,7 @@ import {
   isSmsNavSentinel,
   type CoreNavDef,
   type CoreNavLeaf,
+  type DataEntityKey,
   type PlatformNavVariant,
 } from '@webonone/platform-nav'
 import type { NavConfigItem } from '@webonone/ui-kit'
@@ -108,8 +110,15 @@ function buildNavItems(defs: CoreNavDef[]): NavConfigItem[] {
   })
 }
 
-export function buildPlatformNav(variant: PlatformNavVariant): NavConfigItem[] {
-  return buildNavItems(getPlatformNavDefs(variant))
+export function buildPlatformNav(
+  variant: PlatformNavVariant,
+  dataEntities?: readonly DataEntityKey[],
+): NavConfigItem[] {
+  let defs = getPlatformNavDefs(variant)
+  if (variant === 'main' && dataEntities !== undefined) {
+    defs = filterPlatformNavDataEntities(defs, dataEntities)
+  }
+  return buildNavItems(defs)
 }
 
 export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
@@ -118,8 +127,15 @@ export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
   return 'member'
 }
 
-export function buildNavForSessionRole(role: SessionRole): NavConfigItem[] {
-  return buildPlatformNav(sessionRoleToNavVariant(role))
+export function buildNavForSessionRole(
+  role: SessionRole,
+  dataEntities?: readonly DataEntityKey[],
+): NavConfigItem[] {
+  const variant = sessionRoleToNavVariant(role)
+  if (role === 'company_admin') {
+    return buildPlatformNav(variant, dataEntities ?? [])
+  }
+  return buildPlatformNav(variant)
 }
 
 export const mainNav = buildPlatformNav('main')

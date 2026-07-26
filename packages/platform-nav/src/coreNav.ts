@@ -75,6 +75,73 @@ export const DATA_NAV_SENTINELS = {
   spaces: '/data/spaces',
 } as const
 
+export const DATA_ENTITY_KEYS = [
+  'tags',
+  'units',
+  'attributes',
+  'products',
+  'services',
+  'spaces',
+] as const
+
+export type DataEntityKey = (typeof DATA_ENTITY_KEYS)[number]
+
+export const DATA_ENTITY_LABELS: Record<DataEntityKey, string> = {
+  tags: 'Tags',
+  units: 'Units',
+  attributes: 'Attributes',
+  products: 'Products',
+  services: 'Services',
+  spaces: 'Spaces',
+}
+
+export function isDataEntityKey(value: string): value is DataEntityKey {
+  return (DATA_ENTITY_KEYS as readonly string[]).includes(value)
+}
+
+export function dataEntityKeyFromSentinel(path: string): DataEntityKey | null {
+  switch (path) {
+    case DATA_NAV_SENTINELS.tags:
+      return 'tags'
+    case DATA_NAV_SENTINELS.units:
+      return 'units'
+    case DATA_NAV_SENTINELS.attributes:
+      return 'attributes'
+    case DATA_NAV_SENTINELS.products:
+      return 'products'
+    case DATA_NAV_SENTINELS.services:
+      return 'services'
+    case DATA_NAV_SENTINELS.spaces:
+      return 'spaces'
+    default:
+      return null
+  }
+}
+
+/**
+ * For company_admin nav: keep only enabled Data children; drop the Data group when empty.
+ * Other groups/items are unchanged.
+ */
+export function filterPlatformNavDataEntities(
+  defs: CoreNavDef[],
+  enabledKeys: readonly DataEntityKey[],
+): CoreNavDef[] {
+  const enabled = new Set(enabledKeys)
+  return defs.flatMap((item) => {
+    if (item.kind !== 'group' || item.label !== 'Data') {
+      return [item]
+    }
+    const children = item.children.filter((child) => {
+      const key = dataEntityKeyFromSentinel(child.path)
+      return key !== null && enabled.has(key)
+    })
+    if (children.length === 0) {
+      return []
+    }
+    return [{ ...item, children }]
+  })
+}
+
 export function isDataNavSentinel(to: string): boolean {
   return (
     to === DATA_NAV_SENTINELS.tags ||
