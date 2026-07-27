@@ -45,7 +45,12 @@ function toQueryString(params: Record<string, string | number | string[] | undef
   return qs ? `?${qs}` : ''
 }
 
-export type LibraryListItem = CatalogPayload & { id: string; name: string; description?: string | null }
+export type LibraryListItem = CatalogPayload & {
+  id: string
+  name: string
+  description?: string | null
+  galleryImages?: { mediaId: string; url: string }[]
+}
 
 export const dataLibraryApi = {
   list(kind: CatalogEntityKind, query: { q?: string; page?: number; pageSize?: number; ids?: string[] } = {}) {

@@ -3,5 +3,5 @@ export function getIdentityProfileRedirectUri(): string {
     return `${window.location.origin}/profile`
   }
 
-  return 'http://localhost:3011/profile'
+  return 'http://127.0.0.1:3011/profile'
 }

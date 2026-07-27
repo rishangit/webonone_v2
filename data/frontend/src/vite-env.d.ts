@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_ALLOWED_PARENT_ORIGINS: string
   readonly VITE_EMAIL_ORIGIN?: string
   readonly VITE_SMS_ORIGIN?: string
+  readonly VITE_MEDIA_ORIGIN?: string
 }
 
 interface ImportMeta {

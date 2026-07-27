@@ -7,7 +7,11 @@ import {
 } from '../controllers/catalog.controller.js'
 import { requireAuth, requireCompanyAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/auth.js'
 import { validateBody } from '../middleware/validateBody.js'
-import { createCatalogBodySchema, updateCatalogBodySchema } from '../schemas/catalog.schema.js'
+import {
+  createCatalogBodySchema,
+  updateCatalogBodySchema,
+  updateCatalogGalleryBodySchema,
+} from '../schemas/catalog.schema.js'
 import { createServiceBodySchema, updateServiceBodySchema } from '../schemas/services.schema.js'
 
 function catalogRoutes(
@@ -37,6 +41,13 @@ function catalogRoutes(
     requireCompanyAdminOrSuperAdmin,
     validateBody(schemas.create),
     controller.update,
+  )
+  router.patch(
+    `/${path}/:id/gallery`,
+    requireAuth,
+    requireCompanyAdminOrSuperAdmin,
+    validateBody(updateCatalogGalleryBodySchema),
+    controller.updateGallery,
   )
   router.patch(
     `/${path}/:id`,

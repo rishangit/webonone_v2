@@ -13,10 +13,10 @@ const storeKitRoot = path.resolve(configDir, '../../packages/store-kit')
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, configDir, '')
-  const webononeOrigin = env.VITE_WEBONONE_ORIGIN ?? 'http://localhost:3010'
+  const webononeOrigin = env.VITE_WEBONONE_ORIGIN ?? 'http://127.0.0.1:3010'
   const allowedParentOrigins =
     env.VITE_ALLOWED_PARENT_ORIGINS ??
-    `${webononeOrigin},http://127.0.0.1:3010,http://localhost:3011,http://127.0.0.1:3011,http://localhost:3012,http://127.0.0.1:3012`
+    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012'
   const frameAncestors = ["'self'", ...allowedParentOrigins.split(',').map((entry) => entry.trim()).filter(Boolean)]
     .filter((value, index, list) => list.indexOf(value) === index)
     .join(' ')
@@ -37,8 +37,7 @@ export default defineConfig(({ mode }) => {
       ],
     },
     server: {
-      // Bind IPv4 so Chromium iframes resolving localhost → 127.0.0.1 work
-      // (default Node/Vite localhost can listen on [::1] only).
+      // Bind IPv4 so embeds use a single origin (http://127.0.0.1 — not localhost).
       host: '127.0.0.1',
       port: 3011,
       strictPort: true,

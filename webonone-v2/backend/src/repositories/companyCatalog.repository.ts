@@ -143,8 +143,8 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
 
 function parseGalleryImages(
   value: string | unknown[] | null | undefined,
-): { mediaId: string; url: string }[] {
-  if (value == null) return []
+): { mediaId: string; url: string }[] | null {
+  if (value == null) return null
   let parsed: unknown = value
   if (typeof value === 'string') {
     try {
@@ -178,7 +178,7 @@ export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unkno
     updatedAt: (row.updated_at as Date).toISOString(),
   }
 
-  if (kind === 'services' || kind === 'spaces') {
+  if (kind === 'products' || kind === 'services' || kind === 'spaces') {
     return {
       ...base,
       galleryImages: parseGalleryImages(row.gallery_images as string | unknown[] | null),
@@ -368,7 +368,7 @@ export async function updateItem(
 
 export async function updateGalleryImages(
   companyId: string,
-  kind: Extract<CatalogEntityKind, 'services' | 'spaces'>,
+  kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
   id: string,
   galleryImages: { mediaId: string; url: string }[],
 ): Promise<Record<string, unknown> | undefined> {

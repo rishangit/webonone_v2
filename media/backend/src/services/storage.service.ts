@@ -6,17 +6,53 @@ export interface StorageWriteResult {
   storageKey: string
 }
 
+/** Singular resource type in scope → plural folder under the service. */
+const SCOPE_TYPE_TO_PLURAL: Record<string, string> = {
+  user: 'users',
+  service: 'services',
+  space: 'spaces',
+  product: 'products',
+  company: 'companies',
+  site: 'sites',
+  library: 'library',
+  showcase: 'showcase',
+}
+
 function sanitizeFileName(fileName: string): string {
   const base = path.basename(fileName)
   return base.replace(/[^A-Za-z0-9._-]/g, '_') || 'file'
 }
 
-/** Scope uses `:` separators; encode for cross-platform blob paths (Windows disallows `:` in folder names). */
-function sanitizeScopeForStorage(scope: string): string {
-  return scope
-    .split('/')
-    .map((segment) => segment.replace(/:/g, '__'))
-    .join('/')
+function sanitizePathSegment(segment: string): string {
+  return segment.replace(/[^A-Za-z0-9._-]/g, '_') || '_'
+}
+
+/**
+ * Map scope `{service}:{type}:{id}[/optional/suffix]` to a hierarchical prefix:
+ * `{service}/{pluralType}/{id}[/optional/suffix]`.
+ * Avoids `:` in paths (invalid on Windows) without flattening to `__`.
+ */
+export function sanitizeScopeForStorage(scope: string): string {
+  const colonParts = scope.split(':')
+  if (colonParts.length < 3) {
+    return scope
+      .split('/')
+      .map((segment) => sanitizePathSegment(segment.replace(/:/g, '_')))
+      .filter(Boolean)
+      .join('/')
+  }
+
+  const service = sanitizePathSegment(colonParts[0] ?? '')
+  const resourceType = colonParts[1] ?? ''
+  const rest = colonParts.slice(2).join(':')
+  const [rawId, ...scopePathParts] = rest.split('/').filter(Boolean)
+  const resourceId = sanitizePathSegment(rawId ?? '')
+  const plural =
+    SCOPE_TYPE_TO_PLURAL[resourceType] ?? `${sanitizePathSegment(resourceType)}s`
+
+  const prefix = [service, plural, resourceId].filter(Boolean).join('/')
+  const scopeExtra = scopePathParts.map(sanitizePathSegment).filter(Boolean).join('/')
+  return [prefix, scopeExtra].filter(Boolean).join('/')
 }
 
 function sanitizeFolderPathForStorage(folderPath: string): string {
@@ -26,7 +62,7 @@ function sanitizeFolderPathForStorage(folderPath: string): string {
   return folderPath
     .replace(/^\//, '')
     .split('/')
-    .map((segment) => segment.replace(/[^A-Za-z0-9._-]/g, '_'))
+    .map(sanitizePathSegment)
     .filter(Boolean)
     .join('/')
 }

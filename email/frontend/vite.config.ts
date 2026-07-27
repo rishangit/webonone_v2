@@ -10,8 +10,8 @@ const storeKitRoot = path.resolve(__dirname, '../../packages/store-kit')
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '')
-  const webononeOrigin = env.VITE_WEBONONE_ORIGIN ?? 'http://localhost:3010'
-  const identityOrigin = env.VITE_IDENTITY_ORIGIN ?? 'http://localhost:3011'
+  const webononeOrigin = env.VITE_WEBONONE_ORIGIN ?? 'http://127.0.0.1:3010'
+  const identityOrigin = env.VITE_IDENTITY_ORIGIN ?? 'http://127.0.0.1:3011'
 
   return {
     plugins: [react()],
@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => {
       ],
     },
     server: {
+      host: '127.0.0.1',
       port: 3014,
       strictPort: true,
       headers: {

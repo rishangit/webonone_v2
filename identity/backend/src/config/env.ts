@@ -31,7 +31,7 @@ const envSchema = z.object({
   ACCESS_TOKEN_EXPIRY_SECONDS: z.coerce.number().default(604800),
   REFRESH_TOKEN_EXPIRY_DAYS: z.coerce.number().default(7),
   GOOGLE_CLIENT_ID: z.string().optional(),
-  ALLOWED_REDIRECT_URIS: z.string().default('http://localhost:*'),
+  ALLOWED_REDIRECT_URIS: z.string().default('http://127.0.0.1:*'),
   EMAIL_API_BASE_URL: z.string().optional(),
   EMAIL_SERVICE_API_KEY: z.string().optional(),
   SMS_API_BASE_URL: z.string().optional(),

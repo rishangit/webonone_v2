@@ -1,4 +1,4 @@
-const DEFAULT_MEDIA_ORIGIN = 'http://localhost:3013'
+const DEFAULT_MEDIA_ORIGIN = 'http://127.0.0.1:3013'
 
 export function getMediaOrigin(): string {
   return import.meta.env.VITE_MEDIA_ORIGIN ?? DEFAULT_MEDIA_ORIGIN
@@ -16,27 +16,30 @@ export function getMediaCropDialogUrl(): string {
   return `${getMediaOrigin()}/crop-dialog`
 }
 
+/** Scope webonone:company:{companyId} → disk webonone/companies/{companyId}/ */
 export function buildCompanyMediaScope(companyId: string): string {
   return `webonone:company:${companyId}`
 }
 
-export function buildCompanyProfileFolderPath(companyId: string): string {
-  return `/companies/${companyId}/profile`
+/** Company logo slot → webonone/companies/{id}/profile/ */
+export function buildCompanyProfileFolderPath(_companyId: string): string {
+  return '/profile'
 }
 
-export function buildCompanyGalleryFolderPath(companyId: string): string {
-  return `/companies/${companyId}/gallery`
+/** Company gallery slot → webonone/companies/{id}/gallery/ */
+export function buildCompanyGalleryFolderPath(_companyId: string): string {
+  return '/gallery'
 }
 
 /**
- * Media folder for company catalog entity galleries (services / spaces).
- * Path: /company/{companyId}/{entityKind}/{entityId}/gallery
- * Scope: webonone:company:{companyId} via buildCompanyMediaScope
+ * Company catalog entity images.
+ * Path: /{products|services|spaces}/{entityId}
+ * Disk: webonone/companies/{companyId}/{kind}/{entityId}/
  */
 export function buildCatalogEntityGalleryFolderPath(
-  companyId: string,
-  entityKind: 'services' | 'spaces',
+  _companyId: string,
+  entityKind: 'products' | 'services' | 'spaces',
   entityId: string,
 ): string {
-  return `/company/${companyId}/${entityKind}/${entityId}/gallery`
+  return `/${entityKind}/${entityId}`
 }

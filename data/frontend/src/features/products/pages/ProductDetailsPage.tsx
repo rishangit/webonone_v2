@@ -1,5 +1,213 @@
-import { CatalogDetailsPage } from '@/features/catalog/pages/CatalogDetailsPage'
+import { useEffect, useState } from 'react'
+import { Navigate, useParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  FeaturePage,
+} from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import {
+  CatalogDetailSectionTabs,
+  type CatalogDetailTabId,
+} from '@/features/catalog/components/CatalogDetailSectionTabs'
+import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
+import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import { productsActions } from '@/features/products/store'
+import type { ProductWizardStep } from '@/features/products/schemas/productSchemas'
+import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
+import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
+import { StatusBadge } from '@/shared/components/StatusBadge'
+import type { CatalogAttributeValue } from '@/shared/types/data.types'
+
+function formatAttributeValue(attr: CatalogAttributeValue): string {
+  if (attr.valueText != null && attr.valueText !== '') return attr.valueText
+  if (attr.valueNumber != null) return String(attr.valueNumber)
+  return '—'
+}
+
+function formatTimestamp(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString()
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm">{value}</p>
+    </div>
+  )
+}
 
 export function ProductDetailsPage() {
-  return <CatalogDetailsPage kind="products" />
+  const { productId } = useParams<{ productId: string }>()
+  const { goToList } = useNavigateDataEntity()
+  const dispatch = useAppDispatch()
+  const { accessToken, user } = useAppSelector((s) => s.auth)
+  const { detail, detailStatus, detailError } = useAppSelector((s) => s.products)
+  const canEdit =
+    user?.role === 'super_admin' || user?.role === 'company_admin'
+  const [dialog, setDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
+  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
+
+  useEffect(() => {
+    if (!productId) return
+    dispatch(productsActions.fetchDetailRequested({ id: productId }))
+  }, [dispatch, productId])
+
+  usePlatformLoading(
+    detailStatus === 'loading' && !detail ? 'Loading product…' : null,
+  )
+
+  if (!accessToken) return <Navigate to="/login" replace />
+  if (!productId) return <Navigate to="/products" replace />
+
+  const product = detail?.id === productId ? detail : null
+
+  function openWizard(initialStep: ProductWizardStep) {
+    setDialog({ initialStep })
+  }
+
+  const profile = product ? (
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      <div className="flex flex-col gap-6 lg:col-span-2">
+        <EditableSectionCard
+          title="Product"
+          description="Name, status, and description"
+          canEdit={canEdit}
+          onEdit={() => openWizard(1)}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold">{product.name}</h2>
+            <StatusBadge status={product.status} />
+          </div>
+          <ReadOnlyField
+            label="Description"
+            value={product.description?.trim() ? product.description : '—'}
+          />
+        </EditableSectionCard>
+
+        <EditableSectionCard
+          title="Attributes"
+          description="Custom attribute values for this product"
+          canEdit={canEdit}
+          onEdit={() => openWizard(3)}
+        >
+          {product.attributes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No attributes.</p>
+          ) : (
+            product.attributes.map((attr) => (
+              <ReadOnlyField
+                key={attr.attributeId}
+                label={attr.name}
+                value={formatAttributeValue(attr)}
+              />
+            ))
+          )}
+        </EditableSectionCard>
+      </div>
+
+      <div className="flex flex-col gap-6 lg:col-span-1">
+        <EditableSectionCard
+          title="Tags"
+          description="Labels linked to this product"
+          canEdit={canEdit}
+          onEdit={() => openWizard(2)}
+        >
+          {product.tags.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No tags.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {product.tags.map((tag) => (
+                <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </EditableSectionCard>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Meta</CardTitle>
+            <CardDescription>Record timestamps and references</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ReadOnlyField label="Created" value={formatTimestamp(product.createdAt)} />
+            <ReadOnlyField label="Updated" value={formatTimestamp(product.updatedAt)} />
+            <ReadOnlyField
+              label="References"
+              value={String(product.referenceCount ?? 0)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  ) : null
+
+  return (
+    <FeaturePage
+      title={product?.name ?? 'Product'}
+      description="Product details"
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => goToList('products')}>
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Back
+          </Button>
+        </div>
+      }
+    >
+      {detailError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{detailError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {product ? (
+        <CatalogDetailSectionTabs
+          ariaLabel="Product sections"
+          tab={tab}
+          onTabChange={setTab}
+          profile={profile}
+          gallery={
+            <CatalogLibraryGalleryCard
+              kind="products"
+              entityId={productId}
+              galleryImages={product.galleryImages ?? []}
+              accessToken={accessToken}
+              canEdit={canEdit}
+              onSaved={() => {
+                dispatch(productsActions.fetchDetailRequested({ id: productId, force: true }))
+              }}
+            />
+          }
+        />
+      ) : null}
+
+      {dialog && productId ? (
+        <ProductFormDialog
+          open
+          id={productId}
+          initialStep={dialog.initialStep}
+          onOpenChange={(open) => {
+            if (!open) setDialog(null)
+          }}
+          onSaved={() => {
+            dispatch(productsActions.fetchDetailRequested({ id: productId, force: true }))
+            setDialog(null)
+          }}
+        />
+      ) : null}
+    </FeaturePage>
+  )
 }

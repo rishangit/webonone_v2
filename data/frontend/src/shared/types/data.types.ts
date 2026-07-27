@@ -58,6 +58,11 @@ export interface CatalogAttributeValue {
 
 export type ServiceTimeMode = 'duration' | 'window'
 
+export interface CatalogGalleryImage {
+  mediaId: string
+  url: string
+}
+
 export interface CatalogItem {
   id: string
   name: string
@@ -66,6 +71,7 @@ export interface CatalogItem {
   referenceCount: number
   tags: TagSummary[]
   attributes: CatalogAttributeValue[]
+  galleryImages: CatalogGalleryImage[]
   createdAt: string
   updatedAt: string
   /** Services only */

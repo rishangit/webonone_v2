@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef } from 'react'
-import { sendPlatformInit } from '@webonone/platform-embed'
+import { isPlatformReadyMessage, sendPlatformInit } from '@webonone/platform-embed'
 import { buildMediaCropDialogUrl, sendMediaCropInit } from './embedUrl'
 import type { BuildMediaCropDialogUrlOptions, CropAspectPreset } from './types'
 
@@ -41,25 +41,53 @@ export const MediaCropDialogFrame = forwardRef<HTMLIFrameElement, MediaCropDialo
         return
       }
 
+      const origin = new URL(mediaOrigin).origin
+      const retryTimers: number[] = []
+
       function deliverInit() {
-        sendPlatformInit(iframe!, new URL(mediaOrigin).origin, accessToken!)
-        sendMediaCropInit(iframe!, mediaOrigin, {
+        sendPlatformInit(iframe!, origin, accessToken!)
+        sendMediaCropInit(iframe!, origin, {
           file: cropFile!,
           defaultAspect,
           aspectPresets,
         })
       }
 
-      function handleLoad() {
+      /** Child may attach its CROP_INIT listener in a later effect after READY. */
+      function deliverInitWithRetries() {
         deliverInit()
+        for (const delayMs of [0, 50, 150]) {
+          retryTimers.push(window.setTimeout(deliverInit, delayMs))
+        }
+      }
+
+      function handleLoad() {
+        deliverInitWithRetries()
+      }
+
+      function onMessage(event: MessageEvent) {
+        if (event.origin !== origin) {
+          return
+        }
+        if (isPlatformReadyMessage(event.data)) {
+          deliverInitWithRetries()
+        }
       }
 
       iframe.addEventListener('load', handleLoad)
+      window.addEventListener('message', onMessage)
+
       if (iframe.contentDocument?.readyState === 'complete') {
-        deliverInit()
+        deliverInitWithRetries()
       }
 
-      return () => iframe.removeEventListener('load', handleLoad)
+      return () => {
+        iframe.removeEventListener('load', handleLoad)
+        window.removeEventListener('message', onMessage)
+        for (const timer of retryTimers) {
+          window.clearTimeout(timer)
+        }
+      }
     }, [accessToken, aspectPresets, cropFile, defaultAspect, isOpen, mediaOrigin, ref, src])
 
     if (!isOpen) {

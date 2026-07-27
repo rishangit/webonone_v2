@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, configDir, '')
   const allowedParentOrigins =
     env.VITE_ALLOWED_PARENT_ORIGINS ??
-    'http://localhost:3010,http://127.0.0.1:3010,http://localhost:3011,http://127.0.0.1:3011,http://localhost:3012,http://127.0.0.1:3012,http://localhost:3013,http://127.0.0.1:3013'
+    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012,http://127.0.0.1:3013,http://127.0.0.1:3015'
   const frameAncestors = ["'self'", ...allowedParentOrigins.split(',').map((entry) => entry.trim()).filter(Boolean)]
     .filter((value, index, list) => list.indexOf(value) === index)
     .join(' ')

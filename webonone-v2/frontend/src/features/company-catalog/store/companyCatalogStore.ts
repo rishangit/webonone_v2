@@ -7,6 +7,7 @@ import type {
   CatalogBindingMode,
   CatalogEntityKind,
   CatalogGalleryImage,
+  CatalogGalleryKind,
   CatalogPayload,
   CompanyCatalogItem,
   HydratedCatalogItem,
@@ -96,7 +97,12 @@ const companyCatalogSlice = createSlice({
     },
     forkRequested(
       state,
-      _action: PayloadAction<{ kind: CatalogEntityKind; id: string; payload: CatalogPayload }>,
+      _action: PayloadAction<{
+        kind: CatalogEntityKind
+        id: string
+        payload: CatalogPayload
+        galleryImages?: CatalogGalleryImage[]
+      }>,
     ) {
       state.mutateStatus = 'saving'
       state.mutateError = null
@@ -111,7 +117,7 @@ const companyCatalogSlice = createSlice({
     updateGalleryRequested(
       state,
       _action: PayloadAction<{
-        kind: Extract<CatalogEntityKind, 'services' | 'spaces'>
+        kind: CatalogGalleryKind
         id: string
         galleryImages: CatalogGalleryImage[]
       }>,
@@ -223,8 +229,8 @@ const forkEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.forkRequested.type),
     exhaustMap((action: ReturnType<typeof companyCatalogActions.forkRequested>) => {
-      const { kind, id, payload } = action.payload
-      return from(companyCatalogApi.fork(kind, id, payload)).pipe(
+      const { kind, id, payload, galleryImages } = action.payload
+      return from(companyCatalogApi.fork(kind, id, payload, galleryImages)).pipe(
         mergeMap((item) =>
           from(hydrateOne(kind, item)).pipe(
             mergeMap((hydrated) =>

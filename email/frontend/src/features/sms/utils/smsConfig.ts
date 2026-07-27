@@ -1,4 +1,4 @@
-const DEFAULT_SMS_ORIGIN = 'http://localhost:3016'
+const DEFAULT_SMS_ORIGIN = 'http://127.0.0.1:3016'
 
 export function getSmsOrigin(): string {
   return import.meta.env.VITE_SMS_ORIGIN ?? DEFAULT_SMS_ORIGIN

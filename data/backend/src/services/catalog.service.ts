@@ -1,6 +1,10 @@
 import { nanoid } from 'nanoid'
 import { db, type CatalogRow, type DataRole, type ServiceRow, type ServiceTimeMode } from '../models/db.js'
-import type { CreateCatalogBody, UpdateCatalogBody } from '../schemas/catalog.schema.js'
+import type {
+  CatalogGalleryImage,
+  CreateCatalogBody,
+  UpdateCatalogBody,
+} from '../schemas/catalog.schema.js'
 import type { CreateServiceBody, UpdateServiceBody } from '../schemas/services.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
@@ -60,12 +64,35 @@ export interface CatalogDto {
   referenceCount: number
   tags: TagSummary[]
   attributes: CatalogAttributeValue[]
+  galleryImages: CatalogGalleryImage[]
   createdAt: string
   updatedAt: string
   timeMode?: ServiceTimeMode
   durationMinutes?: number | null
   startTime?: string | null
   endTime?: string | null
+}
+
+function parseGalleryImages(
+  value: string | CatalogGalleryImage[] | null | undefined,
+): CatalogGalleryImage[] {
+  if (value == null) return []
+  let parsed: unknown = value
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(parsed)) return []
+  return parsed.filter(
+    (item): item is CatalogGalleryImage =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as { mediaId?: unknown }).mediaId === 'string' &&
+      typeof (item as { url?: unknown }).url === 'string',
+  )
 }
 
 type CatalogWriteBody = CreateCatalogBody | CreateServiceBody | UpdateCatalogBody | UpdateServiceBody
@@ -150,6 +177,7 @@ async function rowToDto(kind: CatalogKind, row: CatalogRow | ServiceRow): Promis
     referenceCount: 0,
     tags,
     attributes,
+    galleryImages: parseGalleryImages(row.gallery_images),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
@@ -291,6 +319,22 @@ export function createCatalogService(kind: CatalogKind) {
           }
         }
       })
+
+      const updated = await this.getById(id)
+      if (!updated) throw new Error('NOT_FOUND')
+      return updated
+    },
+
+    async updateGallery(id: string, galleryImages: CatalogGalleryImage[]): Promise<CatalogDto> {
+      const existing = await db<CatalogRow>(main).where({ id }).first()
+      if (!existing) throw new Error('NOT_FOUND')
+
+      await db(main)
+        .where({ id })
+        .update({
+          gallery_images: JSON.stringify(galleryImages),
+          updated_at: db.fn.now(3),
+        })
 
       const updated = await this.getById(id)
       if (!updated) throw new Error('NOT_FOUND')

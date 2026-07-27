@@ -95,7 +95,7 @@ Edit `media\frontend\.env.production` — production values:
 | `VITE_API_BASE_URL` | `/api/v1` |
 | `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
 | `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
-| `VITE_ALLOWED_PARENT_ORIGINS` | `https://app.webonone.com` |
+| `VITE_ALLOWED_PARENT_ORIGINS` | `https://app.webonone.com,https://identity.webonone.com,https://data.webonone.com` |
 
 Vite embeds these values during deploy build. Changes require redeploy.
 

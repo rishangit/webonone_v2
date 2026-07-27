@@ -444,6 +444,10 @@ export function CompanyCatalogDetailPage() {
                     kind,
                     id,
                     payload: detail.hydrated,
+                    galleryImages:
+                      detail.galleryImages == null
+                        ? (detail.displayGalleryImages ?? [])
+                        : undefined,
                   }),
                 )
               }}
@@ -505,9 +509,12 @@ export function CompanyCatalogDetailPage() {
                 companyId={detail.companyId}
                 kind={kind}
                 entityId={id}
-                galleryImages={detail.galleryImages ?? []}
+                galleryImages={detail.displayGalleryImages ?? detail.galleryImages ?? []}
                 canEdit={!busy}
                 saving={busy}
+                inheritsLibraryGallery={
+                  detail.bindingMode === 'linked' && detail.galleryImages == null
+                }
               />
             )}
           </div>

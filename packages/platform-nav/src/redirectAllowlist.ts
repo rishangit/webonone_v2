@@ -38,8 +38,10 @@ function matchesHostWildcardUri(uri: URL, pattern: string): boolean {
   return hostMatchesSubdomainWildcard(uri.hostname, baseDomain)
 }
 
+const LOOPBACK_DEV_PATTERNS = new Set(['http://localhost:*', 'http://127.0.0.1:*'])
+
 function matchesLocalhostUri(uri: URL, pattern: string): boolean {
-  if (pattern !== 'http://localhost:*') {
+  if (!LOOPBACK_DEV_PATTERNS.has(pattern)) {
     return false
   }
 
@@ -64,7 +66,7 @@ function matchesPatternUri(uri: URL, pattern: string): boolean {
     return matchesHostWildcardUri(uri, pattern)
   }
 
-  if (pattern === 'http://localhost:*') {
+  if (LOOPBACK_DEV_PATTERNS.has(pattern)) {
     return matchesLocalhostUri(uri, pattern)
   }
 
@@ -91,7 +93,7 @@ export function matchesAllowedOrigin(origin: string, patterns: string[]): boolea
       return matchesHostWildcardUri(parsed, pattern)
     }
 
-    if (pattern === 'http://localhost:*') {
+    if (LOOPBACK_DEV_PATTERNS.has(pattern)) {
       return matchesLocalhostUri(parsed, pattern)
     }
 

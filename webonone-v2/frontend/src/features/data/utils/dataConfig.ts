@@ -1,5 +1,5 @@
-const DEFAULT_DATA_ORIGIN = 'http://localhost:3015'
-const DEFAULT_DATA_API_BASE_URL = 'http://localhost:4015/api/v1'
+const DEFAULT_DATA_ORIGIN = 'http://127.0.0.1:3015'
+const DEFAULT_DATA_API_BASE_URL = 'http://127.0.0.1:4015/api/v1'
 
 export function getDataOrigin(): string {
   return import.meta.env.VITE_DATA_ORIGIN ?? DEFAULT_DATA_ORIGIN

@@ -16,18 +16,19 @@ export function CropDialogPage() {
   const embed = useEmbedMode()
   const cropRef = useRef<ImageCropDialogHandle>(null)
   useEmbedDocumentFill(embed.isEmbed)
-  const { accessToken } = useMediaEmbedAuth(embed)
-  const { postSelect, postCancel } = useMediaPostMessage(embed.parentOrigin, embed.scope)
+  // Attach CROP_INIT listener before auth READY so the first deliverInit is not dropped.
   const { pendingFile, defaultAspect, aspectPresets, clearPending } = useMediaCropInit(
     embed.isEmbed,
     embed.parentOrigin,
   )
+  const { accessToken } = useMediaEmbedAuth(embed)
+  const { postSelect, postCancel } = useMediaPostMessage(embed.parentOrigin, embed.scope)
   const uploadPendingRef = useRef(false)
 
   const { uploadStatus, lastUploadedItems } = useAppSelector((s) => s.media)
 
   const scope = embed.scope ?? 'media:library:default'
-  const folderPath = embed.folderPath ?? '/root'
+  const folderPath = embed.folderPath ?? '/'
 
   useMediaParentCommands(embed.isEmbed, embed.parentOrigin, () => {
     void cropRef.current?.confirm()

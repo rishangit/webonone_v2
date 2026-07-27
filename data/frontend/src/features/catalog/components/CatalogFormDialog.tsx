@@ -30,7 +30,6 @@ import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { attributesActions } from '@/features/attributes/store'
-import { productsActions } from '@/features/products/store'
 import { spacesActions } from '@/features/spaces/store'
 import { DATA_FORM_DIALOG_SIZE } from '@/shared/utils/dataFormDialogSize'
 import {
@@ -44,17 +43,16 @@ import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
 import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
 
-type CatalogKind = 'products' | 'spaces'
+type CatalogKind = 'spaces'
 
 const CONFIG: Record<
   CatalogKind,
   {
     label: string
     select: (s: RootState) => CatalogFeatureState<CatalogItem>
-    actions: typeof productsActions
+    actions: typeof spacesActions
   }
 > = {
-  products: { label: 'Product', select: (s) => s.products, actions: productsActions },
   spaces: { label: 'Space', select: (s) => s.spaces, actions: spacesActions },
 }
 

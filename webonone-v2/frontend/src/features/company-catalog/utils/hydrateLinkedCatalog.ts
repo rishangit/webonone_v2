@@ -4,6 +4,7 @@ import {
 } from '../services/dataLibraryApi'
 import type {
   CatalogEntityKind,
+  CatalogGalleryImage,
   CompanyCatalogItem,
   HydratedCatalogItem,
 } from '../types/companyCatalog.types'
@@ -35,6 +36,28 @@ function displayFromItem(item: CompanyCatalogItem): {
   return displayFromPayload(item.payload)
 }
 
+function parseLibraryGallery(item: { galleryImages?: unknown }): CatalogGalleryImage[] {
+  if (!Array.isArray(item.galleryImages)) return []
+  return item.galleryImages.filter(
+    (entry): entry is CatalogGalleryImage =>
+      Boolean(entry) &&
+      typeof entry === 'object' &&
+      typeof (entry as { mediaId?: unknown }).mediaId === 'string' &&
+      typeof (entry as { url?: unknown }).url === 'string',
+  )
+}
+
+/** Live inherit: linked + null company gallery → library gallery; else company override. */
+export function effectiveGalleryImages(
+  item: Pick<CompanyCatalogItem, 'bindingMode' | 'galleryImages'>,
+  libraryGallery: CatalogGalleryImage[] | null | undefined,
+): CatalogGalleryImage[] {
+  if (item.bindingMode === 'linked' && item.galleryImages == null) {
+    return libraryGallery ?? []
+  }
+  return item.galleryImages ?? []
+}
+
 export async function hydrateLinkedCatalogItems(
   kind: CatalogEntityKind,
   items: CompanyCatalogItem[],
@@ -49,7 +72,7 @@ export async function hydrateLinkedCatalogItems(
     try {
       const result = await dataLibraryApi.list(kind, {
         ids: linkedIds,
-        pageSize: Math.min(100, linkedIds.length),
+        pageSize: Math.min(100, Math.max(linkedIds.length, 1)),
       })
       for (const entry of result.items) {
         libraryById.set(entry.id, entry)
@@ -67,16 +90,19 @@ export async function hydrateLinkedCatalogItems(
           ...item,
           displayName: item.libraryEntityId ? `Library item ${item.libraryEntityId}` : 'Linked item',
           displayDescription: null,
+          displayGalleryImages: effectiveGalleryImages(item, []),
           libraryUnavailable: true,
           hydrated: null,
         }
       }
       const payload = libraryItemToPayload(kind, library)
       const { displayName, displayDescription } = displayFromPayload(payload)
+      const libraryGallery = parseLibraryGallery(library)
       return {
         ...item,
         displayName,
         displayDescription,
+        displayGalleryImages: effectiveGalleryImages(item, libraryGallery),
         libraryUnavailable: false,
         hydrated: payload,
       }
@@ -87,6 +113,7 @@ export async function hydrateLinkedCatalogItems(
       ...item,
       displayName,
       displayDescription,
+      displayGalleryImages: effectiveGalleryImages(item, null),
       libraryUnavailable: false,
       hydrated: item.payload,
     }

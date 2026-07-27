@@ -12,7 +12,7 @@ import { ensureFolderPath } from '../services/mediaApi'
 
 const SHOWCASE_SCOPE = 'media:showcase:default'
 const MEDIA_ORIGIN = window.location.origin
-const ROOT_PATH = '/root'
+const SHOWCASE_FOLDER = '/'
 
 function getSelectorUrl(): string {
   return `${MEDIA_ORIGIN}/selector`
@@ -32,8 +32,6 @@ export function ComponentShowcasePage() {
   const [activeDialog, setActiveDialog] = useState<DialogSurface>(null)
   const [dialogKey, setDialogKey] = useState(0)
   const [folderReady, setFolderReady] = useState(false)
-
-  const profileFolderPath = user ? `/root/users/${user.id}/profile` : '/root/users/profile'
 
   useEffect(() => {
     if (!user) {
@@ -76,7 +74,7 @@ export function ComponentShowcasePage() {
     if (!accessToken) return
     setFolderReady(false)
     try {
-      await ensureFolderPath(SHOWCASE_SCOPE, profileFolderPath)
+      await ensureFolderPath(SHOWCASE_SCOPE, SHOWCASE_FOLDER)
       setFolderReady(true)
       setDialogKey((key) => key + 1)
       setActiveDialog('profileSelector')
@@ -107,7 +105,7 @@ export function ComponentShowcasePage() {
         <p className="text-sm text-muted-foreground">
           Shows the logged-in user image. Toggle view/edit or double-click the preview. In edit
           mode, use the centered pencil to open the selector at{' '}
-          <code className="text-xs">{profileFolderPath}</code>.
+          <code className="text-xs">{SHOWCASE_SCOPE}</code>.
         </p>
         <div className="flex flex-wrap items-start gap-4">
           <div className="h-[200px] w-[200px] shrink-0 overflow-hidden rounded-lg border">
@@ -136,7 +134,7 @@ export function ComponentShowcasePage() {
 
       <section className="space-y-3 rounded-lg border p-4">
         <h2 className="text-lg font-semibold">Media upload</h2>
-        <p className="text-sm text-muted-foreground">Opens upload dialog scoped to {ROOT_PATH}.</p>
+        <p className="text-sm text-muted-foreground">Opens upload dialog scoped to {SHOWCASE_SCOPE}.</p>
         <Button type="button" variant="outline" onClick={() => openDialog('rootUpload')}>
           Open media upload
         </Button>
@@ -145,7 +143,7 @@ export function ComponentShowcasePage() {
       <section className="space-y-3 rounded-lg border p-4">
         <h2 className="text-lg font-semibold">Media select</h2>
         <p className="text-sm text-muted-foreground">
-          Opens selector scoped to {ROOT_PATH} (includes desktop upload with 1:1 crop for images).
+          Opens selector scoped to {SHOWCASE_SCOPE} (includes desktop upload with 1:1 crop for images).
         </p>
         <Button type="button" onClick={() => openDialog('rootSelector')}>
           Click me
@@ -172,7 +170,7 @@ export function ComponentShowcasePage() {
           baseUrl={getSelectorUrl()}
           parentOrigin={window.location.origin}
           scope={SHOWCASE_SCOPE}
-          folderPath={profileFolderPath}
+          folderPath={SHOWCASE_FOLDER}
           mode="single"
           accept="image/*"
           selectorUpload
@@ -200,7 +198,7 @@ export function ComponentShowcasePage() {
           baseUrl={getSelectorUrl()}
           parentOrigin={window.location.origin}
           scope={SHOWCASE_SCOPE}
-          folderPath={ROOT_PATH}
+          folderPath={SHOWCASE_FOLDER}
           mode="single"
           accept="image/*"
           selectorUpload
@@ -227,7 +225,7 @@ export function ComponentShowcasePage() {
           baseUrl={getUploadDialogUrl()}
           parentOrigin={window.location.origin}
           scope={SHOWCASE_SCOPE}
-          folderPath={ROOT_PATH}
+          folderPath={SHOWCASE_FOLDER}
           mediaType="image"
           autoClose
           className="h-full min-h-0 w-full border-0 bg-transparent"

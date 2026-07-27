@@ -175,10 +175,6 @@ export const fromLibraryBodySchema = z
     }
   })
 
-export const forkCatalogBodySchema = z.object({
-  payload: z.record(z.string(), z.unknown()),
-})
-
 export type CatalogGalleryImage = {
   mediaId: string
   url: string
@@ -189,14 +185,21 @@ const galleryImageSchema = z.object({
   url: z.string().url().max(2048),
 })
 
+export const forkCatalogBodySchema = z.object({
+  payload: z.record(z.string(), z.unknown()),
+  /** Snapshot of effective gallery when leaving linked mode (optional). */
+  galleryImages: z.array(galleryImageSchema).max(24).optional(),
+})
+
 export const updateCatalogGalleryBodySchema = z.object({
   galleryImages: z.array(galleryImageSchema).max(24),
 })
 
 export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>
+export type ForkCatalogBody = z.infer<typeof forkCatalogBodySchema>
 
 /** Kinds that support a company-owned media gallery on the detail page. */
-export const CATALOG_GALLERY_KINDS = ['services', 'spaces'] as const
+export const CATALOG_GALLERY_KINDS = ['products', 'services', 'spaces'] as const
 export type CatalogGalleryKind = (typeof CATALOG_GALLERY_KINDS)[number]
 
 export function isCatalogGalleryKind(kind: CatalogEntityKind): kind is CatalogGalleryKind {

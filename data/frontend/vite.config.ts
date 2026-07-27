@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 const configDir = path.dirname(fileURLToPath(import.meta.url))
 const srcDir = path.resolve(configDir, 'src')
 const uiKitRoot = path.resolve(configDir, '../../ui-kit/package')
+const mediaEmbedRoot = path.resolve(configDir, '../../packages/media-embed')
 const platformNavRoot = path.resolve(configDir, '../../packages/platform-nav')
 const platformEmbedRoot = path.resolve(configDir, '../../packages/platform-embed')
 const themeRoot = path.resolve(configDir, '../../packages/theme')
@@ -15,7 +16,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, configDir, '')
   const allowedParentOrigins =
     env.VITE_ALLOWED_PARENT_ORIGINS ??
-    'http://localhost:3010,http://127.0.0.1:3010,http://localhost:3011,http://127.0.0.1:3011,http://localhost:3012,http://127.0.0.1:3012'
+    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012'
   const frameAncestors = ["'self'", ...allowedParentOrigins.split(',').map((entry) => entry.trim()).filter(Boolean)]
     .filter((value, index, list) => list.indexOf(value) === index)
     .join(' ')
@@ -27,6 +28,7 @@ export default defineConfig(({ mode }) => {
         { find: '@webonone/ui-kit/styles', replacement: path.join(uiKitRoot, 'src/styles/globals.css') },
         { find: '@webonone/ui-kit/tailwind', replacement: path.join(uiKitRoot, 'tailwind.config.ts') },
         { find: '@webonone/ui-kit', replacement: path.join(uiKitRoot, 'src/index.ts') },
+        { find: '@webonone/media-embed', replacement: path.join(mediaEmbedRoot, 'src/index.ts') },
         { find: '@webonone/platform-nav', replacement: path.join(platformNavRoot, 'src/index.ts') },
         { find: '@webonone/platform-embed', replacement: path.join(platformEmbedRoot, 'src/index.ts') },
         { find: '@webonone/theme', replacement: path.join(themeRoot, 'src/index.ts') },
@@ -35,8 +37,7 @@ export default defineConfig(({ mode }) => {
       ],
     },
     server: {
-      // Bind IPv4 so Chromium iframes resolving 127.0.0.1 work
-      // (default Node/Vite localhost can listen on [::1] only).
+      // Bind IPv4 so embeds use a single origin (http://127.0.0.1 — not localhost).
       host: '127.0.0.1',
       port: 3015,
       strictPort: true,

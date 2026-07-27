@@ -1,5 +1,5 @@
 export function getIdentityOrigin(): string {
-  return import.meta.env.VITE_IDENTITY_ORIGIN ?? 'http://localhost:3011'
+  return import.meta.env.VITE_IDENTITY_ORIGIN ?? 'http://127.0.0.1:3011'
 }
 
 export function getIdentityLoginUrl(): string {
@@ -7,7 +7,7 @@ export function getIdentityLoginUrl(): string {
 }
 
 export function getIdentityApiBase(): string {
-  return import.meta.env.VITE_IDENTITY_API_BASE_URL ?? 'http://localhost:4011/api/v1'
+  return import.meta.env.VITE_IDENTITY_API_BASE_URL ?? 'http://127.0.0.1:4011/api/v1'
 }
 
 export function getIdentityProfileUrl(): string {
@@ -19,7 +19,7 @@ export function getAuthCallbackUrl(): string {
 }
 
 export function getWebOnOneOrigin(): string {
-  return import.meta.env.VITE_WEBONONE_ORIGIN ?? 'http://localhost:3010'
+  return import.meta.env.VITE_WEBONONE_ORIGIN ?? 'http://127.0.0.1:3010'
 }
 
 export function getWebOnOneApiBase(): string {
@@ -45,7 +45,7 @@ export function getWebOnOneApiBaseFromReturnUrl(returnUrl: string): string {
 export function parseAllowedParentOrigins(): string[] {
   const raw =
     import.meta.env.VITE_ALLOWED_PARENT_ORIGINS ??
-    'http://localhost:3010,http://localhost:3011,http://localhost:3014'
+    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3014'
   return raw
     .split(',')
     .map((entry) => entry.trim())

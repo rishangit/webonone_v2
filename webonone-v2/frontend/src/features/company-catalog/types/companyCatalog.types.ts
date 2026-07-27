@@ -23,8 +23,8 @@ export type CompanyCatalogItem = {
   /** Columnar name for forked/custom (null when linked). */
   name?: string | null
   description?: string | null
-  /** Company-owned gallery refs (services / spaces only). */
-  galleryImages?: CatalogGalleryImage[]
+  /** Company-owned gallery refs; null = inherit library gallery when linked. */
+  galleryImages?: CatalogGalleryImage[] | null
   createdAt: string
   updatedAt: string
 }
@@ -33,6 +33,8 @@ export type CompanyCatalogItem = {
 export type HydratedCatalogItem = CompanyCatalogItem & {
   displayName: string
   displayDescription: string | null
+  /** Effective gallery for UI (library inherit or company override). */
+  displayGalleryImages?: CatalogGalleryImage[]
   libraryUnavailable?: boolean
   hydrated?: CatalogPayload | null
 }
@@ -42,7 +44,7 @@ export function singularLabel(kind: CatalogEntityKind): string {
   return label.endsWith('s') ? label.slice(0, -1) : label
 }
 
-export const CATALOG_GALLERY_KINDS = ['services', 'spaces'] as const
+export const CATALOG_GALLERY_KINDS = ['products', 'services', 'spaces'] as const
 export type CatalogGalleryKind = (typeof CATALOG_GALLERY_KINDS)[number]
 
 export function isCatalogGalleryKind(kind: CatalogEntityKind): kind is CatalogGalleryKind {

@@ -39,11 +39,15 @@ describe('matchesRedirectUri', () => {
     assert.equal(matchesRedirectUri('javascript:alert(1)', productionPatterns), false)
   })
 
-  it('matches localhost dev ports and paths', () => {
+  it('matches localhost and 127.0.0.1 via either loopback pattern', () => {
     assert.equal(matchesRedirectUri('http://localhost:3010/callback', devPatterns), true)
     assert.equal(matchesRedirectUri('http://localhost:3011/profile', devPatterns), true)
     assert.equal(matchesRedirectUri('http://127.0.0.1:3000/callback', devPatterns), true)
     assert.equal(matchesRedirectUri('https://localhost:3010/callback', devPatterns), false)
+
+    const ipv4Patterns = parseAllowlistPatterns('http://127.0.0.1:*')
+    assert.equal(matchesRedirectUri('http://127.0.0.1:3010/callback', ipv4Patterns), true)
+    assert.equal(matchesRedirectUri('http://localhost:3010/callback', ipv4Patterns), true)
   })
 })
 
@@ -53,8 +57,9 @@ describe('matchesAllowedOrigin', () => {
     assert.equal(matchesAllowedOrigin('https://billing.webonone.com', productionPatterns), true)
   })
 
-  it('matches localhost origins in dev', () => {
+  it('matches loopback origins in dev', () => {
     assert.equal(matchesAllowedOrigin('http://localhost:3010', devPatterns), true)
+    assert.equal(matchesAllowedOrigin('http://127.0.0.1:3010', parseAllowlistPatterns('http://127.0.0.1:*')), true)
   })
 
   it('matches exact pattern origins for legacy entries', () => {

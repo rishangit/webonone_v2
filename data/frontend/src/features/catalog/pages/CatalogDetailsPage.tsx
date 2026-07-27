@@ -15,8 +15,12 @@ import {
 import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import {
+  CatalogDetailSectionTabs,
+  type CatalogDetailTabId,
+} from '@/features/catalog/components/CatalogDetailSectionTabs'
 import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
-import { productsActions } from '@/features/products/store'
+import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { spacesActions } from '@/features/spaces/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
@@ -24,25 +28,18 @@ import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogAttributeValue, CatalogItem } from '@/shared/types/data.types'
 
-type CatalogDetailKind = 'products' | 'spaces'
+type CatalogDetailKind = 'spaces'
 
 const CONFIG: Record<
   CatalogDetailKind,
   {
     listPath: string
-    paramKey: 'productId' | 'spaceId'
+    paramKey: 'spaceId'
     singular: string
     select: (s: RootState) => CatalogFeatureState<CatalogItem>
-    actions: typeof productsActions
+    actions: typeof spacesActions
   }
 > = {
-  products: {
-    listPath: '/products',
-    paramKey: 'productId',
-    singular: 'Product',
-    select: (s) => s.products,
-    actions: productsActions,
-  },
   spaces: {
     listPath: '/spaces',
     paramKey: 'spaceId',
@@ -75,7 +72,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const config = CONFIG[kind]
-  const params = useParams<{ productId?: string; spaceId?: string }>()
+  const params = useParams<{ spaceId?: string }>()
   const entityId = params[config.paramKey]
   const { goToList } = useNavigateDataEntity()
   const dispatch = useAppDispatch()
@@ -83,6 +80,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const { detail, detailStatus, detailError } = useAppSelector(config.select)
   const canEdit = user?.role === 'super_admin' || user?.role === 'company_admin'
   const [editOpen, setEditOpen] = useState(false)
+  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
 
   useEffect(() => {
     if (!entityId) return
@@ -99,6 +97,83 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   if (!entityId) return <Navigate to={config.listPath} replace />
 
   const item = detail?.id === entityId ? detail : null
+
+  const profile = item ? (
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      <div className="flex flex-col gap-6 lg:col-span-2">
+        <EditableSectionCard
+          title={config.singular}
+          description="Name, status, and description"
+          canEdit={canEdit}
+          onEdit={() => setEditOpen(true)}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold">{item.name}</h2>
+            <StatusBadge status={item.status} />
+          </div>
+          <ReadOnlyField
+            label="Description"
+            value={item.description?.trim() ? item.description : '—'}
+          />
+        </EditableSectionCard>
+
+        <EditableSectionCard
+          title="Attributes"
+          description={`Custom attribute values for this ${config.singular.toLowerCase()}`}
+          canEdit={canEdit}
+          onEdit={() => setEditOpen(true)}
+        >
+          {item.attributes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No attributes.</p>
+          ) : (
+            item.attributes.map((attr) => (
+              <ReadOnlyField
+                key={attr.attributeId}
+                label={attr.name}
+                value={formatAttributeValue(attr)}
+              />
+            ))
+          )}
+        </EditableSectionCard>
+      </div>
+
+      <div className="flex flex-col gap-6 lg:col-span-1">
+        <EditableSectionCard
+          title="Tags"
+          description={`Labels linked to this ${config.singular.toLowerCase()}`}
+          canEdit={canEdit}
+          onEdit={() => setEditOpen(true)}
+        >
+          {item.tags.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No tags.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {item.tags.map((tag) => (
+                <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </EditableSectionCard>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Meta</CardTitle>
+            <CardDescription>Record timestamps and references</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ReadOnlyField label="Created" value={formatTimestamp(item.createdAt)} />
+            <ReadOnlyField label="Updated" value={formatTimestamp(item.updatedAt)} />
+            <ReadOnlyField
+              label="References"
+              value={String(item.referenceCount ?? 0)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  ) : null
 
   return (
     <FeaturePage
@@ -120,80 +195,24 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
       ) : null}
 
       {item ? (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <EditableSectionCard
-              title={config.singular}
-              description="Name, status, and description"
+        <CatalogDetailSectionTabs
+          ariaLabel={`${config.singular} sections`}
+          tab={tab}
+          onTabChange={setTab}
+          profile={profile}
+          gallery={
+            <CatalogLibraryGalleryCard
+              kind={kind}
+              entityId={entityId}
+              galleryImages={item.galleryImages ?? []}
+              accessToken={accessToken}
               canEdit={canEdit}
-              onEdit={() => setEditOpen(true)}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold">{item.name}</h2>
-                <StatusBadge status={item.status} />
-              </div>
-              <ReadOnlyField
-                label="Description"
-                value={item.description?.trim() ? item.description : '—'}
-              />
-            </EditableSectionCard>
-
-            <EditableSectionCard
-              title="Attributes"
-              description={`Custom attribute values for this ${config.singular.toLowerCase()}`}
-              canEdit={canEdit}
-              onEdit={() => setEditOpen(true)}
-            >
-              {item.attributes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No attributes.</p>
-              ) : (
-                item.attributes.map((attr) => (
-                  <ReadOnlyField
-                    key={attr.attributeId}
-                    label={attr.name}
-                    value={formatAttributeValue(attr)}
-                  />
-                ))
-              )}
-            </EditableSectionCard>
-          </div>
-
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            <EditableSectionCard
-              title="Tags"
-              description={`Labels linked to this ${config.singular.toLowerCase()}`}
-              canEdit={canEdit}
-              onEdit={() => setEditOpen(true)}
-            >
-              {item.tags.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tags.</p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {item.tags.map((tag) => (
-                    <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </EditableSectionCard>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Meta</CardTitle>
-                <CardDescription>Record timestamps and references</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ReadOnlyField label="Created" value={formatTimestamp(item.createdAt)} />
-                <ReadOnlyField label="Updated" value={formatTimestamp(item.updatedAt)} />
-                <ReadOnlyField
-                  label="References"
-                  value={String(item.referenceCount ?? 0)}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              onSaved={() => {
+                dispatch(config.actions.fetchDetailRequested({ id: entityId, force: true }))
+              }}
+            />
+          }
+        />
       ) : null}
 
       {editOpen && entityId ? (

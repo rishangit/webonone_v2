@@ -2,6 +2,7 @@ import { apiClient } from '@/shared/services/apiClient'
 import type {
   CatalogBindingMode,
   CatalogEntityKind,
+  CatalogGalleryImage,
   CatalogPayload,
   CompanyCatalogItem,
 } from '../types/companyCatalog.types'
@@ -41,10 +42,10 @@ export const companyCatalogApi = {
     })
   },
 
-  fork(kind: CatalogEntityKind, id: string, payload: CatalogPayload) {
+  fork(kind: CatalogEntityKind, id: string, payload: CatalogPayload, galleryImages?: CatalogGalleryImage[]) {
     return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/fork`, {
       method: 'POST',
-      body: JSON.stringify({ payload }),
+      body: JSON.stringify({ payload, galleryImages }),
     })
   },
 
@@ -56,7 +57,7 @@ export const companyCatalogApi = {
   },
 
   updateGallery(
-    kind: Extract<CatalogEntityKind, 'services' | 'spaces'>,
+    kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
     id: string,
     galleryImages: { mediaId: string; url: string }[],
   ) {

@@ -1,6 +1,10 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
-import type { CreateCatalogBody, UpdateCatalogBody } from '../schemas/catalog.schema.js'
+import type {
+  CreateCatalogBody,
+  UpdateCatalogBody,
+  UpdateCatalogGalleryBody,
+} from '../schemas/catalog.schema.js'
 import type { CatalogKind } from '../services/catalog.service.js'
 import {
   productsService,
@@ -49,6 +53,16 @@ export function createCatalogController(kind: CatalogKind) {
     async update(req: AuthenticatedRequest, res: Response) {
       try {
         const item = await service.update(String(req.params.id), req.body as UpdateCatalogBody)
+        res.json(item)
+      } catch (err) {
+        if (!handleServiceError(err, res)) throw err
+      }
+    },
+
+    async updateGallery(req: AuthenticatedRequest, res: Response) {
+      try {
+        const body = req.body as UpdateCatalogGalleryBody
+        const item = await service.updateGallery(String(req.params.id), body.galleryImages)
         res.json(item)
       } catch (err) {
         if (!handleServiceError(err, res)) throw err

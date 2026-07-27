@@ -159,6 +159,7 @@ export async function forkCatalogItem(
   kind: CatalogEntityKind,
   id: string,
   payloadInput: unknown,
+  galleryImages?: { mediaId: string; url: string }[],
 ) {
   await assertCompanyAdmin(userId, companyId)
   const row = await repo.findById(companyId, kind, id)
@@ -176,6 +177,19 @@ export async function forkCatalogItem(
   if (!updated) {
     throw httpError('Catalog item not found', 404)
   }
+
+  // Snapshot effective gallery when still inheriting (null), so images are not lost.
+  if (
+    isCatalogGalleryKind(kind) &&
+    updated.gallery_images == null &&
+    galleryImages !== undefined
+  ) {
+    const withGallery = await repo.updateGalleryImages(companyId, kind, id, galleryImages)
+    if (withGallery) {
+      return toDto(kind, withGallery)
+    }
+  }
+
   return toDto(kind, updated)
 }
 
@@ -216,7 +230,7 @@ export async function updateCatalogGallery(
 ) {
   await assertCompanyAdmin(userId, companyId)
   if (!isCatalogGalleryKind(kind)) {
-    throw httpError('Gallery is only supported for services and spaces', 400)
+    throw httpError('Gallery is only supported for products, services, and spaces', 400)
   }
   const row = await repo.findById(companyId, kind, id)
   if (!row) {

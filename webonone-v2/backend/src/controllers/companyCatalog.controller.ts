@@ -119,6 +119,7 @@ export async function forkCatalog(req: CompanyAdminSessionRequest, res: Response
       kind,
       String(req.params.id),
       req.body.payload,
+      req.body.galleryImages,
     )
     res.json(item)
   } catch (err) {

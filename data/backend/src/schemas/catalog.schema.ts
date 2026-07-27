@@ -31,3 +31,15 @@ export const updateCatalogBodySchema = createCatalogBodySchema.partial()
 
 export type CreateCatalogBody = z.infer<typeof createCatalogBodySchema>
 export type UpdateCatalogBody = z.infer<typeof updateCatalogBodySchema>
+
+const galleryImageSchema = z.object({
+  mediaId: z.string().min(1).max(64),
+  url: z.string().url().max(2048),
+})
+
+export const updateCatalogGalleryBodySchema = z.object({
+  galleryImages: z.array(galleryImageSchema).max(24),
+})
+
+export type CatalogGalleryImage = z.infer<typeof galleryImageSchema>
+export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>

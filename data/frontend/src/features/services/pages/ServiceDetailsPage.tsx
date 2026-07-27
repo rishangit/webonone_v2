@@ -14,6 +14,11 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import {
+  CatalogDetailSectionTabs,
+  type CatalogDetailTabId,
+} from '@/features/catalog/components/CatalogDetailSectionTabs'
+import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
@@ -78,6 +83,7 @@ export function ServiceDetailsPage() {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const [dialog, setDialog] = useState<{ initialStep: ServiceWizardStep } | null>(null)
+  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
 
   useEffect(() => {
     if (!serviceId) return
@@ -96,6 +102,92 @@ export function ServiceDetailsPage() {
   function openWizard(initialStep: ServiceWizardStep) {
     setDialog({ initialStep })
   }
+
+  const profile = service ? (
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      <div className="flex flex-col gap-6 lg:col-span-2">
+        <EditableSectionCard
+          title="Service"
+          description="Name, status, and description"
+          canEdit={canEdit}
+          onEdit={() => openWizard(1)}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold">{service.name}</h2>
+            <StatusBadge status={service.status} />
+          </div>
+          <ReadOnlyField
+            label="Description"
+            value={service.description?.trim() ? service.description : '—'}
+          />
+        </EditableSectionCard>
+
+        <EditableSectionCard
+          title="Attributes"
+          description="Custom attribute values for this service"
+          canEdit={canEdit}
+          onEdit={() => openWizard(4)}
+        >
+          {service.attributes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No attributes.</p>
+          ) : (
+            service.attributes.map((attr) => (
+              <ReadOnlyField
+                key={attr.attributeId}
+                label={attr.name}
+                value={formatAttributeValue(attr)}
+              />
+            ))
+          )}
+        </EditableSectionCard>
+      </div>
+
+      <div className="flex flex-col gap-6 lg:col-span-1">
+        <EditableSectionCard
+          title="Time"
+          description="How this service is scheduled"
+          canEdit={canEdit}
+          onEdit={() => openWizard(2)}
+        >
+          <ServiceTimeContent service={service} />
+        </EditableSectionCard>
+
+        <EditableSectionCard
+          title="Tags"
+          description="Labels linked to this service"
+          canEdit={canEdit}
+          onEdit={() => openWizard(3)}
+        >
+          {service.tags.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No tags.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {service.tags.map((tag) => (
+                <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </EditableSectionCard>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Meta</CardTitle>
+            <CardDescription>Record timestamps and references</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ReadOnlyField label="Created" value={formatTimestamp(service.createdAt)} />
+            <ReadOnlyField label="Updated" value={formatTimestamp(service.updatedAt)} />
+            <ReadOnlyField
+              label="References"
+              value={String(service.referenceCount ?? 0)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  ) : null
 
   return (
     <FeaturePage
@@ -117,89 +209,24 @@ export function ServiceDetailsPage() {
       ) : null}
 
       {service ? (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <EditableSectionCard
-              title="Service"
-              description="Name, status, and description"
+        <CatalogDetailSectionTabs
+          ariaLabel="Service sections"
+          tab={tab}
+          onTabChange={setTab}
+          profile={profile}
+          gallery={
+            <CatalogLibraryGalleryCard
+              kind="services"
+              entityId={serviceId}
+              galleryImages={service.galleryImages ?? []}
+              accessToken={accessToken}
               canEdit={canEdit}
-              onEdit={() => openWizard(1)}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold">{service.name}</h2>
-                <StatusBadge status={service.status} />
-              </div>
-              <ReadOnlyField
-                label="Description"
-                value={service.description?.trim() ? service.description : '—'}
-              />
-            </EditableSectionCard>
-
-            <EditableSectionCard
-              title="Attributes"
-              description="Custom attribute values for this service"
-              canEdit={canEdit}
-              onEdit={() => openWizard(4)}
-            >
-              {service.attributes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No attributes.</p>
-              ) : (
-                service.attributes.map((attr) => (
-                  <ReadOnlyField
-                    key={attr.attributeId}
-                    label={attr.name}
-                    value={formatAttributeValue(attr)}
-                  />
-                ))
-              )}
-            </EditableSectionCard>
-          </div>
-
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            <EditableSectionCard
-              title="Time"
-              description="How this service is scheduled"
-              canEdit={canEdit}
-              onEdit={() => openWizard(2)}
-            >
-              <ServiceTimeContent service={service} />
-            </EditableSectionCard>
-
-            <EditableSectionCard
-              title="Tags"
-              description="Labels linked to this service"
-              canEdit={canEdit}
-              onEdit={() => openWizard(3)}
-            >
-              {service.tags.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tags.</p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {service.tags.map((tag) => (
-                    <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </EditableSectionCard>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Meta</CardTitle>
-                <CardDescription>Record timestamps and references</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ReadOnlyField label="Created" value={formatTimestamp(service.createdAt)} />
-                <ReadOnlyField label="Updated" value={formatTimestamp(service.updatedAt)} />
-                <ReadOnlyField
-                  label="References"
-                  value={String(service.referenceCount ?? 0)}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              onSaved={() => {
+                dispatch(servicesActions.fetchDetailRequested({ id: serviceId, force: true }))
+              }}
+            />
+          }
+        />
       ) : null}
 
       {dialog && serviceId ? (

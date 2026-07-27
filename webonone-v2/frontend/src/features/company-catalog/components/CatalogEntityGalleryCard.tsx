@@ -30,6 +30,8 @@ type CatalogEntityGalleryCardProps = {
   galleryImages: CatalogGalleryImage[]
   canEdit: boolean
   saving: boolean
+  /** When true, images come from the Data library until the company overrides. */
+  inheritsLibraryGallery?: boolean
 }
 
 export function CatalogEntityGalleryCard({
@@ -39,6 +41,7 @@ export function CatalogEntityGalleryCard({
   galleryImages,
   canEdit,
   saving,
+  inheritsLibraryGallery = false,
 }: CatalogEntityGalleryCardProps) {
   const dispatch = useAppDispatch()
   const { openMediaDialog } = usePlatformMediaDialog()
@@ -98,7 +101,9 @@ export function CatalogEntityGalleryCard({
           <div className="space-y-1.5">
             <CardTitle className="text-lg">Gallery</CardTitle>
             <CardDescription>
-              Images for this {noun} (up to {MAX_GALLERY_IMAGES})
+              {inheritsLibraryGallery
+                ? `Using library gallery. Changes stay on this company and do not customize details (up to ${MAX_GALLERY_IMAGES}).`
+                : `Images for this ${noun} (up to ${MAX_GALLERY_IMAGES})`}
             </CardDescription>
           </div>
           {canEdit ? (

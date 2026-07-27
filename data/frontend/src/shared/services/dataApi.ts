@@ -102,6 +102,12 @@ export const dataApi = {
   deleteProduct(id: string) {
     return apiClient<void>(`/products/${id}`, { method: 'DELETE' })
   },
+  updateProductGallery(id: string, galleryImages: { mediaId: string; url: string }[]) {
+    return apiClient<CatalogItem>(`/products/${id}/gallery`, {
+      method: 'PATCH',
+      body: JSON.stringify({ galleryImages }),
+    })
+  },
 
   listServices(query: ListQuery = {}) {
     return apiClient<PaginatedResult<CatalogItem>>(`/services${toQueryString(query)}`)
@@ -118,6 +124,12 @@ export const dataApi = {
   deleteService(id: string) {
     return apiClient<void>(`/services/${id}`, { method: 'DELETE' })
   },
+  updateServiceGallery(id: string, galleryImages: { mediaId: string; url: string }[]) {
+    return apiClient<CatalogItem>(`/services/${id}/gallery`, {
+      method: 'PATCH',
+      body: JSON.stringify({ galleryImages }),
+    })
+  },
 
   listSpaces(query: ListQuery = {}) {
     return apiClient<PaginatedResult<CatalogItem>>(`/spaces${toQueryString(query)}`)
@@ -133,5 +145,11 @@ export const dataApi = {
   },
   deleteSpace(id: string) {
     return apiClient<void>(`/spaces/${id}`, { method: 'DELETE' })
+  },
+  updateSpaceGallery(id: string, galleryImages: { mediaId: string; url: string }[]) {
+    return apiClient<CatalogItem>(`/spaces/${id}/gallery`, {
+      method: 'PATCH',
+      body: JSON.stringify({ galleryImages }),
+    })
   },
 }

@@ -53,11 +53,17 @@ export interface AttributeRow {
 
 export type ServiceTimeMode = 'duration' | 'window'
 
+export interface CatalogGalleryImageRef {
+  mediaId: string
+  url: string
+}
+
 export interface CatalogRow {
   id: string
   name: string
   description: string | null
   status: EntityStatus
+  gallery_images: string | CatalogGalleryImageRef[] | null
   created_at: Date
   updated_at: Date
 }

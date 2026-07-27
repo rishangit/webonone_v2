@@ -23,6 +23,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
 import { CatalogList } from '@/features/catalog/components/CatalogList'
+import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { productsActions } from '@/features/products/store'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
 import { servicesActions } from '@/features/services/store'
@@ -165,6 +166,20 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
         />
       </ListPageBody>
 
+      {dialog !== null && kind === 'products' ? (
+        <ProductFormDialog
+          open
+          id={dialog.id}
+          onOpenChange={(o) => {
+            if (!o) setDialog(null)
+          }}
+          onSaved={() => {
+            list.load(list.page, list.pageSize, true)
+            setDialog(null)
+          }}
+        />
+      ) : null}
+
       {dialog !== null && kind === 'services' ? (
         <ServiceFormDialog
           open
@@ -179,9 +194,9 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
         />
       ) : null}
 
-      {dialog !== null && (kind === 'products' || kind === 'spaces') ? (
+      {dialog !== null && kind === 'spaces' ? (
         <CatalogFormDialog
-          kind={kind}
+          kind="spaces"
           open
           id={dialog.id}
           onOpenChange={(o) => {
