@@ -179,6 +179,30 @@ export const forkCatalogBodySchema = z.object({
   payload: z.record(z.string(), z.unknown()),
 })
 
+export type CatalogGalleryImage = {
+  mediaId: string
+  url: string
+}
+
+const galleryImageSchema = z.object({
+  mediaId: z.string().min(1).max(64),
+  url: z.string().url().max(2048),
+})
+
+export const updateCatalogGalleryBodySchema = z.object({
+  galleryImages: z.array(galleryImageSchema).max(24),
+})
+
+export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>
+
+/** Kinds that support a company-owned media gallery on the detail page. */
+export const CATALOG_GALLERY_KINDS = ['services', 'spaces'] as const
+export type CatalogGalleryKind = (typeof CATALOG_GALLERY_KINDS)[number]
+
+export function isCatalogGalleryKind(kind: CatalogEntityKind): kind is CatalogGalleryKind {
+  return (CATALOG_GALLERY_KINDS as readonly string[]).includes(kind)
+}
+
 export function parsePayloadForKind(
   kind: CatalogEntityKind,
   payload: unknown,

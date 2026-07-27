@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import {
   PLATFORM_MESSAGE_TYPES,
   type PlatformPeerDialogRequestMessage,
@@ -8,13 +8,13 @@ import {
   Alert,
   AlertDescription,
   Button,
-  Input,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
-  Label,
+  SearchInput,
+  cn,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
@@ -215,13 +215,14 @@ export function LibraryPickerPanel({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-2">
-        <div className="flex min-w-[12rem] flex-1 flex-col gap-2">
-          <Label htmlFor="library-search">Search library</Label>
-          <Input
+        <div className="min-w-[12rem] flex-1">
+          <SearchInput
             id="library-search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onClear={() => setQ('')}
             placeholder={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}…`}
+            aria-label={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}`}
             disabled={createOpen}
           />
         </div>
@@ -253,24 +254,47 @@ export function LibraryPickerPanel({
           {items.length === 0 ? (
             <ItemListEmpty>No library {labelLower} available.</ItemListEmpty>
           ) : (
-            items.map((item) => (
-              <ItemListItem
-                key={item.id}
-                className={selected?.id === item.id ? itemListRowActiveClassName : undefined}
-                onClick={() => {
-                  if (!createOpen) selectItem(item)
-                }}
-              >
-                <ItemListContent>
-                  <div className="font-medium">{item.name}</div>
-                  {item.description ? (
-                    <div className="text-sm text-muted-foreground line-clamp-2">
-                      {item.description}
-                    </div>
+            items.map((item) => {
+              const isSelected = selected?.id === item.id
+              return (
+                <ItemListItem
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  className={cn(
+                    'cursor-pointer transition-colors',
+                    isSelected && itemListRowActiveClassName,
+                  )}
+                  aria-label={`Select ${item.name}`}
+                  aria-pressed={isSelected}
+                  onClick={() => {
+                    if (!createOpen) selectItem(item)
+                  }}
+                  onKeyDown={(event) => {
+                    if (createOpen) return
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      selectItem(item)
+                    }
+                  }}
+                >
+                  <ItemListContent>
+                    <div className="font-medium">{item.name}</div>
+                    {item.description ? (
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {item.description}
+                      </div>
+                    ) : null}
+                  </ItemListContent>
+                  {isSelected ? (
+                    <Check
+                      className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
+                      aria-hidden
+                    />
                   ) : null}
-                </ItemListContent>
-              </ItemListItem>
-            ))
+                </ItemListItem>
+              )
+            })
           )}
         </ItemList>
       )}

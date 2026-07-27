@@ -28,6 +28,7 @@ See [microservice-architecture.mdc](microservice-architecture.mdc) for productio
 - Copying kit source into `features/` or re-implementing kit primitives locally
 - Page-level loading as plain text (`<p>Loading…</p>`) — use `Spinner` instead
 - `Input` with `type="date"` — use `DatePicker` (native browser date UI is inconsistent and misaligns with other controls)
+- Plain `Input` (or `Input` + `Label`) for **text search / filter-by-query** — use **`SearchInput`**
 
 ## Required component mapping
 
@@ -38,6 +39,7 @@ See [microservice-architecture.mdc](microservice-architecture.mdc) for productio
 | Details / profile sections | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` in 3-col stacks | [details-page-cards.mdc](details-page-cards.mdc) |
 | Forms | `Form`, `FormField`, `Input`, `mapZodIssuesToFieldErrors` | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Date fields | `DatePicker` (prefer `withIcon`) inside `FormField` | [form-creation skill](../skills/form-creation/SKILL.md) |
+| Text search / query filter | **`SearchInput`** (search icon + clear) — list headers, dialogs, pickers, embed bodies | [list-filter-panel.mdc](list-filter-panel.mdc) · this rule |
 | Lists | `ItemList`, `ItemListMenu`, `DropdownMenuItem` | [item-list skill](../skills/item-list/SKILL.md) |
 | Modals | `CustomDialog`, `AlertDialog` | [dialog-windows.mdc](dialog-windows.mdc) |
 | Tag select (multi) | `SelectTag` (+ Data `TagSelectTrigger` / `TagPickerPanel`; consumers: `DataTagPickerFrame` + `DataTagCreateFrame`) | [dialog-windows.mdc](dialog-windows.mdc) SelectTag — **do not fork** |
@@ -45,6 +47,19 @@ See [microservice-architecture.mdc](microservice-architecture.mdc) for productio
 | Errors (page/list load, form banner) | `Alert`, `AlertDescription` | This rule |
 | Mutation success / fail | `useToast` / `ToastProvider` | [toast-notifications skill](../skills/toast-notifications/SKILL.md) · [toast-notifications.mdc](toast-notifications.mdc) |
 | Logos / avatars / entity images | `ImagePreview` (`src={null}` → first-upload icon empty state) | [image-preview.mdc](image-preview.mdc) |
+
+### Search bar (`SearchInput`)
+
+Any UI that filters a list or catalog by typed query must use **`SearchInput`** from `@webonone/ui-kit` — not plain `Input`.
+
+| Context | Placement |
+|---------|-----------|
+| Collection `FeaturePage` | In `actions` (often `className="w-64"`), left of `ListFilterTrigger` / CTA |
+| Dialog / wizard / picker / embed body | Inline above the list (e.g. library pickers) |
+
+Wire `value` + `onChange`; pass `onClear` when clearing should reset query state; set `aria-label` (and optional `placeholder`) for the domain.
+
+Reference: `ui-kit/package/src/components/SearchInput.tsx`, `email/.../HistoryPage.tsx`, `webonone-v2/.../LibraryPickerPanel.tsx`, `data/.../CatalogLibrarySelectEmbedPage.tsx`.
 
 When the kit lacks a component, extend ui-kit via [ui-kit-agent](../agents/ui-kit-agent.md) first — do not add a parallel primitive in a service.
 

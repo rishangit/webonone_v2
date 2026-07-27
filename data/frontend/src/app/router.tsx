@@ -50,6 +50,11 @@ const AttributeFormEmbedPage = lazy(() =>
 const ProductsPage = lazy(() =>
   import('@/features/products/pages/ProductsPage').then((m) => ({ default: m.ProductsPage })),
 )
+const ProductDetailsPage = lazy(() =>
+  import('@/features/products/pages/ProductDetailsPage').then((m) => ({
+    default: m.ProductDetailsPage,
+  })),
+)
 const ServicesPage = lazy(() =>
   import('@/features/services/pages/ServicesPage').then((m) => ({ default: m.ServicesPage })),
 )
@@ -60,6 +65,14 @@ const ServiceDetailsPage = lazy(() =>
 )
 const SpacesPage = lazy(() =>
   import('@/features/spaces/pages/SpacesPage').then((m) => ({ default: m.SpacesPage })),
+)
+const SpaceDetailsPage = lazy(() =>
+  import('@/features/spaces/pages/SpaceDetailsPage').then((m) => ({
+    default: m.SpaceDetailsPage,
+  })),
+)
+const TagDetailsPage = lazy(() =>
+  import('@/features/tags/pages/TagDetailsPage').then((m) => ({ default: m.TagDetailsPage })),
 )
 const CatalogLibrarySelectEmbedPage = lazy(() =>
   import('@/features/catalog/pages/CatalogLibrarySelectEmbedPage').then((m) => ({
@@ -166,9 +179,25 @@ export function App() {
           {embedDialogRoute('/embed/dialogs/:kind/create', CatalogFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/:id/edit', CatalogFormEmbedPage)}
           {entityRoutes('/tags', TagsPage)}
+          <Route
+            path="/tags/:tagId"
+            element={
+              <LazyRoute>
+                <TagDetailsPage />
+              </LazyRoute>
+            }
+          />
           {entityRoutes('/units', UnitsPage)}
           {entityRoutes('/attributes', AttributesPage)}
           {entityRoutes('/products', ProductsPage)}
+          <Route
+            path="/products/:productId"
+            element={
+              <LazyRoute>
+                <ProductDetailsPage />
+              </LazyRoute>
+            }
+          />
           {entityRoutes('/services', ServicesPage)}
           <Route
             path="/services/:serviceId"
@@ -179,6 +208,14 @@ export function App() {
             }
           />
           {entityRoutes('/spaces', SpacesPage)}
+          <Route
+            path="/spaces/:spaceId"
+            element={
+              <LazyRoute>
+                <SpaceDetailsPage />
+              </LazyRoute>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

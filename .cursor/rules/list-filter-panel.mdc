@@ -1,16 +1,16 @@
 ---
-description: List filter panel — slide-over filters and active trigger on collection pages
+description: List filter panel — slide-over filters and SearchInput on collection pages
 globs: "**/frontend/src/features/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 
 # List filter panel
 
-Use `@webonone/ui-kit` **`ListSearchField`**, **`ListFilterTrigger`**, and **`ListFilterPanel`** on any `FeaturePage` that displays a filterable collection (`ItemList` + `Pagination`).
+Use `@webonone/ui-kit` **`SearchInput`**, **`ListFilterTrigger`**, and **`ListFilterPanel`** on any `FeaturePage` that displays a filterable collection (`ItemList` + `Pagination`).
 
-Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · pagination: [item-list-pagination.mdc](item-list-pagination.mdc) · data loading: [redux-store-and-epics.mdc](redux-store-and-epics.mdc).
+Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · pagination: [item-list-pagination.mdc](item-list-pagination.mdc) · search primitive: [ui-kit-consumption.mdc](ui-kit-consumption.mdc) · data loading: [redux-store-and-epics.mdc](redux-store-and-epics.mdc).
 
-Reference: `ui-kit/package/src/components/ListSearchField.tsx`, `ListFilterPanel.tsx`, `email/frontend/src/features/history/pages/HistoryPage.tsx`.
+Reference: `ui-kit/package/src/components/SearchInput.tsx`, `ListFilterPanel.tsx`, `email/frontend/src/features/history/pages/HistoryPage.tsx`.
 
 ## When required
 
@@ -24,10 +24,13 @@ Reference: `ui-kit/package/src/components/ListSearchField.tsx`, `ListFilterPanel
   title="…"
   actions={
     <div className="flex w-full flex-wrap items-center justify-end gap-2">
-      <ListSearchField
+      <SearchInput
         value={searchQuery}
-        onChange={setSearchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onClear={() => setSearchQuery('')}
         placeholder="Context-specific hint"
+        aria-label="Search …"
+        className="w-64"
       />
       <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
     </div>
@@ -48,26 +51,23 @@ Reference: `ui-kit/package/src/components/ListSearchField.tsx`, `ListFilterPanel
 
 | Rule | Detail |
 |------|--------|
-| Search left of filter | `ListSearchField` always **before** `ListFilterTrigger` in `actions` |
+| Search left of filter | `SearchInput` always **before** `ListFilterTrigger` in `actions` |
 | Right-aligned row | Wrap actions in `flex w-full flex-wrap items-center justify-end gap-2` |
-| Forbidden body search | Do **not** place `ListSearchField` as a `FeaturePage` child above the list |
-| Fixed-width expand | `ListSearchField` uses `w-10 shrink-0` anchor; expanded input is `absolute right-0` so the filter icon does not shift |
-| Mobile actions | `PageHeader` actions row uses `justify-end` on mobile |
-| Panel scroll lock | `ListFilterPanel` sets `body overflow: hidden` while open |
-| Text search in header | Use `ListSearchField` — collapsed search icon expands to input with left search icon + clear |
+| Forbidden body search on list pages | Do **not** place `SearchInput` as a `FeaturePage` child above the list |
+| Text search in header | Use **`SearchInput`** — not plain `Input` / `Label` |
 | Panel filters only | Status, dates, MIME type, etc. — not primary text search |
 | No inline filter forms | Do not add full-width `<Form>` rows above lists |
 | `active` trigger | `true` when any **panel** filter ≠ default (search is separate) |
 | Apply | Reset pagination to page 1; refetch (server) or re-slice (client) |
 | Placeholder | Match list domain (`"Company name"`, `"Template name or slug"`, …) |
 
-Search-only pages (no panel filters) may use **`ListSearchField` alone**.
+Search-only pages (no panel filters) may use **`SearchInput` alone**. Dialogs, pickers, and embed bodies that search a list also use **`SearchInput`** (body placement is fine there) — [ui-kit-consumption.mdc](ui-kit-consumption.mdc).
 
 ## Exceptions
 
-- Auth, embed, and form-only pages (no collection list)
+- Auth, embed chrome, and form-only pages (no collection list)
 - Single-card pages (e.g. Providers)
-- Media embed routes — search + filter in `ScopedFolderBrowser` toolbar
+- Media embed routes — search + filter in `ScopedFolderBrowser` toolbar (`SearchInput` still required)
 
 ## Verification
 

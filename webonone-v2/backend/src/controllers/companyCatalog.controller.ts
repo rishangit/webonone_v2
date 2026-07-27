@@ -144,6 +144,24 @@ export async function updateCatalog(req: CompanyAdminSessionRequest, res: Respon
   }
 }
 
+export async function updateCatalogGallery(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const kind = catalogService.parseKindParam(String(req.params.kind))
+    const item = await catalogService.updateCatalogGallery(
+      session.userId,
+      session.companyId,
+      kind,
+      String(req.params.id),
+      req.body.galleryImages,
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function deleteCatalog(req: CompanyAdminSessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return

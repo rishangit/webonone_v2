@@ -49,6 +49,12 @@ When a satellite (Identity, Email, Data, SMS, …) runs inside WebOnOne `#main-c
 
 List/page openers must resolve embed with **`resolvePlatformEmbedParentOrigin`** (URL + session). Do not use URL-only `getPlatformEmbedParentOrigin` on openers — after in-iframe client nav drops query params, a local dialog would open inside `#main-content`. Details: skill [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md).
 
+### Selection dialog list rows (selected item)
+
+Picker / selection dialog bodies must show the **selected item** clearly: `itemListRowActiveClassName` **and** a Lucide `Check` on the **right** of each selected row. Do not rely on border alone.
+
+**Rule:** [selection-dialog-list.mdc](selection-dialog-list.mdc). Canonical: `TagPickerPanel.tsx`. Also `LibraryPickerPanel`, `CatalogLibrarySelectEmbedPage`, `UserSelectionDialog`, `UserPickerPage`.
+
 ### Stacked create from a selection dialog (SelectTag pattern)
 
 When a **selection** dialog needs **Add new / create** as a second dialog:

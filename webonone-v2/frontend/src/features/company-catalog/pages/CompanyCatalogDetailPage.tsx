@@ -9,10 +9,12 @@ import {
   CardTitle,
   FeaturePage,
   StatusTag,
+  cn,
   type SelectTagValue,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { EditableSectionCard } from '../components/EditableSectionCard'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
@@ -23,6 +25,7 @@ import {
   bindingModeLabel,
   CATALOG_ENTITY_KINDS,
   CATALOG_ENTITY_LABELS,
+  isCatalogGalleryKind,
   singularLabel,
   type CatalogEntityKind,
   type CatalogPayload,
@@ -47,12 +50,20 @@ type AttributeDisplay = {
   value: string
 }
 
+type DetailTab = 'profile' | 'gallery'
+
+const DETAIL_TABS: { id: DetailTab; label: string }[] = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'gallery', label: 'Gallery' },
+]
+
 export function CompanyCatalogDetailPage() {
   const { kind: kindParam = '', id = '' } = useParams()
   const kind = isCatalogEntityKind(kindParam) ? kindParam : null
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { detail, detailStatus, mutateStatus, mutateError } = useAppSelector((s) => s.companyCatalog)
+  const [tab, setTab] = useState<DetailTab>('profile')
   const [editOpen, setEditOpen] = useState(false)
   const [pendingEditClose, setPendingEditClose] = useState(false)
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
@@ -65,6 +76,10 @@ export function CompanyCatalogDetailPage() {
   usePlatformLoading(
     loading && kind ? `Loading ${singularLabel(kind).toLowerCase()}…` : null,
   )
+
+  useEffect(() => {
+    setTab('profile')
+  }, [kind, id])
 
   useEffect(() => {
     if (!kind || !id) return
@@ -85,7 +100,7 @@ export function CompanyCatalogDetailPage() {
   }, [mutateStatus, mutateError, pendingEditClose])
 
   useEffect(() => {
-    if (kind !== 'services' || !detail) {
+    if (!detail || (kind !== 'services' && kind !== 'products' && kind !== 'spaces')) {
       setResolvedTags([])
       setResolvedAttributes([])
       return
@@ -131,8 +146,9 @@ export function CompanyCatalogDetailPage() {
           })
           const byId = new Map(result.items.map((item) => [item.id, item]))
           attrDisplays = attrs
-            .filter((row): row is { attributeId: string; valueText?: string | null; valueNumber?: number | null } =>
-              typeof row.attributeId === 'string',
+            .filter(
+              (row): row is { attributeId: string; valueText?: string | null; valueNumber?: number | null } =>
+                typeof row.attributeId === 'string',
             )
             .map((row) => {
               const lib = byId.get(row.attributeId)
@@ -150,8 +166,9 @@ export function CompanyCatalogDetailPage() {
             })
         } catch {
           attrDisplays = attrs
-            .filter((row): row is { attributeId: string; valueText?: string | null; valueNumber?: number | null } =>
-              typeof row.attributeId === 'string',
+            .filter(
+              (row): row is { attributeId: string; valueText?: string | null; valueNumber?: number | null } =>
+                typeof row.attributeId === 'string',
             )
             .map((row) => ({
               attributeId: row.attributeId,
@@ -190,8 +207,215 @@ export function CompanyCatalogDetailPage() {
   const busy = mutateStatus === 'saving'
   const canEdit = detail?.bindingMode === 'forked' || detail?.bindingMode === 'custom'
   const canCustomize = detail?.bindingMode === 'linked' && detail.hydrated && !detail.libraryUnavailable
+  const showGalleryTabs = isCatalogGalleryKind(kind)
   const listPath = `/data/${kind}`
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
+
+  const serviceProfile = detail && kind === 'services' ? (
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      <div className="flex flex-col gap-6 lg:col-span-2">
+        <EditableSectionCard
+          title="Service"
+          description="Name and description"
+          titleExtra={
+            <StatusTag variant="verified">{bindingModeLabel(detail.bindingMode)}</StatusTag>
+          }
+          canEdit={canEdit && !busy}
+          onEdit={() => setServiceDialog({ initialStep: 1 })}
+        >
+          <ReadOnlyField label="Name" value={detail.displayName} />
+          <ReadOnlyField
+            label="Description"
+            value={detail.displayDescription?.trim() ? detail.displayDescription : '—'}
+          />
+          {detail.libraryUnavailable ? (
+            <div className="text-destructive">Library item is unavailable right now.</div>
+          ) : null}
+        </EditableSectionCard>
+
+        <EditableSectionCard
+          title="Attributes"
+          description="Custom attribute values for this service"
+          canEdit={canEdit && !busy}
+          onEdit={() => setServiceDialog({ initialStep: 4 })}
+        >
+          {resolvedAttributes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No attributes.</p>
+          ) : (
+            resolvedAttributes.map((attr) => (
+              <ReadOnlyField key={attr.attributeId} label={attr.name} value={attr.value} />
+            ))
+          )}
+        </EditableSectionCard>
+      </div>
+      <div className="flex flex-col gap-6 lg:col-span-1">
+        <EditableSectionCard
+          title="Time"
+          description="How this service is scheduled"
+          canEdit={canEdit && !busy}
+          onEdit={() => setServiceDialog({ initialStep: 2 })}
+        >
+          <ReadOnlyField
+            label="Time mode"
+            value={
+              servicePayload?.timeMode === 'window'
+                ? 'Specific time'
+                : servicePayload?.timeMode === 'duration'
+                  ? 'Duration'
+                  : '—'
+            }
+          />
+          {servicePayload?.timeMode === 'duration' ? (
+            <ReadOnlyField
+              label="Duration"
+              value={
+                servicePayload.durationMinutes != null
+                  ? `${String(servicePayload.durationMinutes)} minutes`
+                  : '—'
+              }
+            />
+          ) : null}
+          {servicePayload?.timeMode === 'window' ? (
+            <>
+              <ReadOnlyField
+                label="Start time"
+                value={
+                  typeof servicePayload.startTime === 'string' ? servicePayload.startTime : '—'
+                }
+              />
+              <ReadOnlyField
+                label="End time"
+                value={typeof servicePayload.endTime === 'string' ? servicePayload.endTime : '—'}
+              />
+            </>
+          ) : null}
+        </EditableSectionCard>
+
+        <EditableSectionCard
+          title="Tags"
+          description="Labels linked to this service"
+          canEdit={canEdit && !busy}
+          onEdit={() => setServiceDialog({ initialStep: 3 })}
+        >
+          {resolvedTags.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No tags.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {resolvedTags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="rounded-full border px-2 py-0.5 text-xs"
+                  style={{ borderColor: tag.color }}
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </EditableSectionCard>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Provenance</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <div className="text-muted-foreground">Mode</div>
+              <div>{bindingModeLabel(detail.bindingMode)}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Library id</div>
+              <div className="break-all">{detail.libraryEntityId ?? '—'}</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  ) : null
+
+  const genericProfile = detail && kind !== 'services' ? (
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      <div className="flex flex-col gap-6 lg:col-span-2">
+        <EditableSectionCard
+          title={singularLabel(kind)}
+          description="Name and description"
+          titleExtra={
+            <StatusTag variant="verified">{bindingModeLabel(detail.bindingMode)}</StatusTag>
+          }
+          canEdit={canEdit && !busy}
+          onEdit={() => setEditOpen(true)}
+        >
+          <ReadOnlyField label="Name" value={detail.displayName} />
+          <ReadOnlyField
+            label="Description"
+            value={detail.displayDescription?.trim() ? detail.displayDescription : '—'}
+          />
+          {detail.libraryUnavailable ? (
+            <div className="text-destructive">Library item is unavailable right now.</div>
+          ) : null}
+        </EditableSectionCard>
+
+        {kind === 'products' || kind === 'spaces' ? (
+          <EditableSectionCard
+            title="Attributes"
+            description={`Custom attribute values for this ${singularLabel(kind).toLowerCase()}`}
+            canEdit={canEdit && !busy}
+            onEdit={() => setEditOpen(true)}
+          >
+            {resolvedAttributes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No attributes.</p>
+            ) : (
+              resolvedAttributes.map((attr) => (
+                <ReadOnlyField key={attr.attributeId} label={attr.name} value={attr.value} />
+              ))
+            )}
+          </EditableSectionCard>
+        ) : null}
+      </div>
+      <div className="flex flex-col gap-6 lg:col-span-1">
+        {kind === 'products' || kind === 'spaces' ? (
+          <EditableSectionCard
+            title="Tags"
+            description={`Labels linked to this ${singularLabel(kind).toLowerCase()}`}
+            canEdit={canEdit && !busy}
+            onEdit={() => setEditOpen(true)}
+          >
+            {resolvedTags.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tags.</p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {resolvedTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="rounded-full border px-2 py-0.5 text-xs"
+                    style={{ borderColor: tag.color }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </EditableSectionCard>
+        ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Provenance</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <div className="text-muted-foreground">Mode</div>
+              <div>{bindingModeLabel(detail.bindingMode)}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Library id</div>
+              <div className="break-all">{detail.libraryEntityId ?? '—'}</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  ) : null
 
   return (
     <FeaturePage
@@ -243,171 +467,54 @@ export function CompanyCatalogDetailPage() {
         </div>
       }
     >
-      {detail && kind === 'services' ? (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <EditableSectionCard
-              title="Service"
-              description="Name and description"
-              titleExtra={
-                <StatusTag variant="verified">{bindingModeLabel(detail.bindingMode)}</StatusTag>
-              }
-              canEdit={canEdit && !busy}
-              onEdit={() => setServiceDialog({ initialStep: 1 })}
-            >
-              <ReadOnlyField label="Name" value={detail.displayName} />
-              <ReadOnlyField
-                label="Description"
-                value={detail.displayDescription?.trim() ? detail.displayDescription : '—'}
-              />
-              {detail.libraryUnavailable ? (
-                <div className="text-destructive">Library item is unavailable right now.</div>
-              ) : null}
-            </EditableSectionCard>
-
-            <EditableSectionCard
-              title="Attributes"
-              description="Custom attribute values for this service"
-              canEdit={canEdit && !busy}
-              onEdit={() => setServiceDialog({ initialStep: 4 })}
-            >
-              {resolvedAttributes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No attributes.</p>
-              ) : (
-                resolvedAttributes.map((attr) => (
-                  <ReadOnlyField key={attr.attributeId} label={attr.name} value={attr.value} />
-                ))
-              )}
-            </EditableSectionCard>
+      {detail && showGalleryTabs ? (
+        <div className="flex flex-col gap-6">
+          <div
+            role="tablist"
+            aria-label={`${singularLabel(kind)} sections`}
+            className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
+          >
+            {DETAIL_TABS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                id={`catalog-detail-tab-${item.id}`}
+                aria-selected={tab === item.id}
+                aria-controls={`catalog-detail-panel-${item.id}`}
+                className={cn(
+                  'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
+                  tab === item.id && 'bg-background text-foreground shadow-sm',
+                )}
+                onClick={() => setTab(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            <EditableSectionCard
-              title="Time"
-              description="How this service is scheduled"
-              canEdit={canEdit && !busy}
-              onEdit={() => setServiceDialog({ initialStep: 2 })}
-            >
-              <ReadOnlyField
-                label="Time mode"
-                value={
-                  servicePayload?.timeMode === 'window'
-                    ? 'Specific time'
-                    : servicePayload?.timeMode === 'duration'
-                      ? 'Duration'
-                      : '—'
-                }
+
+          <div
+            role="tabpanel"
+            id={`catalog-detail-panel-${tab}`}
+            aria-labelledby={`catalog-detail-tab-${tab}`}
+          >
+            {tab === 'profile' ? (
+              kind === 'services' ? serviceProfile : genericProfile
+            ) : (
+              <CatalogEntityGalleryCard
+                companyId={detail.companyId}
+                kind={kind}
+                entityId={id}
+                galleryImages={detail.galleryImages ?? []}
+                canEdit={!busy}
+                saving={busy}
               />
-              {servicePayload?.timeMode === 'duration' ? (
-                <ReadOnlyField
-                  label="Duration"
-                  value={
-                    servicePayload.durationMinutes != null
-                      ? `${String(servicePayload.durationMinutes)} minutes`
-                      : '—'
-                  }
-                />
-              ) : null}
-              {servicePayload?.timeMode === 'window' ? (
-                <>
-                  <ReadOnlyField
-                    label="Start time"
-                    value={
-                      typeof servicePayload.startTime === 'string' ? servicePayload.startTime : '—'
-                    }
-                  />
-                  <ReadOnlyField
-                    label="End time"
-                    value={typeof servicePayload.endTime === 'string' ? servicePayload.endTime : '—'}
-                  />
-                </>
-              ) : null}
-            </EditableSectionCard>
-
-            <EditableSectionCard
-              title="Tags"
-              description="Labels linked to this service"
-              canEdit={canEdit && !busy}
-              onEdit={() => setServiceDialog({ initialStep: 3 })}
-            >
-              {resolvedTags.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tags.</p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {resolvedTags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="rounded-full border px-2 py-0.5 text-xs"
-                      style={{ borderColor: tag.color }}
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </EditableSectionCard>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Provenance</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Mode</div>
-                  <div>{bindingModeLabel(detail.bindingMode)}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Library id</div>
-                  <div className="break-all">{detail.libraryEntityId ?? '—'}</div>
-                </div>
-              </CardContent>
-            </Card>
+            )}
           </div>
         </div>
       ) : null}
 
-      {detail && kind !== 'services' ? (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <EditableSectionCard
-              title="Details"
-              titleExtra={
-                <StatusTag variant="verified">{bindingModeLabel(detail.bindingMode)}</StatusTag>
-              }
-              canEdit={canEdit && !busy}
-              onEdit={() => setEditOpen(true)}
-            >
-              <div>
-                <div className="text-muted-foreground">Name</div>
-                <div className="font-medium">{detail.displayName}</div>
-              </div>
-              <div>
-                <div className="text-muted-foreground">Description</div>
-                <div>{detail.displayDescription || '—'}</div>
-              </div>
-              {detail.libraryUnavailable ? (
-                <div className="text-destructive">Library item is unavailable right now.</div>
-              ) : null}
-            </EditableSectionCard>
-          </div>
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Provenance</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Mode</div>
-                  <div>{bindingModeLabel(detail.bindingMode)}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Library id</div>
-                  <div className="break-all">{detail.libraryEntityId ?? '—'}</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      ) : null}
+      {detail && !showGalleryTabs ? genericProfile : null}
 
       {kind === 'services' ? (
         <ServiceFormDialog

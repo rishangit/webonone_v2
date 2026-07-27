@@ -12,15 +12,45 @@ import {
   CardTitle,
   FeaturePage,
 } from '@webonone/ui-kit'
+import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
+import { productsActions } from '@/features/products/store'
+import { spacesActions } from '@/features/spaces/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
-import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
-import { servicesActions } from '@/features/services/store'
-import type { ServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
 import { StatusBadge } from '@/shared/components/StatusBadge'
+import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogAttributeValue, CatalogItem } from '@/shared/types/data.types'
+
+type CatalogDetailKind = 'products' | 'spaces'
+
+const CONFIG: Record<
+  CatalogDetailKind,
+  {
+    listPath: string
+    paramKey: 'productId' | 'spaceId'
+    singular: string
+    select: (s: RootState) => CatalogFeatureState<CatalogItem>
+    actions: typeof productsActions
+  }
+> = {
+  products: {
+    listPath: '/products',
+    paramKey: 'productId',
+    singular: 'Product',
+    select: (s) => s.products,
+    actions: productsActions,
+  },
+  spaces: {
+    listPath: '/spaces',
+    paramKey: 'spaceId',
+    singular: 'Space',
+    select: (s) => s.spaces,
+    actions: spacesActions,
+  },
+}
 
 function formatAttributeValue(attr: CatalogAttributeValue): string {
   if (attr.valueText != null && attr.valueText !== '') return attr.valueText
@@ -43,67 +73,40 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ServiceTimeContent({ service }: { service: CatalogItem }) {
-  const mode = service.timeMode
-  return (
-    <>
-      <ReadOnlyField
-        label="Time mode"
-        value={mode === 'window' ? 'Specific time' : mode === 'duration' ? 'Duration' : '—'}
-      />
-      {mode === 'duration' ? (
-        <ReadOnlyField
-          label="Duration"
-          value={
-            service.durationMinutes != null ? `${service.durationMinutes} minutes` : '—'
-          }
-        />
-      ) : null}
-      {mode === 'window' ? (
-        <>
-          <ReadOnlyField label="Start time" value={service.startTime ?? '—'} />
-          <ReadOnlyField label="End time" value={service.endTime ?? '—'} />
-        </>
-      ) : null}
-    </>
-  )
-}
-
-export function ServiceDetailsPage() {
-  const { serviceId } = useParams<{ serviceId: string }>()
+export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
+  const config = CONFIG[kind]
+  const params = useParams<{ productId?: string; spaceId?: string }>()
+  const entityId = params[config.paramKey]
   const { goToList } = useNavigateDataEntity()
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
-  const { detail, detailStatus, detailError } = useAppSelector((s) => s.services)
-  const canEdit =
-    user?.role === 'super_admin' || user?.role === 'company_admin'
-  const [dialog, setDialog] = useState<{ initialStep: ServiceWizardStep } | null>(null)
+  const { detail, detailStatus, detailError } = useAppSelector(config.select)
+  const canEdit = user?.role === 'super_admin' || user?.role === 'company_admin'
+  const [editOpen, setEditOpen] = useState(false)
 
   useEffect(() => {
-    if (!serviceId) return
-    dispatch(servicesActions.fetchDetailRequested({ id: serviceId }))
-  }, [dispatch, serviceId])
+    if (!entityId) return
+    dispatch(config.actions.fetchDetailRequested({ id: entityId }))
+  }, [config.actions, dispatch, entityId])
 
   usePlatformLoading(
-    detailStatus === 'loading' && !detail ? 'Loading service…' : null,
+    detailStatus === 'loading' && !detail
+      ? `Loading ${config.singular.toLowerCase()}…`
+      : null,
   )
 
   if (!accessToken) return <Navigate to="/login" replace />
-  if (!serviceId) return <Navigate to="/services" replace />
+  if (!entityId) return <Navigate to={config.listPath} replace />
 
-  const service = detail?.id === serviceId ? detail : null
-
-  function openWizard(initialStep: ServiceWizardStep) {
-    setDialog({ initialStep })
-  }
+  const item = detail?.id === entityId ? detail : null
 
   return (
     <FeaturePage
-      title={service?.name ?? 'Service'}
-      description="Service details"
+      title={item?.name ?? config.singular}
+      description={`${config.singular} details`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => goToList('services')}>
+          <Button type="button" variant="outline" size="sm" onClick={() => goToList(kind)}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
             Back
           </Button>
@@ -116,35 +119,35 @@ export function ServiceDetailsPage() {
         </Alert>
       ) : null}
 
-      {service ? (
+      {item ? (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="flex flex-col gap-6 lg:col-span-2">
             <EditableSectionCard
-              title="Service"
+              title={config.singular}
               description="Name, status, and description"
               canEdit={canEdit}
-              onEdit={() => openWizard(1)}
+              onEdit={() => setEditOpen(true)}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold">{service.name}</h2>
-                <StatusBadge status={service.status} />
+                <h2 className="text-xl font-semibold">{item.name}</h2>
+                <StatusBadge status={item.status} />
               </div>
               <ReadOnlyField
                 label="Description"
-                value={service.description?.trim() ? service.description : '—'}
+                value={item.description?.trim() ? item.description : '—'}
               />
             </EditableSectionCard>
 
             <EditableSectionCard
               title="Attributes"
-              description="Custom attribute values for this service"
+              description={`Custom attribute values for this ${config.singular.toLowerCase()}`}
               canEdit={canEdit}
-              onEdit={() => openWizard(4)}
+              onEdit={() => setEditOpen(true)}
             >
-              {service.attributes.length === 0 ? (
+              {item.attributes.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No attributes.</p>
               ) : (
-                service.attributes.map((attr) => (
+                item.attributes.map((attr) => (
                   <ReadOnlyField
                     key={attr.attributeId}
                     label={attr.name}
@@ -157,25 +160,16 @@ export function ServiceDetailsPage() {
 
           <div className="flex flex-col gap-6 lg:col-span-1">
             <EditableSectionCard
-              title="Time"
-              description="How this service is scheduled"
-              canEdit={canEdit}
-              onEdit={() => openWizard(2)}
-            >
-              <ServiceTimeContent service={service} />
-            </EditableSectionCard>
-
-            <EditableSectionCard
               title="Tags"
-              description="Labels linked to this service"
+              description={`Labels linked to this ${config.singular.toLowerCase()}`}
               canEdit={canEdit}
-              onEdit={() => openWizard(3)}
+              onEdit={() => setEditOpen(true)}
             >
-              {service.tags.length === 0 ? (
+              {item.tags.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No tags.</p>
               ) : (
                 <div className="flex flex-wrap gap-1">
-                  {service.tags.map((tag) => (
+                  {item.tags.map((tag) => (
                     <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
                       {tag.name}
                     </span>
@@ -190,11 +184,11 @@ export function ServiceDetailsPage() {
                 <CardDescription>Record timestamps and references</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label="Created" value={formatTimestamp(service.createdAt)} />
-                <ReadOnlyField label="Updated" value={formatTimestamp(service.updatedAt)} />
+                <ReadOnlyField label="Created" value={formatTimestamp(item.createdAt)} />
+                <ReadOnlyField label="Updated" value={formatTimestamp(item.updatedAt)} />
                 <ReadOnlyField
                   label="References"
-                  value={String(service.referenceCount ?? 0)}
+                  value={String(item.referenceCount ?? 0)}
                 />
               </CardContent>
             </Card>
@@ -202,17 +196,17 @@ export function ServiceDetailsPage() {
         </div>
       ) : null}
 
-      {dialog && serviceId ? (
-        <ServiceFormDialog
+      {editOpen && entityId ? (
+        <CatalogFormDialog
+          kind={kind}
           open
-          id={serviceId}
-          initialStep={dialog.initialStep}
+          id={entityId}
           onOpenChange={(open) => {
-            if (!open) setDialog(null)
+            if (!open) setEditOpen(false)
           }}
           onSaved={() => {
-            dispatch(servicesActions.fetchDetailRequested({ id: serviceId, force: true }))
-            setDialog(null)
+            dispatch(config.actions.fetchDetailRequested({ id: entityId, force: true }))
+            setEditOpen(false)
           }}
         />
       ) : null}

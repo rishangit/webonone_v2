@@ -10,6 +10,7 @@ import {
 import {
   isPlatformContentReadyMessage,
   isPlatformMediaDialogRequestMessage,
+  isPlatformNavigateMessage,
   isPlatformPeerDialogRequestMessage,
   isPlatformReadyMessage,
 } from './types'
@@ -52,6 +53,8 @@ export type PlatformServiceFrameProps = {
     responder: PlatformPeerDialogResponder,
     peerOrigin: string,
   ) => void
+  /** Peer requested shell SPA navigation (relative path starting with `/`). */
+  onPeerNavigate?: (path: string) => void
 }
 
 export function PlatformServiceFrame({
@@ -66,6 +69,7 @@ export function PlatformServiceFrame({
   onLoadingChange,
   onMediaDialogRequest,
   onPeerDialogRequest,
+  onPeerNavigate,
 }: PlatformServiceFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const peerOriginNormalized = useMemo(() => new URL(peerOrigin).origin, [peerOrigin])
@@ -95,6 +99,15 @@ export function PlatformServiceFrame({
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.origin !== peerOriginNormalized) {
+        return
+      }
+
+      if (isPlatformNavigateMessage(event.data)) {
+        const iframe = iframeRef.current
+        if (!iframe || event.source !== iframe.contentWindow) {
+          return
+        }
+        onPeerNavigate?.(event.data.path)
         return
       }
 
@@ -188,6 +201,7 @@ export function PlatformServiceFrame({
     onLoadingChange,
     onMediaDialogRequest,
     onPeerDialogRequest,
+    onPeerNavigate,
     peerOriginNormalized,
   ])
 

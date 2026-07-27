@@ -141,8 +141,30 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
   }
 }
 
+function parseGalleryImages(
+  value: string | unknown[] | null | undefined,
+): { mediaId: string; url: string }[] {
+  if (value == null) return []
+  let parsed: unknown = value
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(parsed)) return []
+  return parsed.filter(
+    (item): item is { mediaId: string; url: string } =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as { mediaId?: unknown }).mediaId === 'string' &&
+      typeof (item as { url?: unknown }).url === 'string',
+  )
+}
+
 export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unknown>) {
-  return {
+  const base = {
     id: row.id as string,
     companyId: row.company_id as string,
     entityKind: kind,
@@ -155,6 +177,15 @@ export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unkno
     createdAt: (row.created_at as Date).toISOString(),
     updatedAt: (row.updated_at as Date).toISOString(),
   }
+
+  if (kind === 'services' || kind === 'spaces') {
+    return {
+      ...base,
+      galleryImages: parseGalleryImages(row.gallery_images as string | unknown[] | null),
+    }
+  }
+
+  return base
 }
 
 function columnsFromPayload(
@@ -329,6 +360,25 @@ export async function updateItem(
     .where({ id, company_id: companyId })
     .update({
       ...columnsFromPayload(kind, bindingMode, libraryEntityId, payload),
+      updated_at: new Date(),
+    })
+
+  return findById(companyId, kind, id)
+}
+
+export async function updateGalleryImages(
+  companyId: string,
+  kind: Extract<CatalogEntityKind, 'services' | 'spaces'>,
+  id: string,
+  galleryImages: { mediaId: string; url: string }[],
+): Promise<Record<string, unknown> | undefined> {
+  const existing = await findById(companyId, kind, id)
+  if (!existing) return undefined
+
+  await db(CATALOG_TABLE_BY_KIND[kind])
+    .where({ id, company_id: companyId })
+    .update({
+      gallery_images: JSON.stringify(galleryImages),
       updated_at: new Date(),
     })
 

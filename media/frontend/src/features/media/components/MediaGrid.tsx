@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MoreVertical } from 'lucide-react'
+import { Check, MoreVertical } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Button,
@@ -77,6 +77,12 @@ export function MediaGrid({
                 </div>
                 <p className="truncate px-2 py-1 text-xs">{item.fileName}</p>
               </button>
+              {isSelected ? (
+                <Check
+                  className="pointer-events-none absolute bottom-7 right-1.5 h-5 w-5 rounded-full bg-background/90 p-0.5 text-primary shadow-sm"
+                  aria-hidden
+                />
+              ) : null}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import { Alert, AlertDescription } from './Alert'
 import { Avatar } from './Avatar'
 import { Button } from './Button'
@@ -367,6 +367,12 @@ export function UserSelectionDialog({
                         {formatRoleLabel(user.role)}
                       </span>
                     )
+                  ) : null}
+                  {isSelected ? (
+                    <Check
+                      className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
+                      aria-hidden
+                    />
                   ) : null}
                 </ItemListItem>
               )

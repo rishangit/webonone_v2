@@ -71,7 +71,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   return (
     <FeaturePage
       title={CATALOG_ENTITY_LABELS[kind]}
-      description={`Company ${CATALOG_ENTITY_LABELS[kind].toLowerCase()} — link from the Data library, customize a copy, or create your own.`}
+      description={`Company ${CATALOG_ENTITY_LABELS[kind].toLowerCase()} — link from the Data library, customize linked items on the detail page, or create your own.`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput

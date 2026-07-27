@@ -27,6 +27,7 @@ description: >-
 - [details-page-wizard-edit.mdc](../../rules/details-page-wizard-edit.mdc) — catalog wizard-backed details (per-card Edit → shared create/edit wizard); [skill](../details-page-wizard-edit/SKILL.md) — **required** for services-style detail + Add dialogs
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
+- [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) — tag/library selection rows show Check on the right
 
 ## Ports and env
 

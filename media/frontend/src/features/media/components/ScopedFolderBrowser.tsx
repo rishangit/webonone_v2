@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FileIcon, Folder, FolderPlus, LayoutGrid, List, Upload } from 'lucide-react'
+import { Check, FileIcon, Folder, FolderPlus, LayoutGrid, List, Upload } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
@@ -25,6 +25,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  cn,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { getMediaListQueryKey, mediaActions } from '@/features/media/store'
@@ -423,28 +424,38 @@ export function ScopedFolderBrowser({
             {showIconToolbar ? renderFolderMenu(folder) : null}
           </ItemListItem>
         ))}
-        {filteredItems.map((item) => (
-          <ItemListItem
-            key={item.id}
-            className={selectedIds.has(item.id) ? itemListRowActiveClassName : undefined}
-          >
-            <ItemListContent>
-              <button
-                type="button"
-                className="flex w-full items-start gap-2 text-left text-sm"
-                onClick={() => handleFileClick(item)}
-                onDoubleClick={() => handleFileDoubleClick(item)}
-              >
-                <FileIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{item.fileName}</span>
-                  {renderFileMeta(item)}
-                </span>
-              </button>
-            </ItemListContent>
-            {showIconToolbar ? renderFileMenu(item) : null}
-          </ItemListItem>
-        ))}
+        {filteredItems.map((item) => {
+          const isSelected = selectedIds.has(item.id)
+          return (
+            <ItemListItem
+              key={item.id}
+              className={cn(isSelected && itemListRowActiveClassName)}
+              aria-selected={isSelected}
+            >
+              <ItemListContent>
+                <button
+                  type="button"
+                  className="flex w-full items-start gap-2 text-left text-sm"
+                  onClick={() => handleFileClick(item)}
+                  onDoubleClick={() => handleFileDoubleClick(item)}
+                >
+                  <FileIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{item.fileName}</span>
+                    {renderFileMeta(item)}
+                  </span>
+                </button>
+              </ItemListContent>
+              {isSelected ? (
+                <Check
+                  className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
+                  aria-hidden
+                />
+              ) : null}
+              {showIconToolbar ? renderFileMenu(item) : null}
+            </ItemListItem>
+          )
+        })}
       </ItemList>
     )
   }
@@ -525,6 +536,12 @@ export function ScopedFolderBrowser({
                   {renderFileMeta(item)}
                 </div>
               </button>
+              {isSelected ? (
+                <Check
+                  className="pointer-events-none absolute bottom-8 right-1.5 h-5 w-5 rounded-full bg-background/90 p-0.5 text-primary shadow-sm"
+                  aria-hidden
+                />
+              ) : null}
               {showIconToolbar ? (
                 <div className="absolute right-1 top-1">
                   {renderFileMenu(item)}

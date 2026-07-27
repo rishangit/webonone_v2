@@ -68,6 +68,10 @@ if (isHosted) return null
 
 Embed body listens with `usePlatformPeerDialogSubmit({ onSubmit, onSecondary? })` and syncs host chrome via `sendPlatformPeerDialogBusy(..., { description, secondaryLabel })`.
 
+## Selection dialog list rows
+
+Picker / selection bodies (tag select, library select, user pick) must show the **selected item**: `itemListRowActiveClassName` **and** Lucide `Check` on the right. See [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc). Canonical: `TagPickerPanel`.
+
 ## Nested create from a selection dialog
 
 Do **not** open create chrome inside the picker iframe. Outer body sends `peer-dialog-nested-request`; host opens a sibling `CustomDialog` + create `/embed/dialogs/…` body; result/cancel posts back to the outer iframe.

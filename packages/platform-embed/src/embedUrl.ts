@@ -28,6 +28,7 @@ import type {
   PlatformMediaDialogItem,
   PlatformMediaDialogRequestMessage,
   PlatformMediaDialogResultMessage,
+  PlatformNavigateMessage,
   PlatformPeerDialogCancelMessage,
   PlatformPeerDialogCompleteMessage,
   PlatformPeerDialogBusyMessage,
@@ -127,6 +128,21 @@ export function sendPlatformContentReady(parentOrigin: string): void {
     return
   }
   window.parent.postMessage({ type: PLATFORM_MESSAGE_TYPES.CONTENT_READY }, parentOrigin)
+}
+
+/** Embedded app -> parent shell: navigate the host SPA to a relative path. */
+export function sendPlatformNavigate(parentOrigin: string, path: string): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+  if (!path.startsWith('/') || path.startsWith('//')) {
+    return
+  }
+  const message: PlatformNavigateMessage = {
+    type: PLATFORM_MESSAGE_TYPES.NAVIGATE,
+    path,
+  }
+  window.parent.postMessage(message, parentOrigin)
 }
 
 export function sendIdentityUserPickerSelect(

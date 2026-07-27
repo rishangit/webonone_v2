@@ -50,29 +50,46 @@ export function CatalogList({
       <ItemList>
         {items.map((item) => {
           const showMenu = Boolean(onView) || canEdit || canDelete
+          const rowBody = (
+            <>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{item.name}</p>
+                <StatusBadge status={item.status} />
+                <span className="text-xs text-muted-foreground">
+                  Refs: {item.referenceCount ?? 0}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {item.tags.slice(0, 3).map((tag) => (
+                  <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
+                    {tag.name}
+                  </span>
+                ))}
+                {item.tags.length > 3 ? (
+                  <span className="text-xs text-muted-foreground">+{item.tags.length - 3}</span>
+                ) : null}
+              </div>
+            </>
+          )
           return (
             <ItemListItem key={item.id}>
               <ItemListContent>
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{item.name}</p>
-                  <StatusBadge status={item.status} />
-                  <span className="text-xs text-muted-foreground">Refs: {item.referenceCount ?? 0}</span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {item.tags.slice(0, 3).map((tag) => (
-                    <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
-                      {tag.name}
-                    </span>
-                  ))}
-                  {item.tags.length > 3 ? (
-                    <span className="text-xs text-muted-foreground">+{item.tags.length - 3}</span>
-                  ) : null}
-                </div>
+                {onView ? (
+                  <button
+                    type="button"
+                    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => onView(item.id)}
+                  >
+                    {rowBody}
+                  </button>
+                ) : (
+                  rowBody
+                )}
               </ItemListContent>
               {showMenu ? (
                 <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
                   {onView ? (
-                    <DropdownMenuItem onClick={() => onView(item.id)}>View service</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onView(item.id)}>View details</DropdownMenuItem>
                   ) : null}
                   {canDelete && item.status === 'pending' && onVerify ? (
                     <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>

@@ -4,6 +4,7 @@ import * as roleRepo from '../clients/identityRoleClient.js'
 import * as repo from '../repositories/companyCatalog.repository.js'
 import {
   catalogEntityKindSchema,
+  isCatalogGalleryKind,
   parsePartialPayloadForKind,
   parsePayloadForKind,
   type CatalogEntityKind,
@@ -200,6 +201,28 @@ export async function updateCatalogItem(
   const updated = await repo.updateItem(companyId, kind, id, {
     payload: nextPayload,
   })
+  if (!updated) {
+    throw httpError('Catalog item not found', 404)
+  }
+  return toDto(kind, updated)
+}
+
+export async function updateCatalogGallery(
+  userId: string,
+  companyId: string,
+  kind: CatalogEntityKind,
+  id: string,
+  galleryImages: { mediaId: string; url: string }[],
+) {
+  await assertCompanyAdmin(userId, companyId)
+  if (!isCatalogGalleryKind(kind)) {
+    throw httpError('Gallery is only supported for services and spaces', 400)
+  }
+  const row = await repo.findById(companyId, kind, id)
+  if (!row) {
+    throw httpError('Catalog item not found', 404)
+  }
+  const updated = await repo.updateGalleryImages(companyId, kind, id, galleryImages)
   if (!updated) {
     throw httpError('Catalog item not found', 404)
   }

@@ -42,6 +42,8 @@ export const PLATFORM_MESSAGE_TYPES = {
   PEER_DIALOG_NESTED_CANCEL: 'webonone:platform:peer-dialog-nested-cancel',
   /** Shell → outer dialog iframe: nested sibling completed with payload. */
   PEER_DIALOG_NESTED_RESULT: 'webonone:platform:peer-dialog-nested-result',
+  /** Peer iframe → shell: request shell SPA navigation (e.g. Data detail `/data/{entity}/:id`). */
+  NAVIGATE: 'webonone:platform:navigate',
 } as const
 
 export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
@@ -99,6 +101,12 @@ export type PlatformReadyMessage = {
 
 export type PlatformContentReadyMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.CONTENT_READY
+}
+
+/** Peer iframe → shell: navigate the parent SPA to a relative path. */
+export type PlatformNavigateMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.NAVIGATE
+  path: string
 }
 
 export type IdentityUserPickerUser = {
@@ -328,6 +336,7 @@ export type PlatformEmbedMessage =
   | PlatformInitMessage
   | PlatformReadyMessage
   | PlatformContentReadyMessage
+  | PlatformNavigateMessage
   | AuthSuccessMessage
   | AuthCancelMessage
   | IdentityUserPickerSelectMessage
@@ -387,6 +396,20 @@ export function isPlatformContentReadyMessage(
   }
 
   return (data as PlatformContentReadyMessage).type === PLATFORM_MESSAGE_TYPES.CONTENT_READY
+}
+
+export function isPlatformNavigateMessage(data: unknown): data is PlatformNavigateMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as PlatformNavigateMessage
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.NAVIGATE &&
+    typeof message.path === 'string' &&
+    message.path.startsWith('/') &&
+    !message.path.startsWith('//')
+  )
 }
 
 function isAuthSuccessUser(data: unknown): data is AuthSuccessUser {

@@ -36,11 +36,12 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [details-page-cards.mdc](details-page-cards.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `ui-kit/showcase/src/pages/**/*.{ts,tsx}` | Card-based details/profile pages — 3-col stacks, equal `gap-6`, **page-level** Edit |
 | [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `**/…/*Dialog*.{ts,tsx}`, showcase pages | Wizard-backed details — per-card Edit → shared create/edit wizard |
 | [item-list-pagination.mdc](item-list-pagination.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `Pagination` below `ItemList` on collection pages |
-| [list-filter-panel.mdc](list-filter-panel.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `ListFilterPanel` + trigger on collection pages |
+| [list-filter-panel.mdc](list-filter-panel.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `SearchInput` + `ListFilterPanel` + trigger on collection pages |
 | [loading-empty-states.mdc](loading-empty-states.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Unified platform loading overlay; `LoadingState`; `ItemListEmpty` |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |
 | [tailwind-css.mdc](tailwind-css.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Tailwind utilities, tokens, shadcn/ui styling |
 | [dialog-windows.mdc](dialog-windows.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/showcase/**/*.{ts,tsx}` | Dialog box / dialog window standards; CustomDialog chrome; **check** [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) for satellite create/edit/wizard dialogs |
+| [selection-dialog-list.mdc](selection-dialog-list.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/**/*.{ts,tsx}` | Selection/picker dialog rows: selected item shows `Check` on the right (+ `border-primary`) |
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/src/**/*.{ts,tsx}` | RTK slices, redux-observable epics, mandatory for all API I/O |
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 | [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc) | `**/frontend/**/*.{ts,tsx}` | Route lazy-load + `manualChunks`; no 500 kB build warnings |
@@ -98,11 +99,13 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Shared CRUD store factories (`@webonone/store-kit`) | `redux-store-and-epics.mdc`, [feature-store skill](../skills/feature-store/SKILL.md) |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
 | `@webonone/ui-kit` consumption (all service frontends) | `ui-kit-consumption.mdc` |
+| Text search / query filter (`SearchInput`, not plain `Input`) | `ui-kit-consumption.mdc`, [list-filter-panel.mdc](list-filter-panel.mdc) |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
 | Vite chunk splitting (lazy routes, manualChunks) | `frontend-vite-chunk-splitting.mdc` |
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Date fields (`DatePicker`, not `Input type="date"`) | `ui-kit-consumption.mdc`, [form-creation skill](../skills/form-creation/SKILL.md) |
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
+| Selection / picker dialog selected rows (Check icon) | [selection-dialog-list.mdc](selection-dialog-list.mdc) |
 | Details / profile card pages (3-col Card stacks, page-level Edit) | [details-page-cards skill](../skills/details-page-cards/SKILL.md), `details-page-cards.mdc` |
 | Details section Edit → create/edit wizard | [details-page-wizard-edit skill](../skills/details-page-wizard-edit/SKILL.md), `details-page-wizard-edit.mdc` |
 | Loading and empty states (unified overlay, `LoadingState`, `ItemListEmpty`) | [loading-empty-states.mdc](loading-empty-states.mdc) |

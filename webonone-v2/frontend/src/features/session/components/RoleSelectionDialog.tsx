@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Check } from 'lucide-react'
 import { Button, CustomDialog, cn, isStatusTagVariant, StatusTag } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
@@ -117,25 +118,34 @@ export function RoleSelectionDialog() {
             <li key={`${option.role}-${option.companyId ?? 'platform'}`}>
               <button
                 type="button"
+                aria-pressed={selected}
                 className={cn(
-                  'w-full rounded-lg border px-4 py-3 text-left transition-colors',
+                  'flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors',
                   selected
-                    ? 'border-primary bg-primary/10'
+                    ? 'border-primary'
                     : 'border-border bg-glass-bg hover:border-primary/50',
                 )}
                 onClick={() => setPendingRole(option)}
               >
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-foreground">{option.label}</span>
-                  {isStatusTagVariant(option.role) ? (
-                    <StatusTag variant={option.role} className="shrink-0" />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">{option.role}</span>
-                  )}
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-foreground">{option.label}</span>
+                    {isStatusTagVariant(option.role) ? (
+                      <StatusTag variant={option.role} className="shrink-0" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{option.role}</span>
+                    )}
+                  </span>
+                  <span className="mt-1 block text-sm text-muted-foreground">
+                    {accountDescription(option)}
+                  </span>
                 </span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  {accountDescription(option)}
-                </span>
+                {selected ? (
+                  <Check
+                    className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
+                    aria-hidden
+                  />
+                ) : null}
               </button>
             </li>
           )

@@ -46,7 +46,7 @@ For paginated collection **pages** (not embed pickers), compose:
 
 `FeaturePage` → optional `ListFilterPanel` → `ListPageBody` → `ItemList` / `ItemListEmpty` → `Pagination className="mt-auto"`.
 
-Header `actions` (in order): `ListSearchField` + `ListFilterTrigger` + primary CTA. Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
+Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + primary CTA. Never use plain `Input` for text search ([ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc)). Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
 
 **Primary CTA (Add button):** `Button type="button" size="sm"` with a leading `Plus` icon (`h-4 w-4`, `aria-hidden`) **and** a visible text label (e.g. `Add tag`). It is **icon + text**, not icon-only — matches `ListPageDemo`. Gate it on the caller's mutate permission.
 
@@ -119,7 +119,7 @@ When the entity has a details / profile route ([details-page-cards skill](../det
 4. **Detail open** — if a details/profile route exists, wrap row content in a `<button>` that navigates (or calls `onOpen`). See **Detail page navigation**.
 5. **Menu** — `ItemListMenu` as the **last** child of `ItemListItem` (renders top-right via `items-start` on the row + `self-start` on the trigger). Menu items call parent handlers.
 6. **Destructive** — `DropdownMenuItem className="text-destructive focus:text-destructive"`.
-7. **Selection** — highlight active row with `itemListRowActiveClassName` (`border-primary`) on `ItemListItem`. **Never** add `bg-accent`, `bg-primary`, `bg-background`, or palette fills on top of the glass row.
+7. **Selection** — highlight active row with `itemListRowActiveClassName` (`border-primary`) on `ItemListItem`. **Never** add `bg-accent`, `bg-primary`, `bg-background`, or palette fills on top of the glass row. In **selection / picker dialogs**, also show Lucide `Check` on the right of every selected row — [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) (canonical: `TagPickerPanel`).
 
 ## Visual tokens (mandatory)
 
@@ -134,6 +134,7 @@ When the entity has a details / profile route ([details-page-cards skill](../det
 | Row padding | `px-3 py-2` (via `ItemListItem`) |
 | Row border (default) | `--glass-border` via `glass-card`; border color stays on hover |
 | Active / selected row | `itemListRowActiveClassName` → `border-primary` |
+| Selection dialog selected | `border-primary` **+** Lucide `Check` rightmost (`ml-auto h-5 w-5 text-primary`) — [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) |
 | Empty copy | `text-muted-foreground` (via `ItemListEmpty`) |
 | Menu panel | `DropdownMenuContent` defaults (`bg-popover`, `border-border`) |
 
@@ -158,6 +159,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Row surface is `glass-card item-list-row` — no extra `bg-*` on rows
 - [ ] Hover is themed shadow only (`item-list-row`); no `hover:border-*` or `hover:bg-*`
 - [ ] Active state uses `border-primary` only
+- [ ] Selection / picker dialogs: selected rows also show Lucide `Check` on the right ([selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc))
 - [ ] Empty state via **`ItemListEmpty`** with explicit copy as children
 - [ ] Page/section fetch loading via **`usePlatformLoading('Loading …')`** — not inline text or per-page `LoadingState overlay`
 - [ ] `ItemListMenu` is last child of `ItemListItem` — 3-dot trigger at top-right
@@ -183,6 +185,7 @@ Cross-link only — do not duplicate:
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified platform overlay; `usePlatformLoading`; button `Spinner`
 - [details-page-cards skill](../details-page-cards/SKILL.md) — when row click opens a details/profile page
 - [form-creation skill](../form-creation/SKILL.md) — when the list is inside a form (orthogonal)
+- [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) — picker/selection dialogs: Check icon on selected rows
 
 ## Examples
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -27,6 +27,7 @@ import { productsActions } from '@/features/products/store'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
 import { servicesActions } from '@/features/services/store'
 import { spacesActions } from '@/features/spaces/store'
+import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
@@ -68,8 +69,7 @@ const CONFIG: Record<
 
 export function CatalogListPage({ kind }: { kind: CatalogKind }) {
   const config = CONFIG[kind]
-  const navigate = useNavigate()
-  const location = useLocation()
+  const { goToDetail } = useNavigateDataEntity()
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canCreate = user?.role === 'super_admin' || user?.role === 'company_admin'
@@ -148,15 +148,7 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
                 dispatch(config.actions.saveDetailRequested({ id, body: { status: 'verified' } }))
                 list.load(list.page, list.pageSize, true)
               }}
-              onView={
-                kind === 'services'
-                  ? (id) =>
-                      navigate({
-                        pathname: `/services/${id}`,
-                        search: location.search,
-                      })
-                  : undefined
-              }
+              onView={(id) => goToDetail(kind, id)}
               canEdit={canEdit}
               canDelete={canDelete}
             />

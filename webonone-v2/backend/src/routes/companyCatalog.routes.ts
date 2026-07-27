@@ -6,6 +6,7 @@ import {
   forkCatalogBodySchema,
   fromLibraryBodySchema,
   linkCatalogBodySchema,
+  updateCatalogGalleryBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
 
 const router = Router()
@@ -42,6 +43,12 @@ router.post(
   requireCompanyAdminSession,
   validateBody(forkCatalogBodySchema),
   companyCatalogController.forkCatalog,
+)
+router.patch(
+  '/company/me/catalog/:kind/:id/gallery',
+  requireCompanyAdminSession,
+  validateBody(updateCatalogGalleryBodySchema),
+  companyCatalogController.updateCatalogGallery,
 )
 router.patch(
   '/company/me/catalog/:kind/:id',

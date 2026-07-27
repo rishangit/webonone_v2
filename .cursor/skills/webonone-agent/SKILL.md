@@ -27,6 +27,7 @@ description: >-
 - [details-page-cards.mdc](../../rules/details-page-cards.mdc) — inline page-level Edit profile/details ([details-page-cards skill](../details-page-cards/SKILL.md))
 - [details-page-wizard-edit.mdc](../../rules/details-page-wizard-edit.mdc) — company profile (and similar): per-card Edit → shared create/edit wizard ([skill](../details-page-wizard-edit/SKILL.md))
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
+- [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) — library/picker selection rows show Check on the right
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
 
 ## Platform loading overlay

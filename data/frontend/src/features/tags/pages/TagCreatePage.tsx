@@ -10,6 +10,7 @@ import {
 import {
   Alert,
   AlertDescription,
+  ColorInput,
   FormField,
   Input,
   Select,
@@ -23,15 +24,18 @@ import {
 import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { tagFormSchema, type TagFormValues } from '@/features/tags/schemas/tagSchemas'
+import { randomTagColor } from '@/features/tags/utils/randomTagColor'
 import { dataApi } from '@/shared/services/dataApi'
 
 export const TAG_CREATE_FORM_ID = 'data-tag-create-form'
 
-const defaultValues: TagFormValues = {
-  name: '',
-  description: '',
-  color: '#3366FF',
-  status: 'pending',
+function createEmptyTagValues(): TagFormValues {
+  return {
+    name: '',
+    description: '',
+    color: randomTagColor(),
+    status: 'pending',
+  }
 }
 
 export function TagCreatePage() {
@@ -44,7 +48,7 @@ export function TagCreatePage() {
   const scope = (searchParams.get(PLATFORM_EMBED_QUERY.SCOPE) ?? '').trim()
   const isValid = isEmbed && Boolean(parentOrigin) && scope.length > 0
 
-  const [values, setValues] = useState<TagFormValues>(defaultValues)
+  const [values, setValues] = useState<TagFormValues>(createEmptyTagValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -171,21 +175,12 @@ export function TagCreatePage() {
         </FormField>
 
         <FormField label="Color" htmlFor="tag-color" required error={fieldErrors.color}>
-          <div className="flex items-center gap-2">
-            <Input
-              id="tag-color"
-              value={values.color}
-              onChange={(e) => updateField('color', e.target.value)}
-              disabled={saving}
-            />
-            <input
-              type="color"
-              aria-label="Pick color"
-              value={values.color}
-              onChange={(e) => updateField('color', e.target.value)}
-              disabled={saving}
-            />
-          </div>
+          <ColorInput
+            id="tag-color"
+            value={values.color}
+            onChange={(color) => updateField('color', color)}
+            disabled={saving}
+          />
         </FormField>
 
         {canSetStatus ? (

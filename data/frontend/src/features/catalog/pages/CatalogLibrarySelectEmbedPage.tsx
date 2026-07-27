@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { Check } from 'lucide-react'
 import {
   getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
@@ -7,7 +9,17 @@ import {
   sendPlatformPeerDialogComplete,
   usePlatformPeerDialogSubmit,
 } from '@webonone/platform-embed'
-import { Alert, AlertDescription, ItemList, ItemListContent, ItemListEmpty, ItemListItem, itemListRowActiveClassName, Input, Label } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  ItemList,
+  ItemListContent,
+  ItemListEmpty,
+  ItemListItem,
+  itemListRowActiveClassName,
+  SearchInput,
+  cn,
+} from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { dataApi } from '@/shared/services/dataApi'
 import type { CatalogItem, Tag, Unit, Attribute } from '@/shared/types/data.types'
@@ -141,15 +153,14 @@ export function CatalogLibrarySelectEmbedPage() {
 
   return (
     <div className="flex flex-col gap-4 p-1">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="catalog-library-search">Search</Label>
-        <Input
-          id="catalog-library-search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search library…"
-        />
-      </div>
+      <SearchInput
+        id="catalog-library-search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onClear={() => setQ('')}
+        placeholder="Search library…"
+        aria-label="Search library"
+      />
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -162,20 +173,44 @@ export function CatalogLibrarySelectEmbedPage() {
           {items.length === 0 ? (
             <ItemListEmpty>No library items found.</ItemListEmpty>
           ) : (
-            items.map((item) => (
-              <ItemListItem
-                key={item.id}
-                className={selected?.id === item.id ? itemListRowActiveClassName : undefined}
-                onClick={() => setSelected(item)}
-              >
-                <ItemListContent>
-                  <div className="font-medium">{item.name}</div>
-                  {item.description ? (
-                    <div className="text-sm text-muted-foreground line-clamp-2">{item.description}</div>
+            items.map((item) => {
+              const isSelected = selected?.id === item.id
+              return (
+                <ItemListItem
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  className={cn(
+                    'cursor-pointer transition-colors',
+                    isSelected && itemListRowActiveClassName,
+                  )}
+                  aria-label={`Select ${item.name}`}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelected(item)}
+                  onKeyDown={(event: KeyboardEvent<HTMLLIElement>) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setSelected(item)
+                    }
+                  }}
+                >
+                  <ItemListContent>
+                    <div className="font-medium">{item.name}</div>
+                    {item.description ? (
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {item.description}
+                      </div>
+                    ) : null}
+                  </ItemListContent>
+                  {isSelected ? (
+                    <Check
+                      className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
+                      aria-hidden
+                    />
                   ) : null}
-                </ItemListContent>
-              </ItemListItem>
-            ))
+                </ItemListItem>
+              )
+            })
           )}
         </ItemList>
       )}

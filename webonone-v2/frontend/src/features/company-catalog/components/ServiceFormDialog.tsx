@@ -129,7 +129,7 @@ export function ServiceFormDialog({
 
   const description =
     phase === 'library'
-      ? 'Select a library item, or add a new one to the library first.'
+      ? 'Select a library service to link to your company. You can customize it later from the service detail page.'
       : phase === 'source'
         ? 'Choose how to add this service.'
         : STEP_DESCRIPTIONS[step - 1]
@@ -382,14 +382,14 @@ export function ServiceFormDialog({
     dispatch(companyCatalogActions.updateRequested({ kind: 'services', id, payload }))
   }
 
-  function handleLibraryPick(mode: 'linked' | 'forked') {
+  function handleLibraryPick() {
     if (!librarySelected) return
     dispatch(companyCatalogActions.clearMutateError())
     librarySubmittedRef.current = true
     dispatch(
       companyCatalogActions.fromLibraryRequested({
         kind: 'services',
-        ...buildLibraryPick('services', librarySelected, mode),
+        ...buildLibraryPick('services', librarySelected, 'linked'),
       }),
     )
   }
@@ -426,20 +426,11 @@ export function ServiceFormDialog({
         </Button>
         <Button
           type="button"
-          variant="outline"
-          className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
-          disabled={!librarySelected || isSubmitting || libraryCreateOpen}
-          onClick={() => handleLibraryPick('forked')}
-        >
-          Customize
-        </Button>
-        <Button
-          type="button"
           className="h-10 px-4"
           disabled={!librarySelected || isSubmitting || libraryCreateOpen}
-          onClick={() => handleLibraryPick('linked')}
+          onClick={handleLibraryPick}
         >
-          Link live
+          Add
         </Button>
       </div>
     ) : phase === 'source' ? (

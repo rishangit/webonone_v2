@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { PlatformServiceFrame } from '@webonone/platform-embed'
 import {
   CORE_NAV_QUERY_PARAM,
   dataSentinelToExternalPath,
   emailSentinelToExternalPath,
   identitySentinelToExternalPath,
+  isDataEntityKey,
   profileSentinelToExternalPath,
   smsSentinelToExternalPath,
   toCoreNavQueryValue,
@@ -69,8 +70,20 @@ function resolvePeerOrigin(peer: PlatformPeerId): string {
   return getDataOrigin()
 }
 
+/** Allow `/data/{entity}` and `/data/{entity}/:id` only. */
+function isAllowedDataShellNavigatePath(path: string): boolean {
+  if (!path.startsWith('/data/')) return false
+  const parts = path.slice(1).split('/').filter(Boolean)
+  if (parts.length < 2 || parts.length > 3) return false
+  if (parts[0] !== 'data') return false
+  if (!isDataEntityKey(parts[1] ?? '')) return false
+  if (parts.length === 3 && (!parts[2] || parts[2].includes('..'))) return false
+  return true
+}
+
 export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const [frameLoading, setFrameLoading] = useState(true)
@@ -95,6 +108,17 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
     setFrameLoading(loading)
   }, [])
 
+  const handlePeerNavigate = useCallback(
+    (path: string) => {
+      if (peer === 'data') {
+        if (!isAllowedDataShellNavigatePath(path)) return
+        navigate({ pathname: path })
+        return
+      }
+    },
+    [navigate, peer],
+  )
+
   usePlatformLoading(frameLoading ? `Loading ${PEER_LABELS[peer]}…` : null)
 
   if (!accessToken) {
@@ -113,6 +137,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         onLoadingChange={handleLoadingChange}
         onMediaDialogRequest={openMediaDialog}
         onPeerDialogRequest={openPeerDialog}
+        onPeerNavigate={peer === 'data' ? handlePeerNavigate : undefined}
       />
     </div>
   )

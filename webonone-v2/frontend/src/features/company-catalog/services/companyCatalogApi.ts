@@ -55,6 +55,17 @@ export const companyCatalogApi = {
     })
   },
 
+  updateGallery(
+    kind: Extract<CatalogEntityKind, 'services' | 'spaces'>,
+    id: string,
+    galleryImages: { mediaId: string; url: string }[],
+  ) {
+    return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/gallery`, {
+      method: 'PATCH',
+      body: JSON.stringify({ galleryImages }),
+    })
+  },
+
   async remove(kind: CatalogEntityKind, id: string) {
     await apiClient<unknown>(`/company/me/catalog/${kind}/${id}`, { method: 'DELETE' })
   },

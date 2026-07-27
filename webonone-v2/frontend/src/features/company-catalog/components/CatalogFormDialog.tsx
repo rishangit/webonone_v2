@@ -4,6 +4,7 @@ import {
   Alert,
   AlertDescription,
   Button,
+  ColorInput,
   CustomDialog,
   FormField,
   Input,
@@ -26,6 +27,7 @@ import {
 } from '@/features/company-catalog/components/LibraryPickerPanel'
 import type { LibraryListItem } from '@/features/company-catalog/services/dataLibraryApi'
 import { companyCatalogActions } from '@/features/company-catalog/store/companyCatalogStore'
+import { randomTagColor } from '@/features/company-catalog/utils/randomTagColor'
 import {
   CATALOG_ENTITY_LABELS,
   singularLabel,
@@ -53,7 +55,7 @@ type CatalogFormDialogProps = {
 function defaultPayload(kind: NonServiceCatalogKind): CatalogPayload {
   switch (kind) {
     case 'tags':
-      return { name: '', description: '', color: '#2563EB' }
+      return { name: '', description: '', color: randomTagColor() }
     case 'units':
       return { name: '', description: '', symbol: '', isBase: true, baseUnitId: null }
     case 'attributes':
@@ -141,7 +143,7 @@ export function CatalogFormDialog({
 
   const description = useMemo(() => {
     if (phase === 'library') {
-      return 'Select a library item, or add a new one to the library first.'
+      return `Select a library ${noun} to link to your company. You can customize it later from the detail page.`
     }
     if (phase === 'source') {
       return `Choose how to add this ${noun}.`
@@ -204,14 +206,14 @@ export function CatalogFormDialog({
     onSubmit?.(payload)
   }
 
-  function handleLibraryPick(modePick: 'linked' | 'forked') {
+  function handleLibraryPick() {
     if (!librarySelected) return
     dispatch(companyCatalogActions.clearMutateError())
     librarySubmittedRef.current = true
     dispatch(
       companyCatalogActions.fromLibraryRequested({
         kind,
-        ...buildLibraryPick(kind, librarySelected, modePick),
+        ...buildLibraryPick(kind, librarySelected, 'linked'),
       }),
     )
   }
@@ -247,11 +249,10 @@ export function CatalogFormDialog({
 
       {kind === 'tags' ? (
         <FormField label="Color" htmlFor="catalog-color" required>
-          <Input
+          <ColorInput
             id="catalog-color"
-            type="color"
             value={typeof values.color === 'string' ? values.color : '#2563EB'}
-            onChange={(e) => setField('color', e.target.value)}
+            onChange={(color) => setField('color', color)}
           />
         </FormField>
       ) : null}
@@ -327,20 +328,11 @@ export function CatalogFormDialog({
         </Button>
         <Button
           type="button"
-          variant="outline"
-          className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
-          disabled={!librarySelected || busy || libraryCreateOpen}
-          onClick={() => handleLibraryPick('forked')}
-        >
-          Customize
-        </Button>
-        <Button
-          type="button"
           className="h-10 px-4"
           disabled={!librarySelected || busy || libraryCreateOpen}
-          onClick={() => handleLibraryPick('linked')}
+          onClick={handleLibraryPick}
         >
-          Link live
+          Add
         </Button>
       </>
     ) : phase === 'source' ? (

@@ -6,6 +6,7 @@ import { companyCatalogApi } from '../services/companyCatalogApi'
 import type {
   CatalogBindingMode,
   CatalogEntityKind,
+  CatalogGalleryImage,
   CatalogPayload,
   CompanyCatalogItem,
   HydratedCatalogItem,
@@ -103,6 +104,17 @@ const companyCatalogSlice = createSlice({
     updateRequested(
       state,
       _action: PayloadAction<{ kind: CatalogEntityKind; id: string; payload: CatalogPayload }>,
+    ) {
+      state.mutateStatus = 'saving'
+      state.mutateError = null
+    },
+    updateGalleryRequested(
+      state,
+      _action: PayloadAction<{
+        kind: Extract<CatalogEntityKind, 'services' | 'spaces'>
+        id: string
+        galleryImages: CatalogGalleryImage[]
+      }>,
     ) {
       state.mutateStatus = 'saving'
       state.mutateError = null
@@ -251,6 +263,27 @@ const updateEpic: CatalogEpic = (action$) =>
     }),
   )
 
+const updateGalleryEpic: CatalogEpic = (action$) =>
+  action$.pipe(
+    ofType(companyCatalogActions.updateGalleryRequested.type),
+    exhaustMap((action: ReturnType<typeof companyCatalogActions.updateGalleryRequested>) => {
+      const { kind, id, galleryImages } = action.payload
+      return from(companyCatalogApi.updateGallery(kind, id, galleryImages)).pipe(
+        mergeMap((item) =>
+          from(hydrateOne(kind, item)).pipe(
+            mergeMap((hydrated) =>
+              of(
+                companyCatalogActions.mutateSucceeded(item),
+                companyCatalogActions.detailSucceeded(hydrated),
+              ),
+            ),
+          ),
+        ),
+        catchError((err: Error) => of(companyCatalogActions.mutateFailed(err.message))),
+      )
+    }),
+  )
+
 const deleteEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.deleteRequested.type),
@@ -275,5 +308,6 @@ export const companyCatalogEpics = combineEpics(
   createCustomEpic,
   forkEpic,
   updateEpic,
+  updateGalleryEpic,
   deleteEpic,
 )

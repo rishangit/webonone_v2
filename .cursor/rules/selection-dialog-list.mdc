@@ -1,0 +1,78 @@
+---
+description: >-
+  Selection dialog list rows must show the selected item with a Check icon on
+  the right (TagPickerPanel pattern). Use for any select/picker dialog body.
+globs: "**/frontend/src/**/*.{ts,tsx},ui-kit/package/src/**/*.{ts,tsx},ui-kit/showcase/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Selection dialog list rows
+
+Related: [item-list skill](../skills/item-list/SKILL.md), [dialog-windows.mdc](dialog-windows.mdc), [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md).
+
+Canonical reference: `data/frontend/src/features/tags/components/TagPickerPanel.tsx`.
+
+Also: `LibraryPickerPanel.tsx`, `CatalogLibrarySelectEmbedPage.tsx`, `UserSelectionDialog.tsx`, `UserPickerPage.tsx`, `RoleSelectionDialog.tsx`, Media `ScopedFolderBrowser` list view.
+
+## Required — show the selected item
+
+In **any selection / picker dialog** (standalone `CustomDialog` or peer-dialog embed body), each selected row must be visually obvious:
+
+| Signal | Required |
+|--------|----------|
+| Active border | `itemListRowActiveClassName` (`border-primary`) on `ItemListItem` (or `border-primary` on custom picker cards) |
+| Check icon (right) | Lucide `Check` trailing after content (rightmost before any 3-dot menu) |
+
+**Border alone is not enough** — always render the Check when selected.
+
+**Media thumb / grid pickers:** keep ring/border selection **and** show a small Lucide `Check` overlay on the selected tile (bottom-right of the thumb).
+
+```tsx
+const isSelected = selected?.id === item.id // or selectedIds.has(item.id)
+
+<ItemListItem
+  role="button"
+  tabIndex={0}
+  className={cn('cursor-pointer transition-colors', isSelected && itemListRowActiveClassName)}
+  aria-label={`Select ${item.name}`}
+  aria-pressed={isSelected} // or aria-selected for option lists
+  onClick={() => select(item)}
+  onKeyDown={(event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      select(item)
+    }
+  }}
+>
+  {/* optional leading: color swatch, Avatar, ImagePreview */}
+  <ItemListContent>{/* name / subtitle */}</ItemListContent>
+  {/* optional middle trailing: StatusTag / badge */}
+  {isSelected ? (
+    <Check className="ml-auto h-5 w-5 shrink-0 self-center text-primary" aria-hidden />
+  ) : null}
+</ItemListItem>
+```
+
+## Layout rules
+
+- Check is rightmost among selection indicators — after content and any badges (`StatusTag`, role chip); if the row also has `ItemListMenu`, place Check **before** the menu.
+- Classes (list rows): `ml-auto h-5 w-5 shrink-0 self-center text-primary`, `aria-hidden`.
+- Classes (media thumbs): `absolute` bottom-right on the tile + `text-primary`, `aria-hidden`.
+- Multi-select: Check on every selected row (same icon).
+- Single-select: Check only on the pending/selected row.
+- Pure picker rows: no 3-dot menu required. Media browser may keep menus; Check still required when selected.
+
+## Forbidden
+
+- Selected state = `itemListRowActiveClassName` only (no Check)
+- Check on the left, or replacing the leading entity icon/swatch
+- Custom checkmarks, filled circles, or non-Lucide substitutes
+- `bg-accent` / `bg-primary` fill on selected rows (border + Check only)
+
+## Verification
+
+```bash
+npm run type-check -w webonone-v2-root   # or data-root / identity-root / ui-kit-root
+```
+
+Manual: open the picker → click a row → primary border **and** Check on the right; change selection → Check moves (single) or toggles (multi).

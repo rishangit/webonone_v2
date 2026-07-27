@@ -27,3 +27,16 @@ export function buildCompanyProfileFolderPath(companyId: string): string {
 export function buildCompanyGalleryFolderPath(companyId: string): string {
   return `/companies/${companyId}/gallery`
 }
+
+/**
+ * Media folder for company catalog entity galleries (services / spaces).
+ * Path: /company/{companyId}/{entityKind}/{entityId}/gallery
+ * Scope: webonone:company:{companyId} via buildCompanyMediaScope
+ */
+export function buildCatalogEntityGalleryFolderPath(
+  companyId: string,
+  entityKind: 'services' | 'spaces',
+  entityId: string,
+): string {
+  return `/company/${companyId}/${entityKind}/${entityId}/gallery`
+}

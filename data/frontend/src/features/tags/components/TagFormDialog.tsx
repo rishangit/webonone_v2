@@ -27,15 +27,18 @@ import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { tagFormSchema, type TagFormValues } from '@/features/tags/schemas/tagSchemas'
 import { tagsActions } from '@/features/tags/store'
+import { randomTagColor } from '@/features/tags/utils/randomTagColor'
 import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
 import { DATA_FORM_DIALOG_SIZE } from '@/shared/utils/dataFormDialogSize'
 import type { Tag } from '@/shared/types/data.types'
 
-const defaultValues: TagFormValues = {
-  name: '',
-  description: '',
-  color: '#3366FF',
-  status: 'pending',
+function createEmptyTagValues(): TagFormValues {
+  return {
+    name: '',
+    description: '',
+    color: randomTagColor(),
+    status: 'pending',
+  }
 }
 
 interface TagFormDialogProps {
@@ -88,7 +91,7 @@ export function TagFormDialog({
 
   const userRole = useAppSelector((s) => s.auth.user?.role)
   const canSetStatus = userRole === 'super_admin'
-  const [values, setValues] = useState<TagFormValues>(defaultValues)
+  const [values, setValues] = useState<TagFormValues>(createEmptyTagValues)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const submittedRef = useRef(false)
 
@@ -111,6 +114,12 @@ export function TagFormDialog({
       editor.saving ? 'Saving…' : idleSubmitLabel,
     )
   }, [chrome, dialogRequestId, editor.saving, idleSubmitLabel, parentOrigin])
+
+  useEffect(() => {
+    if (!open || !isNew) return
+    setValues(createEmptyTagValues())
+    setFieldErrors({})
+  }, [open, isNew])
 
   useEffect(() => {
     if (!editor.detail || isNew) return

@@ -36,7 +36,7 @@ export function CatalogWizardStepSource({
         <span className="space-y-1">
           <span className="block text-sm font-medium text-foreground">Add from library</span>
           <span className="block text-sm text-muted-foreground">
-            Link a live Data library {noun}, or customize a company-owned copy.
+            Link a live Data library {noun}. Customize later from the detail page if needed.
           </span>
         </span>
       </button>
