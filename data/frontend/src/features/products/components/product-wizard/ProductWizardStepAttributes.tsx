@@ -1,59 +1,28 @@
+import { Plus } from 'lucide-react'
 import {
   Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  DropdownMenuItem,
+  ItemList,
+  ItemListContent,
+  ItemListEmpty,
+  ItemListItem,
+  ItemListMenu,
 } from '@webonone/ui-kit'
 import type { ProductWizardFormValues } from '@/features/products/schemas/productSchemas'
 
-type AttributeOption = {
-  id: string
-  name: string
-  valueType: string
-}
-
 interface ProductWizardStepAttributesProps {
   values: ProductWizardFormValues
-  attributeOptions: AttributeOption[]
   isSubmitting: boolean
-  onChange: (patch: Partial<ProductWizardFormValues>) => void
+  onOpenPicker: () => void
+  onRemove: (attributeId: string) => void
 }
 
 export function ProductWizardStepAttributes({
   values,
-  attributeOptions,
   isSubmitting,
-  onChange,
+  onOpenPicker,
+  onRemove,
 }: ProductWizardStepAttributesProps) {
-  function addAttributeRow() {
-    onChange({
-      attributes: [
-        ...values.attributes,
-        { attributeId: '', valueText: '', valueNumber: '' },
-      ],
-    })
-  }
-
-  function updateRow(
-    index: number,
-    patch: Partial<ProductWizardFormValues['attributes'][number]>,
-  ) {
-    onChange({
-      attributes: values.attributes.map((row, i) =>
-        i === index ? { ...row, ...patch } : row,
-      ),
-    })
-  }
-
-  function removeRow(index: number) {
-    onChange({
-      attributes: values.attributes.filter((_, i) => i !== index),
-    })
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -62,69 +31,40 @@ export function ProductWizardStepAttributes({
           type="button"
           size="sm"
           variant="outline"
-          onClick={addAttributeRow}
+          onClick={onOpenPicker}
           disabled={isSubmitting}
         >
+          <Plus className="h-4 w-4" aria-hidden />
           Add attribute
         </Button>
       </div>
 
       {values.attributes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Optional. Add custom attribute values for this product.
-        </p>
-      ) : null}
-
-      {values.attributes.map((row, index) => {
-        const attr = attributeOptions.find((a) => a.id === row.attributeId)
-        return (
-          <div
-            key={index}
-            className="grid gap-2 rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg))] p-3 sm:grid-cols-3"
-          >
-            <Select
-              value={row.attributeId || undefined}
-              onValueChange={(attributeId) => updateRow(index, { attributeId })}
-              disabled={isSubmitting}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Attribute" />
-              </SelectTrigger>
-              <SelectContent>
-                {attributeOptions.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {attr?.valueType === 'number' ? (
-              <Input
-                type="number"
-                placeholder="Value"
-                value={row.valueNumber}
-                onChange={(e) => updateRow(index, { valueNumber: e.target.value })}
-                disabled={isSubmitting}
-              />
-            ) : (
-              <Input
-                placeholder="Value"
-                value={row.valueText}
-                onChange={(e) => updateRow(index, { valueText: e.target.value })}
-                disabled={isSubmitting}
-              />
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => removeRow(index)}
-              disabled={isSubmitting}
-            >
-              Remove
-            </Button>
-          </div>
-        )
-      })}
+        <ItemListEmpty>Optional. Select attributes for this product.</ItemListEmpty>
+      ) : (
+        <ItemList>
+          {values.attributes.map((row) => (
+            <ItemListItem key={row.attributeId}>
+              <ItemListContent>
+                <p className="truncate font-medium">{row.name || row.attributeId}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  <span className="capitalize">{row.valueType}</span>
+                  {row.unit ? ` · ${row.unit.name} (${row.unit.symbol})` : ''}
+                </p>
+              </ItemListContent>
+              <ItemListMenu ariaLabel={`Actions for ${row.name || 'attribute'}`}>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  disabled={isSubmitting}
+                  onClick={() => onRemove(row.attributeId)}
+                >
+                  Remove
+                </DropdownMenuItem>
+              </ItemListMenu>
+            </ItemListItem>
+          ))}
+        </ItemList>
+      )}
     </div>
   )
 }

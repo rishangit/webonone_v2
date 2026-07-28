@@ -1,8 +1,10 @@
 import { nanoid } from 'nanoid'
 import { db, type CatalogRow, type DataRole, type ServiceRow, type ServiceTimeMode } from '../models/db.js'
 import type {
+  CatalogAttributeValueBody,
   CatalogGalleryImage,
   CreateCatalogBody,
+  ReplaceCatalogAttributesBody,
   UpdateCatalogBody,
 } from '../schemas/catalog.schema.js'
 import type { CreateServiceBody, UpdateServiceBody } from '../schemas/services.schema.js'
@@ -21,24 +23,33 @@ export type CatalogKind = 'products' | 'services' | 'spaces'
 
 const TABLE_MAP: Record<
   CatalogKind,
-  { main: string; tags: string; attributes: string; idCol: string }
+  {
+    main: string
+    tags: string
+    attributes: string
+    attributeValues: string
+    idCol: string
+  }
 > = {
   products: {
     main: 'data_products',
     tags: 'data_product_tags',
     attributes: 'data_product_attributes',
+    attributeValues: 'data_product_attribute_values',
     idCol: 'product_id',
   },
   services: {
     main: 'data_services',
     tags: 'data_service_tags',
     attributes: 'data_service_attributes',
+    attributeValues: 'data_service_attribute_values',
     idCol: 'service_id',
   },
   spaces: {
     main: 'data_spaces',
     tags: 'data_space_tags',
     attributes: 'data_space_attributes',
+    attributeValues: 'data_space_attribute_values',
     idCol: 'space_id',
   },
 }
@@ -49,11 +60,25 @@ export interface TagSummary {
   color: string
 }
 
-export interface CatalogAttributeValue {
-  attributeId: string
+export interface AttributeUnitSummary {
+  id: string
   name: string
+  symbol: string
+}
+
+export interface CatalogAttributeValueEntry {
+  id: string
   valueText: string | null
   valueNumber: number | null
+  isDefault: boolean
+}
+
+export interface CatalogAttributeLink {
+  attributeId: string
+  name: string
+  valueType: 'number' | 'text'
+  unit: AttributeUnitSummary | null
+  values: CatalogAttributeValueEntry[]
 }
 
 export interface CatalogDto {
@@ -63,7 +88,7 @@ export interface CatalogDto {
   status: string
   referenceCount: number
   tags: TagSummary[]
-  attributes: CatalogAttributeValue[]
+  attributes: CatalogAttributeLink[]
   galleryImages: CatalogGalleryImage[]
   createdAt: string
   updatedAt: string
@@ -128,10 +153,7 @@ function serviceTimeColumns(body: CatalogWriteBody): {
   }
 }
 
-async function loadTagsForEntity(
-  kind: CatalogKind,
-  entityId: string,
-): Promise<TagSummary[]> {
+async function loadTagsForEntity(kind: CatalogKind, entityId: string): Promise<TagSummary[]> {
   const { tags, idCol } = TABLE_MAP[kind]
   const links = await db(tags).where({ [idCol]: entityId }).select('tag_id')
   if (links.length === 0) return []
@@ -147,18 +169,65 @@ async function loadTagsForEntity(
 async function loadAttributesForEntity(
   kind: CatalogKind,
   entityId: string,
-): Promise<CatalogAttributeValue[]> {
-  const { attributes, idCol } = TABLE_MAP[kind]
-  const rows = await db(attributes).where({ [idCol]: entityId })
-  const result: CatalogAttributeValue[] = []
-  for (const row of rows) {
-    const attr = await db('data_attributes').where({ id: row.attribute_id }).first()
-    if (!attr) continue
-    result.push({
-      attributeId: row.attribute_id,
-      name: attr.name,
-      valueText: row.value_text ?? null,
+): Promise<CatalogAttributeLink[]> {
+  const { attributes, attributeValues, idCol } = TABLE_MAP[kind]
+  const links = await db(attributes).where({ [idCol]: entityId })
+  if (links.length === 0) return []
+
+  const attributeIds = links.map((link) => link.attribute_id as string)
+  const attrRows = await db('data_attributes').whereIn('id', attributeIds)
+  const attrById = new Map(attrRows.map((row) => [row.id as string, row]))
+
+  const unitIds = [
+    ...new Set(
+      attrRows
+        .map((row) => row.unit_id as string | null)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const unitRows =
+    unitIds.length > 0 ? await db('data_units').whereIn('id', unitIds) : []
+  const unitById = new Map(
+    unitRows.map((row) => [
+      row.id as string,
+      {
+        id: row.id as string,
+        name: row.name as string,
+        symbol: row.symbol as string,
+      },
+    ]),
+  )
+
+  const valueRows = await db(attributeValues)
+    .where({ [idCol]: entityId })
+    .whereIn('attribute_id', attributeIds)
+    .orderBy('created_at', 'asc')
+
+  const valuesByAttribute = new Map<string, CatalogAttributeValueEntry[]>()
+  for (const row of valueRows) {
+    const attributeId = row.attribute_id as string
+    const list = valuesByAttribute.get(attributeId) ?? []
+    list.push({
+      id: row.id as string,
+      valueText: (row.value_text as string | null) ?? null,
       valueNumber: row.value_number != null ? Number(row.value_number) : null,
+      isDefault: Boolean(row.is_default),
+    })
+    valuesByAttribute.set(attributeId, list)
+  }
+
+  const result: CatalogAttributeLink[] = []
+  for (const link of links) {
+    const attributeId = link.attribute_id as string
+    const attr = attrById.get(attributeId)
+    if (!attr) continue
+    const unitId = attr.unit_id as string | null
+    result.push({
+      attributeId,
+      name: attr.name as string,
+      valueType: attr.value_type === 'number' ? 'number' : 'text',
+      unit: unitId ? (unitById.get(unitId) ?? null) : null,
+      values: valuesByAttribute.get(attributeId) ?? [],
     })
   }
   return result
@@ -191,8 +260,52 @@ async function rowToDto(kind: CatalogKind, row: CatalogRow | ServiceRow): Promis
   return dto
 }
 
+function assertValueMatchesType(
+  valueType: 'number' | 'text',
+  body: CatalogAttributeValueBody,
+): void {
+  const hasText = body.value_text != null && body.value_text !== ''
+  const hasNumber = body.value_number != null
+  if (valueType === 'number' && !hasNumber) {
+    throw new Error('VALIDATION: Number attributes require value_number')
+  }
+  if (valueType === 'text' && !hasText) {
+    throw new Error('VALIDATION: Text attributes require value_text')
+  }
+}
+
+/** Ensure each attribute has exactly one default when values exist (single value always default). */
+async function ensureAttributeDefault(
+  attributeValues: string,
+  idCol: string,
+  entityId: string,
+  attributeId: string,
+): Promise<void> {
+  const rows = await db(attributeValues)
+    .where({ [idCol]: entityId, attribute_id: attributeId })
+    .orderBy('created_at', 'asc')
+    .select('id', 'is_default')
+
+  if (rows.length === 0) return
+
+  if (rows.length === 1) {
+    if (!rows[0].is_default) {
+      await db(attributeValues).where({ id: rows[0].id }).update({ is_default: true })
+    }
+    return
+  }
+
+  const defaults = rows.filter((row) => row.is_default)
+  if (defaults.length === 1) return
+
+  await db(attributeValues)
+    .where({ [idCol]: entityId, attribute_id: attributeId })
+    .update({ is_default: false })
+  await db(attributeValues).where({ id: rows[0].id }).update({ is_default: true })
+}
+
 export function createCatalogService(kind: CatalogKind) {
-  const { main } = TABLE_MAP[kind]
+  const { main, attributes, attributeValues, idCol } = TABLE_MAP[kind]
 
   return {
     async list(query: ListQueryInput & { tag_id?: string | string[]; ids?: string | string[] }) {
@@ -209,7 +322,7 @@ export function createCatalogService(kind: CatalogKind) {
           : [query.tag_id]
         : []
       if (tagIds.length > 0) {
-        const { tags, idCol } = TABLE_MAP[kind]
+        const { tags } = TABLE_MAP[kind]
         base.whereIn('id', function filterByTags() {
           this.select(idCol).from(tags).whereIn('tag_id', tagIds)
         })
@@ -218,7 +331,8 @@ export function createCatalogService(kind: CatalogKind) {
       const countResult = await base.clone().count<{ count: number }[]>('* as count')
       const total = Number(countResult[0]?.count ?? 0)
 
-      const pageSize = ids.length > 0 ? Math.min(100, Math.max(parsed.pageSize, ids.length)) : parsed.pageSize
+      const pageSize =
+        ids.length > 0 ? Math.min(100, Math.max(parsed.pageSize, ids.length)) : parsed.pageSize
       const page = ids.length > 0 ? 1 : parsed.page
 
       const rows = await base
@@ -258,17 +372,16 @@ export function createCatalogService(kind: CatalogKind) {
 
         await trx(main).insert(insert)
 
-        const { tags, attributes, idCol } = TABLE_MAP[kind]
+        const { tags } = TABLE_MAP[kind]
         if (body.tag_ids?.length) {
           await trx(tags).insert(body.tag_ids.map((tag_id) => ({ [idCol]: id, tag_id })))
         }
         if (body.attributes?.length) {
+          const uniqueIds = [...new Set(body.attributes.map((av) => av.attribute_id))]
           await trx(attributes).insert(
-            body.attributes.map((av) => ({
+            uniqueIds.map((attribute_id) => ({
               [idCol]: id,
-              attribute_id: av.attribute_id,
-              value_text: av.value_text ?? null,
-              value_number: av.value_number ?? null,
+              attribute_id,
             })),
           )
         }
@@ -298,7 +411,7 @@ export function createCatalogService(kind: CatalogKind) {
 
         await trx(main).where({ id }).update(patch)
 
-        const { tags, attributes, idCol } = TABLE_MAP[kind]
+        const { tags } = TABLE_MAP[kind]
         if (body.tag_ids !== undefined) {
           await trx(tags).where({ [idCol]: id }).delete()
           if (body.tag_ids.length > 0) {
@@ -306,14 +419,14 @@ export function createCatalogService(kind: CatalogKind) {
           }
         }
         if (body.attributes !== undefined) {
+          await trx(attributeValues).where({ [idCol]: id }).delete()
           await trx(attributes).where({ [idCol]: id }).delete()
           if (body.attributes.length > 0) {
+            const uniqueIds = [...new Set(body.attributes.map((av) => av.attribute_id))]
             await trx(attributes).insert(
-              body.attributes.map((av) => ({
+              uniqueIds.map((attribute_id) => ({
                 [idCol]: id,
-                attribute_id: av.attribute_id,
-                value_text: av.value_text ?? null,
-                value_number: av.value_number ?? null,
+                attribute_id,
               })),
             )
           }
@@ -335,6 +448,185 @@ export function createCatalogService(kind: CatalogKind) {
           gallery_images: JSON.stringify(galleryImages),
           updated_at: db.fn.now(3),
         })
+
+      const updated = await this.getById(id)
+      if (!updated) throw new Error('NOT_FOUND')
+      return updated
+    },
+
+    async replaceAttributes(
+      id: string,
+      body: ReplaceCatalogAttributesBody,
+    ): Promise<CatalogDto> {
+      const existing = await db<CatalogRow>(main).where({ id }).first()
+      if (!existing) throw new Error('NOT_FOUND')
+
+      const nextIds = [...new Set(body.attribute_ids)]
+      if (nextIds.length > 0) {
+        const found = await db('data_attributes').whereIn('id', nextIds).select('id')
+        if (found.length !== nextIds.length) throw new Error('NOT_FOUND')
+      }
+
+      await db.transaction(async (trx) => {
+        const currentLinks = await trx(attributes).where({ [idCol]: id }).select('attribute_id')
+        const currentIds = new Set(currentLinks.map((row) => row.attribute_id as string))
+        const nextSet = new Set(nextIds)
+
+        const removed = [...currentIds].filter((attributeId) => !nextSet.has(attributeId))
+        if (removed.length > 0) {
+          await trx(attributeValues)
+            .where({ [idCol]: id })
+            .whereIn('attribute_id', removed)
+            .delete()
+          await trx(attributes)
+            .where({ [idCol]: id })
+            .whereIn('attribute_id', removed)
+            .delete()
+        }
+
+        const added = nextIds.filter((attributeId) => !currentIds.has(attributeId))
+        if (added.length > 0) {
+          await trx(attributes).insert(
+            added.map((attribute_id) => ({
+              [idCol]: id,
+              attribute_id,
+            })),
+          )
+        }
+
+        await trx(main).where({ id }).update({ updated_at: trx.fn.now(3) })
+      })
+
+      const updated = await this.getById(id)
+      if (!updated) throw new Error('NOT_FOUND')
+      return updated
+    },
+
+    async addAttributeValue(
+      id: string,
+      attributeId: string,
+      body: CatalogAttributeValueBody,
+    ): Promise<CatalogDto> {
+      const existing = await db<CatalogRow>(main).where({ id }).first()
+      if (!existing) throw new Error('NOT_FOUND')
+
+      const link = await db(attributes)
+        .where({ [idCol]: id, attribute_id: attributeId })
+        .first()
+      if (!link) throw new Error('NOT_FOUND')
+
+      const attr = await db('data_attributes').where({ id: attributeId }).first()
+      if (!attr) throw new Error('NOT_FOUND')
+      const valueType = attr.value_type === 'number' ? 'number' : 'text'
+      assertValueMatchesType(valueType, body)
+
+      const existingCount = Number(
+        (
+          await db(attributeValues)
+            .where({ [idCol]: id, attribute_id: attributeId })
+            .count({ count: '*' })
+            .first()
+        )?.count ?? 0,
+      )
+      const isDefault = existingCount === 0
+
+      const now = db.fn.now(3)
+      await db(attributeValues).insert({
+        id: nanoid(),
+        [idCol]: id,
+        attribute_id: attributeId,
+        value_text: valueType === 'text' ? body.value_text : null,
+        value_number: valueType === 'number' ? body.value_number : null,
+        is_default: isDefault,
+        created_at: now,
+        updated_at: now,
+      })
+      await db(main).where({ id }).update({ updated_at: now })
+
+      const updated = await this.getById(id)
+      if (!updated) throw new Error('NOT_FOUND')
+      return updated
+    },
+
+    async updateAttributeValue(
+      id: string,
+      valueId: string,
+      body: CatalogAttributeValueBody,
+    ): Promise<CatalogDto> {
+      const existing = await db<CatalogRow>(main).where({ id }).first()
+      if (!existing) throw new Error('NOT_FOUND')
+
+      const valueRow = await db(attributeValues)
+        .where({ id: valueId, [idCol]: id })
+        .first()
+      if (!valueRow) throw new Error('NOT_FOUND')
+
+      const attr = await db('data_attributes')
+        .where({ id: valueRow.attribute_id })
+        .first()
+      if (!attr) throw new Error('NOT_FOUND')
+      const valueType = attr.value_type === 'number' ? 'number' : 'text'
+      assertValueMatchesType(valueType, body)
+
+      const now = db.fn.now(3)
+      await db(attributeValues)
+        .where({ id: valueId })
+        .update({
+          value_text: valueType === 'text' ? body.value_text : null,
+          value_number: valueType === 'number' ? body.value_number : null,
+          updated_at: now,
+        })
+      await db(main).where({ id }).update({ updated_at: now })
+
+      const updated = await this.getById(id)
+      if (!updated) throw new Error('NOT_FOUND')
+      return updated
+    },
+
+    async setAttributeValueDefault(id: string, valueId: string): Promise<CatalogDto> {
+      const existing = await db<CatalogRow>(main).where({ id }).first()
+      if (!existing) throw new Error('NOT_FOUND')
+
+      const valueRow = await db(attributeValues)
+        .where({ id: valueId, [idCol]: id })
+        .first()
+      if (!valueRow) throw new Error('NOT_FOUND')
+
+      const attributeId = valueRow.attribute_id as string
+      const now = db.fn.now(3)
+
+      await db.transaction(async (trx) => {
+        await trx(attributeValues)
+          .where({ [idCol]: id, attribute_id: attributeId })
+          .update({ is_default: false, updated_at: now })
+        await trx(attributeValues)
+          .where({ id: valueId })
+          .update({ is_default: true, updated_at: now })
+        await trx(main).where({ id }).update({ updated_at: now })
+      })
+
+      const updated = await this.getById(id)
+      if (!updated) throw new Error('NOT_FOUND')
+      return updated
+    },
+
+    async deleteAttributeValue(id: string, valueId: string): Promise<CatalogDto> {
+      const existing = await db<CatalogRow>(main).where({ id }).first()
+      if (!existing) throw new Error('NOT_FOUND')
+
+      const valueRow = await db(attributeValues)
+        .where({ id: valueId, [idCol]: id })
+        .first()
+      if (!valueRow) throw new Error('NOT_FOUND')
+
+      const attributeId = valueRow.attribute_id as string
+      const deleted = await db(attributeValues)
+        .where({ id: valueId, [idCol]: id })
+        .delete()
+      if (!deleted) throw new Error('NOT_FOUND')
+
+      await ensureAttributeDefault(attributeValues, idCol, id, attributeId)
+      await db(main).where({ id }).update({ updated_at: db.fn.now(3) })
 
       const updated = await this.getById(id)
       if (!updated) throw new Error('NOT_FOUND')

@@ -44,7 +44,7 @@ export function AttributesList({
               </div>
               <p className="text-xs text-muted-foreground">
                 {item.valueType}
-                {item.unitId ? ' · has unit' : ''}
+                {item.unit ? ` · ${item.unit.name} (${item.unit.symbol})` : ''}
               </p>
             </ItemListContent>
             {canMutate ? (

@@ -1,8 +1,11 @@
+import { findUserById, toUserProfile, type UserProfile } from '../models/user.repository.js'
+import { listRolesByUserId, type UserRoleType } from '../repositories/userRole.repository.js'
 import {
   findIdentityUsers,
   type FindIdentityUsersParams,
   type IdentityUserRole,
 } from '../repositories/users.repository.js'
+import { AuthError } from './auth.service.js'
 
 export type ListUsersQuery = {
   search: string
@@ -23,6 +26,20 @@ export type ListUsersResponse = {
   total: number
   page: number
   pageSize: number
+}
+
+export type IdentityUserDetail = UserProfile & {
+  role?: IdentityUserRole
+}
+
+function pickRepresentativeRole(roles: UserRoleType[]): IdentityUserRole | undefined {
+  const priority: IdentityUserRole[] = ['super_admin', 'company_admin', 'member']
+  for (const role of priority) {
+    if (roles.includes(role)) {
+      return role
+    }
+  }
+  return undefined
 }
 
 export async function listIdentityUsers(query: ListUsersQuery): Promise<ListUsersResponse> {
@@ -47,5 +64,20 @@ export async function listIdentityUsers(query: ListUsersQuery): Promise<ListUser
     total: result.total,
     page: query.page,
     pageSize: query.pageSize,
+  }
+}
+
+export async function getIdentityUserById(userId: string): Promise<IdentityUserDetail> {
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  const roleRows = await listRolesByUserId(userId)
+  const role = pickRepresentativeRole(roleRows.map((row) => row.role))
+
+  return {
+    ...toUserProfile(user),
+    ...(role ? { role } : {}),
   }
 }

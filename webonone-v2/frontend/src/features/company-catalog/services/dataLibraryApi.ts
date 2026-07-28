@@ -45,11 +45,141 @@ function toQueryString(params: Record<string, string | number | string[] | undef
   return qs ? `?${qs}` : ''
 }
 
+export type LibraryAttributeUnit = {
+  id: string
+  name: string
+  symbol: string
+}
+
+export type LibraryAttributeValueEntry = {
+  id: string
+  valueText: string | null
+  valueNumber: number | null
+  isDefault: boolean
+}
+
+/** Rich attribute shape returned by Data catalog entity get/list. */
+export type LibraryCatalogAttribute = {
+  attributeId: string
+  name: string
+  valueType: 'number' | 'text'
+  unit: LibraryAttributeUnit | null
+  values: LibraryAttributeValueEntry[]
+}
+
 export type LibraryListItem = CatalogPayload & {
   id: string
   name: string
   description?: string | null
   galleryImages?: { mediaId: string; url: string }[]
+  attributes?: LibraryCatalogAttribute[] | unknown
+  tags?: { id: string; name?: string; color?: string }[]
+}
+
+export type LibraryProductVariantAttributeValue = {
+  attributeId: string
+  attributeName: string
+  attributeValueId: string
+  valueText: string | null
+  valueNumber: number | null
+  valueType: 'number' | 'text'
+  unitSymbol: string | null
+}
+
+export type LibraryProductVariant = {
+  id: string
+  productId: string
+  name: string
+  sku: string
+  isDefault: boolean
+  values: LibraryProductVariantAttributeValue[]
+  createdAt: string
+  updatedAt: string
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function parseUnit(raw: unknown): LibraryAttributeUnit | null {
+  if (!isRecord(raw)) return null
+  if (typeof raw.id !== 'string' || typeof raw.name !== 'string' || typeof raw.symbol !== 'string') {
+    return null
+  }
+  return { id: raw.id, name: raw.name, symbol: raw.symbol }
+}
+
+function parseAttributeValues(raw: unknown): LibraryAttributeValueEntry[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter(isRecord)
+    .map((entry) => ({
+      id: typeof entry.id === 'string' ? entry.id : '',
+      valueText: typeof entry.valueText === 'string' ? entry.valueText : null,
+      valueNumber: typeof entry.valueNumber === 'number' ? entry.valueNumber : null,
+      isDefault: entry.isDefault === true,
+    }))
+    .filter((entry) => entry.id.length > 0)
+}
+
+/**
+ * Parse Data catalog attribute links (rich multi-value shape, or legacy single value).
+ */
+export function parseLibraryAttributes(raw: unknown): LibraryCatalogAttribute[] {
+  if (!Array.isArray(raw)) return []
+
+  const result: LibraryCatalogAttribute[] = []
+  for (const entry of raw) {
+    if (!isRecord(entry) || typeof entry.attributeId !== 'string') continue
+
+    const valueType = entry.valueType === 'number' ? 'number' : 'text'
+    const name = typeof entry.name === 'string' ? entry.name : entry.attributeId
+    const unit = parseUnit(entry.unit)
+    let values = parseAttributeValues(entry.values)
+
+    // Legacy single-value link on the attribute row
+    if (values.length === 0 && (entry.valueText != null || entry.valueNumber != null)) {
+      values = [
+        {
+          id: `${entry.attributeId}-legacy`,
+          valueText: typeof entry.valueText === 'string' ? entry.valueText : null,
+          valueNumber: typeof entry.valueNumber === 'number' ? entry.valueNumber : null,
+          isDefault: true,
+        },
+      ]
+    }
+
+    result.push({
+      attributeId: entry.attributeId,
+      name,
+      valueType,
+      unit,
+      values,
+    })
+  }
+  return result
+}
+
+/**
+ * Company payload / edit forms still expect attributeId + optional single valueText/valueNumber.
+ * Preserve rich fields for display while keeping simplified defaults for fork/edit.
+ */
+function attributesToPayload(raw: unknown): Record<string, unknown>[] | undefined {
+  const attrs = parseLibraryAttributes(raw)
+  if (attrs.length === 0) return undefined
+
+  return attrs.map((attr) => {
+    const preferred = attr.values.find((v) => v.isDefault) ?? attr.values[0]
+    return {
+      attributeId: attr.attributeId,
+      name: attr.name,
+      valueType: attr.valueType,
+      unit: attr.unit,
+      values: attr.values,
+      valueText: preferred?.valueText ?? null,
+      valueNumber: preferred?.valueNumber ?? null,
+    }
+  })
 }
 
 export const dataLibraryApi = {
@@ -66,6 +196,10 @@ export const dataLibraryApi = {
 
   get(kind: CatalogEntityKind, id: string) {
     return dataFetch<LibraryListItem>(`/${KIND_PATH[kind]}/${id}`)
+  },
+
+  listProductVariants(productId: string) {
+    return dataFetch<{ items: LibraryProductVariant[] }>(`/products/${productId}/variants`)
   },
 }
 
@@ -97,17 +231,9 @@ export function libraryItemToPayload(kind: CatalogEntityKind, item: LibraryListI
       return {
         ...base,
         tagIds: Array.isArray(item.tags)
-          ? (item.tags as { id: string }[]).map((t) => t.id)
+          ? item.tags.map((t) => t.id).filter((id): id is string => typeof id === 'string')
           : undefined,
-        attributes: Array.isArray(item.attributes)
-          ? (item.attributes as { attributeId: string; valueText: string | null; valueNumber: number | null }[]).map(
-              (a) => ({
-                attributeId: a.attributeId,
-                valueText: a.valueText,
-                valueNumber: a.valueNumber,
-              }),
-            )
-          : undefined,
+        attributes: attributesToPayload(item.attributes),
         timeMode: item.timeMode,
         durationMinutes: item.durationMinutes ?? null,
         startTime: item.startTime ?? null,
@@ -118,17 +244,22 @@ export function libraryItemToPayload(kind: CatalogEntityKind, item: LibraryListI
       return {
         ...base,
         tagIds: Array.isArray(item.tags)
-          ? (item.tags as { id: string }[]).map((t) => t.id)
+          ? item.tags.map((t) => t.id).filter((id): id is string => typeof id === 'string')
           : undefined,
-        attributes: Array.isArray(item.attributes)
-          ? (item.attributes as { attributeId: string; valueText: string | null; valueNumber: number | null }[]).map(
-              (a) => ({
-                attributeId: a.attributeId,
-                valueText: a.valueText,
-                valueNumber: a.valueNumber,
-              }),
-            )
-          : undefined,
+        attributes: attributesToPayload(item.attributes),
       }
   }
+}
+
+export function formatLibraryAttributeValueLabel(
+  value: { valueText: string | null; valueNumber: number | null },
+  unitSymbol?: string | null,
+): string {
+  const base =
+    value.valueText != null && value.valueText !== ''
+      ? value.valueText
+      : value.valueNumber != null
+        ? String(value.valueNumber)
+        : '—'
+  return unitSymbol ? `${base} ${unitSymbol}` : base
 }

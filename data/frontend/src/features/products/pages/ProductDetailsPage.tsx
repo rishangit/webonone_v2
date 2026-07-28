@@ -11,27 +11,23 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { CatalogAttributesTab } from '@/features/catalog/components/CatalogAttributesTab'
 import {
   CatalogDetailSectionTabs,
   type CatalogDetailTabId,
 } from '@/features/catalog/components/CatalogDetailSectionTabs'
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import { ProductVariantsTab } from '@/features/products/components/ProductVariantsTab'
 import { productsActions } from '@/features/products/store'
 import type { ProductWizardStep } from '@/features/products/schemas/productSchemas'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { StatusBadge } from '@/shared/components/StatusBadge'
-import type { CatalogAttributeValue } from '@/shared/types/data.types'
-
-function formatAttributeValue(attr: CatalogAttributeValue): string {
-  if (attr.valueText != null && attr.valueText !== '') return attr.valueText
-  if (attr.valueNumber != null) return String(attr.valueNumber)
-  return '—'
-}
 
 function formatTimestamp(value: string): string {
   const date = new Date(value)
@@ -71,10 +67,15 @@ export function ProductDetailsPage() {
   if (!accessToken) return <Navigate to="/login" replace />
   if (!productId) return <Navigate to="/products" replace />
 
-  const product = detail?.id === productId ? detail : null
+  const id = productId
+  const product = detail?.id === id ? detail : null
 
   function openWizard(initialStep: ProductWizardStep) {
     setDialog({ initialStep })
+  }
+
+  function refreshDetail() {
+    dispatch(productsActions.fetchDetailRequested({ id, force: true }))
   }
 
   const profile = product ? (
@@ -95,25 +96,6 @@ export function ProductDetailsPage() {
             value={product.description?.trim() ? product.description : '—'}
           />
         </EditableSectionCard>
-
-        <EditableSectionCard
-          title="Attributes"
-          description="Custom attribute values for this product"
-          canEdit={canEdit}
-          onEdit={() => openWizard(3)}
-        >
-          {product.attributes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No attributes.</p>
-          ) : (
-            product.attributes.map((attr) => (
-              <ReadOnlyField
-                key={attr.attributeId}
-                label={attr.name}
-                value={formatAttributeValue(attr)}
-              />
-            ))
-          )}
-        </EditableSectionCard>
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
@@ -128,9 +110,7 @@ export function ProductDetailsPage() {
           ) : (
             <div className="flex flex-wrap gap-1">
               {product.tags.map((tag) => (
-                <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
-                  {tag.name}
-                </span>
+                <TagChip key={tag.id} name={tag.name} color={tag.color} />
               ))}
             </div>
           )}
@@ -179,31 +159,46 @@ export function ProductDetailsPage() {
           tab={tab}
           onTabChange={setTab}
           profile={profile}
+          attributes={
+            <CatalogAttributesTab
+              kind="products"
+              entityId={id}
+              attributes={product.attributes}
+              canEdit={canEdit}
+              onChanged={refreshDetail}
+            />
+          }
           gallery={
             <CatalogLibraryGalleryCard
               kind="products"
-              entityId={productId}
+              entityId={id}
               galleryImages={product.galleryImages ?? []}
               accessToken={accessToken}
               canEdit={canEdit}
-              onSaved={() => {
-                dispatch(productsActions.fetchDetailRequested({ id: productId, force: true }))
-              }}
+              onSaved={refreshDetail}
+            />
+          }
+          variants={
+            <ProductVariantsTab
+              productId={id}
+              productName={product.name}
+              attributes={product.attributes}
+              canEdit={canEdit}
             />
           }
         />
       ) : null}
 
-      {dialog && productId ? (
+      {dialog ? (
         <ProductFormDialog
           open
-          id={productId}
+          id={id}
           initialStep={dialog.initialStep}
           onOpenChange={(open) => {
             if (!open) setDialog(null)
           }}
           onSaved={() => {
-            dispatch(productsActions.fetchDetailRequested({ id: productId, force: true }))
+            refreshDetail()
             setDialog(null)
           }}
         />

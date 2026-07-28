@@ -86,6 +86,11 @@ export const DATA_ENTITY_KEYS = [
 
 export type DataEntityKey = (typeof DATA_ENTITY_KEYS)[number]
 
+/** Catalog sections a company can enable under Data (company profile + company_admin nav). */
+export const COMPANY_DATA_ENTITY_KEYS = ['products', 'services', 'spaces'] as const
+
+export type CompanyDataEntityKey = (typeof COMPANY_DATA_ENTITY_KEYS)[number]
+
 export const DATA_ENTITY_LABELS: Record<DataEntityKey, string> = {
   tags: 'Tags',
   units: 'Units',
@@ -97,6 +102,16 @@ export const DATA_ENTITY_LABELS: Record<DataEntityKey, string> = {
 
 export function isDataEntityKey(value: string): value is DataEntityKey {
   return (DATA_ENTITY_KEYS as readonly string[]).includes(value)
+}
+
+export function isCompanyDataEntityKey(value: string): value is CompanyDataEntityKey {
+  return (COMPANY_DATA_ENTITY_KEYS as readonly string[]).includes(value)
+}
+
+export function filterCompanyDataEntities(
+  keys: readonly DataEntityKey[],
+): CompanyDataEntityKey[] {
+  return COMPANY_DATA_ENTITY_KEYS.filter((key) => keys.includes(key))
 }
 
 export function dataEntityKeyFromSentinel(path: string): DataEntityKey | null {
@@ -345,6 +360,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
         externalService: 'identity',
         externalPath: '/users',
       },
+      { kind: 'item', path: '/staff', label: 'Staff' },
     ],
   },
   DATA_PLATFORM_NAV_GROUP,

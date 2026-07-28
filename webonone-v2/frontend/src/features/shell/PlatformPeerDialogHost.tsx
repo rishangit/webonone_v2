@@ -62,15 +62,15 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   const [nested, setNested] = useState<NestedPeerDialog | null>(null)
   const [deepNested, setDeepNested] = useState<NestedPeerDialog | null>(null)
   const [footerBusy, setFooterBusy] = useState(false)
-  const [submitLabel, setSubmitLabel] = useState('Save')
+  const [submitLabel, setSubmitLabel] = useState<string | null>('Save')
   const [secondaryLabel, setSecondaryLabel] = useState<string | null>(null)
   const [description, setDescription] = useState<string | undefined>()
   const [nestedFooterBusy, setNestedFooterBusy] = useState(false)
-  const [nestedSubmitLabel, setNestedSubmitLabel] = useState('Create')
+  const [nestedSubmitLabel, setNestedSubmitLabel] = useState<string | null>('Create')
   const [nestedSecondaryLabel, setNestedSecondaryLabel] = useState<string | null>(null)
   const [nestedDescription, setNestedDescription] = useState<string | undefined>()
   const [deepNestedFooterBusy, setDeepNestedFooterBusy] = useState(false)
-  const [deepNestedSubmitLabel, setDeepNestedSubmitLabel] = useState('Create')
+  const [deepNestedSubmitLabel, setDeepNestedSubmitLabel] = useState<string | null>('Create')
   const [deepNestedSecondaryLabel, setDeepNestedSecondaryLabel] = useState<string | null>(null)
   const [deepNestedDescription, setDeepNestedDescription] = useState<string | undefined>()
   const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
@@ -334,7 +334,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       openSequenceRef.current += 1
       activeResponderRef.current = responder
       setFooterBusy(false)
-      setSubmitLabel(request.submitLabel)
+      setSubmitLabel(request.submitLabel ?? null)
       setSecondaryLabel(request.secondaryLabel ?? null)
       setDescription(request.description)
       setDeepNested(null)
@@ -416,7 +416,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
         nestedOpenRef.current = true
         setDeepNested(null)
         setDeepNestedFooterBusy(false)
-        setNestedSubmitLabel(event.data.submitLabel)
+        setNestedSubmitLabel(event.data.submitLabel ?? null)
         setNestedSecondaryLabel(event.data.secondaryLabel ?? null)
         setNestedDescription(event.data.description)
         setNestedFooterBusy(false)
@@ -479,7 +479,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
         }
         openSequenceRef.current += 1
         deepNestedOpenRef.current = true
-        setDeepNestedSubmitLabel(event.data.submitLabel)
+        setDeepNestedSubmitLabel(event.data.submitLabel ?? null)
         setDeepNestedSecondaryLabel(event.data.secondaryLabel ?? null)
         setDeepNestedDescription(event.data.description)
         setDeepNestedFooterBusy(false)
@@ -540,7 +540,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       ) {
         setDeepNestedFooterBusy(event.data.busy)
         if (event.data.submitLabel) {
-          setDeepNestedSubmitLabel(event.data.submitLabel)
+          setDeepNestedSubmitLabel(event.data.submitLabel ?? null)
         }
         if (event.data.description !== undefined) {
           setDeepNestedDescription(event.data.description)
@@ -782,13 +782,15 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                   {secondaryLabel}
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                disabled={!accessToken || footerBusy || nestedOpen || deepNestedOpen}
-                onClick={handleFooterSubmit}
-              >
-                {submitLabel}
-              </Button>
+              {submitLabel ? (
+                <Button
+                  type="button"
+                  disabled={!accessToken || footerBusy || nestedOpen || deepNestedOpen}
+                  onClick={handleFooterSubmit}
+                >
+                  {submitLabel}
+                </Button>
+              ) : null}
             </>
           }
         >
@@ -858,14 +860,16 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                   {nestedSecondaryLabel}
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                className="h-10 px-4"
-                disabled={!accessToken || nestedFooterBusy || deepNestedOpen}
-                onClick={handleNestedFooterSubmit}
-              >
-                {nestedSubmitLabel}
-              </Button>
+              {nestedSubmitLabel ? (
+                <Button
+                  type="button"
+                  className="h-10 px-4"
+                  disabled={!accessToken || nestedFooterBusy || deepNestedOpen}
+                  onClick={handleNestedFooterSubmit}
+                >
+                  {nestedSubmitLabel}
+                </Button>
+              ) : null}
             </>
           }
         >
@@ -922,14 +926,16 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                   {deepNestedSecondaryLabel}
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                className="h-10 px-4"
-                disabled={!accessToken || deepNestedFooterBusy}
-                onClick={handleDeepNestedFooterSubmit}
-              >
-                {deepNestedSubmitLabel}
-              </Button>
+              {deepNestedSubmitLabel ? (
+                <Button
+                  type="button"
+                  className="h-10 px-4"
+                  disabled={!accessToken || deepNestedFooterBusy}
+                  onClick={handleDeepNestedFooterSubmit}
+                >
+                  {deepNestedSubmitLabel}
+                </Button>
+              ) : null}
             </>
           }
         >

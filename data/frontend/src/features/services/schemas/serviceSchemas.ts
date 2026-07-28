@@ -167,13 +167,9 @@ export function toCreateServicePayload(
     tag_ids: values.tags.map((tag) => tag.id),
     attributes: values.attributes
       .filter((row) => row.attributeId)
-      .map((row) => {
-        const attr = options.attributes.find((a) => a.id === row.attributeId)
-        if (attr?.valueType === 'number') {
-          return { attribute_id: row.attributeId, value_number: Number(row.valueNumber) }
-        }
-        return { attribute_id: row.attributeId, value_text: row.valueText }
-      }),
+      .map((row) => ({
+        attribute_id: row.attributeId,
+      })),
     ...timePayload,
   }
 }

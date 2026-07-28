@@ -12,6 +12,27 @@ export type UserPickerUser = {
   isEmailVerified?: boolean
 }
 
+/** Full profile for admin user detail (`GET /users/:id`). */
+export type IdentityUserDetail = {
+  id: string
+  email: string | null
+  displayName: string
+  firstName: string
+  lastName: string
+  phoneNumber: string | null
+  addressLine1: string | null
+  addressLine2: string | null
+  city: string | null
+  stateRegion: string | null
+  postalCode: string | null
+  country: string | null
+  avatarUrl: string | null
+  locale: string | null
+  isEmailVerified: boolean
+  isGoogleUser: boolean
+  role?: UserPickerRole
+}
+
 export type ListUsersParams = {
   search: string
   role: UserPickerRole | null

@@ -4,6 +4,7 @@ import { authReducer } from '@/features/auth/store/authSlice'
 import { sessionRoleReducer } from '@/features/session/store/sessionRoleSlice'
 import { companiesReducer } from '@/features/settings/basic/store/companiesStore'
 import { companyCatalogReducer } from '@/features/company-catalog/store/companyCatalogStore'
+import { staffReducer } from '@/features/staff/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { rootEpic } from '@/app/store/epics/rootEpic'
@@ -17,6 +18,7 @@ export const store = configureStore({
     sessionRole: sessionRoleReducer,
     companies: companiesReducer,
     companyCatalog: companyCatalogReducer,
+    staff: staffReducer,
     systemTheme: systemThemeReducer,
   },
   middleware: (getDefaultMiddleware) =>

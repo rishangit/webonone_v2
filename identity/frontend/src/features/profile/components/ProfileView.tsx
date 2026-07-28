@@ -32,7 +32,12 @@ interface ProfileViewProps {
   onEditSection?: (step: ProfileWizardStep) => void
 }
 
-export function ProfileView({ user, avatarUrl, canEdit = true, onEditSection }: ProfileViewProps) {
+export function ProfileView({
+  user,
+  avatarUrl,
+  canEdit = true,
+  onEditSection,
+}: ProfileViewProps) {
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">

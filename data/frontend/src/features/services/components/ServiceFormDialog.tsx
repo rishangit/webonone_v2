@@ -102,8 +102,8 @@ function valuesFromCatalogItem(item: CatalogItem): ServiceWizardFormValues {
     tags: item.tags.map((t) => ({ id: t.id, name: t.name, color: t.color })),
     attributes: item.attributes.map((a) => ({
       attributeId: a.attributeId,
-      valueText: a.valueText ?? '',
-      valueNumber: a.valueNumber != null ? String(a.valueNumber) : '',
+      valueText: '',
+      valueNumber: '',
     })),
   }
 }

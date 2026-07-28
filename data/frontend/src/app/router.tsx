@@ -39,6 +39,11 @@ const UnitsPage = lazy(() =>
 const UnitFormEmbedPage = lazy(() =>
   import('@/features/units/pages/UnitFormEmbedPage').then((m) => ({ default: m.UnitFormEmbedPage })),
 )
+const UnitSelectEmbedPage = lazy(() =>
+  import('@/features/units/pages/UnitSelectEmbedPage').then((m) => ({
+    default: m.UnitSelectEmbedPage,
+  })),
+)
 const AttributesPage = lazy(() =>
   import('@/features/attributes/pages/AttributesPage').then((m) => ({ default: m.AttributesPage })),
 )
@@ -47,12 +52,27 @@ const AttributeFormEmbedPage = lazy(() =>
     default: m.AttributeFormEmbedPage,
   })),
 )
+const AttributeSelectEmbedPage = lazy(() =>
+  import('@/features/attributes/pages/AttributeSelectEmbedPage').then((m) => ({
+    default: m.AttributeSelectEmbedPage,
+  })),
+)
+const CatalogAttributeValueEmbedPage = lazy(() =>
+  import('@/features/catalog/pages/CatalogAttributeValueEmbedPage').then((m) => ({
+    default: m.CatalogAttributeValueEmbedPage,
+  })),
+)
 const ProductsPage = lazy(() =>
   import('@/features/products/pages/ProductsPage').then((m) => ({ default: m.ProductsPage })),
 )
 const ProductDetailsPage = lazy(() =>
   import('@/features/products/pages/ProductDetailsPage').then((m) => ({
     default: m.ProductDetailsPage,
+  })),
+)
+const ProductVariantFormEmbedPage = lazy(() =>
+  import('@/features/products/pages/ProductVariantFormEmbedPage').then((m) => ({
+    default: m.ProductVariantFormEmbedPage,
   })),
 )
 const ServicesPage = lazy(() =>
@@ -171,10 +191,24 @@ export function App() {
           {embedDialogRoute('/embed/dialogs/tags/select', TagSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/tags/create', TagFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/tags/:id/edit', TagFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/units/select', UnitSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/units/create', UnitFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/units/:id/edit', UnitFormEmbedPage)}
+          {embedDialogRoute('/embed/dialogs/attributes/select', AttributeSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/attributes/create', AttributeFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/attributes/:id/edit', AttributeFormEmbedPage)}
+          {embedDialogRoute(
+            '/embed/dialogs/:kind/:entityId/attributes/:attributeId/values/create',
+            CatalogAttributeValueEmbedPage,
+          )}
+          {embedDialogRoute(
+            '/embed/dialogs/:kind/:entityId/attributes/:attributeId/values/:valueId/edit',
+            CatalogAttributeValueEmbedPage,
+          )}
+          {embedDialogRoute(
+            '/embed/dialogs/products/:productId/variants/create',
+            ProductVariantFormEmbedPage,
+          )}
           {embedDialogRoute('/embed/dialogs/catalog/:kind/select', CatalogLibrarySelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/create', CatalogFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/:id/edit', CatalogFormEmbedPage)}

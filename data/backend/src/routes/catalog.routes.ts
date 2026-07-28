@@ -5,13 +5,17 @@ import {
   servicesController,
   spacesController,
 } from '../controllers/catalog.controller.js'
+import { productVariantsController } from '../controllers/productVariants.controller.js'
 import { requireAuth, requireCompanyAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/auth.js'
 import { validateBody } from '../middleware/validateBody.js'
 import {
+  catalogAttributeValueBodySchema,
   createCatalogBodySchema,
+  replaceCatalogAttributesBodySchema,
   updateCatalogBodySchema,
   updateCatalogGalleryBodySchema,
 } from '../schemas/catalog.schema.js'
+import { createProductVariantBodySchema } from '../schemas/productVariants.schema.js'
 import { createServiceBodySchema, updateServiceBodySchema } from '../schemas/services.schema.js'
 
 function catalogRoutes(
@@ -49,6 +53,39 @@ function catalogRoutes(
     validateBody(updateCatalogGalleryBodySchema),
     controller.updateGallery,
   )
+  router.put(
+    `/${path}/:id/attributes`,
+    requireAuth,
+    requireCompanyAdminOrSuperAdmin,
+    validateBody(replaceCatalogAttributesBodySchema),
+    controller.replaceAttributes,
+  )
+  router.post(
+    `/${path}/:id/attributes/:attributeId/values`,
+    requireAuth,
+    requireCompanyAdminOrSuperAdmin,
+    validateBody(catalogAttributeValueBodySchema),
+    controller.addAttributeValue,
+  )
+  router.patch(
+    `/${path}/:id/attribute-values/:valueId`,
+    requireAuth,
+    requireCompanyAdminOrSuperAdmin,
+    validateBody(catalogAttributeValueBodySchema),
+    controller.updateAttributeValue,
+  )
+  router.delete(
+    `/${path}/:id/attribute-values/:valueId`,
+    requireAuth,
+    requireCompanyAdminOrSuperAdmin,
+    controller.deleteAttributeValue,
+  )
+  router.patch(
+    `/${path}/:id/attribute-values/:valueId/default`,
+    requireAuth,
+    requireCompanyAdminOrSuperAdmin,
+    controller.setAttributeValueDefault,
+  )
   router.patch(
     `/${path}/:id`,
     requireAuth,
@@ -61,6 +98,20 @@ function catalogRoutes(
 }
 
 const router = Router()
+
+router.get(
+  '/products/:id/variants',
+  requireAuth,
+  productVariantsController.list,
+)
+router.post(
+  '/products/:id/variants',
+  requireAuth,
+  requireCompanyAdminOrSuperAdmin,
+  validateBody(createProductVariantBodySchema),
+  productVariantsController.create,
+)
+
 router.use(catalogRoutes('products', productsController))
 router.use(
   catalogRoutes('services', servicesController, {

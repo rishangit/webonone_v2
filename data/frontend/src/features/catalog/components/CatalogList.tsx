@@ -7,6 +7,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  TagChip,
 } from '@webonone/ui-kit'
 import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
 import { StatusBadge } from '@/shared/components/StatusBadge'
@@ -61,9 +62,7 @@ export function CatalogList({
               </div>
               <div className="flex flex-wrap gap-1">
                 {item.tags.slice(0, 3).map((tag) => (
-                  <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
-                    {tag.name}
-                  </span>
+                  <TagChip key={tag.id} name={tag.name} color={tag.color} />
                 ))}
                 {item.tags.length > 3 ? (
                   <span className="text-xs text-muted-foreground">+{item.tags.length - 3}</span>

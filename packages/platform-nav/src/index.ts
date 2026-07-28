@@ -31,8 +31,11 @@ export {
   dataEntityKeyFromSentinel,
   dataSentinelToExternalPath,
   DATA_ENTITY_KEYS,
+  COMPANY_DATA_ENTITY_KEYS,
   DATA_ENTITY_LABELS,
+  filterCompanyDataEntities,
   filterPlatformNavDataEntities,
+  isCompanyDataEntityKey,
   isDataEntityKey,
   isDataNavSentinel,
   PROFILE_NAV_SENTINEL,
@@ -59,6 +62,7 @@ export type {
   RedirectWithAuthCodeOptions,
 } from './types'
 export type {
+  CompanyDataEntityKey,
   CoreNavDef,
   CoreNavGroup,
   CoreNavLeaf,

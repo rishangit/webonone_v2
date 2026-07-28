@@ -291,8 +291,8 @@ export function CatalogFormDialog({
     setAttributeRows(
       item.attributes.map((a) => ({
         attributeId: a.attributeId,
-        valueText: a.valueText ?? '',
-        valueNumber: a.valueNumber != null ? String(a.valueNumber) : '',
+        valueText: '',
+        valueNumber: '',
       })),
     )
   }, [editor.detail, isNew])
@@ -333,13 +333,9 @@ export function CatalogFormDialog({
       tag_ids: selectedTags.map((tag) => tag.id),
       attributes: attributeRows
         .filter((row) => row.attributeId)
-        .map((row) => {
-          const attr = attributes.find((a) => a.id === row.attributeId)
-          if (attr?.valueType === 'number') {
-            return { attribute_id: row.attributeId, value_number: Number(row.valueNumber) }
-          }
-          return { attribute_id: row.attributeId, value_text: row.valueText }
-        }),
+        .map((row) => ({
+          attribute_id: row.attributeId,
+        })),
     })
   }
 

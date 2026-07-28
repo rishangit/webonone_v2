@@ -1,6 +1,7 @@
 export type {
   UserPickerRole,
   UserPickerUser,
+  IdentityUserDetail,
   ListUsersParams,
   ListUsersResponse,
   ListCustomersParams,

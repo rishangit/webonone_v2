@@ -27,7 +27,11 @@ export type UseRequestPlatformPeerDialogOptions = {
   cancelLabel?: string
   /** Optional host footer secondary (e.g. wizard Previous). */
   secondaryLabel?: string
-  submitLabel: string
+  /**
+   * Host footer primary label.
+   * Omit or pass `null` for Close-only footers (no primary button).
+   */
+  submitLabel?: string | null
   onResult?: (payload?: unknown) => void
   onCancel?: (reason?: string) => void
 }

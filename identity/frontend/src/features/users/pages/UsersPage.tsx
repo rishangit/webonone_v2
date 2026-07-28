@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -61,6 +61,7 @@ function formatRoleLabel(role: string): string {
 
 export function UsersPage() {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -245,28 +246,36 @@ export function UsersPage() {
               <ItemList>
                 {items.map((user) => (
                   <ItemListItem key={user.id}>
-                    <Avatar
-                      size="sm"
-                      src={user.avatarUrl}
-                      alt={user.displayName}
-                      fallback={getInitials(user.displayName)}
-                      className="shrink-0"
-                    />
                     <ItemListContent>
-                      <p className="truncate font-medium">{user.displayName}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {user.email?.trim() ? user.email : 'No email'}
-                      </p>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={() => navigate(`/users/${user.id}`)}
+                      >
+                        <Avatar
+                          size="sm"
+                          src={user.avatarUrl}
+                          alt={user.displayName}
+                          fallback={getInitials(user.displayName)}
+                          className="shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">{user.displayName}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {user.email?.trim() ? user.email : 'No email'}
+                          </p>
+                        </div>
+                        {user.role ? (
+                          isStatusTagVariant(user.role) ? (
+                            <StatusTag className="shrink-0 self-center" variant={user.role} />
+                          ) : (
+                            <StatusTag className="shrink-0 self-center" variant="member">
+                              {formatRoleLabel(user.role)}
+                            </StatusTag>
+                          )
+                        ) : null}
+                      </button>
                     </ItemListContent>
-                    {user.role ? (
-                      isStatusTagVariant(user.role) ? (
-                        <StatusTag className="shrink-0 self-center" variant={user.role} />
-                      ) : (
-                        <StatusTag className="shrink-0 self-center" variant="member">
-                          {formatRoleLabel(user.role)}
-                        </StatusTag>
-                      )
-                    ) : null}
                   </ItemListItem>
                 ))}
               </ItemList>

@@ -3,6 +3,7 @@ import { authEpics } from '@/features/auth/store/authEpics'
 import { sessionRoleEpics } from '@/features/session/store/sessionRoleEpics'
 import { companiesEpics } from '@/features/settings/basic/store/companiesStore'
 import { companyCatalogEpics } from '@/features/company-catalog/store/companyCatalogStore'
+import { staffEpics } from '@/features/staff/store'
 import { systemThemeEpics } from '@/features/settings/system-theme/store/systemThemeEpics'
 
 export const rootEpic = combineEpics(
@@ -10,5 +11,6 @@ export const rootEpic = combineEpics(
   sessionRoleEpics,
   companiesEpics,
   companyCatalogEpics,
+  staffEpics,
   systemThemeEpics,
 )

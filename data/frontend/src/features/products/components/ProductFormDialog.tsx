@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import {
@@ -20,9 +20,15 @@ import {
   Spinner,
   type SelectTagValue,
 } from '@webonone/ui-kit'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { attributesActions } from '@/features/attributes/store'
+import {
+  ATTRIBUTE_SELECT_EMBED_PATH,
+  ATTRIBUTE_SELECT_PEER,
+  AttributeSelectStackedDialogs,
+  writeAttributeSelectSession,
+  type AttributeSelectValue,
+} from '@/features/attributes/components/AttributeSelectField'
 import { productsActions } from '@/features/products/store'
 import {
   EMPTY_PRODUCT_WIZARD_VALUES,
@@ -31,6 +37,7 @@ import {
   productWizardStep2Schema,
   productWizardStep3Schema,
   toCreateProductPayload,
+  type ProductAttributeRow,
   type ProductWizardFormValues,
   type ProductWizardStep,
 } from '@/features/products/schemas/productSchemas'
@@ -64,7 +71,7 @@ const STEP_TITLES = ['Basics', 'Tags', 'Attributes', 'Summary'] as const
 const STEP_DESCRIPTIONS = [
   'Name and describe this product.',
   'Optionally label this product with tags.',
-  'Optionally add custom attribute values.',
+  'Optionally select attributes for this product.',
   'Review your details before saving.',
 ] as const
 
@@ -85,6 +92,54 @@ function parseTagsPayload(payload: unknown): SelectTagValue[] | null {
   return record.tags.filter(isSelectTagValue)
 }
 
+function isAttributeSelectValue(value: unknown): value is AttributeSelectValue {
+  if (!value || typeof value !== 'object') return false
+  const attribute = value as Record<string, unknown>
+  const unit = attribute.unit
+  const unitOk =
+    unit === null ||
+    unit === undefined ||
+    (Boolean(unit) &&
+      typeof unit === 'object' &&
+      typeof (unit as { id?: unknown }).id === 'string' &&
+      typeof (unit as { name?: unknown }).name === 'string' &&
+      typeof (unit as { symbol?: unknown }).symbol === 'string')
+  return (
+    typeof attribute.id === 'string' &&
+    typeof attribute.name === 'string' &&
+    (attribute.valueType === 'number' || attribute.valueType === 'text') &&
+    unitOk
+  )
+}
+
+function parseAttributesPayload(payload: unknown): AttributeSelectValue[] | null {
+  if (!payload || typeof payload !== 'object') return null
+  const record = payload as Record<string, unknown>
+  if (!Array.isArray(record.attributes)) return null
+  return record.attributes.filter(isAttributeSelectValue)
+}
+
+function appendAttributeSelection(
+  previous: ProductAttributeRow[],
+  selected: AttributeSelectValue[],
+): ProductAttributeRow[] {
+  const result = [...previous]
+  const seen = new Set(previous.map((row) => row.attributeId))
+  for (const attribute of selected) {
+    if (seen.has(attribute.id)) continue
+    seen.add(attribute.id)
+    result.push({
+      attributeId: attribute.id,
+      name: attribute.name,
+      valueType: attribute.valueType,
+      unit: attribute.unit ?? null,
+      valueText: '',
+      valueNumber: '',
+    })
+  }
+  return result
+}
+
 function valuesFromCatalogItem(item: CatalogItem): ProductWizardFormValues {
   return {
     name: item.name,
@@ -93,8 +148,11 @@ function valuesFromCatalogItem(item: CatalogItem): ProductWizardFormValues {
     tags: item.tags.map((t) => ({ id: t.id, name: t.name, color: t.color })),
     attributes: item.attributes.map((a) => ({
       attributeId: a.attributeId,
-      valueText: a.valueText ?? '',
-      valueNumber: a.valueNumber != null ? String(a.valueNumber) : '',
+      name: a.name,
+      valueType: a.valueType,
+      unit: a.unit,
+      valueText: '',
+      valueNumber: '',
     })),
   }
 }
@@ -140,19 +198,20 @@ export function ProductFormDialog({
     Partial<Record<keyof ProductWizardFormValues, string>>
   >({})
   const [tagPickerOpen, setTagPickerOpen] = useState(false)
+  const [attributePickerOpen, setAttributePickerOpen] = useState(false)
   const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
   const submittedRef = useRef(false)
   const seededDetailIdRef = useRef<string | null>(null)
   const tagPickerOpenRef = useRef(false)
+  const attributePickerOpenRef = useRef(false)
   const blockOuterDismissRef = useRef(false)
   const blockTimerRef = useRef<number | null>(null)
   const nestedTagRequestIdRef = useRef<string | null>(null)
+  const nestedAttributeRequestIdRef = useRef<string | null>(null)
 
-  const dispatch = useAppDispatch()
   const userRole = useAppSelector((s) => s.auth.user?.role)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const canSetStatus = userRole === 'super_admin'
-  const attributeOptions = useAppSelector((s) => s.attributes.items)
 
   const editor = useEpicCatalogEditor(id, isNew, (s) => s.products, productsActions)
   const cachedDetail = useAppSelector((s) => s.products.detail)
@@ -191,16 +250,16 @@ export function ProductFormDialog({
   }, [tagPickerOpen])
 
   useEffect(() => {
+    attributePickerOpenRef.current = attributePickerOpen
+  }, [attributePickerOpen])
+
+  useEffect(() => {
     return () => {
       if (blockTimerRef.current !== null) {
         window.clearTimeout(blockTimerRef.current)
       }
     }
   }, [])
-
-  useEffect(() => {
-    dispatch(attributesActions.loadListRequested({ pageSize: 100, force: true }))
-  }, [dispatch])
 
   useEffect(() => {
     if (!open && chrome === 'dialog') return
@@ -225,6 +284,9 @@ export function ProductFormDialog({
       setTagPickerOpen(false)
       tagPickerOpenRef.current = false
       nestedTagRequestIdRef.current = null
+      setAttributePickerOpen(false)
+      attributePickerOpenRef.current = false
+      nestedAttributeRequestIdRef.current = null
       setBlockOuterDismiss(false)
       blockOuterDismissRef.current = false
     }
@@ -236,10 +298,7 @@ export function ProductFormDialog({
     if (!editor.error) onSaved(editor.detail ?? undefined)
   }, [editor.saving, editor.error, editor.detail, onSaved])
 
-  const closeTagPicker = useCallback(() => {
-    setTagPickerOpen(false)
-    tagPickerOpenRef.current = false
-    nestedTagRequestIdRef.current = null
+  const scheduleBlockOuterDismiss = useCallback(() => {
     blockOuterDismissRef.current = true
     setBlockOuterDismiss(true)
     if (blockTimerRef.current !== null) {
@@ -251,6 +310,20 @@ export function ProductFormDialog({
       blockTimerRef.current = null
     }, 150)
   }, [])
+
+  const closeTagPicker = useCallback(() => {
+    setTagPickerOpen(false)
+    tagPickerOpenRef.current = false
+    nestedTagRequestIdRef.current = null
+    scheduleBlockOuterDismiss()
+  }, [scheduleBlockOuterDismiss])
+
+  const closeAttributePicker = useCallback(() => {
+    setAttributePickerOpen(false)
+    attributePickerOpenRef.current = false
+    nestedAttributeRequestIdRef.current = null
+    scheduleBlockOuterDismiss()
+  }, [scheduleBlockOuterDismiss])
 
   const openTagPicker = useCallback(() => {
     if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {
@@ -274,6 +347,44 @@ export function ProductFormDialog({
     setTagPickerOpen(true)
   }, [chrome, dialogRequestId, parentOrigin, values.tags])
 
+  const openAttributePicker = useCallback(() => {
+    if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {
+      const nestedRequestId = createNestedRequestId()
+      nestedAttributeRequestIdRef.current = nestedRequestId
+      writeAttributeSelectSession(
+        nestedRequestId,
+        values.attributes.map((row) => ({
+          id: row.attributeId,
+          name: row.name,
+          valueType: row.valueType,
+          unit: row.unit,
+        })),
+      )
+      attributePickerOpenRef.current = true
+      setAttributePickerOpen(true)
+      sendPlatformPeerDialogNestedRequest(parentOrigin, {
+        parentRequestId: dialogRequestId,
+        requestId: nestedRequestId,
+        path: ATTRIBUTE_SELECT_EMBED_PATH,
+        title: ATTRIBUTE_SELECT_PEER.title,
+        description: ATTRIBUTE_SELECT_PEER.description,
+        submitLabel: ATTRIBUTE_SELECT_PEER.submitLabel,
+        sizeWidth: ATTRIBUTE_SELECT_PEER.sizeWidth,
+        sizeHeight: ATTRIBUTE_SELECT_PEER.sizeHeight,
+      })
+      return
+    }
+    attributePickerOpenRef.current = true
+    setAttributePickerOpen(true)
+  }, [chrome, dialogRequestId, parentOrigin, values.attributes])
+
+  const applyAttributeSelection = useCallback((selected: AttributeSelectValue[]) => {
+    setValues((prev) => ({
+      ...prev,
+      attributes: appendAttributeSelection(prev.attributes, selected),
+    }))
+  }, [])
+
   useEffect(() => {
     if (chrome !== 'embed-page' || !parentOrigin || !dialogRequestId) {
       return
@@ -283,39 +394,77 @@ export function ProductFormDialog({
       if (event.origin !== parentOrigin || event.source !== window.parent) {
         return
       }
-      const nestedId = nestedTagRequestIdRef.current
-      if (!nestedId) {
-        return
-      }
 
-      if (
-        isPlatformPeerDialogNestedResultMessage(event.data) &&
-        event.data.parentRequestId === dialogRequestId &&
-        event.data.requestId === nestedId
-      ) {
-        const tags = parseTagsPayload(event.data.payload)
-        if (tags) {
-          setValues((prev) => ({ ...prev, tags }))
+      const nestedTagId = nestedTagRequestIdRef.current
+      if (nestedTagId) {
+        if (
+          isPlatformPeerDialogNestedResultMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedTagId
+        ) {
+          const tags = parseTagsPayload(event.data.payload)
+          if (tags) {
+            setValues((prev) => ({ ...prev, tags }))
+          }
+          closeTagPicker()
+          return
         }
-        closeTagPicker()
-        return
+
+        if (
+          isPlatformPeerDialogNestedCancelMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedTagId
+        ) {
+          closeTagPicker()
+          return
+        }
       }
 
-      if (
-        isPlatformPeerDialogNestedCancelMessage(event.data) &&
-        event.data.parentRequestId === dialogRequestId &&
-        event.data.requestId === nestedId
-      ) {
-        closeTagPicker()
+      const nestedAttributeId = nestedAttributeRequestIdRef.current
+      if (nestedAttributeId) {
+        if (
+          isPlatformPeerDialogNestedResultMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedAttributeId
+        ) {
+          const attributes = parseAttributesPayload(event.data.payload)
+          if (attributes) {
+            applyAttributeSelection(attributes)
+          }
+          closeAttributePicker()
+          return
+        }
+
+        if (
+          isPlatformPeerDialogNestedCancelMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedAttributeId
+        ) {
+          closeAttributePicker()
+        }
       }
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [chrome, closeTagPicker, dialogRequestId, parentOrigin])
+  }, [
+    applyAttributeSelection,
+    chrome,
+    closeAttributePicker,
+    closeTagPicker,
+    dialogRequestId,
+    parentOrigin,
+  ])
 
   function patchValues(patch: Partial<ProductWizardFormValues>) {
     setValues((prev) => ({ ...prev, ...patch }))
+  }
+
+  function removeAttribute(attributeId: string) {
+    setValues((prev) => ({
+      ...prev,
+      attributes: prev.attributes.filter((row) => row.attributeId !== attributeId),
+    }))
   }
 
   function validateStep(current: ProductWizardStep): boolean {
@@ -391,7 +540,6 @@ export function ProductFormDialog({
     editor.save(
       toCreateProductPayload(values, {
         canSetStatus,
-        attributes: attributeOptions,
       }),
     )
   }
@@ -404,17 +552,19 @@ export function ProductFormDialog({
     handleSubmit()
   }
 
+  const nestedPickerOpen = tagPickerOpen || attributePickerOpen
+
   usePlatformPeerDialogSubmit({
     parentOrigin: chrome === 'embed-page' ? parentOrigin : null,
     requestId: dialogRequestId,
     onSubmit: () => {
-      if (tagPickerOpenRef.current) {
+      if (tagPickerOpenRef.current || attributePickerOpenRef.current) {
         return
       }
       handlePrimaryAction()
     },
     onSecondary: () => {
-      if (tagPickerOpenRef.current || editor.saving) {
+      if (tagPickerOpenRef.current || attributePickerOpenRef.current || editor.saving) {
         return
       }
       handlePrevious()
@@ -426,7 +576,7 @@ export function ProductFormDialog({
     sendPlatformPeerDialogBusy(
       parentOrigin,
       dialogRequestId,
-      editor.saving || tagPickerOpen,
+      editor.saving || nestedPickerOpen,
       primaryLabelForStep(step, editor.saving),
       {
         description: STEP_DESCRIPTIONS[step - 1],
@@ -437,9 +587,9 @@ export function ProductFormDialog({
     chrome,
     dialogRequestId,
     editor.saving,
+    nestedPickerOpen,
     parentOrigin,
     step,
-    tagPickerOpen,
     finalSubmitLabel,
   ])
 
@@ -447,6 +597,10 @@ export function ProductFormDialog({
     if (next) return
     if (tagPickerOpenRef.current || tagPickerOpen) {
       closeTagPicker()
+      return
+    }
+    if (attributePickerOpenRef.current || attributePickerOpen) {
+      closeAttributePicker()
       return
     }
     if (blockOuterDismissRef.current || blockOuterDismiss) {
@@ -457,6 +611,16 @@ export function ProductFormDialog({
 
   const stepIndex = step - 1
   const isSubmitting = editor.saving
+  const selectedAttributeValues = useMemo(
+    () =>
+      values.attributes.map((row) => ({
+        id: row.attributeId,
+        name: row.name,
+        valueType: row.valueType,
+        unit: row.unit,
+      })),
+    [values.attributes],
+  )
 
   const footer = (
     <div className="flex flex-wrap items-center justify-end gap-2">
@@ -486,7 +650,7 @@ export function ProductFormDialog({
           type="button"
           className="h-10 px-4"
           onClick={handleNext}
-          disabled={isSubmitting || showLoading || tagPickerOpen}
+          disabled={isSubmitting || showLoading || nestedPickerOpen}
         >
           Next
           <ChevronRight className="ml-2 h-4 w-4" />
@@ -496,7 +660,7 @@ export function ProductFormDialog({
           type="button"
           className="h-10"
           onClick={handleSubmit}
-          disabled={isSubmitting || showLoading || tagPickerOpen}
+          disabled={isSubmitting || showLoading || nestedPickerOpen}
         >
           <Save className="mr-2 h-4 w-4" />
           {isSubmitting ? 'Saving…' : finalSubmitLabel}
@@ -546,18 +710,14 @@ export function ProductFormDialog({
       {step === 3 ? (
         <ProductWizardStepAttributes
           values={values}
-          attributeOptions={attributeOptions}
           isSubmitting={isSubmitting}
-          onChange={patchValues}
+          onOpenPicker={openAttributePicker}
+          onRemove={removeAttribute}
         />
       ) : null}
 
       {step === 4 ? (
-        <ProductWizardStepSummary
-          values={values}
-          attributeOptions={attributeOptions}
-          showStatus={canSetStatus}
-        />
+        <ProductWizardStepSummary values={values} showStatus={canSetStatus} />
       ) : null}
     </div>
   )
@@ -579,7 +739,7 @@ export function ProductFormDialog({
         description={STEP_DESCRIPTIONS[stepIndex]}
         sizeWidth={PRODUCT_WIZARD_DIALOG_SIZE.sizeWidth}
         sizeHeight={PRODUCT_WIZARD_DIALOG_SIZE.sizeHeight}
-        nestedDismissGuard={tagPickerOpen || blockOuterDismiss}
+        nestedDismissGuard={nestedPickerOpen || blockOuterDismiss}
         footer={footer}
       >
         {body}
@@ -592,6 +752,16 @@ export function ProductFormDialog({
           closeTagPicker()
         }}
         onClosePicker={closeTagPicker}
+        pickerStackLevel={1}
+      />
+      <AttributeSelectStackedDialogs
+        pickerOpen={attributePickerOpen}
+        alreadySelectedAttributes={selectedAttributeValues}
+        onDone={(attributes) => {
+          applyAttributeSelection(attributes)
+          closeAttributePicker()
+        }}
+        onClosePicker={closeAttributePicker}
         pickerStackLevel={1}
       />
     </>

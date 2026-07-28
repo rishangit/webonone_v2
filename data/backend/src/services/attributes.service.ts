@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { db, type AttributeRow, type DataRole } from '../models/db.js'
+import { db, type AttributeRow, type DataRole, type UnitRow } from '../models/db.js'
 import type { CreateAttributeBody, UpdateAttributeBody } from '../schemas/attributes.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
@@ -13,25 +13,59 @@ import {
 } from '../utils/listQuery.js'
 import { countAttributeReferences } from '../utils/referenceCounts.js'
 
+export interface AttributeUnitSummary {
+  id: string
+  name: string
+  symbol: string
+}
+
 export interface AttributeDto {
   id: string
   name: string
   description: string | null
   valueType: string
   unitId: string | null
+  unit: AttributeUnitSummary | null
   status: string
   referenceCount: number
   createdAt: string
   updatedAt: string
 }
 
-async function rowToDto(row: AttributeRow): Promise<AttributeDto> {
+async function loadUnitsByIds(unitIds: string[]): Promise<Map<string, AttributeUnitSummary>> {
+  const uniqueIds = [...new Set(unitIds.filter(Boolean))]
+  const map = new Map<string, AttributeUnitSummary>()
+  if (uniqueIds.length === 0) return map
+
+  const rows = await db<UnitRow>('data_units').whereIn('id', uniqueIds)
+  for (const row of rows) {
+    map.set(row.id, { id: row.id, name: row.name, symbol: row.symbol })
+  }
+  return map
+}
+
+async function rowToDto(
+  row: AttributeRow,
+  unitsById?: Map<string, AttributeUnitSummary>,
+): Promise<AttributeDto> {
+  let unit: AttributeUnitSummary | null = null
+  if (row.unit_id) {
+    unit = unitsById?.get(row.unit_id) ?? null
+    if (!unit) {
+      const unitRow = await db<UnitRow>('data_units').where({ id: row.unit_id }).first()
+      if (unitRow) {
+        unit = { id: unitRow.id, name: unitRow.name, symbol: unitRow.symbol }
+      }
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     valueType: row.value_type,
     unitId: row.unit_id,
+    unit,
     status: row.status,
     referenceCount: await countAttributeReferences(row.id),
     createdAt: row.created_at.toISOString(),
@@ -65,8 +99,12 @@ export async function listAttributes(
     .offset((page - 1) * pageSize)
     .limit(pageSize)
 
+  const unitsById = await loadUnitsByIds(
+    rows.map((row) => row.unit_id).filter((id): id is string => Boolean(id)),
+  )
+
   return {
-    items: await Promise.all(rows.map(rowToDto)),
+    items: await Promise.all(rows.map((row) => rowToDto(row, unitsById))),
     total,
     page,
     pageSize,
@@ -90,7 +128,7 @@ export async function createAttribute(
     name: body.name,
     description: body.description ?? null,
     value_type: body.value_type,
-    unit_id: body.value_type === 'number' ? (body.unit_id ?? null) : (body.unit_id ?? null),
+    unit_id: body.unit_id ?? null,
     status: resolveCreateStatus(role, body.status),
     created_at: now,
     updated_at: now,
@@ -108,16 +146,13 @@ export async function updateAttribute(
   if (!existing) throw new Error('NOT_FOUND')
   if (body.name) await assertUniqueName('data_attributes', body.name, id)
 
-  const valueType = body.value_type ?? existing.value_type
   await db('data_attributes')
     .where({ id })
     .update({
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.description !== undefined ? { description: body.description } : {}),
       ...(body.value_type !== undefined ? { value_type: body.value_type } : {}),
-      ...(body.unit_id !== undefined || body.value_type !== undefined
-        ? { unit_id: valueType === 'number' ? (body.unit_id ?? existing.unit_id) : null }
-        : {}),
+      ...(body.unit_id !== undefined ? { unit_id: body.unit_id } : {}),
       ...(body.status !== undefined ? { status: body.status } : {}),
       updated_at: db.fn.now(3),
     })

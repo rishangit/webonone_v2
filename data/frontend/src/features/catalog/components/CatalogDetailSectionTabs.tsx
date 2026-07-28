@@ -1,19 +1,17 @@
 import type { ReactNode } from 'react'
 import { cn } from '@webonone/ui-kit'
 
-export type CatalogDetailTabId = 'profile' | 'gallery'
-
-const TABS: { id: CatalogDetailTabId; label: string }[] = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'gallery', label: 'Gallery' },
-]
+export type CatalogDetailTabId = 'profile' | 'attributes' | 'gallery' | 'variants'
 
 type CatalogDetailSectionTabsProps = {
   ariaLabel: string
   tab: CatalogDetailTabId
   onTabChange: (tab: CatalogDetailTabId) => void
   profile: ReactNode
+  attributes: ReactNode
   gallery: ReactNode
+  /** Products only — when omitted, Variants tab is hidden. */
+  variants?: ReactNode
 }
 
 export function CatalogDetailSectionTabs({
@@ -21,8 +19,28 @@ export function CatalogDetailSectionTabs({
   tab,
   onTabChange,
   profile,
+  attributes,
   gallery,
+  variants,
 }: CatalogDetailSectionTabsProps) {
+  const tabs: { id: CatalogDetailTabId; label: string }[] = [
+    { id: 'profile', label: 'Profile' },
+    { id: 'gallery', label: 'Gallery' },
+    { id: 'attributes', label: 'Attributes' },
+  ]
+  if (variants != null) {
+    tabs.push({ id: 'variants', label: 'Variants' })
+  }
+
+  const panel =
+    tab === 'profile'
+      ? profile
+      : tab === 'attributes'
+        ? attributes
+        : tab === 'gallery'
+          ? gallery
+          : variants
+
   return (
     <div className="flex flex-col gap-6">
       <div
@@ -30,7 +48,7 @@ export function CatalogDetailSectionTabs({
         aria-label={ariaLabel}
         className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
       >
-        {TABS.map((item) => (
+        {tabs.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -54,7 +72,7 @@ export function CatalogDetailSectionTabs({
         id={`catalog-library-panel-${tab}`}
         aria-labelledby={`catalog-library-tab-${tab}`}
       >
-        {tab === 'profile' ? profile : gallery}
+        {panel}
       </div>
     </div>
   )

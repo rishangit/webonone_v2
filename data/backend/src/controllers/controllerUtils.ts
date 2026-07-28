@@ -14,6 +14,13 @@ export function handleServiceError(err: unknown, res: Response): boolean {
       res.status(409).json({ message: 'Cannot delete: referenced by other records', code: 'FK_CONSTRAINT' })
       return true
     }
+    if (err.message.startsWith('VALIDATION:')) {
+      res.status(400).json({
+        message: err.message.replace(/^VALIDATION:\s*/, ''),
+        code: 'VALIDATION',
+      })
+      return true
+    }
   }
   return false
 }

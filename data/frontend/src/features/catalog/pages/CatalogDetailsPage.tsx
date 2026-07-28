@@ -11,10 +11,12 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  TagChip,
 } from '@webonone/ui-kit'
 import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { CatalogAttributesTab } from '@/features/catalog/components/CatalogAttributesTab'
 import {
   CatalogDetailSectionTabs,
   type CatalogDetailTabId,
@@ -26,7 +28,7 @@ import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { CatalogFeatureState } from '@webonone/store-kit'
-import type { CatalogAttributeValue, CatalogItem } from '@/shared/types/data.types'
+import type { CatalogItem } from '@/shared/types/data.types'
 
 type CatalogDetailKind = 'spaces'
 
@@ -47,12 +49,6 @@ const CONFIG: Record<
     select: (s) => s.spaces,
     actions: spacesActions,
   },
-}
-
-function formatAttributeValue(attr: CatalogAttributeValue): string {
-  if (attr.valueText != null && attr.valueText !== '') return attr.valueText
-  if (attr.valueNumber != null) return String(attr.valueNumber)
-  return '—'
 }
 
 function formatTimestamp(value: string): string {
@@ -78,7 +74,8 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { detail, detailStatus, detailError } = useAppSelector(config.select)
-  const canEdit = user?.role === 'super_admin' || user?.role === 'company_admin'
+  const canEdit =
+    user?.role === 'super_admin' || user?.role === 'company_admin'
   const [editOpen, setEditOpen] = useState(false)
   const [tab, setTab] = useState<CatalogDetailTabId>('profile')
 
@@ -88,15 +85,18 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   }, [config.actions, dispatch, entityId])
 
   usePlatformLoading(
-    detailStatus === 'loading' && !detail
-      ? `Loading ${config.singular.toLowerCase()}…`
-      : null,
+    detailStatus === 'loading' && !detail ? `Loading ${config.singular.toLowerCase()}…` : null,
   )
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (!entityId) return <Navigate to={config.listPath} replace />
 
-  const item = detail?.id === entityId ? detail : null
+  const id = entityId
+  const item = detail?.id === id ? detail : null
+
+  function refreshDetail() {
+    dispatch(config.actions.fetchDetailRequested({ id, force: true }))
+  }
 
   const profile = item ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
@@ -116,25 +116,6 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
             value={item.description?.trim() ? item.description : '—'}
           />
         </EditableSectionCard>
-
-        <EditableSectionCard
-          title="Attributes"
-          description={`Custom attribute values for this ${config.singular.toLowerCase()}`}
-          canEdit={canEdit}
-          onEdit={() => setEditOpen(true)}
-        >
-          {item.attributes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No attributes.</p>
-          ) : (
-            item.attributes.map((attr) => (
-              <ReadOnlyField
-                key={attr.attributeId}
-                label={attr.name}
-                value={formatAttributeValue(attr)}
-              />
-            ))
-          )}
-        </EditableSectionCard>
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
@@ -149,9 +130,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
           ) : (
             <div className="flex flex-wrap gap-1">
               {item.tags.map((tag) => (
-                <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
-                  {tag.name}
-                </span>
+                <TagChip key={tag.id} name={tag.name} color={tag.color} />
               ))}
             </div>
           )}
@@ -200,31 +179,38 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
           tab={tab}
           onTabChange={setTab}
           profile={profile}
+          attributes={
+            <CatalogAttributesTab
+              kind={kind}
+              entityId={id}
+              attributes={item.attributes}
+              canEdit={canEdit}
+              onChanged={refreshDetail}
+            />
+          }
           gallery={
             <CatalogLibraryGalleryCard
               kind={kind}
-              entityId={entityId}
+              entityId={id}
               galleryImages={item.galleryImages ?? []}
               accessToken={accessToken}
               canEdit={canEdit}
-              onSaved={() => {
-                dispatch(config.actions.fetchDetailRequested({ id: entityId, force: true }))
-              }}
+              onSaved={refreshDetail}
             />
           }
         />
       ) : null}
 
-      {editOpen && entityId ? (
+      {editOpen ? (
         <CatalogFormDialog
           kind={kind}
           open
-          id={entityId}
+          id={id}
           onOpenChange={(open) => {
             if (!open) setEditOpen(false)
           }}
           onSaved={() => {
-            dispatch(config.actions.fetchDetailRequested({ id: entityId, force: true }))
+            refreshDetail()
             setEditOpen(false)
           }}
         />

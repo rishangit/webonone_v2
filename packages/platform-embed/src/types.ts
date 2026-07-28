@@ -249,8 +249,11 @@ export type PlatformPeerDialogRequestMessage = {
    * Shown between Cancel and primary when set.
    */
   secondaryLabel?: string
-  /** Host CustomDialog footer primary action label. */
-  submitLabel: string
+  /**
+   * Host CustomDialog footer primary action label.
+   * Omit or pass `null` for Close-only footers (no primary button).
+   */
+  submitLabel?: string | null
 }
 
 export type PlatformPeerDialogResultMessage = {
@@ -313,7 +316,11 @@ export type PlatformPeerDialogNestedRequestMessage = {
   description?: string
   cancelLabel?: string
   secondaryLabel?: string
-  submitLabel: string
+  /**
+   * Host footer primary label.
+   * Omit or pass `null` for Close-only footers (no primary button).
+   */
+  submitLabel?: string | null
 }
 
 /** Shell → outer dialog iframe when nested sibling is cancelled. */
@@ -742,13 +749,15 @@ export function isPlatformPeerDialogRequestMessage(
     hasStringProperty(message, 'requestId') &&
     hasStringProperty(message, 'path') &&
     hasStringProperty(message, 'title') &&
-    hasStringProperty(message, 'submitLabel') &&
     isAllowedPlatformPeerDialogPath(message.path as string) &&
     isPlatformDialogSizePreset(message.sizeWidth) &&
     isPlatformDialogSizePreset(message.sizeHeight) &&
     (message.description === undefined || typeof message.description === 'string') &&
     (message.cancelLabel === undefined || typeof message.cancelLabel === 'string') &&
-    (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string')
+    (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string') &&
+    (message.submitLabel === undefined ||
+      message.submitLabel === null ||
+      typeof message.submitLabel === 'string')
   )
 }
 
@@ -857,13 +866,15 @@ export function isPlatformPeerDialogNestedRequestMessage(
     hasStringProperty(message, 'requestId') &&
     hasStringProperty(message, 'path') &&
     hasStringProperty(message, 'title') &&
-    hasStringProperty(message, 'submitLabel') &&
     isAllowedPlatformPeerDialogPath(message.path as string) &&
     isPlatformDialogSizePreset(message.sizeWidth) &&
     isPlatformDialogSizePreset(message.sizeHeight) &&
     (message.description === undefined || typeof message.description === 'string') &&
     (message.cancelLabel === undefined || typeof message.cancelLabel === 'string') &&
-    (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string')
+    (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string') &&
+    (message.submitLabel === undefined ||
+      message.submitLabel === null ||
+      typeof message.submitLabel === 'string')
   )
 }
 

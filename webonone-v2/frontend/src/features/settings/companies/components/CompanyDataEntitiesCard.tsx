@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  DATA_ENTITY_KEYS,
+  COMPANY_DATA_ENTITY_KEYS,
   DATA_ENTITY_LABELS,
+  filterCompanyDataEntities,
   type DataEntityKey,
 } from '@webonone/platform-nav'
 import {
@@ -36,13 +37,13 @@ export function CompanyDataEntitiesCard({
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
 
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<DataEntityKey[]>(dataEntities)
+  const [draft, setDraft] = useState<DataEntityKey[]>(() => filterCompanyDataEntities(dataEntities))
   const [pendingSave, setPendingSave] = useState(false)
   const sawSavingRef = useRef(false)
 
   useEffect(() => {
     if (!editing) {
-      setDraft(dataEntities)
+      setDraft(filterCompanyDataEntities(dataEntities))
     }
   }, [dataEntities, editing])
 
@@ -63,7 +64,9 @@ export function CompanyDataEntitiesCard({
     if (detailStatus === 'idle') {
       toast({ title: 'Data services updated' })
       setEditing(false)
-      const saved = detail?.id === companyId ? (detail.dataEntities ?? []) : draft
+      const saved = filterCompanyDataEntities(
+        detail?.id === companyId ? (detail.dataEntities ?? []) : draft,
+      )
       if (activeCompanyId === companyId) {
         dispatch(
           sessionRoleActions.companyDataEntitiesUpdated({
@@ -97,28 +100,31 @@ export function CompanyDataEntitiesCard({
   function toggleEntity(key: DataEntityKey, checked: boolean) {
     setDraft((prev) => {
       if (checked) {
-        return DATA_ENTITY_KEYS.filter((item) => item === key || prev.includes(item))
+        return COMPANY_DATA_ENTITY_KEYS.filter((item) => item === key || prev.includes(item))
       }
       return prev.filter((item) => item !== key)
     })
   }
 
   function handleSave() {
+    const next = filterCompanyDataEntities(draft)
     setPendingSave(true)
     dispatch(
       companiesActions.updateCompanyDetailRequested({
         id: companyId,
-        body: { dataEntities: draft },
+        body: { dataEntities: next },
       }),
     )
   }
 
   function handleCancel() {
-    setDraft(dataEntities)
+    setDraft(filterCompanyDataEntities(dataEntities))
     setEditing(false)
   }
 
-  const selectedLabels = dataEntities.map((key) => DATA_ENTITY_LABELS[key])
+  const selectedLabels = filterCompanyDataEntities(dataEntities).map(
+    (key) => DATA_ENTITY_LABELS[key],
+  )
 
   return (
     <EditableSectionCard
@@ -126,14 +132,14 @@ export function CompanyDataEntitiesCard({
       description="Choose which Data catalog sections this company uses. Selected sections appear under Data in the left navigation."
       canEdit={canEdit && !editing}
       onEdit={() => {
-        setDraft(dataEntities)
+        setDraft(filterCompanyDataEntities(dataEntities))
         setEditing(true)
       }}
     >
       {editing ? (
         <div className="space-y-4">
           <ul className="space-y-3">
-            {DATA_ENTITY_KEYS.map((key) => {
+            {COMPANY_DATA_ENTITY_KEYS.map((key) => {
               const id = `company-data-entity-${key}`
               const checked = draft.includes(key)
               return (

@@ -4,6 +4,7 @@ import type {
   CatalogItem,
   DashboardStats,
   PaginatedResult,
+  ProductVariant,
   Tag,
   Unit,
 } from '@/shared/types/data.types'
@@ -108,6 +109,59 @@ export const dataApi = {
       body: JSON.stringify({ galleryImages }),
     })
   },
+  replaceProductAttributes(id: string, attributeIds: string[]) {
+    return apiClient<CatalogItem>(`/products/${id}/attributes`, {
+      method: 'PUT',
+      body: JSON.stringify({ attribute_ids: attributeIds }),
+    })
+  },
+  addProductAttributeValue(
+    id: string,
+    attributeId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return apiClient<CatalogItem>(`/products/${id}/attributes/${attributeId}/values`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  updateProductAttributeValue(
+    id: string,
+    valueId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return apiClient<CatalogItem>(`/products/${id}/attribute-values/${valueId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+  setProductAttributeValueDefault(id: string, valueId: string) {
+    return apiClient<CatalogItem>(`/products/${id}/attribute-values/${valueId}/default`, {
+      method: 'PATCH',
+    })
+  },
+  deleteProductAttributeValue(id: string, valueId: string) {
+    return apiClient<CatalogItem>(`/products/${id}/attribute-values/${valueId}`, {
+      method: 'DELETE',
+    })
+  },
+  listProductVariants(productId: string) {
+    return apiClient<{ items: ProductVariant[] }>(`/products/${productId}/variants`)
+  },
+  createProductVariant(
+    productId: string,
+    body: {
+      name: string
+      sku: string
+      kind: 'default' | 'custom'
+      attribute_value_ids?: string[]
+    },
+  ) {
+    return apiClient<ProductVariant>(`/products/${productId}/variants`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
 
   listServices(query: ListQuery = {}) {
     return apiClient<PaginatedResult<CatalogItem>>(`/services${toQueryString(query)}`)
@@ -130,6 +184,42 @@ export const dataApi = {
       body: JSON.stringify({ galleryImages }),
     })
   },
+  replaceServiceAttributes(id: string, attributeIds: string[]) {
+    return apiClient<CatalogItem>(`/services/${id}/attributes`, {
+      method: 'PUT',
+      body: JSON.stringify({ attribute_ids: attributeIds }),
+    })
+  },
+  addServiceAttributeValue(
+    id: string,
+    attributeId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return apiClient<CatalogItem>(`/services/${id}/attributes/${attributeId}/values`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  updateServiceAttributeValue(
+    id: string,
+    valueId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return apiClient<CatalogItem>(`/services/${id}/attribute-values/${valueId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+  setServiceAttributeValueDefault(id: string, valueId: string) {
+    return apiClient<CatalogItem>(`/services/${id}/attribute-values/${valueId}/default`, {
+      method: 'PATCH',
+    })
+  },
+  deleteServiceAttributeValue(id: string, valueId: string) {
+    return apiClient<CatalogItem>(`/services/${id}/attribute-values/${valueId}`, {
+      method: 'DELETE',
+    })
+  },
 
   listSpaces(query: ListQuery = {}) {
     return apiClient<PaginatedResult<CatalogItem>>(`/spaces${toQueryString(query)}`)
@@ -150,6 +240,42 @@ export const dataApi = {
     return apiClient<CatalogItem>(`/spaces/${id}/gallery`, {
       method: 'PATCH',
       body: JSON.stringify({ galleryImages }),
+    })
+  },
+  replaceSpaceAttributes(id: string, attributeIds: string[]) {
+    return apiClient<CatalogItem>(`/spaces/${id}/attributes`, {
+      method: 'PUT',
+      body: JSON.stringify({ attribute_ids: attributeIds }),
+    })
+  },
+  addSpaceAttributeValue(
+    id: string,
+    attributeId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return apiClient<CatalogItem>(`/spaces/${id}/attributes/${attributeId}/values`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  updateSpaceAttributeValue(
+    id: string,
+    valueId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return apiClient<CatalogItem>(`/spaces/${id}/attribute-values/${valueId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+  setSpaceAttributeValueDefault(id: string, valueId: string) {
+    return apiClient<CatalogItem>(`/spaces/${id}/attribute-values/${valueId}/default`, {
+      method: 'PATCH',
+    })
+  },
+  deleteSpaceAttributeValue(id: string, valueId: string) {
+    return apiClient<CatalogItem>(`/spaces/${id}/attribute-values/${valueId}`, {
+      method: 'DELETE',
     })
   },
 }

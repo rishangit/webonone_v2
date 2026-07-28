@@ -1,21 +1,6 @@
-import {
-  type SelectTagValue,
-} from '@webonone/ui-kit'
+import { TagChip } from '@webonone/ui-kit'
 import type { CompanyTag } from '@/features/settings/basic/services/companyApi'
 import { EditableSectionCard } from './EditableSectionCard'
-
-function TagChip({ tag }: { tag: SelectTagValue }) {
-  return (
-    <span className="inline-flex max-w-[10rem] items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs">
-      <span
-        className="h-2.5 w-2.5 shrink-0 rounded-full border border-border"
-        style={{ backgroundColor: tag.color }}
-        aria-hidden
-      />
-      <span className="truncate">{tag.name}</span>
-    </span>
-  )
-}
 
 type CompanyTagsCardProps = {
   tags: CompanyTag[]
@@ -38,7 +23,7 @@ export function CompanyTagsCard({ tags, canEdit, onEdit }: CompanyTagsCardProps)
       ) : (
         <div className="flex flex-wrap items-center gap-1.5">
           {tags.map((tag) => (
-            <TagChip key={tag.id} tag={tag} />
+            <TagChip key={tag.id} name={tag.name} color={tag.color} />
           ))}
         </div>
       )}

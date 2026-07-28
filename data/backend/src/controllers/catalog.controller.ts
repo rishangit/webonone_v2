@@ -1,7 +1,9 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type {
+  CatalogAttributeValueBody,
   CreateCatalogBody,
+  ReplaceCatalogAttributesBody,
   UpdateCatalogBody,
   UpdateCatalogGalleryBody,
 } from '../schemas/catalog.schema.js'
@@ -63,6 +65,66 @@ export function createCatalogController(kind: CatalogKind) {
       try {
         const body = req.body as UpdateCatalogGalleryBody
         const item = await service.updateGallery(String(req.params.id), body.galleryImages)
+        res.json(item)
+      } catch (err) {
+        if (!handleServiceError(err, res)) throw err
+      }
+    },
+
+    async replaceAttributes(req: AuthenticatedRequest, res: Response) {
+      try {
+        const body = req.body as ReplaceCatalogAttributesBody
+        const item = await service.replaceAttributes(String(req.params.id), body)
+        res.json(item)
+      } catch (err) {
+        if (!handleServiceError(err, res)) throw err
+      }
+    },
+
+    async addAttributeValue(req: AuthenticatedRequest, res: Response) {
+      try {
+        const item = await service.addAttributeValue(
+          String(req.params.id),
+          String(req.params.attributeId),
+          req.body as CatalogAttributeValueBody,
+        )
+        res.status(201).json(item)
+      } catch (err) {
+        if (!handleServiceError(err, res)) throw err
+      }
+    },
+
+    async updateAttributeValue(req: AuthenticatedRequest, res: Response) {
+      try {
+        const item = await service.updateAttributeValue(
+          String(req.params.id),
+          String(req.params.valueId),
+          req.body as CatalogAttributeValueBody,
+        )
+        res.json(item)
+      } catch (err) {
+        if (!handleServiceError(err, res)) throw err
+      }
+    },
+
+    async deleteAttributeValue(req: AuthenticatedRequest, res: Response) {
+      try {
+        const item = await service.deleteAttributeValue(
+          String(req.params.id),
+          String(req.params.valueId),
+        )
+        res.json(item)
+      } catch (err) {
+        if (!handleServiceError(err, res)) throw err
+      }
+    },
+
+    async setAttributeValueDefault(req: AuthenticatedRequest, res: Response) {
+      try {
+        const item = await service.setAttributeValueDefault(
+          String(req.params.id),
+          String(req.params.valueId),
+        )
         res.json(item)
       } catch (err) {
         if (!handleServiceError(err, res)) throw err

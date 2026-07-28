@@ -9,13 +9,16 @@ import {
   CardTitle,
   FeaturePage,
   StatusTag,
-  cn,
+  TagChip,
   type SelectTagValue,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { CatalogDetailSectionTabs, type CatalogDetailTabId } from '../components/CatalogDetailSectionTabs'
 import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
+import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
+import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
 import { EditableSectionCard } from '../components/EditableSectionCard'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import type { ServiceWizardStep } from '../schemas/serviceSchemas'
@@ -44,33 +47,19 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-type AttributeDisplay = {
-  attributeId: string
-  name: string
-  value: string
-}
-
-type DetailTab = 'profile' | 'gallery'
-
-const DETAIL_TABS: { id: DetailTab; label: string }[] = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'gallery', label: 'Gallery' },
-]
-
 export function CompanyCatalogDetailPage() {
   const { kind: kindParam = '', id = '' } = useParams()
   const kind = isCatalogEntityKind(kindParam) ? kindParam : null
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { detail, detailStatus, mutateStatus, mutateError } = useAppSelector((s) => s.companyCatalog)
-  const [tab, setTab] = useState<DetailTab>('profile')
+  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
   const [editOpen, setEditOpen] = useState(false)
   const [pendingEditClose, setPendingEditClose] = useState(false)
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
     null,
   )
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
-  const [resolvedAttributes, setResolvedAttributes] = useState<AttributeDisplay[]>([])
 
   const loading = detailStatus === 'loading'
   usePlatformLoading(
@@ -102,20 +91,12 @@ export function CompanyCatalogDetailPage() {
   useEffect(() => {
     if (!detail || (kind !== 'services' && kind !== 'products' && kind !== 'spaces')) {
       setResolvedTags([])
-      setResolvedAttributes([])
       return
     }
 
     const payload = detail.payload ?? detail.hydrated ?? null
     const tagIds = Array.isArray(payload?.tagIds)
       ? (payload.tagIds as unknown[]).filter((v): v is string => typeof v === 'string')
-      : []
-    const attrs = Array.isArray(payload?.attributes)
-      ? (payload.attributes as Array<{
-          attributeId?: string
-          valueText?: string | null
-          valueNumber?: number | null
-        }>)
       : []
 
     let cancelled = false
@@ -134,58 +115,8 @@ export function CompanyCatalogDetailPage() {
         }
       }
 
-      const attrIds = attrs
-        .map((row) => row.attributeId)
-        .filter((v): v is string => typeof v === 'string')
-      let attrDisplays: AttributeDisplay[] = []
-      if (attrIds.length > 0) {
-        try {
-          const result = await dataLibraryApi.list('attributes', {
-            ids: attrIds,
-            pageSize: Math.min(100, attrIds.length),
-          })
-          const byId = new Map(result.items.map((item) => [item.id, item]))
-          attrDisplays = attrs
-            .filter(
-              (row): row is { attributeId: string; valueText?: string | null; valueNumber?: number | null } =>
-                typeof row.attributeId === 'string',
-            )
-            .map((row) => {
-              const lib = byId.get(row.attributeId)
-              const value =
-                row.valueNumber != null
-                  ? String(row.valueNumber)
-                  : row.valueText?.trim()
-                    ? row.valueText
-                    : '—'
-              return {
-                attributeId: row.attributeId,
-                name: lib?.name ?? row.attributeId,
-                value,
-              }
-            })
-        } catch {
-          attrDisplays = attrs
-            .filter(
-              (row): row is { attributeId: string; valueText?: string | null; valueNumber?: number | null } =>
-                typeof row.attributeId === 'string',
-            )
-            .map((row) => ({
-              attributeId: row.attributeId,
-              name: row.attributeId,
-              value:
-                row.valueNumber != null
-                  ? String(row.valueNumber)
-                  : row.valueText?.trim()
-                    ? row.valueText
-                    : '—',
-            }))
-        }
-      }
-
       if (cancelled) return
       setResolvedTags(tags)
-      setResolvedAttributes(attrDisplays)
     })()
 
     return () => {
@@ -210,6 +141,15 @@ export function CompanyCatalogDetailPage() {
   const showGalleryTabs = isCatalogGalleryKind(kind)
   const listPath = `/data/${kind}`
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
+  const entityPayload = detail?.payload ?? detail?.hydrated ?? null
+
+  function openAttributesEdit() {
+    if (kind === 'services') {
+      setServiceDialog({ initialStep: 4 })
+      return
+    }
+    setEditOpen(true)
+  }
 
   const serviceProfile = detail && kind === 'services' ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
@@ -231,21 +171,6 @@ export function CompanyCatalogDetailPage() {
           {detail.libraryUnavailable ? (
             <div className="text-destructive">Library item is unavailable right now.</div>
           ) : null}
-        </EditableSectionCard>
-
-        <EditableSectionCard
-          title="Attributes"
-          description="Custom attribute values for this service"
-          canEdit={canEdit && !busy}
-          onEdit={() => setServiceDialog({ initialStep: 4 })}
-        >
-          {resolvedAttributes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No attributes.</p>
-          ) : (
-            resolvedAttributes.map((attr) => (
-              <ReadOnlyField key={attr.attributeId} label={attr.name} value={attr.value} />
-            ))
-          )}
         </EditableSectionCard>
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
@@ -302,13 +227,7 @@ export function CompanyCatalogDetailPage() {
           ) : (
             <div className="flex flex-wrap gap-1">
               {resolvedTags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="rounded-full border px-2 py-0.5 text-xs"
-                  style={{ borderColor: tag.color }}
-                >
-                  {tag.name}
-                </span>
+                <TagChip key={tag.id} name={tag.name} color={tag.color} />
               ))}
             </div>
           )}
@@ -354,23 +273,6 @@ export function CompanyCatalogDetailPage() {
             <div className="text-destructive">Library item is unavailable right now.</div>
           ) : null}
         </EditableSectionCard>
-
-        {kind === 'products' || kind === 'spaces' ? (
-          <EditableSectionCard
-            title="Attributes"
-            description={`Custom attribute values for this ${singularLabel(kind).toLowerCase()}`}
-            canEdit={canEdit && !busy}
-            onEdit={() => setEditOpen(true)}
-          >
-            {resolvedAttributes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No attributes.</p>
-            ) : (
-              resolvedAttributes.map((attr) => (
-                <ReadOnlyField key={attr.attributeId} label={attr.name} value={attr.value} />
-              ))
-            )}
-          </EditableSectionCard>
-        ) : null}
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
         {kind === 'products' || kind === 'spaces' ? (
@@ -385,13 +287,7 @@ export function CompanyCatalogDetailPage() {
             ) : (
               <div className="flex flex-wrap gap-1">
                 {resolvedTags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="rounded-full border px-2 py-0.5 text-xs"
-                    style={{ borderColor: tag.color }}
-                  >
-                    {tag.name}
-                  </span>
+                  <TagChip key={tag.id} name={tag.name} color={tag.color} />
                 ))}
               </div>
             )}
@@ -472,53 +368,39 @@ export function CompanyCatalogDetailPage() {
       }
     >
       {detail && showGalleryTabs ? (
-        <div className="flex flex-col gap-6">
-          <div
-            role="tablist"
-            aria-label={`${singularLabel(kind)} sections`}
-            className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
-          >
-            {DETAIL_TABS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                id={`catalog-detail-tab-${item.id}`}
-                aria-selected={tab === item.id}
-                aria-controls={`catalog-detail-panel-${item.id}`}
-                className={cn(
-                  'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
-                  tab === item.id && 'bg-background text-foreground shadow-sm',
-                )}
-                onClick={() => setTab(item.id)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div
-            role="tabpanel"
-            id={`catalog-detail-panel-${tab}`}
-            aria-labelledby={`catalog-detail-tab-${tab}`}
-          >
-            {tab === 'profile' ? (
-              kind === 'services' ? serviceProfile : genericProfile
-            ) : (
-              <CatalogEntityGalleryCard
-                companyId={detail.companyId}
-                kind={kind}
-                entityId={id}
-                galleryImages={detail.displayGalleryImages ?? detail.galleryImages ?? []}
-                canEdit={!busy}
-                saving={busy}
-                inheritsLibraryGallery={
-                  detail.bindingMode === 'linked' && detail.galleryImages == null
-                }
-              />
-            )}
-          </div>
-        </div>
+        <CatalogDetailSectionTabs
+          ariaLabel={`${singularLabel(kind)} sections`}
+          tab={tab}
+          onTabChange={setTab}
+          profile={kind === 'services' ? serviceProfile : genericProfile}
+          attributes={
+            <CompanyCatalogAttributesTab
+              kind={kind}
+              libraryEntityId={detail.libraryEntityId}
+              payload={entityPayload}
+              canEdit={canEdit && !busy}
+              onEdit={openAttributesEdit}
+            />
+          }
+          gallery={
+            <CatalogEntityGalleryCard
+              companyId={detail.companyId}
+              kind={kind}
+              entityId={id}
+              galleryImages={detail.displayGalleryImages ?? detail.galleryImages ?? []}
+              canEdit={!busy}
+              saving={busy}
+              inheritsLibraryGallery={
+                detail.bindingMode === 'linked' && detail.galleryImages == null
+              }
+            />
+          }
+          variants={
+            kind === 'products' ? (
+              <CompanyProductVariantsTab libraryEntityId={detail.libraryEntityId} />
+            ) : undefined
+          }
+        />
       ) : null}
 
       {detail && !showGalleryTabs ? genericProfile : null}

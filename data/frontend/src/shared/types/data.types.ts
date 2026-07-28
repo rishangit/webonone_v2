@@ -31,12 +31,19 @@ export interface Unit {
   updatedAt: string
 }
 
+export interface AttributeUnitSummary {
+  id: string
+  name: string
+  symbol: string
+}
+
 export interface Attribute {
   id: string
   name: string
   description: string | null
   valueType: 'number' | 'text'
   unitId: string | null
+  unit: AttributeUnitSummary | null
   status: EntityStatus
   referenceCount: number
   createdAt: string
@@ -49,11 +56,19 @@ export interface TagSummary {
   color: string
 }
 
+export interface CatalogAttributeValueEntry {
+  id: string
+  valueText: string | null
+  valueNumber: number | null
+  isDefault: boolean
+}
+
 export interface CatalogAttributeValue {
   attributeId: string
   name: string
-  valueText: string | null
-  valueNumber: number | null
+  valueType: 'number' | 'text'
+  unit: AttributeUnitSummary | null
+  values: CatalogAttributeValueEntry[]
 }
 
 export type ServiceTimeMode = 'duration' | 'window'
@@ -79,6 +94,27 @@ export interface CatalogItem {
   durationMinutes?: number | null
   startTime?: string | null
   endTime?: string | null
+}
+
+export interface ProductVariantAttributeValue {
+  attributeId: string
+  attributeName: string
+  attributeValueId: string
+  valueText: string | null
+  valueNumber: number | null
+  valueType: 'number' | 'text'
+  unitSymbol: string | null
+}
+
+export interface ProductVariant {
+  id: string
+  productId: string
+  name: string
+  sku: string
+  isDefault: boolean
+  values: ProductVariantAttributeValue[]
+  createdAt: string
+  updatedAt: string
 }
 
 export interface DashboardStats {

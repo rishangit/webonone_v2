@@ -45,6 +45,12 @@ const ThemeDetailPage = lazy(() =>
 const PlatformPeerFrame = lazy(() =>
   import('@/features/shell/pages/PlatformPeerFrame').then((m) => ({ default: m.PlatformPeerFrame })),
 )
+const StaffPage = lazy(() =>
+  import('@/features/staff/pages/StaffPage').then((m) => ({ default: m.StaffPage })),
+)
+const StaffDetailsPage = lazy(() =>
+  import('@/features/staff/pages/StaffDetailsPage').then((m) => ({ default: m.StaffDetailsPage })),
+)
 const DataCatalogListRoute = lazy(() =>
   import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
     default: m.DataCatalogListRoute,
@@ -159,6 +165,22 @@ export function App() {
             element={
               <LazyRoute>
                 <ThemeDetailPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="staff"
+            element={
+              <LazyRoute>
+                <StaffPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="staff/:staffId"
+            element={
+              <LazyRoute>
+                <StaffDetailsPage />
               </LazyRoute>
             }
           />

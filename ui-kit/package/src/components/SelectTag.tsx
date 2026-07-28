@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ChevronDown, Tag as TagIcon } from 'lucide-react'
+import { TagChip } from './TagChip'
 import { cn } from '../lib/utils'
 
 export interface SelectTagValue {
@@ -20,19 +21,6 @@ export interface SelectTagProps
 
 const triggerClassName =
   'flex w-full items-center gap-3 rounded-md border border-input bg-background px-3 py-2 text-left text-sm transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-
-function TagChip({ tag }: { tag: SelectTagValue }) {
-  return (
-    <span className="inline-flex max-w-[10rem] items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs">
-      <span
-        className="h-2.5 w-2.5 shrink-0 rounded-full border border-border"
-        style={{ backgroundColor: tag.color }}
-        aria-hidden
-      />
-      <span className="truncate">{tag.name}</span>
-    </span>
-  )
-}
 
 function SelectTag({
   selectedTag,
@@ -68,7 +56,7 @@ function SelectTag({
     <>
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
         {visibleTags.map((tag) => (
-          <TagChip key={tag.id} tag={tag} />
+          <TagChip key={tag.id} name={tag.name} color={tag.color} />
         ))}
         {overflowCount > 0 ? (
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">

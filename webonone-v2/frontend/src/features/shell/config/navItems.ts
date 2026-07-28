@@ -24,6 +24,7 @@ import {
   EMAIL_NAV_SENTINELS,
   IDENTITY_NAV_SENTINELS,
   SMS_NAV_SENTINELS,
+  filterCompanyDataEntities,
   filterPlatformNavDataEntities,
   getPlatformNavDefs,
   isDataNavSentinel,
@@ -116,7 +117,7 @@ export function buildPlatformNav(
 ): NavConfigItem[] {
   let defs = getPlatformNavDefs(variant)
   if (variant === 'main' && dataEntities !== undefined) {
-    defs = filterPlatformNavDataEntities(defs, dataEntities)
+    defs = filterPlatformNavDataEntities(defs, filterCompanyDataEntities(dataEntities))
   }
   return buildNavItems(defs)
 }

@@ -3,10 +3,18 @@ import type {
   AddCustomerParams,
   AddCustomerResponse,
   CreateCustomerParams,
+  IdentityUserDetail,
   ListCustomersParams,
   ListUsersParams,
   ListUsersResponse,
 } from '@/features/users/types'
+
+export async function getUser(userId: string): Promise<IdentityUserDetail> {
+  const result = await apiClient<{ user: IdentityUserDetail }>(
+    `/users/${encodeURIComponent(userId)}`,
+  )
+  return result.user
+}
 
 export async function listUsers(params: ListUsersParams): Promise<ListUsersResponse> {
   const query = new URLSearchParams()

@@ -7,6 +7,7 @@ import {
   dataSentinelToExternalPath,
   EMAIL_NAV_SENTINELS,
   emailSentinelToExternalPath,
+  filterCompanyDataEntities,
   filterPlatformNavDataEntities,
   getCoreOriginFromReturnUrl,
   getPlatformNavDefs,
@@ -199,5 +200,12 @@ describe('coreNav', () => {
     const filtered = filterPlatformNavDataEntities(defs, [])
     const dataGroup = filtered.find((item) => item.kind === 'group' && item.label === 'Data')
     assert.equal(dataGroup, undefined)
+  })
+
+  it('filterCompanyDataEntities keeps only products, services, spaces', () => {
+    assert.deepEqual(
+      filterCompanyDataEntities(['tags', 'units', 'attributes', 'products', 'spaces']),
+      ['products', 'spaces'],
+    )
   })
 })

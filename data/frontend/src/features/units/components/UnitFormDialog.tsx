@@ -46,6 +46,8 @@ interface UnitFormDialogProps {
   onOpenChange: (open: boolean) => void
   onSaved: (unit?: Unit) => void
   chrome?: 'dialog' | 'embed-page'
+  /** When > 0, always render local CustomDialog (stacked create from unit picker). */
+  stackLevel?: number
 }
 
 export function UnitFormDialog({
@@ -54,6 +56,7 @@ export function UnitFormDialog({
   onOpenChange,
   onSaved,
   chrome = 'dialog',
+  stackLevel = 0,
 }: UnitFormDialogProps) {
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
@@ -61,14 +64,15 @@ export function UnitFormDialog({
   const title = isNew ? 'Create unit' : 'Edit unit'
   const path = isNew ? '/embed/dialogs/units/create' : `/embed/dialogs/units/${id}/edit`
   const idleSubmitLabel = isNew ? 'Create unit' : 'Save changes'
+  const forceLocal = stackLevel > 0
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
 
   const { isHosted } = useRequestPlatformPeerDialog({
-    parentOrigin: chrome === 'dialog' ? parentOrigin : null,
-    open: chrome === 'dialog' && open,
+    parentOrigin: chrome === 'dialog' && !forceLocal ? parentOrigin : null,
+    open: chrome === 'dialog' && open && !forceLocal,
     path,
     title,
     submitLabel: idleSubmitLabel,
@@ -246,6 +250,7 @@ export function UnitFormDialog({
       title={title}
       sizeWidth={DATA_FORM_DIALOG_SIZE.sizeWidth}
       sizeHeight={DATA_FORM_DIALOG_SIZE.sizeHeight}
+      stackLevel={stackLevel}
       footer={actions}
     >
       {body}

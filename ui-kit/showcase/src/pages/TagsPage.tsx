@@ -1,9 +1,29 @@
-import { StatusTag } from '@webonone/ui-kit'
+import { StatusTag, TagChip } from '@webonone/ui-kit'
 import { DemoSection } from '@/components/DemoSection'
+
+const DEMO_COLOR_TAGS = [
+  { name: 'Featured', color: '#3366FF' },
+  { name: 'New Arrival', color: '#16A34A' },
+  { name: 'Sale', color: '#DC2626' },
+  { name: 'Limited', color: '#D97706' },
+  { name: 'Seasonal', color: '#7C3AED' },
+]
 
 export function TagsPage() {
   return (
     <div className="space-y-10">
+      <DemoSection
+        id="catalog-color-tags"
+        title="Catalog color tags"
+        description="Colored pills for catalog tags (products, services, spaces, companies). Border, light tint background, solid dot, and label all use the tag color. Same chip as SelectTag selected values and detail pages."
+      >
+        <div className="flex flex-wrap items-center gap-1.5">
+          {DEMO_COLOR_TAGS.map((tag) => (
+            <TagChip key={tag.name} name={tag.name} color={tag.color} />
+          ))}
+        </div>
+      </DemoSection>
+
       <DemoSection
         id="company-status-tags"
         title="Company status tags"

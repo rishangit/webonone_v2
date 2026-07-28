@@ -29,6 +29,9 @@ const UserPickerPage = lazy(() =>
 const UsersPage = lazy(() =>
   import('@/features/users/pages/UsersPage').then((m) => ({ default: m.UsersPage })),
 )
+const UserDetailsPage = lazy(() =>
+  import('@/features/users/pages/UserDetailsPage').then((m) => ({ default: m.UserDetailsPage })),
+)
 const UserSelectionEmbedPage = lazy(() =>
   import('@/features/users/pages/UserSelectionEmbedPage').then((m) => ({
     default: m.UserSelectionEmbedPage,
@@ -106,6 +109,14 @@ export function App() {
               element={
                 <LazyRoute>
                   <UsersPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/users/:id"
+              element={
+                <LazyRoute>
+                  <UserDetailsPage />
                 </LazyRoute>
               }
             />

@@ -1,8 +1,17 @@
 import { z } from 'zod'
 import type { SelectTagValue } from '@webonone/ui-kit'
 
+export type ProductAttributeUnit = {
+  id: string
+  name: string
+  symbol: string
+}
+
 export type ProductAttributeRow = {
   attributeId: string
+  name: string
+  valueType: 'number' | 'text'
+  unit: ProductAttributeUnit | null
   valueText: string
   valueNumber: string
 }
@@ -35,7 +44,16 @@ export const productWizardStep2Schema = z.object({
 })
 
 export const productAttributeRowSchema = z.object({
-  attributeId: z.string(),
+  attributeId: z.string().length(21),
+  name: z.string(),
+  valueType: z.enum(['number', 'text']),
+  unit: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      symbol: z.string(),
+    })
+    .nullable(),
   valueText: z.string(),
   valueNumber: z.string(),
 })
@@ -61,26 +79,14 @@ export function parseProductWizardStep(value: string | null | undefined): Produc
   return 1
 }
 
-export function toCreateProductPayload(
-  values: ProductWizardFormValues,
-  options: {
-    canSetStatus: boolean
-    attributes: Array<{ id: string; valueType: string }>
-  },
-) {
+export function toCreateProductPayload(values: ProductWizardFormValues, options: { canSetStatus: boolean }) {
   return {
     name: values.name.trim(),
     description: values.description.trim() || null,
     status: options.canSetStatus ? values.status : 'pending',
     tag_ids: values.tags.map((tag) => tag.id),
-    attributes: values.attributes
-      .filter((row) => row.attributeId)
-      .map((row) => {
-        const attr = options.attributes.find((a) => a.id === row.attributeId)
-        if (attr?.valueType === 'number') {
-          return { attribute_id: row.attributeId, value_number: Number(row.valueNumber) }
-        }
-        return { attribute_id: row.attributeId, value_text: row.valueText }
-      }),
+    attributes: values.attributes.map((row) => ({
+      attribute_id: row.attributeId,
+    })),
   }
 }

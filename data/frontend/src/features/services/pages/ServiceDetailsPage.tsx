@@ -11,9 +11,11 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { CatalogAttributesTab } from '@/features/catalog/components/CatalogAttributesTab'
 import {
   CatalogDetailSectionTabs,
   type CatalogDetailTabId,
@@ -25,13 +27,7 @@ import { ServiceFormDialog } from '@/features/services/components/ServiceFormDia
 import { servicesActions } from '@/features/services/store'
 import type { ServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
 import { StatusBadge } from '@/shared/components/StatusBadge'
-import type { CatalogAttributeValue, CatalogItem } from '@/shared/types/data.types'
-
-function formatAttributeValue(attr: CatalogAttributeValue): string {
-  if (attr.valueText != null && attr.valueText !== '') return attr.valueText
-  if (attr.valueNumber != null) return String(attr.valueNumber)
-  return '—'
-}
+import type { CatalogItem } from '@/shared/types/data.types'
 
 function formatTimestamp(value: string): string {
   const date = new Date(value)
@@ -97,10 +93,15 @@ export function ServiceDetailsPage() {
   if (!accessToken) return <Navigate to="/login" replace />
   if (!serviceId) return <Navigate to="/services" replace />
 
-  const service = detail?.id === serviceId ? detail : null
+  const id = serviceId
+  const service = detail?.id === id ? detail : null
 
   function openWizard(initialStep: ServiceWizardStep) {
     setDialog({ initialStep })
+  }
+
+  function refreshDetail() {
+    dispatch(servicesActions.fetchDetailRequested({ id, force: true }))
   }
 
   const profile = service ? (
@@ -120,25 +121,6 @@ export function ServiceDetailsPage() {
             label="Description"
             value={service.description?.trim() ? service.description : '—'}
           />
-        </EditableSectionCard>
-
-        <EditableSectionCard
-          title="Attributes"
-          description="Custom attribute values for this service"
-          canEdit={canEdit}
-          onEdit={() => openWizard(4)}
-        >
-          {service.attributes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No attributes.</p>
-          ) : (
-            service.attributes.map((attr) => (
-              <ReadOnlyField
-                key={attr.attributeId}
-                label={attr.name}
-                value={formatAttributeValue(attr)}
-              />
-            ))
-          )}
         </EditableSectionCard>
       </div>
 
@@ -163,9 +145,7 @@ export function ServiceDetailsPage() {
           ) : (
             <div className="flex flex-wrap gap-1">
               {service.tags.map((tag) => (
-                <span key={tag.id} className="rounded-full border px-2 py-0.5 text-xs">
-                  {tag.name}
-                </span>
+                <TagChip key={tag.id} name={tag.name} color={tag.color} />
               ))}
             </div>
           )}
@@ -214,31 +194,38 @@ export function ServiceDetailsPage() {
           tab={tab}
           onTabChange={setTab}
           profile={profile}
+          attributes={
+            <CatalogAttributesTab
+              kind="services"
+              entityId={id}
+              attributes={service.attributes}
+              canEdit={canEdit}
+              onChanged={refreshDetail}
+            />
+          }
           gallery={
             <CatalogLibraryGalleryCard
               kind="services"
-              entityId={serviceId}
+              entityId={id}
               galleryImages={service.galleryImages ?? []}
               accessToken={accessToken}
               canEdit={canEdit}
-              onSaved={() => {
-                dispatch(servicesActions.fetchDetailRequested({ id: serviceId, force: true }))
-              }}
+              onSaved={refreshDetail}
             />
           }
         />
       ) : null}
 
-      {dialog && serviceId ? (
+      {dialog ? (
         <ServiceFormDialog
           open
-          id={serviceId}
+          id={id}
           initialStep={dialog.initialStep}
           onOpenChange={(open) => {
             if (!open) setDialog(null)
           }}
           onSaved={() => {
-            dispatch(servicesActions.fetchDetailRequested({ id: serviceId, force: true }))
+            refreshDetail()
             setDialog(null)
           }}
         />

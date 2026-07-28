@@ -1,0 +1,77 @@
+---
+description: >-
+  Implementation plan for spec 1.14.1 — Attribute unit-of-measure selection
+  dialog (TagSelect parity) in Data microservice
+alwaysApply: false
+globs: data/frontend/src/features/attributes/**,data/frontend/src/features/units/**,data/frontend/src/app/router.tsx
+---
+
+# Implementation plan — Spec 1.14.1
+
+## Summary
+
+Replace the **inline unit `<Select>`** on Data **Create / Edit attribute** with a **common unit selection dialog** matching **tag selection**: `UnitPickerPanel`, `UnitSelectField` (trigger + stacked dialogs), `/embed/dialogs/units/select` peer-dialog body, optional nested **Create unit**. Backend `unit_id` contract unchanged.
+
+See [02-unit-select-dialog.md](./02-unit-select-dialog.md), [03-attribute-form-unit-field.md](./03-attribute-form-unit-field.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.14.1` |
+| Prerequisite | Tag select pattern (`TagSelectField`, `TagSelectEmbedPage`); Units CRUD + `/embed/dialogs/units/create`; Attribute form with `unitId` |
+| Services | Data FE only |
+| New env | None |
+
+## Skills / rules (required)
+
+1. `.cursor/skills/data-agent/SKILL.md`
+2. `.cursor/skills/core-hosted-peer-dialog/SKILL.md`
+3. `.cursor/rules/dialog-windows.mdc` — stacked SelectTag pattern
+4. `.cursor/rules/selection-dialog-list.mdc` — Check on selected row
+5. `.cursor/skills/item-list/SKILL.md`
+6. `.cursor/skills/form-creation/SKILL.md` — keep Zod + required asterisks
+7. `.cursor/rules/platform-shell-navigation.mdc`
+8. `.cursor/rules/code-cleanliness.mdc`
+
+## Phase 1 — Unit select module
+
+**Goal:** Reusable picker + embed route.
+
+| Task | Paths |
+|------|-------|
+| Panel | `data/frontend/src/features/units/components/UnitPickerPanel.tsx` |
+| Field helpers | `data/frontend/src/features/units/components/UnitSelectField.tsx` |
+| Embed page | `data/frontend/src/features/units/pages/UnitSelectEmbedPage.tsx` |
+| Router | `data/frontend/src/app/router.tsx` → `/embed/dialogs/units/select` |
+| Create payload | Ensure `UnitFormDialog` / embed complete includes `symbol` for auto-select |
+
+**Verify:** `npm run type-check -w data-root`
+
+## Phase 2 — Attribute form
+
+**Goal:** Wire Unit field to picker; remove inline Select + bulk list load.
+
+| Task | Paths |
+|------|-------|
+| Form | `data/frontend/src/features/attributes/components/AttributeFormDialog.tsx` |
+| Schema | Keep `attributeSchemas.ts`; messages only if needed |
+| Edit hydrate | Resolve `{ name, symbol }` for existing `unitId` |
+
+**Verify:** `npm run type-check -w data-root`
+
+## Forbidden
+
+- Local unit picker `CustomDialog` when `parentOrigin` is set
+- Footer actions in `/embed/dialogs/units/select` body
+- Using `/embed/dialogs/catalog/units/select` for attributes
+- Backend / migration changes unless create-complete payload truly lacks `symbol` (prefer FE mapping from existing response)
+- Editing `webonone-v2/` for this dialog (host already allowlists embed dialogs)
+
+## Done when
+
+- [ ] Number attribute Unit field opens tag-style select dialog
+- [ ] Standalone stacked + embed nested both work
+- [ ] Selected row has border + Check
+- [ ] Create-from-picker auto-selects new unit
+- [ ] type-check data-root passes

@@ -41,6 +41,8 @@ export { SelectMedia } from './components/SelectMedia'
 export type { SelectMediaValue, SelectMediaProps } from './components/SelectMedia'
 export { SelectTag } from './components/SelectTag'
 export type { SelectTagValue, SelectTagProps } from './components/SelectTag'
+export { TagChip } from './components/TagChip'
+export type { TagChipProps } from './components/TagChip'
 export { CountrySelect } from './components/CountrySelect'
 export type { CountrySelectProps } from './components/CountrySelect'
 export {
