@@ -66,7 +66,7 @@ export const PLATFORM_ICONS: PlatformIconDefinition[] = [
     name: 'Calendar',
     icon: Calendar,
     category: 'form',
-    usedIn: ['DatePicker'],
+    usedIn: ['DatePicker', 'FullCalendar'],
   },
   {
     name: 'Check',
@@ -84,13 +84,13 @@ export const PLATFORM_ICONS: PlatformIconDefinition[] = [
     name: 'ChevronLeft',
     icon: ChevronLeft,
     category: 'navigation',
-    usedIn: ['Calendar'],
+    usedIn: ['Calendar', 'FullCalendar'],
   },
   {
     name: 'ChevronRight',
     icon: ChevronRight,
     category: 'navigation',
-    usedIn: ['Calendar', 'DropdownMenuSubTrigger'],
+    usedIn: ['Calendar', 'FullCalendar', 'DropdownMenuSubTrigger'],
   },
   {
     name: 'ChevronUp',

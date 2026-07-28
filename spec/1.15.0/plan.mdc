@@ -1,0 +1,102 @@
+---
+description: >-
+  Implementation plan for spec 1.15.0 — Company admin Calendar navigation and
+  FullCalendar day/week/month views (UI Kit + WebOnOne)
+alwaysApply: false
+globs: >-
+  ui-kit/package/src/components/FullCalendar*,ui-kit/package/src/components/Calendar.tsx,ui-kit/showcase/**,packages/platform-nav/src/coreNav.ts,webonone-v2/frontend/src/features/calendar/**,webonone-v2/frontend/src/features/shell/config/navItems.ts
+---
+
+# Implementation plan — Spec 1.15.0
+
+## Summary
+
+Add **Calendar** to **company_admin** left nav and a WebOnOne **`/calendar`** page that shows a **full calendar** with **Day**, **Week**, and **Month** views. Implement the board as UI Kit **`FullCalendar`** (keep compact `Calendar` for DatePicker). No events API in this release.
+
+See [02-ui-kit-full-calendar.md](./02-ui-kit-full-calendar.md), [04-company-admin-calendar-nav.md](./04-company-admin-calendar-nav.md), [05-calendar-page.md](./05-calendar-page.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.15.0` |
+| Prerequisite | Session roles + `MAIN_PLATFORM_NAV`; UI Kit `Button` / theme tokens; `FeaturePage` |
+| Services | UI Kit, platform-nav, WebOnOne FE |
+| New env | None |
+| Backend | None |
+
+## Skills / rules (required)
+
+1. `.cursor/skills/platform-orchestrator/SKILL.md` — UI Kit first, then WebOnOne
+2. `.cursor/skills/ui-kit-agent/SKILL.md`
+3. `.cursor/skills/webonone-agent/SKILL.md`
+4. `.cursor/rules/ui-kit-project.mdc`
+5. `.cursor/rules/ui-kit-consumption.mdc` — no local FullCalendar reimplementation
+6. `.cursor/rules/feature-page-layout.mdc`
+7. `.cursor/rules/platform-shell-navigation.mdc` — core route, not peer sentinel
+8. `.cursor/rules/webonone-v2-project.mdc`
+9. `.cursor/rules/loading-empty-states.mdc`
+10. `.cursor/rules/code-cleanliness.mdc`
+11. `.cursor/rules/tailwind-css.mdc`
+
+## Phase 1 — UI Kit FullCalendar
+
+**Goal:** Day / week / month board + toolbar.
+
+| Task | Paths |
+|------|-------|
+| Component | `ui-kit/package/src/components/FullCalendar.tsx` (split files OK) |
+| Exports | `ui-kit/package/src/index.ts` |
+| Preserve | `Calendar.tsx`, `DatePicker.tsx` |
+
+**Verify:** `npm run build -w @webonone/ui-kit` · `npm run type-check -w ui-kit-root`
+
+## Phase 2 — Showcase
+
+**Goal:** Components demo with sample events.
+
+| Task | Paths |
+|------|-------|
+| Demo | `ui-kit/showcase/…` Components section |
+
+**Verify:** `npm run type-check -w ui-kit-root`
+
+## Phase 3 — platform-nav
+
+**Goal:** Calendar on `main` nav only.
+
+| Task | Paths |
+|------|-------|
+| Def | `packages/platform-nav/src/coreNav.ts` — after Home |
+| Tests | `packages/platform-nav/src/coreNav.test.ts` |
+
+**Verify:** `npm run build:platform-nav`
+
+## Phase 4 — WebOnOne page + icon
+
+**Goal:** `/calendar` for company_admin.
+
+| Task | Paths |
+|------|-------|
+| Nav icon | `webonone-v2/frontend/src/features/shell/config/navItems.ts` |
+| Page | `webonone-v2/frontend/src/features/calendar/pages/CalendarPage.tsx` |
+| Router | app router registration + role guard |
+
+**Verify:** `npm run type-check -w webonone-v2-root`
+
+## Forbidden
+
+- Third-party calendar libraries
+- Events CRUD / migrations
+- Calendar on member or super_admin nav without spec revision
+- Peer-dialog / iframe for this page
+- Breaking compact `Calendar` / `DatePicker`
+- Hand-rolled day/week/month grids in WebOnOne
+
+## Done when
+
+- [ ] Company admin sees Calendar in left nav and opens full board
+- [ ] Day / Week / Month + Today / prev / next work
+- [ ] Showcase demo exists
+- [ ] type-check / ui-kit build pass
+- [ ] DatePicker still works

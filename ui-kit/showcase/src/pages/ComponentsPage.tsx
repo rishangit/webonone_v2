@@ -37,6 +37,7 @@ import {
   Form,
   FormField,
   FeaturePage,
+  FullCalendar,
   ImagePreview,
   Input,
   ItemList,
@@ -63,6 +64,8 @@ import {
   Switch,
   Textarea,
   useToast,
+  type FullCalendarEvent,
+  type FullCalendarView,
   type NavConfigItem,
   type ImagePreviewMode,
 } from '@webonone/ui-kit'
@@ -272,6 +275,78 @@ function LoadingStateDemo() {
           </Button>
         </div>
       ) : null}
+    </div>
+  )
+}
+
+function FullCalendarDemo() {
+  const [view, setView] = useState<FullCalendarView>('month')
+  const [anchorDate, setAnchorDate] = useState(() => new Date())
+  const [selection, setSelection] = useState<string | null>(null)
+
+  const sampleEvents = useMemo((): FullCalendarEvent[] => {
+    const today = new Date()
+    const y = today.getFullYear()
+    const m = today.getMonth()
+    const d = today.getDate()
+    return [
+      {
+        id: '1',
+        title: 'Team standup',
+        start: new Date(y, m, d, 9, 0),
+        end: new Date(y, m, d, 9, 30),
+      },
+      {
+        id: '2',
+        title: 'Design review',
+        start: new Date(y, m, d, 11, 0),
+        end: new Date(y, m, d, 12, 0),
+      },
+      {
+        id: '3',
+        title: 'Client workshop',
+        start: new Date(y, m, d, 14, 0),
+        end: new Date(y, m, d, 16, 0),
+      },
+      {
+        id: '4',
+        title: 'Sprint planning',
+        start: new Date(y, m, d + 1, 10, 0),
+        end: new Date(y, m, d + 1, 12, 0),
+      },
+      {
+        id: '5',
+        title: 'Offsite (multi-day)',
+        start: new Date(y, m, d + 2, 9, 0),
+        end: new Date(y, m, d + 4, 17, 0),
+      },
+      {
+        id: '6',
+        title: 'One-on-one',
+        start: new Date(y, m, d + 3, 15, 0),
+        end: new Date(y, m, d + 3, 15, 45),
+      },
+    ]
+  }, [])
+
+  return (
+    <div className="space-y-3">
+      <FullCalendar
+        view={view}
+        onViewChange={setView}
+        anchorDate={anchorDate}
+        onAnchorDateChange={setAnchorDate}
+        events={sampleEvents}
+        onSlotClick={(range) =>
+          setSelection(`Slot ${range.start.toLocaleString()} – ${range.end.toLocaleString()}`)
+        }
+        onEventClick={(event) => setSelection(`Event: ${event.title}`)}
+      />
+      {selection ? (
+        <p className="text-sm text-muted-foreground">Selected: {selection}</p>
+      ) : (
+        <p className="text-sm text-muted-foreground">Click a slot or event to preview selection.</p>
+      )}
     </div>
   )
 }
@@ -687,6 +762,14 @@ export function ComponentsPage() {
             </AuthLayout>
           </div>
         </div>
+      </DemoSection>
+
+      <DemoSection
+        id="full-calendar"
+        title="Full calendar"
+        description="Day / week / month board for scheduling pages. Compact Calendar remains for DatePicker only."
+      >
+        <FullCalendarDemo />
       </DemoSection>
 
       <DemoSection id="cards" title="Cards">

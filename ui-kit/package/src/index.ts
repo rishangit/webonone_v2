@@ -75,6 +75,12 @@ export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './compon
 export { Calendar } from './components/Calendar'
 export { DatePicker } from './components/DatePicker'
 export type { DatePickerProps } from './components/DatePicker'
+export { FullCalendar } from './components/FullCalendar'
+export type {
+  FullCalendarProps,
+  FullCalendarView,
+  FullCalendarEvent,
+} from './components/FullCalendar'
 export { MultiSelect } from './components/MultiSelect'
 export type { MultiSelectOption, MultiSelectProps } from './components/MultiSelect'
 export {

@@ -51,6 +51,9 @@ const StaffPage = lazy(() =>
 const StaffDetailsPage = lazy(() =>
   import('@/features/staff/pages/StaffDetailsPage').then((m) => ({ default: m.StaffDetailsPage })),
 )
+const CalendarPage = lazy(() =>
+  import('@/features/calendar/pages/CalendarPage').then((m) => ({ default: m.CalendarPage })),
+)
 const DataCatalogListRoute = lazy(() =>
   import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
     default: m.DataCatalogListRoute,
@@ -105,6 +108,14 @@ export function App() {
             element={
               <LazyRoute>
                 <HomePage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="calendar"
+            element={
+              <LazyRoute>
+                <CalendarPage />
               </LazyRoute>
             }
           />

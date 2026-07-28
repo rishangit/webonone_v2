@@ -36,6 +36,23 @@ describe('coreNav', () => {
     }
   })
 
+  it('includes Calendar on main nav only', () => {
+    const main = getPlatformNavDefs('main')
+    const calendar = main.find((item) => item.kind === 'item' && item.path === '/calendar')
+    assert.ok(calendar?.kind === 'item')
+    if (calendar?.kind === 'item') {
+      assert.equal(calendar.label, 'Calendar')
+      assert.equal(calendar.externalService, undefined)
+    }
+    assert.equal(main[1]?.kind === 'item' && main[1].path === '/calendar', true)
+
+    for (const variant of ['member', 'superAdmin'] as const) {
+      const defs = getPlatformNavDefs(variant)
+      const found = defs.find((item) => item.kind === 'item' && item.path === '/calendar')
+      assert.equal(found, undefined, `Calendar should not appear on ${variant}`)
+    }
+  })
+
   it('resolves super admin nav with companies', () => {
     const nav = resolvePlatformNavUrls('http://localhost:3010', 'superAdmin')
     const companies = nav.find((item) => item.kind === 'item' && item.label === 'Companies')

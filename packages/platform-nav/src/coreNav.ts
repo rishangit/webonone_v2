@@ -349,6 +349,7 @@ const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
 
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
+  { kind: 'item', path: '/calendar', label: 'Calendar' },
   {
     kind: 'group',
     label: 'Identity',
