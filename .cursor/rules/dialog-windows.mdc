@@ -53,7 +53,7 @@ List/page openers must resolve embed with **`resolvePlatformEmbedParentOrigin`**
 
 Picker / selection dialog bodies must show the **selected item** clearly: `itemListRowActiveClassName` **and** a Lucide `Check` on the **right** of each selected row. Do not rely on border alone.
 
-**Rule:** [selection-dialog-list.mdc](selection-dialog-list.mdc). Canonical: `TagPickerPanel.tsx`. Also `LibraryPickerPanel`, `CatalogLibrarySelectEmbedPage`, `UserSelectionDialog`, `UserPickerPage`.
+**Rule:** [selection-dialog-list.mdc](selection-dialog-list.mdc). Canonical: `TagPickerPanel.tsx`. Also `LibraryPickerPanel`, `CatalogLibrarySelectEmbedPage`, `UserSelectionDialog`, `ServiceSelectionDialog`, `UserPickerPage`.
 
 ### Stacked create from a selection dialog (SelectTag pattern)
 
@@ -137,10 +137,30 @@ Optional Radix passthrough on content: `onInteractOutside`, `onPointerDownOutsid
 
 ## Wizard dialogs
 
-- One step component per step — no one long inline block.
-- Single **step progress bar** only (`w-1/2 mx-auto`) — no duplicate numeric stepper.
-- Next/Previous in footer.
-- **Dual-use required** when the entity also has a details page: one `*FormDialog` for list Add, list Edit, and detail section Edit — `isNew = !id`; support `initialStep` (standalone) and `?step=` on `/embed/dialogs/<kind>/create` and `/embed/dialogs/<kind>/:id/edit`. See [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) · [skill](../skills/details-page-wizard-edit/SKILL.md). Do not ship a create-only wizard and a separate edit dialog for the same entity.
+Required chrome (every multi-step `*FormDialog` / wizard):
+
+```text
+CustomDialog (title + description — preferably the current step name / help)
+  body:
+    centered block:
+      "Step {n} of {total} — {StepTitle}"   ← required label
+      progress bar only (w-1/2 mx-auto)     ← required; no chip/numeric stepper UI
+    step body component
+  footer: Cancel (+ Previous when n > 1) + Next | primary submit
+```
+
+| Requirement | Detail |
+|-------------|--------|
+| **Step label** | Exact pattern: `Step {current} of {total} — {StepTitle}` — `text-xs font-medium uppercase tracking-wide text-muted-foreground`, centered above the bar. **Required on every wizard.** |
+| **Progress** | Single bar only (`w-1/2 mx-auto`, fill = `current/total`) — no duplicate numbered chips or second steppers |
+| **Steps** | One step component per step — no one long inline block |
+| **Footer** | Next/Previous in footer (`h-10`); Cancel on outline; primary Create/Save with Lucide `Save` on final step |
+| **Stacked pickers** | Sibling dialog + `nestedDismissGuard` on outer (see Stacked sibling dialogs). Canonical: Staff/`UserSelectionDialog`; Events step 1/`ServiceSelectionDialog` (company catalog loader — see `createCompanyCatalogServicesLoader` / `createDataLibraryServicesLoader`) |
+| **Dual-use** | When the entity also has a details page: one `*FormDialog` for list Add, list Edit, and detail section Edit — `isNew = !id`; support `initialStep` (standalone) and `?step=` on `/embed/dialogs/<kind>/create` and `/embed/dialogs/<kind>/:id/edit`. See [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) · [skill](../skills/details-page-wizard-edit/SKILL.md). Do not ship a create-only wizard and a separate edit dialog for the same entity. |
+
+**Canonical label + bar:** `CompanyFormDialog`, `StaffFormDialog`, `EventFormDialog`, `ServiceFormDialog`, `ThemeFormDialog`, Data `ProductFormDialog` / `ServiceFormDialog`, Identity `ProfileFormDialog`.
+
+**Forbidden:** progress bar without the `Step n of total — Title` line; chip steppers; footer actions in the body.
 
 ## Tabbed dialogs
 

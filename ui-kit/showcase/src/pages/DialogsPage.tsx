@@ -25,7 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
   type DialogSizePreset,
+  type LoadServicesFn,
   type LoadUsersFn,
+  type ServiceOption,
+  ServiceSelectionDialog,
   type UserOption,
   UserSelectionDialog,
 } from '@webonone/ui-kit'
@@ -67,6 +70,37 @@ async function mockLoadUsers(params: Parameters<LoadUsersFn>[0]) {
 
   return {
     users,
+    hasMore: start + params.pageSize < filtered.length,
+  }
+}
+
+const MOCK_SERVICES: ServiceOption[] = Array.from({ length: 80 }, (_, index) => ({
+  id: `mock-service-${index + 1}`,
+  name: `Mock Service ${index + 1}`,
+  description:
+    index % 2 === 0
+      ? `Duration · ${(index % 5) * 15 + 30} min`
+      : `Specific time · 09:00–${String(10 + (index % 4)).padStart(2, '0')}:00`,
+}))
+
+async function mockLoadServices(params: Parameters<LoadServicesFn>[0]) {
+  await new Promise((resolve) => window.setTimeout(resolve, 400))
+
+  let filtered = MOCK_SERVICES
+  const query = params.search.trim().toLowerCase()
+  if (query) {
+    filtered = filtered.filter(
+      (service) =>
+        service.name.toLowerCase().includes(query) ||
+        (service.description ?? '').toLowerCase().includes(query),
+    )
+  }
+
+  const start = (params.page - 1) * params.pageSize
+  const services = filtered.slice(start, start + params.pageSize)
+
+  return {
+    services,
     hasMore: start + params.pageSize < filtered.length,
   }
 }
@@ -163,6 +197,8 @@ export function DialogsPage() {
   const [terms, setTerms] = useState(false)
   const [userSelectOpen, setUserSelectOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserOption | null>(null)
+  const [serviceSelectOpen, setServiceSelectOpen] = useState(false)
+  const [selectedService, setSelectedService] = useState<ServiceOption | null>(null)
 
   function openDelete(item: (typeof mockItems)[0]) {
     setDeleteTarget(item)
@@ -392,6 +428,35 @@ export function DialogsPage() {
           loadUsers={mockLoadUsers}
           roleOptions={USER_ROLE_OPTIONS}
           description="Scroll to load more users. Select a row, then click Done."
+        />
+      </DemoSection>
+
+      <DemoSection
+        id="service-selection-dialog"
+        title="ServiceSelectionDialog (local mock data) — search + infinite scroll"
+      >
+        <div className="space-y-3">
+          <Button variant="outline" onClick={() => setServiceSelectOpen(true)}>
+            Open local-data service selection
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Selected (mock):{' '}
+            {selectedService ? (
+              <span className="text-foreground">
+                {selectedService.name}
+                {selectedService.description ? ` · ${selectedService.description}` : ''}
+              </span>
+            ) : (
+              '(none)'
+            )}
+          </p>
+        </div>
+        <ServiceSelectionDialog
+          open={serviceSelectOpen}
+          onOpenChange={setServiceSelectOpen}
+          onSelect={setSelectedService}
+          loadServices={mockLoadServices}
+          description="Scroll to load more services. Select a row, then click Done."
         />
       </DemoSection>
 

@@ -19,7 +19,7 @@ export interface AppHeaderUser {
   avatarUrl?: string | null
   email?: string
   /**
-   * Platform role key (`super_admin` | `company_admin` | `member`) shown as a
+   * Platform role key (`super_admin` | `company_admin` | `member` | `staff`) shown as a
    * StatusTag below email in the user dropdown.
    */
   role?: string

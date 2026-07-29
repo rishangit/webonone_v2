@@ -9,11 +9,13 @@ export type AssumableRoleOption = {
   companyName?: string
   companyLogoUrl?: string | null
   dataEntities?: DataEntityKey[]
+  /** Present when this company card is from company_staff (not owner). */
+  accountKind?: 'staff'
 }
 
 export type AssumableRolesResponse = {
   roles: AssumableRoleOption[]
-  /** True when Super Admin and/or owned companies — show Choose account dialog */
+  /** True when Super Admin, owned companies, and/or staff companies — show Choose account dialog */
   requiresAccountSelection: boolean
   /** Compat: true when user owns ≥1 pending/approved company */
   hasCompanyMembership: boolean

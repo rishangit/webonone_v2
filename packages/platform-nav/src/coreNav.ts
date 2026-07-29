@@ -347,23 +347,34 @@ const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
+const CALENDAR_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Calendar',
+  children: [
+    { kind: 'item', path: '/calendar/schedule', label: 'Schedule' },
+    { kind: 'item', path: '/calendar/events', label: 'Events' },
+  ],
+}
+
+const IDENTITY_COMPANY_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Identity',
+  children: [
+    {
+      kind: 'item',
+      path: IDENTITY_NAV_SENTINELS.users,
+      label: 'Users',
+      externalService: 'identity',
+      externalPath: '/users',
+    },
+    { kind: 'item', path: '/staff', label: 'Staff' },
+  ],
+}
+
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
-  { kind: 'item', path: '/calendar', label: 'Calendar' },
-  {
-    kind: 'group',
-    label: 'Identity',
-    children: [
-      {
-        kind: 'item',
-        path: IDENTITY_NAV_SENTINELS.users,
-        label: 'Users',
-        externalService: 'identity',
-        externalPath: '/users',
-      },
-      { kind: 'item', path: '/staff', label: 'Staff' },
-    ],
-  },
+  CALENDAR_PLATFORM_NAV_GROUP,
+  IDENTITY_COMPANY_NAV_GROUP,
   DATA_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
@@ -413,6 +424,9 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
 
 export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
+  CALENDAR_PLATFORM_NAV_GROUP,
+  IDENTITY_COMPANY_NAV_GROUP,
+  DATA_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Settings',

@@ -35,11 +35,13 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { items, listStatus, kind: storeKind } = useAppSelector((s) => s.companyCatalog)
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
 
   const loading = listStatus === 'loading' && storeKind === kind
   usePlatformLoading(loading ? `Loading ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}…` : null)
+  const canManage = activeRole === 'company_admin'
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -82,10 +84,12 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
             aria-label={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}`}
             className="w-64"
           />
-          <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Add {noun}
-          </Button>
+          {canManage ? (
+            <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add {noun}
+            </Button>
+          ) : null}
         </div>
       }
     >
@@ -124,15 +128,19 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                   <DropdownMenuItem onClick={() => navigate(`/data/${kind}/${item.id}`)}>
                     View details
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() =>
-                      dispatch(companyCatalogActions.deleteRequested({ kind, id: item.id }))
-                    }
-                  >
-                    Remove
-                  </DropdownMenuItem>
+                  {canManage ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() =>
+                          dispatch(companyCatalogActions.deleteRequested({ kind, id: item.id }))
+                        }
+                      >
+                        Remove
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
                 </ItemListMenu>
               </ItemListItem>
             ))
@@ -140,7 +148,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
         </ItemList>
       </ListPageBody>
 
-      {kind === 'services' ? (
+      {canManage && kind === 'services' ? (
         <ServiceFormDialog
           open={addOpen}
           includeSourceStep
@@ -148,7 +156,8 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
           onOpenChange={setAddOpen}
           onSaved={() => setAddOpen(false)}
         />
-      ) : (
+      ) : null}
+      {canManage && kind !== 'services' ? (
         <CatalogFormDialog
           open={addOpen}
           kind={kind}
@@ -158,7 +167,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
           onOpenChange={setAddOpen}
           onSaved={() => setAddOpen(false)}
         />
-      )}
+      ) : null}
     </FeaturePage>
   )
 }

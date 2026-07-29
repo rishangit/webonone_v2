@@ -77,11 +77,11 @@ function AppLayoutContent() {
 
   const nav = useMemo(() => {
     if (!activeRole) return []
-    if (activeRole === 'company_admin') {
-      const matched = findMatchingRole(assumableRoles, activeRole, activeCompanyId)
-      return buildNavForSessionRole(activeRole, matched?.dataEntities ?? [])
+    const matched = findMatchingRole(assumableRoles, activeRole, activeCompanyId)
+    if (activeRole === 'company_admin' || (activeRole === 'member' && activeCompanyId)) {
+      return buildNavForSessionRole(activeRole, matched?.dataEntities ?? [], activeCompanyId)
     }
-    return buildNavForSessionRole(activeRole)
+    return buildNavForSessionRole(activeRole, undefined, activeCompanyId)
   }, [activeRole, activeCompanyId, assumableRoles])
 
   const sidebarSession = useMemo(() => {
@@ -91,12 +91,26 @@ function AppLayoutContent() {
     const matched = findMatchingRole(assumableRoles, activeRole, activeCompanyId)
     const title =
       matched?.companyName ?? matched?.label ?? fallbackAccountLabel(activeRole, activeCompanyId)
+    const displayRole = matched?.accountKind === 'staff' ? 'staff' : activeRole
     return {
       title,
-      role: activeRole,
+      role: displayRole,
       imageUrl: matched?.companyLogoUrl ?? null,
     }
   }, [user, selectionComplete, activeRole, activeCompanyId, assumableRoles])
+
+  const headerUser = useMemo(() => {
+    if (!user) return null
+    const matched = findMatchingRole(assumableRoles, activeRole, activeCompanyId)
+    const displayRole =
+      matched?.accountKind === 'staff' ? 'staff' : (activeRole ?? undefined)
+    return {
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      email: user.email,
+      role: displayRole,
+    }
+  }, [user, activeRole, activeCompanyId, assumableRoles])
 
   function handleLogout() {
     clearWebOnOneAuthStorage()
@@ -122,16 +136,7 @@ function AppLayoutContent() {
           nav={nav}
           activePath={location.pathname}
           logo={<BrandLogo>WebOnOne</BrandLogo>}
-          user={
-            user
-              ? {
-                  displayName: user.displayName,
-                  avatarUrl: user.avatarUrl,
-                  email: user.email,
-                  role: activeRole ?? undefined,
-                }
-              : null
-          }
+          user={headerUser}
           sidebarSession={sidebarSession}
           onProfileClick={user ? handleProfileClick : undefined}
           onLogout={handleLogout}

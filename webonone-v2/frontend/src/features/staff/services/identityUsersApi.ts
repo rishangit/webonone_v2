@@ -54,3 +54,33 @@ export async function loadIdentityUsersForStaff(
     hasMore: data.page * data.pageSize < data.total,
   }
 }
+
+/** Idempotent: adds Identity user as company member if not already a member. */
+export async function ensureCompanyCustomer(
+  accessToken: string,
+  companyId: string,
+  userId: string,
+  companyName = '',
+): Promise<void> {
+  const res = await fetch(
+    `${getIdentityApiBase()}/companies/${encodeURIComponent(companyId)}/customers`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, companyName }),
+    },
+  )
+  if (res.ok) return
+
+  const data = (await res.json().catch(() => ({}))) as {
+    message?: string
+    code?: string
+  }
+  // Owners are already linked to the company; Identity rejects them as customers.
+  if (res.status === 409 && data.code === 'ALREADY_OWNER') return
+
+  throw new Error(data.message ?? `Failed to add company user (${res.status})`)
+}

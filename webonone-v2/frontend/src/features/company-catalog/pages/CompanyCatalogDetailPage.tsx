@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import {
@@ -14,6 +14,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import { CatalogDetailSectionTabs, type CatalogDetailTabId } from '../components/CatalogDetailSectionTabs'
 import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
@@ -34,6 +35,17 @@ import {
   type CatalogPayload,
 } from '../types/companyCatalog.types'
 
+const CATALOG_TABS_BASE = [
+  'profile',
+  'gallery',
+  'attributes',
+] as const satisfies readonly CatalogDetailTabId[]
+
+const CATALOG_TABS_WITH_VARIANTS = [
+  ...CATALOG_TABS_BASE,
+  'variants',
+] as const satisfies readonly CatalogDetailTabId[]
+
 function isCatalogEntityKind(value: string): value is CatalogEntityKind {
   return (CATALOG_ENTITY_KINDS as readonly string[]).includes(value)
 }
@@ -53,7 +65,12 @@ export function CompanyCatalogDetailPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { detail, detailStatus, mutateStatus, mutateError } = useAppSelector((s) => s.companyCatalog)
-  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const allowedTabs = useMemo(
+    () => (kind === 'products' ? CATALOG_TABS_WITH_VARIANTS : CATALOG_TABS_BASE),
+    [kind],
+  )
+  const [tab, setTab] = useDetailTabParam(allowedTabs, 'profile')
   const [editOpen, setEditOpen] = useState(false)
   const [pendingEditClose, setPendingEditClose] = useState(false)
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
@@ -65,10 +82,6 @@ export function CompanyCatalogDetailPage() {
   usePlatformLoading(
     loading && kind ? `Loading ${singularLabel(kind).toLowerCase()}…` : null,
   )
-
-  useEffect(() => {
-    setTab('profile')
-  }, [kind, id])
 
   useEffect(() => {
     if (!kind || !id) return
@@ -136,8 +149,11 @@ export function CompanyCatalogDetailPage() {
   }
 
   const busy = mutateStatus === 'saving'
-  const canEdit = detail?.bindingMode === 'forked' || detail?.bindingMode === 'custom'
-  const canCustomize = detail?.bindingMode === 'linked' && detail.hydrated && !detail.libraryUnavailable
+  const canManage = activeRole === 'company_admin'
+  const canEdit =
+    canManage && (detail?.bindingMode === 'forked' || detail?.bindingMode === 'custom')
+  const canCustomize =
+    canManage && detail?.bindingMode === 'linked' && detail.hydrated && !detail.libraryUnavailable
   const showGalleryTabs = isCatalogGalleryKind(kind)
   const listPath = `/data/${kind}`
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
@@ -388,7 +404,7 @@ export function CompanyCatalogDetailPage() {
               kind={kind}
               entityId={id}
               galleryImages={detail.displayGalleryImages ?? detail.galleryImages ?? []}
-              canEdit={!busy}
+              canEdit={canManage && !busy}
               saving={busy}
               inheritsLibraryGallery={
                 detail.bindingMode === 'linked' && detail.galleryImages == null

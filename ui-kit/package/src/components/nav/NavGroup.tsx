@@ -30,7 +30,8 @@ interface NavGroupProps {
 
 function isChildActive(activePath: string | undefined, children: NavItemConfig[]): boolean {
   if (!activePath) return false
-  return children.some((child) => isNavPathActive(activePath, child.to))
+  const siblingTos = children.map((child) => child.to)
+  return children.some((child) => isNavPathActive(activePath, child.to, siblingTos))
 }
 
 function NavGroup({
@@ -50,6 +51,7 @@ function NavGroup({
   const isControlled = openProp !== undefined
   const open = isControlled ? openProp : uncontrolledOpen
   const groupActive = isChildActive(activePath, children)
+  const siblingTos = children.map((child) => child.to)
 
   function handleToggle() {
     const next = !open
@@ -100,7 +102,7 @@ function NavGroup({
                   }}
                   className={cn(
                     'flex cursor-pointer items-center gap-2',
-                    isNavPathActive(activePath, child.to) && 'text-primary',
+                    isNavPathActive(activePath, child.to, siblingTos) && 'text-primary',
                   )}
                 >
                   <child.icon className="h-4 w-4" aria-hidden />
@@ -144,7 +146,7 @@ function NavGroup({
               onNavItemNavigate={onNavItemNavigate}
               onNavItemPrefetch={onNavItemPrefetch}
               nested
-              active={isNavPathActive(activePath, child.to)}
+              active={isNavPathActive(activePath, child.to, siblingTos)}
               onNavigate={onNavigate}
             />
           ))}

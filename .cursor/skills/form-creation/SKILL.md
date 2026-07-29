@@ -22,6 +22,8 @@ Standard workflow for forms that submit to the **same service's API**. Validate 
 - Adding or changing API routes that accept form payloads
 - **Also read** when the form is in a dialog/modal/wizard: [core-hosted-peer-dialog](../core-hosted-peer-dialog/SKILL.md) · [dialog-windows.mdc](../../rules/dialog-windows.mdc)
 
+**Multi-step wizards:** every wizard body must show `Step {n} of {total} — {StepTitle}` above the single progress bar — see [dialog-windows.mdc](../../rules/dialog-windows.mdc) § Wizard dialogs and [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md).
+
 ## Validation approach
 
 | Layer | Role | Mechanism |

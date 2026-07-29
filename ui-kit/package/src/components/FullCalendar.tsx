@@ -116,7 +116,7 @@ function TimelineColumn({
     <div className="relative flex min-w-0 flex-1">
       {showGutter ? (
         <div
-          className="sticky left-0 z-20 w-14 shrink-0 border-r border-border bg-background text-right text-xs text-muted-foreground"
+          className="sticky left-0 z-20 w-14 shrink-0 border-r border-border bg-[hsl(var(--background-base))] text-right text-xs text-muted-foreground"
           style={{ height: HOURS.length * HOUR_HEIGHT_PX }}
         >
           {HOURS.map((hour) => (
@@ -193,7 +193,7 @@ function DayView({
     <div className="overflow-auto">
       <div
         className={cn(
-          'sticky top-0 z-30 border-b border-border bg-background px-3 py-2 text-sm font-medium',
+          'sticky top-0 z-30 border-b border-border bg-[hsl(var(--background-base))] px-3 py-2 text-sm font-medium',
           isToday(day) && 'bg-accent',
         )}
       >
@@ -230,7 +230,7 @@ function WeekView({
 
   return (
     <div className="overflow-auto">
-      <div className="sticky top-0 z-30 flex border-b border-border bg-background">
+      <div className="sticky top-0 z-30 flex border-b border-border bg-[hsl(var(--background-base))]">
         <div className="w-14 shrink-0 border-r border-border" />
         {days.map((day) => (
           <div
@@ -249,7 +249,7 @@ function WeekView({
       </div>
       <div className="flex">
         <div
-          className="sticky left-0 z-20 w-14 shrink-0 border-r border-border bg-background text-right text-xs text-muted-foreground"
+          className="sticky left-0 z-20 w-14 shrink-0 border-r border-border bg-[hsl(var(--background-base))] text-right text-xs text-muted-foreground"
           style={{ height: HOURS.length * HOUR_HEIGHT_PX }}
         >
           {HOURS.map((hour) => (
@@ -291,15 +291,18 @@ function MonthView({
   const interactive = Boolean(onSlotClick)
 
   return (
-    <div>
-      <div className="grid grid-cols-7 border-b border-border text-center text-xs font-medium text-muted-foreground">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="grid shrink-0 grid-cols-7 border-b border-border text-center text-xs font-medium text-muted-foreground">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="border-r border-border py-2 last:border-r-0">
             {label}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7">
+      <div
+        className="grid min-h-0 flex-1 grid-cols-7"
+        style={{ gridTemplateRows: `repeat(${days.length / 7}, minmax(0, 1fr))` }}
+      >
         {days.map((day) => {
           const inMonth = day.getMonth() === month
           const dayEvents = eventsForDay(events, day)
@@ -314,9 +317,9 @@ function MonthView({
               role={interactive ? 'button' : undefined}
               tabIndex={interactive ? 0 : undefined}
               className={cn(
-                'min-h-24 border-b border-r border-border p-1 last:border-r-0',
-                !inMonth && 'bg-muted/30 text-muted-foreground',
-                isToday(day) && 'bg-accent/50',
+                'min-h-0 overflow-hidden border-b border-r border-border p-1 last:border-r-0',
+                !inMonth && 'bg-muted/20 text-muted-foreground',
+                isToday(day) && 'bg-accent/40',
                 interactive && 'cursor-pointer hover:bg-accent/40',
               )}
               onClick={() => onSlotClick?.({ start: dayStart, end: dayEnd })}
@@ -388,10 +391,13 @@ function FullCalendar({
   return (
     <div
       id={id}
-      className={cn('rounded-md border border-border bg-background', className)}
+      className={cn(
+        'flex min-h-[28rem] flex-1 flex-col rounded-md border border-border bg-[hsl(var(--background-base))]',
+        className,
+      )}
     >
       {showToolbar ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-3">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-[hsl(var(--background-base))] p-3">
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -445,7 +451,12 @@ function FullCalendar({
           </div>
         </div>
       ) : null}
-      <div className="min-h-[28rem]">
+      <div
+        className={cn(
+          'min-h-0 flex-1',
+          view === 'month' ? 'flex flex-col' : 'overflow-auto',
+        )}
+      >
         {view === 'day' ? (
           <DayView
             anchorDate={anchorDate}

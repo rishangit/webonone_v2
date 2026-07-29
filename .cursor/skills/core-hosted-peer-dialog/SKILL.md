@@ -35,7 +35,7 @@ Standalone (no parent): local `CustomDialog` as usual. Chrome sizing/footer: [di
 | Footer Cancel + optional secondary + primary | Parent host (`secondary` → `peer-dialog-secondary`, primary → `peer-dialog-submit`) | Same labels (wizards: Previous + Next/Save) |
 | Body | Peer `/embed/dialogs/…` — fields/list only; **no** footer buttons | Same shared body component |
 
-Wizards: pass `secondaryLabel: 'Previous'` when step > 1; update `description`, `submitLabel`, and `secondaryLabel` with `sendPlatformPeerDialogBusy` as the step changes. Never put Previous/Next/Save in the embed body.
+Wizards: pass `secondaryLabel: 'Previous'` when step > 1; update `description`, `submitLabel`, and `secondaryLabel` with `sendPlatformPeerDialogBusy` as the step changes. Never put Previous/Next/Save in the embed body. Body still shows `Step {n} of {total} — {Title}` + progress bar per [dialog-windows.mdc](../../rules/dialog-windows.mdc).
 
 ## Recipe
 

@@ -2,6 +2,7 @@ import { Navigate, useParams } from 'react-router-dom'
 import { useAppSelector } from '@/app/store/hooks'
 import { CompanyCatalogDetailPage } from '@/features/company-catalog/pages/CompanyCatalogDetailPage'
 import { CompanyCatalogListPage } from '@/features/company-catalog/pages/CompanyCatalogListPage'
+import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { PlatformPeerFrame } from '@/features/shell/pages/PlatformPeerFrame'
 import {
   CATALOG_ENTITY_KINDS,
@@ -12,16 +13,17 @@ function isCatalogEntityKind(value: string): value is CatalogEntityKind {
   return (CATALOG_ENTITY_KINDS as readonly string[]).includes(value)
 }
 
-/** company_admin company catalog list; super_admin Data library embed. */
+/** Company catalog list for company_admin / staff; super_admin Data library embed. */
 export function DataCatalogListRoute() {
   const { kind: kindParam = '' } = useParams()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
 
   if (activeRole === 'super_admin') {
     return <PlatformPeerFrame peer="data" />
   }
 
-  if (activeRole !== 'company_admin') {
+  if (!canAccessCompanySession(activeRole, activeCompanyId)) {
     return <Navigate to="/" replace />
   }
 
@@ -32,15 +34,16 @@ export function DataCatalogListRoute() {
   return <CompanyCatalogListPage kind={kindParam} />
 }
 
-/** company_admin company catalog detail; super_admin Data library embed. */
+/** Company catalog detail for company_admin / staff; super_admin Data library embed. */
 export function DataCatalogDetailRoute() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
 
   if (activeRole === 'super_admin') {
     return <PlatformPeerFrame peer="data" />
   }
 
-  if (activeRole !== 'company_admin') {
+  if (!canAccessCompanySession(activeRole, activeCompanyId)) {
     return <Navigate to="/" replace />
   }
 

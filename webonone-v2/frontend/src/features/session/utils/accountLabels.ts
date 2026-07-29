@@ -1,6 +1,14 @@
 import type { AssumableRoleOption, SessionRole } from '../types/sessionRole.types'
 
-export function accountDescription(option: Pick<AssumableRoleOption, 'role' | 'companyName'>): string {
+export function accountDescription(
+  option: Pick<AssumableRoleOption, 'role' | 'companyName' | 'accountKind' | 'companyId'>,
+): string {
+  if (option.accountKind === 'staff' || (option.role === 'member' && option.companyId)) {
+    return option.companyName
+      ? `Staff — work as staff for ${option.companyName}.`
+      : 'Staff — work as staff for this company.'
+  }
+
   switch (option.role) {
     case 'super_admin':
       return 'Platform operator — Companies nav and system-wide Email access.'
@@ -35,7 +43,10 @@ export function fallbackAccountLabel(role: SessionRole | null, companyId: string
     return 'Super Admin'
   }
   if (role === 'company_admin') {
-    return companyId ? 'Company Owner' : 'Company Owner'
+    return 'Company Owner'
+  }
+  if (role === 'member' && companyId) {
+    return 'Staff'
   }
   return 'Default User'
 }

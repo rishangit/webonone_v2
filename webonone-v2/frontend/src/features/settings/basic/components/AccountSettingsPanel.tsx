@@ -25,7 +25,11 @@ export function AccountSettingsPanel() {
   const label = matched?.label ?? fallbackAccountLabel(activeRole, activeCompanyId)
   const description = matched
     ? accountDescription(matched)
-    : accountDescription({ role: activeRole ?? 'member', companyName: undefined })
+    : accountDescription({
+        role: activeRole ?? 'member',
+        companyId: activeCompanyId,
+        companyName: undefined,
+      })
   const roleForTag = activeRole ?? matched?.role
 
   const canChange = assumableRoles.length > 1
@@ -53,7 +57,9 @@ export function AccountSettingsPanel() {
       <CardContent>
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium text-foreground">{label}</p>
-          {roleForTag ? (
+          {matched?.accountKind === 'staff' ? (
+            <StatusTag variant="staff" className="shrink-0" />
+          ) : roleForTag ? (
             isStatusTagVariant(roleForTag) ? (
               <StatusTag variant={roleForTag} className="shrink-0" />
             ) : (

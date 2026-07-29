@@ -1,10 +1,12 @@
 import {
   Building2,
   Calendar,
+  CalendarDays,
   Database,
   History,
   Home,
   Layers,
+  List,
   Mail,
   MessageSquare,
   Package,
@@ -43,9 +45,11 @@ import type { SessionRole } from '@/features/session/types/sessionRole.types'
 
 const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/': Home,
-  '/calendar': Calendar,
+  '/calendar/schedule': CalendarDays,
+  '/calendar/events': List,
   '/companies': Building2,
   '/settings/companies': Building2,
+  '/staff': Users,
   [IDENTITY_NAV_SENTINELS.users]: Users,
   [EMAIL_NAV_SENTINELS.send]: Send,
   [EMAIL_NAV_SENTINELS.queue]: Rows3,
@@ -72,6 +76,7 @@ const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Email: Mail,
   Data: Database,
   SMS: MessageSquare,
+  Calendar: Calendar,
 }
 
 function iconForPath(path: string): LucideIcon {
@@ -118,10 +123,18 @@ export function buildPlatformNav(
   dataEntities?: readonly DataEntityKey[],
 ): NavConfigItem[] {
   let defs = getPlatformNavDefs(variant)
-  if (variant === 'main' && dataEntities !== undefined) {
+  if ((variant === 'main' || variant === 'member') && dataEntities !== undefined) {
     defs = filterPlatformNavDataEntities(defs, filterCompanyDataEntities(dataEntities))
   }
   return buildNavItems(defs)
+}
+
+const STAFF_WORKSPACE_GROUPS = new Set(['Calendar', 'Identity', 'Data'])
+
+function withoutStaffWorkspaceGroups(defs: CoreNavDef[]): CoreNavDef[] {
+  return defs.filter(
+    (item) => !(item.kind === 'group' && STAFF_WORKSPACE_GROUPS.has(item.label)),
+  )
 }
 
 export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
@@ -133,9 +146,17 @@ export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
 export function buildNavForSessionRole(
   role: SessionRole,
   dataEntities?: readonly DataEntityKey[],
+  companyId?: string | null,
 ): NavConfigItem[] {
   const variant = sessionRoleToNavVariant(role)
   if (role === 'company_admin') {
+    return buildPlatformNav(variant, dataEntities ?? [])
+  }
+  // Default user (member, no company) — Settings only; workspace groups are for staff.
+  if (role === 'member' && !companyId) {
+    return buildNavItems(withoutStaffWorkspaceGroups(getPlatformNavDefs('member')))
+  }
+  if (role === 'member') {
     return buildPlatformNav(variant, dataEntities ?? [])
   }
   return buildPlatformNav(variant)

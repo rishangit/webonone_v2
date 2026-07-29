@@ -4,7 +4,12 @@ import type {
   StaffScheduleDay,
   UpdateCompanyStaffBody,
 } from '../schemas/companyStaffSchemas.js'
+import * as roleRepo from '../clients/identityRoleClient.js'
 import * as repo from '../repositories/companyStaff.repository.js'
+
+export async function ensureCompanyMemberRole(userId: string, companyId: string): Promise<void> {
+  await roleRepo.ensureCompanyMemberRole(userId, companyId, nanoid())
+}
 
 export type StaffScheduleDayDto = {
   day_of_week: number
@@ -132,6 +137,7 @@ export async function createCompanyStaff(
       end_time: day.end_time,
     })),
   )
+  await ensureCompanyMemberRole(body.user_id, companyId)
   return getCompanyStaff(companyId, id)
 }
 
@@ -149,6 +155,9 @@ export async function updateCompanyStaff(
       throw serviceError('This user is already on the staff list', 409)
     }
   }
+
+  const previousUserId = row.user_id
+  const nextUserId = body.user_id !== undefined ? body.user_id : previousUserId
 
   if (
     body.user_id !== undefined ||
@@ -175,7 +184,34 @@ export async function updateCompanyStaff(
     )
   }
 
+  if (nextUserId !== previousUserId) {
+    await ensureCompanyMemberRole(nextUserId, companyId)
+  }
+
   return getCompanyStaff(companyId, staffId)
+}
+
+export async function backfillStaffMemberRoles(): Promise<{
+  total: number
+  ensured: number
+  failed: number
+}> {
+  const rows = await repo.listAllStaff()
+  let ensured = 0
+  let failed = 0
+  for (const row of rows) {
+    try {
+      await ensureCompanyMemberRole(row.user_id, row.company_id)
+      ensured += 1
+    } catch (err) {
+      failed += 1
+      console.error(
+        `Failed to ensure member role for staff ${row.id} (user=${row.user_id}, company=${row.company_id})`,
+        err,
+      )
+    }
+  }
+  return { total: rows.length, ensured, failed }
 }
 
 export async function deleteCompanyStaff(companyId: string, staffId: string): Promise<void> {

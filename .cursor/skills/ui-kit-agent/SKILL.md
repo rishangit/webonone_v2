@@ -40,6 +40,8 @@ After breaking API or style changes, note consumer impact for the parent agent. 
 | `ListPageDemo` | `#pages-list` | [item-list](../item-list/SKILL.md) |
 | `DetailsPageDemo` | `#pages-details` | [details-page-cards](../details-page-cards/SKILL.md) |
 
+Shared selection dialogs: `UserSelectionDialog`, `ServiceSelectionDialog` (Dialogs showcase — mock `loadUsers` / `loadServices`).
+
 Keep both demos aligned with the rules above when changing Pages tab layouts.
 
 ## Verification

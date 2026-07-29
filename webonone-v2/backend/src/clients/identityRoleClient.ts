@@ -103,6 +103,39 @@ export async function insertUserRole(
   }
 }
 
+/**
+ * Ensure the user has a company-scoped role. If they already have company_admin or
+ * member for the company, leave it unchanged. Otherwise insert member.
+ * Duplicate Identity inserts are treated as success (idempotent).
+ */
+export async function ensureCompanyMemberRole(
+  userId: string,
+  companyId: string,
+  roleId: string,
+): Promise<void> {
+  const existing = await findCompanyRole(userId, companyId)
+  if (existing) return
+
+  try {
+    await insertUserRole({
+      id: roleId,
+      user_id: userId,
+      role: 'member',
+      company_id: companyId,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    // Race or prior insert: unique (user_id, company_id, role) — treat as done.
+    if (/insert role failed \(409\)|ER_DUP_ENTRY|Duplicate/i.test(message)) {
+      return
+    }
+    // Re-check in case a concurrent request created the role under another id.
+    const after = await findCompanyRole(userId, companyId)
+    if (after) return
+    throw err
+  }
+}
+
 export async function upsertSuperAdminRole(userId: string, roleId: string): Promise<void> {
   const res = await fetch(`${apiBase()}/api/v1/internal/roles/upsert-super-admin`, {
     method: 'POST',

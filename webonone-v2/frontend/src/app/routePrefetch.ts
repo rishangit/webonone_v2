@@ -10,7 +10,8 @@ import {
 
 const ROUTE_PREFETCHERS: Record<string, () => Promise<unknown>> = {
   '/': () => import('@/features/home/pages/HomePage'),
-  '/calendar': () => import('@/features/calendar/pages/CalendarPage'),
+  '/calendar/schedule': () => import('@/features/calendar/pages/CalendarPage'),
+  '/calendar/events': () => import('@/features/calendar/pages/EventsPage'),
   '/companies': () => import('@/features/settings/basic/pages/CompaniesPage'),
   '/staff': () => import('@/features/staff/pages/StaffPage'),
   '/settings/companies': () => import('@/features/settings/companies/pages/AllCompaniesPage'),
@@ -31,10 +32,28 @@ function prefetchCompanyProfile(): void {
   void import('@/features/settings/companies/pages/CompanyProfilePage')
 }
 
+function prefetchEventDetails(): void {
+  void import('@/features/calendar/pages/EventDetailsPage')
+}
+
+function prefetchSessionDetails(): void {
+  void import('@/features/calendar/pages/SessionDetailsPage')
+}
+
 export function prefetchRoutePath(pathname: string): void {
   const prefetch = ROUTE_PREFETCHERS[pathname]
   if (prefetch) {
     void prefetch()
+    return
+  }
+
+  if (/^\/calendar\/events\/[^/]+\/sessions\/[^/]+$/.test(pathname)) {
+    prefetchSessionDetails()
+    return
+  }
+
+  if (/^\/calendar\/events\/[^/]+$/.test(pathname)) {
+    prefetchEventDetails()
     return
   }
 

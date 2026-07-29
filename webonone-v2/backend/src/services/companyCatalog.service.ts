@@ -35,6 +35,14 @@ async function assertCompanyAdmin(userId: string, companyId: string): Promise<vo
   }
 }
 
+/** Company owner or staff (member) with an Identity role for this company. */
+async function assertCompanySessionAccess(userId: string, companyId: string): Promise<void> {
+  const membership = await roleRepo.findCompanyRole(userId, companyId)
+  if (membership?.role !== 'company_admin' && membership?.role !== 'member') {
+    throw httpError('Company access required', 403)
+  }
+}
+
 function toDto(kind: CatalogEntityKind, row: Record<string, unknown>) {
   return repo.mapCatalogRow(kind, row)
 }
@@ -53,7 +61,7 @@ export async function listCatalogItems(
   kind: CatalogEntityKind,
   options?: { q?: string },
 ) {
-  await assertCompanyAdmin(userId, companyId)
+  await assertCompanySessionAccess(userId, companyId)
   const rows = await repo.listByCompanyAndKind(companyId, kind, options)
   return rows.map((row) => toDto(kind, row))
 }
@@ -64,7 +72,7 @@ export async function getCatalogItem(
   kind: CatalogEntityKind,
   id: string,
 ) {
-  await assertCompanyAdmin(userId, companyId)
+  await assertCompanySessionAccess(userId, companyId)
   const row = await repo.findById(companyId, kind, id)
   if (!row) {
     throw httpError('Catalog item not found', 404)

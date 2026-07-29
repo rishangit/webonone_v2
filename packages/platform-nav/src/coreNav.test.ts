@@ -11,6 +11,7 @@ import {
   filterPlatformNavDataEntities,
   getCoreOriginFromReturnUrl,
   getPlatformNavDefs,
+  IDENTITY_NAV_SENTINELS,
   isDataNavSentinel,
   isEmailNavSentinel,
   isSmsNavSentinel,
@@ -36,21 +37,26 @@ describe('coreNav', () => {
     }
   })
 
-  it('includes Calendar on main nav only', () => {
-    const main = getPlatformNavDefs('main')
-    const calendar = main.find((item) => item.kind === 'item' && item.path === '/calendar')
-    assert.ok(calendar?.kind === 'item')
-    if (calendar?.kind === 'item') {
-      assert.equal(calendar.label, 'Calendar')
-      assert.equal(calendar.externalService, undefined)
-    }
-    assert.equal(main[1]?.kind === 'item' && main[1].path === '/calendar', true)
-
-    for (const variant of ['member', 'superAdmin'] as const) {
+  it('includes Calendar group with Schedule and Events on main and member nav', () => {
+    for (const variant of ['main', 'member'] as const) {
       const defs = getPlatformNavDefs(variant)
-      const found = defs.find((item) => item.kind === 'item' && item.path === '/calendar')
-      assert.equal(found, undefined, `Calendar should not appear on ${variant}`)
+      const calendar = defs.find((item) => item.kind === 'group' && item.label === 'Calendar')
+      assert.ok(calendar?.kind === 'group', `Calendar missing for ${variant}`)
+      if (calendar?.kind === 'group') {
+        assert.deepEqual(
+          calendar.children.map((child) => ({ path: child.path, label: child.label })),
+          [
+            { path: '/calendar/schedule', label: 'Schedule' },
+            { path: '/calendar/events', label: 'Events' },
+          ],
+        )
+      }
+      assert.equal(defs[1]?.kind === 'group' && defs[1].label === 'Calendar', true)
     }
+
+    const superAdmin = getPlatformNavDefs('superAdmin')
+    const found = superAdmin.find((item) => item.kind === 'group' && item.label === 'Calendar')
+    assert.equal(found, undefined, 'Calendar should not appear on superAdmin')
   })
 
   it('resolves super admin nav with companies', () => {
@@ -172,10 +178,33 @@ describe('coreNav', () => {
     }
   })
 
-  it('member nav omits Data group', () => {
-    const nav = resolvePlatformNavUrls('http://localhost:3010', 'member')
+  it('member nav includes Identity Users and Staff', () => {
+    const defs = getPlatformNavDefs('member')
+    const identity = defs.find((item) => item.kind === 'group' && item.label === 'Identity')
+    assert.ok(identity?.kind === 'group')
+    if (identity?.kind === 'group') {
+      assert.deepEqual(
+        identity.children.map((child) => ({ path: child.path, label: child.label })),
+        [
+          { path: IDENTITY_NAV_SENTINELS.users, label: 'Users' },
+          { path: '/staff', label: 'Staff' },
+        ],
+      )
+    }
+  })
+
+  it('member nav includes Data group (filtered by company entities at consumer)', () => {
+    const nav = resolvePlatformNavUrls('http://localhost:3010', 'member', {
+      data: 'http://localhost:3005',
+    })
     const dataGroup = nav.find((item) => item.kind === 'group' && item.label === 'Data')
-    assert.equal(dataGroup, undefined)
+    assert.ok(dataGroup?.kind === 'group')
+    if (dataGroup?.kind === 'group') {
+      assert.equal(dataGroup.children.length, 6)
+      assert.equal(dataGroup.children[3]?.href, 'http://localhost:3005/products')
+      assert.equal(dataGroup.children[4]?.href, 'http://localhost:3005/services')
+      assert.equal(dataGroup.children[5]?.href, 'http://localhost:3005/spaces')
+    }
   })
 
   it('maps Data sentinels to external paths', () => {

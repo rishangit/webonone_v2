@@ -6,10 +6,12 @@ import { Button } from './Button'
 interface CalendarProps {
   selected?: Date
   onSelect?: (date: Date) => void
+  /** When true, day is not selectable. */
+  isDateDisabled?: (date: Date) => boolean
   className?: string
 }
 
-function Calendar({ selected, onSelect, className }: CalendarProps) {
+function Calendar({ selected, onSelect, isDateDisabled, className }: CalendarProps) {
   const [viewDate, setViewDate] = React.useState(() => selected ?? new Date())
 
   const year = viewDate.getFullYear()
@@ -23,6 +25,7 @@ function Calendar({ selected, onSelect, className }: CalendarProps) {
 
   function selectDay(day: number) {
     const next = new Date(year, month, day)
+    if (isDateDisabled?.(next)) return
     onSelect?.(next)
   }
 
@@ -38,6 +41,11 @@ function Calendar({ selected, onSelect, className }: CalendarProps) {
   function isToday(day: number) {
     const today = new Date()
     return today.getFullYear() === year && today.getMonth() === month && today.getDate() === day
+  }
+
+  function isDisabled(day: number) {
+    if (!isDateDisabled) return false
+    return isDateDisabled(new Date(year, month, day))
   }
 
   return (
@@ -80,11 +88,14 @@ function Calendar({ selected, onSelect, className }: CalendarProps) {
             <button
               key={day}
               type="button"
+              disabled={isDisabled(day)}
               onClick={() => selectDay(day)}
               className={cn(
                 'h-8 w-8 rounded-md text-sm transition-colors hover:bg-accent',
                 isSelected(day) && 'bg-primary text-primary-foreground hover:bg-primary/90',
                 isToday(day) && !isSelected(day) && 'ring-1 ring-ring',
+                isDisabled(day) &&
+                  'cursor-not-allowed opacity-40 hover:bg-transparent',
               )}
             >
               {day}

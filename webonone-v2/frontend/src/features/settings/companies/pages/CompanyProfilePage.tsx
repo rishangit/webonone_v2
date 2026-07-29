@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import type { CompanyWizardStep } from '@/features/settings/basic/schemas/companySchemas'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import { CompanyContactCard } from '../components/CompanyContactCard'
 import { CompanyDataEntitiesCard } from '../components/CompanyDataEntitiesCard'
 import { CompanyFormDialog } from '../components/CompanyFormDialog'
@@ -28,6 +29,12 @@ type CompanyProfilePageProps = {
 
 type CompanyProfileTab = 'profile' | 'gallery' | 'data'
 
+const COMPANY_PROFILE_TABS = [
+  'profile',
+  'gallery',
+  'data',
+] as const satisfies readonly CompanyProfileTab[]
+
 const TABS: { id: CompanyProfileTab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'gallery', label: 'Gallery' },
@@ -43,7 +50,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
   const detailError = useAppSelector((s) => s.companies.detailError)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
 
-  const [tab, setTab] = useState<CompanyProfileTab>('profile')
+  const [tab, setTab] = useDetailTabParam(COMPANY_PROFILE_TABS, 'profile')
   const [dialog, setDialog] = useState<{ initialStep: CompanyWizardStep } | null>(null)
 
   const loading = detailStatus === 'loading' && !detail

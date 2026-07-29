@@ -27,7 +27,14 @@ import { ServiceFormDialog } from '@/features/services/components/ServiceFormDia
 import { servicesActions } from '@/features/services/store'
 import type { ServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
 import { StatusBadge } from '@/shared/components/StatusBadge'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import type { CatalogItem } from '@/shared/types/data.types'
+
+const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
+  'profile',
+  'gallery',
+  'attributes',
+]
 
 function formatTimestamp(value: string): string {
   const date = new Date(value)
@@ -79,7 +86,7 @@ export function ServiceDetailsPage() {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const [dialog, setDialog] = useState<{ initialStep: ServiceWizardStep } | null>(null)
-  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
+  const [tab, setTab] = useDetailTabParam(SERVICE_DETAIL_TABS, 'profile')
 
   useEffect(() => {
     if (!serviceId) return

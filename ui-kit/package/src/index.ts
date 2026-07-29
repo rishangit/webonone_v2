@@ -35,6 +35,17 @@ export type {
   LoadUsersFn,
   UserSelectionDialogProps,
 } from './components/UserSelectionDialog'
+export {
+  ServiceSelectionDialog,
+  SERVICE_SELECTION_DIALOG_SIZE,
+} from './components/ServiceSelectionDialog'
+export type {
+  ServiceOption,
+  ServiceSelectionLoadParams,
+  ServiceSelectionLoadResult,
+  LoadServicesFn,
+  ServiceSelectionDialogProps,
+} from './components/ServiceSelectionDialog'
 export { SelectUser } from './components/SelectUser'
 export type { SelectUserValue, SelectUserProps } from './components/SelectUser'
 export { SelectMedia } from './components/SelectMedia'

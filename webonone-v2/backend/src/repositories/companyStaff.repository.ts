@@ -27,6 +27,16 @@ export async function listStaffByCompany(companyId: string): Promise<CompanyStaf
     .orderBy('display_name', 'asc')
 }
 
+export async function listStaffByUserId(userId: string): Promise<CompanyStaffRow[]> {
+  return db<CompanyStaffRow>('company_staff')
+    .where({ user_id: userId })
+    .orderBy('created_at', 'asc')
+}
+
+export async function listAllStaff(): Promise<CompanyStaffRow[]> {
+  return db<CompanyStaffRow>('company_staff').orderBy(['company_id', 'display_name'])
+}
+
 export async function findStaffById(
   companyId: string,
   staffId: string,

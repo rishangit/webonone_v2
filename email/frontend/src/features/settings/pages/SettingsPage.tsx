@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   AlertDescription,
@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { settingsActions } from '@/features/settings/store'
 import type { CompanyBranding } from '@/shared/types/email.types'
+import { useDetailTabParam } from '../hooks/useDetailTabParam'
 import { brandingSchema, type BrandingFormValues } from '../schemas/brandingSchemas'
 
 type SettingsTab = 'global' | 'branding'
@@ -37,7 +38,12 @@ export function SettingsPage() {
 
   const isSuperAdmin = role === 'super_admin'
   const defaultTab: SettingsTab = isSuperAdmin ? 'global' : 'branding'
-  const [tab, setTab] = useState<SettingsTab>(defaultTab)
+  const allowedTabs = useMemo((): readonly SettingsTab[] => {
+    if (isSuperAdmin && companyId) return ['global', 'branding']
+    if (isSuperAdmin) return ['global']
+    return ['branding']
+  }, [companyId, isSuperAdmin])
+  const [tab, setTab] = useDetailTabParam(allowedTabs, defaultTab)
   const [values, setValues] = useState<BrandingFormValues>({
     companyName: '',
     logoUrl: '',

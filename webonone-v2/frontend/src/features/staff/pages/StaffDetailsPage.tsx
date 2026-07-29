@@ -13,6 +13,7 @@ import {
   FeaturePage,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { StaffFormDialog } from '@/features/staff/components/StaffFormDialog'
 import { StaffScheduleCard } from '@/features/staff/components/StaffScheduleCard'
@@ -26,6 +27,7 @@ export function StaffDetailsPage() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
   const detail = useAppSelector((s) => s.staff.detail) as CompanyStaff | null
   const detailStatus = useAppSelector((s) => s.staff.detailStatus)
@@ -54,11 +56,11 @@ export function StaffDetailsPage() {
     setDialog({ initialStep })
   }
 
-  if (selectionComplete && activeRole !== 'company_admin') {
+  if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
     return (
       <FeaturePage title="Staff" description="Staff details">
         <Alert variant="destructive">
-          <AlertDescription>Company admin session required.</AlertDescription>
+          <AlertDescription>Company session required.</AlertDescription>
         </Alert>
       </FeaturePage>
     )

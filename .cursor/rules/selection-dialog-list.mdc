@@ -12,7 +12,7 @@ Related: [item-list skill](../skills/item-list/SKILL.md), [dialog-windows.mdc](d
 
 Canonical reference: `data/frontend/src/features/tags/components/TagPickerPanel.tsx`.
 
-Also: `LibraryPickerPanel.tsx`, `CatalogLibrarySelectEmbedPage.tsx`, `UserSelectionDialog.tsx`, `UserPickerPage.tsx`, `RoleSelectionDialog.tsx`, Media `ScopedFolderBrowser` list view.
+Also: `LibraryPickerPanel.tsx`, `CatalogLibrarySelectEmbedPage.tsx`, `UserSelectionDialog.tsx`, `ServiceSelectionDialog.tsx`, `UserPickerPage.tsx`, `RoleSelectionDialog.tsx`, Media `ScopedFolderBrowser` list view.
 
 ## Required — show the selected item
 

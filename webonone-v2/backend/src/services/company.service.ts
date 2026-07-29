@@ -7,6 +7,7 @@ import type {
   UpdateCompanyStatusBody,
 } from '../schemas/companySchemas.js'
 import * as repo from '../repositories/company.repository.js'
+import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
 
@@ -567,11 +568,13 @@ export type AssumableRoleOption = {
   companyName?: string
   companyLogoUrl?: string | null
   dataEntities?: CompanyDataEntity[]
+  /** Present when this company card is from company_staff (not owner). */
+  accountKind?: 'staff'
 }
 
 export type AssumableRolesResponse = {
   roles: AssumableRoleOption[]
-  /** True when Super Admin and/or owned pending/approved companies — client shows Choose account dialog */
+  /** True when Super Admin, owned companies, and/or staff companies — client shows Choose account dialog */
   requiresAccountSelection: boolean
   /** True when user owns ≥1 pending/approved company */
   hasCompanyMembership: boolean
@@ -583,9 +586,14 @@ const defaultUserOption: AssumableRoleOption = {
   label: 'Default User',
 }
 
+function isSelectableCompanyStatus(status: repo.CompanyStatus): boolean {
+  return status === 'pending' || status === 'approved'
+}
+
 export async function getAssumableRoles(userId: string): Promise<AssumableRolesResponse> {
   const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
   const companyRoles = await roleRepo.findCompanyRolesByUserId(userId)
+  const staffRows = await staffRepo.listStaffByUserId(userId)
 
   const ownedCompanyIds = [
     ...new Set(
@@ -595,20 +603,40 @@ export async function getAssumableRoles(userId: string): Promise<AssumableRolesR
     ),
   ]
 
+  const staffCompanyIds = [...new Set(staffRows.map((row) => row.company_id))]
+  const companyIdsToLoad = [...new Set([...ownedCompanyIds, ...staffCompanyIds])]
+
   const companies =
-    ownedCompanyIds.length > 0 ? await repo.findCompaniesByIds(ownedCompanyIds) : []
+    companyIdsToLoad.length > 0 ? await repo.findCompaniesByIds(companyIdsToLoad) : []
   const companyById = new Map(companies.map((row) => [row.id, row]))
 
   const ownedCompanies = ownedCompanyIds
     .map((id) => companyById.get(id))
     .filter((company): company is repo.CompanyRow => {
       if (!company) return false
-      return company.status === 'pending' || company.status === 'approved'
+      return isSelectableCompanyStatus(company.status)
     })
     .sort((a, b) => b.created_at.toISOString().localeCompare(a.created_at.toISOString()))
 
+  // Include staff cards even when the user also owns the company so they can
+  // choose Company Owner vs Staff for the same company.
+  const staffCompanies = staffCompanyIds
+    .map((id) => companyById.get(id))
+    .filter((company): company is repo.CompanyRow => {
+      if (!company) return false
+      return isSelectableCompanyStatus(company.status)
+    })
+    .sort((a, b) => b.created_at.toISOString().localeCompare(a.created_at.toISOString()))
+
+  for (const company of staffCompanies) {
+    // Owners typically only have company_admin; ensure still no-ops if any role exists.
+    // Identity allows assuming member+companyId when company_admin is present.
+    await roleRepo.ensureCompanyMemberRole(userId, company.id, nanoid())
+  }
+
   const hasCompanyMembership = ownedCompanies.length > 0
-  const requiresAccountSelection = Boolean(superAdmin) || hasCompanyMembership
+  const requiresAccountSelection =
+    Boolean(superAdmin) || hasCompanyMembership || staffCompanies.length > 0
 
   if (!requiresAccountSelection) {
     return {
@@ -632,6 +660,18 @@ export async function getAssumableRoles(userId: string): Promise<AssumableRolesR
       companyName: company.name,
       companyLogoUrl: company.logo_url,
       dataEntities: parseDataEntities(company.data_entities),
+    })
+  }
+
+  for (const company of staffCompanies) {
+    roles.push({
+      role: 'member',
+      companyId: company.id,
+      label: `${company.name} (Staff)`,
+      companyName: company.name,
+      companyLogoUrl: company.logo_url,
+      dataEntities: parseDataEntities(company.data_entities),
+      accountKind: 'staff',
     })
   }
 

@@ -46,6 +46,25 @@ FeaturePage
 | Mode | `isNew = !id` when create is supported — no separate `mode` prop; self-edit may omit `id` |
 | Step jump | `initialStep` (standalone) / `?step=` on embed path |
 
+## Section tabs URL sync
+
+When a details or settings page has a **section tablist** (Profile / Gallery / Sessions / etc.), sync the active tab with the query param **`?tab=<id>`**. Do not keep the tab in local `useState` only.
+
+| Rule | Detail |
+|------|--------|
+| Query key | `tab` |
+| Default | Omit `tab` from the URL when the default tab is selected |
+| Invalid / missing | Fall back to the page default |
+| History | `setSearchParams(..., { replace: false })` so Back/Forward restores the tab |
+| Paths | Do **not** use path segments for section tabs on an entity route that is already `…/:id` |
+| Wizard steps | Keep embed/wizard entry on `?step=N` — do **not** overload `tab` for wizard steps |
+
+Prefer a small service-local helper (e.g. `useDetailTabParam(allowed, defaultTab)`) so allowed tabs can shrink per kind/role (stale `?tab=variants` on a non-product falls back to default).
+
+Applies to wizard-backed details **and** settings pages with the same tablist pattern (Basic Settings, Email settings).
+
+Forbidden: local-only tab state when a section tablist is shown.
+
 ## Dual-use wizard (mandatory when create exists)
 
 List **Add** and detail/list **Edit** must share the same `*FormDialog`:
@@ -56,6 +75,8 @@ List **Add** and detail/list **Edit** must share the same `*FormDialog`:
 | List Edit | `open`, `id`, step `1` |
 | Detail card | `open`, `id` (when applicable), `initialStep` = section → step map |
 | Self-edit only | `open`, `initialStep` — e.g. Identity profile |
+
+**Every wizard body** must show centered `Step {n} of {total} — {StepTitle}` above the progress bar — see [dialog-windows.mdc](dialog-windows.mdc) § Wizard dialogs. Do not ship a bar alone.
 
 Embed routes: `/embed/dialogs/<kind>/create` and `/embed/dialogs/<kind>/:id/edit` (or `/embed/dialogs/profile/edit`) with optional `?step=N`. Hosted chrome: [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md).
 
@@ -111,6 +132,7 @@ Forbidden Edit chrome: `size="sm"` with text “Edit”, always-visible labeled 
 - Local `CustomDialog` inside `#main-content` when embedded — use peer-dialog
 - Using this pattern for showcase/simple **inline** page-level Edit ([details-page-cards.mdc](details-page-cards.mdc))
 - Per-card Edit that does not match the hover icon chrome above
+- Section tablist with local-only tab state (must sync `?tab=`)
 
 ## Reference
 
@@ -130,4 +152,4 @@ npm run type-check
 npm run lint
 ```
 
-Confirm: Back only in header; each editable card uses hover icon-only Edit3 (same as Data/company/profile); card Edit opens the shared wizard at the mapped step; list Add uses the same dialog without `id`; after save, detail refreshes.
+Confirm: Back only in header; each editable card uses hover icon-only Edit3 (same as Data/company/profile); card Edit opens the shared wizard at the mapped step; list Add uses the same dialog without `id`; after save, detail refreshes; section tabs sync via `?tab=` (default omitted from URL).

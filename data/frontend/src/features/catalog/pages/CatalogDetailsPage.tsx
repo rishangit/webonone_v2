@@ -27,10 +27,17 @@ import { spacesActions } from '@/features/spaces/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { StatusBadge } from '@/shared/components/StatusBadge'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 type CatalogDetailKind = 'spaces'
+
+const CATALOG_DETAIL_TABS: readonly CatalogDetailTabId[] = [
+  'profile',
+  'gallery',
+  'attributes',
+]
 
 const CONFIG: Record<
   CatalogDetailKind,
@@ -77,7 +84,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const [editOpen, setEditOpen] = useState(false)
-  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
+  const [tab, setTab] = useDetailTabParam(CATALOG_DETAIL_TABS, 'profile')
 
   useEffect(() => {
     if (!entityId) return

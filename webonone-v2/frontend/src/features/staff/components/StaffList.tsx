@@ -18,10 +18,11 @@ import type { CompanyStaff } from '@/features/staff/types/staff.types'
 
 type StaffListProps = {
   items: CompanyStaff[]
+  canManage?: boolean
   onRemoved: () => void
 }
 
-export function StaffList({ items, onRemoved }: StaffListProps) {
+export function StaffList({ items, canManage = false, onRemoved }: StaffListProps) {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
@@ -71,14 +72,18 @@ export function StaffList({ items, onRemoved }: StaffListProps) {
           </ItemListContent>
           <ItemListMenu ariaLabel={`Actions for ${item.displayName}`}>
             <DropdownMenuItem onSelect={() => openDetails(item.id)}>View details</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              disabled={removingId === item.id}
-              onSelect={() => void handleRemove(item)}
-              className="text-destructive focus:text-destructive"
-            >
-              {removingId === item.id ? 'Removing…' : 'Remove'}
-            </DropdownMenuItem>
+            {canManage ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={removingId === item.id}
+                  onSelect={() => void handleRemove(item)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  {removingId === item.id ? 'Removing…' : 'Remove'}
+                </DropdownMenuItem>
+              </>
+            ) : null}
           </ItemListMenu>
         </ItemListItem>
       ))}

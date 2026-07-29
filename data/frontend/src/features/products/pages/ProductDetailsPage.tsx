@@ -28,6 +28,14 @@ import type { ProductWizardStep } from '@/features/products/schemas/productSchem
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { StatusBadge } from '@/shared/components/StatusBadge'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
+
+const PRODUCT_DETAIL_TABS = [
+  'profile',
+  'gallery',
+  'attributes',
+  'variants',
+] as const satisfies readonly CatalogDetailTabId[]
 
 function formatTimestamp(value: string): string {
   const date = new Date(value)
@@ -53,7 +61,7 @@ export function ProductDetailsPage() {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const [dialog, setDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
-  const [tab, setTab] = useState<CatalogDetailTabId>('profile')
+  const [tab, setTab] = useDetailTabParam(PRODUCT_DETAIL_TABS, 'profile')
 
   useEffect(() => {
     if (!productId) return

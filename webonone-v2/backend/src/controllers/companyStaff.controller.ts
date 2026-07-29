@@ -1,5 +1,6 @@
 import type { Response } from 'express'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
+import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as staffService from '../services/companyStaff.service.js'
 
 function handleServiceError(err: unknown, res: Response) {
@@ -12,7 +13,7 @@ function handleServiceError(err: unknown, res: Response) {
 }
 
 function requireSession(
-  req: CompanyAdminSessionRequest,
+  req: CompanySessionRequest | CompanyAdminSessionRequest,
   res: Response,
 ): { companyId: string } | null {
   if (!req.user || !req.sessionCompanyId) {
@@ -22,7 +23,7 @@ function requireSession(
   return { companyId: req.sessionCompanyId }
 }
 
-export async function listStaff(req: CompanyAdminSessionRequest, res: Response) {
+export async function listStaff(req: CompanySessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return
   try {
@@ -33,7 +34,7 @@ export async function listStaff(req: CompanyAdminSessionRequest, res: Response) 
   }
 }
 
-export async function getStaff(req: CompanyAdminSessionRequest, res: Response) {
+export async function getStaff(req: CompanySessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return
   try {

@@ -8,7 +8,8 @@
     "stage:deploy": "node ../tooling/stage-iis-deploy.mjs webonone-v2/deploy",
     "clean:deploy": "node ../tooling/stage-iis-deploy.mjs webonone-v2/deploy --clean-only",
     "type-check": "npm run type-check -w @webonone/webonone-frontend && npm run type-check -w @webonone/webonone-backend",
-    "migrate": "npm run migrate -w @webonone/webonone-backend"
+    "migrate": "npm run migrate -w @webonone/webonone-backend",
+    "backfill:staff-roles": "npm run backfill:staff-roles -w @webonone/webonone-backend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -8,6 +8,7 @@ import preferencesRoutes from './routes/preferences.routes.js'
 import companyRoutes from './routes/company.routes.js'
 import companyCatalogRoutes from './routes/companyCatalog.routes.js'
 import companyStaffRoutes from './routes/companyStaff.routes.js'
+import companyEventRoutes from './routes/companyEvent.routes.js'
 import siteMediaRefsRoutes from './routes/siteMediaRefs.routes.js'
 import themesRoutes from './routes/themes.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -30,6 +31,7 @@ export function createApp() {
   app.use('/api/v1', preferencesRoutes)
   app.use('/api/v1', companyCatalogRoutes)
   app.use('/api/v1', companyStaffRoutes)
+  app.use('/api/v1', companyEventRoutes)
   app.use('/api/v1', companyRoutes)
 
   if (fs.existsSync(publicDir)) {

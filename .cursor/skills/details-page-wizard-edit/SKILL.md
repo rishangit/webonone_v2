@@ -55,12 +55,35 @@ Embed paths: `/embed/dialogs/<kind>/create` and `/embed/dialogs/<kind>/:id/edit`
 ## Steps
 
 1. **Confirm pattern** — create is a multi-step wizard → continue; else use details-page-cards.
-2. **Build one dual-use `*FormDialog` first** — Zod schemas, one step component per step, progress bar, `isNew = !id`, empty seed vs `valuesFromDetail`, size `large` × `xlarge`. Follow form-creation + dialog-windows + core-hosted-peer-dialog.
+2. **Build one dual-use `*FormDialog` first** — Zod schemas, one step component per step, **required** centered label `Step {n} of {total} — {StepTitle}` **plus** progress bar (`w-1/2 mx-auto`), `isNew = !id`, empty seed vs `valuesFromDetail`, size `large` × `xlarge`. Follow form-creation + dialog-windows (Wizard dialogs) + core-hosted-peer-dialog.
 3. **Wire the list** — Add: `setDialog({})` (no id). Edit (row menu): `setDialog({ id })`. Primary CTA per item-list.
 4. **Add the details route** — `FeaturePage` + Back only; 3-col `gap-6` card grid (left span-2 / right span-1).
 5. **Section cards** — copy Data `EditableSectionCard` shape exactly (`canEdit`, hover icon-only `Edit3`, `onEdit`). Map each editable section → `openWizard(step)`. Meta/audit → plain `Card`.
-6. **Open wizard from detail** — `<FormDialog open id={entityId} initialStep={…} onSaved={refreshDetail} />`.
-7. **Embed** — routes for create + `:id/edit`; body uses `chrome="embed-page"` and `?step=` via `parse…Step`; host Previous/Next via peer-dialog busy sync.
+6. **Section tabs** — if the page has a section tablist, sync with `?tab=` via service-local `useDetailTabParam(allowed, defaultTab)` (default omitted from URL; invalid → default; `replace: false`). Same contract for Basic Settings / Email settings even when not wizard-backed. Keep wizard/embed entry on `?step=N`.
+7. **Open wizard from detail** — `<FormDialog open id={entityId} initialStep={…} onSaved={refreshDetail} />`.
+8. **Embed** — routes for create + `:id/edit`; body uses `chrome="embed-page"` and `?step=` via `parse…Step`; host Previous/Next via peer-dialog busy sync.
+
+### Section tabs URL sync
+
+```ts
+const [tab, setTab] = useDetailTabParam(['profile', 'gallery', 'attributes'] as const, 'profile')
+// Click non-default → ?tab=gallery; click default → delete tab; Back/Forward restores
+```
+
+Canonical helpers: `webonone-v2/.../shared/hooks/useDetailTabParam.ts`, `data/.../shared/hooks/useDetailTabParam.ts`.
+
+### Wizard body chrome (mandatory — all wizards)
+
+```tsx
+<div className="space-y-2 text-center">
+  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    Step {step} of {TOTAL_STEPS} — {STEP_TITLES[stepIndex]}
+  </p>
+  <XxxWizardProgress currentStep={step} totalSteps={TOTAL_STEPS} />
+</div>
+```
+
+Do **not** ship a progress bar without this label. Canonical: `CompanyFormDialog`, Data `ServiceFormDialog`, `EventFormDialog`.
 
 ## EditableSectionCard Edit chrome (mandatory)
 
@@ -99,6 +122,8 @@ Card Edit jumps into the wizard; save still walks the full flow (no section-only
 - `CustomDialog` inside the page iframe when `parentOrigin` is set
 - Putting Previous / Next / Save in the embed body
 - Labeled or always-visible “Edit” text buttons on section cards (must match hover icon chrome)
+- Wizard progress bar **without** the `Step {n} of {total} — {Title}` label
+- Section tablist with local-only tab state (must sync `?tab=`)
 
 ## Canonical reference
 
@@ -116,6 +141,7 @@ Card Edit jumps into the wizard; save still walks the full flow (no section-only
 | Identity profile | `identity/.../profile/pages/ProfilePage.tsx` |
 | Identity wizard | `identity/.../profile/components/ProfileFormDialog.tsx` |
 | Identity embed | `identity/.../profile/pages/ProfileFormEmbedPage.tsx` |
+| Tab URL helper | `webonone-v2/.../shared/hooks/useDetailTabParam.ts` · `data/.../shared/hooks/useDetailTabParam.ts` |
 
 `EditableSectionCard` is feature-local — copy the component shape; do not invent a different Edit chrome.
 
@@ -126,4 +152,4 @@ npm run type-check
 npm run lint
 ```
 
-Manual: list Add opens wizard at step 1 with empty values; list Edit and each detail card Edit open the same dialog with entity loaded at the mapped step; section Edit is hover icon-only `Edit3` aligned with other detail pages; save refreshes the detail page; when embedded in WebOnOne, host owns Cancel / Previous / primary footer.
+Manual: list Add opens wizard at step 1 with empty values; list Edit and each detail card Edit open the same dialog with entity loaded at the mapped step; section Edit is hover icon-only `Edit3` aligned with other detail pages; save refreshes the detail page; section tabs sync via `?tab=` (default omitted); when embedded in WebOnOne, host owns Cancel / Previous / primary footer.

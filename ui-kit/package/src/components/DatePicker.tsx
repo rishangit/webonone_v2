@@ -11,6 +11,8 @@ export interface DatePickerProps {
   onChange?: (date: Date | undefined) => void
   placeholder?: string
   disabled?: boolean
+  /** Forwarded to Calendar — disabled days are not selectable. */
+  isDateDisabled?: (date: Date) => boolean
   withIcon?: boolean
   className?: string
   id?: string
@@ -25,6 +27,7 @@ function DatePicker({
   onChange,
   placeholder = 'Pick a date',
   disabled,
+  isDateDisabled,
   withIcon = false,
   className,
   id,
@@ -77,6 +80,7 @@ function DatePicker({
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           selected={value}
+          isDateDisabled={isDateDisabled}
           onSelect={(date) => {
             onChange?.(date)
             setOpen(false)

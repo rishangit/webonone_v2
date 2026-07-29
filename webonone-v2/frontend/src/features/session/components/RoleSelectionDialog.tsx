@@ -130,7 +130,9 @@ export function RoleSelectionDialog() {
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-foreground">{option.label}</span>
-                    {isStatusTagVariant(option.role) ? (
+                    {option.accountKind === 'staff' ? (
+                      <StatusTag variant="staff" className="shrink-0" />
+                    ) : isStatusTagVariant(option.role) ? (
                       <StatusTag variant={option.role} className="shrink-0" />
                     ) : (
                       <span className="text-xs text-muted-foreground">{option.role}</span>

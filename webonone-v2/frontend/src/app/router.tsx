@@ -54,6 +54,19 @@ const StaffDetailsPage = lazy(() =>
 const CalendarPage = lazy(() =>
   import('@/features/calendar/pages/CalendarPage').then((m) => ({ default: m.CalendarPage })),
 )
+const EventsPage = lazy(() =>
+  import('@/features/calendar/pages/EventsPage').then((m) => ({ default: m.EventsPage })),
+)
+const EventDetailsPage = lazy(() =>
+  import('@/features/calendar/pages/EventDetailsPage').then((m) => ({
+    default: m.EventDetailsPage,
+  })),
+)
+const SessionDetailsPage = lazy(() =>
+  import('@/features/calendar/pages/SessionDetailsPage').then((m) => ({
+    default: m.SessionDetailsPage,
+  })),
+)
 const DataCatalogListRoute = lazy(() =>
   import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
     default: m.DataCatalogListRoute,
@@ -113,9 +126,37 @@ export function App() {
           />
           <Route
             path="calendar"
+            element={<Navigate to="/calendar/schedule" replace />}
+          />
+          <Route
+            path="calendar/schedule"
             element={
               <LazyRoute>
                 <CalendarPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="calendar/events"
+            element={
+              <LazyRoute>
+                <EventsPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="calendar/events/:eventId"
+            element={
+              <LazyRoute>
+                <EventDetailsPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="calendar/events/:eventId/sessions/:occurrenceDate"
+            element={
+              <LazyRoute>
+                <SessionDetailsPage />
               </LazyRoute>
             }
           />

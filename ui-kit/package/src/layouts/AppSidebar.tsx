@@ -12,7 +12,7 @@ import { SidebarCollapseButton } from '../components/nav/SidebarCollapseButton'
 interface SidebarSession {
   title: string
   /**
-   * Platform role key (`super_admin` | `company_admin` | `member`) shown as a
+   * Platform role key (`super_admin` | `company_admin` | `member` | `staff`) shown as a
    * StatusTag under the company title.
    */
   role?: string

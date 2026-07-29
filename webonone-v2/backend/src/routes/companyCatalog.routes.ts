@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import * as companyCatalogController from '../controllers/companyCatalog.controller.js'
 import { requireCompanyAdminSession } from '../middleware/requireCompanyAdminSession.js'
+import { requireCompanySession } from '../middleware/requireCompanySession.js'
 import { validateBody } from '../middleware/validateBody.js'
 import {
   forkCatalogBodySchema,
@@ -13,7 +14,7 @@ const router = Router()
 
 router.get(
   '/company/me/catalog/:kind',
-  requireCompanyAdminSession,
+  requireCompanySession,
   companyCatalogController.listCatalog,
 )
 router.post(
@@ -35,7 +36,7 @@ router.post(
 )
 router.get(
   '/company/me/catalog/:kind/:id',
-  requireCompanyAdminSession,
+  requireCompanySession,
   companyCatalogController.getCatalog,
 )
 router.post(

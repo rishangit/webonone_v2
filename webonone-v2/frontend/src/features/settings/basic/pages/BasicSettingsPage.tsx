@@ -1,9 +1,11 @@
-import { useState } from 'react'
 import { FeaturePage, cn } from '@webonone/ui-kit'
 import { AccountSettingsPanel } from '@/features/settings/basic/components/AccountSettingsPanel'
 import { AppearanceSettingsPanel } from '@/features/settings/basic/components/AppearanceSettingsPanel'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 
 type BasicSettingsTab = 'account' | 'theme'
+
+const BASIC_SETTINGS_TABS = ['account', 'theme'] as const satisfies readonly BasicSettingsTab[]
 
 const TABS: { id: BasicSettingsTab; label: string }[] = [
   { id: 'account', label: 'Account' },
@@ -11,7 +13,7 @@ const TABS: { id: BasicSettingsTab; label: string }[] = [
 ]
 
 export function BasicSettingsPage() {
-  const [tab, setTab] = useState<BasicSettingsTab>('account')
+  const [tab, setTab] = useDetailTabParam(BASIC_SETTINGS_TABS, 'account')
 
   return (
     <FeaturePage

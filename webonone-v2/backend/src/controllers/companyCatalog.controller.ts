@@ -1,5 +1,6 @@
 import type { Response } from 'express'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
+import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as catalogService from '../services/companyCatalog.service.js'
 
 function handleServiceError(err: unknown, res: Response) {
@@ -11,7 +12,7 @@ function handleServiceError(err: unknown, res: Response) {
   })
 }
 
-function requireSession(req: CompanyAdminSessionRequest, res: Response): {
+function requireSession(req: CompanySessionRequest | CompanyAdminSessionRequest, res: Response): {
   userId: string
   companyId: string
 } | null {
@@ -22,7 +23,7 @@ function requireSession(req: CompanyAdminSessionRequest, res: Response): {
   return { userId: req.user.id, companyId: req.sessionCompanyId }
 }
 
-export async function listCatalog(req: CompanyAdminSessionRequest, res: Response) {
+export async function listCatalog(req: CompanySessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return
   try {
@@ -40,7 +41,7 @@ export async function listCatalog(req: CompanyAdminSessionRequest, res: Response
   }
 }
 
-export async function getCatalog(req: CompanyAdminSessionRequest, res: Response) {
+export async function getCatalog(req: CompanySessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return
   try {

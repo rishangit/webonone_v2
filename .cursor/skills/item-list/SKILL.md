@@ -70,7 +70,9 @@ Canonical demo: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` (`ListPageDemo`)
 
 Primary row click (select, navigate, toggle) may stay on the row body — only **secondary actions** go in the menu.
 
-For **single-select user pickers** in a modal (search + infinite scroll, no 3-dot menu), use **`UserSelectionDialog`** from `@webonone/ui-kit` instead of hand-rolling `ItemList` inside `CustomDialog`. See `ui-kit/package/src/components/UserSelectionDialog.tsx` and spec `1.9.3`.
+For **single-select user pickers** in a modal (search + infinite scroll, no 3-dot menu), use **`UserSelectionDialog`** from `@webonone/ui-kit` instead of hand-rolling `ItemList` inside `CustomDialog`. See `ui-kit/package/src/components/UserSelectionDialog.tsx`.
+
+For **single-select service pickers**, use **`ServiceSelectionDialog`** the same way (injected `loadServices` — company catalog or Data library). See `ui-kit/package/src/components/ServiceSelectionDialog.tsx` and WebOnOne `createCompanyCatalogServicesLoader` / `createDataLibraryServicesLoader`.
 
 ## Detail page navigation
 

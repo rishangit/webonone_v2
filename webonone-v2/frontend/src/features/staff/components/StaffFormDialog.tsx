@@ -284,7 +284,12 @@ export function StaffFormDialog({
         }
       >
         <div className="space-y-4">
-          <StaffWizardProgress currentStep={step} totalSteps={TOTAL_STEPS} />
+          <div className="space-y-2 text-center">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Step {step} of {TOTAL_STEPS} — {STEP_TITLES[step - 1]}
+            </p>
+            <StaffWizardProgress currentStep={step} totalSteps={TOTAL_STEPS} />
+          </div>
           {error ? (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>

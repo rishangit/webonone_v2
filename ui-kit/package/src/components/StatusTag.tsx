@@ -5,7 +5,7 @@ import { cn } from '../lib/utils'
 /**
  * Status chip for company approval (`pending` | `approved` | `rejected`),
  * catalog verification (`unverified` | `verified`), and platform user roles
- * (`super_admin` | `company_admin` | `member`).
+ * (`super_admin` | `company_admin` | `member` | `staff`).
  */
 const statusTagVariants = cva(
   'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm',
@@ -28,6 +28,8 @@ const statusTagVariants = cva(
           'border-sky-600/55 bg-sky-500/15 text-sky-900 dark:border-sky-400/50 dark:bg-sky-500/20 dark:text-sky-200',
         member:
           'border-slate-600/55 bg-slate-500/15 text-slate-900 dark:border-slate-400/50 dark:bg-slate-500/20 dark:text-slate-200',
+        staff:
+          'border-indigo-600/55 bg-indigo-500/15 text-indigo-900 dark:border-indigo-400/50 dark:bg-indigo-500/20 dark:text-indigo-200',
       },
     },
     defaultVariants: {
@@ -45,6 +47,7 @@ const DEFAULT_LABELS: Record<NonNullable<VariantProps<typeof statusTagVariants>[
   super_admin: 'Super Admin',
   company_admin: 'Company Admin',
   member: 'Member',
+  staff: 'Staff',
 }
 
 export type StatusTagVariant = NonNullable<VariantProps<typeof statusTagVariants>['variant']>
