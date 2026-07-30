@@ -1,0 +1,41 @@
+{
+  "name": "@webonone/payment-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3017",
+    "build": "tsc -b && vite build",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.8.2",
+    "@webonone/media-embed": "*",
+    "@webonone/platform-embed": "*",
+    "@webonone/platform-nav": "*",
+    "@webonone/store-kit": "*",
+    "@webonone/theme": "*",
+    "@webonone/ui-kit": "*",
+    "lucide-react": "^0.511.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.6.2",
+    "redux": "^5.0.1",
+    "redux-observable": "3.0.0-rc.3",
+    "rxjs": "^7.8.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.2",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

@@ -1,6 +1,6 @@
 export type PlatformNavVariant = 'main' | 'superAdmin' | 'member'
 
-export type ExternalServiceId = 'email' | 'data' | 'identity' | 'sms'
+export type ExternalServiceId = 'email' | 'data' | 'identity' | 'sms' | 'payment'
 
 export type CoreNavLeaf = {
   kind: 'item'
@@ -298,6 +298,38 @@ const SMS_PLATFORM_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
+/** Internal sentinels for Payment sub-nav in consumer AppLayouts (not routed on core origin). */
+export const PAYMENT_NAV_SENTINELS = {
+  invoices: '/payment/invoices',
+} as const
+
+export function isPaymentNavSentinel(to: string): boolean {
+  return to === PAYMENT_NAV_SENTINELS.invoices
+}
+
+export function paymentSentinelToExternalPath(sentinel: string): string | null {
+  switch (sentinel) {
+    case PAYMENT_NAV_SENTINELS.invoices:
+      return '/invoices'
+    default:
+      return null
+  }
+}
+
+const PAYMENT_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Payment',
+  children: [
+    {
+      kind: 'item',
+      path: PAYMENT_NAV_SENTINELS.invoices,
+      label: 'Invoices',
+      externalService: 'payment',
+      externalPath: '/invoices',
+    },
+  ],
+}
+
 const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
   kind: 'group',
   label: 'Data',
@@ -411,6 +443,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
     ],
   },
   SMS_PLATFORM_NAV_GROUP,
+  PAYMENT_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Settings',
@@ -490,6 +523,7 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
     ],
   },
   SMS_PLATFORM_NAV_GROUP,
+  PAYMENT_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Settings',

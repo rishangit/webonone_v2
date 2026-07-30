@@ -253,6 +253,14 @@ export function App() {
             }
           />
           <Route
+            path="payment/*"
+            element={
+              <LazyRoute>
+                <PlatformPeerFrame peer="payment" />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="data/:kind/:id"
             element={
               <LazyRoute>

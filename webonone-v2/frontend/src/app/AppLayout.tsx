@@ -6,6 +6,7 @@ import {
   isDataNavSentinel,
   isEmailNavSentinel,
   isIdentityNavSentinel,
+  isPaymentNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
   performPlatformLogout,
@@ -33,6 +34,8 @@ function isPlatformPeerEmbedPath(pathname: string, activeRole: string | null): b
   if (
     isEmailNavSentinel(pathname) ||
     isSmsNavSentinel(pathname) ||
+    isPaymentNavSentinel(pathname) ||
+    pathname.startsWith('/payment/') ||
     isIdentityNavSentinel(pathname) ||
     isProfileNavSentinel(pathname)
   ) {

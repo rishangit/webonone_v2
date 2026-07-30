@@ -10,6 +10,7 @@ import * as repo from '../repositories/company.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
+import { upsertPaymentCompany } from './paymentClient.service.js'
 
 function httpError(message: string, statusCode: number): Error & { statusCode: number } {
   const err = new Error(message) as Error & { statusCode: number }
@@ -545,8 +546,25 @@ export async function updateCompanyStatus(
 
   if (input.status === 'approved') {
     sendCompanyEmail('company_approved', company)
+    void upsertPaymentCompany({
+      companyId: company.id,
+      name: company.name,
+      activatedAt: company.approved_at ? company.approved_at.toISOString() : new Date().toISOString(),
+      status: 'active',
+    })
   } else if (input.status === 'rejected') {
     sendCompanyEmail('company_rejected', company)
+    void upsertPaymentCompany({
+      companyId: company.id,
+      name: company.name,
+      status: 'inactive',
+    })
+  } else {
+    void upsertPaymentCompany({
+      companyId: company.id,
+      name: company.name,
+      status: 'inactive',
+    })
   }
 
   return toCompanyWithMembership(company, role)

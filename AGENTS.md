@@ -39,6 +39,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | Media | `media/` | [media-agent](.cursor/agents/media-agent.md) | [skill](.cursor/skills/media-agent/SKILL.md) |
 | Data | `data/` | [data-agent](.cursor/agents/data-agent.md) | [skill](.cursor/skills/data-agent/SKILL.md) |
 | SMS | `sms/` + `mobile/` | [sms-agent](.cursor/agents/sms-agent.md) | [skill](.cursor/skills/sms-agent/SKILL.md) |
+| Payment | `payment/` | [payment-agent](.cursor/agents/payment-agent.md) | [skill](.cursor/skills/payment-agent/SKILL.md) |
 
 Company registration, memberships, platform roles, and super-admin approval are a **WebOnOne v2 feature** (backend + Basic Settings UI). See [spec/1.6.0](../spec/1.6.0/README.md).
 
@@ -60,6 +61,7 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:media` | Media FE + BE |
 | `npm run dev:data` | Data FE + BE |
 | `npm run dev:sms` | SMS FE + BE |
+| `npm run dev:payment` | Payment FE + BE |
 | `npm run mobile` | Mobile Expo app (not in root `dev`) |
 | `npm run mobile:web` | Mobile app via RN Web |
 | `npm run build:platform-nav` | Build `@webonone/platform-nav` |

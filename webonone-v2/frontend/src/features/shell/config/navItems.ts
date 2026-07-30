@@ -19,6 +19,7 @@ import {
   Smartphone,
   Tag,
   Users,
+  Wallet,
   Wrench,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -26,6 +27,7 @@ import {
   DATA_NAV_SENTINELS,
   EMAIL_NAV_SENTINELS,
   IDENTITY_NAV_SENTINELS,
+  PAYMENT_NAV_SENTINELS,
   SMS_NAV_SENTINELS,
   filterCompanyDataEntities,
   filterPlatformNavDataEntities,
@@ -33,6 +35,7 @@ import {
   isDataNavSentinel,
   isEmailNavSentinel,
   isIdentityNavSentinel,
+  isPaymentNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
   type CoreNavDef,
@@ -66,6 +69,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
   [SMS_NAV_SENTINELS.queue]: Rows3,
   [SMS_NAV_SENTINELS.history]: History,
   [SMS_NAV_SENTINELS.templates]: MessageSquare,
+  [PAYMENT_NAV_SENTINELS.invoices]: Wallet,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
@@ -76,6 +80,7 @@ const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Email: Mail,
   Data: Database,
   SMS: MessageSquare,
+  Payment: Wallet,
   Calendar: Calendar,
 }
 
@@ -87,7 +92,8 @@ function resolveItemPath(item: CoreNavLeaf): string {
   if (
     item.externalService === 'email' ||
     item.externalService === 'data' ||
-    item.externalService === 'sms'
+    item.externalService === 'sms' ||
+    item.externalService === 'payment'
   ) {
     return item.path
   }
@@ -172,4 +178,5 @@ export {
   isIdentityNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
+  isPaymentNavSentinel,
 }

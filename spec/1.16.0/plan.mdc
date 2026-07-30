@@ -1,0 +1,142 @@
+---
+description: Implementation plan for spec 1.16.0 — Payment microservice (system subscription invoices)
+alwaysApply: false
+globs: payment/**, webonone-v2/**, packages/platform-nav/**
+---
+
+# Implementation plan — Spec 1.16.0
+
+## Summary
+
+Add a standalone **`payment/`** microservice (cloned from `email/` or `sms/`) that owns **system** billing: monthly company subscription invoices at **LKR 3,000**, starting from each company's **activation date** (`approved_at`). Super admins list **all companies' invoices** in the Payment admin UI, reachable from WebOnOne via platform-nav. Customer payments and payment gateways are **out of scope**.
+
+See [01-overview.md](./01-overview.md), [02-payment-service-scaffold.md](./02-payment-service-scaffold.md), [03-system-billing-and-invoices.md](./03-system-billing-and-invoices.md), [04-super-admin-invoices-ui.md](./04-super-admin-invoices-ui.md), [05-platform-integration.md](./05-platform-integration.md).
+
+| Project | Touch |
+|---------|--------|
+| `payment/` | New FE (admin) + BE + migrations; primary scope |
+| `webonone-v2/` | Approve/reject → Payment upsert; env; Payment redirect |
+| `packages/platform-nav/` | Super-admin Payment → Invoices |
+| root `package.json` | `payment/` workspaces, `dev:payment`, `build:payment`, `migrate:payment` |
+
+---
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.16.0` |
+| Dev (service) | `npm run dev:payment` (FE **3017** / BE **4017**) |
+| Package build | Chain shared builds in `payment/` `build` like `sms/` / `email/` |
+| Env / migrations | `payment/backend/.env` (`webonone_payment`, `JWT_SECRET`, `PAYMENT_SERVICE_API_KEY`, billing vars); WebOnOne `PAYMENT_*` + `VITE_PAYMENT_ORIGIN` |
+| Agent | Add `payment-agent` + skill (copy `sms-agent`); follow `microservice-architecture.mdc`, `nodejs-express.mdc`, item-list + feature-store skills |
+
+---
+
+## Phase 1 — Payment service scaffold
+
+**Goal:** [02-payment-service-scaffold.md](./02-payment-service-scaffold.md) — standalone shell, auth, roles, root wiring.
+
+**Exit criteria:** `dev:payment` login shell + `/health`; own DB `webonone_payment`.
+
+| Task | Paths / detail |
+|------|----------------|
+| Clone service | Copy `sms/` or `email/` → `payment/`; ports 3017/4017; DB `webonone_payment` |
+| Middleware | JWT auth, `X-Payment-Service-Key`, validateBody, requireRole |
+| Base migrations | companies mirror, plans (+ seed LKR 3000), audit |
+| Root wiring | workspaces; `dev:payment` on root `dev` |
+
+**Verify:** `npm run type-check -w payment-root` · `npm run dev:payment`
+
+---
+
+## Phase 2 — System billing + invoices engine
+
+**Goal:** [03-system-billing-and-invoices.md](./03-system-billing-and-invoices.md).
+
+**Exit criteria:** Activation upsert → monthly invoices @ LKR 3000; idempotent; mark paid/void API.
+
+| Task | Paths / detail |
+|------|----------------|
+| Domain migrations | subscriptions, invoices, lines; unique period key |
+| Internal upsert | `/internal/companies/upsert` |
+| Generator | `workers/invoiceGenerator.ts` + `/internal/invoices/generate` |
+| Public API | invoices CRUD-ish (list/detail/status), dashboard |
+
+**Verify:** `npm run migrate -w payment-root`; curl upsert + generate; list invoices.
+
+---
+
+## Phase 3 — Super-admin invoices UI
+
+**Goal:** [04-super-admin-invoices-ui.md](./04-super-admin-invoices-ui.md).
+
+**Exit criteria:** Super admin sees all companies' invoices; mark paid/void in UI.
+
+| Task | Paths / detail |
+|------|----------------|
+| Invoices list/detail | FeaturePage + ItemList; Rs formatting |
+| Dashboard | Summary counts |
+| Store | store-kit paginated list preferred |
+
+**Verify:** Manual UI against seeded/generated invoices.
+
+---
+
+## Phase 4 — Platform integration and release
+
+**Goal:** [05-platform-integration.md](./05-platform-integration.md).
+
+| Task | Detail |
+|------|--------|
+| WebOnOne sync | company status → Payment upsert |
+| Nav | platform-nav Payment group; `paymentConfig` + redirect |
+| Security | service key, role gates, audit |
+| Release | run [05](./05-platform-integration.md) checklist |
+
+**Verify:** Approve company e2e → Invoices list; type-check Payment + WebOnOne + platform-nav.
+
+---
+
+## Cross-service integration
+
+- **Auth:** Payment verifies Identity JWT locally.
+- **Internal:** WebOnOne → Payment HTTP + service key.
+- **UI:** WebOnOne → Payment via platform-nav handoff.
+- **No shared DB.**
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| [User Story] Spec No 1.16.0 | TBD | All |
+| Payment service scaffold | TBD | Phase 1 |
+| System billing + invoices engine | TBD | Phase 2 |
+| Super-admin invoices UI | TBD | Phase 3 |
+| Platform integration and release | TBD | Phase 4 |
+
+---
+
+## Risks and open items
+
+- Non-blocking sync if Payment is down; ops backfill.
+- Month-end day clamping; unit-test period math.
+- Backfill already-approved companies at cutover.
+- Customer payments / gateways deferred.
+- ClickUp IDs TBD.
+
+---
+
+## Final verification
+
+```bash
+npm run migrate -w payment-root
+npm run type-check -w payment-root
+npm run build -w payment-root
+npm run build:platform-nav
+npm run type-check -w webonone-v2-root
+```
+
+Manual: Approve company → Rs 3,000/month invoices from activation → super admin **Payment → Invoices** → mark paid.

@@ -7,6 +7,7 @@ import {
   emailSentinelToExternalPath,
   identitySentinelToExternalPath,
   isDataEntityKey,
+  paymentSentinelToExternalPath,
   profileSentinelToExternalPath,
   smsSentinelToExternalPath,
   toCoreNavQueryValue,
@@ -15,6 +16,7 @@ import { useAppSelector } from '@/app/store/hooks'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
 import { getEmailOrigin } from '@/features/email/utils/emailConfig'
+import { getPaymentOrigin } from '@/features/payment/utils/paymentConfig'
 import { getSmsOrigin } from '@/features/sms/utils/smsConfig'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
@@ -26,9 +28,10 @@ const PEER_LABELS: Record<PlatformPeerId, string> = {
   data: 'Data',
   identity: 'Profile',
   sms: 'SMS',
+  payment: 'Payment',
 }
 
-export type PlatformPeerId = 'email' | 'data' | 'identity' | 'sms'
+export type PlatformPeerId = 'email' | 'data' | 'identity' | 'sms' | 'payment'
 
 type PlatformPeerFrameProps = {
   peer: PlatformPeerId
@@ -40,6 +43,9 @@ function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
   }
   if (peer === 'sms') {
     return smsSentinelToExternalPath(pathname) ?? '/send'
+  }
+  if (peer === 'payment') {
+    return paymentSentinelToExternalPath(pathname) ?? '/invoices'
   }
   if (peer === 'identity') {
     return (
@@ -63,6 +69,9 @@ function resolvePeerOrigin(peer: PlatformPeerId): string {
   }
   if (peer === 'sms') {
     return getSmsOrigin()
+  }
+  if (peer === 'payment') {
+    return getPaymentOrigin()
   }
   if (peer === 'identity') {
     return getIdentityOrigin()

@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_EMAIL_ORIGIN?: string
   readonly VITE_DATA_ORIGIN?: string
   readonly VITE_SMS_ORIGIN?: string
+  readonly VITE_PAYMENT_ORIGIN?: string
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv
