@@ -7,20 +7,37 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { SessionProvider, useSession } from '@/features/auth/SessionContext'
 
 function AuthGate() {
-  const { isAuthenticated, isBootstrapping } = useSession()
+  const { isAuthenticated, isBootstrapping, needsRoleSelection, isBlocked } = useSession()
   const segments = useSegments()
   const router = useRouter()
 
   useEffect(() => {
     if (isBootstrapping) return
-    const inAuthGroup = segments[0] === '(tabs)'
 
-    if (!isAuthenticated && inAuthGroup) {
-      router.replace('/login')
-    } else if (isAuthenticated && !inAuthGroup) {
-      router.replace('/(tabs)')
+    const segment = segments[0]
+    const onLogin = segment === 'login'
+    const onSelectRole = segment === 'select-role'
+    const inTabs = segment === '(tabs)'
+
+    if (isAuthenticated) {
+      if (!inTabs) router.replace('/(tabs)')
+      return
     }
-  }, [isAuthenticated, isBootstrapping, router, segments])
+
+    if (needsRoleSelection || isBlocked) {
+      if (!onSelectRole) router.replace('/select-role')
+      return
+    }
+
+    if (inTabs || onSelectRole) {
+      router.replace('/login')
+      return
+    }
+
+    if (!onLogin && segment !== undefined) {
+      router.replace('/login')
+    }
+  }, [isAuthenticated, isBootstrapping, needsRoleSelection, isBlocked, router, segments])
 
   if (isBootstrapping) {
     return (

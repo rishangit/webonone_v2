@@ -2,14 +2,17 @@ import { useState } from 'react'
 import { View } from 'react-native'
 import { Body, Button, Card, Heading, Muted, Screen, TextField } from '@/ui'
 import { useSession } from './SessionContext'
+import { isGoogleSignInAvailable } from './googleSignIn'
 import { loginSchema, type LoginFormValues } from './loginSchema'
 
 export function LoginScreen() {
-  const { login } = useSession()
+  const { login, loginWithGoogle } = useSession()
   const [values, setValues] = useState<LoginFormValues>({ email: '', password: '' })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof LoginFormValues, string>>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [googleSubmitting, setGoogleSubmitting] = useState(false)
+  const showGoogle = isGoogleSignInAvailable()
 
   async function handleSubmit() {
     const result = loginSchema.safeParse(values)
@@ -35,6 +38,20 @@ export function LoginScreen() {
       setSubmitting(false)
     }
   }
+
+  async function handleGoogle() {
+    setFormError(null)
+    setGoogleSubmitting(true)
+    try {
+      await loginWithGoogle()
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Google sign-in failed')
+    } finally {
+      setGoogleSubmitting(false)
+    }
+  }
+
+  const busy = submitting || googleSubmitting
 
   return (
     <Screen>
@@ -64,9 +81,27 @@ export function LoginScreen() {
           error={fieldErrors.password}
         />
         {formError ? <Body className="text-destructive">{formError}</Body> : null}
-        <Button loading={submitting} onPress={handleSubmit}>
+        <Button loading={submitting} disabled={busy} onPress={handleSubmit}>
           Sign in
         </Button>
+
+        {showGoogle ? (
+          <View className="gap-3">
+            <View className="flex-row items-center gap-3">
+              <View className="h-px flex-1 bg-border" />
+              <Muted>or</Muted>
+              <View className="h-px flex-1 bg-border" />
+            </View>
+            <Button
+              variant="outline"
+              loading={googleSubmitting}
+              disabled={busy}
+              onPress={handleGoogle}
+            >
+              Continue with Google
+            </Button>
+          </View>
+        ) : null}
       </Card>
     </Screen>
   )

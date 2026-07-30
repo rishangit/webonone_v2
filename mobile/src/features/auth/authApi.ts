@@ -35,14 +35,25 @@ export const authApi = {
     return { accessToken: result.accessToken }
   },
 
+  /** Exchange a Google ID token for an Identity access token. */
+  async googleLogin(idToken: string): Promise<{ accessToken: string }> {
+    const result = await identityClient<IdentityLoginResponse>('/auth/google', {
+      method: 'POST',
+      body: { idToken },
+      bearer: null,
+    })
+    return { accessToken: result.accessToken }
+  },
+
   /** Resolve the SMS role/scope for the signed-in user (uses the stored token). */
-  async fetchProfile(): Promise<UserProfile> {
+  async fetchProfile(companyName: string | null = null): Promise<UserProfile> {
     const { user } = await smsClient<SmsMeResponse>('/me')
     return {
       id: user.id,
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      companyName: user.role === 'company_admin' ? companyName : null,
       scope: scopeForRole(user.role),
     }
   },

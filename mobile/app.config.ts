@@ -33,12 +33,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundler: 'metro',
     output: 'single',
   },
-  plugins: ['expo-router', 'expo-secure-store'],
+  plugins: ['expo-router', 'expo-secure-store', '@react-native-google-signin/google-signin'],
   experiments: {
     typedRoutes: true,
   },
   extra: {
     identityApiBaseUrl: process.env.IDENTITY_API_BASE_URL ?? 'http://localhost:4011/api/v1',
     smsApiBaseUrl: process.env.SMS_API_BASE_URL ?? 'http://localhost:4016/api/v1',
+    webononeApiBaseUrl: process.env.WEBONONE_API_BASE_URL ?? 'http://localhost:4010/api/v1',
+    /** Same Web OAuth client ID as Identity `VITE_GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_ID`. */
+    googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID ?? '',
   },
 })

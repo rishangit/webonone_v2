@@ -23,12 +23,17 @@ export function GatewayScreen() {
   }
 
   const scopeLabel = user?.scope === 'platform' ? 'Platform (system SMS)' : 'Company SMS'
+  const isOwner = user?.role === 'company_admin'
+  const contextLine = isOwner
+    ? `${user?.companyName ?? 'Company'} · Company owner`
+    : 'Super Admin'
 
   return (
     <Screen>
       <View className="gap-1">
         <Heading>SMS Gateway</Heading>
-        <Muted>Scope: {scopeLabel}</Muted>
+        <Body className="font-semibold">{contextLine}</Body>
+        <Muted>{scopeLabel}</Muted>
       </View>
 
       <Card className="gap-3">

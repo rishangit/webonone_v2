@@ -3,6 +3,10 @@ import Constants from 'expo-constants'
 interface MobileEnv {
   identityApiBaseUrl: string
   smsApiBaseUrl: string
+  /** WebOnOne API — assumable roles (company names) after login. */
+  webononeApiBaseUrl: string
+  /** Empty when Google Sign-In is not configured (button hidden). */
+  googleWebClientId: string
 }
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Partial<MobileEnv>
@@ -49,4 +53,6 @@ function resolveApiBaseUrl(value: string | undefined, fallback: string): string 
 export const env: MobileEnv = {
   identityApiBaseUrl: resolveApiBaseUrl(extra.identityApiBaseUrl, 'http://localhost:4011/api/v1'),
   smsApiBaseUrl: resolveApiBaseUrl(extra.smsApiBaseUrl, 'http://localhost:4016/api/v1'),
+  webononeApiBaseUrl: resolveApiBaseUrl(extra.webononeApiBaseUrl, 'http://localhost:4010/api/v1'),
+  googleWebClientId: (extra.googleWebClientId ?? '').trim(),
 }

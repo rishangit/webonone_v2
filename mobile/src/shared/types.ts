@@ -9,7 +9,16 @@ export interface UserProfile {
   email: string
   role: SmsRole
   companyId: string | null
+  /** Company display name when role is company_admin; null for Super Admin. */
+  companyName: string | null
   scope: DeviceScope | null
+}
+
+/** Sticky post-login role choice (cleared on logout). */
+export interface StickySessionRole {
+  role: 'super_admin' | 'company_admin'
+  companyId: string | null
+  companyName: string | null
 }
 
 export interface SmsDevice {

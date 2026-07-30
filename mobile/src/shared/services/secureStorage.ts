@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
+import type { StickySessionRole } from '@/shared/types'
 
 const ACCESS_TOKEN_KEY = 'webonone.sms.accessToken'
 const DEVICE_KEY_KEY = 'webonone.sms.deviceKey'
 const DEVICE_ID_KEY = 'webonone.sms.deviceId'
+const SESSION_ROLE_KEY = 'webonone.sms.sessionRole'
 
 const useSecureStore = Platform.OS !== 'web'
 
@@ -38,6 +40,23 @@ export const secureStorage = {
   },
   async clearAccessToken(): Promise<void> {
     await deleteItem(ACCESS_TOKEN_KEY)
+  },
+  async getSessionRole(): Promise<StickySessionRole | null> {
+    const raw = await getItem(SESSION_ROLE_KEY)
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw) as StickySessionRole
+      if (parsed.role !== 'super_admin' && parsed.role !== 'company_admin') return null
+      return parsed
+    } catch {
+      return null
+    }
+  },
+  async setSessionRole(role: StickySessionRole): Promise<void> {
+    await setItem(SESSION_ROLE_KEY, JSON.stringify(role))
+  },
+  async clearSessionRole(): Promise<void> {
+    await deleteItem(SESSION_ROLE_KEY)
   },
   async getDeviceKey(): Promise<string | null> {
     return getItem(DEVICE_KEY_KEY)
