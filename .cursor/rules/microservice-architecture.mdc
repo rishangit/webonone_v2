@@ -62,6 +62,7 @@ Root `package.json` uses `concurrently` to run each service's own `dev` script i
 | `npm run dev` | All microservices (full local stack) |
 | `npm run dev:identity` | Identity FE + BE only |
 | `npm run dev:webonone` | WebOnOne FE + BE only |
+| `npm run dev:website` | Website FE + BE only |
 | `npm run dev:ui-kit` | UI kit showcase only |
 
 **When scaffolding a new service:**

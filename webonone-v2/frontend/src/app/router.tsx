@@ -130,6 +130,10 @@ export function App() {
             }
           />
           <Route
+            path="home"
+            element={<Navigate to="/" replace />}
+          />
+          <Route
             path="calendar"
             element={<Navigate to="/calendar/schedule" replace />}
           />
