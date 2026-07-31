@@ -6,7 +6,13 @@ import {
   spacesController,
 } from '../controllers/catalog.controller.js'
 import { productVariantsController } from '../controllers/productVariants.controller.js'
-import { requireAuth, requireCompanyAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/auth.js'
+import { stocksController } from '../controllers/stocks.controller.js'
+import {
+  requireAuth,
+  requireCompanyAdmin,
+  requireCompanyAdminOrSuperAdmin,
+  requireSuperAdmin,
+} from '../middleware/auth.js'
 import { validateBody } from '../middleware/validateBody.js'
 import {
   catalogAttributeValueBodySchema,
@@ -17,6 +23,7 @@ import {
 } from '../schemas/catalog.schema.js'
 import { createProductVariantBodySchema } from '../schemas/productVariants.schema.js'
 import { createServiceBodySchema, updateServiceBodySchema } from '../schemas/services.schema.js'
+import { createStockBodySchema } from '../schemas/stocks.schema.js'
 
 function catalogRoutes(
   path: string,
@@ -104,12 +111,36 @@ router.get(
   requireAuth,
   productVariantsController.list,
 )
+router.get(
+  '/products/:id/variants/:variantId',
+  requireAuth,
+  productVariantsController.get,
+)
 router.post(
   '/products/:id/variants',
   requireAuth,
   requireCompanyAdminOrSuperAdmin,
   validateBody(createProductVariantBodySchema),
   productVariantsController.create,
+)
+
+router.get(
+  '/products/:id/variants/:variantId/stocks',
+  requireAuth,
+  stocksController.list,
+)
+router.post(
+  '/products/:id/variants/:variantId/stocks',
+  requireAuth,
+  requireCompanyAdmin,
+  validateBody(createStockBodySchema),
+  stocksController.create,
+)
+router.patch(
+  '/products/:id/variants/:variantId/stocks/:stockId/active',
+  requireAuth,
+  requireCompanyAdmin,
+  stocksController.setActive,
 )
 
 router.use(catalogRoutes('products', productsController))

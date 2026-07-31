@@ -15,21 +15,52 @@ import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingCont
 import { EventFormDialog } from '@/features/calendar/components/EventFormDialog'
 import { EventsList } from '@/features/calendar/components/EventsList'
 import { eventsActions } from '@/features/calendar/store'
-import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
+import {
+  canAccessCompanySession,
+  canBrowseCalendar,
+} from '@/features/session/utils/canAccessCompanySession'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
-export function EventsPage() {
-  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
-  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
-  const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const [dialog, setDialog] = useState<{ id?: string } | null>(null)
+function EmptyEventsPage() {
+  return (
+    <FeaturePage
+      title="Events"
+      description="Manage company calendar events."
+      actions={
+        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+          <SearchInput
+            value=""
+            onChange={() => undefined}
+            placeholder="Search events…"
+            className="w-64"
+            aria-label="Search events"
+            disabled
+          />
+        </div>
+      }
+    >
+      <ListPageBody>
+        <div className="flex-1">
+          <EventsList items={[]} onRemoved={() => undefined} />
+        </div>
+        <Pagination
+          className="mt-auto"
+          totalCount={0}
+          currentPage={1}
+          pageSize={12}
+          onPageChange={() => undefined}
+          onPageSizeChange={() => undefined}
+          pageSizeOptions={[12, 24, 48]}
+        />
+      </ListPageBody>
+    </FeaturePage>
+  )
+}
 
+function CompanyEventsPage() {
+  const [dialog, setDialog] = useState<{ id?: string } | null>(null)
   const list = useEpicCatalogList((s) => s.events, eventsActions)
   usePlatformLoading(list.loading ? 'Loading events…' : null)
-
-  if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
-    return <Navigate to="/" replace />
-  }
 
   return (
     <FeaturePage
@@ -90,4 +121,21 @@ export function EventsPage() {
       ) : null}
     </FeaturePage>
   )
+}
+
+export function EventsPage() {
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
+  const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
+
+  if (selectionComplete && !canBrowseCalendar(activeRole)) {
+    return <Navigate to="/" replace />
+  }
+
+  // Default User (no company) — empty list; skip company-scoped API.
+  if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
+    return <EmptyEventsPage />
+  }
+
+  return <CompanyEventsPage />
 }

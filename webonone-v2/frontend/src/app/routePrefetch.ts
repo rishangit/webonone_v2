@@ -72,7 +72,9 @@ export function prefetchRoutePath(pathname: string): void {
 
   if (
     isEmailNavSentinel(pathname) ||
+    pathname.startsWith('/email/') ||
     isSmsNavSentinel(pathname) ||
+    pathname.startsWith('/sms/') ||
     isIdentityNavSentinel(pathname) ||
     isProfileNavSentinel(pathname)
   ) {

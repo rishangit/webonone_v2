@@ -13,12 +13,16 @@ import {
   patchCurrentUser,
   refreshAccessToken,
   requestPasswordReset,
+  requestProfileEmailOtp,
+  requestProfilePhoneOtp,
   requestRegisterEmailOtp,
   resendEmailVerification,
   resetPassword,
   resetPasswordWithSession,
   reissueSessionRole,
   verifyEmail,
+  verifyProfileEmailOtp,
+  verifyProfilePhoneOtp,
   verifyRegisterEmailOtp,
   verifyResetOtp,
 } from '../services/auth.service.js'
@@ -304,6 +308,68 @@ export async function patchMe(req: AuthenticatedRequest, res: Response) {
     }
     const body = patchMeSchema.parse(req.body)
     const user = await patchCurrentUser(req.user.id, body)
+    res.json({ user })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+const profileOtpSchema = z.object({
+  otp: z.coerce.string().regex(/^\d{4,10}$/, 'Enter the verification code'),
+})
+
+export async function requestProfileEmailOtpHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    await requestProfileEmailOtp(req.user.id)
+    res.json({ message: 'Verification code sent' })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function verifyProfileEmailOtpHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    const body = profileOtpSchema.parse(req.body)
+    const user = await verifyProfileEmailOtp(req.user.id, body.otp)
+    res.json({ user })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function requestProfilePhoneOtpHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    await requestProfilePhoneOtp(req.user.id)
+    res.json({ message: 'Verification code sent' })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function verifyProfilePhoneOtpHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    const body = profileOtpSchema.parse(req.body)
+    const user = await verifyProfilePhoneOtp(req.user.id, body.otp)
     res.json({ user })
   } catch (err) {
     if (handleAuthError(err, res)) return

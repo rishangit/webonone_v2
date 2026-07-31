@@ -113,7 +113,12 @@ export function StaffDetailsPage() {
           />
         </div>
         <div className="flex flex-col gap-6 lg:col-span-1">
-          <StaffUserCard staff={detail} canEdit={canEdit} onEdit={() => openWizard(1)} />
+          <StaffUserCard
+            staff={detail}
+            canEdit={canEdit}
+            canViewProfile={canEdit}
+            onEdit={() => openWizard(1)}
+          />
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Record</CardTitle>

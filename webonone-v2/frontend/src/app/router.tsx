@@ -77,6 +77,11 @@ const DataCatalogDetailRoute = lazy(() =>
     default: m.DataCatalogDetailRoute,
   })),
 )
+const DataCatalogVariantDetailRoute = lazy(() =>
+  import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
+    default: m.DataCatalogVariantDetailRoute,
+  })),
+)
 const DataLibraryCatchAllRoute = lazy(() =>
   import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
     default: m.DataLibraryCatchAllRoute,
@@ -257,6 +262,14 @@ export function App() {
             element={
               <LazyRoute>
                 <PlatformPeerFrame peer="payment" />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="data/products/:productId/variants/:variantId"
+            element={
+              <LazyRoute>
+                <DataCatalogVariantDetailRoute />
               </LazyRoute>
             }
           />

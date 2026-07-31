@@ -33,7 +33,9 @@ import {
 function isPlatformPeerEmbedPath(pathname: string, activeRole: string | null): boolean {
   if (
     isEmailNavSentinel(pathname) ||
+    pathname.startsWith('/email/') ||
     isSmsNavSentinel(pathname) ||
+    pathname.startsWith('/sms/') ||
     isPaymentNavSentinel(pathname) ||
     pathname.startsWith('/payment/') ||
     isIdentityNavSentinel(pathname) ||

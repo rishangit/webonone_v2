@@ -160,6 +160,18 @@ async function getById(variantId: string): Promise<ProductVariantDto | null> {
   return rowToDto(row, valuesMap.get(variantId) ?? [])
 }
 
+export async function getProductVariant(
+  productId: string,
+  variantId: string,
+): Promise<ProductVariantDto> {
+  await assertProductExists(productId)
+  const variant = await getById(variantId)
+  if (!variant || variant.productId !== productId) {
+    throw new Error('NOT_FOUND')
+  }
+  return variant
+}
+
 export async function listProductVariants(productId: string): Promise<ProductVariantDto[]> {
   await assertProductExists(productId)
   const rows = (await db('data_product_variants')

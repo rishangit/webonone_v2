@@ -21,9 +21,26 @@ export function resolvePlatformLogoutLoginUrl(
   return `${origin}/login`
 }
 
+/** Ensures consumer login URLs force a fresh Identity handoff (no silent SSO). */
+export function appendPromptLogin(url: string): string {
+  try {
+    const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1')
+    if (parsed.searchParams.get('prompt') !== 'login') {
+      parsed.searchParams.set('prompt', 'login')
+    }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return parsed.toString()
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`
+  } catch {
+    return url
+  }
+}
+
 /**
  * Absolute consumer (or local) login URL after logout.
- * Does not append `prompt=login` — Identity `/logout` already clears SSO sessions.
+ * Always includes `prompt=login` so the consumer clears local JWT and Identity
+ * does not silently re-auth via leftover SSO session.
  */
 export function resolveAbsolutePostLogoutLoginUrl(
   returnUrl: string | null | undefined,
@@ -31,14 +48,15 @@ export function resolveAbsolutePostLogoutLoginUrl(
 ): string {
   const pathOrUrl = resolvePlatformLogoutLoginUrl(returnUrl, localLoginPath)
   if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
-    return pathOrUrl
+    return appendPromptLogin(pathOrUrl)
   }
 
   if (typeof window === 'undefined') {
-    return pathOrUrl
+    return appendPromptLogin(pathOrUrl)
   }
 
-  return `${window.location.origin}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`
+  const absolute = `${window.location.origin}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`
+  return appendPromptLogin(absolute)
 }
 
 export function buildIdentityLogoutUrl(

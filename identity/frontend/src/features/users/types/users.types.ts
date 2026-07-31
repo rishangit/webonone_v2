@@ -6,10 +6,11 @@ export type UserPickerUser = {
   email: string | null
   role?: UserPickerRole
   avatarUrl: string | null
-  phone?: string | null
+  phoneNumber?: string | null
   companyId?: string
   addedAt?: string
   isEmailVerified?: boolean
+  isPhoneVerified?: boolean
 }
 
 /** Full profile for admin user detail (`GET /users/:id`). */
@@ -29,6 +30,7 @@ export type IdentityUserDetail = {
   avatarUrl: string | null
   locale: string | null
   isEmailVerified: boolean
+  isPhoneVerified: boolean
   isGoogleUser: boolean
   role?: UserPickerRole
 }

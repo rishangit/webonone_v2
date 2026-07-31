@@ -117,6 +117,23 @@ export interface ProductVariant {
   updatedAt: string
 }
 
+export interface ProductVariantStock {
+  id: string
+  variantId: string
+  quantity: number
+  batchNumber: string
+  costPrice: number
+  sellPrice: number
+  purchaseDate: string
+  expiredDate: string | null
+  supplierUserId: string
+  supplierDisplayName: string
+  supplierEmail: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface DashboardStats {
   counts: Record<string, { verified: number; pending: number }>
 }

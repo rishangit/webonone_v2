@@ -39,7 +39,14 @@ type PlatformPeerFrameProps = {
 
 function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
   if (peer === 'email') {
-    return emailSentinelToExternalPath(pathname) ?? '/send'
+    const mapped = emailSentinelToExternalPath(pathname)
+    if (mapped) return mapped
+    if (pathname.startsWith('/email/')) {
+      const suffix = pathname.slice('/email'.length)
+      if (!suffix || suffix.includes('..')) return '/send'
+      return suffix
+    }
+    return '/send'
   }
   if (peer === 'sms') {
     return smsSentinelToExternalPath(pathname) ?? '/send'
@@ -79,12 +86,89 @@ function resolvePeerOrigin(peer: PlatformPeerId): string {
   return getDataOrigin()
 }
 
-/** Allow `/data/{entity}` and `/data/{entity}/:id` only. */
+/**
+ * Allow Email top-level routes and template nested paths
+ * (`/email/templates/:id`, `/preview`, `/versions`). Path may include a query string.
+ */
+function isAllowedEmailShellNavigatePath(path: string): boolean {
+  const pathname = path.split('?')[0] ?? path
+  if (!pathname.startsWith('/email/')) return false
+  const parts = pathname.slice(1).split('/').filter(Boolean)
+  if (parts[0] !== 'email' || parts.length < 2) return false
+  if (parts.some((part) => !part || part.includes('..'))) return false
+
+  const section = parts[1]
+  const topLevel = new Set([
+    'send',
+    'queue',
+    'history',
+    'templates',
+    'settings',
+    'providers',
+    'test',
+  ])
+  if (!topLevel.has(section ?? '')) return false
+
+  if (section === 'templates') {
+    if (parts.length === 2 || parts.length === 3) return true
+    if (parts.length === 4 && (parts[3] === 'preview' || parts[3] === 'versions')) {
+      return true
+    }
+    return false
+  }
+
+  return parts.length === 2
+}
+
+/**
+ * Allow SMS top-level routes and template nested paths
+ * (`/sms/templates/:id`, `/preview`, `/versions`). Path may include a query string.
+ */
+function isAllowedSmsShellNavigatePath(path: string): boolean {
+  const pathname = path.split('?')[0] ?? path
+  if (!pathname.startsWith('/sms/')) return false
+  const parts = pathname.slice(1).split('/').filter(Boolean)
+  if (parts[0] !== 'sms' || parts.length < 2) return false
+  if (parts.some((part) => !part || part.includes('..'))) return false
+
+  const section = parts[1]
+  const topLevel = new Set(['send', 'devices', 'queue', 'history', 'templates'])
+  if (!topLevel.has(section ?? '')) return false
+
+  if (section === 'templates') {
+    if (parts.length === 2 || parts.length === 3) return true
+    if (parts.length === 4 && (parts[3] === 'preview' || parts[3] === 'versions')) {
+      return true
+    }
+    return false
+  }
+
+  return parts.length === 2
+}
+
+/**
+ * Allow `/data/{entity}`, `/data/{entity}/:id`, and nested product variant
+ * `/data/products/:productId/variants/:variantId`. Path may include a query string.
+ */
 function isAllowedDataShellNavigatePath(path: string): boolean {
-  if (!path.startsWith('/data/')) return false
-  const parts = path.slice(1).split('/').filter(Boolean)
-  if (parts.length < 2 || parts.length > 3) return false
+  const pathname = path.split('?')[0] ?? path
+  if (!pathname.startsWith('/data/')) return false
+  const parts = pathname.slice(1).split('/').filter(Boolean)
   if (parts[0] !== 'data') return false
+
+  if (
+    parts.length === 5 &&
+    parts[1] === 'products' &&
+    parts[3] === 'variants' &&
+    parts[2] &&
+    parts[4] &&
+    !parts[2].includes('..') &&
+    !parts[4].includes('..')
+  ) {
+    return true
+  }
+
+  if (parts.length < 2 || parts.length > 3) return false
   if (!isDataEntityKey(parts[1] ?? '')) return false
   if (parts.length === 3 && (!parts[2] || parts[2].includes('..'))) return false
   return true
@@ -108,10 +192,15 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
 
   const searchParams = useMemo(() => {
     const navVariant = getNavVariantForSessionRole(activeRole)
-    return {
+    const params: Record<string, string> = {
       [CORE_NAV_QUERY_PARAM]: toCoreNavQueryValue(navVariant),
     }
-  }, [activeRole])
+    const tab = new URLSearchParams(location.search).get('tab')
+    if (tab) {
+      params.tab = tab
+    }
+    return params
+  }, [activeRole, location.search])
 
   const handleLoadingChange = useCallback((loading: boolean) => {
     setFrameLoading(loading)
@@ -121,8 +210,20 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
     (path: string) => {
       if (peer === 'data') {
         if (!isAllowedDataShellNavigatePath(path)) return
-        navigate({ pathname: path })
+        const [pathname = path, query = ''] = path.split('?')
+        navigate({ pathname, search: query ? `?${query}` : undefined })
         return
+      }
+      if (peer === 'email') {
+        if (!isAllowedEmailShellNavigatePath(path)) return
+        const [pathname = path, query = ''] = path.split('?')
+        navigate({ pathname, search: query ? `?${query}` : undefined })
+        return
+      }
+      if (peer === 'sms') {
+        if (!isAllowedSmsShellNavigatePath(path)) return
+        const [pathname = path, query = ''] = path.split('?')
+        navigate({ pathname, search: query ? `?${query}` : undefined })
       }
     },
     [navigate, peer],
@@ -146,7 +247,9 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         onLoadingChange={handleLoadingChange}
         onMediaDialogRequest={openMediaDialog}
         onPeerDialogRequest={openPeerDialog}
-        onPeerNavigate={peer === 'data' ? handlePeerNavigate : undefined}
+        onPeerNavigate={
+          peer === 'data' || peer === 'email' || peer === 'sms' ? handlePeerNavigate : undefined
+        }
       />
     </div>
   )

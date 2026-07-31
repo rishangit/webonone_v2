@@ -66,6 +66,34 @@ export const authSlice = createSlice({
       state.user = action.payload.user
       syncPersistedSession(state)
     },
+    /**
+     * Embed JWT handoff: set token without wiping a richer same-user profile
+     * already loaded via `/auth/me`. Stub only when no matching user is present.
+     */
+    embedAccessTokenReceived(
+      state,
+      action: PayloadAction<{
+        accessToken: string
+        stubUser: UserProfile
+      }>,
+    ) {
+      const { accessToken, stubUser } = action.payload
+      state.accessToken = accessToken
+      const keep =
+        state.user &&
+        state.user.id === stubUser.id &&
+        !(
+          !state.user.firstName &&
+          !state.user.lastName &&
+          state.user.displayName === state.user.email
+        )
+      if (!keep) {
+        state.user = stubUser
+      }
+      state.isProfileLoading = true
+      state.profileError = null
+      syncPersistedSession(state)
+    },
     loginFailed(state, action: PayloadAction<string>) {
       state.isLoading = false
       state.error = action.payload

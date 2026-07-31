@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -16,16 +17,21 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { useNavigateSms } from '@/features/shell/utils/navigateSms'
 import { templatesActions } from '@/features/templates/store'
 
 export function TemplateEditorPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { goToDetail, goToPreview } = useNavigateSms()
   const dispatch = useAppDispatch()
-  const { accessToken } = useAppSelector((s) => s.auth)
-  const { detail: template, detailStatus, detailError, versions, versionsStatus } = useAppSelector(
-    (s) => s.templates,
-  )
+  const {
+    detail: template,
+    detailStatus,
+    detailError,
+    versions,
+    versionsStatus,
+  } = useAppSelector((s) => s.templates)
   const [success, setSuccess] = useState<string | null>(null)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [versionPage, setVersionPage] = useState(1)
@@ -42,10 +48,10 @@ export function TemplateEditorPage() {
   )
 
   useEffect(() => {
-    if (!id || !accessToken) return
+    if (!id) return
     dispatch(templatesActions.fetchDetailRequested({ id }))
     dispatch(templatesActions.loadVersionsRequested({ id }))
-  }, [accessToken, dispatch, id])
+  }, [dispatch, id])
 
   useEffect(() => {
     if (restoringId && detailStatus === 'idle' && template) {
@@ -54,10 +60,6 @@ export function TemplateEditorPage() {
       dispatch(templatesActions.loadVersionsRequested({ id: template.id, force: true }))
     }
   }, [detailStatus, dispatch, restoringId, template])
-
-  if (!accessToken) {
-    return <Navigate to="/login" replace />
-  }
 
   function handleRestoreVersion(versionId: string) {
     if (!id) return
@@ -81,9 +83,15 @@ export function TemplateEditorPage() {
       title={template ? `Versions: ${template.name}` : 'Version history'}
       description="Restore a previous version of this template."
       actions={
-        <Button type="button" variant="outline" asChild>
-          <Link to="/templates">Back</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => goToDetail(id)}>
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Back
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => goToPreview(id)}>
+            Preview
+          </Button>
+        </div>
       }
     >
       {detailError ? (

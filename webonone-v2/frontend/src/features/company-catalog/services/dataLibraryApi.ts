@@ -18,12 +18,19 @@ const KIND_PATH: Record<CatalogEntityKind, string> = {
   spaces: 'spaces',
 }
 
-async function dataFetch<T>(path: string): Promise<T> {
+async function dataFetch<T>(
+  path: string,
+  init?: { method?: string; body?: string },
+): Promise<T> {
   const token = getToken()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(`${getDataApiBaseUrl()}${path}`, { headers })
+  const res = await fetch(`${getDataApiBaseUrl()}${path}`, {
+    method: init?.method ?? 'GET',
+    headers,
+    body: init?.body,
+  })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error((data as { message?: string }).message ?? 'Data library request failed')
@@ -93,6 +100,23 @@ export type LibraryProductVariant = {
   sku: string
   isDefault: boolean
   values: LibraryProductVariantAttributeValue[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type LibraryProductVariantStock = {
+  id: string
+  variantId: string
+  quantity: number
+  batchNumber: string
+  costPrice: number
+  sellPrice: number
+  purchaseDate: string
+  expiredDate: string | null
+  supplierUserId: string
+  supplierDisplayName: string
+  supplierEmail: string | null
+  isActive: boolean
   createdAt: string
   updatedAt: string
 }
@@ -200,6 +224,47 @@ export const dataLibraryApi = {
 
   listProductVariants(productId: string) {
     return dataFetch<{ items: LibraryProductVariant[] }>(`/products/${productId}/variants`)
+  },
+
+  getProductVariant(productId: string, variantId: string) {
+    return dataFetch<LibraryProductVariant>(`/products/${productId}/variants/${variantId}`)
+  },
+
+  listProductVariantStocks(productId: string, variantId: string) {
+    return dataFetch<{ items: LibraryProductVariantStock[] }>(
+      `/products/${productId}/variants/${variantId}/stocks`,
+    )
+  },
+
+  createProductVariantStock(
+    productId: string,
+    variantId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id: string
+      supplier_display_name: string
+      supplier_email?: string | null
+    },
+  ) {
+    return dataFetch<LibraryProductVariantStock>(
+      `/products/${productId}/variants/${variantId}/stocks`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    )
+  },
+
+  setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
+    return dataFetch<LibraryProductVariantStock>(
+      `/products/${productId}/variants/${variantId}/stocks/${stockId}/active`,
+      { method: 'PATCH' },
+    )
   },
 }
 

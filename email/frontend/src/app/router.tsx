@@ -18,6 +18,11 @@ const SendEmailPage = lazy(() =>
 const TemplatesPage = lazy(() =>
   import('@/features/templates/pages/TemplatesPage').then((m) => ({ default: m.TemplatesPage })),
 )
+const TemplateDetailsPage = lazy(() =>
+  import('@/features/templates/pages/TemplateDetailsPage').then((m) => ({
+    default: m.TemplateDetailsPage,
+  })),
+)
 const TemplateEditorPage = lazy(() =>
   import('@/features/templates/pages/TemplateEditorPage').then((m) => ({
     default: m.TemplateEditorPage,
@@ -127,6 +132,16 @@ export function App() {
           />
           <Route
             path="/templates/:id"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
+                  <TemplateDetailsPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/templates/:id/versions"
             element={
               <RoleRoute roles={[...adminRoles]}>
                 <LazyRoute>

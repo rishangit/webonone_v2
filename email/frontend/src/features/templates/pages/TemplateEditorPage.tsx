@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -81,10 +82,13 @@ export function TemplateEditorPage() {
       description="Restore a previous version of this template."
       actions={
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" asChild>
-            <Link to="/templates">Back</Link>
+          <Button type="button" variant="outline" size="sm" asChild>
+            <Link to={`/templates/${id}`}>
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Back
+            </Link>
           </Button>
-          <Button type="button" variant="outline" asChild>
+          <Button type="button" variant="outline" size="sm" asChild>
             <Link to={`/templates/${id}/preview`}>Preview</Link>
           </Button>
         </div>

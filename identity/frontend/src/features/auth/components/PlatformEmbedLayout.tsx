@@ -20,7 +20,9 @@ type PlatformEmbedLayoutProps = {
   parentOrigin: string
 }
 
-function minimalUserFromClaims(claims: NonNullable<ReturnType<typeof decodeJwtPayload>>): UserProfile {
+function minimalUserFromClaims(
+  claims: NonNullable<ReturnType<typeof decodeJwtPayload>>,
+): UserProfile {
   return {
     id: claims.sub,
     email: claims.email,
@@ -37,6 +39,7 @@ function minimalUserFromClaims(claims: NonNullable<ReturnType<typeof decodeJwtPa
     avatarUrl: null,
     locale: null,
     isEmailVerified: false,
+    isPhoneVerified: false,
     isGoogleUser: false,
   }
 }
@@ -55,12 +58,14 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
         return
       }
 
+      // Keep any richer same-user profile; always refresh from `/auth/me`.
       dispatch(
-        authActions.loginSucceeded({
+        authActions.embedAccessTokenReceived({
           accessToken: token,
-          user: minimalUserFromClaims(claims),
+          stubUser: minimalUserFromClaims(claims),
         }),
       )
+      dispatch(authActions.profileFetchRequested({ force: true }))
     },
     [dispatch],
   )
@@ -74,6 +79,7 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
           user: session.user as UserProfile,
         }),
       )
+      dispatch(authActions.profileFetchRequested({ force: true }))
     },
     [dispatch],
   )
@@ -89,7 +95,7 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
 
   useEffect(() => {
     if (accessToken && !isAwaitingToken) {
-      dispatch(authActions.profileFetchRequested())
+      dispatch(authActions.profileFetchRequested({ force: true }))
     }
   }, [accessToken, dispatch, isAwaitingToken])
 

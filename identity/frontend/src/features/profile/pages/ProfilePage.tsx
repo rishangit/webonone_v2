@@ -14,6 +14,10 @@ import { buildProfileSearchWithoutCode, parseProfileReturnUrl } from '../utils/p
 import type { ProfileWizardStep } from '../schemas/profileSchemas'
 import { ProfileFormDialog } from '../components/ProfileFormDialog'
 import { ProfileView } from '../components/ProfileView'
+import {
+  VerifyContactOtpDialog,
+  type VerifyContactChannel,
+} from '../components/VerifyContactOtpDialog'
 
 export function ProfilePage() {
   const [searchParams] = useSearchParams()
@@ -25,16 +29,22 @@ export function ProfilePage() {
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
   const [isBootstrapping, setIsBootstrapping] = useState(false)
   const [dialog, setDialog] = useState<{ initialStep: ProfileWizardStep } | null>(null)
+  const [verifyChannel, setVerifyChannel] = useState<VerifyContactChannel | null>(null)
   const bootstrapRef = useRef(false)
 
   const code = searchParams.get('code')
   const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
   const returnUrl = parseProfileReturnUrl(searchParams)
 
+  const showProfileLoading =
+    isProfileLoading &&
+    (!user ||
+      (!user.firstName && !user.lastName && user.displayName === user.email))
+
   usePlatformLoading(
     isBootstrapping
       ? 'Loading your profile…'
-      : isProfileLoading && !user
+      : showProfileLoading
         ? 'Loading profile…'
         : null,
   )
@@ -72,10 +82,11 @@ export function ProfilePage() {
   }, [code, dispatch, isEmbedHandoff, navigate, searchParams])
 
   useEffect(() => {
-    if (accessToken && !code && !user) {
-      dispatch(authActions.profileFetchRequested())
+    if (accessToken && !code) {
+      // Always load `/auth/me` — embed may have seeded a JWT-only stub user.
+      dispatch(authActions.profileFetchRequested({ force: true }))
     }
-  }, [accessToken, code, dispatch, user])
+  }, [accessToken, code, dispatch])
 
   useEffect(() => {
     if (profileSaveSuccess) {
@@ -180,7 +191,13 @@ export function ProfilePage() {
             <AlertDescription>Profile saved successfully.</AlertDescription>
           </Alert>
         ) : null}
-        <ProfileView user={user} avatarUrl={user.avatarUrl} onEditSection={openWizard} />
+        <ProfileView
+          user={user}
+          avatarUrl={user.avatarUrl}
+          onEditSection={openWizard}
+          onVerifyEmail={() => setVerifyChannel('email')}
+          onVerifyPhone={() => setVerifyChannel('phone')}
+        />
       </div>
 
       {dialog ? (
@@ -192,6 +209,24 @@ export function ProfilePage() {
           }}
           onSaved={() => {
             setDialog(null)
+          }}
+        />
+      ) : null}
+
+      {verifyChannel ? (
+        <VerifyContactOtpDialog
+          open
+          channel={verifyChannel}
+          contactHint={
+            verifyChannel === 'email'
+              ? (user.email?.trim() || 'your email')
+              : (user.phoneNumber?.trim() || 'your phone')
+          }
+          onOpenChange={(open) => {
+            if (!open) setVerifyChannel(null)
+          }}
+          onVerified={() => {
+            setVerifyChannel(null)
           }}
         />
       ) : null}

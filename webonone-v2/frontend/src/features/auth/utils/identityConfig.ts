@@ -25,10 +25,16 @@ export function getAuthCallbackUrl(): string {
   return `${window.location.origin}/callback`
 }
 
-/** Iframe login src for WebOnOne `/login` — parentOrigin + returnPath only. */
+/** Iframe login src for WebOnOne `/login` — parentOrigin + returnPath; forward prompt=login. */
 export function buildIdentityEmbedLoginUrl(returnPath = '/'): string {
   const url = new URL(getIdentityLoginUrl())
   url.searchParams.set('parentOrigin', window.location.origin)
   url.searchParams.set('returnPath', returnPath)
+  if (typeof window !== 'undefined') {
+    const prompt = new URLSearchParams(window.location.search).get('prompt')
+    if (prompt === 'login') {
+      url.searchParams.set('prompt', 'login')
+    }
+  }
   return url.toString()
 }

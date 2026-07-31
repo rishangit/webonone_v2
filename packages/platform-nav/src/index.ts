@@ -4,9 +4,16 @@ export { createNavItemNavigate, parseNavTarget } from './clientNav'
 export type { NavItemNavigateHandler, NavTarget } from './clientNav'
 export { buildLoginRedirectUrl, consumeOAuthState } from './loginRedirect'
 export { parseReturnUrl, stripAuthCodeFromSearch, hasPlatformRedirectHandoff } from './returnUrl'
-export { resolvePlatformLogoutLoginUrl, resolveAbsolutePostLogoutLoginUrl, buildIdentityLogoutUrl, performPlatformLogout } from './platformLogout'
+export {
+  appendPromptLogin,
+  resolvePlatformLogoutLoginUrl,
+  resolveAbsolutePostLogoutLoginUrl,
+  buildIdentityLogoutUrl,
+  performPlatformLogout,
+} from './platformLogout'
 export type { PlatformLogoutOptions } from './platformLogout'
 export {
+  expandLoopbackOrigins,
   matchesAllowedOrigin,
   matchesRedirectUri,
   parseAllowlistPatterns,

@@ -35,15 +35,44 @@ export function useNavigateDataEntity() {
   )
 
   const goToDetail = useCallback(
-    (entity: DataEntityKey, id: string) => {
+    (entity: DataEntityKey, id: string, search?: Record<string, string>) => {
       if (parentOrigin) {
-        sendPlatformNavigate(parentOrigin, `/data/${entity}/${id}`)
+        const path = `/data/${entity}/${id}`
+        if (search && Object.keys(search).length > 0) {
+          const query = new URLSearchParams(search).toString()
+          sendPlatformNavigate(parentOrigin, `${path}?${query}`)
+          return
+        }
+        sendPlatformNavigate(parentOrigin, path)
         return
       }
-      navigate({ pathname: `/${entity}/${id}`, search: searchParams.toString() })
+      const nextSearch = new URLSearchParams(searchParams)
+      if (search) {
+        for (const [key, value] of Object.entries(search)) {
+          nextSearch.set(key, value)
+        }
+      }
+      navigate({ pathname: `/${entity}/${id}`, search: nextSearch.toString() })
     },
     [navigate, parentOrigin, searchParams],
   )
 
-  return { goToList, goToDetail, isEmbedded: Boolean(parentOrigin) }
+  const goToVariantDetail = useCallback(
+    (productId: string, variantId: string) => {
+      if (parentOrigin) {
+        sendPlatformNavigate(
+          parentOrigin,
+          `/data/products/${productId}/variants/${variantId}`,
+        )
+        return
+      }
+      navigate({
+        pathname: `/products/${productId}/variants/${variantId}`,
+        search: searchParams.toString(),
+      })
+    },
+    [navigate, parentOrigin, searchParams],
+  )
+
+  return { goToList, goToDetail, goToVariantDetail, isEmbedded: Boolean(parentOrigin) }
 }

@@ -23,6 +23,7 @@ export interface UserRow {
   first_name: string
   last_name: string
   is_email_verified: boolean
+  is_phone_verified: boolean
   avatar_url: string | null
   locale: string | null
   phone_number: string | null
@@ -52,6 +53,7 @@ export interface UserProfile {
   avatarUrl: string | null
   locale: string | null
   isEmailVerified: boolean
+  isPhoneVerified: boolean
   isGoogleUser: boolean
 }
 
@@ -108,6 +110,7 @@ export function toUserProfile(user: UserRow): UserProfile {
     avatarUrl: user.avatar_url,
     locale: user.locale,
     isEmailVerified: Boolean(user.is_email_verified),
+    isPhoneVerified: Boolean(user.is_phone_verified),
     isGoogleUser: Boolean(user.google_sub),
   }
 }
@@ -245,7 +248,14 @@ export async function updateUserProfile(
     updated_at: new Date(),
   }
 
-  if (input.phoneNumber !== undefined) updates.phone_number = input.phoneNumber
+  if (input.phoneNumber !== undefined) {
+    updates.phone_number = input.phoneNumber
+    const nextPhone = input.phoneNumber ?? null
+    const prevPhone = existing.phone_number ?? null
+    if (nextPhone !== prevPhone) {
+      updates.is_phone_verified = false
+    }
+  }
   if (input.addressLine1 !== undefined) updates.address_line_1 = input.addressLine1
   if (input.addressLine2 !== undefined) updates.address_line_2 = input.addressLine2
   if (input.city !== undefined) updates.city = input.city
@@ -523,4 +533,65 @@ export async function markUserEmailVerified(userId: string): Promise<void> {
     is_email_verified: true,
     updated_at: new Date(),
   })
+}
+
+export async function markUserPhoneVerified(userId: string): Promise<void> {
+  await db('users').where({ id: userId }).update({
+    is_phone_verified: true,
+    updated_at: new Date(),
+  })
+}
+
+export interface ProfileEmailOtpRow {
+  id: string
+  user_id: string
+  email: string
+  otp_hash: string
+  expires_at: Date
+  used_at: Date | null
+  attempt_count: number
+  created_at: Date
+}
+
+export async function invalidateUnusedProfileEmailOtps(userId: string): Promise<void> {
+  await db('profile_email_otps').where({ user_id: userId }).whereNull('used_at').del()
+}
+
+export async function createProfileEmailOtp(input: {
+  id: string
+  userId: string
+  email: string
+  otpHash: string
+  expiresAt: Date
+}): Promise<void> {
+  await db('profile_email_otps').insert({
+    id: input.id,
+    user_id: input.userId,
+    email: input.email,
+    otp_hash: input.otpHash,
+    expires_at: input.expiresAt,
+    attempt_count: 0,
+    created_at: new Date(),
+  })
+}
+
+export async function findActiveProfileEmailOtp(
+  userId: string,
+): Promise<ProfileEmailOtpRow | undefined> {
+  return db<ProfileEmailOtpRow>('profile_email_otps')
+    .where({ user_id: userId })
+    .whereNull('used_at')
+    .orderBy('created_at', 'desc')
+    .first()
+}
+
+export async function updateProfileEmailOtpAttemptCount(
+  id: string,
+  attemptCount: number,
+): Promise<void> {
+  await db('profile_email_otps').where({ id }).update({ attempt_count: attemptCount })
+}
+
+export async function markProfileEmailOtpUsed(id: string): Promise<void> {
+  await db('profile_email_otps').where({ id }).update({ used_at: new Date() })
 }

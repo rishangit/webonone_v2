@@ -80,6 +80,30 @@ export const authApi = {
       body: JSON.stringify(body),
     })
   },
+  requestProfileEmailOtp() {
+    return apiClient<{ message: string }>('/auth/me/email/request-otp', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  },
+  verifyProfileEmailOtp(body: { otp: string }) {
+    return apiClient<{ user: UserProfile }>('/auth/me/email/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  requestProfilePhoneOtp() {
+    return apiClient<{ message: string }>('/auth/me/phone/request-otp', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  },
+  verifyProfilePhoneOtp(body: { otp: string }) {
+    return apiClient<{ user: UserProfile }>('/auth/me/phone/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
   exchangeCode(code: string, redirectUri: string) {
     return apiClient<ExchangeAuthPayload>('/auth/exchange', {
       method: 'POST',

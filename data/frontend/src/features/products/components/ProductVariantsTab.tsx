@@ -9,9 +9,10 @@ import {
   StatusTag,
 } from '@webonone/ui-kit'
 import { ProductVariantFormDialog } from '@/features/products/components/ProductVariantFormDialog'
+import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
+import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { dataApi } from '@/shared/services/dataApi'
 import type { CatalogAttributeValue, ProductVariant } from '@/shared/types/data.types'
-import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
 
 type ProductVariantsTabProps = {
   productId: string
@@ -26,6 +27,7 @@ export function ProductVariantsTab({
   attributes,
   canEdit,
 }: ProductVariantsTabProps) {
+  const { goToVariantDetail } = useNavigateDataEntity()
   const [items, setItems] = useState<ProductVariant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -75,9 +77,9 @@ export function ProductVariantsTab({
         <ItemListEmpty>No variants yet. Add a default or custom variant to get started.</ItemListEmpty>
       ) : (
         <ItemList>
-          {items.map((variant) => (
-            <ItemListItem key={variant.id}>
-              <ItemListContent>
+          {items.map((variant) => {
+            const rowBody = (
+              <>
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate font-medium">{variant.name}</p>
                   {variant.isDefault ? (
@@ -97,9 +99,22 @@ export function ProductVariantsTab({
                       .join(' · ')}
                   </p>
                 ) : null}
-              </ItemListContent>
-            </ItemListItem>
-          ))}
+              </>
+            )
+            return (
+              <ItemListItem key={variant.id}>
+                <ItemListContent>
+                  <button
+                    type="button"
+                    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => goToVariantDetail(productId, variant.id)}
+                  >
+                    {rowBody}
+                  </button>
+                </ItemListContent>
+              </ItemListItem>
+            )
+          })}
         </ItemList>
       )}
 

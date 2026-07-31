@@ -135,11 +135,12 @@ export function buildPlatformNav(
   return buildNavItems(defs)
 }
 
-const STAFF_WORKSPACE_GROUPS = new Set(['Calendar', 'Identity', 'Data'])
+/** Identity/Data remain staff/company-session only. Default User keeps Calendar. */
+const COMPANY_SESSION_ONLY_GROUPS = new Set(['Identity', 'Data'])
 
-function withoutStaffWorkspaceGroups(defs: CoreNavDef[]): CoreNavDef[] {
+function withoutCompanySessionOnlyGroups(defs: CoreNavDef[]): CoreNavDef[] {
   return defs.filter(
-    (item) => !(item.kind === 'group' && STAFF_WORKSPACE_GROUPS.has(item.label)),
+    (item) => !(item.kind === 'group' && COMPANY_SESSION_ONLY_GROUPS.has(item.label)),
   )
 }
 
@@ -158,9 +159,9 @@ export function buildNavForSessionRole(
   if (role === 'company_admin') {
     return buildPlatformNav(variant, dataEntities ?? [])
   }
-  // Default user (member, no company) — Settings only; workspace groups are for staff.
+  // Default User (member, no company) — Calendar + Settings; Identity/Data need a company session.
   if (role === 'member' && !companyId) {
-    return buildNavItems(withoutStaffWorkspaceGroups(getPlatformNavDefs('member')))
+    return buildNavItems(withoutCompanySessionOnlyGroups(getPlatformNavDefs('member')))
   }
   if (role === 'member') {
     return buildPlatformNav(variant, dataEntities ?? [])

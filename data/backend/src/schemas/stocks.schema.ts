@@ -1,0 +1,30 @@
+import { z } from 'zod'
+
+const dateString = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date')
+
+export const createStockBodySchema = z
+  .object({
+    quantity: z.coerce.number().positive(),
+    batch_number: z.string().trim().min(1).max(255),
+    cost_price: z.coerce.number().min(0),
+    sell_price: z.coerce.number().min(0),
+    purchase_date: dateString,
+    expired_date: dateString.nullable().optional(),
+    supplier_user_id: z.string().trim().length(21),
+    supplier_display_name: z.string().trim().min(1).max(255),
+    supplier_email: z.string().trim().email().max(255).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.expired_date && value.expired_date < value.purchase_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['expired_date'],
+        message: 'Expired date must be on or after purchase date',
+      })
+    }
+  })
+
+export type CreateStockBody = z.infer<typeof createStockBodySchema>

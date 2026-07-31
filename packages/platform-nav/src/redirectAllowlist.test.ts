@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  expandLoopbackOrigins,
   matchesAllowedOrigin,
   matchesRedirectUri,
   parseAllowlistPatterns,
@@ -51,6 +52,34 @@ describe('matchesRedirectUri', () => {
   })
 })
 
+describe('expandLoopbackOrigins', () => {
+  it('adds the localhost ↔ 127.0.0.1 alias with the same port', () => {
+    assert.deepEqual(expandLoopbackOrigins(['http://127.0.0.1:3010']), [
+      'http://127.0.0.1:3010',
+      'http://localhost:3010',
+    ])
+    assert.deepEqual(expandLoopbackOrigins(['http://localhost:3011']), [
+      'http://localhost:3011',
+      'http://127.0.0.1:3011',
+    ])
+  })
+
+  it('dedupes when both aliases are already listed', () => {
+    assert.deepEqual(
+      expandLoopbackOrigins(['http://127.0.0.1:3010', 'http://localhost:3010', 'http://127.0.0.1:3010']),
+      ['http://127.0.0.1:3010', 'http://localhost:3010'],
+    )
+  })
+
+  it('leaves non-loopback and invalid entries unchanged', () => {
+    assert.deepEqual(expandLoopbackOrigins(['https://app.webonone.com', 'not-a-url', "'self'"]), [
+      'https://app.webonone.com',
+      'not-a-url',
+      "'self'",
+    ])
+  })
+})
+
 describe('matchesAllowedOrigin', () => {
   it('matches consumer origins from wildcard patterns', () => {
     assert.equal(matchesAllowedOrigin('https://app.webonone.com', productionPatterns), true)
@@ -67,4 +96,19 @@ describe('matchesAllowedOrigin', () => {
     assert.equal(matchesAllowedOrigin('https://app.webonone.com', patterns), true)
     assert.equal(matchesAllowedOrigin('https://identity.webonone.com', patterns), false)
   })
-})
+
+  it('treats localhost and 127.0.0.1 as aliases for exact origins', () => {
+    const patterns = parseAllowlistPatterns('http://127.0.0.1:3010')
+    assert.equal(matchesAllowedOrigin('http://localhost:3010', patterns), true)
+    assert.equal(matchesAllowedOrigin('http://127.0.0.1:3010', patterns), true)
+    assert.equal(matchesAllowedOrigin('http://localhost:3011', patterns), false)
+    assert.equal(matchesAllowedOrigin('https://localhost:3010', patterns), false)
+  })
+
+  it('does not apply loopback aliasing to subdomain wildcards', () => {
+    assert.equal(matchesAllowedOrigin('http://localhost:3010', productionPatterns), false)
+    assert.equal(matchesAllowedOrigin('http://127.0.0.1:3010', productionPatterns), false)
+    assert.equal(matchesAllowedOrigin('https://webonone.com', productionPatterns), false)
+  })
+}
+)

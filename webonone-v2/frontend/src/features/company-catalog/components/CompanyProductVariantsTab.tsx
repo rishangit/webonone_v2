@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ItemList,
   ItemListContent,
@@ -13,10 +14,16 @@ import {
 } from '../services/dataLibraryApi'
 
 type CompanyProductVariantsTabProps = {
+  /** Company catalog product id (used for variant detail navigation). */
+  productId: string
   libraryEntityId: string | null
 }
 
-export function CompanyProductVariantsTab({ libraryEntityId }: CompanyProductVariantsTabProps) {
+export function CompanyProductVariantsTab({
+  productId,
+  libraryEntityId,
+}: CompanyProductVariantsTabProps) {
+  const navigate = useNavigate()
   const [items, setItems] = useState<LibraryProductVariant[]>([])
   const [loading, setLoading] = useState(Boolean(libraryEntityId))
   const [error, setError] = useState<string | null>(null)
@@ -75,9 +82,9 @@ export function CompanyProductVariantsTab({ libraryEntityId }: CompanyProductVar
         <ItemListEmpty>No variants in the library for this product.</ItemListEmpty>
       ) : (
         <ItemList>
-          {items.map((variant) => (
-            <ItemListItem key={variant.id}>
-              <ItemListContent>
+          {items.map((variant) => {
+            const rowBody = (
+              <>
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate font-medium">{variant.name}</p>
                   {variant.isDefault ? (
@@ -97,9 +104,24 @@ export function CompanyProductVariantsTab({ libraryEntityId }: CompanyProductVar
                       .join(' · ')}
                   </p>
                 ) : null}
-              </ItemListContent>
-            </ItemListItem>
-          ))}
+              </>
+            )
+            return (
+              <ItemListItem key={variant.id}>
+                <ItemListContent>
+                  <button
+                    type="button"
+                    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() =>
+                      navigate(`/data/products/${productId}/variants/${variant.id}`)
+                    }
+                  >
+                    {rowBody}
+                  </button>
+                </ItemListContent>
+              </ItemListItem>
+            )
+          })}
         </ItemList>
       )}
     </div>

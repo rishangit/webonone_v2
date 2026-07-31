@@ -32,9 +32,19 @@ const TemplateFormEmbedPage = lazy(() =>
     default: m.TemplateFormEmbedPage,
   })),
 )
+const TemplateDetailsPage = lazy(() =>
+  import('@/features/templates/pages/TemplateDetailsPage').then((m) => ({
+    default: m.TemplateDetailsPage,
+  })),
+)
 const TemplateEditorPage = lazy(() =>
   import('@/features/templates/pages/TemplateEditorPage').then((m) => ({
     default: m.TemplateEditorPage,
+  })),
+)
+const TemplatePreviewPage = lazy(() =>
+  import('@/features/templates/pages/TemplatePreviewPage').then((m) => ({
+    default: m.TemplatePreviewPage,
   })),
 )
 
@@ -149,7 +159,27 @@ export function App() {
             element={
               <RoleRoute roles={[...adminRoles]}>
                 <LazyRoute>
+                  <TemplateDetailsPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/templates/:id/versions"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
                   <TemplateEditorPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/templates/:id/preview"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
+                  <TemplatePreviewPage />
                 </LazyRoute>
               </RoleRoute>
             }

@@ -14,6 +14,7 @@ export interface UserProfile {
   avatarUrl: string | null
   locale: string | null
   isEmailVerified: boolean
+  isPhoneVerified: boolean
   isGoogleUser: boolean
 }
 

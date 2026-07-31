@@ -12,6 +12,8 @@ import {
   getCoreOriginFromReturnUrl,
   getPlatformNavDefs,
   IDENTITY_NAV_SENTINELS,
+  identitySentinelToExternalPath,
+  isIdentityNavSentinel,
   isDataNavSentinel,
   isEmailNavSentinel,
   isSmsNavSentinel,
@@ -102,11 +104,17 @@ describe('coreNav', () => {
   it('maps Email sentinels to external paths', () => {
     assert.equal(isEmailNavSentinel(EMAIL_NAV_SENTINELS.send), true)
     assert.equal(isEmailNavSentinel(EMAIL_NAV_SENTINELS.queue), true)
+    assert.equal(isEmailNavSentinel(`${EMAIL_NAV_SENTINELS.templates}/tmpl_1`), true)
+    assert.equal(isEmailNavSentinel(`${EMAIL_NAV_SENTINELS.templates}/tmpl_1/preview`), true)
     assert.equal(isEmailNavSentinel('/sms/send'), false)
     assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.send), '/send')
     assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.queue), '/queue')
     assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.history), '/history')
     assert.equal(emailSentinelToExternalPath(EMAIL_NAV_SENTINELS.templates), '/templates')
+    assert.equal(
+      emailSentinelToExternalPath(`${EMAIL_NAV_SENTINELS.templates}/tmpl_1`),
+      '/templates/tmpl_1',
+    )
     assert.equal(emailSentinelToExternalPath('/unknown'), null)
   })
 
@@ -148,14 +156,39 @@ describe('coreNav', () => {
     assert.equal(smsGroup, undefined)
   })
 
+  it('maps Identity users sentinels to external paths', () => {
+    assert.equal(isIdentityNavSentinel(IDENTITY_NAV_SENTINELS.users), true)
+    assert.equal(isIdentityNavSentinel('/identity/users/user_abc'), true)
+    assert.equal(isIdentityNavSentinel('/identity/users/'), false)
+    assert.equal(isIdentityNavSentinel('/identity/users/a/b'), false)
+    assert.equal(isIdentityNavSentinel('/identity/users/../x'), false)
+    assert.equal(isIdentityNavSentinel('/profile'), false)
+    assert.equal(identitySentinelToExternalPath(IDENTITY_NAV_SENTINELS.users), '/users')
+    assert.equal(identitySentinelToExternalPath('/identity/users/user_abc'), '/users/user_abc')
+    assert.equal(identitySentinelToExternalPath('/identity/users/'), null)
+    assert.equal(identitySentinelToExternalPath('/identity/users/a/b'), null)
+    assert.equal(identitySentinelToExternalPath('/unknown'), null)
+  })
+
   it('maps SMS sentinels to external paths', () => {
     assert.equal(isSmsNavSentinel(SMS_NAV_SENTINELS.send), true)
+    assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1`), true)
+    assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1/preview`), true)
+    assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1/versions`), true)
     assert.equal(isSmsNavSentinel('/email/history'), false)
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.send), '/send')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.devices), '/devices')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.queue), '/queue')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.history), '/history')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.templates), '/templates')
+    assert.equal(
+      smsSentinelToExternalPath(`${SMS_NAV_SENTINELS.templates}/tmpl_1`),
+      '/templates/tmpl_1',
+    )
+    assert.equal(
+      smsSentinelToExternalPath(`${SMS_NAV_SENTINELS.templates}/tmpl_1/versions`),
+      '/templates/tmpl_1/versions',
+    )
     assert.equal(smsSentinelToExternalPath('/unknown'), null)
   })
 

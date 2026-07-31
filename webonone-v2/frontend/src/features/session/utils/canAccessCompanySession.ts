@@ -10,3 +10,8 @@ export function canAccessCompanySession(
   }
   return false
 }
+
+/** Schedule/Events list pages — Default User (member, no company) and company sessions. */
+export function canBrowseCalendar(role: SessionRole | null | undefined): boolean {
+  return role === 'member' || role === 'company_admin'
+}

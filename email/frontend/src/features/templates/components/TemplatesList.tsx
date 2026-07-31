@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
   ItemList,
@@ -7,6 +6,7 @@ import {
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
+import { useNavigateEmail } from '@/features/shell/utils/navigateEmail'
 import type { EmailTemplate } from '@/shared/types/email.types'
 
 interface TemplatesListProps {
@@ -26,7 +26,7 @@ function formatDate(iso: string): string {
 }
 
 export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: TemplatesListProps) {
-  const navigate = useNavigate()
+  const { goToDetail, goToPreview, goToVersions } = useNavigateEmail()
   const items = Array.isArray(templates) ? templates : []
 
   if (items.length === 0) {
@@ -42,20 +42,27 @@ export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: Tem
         return (
           <ItemListItem key={template.id}>
             <ItemListContent>
-              <p className="font-medium">{template.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {template.slug} · {formatScope(template)} ·{' '}
-                {template.isActive ? 'Active' : 'Inactive'} · Updated {formatDate(template.updatedAt)}
-              </p>
+              <button
+                type="button"
+                className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => goToDetail(template.id)}
+              >
+                <p className="font-medium">{template.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {template.slug} · {formatScope(template)} ·{' '}
+                  {template.isActive ? 'Active' : 'Inactive'} · Updated{' '}
+                  {formatDate(template.updatedAt)}
+                </p>
+              </button>
             </ItemListContent>
             <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
+              <DropdownMenuItem onClick={() => goToDetail(template.id)} disabled={isBusy}>
+                View details
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
                 {isDefault ? 'Customize' : 'Edit'}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigate(`/templates/${template.id}/preview`)}
-                disabled={isBusy}
-              >
+              <DropdownMenuItem onClick={() => goToPreview(template.id)} disabled={isBusy}>
                 Preview
               </DropdownMenuItem>
               {!isDefault ? (
@@ -64,10 +71,7 @@ export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: Tem
                 </DropdownMenuItem>
               ) : null}
               {!isDefault ? (
-                <DropdownMenuItem
-                  onClick={() => navigate(`/templates/${template.id}`)}
-                  disabled={isBusy}
-                >
+                <DropdownMenuItem onClick={() => goToVersions(template.id)} disabled={isBusy}>
                   Version history
                 </DropdownMenuItem>
               ) : null}

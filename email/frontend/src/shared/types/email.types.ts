@@ -36,6 +36,7 @@ export interface EmailTemplate {
   companyId: string | null
   isActive: boolean
   requiredKeys: string[]
+  createdAt?: string
   updatedAt: string
   /** True when this is a platform default shown until the company saves an override. */
   isDefault?: boolean

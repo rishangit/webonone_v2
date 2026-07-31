@@ -5,6 +5,7 @@ import type {
   DashboardStats,
   PaginatedResult,
   ProductVariant,
+  ProductVariantStock,
   Tag,
   Unit,
 } from '@/shared/types/data.types'
@@ -148,6 +149,9 @@ export const dataApi = {
   listProductVariants(productId: string) {
     return apiClient<{ items: ProductVariant[] }>(`/products/${productId}/variants`)
   },
+  getProductVariant(productId: string, variantId: string) {
+    return apiClient<ProductVariant>(`/products/${productId}/variants/${variantId}`)
+  },
   createProductVariant(
     productId: string,
     body: {
@@ -161,6 +165,40 @@ export const dataApi = {
       method: 'POST',
       body: JSON.stringify(body),
     })
+  },
+  listProductVariantStocks(productId: string, variantId: string) {
+    return apiClient<{ items: ProductVariantStock[] }>(
+      `/products/${productId}/variants/${variantId}/stocks`,
+    )
+  },
+  createProductVariantStock(
+    productId: string,
+    variantId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id: string
+      supplier_display_name: string
+      supplier_email?: string | null
+    },
+  ) {
+    return apiClient<ProductVariantStock>(
+      `/products/${productId}/variants/${variantId}/stocks`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    )
+  },
+  setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
+    return apiClient<ProductVariantStock>(
+      `/products/${productId}/variants/${variantId}/stocks/${stockId}/active`,
+      { method: 'PATCH' },
+    )
   },
 
   listServices(query: ListQuery = {}) {

@@ -2,6 +2,7 @@ import { Navigate, useParams } from 'react-router-dom'
 import { useAppSelector } from '@/app/store/hooks'
 import { CompanyCatalogDetailPage } from '@/features/company-catalog/pages/CompanyCatalogDetailPage'
 import { CompanyCatalogListPage } from '@/features/company-catalog/pages/CompanyCatalogListPage'
+import { CompanyProductVariantDetailsPage } from '@/features/company-catalog/pages/CompanyProductVariantDetailsPage'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { PlatformPeerFrame } from '@/features/shell/pages/PlatformPeerFrame'
 import {
@@ -48,6 +49,25 @@ export function DataCatalogDetailRoute() {
   }
 
   return <CompanyCatalogDetailPage />
+}
+
+/**
+ * Product variant details — company catalog for company_admin / staff;
+ * Data library embed for super_admin.
+ */
+export function DataCatalogVariantDetailRoute() {
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
+
+  if (activeRole === 'super_admin') {
+    return <PlatformPeerFrame peer="data" />
+  }
+
+  if (!canAccessCompanySession(activeRole, activeCompanyId)) {
+    return <Navigate to="/" replace />
+  }
+
+  return <CompanyProductVariantDetailsPage />
 }
 
 /** Catch-all Data paths (e.g. unknown) — super_admin library; others home. */

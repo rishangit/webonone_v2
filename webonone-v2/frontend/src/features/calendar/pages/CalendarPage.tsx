@@ -8,7 +8,10 @@ import {
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { eventsApi } from '@/features/calendar/services/eventsApi'
-import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
+import {
+  canAccessCompanySession,
+  canBrowseCalendar,
+} from '@/features/session/utils/canAccessCompanySession'
 
 function toYmd(date: Date): string {
   const y = date.getFullYear()
@@ -48,10 +51,13 @@ export function CalendarPage() {
   const [events, setEvents] = useState<FullCalendarEvent[]>([])
 
   const range = useMemo(() => rangeForView(anchorDate, view), [anchorDate, view])
-  const canAccess = canAccessCompanySession(activeRole, activeCompanyId)
+  const canManage = canAccessCompanySession(activeRole, activeCompanyId)
 
   useEffect(() => {
-    if (selectionComplete && !canAccess) return
+    if (!canManage) {
+      setEvents([])
+      return
+    }
     let cancelled = false
     void eventsApi
       .listOccurrences(range.from, range.to)
@@ -72,9 +78,9 @@ export function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [range.from, range.to, canAccess, selectionComplete])
+  }, [range.from, range.to, canManage])
 
-  if (selectionComplete && !canAccess) {
+  if (selectionComplete && !canBrowseCalendar(activeRole)) {
     return <Navigate to="/" replace />
   }
 

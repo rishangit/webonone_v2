@@ -111,14 +111,15 @@ type SendPhoneOtpParams = {
   companyId?: string
 }
 
-/** Request a phone OTP send via the SMS service. Best-effort (fails silently if unconfigured). */
-export async function sendPhoneOtp(params: SendPhoneOtpParams): Promise<void> {
-  await postInternal('/api/v1/internal/otp/send', {
+/** Request a phone OTP send via the SMS service. Returns false if unconfigured or request failed. */
+export async function sendPhoneOtp(params: SendPhoneOtpParams): Promise<boolean> {
+  const response = await postInternal('/api/v1/internal/otp/send', {
     toNumber: params.toNumber,
     purpose: params.purpose,
     companyId: params.companyId,
     requestedByService: params.requestedByService,
   })
+  return Boolean(response?.ok)
 }
 
 type VerifyPhoneOtpParams = {

@@ -240,9 +240,10 @@ When the user signs out from a satellite opened with `return_url` (core shell mo
 
 1. Resolve effective `return_url` from query **or** persisted platform context (Email: `platform.returnUrl`).
 2. Clear satellite auth storage synchronously (`clearEmailAuthStorage`, `persistAuthSession(null)`, etc.).
-3. `performPlatformLogout(returnUrl)` from `@webonone/platform-nav` — uses `window.location.replace` to core `{origin}/login`.
+3. `performPlatformLogout(returnUrl, { identityOrigin })` from `@webonone/platform-nav` — routes through Identity `/logout`, then core `{origin}/login?prompt=login`.
 4. **Do not** `dispatch(logout())` before redirect — that re-renders the satellite `/login` route and flashes the wrong page.
-5. No `return_url` → `performPlatformLogout` falls back to local `'/login'` (standalone mode).
+5. No `return_url` → `performPlatformLogout` falls back to local `'/login?prompt=login'` (standalone mode).
+6. WebOnOne `/login?prompt=login` must clear core JWT (see `LoginPage` + Identity embed `prompt=login`) so satellite logout cannot leave the shell signed in.
 
 **Reference:** `email/frontend/src/app/AppLayout.tsx`, `identity/frontend/src/app/AppLayout.tsx`.
 

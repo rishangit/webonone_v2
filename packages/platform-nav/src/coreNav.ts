@@ -42,12 +42,20 @@ export const EMAIL_NAV_SENTINELS = {
 } as const
 
 export function isEmailNavSentinel(to: string): boolean {
-  return (
+  if (
     to === EMAIL_NAV_SENTINELS.send ||
     to === EMAIL_NAV_SENTINELS.queue ||
     to === EMAIL_NAV_SENTINELS.history ||
     to === EMAIL_NAV_SENTINELS.templates
-  )
+  ) {
+    return true
+  }
+  // Nested template routes: /email/templates/:id[/preview|versions]
+  if (to.startsWith(`${EMAIL_NAV_SENTINELS.templates}/`)) {
+    const rest = to.slice(`${EMAIL_NAV_SENTINELS.templates}/`.length)
+    return Boolean(rest) && !rest.includes('..')
+  }
+  return false
 }
 
 export function emailSentinelToExternalPath(sentinel: string): string | null {
@@ -61,8 +69,14 @@ export function emailSentinelToExternalPath(sentinel: string): string | null {
     case EMAIL_NAV_SENTINELS.templates:
       return '/templates'
     default:
-      return null
+      break
   }
+  if (sentinel.startsWith(`${EMAIL_NAV_SENTINELS.templates}/`)) {
+    const rest = sentinel.slice(EMAIL_NAV_SENTINELS.templates.length)
+    if (!rest || rest.includes('..')) return null
+    return `/templates${rest}`
+  }
+  return null
 }
 
 /** Internal sentinels for Data sub-nav in consumer AppLayouts (not routed on core origin). */
@@ -208,16 +222,24 @@ export const IDENTITY_NAV_SENTINELS = {
 } as const
 
 export function isIdentityNavSentinel(to: string): boolean {
-  return to === IDENTITY_NAV_SENTINELS.users
+  if (to === IDENTITY_NAV_SENTINELS.users) return true
+  if (!to.startsWith(`${IDENTITY_NAV_SENTINELS.users}/`)) return false
+  const userId = to.slice(`${IDENTITY_NAV_SENTINELS.users}/`.length)
+  return Boolean(userId) && !userId.includes('/') && !userId.includes('..')
 }
 
 export function identitySentinelToExternalPath(sentinel: string): string | null {
-  switch (sentinel) {
-    case IDENTITY_NAV_SENTINELS.users:
-      return '/users'
-    default:
-      return null
+  if (sentinel === IDENTITY_NAV_SENTINELS.users) {
+    return '/users'
   }
+  if (sentinel.startsWith(`${IDENTITY_NAV_SENTINELS.users}/`)) {
+    const userId = sentinel.slice(`${IDENTITY_NAV_SENTINELS.users}/`.length)
+    if (!userId || userId.includes('/') || userId.includes('..')) {
+      return null
+    }
+    return `/users/${userId}`
+  }
+  return null
 }
 
 /** Internal sentinels for SMS sub-nav in consumer AppLayouts (not routed on core origin). */
@@ -230,13 +252,21 @@ export const SMS_NAV_SENTINELS = {
 } as const
 
 export function isSmsNavSentinel(to: string): boolean {
-  return (
+  if (
     to === SMS_NAV_SENTINELS.send ||
     to === SMS_NAV_SENTINELS.devices ||
     to === SMS_NAV_SENTINELS.queue ||
     to === SMS_NAV_SENTINELS.history ||
     to === SMS_NAV_SENTINELS.templates
-  )
+  ) {
+    return true
+  }
+  // Nested template routes: /sms/templates/:id[/preview|versions]
+  if (to.startsWith(`${SMS_NAV_SENTINELS.templates}/`)) {
+    const rest = to.slice(`${SMS_NAV_SENTINELS.templates}/`.length)
+    return Boolean(rest) && !rest.includes('..')
+  }
+  return false
 }
 
 export function smsSentinelToExternalPath(sentinel: string): string | null {
@@ -252,8 +282,14 @@ export function smsSentinelToExternalPath(sentinel: string): string | null {
     case SMS_NAV_SENTINELS.templates:
       return '/templates'
     default:
-      return null
+      break
   }
+  if (sentinel.startsWith(`${SMS_NAV_SENTINELS.templates}/`)) {
+    const rest = sentinel.slice(SMS_NAV_SENTINELS.templates.length)
+    if (!rest || rest.includes('..')) return null
+    return `/templates${rest}`
+  }
+  return null
 }
 
 const SMS_PLATFORM_NAV_GROUP: CoreNavGroup = {

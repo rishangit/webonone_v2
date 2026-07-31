@@ -1,6 +1,6 @@
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of, type Observable } from 'rxjs'
-import { catchError, exhaustMap, filter, map, mergeMap, withLatestFrom } from 'rxjs/operators'
+import { catchError, exhaustMap, filter, map, mergeMap, switchMap, withLatestFrom } from 'rxjs/operators'
 import { authApi } from '@/shared/services/authApi'
 import { clearResetSessionToken } from '../utils/resetSessionStorage'
 import { clearRegistrationWizardStorage } from '../utils/resetRegistrationWizard'
@@ -96,7 +96,8 @@ const googleLoginEpic: AuthEpic = (action$) =>
 const profileFetchEpic: AuthEpic = (action$) =>
   action$.pipe(
     ofType(authActions.profileFetchRequested.type),
-    exhaustMap(() =>
+    // Latest request wins — embed INIT can re-request while an earlier fetch is in flight.
+    switchMap(() =>
       from(authApi.getMe()).pipe(
         map((result) => authActions.profileFetchSucceeded(result.user)),
         catchError((err: Error) => of(authActions.profileFetchFailed(err.message))),

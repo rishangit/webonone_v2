@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  appendPromptLogin,
   buildIdentityLogoutUrl,
   performPlatformLogout,
   resolveAbsolutePostLogoutLoginUrl,
@@ -34,19 +35,35 @@ describe('resolvePlatformLogoutLoginUrl', () => {
   })
 })
 
+describe('appendPromptLogin', () => {
+  it('appends prompt=login to absolute URLs', () => {
+    assert.equal(
+      appendPromptLogin('http://localhost:3010/login'),
+      'http://localhost:3010/login?prompt=login',
+    )
+  })
+
+  it('does not duplicate prompt=login', () => {
+    assert.equal(
+      appendPromptLogin('http://localhost:3010/login?prompt=login'),
+      'http://localhost:3010/login?prompt=login',
+    )
+  })
+})
+
 describe('buildIdentityLogoutUrl', () => {
   it('builds logout URL with post_logout_redirect_uri', () => {
-    const url = buildIdentityLogoutUrl('http://localhost:3011', 'http://localhost:3010/login')
+    const url = buildIdentityLogoutUrl('http://localhost:3011', 'http://localhost:3010/login?prompt=login')
     assert.equal(
       url,
-      'http://localhost:3011/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3010%2Flogin',
+      'http://localhost:3011/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3010%2Flogin%3Fprompt%3Dlogin',
     )
   })
 })
 
 describe('resolveAbsolutePostLogoutLoginUrl', () => {
-  it('returns relative local login path without prompt=login', () => {
-    assert.equal(resolveAbsolutePostLogoutLoginUrl(null, '/login'), '/login')
+  it('returns relative local login path with prompt=login', () => {
+    assert.equal(resolveAbsolutePostLogoutLoginUrl(null, '/login'), '/login?prompt=login')
   })
 })
 

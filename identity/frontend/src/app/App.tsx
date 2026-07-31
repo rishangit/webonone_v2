@@ -47,6 +47,16 @@ const ProfileFormEmbedPage = lazy(() =>
     default: m.ProfileFormEmbedPage,
   })),
 )
+const VerifyEmailEmbedPage = lazy(() =>
+  import('@/features/profile/pages/VerifyContactEmbedPage').then((m) => ({
+    default: () => <m.VerifyContactEmbedPage channel="email" />,
+  })),
+)
+const VerifyPhoneEmbedPage = lazy(() =>
+  import('@/features/profile/pages/VerifyContactEmbedPage').then((m) => ({
+    default: () => <m.VerifyContactEmbedPage channel="phone" />,
+  })),
+)
 
 export function App() {
   return (
@@ -141,6 +151,22 @@ export function App() {
               element={
                 <LazyRoute>
                   <ProfileFormEmbedPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/profile/verify-email"
+              element={
+                <LazyRoute>
+                  <VerifyEmailEmbedPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/profile/verify-phone"
+              element={
+                <LazyRoute>
+                  <VerifyPhoneEmbedPage />
                 </LazyRoute>
               }
             />

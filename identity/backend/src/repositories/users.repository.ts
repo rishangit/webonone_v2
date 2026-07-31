@@ -8,7 +8,9 @@ export type IdentityUserListItemRow = {
   display_name: string
   email: string | null
   avatar_url: string | null
-  phone_number?: string | null
+  phone_number: string | null
+  is_email_verified: boolean
+  is_phone_verified: boolean
 }
 
 type UserRoleRow = {
@@ -39,6 +41,8 @@ export type CompanyCustomerRow = {
   email: string | null
   avatar_url: string | null
   phone_number: string | null
+  is_email_verified: boolean
+  is_phone_verified: boolean
   role: 'member'
   company_id: string
   added_at: Date
@@ -156,6 +160,9 @@ export async function findIdentityUsers(params: FindIdentityUsersParams): Promis
       'u.display_name',
       'u.email',
       'u.avatar_url',
+      'u.phone_number',
+      'u.is_email_verified',
+      'u.is_phone_verified',
     )
     .orderBy('u.display_name', 'asc')
     .orderBy('u.id', 'asc')
@@ -226,6 +233,8 @@ export async function findCompanyCustomers(
       'u.email',
       'u.avatar_url',
       'u.phone_number',
+      'u.is_email_verified',
+      'u.is_phone_verified',
       'ur.company_id',
       'ur.created_at as added_at',
     )
@@ -244,6 +253,8 @@ export async function findCompanyCustomers(
     email: (row.email as string | null) ?? null,
     avatar_url: (row.avatar_url as string | null) ?? null,
     phone_number: (row.phone_number as string | null) ?? null,
+    is_email_verified: Boolean(row.is_email_verified),
+    is_phone_verified: Boolean(row.is_phone_verified),
     role: 'member',
     company_id: row.company_id as string,
     added_at: row.added_at as Date,

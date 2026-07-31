@@ -70,9 +70,24 @@ const ProductDetailsPage = lazy(() =>
     default: m.ProductDetailsPage,
   })),
 )
+const ProductVariantDetailsPage = lazy(() =>
+  import('@/features/products/pages/ProductVariantDetailsPage').then((m) => ({
+    default: m.ProductVariantDetailsPage,
+  })),
+)
 const ProductVariantFormEmbedPage = lazy(() =>
   import('@/features/products/pages/ProductVariantFormEmbedPage').then((m) => ({
     default: m.ProductVariantFormEmbedPage,
+  })),
+)
+const StockFormEmbedPage = lazy(() =>
+  import('@/features/products/pages/StockFormEmbedPage').then((m) => ({
+    default: m.StockFormEmbedPage,
+  })),
+)
+const UserSelectEmbedPage = lazy(() =>
+  import('@/features/identity/pages/UserSelectEmbedPage').then((m) => ({
+    default: m.UserSelectEmbedPage,
   })),
 )
 const ServicesPage = lazy(() =>
@@ -209,6 +224,11 @@ export function App() {
             '/embed/dialogs/products/:productId/variants/create',
             ProductVariantFormEmbedPage,
           )}
+          {embedDialogRoute(
+            '/embed/dialogs/products/:productId/variants/:variantId/stocks/create',
+            StockFormEmbedPage,
+          )}
+          {embedDialogRoute('/embed/dialogs/users/select', UserSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/catalog/:kind/select', CatalogLibrarySelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/create', CatalogFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/:id/edit', CatalogFormEmbedPage)}
@@ -224,6 +244,14 @@ export function App() {
           {entityRoutes('/units', UnitsPage)}
           {entityRoutes('/attributes', AttributesPage)}
           {entityRoutes('/products', ProductsPage)}
+          <Route
+            path="/products/:productId/variants/:variantId"
+            element={
+              <LazyRoute>
+                <ProductVariantDetailsPage />
+              </LazyRoute>
+            }
+          />
           <Route
             path="/products/:productId"
             element={

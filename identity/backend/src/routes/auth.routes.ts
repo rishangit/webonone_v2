@@ -22,5 +22,9 @@ router.post('/code', requireAuth, authController.createAuthCode)
 router.post('/exchange', authController.exchange)
 router.get('/me', requireAuth, authController.me)
 router.patch('/me', requireAuth, authController.patchMe)
+router.post('/me/email/request-otp', requireAuth, authController.requestProfileEmailOtpHandler)
+router.post('/me/email/verify-otp', requireAuth, authController.verifyProfileEmailOtpHandler)
+router.post('/me/phone/request-otp', requireAuth, authController.requestProfilePhoneOtpHandler)
+router.post('/me/phone/verify-otp', requireAuth, authController.verifyProfilePhoneOtpHandler)
 
 export default router

@@ -52,6 +52,65 @@ function matchesLocalhostUri(uri: URL, pattern: string): boolean {
   return uri.hostname === 'localhost' || uri.hostname === '127.0.0.1'
 }
 
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1'
+}
+
+function loopbackAliasOrigin(uri: URL): string | null {
+  if (!isLoopbackHost(uri.hostname)) {
+    return null
+  }
+
+  const alias = new URL(uri.href)
+  alias.hostname = uri.hostname === 'localhost' ? '127.0.0.1' : 'localhost'
+  return alias.origin
+}
+
+/** Exact origins match, or localhost ↔ 127.0.0.1 with the same protocol and port. */
+function originsEqualWithLoopbackAlias(a: URL, b: URL): boolean {
+  if (a.origin === b.origin) {
+    return true
+  }
+
+  const aAlias = loopbackAliasOrigin(a)
+  return aAlias !== null && aAlias === b.origin
+}
+
+/**
+ * Expands each http(s) origin whose host is `localhost` or `127.0.0.1` to also
+ * include the other loopback host with the same protocol and port (deduped).
+ * Non-loopback and non-http(s) entries are kept as-is.
+ */
+export function expandLoopbackOrigins(origins: string[]): string[] {
+  const result: string[] = []
+  const seen = new Set<string>()
+
+  for (const entry of origins) {
+    const origin = entry.trim()
+    if (!origin || seen.has(origin)) {
+      continue
+    }
+
+    seen.add(origin)
+    result.push(origin)
+
+    const parsed = parseHttpUri(origin)
+    if (!parsed || !isLoopbackHost(parsed.hostname)) {
+      continue
+    }
+
+    const alias = loopbackAliasOrigin(parsed)
+    if (!alias || seen.has(alias)) {
+      continue
+    }
+
+    seen.add(alias)
+    result.push(alias)
+  }
+
+  return result
+}
+
 function matchesExactUri(uri: URL, pattern: string): boolean {
   const patternUri = parseHttpUri(pattern)
   if (!patternUri) {
@@ -102,6 +161,6 @@ export function matchesAllowedOrigin(origin: string, patterns: string[]): boolea
       return false
     }
 
-    return parsed.origin === patternUri.origin
+    return originsEqualWithLoopbackAlias(parsed, patternUri)
   })
 }

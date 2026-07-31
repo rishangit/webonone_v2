@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { LoadingState } from '@webonone/ui-kit'
-import { matchesAllowedOrigin, parseAllowlistPatterns } from '@webonone/platform-nav'
+import { appendPromptLogin, matchesAllowedOrigin, parseAllowlistPatterns } from '@webonone/platform-nav'
 import {
   clearStoredAuthSession,
   loadStoredAuthSession,
@@ -20,13 +20,13 @@ function parsePostLogoutRedirectUri(raw: string | null): string | null {
     }
 
     const patterns = parseAllowlistPatterns(
-      import.meta.env.VITE_ALLOWED_REDIRECT_URIS ?? 'http://localhost:*',
+      import.meta.env.VITE_ALLOWED_REDIRECT_URIS ?? 'http://127.0.0.1:*',
     )
     if (!matchesAllowedOrigin(parsed.origin, patterns)) {
       return null
     }
 
-    return parsed.toString()
+    return appendPromptLogin(parsed.toString())
   } catch {
     return null
   }
@@ -49,16 +49,18 @@ export function LogoutPage() {
     if (startedRef.current) return
     startedRef.current = true
 
-    const fallbackTarget = `${window.location.origin}/login`
+    const fallbackTarget = appendPromptLogin(`${window.location.origin}/login`)
     const postLogout =
       parsePostLogoutRedirectUri(searchParams.get(POST_LOGOUT_PARAM)) ?? fallbackTarget
 
+    // Clear local session first so a failed network revoke cannot leave SSO intact.
     const session = loadStoredAuthSession()
+    clearStoredAuthSession()
+
     const run = async () => {
       if (session?.accessToken) {
         await revokeIdentitySessions(session.accessToken)
       }
-      clearStoredAuthSession()
       window.location.replace(postLogout)
     }
 

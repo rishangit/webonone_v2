@@ -27,11 +27,12 @@ export type CustomerDto = {
   displayName: string
   email: string | null
   avatarUrl: string | null
-  phone: string | null
+  phoneNumber: string | null
   role: 'member'
   companyId: string
   addedAt: string
-  isEmailVerified?: boolean
+  isEmailVerified: boolean
+  isPhoneVerified: boolean
 }
 
 export type ListCustomersResult = {
@@ -52,10 +53,12 @@ function toCustomerDto(row: CompanyCustomerRow): CustomerDto {
     displayName: row.display_name,
     email: row.email,
     avatarUrl: row.avatar_url,
-    phone: row.phone_number,
+    phoneNumber: row.phone_number,
     role: 'member',
     companyId: row.company_id,
     addedAt: row.added_at.toISOString(),
+    isEmailVerified: Boolean(row.is_email_verified),
+    isPhoneVerified: Boolean(row.is_phone_verified),
   }
 }
 
@@ -85,11 +88,12 @@ async function loadCustomerDto(userId: string, companyId: string): Promise<Custo
     displayName: user.display_name,
     email: user.email,
     avatarUrl: user.avatar_url,
-    phone: user.phone_number,
+    phoneNumber: user.phone_number,
     role: 'member',
     companyId,
     addedAt: memberRole.created_at.toISOString(),
     isEmailVerified: Boolean(user.is_email_verified),
+    isPhoneVerified: Boolean(user.is_phone_verified),
   }
 }
 

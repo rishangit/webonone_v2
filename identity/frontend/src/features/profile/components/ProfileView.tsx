@@ -2,6 +2,7 @@ import { Globe, MapPin, User } from 'lucide-react'
 import { ImagePreview } from '@webonone/ui-kit'
 import type { UserProfile } from '@/shared/types/auth.types'
 import type { ProfileWizardStep } from '../schemas/profileSchemas'
+import { ContactVerifiedRow } from './ContactVerification'
 import { EditableSectionCard } from './EditableSectionCard'
 
 function ReadOnlyField({
@@ -30,6 +31,8 @@ interface ProfileViewProps {
   avatarUrl: string | null
   canEdit?: boolean
   onEditSection?: (step: ProfileWizardStep) => void
+  onVerifyEmail?: () => void
+  onVerifyPhone?: () => void
 }
 
 export function ProfileView({
@@ -37,6 +40,8 @@ export function ProfileView({
   avatarUrl,
   canEdit = true,
   onEditSection,
+  onVerifyEmail,
+  onVerifyPhone,
 }: ProfileViewProps) {
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
@@ -54,13 +59,21 @@ export function ProfileView({
               mode="view"
               className="rounded-full"
             />
-            <div className="min-w-0 flex-1 space-y-2">
+            <div className="min-w-0 flex-1 space-y-3">
               <h2 className="text-xl font-semibold">{user.displayName}</h2>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-              <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
-                {user.isEmailVerified ? <span>Email verified</span> : null}
-                {user.isGoogleUser ? <span>Signed in with Google</span> : null}
-              </div>
+              <ContactVerifiedRow
+                label="Email"
+                value={user.email}
+                verified={user.isEmailVerified}
+                canVerify={canEdit}
+                onVerify={onVerifyEmail}
+                verifyLabel="Verify email"
+              />
+              {user.isGoogleUser ? (
+                <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
+                  <span>Signed in with Google</span>
+                </div>
+              ) : null}
               {user.isGoogleUser ? (
                 <p className="text-sm text-muted-foreground">
                   Name and photo were imported from Google. You can update your profile with Edit on
@@ -97,7 +110,14 @@ export function ProfileView({
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(3) : undefined}
         >
-          <ReadOnlyField label="Phone number" value={user.phoneNumber} />
+          <ContactVerifiedRow
+            label="Phone number"
+            value={user.phoneNumber}
+            verified={user.isPhoneVerified}
+            canVerify={canEdit}
+            onVerify={onVerifyPhone}
+            verifyLabel="Verify phone"
+          />
           <ReadOnlyField label="Locale" value={user.locale} icon={Globe} />
         </EditableSectionCard>
 

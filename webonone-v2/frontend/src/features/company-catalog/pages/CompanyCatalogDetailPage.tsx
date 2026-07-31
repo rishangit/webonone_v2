@@ -413,7 +413,10 @@ export function CompanyCatalogDetailPage() {
           }
           variants={
             kind === 'products' ? (
-              <CompanyProductVariantsTab libraryEntityId={detail.libraryEntityId} />
+              <CompanyProductVariantsTab
+                productId={id}
+                libraryEntityId={detail.libraryEntityId}
+              />
             ) : undefined
           }
         />

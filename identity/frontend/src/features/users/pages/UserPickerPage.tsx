@@ -365,9 +365,26 @@ export function UserPickerPage() {
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {user.email?.trim() ? user.email : 'No email'}
-                    </p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email?.trim() ? user.email : 'No email'}
+                      </p>
+                      {user.email?.trim() ? (
+                        <StatusTag
+                          className="shrink-0"
+                          variant={user.isEmailVerified ? 'verified' : 'unverified'}
+                        />
+                      ) : null}
+                    </div>
+                    {user.phoneNumber?.trim() ? (
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        <p className="truncate text-xs text-muted-foreground">{user.phoneNumber}</p>
+                        <StatusTag
+                          className="shrink-0"
+                          variant={user.isPhoneVerified ? 'verified' : 'unverified'}
+                        />
+                      </div>
+                    ) : null}
                   </ItemListContent>
                   {user.role ? (
                     isStatusTagVariant(user.role) ? (

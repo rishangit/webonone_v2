@@ -31,13 +31,19 @@ import {
   markRegistrationEmailOtpUsed,
   markRegistrationSessionUsed,
   markUserEmailVerified,
+  markUserPhoneVerified,
+  markProfileEmailOtpUsed,
   revokeRefreshToken,
   revokeAllRefreshTokensForUser,
   toUserProfile,
   updatePasswordResetOtpAttemptCount,
+  updateProfileEmailOtpAttemptCount,
   updateRegistrationEmailOtpAttemptCount,
   updateUserPassword,
   updateUserProfile,
+  invalidateUnusedProfileEmailOtps,
+  createProfileEmailOtp,
+  findActiveProfileEmailOtp,
   type UpdateUserProfileInput,
   type UserRow,
 } from '../models/user.repository.js'
@@ -60,6 +66,7 @@ import { resolveDefaultSessionClaims, assertCanAssumeSessionRole } from './userR
 import { matchesRedirectUri } from '@webonone/platform-nav'
 import { env } from '../config/env.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
+import { sendPhoneOtp, verifyPhoneOtp } from './smsClient.service.js'
 
 export class AuthError extends Error {
   constructor(
@@ -543,6 +550,150 @@ export async function getCurrentUser(userId: string) {
 export async function patchCurrentUser(userId: string, input: UpdateUserProfileInput) {
   const user = await updateUserProfile(userId, input)
   return toUserProfile(user)
+}
+
+export async function requestProfileEmailOtp(userId: string): Promise<void> {
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  const email = user.email?.trim().toLowerCase()
+  if (!email) {
+    throw new AuthError('No email on profile', 400, 'MISSING_CONTACT')
+  }
+  if (user.is_email_verified) {
+    throw new AuthError('Email already verified', 400, 'ALREADY_VERIFIED')
+  }
+
+  await invalidateUnusedProfileEmailOtps(userId)
+
+  const otp = generatePasswordResetOtp()
+  const otpHash = hashToken(otp)
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS)
+
+  await createProfileEmailOtp({
+    id: nanoid(),
+    userId,
+    email,
+    otpHash,
+    expiresAt,
+  })
+
+  void sendTransactionalEmail({
+    templateSlug: 'profile_email_verification_otp',
+    toEmail: email,
+    payload: {
+      userName: user.display_name || email.split('@')[0] || email,
+      otp,
+    },
+    requestedByService: 'identity',
+  }).catch((err) => {
+    console.error('[auth] failed to send profile email OTP:', err)
+  })
+}
+
+export async function verifyProfileEmailOtp(userId: string, otp: string): Promise<ReturnType<typeof toUserProfile>> {
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+  if (user.is_email_verified) {
+    throw new AuthError('Email already verified', 400, 'ALREADY_VERIFIED')
+  }
+
+  const normalizedOtp = otp.trim()
+  const record = await findActiveProfileEmailOtp(userId)
+  if (!record) {
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', { attemptsRemaining: 0 })
+  }
+
+  if (new Date(record.expires_at) < new Date()) {
+    throw new AuthError('Verification code expired', 401, 'OTP_EXPIRED')
+  }
+
+  if (record.attempt_count >= OTP_MAX_ATTEMPTS) {
+    throw new AuthError('Too many incorrect attempts', 403, 'OTP_MAX_ATTEMPTS')
+  }
+
+  const otpHash = hashToken(normalizedOtp)
+  if (otpHash !== record.otp_hash) {
+    const nextAttempts = record.attempt_count + 1
+    if (nextAttempts >= OTP_MAX_ATTEMPTS) {
+      await markProfileEmailOtpUsed(record.id)
+      throw new AuthError('Too many incorrect attempts', 403, 'OTP_MAX_ATTEMPTS')
+    }
+    await updateProfileEmailOtpAttemptCount(record.id, nextAttempts)
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP', {
+      attemptsRemaining: OTP_MAX_ATTEMPTS - nextAttempts,
+    })
+  }
+
+  await markProfileEmailOtpUsed(record.id)
+  await markUserEmailVerified(userId)
+  const updated = await findUserById(userId)
+  if (!updated) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+  return toUserProfile(updated)
+}
+
+export async function requestProfilePhoneOtp(userId: string): Promise<void> {
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  const phone = user.phone_number?.trim()
+  if (!phone) {
+    throw new AuthError('No phone number on profile', 400, 'MISSING_CONTACT')
+  }
+  if (user.is_phone_verified) {
+    throw new AuthError('Phone already verified', 400, 'ALREADY_VERIFIED')
+  }
+
+  const sent = await sendPhoneOtp({
+    toNumber: phone,
+    purpose: 'phone_verification',
+    requestedByService: 'identity',
+  })
+  if (!sent) {
+    throw new AuthError('Unable to send verification SMS', 503, 'SMS_SEND_FAILED')
+  }
+}
+
+export async function verifyProfilePhoneOtp(
+  userId: string,
+  otp: string,
+): Promise<ReturnType<typeof toUserProfile>> {
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  const phone = user.phone_number?.trim()
+  if (!phone) {
+    throw new AuthError('No phone number on profile', 400, 'MISSING_CONTACT')
+  }
+  if (user.is_phone_verified) {
+    throw new AuthError('Phone already verified', 400, 'ALREADY_VERIFIED')
+  }
+
+  const valid = await verifyPhoneOtp({
+    toNumber: phone,
+    purpose: 'phone_verification',
+    code: otp.trim(),
+  })
+  if (!valid) {
+    throw new AuthError('Invalid verification code', 401, 'INVALID_OTP')
+  }
+
+  await markUserPhoneVerified(userId)
+  const updated = await findUserById(userId)
+  if (!updated) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+  return toUserProfile(updated)
 }
 
 const AUTH_CODE_EXPIRY_SECONDS = 60

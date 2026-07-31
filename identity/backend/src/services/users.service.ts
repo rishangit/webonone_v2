@@ -22,6 +22,9 @@ export type ListUsersResponse = {
     email: string | null
     role?: IdentityUserRole
     avatarUrl: string | null
+    phoneNumber: string | null
+    isEmailVerified: boolean
+    isPhoneVerified: boolean
   }>
   total: number
   page: number
@@ -60,6 +63,9 @@ export async function listIdentityUsers(query: ListUsersQuery): Promise<ListUser
       email: item.email ?? null,
       role: item.role,
       avatarUrl: item.avatar_url,
+      phoneNumber: item.phone_number ?? null,
+      isEmailVerified: Boolean(item.is_email_verified),
+      isPhoneVerified: Boolean(item.is_phone_verified),
     })),
     total: result.total,
     page: query.page,

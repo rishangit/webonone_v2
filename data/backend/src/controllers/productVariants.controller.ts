@@ -14,6 +14,18 @@ export const productVariantsController = {
     }
   },
 
+  async get(req: AuthenticatedRequest, res: Response) {
+    try {
+      const item = await productVariantsService.getProductVariant(
+        String(req.params.id),
+        String(req.params.variantId),
+      )
+      res.json(item)
+    } catch (err) {
+      if (!handleServiceError(err, res)) throw err
+    }
+  },
+
   async create(req: AuthenticatedRequest, res: Response) {
     try {
       const item = await productVariantsService.createProductVariant(

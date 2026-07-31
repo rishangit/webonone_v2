@@ -12,6 +12,7 @@ import { useAppSelector } from '@/app/store/hooks'
 import { useEmbedLoginMode } from '@/features/auth/hooks/useEmbedLoginMode'
 import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { PlatformEmbedLayout } from '@/features/auth/components/PlatformEmbedLayout'
+import { clearStoredAuthSession } from '@/features/auth/utils/authStorage'
 import {
   PlatformLoadingProvider,
   usePlatformOverlayLabel,
@@ -199,6 +200,7 @@ function AppLayoutShellContent() {
       : null
 
   function handleLogout() {
+    clearStoredAuthSession()
     performPlatformLogout(returnUrl, { identityOrigin: window.location.origin })
   }
 

@@ -13,7 +13,7 @@ function generateCode(): string {
   return String(crypto.randomInt(100000, 1000000))
 }
 
-/** Generate + store a hashed OTP, then enqueue it for delivery via the `otp` template. */
+/** Generate + store a hashed OTP, then enqueue it for delivery. */
 export async function sendOtp(input: {
   phoneNumber: string
   purpose: string
@@ -41,10 +41,13 @@ export async function sendOtp(input: {
     created_at: db.fn.now(3),
   })
 
+  const isPhoneVerification = input.purpose === 'phone_verification'
   await enqueue({
     toNumber: input.phoneNumber,
-    templateSlug: 'otp',
-    payload: { code, minutes: String(Math.round(env.otpTtlSeconds / 60)) },
+    templateSlug: isPhoneVerification ? 'phone_verification' : 'otp',
+    payload: isPhoneVerification
+      ? { code }
+      : { code, minutes: String(Math.round(env.otpTtlSeconds / 60)) },
     companyId: input.companyId ?? null,
     priority: 10,
   })

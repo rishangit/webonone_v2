@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -78,14 +79,12 @@ export function TemplatePreviewPage() {
       description="Render the template with sample payload and branding."
       actions={
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" asChild>
-            <Link to="/templates">Back</Link>
+          <Button type="button" variant="outline" size="sm" asChild>
+            <Link to={id ? `/templates/${id}` : '/templates'}>
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Back
+            </Link>
           </Button>
-          {id ? (
-            <Button type="button" variant="outline" asChild>
-              <Link to={`/templates/${id}`}>Edit</Link>
-            </Button>
-          ) : null}
         </div>
       }
     >

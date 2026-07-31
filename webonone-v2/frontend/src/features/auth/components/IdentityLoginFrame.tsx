@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Button } from '@webonone/ui-kit'
 import { broadcastThemeToIframes } from '@webonone/theme'
 import { useIdentityAuthMessage } from '../hooks/useIdentityAuthMessage'
@@ -10,6 +11,8 @@ type IdentityLoginFrameProps = {
 }
 
 export function IdentityLoginFrame({ returnPath = '/' }: IdentityLoginFrameProps) {
+  const [searchParams] = useSearchParams()
+  const promptLogin = searchParams.get('prompt') === 'login'
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [src, setSrc] = useState(() => buildIdentityEmbedLoginUrl(returnPath))
   const [loadError, setLoadError] = useState(false)
@@ -48,7 +51,7 @@ export function IdentityLoginFrame({ returnPath = '/' }: IdentityLoginFrameProps
       ) : null}
       <iframe
         ref={iframeRef}
-        key={src}
+        key={`${src}:${promptLogin ? 'prompt' : 'default'}`}
         title="Sign in"
         src={src}
         onLoad={handleLoad}
