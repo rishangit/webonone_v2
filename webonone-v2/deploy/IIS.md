@@ -76,8 +76,11 @@ Edit `webonone-v2\backend\.env` — set `DB_*`, `JWT_SECRET` (must match `identi
 |-----|-------|
 | `IDENTITY_API_BASE_URL` | `https://identity.webonone.com` |
 | `IDENTITY_SERVICE_API_KEY` | Same value as `identity\backend\.env` |
+| `WEBONONE_SERVICE_API_KEY` | Same value as `website\backend\.env` (public catalog search) |
 
 `IDENTITY_SERVICE_API_KEY` must match on both WebOnOne and Identity backends. Without `IDENTITY_API_BASE_URL`, role APIs (e.g. `GET /company/me/assumable-roles`) fail with 500.
+
+`WEBONONE_SERVICE_API_KEY` must match `website\backend\.env`. Without it, website search returns `WEBONONE_API_DISABLED`.
 
 For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
 
