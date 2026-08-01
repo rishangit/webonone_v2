@@ -4,6 +4,7 @@ import { isAuthCancelMessage, isAuthSuccessMessage } from '@webonone/platform-em
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
 import { getIdentityOrigin } from '../utils/identityConfig'
+import { redirectToWebsiteWithAuthCode } from '../utils/redirectToWebsite'
 
 function normalizeOrigin(origin: string): string {
   return origin.replace(/\/$/, '')
@@ -11,6 +12,8 @@ function normalizeOrigin(origin: string): string {
 
 type UseIdentityAuthMessageOptions = {
   returnPath?: string
+  /** When set, after login hand the session back to the public website via auth code. */
+  websiteReturnUrl?: string | null
   onCancel?: () => void
 }
 
@@ -19,6 +22,7 @@ type UseIdentityAuthMessageOptions = {
  */
 export function useIdentityAuthMessage({
   returnPath = '/',
+  websiteReturnUrl = null,
   onCancel,
 }: UseIdentityAuthMessageOptions = {}): void {
   const dispatch = useAppDispatch()
@@ -51,6 +55,14 @@ export function useIdentityAuthMessage({
             },
           }),
         )
+
+        if (websiteReturnUrl) {
+          void redirectToWebsiteWithAuthCode(event.data.accessToken, websiteReturnUrl).catch(() => {
+            navigate(returnPath || '/', { replace: true })
+          })
+          return
+        }
+
         navigate(returnPath || '/', { replace: true })
         return
       }
@@ -62,5 +74,5 @@ export function useIdentityAuthMessage({
 
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [dispatch, navigate, returnPath])
+  }, [dispatch, navigate, returnPath, websiteReturnUrl])
 }

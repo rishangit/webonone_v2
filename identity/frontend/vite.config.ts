@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, configDir, '')
   const allowedParentOrigins =
     env.VITE_ALLOWED_PARENT_ORIGINS ??
-    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012'
+    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012,http://127.0.0.1:3018'
   const frameAncestors = [
     "'self'",
     ...expandLoopbackOrigins(

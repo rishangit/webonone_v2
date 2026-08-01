@@ -9,6 +9,8 @@ export {
   resolvePlatformLogoutLoginUrl,
   resolveAbsolutePostLogoutLoginUrl,
   buildIdentityLogoutUrl,
+  buildClearSessionUrl,
+  buildLogoutClearChain,
   performPlatformLogout,
 } from './platformLogout'
 export type { PlatformLogoutOptions } from './platformLogout'

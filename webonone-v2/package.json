@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "concurrently -n fe,be -c blue,green \"npm run dev -w @webonone/webonone-frontend\" \"npm run dev -w @webonone/webonone-backend\"",
     "build": "npm run build:platform-nav --prefix .. && npm run build:platform-embed --prefix .. && npm run build:theme --prefix .. && npm run build:store-kit --prefix .. && npm run build:ui-kit --prefix .. && npm run build -w @webonone/webonone-frontend && npm run build -w @webonone/webonone-backend",
-    "deploy": "npm run build && npm run stage:deploy",
+    "deploy": "npm run env:apply --prefix .. && npm run build && npm run stage:deploy",
     "stage:deploy": "node ../tooling/stage-iis-deploy.mjs webonone-v2/deploy",
     "clean:deploy": "node ../tooling/stage-iis-deploy.mjs webonone-v2/deploy --clean-only",
     "type-check": "npm run type-check -w @webonone/webonone-frontend && npm run type-check -w @webonone/webonone-backend",

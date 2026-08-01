@@ -23,12 +23,7 @@ Committed files in `webonone-v2\deploy\`: **`web.config`**, **`stage-deploy.ps1`
 
 ## Prerequisites
 
-Identity must be deployed at **https://identity.webonone.com** with a platform-wide redirect allowlist:
-
-- `identity\backend\.env` → `ALLOWED_REDIRECT_URIS=https://*.webonone.com`
-- `identity\frontend\.env.production` → `VITE_ALLOWED_REDIRECT_URIS=https://*.webonone.com`
-
-This allows any `https://` microservice subdomain (e.g. `app`, `billing`) without listing each callback URL. After updating Identity env, run `npm run deploy:identity` and recycle the Identity app pool.
+Identity must be deployed at **https://identity.webonone.com** with a platform-wide redirect allowlist. Set `ALLOWED_REDIRECT_URIS=https://*.webonone.com` once in root `production.env` (apply writes Identity BE + FE). Then `npm run deploy:identity` and recycle the Identity app pool.
 
 ---
 
@@ -62,56 +57,19 @@ npm install
 
 ## Step 4 — Configure environment
 
-Use the same env files as local development — no separate deploy templates.
-
-### Backend (migrations + IIS runtime)
+Edit **one** file at the repo root (gitignored):
 
 ```powershell
-copy webonone-v2\backend\.env.example webonone-v2\backend\.env
+copy production.env.example production.env
 ```
 
-Edit `webonone-v2\backend\.env` — set `DB_*`, `JWT_SECRET` (must match `identity\backend\.env`), and Identity service keys:
+Fill shared secrets (`JWT_SECRET`, service API keys, `DB_*`), origins (`ORIGIN_*`), and service-specific keys. See `production.env.example` comments.
 
-| Key | Value |
-|-----|-------|
-| `IDENTITY_API_BASE_URL` | `https://identity.webonone.com` |
-| `IDENTITY_SERVICE_API_KEY` | Same value as `identity\backend\.env` |
-| `WEBONONE_SERVICE_API_KEY` | Same value as `website\backend\.env` (public catalog search) |
+`npm run deploy:webonone` runs `npm run env:apply`, which writes each service's `backend\.env` and `frontend\.env.production`. Do not hand-copy per-service `.env.example` for production.
 
-`IDENTITY_SERVICE_API_KEY` must match on both WebOnOne and Identity backends. Without `IDENTITY_API_BASE_URL`, role APIs (e.g. `GET /company/me/assumable-roles`) fail with 500.
+For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in generated backend files is ignored when `IIS_NODE_HOSTED=1`.
 
-`WEBONONE_SERVICE_API_KEY` must match `website\backend\.env`. Without it, website search returns `WEBONONE_API_DISABLED`.
-
-For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
-
-### Frontend (build-time only)
-
-```powershell
-copy webonone-v2\frontend\.env.example webonone-v2\frontend\.env.production
-```
-
-Edit `webonone-v2\frontend\.env.production` — production values:
-
-| Key | Value |
-|-----|-------|
-| `VITE_API_BASE_URL` | `/api/v1` |
-| `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
-| `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
-| `VITE_MEDIA_ORIGIN` | `https://media.webonone.com` |
-| `VITE_EMAIL_ORIGIN` | `https://email.webonone.com` |
-
-| Variable | Purpose |
-|----------|---------|
-| `VITE_IDENTITY_ORIGIN` | Login redirect and profile page (Identity SPA) |
-| `VITE_IDENTITY_API_BASE_URL` | Identity API calls (`/auth/exchange`, `/auth/code`) |
-| `VITE_MEDIA_ORIGIN` | Media picker/upload embed iframes (derived `/picker`, `/upload`) |
-| `VITE_EMAIL_ORIGIN` | Email admin app URL (derived paths such as `/history`) |
-
-Locally, Identity FE (3001) and BE (4001) run on different ports, so both URLs must be set. On IIS, Identity serves SPA and API from the same host — use the same domain with `/api/v1` for the API base. Same pattern for Media: local dev uses separate FE (3003) and BE (4003) ports; production uses one host with `/api/v1`.
-
-Login callback (`/callback`) is derived at runtime from `window.location.origin`. Media picker and upload URLs are derived from `VITE_MEDIA_ORIGIN`.
-
-Vite embeds these values during deploy build. Changes require redeploy.
+**Warning:** Keep `production.env` only on the ops/IIS machine. Running `env:apply` overwrites every service's `backend\.env`.
 
 ---
 
@@ -133,8 +91,9 @@ npm run deploy:webonone
 
 This will:
 
-1. Build shared packages (`@webonone/platform-nav`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
-2. Copy output into `webonone-v2\deploy\public\` and `webonone-v2\deploy\dist\`
+1. Run `env:apply` (expand root `production.env` into each service’s env files)
+2. Build shared packages (`@webonone/platform-nav`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
+3. Copy output into `webonone-v2\deploy\public\` and `webonone-v2\deploy\dist\`
 
 Dependencies are **not** copied into `deploy\`. Node resolves packages from the repo root `node_modules\`.
 

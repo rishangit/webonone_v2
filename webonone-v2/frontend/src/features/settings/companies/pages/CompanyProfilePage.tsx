@@ -13,6 +13,7 @@ import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingCont
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import type { CompanyWizardStep } from '@/features/settings/basic/schemas/companySchemas'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
+import { CompanyAddressCard } from '../components/CompanyAddressCard'
 import { CompanyContactCard } from '../components/CompanyContactCard'
 import { CompanyDataEntitiesCard } from '../components/CompanyDataEntitiesCard'
 import { CompanyFormDialog } from '../components/CompanyFormDialog'
@@ -151,30 +152,43 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
           aria-labelledby={`company-profile-tab-${tab}`}
         >
           {tab === 'profile' ? (
-            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-              <div className="flex flex-col gap-6 lg:col-span-2">
-                <CompanyProfileCard
-                  detail={detail}
-                  canEdit={canEdit}
-                  onEdit={() => openWizard(1)}
-                />
-                <CompanyLocationCard
-                  detail={detail}
-                  canEdit={canEdit}
-                  onEdit={() => openWizard(3)}
-                />
-              </div>
-              <div className="flex flex-col gap-6 lg:col-span-1">
+            <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <CompanyProfileCard
+                    detail={detail}
+                    canEdit={canEdit}
+                    onEdit={() => openWizard(1)}
+                  />
+                </div>
                 <CompanyContactCard
                   detail={detail}
                   canEdit={canEdit}
                   onEdit={() => openWizard(2)}
                 />
-                <CompanyTagsCard
-                  tags={detail.tags ?? []}
-                  canEdit={canEdit}
-                  onEdit={() => openWizard(4)}
-                />
+              </div>
+
+              <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3">
+                <div className="flex h-full min-h-[20rem] flex-col lg:col-span-2">
+                  <CompanyLocationCard
+                    detail={detail}
+                    canEdit={canEdit}
+                    onEdit={() => openWizard(4)}
+                    fillHeight
+                  />
+                </div>
+                <div className="flex flex-col gap-6">
+                  <CompanyAddressCard
+                    detail={detail}
+                    canEdit={canEdit}
+                    onEdit={() => openWizard(3)}
+                  />
+                  <CompanyTagsCard
+                    tags={detail.tags ?? []}
+                    canEdit={canEdit}
+                    onEdit={() => openWizard(5)}
+                  />
+                </div>
               </div>
             </div>
           ) : tab === 'gallery' ? (

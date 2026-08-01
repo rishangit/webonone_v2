@@ -2,13 +2,19 @@ import {
   AUTH_MESSAGE_TYPES,
   DATA_TAG_PICKER_MESSAGE_TYPES,
   IDENTITY_USER_PICKER_MESSAGE_TYPES,
+  IDENTITY_SSO_MESSAGE_TYPES,
   PLATFORM_EMBED_QUERY,
   PLATFORM_MESSAGE_TYPES,
+  WEBSITE_SSO_MESSAGE_TYPES,
 } from './types'
 import type {
   AuthCancelMessage,
   AuthSuccessMessage,
   AuthSuccessUser,
+  IdentitySsoNoneMessage,
+  IdentitySsoSessionMessage,
+  WebsiteSsoNoneMessage,
+  WebsiteSsoSessionMessage,
   BuildPlatformEmbedUrlOptions,
   DataTagPickerCancelMessage,
   DataTagPickerCreatedMessage,
@@ -635,4 +641,88 @@ export function sendAuthCancel(parentOrigin: string, embedId?: string): void {
     ...(embedId !== undefined ? { embedId } : {}),
   }
   window.parent.postMessage(message, parentOrigin)
+}
+
+export type SendWebsiteSsoSessionPayload = {
+  accessToken: string
+  user: AuthSuccessUser
+}
+
+/** WebOnOne silent SSO iframe → website parent: existing app session. */
+export function sendWebsiteSsoSession(
+  parentOrigin: string,
+  payload: SendWebsiteSsoSessionPayload,
+): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: WebsiteSsoSessionMessage = {
+    type: WEBSITE_SSO_MESSAGE_TYPES.SESSION,
+    accessToken: payload.accessToken,
+    user: payload.user,
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/** WebOnOne silent SSO iframe → website parent: no app session. */
+export function sendWebsiteSsoNone(parentOrigin: string): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: WebsiteSsoNoneMessage = {
+    type: WEBSITE_SSO_MESSAGE_TYPES.NONE,
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/** Hidden iframe src for website → WebOnOne silent SSO check. */
+export function buildWebsiteSsoUrl(webononeOrigin: string, parentOrigin: string): string {
+  const base = webononeOrigin.replace(/\/$/, '')
+  const url = new URL(`${base}/auth/website-sso`)
+  url.searchParams.set(PLATFORM_EMBED_QUERY.PARENT_ORIGIN, parentOrigin)
+  return url.toString()
+}
+
+export type SendIdentitySsoSessionPayload = {
+  accessToken: string
+  user: AuthSuccessUser
+}
+
+/** Identity silent SSO iframe → consumer parent: existing Identity session. */
+export function sendIdentitySsoSession(
+  parentOrigin: string,
+  payload: SendIdentitySsoSessionPayload,
+): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: IdentitySsoSessionMessage = {
+    type: IDENTITY_SSO_MESSAGE_TYPES.SESSION,
+    accessToken: payload.accessToken,
+    user: payload.user,
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/** Identity silent SSO iframe → consumer parent: no Identity session. */
+export function sendIdentitySsoNone(parentOrigin: string): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: IdentitySsoNoneMessage = {
+    type: IDENTITY_SSO_MESSAGE_TYPES.NONE,
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/** Hidden iframe src for consumer → Identity silent SSO check. */
+export function buildIdentitySilentSsoUrl(identityOrigin: string, parentOrigin: string): string {
+  const base = identityOrigin.replace(/\/$/, '')
+  const url = new URL(`${base}/auth/silent-sso`)
+  url.searchParams.set(PLATFORM_EMBED_QUERY.PARENT_ORIGIN, parentOrigin)
+  return url.toString()
 }

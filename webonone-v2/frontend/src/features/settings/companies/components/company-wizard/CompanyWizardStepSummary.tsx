@@ -42,6 +42,15 @@ export function CompanyWizardStepSummary({
             value={[values.addressLine1, values.city, values.country].filter(Boolean).join(', ')}
           />
           <SummaryRow
+            label="Map location"
+            value={
+              values.latitude !== null && values.longitude !== null
+                ? (values.mapFormattedAddress ??
+                  `${values.latitude.toFixed(5)}, ${values.longitude.toFixed(5)}`)
+                : ''
+            }
+          />
+          <SummaryRow
             label="Tags"
             value={values.tags.length > 0 ? values.tags.map((t) => t.name).join(', ') : ''}
           />

@@ -10,6 +10,10 @@ interface ImportMetaEnv {
   readonly VITE_DATA_ORIGIN?: string
   readonly VITE_SMS_ORIGIN?: string
   readonly VITE_PAYMENT_ORIGIN?: string
+  readonly VITE_WEBSITE_ORIGIN?: string
+  readonly VITE_WEBSITE_ALLOWED_ORIGINS?: string
+  readonly VITE_CLEAR_SESSION_ALLOWED_ORIGINS?: string
+  readonly VITE_GOOGLE_MAPS_API_KEY?: string
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv

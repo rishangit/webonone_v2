@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AppShell, BrandLogo, LoadingState } from '@webonone/ui-kit'
 import {
+  appendPromptLogin,
+  buildLogoutClearChain,
   createNavItemNavigate,
   isDataNavSentinel,
   isEmailNavSentinel,
@@ -15,6 +17,7 @@ import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppSelector } from '@/app/store/hooks'
 import { clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
+import { getWebsiteOrigin } from '@/features/auth/utils/websiteConfig'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { buildNavForSessionRole } from '@/features/shell/config/navItems'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
@@ -119,7 +122,13 @@ function AppLayoutContent() {
 
   function handleLogout() {
     clearWebOnOneAuthStorage()
-    performPlatformLogout(null, { identityOrigin: getIdentityOrigin() })
+    const websiteOrigin = getWebsiteOrigin()
+    const loginUrl = appendPromptLogin(`${window.location.origin}/login`)
+    const postLogoutRedirectUri = buildLogoutClearChain([websiteOrigin], loginUrl)
+    performPlatformLogout(null, {
+      identityOrigin: getIdentityOrigin(),
+      postLogoutRedirectUri,
+    })
   }
 
   function handleProfileClick() {

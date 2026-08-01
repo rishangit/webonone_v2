@@ -8,16 +8,20 @@ import { buildIdentityEmbedLoginUrl } from '../utils/identityConfig'
 
 type IdentityLoginFrameProps = {
   returnPath?: string
+  websiteReturnUrl?: string | null
 }
 
-export function IdentityLoginFrame({ returnPath = '/' }: IdentityLoginFrameProps) {
+export function IdentityLoginFrame({
+  returnPath = '/',
+  websiteReturnUrl = null,
+}: IdentityLoginFrameProps) {
   const [searchParams] = useSearchParams()
   const promptLogin = searchParams.get('prompt') === 'login'
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [src, setSrc] = useState(() => buildIdentityEmbedLoginUrl(returnPath))
   const [loadError, setLoadError] = useState(false)
 
-  useIdentityAuthMessage({ returnPath })
+  useIdentityAuthMessage({ returnPath, websiteReturnUrl })
 
   const applyTheme = useCallback(() => {
     const iframe = iframeRef.current

@@ -27,16 +27,7 @@ Committed files in `data\deploy\`: **`web.config`**, **`IIS.md`** only.
 
 ## Production env
 
-**Backend** (`data\backend\.env`):
-
-- `DB_NAME=webonone_data`
-- `JWT_SECRET` (same as Identity)
-- `FRONTEND_BASE_URL=https://data.webonone.com`
-
-**Frontend build** (`data\frontend\.env.production`):
-
-- `VITE_API_BASE_URL=/api/v1`
-- Peer origins for Identity and WebOnOne (production URLs)
+Edit repo-root `production.env` (from `production.env.example`), then run `npm run deploy:data` (runs `env:apply` then build + stage). Shared keys such as `JWT_SECRET` are written once in `production.env`.
 
 ---
 

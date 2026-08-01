@@ -5,6 +5,7 @@ import {
   AlertDescription,
   Button,
   CustomDialog,
+  cn,
   formatPhoneE164,
   getBrowserDefaultCountryIso2,
   mapZodIssuesToFieldErrors,
@@ -13,12 +14,14 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import {
   COMPANY_WIZARD_TOTAL_STEPS,
+  companyAddressCardSchema,
   companyContactCardSchema,
   companyLocationCardSchema,
   companyProfileCardSchema,
   companyWizardCreateStep1Schema,
   companyWizardCreateStep2Schema,
   companyWizardCreateStep3Schema,
+  companyWizardCreateStep4Schema,
   EMPTY_COMPANY_WIZARD_VALUES,
   registerCompanyFormSchema,
   type CompanyWizardFormValues,
@@ -31,18 +34,20 @@ import type {
 } from '@/features/settings/basic/services/companyApi'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import { CompanyWizardProgress } from './company-wizard/CompanyWizardProgress'
+import { CompanyWizardStepAddress } from './company-wizard/CompanyWizardStepAddress'
 import { CompanyWizardStepContact } from './company-wizard/CompanyWizardStepContact'
 import { CompanyWizardStepLocation } from './company-wizard/CompanyWizardStepLocation'
 import { CompanyWizardStepProfile } from './company-wizard/CompanyWizardStepProfile'
 import { CompanyWizardStepSummary } from './company-wizard/CompanyWizardStepSummary'
 import { CompanyWizardStepTags } from './company-wizard/CompanyWizardStepTags'
 
-const STEP_TITLES = ['Profile', 'Contact', 'Location', 'Tags', 'Summary'] as const
+const STEP_TITLES = ['Profile', 'Contact', 'Address', 'Location', 'Tags', 'Summary'] as const
 
 const STEP_DESCRIPTIONS_CREATE = [
   'Tell us about your company.',
   'How customers and the platform can reach you (optional).',
-  'Map pin and postal address (optional).',
+  'Postal and street address (optional).',
+  'Map pin for this company (optional).',
   'Associate catalog tags (optional).',
   'Review your details before submitting.',
 ] as const
@@ -50,7 +55,8 @@ const STEP_DESCRIPTIONS_CREATE = [
 const STEP_DESCRIPTIONS_EDIT = [
   'Company name, description, and size.',
   'Contact email and phone.',
-  'Map pin and postal address.',
+  'Postal and street address.',
+  'Map pin for this company.',
   'Catalog tags for this company.',
   'Review your changes before saving.',
 ] as const
@@ -315,19 +321,32 @@ export function CompanyFormDialog({
     }
 
     if (current === 3) {
-      const locationValues = {
+      const addressValues = {
         addressLine1: values.addressLine1,
         addressLine2: values.addressLine2,
         city: values.city,
         stateRegion: values.stateRegion,
         postalCode: values.postalCode,
         country: values.country,
+      }
+      const schema = isNew ? companyWizardCreateStep3Schema : companyAddressCardSchema
+      const result = schema.safeParse(addressValues)
+      if (!result.success) {
+        setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
+        return false
+      }
+      setFieldErrors({})
+      return true
+    }
+
+    if (current === 4) {
+      const locationValues = {
         latitude: values.latitude,
         longitude: values.longitude,
         mapPlaceId: values.mapPlaceId,
         mapFormattedAddress: values.mapFormattedAddress,
       }
-      const schema = isNew ? companyWizardCreateStep3Schema : companyLocationCardSchema
+      const schema = isNew ? companyWizardCreateStep4Schema : companyLocationCardSchema
       const result = schema.safeParse(locationValues)
       if (!result.success) {
         setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
@@ -366,7 +385,7 @@ export function CompanyFormDialog({
     }
 
     if (!id) return
-    for (const s of [1, 2, 3] as const) {
+    for (const s of [1, 2, 3, 4] as const) {
       if (!validateStep(s)) {
         setStep(s)
         return
@@ -392,6 +411,7 @@ export function CompanyFormDialog({
 
   const stepIndex = step - 1
   const contactPhoneDisplay = contactPhoneFromValues(values)
+  const isLocationStep = step === 4
 
   return (
     <CustomDialog
@@ -402,6 +422,7 @@ export function CompanyFormDialog({
       sizeWidth="large"
       sizeHeight="xlarge"
       nestedDismissGuard={nestedOpen || blockOuterDismiss}
+      disableContentScroll={isLocationStep}
       footer={
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
@@ -449,8 +470,12 @@ export function CompanyFormDialog({
         </div>
       }
     >
-      <div className="space-y-6">
-        <div className="space-y-2 text-center">
+      <div
+        className={cn(
+          isLocationStep ? 'flex h-full min-h-0 flex-col gap-6' : 'space-y-6',
+        )}
+      >
+        <div className="shrink-0 space-y-2 text-center">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Step {step} of {COMPANY_WIZARD_TOTAL_STEPS} — {STEP_TITLES[stepIndex]}
           </p>
@@ -461,7 +486,7 @@ export function CompanyFormDialog({
         </div>
 
         {error ? (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="shrink-0">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
@@ -491,7 +516,7 @@ export function CompanyFormDialog({
         ) : null}
 
         {!showLoading && step === 3 ? (
-          <CompanyWizardStepLocation
+          <CompanyWizardStepAddress
             values={values}
             fieldErrors={fieldErrors}
             isSubmitting={saving}
@@ -500,7 +525,17 @@ export function CompanyFormDialog({
           />
         ) : null}
 
-        {!showLoading && step === 4 ? (
+        {!showLoading && isLocationStep ? (
+          <div className="min-h-0 flex-1">
+            <CompanyWizardStepLocation
+              values={values}
+              isSubmitting={saving}
+              onChange={patchValues}
+            />
+          </div>
+        ) : null}
+
+        {!showLoading && step === 5 ? (
           <CompanyWizardStepTags
             values={values}
             isSubmitting={saving}
@@ -509,7 +544,7 @@ export function CompanyFormDialog({
           />
         ) : null}
 
-        {!showLoading && step === 5 ? (
+        {!showLoading && step === 6 ? (
           <CompanyWizardStepSummary
             values={values}
             isNew={isNew}

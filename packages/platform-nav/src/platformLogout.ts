@@ -3,6 +3,11 @@ import { getCoreOriginFromReturnUrl } from './coreNav'
 export type PlatformLogoutOptions = {
   localLoginPath?: string
   identityOrigin?: string
+  /**
+   * When set, used as Identity `post_logout_redirect_uri` instead of the default
+   * consumer `/login?prompt=login` (e.g. a clear-session hop chain).
+   */
+  postLogoutRedirectUri?: string
 }
 
 export function resolvePlatformLogoutLoginUrl(
@@ -69,6 +74,25 @@ export function buildIdentityLogoutUrl(
   return url.toString()
 }
 
+/** `{origin}/auth/clear-session?continue=…` hop used in global logout chains. */
+export function buildClearSessionUrl(serviceOrigin: string, continueUrl: string): string {
+  const base = serviceOrigin.replace(/\/$/, '')
+  const url = new URL(`${base}/auth/clear-session`)
+  url.searchParams.set('continue', continueUrl)
+  return url.toString()
+}
+
+/**
+ * Nest clear-session hops (first origin clears first after Identity logout),
+ * then land on `finalUrl`.
+ */
+export function buildLogoutClearChain(clearOrigins: string[], finalUrl: string): string {
+  return clearOrigins.reduceRight(
+    (continueUrl, origin) => buildClearSessionUrl(origin, continueUrl),
+    finalUrl,
+  )
+}
+
 /**
  * Full-page redirect to login after sign-out. When `identityOrigin` is set, routes through
  * Identity `/logout` to revoke SSO sessions before landing on the target login URL.
@@ -78,7 +102,9 @@ export function performPlatformLogout(
   options?: PlatformLogoutOptions,
 ): void {
   const localLoginPath = options?.localLoginPath ?? '/login'
-  const postLogoutTarget = resolveAbsolutePostLogoutLoginUrl(returnUrl, localLoginPath)
+  const postLogoutTarget =
+    options?.postLogoutRedirectUri ??
+    resolveAbsolutePostLogoutLoginUrl(returnUrl, localLoginPath)
 
   if (options?.identityOrigin) {
     window.location.replace(buildIdentityLogoutUrl(options.identityOrigin, postLogoutTarget))

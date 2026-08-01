@@ -4,7 +4,7 @@ import {
   PLATFORM_EMBED_APP_HOST_CLASS,
   resolvePlatformEmbedParentOrigin,
 } from '@webonone/platform-embed'
-import { CORE_NAV_QUERY_PARAM, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
+import { CORE_NAV_QUERY_PARAM, appendPromptLogin, buildLogoutClearChain, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
@@ -20,7 +20,7 @@ import {
 import { getEmailRedirectOptions } from '@/features/email/utils/redirectToEmail'
 import { getSmsRedirectOptions } from '@/features/sms/utils/redirectToSms'
 import { parseProfileReturnUrl } from '@/features/profile/utils/profileReturn'
-import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
+import { isAllowedParentOrigin, getWebOnOneOrigin, getWebsiteOrigin } from '@/features/shell/utils/platformConfig'
 import { isSessionCompanyAdmin, isSessionSuperAdmin } from '@/features/users/utils/currentRole'
 import {
   buildCoreNavFromQuery,
@@ -201,7 +201,19 @@ function AppLayoutShellContent() {
 
   function handleLogout() {
     clearStoredAuthSession()
-    performPlatformLogout(returnUrl, { identityOrigin: window.location.origin })
+    const webononeOrigin = getWebOnOneOrigin().replace(/\/$/, '')
+    const websiteOrigin = getWebsiteOrigin()
+    const finalTarget = returnUrl
+      ? appendPromptLogin(returnUrl)
+      : appendPromptLogin(`${webononeOrigin}/login`)
+    const postLogoutRedirectUri = buildLogoutClearChain(
+      [webononeOrigin, websiteOrigin],
+      finalTarget,
+    )
+    performPlatformLogout(returnUrl, {
+      identityOrigin: window.location.origin,
+      postLogoutRedirectUri,
+    })
   }
 
   function handleProfileClick() {
@@ -234,8 +246,8 @@ function AppLayoutShellContent() {
     )
   }
 
-  // Embed login iframe / logout hop: fill the frame with no AppHeader.
-  if (isEmbed || location.pathname === '/logout') {
+  // Embed login iframe / logout hop / silent SSO: fill the frame with no AppHeader.
+  if (isEmbed || location.pathname === '/logout' || location.pathname === '/auth/silent-sso') {
     return (
       <div className="relative flex h-dvh w-full items-center justify-center overflow-y-auto p-4">
         <Outlet />

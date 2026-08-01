@@ -45,24 +45,27 @@ npm run deploy:{service}
 
 `npm run dev:{service}` and `npm run build:{service}` do **not** touch `{service}/deploy/`.
 
-## Environment (no deploy-only templates)
+## Environment (deploy-time split)
 
-Use the same env files as local dev — copy from `.env.example`, edit for production **before** deploy.
+**Source of truth (ops/IIS machine only):** repo-root `production.env` (gitignored). Copy from [`production.env.example`](../../production.env.example), edit once.
+
+| Script | Effect |
+|--------|--------|
+| `npm run env:apply` | Writes every `{service}/backend/.env` and `{service}/frontend/.env.production` |
+| `npm run deploy:{service}` | Runs `env:apply`, then build + stage |
+
+Runtime is unchanged: Node loads only `{service}/backend/.env`; Vite embeds `frontend/.env.production` at build time. Services must **not** `dotenv`-load `production.env`.
 
 | Layer | File | When read |
 |-------|------|-----------|
 | Backend | `{service}/backend/.env` | Every IIS request (Node loads at startup) |
 | Frontend | `{service}/frontend/.env.production` | Deploy build only — values compiled into JS; changes require redeploy |
 
-**Frontend** — typical production keys:
+**Do not** run `env:apply` / `deploy:*` on a laptop that uses local `backend/.env` for `npm run dev` unless you intend to overwrite those files.
 
-- `VITE_API_BASE_URL=/api/v1` (same-origin API on IIS)
-- Other `VITE_*` URLs and client IDs for that service (production `https://…` values)
-- Mirror matching backend env vars where both layers validate the same data (e.g. redirect URIs, OAuth client IDs)
+Local `npm run dev` still uses per-service `frontend/.env` + `backend/.env` copied from each layer’s `.env.example`.
 
-**Backend** — `DB_*`, `JWT_SECRET`, and service-specific server config. Keep paired FE/BE values in sync.
-
-On IIS, HttpPlatformHandler sets `PORT` — backend must not override it when `IIS_NODE_HOSTED=1`. Local dev uses `frontend/.env` (not `.env.production`).
+On IIS, HttpPlatformHandler sets `PORT` — backend must not override it when `IIS_NODE_HOSTED=1`.
 
 Per-service env rules: [microservice-architecture.mdc](microservice-architecture.mdc).
 
@@ -76,11 +79,12 @@ Per-service env rules: [microservice-architecture.mdc](microservice-architecture
 ## Redeploy
 
 ```powershell
+# Edit production.env if secrets/origins changed, then:
 git pull
 npm run deploy:{service}
 ```
 
-Recycle the IIS app pool or restart the site.
+`deploy` always re-runs `env:apply` first. Recycle the IIS app pool or restart the site.
 
 ## Verification
 

@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/app/AppLayout'
 import { LazyRoute } from '@/app/LazyRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
+import { ClearSessionPage } from '@/features/auth/pages/ClearSessionPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { useAppSelector } from '@/app/store/hooks'
 
@@ -114,6 +115,7 @@ export function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/callback" element={<AuthCallbackPage />} />
+        <Route path="/auth/clear-session" element={<ClearSessionPage />} />
         <Route
           element={
             <PrivateRoute>

@@ -5,9 +5,12 @@ export function getWebOnOneOrigin(): string {
   return (fromEnv || DEFAULT_WEBONONE_ORIGIN).replace(/\/$/, '')
 }
 
-/** WebOnOne app login — full-page handoff (Identity embed lives on WebOnOne). */
+/** WebOnOne app login with return to the current website origin. */
 export function getWebOnOneLoginUrl(): string {
-  return `${getWebOnOneOrigin()}/login`
+  const returnUrl = `${window.location.origin}/`
+  const url = new URL(`${getWebOnOneOrigin()}/login`)
+  url.searchParams.set('return_url', returnUrl)
+  return url.toString()
 }
 
 /** Authenticated WebOnOne app home. */

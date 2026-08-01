@@ -62,36 +62,19 @@ npm install
 
 ## Step 4 — Configure environment
 
-Use the same env files as local development — no separate deploy templates.
-
-### Backend (migrations + IIS runtime)
+Edit **one** file at the repo root (gitignored):
 
 ```powershell
-copy email\backend\.env.example email\backend\.env
+copy production.env.example production.env
 ```
 
-Edit `email\backend\.env` — set `DB_*`, `JWT_SECRET` (must match `identity\backend\.env`), `EMAIL_SERVICE_API_KEY` (shared with Identity and WebOnOne backends), and production SMTP values. See commented production block in `email\backend\.env.example`.
+Fill shared secrets (`JWT_SECRET`, service API keys, `DB_*`), origins (`ORIGIN_*`), and service-specific keys. See `production.env.example` comments.
 
-For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
+`npm run deploy:email` runs `npm run env:apply`, which writes each service's `backend\.env` and `frontend\.env.production`. Do not hand-copy per-service `.env.example` for production.
 
-### Frontend (build-time only)
+For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in generated backend files is ignored when `IIS_NODE_HOSTED=1`.
 
-```powershell
-copy email\frontend\.env.example email\frontend\.env.production
-```
-
-Edit `email\frontend\.env.production` — production values:
-
-| Key | Value |
-|-----|-------|
-| `VITE_API_BASE_URL` | `/api/v1` |
-| `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
-| `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
-| `VITE_WEBONONE_ORIGIN` | `https://app.webonone.com` |
-| `VITE_WEBONONE_API_BASE_URL` | `https://app.webonone.com/api/v1` |
-| `VITE_ALLOWED_PARENT_ORIGINS` | `https://app.webonone.com,https://identity.webonone.com` |
-
-Vite embeds these values during deploy build. Changes require redeploy.
+**Warning:** Keep `production.env` only on the ops/IIS machine. Running `env:apply` overwrites every service's `backend\.env`.
 
 ---
 
@@ -113,8 +96,9 @@ npm run deploy:email
 
 This will:
 
-1. Build shared packages (`@webonone/theme`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
-2. Copy output into `email\deploy\public\` and `email\deploy\dist\`
+1. Run `env:apply` (expand root `production.env` into each service’s env files)
+2. Build shared packages (`@webonone/theme`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
+3. Copy output into `email\deploy\public\` and `email\deploy\dist\`
 
 Dependencies are **not** copied into `deploy\`. Node resolves packages from the repo root `node_modules\`.
 

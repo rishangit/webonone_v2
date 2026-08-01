@@ -61,42 +61,19 @@ npm install
 
 ## Step 4 — Configure environment
 
-Use the same env files as local development — no separate deploy templates.
-
-### Backend (migrations + IIS runtime)
+Edit **one** file at the repo root (gitignored):
 
 ```powershell
-copy sms\backend\.env.example sms\backend\.env
+copy production.env.example production.env
 ```
 
-Edit `sms\backend\.env` — set `DB_*`, `JWT_SECRET` (must match `identity\backend\.env`), `SMS_SERVICE_API_KEY` (shared with Identity for internal OTP), and production values:
+Fill shared secrets (`JWT_SECRET`, service API keys, `DB_*`), origins (`ORIGIN_*`), and service-specific keys. See `production.env.example` comments.
 
-| Variable | Production value |
-|----------|------------------|
-| `DB_NAME` | `webonone_sms` |
-| `JWT_SECRET` | Same as Identity |
-| `FRONTEND_BASE_URL` | `https://sms.webonone.com` |
-| `SMS_SERVICE_API_KEY` | Shared key used by Identity `smsClient` |
+`npm run deploy:sms` runs `npm run env:apply`, which writes each service's `backend\.env` and `frontend\.env.production`. Do not hand-copy per-service `.env.example` for production.
 
-For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
+For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in generated backend files is ignored when `IIS_NODE_HOSTED=1`.
 
-### Frontend (build-time only)
-
-```powershell
-copy sms\frontend\.env.example sms\frontend\.env.production
-```
-
-Edit `sms\frontend\.env.production` — production values:
-
-| Key | Value |
-|-----|-------|
-| `VITE_API_BASE_URL` | `/api/v1` |
-| `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
-| `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
-| `VITE_WEBONONE_ORIGIN` | `https://app.webonone.com` |
-| `VITE_ALLOWED_PARENT_ORIGINS` | `https://app.webonone.com,https://identity.webonone.com,https://sms.webonone.com` |
-
-Vite embeds these values during deploy build. Changes require redeploy.
+**Warning:** Keep `production.env` only on the ops/IIS machine. Running `env:apply` overwrites every service's `backend\.env`.
 
 ---
 
@@ -118,8 +95,9 @@ npm run deploy:sms
 
 This will:
 
-1. Build shared packages (`@webonone/platform-embed`, `@webonone/theme`, `@webonone/store-kit`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
-2. Copy output into `sms\deploy\public\` and `sms\deploy\dist\`
+1. Run `env:apply` (expand root `production.env` into each service’s env files)
+2. Build shared packages (`@webonone/platform-embed`, `@webonone/theme`, `@webonone/store-kit`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
+3. Copy output into `sms\deploy\public\` and `sms\deploy\dist\`
 
 Dependencies are **not** copied into `deploy\`. Node resolves packages from the repo root `node_modules\`.
 

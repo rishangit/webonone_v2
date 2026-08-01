@@ -23,12 +23,7 @@ Committed files in `website\deploy\`: **`web.config`**, **`stage-deploy.ps1`**, 
 
 ## Prerequisites
 
-WebOnOne must be deployed at **https://app.webonone.com** so catalog search can call the internal API:
-
-- `webonone-v2\backend\.env` → `WEBONONE_SERVICE_API_KEY` set
-- `website\backend\.env` → same `WEBONONE_SERVICE_API_KEY` value, and `WEBONONE_API_BASE_URL=https://app.webonone.com`
-
-After updating WebOnOne env, run `npm run deploy:webonone` and recycle the WebOnOne app pool.
+WebOnOne must be deployed at **https://app.webonone.com** so catalog search can call the internal API. Set `WEBONONE_SERVICE_API_KEY` and `ORIGIN_WEBONONE` once in root `production.env` (apply writes matching values into both WebOnOne and Website backends). Then `npm run deploy:webonone` / `npm run deploy:website` and recycle the app pools.
 
 ---
 
@@ -62,32 +57,19 @@ npm install
 
 ## Step 4 — Configure environment
 
-Use the same env files as local development — no separate deploy templates.
-
-### Backend (migrations + IIS runtime)
+Edit **one** file at the repo root (gitignored):
 
 ```powershell
-copy website\backend\.env.example website\backend\.env
+copy production.env.example production.env
 ```
 
-Edit `website\backend\.env` — set `DB_*`, `WEBONONE_SERVICE_API_KEY` (must match `webonone-v2\backend\.env`), and production values. See commented production block in `website\backend\.env.example`.
+Fill shared secrets (`JWT_SECRET`, service API keys, `DB_*`), origins (`ORIGIN_*`), and service-specific keys. See `production.env.example` comments.
 
-For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
+`npm run deploy:website` runs `npm run env:apply`, which writes each service's `backend\.env` and `frontend\.env.production`. Do not hand-copy per-service `.env.example` for production.
 
-### Frontend (build-time only)
+For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in generated backend files is ignored when `IIS_NODE_HOSTED=1`.
 
-```powershell
-copy website\frontend\.env.example website\frontend\.env.production
-```
-
-Edit `website\frontend\.env.production` — production values:
-
-| Key | Value |
-|-----|-------|
-| `VITE_API_BASE_URL` | `/api/v1` |
-| `VITE_WEBONONE_ORIGIN` | `https://app.webonone.com` |
-
-Vite embeds these values during deploy build. Changes require redeploy.
+**Warning:** Keep `production.env` only on the ops/IIS machine. Running `env:apply` overwrites every service's `backend\.env`.
 
 ---
 
@@ -109,8 +91,9 @@ npm run deploy:website
 
 This will:
 
-1. Build shared packages (`@webonone/theme`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
-2. Copy output into `website\deploy\public\` and `website\deploy\dist\`
+1. Run `env:apply` (expand root `production.env` into each service’s env files)
+2. Build shared packages (`@webonone/theme`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
+3. Copy output into `website\deploy\public\` and `website\deploy\dist\`
 
 Dependencies are **not** copied into `deploy\`. Node resolves packages from the repo root `node_modules\`.
 

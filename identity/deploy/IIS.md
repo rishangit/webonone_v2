@@ -51,27 +51,19 @@ npm install
 
 ## Step 4 — Configure environment
 
-Use the same env files as local development — no separate deploy templates.
-
-### Backend (migrations + IIS runtime)
+Edit **one** file at the repo root (gitignored):
 
 ```powershell
-copy identity\backend\.env.example identity\backend\.env
+copy production.env.example production.env
 ```
 
-Edit `identity\backend\.env` — set `DB_*`, `JWT_SECRET`, `ALLOWED_REDIRECT_URIS` (e.g. `https://*.webonone.com` in production, `http://localhost:*` locally), and `GOOGLE_CLIENT_ID` if used.
+Fill shared secrets (`JWT_SECRET`, service API keys, `DB_*`), origins (`ORIGIN_*`), and service-specific keys. See `production.env.example` comments.
 
-For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
+`npm run deploy:identity` runs `npm run env:apply`, which writes `identity\backend\.env` and `identity\frontend\.env.production` (and the same for every other service). Do not hand-copy per-service `.env.example` for production.
 
-### Frontend (build-time only)
+For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in generated backend files is ignored when `IIS_NODE_HOSTED=1`.
 
-```powershell
-copy identity\frontend\.env.example identity\frontend\.env.production
-```
-
-Edit `identity\frontend\.env.production` — set `VITE_ALLOWED_REDIRECT_URIS` to the same pattern as backend (e.g. `https://*.webonone.com`). Vite embeds these values during deploy build.
-
-Keep **`ALLOWED_REDIRECT_URIS`** (backend) and **`VITE_ALLOWED_REDIRECT_URIS`** (frontend) in sync, same for Google client IDs.
+**Warning:** Keep `production.env` only on the ops/IIS machine. Running `env:apply` overwrites every service’s `backend\.env`.
 
 ---
 
@@ -93,8 +85,9 @@ npm run deploy:identity
 
 This will:
 
-1. Build frontend (using `frontend\.env.production`) and backend
-2. Copy output into `identity\deploy\public\` and `identity\deploy\dist\`
+1. Run `env:apply` (expand root `production.env` into each service’s `backend\.env` + `frontend\.env.production`)
+2. Build frontend (using `frontend\.env.production`) and backend
+3. Copy output into `identity\deploy\public\` and `identity\deploy\dist\`
 
 Dependencies are **not** copied into `deploy\`. Node resolves packages from the repo root `node_modules\` (install once with `npm install` at repo root). No `package.json` in `deploy\` is required.
 

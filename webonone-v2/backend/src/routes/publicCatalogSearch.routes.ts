@@ -11,4 +11,11 @@ router.get(
   publicCatalogSearchController.searchCatalog,
 )
 
+/** Service-key marketplace detail for website BFF. */
+router.get(
+  '/internal/catalog/:kind/:id',
+  requireInternalAuth,
+  publicCatalogSearchController.getCatalogItem,
+)
+
 export default router

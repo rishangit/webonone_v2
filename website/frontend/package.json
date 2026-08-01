@@ -10,6 +10,8 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@webonone/platform-embed": "*",
+    "@webonone/platform-nav": "*",
     "@webonone/theme": "*",
     "@webonone/ui-kit": "*",
     "lucide-react": "^0.511.0",

@@ -21,6 +21,8 @@ type CompanyMapPickerProps = {
   latitude: number | null
   longitude: number | null
   onPlaceSelected?: (place: PlaceResult) => void
+  /** Grow the map canvas to fill available card height. */
+  fillHeight?: boolean
 }
 
 declare global {
@@ -29,10 +31,20 @@ declare global {
       maps: {
         Map: new (
           el: HTMLElement,
-          opts: { center: LatLng; zoom: number; mapTypeControl?: boolean; streetViewControl?: boolean },
+          opts: {
+            center: LatLng
+            zoom: number
+            mapTypeControl?: boolean
+            streetViewControl?: boolean
+            fullscreenControl?: boolean
+          },
         ) => {
           setCenter: (c: LatLng) => void
-          addListener: (event: string, handler: (e: { latLng?: { lat: () => number; lng: () => number } }) => void) => void
+          setZoom: (z: number) => void
+          addListener: (
+            event: string,
+            handler: (e: { latLng?: { lat: () => number; lng: () => number } }) => void,
+          ) => void
         }
         Marker: new (opts: {
           map: unknown
@@ -61,31 +73,57 @@ declare global {
             }
           }
         }
-        event: { clearInstanceListeners: (instance: unknown) => void }
+        event: {
+          clearInstanceListeners: (instance: unknown) => void
+          trigger: (instance: unknown, eventName: string) => void
+        }
       }
     }
     __webononeMapsPromise?: Promise<void>
   }
 }
 
+function mapsApiReady(): boolean {
+  return Boolean(window.google?.maps?.Map && window.google?.maps?.places)
+}
+
 function loadGoogleMaps(apiKey: string): Promise<void> {
-  if (window.google?.maps?.places) return Promise.resolve()
+  if (mapsApiReady()) return Promise.resolve()
   if (window.__webononeMapsPromise) return window.__webononeMapsPromise
 
   window.__webononeMapsPromise = new Promise((resolve, reject) => {
+    const finish = () => {
+      if (mapsApiReady()) {
+        resolve()
+        return
+      }
+      reject(new Error('Google Maps loaded without Places library'))
+    }
+
     const existing = document.querySelector<HTMLScriptElement>('script[data-webonone-maps]')
     if (existing) {
-      existing.addEventListener('load', () => resolve())
-      existing.addEventListener('error', () => reject(new Error('Failed to load Google Maps')))
+      if (mapsApiReady()) {
+        finish()
+        return
+      }
+      existing.addEventListener('load', finish)
+      existing.addEventListener('error', () => {
+        window.__webononeMapsPromise = undefined
+        reject(new Error('Failed to load Google Maps'))
+      })
       return
     }
+
     const script = document.createElement('script')
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`
     script.async = true
     script.defer = true
     script.dataset.webononeMaps = '1'
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load Google Maps'))
+    script.onload = finish
+    script.onerror = () => {
+      window.__webononeMapsPromise = undefined
+      reject(new Error('Failed to load Google Maps'))
+    }
     document.head.appendChild(script)
   })
 
@@ -107,12 +145,17 @@ export function CompanyMapPicker({
   latitude,
   longitude,
   onPlaceSelected,
+  fillHeight = false,
 }: CompanyMapPickerProps) {
   const apiKey = getGoogleMapsApiKey()
   const mapRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const mapInstanceRef = useRef<{
+    setCenter: (c: LatLng) => void
+    setZoom: (z: number) => void
+  } | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(mapsApiReady)
 
   const hasPin = latitude !== null && longitude !== null
 
@@ -145,7 +188,9 @@ export function CompanyMapPicker({
       zoom,
       mapTypeControl: false,
       streetViewControl: false,
+      fullscreenControl: false,
     })
+    mapInstanceRef.current = map
 
     let marker: InstanceType<NonNullable<typeof window.google>['maps']['Marker']> | null = null
     if (hasPin) {
@@ -205,6 +250,7 @@ export function CompanyMapPicker({
           const lat = loc.lat()
           const lng = loc.lng()
           map.setCenter({ lat, lng })
+          map.setZoom(14)
           if (marker) {
             marker.setPosition({ lat, lng })
           } else {
@@ -236,7 +282,35 @@ export function CompanyMapPicker({
       }
     }
 
+    // Maps paints blank when the flex container starts at 0 height — resize once laid out.
+    const triggerResize = () => {
+      if (!window.google?.maps?.event || !mapRef.current) return
+      window.google.maps.event.trigger(map, 'resize')
+      map.setCenter(center)
+    }
+    const raf = window.requestAnimationFrame(triggerResize)
+    let lastSize = { w: 0, h: 0 }
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver((entries) => {
+            const entry = entries[0]
+            if (!entry) return
+            const w = Math.round(entry.contentRect.width)
+            const h = Math.round(entry.contentRect.height)
+            if (w === lastSize.w && h === lastSize.h) return
+            if (w === 0 || h === 0) return
+            lastSize = { w, h }
+            triggerResize()
+          })
+        : null
+    if (mapRef.current && resizeObserver) {
+      resizeObserver.observe(mapRef.current)
+    }
+
     return () => {
+      window.cancelAnimationFrame(raf)
+      resizeObserver?.disconnect()
+      mapInstanceRef.current = null
       if (window.google?.maps?.event) {
         window.google.maps.event.clearInstanceListeners(map)
         if (marker) window.google.maps.event.clearInstanceListeners(marker)
@@ -248,7 +322,7 @@ export function CompanyMapPicker({
     return (
       <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
         Set location on the map is unavailable until <code>VITE_GOOGLE_MAPS_API_KEY</code> is
-        configured. You can still save address details below.
+        configured. You can still save postal address details in the Address step.
       </div>
     )
   }
@@ -258,7 +332,7 @@ export function CompanyMapPicker({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={fillHeight ? 'flex min-h-0 flex-1 flex-col gap-3' : 'space-y-3'}>
       {mode === 'edit' ? (
         <Input
           ref={inputRef}
@@ -269,11 +343,16 @@ export function CompanyMapPicker({
       ) : null}
       <div
         ref={mapRef}
-        className="h-56 w-full overflow-hidden rounded-md border border-border bg-muted"
+        className={
+          fillHeight
+            ? 'min-h-[20rem] w-full flex-1 overflow-hidden rounded-md border border-border bg-muted'
+            : 'h-56 w-full overflow-hidden rounded-md border border-border bg-muted'
+        }
         role="img"
         aria-label={hasPin ? 'Company map location' : 'Map — no pin set'}
       />
-      {!hasPin && mode === 'view' ? (
+      {!ready ? <p className="text-sm text-muted-foreground">Loading map…</p> : null}
+      {ready && !hasPin && mode === 'view' ? (
         <p className="text-sm text-muted-foreground">No map location set yet.</p>
       ) : null}
       {mode === 'edit' && !hasPin ? (

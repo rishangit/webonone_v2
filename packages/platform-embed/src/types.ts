@@ -70,6 +70,18 @@ export const AUTH_MESSAGE_TYPES = {
   CANCEL: 'webonone:auth:cancel',
 } as const
 
+/** WebOnOne silent SSO iframe → public website parent. */
+export const WEBSITE_SSO_MESSAGE_TYPES = {
+  SESSION: 'webonone:website-sso:session',
+  NONE: 'webonone:website-sso:none',
+} as const
+
+/** Identity silent SSO iframe → consumer parent (Website, WebOnOne, …). */
+export const IDENTITY_SSO_MESSAGE_TYPES = {
+  SESSION: 'webonone:identity-sso:session',
+  NONE: 'webonone:identity-sso:none',
+} as const
+
 export type AuthSuccessUser = {
   id: string
   email: string
@@ -88,6 +100,26 @@ export type AuthSuccessMessage = {
 export type AuthCancelMessage = {
   type: typeof AUTH_MESSAGE_TYPES.CANCEL
   embedId?: string
+}
+
+export type WebsiteSsoSessionMessage = {
+  type: typeof WEBSITE_SSO_MESSAGE_TYPES.SESSION
+  accessToken: string
+  user: AuthSuccessUser
+}
+
+export type WebsiteSsoNoneMessage = {
+  type: typeof WEBSITE_SSO_MESSAGE_TYPES.NONE
+}
+
+export type IdentitySsoSessionMessage = {
+  type: typeof IDENTITY_SSO_MESSAGE_TYPES.SESSION
+  accessToken: string
+  user: AuthSuccessUser
+}
+
+export type IdentitySsoNoneMessage = {
+  type: typeof IDENTITY_SSO_MESSAGE_TYPES.NONE
 }
 
 export type PlatformInitMessage = {
@@ -464,6 +496,50 @@ export function isAuthCancelMessage(data: unknown): data is AuthCancelMessage {
     message.type === AUTH_MESSAGE_TYPES.CANCEL &&
     (message.embedId === undefined || typeof message.embedId === 'string')
   )
+}
+
+export function isWebsiteSsoSessionMessage(data: unknown): data is WebsiteSsoSessionMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === WEBSITE_SSO_MESSAGE_TYPES.SESSION &&
+    typeof message.accessToken === 'string' &&
+    message.accessToken.length > 0 &&
+    isAuthSuccessUser(message.user)
+  )
+}
+
+export function isWebsiteSsoNoneMessage(data: unknown): data is WebsiteSsoNoneMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  return (data as Record<string, unknown>).type === WEBSITE_SSO_MESSAGE_TYPES.NONE
+}
+
+export function isIdentitySsoSessionMessage(data: unknown): data is IdentitySsoSessionMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === IDENTITY_SSO_MESSAGE_TYPES.SESSION &&
+    typeof message.accessToken === 'string' &&
+    message.accessToken.length > 0 &&
+    isAuthSuccessUser(message.user)
+  )
+}
+
+export function isIdentitySsoNoneMessage(data: unknown): data is IdentitySsoNoneMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  return (data as Record<string, unknown>).type === IDENTITY_SSO_MESSAGE_TYPES.NONE
 }
 
 function hasStringProperty(data: Record<string, unknown>, property: string): boolean {

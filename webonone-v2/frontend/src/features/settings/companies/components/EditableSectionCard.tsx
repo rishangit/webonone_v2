@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  cn,
 } from '@webonone/ui-kit'
 
 interface EditableSectionCardProps {
@@ -13,6 +14,8 @@ interface EditableSectionCardProps {
   description?: string
   canEdit?: boolean
   onEdit?: () => void
+  className?: string
+  contentClassName?: string
   children: React.ReactNode
 }
 
@@ -21,10 +24,12 @@ export function EditableSectionCard({
   description,
   canEdit = false,
   onEdit,
+  className,
+  contentClassName,
   children,
 }: EditableSectionCardProps) {
   return (
-    <Card className="group">
+    <Card className={cn('group', className)}>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1.5">
@@ -45,7 +50,7 @@ export function EditableSectionCard({
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
+      <CardContent className={cn('space-y-4', contentClassName)}>{children}</CardContent>
     </Card>
   )
 }

@@ -24,12 +24,7 @@ Committed files in `media\deploy\`: **`web.config`**, **`stage-deploy.ps1`**, **
 
 ## Prerequisites
 
-Identity must be deployed at **https://identity.webonone.com** with a platform-wide redirect allowlist:
-
-- `identity\backend\.env` → `ALLOWED_REDIRECT_URIS=https://*.webonone.com`
-- `identity\frontend\.env.production` → `VITE_ALLOWED_REDIRECT_URIS=https://*.webonone.com`
-
-This allows Media login callbacks on `https://media.webonone.com/callback`. After updating Identity env, run `npm run deploy:identity` and recycle the Identity app pool.
+Identity must be deployed at **https://identity.webonone.com** with a platform-wide redirect allowlist. Set `ALLOWED_REDIRECT_URIS=https://*.webonone.com` in root `production.env`, then `npm run deploy:identity` and recycle the Identity app pool.
 
 ---
 
@@ -63,43 +58,25 @@ npm install
 
 ## Step 4 — Configure environment
 
-Use the same env files as local development — no separate deploy templates.
-
-### Backend (migrations + IIS runtime)
+Edit **one** file at the repo root (gitignored):
 
 ```powershell
-copy media\backend\.env.example media\backend\.env
+copy production.env.example production.env
+```
+
+Fill shared secrets (`JWT_SECRET`, service API keys, `DB_*`), origins (`ORIGIN_*`), and service-specific keys. See `production.env.example` comments.
+
+`npm run deploy:media` runs `npm run env:apply`, which writes each service's `backend\.env` and `frontend\.env.production`. Do not hand-copy per-service `.env.example` for production.
+
+Also create local storage if using the local driver:
+
+```powershell
 New-Item -ItemType Directory -Path media\backend\storage -Force
 ```
 
-Edit `media\backend\.env` — set `DB_*`, `JWT_SECRET` (must match `identity\backend\.env`), and production values:
+For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in generated backend files is ignored when `IIS_NODE_HOSTED=1`.
 
-| Variable | Production value |
-|----------|------------------|
-| `MEDIA_STORAGE_DRIVER` | `local` |
-| `MEDIA_LOCAL_STORAGE_PATH` | `./storage` |
-| `MEDIA_PUBLIC_BASE_URL` | `https://media.webonone.com/api/v1` |
-
-For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in this file is ignored when `IIS_NODE_HOSTED=1`.
-
-### Frontend (build-time only)
-
-```powershell
-copy media\frontend\.env.example media\frontend\.env.production
-```
-
-Edit `media\frontend\.env.production` — production values:
-
-| Key | Value |
-|-----|-------|
-| `VITE_API_BASE_URL` | `/api/v1` |
-| `VITE_IDENTITY_ORIGIN` | `https://identity.webonone.com` |
-| `VITE_IDENTITY_API_BASE_URL` | `https://identity.webonone.com/api/v1` |
-| `VITE_ALLOWED_PARENT_ORIGINS` | `https://app.webonone.com,https://identity.webonone.com,https://data.webonone.com` |
-
-Vite embeds these values during deploy build. Changes require redeploy.
-
-Keep **`VITE_ALLOWED_PARENT_ORIGINS`** aligned with consumer app origins that embed Media routes.
+**Warning:** Keep `production.env` only on the ops/IIS machine. Running `env:apply` overwrites every service's `backend\.env`.
 
 ---
 
@@ -121,8 +98,9 @@ npm run deploy:media
 
 This will:
 
-1. Build shared packages (`@webonone/media-embed`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
-2. Copy output into `media\deploy\public\` and `media\deploy\dist\`
+1. Run `env:apply` (expand root `production.env` into each service’s env files)
+2. Build shared packages (`@webonone/media-embed`, `@webonone/ui-kit`), frontend (using `frontend\.env.production`), and backend
+3. Copy output into `media\deploy\public\` and `media\deploy\dist\`
 
 Dependencies are **not** copied into `deploy\`. Node resolves packages from the repo root `node_modules\`.
 
@@ -184,13 +162,13 @@ If the site fails, check `media\deploy\logs\` for Node errors.
 
 ## Wire WebOnOne consumer
 
-After Media is verified, update `webonone-v2\frontend\.env.production` with `VITE_MEDIA_ORIGIN` (see `webonone-v2\frontend\.env.example`), then:
+After Media is verified, ensure `ORIGIN_MEDIA` is set in root `production.env`, then:
 
 ```powershell
 npm run deploy:webonone
 ```
 
-Recycle the WebOnOne app pool.
+Recycle the WebOnOne app pool so `VITE_MEDIA_ORIGIN` is baked from the applied frontend env.
 
 ---
 
@@ -230,4 +208,4 @@ Recycle the IIS app pool or restart the site.
 | [`stage-deploy.ps1`](stage-deploy.ps1) | Copies build output here (run via `npm run deploy -w media-root`) |
 | [`IIS.md`](IIS.md) | This deployment guide |
 
-Env templates live in **`media\backend\.env.example`** and **`media\frontend\.env.example`**.
+Production secrets/origins: repo-root **`production.env`** (from `production.env.example`). Local-dev templates: **`media\backend\.env.example`** and **`media\frontend\.env.example`**.

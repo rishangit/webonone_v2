@@ -5,13 +5,13 @@ export const COMPANY_SIZE_OPTIONS = ['1-10', '11-50', '51-200', '201-500', '500+
 
 export type CompanySize = (typeof COMPANY_SIZE_OPTIONS)[number]
 
-export const COMPANY_WIZARD_TOTAL_STEPS = 5 as const
+export const COMPANY_WIZARD_TOTAL_STEPS = 6 as const
 
-export type CompanyWizardStep = 1 | 2 | 3 | 4 | 5
+export type CompanyWizardStep = 1 | 2 | 3 | 4 | 5 | 6
 
 export function parseCompanyWizardStep(raw: string | null | undefined): CompanyWizardStep {
   const n = Number(raw)
-  if (n === 2 || n === 3 || n === 4 || n === 5) return n
+  if (n === 2 || n === 3 || n === 4 || n === 5 || n === 6) return n
   return 1
 }
 
@@ -92,7 +92,7 @@ export const companyWizardCreateStep2Schema = z.object({
   contactPhone: z.string().trim().max(64),
 })
 
-/** Create step 3 — all optional; soft max lengths. */
+/** Create step 3 — postal / street address; all optional. */
 export const companyWizardCreateStep3Schema = z.object({
   addressLine1: z.string().trim().max(255),
   addressLine2: z.string().trim().max(255),
@@ -100,6 +100,10 @@ export const companyWizardCreateStep3Schema = z.object({
   stateRegion: z.string().trim().max(128),
   postalCode: z.string().trim().max(32),
   country: z.string().trim().max(128),
+})
+
+/** Create step 4 — map pin; all optional. */
+export const companyWizardCreateStep4Schema = z.object({
   latitude: z.number().min(-90).max(90).nullable(),
   longitude: z.number().min(-180).max(180).nullable(),
   mapPlaceId: z.string().trim().max(255).nullable(),
@@ -121,13 +125,18 @@ export const companyContactCardSchema = z.object({
 
 export type CompanyContactCardValues = z.infer<typeof companyContactCardSchema>
 
-export const companyLocationCardSchema = z.object({
+export const companyAddressCardSchema = z.object({
   addressLine1: z.string().trim().min(1, 'Address is required').max(255),
   addressLine2: z.string().trim().max(255),
   city: z.string().trim().min(1, 'City is required').max(128),
   stateRegion: z.string().trim().max(128),
   postalCode: z.string().trim().max(32),
   country: z.string().trim().min(1, 'Country is required').max(128),
+})
+
+export type CompanyAddressCardValues = z.infer<typeof companyAddressCardSchema>
+
+export const companyLocationCardSchema = z.object({
   latitude: z.number().min(-90).max(90).nullable(),
   longitude: z.number().min(-180).max(180).nullable(),
   mapPlaceId: z.string().trim().max(255).nullable(),

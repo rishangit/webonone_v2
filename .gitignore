@@ -5,6 +5,8 @@ build/
 .env.local
 .env.production
 .env.*.local
+# Deploy-time source of truth (copy from production.env.example)
+/production.env
 *.log
 .DS_Store
 coverage/

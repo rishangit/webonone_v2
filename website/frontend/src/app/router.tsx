@@ -1,13 +1,24 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { WebsiteAuthBootstrap } from '@/features/auth/components/WebsiteAuthBootstrap'
+import { WebsiteAuthProvider } from '@/features/auth/context/WebsiteAuthContext'
+import { ClearSessionPage } from '@/features/auth/pages/ClearSessionPage'
+import { CatalogDetailPage } from '@/features/website/pages/CatalogDetailPage'
+import { CatalogSearchPage } from '@/features/website/pages/CatalogSearchPage'
 import { WebsiteHomePage } from '@/features/website/pages/WebsiteHomePage'
 
 export function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route index element={<WebsiteHomePage />} />
-        <Route path="*" element={<WebsiteHomePage />} />
-      </Routes>
+      <WebsiteAuthProvider>
+        <WebsiteAuthBootstrap />
+        <Routes>
+          <Route index element={<WebsiteHomePage />} />
+          <Route path="search" element={<CatalogSearchPage />} />
+          <Route path="catalog/:kind/:id" element={<CatalogDetailPage />} />
+          <Route path="auth/clear-session" element={<ClearSessionPage />} />
+          <Route path="*" element={<WebsiteHomePage />} />
+        </Routes>
+      </WebsiteAuthProvider>
     </BrowserRouter>
   )
 }

@@ -8,10 +8,14 @@ import {
   type DataTagSummary,
 } from '../clients/dataCatalogClient.js'
 import {
+  findApprovedCompanyCatalogById,
+  isSellableCatalogKind,
+  parseGalleryImages,
   parseTagIds,
   searchApprovedCompanyCatalog,
   type PublicCatalogSearchRow,
 } from '../repositories/publicCatalogSearch.repository.js'
+import { distanceKm, parseLatLng, toFiniteNumber } from '../utils/geo.js'
 
 export type PublicCatalogSearchItem = {
   id: string
@@ -21,6 +25,13 @@ export type PublicCatalogSearchItem = {
   companyId: string
   companyName: string
   tags: Array<{ id: string; name: string; color?: string }>
+  distanceKm: number | null
+  latitude: number | null
+  longitude: number | null
+}
+
+export type PublicCatalogDetailItem = PublicCatalogSearchItem & {
+  galleryImages: Array<{ mediaId: string; url: string }>
 }
 
 export type PublicCatalogSearchResult = {
@@ -28,6 +39,11 @@ export type PublicCatalogSearchResult = {
   total: number
   page: number
   pageSize: number
+}
+
+type HydratedCatalogItem = Omit<PublicCatalogSearchItem, 'distanceKm' | 'latitude' | 'longitude'> & {
+  companyLatitude: number | null
+  companyLongitude: number | null
 }
 
 const KINDS: CatalogKind[] = ['products', 'services', 'spaces']
@@ -68,7 +84,17 @@ function tagsFromLibrary(
   return tags
 }
 
-async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<PublicCatalogSearchItem[]> {
+function companyCoords(row: PublicCatalogSearchRow): {
+  companyLatitude: number | null
+  companyLongitude: number | null
+} {
+  return {
+    companyLatitude: toFiniteNumber(row.company_latitude),
+    companyLongitude: toFiniteNumber(row.company_longitude),
+  }
+}
+
+async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCatalogItem[]> {
   const libraryIdsByKind: Record<CatalogKind, string[]> = {
     products: [],
     services: [],
@@ -101,9 +127,10 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<PublicCatalo
   const tagRows = await listInternalTagsByIds([...allLocalTagIds])
   const tagById = new Map(tagRows.map((tag) => [tag.id, tag]))
 
-  const items: PublicCatalogSearchItem[] = []
+  const items: HydratedCatalogItem[] = []
   for (const row of rows) {
     const localTagIds = parseTagIds(row.tag_ids)
+    const coords = companyCoords(row)
     if (row.binding_mode === 'linked') {
       const library = row.library_entity_id
         ? libraryByKind.get(row.kind)?.get(row.library_entity_id)
@@ -119,6 +146,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<PublicCatalo
         companyId: row.company_id,
         companyName: row.company_name,
         tags: tagsFromLibrary(library, tagById, localTagIds),
+        ...coords,
       })
       continue
     }
@@ -134,16 +162,62 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<PublicCatalo
       companyId: row.company_id,
       companyName: row.company_name,
       tags: tagsFromLibrary(undefined, tagById, localTagIds),
+      ...coords,
     })
   }
 
   return items
 }
 
+function withDistance(
+  items: HydratedCatalogItem[],
+  origin: { lat: number; lng: number } | null,
+): PublicCatalogSearchItem[] {
+  return items.map((item) => {
+    const { companyLatitude, companyLongitude, ...rest } = item
+    let distance: number | null = null
+    if (
+      origin &&
+      companyLatitude != null &&
+      companyLongitude != null
+    ) {
+      distance = Math.round(distanceKm(origin.lat, origin.lng, companyLatitude, companyLongitude) * 10) / 10
+    }
+    return {
+      ...rest,
+      distanceKm: distance,
+      latitude: companyLatitude,
+      longitude: companyLongitude,
+    }
+  })
+}
+
+function sortCatalogItems(
+  items: PublicCatalogSearchItem[],
+  byDistance: boolean,
+): void {
+  if (byDistance) {
+    items.sort((a, b) => {
+      if (a.distanceKm == null && b.distanceKm == null) {
+        return a.name.localeCompare(b.name) || a.companyName.localeCompare(b.companyName)
+      }
+      if (a.distanceKm == null) return 1
+      if (b.distanceKm == null) return -1
+      if (a.distanceKm !== b.distanceKm) return a.distanceKm - b.distanceKm
+      return a.name.localeCompare(b.name) || a.companyName.localeCompare(b.companyName)
+    })
+    return
+  }
+
+  items.sort((a, b) => a.name.localeCompare(b.name) || a.companyName.localeCompare(b.companyName))
+}
+
 export async function searchPublicCatalog(query: {
   q?: string
   page?: unknown
   pageSize?: unknown
+  lat?: unknown
+  lng?: unknown
 }): Promise<PublicCatalogSearchResult> {
   const page = parsePage(query.page)
   const pageSize = parsePageSize(query.pageSize)
@@ -151,6 +225,8 @@ export async function searchPublicCatalog(query: {
   if (!q) {
     return emptyResult(page, pageSize)
   }
+
+  const origin = parseLatLng(query)
 
   const matchedTags = await listInternalTagsByQuery(q)
   const matchedTagIds = matchedTags.map((tag) => tag.id)
@@ -176,11 +252,38 @@ export async function searchPublicCatalog(query: {
   })
 
   const hydrated = await hydrateRows(rows)
-  hydrated.sort((a, b) => a.name.localeCompare(b.name) || a.companyName.localeCompare(b.companyName))
+  const itemsWithDistance = withDistance(hydrated, origin)
+  sortCatalogItems(itemsWithDistance, origin != null)
 
-  const total = hydrated.length
+  const total = itemsWithDistance.length
   const start = (page - 1) * pageSize
-  const items = hydrated.slice(start, start + pageSize)
+  const items = itemsWithDistance.slice(start, start + pageSize)
 
   return { items, total, page, pageSize }
+}
+
+export async function getPublicCatalogItem(options: {
+  kind: string
+  id: string
+  lat?: unknown
+  lng?: unknown
+}): Promise<PublicCatalogDetailItem | null> {
+  if (!isSellableCatalogKind(options.kind)) return null
+  const id = typeof options.id === 'string' ? options.id.trim() : ''
+  if (!id) return null
+
+  const row = await findApprovedCompanyCatalogById(options.kind, id)
+  if (!row) return null
+
+  const hydrated = await hydrateRows([row])
+  if (hydrated.length === 0) return null
+
+  const origin = parseLatLng(options)
+  const [item] = withDistance(hydrated, origin)
+  if (!item) return null
+
+  return {
+    ...item,
+    galleryImages: parseGalleryImages(row.gallery_images),
+  }
 }

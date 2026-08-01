@@ -6,6 +6,8 @@ export type PublicCatalogSearchRow = {
   id: string
   company_id: string
   company_name: string
+  company_latitude: string | number | null
+  company_longitude: string | number | null
   binding_mode: 'linked' | 'forked' | 'custom'
   library_entity_id: string | null
   name: string | null
@@ -13,9 +15,36 @@ export type PublicCatalogSearchRow = {
   status: 'verified' | 'pending' | null
   tag_ids: string | unknown[] | null
   kind: CatalogKind
+  gallery_images?: string | unknown[] | null
 }
 
 const SELLABLE_KINDS: CatalogKind[] = ['products', 'services', 'spaces']
+
+export function isSellableCatalogKind(value: string): value is CatalogKind {
+  return (SELLABLE_KINDS as readonly string[]).includes(value)
+}
+
+export function parseGalleryImages(
+  value: string | unknown[] | null | undefined,
+): { mediaId: string; url: string }[] {
+  if (value == null) return []
+  let parsed: unknown = value
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(parsed)) return []
+  return parsed.filter(
+    (item): item is { mediaId: string; url: string } =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as { mediaId?: unknown }).mediaId === 'string' &&
+      typeof (item as { url?: unknown }).url === 'string',
+  )
+}
 
 function parseJsonStringArray(value: string | unknown[] | null): string[] {
   if (value == null) return []
@@ -91,6 +120,8 @@ export async function searchApprovedCompanyCatalog(options: {
         'item.id',
         'item.company_id',
         'company.name as company_name',
+        'company.latitude as company_latitude',
+        'company.longitude as company_longitude',
         'item.binding_mode',
         'item.library_entity_id',
         'item.name',
@@ -108,4 +139,46 @@ export async function searchApprovedCompanyCatalog(options: {
   }
 
   return rows
+}
+
+/**
+ * Load one marketplace sellable by kind + id (approved company + same binding rules as search).
+ */
+export async function findApprovedCompanyCatalogById(
+  kind: CatalogKind,
+  id: string,
+): Promise<PublicCatalogSearchRow | null> {
+  if (!isSellableCatalogKind(kind)) return null
+
+  const table = CATALOG_TABLE_BY_KIND[kind]
+  const row = (await db(`${table} as item`)
+    .join('companies as company', 'company.id', 'item.company_id')
+    .where('item.id', id)
+    .where('company.status', 'approved')
+    .andWhere(function sellable() {
+      this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
+        this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(
+          'item.status',
+          'verified',
+        )
+      })
+    })
+    .select(
+      'item.id',
+      'item.company_id',
+      'company.name as company_name',
+      'company.latitude as company_latitude',
+      'company.longitude as company_longitude',
+      'item.binding_mode',
+      'item.library_entity_id',
+      'item.name',
+      'item.description',
+      'item.status',
+      'item.tag_ids',
+      'item.gallery_images',
+    )
+    .first()) as Omit<PublicCatalogSearchRow, 'kind'> | undefined
+
+  if (!row) return null
+  return { ...row, kind }
 }
