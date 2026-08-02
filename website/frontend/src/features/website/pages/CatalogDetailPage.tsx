@@ -8,7 +8,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -22,6 +21,7 @@ import {
   type CatalogSessionItem,
 } from '@/features/catalog/types/catalog.types'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
+import { CatalogDetailImageCarousel } from '@/features/website/components/CatalogDetailImageCarousel'
 import { CatalogSearchMapView } from '@/features/website/components/CatalogSearchMapView'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
@@ -69,6 +69,16 @@ function formatOccurrenceDate(ymd: string): string {
 function weekdayLabel(ymd: string): string {
   const date = new Date(`${ymd}T12:00:00`)
   return DAY_LABELS[date.getDay()] ?? `D${date.getDay()}`
+}
+
+function detailImages(item: CatalogDetailItem) {
+  if (item.galleryImages.length > 0) {
+    return item.galleryImages
+  }
+  if (item.imageUrl) {
+    return [{ mediaId: 'cover', url: item.imageUrl }]
+  }
+  return []
 }
 
 type BookingTarget = {
@@ -286,12 +296,8 @@ export function CatalogDetailPage() {
                       <CardTitle className="text-lg">Overview</CardTitle>
                       <CardDescription>Basic details for this offering.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <ImagePreview
-                        src={item.galleryImages[0]?.url ?? item.imageUrl ?? null}
-                        alt={item.name}
-                        className="h-40 w-40"
-                      />
+                    <CardContent className="space-y-4">
+                      <CatalogDetailImageCarousel images={detailImages(item)} alt={item.name} />
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
                           {KIND_LABEL[item.kind]}
@@ -312,32 +318,6 @@ export function CatalogDetailPage() {
                       )}
                     </CardContent>
                   </Card>
-
-                  {item.galleryImages.length > 0 ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">Gallery</CardTitle>
-                        <CardDescription>Photos for this offering.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                          {item.galleryImages.map((image) => (
-                            <div
-                              key={image.mediaId}
-                              className="overflow-hidden rounded-lg border border-border bg-muted/40"
-                            >
-                              <img
-                                src={image.url}
-                                alt=""
-                                className="aspect-[4/3] h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : null}
 
                   <Card>
                     <CardHeader>
