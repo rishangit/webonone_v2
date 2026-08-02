@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   FeaturePage,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -23,9 +24,11 @@ import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
   bindingModeLabel,
   CATALOG_ENTITY_LABELS,
+  isCatalogGalleryKind,
   singularLabel,
   type CatalogEntityKind,
 } from '../types/companyCatalog.types'
+import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
 
 type CompanyCatalogListPageProps = {
   kind: CatalogEntityKind
@@ -69,6 +72,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   )
 
   const noun = singularLabel(kind).toLowerCase()
+  const showThumbnails = isCatalogGalleryKind(kind)
 
   return (
     <FeaturePage
@@ -107,21 +111,30 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                 <ItemListContent>
                   <button
                     type="button"
-                    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => navigate(`/data/${kind}/${item.id}`)}
                   >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{item.displayName}</span>
-                      <StatusTag variant="verified">{bindingModeLabel(item.bindingMode)}</StatusTag>
-                      {item.libraryUnavailable ? (
-                        <StatusTag variant="pending">Library unavailable</StatusTag>
+                    {showThumbnails ? (
+                      <ImagePreview
+                        src={firstGalleryImageUrl(item.displayGalleryImages)}
+                        alt=""
+                        className="h-12 w-12"
+                      />
+                    ) : null}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{item.displayName}</span>
+                        <StatusTag variant="verified">{bindingModeLabel(item.bindingMode)}</StatusTag>
+                        {item.libraryUnavailable ? (
+                          <StatusTag variant="pending">Library unavailable</StatusTag>
+                        ) : null}
+                      </div>
+                      {item.displayDescription ? (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {item.displayDescription}
+                        </p>
                       ) : null}
                     </div>
-                    {item.displayDescription ? (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {item.displayDescription}
-                      </p>
-                    ) : null}
                   </button>
                 </ItemListContent>
                 <ItemListMenu ariaLabel={`Actions for ${item.displayName}`}>

@@ -132,6 +132,11 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
   }
 }
 
+/** Map a raw event row to DTO (shared by company + public catalog booking). */
+export function mapEventRow(row: eventRepo.CompanyEventRow): CompanyEventDto {
+  return mapEvent(row)
+}
+
 type ServiceTimeInfo = {
   id: string
   name: string
@@ -565,4 +570,31 @@ export async function createSessionToken(
     }
     throw err
   }
+}
+
+export async function getNextSessionTokenLabel(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<{ tokenNumber: number; tokenLabel: string }> {
+  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const nextNumber =
+    (await sessionTokenRepo.getMaxTokenNumber(companyId, eventId, occurrenceDate)) + 1
+  return { tokenNumber: nextNumber, tokenLabel: formatTokenLabel(nextNumber) }
+}
+
+export async function getSessionTokenForUser(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  userId: string,
+): Promise<SessionTokenDto | null> {
+  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const row = await sessionTokenRepo.findTokenByUser(
+    companyId,
+    eventId,
+    occurrenceDate,
+    userId,
+  )
+  return row ? mapSessionToken(row) : null
 }

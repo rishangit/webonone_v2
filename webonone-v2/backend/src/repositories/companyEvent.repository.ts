@@ -45,6 +45,21 @@ export async function listEventsByCompany(companyId: string): Promise<CompanyEve
     .orderBy('start_time', 'asc')
 }
 
+/** Specific-time (window) events for a catalog service — used by public booking. */
+export async function listWindowEventsByService(
+  companyId: string,
+  serviceId: string,
+): Promise<CompanyEventRow[]> {
+  return db<CompanyEventRow>('company_events')
+    .where({
+      company_id: companyId,
+      service_id: serviceId,
+      time_mode: 'window',
+    })
+    .orderBy('starts_on', 'asc')
+    .orderBy('start_time', 'asc')
+}
+
 export async function findEventById(
   companyId: string,
   eventId: string,

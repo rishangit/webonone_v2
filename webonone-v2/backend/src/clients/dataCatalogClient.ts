@@ -19,12 +19,23 @@ export type DataTagSummary = {
   description?: string | null
 }
 
+export type DataLibraryGalleryImage = {
+  mediaId: string
+  url: string
+}
+
 export type DataLibraryCatalogItem = {
   id: string
   name: string
   description: string | null
   status: string
   tags: DataTagSummary[]
+  galleryImages?: DataLibraryGalleryImage[]
+  /** Present on services from Data catalog DTO. */
+  timeMode?: 'duration' | 'window'
+  durationMinutes?: number | null
+  startTime?: string | null
+  endTime?: string | null
 }
 
 type ListResult<T> = {

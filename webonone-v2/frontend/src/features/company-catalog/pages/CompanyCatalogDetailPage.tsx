@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ImagePreview,
   StatusTag,
   TagChip,
   type SelectTagValue,
@@ -34,6 +35,7 @@ import {
   type CatalogEntityKind,
   type CatalogPayload,
 } from '../types/companyCatalog.types'
+import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
 
 const CATALOG_TABS_BASE = [
   'profile',
@@ -158,6 +160,9 @@ export function CompanyCatalogDetailPage() {
   const listPath = `/data/${kind}`
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
   const entityPayload = detail?.payload ?? detail?.hydrated ?? null
+  const profileImageUrl = firstGalleryImageUrl(
+    detail?.displayGalleryImages ?? detail?.galleryImages,
+  )
 
   function openAttributesEdit() {
     if (kind === 'services') {
@@ -179,6 +184,9 @@ export function CompanyCatalogDetailPage() {
           canEdit={canEdit && !busy}
           onEdit={() => setServiceDialog({ initialStep: 1 })}
         >
+          {showGalleryTabs ? (
+            <ImagePreview src={profileImageUrl} alt={detail.displayName} className="h-40 w-40" />
+          ) : null}
           <ReadOnlyField label="Name" value={detail.displayName} />
           <ReadOnlyField
             label="Description"
@@ -280,6 +288,9 @@ export function CompanyCatalogDetailPage() {
           canEdit={canEdit && !busy}
           onEdit={() => setEditOpen(true)}
         >
+          {showGalleryTabs ? (
+            <ImagePreview src={profileImageUrl} alt={detail.displayName} className="h-40 w-40" />
+          ) : null}
           <ReadOnlyField label="Name" value={detail.displayName} />
           <ReadOnlyField
             label="Description"

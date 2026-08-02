@@ -5,9 +5,16 @@ export function getWebOnOneOrigin(): string {
   return (fromEnv || DEFAULT_WEBONONE_ORIGIN).replace(/\/$/, '')
 }
 
-/** WebOnOne app login with return to the current website origin. */
-export function getWebOnOneLoginUrl(): string {
-  const returnUrl = `${window.location.origin}/`
+/**
+ * WebOnOne app login with return to the website.
+ * @param returnPath Absolute path or full URL on the website origin (defaults to `/`).
+ */
+export function getWebOnOneLoginUrl(returnPath?: string): string {
+  const path = returnPath?.trim()
+  const returnUrl =
+    path && path.startsWith('http')
+      ? path
+      : `${window.location.origin}${path && path.startsWith('/') ? path : '/'}`
   const url = new URL(`${getWebOnOneOrigin()}/login`)
   url.searchParams.set('return_url', returnUrl)
   return url.toString()

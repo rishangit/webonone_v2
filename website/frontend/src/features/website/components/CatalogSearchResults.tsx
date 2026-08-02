@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ItemList, ItemListContent, ItemListEmpty, ItemListItem } from '@webonone/ui-kit'
+import { ImagePreview, ItemList, ItemListContent, ItemListEmpty, ItemListItem } from '@webonone/ui-kit'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
 import type { UserLocationStatus } from '@/features/website/hooks/useUserLocation'
 
@@ -74,59 +74,79 @@ export function CatalogSearchResults({
           return (
             <ItemListItem key={`${item.kind}-${item.id}`}>
               <ItemListContent>
-                <div className="flex items-start justify-between gap-3">
-                  <Link to={detailTo} className="min-w-0 flex-1 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        {KIND_LABEL[item.kind]}
-                      </span>
-                      <span className="text-sm font-medium text-foreground hover:underline">
-                        {item.name}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-sm text-muted-foreground">{item.companyName}</p>
+                <div className="flex items-start gap-3">
+                  <Link
+                    to={detailTo}
+                    className="shrink-0 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <ImagePreview src={item.imageUrl} alt="" className="h-12 w-12" />
                   </Link>
-                  <div className="flex shrink-0 items-center gap-3">
-                    {mappable && onViewInMap ? (
-                      <button
-                        type="button"
-                        className="text-sm font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"
-                        onClick={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                          onViewInMap(item)
-                        }}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <Link
+                        to={detailTo}
+                        className="min-w-0 flex-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        View in map
-                      </button>
-                    ) : null}
-                    {item.distanceKm != null ? (
-                      <span className="rounded-md border border-border bg-muted/60 px-2 py-1 text-xs font-semibold text-foreground">
-                        {formatDistanceKm(item.distanceKm)}
-                      </span>
-                    ) : locationStatus === 'ready' && !mappable ? (
-                      <span className="text-xs text-muted-foreground">No map pin</span>
-                    ) : null}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                            {KIND_LABEL[item.kind]}
+                          </span>
+                          <span className="text-sm font-medium text-foreground hover:underline">
+                            {item.name}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-sm text-muted-foreground">{item.companyName}</p>
+                      </Link>
+                      <div className="flex shrink-0 items-center gap-3">
+                        {mappable && onViewInMap ? (
+                          <button
+                            type="button"
+                            className="text-sm font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              onViewInMap(item)
+                            }}
+                          >
+                            View in map
+                          </button>
+                        ) : null}
+                        {item.distanceKm != null ? (
+                          <span className="rounded-md border border-border bg-muted/60 px-2 py-1 text-xs font-semibold text-foreground">
+                            {formatDistanceKm(item.distanceKm)}
+                          </span>
+                        ) : locationStatus === 'ready' && !mappable ? (
+                          <span className="text-xs text-muted-foreground">No map pin</span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <Link
+                      to={detailTo}
+                      className="block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {item.description ? (
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                          {item.description}
+                        </p>
+                      ) : null}
+                      {item.tags.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {item.tags.map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="rounded-md border border-border px-1.5 py-0.5 text-xs text-muted-foreground"
+                              style={
+                                tag.color ? { borderColor: tag.color, color: tag.color } : undefined
+                              }
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </Link>
                   </div>
                 </div>
-                <Link to={detailTo} className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
-                  {item.description ? (
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
-                  ) : null}
-                  {item.tags.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {item.tags.map((tag) => (
-                        <span
-                          key={tag.id}
-                          className="rounded-md border border-border px-1.5 py-0.5 text-xs text-muted-foreground"
-                          style={tag.color ? { borderColor: tag.color, color: tag.color } : undefined}
-                        >
-                          {tag.name}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </Link>
               </ItemListContent>
             </ItemListItem>
           )

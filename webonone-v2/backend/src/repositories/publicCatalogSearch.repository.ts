@@ -16,7 +16,34 @@ export type PublicCatalogSearchRow = {
   tag_ids: string | unknown[] | null
   kind: CatalogKind
   gallery_images?: string | unknown[] | null
+  /** Services only — null for products/spaces and linked rows without local copy. */
+  time_mode?: 'duration' | 'window' | null
+  duration_minutes?: number | null
+  start_time?: string | Date | null
+  end_time?: string | Date | null
 }
+
+const BASE_ITEM_SELECT = [
+  'item.id',
+  'item.company_id',
+  'company.name as company_name',
+  'company.latitude as company_latitude',
+  'company.longitude as company_longitude',
+  'item.binding_mode',
+  'item.library_entity_id',
+  'item.name',
+  'item.description',
+  'item.status',
+  'item.tag_ids',
+  'item.gallery_images',
+] as const
+
+const SERVICE_TIME_SELECT = [
+  'item.time_mode',
+  'item.duration_minutes',
+  'item.start_time',
+  'item.end_time',
+] as const
 
 const SELLABLE_KINDS: CatalogKind[] = ['products', 'services', 'spaces']
 
@@ -116,19 +143,7 @@ export async function searchApprovedCompanyCatalog(options: {
           })
         }
       })
-      .select(
-        'item.id',
-        'item.company_id',
-        'company.name as company_name',
-        'company.latitude as company_latitude',
-        'company.longitude as company_longitude',
-        'item.binding_mode',
-        'item.library_entity_id',
-        'item.name',
-        'item.description',
-        'item.status',
-        'item.tag_ids',
-      )
+      .select(...BASE_ITEM_SELECT, ...(kind === 'services' ? SERVICE_TIME_SELECT : []))
       .orderBy('item.updated_at', 'desc')
       .limit(500)
 
@@ -163,20 +178,7 @@ export async function findApprovedCompanyCatalogById(
         )
       })
     })
-    .select(
-      'item.id',
-      'item.company_id',
-      'company.name as company_name',
-      'company.latitude as company_latitude',
-      'company.longitude as company_longitude',
-      'item.binding_mode',
-      'item.library_entity_id',
-      'item.name',
-      'item.description',
-      'item.status',
-      'item.tag_ids',
-      'item.gallery_images',
-    )
+    .select(...BASE_ITEM_SELECT, ...(kind === 'services' ? SERVICE_TIME_SELECT : []))
     .first()) as Omit<PublicCatalogSearchRow, 'kind'> | undefined
 
   if (!row) return null

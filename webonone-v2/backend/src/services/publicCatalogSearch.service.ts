@@ -7,6 +7,7 @@ import {
   type DataLibraryCatalogItem,
   type DataTagSummary,
 } from '../clients/dataCatalogClient.js'
+import { listWindowEventsByService } from '../repositories/companyEvent.repository.js'
 import {
   findApprovedCompanyCatalogById,
   isSellableCatalogKind,
@@ -15,7 +16,13 @@ import {
   searchApprovedCompanyCatalog,
   type PublicCatalogSearchRow,
 } from '../repositories/publicCatalogSearch.repository.js'
+import { expandOccurrences, mapEventRow } from './companyEvent.service.js'
 import { distanceKm, parseLatLng, toFiniteNumber } from '../utils/geo.js'
+
+export type PublicCatalogGalleryImage = {
+  mediaId: string
+  url: string
+}
 
 export type PublicCatalogSearchItem = {
   id: string
@@ -25,13 +32,19 @@ export type PublicCatalogSearchItem = {
   companyId: string
   companyName: string
   tags: Array<{ id: string; name: string; color?: string }>
+  imageUrl: string | null
   distanceKm: number | null
   latitude: number | null
   longitude: number | null
 }
 
 export type PublicCatalogDetailItem = PublicCatalogSearchItem & {
-  galleryImages: Array<{ mediaId: string; url: string }>
+  galleryImages: PublicCatalogGalleryImage[]
+  /** Services only. */
+  timeMode?: 'duration' | 'window' | null
+  durationMinutes?: number | null
+  startTime?: string | null
+  endTime?: string | null
 }
 
 export type PublicCatalogSearchResult = {
@@ -41,9 +54,33 @@ export type PublicCatalogSearchResult = {
   pageSize: number
 }
 
-type HydratedCatalogItem = Omit<PublicCatalogSearchItem, 'distanceKm' | 'latitude' | 'longitude'> & {
+export type PublicCatalogSessionItem = {
+  eventId: string
+  occurrenceDate: string
+  startTime: string
+  endTime: string
+  serviceName: string
+  companyId: string
+}
+
+type ServiceTimeFields = {
+  timeMode: 'duration' | 'window' | null
+  durationMinutes: number | null
+  startTime: string | null
+  endTime: string | null
+}
+
+type HydratedCatalogItem = Omit<
+  PublicCatalogSearchItem,
+  'distanceKm' | 'latitude' | 'longitude' | 'imageUrl'
+> & {
   companyLatitude: number | null
   companyLongitude: number | null
+  galleryImages: PublicCatalogGalleryImage[]
+  timeMode: 'duration' | 'window' | null
+  durationMinutes: number | null
+  startTime: string | null
+  endTime: string | null
 }
 
 const KINDS: CatalogKind[] = ['products', 'services', 'spaces']
@@ -94,6 +131,75 @@ function companyCoords(row: PublicCatalogSearchRow): {
   }
 }
 
+function parseLibraryGallery(item: DataLibraryCatalogItem | undefined): PublicCatalogGalleryImage[] {
+  if (!item || !Array.isArray(item.galleryImages)) return []
+  return item.galleryImages.filter(
+    (entry): entry is PublicCatalogGalleryImage =>
+      Boolean(entry) &&
+      typeof entry === 'object' &&
+      typeof entry.mediaId === 'string' &&
+      typeof entry.url === 'string',
+  )
+}
+
+function formatTime(value: string | Date | null | undefined): string | null {
+  if (value == null) return null
+  if (typeof value === 'string') {
+    const match = /^(\d{2}:\d{2})/.exec(value)
+    return match?.[1] ?? value.slice(0, 5)
+  }
+  const hours = String(value.getHours()).padStart(2, '0')
+  const minutes = String(value.getMinutes()).padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+function emptyServiceTime(): ServiceTimeFields {
+  return {
+    timeMode: null,
+    durationMinutes: null,
+    startTime: null,
+    endTime: null,
+  }
+}
+
+function resolveServiceTime(
+  row: PublicCatalogSearchRow,
+  library: DataLibraryCatalogItem | undefined,
+): ServiceTimeFields {
+  if (row.kind !== 'services') return emptyServiceTime()
+
+  if (row.binding_mode === 'linked') {
+    const mode = library?.timeMode
+    if (mode !== 'duration' && mode !== 'window') return emptyServiceTime()
+    return {
+      timeMode: mode,
+      durationMinutes: library?.durationMinutes ?? null,
+      startTime: formatTime(library?.startTime ?? null),
+      endTime: formatTime(library?.endTime ?? null),
+    }
+  }
+
+  const mode = row.time_mode
+  if (mode !== 'duration' && mode !== 'window') return emptyServiceTime()
+  return {
+    timeMode: mode,
+    durationMinutes: row.duration_minutes ?? null,
+    startTime: formatTime(row.start_time ?? null),
+    endTime: formatTime(row.end_time ?? null),
+  }
+}
+
+/** Linked + null company gallery → library gallery; else company override. */
+function effectiveGalleryImages(
+  row: PublicCatalogSearchRow,
+  library: DataLibraryCatalogItem | undefined,
+): PublicCatalogGalleryImage[] {
+  if (row.binding_mode === 'linked' && row.gallery_images == null) {
+    return parseLibraryGallery(library)
+  }
+  return parseGalleryImages(row.gallery_images)
+}
+
 async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCatalogItem[]> {
   const libraryIdsByKind: Record<CatalogKind, string[]> = {
     products: [],
@@ -138,6 +244,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
       if (!library) {
         continue
       }
+      const time = resolveServiceTime(row, library)
       items.push({
         id: row.id,
         kind: row.kind,
@@ -146,7 +253,9 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
         companyId: row.company_id,
         companyName: row.company_name,
         tags: tagsFromLibrary(library, tagById, localTagIds),
+        galleryImages: effectiveGalleryImages(row, library),
         ...coords,
+        ...time,
       })
       continue
     }
@@ -154,6 +263,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
     const name = typeof row.name === 'string' && row.name.trim() ? row.name.trim() : null
     if (!name) continue
 
+    const time = resolveServiceTime(row, undefined)
     items.push({
       id: row.id,
       kind: row.kind,
@@ -162,7 +272,9 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
       companyId: row.company_id,
       companyName: row.company_name,
       tags: tagsFromLibrary(undefined, tagById, localTagIds),
+      galleryImages: effectiveGalleryImages(row, undefined),
       ...coords,
+      ...time,
     })
   }
 
@@ -174,7 +286,16 @@ function withDistance(
   origin: { lat: number; lng: number } | null,
 ): PublicCatalogSearchItem[] {
   return items.map((item) => {
-    const { companyLatitude, companyLongitude, ...rest } = item
+    const {
+      companyLatitude,
+      companyLongitude,
+      galleryImages,
+      timeMode: _timeMode,
+      durationMinutes: _durationMinutes,
+      startTime: _startTime,
+      endTime: _endTime,
+      ...rest
+    } = item
     let distance: number | null = null
     if (
       origin &&
@@ -185,6 +306,7 @@ function withDistance(
     }
     return {
       ...rest,
+      imageUrl: galleryImages[0]?.url ?? null,
       distanceKm: distance,
       latitude: companyLatitude,
       longitude: companyLongitude,
@@ -282,8 +404,76 @@ export async function getPublicCatalogItem(options: {
   const [item] = withDistance(hydrated, origin)
   if (!item) return null
 
+  const detail = hydrated[0]!
   return {
     ...item,
-    galleryImages: parseGalleryImages(row.gallery_images),
+    galleryImages: detail.galleryImages,
+    timeMode: detail.timeMode,
+    durationMinutes: detail.durationMinutes,
+    startTime: detail.startTime,
+    endTime: detail.endTime,
   }
+}
+
+function toDateOnly(value: Date): string {
+  const y = value.getFullYear()
+  const m = String(value.getMonth() + 1).padStart(2, '0')
+  const d = String(value.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function addDaysYmd(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split('-').map(Number)
+  const date = new Date(y!, m! - 1, d!)
+  date.setDate(date.getDate() + days)
+  return toDateOnly(date)
+}
+
+function parseYmdParam(raw: unknown, fallback: string): string {
+  if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
+  return fallback
+}
+
+/**
+ * Upcoming Specific-time (window) event sessions for a public marketplace service.
+ */
+export async function listPublicServiceSessions(options: {
+  serviceId: string
+  from?: unknown
+  to?: unknown
+}): Promise<{ items: PublicCatalogSessionItem[] }> {
+  const serviceId = typeof options.serviceId === 'string' ? options.serviceId.trim() : ''
+  if (!serviceId) return { items: [] }
+
+  const row = await findApprovedCompanyCatalogById('services', serviceId)
+  if (!row) return { items: [] }
+
+  const today = toDateOnly(new Date())
+  const from = parseYmdParam(options.from, today)
+  const to = parseYmdParam(options.to, addDaysYmd(today, 30))
+  if (to < from) return { items: [] }
+
+  const eventRows = await listWindowEventsByService(row.company_id, serviceId)
+  const items: PublicCatalogSessionItem[] = []
+  for (const eventRow of eventRows) {
+    const event = mapEventRow(eventRow)
+    for (const occurrence of expandOccurrences(event, from, to)) {
+      items.push({
+        eventId: occurrence.id,
+        occurrenceDate: occurrence.occurrenceDate,
+        startTime: occurrence.startTime,
+        endTime: occurrence.endTime,
+        serviceName: occurrence.serviceName,
+        companyId: occurrence.companyId,
+      })
+    }
+  }
+
+  items.sort((a, b) => {
+    const byDate = a.occurrenceDate.localeCompare(b.occurrenceDate)
+    if (byDate !== 0) return byDate
+    return a.startTime.localeCompare(b.startTime)
+  })
+
+  return { items }
 }

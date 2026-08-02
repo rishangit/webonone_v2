@@ -68,6 +68,13 @@ export const createSessionTokenBodySchema = z.object({
   user_email: z.string().trim().email().max(255).nullable().optional(),
 })
 
+/** Self-serve public booking — user id comes from JWT. */
+export const bookPublicSessionTokenBodySchema = z.object({
+  user_display_name: z.string().trim().min(1).max(255),
+  user_email: z.string().trim().email().max(255).nullable().optional(),
+})
+
 export type CreateCompanyEventBody = z.infer<typeof createCompanyEventBodySchema>
 export type UpdateCompanyEventBody = z.infer<typeof updateCompanyEventBodySchema>
 export type CreateSessionTokenBody = z.infer<typeof createSessionTokenBodySchema>
+export type BookPublicSessionTokenBody = z.infer<typeof bookPublicSessionTokenBodySchema>
