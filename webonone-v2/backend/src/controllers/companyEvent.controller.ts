@@ -111,12 +111,12 @@ export async function listSessionTokens(req: CompanySessionRequest, res: Respons
       res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
       return
     }
-    const items = await eventService.listSessionTokens(
+    const detail = await eventService.getSessionDetail(
       session.companyId,
       String(req.params.eventId),
       occurrenceDate,
     )
-    res.json({ items })
+    res.json(detail)
   } catch (err) {
     handleServiceError(err, res)
   }
@@ -138,6 +138,87 @@ export async function createSessionToken(req: CompanySessionRequest, res: Respon
       req.body,
     )
     res.status(201).json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+function parseOccurrenceDate(
+  req: CompanySessionRequest,
+  res: Response,
+): string | null {
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return null
+  }
+  return occurrenceDate
+}
+
+export async function getSession(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = parseOccurrenceDate(req, res)
+  if (!occurrenceDate) return
+  try {
+    const detail = await eventService.getSessionDetail(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(detail)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function startSession(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = parseOccurrenceDate(req, res)
+  if (!occurrenceDate) return
+  try {
+    const detail = await eventService.startSession(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+      req.user!.id,
+    )
+    res.json(detail)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function callNextSessionToken(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = parseOccurrenceDate(req, res)
+  if (!occurrenceDate) return
+  try {
+    const detail = await eventService.callNextSessionToken(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(detail)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function endSession(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = parseOccurrenceDate(req, res)
+  if (!occurrenceDate) return
+  try {
+    const detail = await eventService.endSession(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(detail)
   } catch (err) {
     handleServiceError(err, res)
   }

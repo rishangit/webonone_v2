@@ -62,8 +62,19 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
   return platformTemplate ?? null
 }
 
+/** Session queue templates — company-admin defaults, hidden from super-admin list. */
+const SESSION_COMPANY_PLATFORM_SLUGS = [
+  'session_token_issued',
+  'session_started',
+  'session_ended',
+  'session_token_called',
+] as const
+
 /** Platform slugs company owners may see/customize as defaults (1.13.6). */
-const COMPANY_DEFAULT_PLATFORM_SLUGS = new Set(['welcome'])
+const COMPANY_DEFAULT_PLATFORM_SLUGS = new Set([
+  'welcome',
+  ...SESSION_COMPANY_PLATFORM_SLUGS,
+])
 
 export async function listTemplates(filters: { companyId?: string | null; role?: string }): Promise<TemplateDto[]> {
   if (filters.role === 'company_admin' && filters.companyId) {
@@ -86,7 +97,10 @@ export async function listTemplates(filters: { companyId?: string | null; role?:
   }
 
   const query = db<SmsTemplateRow>('sms_templates').orderBy('updated_at', 'desc')
-  query.where({ scope: 'platform' }).whereNull('company_id')
+  query
+    .where({ scope: 'platform' })
+    .whereNull('company_id')
+    .whereNotIn('slug', [...SESSION_COMPANY_PLATFORM_SLUGS])
   const rows = await query
   return rows.map(rowToDto)
 }

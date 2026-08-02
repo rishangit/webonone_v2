@@ -73,8 +73,19 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
   return platformTemplate ?? null
 }
 
+/** Session queue templates — company-admin defaults, hidden from super-admin list. */
+const SESSION_COMPANY_PLATFORM_SLUGS = [
+  'session_token_issued',
+  'session_started',
+  'session_ended',
+  'session_token_called',
+] as const
+
 /** Platform slugs company owners may see/customize as defaults (1.13.6). */
-const COMPANY_DEFAULT_PLATFORM_SLUGS = new Set(['welcome'])
+const COMPANY_DEFAULT_PLATFORM_SLUGS = new Set([
+  'welcome',
+  ...SESSION_COMPANY_PLATFORM_SLUGS,
+])
 
 export async function listTemplates(filters: {
   companyId?: string | null
@@ -107,7 +118,10 @@ export async function listTemplates(filters: {
   }
 
   if (filters.role === 'super_admin') {
-    query.where({ scope: 'platform' }).whereNull('company_id')
+    query
+      .where({ scope: 'platform' })
+      .whereNull('company_id')
+      .whereNotIn('slug', [...SESSION_COMPANY_PLATFORM_SLUGS])
   } else if (filters.companyId) {
     query.where({ scope: 'company', company_id: filters.companyId })
   } else {
@@ -338,7 +352,7 @@ export function canAccessTemplate(
   if (role === 'super_admin') return true
   if (role === 'company_admin') {
     if (template.scope === 'company' && template.companyId === userCompanyId) return true
-    // Company owners may view only allowed platform defaults (e.g. welcome).
+    // Company owners may view only allowed platform defaults (welcome, session_token_issued).
     if (
       template.scope === 'platform' &&
       !template.companyId &&

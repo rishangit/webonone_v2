@@ -1,15 +1,21 @@
 import { apiClient } from '@/shared/services/apiClient'
-import type { CreateSessionTokenBody, SessionToken } from '../types/event.types'
-
-type SessionTokensListResponse = {
-  items: SessionToken[]
-}
+import type {
+  CreateSessionTokenBody,
+  SessionDetail,
+  SessionToken,
+} from '../types/event.types'
 
 export const sessionTokensApi = {
-  list(eventId: string, occurrenceDate: string): Promise<SessionToken[]> {
-    return apiClient<SessionTokensListResponse>(
+  getSession(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}`,
+    )
+  },
+
+  list(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
       `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/tokens`,
-    ).then((result) => result.items)
+    )
   },
 
   create(
@@ -23,6 +29,27 @@ export const sessionTokensApi = {
         method: 'POST',
         body: JSON.stringify(body),
       },
+    )
+  },
+
+  start(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/start`,
+      { method: 'POST' },
+    )
+  },
+
+  callNext(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/call-next`,
+      { method: 'POST' },
+    )
+  },
+
+  end(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/end`,
+      { method: 'POST' },
     )
   },
 }

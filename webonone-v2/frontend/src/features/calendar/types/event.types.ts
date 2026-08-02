@@ -29,6 +29,9 @@ export type CompanyEventOccurrence = CompanyEvent & {
   title: string
 }
 
+export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
+export type SessionRunStatus = 'scheduled' | 'started' | 'ended'
+
 export type SessionToken = {
   id: string
   companyId: string
@@ -36,11 +39,31 @@ export type SessionToken = {
   occurrenceDate: string
   tokenNumber: number
   tokenLabel: string
+  status: SessionTokenStatus
   userId: string
   userDisplayName: string
   userEmail: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type SessionRun = {
+  id: string
+  companyId: string
+  eventId: string
+  occurrenceDate: string
+  status: SessionRunStatus
+  currentTokenId: string | null
+  startedAt: string | null
+  startedByUserId: string | null
+  endedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type SessionDetail = {
+  run: SessionRun
+  items: SessionToken[]
 }
 
 export type CreateSessionTokenBody = {

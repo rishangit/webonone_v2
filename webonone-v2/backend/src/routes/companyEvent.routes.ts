@@ -27,6 +27,26 @@ router.patch(
 router.delete('/company/events/:id', requireCompanySession, companyEventController.deleteEvent)
 
 router.get(
+  '/company/events/:eventId/sessions/:occurrenceDate',
+  requireCompanySession,
+  companyEventController.getSession,
+)
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/start',
+  requireCompanySession,
+  companyEventController.startSession,
+)
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/call-next',
+  requireCompanySession,
+  companyEventController.callNextSessionToken,
+)
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/end',
+  requireCompanySession,
+  companyEventController.endSession,
+)
+router.get(
   '/company/events/:eventId/sessions/:occurrenceDate/tokens',
   requireCompanySession,
   companyEventController.listSessionTokens,

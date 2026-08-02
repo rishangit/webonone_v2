@@ -6,9 +6,16 @@ import type {
 } from '../schemas/companyEventSchemas.js'
 import { getLibraryService } from '../clients/dataCatalogClient.js'
 import * as eventRepo from '../repositories/companyEvent.repository.js'
+import * as sessionRunRepo from '../repositories/companyEventSessionRun.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
+import {
+  notifySessionEnded,
+  notifySessionStarted,
+  notifySessionTokenCalled,
+  notifySessionTokenIssued,
+} from './sessionTokenNotify.service.js'
 
 export type CompanyEventDto = {
   id: string
@@ -38,6 +45,9 @@ export type CompanyEventOccurrenceDto = CompanyEventDto & {
   title: string
 }
 
+export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
+export type SessionRunStatus = 'scheduled' | 'started' | 'ended'
+
 export type SessionTokenDto = {
   id: string
   companyId: string
@@ -45,11 +55,31 @@ export type SessionTokenDto = {
   occurrenceDate: string
   tokenNumber: number
   tokenLabel: string
+  status: SessionTokenStatus
   userId: string
   userDisplayName: string
   userEmail: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type SessionRunDto = {
+  id: string
+  companyId: string
+  eventId: string
+  occurrenceDate: string
+  status: SessionRunStatus
+  currentTokenId: string | null
+  startedAt: string | null
+  startedByUserId: string | null
+  endedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type SessionDetailDto = {
+  run: SessionRunDto
+  items: SessionTokenDto[]
 }
 
 function serviceError(message: string, statusCode: number): Error & { statusCode: number } {
@@ -498,9 +528,26 @@ function mapSessionToken(row: sessionTokenRepo.CompanyEventSessionTokenRow): Ses
     occurrenceDate,
     tokenNumber: row.token_number,
     tokenLabel: formatTokenLabel(row.token_number),
+    status: row.status,
     userId: row.user_id,
     userDisplayName: row.user_display_name,
     userEmail: row.user_email,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  }
+}
+
+function mapSessionRun(row: sessionRunRepo.CompanyEventSessionRunRow): SessionRunDto {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    eventId: row.event_id,
+    occurrenceDate: toDateOnly(row.occurrence_date),
+    status: row.status,
+    currentTokenId: row.current_token_id,
+    startedAt: row.started_at ? row.started_at.toISOString() : null,
+    startedByUserId: row.started_by_user_id,
+    endedAt: row.ended_at ? row.ended_at.toISOString() : null,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
@@ -519,14 +566,60 @@ async function assertValidSessionOccurrence(
   return event
 }
 
+async function getOrCreateSessionRun(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<sessionRunRepo.CompanyEventSessionRunRow> {
+  const existing = await sessionRunRepo.findRunForSession(companyId, eventId, occurrenceDate)
+  if (existing) return existing
+  try {
+    return await sessionRunRepo.insertRun({
+      id: nanoid(),
+      company_id: companyId,
+      event_id: eventId,
+      occurrence_date: occurrenceDate,
+      status: 'scheduled',
+    })
+  } catch (err) {
+    const code = (err as { code?: string }).code
+    if (code === 'ER_DUP_ENTRY') {
+      const raced = await sessionRunRepo.findRunForSession(companyId, eventId, occurrenceDate)
+      if (raced) return raced
+    }
+    throw err
+  }
+}
+
+async function buildSessionDetail(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionDetailDto> {
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+  const rows = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
+  return {
+    run: mapSessionRun(run),
+    items: rows.map(mapSessionToken),
+  }
+}
+
+export async function getSessionDetail(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionDetailDto> {
+  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  return buildSessionDetail(companyId, eventId, occurrenceDate)
+}
+
 export async function listSessionTokens(
   companyId: string,
   eventId: string,
   occurrenceDate: string,
 ): Promise<SessionTokenDto[]> {
-  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
-  const rows = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
-  return rows.map(mapSessionToken)
+  const detail = await getSessionDetail(companyId, eventId, occurrenceDate)
+  return detail.items
 }
 
 export async function createSessionToken(
@@ -535,7 +628,7 @@ export async function createSessionToken(
   occurrenceDate: string,
   body: CreateSessionTokenBody,
 ): Promise<SessionTokenDto> {
-  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
 
   const userId = body.user_id.trim()
   const existing = await sessionTokenRepo.findTokenByUser(
@@ -562,7 +655,40 @@ export async function createSessionToken(
       user_display_name: body.user_display_name.trim(),
       user_email: body.user_email?.trim() || null,
     })
-    return mapSessionToken(row)
+
+    const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+    if (run.status === 'started' && !run.current_token_id) {
+      const serving = await sessionTokenRepo.findServingToken(
+        companyId,
+        eventId,
+        occurrenceDate,
+      )
+      if (!serving) {
+        await sessionTokenRepo.updateTokenStatus(row.id, 'serving')
+        await sessionRunRepo.updateRun(run.id, { current_token_id: row.id })
+        const updated = await sessionTokenRepo.findTokenById(companyId, row.id)
+        if (updated) {
+          const token = mapSessionToken(updated)
+          notifySessionTokenIssued({
+            companyId,
+            event,
+            token,
+            preferredEmail: body.user_email,
+          })
+          notifySessionTokenCalled({ companyId, event, token })
+          return token
+        }
+      }
+    }
+
+    const token = mapSessionToken(row)
+    notifySessionTokenIssued({
+      companyId,
+      event,
+      token,
+      preferredEmail: body.user_email,
+    })
+    return token
   } catch (err) {
     const code = (err as { code?: string }).code
     if (code === 'ER_DUP_ENTRY') {
@@ -597,4 +723,127 @@ export async function getSessionTokenForUser(
     userId,
   )
   return row ? mapSessionToken(row) : null
+}
+
+export async function startSession(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  startedByUserId: string,
+): Promise<SessionDetailDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+
+  if (run.status === 'ended') {
+    throw serviceError('This session has already ended', 409)
+  }
+
+  if (run.status === 'started') {
+    return buildSessionDetail(companyId, eventId, occurrenceDate)
+  }
+
+  let currentTokenId: string | null = null
+  let firstServingToken: SessionTokenDto | null = null
+  const firstWaiting = await sessionTokenRepo.findFirstWaitingToken(
+    companyId,
+    eventId,
+    occurrenceDate,
+  )
+  if (firstWaiting) {
+    await sessionTokenRepo.updateTokenStatus(firstWaiting.id, 'serving')
+    currentTokenId = firstWaiting.id
+    firstServingToken = mapSessionToken({ ...firstWaiting, status: 'serving' })
+  }
+
+  await sessionRunRepo.updateRun(run.id, {
+    status: 'started',
+    current_token_id: currentTokenId,
+    started_at: new Date(),
+    started_by_user_id: startedByUserId,
+    ended_at: null,
+  })
+
+  const tokens = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
+  notifySessionStarted({
+    companyId,
+    event,
+    tokens: tokens.map(mapSessionToken),
+  })
+  if (firstServingToken) {
+    notifySessionTokenCalled({ companyId, event, token: firstServingToken })
+  }
+
+  return buildSessionDetail(companyId, eventId, occurrenceDate)
+}
+
+export async function callNextSessionToken(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionDetailDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+
+  if (run.status !== 'started') {
+    throw serviceError('Session must be started before calling next token', 409)
+  }
+
+  const serving = await sessionTokenRepo.findServingToken(companyId, eventId, occurrenceDate)
+  if (serving) {
+    await sessionTokenRepo.updateTokenStatus(serving.id, 'completed')
+  }
+
+  const nextWaiting = await sessionTokenRepo.findFirstWaitingToken(
+    companyId,
+    eventId,
+    occurrenceDate,
+  )
+  if (!nextWaiting) {
+    if (!serving) {
+      throw serviceError('No waiting tokens to call', 400)
+    }
+    await sessionRunRepo.updateRun(run.id, { current_token_id: null })
+    return buildSessionDetail(companyId, eventId, occurrenceDate)
+  }
+
+  await sessionTokenRepo.updateTokenStatus(nextWaiting.id, 'serving')
+  await sessionRunRepo.updateRun(run.id, { current_token_id: nextWaiting.id })
+
+  const nextToken = mapSessionToken({ ...nextWaiting, status: 'serving' })
+  notifySessionTokenCalled({ companyId, event, token: nextToken })
+
+  return buildSessionDetail(companyId, eventId, occurrenceDate)
+}
+
+export async function endSession(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionDetailDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+
+  if (run.status === 'ended') {
+    return buildSessionDetail(companyId, eventId, occurrenceDate)
+  }
+  if (run.status !== 'started') {
+    throw serviceError('Session must be started before it can be ended', 409)
+  }
+
+  const tokens = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
+
+  await sessionTokenRepo.clearServingTokens(companyId, eventId, occurrenceDate)
+  await sessionRunRepo.updateRun(run.id, {
+    status: 'ended',
+    current_token_id: null,
+    ended_at: new Date(),
+  })
+
+  notifySessionEnded({
+    companyId,
+    event,
+    tokens: tokens.map(mapSessionToken),
+  })
+
+  return buildSessionDetail(companyId, eventId, occurrenceDate)
 }

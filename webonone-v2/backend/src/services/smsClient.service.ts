@@ -23,6 +23,52 @@ function resolveInternalSmsUrl(path: string): string | null {
   return `${normalizeSmsApiBaseUrl(env.smsApiBaseUrl)}${path}`
 }
 
+async function postInternal(path: string, body: Record<string, unknown>): Promise<Response | null> {
+  const url = resolveInternalSmsUrl(path)
+  if (!url) return null
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Sms-Service-Key': env.smsServiceApiKey,
+      },
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+      const text = await response.text()
+      console.error(`[smsClient] ${path} failed (${response.status}): ${text}`)
+    }
+    return response
+  } catch (err) {
+    console.error(`[smsClient] ${path} error:`, err)
+    return null
+  }
+}
+
+type SendSmsParams = {
+  toNumber: string
+  templateSlug?: string
+  body?: string
+  payload?: Record<string, string>
+  requestedByService: 'identity' | 'webonone'
+  companyId?: string
+}
+
+/** Enqueue a transactional SMS via the SMS service internal API. Best-effort. */
+export async function sendTransactionalSms(params: SendSmsParams): Promise<boolean> {
+  const response = await postInternal('/api/v1/internal/send', {
+    toNumber: params.toNumber,
+    templateSlug: params.templateSlug,
+    body: params.body,
+    payload: params.payload ?? {},
+    companyId: params.companyId,
+    requestedByService: params.requestedByService,
+  })
+  return Boolean(response?.ok)
+}
+
 export async function ensureWelcomeTemplate(
   companyId: string,
   companyName?: string,

@@ -3,30 +3,48 @@ import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
 import { catchError, exhaustMap, map, mergeMap } from 'rxjs/operators'
 import { sessionTokensApi } from '../services/sessionTokensApi'
-import type { CreateSessionTokenBody, SessionToken } from '../types/event.types'
+import type {
+  CreateSessionTokenBody,
+  SessionDetail,
+  SessionRun,
+  SessionToken,
+} from '../types/event.types'
 
 type Status = 'idle' | 'loading' | 'saving' | 'error'
 
 interface SessionTokensState {
   eventId: string | null
   occurrenceDate: string | null
+  run: SessionRun | null
   items: SessionToken[]
   listStatus: Status
   createStatus: Status
+  actionStatus: Status
   listError: string | null
   createError: string | null
+  actionError: string | null
   lastCreatedId: string | null
+  lastAction: 'start' | 'call-next' | 'end' | null
 }
 
 const initialState: SessionTokensState = {
   eventId: null,
   occurrenceDate: null,
+  run: null,
   items: [],
   listStatus: 'idle',
   createStatus: 'idle',
+  actionStatus: 'idle',
   listError: null,
   createError: null,
+  actionError: null,
   lastCreatedId: null,
+  lastAction: null,
+}
+
+function applyDetail(state: SessionTokensState, detail: SessionDetail) {
+  state.run = detail.run
+  state.items = detail.items
 }
 
 const sessionTokensSlice = createSlice({
@@ -42,8 +60,8 @@ const sessionTokensSlice = createSlice({
       state.listStatus = 'loading'
       state.listError = null
     },
-    fetchListSucceeded(state, action: PayloadAction<SessionToken[]>) {
-      state.items = action.payload
+    fetchListSucceeded(state, action: PayloadAction<SessionDetail>) {
+      applyDetail(state, action.payload)
       state.listStatus = 'idle'
       state.listError = null
     },
@@ -69,6 +87,13 @@ const sessionTokensSlice = createSlice({
         state.items = [...state.items, action.payload].sort(
           (a, b) => a.tokenNumber - b.tokenNumber,
         )
+      } else {
+        state.items = state.items.map((item) =>
+          item.id === action.payload.id ? action.payload : item,
+        )
+      }
+      if (action.payload.status === 'serving' && state.run) {
+        state.run = { ...state.run, currentTokenId: action.payload.id }
       }
       state.createStatus = 'idle'
       state.createError = null
@@ -77,6 +102,44 @@ const sessionTokensSlice = createSlice({
     createFailed(state, action: PayloadAction<string>) {
       state.createStatus = 'error'
       state.createError = action.payload
+    },
+    startRequested(
+      state,
+      _action: PayloadAction<{ eventId: string; occurrenceDate: string }>,
+    ) {
+      state.actionStatus = 'saving'
+      state.actionError = null
+      state.lastAction = 'start'
+    },
+    callNextRequested(
+      state,
+      _action: PayloadAction<{ eventId: string; occurrenceDate: string }>,
+    ) {
+      state.actionStatus = 'saving'
+      state.actionError = null
+      state.lastAction = 'call-next'
+    },
+    endRequested(
+      state,
+      _action: PayloadAction<{ eventId: string; occurrenceDate: string }>,
+    ) {
+      state.actionStatus = 'saving'
+      state.actionError = null
+      state.lastAction = 'end'
+    },
+    actionSucceeded(state, action: PayloadAction<SessionDetail>) {
+      applyDetail(state, action.payload)
+      state.actionStatus = 'idle'
+      state.actionError = null
+    },
+    actionFailed(state, action: PayloadAction<string>) {
+      state.actionStatus = 'error'
+      state.actionError = action.payload
+    },
+    resetActionStatus(state) {
+      state.actionStatus = 'idle'
+      state.actionError = null
+      state.lastAction = null
     },
     resetCreateStatus(state) {
       state.createStatus = 'idle'
@@ -97,9 +160,9 @@ const fetchListEpic: Epic = (action$) =>
     ofType(sessionTokensActions.fetchListRequested.type),
     mergeMap((action: ReturnType<typeof sessionTokensActions.fetchListRequested>) =>
       from(
-        sessionTokensApi.list(action.payload.eventId, action.payload.occurrenceDate),
+        sessionTokensApi.getSession(action.payload.eventId, action.payload.occurrenceDate),
       ).pipe(
-        map((items) => sessionTokensActions.fetchListSucceeded(items)),
+        map((detail) => sessionTokensActions.fetchListSucceeded(detail)),
         catchError((err: unknown) =>
           of(
             sessionTokensActions.fetchListFailed(
@@ -134,7 +197,66 @@ const createEpic: Epic = (action$) =>
     ),
   )
 
-export const sessionTokensEpics = combineEpics(fetchListEpic, createEpic)
+const startEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(sessionTokensActions.startRequested.type),
+    exhaustMap((action: ReturnType<typeof sessionTokensActions.startRequested>) =>
+      from(sessionTokensApi.start(action.payload.eventId, action.payload.occurrenceDate)).pipe(
+        map((detail) => sessionTokensActions.actionSucceeded(detail)),
+        catchError((err: unknown) =>
+          of(
+            sessionTokensActions.actionFailed(
+              err instanceof Error ? err.message : 'Failed to start session',
+            ),
+          ),
+        ),
+      ),
+    ),
+  )
+
+const callNextEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(sessionTokensActions.callNextRequested.type),
+    exhaustMap((action: ReturnType<typeof sessionTokensActions.callNextRequested>) =>
+      from(
+        sessionTokensApi.callNext(action.payload.eventId, action.payload.occurrenceDate),
+      ).pipe(
+        map((detail) => sessionTokensActions.actionSucceeded(detail)),
+        catchError((err: unknown) =>
+          of(
+            sessionTokensActions.actionFailed(
+              err instanceof Error ? err.message : 'Failed to call next token',
+            ),
+          ),
+        ),
+      ),
+    ),
+  )
+
+const endEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(sessionTokensActions.endRequested.type),
+    exhaustMap((action: ReturnType<typeof sessionTokensActions.endRequested>) =>
+      from(sessionTokensApi.end(action.payload.eventId, action.payload.occurrenceDate)).pipe(
+        map((detail) => sessionTokensActions.actionSucceeded(detail)),
+        catchError((err: unknown) =>
+          of(
+            sessionTokensActions.actionFailed(
+              err instanceof Error ? err.message : 'Failed to end session',
+            ),
+          ),
+        ),
+      ),
+    ),
+  )
+
+export const sessionTokensEpics = combineEpics(
+  fetchListEpic,
+  createEpic,
+  startEpic,
+  callNextEpic,
+  endEpic,
+)
 
 export function nextTokenLabel(items: SessionToken[]): string {
   const max = items.reduce((acc, item) => Math.max(acc, item.tokenNumber), 0)

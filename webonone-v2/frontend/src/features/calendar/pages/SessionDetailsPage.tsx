@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
 import {
@@ -15,12 +15,19 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  StatusTag,
+  useToast,
+  type StatusTagVariant,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { IssueTokenDialog } from '@/features/calendar/components/IssueTokenDialog'
 import { formatTimeModeLabel } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions, sessionTokensActions } from '@/features/calendar/store'
-import type { CompanyEvent } from '@/features/calendar/types/event.types'
+import type {
+  CompanyEvent,
+  SessionRunStatus,
+  SessionTokenStatus,
+} from '@/features/calendar/types/event.types'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOccurrences'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -51,6 +58,30 @@ function weekdayLabel(ymd: string): string {
 
 const DATE_YMD = /^\d{4}-\d{2}-\d{2}$/
 
+const RUN_STATUS_LABEL: Record<SessionRunStatus, string> = {
+  scheduled: 'Scheduled',
+  started: 'Started',
+  ended: 'Ended',
+}
+
+const RUN_STATUS_VARIANT: Record<SessionRunStatus, StatusTagVariant> = {
+  scheduled: 'pending',
+  started: 'verified',
+  ended: 'member',
+}
+
+const TOKEN_STATUS_LABEL: Record<SessionTokenStatus, string> = {
+  waiting: 'Waiting',
+  serving: 'Serving',
+  completed: 'Completed',
+}
+
+const TOKEN_STATUS_VARIANT: Record<SessionTokenStatus, StatusTagVariant> = {
+  waiting: 'pending',
+  serving: 'verified',
+  completed: 'member',
+}
+
 export function SessionDetailsPage() {
   const { eventId, occurrenceDate } = useParams<{
     eventId: string
@@ -58,6 +89,7 @@ export function SessionDetailsPage() {
   }>()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const { toast } = useToast()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
@@ -65,9 +97,14 @@ export function SessionDetailsPage() {
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
   const tokens = useAppSelector((s) => s.sessionTokens.items)
+  const run = useAppSelector((s) => s.sessionTokens.run)
   const tokensStatus = useAppSelector((s) => s.sessionTokens.listStatus)
   const tokensError = useAppSelector((s) => s.sessionTokens.listError)
+  const actionStatus = useAppSelector((s) => s.sessionTokens.actionStatus)
+  const actionError = useAppSelector((s) => s.sessionTokens.actionError)
+  const lastAction = useAppSelector((s) => s.sessionTokens.lastAction)
   const [issueOpen, setIssueOpen] = useState(false)
+  const lastActionStatus = useRef(actionStatus)
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? 'Loading session…' : null)
@@ -90,10 +127,43 @@ export function SessionDetailsPage() {
     }
   }, [dispatch, eventId, occurrenceDate])
 
+  useEffect(() => {
+    if (lastActionStatus.current === 'saving' && actionStatus === 'idle' && !actionError) {
+      if (lastAction === 'start') toast({ title: 'Session started' })
+      if (lastAction === 'call-next') toast({ title: 'Next token called' })
+      if (lastAction === 'end') toast({ title: 'Session ended' })
+      dispatch(sessionTokensActions.resetActionStatus())
+    }
+    if (actionError) {
+      const title =
+        lastAction === 'start'
+          ? 'Failed to start session'
+          : lastAction === 'call-next'
+            ? 'Failed to call next token'
+            : lastAction === 'end'
+              ? 'Failed to end session'
+              : 'Session action failed'
+      toast({ title, description: actionError, variant: 'destructive' })
+      dispatch(sessionTokensActions.resetActionStatus())
+    }
+    lastActionStatus.current = actionStatus
+  }, [actionStatus, actionError, lastAction, toast, dispatch])
+
   const backToEvent = () => {
     if (eventId) navigate(`/calendar/events/${eventId}`)
     else navigate('/calendar/events')
   }
+
+  const sessionKey =
+    eventId && occurrenceDate
+      ? { eventId, occurrenceDate }
+      : null
+
+  const actionBusy = actionStatus === 'saving'
+  const runStatus = run?.status ?? 'scheduled'
+  const currentToken = tokens.find((token) => token.id === run?.currentTokenId) ??
+    tokens.find((token) => token.status === 'serving') ??
+    null
 
   if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
     return (
@@ -184,14 +254,77 @@ export function SessionDetailsPage() {
       title={titleDate}
       description={`${detail.serviceName} session`}
       actions={
-        <Button type="button" variant="outline" size="sm" onClick={backToEvent}>
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {runStatus === 'scheduled' && sessionKey ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={actionBusy}
+              onClick={() => dispatch(sessionTokensActions.startRequested(sessionKey))}
+            >
+              Start session
+            </Button>
+          ) : null}
+          {runStatus === 'started' && sessionKey ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={actionBusy}
+              onClick={() => dispatch(sessionTokensActions.endRequested(sessionKey))}
+            >
+              End session
+            </Button>
+          ) : null}
+          <Button type="button" variant="outline" size="sm" onClick={backToEvent}>
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Back
+          </Button>
+        </div>
       }
     >
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
+          {runStatus === 'started' ? (
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                <div className="space-y-1.5">
+                  <CardTitle className="text-lg">Now serving</CardTitle>
+                  <CardDescription>Current queue token for this session</CardDescription>
+                </div>
+                {sessionKey ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={actionBusy}
+                    onClick={() =>
+                      dispatch(sessionTokensActions.callNextRequested(sessionKey))
+                    }
+                  >
+                    Call next
+                  </Button>
+                ) : null}
+              </CardHeader>
+              <CardContent>
+                {currentToken ? (
+                  <div className="space-y-1">
+                    <p className="text-2xl font-semibold text-foreground">
+                      {currentToken.tokenLabel}
+                    </p>
+                    <p className="text-sm text-foreground">{currentToken.userDisplayName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {currentToken.userEmail ?? 'No email'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No token is being served. Issue tokens or call next when ready.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
               <div className="space-y-1.5">
@@ -215,18 +348,30 @@ export function SessionDetailsPage() {
               ) : (
                 <ItemList>
                   {tokens.map((token) => (
-                    <ItemListItem key={token.id}>
+                    <ItemListItem
+                      key={token.id}
+                      className={
+                        token.status === 'serving'
+                          ? 'ring-1 ring-primary/40'
+                          : undefined
+                      }
+                    >
                       <ItemListContent>
-                        <div className="min-w-0 space-y-1">
-                          <p className="truncate font-medium text-foreground">
-                            {token.tokenLabel}
-                          </p>
-                          <p className="truncate text-sm text-foreground">
-                            {token.userDisplayName}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {token.userEmail ?? 'No email'}
-                          </p>
+                        <div className="flex min-w-0 items-start justify-between gap-3">
+                          <div className="min-w-0 space-y-1">
+                            <p className="truncate font-medium text-foreground">
+                              {token.tokenLabel}
+                            </p>
+                            <p className="truncate text-sm text-foreground">
+                              {token.userDisplayName}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {token.userEmail ?? 'No email'}
+                            </p>
+                          </div>
+                          <StatusTag variant={TOKEN_STATUS_VARIANT[token.status]}>
+                            {TOKEN_STATUS_LABEL[token.status]}
+                          </StatusTag>
                         </div>
                       </ItemListContent>
                     </ItemListItem>
@@ -250,6 +395,12 @@ export function SessionDetailsPage() {
                 label="Time"
                 value={`${session.startTime}–${session.endTime}`}
               />
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Status</p>
+                <StatusTag variant={RUN_STATUS_VARIANT[runStatus]}>
+                  {RUN_STATUS_LABEL[runStatus]}
+                </StatusTag>
+              </div>
             </CardContent>
           </Card>
 
