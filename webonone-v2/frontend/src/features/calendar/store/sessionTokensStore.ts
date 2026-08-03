@@ -24,7 +24,7 @@ interface SessionTokensState {
   createError: string | null
   actionError: string | null
   lastCreatedId: string | null
-  lastAction: 'start' | 'call-next' | 'end' | null
+  lastAction: 'start' | 'call-next' | 'call-previous' | 'end' | null
 }
 
 const initialState: SessionTokensState = {
@@ -118,6 +118,14 @@ const sessionTokensSlice = createSlice({
       state.actionStatus = 'saving'
       state.actionError = null
       state.lastAction = 'call-next'
+    },
+    callPreviousRequested(
+      state,
+      _action: PayloadAction<{ eventId: string; occurrenceDate: string }>,
+    ) {
+      state.actionStatus = 'saving'
+      state.actionError = null
+      state.lastAction = 'call-previous'
     },
     endRequested(
       state,
@@ -233,6 +241,25 @@ const callNextEpic: Epic = (action$) =>
     ),
   )
 
+const callPreviousEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(sessionTokensActions.callPreviousRequested.type),
+    exhaustMap((action: ReturnType<typeof sessionTokensActions.callPreviousRequested>) =>
+      from(
+        sessionTokensApi.callPrevious(action.payload.eventId, action.payload.occurrenceDate),
+      ).pipe(
+        map((detail) => sessionTokensActions.actionSucceeded(detail)),
+        catchError((err: unknown) =>
+          of(
+            sessionTokensActions.actionFailed(
+              err instanceof Error ? err.message : 'Failed to call previous token',
+            ),
+          ),
+        ),
+      ),
+    ),
+  )
+
 const endEpic: Epic = (action$) =>
   action$.pipe(
     ofType(sessionTokensActions.endRequested.type),
@@ -255,6 +282,7 @@ export const sessionTokensEpics = combineEpics(
   createEpic,
   startEpic,
   callNextEpic,
+  callPreviousEpic,
   endEpic,
 )
 

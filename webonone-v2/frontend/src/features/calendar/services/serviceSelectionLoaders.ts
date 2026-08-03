@@ -2,8 +2,12 @@ import type { LoadServicesFn, ServiceOption } from '@webonone/ui-kit'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
 import { dataLibraryApi } from '@/features/company-catalog/services/dataLibraryApi'
 import type { HydratedCatalogItem } from '@/features/company-catalog/types/companyCatalog.types'
+import { firstGalleryImageUrl } from '@/features/company-catalog/utils/firstGalleryImageUrl'
 import { hydrateLinkedCatalogItems } from '@/features/company-catalog/utils/hydrateLinkedCatalog'
-import type { EventServiceOption } from '@/features/calendar/schemas/eventSchemas'
+import type {
+  EventServiceOption,
+  EventSpaceOption,
+} from '@/features/calendar/schemas/eventSchemas'
 
 export function formatEventServiceDescription(service: EventServiceOption): string {
   return service.timeMode === 'window'
@@ -35,6 +39,7 @@ export function mapHydratedCatalogToEventService(
       typeof payload.durationMinutes === 'number' ? payload.durationMinutes : null,
     startTime: typeof payload.startTime === 'string' ? payload.startTime : null,
     endTime: typeof payload.endTime === 'string' ? payload.endTime : null,
+    imageUrl: firstGalleryImageUrl(item.displayGalleryImages),
   }
 }
 
@@ -43,6 +48,7 @@ export function toServiceOption(service: EventServiceOption): ServiceOption {
     id: service.id,
     name: service.name,
     description: formatEventServiceDescription(service),
+    imageUrl: service.imageUrl ?? null,
   }
 }
 
@@ -97,8 +103,81 @@ export function createDataLibraryServicesLoader(): LoadServicesFn {
         id: item.id,
         name: item.name,
         description: item.description?.trim() ? item.description : null,
+        imageUrl: firstGalleryImageUrl(item.galleryImages),
       })),
       hasMore: page * pageSize < result.total,
+    }
+  }
+}
+
+export function mapHydratedCatalogToEventSpace(
+  item: HydratedCatalogItem,
+): EventSpaceOption | null {
+  if (item.libraryUnavailable) return null
+
+  const payload = (item.payload ?? item.hydrated ?? {}) as Record<string, unknown>
+  const name =
+    (typeof item.displayName === 'string' && item.displayName.trim()
+      ? item.displayName
+      : null) ||
+    (typeof item.name === 'string' && item.name.trim() ? item.name : null) ||
+    (typeof payload.name === 'string' && payload.name.trim() ? payload.name : null)
+
+  if (!name) return null
+
+  const description =
+    (typeof item.displayDescription === 'string' && item.displayDescription.trim()
+      ? item.displayDescription
+      : null) ||
+    (typeof item.description === 'string' && item.description.trim()
+      ? item.description
+      : null) ||
+    (typeof payload.description === 'string' && payload.description.trim()
+      ? payload.description
+      : null)
+
+  return {
+    id: item.id,
+    name,
+    description,
+    imageUrl: firstGalleryImageUrl(item.displayGalleryImages),
+  }
+}
+
+/**
+ * Company catalog spaces for Specific-time calendar events (`company_spaces.id`).
+ * Hydrates linked library rows before mapping. Caches full options in `cacheById`.
+ */
+export function createCompanyCatalogSpacesLoader(
+  cacheById: Map<string, EventSpaceOption>,
+): LoadServicesFn {
+  return async ({ search, page, pageSize }) => {
+    const q = search.trim()
+    const result = await companyCatalogApi.list('spaces')
+    const hydrated = await hydrateLinkedCatalogItems('spaces', result.items)
+    let mapped = hydrated
+      .map(mapHydratedCatalogToEventSpace)
+      .filter((s): s is EventSpaceOption => s != null)
+
+    if (q) {
+      const needle = q.toLowerCase()
+      mapped = mapped.filter((s) => s.name.toLowerCase().includes(needle))
+    }
+
+    for (const space of mapped) {
+      cacheById.set(space.id, space)
+    }
+
+    const start = (page - 1) * pageSize
+    const slice = mapped.slice(start, start + pageSize)
+    return {
+      services: slice.map((space) => ({
+        id: space.id,
+        name: space.name,
+        description: space.description?.trim() ? space.description : null,
+        imageUrl: space.imageUrl ?? null,
+      })),
+      hasMore: start + pageSize < mapped.length,
     }
   }
 }

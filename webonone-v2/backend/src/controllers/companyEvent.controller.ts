@@ -207,6 +207,23 @@ export async function callNextSessionToken(req: CompanySessionRequest, res: Resp
   }
 }
 
+export async function callPreviousSessionToken(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = parseOccurrenceDate(req, res)
+  if (!occurrenceDate) return
+  try {
+    const detail = await eventService.callPreviousSessionToken(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(detail)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function endSession(req: CompanySessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return

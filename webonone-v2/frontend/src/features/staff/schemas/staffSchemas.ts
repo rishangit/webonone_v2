@@ -12,6 +12,7 @@ export type StaffWizardUser = {
   id: string
   displayName: string
   email: string | null
+  avatarUrl: string | null
 }
 
 export type StaffWizardFormValues = {
@@ -71,6 +72,7 @@ export const staffWizardStep1Schema = z.object({
       id: z.string().min(1),
       displayName: z.string().min(1),
       email: z.string().nullable(),
+      avatarUrl: z.string().nullable(),
     })
     .nullable()
     .refine((user) => user != null, { message: 'Select a user' }),
@@ -117,6 +119,7 @@ export function valuesFromStaff(staff: CompanyStaff): StaffWizardFormValues {
       id: staff.userId,
       displayName: staff.displayName,
       email: staff.email,
+      avatarUrl: staff.avatarUrl,
     },
     schedule: emptyWeekSchedule().map((day) => {
       const existing = byDay.get(day.day_of_week)
@@ -140,6 +143,7 @@ export function toCreateStaffPayload(values: StaffWizardFormValues): CreateCompa
     user_id: values.user.id,
     display_name: values.user.displayName,
     email: values.user.email,
+    avatar_url: values.user.avatarUrl,
     schedule: values.schedule.map((day) => ({
       day_of_week: day.day_of_week,
       is_working: day.is_working,
@@ -157,6 +161,7 @@ export function toUpdateStaffPayload(values: StaffWizardFormValues): UpdateCompa
     user_id: values.user.id,
     display_name: values.user.displayName,
     email: values.user.email,
+    avatar_url: values.user.avatarUrl,
     schedule: values.schedule.map((day) => ({
       day_of_week: day.day_of_week,
       is_working: day.is_working,

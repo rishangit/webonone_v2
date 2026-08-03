@@ -24,6 +24,7 @@ export type CompanyStaffDto = {
   userId: string
   displayName: string
   email: string | null
+  avatarUrl: string | null
   schedule: StaffScheduleDayDto[]
   createdAt: string
   updatedAt: string
@@ -72,6 +73,7 @@ function mapStaff(
     userId: row.user_id,
     displayName: row.display_name,
     email: row.email,
+    avatarUrl: row.avatar_url,
     schedule,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
@@ -126,6 +128,7 @@ export async function createCompanyStaff(
     user_id: body.user_id,
     display_name: body.display_name.trim(),
     email: body.email?.trim() || null,
+    avatar_url: body.avatar_url?.trim() || null,
   })
   await repo.replaceSchedules(
     id,
@@ -162,12 +165,14 @@ export async function updateCompanyStaff(
   if (
     body.user_id !== undefined ||
     body.display_name !== undefined ||
-    body.email !== undefined
+    body.email !== undefined ||
+    body.avatar_url !== undefined
   ) {
     await repo.updateStaff(companyId, staffId, {
       ...(body.user_id !== undefined ? { user_id: body.user_id } : {}),
       ...(body.display_name !== undefined ? { display_name: body.display_name.trim() } : {}),
       ...(body.email !== undefined ? { email: body.email?.trim() || null } : {}),
+      ...(body.avatar_url !== undefined ? { avatar_url: body.avatar_url?.trim() || null } : {}),
     })
   }
 

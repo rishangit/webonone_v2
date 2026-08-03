@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ImageCarousel,
   TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -31,7 +32,7 @@ import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
-  'profile',
+  'overview',
   'gallery',
   'attributes',
 ]
@@ -86,7 +87,7 @@ export function ServiceDetailsPage() {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const [dialog, setDialog] = useState<{ initialStep: ServiceWizardStep } | null>(null)
-  const [tab, setTab] = useDetailTabParam(SERVICE_DETAIL_TABS, 'profile')
+  const [tab, setTab] = useDetailTabParam(SERVICE_DETAIL_TABS, 'overview')
 
   useEffect(() => {
     if (!serviceId) return
@@ -111,9 +112,16 @@ export function ServiceDetailsPage() {
     dispatch(servicesActions.fetchDetailRequested({ id, force: true }))
   }
 
-  const profile = service ? (
+  const overview = service ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
+        {(service.galleryImages ?? []).length > 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <ImageCarousel images={service.galleryImages ?? []} alt={service.name} />
+            </CardContent>
+          </Card>
+        ) : null}
         <EditableSectionCard
           title="Service"
           description="Name, status, and description"
@@ -200,7 +208,7 @@ export function ServiceDetailsPage() {
           ariaLabel="Service sections"
           tab={tab}
           onTabChange={setTab}
-          profile={profile}
+          overview={overview}
           attributes={
             <CatalogAttributesTab
               kind="services"

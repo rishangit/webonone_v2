@@ -73,12 +73,17 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
   return platformTemplate ?? null
 }
 
-/** Session queue templates — company-admin defaults, hidden from super-admin list. */
+/**
+ * Company-facing platform templates — shown to company admins as defaults,
+ * hidden from the super-admin platform list.
+ */
 const SESSION_COMPANY_PLATFORM_SLUGS = [
   'session_token_issued',
   'session_started',
   'session_ended',
   'session_token_called',
+  'appointment_booked',
+  'appointment_reminder_24h',
 ] as const
 
 /** Platform slugs company owners may see/customize as defaults (1.13.6). */
@@ -86,6 +91,7 @@ const COMPANY_DEFAULT_PLATFORM_SLUGS = new Set([
   'welcome',
   ...SESSION_COMPANY_PLATFORM_SLUGS,
 ])
+
 
 export async function listTemplates(filters: {
   companyId?: string | null
@@ -352,7 +358,7 @@ export function canAccessTemplate(
   if (role === 'super_admin') return true
   if (role === 'company_admin') {
     if (template.scope === 'company' && template.companyId === userCompanyId) return true
-    // Company owners may view only allowed platform defaults (welcome, session_token_issued).
+    // Company owners may view only allowed platform defaults (welcome, session, appointment).
     if (
       template.scope === 'platform' &&
       !template.companyId &&

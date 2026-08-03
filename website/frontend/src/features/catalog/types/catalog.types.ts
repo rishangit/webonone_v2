@@ -38,6 +38,8 @@ export type CatalogSessionItem = {
   endTime: string
   serviceName: string
   companyId: string
+  spaceId: string | null
+  spaceName: string | null
 }
 
 export type SessionTokenItem = {

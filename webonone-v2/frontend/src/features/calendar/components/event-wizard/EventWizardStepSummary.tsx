@@ -1,4 +1,5 @@
 import {
+  formatRecurrenceLabel,
   formatWeekdaysLabel,
   type EventWizardFormValues,
 } from '@/features/calendar/schemas/eventSchemas'
@@ -8,11 +9,34 @@ type EventWizardStepSummaryProps = {
 }
 
 export function EventWizardStepSummary({ values }: EventWizardStepSummaryProps) {
-  const { service, staff, attendee, startsOn, startTime, weekdays, recurrenceUntil } = values
+  const {
+    service,
+    staff,
+    attendee,
+    space,
+    startsOn,
+    startTime,
+    weekdays,
+    recurrence,
+    recurrenceUntil,
+  } = values
   const endHint =
     service?.timeMode === 'window'
       ? `${service.startTime ?? '—'}–${service.endTime ?? '—'}`
       : `${startTime} (+${service?.durationMinutes ?? '—'} min)`
+
+  const isDuration = service?.timeMode === 'duration'
+  const scheduleLabel = isDuration
+    ? formatRecurrenceLabel(recurrence, { startsOn, weekdays })
+    : weekdays.length > 0
+      ? formatWeekdaysLabel(weekdays)
+      : '—'
+  const rangeLabel =
+    isDuration && recurrence === 'none'
+      ? startsOn || '—'
+      : startsOn && recurrenceUntil
+        ? `${startsOn} → ${recurrenceUntil}`
+        : '—'
 
   return (
     <div className="space-y-3 text-sm">
@@ -22,7 +46,7 @@ export function EventWizardStepSummary({ values }: EventWizardStepSummaryProps) 
         value={service?.timeMode === 'window' ? 'Specific time' : 'Duration'}
       />
       <SummaryRow label="Staff" value={staff?.displayName ?? '—'} />
-      {service?.timeMode === 'duration' ? (
+      {isDuration ? (
         <SummaryRow
           label="Attendee"
           value={
@@ -32,14 +56,11 @@ export function EventWizardStepSummary({ values }: EventWizardStepSummaryProps) 
           }
         />
       ) : null}
-      <SummaryRow
-        label="Weekdays"
-        value={weekdays.length > 0 ? formatWeekdaysLabel(weekdays) : '—'}
-      />
-      <SummaryRow
-        label="Range"
-        value={startsOn && recurrenceUntil ? `${startsOn} → ${recurrenceUntil}` : '—'}
-      />
+      {service?.timeMode === 'window' ? (
+        <SummaryRow label="Where" value={space?.name ?? '—'} />
+      ) : null}
+      <SummaryRow label={isDuration ? 'Schedule' : 'Weekdays'} value={scheduleLabel} />
+      <SummaryRow label={isDuration && recurrence === 'none' ? 'Date' : 'Range'} value={rangeLabel} />
       <SummaryRow label="Time" value={endHint} />
     </div>
   )

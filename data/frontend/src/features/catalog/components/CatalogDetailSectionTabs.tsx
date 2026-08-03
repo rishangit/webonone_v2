@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react'
 import { cn } from '@webonone/ui-kit'
 
-export type CatalogDetailTabId = 'profile' | 'attributes' | 'gallery' | 'variants'
+export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants'
 
 type CatalogDetailSectionTabsProps = {
   ariaLabel: string
   tab: CatalogDetailTabId
   onTabChange: (tab: CatalogDetailTabId) => void
-  profile: ReactNode
+  overview: ReactNode
   attributes: ReactNode
   gallery: ReactNode
   /** Products only — when omitted, Variants tab is hidden. */
@@ -18,13 +18,13 @@ export function CatalogDetailSectionTabs({
   ariaLabel,
   tab,
   onTabChange,
-  profile,
+  overview,
   attributes,
   gallery,
   variants,
 }: CatalogDetailSectionTabsProps) {
   const tabs: { id: CatalogDetailTabId; label: string }[] = [
-    { id: 'profile', label: 'Profile' },
+    { id: 'overview', label: 'Overview' },
     { id: 'gallery', label: 'Gallery' },
     { id: 'attributes', label: 'Attributes' },
   ]
@@ -33,8 +33,8 @@ export function CatalogDetailSectionTabs({
   }
 
   const panel =
-    tab === 'profile'
-      ? profile
+    tab === 'overview'
+      ? overview
       : tab === 'attributes'
         ? attributes
         : tab === 'gallery'

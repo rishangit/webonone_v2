@@ -29,6 +29,8 @@ type SendEmailParams = {
   payload: Record<string, string>
   requestedByService: 'identity' | 'webonone'
   companyId?: string
+  /** ISO datetime; when set, Email queues delivery for that time. */
+  scheduledAt?: string
 }
 
 export async function sendTransactionalEmail(params: SendEmailParams): Promise<void> {
@@ -47,6 +49,7 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<v
         toEmail: params.toEmail,
         payload: params.payload,
         companyId: params.companyId,
+        scheduledAt: params.scheduledAt,
         requestedByService: params.requestedByService,
       }),
     })

@@ -78,6 +78,10 @@ export type CatalogSessionItem = {
 
   companyId: string
 
+  spaceId: string | null
+
+  spaceName: string | null
+
 }
 
 

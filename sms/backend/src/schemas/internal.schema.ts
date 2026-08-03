@@ -13,6 +13,8 @@ export const internalSendBodySchema = z
     templateSlug: z.string().min(1).max(64).optional(),
     payload: z.record(z.string()).optional().default({}),
     companyId: z.string().length(21).optional(),
+    /** ISO datetime; when set, queue processes the message at/after this time. */
+    scheduledAt: z.string().datetime().optional(),
     requestedByService: z.enum(['identity', 'webonone']),
   })
   .refine((data) => Boolean(data.body) || Boolean(data.templateSlug), {

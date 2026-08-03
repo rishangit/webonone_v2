@@ -69,7 +69,7 @@ FeaturePage
 4. View: outer `<div className="grid …">`. Edit: same classes on `<Form id=… space-y-0>`.
 5. Match `DetailsPageDemo`.
 
-Wizard-backed details (Identity profile, company, services): [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md).
+Wizard-backed details (Identity profile, company, services — Overview `ImageCarousel` when gallery images exist): [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md).
 
 ## Forbidden (this pattern)
 

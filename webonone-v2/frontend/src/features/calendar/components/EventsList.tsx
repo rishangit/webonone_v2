@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -57,9 +58,15 @@ export function EventsList({ items, onRemoved }: EventsListProps) {
           <ItemListContent>
             <button
               type="button"
-              className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => openDetails(item.id)}
             >
+              <ImagePreview
+                src={item.serviceImageUrl}
+                alt={item.serviceName}
+                mode="view"
+                className="h-12 w-12"
+              />
               <div className="min-w-0 space-y-1">
                 <p className="truncate font-medium text-foreground">{item.serviceName}</p>
                 <p className="truncate text-xs text-muted-foreground">

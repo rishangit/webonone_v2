@@ -4,10 +4,10 @@ import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Avatar,
   Button,
   FeaturePage,
   FormField,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -43,14 +43,6 @@ import type { UserPickerRole } from '@/features/users/types'
 const ALL_ROLES_VALUE = '__all__'
 const SEARCH_DEBOUNCE_MS = 300
 const PAGE_SIZE_OPTIONS = [12, 24, 48]
-
-function getInitials(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
-  }
-  return displayName.slice(0, 2).toUpperCase()
-}
 
 function formatRoleLabel(role: string): string {
   return role
@@ -252,12 +244,11 @@ export function UsersPage() {
                         className="flex w-full items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         onClick={() => navigate(`/users/${user.id}`)}
                       >
-                        <Avatar
-                          size="sm"
+                        <ImagePreview
                           src={user.avatarUrl}
                           alt={user.displayName}
-                          fallback={getInitials(user.displayName)}
-                          className="shrink-0"
+                          mode="view"
+                          className="h-12 w-12"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium">{user.displayName}</p>

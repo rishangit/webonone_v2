@@ -106,6 +106,22 @@ export async function findServingToken(
     .first()
 }
 
+export async function findLastCompletedToken(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<CompanyEventSessionTokenRow | undefined> {
+  return db<CompanyEventSessionTokenRow>('company_event_session_tokens')
+    .where({
+      company_id: companyId,
+      event_id: eventId,
+      occurrence_date: occurrenceDate,
+      status: 'completed',
+    })
+    .orderBy('token_number', 'desc')
+    .first()
+}
+
 export async function insertToken(row: {
   id: string
   company_id: string

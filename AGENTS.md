@@ -25,7 +25,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | [form-creation](.cursor/skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
 | [item-list](.cursor/skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
 | [details-page-cards](.cursor/skills/details-page-cards/SKILL.md) | Profile/details pages: `Card` sections in 3-col left(2)+right(1) stacks, equal `gap-6`, page-level Edit |
-| [details-page-wizard-edit](.cursor/skills/details-page-wizard-edit/SKILL.md) | Wizard-backed details: per-card Edit opens shared create/edit wizard at mapped step |
+| [details-page-wizard-edit](.cursor/skills/details-page-wizard-edit/SKILL.md) | Wizard-backed details: Overview `ImageCarousel` when images exist; per-card Edit → shared wizard |
 | [feature-store](.cursor/skills/feature-store/SKILL.md) | List/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 | [toast-notifications](.cursor/skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
 

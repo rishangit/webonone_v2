@@ -8,9 +8,16 @@ const dateYmd = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format')
 
+export const eventRecurrenceSchema = z.enum([
+  'none',
+  'weekly',
+  'biweekly',
+  'monthly_first_week',
+  'monthly_by_date',
+])
+
 const weekdaysSchema = z
   .array(z.number().int().min(0).max(6))
-  .min(1, 'Select at least one weekday')
   .refine((days) => new Set(days).size === days.length, {
     message: 'Weekdays must be unique',
   })
@@ -22,11 +29,13 @@ export const createCompanyEventBodySchema = z
     attendee_user_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_display_name: z.string().trim().min(1).max(255).nullable().optional(),
     attendee_email: z.string().trim().email().max(255).nullable().optional(),
+    /** Required for Specific time (window) services; ignored for duration. */
+    space_id: z.string().trim().min(1).max(21).nullable().optional(),
     starts_on: dateYmd,
     /** Required for duration services; ignored for window (taken from service). */
     start_time: timeHhMm.optional(),
-    weekdays: weekdaysSchema,
-    recurrence: z.enum(['none', 'weekly']).default('weekly'),
+    weekdays: weekdaysSchema.default([]),
+    recurrence: eventRecurrenceSchema.default('weekly'),
     recurrence_until: dateYmd,
   })
   .superRefine((body, ctx) => {
@@ -34,6 +43,13 @@ export const createCompanyEventBodySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'End date must be on or after the start date',
+        path: ['recurrence_until'],
+      })
+    }
+    if (body.recurrence === 'none' && body.recurrence_until !== body.starts_on) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Single events must end on the start date',
         path: ['recurrence_until'],
       })
     }
@@ -46,10 +62,11 @@ export const updateCompanyEventBodySchema = z
     attendee_user_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_display_name: z.string().trim().min(1).max(255).nullable().optional(),
     attendee_email: z.string().trim().email().max(255).nullable().optional(),
+    space_id: z.string().trim().min(1).max(21).nullable().optional(),
     starts_on: dateYmd.optional(),
     start_time: timeHhMm.optional(),
     weekdays: weekdaysSchema.optional(),
-    recurrence: z.enum(['none', 'weekly']).optional(),
+    recurrence: eventRecurrenceSchema.optional(),
     recurrence_until: dateYmd.nullable().optional(),
   })
   .superRefine((body, ctx) => {
@@ -57,6 +74,18 @@ export const updateCompanyEventBodySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'End date must be on or after the start date',
+        path: ['recurrence_until'],
+      })
+    }
+    if (
+      body.recurrence === 'none' &&
+      body.recurrence_until &&
+      body.starts_on &&
+      body.recurrence_until !== body.starts_on
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Single events must end on the start date',
         path: ['recurrence_until'],
       })
     }

@@ -1,10 +1,12 @@
 import {
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
   SearchInput,
+  cn,
 } from '@webonone/ui-kit'
 import { Check } from 'lucide-react'
 import { formatWorkingDaysSummary } from '@/features/staff/schemas/staffSchemas'
@@ -55,21 +57,40 @@ export function EventWizardStepStaff({
             return (
               <ItemListItem
                 key={item.id}
-                className={active ? itemListRowActiveClassName : undefined}
+                role="option"
+                tabIndex={0}
+                aria-selected={active}
+                className={cn(
+                  'cursor-pointer transition-colors',
+                  active && itemListRowActiveClassName,
+                )}
+                aria-label={`Select ${item.displayName}`}
+                onClick={() => onSelect(item)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    onSelect(item)
+                  }
+                }}
               >
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 text-left"
-                  onClick={() => onSelect(item)}
-                >
-                  <ItemListContent>
-                    <p className="font-medium">{item.displayName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatWorkingDaysSummary(item.schedule)}
-                    </p>
-                  </ItemListContent>
-                  {active ? <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden /> : null}
-                </button>
+                <ImagePreview
+                  src={item.avatarUrl}
+                  alt={item.displayName}
+                  mode="view"
+                  className="h-12 w-12"
+                />
+                <ItemListContent>
+                  <p className="truncate font-medium">{item.displayName}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {formatWorkingDaysSummary(item.schedule)}
+                  </p>
+                </ItemListContent>
+                {active ? (
+                  <Check
+                    className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
+                    aria-hidden
+                  />
+                ) : null}
               </ItemListItem>
             )
           })}

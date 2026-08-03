@@ -14,6 +14,8 @@ export interface EnqueueInput {
   companyId?: string | null
   priority?: number
   maxRetries?: number
+  /** When set, the worker sends at/after this time instead of immediately. */
+  scheduledAt?: Date | string | null
 }
 
 export interface QueueItemDto {
@@ -134,7 +136,7 @@ export async function enqueue(input: EnqueueInput): Promise<{ queueId: string; s
     retry_count: 0,
     max_retries: input.maxRetries ?? 3,
     priority: input.priority ?? 0,
-    scheduled_at: db.fn.now(3),
+    scheduled_at: input.scheduledAt ? new Date(input.scheduledAt) : db.fn.now(3),
     dispatched_at: null,
     processed_at: null,
     last_error: null,

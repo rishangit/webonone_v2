@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ImageCarousel,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { EditableSectionCard } from '@/features/calendar/components/EditableSectionCard'
@@ -21,17 +22,18 @@ import {
 import { EventFormDialog } from '@/features/calendar/components/EventFormDialog'
 import { EventSessionsList } from '@/features/calendar/components/EventSessionsList'
 import {
+  formatRecurrenceLabel,
   formatTimeModeLabel,
   formatWeekdaysLabel,
   type EventWizardStep,
 } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions } from '@/features/calendar/store'
-import type { CompanyEvent } from '@/features/calendar/types/event.types'
+import type { CompanyEvent, EventGalleryImage } from '@/features/calendar/types/event.types'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 
-const EVENT_DETAIL_TABS = ['details', 'sessions'] as const satisfies readonly EventDetailTabId[]
+const EVENT_DETAIL_TABS = ['overview', 'sessions'] as const satisfies readonly EventDetailTabId[]
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -40,6 +42,20 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-foreground">{value}</p>
     </div>
   )
+}
+
+function combineEventGalleryImages(detail: CompanyEvent): EventGalleryImage[] {
+  const seen = new Set<string>()
+  const combined: EventGalleryImage[] = []
+  for (const image of [
+    ...(detail.serviceGalleryImages ?? []),
+    ...(detail.spaceGalleryImages ?? []),
+  ]) {
+    if (!image.mediaId || seen.has(image.mediaId)) continue
+    seen.add(image.mediaId)
+    combined.push(image)
+  }
+  return combined
 }
 
 export function EventDetailsPage() {
@@ -54,7 +70,7 @@ export function EventDetailsPage() {
   const detailError = useAppSelector((s) => s.events.detailError)
 
   const [dialog, setDialog] = useState<{ initialStep: EventWizardStep } | null>(null)
-  const [tab, setTab] = useDetailTabParam(EVENT_DETAIL_TABS, 'details')
+  const [tab, setTab] = useDetailTabParam(EVENT_DETAIL_TABS, 'overview')
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? 'Loading event…' : null)
@@ -117,10 +133,19 @@ export function EventDetailsPage() {
   }
 
   const showAttendee = isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
+  const overviewGalleryImages = combineEventGalleryImages(detail)
 
-  const detailsPanel = (
+  const overviewPanel = (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
+        {overviewGalleryImages.length > 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <ImageCarousel images={overviewGalleryImages} alt={detail.serviceName} />
+            </CardContent>
+          </Card>
+        ) : null}
+
         <EditableSectionCard
           title="Service"
           description="Catalog service for this event"
@@ -133,17 +158,41 @@ export function EventDetailsPage() {
 
         <EditableSectionCard
           title="When"
-          description="Weekdays, date range, and times"
+          description={
+            isDuration ? 'Date, start time, and optional recurrence' : 'Weekdays, date range, and times'
+          }
           canEdit={canEdit}
-          onEdit={() => openWizard(isDuration ? 4 : 3)}
+          onEdit={() => openWizard(4)}
         >
-          <DetailField
-            label="Weekdays"
-            value={detail.weekdays.length > 0 ? formatWeekdaysLabel(detail.weekdays) : '—'}
-          />
-          <DetailField label="From" value={detail.startsOn} />
-          <DetailField label="Until" value={detail.recurrenceUntil ?? '—'} />
-          <DetailField label="Time" value={`${detail.startTime}–${detail.endTime}`} />
+          {isDuration ? (
+            <>
+              <DetailField
+                label="Schedule"
+                value={formatRecurrenceLabel(detail.recurrence, {
+                  startsOn: detail.startsOn,
+                  weekdays: detail.weekdays,
+                })}
+              />
+              <DetailField
+                label={detail.recurrence === 'none' ? 'Date' : 'From'}
+                value={detail.startsOn}
+              />
+              {detail.recurrence !== 'none' ? (
+                <DetailField label="Until" value={detail.recurrenceUntil ?? '—'} />
+              ) : null}
+              <DetailField label="Time" value={`${detail.startTime}–${detail.endTime}`} />
+            </>
+          ) : (
+            <>
+              <DetailField
+                label="Weekdays"
+                value={detail.weekdays.length > 0 ? formatWeekdaysLabel(detail.weekdays) : '—'}
+              />
+              <DetailField label="From" value={detail.startsOn} />
+              <DetailField label="Until" value={detail.recurrenceUntil ?? '—'} />
+              <DetailField label="Time" value={`${detail.startTime}–${detail.endTime}`} />
+            </>
+          )}
         </EditableSectionCard>
       </div>
 
@@ -156,6 +205,17 @@ export function EventDetailsPage() {
         >
           <DetailField label="Name" value={detail.staffDisplayName} />
         </EditableSectionCard>
+
+        {!isDuration ? (
+          <EditableSectionCard
+            title="Where"
+            description="Space where this event happens"
+            canEdit={canEdit}
+            onEdit={() => openWizard(3)}
+          >
+            <DetailField label="Space" value={detail.spaceName ?? '—'} />
+          </EditableSectionCard>
+        ) : null}
 
         {showAttendee ? (
           <EditableSectionCard
@@ -209,7 +269,7 @@ export function EventDetailsPage() {
         ariaLabel="Event sections"
         tab={tab}
         onTabChange={setTab}
-        details={detailsPanel}
+        overview={overviewPanel}
         sessions={<EventSessionsList event={detail} />}
       />
 

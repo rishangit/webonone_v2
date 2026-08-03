@@ -293,6 +293,16 @@ export async function findById(
   return db(CATALOG_TABLE_BY_KIND[kind]).where({ id, company_id: companyId }).first()
 }
 
+export async function findByIds(
+  companyId: string,
+  kind: CatalogEntityKind,
+  ids: string[],
+): Promise<Record<string, unknown>[]> {
+  const unique = [...new Set(ids.filter(Boolean))]
+  if (unique.length === 0) return []
+  return db(CATALOG_TABLE_BY_KIND[kind]).where({ company_id: companyId }).whereIn('id', unique)
+}
+
 export async function findByLibraryId(
   companyId: string,
   kind: CatalogEntityKind,

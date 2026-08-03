@@ -12,9 +12,9 @@ import {
 import {
   Alert,
   AlertDescription,
-  Avatar,
   Button,
   SearchInput,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -38,14 +38,6 @@ import type { UserPickerRole, UserPickerUser } from '@/features/users/types'
 const ALL_ROLES_VALUE = '__all__'
 const SEARCH_DEBOUNCE_MS = 300
 const PAGE_SIZE = 20
-
-function getInitials(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
-  }
-  return displayName.slice(0, 2).toUpperCase()
-}
 
 function formatRoleLabel(role: string): string {
   return role
@@ -356,12 +348,11 @@ export function UserPickerPage() {
                     }
                   }}
                 >
-                  <Avatar
-                    size="sm"
+                  <ImagePreview
                     src={user.avatarUrl}
                     alt={user.displayName}
-                    fallback={getInitials(user.displayName)}
-                    className="shrink-0"
+                    mode="view"
+                    className="h-12 w-12"
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>

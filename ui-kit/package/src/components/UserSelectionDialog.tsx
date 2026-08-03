@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Plus } from 'lucide-react'
 import { Alert, AlertDescription } from './Alert'
-import { Avatar } from './Avatar'
 import { Button } from './Button'
 import { CustomDialog } from './CustomDialog'
+import { ImagePreview } from './ImagePreview'
 import { SearchInput } from './SearchInput'
 import {
   ItemList,
@@ -77,14 +77,6 @@ export interface UserSelectionDialogProps {
 
 const ALL_ROLES_VALUE = '__all__'
 const SEARCH_DEBOUNCE_MS = 300
-
-function getInitials(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
-  }
-  return displayName.slice(0, 2).toUpperCase()
-}
 
 function formatRoleLabel(role: string): string {
   return role
@@ -346,12 +338,11 @@ export function UserSelectionDialog({
                     }
                   }}
                 >
-                  <Avatar
-                    size="sm"
-                    src={user.avatarUrl}
+                  <ImagePreview
+                    src={user.avatarUrl ?? null}
                     alt={user.displayName}
-                    fallback={getInitials(user.displayName)}
-                    className="shrink-0"
+                    mode="view"
+                    className="h-12 w-12"
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>

@@ -11,6 +11,7 @@ import {
   ItemListItem,
   itemListRowActiveClassName,
 } from './ItemList'
+import { ImagePreview } from './ImagePreview'
 import { Spinner } from './Spinner'
 import { cn } from '../lib/utils'
 
@@ -18,6 +19,7 @@ export interface ServiceOption {
   id: string
   name: string
   description?: string | null
+  imageUrl?: string | null
 }
 
 export interface ServiceSelectionLoadParams {
@@ -47,6 +49,7 @@ export interface ServiceSelectionDialogProps {
   loadServices: LoadServicesFn
   title?: string
   description?: string
+  searchPlaceholder?: string
   pageSize?: number
   emptyMessage?: string
   id?: string
@@ -70,6 +73,7 @@ export function ServiceSelectionDialog({
   loadServices,
   title = 'Select service',
   description,
+  searchPlaceholder = 'Search services…',
   pageSize = 20,
   emptyMessage = 'No services found',
   id = 'service-selection-dialog',
@@ -236,8 +240,8 @@ export function ServiceSelectionDialog({
         <SearchInput
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          placeholder="Search services…"
-          aria-label="Search services"
+          placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder.replace(/…$/, '')}
           className="flex-1"
         />
       </div>
@@ -288,6 +292,12 @@ export function ServiceSelectionDialog({
                     }
                   }}
                 >
+                  <ImagePreview
+                    src={service.imageUrl ?? null}
+                    alt={service.name}
+                    mode="view"
+                    className="h-12 w-12"
+                  />
                   <ItemListContent>
                     <p className="truncate font-medium">{service.name}</p>
                     {service.description?.trim() ? (

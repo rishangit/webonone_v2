@@ -78,6 +78,29 @@ export async function getLibraryService(
   return (await res.json()) as DataLibraryService
 }
 
+/** Fetch a Data library catalog item (e.g. space) using the caller's JWT. */
+export async function getLibraryCatalogItem(
+  kind: CatalogKind,
+  libraryEntityId: string,
+  accessToken: string,
+): Promise<DataLibraryCatalogItem | null> {
+  const res = await fetch(
+    `${apiBase()}/api/v1/${kind}/${encodeURIComponent(libraryEntityId)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+  if (res.status === 404) return null
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Data library get ${kind} failed (${res.status}): ${text}`)
+  }
+  return (await res.json()) as DataLibraryCatalogItem
+}
+
 async function internalGet<T>(path: string, searchParams: URLSearchParams): Promise<T | null> {
   if (!hasInternalConfig()) return null
   try {

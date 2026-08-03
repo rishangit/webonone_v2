@@ -6,6 +6,7 @@ export interface CompanyStaffRow {
   user_id: string
   display_name: string
   email: string | null
+  avatar_url: string | null
   created_at: Date
   updated_at: Date
 }
@@ -59,6 +60,7 @@ export async function insertStaff(row: {
   user_id: string
   display_name: string
   email: string | null
+  avatar_url: string | null
 }): Promise<CompanyStaffRow> {
   await db('company_staff').insert({
     ...row,
@@ -73,7 +75,12 @@ export async function insertStaff(row: {
 export async function updateStaff(
   companyId: string,
   staffId: string,
-  patch: { user_id?: string; display_name?: string; email?: string | null },
+  patch: {
+    user_id?: string
+    display_name?: string
+    email?: string | null
+    avatar_url?: string | null
+  },
 ): Promise<CompanyStaffRow | undefined> {
   await db('company_staff')
     .where({ id: staffId, company_id: companyId })

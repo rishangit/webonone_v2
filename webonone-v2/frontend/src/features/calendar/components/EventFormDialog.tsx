@@ -20,12 +20,15 @@ import { EventWizardStepService } from '@/features/calendar/components/event-wiz
 import { EventWizardStepStaff } from '@/features/calendar/components/event-wizard/EventWizardStepStaff'
 import { EventWizardStepSummary } from '@/features/calendar/components/event-wizard/EventWizardStepSummary'
 import { EventWizardStepWhen } from '@/features/calendar/components/event-wizard/EventWizardStepWhen'
+import { EventWizardStepWhere } from '@/features/calendar/components/event-wizard/EventWizardStepWhere'
 import {
   EMPTY_EVENT_WIZARD_VALUES,
   eventWizardStepAttendeeSchema,
   eventWizardStepServiceSchema,
+  eventWizardStepSpaceSchema,
   eventWizardStepStaffSchema,
-  eventWizardStepWhenSchema,
+  eventWizardStepWhenDurationSchema,
+  eventWizardStepWhenWindowSchema,
   eventWizardTotalSteps,
   parseEventWizardStep,
   staffWorkingWeekdays,
@@ -33,11 +36,15 @@ import {
   toUpdateEventPayload,
   valuesFromEvent,
   type EventServiceOption,
+  type EventSpaceOption,
   type EventWizardFormValues,
   type EventWizardStep,
 } from '@/features/calendar/schemas/eventSchemas'
 import { eventsApi } from '@/features/calendar/services/eventsApi'
-import { createCompanyCatalogServicesLoader } from '@/features/calendar/services/serviceSelectionLoaders'
+import {
+  createCompanyCatalogServicesLoader,
+  createCompanyCatalogSpacesLoader,
+} from '@/features/calendar/services/serviceSelectionLoaders'
 import type { CompanyEvent } from '@/features/calendar/types/event.types'
 import { loadIdentityUsersForStaff } from '@/features/staff/services/identityUsersApi'
 import { staffApi } from '@/features/staff/services/staffApi'
@@ -90,17 +97,23 @@ export function EventFormDialog({
   const [staffList, setStaffList] = useState<CompanyStaff[]>([])
   const [staffSearch, setStaffSearch] = useState('')
   const [servicePickerOpen, setServicePickerOpen] = useState(false)
+  const [spacePickerOpen, setSpacePickerOpen] = useState(false)
   const [attendeePickerOpen, setAttendeePickerOpen] = useState(false)
   const serviceByIdRef = useRef(new Map<string, EventServiceOption>())
+  const spaceByIdRef = useRef(new Map<string, EventSpaceOption>())
   const loadServices = useMemo(
     () => createCompanyCatalogServicesLoader(serviceByIdRef.current),
+    [],
+  )
+  const loadSpaces = useMemo(
+    () => createCompanyCatalogSpacesLoader(spaceByIdRef.current),
     [],
   )
 
   const isDuration = values.service?.timeMode === 'duration'
   const stepTitles = useMemo(() => {
     if (isDuration) return ['Service', 'Staff', 'Attendee', 'When', 'Summary'] as const
-    return ['Service', 'Staff', 'When', 'Summary'] as const
+    return ['Service', 'Staff', 'Where', 'When', 'Summary'] as const
   }, [isDuration])
 
   const stepDescriptions = useMemo(() => {
@@ -109,13 +122,14 @@ export function EventFormDialog({
         'Select the company service for this event.',
         'Choose which staff member will deliver the service.',
         'Select the Identity user attending this event.',
-        'Select working weekdays and the From–Until range.',
+        'Pick the date and start time; optionally repeat weekly, biweekly, or monthly.',
         isNew ? 'Review and create the event.' : 'Review and save changes.',
       ] as const
     }
     return [
       'Select the company service for this event.',
       'Choose which staff member will deliver the service.',
+      'Choose the space where this Specific time event happens.',
       'Select working weekdays and the From–Until range (service time is fixed).',
       isNew ? 'Review and create the event.' : 'Review and save changes.',
     ] as const
@@ -130,8 +144,10 @@ export function EventFormDialog({
     setSaving(false)
     setStaffSearch('')
     setServicePickerOpen(false)
+    setSpacePickerOpen(false)
     setAttendeePickerOpen(false)
     serviceByIdRef.current.clear()
+    spaceByIdRef.current.clear()
 
     let cancelled = false
     setLoading(true)
@@ -165,6 +181,9 @@ export function EventFormDialog({
         const nextValues = valuesFromEvent(event, staff)
         if (nextValues.service) {
           serviceByIdRef.current.set(nextValues.service.id, nextValues.service)
+        }
+        if (nextValues.space) {
+          spaceByIdRef.current.set(nextValues.space.id, nextValues.space)
         }
         setValues(nextValues)
         const max = eventWizardTotalSteps(event.timeMode)
@@ -200,12 +219,12 @@ export function EventFormDialog({
     setValues((prev) => ({ ...prev, ...patch }))
   }
 
-  function currentStepKey(): 'service' | 'staff' | 'attendee' | 'when' | 'summary' {
+  function currentStepKey(): 'service' | 'staff' | 'attendee' | 'where' | 'when' | 'summary' {
     const index = step - 1
     if (isDuration) {
       return (['service', 'staff', 'attendee', 'when', 'summary'] as const)[index]!
     }
-    return (['service', 'staff', 'when', 'summary'] as const)[index]!
+    return (['service', 'staff', 'where', 'when', 'summary'] as const)[index]!
   }
 
   function validateCurrent(): boolean {
@@ -228,19 +247,33 @@ export function EventFormDialog({
         setFieldErrors(flattenZodFieldErrors(result.error.issues))
         return false
       }
+    } else if (key === 'where') {
+      const result = eventWizardStepSpaceSchema.safeParse({ space: values.space })
+      if (!result.success) {
+        setFieldErrors(flattenZodFieldErrors(result.error.issues))
+        return false
+      }
     } else if (key === 'when') {
       if (!values.staff) {
         setFieldErrors({ staff: 'Select a staff member first' })
         return false
       }
-      const result = eventWizardStepWhenSchema.safeParse({
-        startsOn: values.startsOn,
-        startTime: values.startTime,
-        weekdays: values.weekdays,
-        recurrenceUntil: values.recurrenceUntil,
-        timeMode: values.service?.timeMode ?? 'duration',
-        staffWorkingWeekdays: staffWorkingWeekdays(values.staff.schedule),
-      })
+      const working = staffWorkingWeekdays(values.staff.schedule)
+      const result =
+        values.service?.timeMode === 'window'
+          ? eventWizardStepWhenWindowSchema.safeParse({
+              startsOn: values.startsOn,
+              weekdays: values.weekdays,
+              recurrenceUntil: values.recurrenceUntil,
+              staffWorkingWeekdays: working,
+            })
+          : eventWizardStepWhenDurationSchema.safeParse({
+              startsOn: values.startsOn,
+              startTime: values.startTime,
+              recurrence: values.recurrence,
+              recurrenceUntil: values.recurrenceUntil,
+              staffWorkingWeekdays: working,
+            })
       if (!result.success) {
         setFieldErrors(flattenZodFieldErrors(result.error.issues))
         return false
@@ -291,7 +324,20 @@ export function EventFormDialog({
       ...prev,
       service,
       attendee: service.timeMode === 'window' ? null : prev.attendee,
+      space: service.timeMode === 'duration' ? null : prev.space,
       startTime: prev.startTime,
+      weekdays: service.timeMode === 'duration' ? [] : prev.weekdays,
+      recurrence:
+        service.timeMode === 'duration'
+          ? prev.service?.timeMode === 'duration'
+            ? prev.recurrence
+            : 'none'
+          : 'weekly',
+      recurrenceUntil:
+        service.timeMode === 'duration' &&
+        (prev.service?.timeMode !== 'duration' || prev.recurrence === 'none')
+          ? prev.startsOn
+          : prev.recurrenceUntil,
     }))
     setFieldErrors((prev) => {
       const next = { ...prev }
@@ -299,6 +345,18 @@ export function EventFormDialog({
       return next
     })
     setServicePickerOpen(false)
+  }
+
+  function handleSpaceSelect(option: ServiceOption) {
+    const space = spaceByIdRef.current.get(option.id)
+    if (!space) return
+    patchValues({ space })
+    setFieldErrors((prev) => {
+      const next = { ...prev }
+      delete next.space
+      return next
+    })
+    setSpacePickerOpen(false)
   }
 
   function handleUserSelect(user: UserOption) {
@@ -335,7 +393,7 @@ export function EventFormDialog({
         title={stepTitles[step - 1]}
         description={stepDescriptions[step - 1]}
         {...DIALOG_SIZE}
-        nestedDismissGuard={servicePickerOpen || attendeePickerOpen}
+        nestedDismissGuard={servicePickerOpen || spacePickerOpen || attendeePickerOpen}
         footer={
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
@@ -419,6 +477,13 @@ export function EventFormDialog({
                   error={fieldErrors.attendee}
                 />
               ) : null}
+              {stepKey === 'where' ? (
+                <EventWizardStepWhere
+                  space={values.space}
+                  onOpenPicker={() => setSpacePickerOpen(true)}
+                  error={fieldErrors.space}
+                />
+              ) : null}
               {stepKey === 'when' && values.service && values.staff ? (
                 <EventWizardStepWhen
                   service={values.service}
@@ -426,6 +491,7 @@ export function EventFormDialog({
                   startsOn={values.startsOn}
                   startTime={values.startTime}
                   weekdays={values.weekdays}
+                  recurrence={values.recurrence}
                   recurrenceUntil={values.recurrenceUntil}
                   onChange={(patch) => patchValues(patch)}
                   errors={fieldErrors}
@@ -446,6 +512,18 @@ export function EventFormDialog({
         emptyMessage="No services found. Add a company service first."
         chrome="dialog"
         onSelect={handleServiceSelect}
+      />
+
+      <ServiceSelectionDialog
+        open={spacePickerOpen}
+        onOpenChange={setSpacePickerOpen}
+        title="Select space"
+        description="Choose the company space where this event happens."
+        searchPlaceholder="Search spaces…"
+        loadServices={loadSpaces}
+        emptyMessage="No spaces found. Add a company space first."
+        chrome="dialog"
+        onSelect={handleSpaceSelect}
       />
 
       <UserSelectionDialog

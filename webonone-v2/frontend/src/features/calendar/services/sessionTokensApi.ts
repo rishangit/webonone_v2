@@ -46,6 +46,13 @@ export const sessionTokensApi = {
     )
   },
 
+  callPrevious(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/call-previous`,
+      { method: 'POST' },
+    )
+  },
+
   end(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
     return apiClient<SessionDetail>(
       `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/end`,

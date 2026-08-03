@@ -223,6 +223,7 @@ export function StaffFormDialog({
         id: user.id,
         displayName: user.displayName,
         email: user.email,
+        avatarUrl: user.avatarUrl ?? null,
       },
     }))
     setFieldErrors((prev) => {

@@ -8,6 +8,7 @@ import {
   Alert,
   AlertDescription,
   Button,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -31,6 +32,11 @@ import {
   type CatalogEntityKind,
   type CatalogPayload,
 } from '../types/companyCatalog.types'
+import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
+
+function kindShowsThumbnail(kind: CatalogEntityKind): boolean {
+  return kind === 'products' || kind === 'services' || kind === 'spaces'
+}
 
 export type LibraryPickInput = {
   libraryEntityId: string
@@ -278,6 +284,14 @@ export function LibraryPickerPanel({
                     }
                   }}
                 >
+                  {kindShowsThumbnail(kind) ? (
+                    <ImagePreview
+                      src={firstGalleryImageUrl(item.galleryImages)}
+                      alt={item.name}
+                      mode="view"
+                      className="h-12 w-12"
+                    />
+                  ) : null}
                   <ItemListContent>
                     <div className="font-medium">{item.name}</div>
                     {item.description ? (

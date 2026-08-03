@@ -11,15 +11,24 @@ export interface CompanyEventRow {
   attendee_user_id: string | null
   attendee_display_name: string | null
   attendee_email: string | null
+  space_id: string | null
+  space_name: string | null
   starts_on: string | Date
   start_time: string
   end_time: string
   weekdays: string | number[] | null
-  recurrence: 'none' | 'weekly'
+  recurrence:
+    | 'none'
+    | 'weekly'
+    | 'biweekly'
+    | 'monthly_first_week'
+    | 'monthly_by_date'
   recurrence_until: string | Date | null
   created_at: Date
   updated_at: Date
 }
+
+export type EventRecurrence = CompanyEventRow['recurrence']
 
 export function parseWeekdays(value: string | number[] | null | undefined): number[] {
   if (value == null) return []
@@ -80,11 +89,13 @@ export async function insertEvent(row: {
   attendee_user_id: string | null
   attendee_display_name: string | null
   attendee_email: string | null
+  space_id: string | null
+  space_name: string | null
   starts_on: string
   start_time: string
   end_time: string
   weekdays: number[]
-  recurrence: 'none' | 'weekly'
+  recurrence: EventRecurrence
   recurrence_until: string | null
 }): Promise<CompanyEventRow> {
   await db('company_events').insert({
@@ -110,11 +121,13 @@ export async function updateEvent(
     attendee_user_id: string | null
     attendee_display_name: string | null
     attendee_email: string | null
+    space_id: string | null
+    space_name: string | null
     starts_on: string
     start_time: string
     end_time: string
     weekdays: number[]
-    recurrence: 'none' | 'weekly'
+    recurrence: EventRecurrence
     recurrence_until: string | null
   }>,
 ): Promise<CompanyEventRow | undefined> {

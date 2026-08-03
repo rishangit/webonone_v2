@@ -73,7 +73,7 @@ actions={
 
 - Showcase: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` — `DetailsPageDemo`
 
-Wizard-backed details (per-card Edit): [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) — Data `ServiceDetailsPage`, WebOnOne `CompanyProfilePage`, Identity `ProfilePage`.
+Wizard-backed details (per-card Edit): [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) — Data `ServiceDetailsPage`, WebOnOne `CompanyCatalogDetailPage` / `EventDetailsPage`, Identity `ProfilePage`. Entities with gallery images must show Overview `ImageCarousel` (see that rule).
 
 ## Verification
 

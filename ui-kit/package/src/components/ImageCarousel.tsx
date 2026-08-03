@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react'
-import { Button } from '@webonone/ui-kit'
+import { Button } from './Button'
 
-export type CatalogCarouselImage = {
+export type ImageCarouselImage = {
   mediaId: string
   url: string
 }
 
-type CatalogDetailImageCarouselProps = {
-  images: CatalogCarouselImage[]
+export type ImageCarouselProps = {
+  images: ImageCarouselImage[]
   alt: string
 }
 
-export function CatalogDetailImageCarousel({ images, alt }: CatalogDetailImageCarouselProps) {
+export function ImageCarousel({ images, alt }: ImageCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const thumbStripRef = useRef<HTMLDivElement>(null)
 

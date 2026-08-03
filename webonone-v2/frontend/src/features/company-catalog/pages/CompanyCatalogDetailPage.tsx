@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
-  ImagePreview,
+  ImageCarousel,
   StatusTag,
   TagChip,
   type SelectTagValue,
@@ -35,10 +35,9 @@ import {
   type CatalogEntityKind,
   type CatalogPayload,
 } from '../types/companyCatalog.types'
-import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
 
 const CATALOG_TABS_BASE = [
-  'profile',
+  'overview',
   'gallery',
   'attributes',
 ] as const satisfies readonly CatalogDetailTabId[]
@@ -72,7 +71,7 @@ export function CompanyCatalogDetailPage() {
     () => (kind === 'products' ? CATALOG_TABS_WITH_VARIANTS : CATALOG_TABS_BASE),
     [kind],
   )
-  const [tab, setTab] = useDetailTabParam(allowedTabs, 'profile')
+  const [tab, setTab] = useDetailTabParam(allowedTabs, 'overview')
   const [editOpen, setEditOpen] = useState(false)
   const [pendingEditClose, setPendingEditClose] = useState(false)
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
@@ -160,9 +159,7 @@ export function CompanyCatalogDetailPage() {
   const listPath = `/data/${kind}`
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
   const entityPayload = detail?.payload ?? detail?.hydrated ?? null
-  const profileImageUrl = firstGalleryImageUrl(
-    detail?.displayGalleryImages ?? detail?.galleryImages,
-  )
+  const overviewGalleryImages = detail?.displayGalleryImages ?? detail?.galleryImages ?? []
 
   function openAttributesEdit() {
     if (kind === 'services') {
@@ -175,6 +172,13 @@ export function CompanyCatalogDetailPage() {
   const serviceProfile = detail && kind === 'services' ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
+        {showGalleryTabs && overviewGalleryImages.length > 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
+            </CardContent>
+          </Card>
+        ) : null}
         <EditableSectionCard
           title="Service"
           description="Name and description"
@@ -184,9 +188,6 @@ export function CompanyCatalogDetailPage() {
           canEdit={canEdit && !busy}
           onEdit={() => setServiceDialog({ initialStep: 1 })}
         >
-          {showGalleryTabs ? (
-            <ImagePreview src={profileImageUrl} alt={detail.displayName} className="h-40 w-40" />
-          ) : null}
           <ReadOnlyField label="Name" value={detail.displayName} />
           <ReadOnlyField
             label="Description"
@@ -279,6 +280,13 @@ export function CompanyCatalogDetailPage() {
   const genericProfile = detail && kind !== 'services' ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
+        {showGalleryTabs && overviewGalleryImages.length > 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
+            </CardContent>
+          </Card>
+        ) : null}
         <EditableSectionCard
           title={singularLabel(kind)}
           description="Name and description"
@@ -288,9 +296,6 @@ export function CompanyCatalogDetailPage() {
           canEdit={canEdit && !busy}
           onEdit={() => setEditOpen(true)}
         >
-          {showGalleryTabs ? (
-            <ImagePreview src={profileImageUrl} alt={detail.displayName} className="h-40 w-40" />
-          ) : null}
           <ReadOnlyField label="Name" value={detail.displayName} />
           <ReadOnlyField
             label="Description"
@@ -399,7 +404,7 @@ export function CompanyCatalogDetailPage() {
           ariaLabel={`${singularLabel(kind)} sections`}
           tab={tab}
           onTabChange={setTab}
-          profile={kind === 'services' ? serviceProfile : genericProfile}
+          overview={kind === 'services' ? serviceProfile : genericProfile}
           attributes={
             <CompanyCatalogAttributesTab
               kind={kind}

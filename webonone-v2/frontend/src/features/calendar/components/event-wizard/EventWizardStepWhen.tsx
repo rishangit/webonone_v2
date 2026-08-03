@@ -1,10 +1,25 @@
-import { Checkbox, DatePicker, FormField, Input, Label } from '@webonone/ui-kit'
 import {
+  Checkbox,
+  DatePicker,
+  FormField,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@webonone/ui-kit'
+import {
+  dayOfMonthOfYmd,
   formatWeekdaysLabel,
+  staffHoursForDate,
   staffHoursForWeekday,
   staffWorkingWeekdays,
+  type DurationRepeatFrequency,
   type EventServiceOption,
 } from '@/features/calendar/schemas/eventSchemas'
+import type { EventRecurrence } from '@/features/calendar/types/event.types'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
 
@@ -14,11 +29,13 @@ type EventWizardStepWhenProps = {
   startsOn: string
   startTime: string
   weekdays: number[]
+  recurrence: EventRecurrence
   recurrenceUntil: string
   onChange: (patch: {
     startsOn?: string
     startTime?: string
     weekdays?: number[]
+    recurrence?: EventRecurrence
     recurrenceUntil?: string
   }) => void
   errors: Record<string, string>
@@ -36,11 +53,149 @@ function toYmd(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-export function EventWizardStepWhen({
+function ordinal(n: number): string {
+  const mod100 = n % 100
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`
+  switch (n % 10) {
+    case 1:
+      return `${n}st`
+    case 2:
+      return `${n}nd`
+    case 3:
+      return `${n}rd`
+    default:
+      return `${n}th`
+  }
+}
+
+function DurationWhenStep({
   service,
   staff,
   startsOn,
   startTime,
+  recurrence,
+  recurrenceUntil,
+  onChange,
+  errors,
+}: EventWizardStepWhenProps) {
+  const repeating = recurrence !== 'none'
+  const dayOfMonth = startsOn ? dayOfMonthOfYmd(startsOn) : null
+  const hoursHint = startsOn ? staffHoursForDate(staff.schedule, startsOn) : null
+
+  function setRepeat(enabled: boolean) {
+    if (!enabled) {
+      onChange({
+        recurrence: 'none',
+        recurrenceUntil: startsOn || '',
+      })
+      return
+    }
+    onChange({
+      recurrence: recurrence === 'none' ? 'weekly' : recurrence,
+      recurrenceUntil: recurrenceUntil || startsOn || '',
+    })
+  }
+
+  function setFrequency(value: DurationRepeatFrequency) {
+    onChange({ recurrence: value })
+  }
+
+  return (
+    <div className="space-y-4">
+      <FormField label="Date" htmlFor="event-starts-on" required error={errors.startsOn}>
+        <DatePicker
+          id="event-starts-on"
+          value={toDate(startsOn)}
+          onChange={(date) => {
+            const ymd = date ? toYmd(date) : ''
+            onChange({
+              startsOn: ymd,
+              ...(recurrence === 'none' ? { recurrenceUntil: ymd } : {}),
+            })
+          }}
+          withIcon
+          placeholder="Select date"
+        />
+      </FormField>
+
+      <FormField label="Start time" htmlFor="event-start-time" required error={errors.startTime}>
+        <Input
+          id="event-start-time"
+          type="time"
+          value={startTime}
+          onChange={(e) => onChange({ startTime: e.target.value })}
+        />
+        {hoursHint ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Must fit staff hours on this day: {hoursHint.start}–{hoursHint.end}
+            {service.durationMinutes != null
+              ? ` · ends after ${service.durationMinutes} min`
+              : null}
+          </p>
+        ) : startsOn ? (
+          <p className="mt-1 text-xs text-destructive">Staff is not working on this date.</p>
+        ) : null}
+      </FormField>
+
+      <label htmlFor="event-repeat" className="flex cursor-pointer items-center gap-3">
+        <Checkbox
+          id="event-repeat"
+          checked={repeating}
+          onCheckedChange={(value) => setRepeat(value === true)}
+        />
+        <span className="text-sm font-medium">Repeat this event</span>
+      </label>
+
+      {repeating ? (
+        <div className="space-y-4 rounded-md border border-border p-3">
+          <FormField label="Frequency" htmlFor="event-frequency" required error={errors.recurrence}>
+            <Select
+              value={recurrence}
+              onValueChange={(value) => setFrequency(value as DurationRepeatFrequency)}
+            >
+              <SelectTrigger id="event-frequency" className="w-full">
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Every week</SelectItem>
+                <SelectItem value="biweekly">Every two weeks</SelectItem>
+                <SelectItem value="monthly_first_week">Every month (first week)</SelectItem>
+                <SelectItem value="monthly_by_date">
+                  {dayOfMonth != null
+                    ? `Every month on the ${ordinal(dayOfMonth)}`
+                    : 'Every month on day of month'}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+
+          <FormField
+            label="Until"
+            htmlFor="event-recurrence-until"
+            required
+            error={errors.recurrenceUntil}
+          >
+            <DatePicker
+              id="event-recurrence-until"
+              value={toDate(recurrenceUntil)}
+              onChange={(date) => onChange({ recurrenceUntil: date ? toYmd(date) : '' })}
+              withIcon
+              placeholder="Series end"
+            />
+          </FormField>
+          <p className="text-xs text-muted-foreground">
+            Same start time on each occurrence through the end date.
+          </p>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function WindowWhenStep({
+  service,
+  staff,
+  startsOn,
   weekdays,
   recurrenceUntil,
   onChange,
@@ -55,14 +210,6 @@ export function EventWizardStepWhen({
       : weekdays.filter((d) => d !== day)
     onChange({ weekdays: next })
   }
-
-  const hoursHints = weekdays
-    .map((day) => {
-      const hours = staffHoursForWeekday(staff.schedule, day)
-      if (!hours) return null
-      return `${DAY_LABELS[day]?.slice(0, 3)} ${hours.start}–${hours.end}`
-    })
-    .filter(Boolean)
 
   return (
     <div className="space-y-4">
@@ -133,28 +280,19 @@ export function EventWizardStepWhen({
         from the start date through the end date.
       </p>
 
-      {service.timeMode === 'window' ? (
-        <div className="rounded-md border border-border p-3 text-sm">
-          <p className="font-medium">Service time</p>
-          <p className="text-muted-foreground">
-            {service.startTime ?? '—'}–{service.endTime ?? '—'}
-          </p>
-        </div>
-      ) : (
-        <FormField label="Start time" htmlFor="event-start-time" required error={errors.startTime}>
-          <Input
-            id="event-start-time"
-            type="time"
-            value={startTime}
-            onChange={(e) => onChange({ startTime: e.target.value })}
-          />
-          {hoursHints.length > 0 ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Must fit staff hours on every selected day: {hoursHints.join(' · ')}
-            </p>
-          ) : null}
-        </FormField>
-      )}
+      <div className="rounded-md border border-border p-3 text-sm">
+        <p className="font-medium">Service time</p>
+        <p className="text-muted-foreground">
+          {service.startTime ?? '—'}–{service.endTime ?? '—'}
+        </p>
+      </div>
     </div>
   )
+}
+
+export function EventWizardStepWhen(props: EventWizardStepWhenProps) {
+  if (props.service.timeMode === 'duration') {
+    return <DurationWhenStep {...props} />
+  }
+  return <WindowWhenStep {...props} />
 }

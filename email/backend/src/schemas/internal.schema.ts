@@ -5,7 +5,10 @@ export const internalSendBodySchema = z.object({
   toEmail: z.string().email(),
   payload: z.record(z.string()),
   companyId: z.string().length(21).optional(),
+  /** ISO datetime; when set, queue processes the message at/after this time. */
+  scheduledAt: z.string().datetime().optional(),
   requestedByService: z.enum(['identity', 'webonone']),
 })
+
 
 export type InternalSendBody = z.infer<typeof internalSendBodySchema>

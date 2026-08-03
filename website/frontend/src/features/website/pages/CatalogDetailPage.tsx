@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Ticket } from 'lucide-react'
 import {
@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ImageCarousel,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -21,7 +22,6 @@ import {
   type CatalogSessionItem,
 } from '@/features/catalog/types/catalog.types'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
-import { CatalogDetailImageCarousel } from '@/features/website/components/CatalogDetailImageCarousel'
 import { CatalogSearchMapView } from '@/features/website/components/CatalogSearchMapView'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
@@ -112,6 +112,16 @@ export function CatalogDetailPage() {
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionsError, setSessionsError] = useState<string | null>(null)
   const [bookingTarget, setBookingTarget] = useState<BookingTarget | null>(null)
+
+  const sessionSpaces = useMemo(() => {
+    const byId = new Map<string, string>()
+    for (const session of sessions) {
+      if (session.spaceId && session.spaceName?.trim()) {
+        byId.set(session.spaceId, session.spaceName.trim())
+      }
+    }
+    return [...byId.entries()].map(([spaceId, spaceName]) => ({ spaceId, spaceName }))
+  }, [sessions])
 
   useEffect(() => {
     if (!kind || !id.trim()) {
@@ -297,7 +307,7 @@ export function CatalogDetailPage() {
                       <CardDescription>Basic details for this offering.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <CatalogDetailImageCarousel images={detailImages(item)} alt={item.name} />
+                      <ImageCarousel images={detailImages(item)} alt={item.name} />
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
                           {KIND_LABEL[item.kind]}
@@ -427,6 +437,33 @@ export function CatalogDetailPage() {
                   {item.kind === 'services' && item.timeMode === 'window' ? (
                     <Card>
                       <CardHeader>
+                        <CardTitle className="text-lg">Where</CardTitle>
+                        <CardDescription>
+                          Space where upcoming Specific time sessions happen.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {sessionsLoading ? (
+                          <p className="text-sm text-muted-foreground">Loading…</p>
+                        ) : sessionSpaces.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No space has been set for upcoming sessions yet.
+                          </p>
+                        ) : (
+                          sessionSpaces.map((space) => (
+                            <div key={space.spaceId}>
+                              <p className="text-xs font-medium text-muted-foreground">Space</p>
+                              <p className="text-sm text-foreground">{space.spaceName}</p>
+                            </div>
+                          ))
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : null}
+
+                  {item.kind === 'services' && item.timeMode === 'window' ? (
+                    <Card>
+                      <CardHeader>
                         <CardTitle className="text-lg">Sessions</CardTitle>
                         <CardDescription>
                           Book a queue token for an upcoming Specific time session.
@@ -454,6 +491,9 @@ export function CatalogDetailPage() {
                                       <p className="truncate text-xs text-muted-foreground">
                                         {weekdayLabel(session.occurrenceDate)} ·{' '}
                                         {session.startTime}–{session.endTime}
+                                        {session.spaceName?.trim()
+                                          ? ` · ${session.spaceName.trim()}`
+                                          : ''}
                                       </p>
                                     </div>
                                     <Button

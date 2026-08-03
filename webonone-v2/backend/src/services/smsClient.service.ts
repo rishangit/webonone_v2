@@ -54,6 +54,8 @@ type SendSmsParams = {
   payload?: Record<string, string>
   requestedByService: 'identity' | 'webonone'
   companyId?: string
+  /** ISO datetime; when set, SMS queues delivery for that time. */
+  scheduledAt?: string
 }
 
 /** Enqueue a transactional SMS via the SMS service internal API. Best-effort. */
@@ -64,6 +66,7 @@ export async function sendTransactionalSms(params: SendSmsParams): Promise<boole
     body: params.body,
     payload: params.payload ?? {},
     companyId: params.companyId,
+    scheduledAt: params.scheduledAt,
     requestedByService: params.requestedByService,
   })
   return Boolean(response?.ok)

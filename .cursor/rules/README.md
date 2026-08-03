@@ -34,7 +34,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [front-end-structure.mdc](front-end-structure.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `src/` layout, feature modules, `shared/` boundaries |
 | [feature-page-layout.mdc](feature-page-layout.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}` | `FeaturePage` / `PageHeader` for AppShell feature pages |
 | [details-page-cards.mdc](details-page-cards.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `ui-kit/showcase/src/pages/**/*.{ts,tsx}` | Card-based details/profile pages — 3-col stacks, equal `gap-6`, **page-level** Edit |
-| [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `**/…/*Dialog*.{ts,tsx}`, showcase pages | Wizard-backed details — per-card Edit → shared create/edit wizard; section `?tab=` sync |
+| [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `**/…/*Dialog*.{ts,tsx}`, showcase pages | Wizard-backed details — Overview `ImageCarousel` when images exist; per-card Edit → shared wizard; `?tab=` sync |
 | [item-list-pagination.mdc](item-list-pagination.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `Pagination` below `ItemList` on collection pages |
 | [list-filter-panel.mdc](list-filter-panel.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `SearchInput` + `ListFilterPanel` + trigger on collection pages |
 | [loading-empty-states.mdc](loading-empty-states.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Unified platform loading overlay; `LoadingState`; `ItemListEmpty` |
@@ -76,7 +76,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | [form-creation](../skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
 | [item-list](../skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
 | [details-page-cards](../skills/details-page-cards/SKILL.md) | Profile/details pages: `Card` sections in 3-col left(2)+right(1) stacks, equal `gap-6`, page-level Edit |
-| [details-page-wizard-edit](../skills/details-page-wizard-edit/SKILL.md) | Wizard-backed details: per-card Edit opens shared create/edit wizard at mapped step; section `?tab=` sync |
+| [details-page-wizard-edit](../skills/details-page-wizard-edit/SKILL.md) | Wizard-backed details: Overview `ImageCarousel`; per-card Edit → shared wizard at mapped step; `?tab=` sync |
 | [feature-store](../skills/feature-store/SKILL.md) | Standard list/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 | [toast-notifications](../skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
 
@@ -94,7 +94,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Feature folders, `@/shared` between features | `front-end-structure.mdc` |
 | Feature page layout (`FeaturePage`, `PageHeader`) | `feature-page-layout.mdc` |
 | Details / profile card grid (`Card` 2+1 stacks) | `details-page-cards.mdc` |
-| Wizard-backed details (per-card Edit → shared wizard) | [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc), [skill](../skills/details-page-wizard-edit/SKILL.md) |
+| Wizard-backed details (per-card Edit → shared wizard; Overview `ImageCarousel`) | [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc), [skill](../skills/details-page-wizard-edit/SKILL.md) |
 | Slices, epics, `rootEpic` | `redux-store-and-epics.mdc` |
 | Shared CRUD store factories (`@webonone/store-kit`) | `redux-store-and-epics.mdc`, [feature-store skill](../skills/feature-store/SKILL.md) |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
@@ -107,7 +107,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
 | Selection / picker dialog selected rows (Check icon) | [selection-dialog-list.mdc](selection-dialog-list.mdc) |
 | Details / profile card pages (3-col Card stacks, page-level Edit) | [details-page-cards skill](../skills/details-page-cards/SKILL.md), `details-page-cards.mdc` |
-| Details section Edit → create/edit wizard | [details-page-wizard-edit skill](../skills/details-page-wizard-edit/SKILL.md), `details-page-wizard-edit.mdc` |
+| Details section Edit → create/edit wizard; Overview `ImageCarousel` | [details-page-wizard-edit skill](../skills/details-page-wizard-edit/SKILL.md), `details-page-wizard-edit.mdc` |
 | Loading and empty states (unified overlay, `LoadingState`, `ItemListEmpty`) | [loading-empty-states.mdc](loading-empty-states.mdc) |
 | Dialog box / dialog window (any create/edit/wizard/selection) | `dialog-windows.mdc` + [core-hosted-peer-dialog skill](../skills/core-hosted-peer-dialog/SKILL.md) (unless Media picker/crop) |
 | Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |

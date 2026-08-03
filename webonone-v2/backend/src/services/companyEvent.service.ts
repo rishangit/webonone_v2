@@ -4,7 +4,11 @@ import type {
   CreateSessionTokenBody,
   UpdateCompanyEventBody,
 } from '../schemas/companyEventSchemas.js'
-import { getLibraryService } from '../clients/dataCatalogClient.js'
+import {
+  getLibraryCatalogItem,
+  getLibraryService,
+  listLibraryItemsByIds,
+} from '../clients/dataCatalogClient.js'
 import * as eventRepo from '../repositories/companyEvent.repository.js'
 import * as sessionRunRepo from '../repositories/companyEventSessionRun.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
@@ -16,23 +20,42 @@ import {
   notifySessionTokenCalled,
   notifySessionTokenIssued,
 } from './sessionTokenNotify.service.js'
+import { notifyAppointmentBooked } from './appointmentNotify.service.js'
+
+export type EventGalleryImage = {
+  mediaId: string
+  url: string
+}
 
 export type CompanyEventDto = {
   id: string
   companyId: string
   serviceId: string
   serviceName: string
+  /** First gallery image URL for the linked company service, or null. */
+  serviceImageUrl: string | null
+  /** Effective service gallery (company override or linked library inherit). */
+  serviceGalleryImages: EventGalleryImage[]
+  /** Effective space gallery when the event has a space; empty otherwise. */
+  spaceGalleryImages: EventGalleryImage[]
   timeMode: 'duration' | 'window'
   staffId: string
   staffDisplayName: string
   attendeeUserId: string | null
   attendeeDisplayName: string | null
   attendeeEmail: string | null
+  spaceId: string | null
+  spaceName: string | null
   startsOn: string
   startTime: string
   endTime: string
   weekdays: number[]
-  recurrence: 'none' | 'weekly'
+  recurrence:
+    | 'none'
+    | 'weekly'
+    | 'biweekly'
+    | 'monthly_first_week'
+    | 'monthly_by_date'
   recurrenceUntil: string | null
   createdAt: string
   updatedAt: string
@@ -119,6 +142,60 @@ function weekdayOfYmd(ymd: string): number {
   return parseYmd(ymd).getDay()
 }
 
+function dayOfMonthOfYmd(ymd: string): number {
+  return parseYmd(ymd).getDate()
+}
+
+function weeksBetween(startYmd: string, cursorYmd: string): number {
+  const ms = parseYmd(cursorYmd).getTime() - parseYmd(startYmd).getTime()
+  return Math.floor(ms / (7 * 24 * 60 * 60 * 1000))
+}
+
+/** Date in days 1–7 of the month with the given weekday (JS Sunday=0). */
+function firstWeekDateInMonth(year: number, monthIndex: number, weekday: number): string {
+  for (let day = 1; day <= 7; day++) {
+    const date = new Date(year, monthIndex, day)
+    if (date.getDay() === weekday) return toDateOnly(date)
+  }
+  // Unreachable: days 1–7 always contain every weekday once.
+  return toDateOnly(new Date(year, monthIndex, 1))
+}
+
+/** Same day-of-month in a month, or null if that date does not exist. */
+function dateInMonthOrNull(year: number, monthIndex: number, dayOfMonth: number): string | null {
+  const date = new Date(year, monthIndex, dayOfMonth)
+  if (date.getFullYear() !== year || date.getMonth() !== monthIndex || date.getDate() !== dayOfMonth) {
+    return null
+  }
+  return toDateOnly(date)
+}
+
+function iterateMonthStarts(fromYmd: string, toYmd: string): Array<{ year: number; monthIndex: number }> {
+  const start = parseYmd(fromYmd)
+  const end = parseYmd(toYmd)
+  const months: Array<{ year: number; monthIndex: number }> = []
+  let year = start.getFullYear()
+  let monthIndex = start.getMonth()
+  const endYear = end.getFullYear()
+  const endMonth = end.getMonth()
+  while (year < endYear || (year === endYear && monthIndex <= endMonth)) {
+    months.push({ year, monthIndex })
+    monthIndex += 1
+    if (monthIndex > 11) {
+      monthIndex = 0
+      year += 1
+    }
+  }
+  return months
+}
+
+export type EventRecurrence =
+  | 'none'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly_first_week'
+  | 'monthly_by_date'
+
 function timeToMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number)
   return h! * 60 + m!
@@ -145,12 +222,17 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
     companyId: row.company_id,
     serviceId: row.service_id,
     serviceName: row.service_name,
+    serviceImageUrl: null,
+    serviceGalleryImages: [],
+    spaceGalleryImages: [],
     timeMode: row.time_mode,
     staffId: row.staff_id,
     staffDisplayName: row.staff_display_name,
     attendeeUserId: row.attendee_user_id,
     attendeeDisplayName: row.attendee_display_name,
     attendeeEmail: row.attendee_email,
+    spaceId: row.space_id,
+    spaceName: row.space_name,
     startsOn,
     startTime: normalizeTime(row.start_time) ?? '00:00',
     endTime: normalizeTime(row.end_time) ?? '00:00',
@@ -160,6 +242,101 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
+}
+
+function firstGalleryUrl(images: EventGalleryImage[] | null | undefined): string | null {
+  const url = images?.[0]?.url
+  return typeof url === 'string' && url.trim() ? url : null
+}
+
+function normalizeGalleryImages(
+  images: { mediaId: string; url: string }[] | null | undefined,
+): EventGalleryImage[] {
+  if (!Array.isArray(images)) return []
+  return images.filter(
+    (entry): entry is EventGalleryImage =>
+      Boolean(entry) &&
+      typeof entry === 'object' &&
+      typeof entry.mediaId === 'string' &&
+      typeof entry.url === 'string',
+  )
+}
+
+/**
+ * Resolve effective galleries for catalog entity ids (company gallery, else linked library inherit).
+ */
+async function resolveCatalogGalleries(
+  companyId: string,
+  kind: 'services' | 'spaces',
+  ids: string[],
+): Promise<Map<string, EventGalleryImage[]>> {
+  const unique = [...new Set(ids.filter(Boolean))]
+  const galleryById = new Map<string, EventGalleryImage[]>()
+  if (unique.length === 0) return galleryById
+
+  const rows = await catalogRepo.findByIds(companyId, kind, unique)
+  const libraryIdsNeeded: string[] = []
+  const entityIdToLibraryId = new Map<string, string>()
+
+  for (const row of rows) {
+    const mapped = catalogRepo.mapCatalogRow(kind, row) as {
+      id: string
+      bindingMode: 'linked' | 'forked' | 'custom'
+      libraryEntityId: string | null
+      galleryImages: EventGalleryImage[] | null
+    }
+    if (mapped.bindingMode === 'linked' && mapped.libraryEntityId && mapped.galleryImages == null) {
+      libraryIdsNeeded.push(mapped.libraryEntityId)
+      entityIdToLibraryId.set(mapped.id, mapped.libraryEntityId)
+      galleryById.set(mapped.id, [])
+      continue
+    }
+    galleryById.set(mapped.id, normalizeGalleryImages(mapped.galleryImages))
+  }
+
+  if (libraryIdsNeeded.length > 0) {
+    try {
+      const libraryItems = await listLibraryItemsByIds(kind, libraryIdsNeeded)
+      const libraryById = new Map(libraryItems.map((item) => [item.id, item]))
+      for (const [entityId, libraryId] of entityIdToLibraryId) {
+        const lib = libraryById.get(libraryId)
+        galleryById.set(entityId, normalizeGalleryImages(lib?.galleryImages))
+      }
+    } catch {
+      // Keep empty galleries when Data library is unreachable.
+    }
+  }
+
+  return galleryById
+}
+
+/** Resolve service/space galleries for event list/detail (company gallery, else linked library). */
+async function enrichEventsWithServiceImages(
+  companyId: string,
+  events: CompanyEventDto[],
+): Promise<CompanyEventDto[]> {
+  if (events.length === 0) return events
+
+  const serviceIds = events.map((e) => e.serviceId)
+  const spaceIds = events.map((e) => e.spaceId).filter((id): id is string => Boolean(id))
+
+  const [serviceGalleries, spaceGalleries] = await Promise.all([
+    resolveCatalogGalleries(companyId, 'services', serviceIds),
+    resolveCatalogGalleries(companyId, 'spaces', spaceIds),
+  ])
+
+  return events.map((event) => {
+    const serviceGalleryImages = serviceGalleries.get(event.serviceId) ?? []
+    const spaceGalleryImages = event.spaceId
+      ? (spaceGalleries.get(event.spaceId) ?? [])
+      : []
+    return {
+      ...event,
+      serviceGalleryImages,
+      spaceGalleryImages,
+      serviceImageUrl: firstGalleryUrl(serviceGalleryImages),
+    }
+  })
 }
 
 /** Map a raw event row to DTO (shared by company + public catalog booking). */
@@ -235,6 +412,62 @@ async function loadService(
   }
 
   throw serviceError('Service catalog data is incomplete', 400)
+}
+
+type SpaceInfo = {
+  id: string
+  name: string
+}
+
+async function loadSpace(
+  companyId: string,
+  spaceId: string,
+  accessToken?: string,
+): Promise<SpaceInfo> {
+  const row = await catalogRepo.findById(companyId, 'spaces', spaceId)
+  if (!row) throw serviceError('Space not found', 404)
+  const mapped = catalogRepo.mapCatalogRow('spaces', row) as {
+    id: string
+    name: string | null
+    bindingMode: 'linked' | 'forked' | 'custom'
+    libraryEntityId: string | null
+    payload: { name?: string } | null
+  }
+
+  const payloadName = mapped.payload?.name?.trim()
+  const columnName = mapped.name?.trim()
+  if (columnName || payloadName) {
+    return {
+      id: mapped.id,
+      name: columnName || payloadName || 'Space',
+    }
+  }
+
+  if (mapped.bindingMode === 'linked' && mapped.libraryEntityId) {
+    if (!accessToken) {
+      throw serviceError('Linked space requires an authenticated Data library lookup', 400)
+    }
+    try {
+      const library = await getLibraryCatalogItem(
+        'spaces',
+        mapped.libraryEntityId,
+        accessToken,
+      )
+      if (!library) throw serviceError('Linked library space not found', 404)
+      return {
+        id: mapped.id,
+        name: library.name,
+      }
+    } catch (err) {
+      if ((err as Error & { statusCode?: number }).statusCode) throw err
+      throw serviceError(
+        err instanceof Error ? err.message : 'Failed to load linked library space',
+        502,
+      )
+    }
+  }
+
+  throw serviceError('Space catalog data is incomplete', 400)
 }
 
 async function loadStaffWithSchedule(companyId: string, staffId: string) {
@@ -324,22 +557,84 @@ function resolveAttendee(
   }
 }
 
+async function resolveSpace(
+  timeMode: 'duration' | 'window',
+  companyId: string,
+  spaceId: string | null | undefined,
+  accessToken?: string,
+): Promise<{ space_id: string | null; space_name: string | null }> {
+  if (timeMode === 'duration') {
+    return { space_id: null, space_name: null }
+  }
+  const id = spaceId?.trim()
+  if (!id) {
+    throw serviceError('Space is required for Specific time services', 400)
+  }
+  const space = await loadSpace(companyId, id, accessToken)
+  return { space_id: space.id, space_name: space.name }
+}
+
 export function expandOccurrences(
   event: CompanyEventDto,
   fromYmd: string,
   toYmd: string,
 ): CompanyEventOccurrenceDto[] {
-  const results: CompanyEventOccurrenceDto[] = []
   const seriesStart = event.startsOn
   const seriesEnd =
     event.recurrenceUntil ??
     (event.recurrence === 'none' ? event.startsOn : toYmd)
+  const rangeStart = seriesStart > fromYmd ? seriesStart : fromYmd
+  const rangeEnd = seriesEnd < toYmd ? seriesEnd : toYmd
+  if (rangeStart > rangeEnd) return []
+
+  if (event.recurrence === 'none') {
+    if (seriesStart >= fromYmd && seriesStart <= toYmd && seriesStart <= seriesEnd) {
+      return [toOccurrence(event, seriesStart)]
+    }
+    return []
+  }
+
+  if (event.recurrence === 'monthly_first_week') {
+    const weekday =
+      event.weekdays.length > 0 ? event.weekdays[0]! : weekdayOfYmd(seriesStart)
+    const results: CompanyEventOccurrenceDto[] = []
+    for (const { year, monthIndex } of iterateMonthStarts(seriesStart, seriesEnd)) {
+      const occurrence = firstWeekDateInMonth(year, monthIndex, weekday)
+      if (occurrence >= rangeStart && occurrence <= rangeEnd && occurrence >= seriesStart) {
+        results.push(toOccurrence(event, occurrence))
+      }
+    }
+    return results
+  }
+
+  if (event.recurrence === 'monthly_by_date') {
+    const dayOfMonth = dayOfMonthOfYmd(seriesStart)
+    const results: CompanyEventOccurrenceDto[] = []
+    for (const { year, monthIndex } of iterateMonthStarts(seriesStart, seriesEnd)) {
+      const occurrence = dateInMonthOrNull(year, monthIndex, dayOfMonth)
+      if (
+        occurrence &&
+        occurrence >= rangeStart &&
+        occurrence <= rangeEnd &&
+        occurrence >= seriesStart
+      ) {
+        results.push(toOccurrence(event, occurrence))
+      }
+    }
+    return results
+  }
+
+  // weekly / biweekly — walk days in range matching weekdays
   const weekdays =
     event.weekdays.length > 0 ? new Set(event.weekdays) : new Set([weekdayOfYmd(seriesStart)])
-
+  const results: CompanyEventOccurrenceDto[] = []
   let cursor = seriesStart
   while (cursor <= seriesEnd && cursor <= toYmd) {
     if (cursor >= fromYmd && weekdays.has(weekdayOfYmd(cursor))) {
+      if (event.recurrence === 'biweekly' && weeksBetween(seriesStart, cursor) % 2 !== 0) {
+        cursor = addDaysYmd(cursor, 1)
+        continue
+      }
       results.push(toOccurrence(event, cursor))
     }
     cursor = addDaysYmd(cursor, 1)
@@ -368,7 +663,7 @@ export async function listCompanyEvents(
   mode: 'series' | 'occurrences'
 }> {
   const rows = await eventRepo.listEventsByCompany(companyId)
-  let series = rows.map(mapEvent)
+  let series = await enrichEventsWithServiceImages(companyId, rows.map(mapEvent))
 
   const q = opts.q?.trim().toLowerCase()
   if (q) {
@@ -376,7 +671,8 @@ export async function listCompanyEvents(
       (e) =>
         e.serviceName.toLowerCase().includes(q) ||
         e.staffDisplayName.toLowerCase().includes(q) ||
-        (e.attendeeDisplayName?.toLowerCase().includes(q) ?? false),
+        (e.attendeeDisplayName?.toLowerCase().includes(q) ?? false) ||
+        (e.spaceName?.toLowerCase().includes(q) ?? false),
     )
   }
 
@@ -407,7 +703,68 @@ export async function listCompanyEvents(
 export async function getCompanyEvent(companyId: string, eventId: string): Promise<CompanyEventDto> {
   const row = await eventRepo.findEventById(companyId, eventId)
   if (!row) throw serviceError('Event not found', 404)
-  return mapEvent(row)
+  const [enriched] = await enrichEventsWithServiceImages(companyId, [mapEvent(row)])
+  return enriched!
+}
+
+function normalizeEventSchedule(
+  timeMode: 'duration' | 'window',
+  startsOn: string,
+  bodyWeekdays: number[] | undefined,
+  recurrence: EventRecurrence | undefined,
+  recurrenceUntil: string | null | undefined,
+): {
+  weekdays: number[]
+  recurrence: EventRecurrence
+  recurrenceUntil: string
+} {
+  if (timeMode === 'window') {
+    const weekdays = [...new Set(bodyWeekdays ?? [])].sort((a, b) => a - b)
+    if (weekdays.length === 0) {
+      throw serviceError('Select at least one weekday', 400)
+    }
+    const resolvedRecurrence = recurrence ?? 'weekly'
+    if (resolvedRecurrence !== 'weekly') {
+      throw serviceError('Specific time events only support weekly recurrence', 400)
+    }
+    if (!recurrenceUntil) {
+      throw serviceError('End date is required', 400)
+    }
+    if (recurrenceUntil < startsOn) {
+      throw serviceError('End date must be on or after the start date', 400)
+    }
+    return { weekdays, recurrence: 'weekly', recurrenceUntil }
+  }
+
+  const resolvedRecurrence = recurrence ?? 'none'
+  const startWeekday = weekdayOfYmd(startsOn)
+  let weekdays = [...new Set(bodyWeekdays ?? [])].sort((a, b) => a - b)
+
+  if (resolvedRecurrence === 'monthly_by_date') {
+    weekdays = weekdays.length > 0 ? weekdays : [startWeekday]
+  } else if (weekdays.length === 0) {
+    weekdays = [startWeekday]
+  } else if (
+    resolvedRecurrence === 'none' ||
+    resolvedRecurrence === 'weekly' ||
+    resolvedRecurrence === 'biweekly' ||
+    resolvedRecurrence === 'monthly_first_week'
+  ) {
+    // Duration series use a single weekday derived from the start date.
+    weekdays = [startWeekday]
+  }
+
+  let until = recurrenceUntil ?? null
+  if (resolvedRecurrence === 'none') {
+    until = startsOn
+  } else if (!until) {
+    throw serviceError('End date is required', 400)
+  }
+  if (until < startsOn) {
+    throw serviceError('End date must be on or after the start date', 400)
+  }
+
+  return { weekdays, recurrence: resolvedRecurrence, recurrenceUntil: until }
 }
 
 export async function createCompanyEvent(
@@ -418,9 +775,21 @@ export async function createCompanyEvent(
   const service = await loadService(companyId, body.service_id, options?.accessToken)
   const { staff, schedules } = await loadStaffWithSchedule(companyId, body.staff_id)
   const times = resolveTimes(service, body.start_time)
-  const weekdays = [...new Set(body.weekdays)].sort((a, b) => a - b)
-  assertStaffWorksOnWeekdays(schedules, weekdays, times.startTime, times.endTime)
+  const schedule = normalizeEventSchedule(
+    service.timeMode,
+    body.starts_on,
+    body.weekdays,
+    body.recurrence,
+    body.recurrence_until,
+  )
+  assertStaffWorksOnWeekdays(schedules, schedule.weekdays, times.startTime, times.endTime)
   const attendee = resolveAttendee(service.timeMode, body)
+  const space = await resolveSpace(
+    service.timeMode,
+    companyId,
+    body.space_id,
+    options?.accessToken,
+  )
 
   const id = nanoid()
   await eventRepo.insertEvent({
@@ -434,14 +803,24 @@ export async function createCompanyEvent(
     attendee_user_id: attendee.attendee_user_id,
     attendee_display_name: attendee.attendee_display_name,
     attendee_email: attendee.attendee_email,
+    space_id: space.space_id,
+    space_name: space.space_name,
     starts_on: body.starts_on,
     start_time: times.startTime,
     end_time: times.endTime,
-    weekdays,
-    recurrence: 'weekly',
-    recurrence_until: body.recurrence_until,
+    weekdays: schedule.weekdays,
+    recurrence: schedule.recurrence,
+    recurrence_until: schedule.recurrenceUntil,
   })
-  return getCompanyEvent(companyId, id)
+  const created = await getCompanyEvent(companyId, id)
+  if (created.timeMode === 'duration' && service.durationMinutes) {
+    notifyAppointmentBooked({
+      companyId,
+      event: created,
+      durationMinutes: service.durationMinutes,
+    })
+  }
+  return created
 }
 
 export async function updateCompanyEvent(
@@ -457,20 +836,6 @@ export async function updateCompanyEvent(
   const staffId = body.staff_id ?? existing.staff_id
   const startsOn = body.starts_on ?? toDateOnly(existing.starts_on)
   const mappedExisting = mapEvent(existing)
-  const weekdays = body.weekdays
-    ? [...new Set(body.weekdays)].sort((a, b) => a - b)
-    : mappedExisting.weekdays
-  const recurrenceUntil =
-    body.recurrence_until !== undefined
-      ? body.recurrence_until
-      : mappedExisting.recurrenceUntil
-
-  if (!recurrenceUntil) {
-    throw serviceError('End date is required', 400)
-  }
-  if (recurrenceUntil < startsOn) {
-    throw serviceError('End date must be on or after the start date', 400)
-  }
 
   const service = await loadService(companyId, serviceId, options?.accessToken)
   const { staff, schedules } = await loadStaffWithSchedule(companyId, staffId)
@@ -478,7 +843,17 @@ export async function updateCompanyEvent(
     service,
     body.start_time ?? normalizeTime(existing.start_time) ?? undefined,
   )
-  assertStaffWorksOnWeekdays(schedules, weekdays, times.startTime, times.endTime)
+
+  const schedule = normalizeEventSchedule(
+    service.timeMode,
+    startsOn,
+    body.weekdays ?? mappedExisting.weekdays,
+    body.recurrence ?? mappedExisting.recurrence,
+    body.recurrence_until !== undefined
+      ? body.recurrence_until
+      : mappedExisting.recurrenceUntil,
+  )
+  assertStaffWorksOnWeekdays(schedules, schedule.weekdays, times.startTime, times.endTime)
 
   const attendee = resolveAttendee(service.timeMode, {
     attendee_user_id:
@@ -491,6 +866,15 @@ export async function updateCompanyEvent(
       body.attendee_email !== undefined ? body.attendee_email : existing.attendee_email,
   })
 
+  const spaceIdForResolve =
+    body.space_id !== undefined ? body.space_id : existing.space_id
+  const space = await resolveSpace(
+    service.timeMode,
+    companyId,
+    spaceIdForResolve,
+    options?.accessToken,
+  )
+
   await eventRepo.updateEvent(companyId, eventId, {
     service_id: service.id,
     service_name: service.name,
@@ -500,12 +884,14 @@ export async function updateCompanyEvent(
     attendee_user_id: attendee.attendee_user_id,
     attendee_display_name: attendee.attendee_display_name,
     attendee_email: attendee.attendee_email,
+    space_id: space.space_id,
+    space_name: space.space_name,
     starts_on: startsOn,
     start_time: times.startTime,
     end_time: times.endTime,
-    weekdays,
-    recurrence: 'weekly',
-    recurrence_until: recurrenceUntil,
+    weekdays: schedule.weekdays,
+    recurrence: schedule.recurrence,
+    recurrence_until: schedule.recurrenceUntil,
   })
   return getCompanyEvent(companyId, eventId)
 }
@@ -604,6 +990,15 @@ async function buildSessionDetail(
   }
 }
 
+function assertWindowTokensAllowed(event: CompanyEventDto): void {
+  if (event.timeMode === 'duration') {
+    throw serviceError(
+      'Tokens are only available for Specific time (window) sessions',
+      400,
+    )
+  }
+}
+
 export async function getSessionDetail(
   companyId: string,
   eventId: string,
@@ -629,6 +1024,7 @@ export async function createSessionToken(
   body: CreateSessionTokenBody,
 ): Promise<SessionTokenDto> {
   const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  assertWindowTokensAllowed(event)
 
   const userId = body.user_id.trim()
   const existing = await sessionTokenRepo.findTokenByUser(
@@ -703,7 +1099,8 @@ export async function getNextSessionTokenLabel(
   eventId: string,
   occurrenceDate: string,
 ): Promise<{ tokenNumber: number; tokenLabel: string }> {
-  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  assertWindowTokensAllowed(event)
   const nextNumber =
     (await sessionTokenRepo.getMaxTokenNumber(companyId, eventId, occurrenceDate)) + 1
   return { tokenNumber: nextNumber, tokenLabel: formatTokenLabel(nextNumber) }
@@ -782,6 +1179,7 @@ export async function callNextSessionToken(
   occurrenceDate: string,
 ): Promise<SessionDetailDto> {
   const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  assertWindowTokensAllowed(event)
   const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
 
   if (run.status !== 'started') {
@@ -811,6 +1209,40 @@ export async function callNextSessionToken(
 
   const nextToken = mapSessionToken({ ...nextWaiting, status: 'serving' })
   notifySessionTokenCalled({ companyId, event, token: nextToken })
+
+  return buildSessionDetail(companyId, eventId, occurrenceDate)
+}
+
+/** Undo a mistaken call-next. Does not send email/SMS. */
+export async function callPreviousSessionToken(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionDetailDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  assertWindowTokensAllowed(event)
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+
+  if (run.status !== 'started') {
+    throw serviceError('Session must be started before calling previous token', 409)
+  }
+
+  const lastCompleted = await sessionTokenRepo.findLastCompletedToken(
+    companyId,
+    eventId,
+    occurrenceDate,
+  )
+  if (!lastCompleted) {
+    throw serviceError('No previous token to return to', 400)
+  }
+
+  const serving = await sessionTokenRepo.findServingToken(companyId, eventId, occurrenceDate)
+  if (serving) {
+    await sessionTokenRepo.updateTokenStatus(serving.id, 'waiting')
+  }
+
+  await sessionTokenRepo.updateTokenStatus(lastCompleted.id, 'serving')
+  await sessionRunRepo.updateRun(run.id, { current_token_id: lastCompleted.id })
 
   return buildSessionDetail(companyId, eventId, occurrenceDate)
 }

@@ -17,6 +17,7 @@ export async function internalSend(req: Request, res: Response) {
     templateSlug: body.templateSlug,
     payload: body.payload,
     companyId: body.companyId,
+    scheduledAt: body.scheduledAt,
   })
   res.status(202).json(result)
 }

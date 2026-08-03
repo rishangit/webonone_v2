@@ -61,6 +61,8 @@ export type PublicCatalogSessionItem = {
   endTime: string
   serviceName: string
   companyId: string
+  spaceId: string | null
+  spaceName: string | null
 }
 
 type ServiceTimeFields = {
@@ -465,6 +467,8 @@ export async function listPublicServiceSessions(options: {
         endTime: occurrence.endTime,
         serviceName: occurrence.serviceName,
         companyId: occurrence.companyId,
+        spaceId: occurrence.spaceId,
+        spaceName: occurrence.spaceName,
       })
     }
   }

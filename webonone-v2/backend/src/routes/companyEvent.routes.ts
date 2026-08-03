@@ -42,6 +42,11 @@ router.post(
   companyEventController.callNextSessionToken,
 )
 router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/call-previous',
+  requireCompanySession,
+  companyEventController.callPreviousSessionToken,
+)
+router.post(
   '/company/events/:eventId/sessions/:occurrenceDate/end',
   requireCompanySession,
   companyEventController.endSession,

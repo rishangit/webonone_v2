@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ImageCarousel,
   TagChip,
 } from '@webonone/ui-kit'
 import type { RootState } from '@/app/store'
@@ -34,7 +35,7 @@ import type { CatalogItem } from '@/shared/types/data.types'
 type CatalogDetailKind = 'spaces'
 
 const CATALOG_DETAIL_TABS: readonly CatalogDetailTabId[] = [
-  'profile',
+  'overview',
   'gallery',
   'attributes',
 ]
@@ -84,7 +85,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const [editOpen, setEditOpen] = useState(false)
-  const [tab, setTab] = useDetailTabParam(CATALOG_DETAIL_TABS, 'profile')
+  const [tab, setTab] = useDetailTabParam(CATALOG_DETAIL_TABS, 'overview')
 
   useEffect(() => {
     if (!entityId) return
@@ -105,9 +106,16 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
     dispatch(config.actions.fetchDetailRequested({ id, force: true }))
   }
 
-  const profile = item ? (
+  const overview = item ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
+        {(item.galleryImages ?? []).length > 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <ImageCarousel images={item.galleryImages ?? []} alt={item.name} />
+            </CardContent>
+          </Card>
+        ) : null}
         <EditableSectionCard
           title={config.singular}
           description="Name, status, and description"
@@ -185,7 +193,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
           ariaLabel={`${config.singular} sections`}
           tab={tab}
           onTabChange={setTab}
-          profile={profile}
+          overview={overview}
           attributes={
             <CatalogAttributesTab
               kind={kind}

@@ -47,6 +47,10 @@ const MOCK_DIRECTORY_USERS: UserOption[] = Array.from({ length: 120 }, (_, index
   displayName: `Mock User ${index + 1}`,
   email: `mock.user${index + 1}@example.com`,
   role: USER_ROLE_OPTIONS[index % USER_ROLE_OPTIONS.length]!.value,
+  avatarUrl:
+    index % 3 === 0
+      ? `https://placehold.co/72x72/1e293b/f8fafc/png?text=U${index + 1}`
+      : null,
 }))
 
 async function mockLoadUsers(params: Parameters<LoadUsersFn>[0]) {
@@ -81,6 +85,10 @@ const MOCK_SERVICES: ServiceOption[] = Array.from({ length: 80 }, (_, index) => 
     index % 2 === 0
       ? `Duration · ${(index % 5) * 15 + 30} min`
       : `Specific time · 09:00–${String(10 + (index % 4)).padStart(2, '0')}:00`,
+  imageUrl:
+    index % 4 === 0
+      ? `https://placehold.co/72x72/0f172a/f8fafc/png?text=S${index + 1}`
+      : null,
 }))
 
 async function mockLoadServices(params: Parameters<LoadServicesFn>[0]) {

@@ -1,18 +1,18 @@
 import type { ReactNode } from 'react'
 import { cn } from '@webonone/ui-kit'
 
-export type EventDetailTabId = 'details' | 'sessions'
+export type EventDetailTabId = 'overview' | 'sessions'
 
 type EventDetailSectionTabsProps = {
   ariaLabel: string
   tab: EventDetailTabId
   onTabChange: (tab: EventDetailTabId) => void
-  details: ReactNode
+  overview: ReactNode
   sessions: ReactNode
 }
 
 const TABS: { id: EventDetailTabId; label: string }[] = [
-  { id: 'details', label: 'Details' },
+  { id: 'overview', label: 'Overview' },
   { id: 'sessions', label: 'Sessions' },
 ]
 
@@ -20,10 +20,10 @@ export function EventDetailSectionTabs({
   ariaLabel,
   tab,
   onTabChange,
-  details,
+  overview,
   sessions,
 }: EventDetailSectionTabsProps) {
-  const panel = tab === 'details' ? details : sessions
+  const panel = tab === 'overview' ? overview : sessions
 
   return (
     <div className="flex flex-col gap-6">

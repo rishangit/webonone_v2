@@ -1,7 +1,8 @@
 ---
 description: >-
-  Wizard-backed entity details — read-only section cards with per-card Edit
-  opening a shared create/edit wizard at the mapped step
+  Wizard-backed entity details — Overview ImageCarousel when gallery images
+  exist; read-only section cards with per-card Edit opening a shared create/edit
+  wizard at the mapped step
 globs: "**/frontend/src/features/**/pages/**/*.{ts,tsx},**/frontend/src/features/**/components/**/*Dialog*.{ts,tsx},ui-kit/showcase/src/pages/**/*.{ts,tsx}"
 alwaysApply: false
 ---
@@ -39,6 +40,7 @@ FeaturePage
 |-------|-------------|
 | Shell | `FeaturePage` — full width; same 3-col grid as details-page-cards |
 | Back | Always in `actions`: outline `size="sm"` + `ArrowLeft` → parent list |
+| Overview gallery | When the entity (or linked catalog items) has images → `ImageCarousel` first in left stack (see below) |
 | Cards | View-only content; no inline fields on the details page |
 | Per-card Edit | `EditableSectionCard` with `canEdit` + `onEdit` → `openWizard(n)` |
 | Meta cards | Plain `Card` — timestamps / references stay non-editable |
@@ -46,9 +48,34 @@ FeaturePage
 | Mode | `isNew = !id` when create is supported — no separate `mode` prop; self-edit may omit `id` |
 | Step jump | `initialStep` (standalone) / `?step=` on embed path |
 
+## Overview ImageCarousel (mandatory when gallery images exist)
+
+Keep Overview UI aligned across catalog, company catalog, and linked entities (e.g. events). When gallery images are available, render `@webonone/ui-kit` **`ImageCarousel`** as the **first** card in the **left** column — before section cards.
+
+```tsx
+{overviewGalleryImages.length > 0 ? (
+  <Card>
+    <CardContent className="pt-6">
+      <ImageCarousel images={overviewGalleryImages} alt={entityDisplayName} />
+    </CardContent>
+  </Card>
+) : null}
+```
+
+| Rule | Detail |
+|------|--------|
+| Props | `images: { mediaId: string; url: string }[]`, `alt` = entity / service display name |
+| Placement | Left stack (`lg:col-span-2`), **above** Basics / Service / etc. |
+| Empty | **Omit** the Card when `images.length === 0` — do not ship an empty carousel shell |
+| Wrapper | Plain `Card` + `CardContent className="pt-6"` — **not** `EditableSectionCard` |
+| Source | Entity `galleryImages` / `displayGalleryImages`, or combined linked galleries (events: service + space, dedupe by `mediaId`) |
+| Gallery tab | Optional separate Gallery tab for manage/edit; Overview still shows the carousel |
+
+Forbidden: Overview missing the carousel when images exist; using `ImagePreview` for multi-image Overview galleries; inventing a custom carousel.
+
 ## Section tabs URL sync
 
-When a details or settings page has a **section tablist** (Profile / Gallery / Sessions / etc.), sync the active tab with the query param **`?tab=<id>`**. Do not keep the tab in local `useState` only.
+When a details or settings page has a **section tablist** (Overview / Gallery / Sessions / etc.), sync the active tab with the query param **`?tab=<id>`**. Do not keep the tab in local `useState` only.
 
 | Rule | Detail |
 |------|--------|
@@ -133,15 +160,18 @@ Forbidden Edit chrome: `size="sm"` with text “Edit”, always-visible labeled 
 - Using this pattern for showcase/simple **inline** page-level Edit ([details-page-cards.mdc](details-page-cards.mdc))
 - Per-card Edit that does not match the hover icon chrome above
 - Section tablist with local-only tab state (must sync `?tab=`)
+- Overview without `ImageCarousel` when gallery images exist (or a one-off image UI instead of UI Kit)
 
 ## Reference
 
-- Data: `data/frontend/src/features/services/pages/ServiceDetailsPage.tsx`
+- Data Overview carousel: `ServiceDetailsPage.tsx` · `ProductDetailsPage.tsx` · `CatalogDetailsPage.tsx`
 - Card chrome: `data/frontend/src/features/services/components/EditableSectionCard.tsx` (canonical)
 - Wizard: `…/services/components/ServiceFormDialog.tsx`
-- WebOnOne company: `webonone-v2/.../companies/pages/CompanyProfilePage.tsx` · `CompanyFormDialog.tsx` · `EditableSectionCard.tsx`
-- WebOnOne theme: `webonone-v2/.../system-theme/pages/ThemeDetailPage.tsx` · `ThemeFormDialog.tsx` · `EditableSectionCard.tsx`
-- Identity profile: `identity/.../profile/pages/ProfilePage.tsx` · `ProfileFormDialog.tsx` · `/embed/dialogs/profile/edit`
+- WebOnOne company catalog: `…/company-catalog/pages/CompanyCatalogDetailPage.tsx`
+- WebOnOne events: `…/calendar/pages/EventDetailsPage.tsx` (combined service + space galleries)
+- WebOnOne company: `…/companies/pages/CompanyProfilePage.tsx` · `CompanyFormDialog.tsx`
+- WebOnOne theme: `…/system-theme/pages/ThemeDetailPage.tsx` · `ThemeFormDialog.tsx`
+- Identity profile: `identity/.../profile/pages/ProfilePage.tsx` · `ProfileFormDialog.tsx`
 
 Skill: [details-page-wizard-edit](../skills/details-page-wizard-edit/SKILL.md).
 
@@ -152,4 +182,4 @@ npm run type-check
 npm run lint
 ```
 
-Confirm: Back only in header; each editable card uses hover icon-only Edit3 (same as Data/company/profile); card Edit opens the shared wizard at the mapped step; list Add uses the same dialog without `id`; after save, detail refreshes; section tabs sync via `?tab=` (default omitted from URL).
+Confirm: Back only in header; Overview shows `ImageCarousel` first in the left column when images exist; each editable card uses hover icon-only Edit3; card Edit opens the shared wizard at the mapped step; list Add uses the same dialog without `id`; after save, detail refreshes; section tabs sync via `?tab=` (default omitted from URL).

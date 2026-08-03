@@ -5,15 +5,25 @@ import type { CompanyStaff, StaffScheduleDay } from '@/features/staff/types/staf
 import type {
   CompanyEvent,
   CreateCompanyEventBody,
+  EventRecurrence,
   EventTimeMode,
   UpdateCompanyEventBody,
 } from '../types/event.types'
 
-/** 1-based wizard step; duration has 5 steps, window has 4. */
+/** 1-based wizard step; both duration and window have 5 steps. */
 export type EventWizardStep = 1 | 2 | 3 | 4 | 5
 
 const timeHhMm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:mm format')
 const dateYmd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format')
+
+export const DURATION_REPEAT_FREQUENCIES = [
+  'weekly',
+  'biweekly',
+  'monthly_first_week',
+  'monthly_by_date',
+] as const satisfies readonly EventRecurrence[]
+
+export type DurationRepeatFrequency = (typeof DURATION_REPEAT_FREQUENCIES)[number]
 
 export type EventServiceOption = {
   id: string
@@ -22,15 +32,25 @@ export type EventServiceOption = {
   durationMinutes: number | null
   startTime: string | null
   endTime: string | null
+  imageUrl?: string | null
+}
+
+export type EventSpaceOption = {
+  id: string
+  name: string
+  description?: string | null
+  imageUrl?: string | null
 }
 
 export type EventWizardFormValues = {
   service: EventServiceOption | null
   staff: CompanyStaff | null
   attendee: UserOption | null
+  space: EventSpaceOption | null
   startsOn: string
   startTime: string
   weekdays: number[]
+  recurrence: EventRecurrence
   recurrenceUntil: string
 }
 
@@ -38,9 +58,11 @@ export const EMPTY_EVENT_WIZARD_VALUES: EventWizardFormValues = {
   service: null,
   staff: null,
   attendee: null,
+  space: null,
   startsOn: '',
   startTime: '09:00',
   weekdays: [],
+  recurrence: 'none',
   recurrenceUntil: '',
 }
 
@@ -56,23 +78,19 @@ export const eventWizardStepAttendeeSchema = z.object({
   attendee: z.object({ id: z.string().min(1) }, { required_error: 'Select an attendee' }),
 })
 
-export const eventWizardStepWhenSchema = z
+export const eventWizardStepSpaceSchema = z.object({
+  space: z.object({ id: z.string().min(1) }, { required_error: 'Select a space' }),
+})
+
+/** Window (Specific time) When-step validation — weekday checkboxes + From–Until. */
+export const eventWizardStepWhenWindowSchema = z
   .object({
     startsOn: dateYmd,
-    startTime: timeHhMm.optional(),
     weekdays: z.array(z.number().int().min(0).max(6)).min(1, 'Select at least one weekday'),
     recurrenceUntil: dateYmd,
-    timeMode: z.enum(['duration', 'window']),
     staffWorkingWeekdays: z.array(z.number().int().min(0).max(6)),
   })
   .superRefine((data, ctx) => {
-    if (data.timeMode === 'duration' && !data.startTime) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Start time is required',
-        path: ['startTime'],
-      })
-    }
     if (data.recurrenceUntil < data.startsOn) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -92,6 +110,53 @@ export const eventWizardStepWhenSchema = z
       }
     }
   })
+
+/** Duration When-step validation — date + start time, optional repeat. */
+export const eventWizardStepWhenDurationSchema = z
+  .object({
+    startsOn: dateYmd,
+    startTime: timeHhMm,
+    recurrence: z.enum([
+      'none',
+      'weekly',
+      'biweekly',
+      'monthly_first_week',
+      'monthly_by_date',
+    ]),
+    recurrenceUntil: z.string(),
+    staffWorkingWeekdays: z.array(z.number().int().min(0).max(6)),
+  })
+  .superRefine((data, ctx) => {
+    const startWeekday = weekdayOfYmd(data.startsOn)
+    if (!data.staffWorkingWeekdays.includes(startWeekday)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Selected date must be a staff working day',
+        path: ['startsOn'],
+      })
+    }
+    if (data.recurrence === 'none') {
+      return
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.recurrenceUntil)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'End date is required',
+        path: ['recurrenceUntil'],
+      })
+      return
+    }
+    if (data.recurrenceUntil < data.startsOn) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'End date must be on or after the start date',
+        path: ['recurrenceUntil'],
+      })
+    }
+  })
+
+/** @deprecated Prefer window/duration-specific schemas. */
+export const eventWizardStepWhenSchema = eventWizardStepWhenWindowSchema
 
 export function staffWorkingWeekdays(schedule: StaffScheduleDay[]): number[] {
   return schedule.filter((d) => d.is_working).map((d) => d.day_of_week)
@@ -122,6 +187,14 @@ export function staffHoursForDate(
   return staffHoursForWeekday(schedule, date.getDay())
 }
 
+export function weekdayOfYmd(ymd: string): number {
+  return new Date(`${ymd}T12:00:00`).getDay()
+}
+
+export function dayOfMonthOfYmd(ymd: string): number {
+  return new Date(`${ymd}T12:00:00`).getDate()
+}
+
 export function formatWeekdaysLabel(weekdays: number[]): string {
   return [...weekdays]
     .sort((a, b) => a - b)
@@ -129,36 +202,110 @@ export function formatWeekdaysLabel(weekdays: number[]): string {
     .join(', ')
 }
 
+export function formatRecurrenceLabel(
+  recurrence: EventRecurrence,
+  opts?: { startsOn?: string; weekdays?: number[] },
+): string {
+  switch (recurrence) {
+    case 'none':
+      return 'Single event'
+    case 'weekly': {
+      const days =
+        opts?.weekdays && opts.weekdays.length > 0
+          ? formatWeekdaysLabel(opts.weekdays)
+          : opts?.startsOn
+            ? DAY_LABELS[weekdayOfYmd(opts.startsOn)]?.slice(0, 3)
+            : null
+      return days ? `Every week on ${days}` : 'Every week'
+    }
+    case 'biweekly': {
+      const day = opts?.startsOn
+        ? DAY_LABELS[weekdayOfYmd(opts.startsOn)]?.slice(0, 3)
+        : opts?.weekdays?.[0] != null
+          ? DAY_LABELS[opts.weekdays[0]]?.slice(0, 3)
+          : null
+      return day ? `Every 2 weeks on ${day}` : 'Every 2 weeks'
+    }
+    case 'monthly_first_week': {
+      const day = opts?.startsOn
+        ? DAY_LABELS[weekdayOfYmd(opts.startsOn)]?.slice(0, 3)
+        : null
+      return day ? `Every month (first week ${day})` : 'Every month (first week)'
+    }
+    case 'monthly_by_date': {
+      const n = opts?.startsOn ? dayOfMonthOfYmd(opts.startsOn) : null
+      return n != null ? `Every month on the ${ordinal(n)}` : 'Every month on day of month'
+    }
+    default:
+      return recurrence
+  }
+}
+
+function ordinal(n: number): string {
+  const mod100 = n % 100
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`
+  switch (n % 10) {
+    case 1:
+      return `${n}st`
+    case 2:
+      return `${n}nd`
+    case 3:
+      return `${n}rd`
+    default:
+      return `${n}th`
+  }
+}
+
 export function toCreateEventPayload(values: EventWizardFormValues): CreateCompanyEventBody {
-  if (!values.service || !values.staff || !values.startsOn || !values.recurrenceUntil) {
+  if (!values.service || !values.staff || !values.startsOn) {
     throw new Error('Incomplete event form')
   }
-  if (values.weekdays.length === 0) {
-    throw new Error('Select at least one weekday')
+
+  if (values.service.timeMode === 'window') {
+    if (values.weekdays.length === 0 || !values.recurrenceUntil) {
+      throw new Error('Select weekdays and an end date')
+    }
+    if (!values.space) {
+      throw new Error('Select a space for this Specific time event')
+    }
+    return {
+      service_id: values.service.id,
+      staff_id: values.staff.id,
+      starts_on: values.startsOn,
+      weekdays: [...values.weekdays].sort((a, b) => a - b),
+      recurrence: 'weekly',
+      recurrence_until: values.recurrenceUntil,
+      space_id: values.space.id,
+    }
   }
-  const body: CreateCompanyEventBody = {
+
+  const weekday = weekdayOfYmd(values.startsOn)
+  const recurrence = values.recurrence
+  const recurrenceUntil = recurrence === 'none' ? values.startsOn : values.recurrenceUntil
+  if (!recurrenceUntil) {
+    throw new Error('End date is required')
+  }
+
+  return {
     service_id: values.service.id,
     staff_id: values.staff.id,
     starts_on: values.startsOn,
-    weekdays: [...values.weekdays].sort((a, b) => a - b),
-    recurrence: 'weekly',
-    recurrence_until: values.recurrenceUntil,
+    weekdays: [weekday],
+    recurrence,
+    recurrence_until: recurrenceUntil,
+    start_time: values.startTime,
+    attendee_user_id: values.attendee?.id ?? null,
+    attendee_display_name: values.attendee?.displayName ?? null,
+    attendee_email: values.attendee?.email ?? null,
   }
-  if (values.service.timeMode === 'duration') {
-    body.start_time = values.startTime
-    body.attendee_user_id = values.attendee?.id ?? null
-    body.attendee_display_name = values.attendee?.displayName ?? null
-    body.attendee_email = values.attendee?.email ?? null
-  }
-  return body
 }
 
 export function toUpdateEventPayload(values: EventWizardFormValues): UpdateCompanyEventBody {
   return toCreateEventPayload(values)
 }
 
-export function eventWizardTotalSteps(timeMode: EventTimeMode | null | undefined): number {
-  return timeMode === 'window' ? 4 : 5
+export function eventWizardTotalSteps(_timeMode?: EventTimeMode | null | undefined): number {
+  return 5
 }
 
 export function parseEventWizardStep(
@@ -201,9 +348,17 @@ export function valuesFromEvent(
             email: event.attendeeEmail,
           }
         : null,
+    space:
+      event.spaceId != null
+        ? {
+            id: event.spaceId,
+            name: event.spaceName ?? 'Space',
+          }
+        : null,
     startsOn: event.startsOn,
     startTime: event.startTime,
     weekdays: [...event.weekdays],
+    recurrence: event.recurrence,
     recurrenceUntil: event.recurrenceUntil ?? '',
   }
 }
@@ -217,12 +372,18 @@ export function formatEventWhen(event: {
   startTime: string
   endTime: string
   weekdays?: number[]
+  recurrence?: EventRecurrence
   recurrenceUntil: string | null
 }): string {
-  const days =
-    event.weekdays && event.weekdays.length > 0
-      ? formatWeekdaysLabel(event.weekdays)
-      : 'Weekly'
+  const recurrence = event.recurrence ?? 'weekly'
   const until = event.recurrenceUntil ?? '—'
-  return `${days} · ${event.startsOn} → ${until} · ${event.startTime}–${event.endTime}`
+  const time = `${event.startTime}–${event.endTime}`
+  if (recurrence === 'none') {
+    return `Single · ${event.startsOn} · ${time}`
+  }
+  const label = formatRecurrenceLabel(recurrence, {
+    startsOn: event.startsOn,
+    weekdays: event.weekdays,
+  })
+  return `${label} · ${event.startsOn} → ${until} · ${time}`
 }

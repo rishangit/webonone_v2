@@ -131,6 +131,7 @@ export function SessionDetailsPage() {
     if (lastActionStatus.current === 'saving' && actionStatus === 'idle' && !actionError) {
       if (lastAction === 'start') toast({ title: 'Session started' })
       if (lastAction === 'call-next') toast({ title: 'Next token called' })
+      if (lastAction === 'call-previous') toast({ title: 'Moved to previous token' })
       if (lastAction === 'end') toast({ title: 'Session ended' })
       dispatch(sessionTokensActions.resetActionStatus())
     }
@@ -140,9 +141,11 @@ export function SessionDetailsPage() {
           ? 'Failed to start session'
           : lastAction === 'call-next'
             ? 'Failed to call next token'
-            : lastAction === 'end'
-              ? 'Failed to end session'
-              : 'Session action failed'
+            : lastAction === 'call-previous'
+              ? 'Failed to call previous token'
+              : lastAction === 'end'
+                ? 'Failed to end session'
+                : 'Session action failed'
       toast({ title, description: actionError, variant: 'destructive' })
       dispatch(sessionTokensActions.resetActionStatus())
     }
@@ -161,9 +164,29 @@ export function SessionDetailsPage() {
 
   const actionBusy = actionStatus === 'saving'
   const runStatus = run?.status ?? 'scheduled'
-  const currentToken = tokens.find((token) => token.id === run?.currentTokenId) ??
+  const currentToken =
+    tokens.find((token) => token.id === run?.currentTokenId) ??
     tokens.find((token) => token.status === 'serving') ??
     null
+  const prevToken =
+    tokens
+      .filter((token) => token.status === 'completed')
+      .reduce<typeof tokens[number] | null>(
+        (best, token) =>
+          !best || token.tokenNumber > best.tokenNumber ? token : best,
+        null,
+      )
+  const nextToken =
+    tokens
+      .filter((token) => token.status === 'waiting')
+      .reduce<typeof tokens[number] | null>(
+        (best, token) =>
+          !best || token.tokenNumber < best.tokenNumber ? token : best,
+        null,
+      )
+  const canCallPrevious = Boolean(prevToken)
+  const canCallNext =
+    Boolean(nextToken) || tokens.some((token) => token.status === 'serving')
 
   if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
     return (
@@ -255,16 +278,6 @@ export function SessionDetailsPage() {
       description={`${detail.serviceName} session`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          {runStatus === 'scheduled' && sessionKey ? (
-            <Button
-              type="button"
-              size="sm"
-              disabled={actionBusy}
-              onClick={() => dispatch(sessionTokensActions.startRequested(sessionKey))}
-            >
-              Start session
-            </Button>
-          ) : null}
           {runStatus === 'started' && sessionKey ? (
             <Button
               type="button"
@@ -285,104 +298,183 @@ export function SessionDetailsPage() {
     >
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          {runStatus === 'started' ? (
+          {isDuration ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Session</CardTitle>
+                <CardDescription>
+                  Duration sessions are for the assigned attendee — no queue tokens
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <DetailField
+                  label="Attendee"
+                  value={detail.attendeeDisplayName ?? '—'}
+                />
+                <DetailField label="Email" value={detail.attendeeEmail ?? '—'} />
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">Status</p>
+                  <StatusTag variant={RUN_STATUS_VARIANT[runStatus]}>
+                    {RUN_STATUS_LABEL[runStatus]}
+                  </StatusTag>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
             <Card>
               <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                 <div className="space-y-1.5">
-                  <CardTitle className="text-lg">Now serving</CardTitle>
-                  <CardDescription>Current queue token for this session</CardDescription>
+                  <CardTitle className="text-lg">Tokens</CardTitle>
+                  <CardDescription>
+                    Queue tokens issued for users at this session
+                  </CardDescription>
                 </div>
-                {sessionKey ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={actionBusy}
-                    onClick={() =>
-                      dispatch(sessionTokensActions.callNextRequested(sessionKey))
-                    }
-                  >
-                    Call next
-                  </Button>
-                ) : null}
+                <Button type="button" size="sm" onClick={() => setIssueOpen(true)}>
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Issue new token
+                </Button>
               </CardHeader>
               <CardContent>
-                {currentToken ? (
-                  <div className="space-y-1">
-                    <p className="text-2xl font-semibold text-foreground">
-                      {currentToken.tokenLabel}
-                    </p>
-                    <p className="text-sm text-foreground">{currentToken.userDisplayName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {currentToken.userEmail ?? 'No email'}
-                    </p>
-                  </div>
+                {tokensError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{tokensError}</AlertDescription>
+                  </Alert>
+                ) : tokensStatus === 'loading' && tokens.length === 0 ? null : tokens.length === 0 ? (
+                  <ItemListEmpty>No tokens issued yet.</ItemListEmpty>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No token is being served. Issue tokens or call next when ready.
-                  </p>
+                  <ItemList>
+                    {tokens.map((token) => (
+                      <ItemListItem
+                        key={token.id}
+                        className={
+                          token.status === 'serving'
+                            ? 'ring-1 ring-primary/40'
+                            : undefined
+                        }
+                      >
+                        <ItemListContent>
+                          <div className="flex min-w-0 items-start justify-between gap-3">
+                            <div className="min-w-0 space-y-1">
+                              <p className="truncate font-medium text-foreground">
+                                {token.tokenLabel}
+                              </p>
+                              <p className="truncate text-sm text-foreground">
+                                {token.userDisplayName}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {token.userEmail ?? 'No email'}
+                              </p>
+                            </div>
+                            <StatusTag variant={TOKEN_STATUS_VARIANT[token.status]}>
+                              {TOKEN_STATUS_LABEL[token.status]}
+                            </StatusTag>
+                          </div>
+                        </ItemListContent>
+                      </ItemListItem>
+                    ))}
+                  </ItemList>
                 )}
               </CardContent>
             </Card>
-          ) : null}
-
-          <Card>
-            <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-              <div className="space-y-1.5">
-                <CardTitle className="text-lg">Tokens</CardTitle>
-                <CardDescription>
-                  Queue tokens issued for users at this session
-                </CardDescription>
-              </div>
-              <Button type="button" size="sm" onClick={() => setIssueOpen(true)}>
-                <Plus className="h-4 w-4" aria-hidden />
-                Issue new token
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {tokensError ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{tokensError}</AlertDescription>
-                </Alert>
-              ) : tokensStatus === 'loading' && tokens.length === 0 ? null : tokens.length === 0 ? (
-                <ItemListEmpty>No tokens issued yet.</ItemListEmpty>
-              ) : (
-                <ItemList>
-                  {tokens.map((token) => (
-                    <ItemListItem
-                      key={token.id}
-                      className={
-                        token.status === 'serving'
-                          ? 'ring-1 ring-primary/40'
-                          : undefined
-                      }
-                    >
-                      <ItemListContent>
-                        <div className="flex min-w-0 items-start justify-between gap-3">
-                          <div className="min-w-0 space-y-1">
-                            <p className="truncate font-medium text-foreground">
-                              {token.tokenLabel}
-                            </p>
-                            <p className="truncate text-sm text-foreground">
-                              {token.userDisplayName}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {token.userEmail ?? 'No email'}
-                            </p>
-                          </div>
-                          <StatusTag variant={TOKEN_STATUS_VARIANT[token.status]}>
-                            {TOKEN_STATUS_LABEL[token.status]}
-                          </StatusTag>
-                        </div>
-                      </ItemListContent>
-                    </ItemListItem>
-                  ))}
-                </ItemList>
-              )}
-            </CardContent>
-          </Card>
+          )}
         </div>
 
         <div className="flex flex-col gap-6 lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                {isDuration ? 'Session controls' : 'Session queue'}
+              </CardTitle>
+              <CardDescription>
+                {isDuration
+                  ? 'Start or end this appointment session'
+                  : 'Start the session and move through tokens'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {runStatus === 'scheduled' && sessionKey ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full"
+                  disabled={actionBusy}
+                  onClick={() => dispatch(sessionTokensActions.startRequested(sessionKey))}
+                >
+                  Start session
+                </Button>
+              ) : null}
+
+              {!isDuration && runStatus !== 'scheduled' ? (
+                <>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="space-y-1 rounded-md border border-border/60 bg-muted/30 px-2 py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Prev
+                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {prevToken?.tokenLabel ?? '—'}
+                      </p>
+                    </div>
+                    <div className="space-y-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Current
+                      </p>
+                      <p className="text-base font-semibold text-foreground">
+                        {currentToken?.tokenLabel ?? '—'}
+                      </p>
+                    </div>
+                    <div className="space-y-1 rounded-md border border-border/60 bg-muted/30 px-2 py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Next
+                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {nextToken?.tokenLabel ?? '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {runStatus === 'started' && sessionKey ? (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        disabled={actionBusy || !canCallPrevious}
+                        onClick={() =>
+                          dispatch(sessionTokensActions.callPreviousRequested(sessionKey))
+                        }
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="flex-1"
+                        disabled={actionBusy || !canCallNext}
+                        onClick={() =>
+                          dispatch(sessionTokensActions.callNextRequested(sessionKey))
+                        }
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+
+              {isDuration && runStatus === 'started' ? (
+                <p className="text-sm text-muted-foreground">
+                  Session is in progress for the assigned attendee.
+                </p>
+              ) : null}
+
+              {isDuration && runStatus === 'ended' ? (
+                <p className="text-sm text-muted-foreground">This session has ended.</p>
+              ) : null}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">When</CardTitle>
@@ -425,7 +517,7 @@ export function SessionDetailsPage() {
             </CardContent>
           </Card>
 
-          {showAttendee ? (
+          {showAttendee && !isDuration ? (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Attendee</CardTitle>
@@ -440,12 +532,14 @@ export function SessionDetailsPage() {
         </div>
       </div>
 
-      <IssueTokenDialog
-        open={issueOpen}
-        eventId={eventId}
-        occurrenceDate={occurrenceDate}
-        onOpenChange={setIssueOpen}
-      />
+      {!isDuration ? (
+        <IssueTokenDialog
+          open={issueOpen}
+          eventId={eventId}
+          occurrenceDate={occurrenceDate}
+          onOpenChange={setIssueOpen}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

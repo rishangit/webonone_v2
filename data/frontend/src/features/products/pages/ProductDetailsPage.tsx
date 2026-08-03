@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ImageCarousel,
   TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -31,7 +32,7 @@ import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 
 const PRODUCT_DETAIL_TABS = [
-  'profile',
+  'overview',
   'gallery',
   'attributes',
   'variants',
@@ -61,7 +62,7 @@ export function ProductDetailsPage() {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const [dialog, setDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
-  const [tab, setTab] = useDetailTabParam(PRODUCT_DETAIL_TABS, 'profile')
+  const [tab, setTab] = useDetailTabParam(PRODUCT_DETAIL_TABS, 'overview')
 
   useEffect(() => {
     if (!productId) return
@@ -86,9 +87,16 @@ export function ProductDetailsPage() {
     dispatch(productsActions.fetchDetailRequested({ id, force: true }))
   }
 
-  const profile = product ? (
+  const overview = product ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
+        {(product.galleryImages ?? []).length > 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <ImageCarousel images={product.galleryImages ?? []} alt={product.name} />
+            </CardContent>
+          </Card>
+        ) : null}
         <EditableSectionCard
           title="Product"
           description="Name, status, and description"
@@ -166,7 +174,7 @@ export function ProductDetailsPage() {
           ariaLabel="Product sections"
           tab={tab}
           onTabChange={setTab}
-          profile={profile}
+          overview={overview}
           attributes={
             <CatalogAttributesTab
               kind="products"

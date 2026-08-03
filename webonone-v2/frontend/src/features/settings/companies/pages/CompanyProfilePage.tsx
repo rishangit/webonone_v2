@@ -28,16 +28,16 @@ type CompanyProfilePageProps = {
   backLabel: string
 }
 
-type CompanyProfileTab = 'profile' | 'gallery' | 'data'
+type CompanyProfileTab = 'overview' | 'gallery' | 'data'
 
 const COMPANY_PROFILE_TABS = [
-  'profile',
+  'overview',
   'gallery',
   'data',
 ] as const satisfies readonly CompanyProfileTab[]
 
 const TABS: { id: CompanyProfileTab; label: string }[] = [
-  { id: 'profile', label: 'Profile' },
+  { id: 'overview', label: 'Overview' },
   { id: 'gallery', label: 'Gallery' },
   { id: 'data', label: 'Data' },
 ]
@@ -51,7 +51,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
   const detailError = useAppSelector((s) => s.companies.detailError)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
 
-  const [tab, setTab] = useDetailTabParam(COMPANY_PROFILE_TABS, 'profile')
+  const [tab, setTab] = useDetailTabParam(COMPANY_PROFILE_TABS, 'overview')
   const [dialog, setDialog] = useState<{ initialStep: CompanyWizardStep } | null>(null)
 
   const loading = detailStatus === 'loading' && !detail
@@ -151,7 +151,7 @@ export function CompanyProfilePage({ backTo, backLabel }: CompanyProfilePageProp
           id={`company-profile-panel-${tab}`}
           aria-labelledby={`company-profile-tab-${tab}`}
         >
-          {tab === 'profile' ? (
+          {tab === 'overview' ? (
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">

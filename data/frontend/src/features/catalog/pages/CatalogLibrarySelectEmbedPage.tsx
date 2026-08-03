@@ -12,6 +12,7 @@ import {
 import {
   Alert,
   AlertDescription,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -26,7 +27,12 @@ import type { CatalogItem, Tag, Unit, Attribute } from '@/shared/types/data.type
 
 type PickerKind = 'tags' | 'units' | 'attributes' | 'products' | 'services' | 'spaces'
 
-type PickerRow = { id: string; name: string; description: string | null }
+type PickerRow = {
+  id: string
+  name: string
+  description: string | null
+  imageUrl: string | null
+}
 
 function isPickerKind(value: string): value is PickerKind {
   return (
@@ -39,6 +45,17 @@ function isPickerKind(value: string): value is PickerKind {
   )
 }
 
+function kindShowsThumbnail(kind: PickerKind): boolean {
+  return kind === 'products' || kind === 'services' || kind === 'spaces'
+}
+
+function firstGalleryUrl(
+  images: { mediaId: string; url: string }[] | null | undefined,
+): string | null {
+  const url = images?.[0]?.url
+  return typeof url === 'string' && url.trim() ? url : null
+}
+
 async function listLibrary(kind: PickerKind, q?: string): Promise<PickerRow[]> {
   switch (kind) {
     case 'tags': {
@@ -47,6 +64,7 @@ async function listLibrary(kind: PickerKind, q?: string): Promise<PickerRow[]> {
         id: item.id,
         name: item.name,
         description: item.description,
+        imageUrl: null,
       }))
     }
     case 'units': {
@@ -55,6 +73,7 @@ async function listLibrary(kind: PickerKind, q?: string): Promise<PickerRow[]> {
         id: item.id,
         name: item.name,
         description: item.description,
+        imageUrl: null,
       }))
     }
     case 'attributes': {
@@ -63,6 +82,7 @@ async function listLibrary(kind: PickerKind, q?: string): Promise<PickerRow[]> {
         id: item.id,
         name: item.name,
         description: item.description,
+        imageUrl: null,
       }))
     }
     case 'products':
@@ -79,6 +99,7 @@ async function listLibrary(kind: PickerKind, q?: string): Promise<PickerRow[]> {
         id: item.id,
         name: item.name,
         description: item.description,
+        imageUrl: firstGalleryUrl(item.galleryImages),
       }))
     }
   }
@@ -194,6 +215,14 @@ export function CatalogLibrarySelectEmbedPage() {
                     }
                   }}
                 >
+                  {kindShowsThumbnail(kind) ? (
+                    <ImagePreview
+                      src={item.imageUrl}
+                      alt={item.name}
+                      mode="view"
+                      className="h-12 w-12"
+                    />
+                  ) : null}
                   <ItemListContent>
                     <div className="font-medium">{item.name}</div>
                     {item.description ? (

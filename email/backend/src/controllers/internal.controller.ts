@@ -10,6 +10,7 @@ export async function internalSend(req: Request, res: Response) {
     toEmail: body.toEmail,
     payload: body.payload,
     companyId: body.companyId,
+    scheduledAt: body.scheduledAt,
   })
   res.status(202).json(result)
 }

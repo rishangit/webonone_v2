@@ -1,17 +1,32 @@
 export type EventTimeMode = 'duration' | 'window'
-export type EventRecurrence = 'none' | 'weekly'
+export type EventRecurrence =
+  | 'none'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly_first_week'
+  | 'monthly_by_date'
+
+export type EventGalleryImage = {
+  mediaId: string
+  url: string
+}
 
 export type CompanyEvent = {
   id: string
   companyId: string
   serviceId: string
   serviceName: string
+  serviceImageUrl: string | null
+  serviceGalleryImages: EventGalleryImage[]
+  spaceGalleryImages: EventGalleryImage[]
   timeMode: EventTimeMode
   staffId: string
   staffDisplayName: string
   attendeeUserId: string | null
   attendeeDisplayName: string | null
   attendeeEmail: string | null
+  spaceId: string | null
+  spaceName: string | null
   startsOn: string
   startTime: string
   endTime: string
@@ -78,6 +93,7 @@ export type CreateCompanyEventBody = {
   attendee_user_id?: string | null
   attendee_display_name?: string | null
   attendee_email?: string | null
+  space_id?: string | null
   starts_on: string
   start_time?: string
   weekdays: number[]
