@@ -2,8 +2,10 @@ import { parseNavTarget } from '@webonone/platform-nav'
 
 import {
   isDataNavSentinel,
+  isDesignNavSentinel,
   isEmailNavSentinel,
   isIdentityNavSentinel,
+  isPaymentNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
 } from '@/features/shell/config/navItems'
@@ -75,6 +77,10 @@ export function prefetchRoutePath(pathname: string): void {
     pathname.startsWith('/email/') ||
     isSmsNavSentinel(pathname) ||
     pathname.startsWith('/sms/') ||
+    isPaymentNavSentinel(pathname) ||
+    pathname.startsWith('/payment/') ||
+    isDesignNavSentinel(pathname) ||
+    pathname.startsWith('/design/') ||
     isIdentityNavSentinel(pathname) ||
     isProfileNavSentinel(pathname)
   ) {

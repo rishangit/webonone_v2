@@ -272,6 +272,14 @@ export function App() {
             }
           />
           <Route
+            path="design/*"
+            element={
+              <LazyRoute>
+                <PlatformPeerFrame peer="design" />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="data/products/:productId/variants/:variantId"
             element={
               <LazyRoute>

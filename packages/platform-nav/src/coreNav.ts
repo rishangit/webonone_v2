@@ -1,6 +1,6 @@
 export type PlatformNavVariant = 'main' | 'superAdmin' | 'member'
 
-export type ExternalServiceId = 'email' | 'data' | 'identity' | 'sms' | 'payment'
+export type ExternalServiceId = 'email' | 'data' | 'identity' | 'sms' | 'payment' | 'design'
 
 export type CoreNavLeaf = {
   kind: 'item'
@@ -366,6 +366,44 @@ const PAYMENT_PLATFORM_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
+/** Internal sentinels for Design sub-nav in consumer AppLayouts (not routed on core origin). */
+export const DESIGN_NAV_SENTINELS = {
+  forms: '/design/forms',
+} as const
+
+export function isDesignNavSentinel(to: string): boolean {
+  if (to === DESIGN_NAV_SENTINELS.forms) return true
+  if (to.startsWith(`${DESIGN_NAV_SENTINELS.forms}/`)) {
+    const rest = to.slice(`${DESIGN_NAV_SENTINELS.forms}/`.length)
+    return Boolean(rest) && !rest.includes('..')
+  }
+  return false
+}
+
+export function designSentinelToExternalPath(sentinel: string): string | null {
+  if (sentinel === DESIGN_NAV_SENTINELS.forms) return '/forms'
+  if (sentinel.startsWith(`${DESIGN_NAV_SENTINELS.forms}/`)) {
+    const rest = sentinel.slice(DESIGN_NAV_SENTINELS.forms.length)
+    if (!rest || rest.includes('..')) return null
+    return `/forms${rest}`
+  }
+  return null
+}
+
+const DESIGN_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Design',
+  children: [
+    {
+      kind: 'item',
+      path: DESIGN_NAV_SENTINELS.forms,
+      label: 'Forms',
+      externalService: 'design',
+      externalPath: '/forms',
+    },
+  ],
+}
+
 const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
   kind: 'group',
   label: 'Data',
@@ -480,6 +518,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   },
   SMS_PLATFORM_NAV_GROUP,
   PAYMENT_PLATFORM_NAV_GROUP,
+  DESIGN_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Settings',
@@ -496,6 +535,7 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
   CALENDAR_PLATFORM_NAV_GROUP,
   IDENTITY_COMPANY_NAV_GROUP,
   DATA_PLATFORM_NAV_GROUP,
+  DESIGN_PLATFORM_NAV_GROUP,
   {
     kind: 'group',
     label: 'Settings',

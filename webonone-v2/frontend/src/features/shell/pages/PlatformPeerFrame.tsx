@@ -4,6 +4,7 @@ import { PlatformServiceFrame } from '@webonone/platform-embed'
 import {
   CORE_NAV_QUERY_PARAM,
   dataSentinelToExternalPath,
+  designSentinelToExternalPath,
   emailSentinelToExternalPath,
   identitySentinelToExternalPath,
   isDataEntityKey,
@@ -15,6 +16,7 @@ import {
 import { useAppSelector } from '@/app/store/hooks'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
+import { getDesignOrigin } from '@/features/design/utils/designConfig'
 import { getEmailOrigin } from '@/features/email/utils/emailConfig'
 import { getPaymentOrigin } from '@/features/payment/utils/paymentConfig'
 import { getSmsOrigin } from '@/features/sms/utils/smsConfig'
@@ -29,9 +31,10 @@ const PEER_LABELS: Record<PlatformPeerId, string> = {
   identity: 'Profile',
   sms: 'SMS',
   payment: 'Payment',
+  design: 'Design',
 }
 
-export type PlatformPeerId = 'email' | 'data' | 'identity' | 'sms' | 'payment'
+export type PlatformPeerId = 'email' | 'data' | 'identity' | 'sms' | 'payment' | 'design'
 
 type PlatformPeerFrameProps = {
   peer: PlatformPeerId
@@ -53,6 +56,9 @@ function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
   }
   if (peer === 'payment') {
     return paymentSentinelToExternalPath(pathname) ?? '/invoices'
+  }
+  if (peer === 'design') {
+    return designSentinelToExternalPath(pathname) ?? '/forms'
   }
   if (peer === 'identity') {
     return (
@@ -79,6 +85,9 @@ function resolvePeerOrigin(peer: PlatformPeerId): string {
   }
   if (peer === 'payment') {
     return getPaymentOrigin()
+  }
+  if (peer === 'design') {
+    return getDesignOrigin()
   }
   if (peer === 'identity') {
     return getIdentityOrigin()
@@ -174,6 +183,19 @@ function isAllowedDataShellNavigatePath(path: string): boolean {
   return true
 }
 
+function isAllowedDesignShellNavigatePath(path: string): boolean {
+  const pathname = path.split('?')[0] ?? path
+  if (!pathname.startsWith('/design/')) return false
+  const parts = pathname.slice(1).split('/').filter(Boolean)
+  if (parts[0] !== 'design' || parts.length < 2) return false
+  if (parts.some((part) => !part || part.includes('..'))) return false
+  if (parts[1] !== 'forms') return false
+  // /design/forms or /design/forms/:id/edit
+  if (parts.length === 2) return true
+  if (parts.length === 4 && parts[3] === 'edit') return true
+  return false
+}
+
 export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -224,6 +246,12 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         if (!isAllowedSmsShellNavigatePath(path)) return
         const [pathname = path, query = ''] = path.split('?')
         navigate({ pathname, search: query ? `?${query}` : undefined })
+        return
+      }
+      if (peer === 'design') {
+        if (!isAllowedDesignShellNavigatePath(path)) return
+        const [pathname = path, query = ''] = path.split('?')
+        navigate({ pathname, search: query ? `?${query}` : undefined })
       }
     },
     [navigate, peer],
@@ -248,7 +276,9 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         onMediaDialogRequest={openMediaDialog}
         onPeerDialogRequest={openPeerDialog}
         onPeerNavigate={
-          peer === 'data' || peer === 'email' || peer === 'sms' ? handlePeerNavigate : undefined
+          peer === 'data' || peer === 'email' || peer === 'sms' || peer === 'design'
+            ? handlePeerNavigate
+            : undefined
         }
       />
     </div>

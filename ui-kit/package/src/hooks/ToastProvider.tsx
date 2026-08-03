@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { cn } from '../lib/utils'
 import { ToastContext, type Toast } from './toast-context'
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -19,29 +21,35 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ toasts, toast, dismiss }), [toasts, toast, dismiss])
 
+  const viewport =
+    toasts.length > 0 ? (
+      <div
+        aria-live="polite"
+        className="ui-toast-viewport pointer-events-none fixed bottom-4 right-4 z-[100] flex w-auto flex-col items-end gap-2"
+      >
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={cn(
+              'pointer-events-auto min-w-[12rem] max-w-sm rounded-lg px-4 py-3 text-foreground shadow-lg',
+              t.variant === 'destructive'
+                ? 'border border-destructive/50 bg-destructive text-destructive-foreground'
+                : 'glass-card',
+            )}
+          >
+            <p className="text-sm font-medium">{t.title}</p>
+            {t.description ? <p className="mt-0.5 text-sm opacity-90">{t.description}</p> : null}
+          </div>
+        ))}
+      </div>
+    ) : null
+
   return (
     <ToastContext.Provider value={value}>
       {children}
-      {toasts.length > 0 ? (
-        <div
-          aria-live="polite"
-          className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2"
-        >
-          {toasts.map((t) => (
-            <div
-              key={t.id}
-              className={`pointer-events-auto rounded-md border px-4 py-3 shadow-lg ${
-                t.variant === 'destructive'
-                  ? 'border-destructive bg-destructive text-destructive-foreground'
-                  : 'bg-background'
-              }`}
-            >
-              <p className="text-sm font-medium">{t.title}</p>
-              {t.description ? <p className="text-sm opacity-90">{t.description}</p> : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
+      {typeof document !== 'undefined' && viewport
+        ? createPortal(viewport, document.body)
+        : null}
     </ToastContext.Provider>
   )
 }

@@ -8,6 +8,7 @@ import {
   isDataNavSentinel,
   isEmailNavSentinel,
   isIdentityNavSentinel,
+  isDesignNavSentinel,
   isPaymentNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
@@ -41,6 +42,8 @@ function isPlatformPeerEmbedPath(pathname: string, activeRole: string | null): b
     pathname.startsWith('/sms/') ||
     isPaymentNavSentinel(pathname) ||
     pathname.startsWith('/payment/') ||
+    isDesignNavSentinel(pathname) ||
+    pathname.startsWith('/design/') ||
     isIdentityNavSentinel(pathname) ||
     isProfileNavSentinel(pathname)
   ) {

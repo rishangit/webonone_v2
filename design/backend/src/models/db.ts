@@ -1,0 +1,42 @@
+import knex from 'knex'
+import { env } from '../config/env.js'
+
+export const db = knex({
+  client: 'mysql2',
+  connection: {
+    ...env.database,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
+  },
+  pool: { min: 0, max: 10 },
+})
+
+export type DesignRole = 'super_admin' | 'company_admin' | 'member'
+export type FormTemplateStatus = 'draft' | 'published'
+
+export interface DesignUserRow {
+  id: string
+  email: string
+  display_name: string
+  created_at: Date
+  updated_at: Date
+}
+
+export interface DesignCompanyRow {
+  id: string
+  name: string
+  created_at: Date
+  updated_at: Date
+}
+
+export interface DesignFormTemplateRow {
+  id: string
+  company_id: string
+  name: string
+  slug: string
+  definition: string | Record<string, unknown>
+  status: FormTemplateStatus
+  created_by: string | null
+  created_at: Date
+  updated_at: Date
+}

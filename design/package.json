@@ -1,0 +1,16 @@
+{
+  "name": "design-root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n fe,be -c blue,green \"npm run dev -w @webonone/design-frontend\" \"npm run dev -w @webonone/design-backend\"",
+    "build": "npm run build:platform-nav --prefix .. && npm run build:platform-embed --prefix .. && npm run build:theme --prefix .. && npm run build:store-kit --prefix .. && npm run build:ui-kit --prefix .. && npm run build -w @webonone/design-frontend && npm run build -w @webonone/design-backend",
+    "deploy": "npm run env:apply --prefix .. && npm run build && npm run stage:deploy",
+    "stage:deploy": "node ../tooling/stage-iis-deploy.mjs design/deploy",
+    "clean:deploy": "node ../tooling/stage-iis-deploy.mjs design/deploy --clean-only",
+    "type-check": "npm run type-check -w @webonone/design-frontend && npm run type-check -w @webonone/design-backend",
+    "migrate": "npm run migrate -w @webonone/design-backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

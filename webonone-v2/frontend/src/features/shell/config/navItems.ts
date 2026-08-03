@@ -25,6 +25,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import {
   DATA_NAV_SENTINELS,
+  DESIGN_NAV_SENTINELS,
   EMAIL_NAV_SENTINELS,
   IDENTITY_NAV_SENTINELS,
   PAYMENT_NAV_SENTINELS,
@@ -33,6 +34,7 @@ import {
   filterPlatformNavDataEntities,
   getPlatformNavDefs,
   isDataNavSentinel,
+  isDesignNavSentinel,
   isEmailNavSentinel,
   isIdentityNavSentinel,
   isPaymentNavSentinel,
@@ -70,6 +72,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
   [SMS_NAV_SENTINELS.history]: History,
   [SMS_NAV_SENTINELS.templates]: MessageSquare,
   [PAYMENT_NAV_SENTINELS.invoices]: Wallet,
+  [DESIGN_NAV_SENTINELS.forms]: Palette,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }
@@ -81,6 +84,7 @@ const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Data: Database,
   SMS: MessageSquare,
   Payment: Wallet,
+  Design: Palette,
   Calendar: Calendar,
 }
 
@@ -93,7 +97,8 @@ function resolveItemPath(item: CoreNavLeaf): string {
     item.externalService === 'email' ||
     item.externalService === 'data' ||
     item.externalService === 'sms' ||
-    item.externalService === 'payment'
+    item.externalService === 'payment' ||
+    item.externalService === 'design'
   ) {
     return item.path
   }
@@ -135,8 +140,8 @@ export function buildPlatformNav(
   return buildNavItems(defs)
 }
 
-/** Identity/Data remain staff/company-session only. Default User keeps Calendar. */
-const COMPANY_SESSION_ONLY_GROUPS = new Set(['Identity', 'Data'])
+/** Identity/Data/Design remain staff/company-session only. Default User keeps Calendar. */
+const COMPANY_SESSION_ONLY_GROUPS = new Set(['Identity', 'Data', 'Design'])
 
 function withoutCompanySessionOnlyGroups(defs: CoreNavDef[]): CoreNavDef[] {
   return defs.filter(
@@ -180,4 +185,5 @@ export {
   isProfileNavSentinel,
   isSmsNavSentinel,
   isPaymentNavSentinel,
+  isDesignNavSentinel,
 }

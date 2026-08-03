@@ -339,6 +339,14 @@ html.platform-embed-canvas #root > * {
   width: 100%;
 }
 
+/** Toast portals to body — keep compact bottom-right (not stretched by embed flex). */
+html.platform-embed-canvas .ui-toast-viewport {
+  flex: none;
+  width: auto;
+  height: auto;
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
 html.platform-embed-canvas .platform-embed-shell,
 html.platform-embed-canvas .platform-embed-shell-main {
   flex: 1 1 auto;

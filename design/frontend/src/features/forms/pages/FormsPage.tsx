@@ -1,0 +1,177 @@
+import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  FeaturePage,
+  ListPageBody,
+  Pagination,
+  SearchInput,
+  useToast,
+} from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { formsActions } from '@/features/forms/store'
+import { FormCreateDialog } from '@/features/forms/components/FormCreateDialog'
+import { FormsList } from '@/features/forms/components/FormsList'
+import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
+import type { FormTemplate } from '@/shared/types/design.types'
+import type { FormCreateMetaValues } from '@/features/forms/schemas/formSchemas'
+
+export function FormsPage() {
+  const dispatch = useAppDispatch()
+  const { goToEdit } = useNavigateDesign()
+  const { toast } = useToast()
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const user = useAppSelector((s) => s.auth.user)
+  const role = user?.role ?? 'member'
+  const companyId = user?.companyId ?? null
+  const {
+    items,
+    total,
+    page,
+    pageSize,
+    listStatus,
+    listError,
+    detail,
+    detailStatus,
+    detailError,
+  } = useAppSelector((s) => s.forms)
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [awaitingCreate, setAwaitingCreate] = useState(false)
+
+  const canManage = role === 'super_admin' || role === 'company_admin'
+  const hasCompany = Boolean(companyId)
+  const loading = hasCompany && listStatus === 'loading' && items.length === 0
+  usePlatformLoading(loading ? 'Loading forms…' : null)
+
+  useEffect(() => {
+    if (!accessToken || !hasCompany) return
+    dispatch(formsActions.loadListRequested({ page: 1, pageSize: 12, force: true }))
+  }, [accessToken, dispatch, hasCompany])
+
+  useEffect(() => {
+    if (!awaitingCreate) return
+    if (detailStatus === 'idle' && detail) {
+      setAwaitingCreate(false)
+      setDialogOpen(false)
+      toast({ title: 'Form created' })
+      goToEdit(detail.id)
+      return
+    }
+    if (detailStatus === 'error') {
+      setAwaitingCreate(false)
+    }
+  }, [awaitingCreate, detail, detailStatus, goToEdit, toast])
+
+  if (!accessToken) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!hasCompany) {
+    return (
+      <FeaturePage
+        title="Forms"
+        description="Design company form templates for future documents and tokens."
+      >
+        <Alert>
+          <AlertDescription>
+            Select a company account in WebOnOne (account switcher) to design forms. Forms are
+            scoped to your active company.
+          </AlertDescription>
+        </Alert>
+      </FeaturePage>
+    )
+  }
+
+  function handleSearch(value: string) {
+    setSearchQuery(value)
+    dispatch(formsActions.loadListRequested({ page: 1, q: value, force: true }))
+  }
+
+  function handleCreate(values: FormCreateMetaValues) {
+    setAwaitingCreate(true)
+    dispatch(
+      formsActions.saveDetailRequested({
+        body: {
+          name: values.name,
+          slug: values.slug,
+          definition: { version: 1, fields: [] },
+          status: 'draft',
+        },
+      }),
+    )
+  }
+
+  function handleOpen(form: FormTemplate) {
+    goToEdit(form.id)
+  }
+
+  function handleDelete(form: FormTemplate) {
+    if (!window.confirm(`Delete form “${form.name}”?`)) return
+    dispatch(formsActions.deleteRequested({ id: form.id }))
+    toast({ title: 'Form deleted' })
+  }
+
+  return (
+    <FeaturePage
+      title="Forms"
+      description="Design company form templates for future documents and tokens."
+      actions={
+        <>
+          <SearchInput
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search forms…"
+            className="w-56"
+          />
+          {canManage ? (
+            <Button type="button" size="sm" onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add form
+            </Button>
+          ) : null}
+        </>
+      }
+    >
+      <ListPageBody>
+        {listError ? (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{listError}</AlertDescription>
+          </Alert>
+        ) : null}
+        <FormsList
+          forms={items}
+          onOpen={handleOpen}
+          onDelete={handleDelete}
+          canManage={canManage}
+        />
+        <Pagination
+          className="mt-auto"
+          currentPage={page}
+          pageSize={pageSize}
+          totalCount={total}
+          onPageChange={(next) =>
+            dispatch(formsActions.loadListRequested({ page: next, force: true }))
+          }
+          onPageSizeChange={(next) =>
+            dispatch(formsActions.loadListRequested({ page: 1, pageSize: next, force: true }))
+          }
+        />
+      </ListPageBody>
+
+      <FormCreateDialog
+        open={dialogOpen}
+        isSaving={detailStatus === 'saving'}
+        error={awaitingCreate ? detailError : null}
+        onOpenChange={setDialogOpen}
+        onCreate={handleCreate}
+        onHostedSaved={() => dispatch(formsActions.loadListRequested({ force: true }))}
+      />
+    </FeaturePage>
+  )
+}
