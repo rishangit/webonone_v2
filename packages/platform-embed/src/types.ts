@@ -10,8 +10,17 @@ export const PLATFORM_EMBED_QUERY = {
 /** Peer dialog routes must live under this prefix (host allowlist). */
 export const PLATFORM_PEER_DIALOG_PATH_PREFIX = '/embed/dialogs/' as const
 
+/**
+ * Sentinel path for shell-hosted AlertDialog confirms (`variant: 'alert'`).
+ * Allowlisted only — never loaded as an iframe body.
+ */
+export const PLATFORM_ALERT_CONFIRM_PATH = '/embed/dialogs/confirm-delete' as const
+
 /** Mirrors `@webonone/ui-kit` CustomDialog size presets — kept local to avoid a ui-kit dependency. */
 export type PlatformDialogSizePreset = 'small' | 'medium' | 'large' | 'xlarge' | 'auto'
+
+/** Host chrome: CustomDialog+iframe body vs shell AlertDialog (no iframe). */
+export type PlatformPeerDialogVariant = 'dialog' | 'alert'
 
 export type IdentityUserPickerMode = 'single' | 'multiple'
 
@@ -248,6 +257,11 @@ export type PlatformMediaDialogRequestMessage = {
   title?: string
   scope: string
   folderPath: string
+  /**
+   * Navigation ceiling for the Media selector breadcrumbs. When omitted,
+   * Media locks navigation to `folderPath`.
+   */
+  scopedRoot?: string
   mode?: PlatformMediaDialogMode
   accept?: string
   selectorUpload?: boolean
@@ -274,6 +288,12 @@ export type PlatformPeerDialogRequestMessage = {
   sizeWidth: PlatformDialogSizePreset
   sizeHeight: PlatformDialogSizePreset
   description?: string
+  /**
+   * Host chrome variant.
+   * - `dialog` (default): CustomDialog + peer `/embed/dialogs/…` iframe body
+   * - `alert`: shell AlertDialog only (no iframe) — strict destructive confirms
+   */
+  variant?: PlatformPeerDialogVariant
   /** Host CustomDialog footer Cancel label (default Cancel). */
   cancelLabel?: string
   /**
@@ -755,7 +775,8 @@ export function isPlatformMediaDialogRequestMessage(
     message.type === PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_REQUEST &&
     hasStringProperty(message, 'requestId') &&
     hasStringProperty(message, 'scope') &&
-    hasStringProperty(message, 'folderPath')
+    hasStringProperty(message, 'folderPath') &&
+    (message.scopedRoot === undefined || hasStringProperty(message, 'scopedRoot'))
   )
 }
 
@@ -828,6 +849,9 @@ export function isPlatformPeerDialogRequestMessage(
     isAllowedPlatformPeerDialogPath(message.path as string) &&
     isPlatformDialogSizePreset(message.sizeWidth) &&
     isPlatformDialogSizePreset(message.sizeHeight) &&
+    (message.variant === undefined ||
+      message.variant === 'dialog' ||
+      message.variant === 'alert') &&
     (message.description === undefined || typeof message.description === 'string') &&
     (message.cancelLabel === undefined || typeof message.cancelLabel === 'string') &&
     (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string') &&

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -7,6 +9,7 @@ import {
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateSms } from '@/features/shell/utils/navigateSms'
 import type { SmsTemplate } from '@/shared/types/sms.types'
 
@@ -38,69 +41,84 @@ export function TemplatesList({
 }: TemplatesListProps) {
   const { goToDetail, goToPreview, goToVersions } = useNavigateSms()
   const items = Array.isArray(templates) ? templates : []
+  const [pendingDelete, setPendingDelete] = useState<SmsTemplate | null>(null)
 
   if (items.length === 0) {
     return <ItemListEmpty>No templates found for your scope.</ItemListEmpty>
   }
 
   return (
-    <ItemList>
-      {items.map((template) => {
-        const isBusy = busyId === template.id
-        const isDefault = Boolean(template.isDefault)
+    <>
+      <ItemList>
+        {items.map((template) => {
+          const isBusy = busyId === template.id
+          const isDefault = Boolean(template.isDefault)
 
-        return (
-          <ItemListItem key={template.id}>
-            <ItemListContent>
-              <button
-                type="button"
-                className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => goToDetail(template.id)}
-              >
-                <p className="font-medium">{template.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {template.slug} · {formatScope(template)} ·{' '}
-                  {template.isActive ? 'Active' : 'Inactive'} · Updated{' '}
-                  {formatDate(template.updatedAt)}
-                </p>
-              </button>
-            </ItemListContent>
-            <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
-              <DropdownMenuItem onClick={() => goToDetail(template.id)} disabled={isBusy}>
-                View details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
-                {isDefault ? 'Customize' : 'Edit'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => goToPreview(template.id)} disabled={isBusy}>
-                Preview
-              </DropdownMenuItem>
-              {!isDefault ? (
-                <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
-                  {template.isActive ? 'Deactivate' : 'Activate'}
+          return (
+            <ItemListItem key={template.id}>
+              <ItemListContent>
+                <button
+                  type="button"
+                  className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => goToDetail(template.id)}
+                >
+                  <p className="font-medium">{template.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {template.slug} · {formatScope(template)} ·{' '}
+                    {template.isActive ? 'Active' : 'Inactive'} · Updated{' '}
+                    {formatDate(template.updatedAt)}
+                  </p>
+                </button>
+              </ItemListContent>
+              <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
+                <DropdownMenuItem onClick={() => goToDetail(template.id)} disabled={isBusy}>
+                  View details
                 </DropdownMenuItem>
-              ) : null}
-              {!isDefault ? (
-                <DropdownMenuItem onClick={() => goToVersions(template.id)} disabled={isBusy}>
-                  Version history
+                <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
+                  {isDefault ? 'Customize' : 'Edit'}
                 </DropdownMenuItem>
-              ) : null}
-              {canDelete && template.scope === 'company' && !isDefault ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => onDelete(template)}
-                    disabled={isBusy}
-                  >
-                    Delete
+                <DropdownMenuItem onClick={() => goToPreview(template.id)} disabled={isBusy}>
+                  Preview
+                </DropdownMenuItem>
+                {!isDefault ? (
+                  <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
+                    {template.isActive ? 'Deactivate' : 'Activate'}
                   </DropdownMenuItem>
-                </>
-              ) : null}
-            </ItemListMenu>
-          </ItemListItem>
-        )
-      })}
-    </ItemList>
+                ) : null}
+                {!isDefault ? (
+                  <DropdownMenuItem onClick={() => goToVersions(template.id)} disabled={isBusy}>
+                    Version history
+                  </DropdownMenuItem>
+                ) : null}
+                {canDelete && template.scope === 'company' && !isDefault ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setPendingDelete(template)}
+                      disabled={isBusy}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </ItemListMenu>
+            </ItemListItem>
+          )
+        })}
+      </ItemList>
+      <PlatformAlertConfirmDialog
+        open={pendingDelete !== null}
+        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete template?'}
+        description="This action cannot be undone. The SMS template will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        onConfirm={() => {
+          if (pendingDelete) onDelete(pendingDelete)
+        }}
+      />
+    </>
   )
 }

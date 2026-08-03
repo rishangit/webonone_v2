@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
   DropdownMenuItem,
@@ -17,6 +18,7 @@ import {
   StatusTag,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
@@ -41,6 +43,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
+  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null)
 
   const loading = listStatus === 'loading' && storeKind === kind
   usePlatformLoading(loading ? `Loading ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}…` : null)
@@ -147,7 +150,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() =>
-                          dispatch(companyCatalogActions.deleteRequested({ kind, id: item.id }))
+                          setPendingRemove({ id: item.id, name: item.displayName })
                         }
                       >
                         Remove
@@ -181,6 +184,21 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
           onSaved={() => setAddOpen(false)}
         />
       ) : null}
+
+      <PlatformAlertConfirmDialog
+        open={pendingRemove !== null}
+        title={pendingRemove ? `Remove ${pendingRemove.name}?` : `Remove ${noun}?`}
+        description="This action cannot be undone. The item will be removed from your company catalog."
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel="Remove"
+        onOpenChange={(open) => {
+          if (!open) setPendingRemove(null)
+        }}
+        onConfirm={() => {
+          if (!pendingRemove) return
+          dispatch(companyCatalogActions.deleteRequested({ kind, id: pendingRemove.id }))
+        }}
+      />
     </FeaturePage>
   )
 }

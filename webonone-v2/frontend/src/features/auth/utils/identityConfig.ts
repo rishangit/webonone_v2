@@ -38,3 +38,11 @@ export function buildIdentityEmbedLoginUrl(returnPath = '/'): string {
   }
   return url.toString()
 }
+
+/**
+ * WebOnOne is the shell host — never an embedded peer.
+ * PlatformAlertConfirmDialog always uses a local AlertDialog here.
+ */
+export function isAllowedParentOrigin(_origin: string): boolean {
+  return false
+}

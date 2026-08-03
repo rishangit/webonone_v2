@@ -12,7 +12,13 @@ export interface EmbedModeState {
   scope: string | null
   mode: EmbedMode
   accept: string
+  /** Initial folder when the picker opens. */
   folderPath: string
+  /**
+   * Navigation ceiling for breadcrumbs. Defaults to `folderPath` when the
+   * query param is omitted (legacy embeds stay locked to the start folder).
+   */
+  scopedRoot: string
   maxFiles: number
   mediaType: MediaTypePreset | null
   crop: boolean
@@ -85,6 +91,7 @@ export function useEmbedMode(): EmbedModeState {
     const mode: EmbedMode = modeParam === 'multiple' ? 'multiple' : 'single'
     const accept = searchParams.get('accept') ?? '*/*'
     const folderPath = searchParams.get('folderPath') ?? '/'
+    const scopedRoot = searchParams.get('scopedRoot') ?? folderPath
     const maxFiles = Math.min(Number(searchParams.get('maxFiles') ?? 10), 50)
     const mediaType = parseMediaType(searchParams.get('mediaType'))
     const crop = searchParams.get('crop') === 'true'
@@ -104,6 +111,7 @@ export function useEmbedMode(): EmbedModeState {
       mode,
       accept,
       folderPath,
+      scopedRoot,
       maxFiles,
       mediaType,
       crop,

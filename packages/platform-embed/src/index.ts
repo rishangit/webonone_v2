@@ -5,6 +5,7 @@ export {
   IDENTITY_SSO_MESSAGE_TYPES,
   PLATFORM_EMBED_QUERY,
   PLATFORM_MESSAGE_TYPES,
+  PLATFORM_ALERT_CONFIRM_PATH,
   PLATFORM_PEER_DIALOG_PATH_PREFIX,
   WEBSITE_SSO_MESSAGE_TYPES,
   isAllowedPlatformPeerDialogPath,
@@ -83,6 +84,7 @@ export {
   type PlatformPeerDialogResultMessage,
   type PlatformPeerDialogSecondaryMessage,
   type PlatformPeerDialogSubmitMessage,
+  type PlatformPeerDialogVariant,
   type PlatformReadyMessage,
   type WebsiteSsoNoneMessage,
   type WebsiteSsoSessionMessage,
@@ -201,6 +203,10 @@ export {
   type UseRequestPlatformPeerDialogOptions,
   type UseRequestPlatformPeerDialogResult,
 } from './useRequestPlatformPeerDialog'
+export {
+  PlatformAlertConfirmDialog,
+  type PlatformAlertConfirmDialogProps,
+} from './PlatformAlertConfirmDialog'
 export {
   usePlatformPeerDialogSubmit,
   type UsePlatformPeerDialogSubmitOptions,

@@ -250,6 +250,7 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
               parentOrigin={hostOrigin}
               scope={active.request.scope}
               folderPath={active.request.folderPath}
+              scopedRoot={active.request.scopedRoot}
               mode={active.request.mode}
               accept={active.request.accept}
               selectorUpload={active.request.selectorUpload}

@@ -9,6 +9,7 @@ import {
   isMimeAllowed,
   writeBlob,
 } from './storage.service.js'
+import { ensureFolderPath } from './folder.service.js'
 import { env } from '../config/env.js'
 
 interface MediaItemRow {
@@ -78,6 +79,8 @@ export async function uploadMediaItem(input: {
   const storageKey = buildStorageKey(input.scope, input.folderPath, id, input.fileName)
   const publicUrl = buildPublicUrl(id, input.fileName)
   const dimensions = await extractImageDimensions(input.buffer, input.mimeType)
+
+  await ensureFolderPath(input.scope, input.folderPath, input.userId)
 
   const trx = await db.transaction()
   try {

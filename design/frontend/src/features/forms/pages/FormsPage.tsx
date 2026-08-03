@@ -111,10 +111,8 @@ export function FormsPage() {
     goToEdit(form.id)
   }
 
-  function handleDelete(form: FormTemplate) {
-    if (!window.confirm(`Delete form “${form.name}”?`)) return
-    dispatch(formsActions.deleteRequested({ id: form.id }))
-    toast({ title: 'Form deleted' })
+  function handleDeleted(id: string) {
+    dispatch(formsActions.deleteRequested({ id }))
   }
 
   return (
@@ -147,7 +145,7 @@ export function FormsPage() {
         <FormsList
           forms={items}
           onOpen={handleOpen}
-          onDelete={handleDelete}
+          onDeleted={handleDeleted}
           canManage={canManage}
         />
         <Pagination

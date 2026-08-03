@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { ImagePlus, Trash2 } from 'lucide-react'
-import { PLATFORM_MESSAGE_TYPES } from '@webonone/platform-embed'
+import { PLATFORM_MESSAGE_TYPES, PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
   Card,
@@ -9,10 +10,12 @@ import {
   CardTitle,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
 import {
   buildCompanyGalleryFolderPath,
   buildCompanyMediaScope,
+  COMPANY_MEDIA_SCOPED_ROOT,
 } from '@/features/media/utils/mediaConfig'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import type { CompanyGalleryImage } from '@/features/settings/basic/services/companyApi'
@@ -35,6 +38,7 @@ export function CompanyGalleryCard({
   const dispatch = useAppDispatch()
   const { openMediaDialog } = usePlatformMediaDialog()
   const images = galleryImages ?? []
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
 
   function persistGallery(next: CompanyGalleryImage[]) {
     dispatch(
@@ -55,6 +59,7 @@ export function CompanyGalleryCard({
         requestId: crypto.randomUUID(),
         title: 'Add gallery images',
         scope: buildCompanyMediaScope(companyId),
+        scopedRoot: COMPANY_MEDIA_SCOPED_ROOT,
         folderPath: buildCompanyGalleryFolderPath(companyId),
         mode: 'multiple',
         accept: 'image/*',
@@ -82,62 +87,77 @@ export function CompanyGalleryCard({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1.5">
-            <CardTitle className="text-lg">Gallery</CardTitle>
-            <CardDescription>
-              Additional company images (marketing, office, products, etc.)
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1.5">
+              <CardTitle className="text-lg">Gallery</CardTitle>
+              <CardDescription>
+                Additional company images (marketing, office, products, etc.)
+              </CardDescription>
+            </div>
+            {canEdit ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={openGalleryPicker}
+                disabled={saving || images.length >= MAX_GALLERY_IMAGES}
+              >
+                <ImagePlus className="h-4 w-4" aria-hidden />
+                Add images
+              </Button>
+            ) : null}
           </div>
-          {canEdit ? (
-            <Button
-              type="button"
-              size="sm"
-              onClick={openGalleryPicker}
-              disabled={saving || images.length >= MAX_GALLERY_IMAGES}
-            >
-              <ImagePlus className="h-4 w-4" aria-hidden />
-              Add images
-            </Button>
-          ) : null}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {images.length === 0 ? (
-          <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {canEdit ? 'Add gallery images' : 'No gallery images yet'}
-            </p>
-          </div>
-        ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {images.map((img) => (
-              <li key={img.mediaId} className="group relative overflow-hidden rounded-lg border">
-                <img
-                  src={img.url}
-                  alt="Company gallery"
-                  className="aspect-square w-full object-cover"
-                />
-                {canEdit ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={() => handleRemove(img.mediaId)}
-                    disabled={saving}
-                    aria-label="Remove gallery image"
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          {images.length === 0 ? (
+            <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {canEdit ? 'Add gallery images' : 'No gallery images yet'}
+              </p>
+            </div>
+          ) : (
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {images.map((img) => (
+                <li key={img.mediaId} className="group relative overflow-hidden rounded-lg border">
+                  <img
+                    src={img.url}
+                    alt="Company gallery"
+                    className="aspect-square w-full object-cover"
+                  />
+                  {canEdit ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={() => setPendingRemoveId(img.mediaId)}
+                      disabled={saving}
+                      aria-label="Remove gallery image"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+      <PlatformAlertConfirmDialog
+        open={pendingRemoveId !== null}
+        title="Remove gallery image?"
+        description="This action cannot be undone. The image will be removed from the company gallery."
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel="Remove"
+        onOpenChange={(open) => {
+          if (!open) setPendingRemoveId(null)
+        }}
+        onConfirm={() => {
+          if (pendingRemoveId) handleRemove(pendingRemoveId)
+        }}
+      />
+    </>
   )
 }

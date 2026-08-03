@@ -24,8 +24,9 @@ Any **create / edit / selection / wizard** dialog box or dialog window in a sate
 
 | Use | Component |
 |-----|-----------|
-| Forms, wizards, selection, previews, delete (sized) | **`CustomDialog`** from `@webonone/ui-kit` |
-| Strict non-dismissible destructive confirm | **`AlertDialog`** |
+| Forms, wizards, selection, previews | **`CustomDialog`** from `@webonone/ui-kit` (+ peer-dialog when embedded) |
+| Strict destructive confirm (delete) | **`PlatformAlertConfirmDialog`** from `@webonone/platform-embed` (local or shell `AlertDialog`) |
+| Strict confirm inside WebOnOne-native FE only | UI Kit **`AlertDialog`** (e.g. `ThemeDeleteDialog`) |
 | Low-level Radix composition | UI Kit internals only — not feature code |
 
 ## Core layout

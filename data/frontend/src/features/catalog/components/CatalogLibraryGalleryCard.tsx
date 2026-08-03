@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ImagePlus, Trash2 } from 'lucide-react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
   Card,
@@ -9,6 +10,7 @@ import {
   CardTitle,
 } from '@webonone/ui-kit'
 import { CatalogLibraryGalleryMediaModal } from '@/features/catalog/components/CatalogLibraryGalleryMediaModal'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { libraryKindSingular, type LibraryGalleryKind } from '@/features/media/utils/mediaConfig'
 import { dataApi } from '@/shared/services/dataApi'
 import type { CatalogGalleryImage } from '@/shared/types/data.types'
@@ -36,6 +38,7 @@ export function CatalogLibraryGalleryCard({
   const [pickerKey, setPickerKey] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const images = galleryImages ?? []
   const noun = libraryKindSingular(kind)
 
@@ -114,7 +117,7 @@ export function CatalogLibraryGalleryCard({
                       size="sm"
                       variant="secondary"
                       className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={() => handleRemove(img.mediaId)}
+                      onClick={() => setPendingRemoveId(img.mediaId)}
                       disabled={saving}
                       aria-label="Remove gallery image"
                     >
@@ -145,6 +148,20 @@ export function CatalogLibraryGalleryCard({
           void persistGallery(Array.from(byId.values()))
         }}
         onClose={() => setPickerOpen(false)}
+      />
+
+      <PlatformAlertConfirmDialog
+        open={pendingRemoveId !== null}
+        title="Remove gallery image?"
+        description={`This action cannot be undone. The image will be removed from this ${noun} gallery.`}
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel="Remove"
+        onOpenChange={(open) => {
+          if (!open) setPendingRemoveId(null)
+        }}
+        onConfirm={() => {
+          if (pendingRemoveId) handleRemove(pendingRemoveId)
+        }}
       />
     </>
   )

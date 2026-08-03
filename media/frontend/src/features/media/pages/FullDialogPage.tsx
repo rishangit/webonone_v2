@@ -189,7 +189,8 @@ export function FullDialogPage() {
       <ScopedFolderBrowser
         key={browserKey}
         scope={scope}
-        scopedRoot={embed.folderPath}
+        scopedRoot={embed.scopedRoot}
+        initialPath={embed.folderPath}
         mode={embed.selectable ? embed.mode : 'single'}
         selectedIds={selectedIds}
         onSelectFile={embed.selectable ? handleSelectFile : undefined}

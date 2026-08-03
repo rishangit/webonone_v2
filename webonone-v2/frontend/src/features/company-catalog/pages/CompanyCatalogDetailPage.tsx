@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
   Card,
@@ -14,6 +15,7 @@ import {
   type SelectTagValue,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import { CatalogDetailSectionTabs, type CatalogDetailTabId } from '../components/CatalogDetailSectionTabs'
@@ -78,6 +80,7 @@ export function CompanyCatalogDetailPage() {
     null,
   )
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
+  const [pendingRemove, setPendingRemove] = useState(false)
 
   const loading = detailStatus === 'loading'
   usePlatformLoading(
@@ -389,10 +392,7 @@ export function CompanyCatalogDetailPage() {
             size="sm"
             variant="destructive"
             disabled={busy}
-            onClick={() => {
-              dispatch(companyCatalogActions.deleteRequested({ kind, id }))
-              navigate(listPath)
-            }}
+            onClick={() => setPendingRemove(true)}
           >
             Remove
           </Button>
@@ -469,6 +469,21 @@ export function CompanyCatalogDetailPage() {
           }}
         />
       )}
+
+      <PlatformAlertConfirmDialog
+        open={pendingRemove}
+        title={detail ? `Remove ${detail.displayName}?` : `Remove ${singularLabel(kind).toLowerCase()}?`}
+        description="This action cannot be undone. The item will be removed from your company catalog."
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel="Remove"
+        onOpenChange={(open) => {
+          if (!open) setPendingRemove(false)
+        }}
+        onConfirm={() => {
+          dispatch(companyCatalogActions.deleteRequested({ kind, id }))
+          navigate(listPath)
+        }}
+      />
     </FeaturePage>
   )
 }

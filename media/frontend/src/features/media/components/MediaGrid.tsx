@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, MoreVertical } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
   DropdownMenu,
@@ -9,7 +10,7 @@ import {
   DropdownMenuTrigger,
   ItemListEmpty,
 } from '@webonone/ui-kit'
-import { MediaDeleteDialog } from './MediaDeleteDialog'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 
 interface MediaGridProps {
   items: MediaItemDto[]
@@ -27,23 +28,11 @@ export function MediaGrid({
   selectionEnabled = true,
 }: MediaGridProps) {
   const [deleteTarget, setDeleteTarget] = useState<MediaItemDto | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   const rows = Array.isArray(items) ? items : []
 
   if (!rows.length) {
     return <ItemListEmpty>No media in this folder.</ItemListEmpty>
-  }
-
-  async function handleConfirmDelete() {
-    if (!deleteTarget) return
-    setIsDeleting(true)
-    try {
-      await onDelete(deleteTarget.id)
-      setDeleteTarget(null)
-    } finally {
-      setIsDeleting(false)
-    }
   }
 
   return (
@@ -109,16 +98,17 @@ export function MediaGrid({
           )
         })}
       </div>
-      <MediaDeleteDialog
+      <PlatformAlertConfirmDialog
         open={deleteTarget !== null}
-        fileName={deleteTarget?.fileName ?? null}
-        isDeleting={isDeleting}
+        title={deleteTarget ? `Delete ${deleteTarget.fileName}?` : 'Delete media?'}
+        description="This action cannot be undone. The file will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
-          if (!open && !isDeleting) {
-            setDeleteTarget(null)
-          }
+          if (!open) setDeleteTarget(null)
         }}
-        onConfirm={() => void handleConfirmDelete()}
+        onConfirm={() => {
+          if (deleteTarget) void onDelete(deleteTarget.id)
+        }}
       />
     </>
   )

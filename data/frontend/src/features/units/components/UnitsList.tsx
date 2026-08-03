@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -8,7 +9,7 @@ import {
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
-import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { Unit } from '@/shared/types/data.types'
 
@@ -60,14 +61,11 @@ export function UnitsList({ items, onEdit, onDeleted, onVerify, canMutate }: Uni
           </ItemListItem>
         ))}
       </ItemList>
-      <ConfirmDeleteDialog
+      <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
-        title="Delete unit"
-        description={
-          pendingDelete
-            ? `Delete unit "${pendingDelete.name}"? This cannot be undone.`
-            : 'Delete this unit? This cannot be undone.'
-        }
+        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete unit?'}
+        description="This action cannot be undone. The unit will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)
         }}

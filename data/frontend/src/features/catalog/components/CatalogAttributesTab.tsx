@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Plus } from 'lucide-react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
   DropdownMenuItem,
@@ -19,7 +20,7 @@ import {
   type CatalogEntityKind,
   replaceCatalogEntityAttributes,
 } from '@/features/catalog/utils/catalogAttributeApi'
-import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import type { CatalogAttributeValue } from '@/shared/types/data.types'
 
 type CatalogAttributesTabProps = {
@@ -179,14 +180,16 @@ export function CatalogAttributesTab({
         />
       ) : null}
 
-      <ConfirmDeleteDialog
+      <PlatformAlertConfirmDialog
         open={pendingRemoveAttribute !== null}
-        title="Remove attribute"
-        description={
+        title={
           pendingRemoveAttribute
-            ? `Remove "${pendingRemoveAttribute.name}" and all of its values from this item?`
-            : 'Remove this attribute?'
+            ? `Remove ${pendingRemoveAttribute.name}?`
+            : 'Remove attribute?'
         }
+        description="Remove this attribute and all of its values from this item? This cannot be undone."
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel="Remove"
         onOpenChange={(open) => {
           if (!open) setPendingRemoveAttribute(null)
         }}

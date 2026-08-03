@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, Save, Trash2 } from 'lucide-react'
+import { Plus, Save } from 'lucide-react'
 import {
   PLATFORM_EMBED_QUERY,
+  PlatformAlertConfirmDialog,
   resolvePlatformEmbedParentOrigin,
   sendPlatformPeerDialogBusy,
   useRequestPlatformPeerDialog,
@@ -10,14 +11,6 @@ import {
 import {
   Alert,
   AlertDescription,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   Button,
   CustomDialog,
   DropdownMenuItem,
@@ -447,39 +440,24 @@ export function CatalogAttributeValueDialog({
   )
 
   const deleteConfirm = (
-    <AlertDialog
+    <PlatformAlertConfirmDialog
       open={pendingDeleteValue !== null}
-      onOpenChange={(next) => {
-        if (!next) setPendingDeleteValue(null)
+      title={
+        pendingDeleteValue
+          ? `Delete ${formatCatalogAttributeEntry(attribute, pendingDeleteValue)}?`
+          : 'Delete value?'
+      }
+      description={`This action cannot be undone. The value will be removed from ${attribute.name}.`}
+      isAllowedParentOrigin={isAllowedParentOrigin}
+      onOpenChange={(open) => {
+        if (!open) setPendingDeleteValue(null)
       }}
-    >
-      <AlertDialogContent className="max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete value</AlertDialogTitle>
-          <AlertDialogDescription>
-            {pendingDeleteValue
-              ? `Delete value "${formatCatalogAttributeEntry(attribute, pendingDeleteValue)}" from ${attribute.name}?`
-              : 'Delete this value?'}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={saving}
-            onClick={(event) => {
-              event.preventDefault()
-              if (pendingDeleteValue) {
-                void handleDeleteValue(pendingDeleteValue)
-              }
-            }}
-          >
-            <Trash2 className="mr-2 h-4 w-4" aria-hidden />
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      onConfirm={() => {
+        if (pendingDeleteValue) {
+          void handleDeleteValue(pendingDeleteValue)
+        }
+      }}
+    />
   )
 
   if (chrome === 'embed-page') {

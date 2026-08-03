@@ -26,6 +26,8 @@ Standalone (no parent): local `CustomDialog` as usual. Chrome sizing/footer: [di
 
 **Not this skill:** Media picker/crop (`media-dialog-*`).
 
+**Strict delete / confirm:** use shared **`PlatformAlertConfirmDialog`** from `@webonone/platform-embed` (any microservice). Standalone → local UI Kit `AlertDialog`; embedded → peer-dialog `variant: 'alert'` → shell `AlertDialog` (no iframe body). Do not open a local AlertDialog inside the peer page iframe when embedded.
+
 ## Chrome split
 
 | Region | Owner | Must match standalone |

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -8,7 +9,7 @@ import {
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
-import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { Attribute } from '@/shared/types/data.types'
 
@@ -65,14 +66,11 @@ export function AttributesList({
           </ItemListItem>
         ))}
       </ItemList>
-      <ConfirmDeleteDialog
+      <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
-        title="Delete attribute"
-        description={
-          pendingDelete
-            ? `Delete attribute "${pendingDelete.name}"? This cannot be undone.`
-            : 'Delete this attribute? This cannot be undone.'
-        }
+        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete attribute?'}
+        description="This action cannot be undone. The attribute will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)
         }}

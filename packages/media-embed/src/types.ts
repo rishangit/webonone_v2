@@ -119,6 +119,11 @@ export interface BuildMediaUploadDialogUrlOptions extends BuildMediaEmbedUrlOpti
 
 export interface BuildMediaSelectorUrlOptions extends BuildMediaEmbedUrlOptions {
   folderPath: string
+  /**
+   * Navigation ceiling for breadcrumbs. When omitted, Media locks navigation
+   * to `folderPath` (legacy behavior).
+   */
+  scopedRoot?: string
   mode?: MediaEmbedMode
   selectorUpload?: boolean
   cropAspectPresets?: CropAspectPreset[]

@@ -28,10 +28,11 @@ import {
   cn,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { getMediaListQueryKey, mediaActions } from '@/features/media/store'
 import { CreateFolderDialog } from './CreateFolderDialog'
-import { MediaDeleteDialog } from './MediaDeleteDialog'
 import { MediaPreviewDialog } from './MediaPreviewDialog'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import { useScopedNavigation } from '../hooks/useScopedNavigation'
 import {
   createFolder,
@@ -47,6 +48,8 @@ type BrowserViewMode = 'list' | 'thumb'
 interface ScopedFolderBrowserProps {
   scope: string
   scopedRoot: string
+  /** Start folder within scopedRoot. Defaults to scopedRoot. */
+  initialPath?: string
   mode: 'single' | 'multiple'
   selectedIds?: Set<string>
   refreshKey?: number
@@ -64,9 +67,17 @@ interface ScopedFolderBrowserProps {
   hostLoading?: boolean
 }
 
+function companyRootLabel(scope: string, scopedRoot: string): string {
+  if (scopedRoot === '/' && scope.startsWith('webonone:company:')) {
+    return 'Company'
+  }
+  return 'Root'
+}
+
 export function ScopedFolderBrowser({
   scope,
   scopedRoot,
+  initialPath,
   mode,
   selectedIds = new Set(),
   refreshKey = 0,
@@ -82,7 +93,12 @@ export function ScopedFolderBrowser({
   hostLoading = false,
 }: ScopedFolderBrowserProps) {
   const dispatch = useAppDispatch()
-  const { currentPath, navigateTo, breadcrumbSegments } = useScopedNavigation(scopedRoot)
+  const rootLabel = companyRootLabel(scope, scopedRoot)
+  const { currentPath, navigateTo, breadcrumbSegments } = useScopedNavigation(
+    scopedRoot,
+    initialPath,
+    rootLabel,
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [mediaPage, setMediaPage] = useState(1)
   const [mediaPageSize, setMediaPageSize] = useState(12)
@@ -291,10 +307,11 @@ export function ScopedFolderBrowser({
   }
 
   function renderFolderMenu(folder: MediaFolderDto) {
+    const canDeleteFolder = allowDelete && !folder.id.startsWith('inferred:')
     return (
       <ItemListMenu ariaLabel={`Actions for ${folder.name}`}>
         <DropdownMenuItem onClick={() => handleFolderOpen(folder)}>Open</DropdownMenuItem>
-        {allowDelete ? (
+        {canDeleteFolder ? (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -671,20 +688,21 @@ export function ScopedFolderBrowser({
           if (!open) setPreviewItem(null)
         }}
       />
-      <MediaDeleteDialog
+      <PlatformAlertConfirmDialog
         open={deleteFileTarget !== null}
-        fileName={deleteFileTarget?.fileName ?? null}
-        isDeleting={isDeleting}
+        title={deleteFileTarget ? `Delete ${deleteFileTarget.fileName}?` : 'Delete media?'}
+        description="This action cannot be undone. The file will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open && !isDeleting) setDeleteFileTarget(null)
         }}
         onConfirm={() => void handleConfirmDeleteFile()}
       />
-      <MediaDeleteDialog
+      <PlatformAlertConfirmDialog
         open={deleteFolderTarget !== null}
-        fileName={deleteFolderTarget?.name ?? null}
-        title="Delete folder"
-        isDeleting={isDeleting}
+        title={deleteFolderTarget ? `Delete ${deleteFolderTarget.name}?` : 'Delete folder?'}
+        description="This action cannot be undone. The folder will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open && !isDeleting) setDeleteFolderTarget(null)
         }}

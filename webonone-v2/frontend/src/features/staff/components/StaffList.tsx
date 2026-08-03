@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -12,6 +13,7 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { formatWorkingDaysSummary } from '@/features/staff/schemas/staffSchemas'
 import { staffActions } from '@/features/staff/store'
 import { staffApi } from '@/features/staff/services/staffApi'
@@ -28,6 +30,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [pendingRemove, setPendingRemove] = useState<CompanyStaff | null>(null)
 
   if (items.length === 0) {
     return <ItemListEmpty>No staff yet. Add a staff member to get started.</ItemListEmpty>
@@ -53,47 +56,62 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
   }
 
   return (
-    <ItemList>
-      {items.map((item) => (
-        <ItemListItem key={item.id}>
-          <ItemListContent>
-            <button
-              type="button"
-              className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              onClick={() => openDetails(item.id)}
-            >
-              <ImagePreview
-                src={item.avatarUrl}
-                alt={item.displayName}
-                mode="view"
-                className="h-12 w-12"
-              />
-              <div className="min-w-0 space-y-1">
-                <p className="truncate font-medium text-foreground">{item.displayName}</p>
-                <p className="truncate text-xs text-muted-foreground">{item.email ?? 'No email'}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {formatWorkingDaysSummary(item.schedule)}
-                </p>
-              </div>
-            </button>
-          </ItemListContent>
-          <ItemListMenu ariaLabel={`Actions for ${item.displayName}`}>
-            <DropdownMenuItem onSelect={() => openDetails(item.id)}>View details</DropdownMenuItem>
-            {canManage ? (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={removingId === item.id}
-                  onSelect={() => void handleRemove(item)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  {removingId === item.id ? 'Removing…' : 'Remove'}
-                </DropdownMenuItem>
-              </>
-            ) : null}
-          </ItemListMenu>
-        </ItemListItem>
-      ))}
-    </ItemList>
+    <>
+      <ItemList>
+        {items.map((item) => (
+          <ItemListItem key={item.id}>
+            <ItemListContent>
+              <button
+                type="button"
+                className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => openDetails(item.id)}
+              >
+                <ImagePreview
+                  src={item.avatarUrl}
+                  alt={item.displayName}
+                  mode="view"
+                  className="h-12 w-12"
+                />
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate font-medium text-foreground">{item.displayName}</p>
+                  <p className="truncate text-xs text-muted-foreground">{item.email ?? 'No email'}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {formatWorkingDaysSummary(item.schedule)}
+                  </p>
+                </div>
+              </button>
+            </ItemListContent>
+            <ItemListMenu ariaLabel={`Actions for ${item.displayName}`}>
+              <DropdownMenuItem onSelect={() => openDetails(item.id)}>View details</DropdownMenuItem>
+              {canManage ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={removingId === item.id}
+                    onSelect={() => setPendingRemove(item)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    {removingId === item.id ? 'Removing…' : 'Remove'}
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+            </ItemListMenu>
+          </ItemListItem>
+        ))}
+      </ItemList>
+      <PlatformAlertConfirmDialog
+        open={pendingRemove !== null}
+        title={pendingRemove ? `Remove ${pendingRemove.displayName}?` : 'Remove staff?'}
+        description="This action cannot be undone. The staff member will be removed from the company."
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel="Remove"
+        onOpenChange={(open) => {
+          if (!open) setPendingRemove(null)
+        }}
+        onConfirm={() => {
+          if (pendingRemove) void handleRemove(pendingRemove)
+        }}
+      />
+    </>
   )
 }

@@ -24,7 +24,19 @@ import {
   type PlatformPeerDialogRequestMessage,
   type PlatformPeerDialogResponder,
 } from '@webonone/platform-embed'
-import { Button, CustomDialog } from '@webonone/ui-kit'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  CustomDialog,
+} from '@webonone/ui-kit'
+import { Trash2 } from 'lucide-react'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformPeerDialogContext } from '@/features/shell/PlatformPeerDialogContext'
 
@@ -43,6 +55,10 @@ type NestedPeerDialog = {
 function iframeHeightClass(sizeHeight: string, sizeWidth: string): string {
   if (sizeHeight !== 'auto') {
     return 'h-full min-h-0'
+  }
+  // Short confirms (delete): content-sized shell — keep iframe compact
+  if (sizeWidth === 'auto') {
+    return 'min-h-0 h-[6rem]'
   }
   if (sizeWidth === 'small') {
     return 'min-h-[280px] h-[min(50vh,420px)]'
@@ -97,6 +113,9 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     if (!active) {
       return null
     }
+    if (active.request.variant === 'alert') {
+      return null
+    }
     if (!isAllowedPlatformPeerDialogPath(active.request.path)) {
       return null
     }
@@ -110,6 +129,8 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       },
     })
   }, [active, hostOrigin])
+
+  const isAlertConfirm = active?.request.variant === 'alert'
 
   const nestedIframeSrc = useMemo(() => {
     if (!nested) {
@@ -751,6 +772,43 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   return (
     <PlatformPeerDialogContext.Provider value={{ openPeerDialog }}>
       {children}
+      {active && isAlertConfirm ? (
+        <AlertDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) cancelActive('cancelled')
+          }}
+        >
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle>{active.request.title}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {description ?? 'This action cannot be undone.'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={(event) => {
+                  event.preventDefault()
+                  cancelActive('cancelled')
+                }}
+              >
+                {cancelLabel}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={(event) => {
+                  event.preventDefault()
+                  resolveActive()
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+                {submitLabel ?? 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
       {active && iframeSrc ? (
         <CustomDialog
           open
@@ -759,6 +817,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           description={description}
           sizeWidth={active.request.sizeWidth}
           sizeHeight={active.request.sizeHeight}
+          maxWidth={active.request.sizeWidth === 'auto' ? 'max-w-md' : undefined}
           noContentPadding
           disableContentScroll={active.request.sizeHeight !== 'auto'}
           nestedDismissGuard={nestedOpen || deepNestedOpen || blockOuterDismiss}

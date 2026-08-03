@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import { Button, FeaturePage, ListPageBody, SearchInput, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { ThemeDeleteDialog } from '../components/ThemeDeleteDialog'
 import { ThemeFormDialog } from '../components/ThemeFormDialog'
 import { ThemeList } from '../components/ThemeList'
 import type { ApiTheme } from '../services/themeApi'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { systemThemeActions } from '../store/systemThemeSlice'
 
-type PendingDelete = boolean
 type DialogState = { id?: string } | null
 
 export function SystemThemePage() {
@@ -21,7 +21,6 @@ export function SystemThemePage() {
     useAppSelector((s) => s.systemTheme)
   const [dialog, setDialog] = useState<DialogState>(null)
   const [deleteTarget, setDeleteTarget] = useState<ApiTheme | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<PendingDelete>(false)
   const [themePage, setThemePage] = useState(1)
   const [themePageSize, setThemePageSize] = useState(12)
   const [themeSearchQuery, setThemeSearchQuery] = useState('')
@@ -32,7 +31,6 @@ export function SystemThemePage() {
     return themes.filter((theme) => theme.name.toLowerCase().includes(query))
   }, [themes, themeSearchQuery])
 
-  const isDeleting = status === 'saving' && pendingDelete
   const loading = status === 'loading'
 
   usePlatformLoading(loading ? 'Loading themes…' : null)
@@ -51,23 +49,6 @@ export function SystemThemePage() {
       dispatch(systemThemeActions.clearError())
     }
   }, [deleteTarget, dispatch])
-
-  useEffect(() => {
-    if (!pendingDelete) return
-
-    if (status === 'idle') {
-      setDeleteTarget(null)
-      setPendingDelete(false)
-    } else if (status === 'error') {
-      // Keep dialog open so the user can retry or cancel.
-    }
-  }, [status, pendingDelete])
-
-  function handleDeleteConfirm() {
-    if (!deleteTarget) return
-    setPendingDelete(true)
-    dispatch(systemThemeActions.deleteThemeRequested(deleteTarget.id))
-  }
 
   const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
   const emptyMessage = themeSearchQuery.trim()
@@ -149,17 +130,19 @@ export function SystemThemePage() {
         />
       ) : null}
 
-      <ThemeDeleteDialog
+      <PlatformAlertConfirmDialog
         open={deleteTarget !== null}
-        themeName={deleteTarget?.name ?? null}
-        isDeleting={isDeleting}
+        title={deleteTarget ? `Delete ${deleteTarget.name}?` : 'Delete theme?'}
+        description="This action cannot be undone. The theme will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
-          if (!open) {
-            setDeleteTarget(null)
-            setPendingDelete(false)
-          }
+          if (!open) setDeleteTarget(null)
         }}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          dispatch(systemThemeActions.deleteThemeRequested(deleteTarget.id))
+          setDeleteTarget(null)
+        }}
       />
     </FeaturePage>
   )

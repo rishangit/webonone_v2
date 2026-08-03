@@ -26,13 +26,14 @@ export interface BreadcrumbSegment {
 export function buildBreadcrumbSegments(
   scopedRoot: string,
   currentPath: string,
+  rootLabel = 'Root',
 ): BreadcrumbSegment[] {
   const root = normalizeFolderPath(scopedRoot)
   const current = normalizeFolderPath(currentPath)
   const segments: BreadcrumbSegment[] = []
 
   if (root === '/') {
-    segments.push({ label: 'Root', path: '/' })
+    segments.push({ label: rootLabel, path: '/' })
     if (current === '/') {
       return segments
     }
@@ -59,9 +60,24 @@ export function buildBreadcrumbSegments(
   return segments
 }
 
-export function useScopedNavigation(scopedRoot: string) {
+function resolveInitialPath(scopedRoot: string, initialPath?: string): string {
+  const root = normalizeFolderPath(scopedRoot)
+  if (initialPath === undefined) {
+    return root
+  }
+  const start = normalizeFolderPath(initialPath)
+  return isPathWithinScope(start, root) ? start : root
+}
+
+export function useScopedNavigation(
+  scopedRoot: string,
+  initialPath?: string,
+  rootLabel = 'Root',
+) {
   const normalizedRoot = useMemo(() => normalizeFolderPath(scopedRoot), [scopedRoot])
-  const [currentPath, setCurrentPath] = useState(normalizedRoot)
+  const [currentPath, setCurrentPath] = useState(() =>
+    resolveInitialPath(normalizedRoot, initialPath),
+  )
 
   const navigateTo = useCallback(
     (path: string) => {
@@ -74,8 +90,8 @@ export function useScopedNavigation(scopedRoot: string) {
   )
 
   const breadcrumbSegments = useMemo(
-    () => buildBreadcrumbSegments(normalizedRoot, currentPath),
-    [currentPath, normalizedRoot],
+    () => buildBreadcrumbSegments(normalizedRoot, currentPath, rootLabel),
+    [currentPath, normalizedRoot, rootLabel],
   )
 
   return {

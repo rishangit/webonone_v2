@@ -4,6 +4,7 @@ import {
   isPlatformPeerDialogCancelMessage,
   isPlatformPeerDialogResultMessage,
   type PlatformDialogSizePreset,
+  type PlatformPeerDialogVariant,
 } from './types'
 
 function createPeerDialogRequestId(): string {
@@ -24,6 +25,8 @@ export type UseRequestPlatformPeerDialogOptions = {
   description?: string
   sizeWidth: PlatformDialogSizePreset
   sizeHeight: PlatformDialogSizePreset
+  /** Host chrome: `dialog` (default) or shell `alert` (no iframe). */
+  variant?: PlatformPeerDialogVariant
   cancelLabel?: string
   /** Optional host footer secondary (e.g. wizard Previous). */
   secondaryLabel?: string
@@ -57,6 +60,7 @@ export function useRequestPlatformPeerDialog(
     description,
     sizeWidth,
     sizeHeight,
+    variant,
     cancelLabel,
     secondaryLabel,
     submitLabel,
@@ -89,6 +93,7 @@ export function useRequestPlatformPeerDialog(
       description,
       sizeWidth,
       sizeHeight,
+      variant,
       cancelLabel,
       secondaryLabel,
       submitLabel,
@@ -105,6 +110,7 @@ export function useRequestPlatformPeerDialog(
     sizeWidth,
     submitLabel,
     title,
+    variant,
   ])
 
   useEffect(() => {

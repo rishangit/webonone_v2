@@ -1,5 +1,8 @@
 const DEFAULT_MEDIA_ORIGIN = 'http://127.0.0.1:3013'
 
+/** Company media navigation ceiling → disk webonone/companies/{companyId}/ */
+export const COMPANY_MEDIA_SCOPED_ROOT = '/'
+
 export function getMediaOrigin(): string {
   return import.meta.env.VITE_MEDIA_ORIGIN ?? DEFAULT_MEDIA_ORIGIN
 }

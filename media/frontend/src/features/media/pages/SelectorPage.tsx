@@ -10,7 +10,6 @@ import { useEmbedMode } from '../hooks/useEmbedMode'
 import { useMediaEmbedAuth } from '../hooks/useMediaEmbedAuth'
 import { useMediaParentCommands } from '../hooks/useMediaParentCommands'
 import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
-import { useScopedNavigation } from '../hooks/useScopedNavigation'
 
 export function SelectorPage() {
   const dispatch = useAppDispatch()
@@ -25,8 +24,8 @@ export function SelectorPage() {
   const [cropOpen, setCropOpen] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [currentPath, setCurrentPath] = useState(embed.folderPath)
   const uploadPendingRef = useRef(false)
-  const { currentPath } = useScopedNavigation(embed.folderPath)
 
   const { uploadStatus, lastUploadedItems, uploadError: storeUploadError, lastUploadFailed } =
     useAppSelector((s) => s.media)
@@ -163,12 +162,14 @@ export function SelectorPage() {
     <div className="flex h-full min-h-0 flex-col gap-3">
       <ScopedFolderBrowser
         scope={scope}
-        scopedRoot={embed.folderPath}
+        scopedRoot={embed.scopedRoot}
+        initialPath={embed.folderPath}
         mode={embed.mode}
         selectedIds={selectedIds}
         refreshKey={refreshKey}
         onSelectFile={handleSelectFile}
         onToggleSelect={toggleItem}
+        onNavigate={setCurrentPath}
         showIconToolbar
         allowDelete
         enableUpload={showUpload}

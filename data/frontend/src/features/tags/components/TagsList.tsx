@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -8,8 +9,8 @@ import {
   ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { Tag } from '@/shared/types/data.types'
 
@@ -98,14 +99,11 @@ export function TagsList({
           )
         })}
       </ItemList>
-      <ConfirmDeleteDialog
+      <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
-        title="Delete tag"
-        description={
-          pendingDelete
-            ? `Delete tag "${pendingDelete.name}"? This cannot be undone.`
-            : 'Delete this tag? This cannot be undone.'
-        }
+        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete tag?'}
+        description="This action cannot be undone. The tag will be permanently removed."
+        isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)
         }}
