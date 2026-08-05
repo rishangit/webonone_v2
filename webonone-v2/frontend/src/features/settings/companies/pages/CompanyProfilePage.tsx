@@ -6,7 +6,10 @@ import {
   AlertDescription,
   Button,
   FeaturePage,
-  cn,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@webonone/ui-kit'
 import { filterCompanyDataEntities, type CompanyDataEntityKey } from '@webonone/platform-nav'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -26,9 +29,13 @@ import { CompanyProfileCard } from '../components/CompanyProfileCard'
 import { CompanyTagsCard } from '../components/CompanyTagsCard'
 
 type CompanyProfilePageProps = {
-  backTo: string
-  backLabel: string
-  /** Admin = Overview/Gallery/Data; member = Overview + catalog entity tabs when data exists. */
+  backTo?: string
+  backLabel?: string
+  /**
+   * Route shell: `admin` = super-admin companies list (always Gallery/Data).
+   * `member` = settings route — tab mode follows membership role
+   * (`company_admin` → Gallery/Data; `member` → Our Products/Services/Spaces).
+   */
   variant?: 'admin' | 'member'
 }
 
@@ -61,9 +68,22 @@ const ALL_MEMBER_TABS = [
   'spaces',
 ] as const satisfies readonly MemberProfileTab[]
 
+function membershipBackNav(role: 'member' | 'company_admin' | undefined): {
+  backTo: string
+  backLabel: string
+} {
+  if (role === 'company_admin') {
+    return { backTo: '/settings/companies', backLabel: 'Back to My Companies' }
+  }
+  return {
+    backTo: '/settings/connected-companies',
+    backLabel: 'Back to Connected Companies',
+  }
+}
+
 export function CompanyProfilePage({
-  backTo,
-  backLabel,
+  backTo: backToProp,
+  backLabel: backLabelProp,
   variant = 'admin',
 }: CompanyProfilePageProps) {
   const { companyId } = useParams<{ companyId: string }>()
@@ -80,6 +100,10 @@ export function CompanyProfilePage({
 
   const loading = detailStatus === 'loading' && !detail
   const saving = detailStatus === 'saving'
+
+  const membershipBack = membershipBackNav(detail?.role)
+  const backTo = backToProp ?? membershipBack.backTo
+  const backLabel = backLabelProp ?? membershipBack.backLabel
 
   usePlatformLoading(loading ? 'Loading company…' : null)
 
@@ -124,9 +148,9 @@ export function CompanyProfilePage({
   }
 
   const pageDescription =
-    variant === 'member'
-      ? 'Company details and catalog for companies you belong to.'
-      : 'Company details, gallery images, and Data services.'
+    variant === 'admin' || detail?.role === 'company_admin'
+      ? 'Company details, gallery images, and Data services.'
+      : 'Company details and catalog for companies you book with or buy from.'
 
   if (detailError && !detail) {
     return (
@@ -150,6 +174,10 @@ export function CompanyProfilePage({
   if (!detail || !companyId) {
     return null
   }
+
+  const isOwnerTabs = variant === 'admin' || detail.role === 'company_admin'
+  const isConnectedTabs = variant === 'member' && detail.role === 'member'
+  const showConnectedCatalogTabs = isConnectedTabs && memberTabItems.length > 1
 
   const overviewContent = (
     <div className="flex flex-col gap-6">
@@ -193,7 +221,77 @@ export function CompanyProfilePage({
     </div>
   )
 
-  const showMemberTabs = variant === 'member' && memberTabItems.length > 1
+  const ownerTabsContent = (
+    <Tabs
+      value={adminTab}
+      onValueChange={(value) => setAdminTab(value as AdminProfileTab)}
+      className="flex flex-col gap-6"
+    >
+      <TabsList aria-label="Company profile sections">
+        {ADMIN_TAB_ITEMS.map((item) => (
+          <TabsTrigger key={item.id} value={item.id}>
+            {item.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      <TabsContent value={adminTab} className="mt-0 outline-none">
+        {adminTab === 'overview' ? (
+          overviewContent
+        ) : adminTab === 'gallery' ? (
+          <div className="flex flex-col gap-6">
+            <CompanyLogoCard
+              companyId={companyId}
+              logoUrl={detail.logoUrl}
+              canEdit={canEdit}
+              saving={saving}
+            />
+            <CompanyGalleryCard
+              companyId={companyId}
+              galleryImages={detail.galleryImages ?? []}
+              canEdit={canEdit}
+              saving={saving}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6">
+            <CompanyDataEntitiesCard
+              companyId={companyId}
+              dataEntities={detail.dataEntities ?? []}
+              canEdit={canEdit}
+              saving={saving}
+            />
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
+  )
+
+  const connectedTabsContent = (
+    <Tabs
+      value={activeMemberTab}
+      onValueChange={(value) => setMemberTab(value as MemberProfileTab)}
+      className="flex flex-col gap-6"
+    >
+      {showConnectedCatalogTabs ? (
+        <TabsList aria-label="Company profile sections">
+          {memberTabItems.map((item) => (
+            <TabsTrigger key={item.id} value={item.id}>
+              {item.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      ) : null}
+
+      <TabsContent value={activeMemberTab} className="mt-0 outline-none">
+        {activeMemberTab === 'overview' || !isConnectedTabs ? (
+          overviewContent
+        ) : (
+          <MemberCompanyCatalogPanel companyId={companyId} kind={activeMemberTab} />
+        )}
+      </TabsContent>
+    </Tabs>
+  )
 
   return (
     <FeaturePage
@@ -215,107 +313,7 @@ export function CompanyProfilePage({
           </Alert>
         ) : null}
 
-        {variant === 'member' ? (
-          <>
-            {showMemberTabs ? (
-              <div
-                role="tablist"
-                aria-label="Company profile sections"
-                className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
-              >
-                {memberTabItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    role="tab"
-                    id={`company-profile-tab-${item.id}`}
-                    aria-selected={activeMemberTab === item.id}
-                    aria-controls={`company-profile-panel-${item.id}`}
-                    className={cn(
-                      'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
-                      activeMemberTab === item.id && 'bg-background text-foreground shadow-sm',
-                    )}
-                    onClick={() => setMemberTab(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
-            <div
-              role="tabpanel"
-              id={`company-profile-panel-${activeMemberTab}`}
-              aria-labelledby={`company-profile-tab-${activeMemberTab}`}
-            >
-              {activeMemberTab === 'overview' ? (
-                overviewContent
-              ) : (
-                <MemberCompanyCatalogPanel companyId={companyId} kind={activeMemberTab} />
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <div
-              role="tablist"
-              aria-label="Company profile sections"
-              className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
-            >
-              {ADMIN_TAB_ITEMS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  id={`company-profile-tab-${item.id}`}
-                  aria-selected={adminTab === item.id}
-                  aria-controls={`company-profile-panel-${item.id}`}
-                  className={cn(
-                    'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
-                    adminTab === item.id && 'bg-background text-foreground shadow-sm',
-                  )}
-                  onClick={() => setAdminTab(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <div
-              role="tabpanel"
-              id={`company-profile-panel-${adminTab}`}
-              aria-labelledby={`company-profile-tab-${adminTab}`}
-            >
-              {adminTab === 'overview' ? (
-                overviewContent
-              ) : adminTab === 'gallery' ? (
-                <div className="flex flex-col gap-6">
-                  <CompanyLogoCard
-                    companyId={companyId}
-                    logoUrl={detail.logoUrl}
-                    canEdit={canEdit}
-                    saving={saving}
-                  />
-                  <CompanyGalleryCard
-                    companyId={companyId}
-                    galleryImages={detail.galleryImages ?? []}
-                    canEdit={canEdit}
-                    saving={saving}
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col gap-6">
-                  <CompanyDataEntitiesCard
-                    companyId={companyId}
-                    dataEntities={detail.dataEntities ?? []}
-                    canEdit={canEdit}
-                    saving={saving}
-                  />
-                </div>
-              )}
-            </div>
-          </>
-        )}
+        {isOwnerTabs ? ownerTabsContent : connectedTabsContent}
       </div>
 
       {dialog && companyId ? (
@@ -337,13 +335,7 @@ export function CompanyProfilePage({
 }
 
 export function MemberCompanyProfilePage() {
-  return (
-    <CompanyProfilePage
-      backTo="/settings/companies"
-      backLabel="Back to My Company"
-      variant="member"
-    />
-  )
+  return <CompanyProfilePage variant="member" />
 }
 
 export function AdminCompanyProfilePage() {

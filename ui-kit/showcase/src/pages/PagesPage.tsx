@@ -1,4 +1,4 @@
-import * as Tabs from '@radix-ui/react-tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { pagesNestedHash, type PagesNestedTab } from '@/components/showcase-nav'
 import { DetailsPageDemo, ListPageDemo } from '@/pages/pages/PageDemos'
 
@@ -19,25 +19,21 @@ export function PagesPage({ nested, onNestedChange }: PagesPageProps) {
         Page-level compositions that mirror production FeaturePage screens. Prefer copying these
         patterns over the isolated Components demos.
       </p>
-      <Tabs.Root value={nested} onValueChange={(value) => onNestedChange(value as PagesNestedTab)}>
-        <Tabs.List className="mb-6 flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1">
+      <Tabs value={nested} onValueChange={(value) => onNestedChange(value as PagesNestedTab)}>
+        <TabsList>
           {PAGES_NESTED_TABS.map((t) => (
-            <Tabs.Trigger
-              key={t.id}
-              value={t.id}
-              className="rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-            >
+            <TabsTrigger key={t.id} value={t.id}>
               {t.label}
-            </Tabs.Trigger>
+            </TabsTrigger>
           ))}
-        </Tabs.List>
-        <Tabs.Content id={pagesNestedHash('list')} value="list" className="outline-none">
+        </TabsList>
+        <TabsContent id={pagesNestedHash('list')} value="list">
           <ListPageDemo />
-        </Tabs.Content>
-        <Tabs.Content id={pagesNestedHash('details')} value="details" className="outline-none">
+        </TabsContent>
+        <TabsContent id={pagesNestedHash('details')} value="details">
           <DetailsPageDemo onBack={() => onNestedChange('list')} />
-        </Tabs.Content>
-      </Tabs.Root>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

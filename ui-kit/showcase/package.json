@@ -10,7 +10,6 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@radix-ui/react-tabs": "^1.1.12",
     "@webonone/media-embed": "*",
     "@webonone/platform-embed": "*",
     "@webonone/platform-nav": "*",

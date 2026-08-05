@@ -6,11 +6,11 @@ import { Button } from '@webonone/ui-kit'
 const PLATFORM_DEFAULT = {
   id: 'platform-default',
   name: 'Platform Default',
-  color1: '#2563eb',
-  color2: '#3b82f6',
-  color3: '#f59e0b',
-  color4: '#f8fafc',
-  color5: '#1e293b',
+  color1: '#344CE2',
+  color2: '#3578E8',
+  color3: '#3578E8',
+  color4: '#EFF3FA',
+  color5: '#0E2F59',
 }
 
 const ALT_PALETTE = {

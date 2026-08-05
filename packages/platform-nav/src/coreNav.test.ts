@@ -61,7 +61,7 @@ describe('coreNav', () => {
     assert.equal(found, undefined, 'Calendar should not appear on superAdmin')
   })
 
-  it('resolves super admin Companies group with My Company and All Companies', () => {
+  it('resolves super admin Companies group with My Companies, Connected, and All Companies', () => {
     const nav = resolvePlatformNavUrls('http://localhost:3010', 'superAdmin')
     const companies = nav.find((item) => item.kind === 'group' && item.label === 'Companies')
     assert.ok(companies?.kind === 'group')
@@ -69,21 +69,30 @@ describe('coreNav', () => {
       assert.deepEqual(
         companies.children.map((child) => ({ href: child.href, label: child.label })),
         [
-          { href: 'http://localhost:3010/settings/companies', label: 'My Company' },
+          { href: 'http://localhost:3010/settings/companies', label: 'My Companies' },
+          {
+            href: 'http://localhost:3010/settings/connected-companies',
+            label: 'Connected Companies',
+          },
           { href: 'http://localhost:3010/companies', label: 'All Companies' },
         ],
       )
     }
   })
 
-  it('includes My Company under Companies for member, main, and superAdmin', () => {
+  it('includes My Companies and Connected Companies under Companies for member, main, and superAdmin', () => {
     for (const variant of ['member', 'main', 'superAdmin'] as const) {
       const nav = resolvePlatformNavUrls('http://localhost:3010', variant)
       const companies = nav.find((item) => item.kind === 'group' && item.label === 'Companies')
       assert.ok(companies?.kind === 'group', `Companies missing for ${variant}`)
       if (companies?.kind === 'group') {
-        assert.equal(companies.children[0]?.label, 'My Company')
+        assert.equal(companies.children[0]?.label, 'My Companies')
         assert.equal(companies.children[0]?.href, 'http://localhost:3010/settings/companies')
+        assert.equal(companies.children[1]?.label, 'Connected Companies')
+        assert.equal(
+          companies.children[1]?.href,
+          'http://localhost:3010/settings/connected-companies',
+        )
       }
 
       const settings = nav.find((item) => item.kind === 'group' && item.label === 'Settings')
@@ -92,7 +101,11 @@ describe('coreNav', () => {
         assert.equal(settings.children[0]?.label, 'Basic Settings')
         assert.equal(settings.children[1]?.label, 'System Theme')
         assert.equal(
-          settings.children.some((child) => child.label === 'My Company'),
+          settings.children.some((child) => child.label === 'My Companies'),
+          false,
+        )
+        assert.equal(
+          settings.children.some((child) => child.label === 'Connected Companies'),
           false,
         )
       }

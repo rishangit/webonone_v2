@@ -19,13 +19,17 @@ import type { MyCompanySummary } from '@/features/settings/basic/services/compan
 
 type MyCompaniesListProps = {
   items: MyCompanySummary[]
+  emptyMessage?: string
 }
 
 function canLoginAsOwner(item: MyCompanySummary): boolean {
   return item.role === 'company_admin' && item.status !== 'rejected'
 }
 
-export function MyCompaniesList({ items }: MyCompaniesListProps) {
+export function MyCompaniesList({
+  items,
+  emptyMessage = 'No companies yet. Add a company to get started.',
+}: MyCompaniesListProps) {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -34,7 +38,7 @@ export function MyCompaniesList({ items }: MyCompaniesListProps) {
   const rows = Array.isArray(items) ? items : []
 
   if (rows.length === 0) {
-    return <ItemListEmpty>No companies yet. Add a company to get started.</ItemListEmpty>
+    return <ItemListEmpty>{emptyMessage}</ItemListEmpty>
   }
 
   function openProfile(id: string) {

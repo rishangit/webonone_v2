@@ -25,6 +25,10 @@ import {
   SelectValue,
   Slider,
   Switch,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   Textarea,
 } from '@webonone/ui-kit'
 import { useMemo, useState } from 'react'
@@ -284,6 +288,29 @@ export function ControlsPage() {
             <Label htmlFor="r-pro">Pro</Label>
           </div>
         </RadioGroup>
+      </DemoSection>
+
+      <DemoSection
+        id="tabs"
+        title="Tabs"
+        description="Classic tab strip: no bottom border on the list; selected tab shows a top primary border."
+      >
+        <Tabs defaultValue="account">
+          <TabsList>
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="theme">Theme</TabsTrigger>
+            <TabsTrigger value="billing">Billing</TabsTrigger>
+          </TabsList>
+          <TabsContent value="account">
+            <p className="text-sm text-muted-foreground">Account settings panel content.</p>
+          </TabsContent>
+          <TabsContent value="theme">
+            <p className="text-sm text-muted-foreground">Theme settings panel content.</p>
+          </TabsContent>
+          <TabsContent value="billing">
+            <p className="text-sm text-muted-foreground">Billing settings panel content.</p>
+          </TabsContent>
+        </Tabs>
       </DemoSection>
 
       <DemoSection id="text-area" title="Text area">

@@ -7,7 +7,10 @@ import {
   Button,
   FeaturePage,
   StatusTag,
-  cn,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   isStatusTagVariant,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -150,43 +153,27 @@ export function UserDetailsPage() {
       ) : null}
 
       {user ? (
-        <div className="flex flex-col gap-6">
-          <div
-            role="tablist"
-            aria-label="User sections"
-            className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
-          >
+        <Tabs
+          value={tab}
+          onValueChange={(value) => handleTabChange(value as UserDetailTab)}
+          className="flex flex-col gap-6"
+        >
+          <TabsList aria-label="User sections">
             {tabs.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                id={`user-tab-${item.id}`}
-                aria-selected={tab === item.id}
-                aria-controls={`user-panel-${item.id}`}
-                className={cn(
-                  'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
-                  tab === item.id && 'bg-background text-foreground shadow-sm',
-                )}
-                onClick={() => handleTabChange(item.id)}
-              >
+              <TabsTrigger key={item.id} value={item.id}>
                 {item.label}
-              </button>
+              </TabsTrigger>
             ))}
-          </div>
+          </TabsList>
 
-          <div
-            role="tabpanel"
-            id={`user-panel-${tab}`}
-            aria-labelledby={`user-tab-${tab}`}
-          >
+          <TabsContent value={tab} className="mt-0 outline-none">
             {tab === 'overview' ? (
               <ProfileView user={user} avatarUrl={user.avatarUrl} canEdit={false} />
             ) : (
               <UserHistoryPanel user={user} />
             )}
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       ) : null}
     </FeaturePage>
   )

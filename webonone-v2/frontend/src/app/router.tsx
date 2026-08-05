@@ -18,6 +18,11 @@ const AllCompaniesPage = lazy(() =>
     default: m.AllCompaniesPage,
   })),
 )
+const ConnectedCompaniesPage = lazy(() =>
+  import('@/features/settings/companies/pages/ConnectedCompaniesPage').then((m) => ({
+    default: m.ConnectedCompaniesPage,
+  })),
+)
 const MemberCompanyProfilePage = lazy(() =>
   import('@/features/settings/companies/pages/CompanyProfilePage').then((m) => ({
     default: m.MemberCompanyProfilePage,
@@ -211,6 +216,14 @@ export function App() {
             element={
               <LazyRoute>
                 <AllCompaniesPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="settings/connected-companies"
+            element={
+              <LazyRoute>
+                <ConnectedCompaniesPage />
               </LazyRoute>
             }
           />

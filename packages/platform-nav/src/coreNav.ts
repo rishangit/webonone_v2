@@ -477,25 +477,32 @@ const IDENTITY_COMPANY_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
-const MY_COMPANY_NAV_ITEM: CoreNavLeaf = {
+const MY_COMPANIES_NAV_ITEM: CoreNavLeaf = {
   kind: 'item',
   path: '/settings/companies',
-  label: 'My Company',
+  label: 'My Companies',
 }
 
-/** Membership list — all roles. */
+const CONNECTED_COMPANIES_NAV_ITEM: CoreNavLeaf = {
+  kind: 'item',
+  path: '/settings/connected-companies',
+  label: 'Connected Companies',
+}
+
+/** Owned + customer company lists — all roles. */
 const COMPANIES_PLATFORM_NAV_GROUP: CoreNavGroup = {
   kind: 'group',
   label: 'Companies',
-  children: [MY_COMPANY_NAV_ITEM],
+  children: [MY_COMPANIES_NAV_ITEM, CONNECTED_COMPANIES_NAV_ITEM],
 }
 
-/** Super admin: membership list + platform-wide companies admin. */
+/** Super admin: personal lists + platform-wide companies admin. */
 const COMPANIES_SUPER_ADMIN_NAV_GROUP: CoreNavGroup = {
   kind: 'group',
   label: 'Companies',
   children: [
-    MY_COMPANY_NAV_ITEM,
+    MY_COMPANIES_NAV_ITEM,
+    CONNECTED_COMPANIES_NAV_ITEM,
     { kind: 'item', path: '/companies', label: 'All Companies' },
   ],
 }

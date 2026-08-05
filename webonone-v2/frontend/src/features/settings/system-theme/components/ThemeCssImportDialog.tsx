@@ -5,11 +5,11 @@ import type { ParsedThemeColors } from '../utils/parseCssThemeVariables'
 import { parseCssThemeVariables } from '../utils/parseCssThemeVariables'
 
 const PLACEHOLDER = `:root {
-  --color-1: #2563EB;
-  --color-2: #3B82F6;
-  --color-3: #F59E0B;
-  --color-4: #F8FAFC;
-  --color-5: #1E293B;
+  --color-1: #344CE2;
+  --color-2: #3578E8;
+  --color-3: #3578E8;
+  --color-4: #EFF3FA;
+  --color-5: #0E2F59;
 }`
 
 interface ThemeCssImportDialogProps {

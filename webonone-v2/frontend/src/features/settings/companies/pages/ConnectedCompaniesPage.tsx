@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
   ListPageBody,
   SearchInput,
@@ -14,10 +11,9 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { isFresh } from '@/shared/store/cacheUtils'
-import { CompanyFormDialog } from '../components/CompanyFormDialog'
 import { MyCompaniesList } from '../components/MyCompaniesList'
 
-export function AllCompaniesPage() {
+export function ConnectedCompaniesPage() {
   const dispatch = useAppDispatch()
   const {
     myCompanies,
@@ -29,11 +25,9 @@ export function AllCompaniesPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
-  const [registerOpen, setRegisterOpen] = useState(false)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  const ownedCompanies = useMemo(
-    () => myCompanies.filter((item) => item.role === 'company_admin'),
+  const connectedCompanies = useMemo(
+    () => myCompanies.filter((item) => item.role === 'member'),
     [myCompanies],
   )
 
@@ -49,10 +43,10 @@ export function AllCompaniesPage() {
   }, [dispatch, myCompaniesFetchedAt])
 
   const filteredItems = searchQuery.trim()
-    ? ownedCompanies.filter((item) =>
+    ? connectedCompanies.filter((item) =>
         item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
       )
-    : ownedCompanies
+    : connectedCompanies
 
   const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
 
@@ -62,26 +56,20 @@ export function AllCompaniesPage() {
 
   return (
     <FeaturePage
-      title="My Companies"
-      description="View and register companies you own or administer on the platform."
+      title="Connected Companies"
+      description="Companies you book with or buy from as a customer."
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <SearchInput
-            value={searchQuery}
-            onChange={(event) => {
-              setSearchQuery(event.target.value)
-              setPage(1)
-            }}
-            placeholder="Company name"
-            onClear={() => setPage(1)}
-            aria-label="Search companies"
-            className="w-64"
-          />
-          <Button type="button" size="sm" onClick={() => setRegisterOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Add company
-          </Button>
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={(event) => {
+            setSearchQuery(event.target.value)
+            setPage(1)
+          }}
+          placeholder="Company name"
+          onClear={() => setPage(1)}
+          aria-label="Search connected companies"
+          className="w-64"
+        />
       }
     >
       {myCompaniesError ? (
@@ -90,13 +78,11 @@ export function AllCompaniesPage() {
         </Alert>
       ) : null}
 
-      {successMessage ? <p className="text-sm text-primary">{successMessage}</p> : null}
-
       <ListPageBody>
         <div className="flex-1">
           <MyCompaniesList
             items={visibleItems}
-            emptyMessage="No companies yet. Add a company to get started."
+            emptyMessage="No connected companies yet. Companies appear here when you book or buy from them."
           />
         </div>
         <Pagination
@@ -112,23 +98,6 @@ export function AllCompaniesPage() {
           }}
         />
       </ListPageBody>
-
-      <p className="text-sm text-muted-foreground">
-        Looking for other settings?{' '}
-        <Link to="/settings/basic" className="text-primary underline-offset-4 hover:underline">
-          Basic Settings
-        </Link>
-      </p>
-
-      <CompanyFormDialog
-        open={registerOpen}
-        onOpenChange={setRegisterOpen}
-        onSaved={() => {
-          setSuccessMessage(
-            'Registration submitted. Admin approval is required — the company stays Pending until a super admin approves or rejects it.',
-          )
-        }}
-      />
     </FeaturePage>
   )
 }

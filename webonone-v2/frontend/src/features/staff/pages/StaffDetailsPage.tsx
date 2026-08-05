@@ -11,7 +11,10 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
-  cn,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
@@ -171,35 +174,23 @@ export function StaffDetailsPage() {
         </Button>
       }
     >
-      <div className="flex flex-col gap-6">
-        <div
-          role="tablist"
-          aria-label="Staff sections"
-          className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
-        >
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as StaffDetailTab)}
+        className="flex flex-col gap-6"
+      >
+        <TabsList aria-label="Staff sections">
           {tabs.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              id={`staff-tab-${item.id}`}
-              aria-selected={tab === item.id}
-              aria-controls={`staff-panel-${item.id}`}
-              className={cn(
-                'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
-                tab === item.id && 'bg-background text-foreground shadow-sm',
-              )}
-              onClick={() => setTab(item.id)}
-            >
+            <TabsTrigger key={item.id} value={item.id}>
               {item.label}
-            </button>
+            </TabsTrigger>
           ))}
-        </div>
+        </TabsList>
 
-        <div role="tabpanel" id={`staff-panel-${tab}`} aria-labelledby={`staff-tab-${tab}`}>
+        <TabsContent value={tab} className="mt-0 outline-none">
           {tab === 'overview' ? overview : <StaffHistoryPanel userId={detail.userId} />}
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {dialog ? (
         <StaffFormDialog

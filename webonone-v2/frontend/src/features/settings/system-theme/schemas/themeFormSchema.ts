@@ -30,9 +30,9 @@ export type ThemeFormValues = z.infer<typeof themeFormSchema>
 
 export const EMPTY_THEME_WIZARD_VALUES: ThemeFormValues = {
   name: '',
-  color1: '#2563EB',
-  color2: '#3B82F6',
-  color3: '#F59E0B',
-  color4: '#F8FAFC',
-  color5: '#1E293B',
+  color1: '#344CE2',
+  color2: '#3578E8',
+  color3: '#3578E8',
+  color4: '#EFF3FA',
+  color5: '#0E2F59',
 }

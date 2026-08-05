@@ -81,7 +81,8 @@ export async function findCompanyRole(
   companyId: string,
 ): Promise<UserRoleRow | undefined> {
   const roles = await findCompanyRolesByUserId(userId)
-  return roles.find((row) => row.company_id === companyId)
+  const forCompany = roles.filter((row) => row.company_id === companyId)
+  return forCompany.find((row) => row.role === 'company_admin') ?? forCompany[0]
 }
 
 export async function findCompanyMemberRole(

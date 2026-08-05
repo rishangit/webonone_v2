@@ -5,32 +5,32 @@
 @layer base {
   :root {
     /* Platform Default semantic palette — @webonone/theme overwrites at runtime */
-    --color-1: #2563eb;
-    --color-2: #3b82f6;
-    --color-3: #f59e0b;
-    --color-4: #f8fafc;
-    --color-5: #1e293b;
+    --color-1: #344ce2;
+    --color-2: #3578e8;
+    --color-3: #3578e8;
+    --color-4: #eff3fa;
+    --color-5: #0e2f59;
 
     /* Semantic fallbacks before ThemeProvider */
-    --primary: 221 83% 53%;
+    --primary: 232 75% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-gradient-from: 38 92% 50%;
-    --primary-gradient-to: 221 83% 53%;
+    --primary-gradient-from: 218 80% 56%;
+    --primary-gradient-to: 232 75% 55%;
     --glass-bg: 0 0% 100% / 0.85;
     --glass-border: 0 0% 10% / 0.1;
     --glass-shadow: 0 0% 0% / 0.1;
-    --accent-primary: 221 83% 53%;
-    --accent-secondary: 38 92% 50%;
-    --accent-primary-hover: 221 83% 43%;
+    --accent-primary: 232 75% 55%;
+    --accent-secondary: 218 80% 56%;
+    --accent-primary-hover: 232 75% 45%;
     --accent-button-text: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 38 92% 50%;
-    --scrollbar-thumb: 38 92% 50% / 0.6;
+    --ring: 218 80% 56%;
+    --scrollbar-thumb: 218 80% 56% / 0.6;
 
     /* Glass site canvas (tint from color4 applied at runtime) */
     --background-base: 0 0% 100%;
-    --background-tint: 210 40% 98%;
+    --background-tint: 218 45% 96%;
     --background-tint-opacity: 0.16;
 
     /* Light neutrals / glass surfaces */
@@ -46,7 +46,7 @@
     --accent-foreground: 0 0% 10%;
     --border: 240 6% 90%;
     --input-background: 221 60% 97%;
-    --input: 221 83% 53% / 0.22;
+    --input: 232 75% 55% / 0.22;
     --radius: 0.5rem;
     --popover: 210 36% 90% / 0.50;
     --menu-bg: 210 36% 90% / 0.50;
@@ -69,14 +69,14 @@
     --accent-foreground: 0 0% 98%;
     --border: 240 4% 16%;
     --input-background: 221 35% 17%;
-    --input: 221 83% 53% / 0.38;
+    --input: 232 75% 55% / 0.38;
     --popover: 215 28% 24% / 0.94;
     --menu-bg: 215 28% 24% / 0.94;
     --popover-foreground: 0 0% 98%;
     --glass-bg: 215 28% 17% / 0.8;
     --glass-border: 0 0% 98% / 0.22;
     --glass-shadow: 0 0% 0% / 0.25;
-    --accent-primary-hover: 221 83% 43%;
+    --accent-primary-hover: 232 75% 45%;
     --accent-button-text: 0 0% 100%;
   }
 
@@ -239,6 +239,41 @@
 
   .item-list-row:hover {
     box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22);
+  }
+
+  /**
+   * Tabs — selected tab outer bottom curves (continuous strip → side → top).
+   * Pseudo borders draw the quarter-circle; page-colored box-shadow covers the
+   * straight strip under the notch so the stroke reads as one path.
+   */
+  .ui-tabs-trigger {
+    position: relative;
+  }
+
+  .ui-tabs-trigger[data-state='active']::before,
+  .ui-tabs-trigger[data-state='active']::after {
+    content: '';
+    position: absolute;
+    bottom: -0.75px;
+    width: 0.5rem;
+    height: 0.5rem;
+    pointer-events: none;
+    background: transparent;
+    border: 1px solid hsl(var(--secondary));
+  }
+
+  .ui-tabs-trigger[data-state='active']::before {
+    left: -0.5rem;
+    border-width: 0 1px 1px 0;
+    border-bottom-right-radius: 0.5rem;
+    box-shadow: 2px 2px 0 0 hsl(var(--background-base));
+  }
+
+  .ui-tabs-trigger[data-state='active']::after {
+    right: -0.5rem;
+    border-width: 0 0 1px 1px;
+    border-bottom-left-radius: 0.5rem;
+    box-shadow: -2px 2px 0 0 hsl(var(--background-base));
   }
 
   /** Primary button — palette accent (color3 → color1) with hover + tinted shadow. */

@@ -286,12 +286,17 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
     const company = companyById.get(role.company_id)
     if (!company) continue
 
+    const nextRole = role.role === 'company_admin' ? 'company_admin' : 'member'
+    const existing = byId.get(company.id)
+    // Prefer company_admin when the user has both roles on the same company.
+    if (existing?.role === 'company_admin' && nextRole === 'member') continue
+
     byId.set(company.id, {
       id: company.id,
       name: company.name,
       logoUrl: company.logo_url,
       status: company.status,
-      role: role.role === 'company_admin' ? 'company_admin' : 'member',
+      role: nextRole,
       dataEntities: parseDataEntities(company.data_entities),
       createdAt: company.created_at.toISOString(),
       approvedAt: company.approved_at ? company.approved_at.toISOString() : null,
@@ -300,7 +305,7 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
 
   // Creator fallback + heal: company rows can exist when Identity role insert timed out.
   for (const company of ownedCompanies) {
-    if (byId.has(company.id)) continue
+    if (byId.get(company.id)?.role === 'company_admin') continue
 
     try {
       await roleRepo.insertUserRole({

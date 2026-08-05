@@ -72,6 +72,16 @@ export { Checkbox } from './components/Checkbox'
 export { Switch } from './components/Switch'
 export { RadioGroup, RadioGroupItem } from './components/RadioGroup'
 export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  tabsListClassName,
+  tabsTriggerClassName,
+  tabsContentClassName,
+} from './components/Tabs'
+
+export {
   Select,
   SelectGroup,
   SelectValue,

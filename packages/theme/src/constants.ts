@@ -19,11 +19,11 @@ export const PLATFORM_DESTRUCTIVE_HEX = '#DC2626'
 
 export const PLATFORM_DEFAULT_THEME: Omit<ThemeDto, 'id'> = {
   name: 'Platform Default',
-  color1: '#2563EB',
-  color2: '#3B82F6',
-  color3: '#F59E0B',
-  color4: '#F8FAFC',
-  color5: '#1E293B',
+  color1: '#344CE2',
+  color2: '#3578E8',
+  color3: '#3578E8',
+  color4: '#EFF3FA',
+  color5: '#0E2F59',
 }
 
 export const PLATFORM_DEFAULT_THEME_ID = 'platform-default-theme'
