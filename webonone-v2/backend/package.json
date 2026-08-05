@@ -11,6 +11,7 @@
     "migrate:status": "node --import tsx ../../node_modules/knex/bin/cli.js migrate:status --knexfile knexfile.ts",
     "seed": "tsx src/db/seedSuperAdmin.ts",
     "backfill:staff-roles": "tsx src/db/backfillStaffMemberRoles.ts",
+    "backfill:session-token-members": "tsx src/db/backfillSessionTokenMemberRoles.ts",
     "sync:payment-companies": "tsx src/db/syncPaymentCompanies.ts"
   },
   "dependencies": {

@@ -14,8 +14,23 @@ export const companyCatalogApi = {
     return apiClient<{ items: CompanyCatalogItem[] }>(`/company/me/catalog/${kind}${qs}`)
   },
 
+  /** Membership-scoped list (Settings → My Companies; no company JWT session required). */
+  listForCompany(companyId: string, kind: CatalogEntityKind, query?: { q?: string }) {
+    const q = query?.q?.trim()
+    const qs = q ? `?q=${encodeURIComponent(q)}` : ''
+    return apiClient<{ items: CompanyCatalogItem[] }>(
+      `/company/${encodeURIComponent(companyId)}/catalog/${kind}${qs}`,
+    )
+  },
+
   get(kind: CatalogEntityKind, id: string) {
     return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}`)
+  },
+
+  getForCompany(companyId: string, kind: CatalogEntityKind, id: string) {
+    return apiClient<CompanyCatalogItem>(
+      `/company/${encodeURIComponent(companyId)}/catalog/${kind}/${encodeURIComponent(id)}`,
+    )
   },
 
   link(kind: CatalogEntityKind, libraryEntityId: string) {
@@ -65,6 +80,17 @@ export const companyCatalogApi = {
       method: 'PATCH',
       body: JSON.stringify({ galleryImages }),
     })
+  },
+
+  updateServiceForm(id: string, formTemplateId: string | null) {
+    return apiClient<CompanyCatalogItem>(`/company/me/catalog/services/${id}/form`, {
+      method: 'PATCH',
+      body: JSON.stringify({ formTemplateId }),
+    })
+  },
+
+  listServicesWithForm() {
+    return apiClient<{ items: CompanyCatalogItem[] }>('/company/me/catalog/services/with-form')
   },
 
   async remove(kind: CatalogEntityKind, id: string) {

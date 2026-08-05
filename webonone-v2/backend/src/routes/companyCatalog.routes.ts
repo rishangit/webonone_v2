@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import * as companyCatalogController from '../controllers/companyCatalog.controller.js'
+import { requireAuth } from '../middleware/auth.js'
 import { requireCompanyAdminSession } from '../middleware/requireCompanyAdminSession.js'
 import { requireCompanySession } from '../middleware/requireCompanySession.js'
 import { validateBody } from '../middleware/validateBody.js'
@@ -8,9 +9,16 @@ import {
   fromLibraryBodySchema,
   linkCatalogBodySchema,
   updateCatalogGalleryBodySchema,
+  updateServiceFormBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
 
 const router = Router()
+
+router.get(
+  '/company/me/catalog/services/with-form',
+  requireCompanySession,
+  companyCatalogController.listServicesWithForm,
+)
 
 router.get(
   '/company/me/catalog/:kind',
@@ -52,6 +60,12 @@ router.patch(
   companyCatalogController.updateCatalogGallery,
 )
 router.patch(
+  '/company/me/catalog/services/:id/form',
+  requireCompanyAdminSession,
+  validateBody(updateServiceFormBodySchema),
+  companyCatalogController.updateServiceForm,
+)
+router.patch(
   '/company/me/catalog/:kind/:id',
   requireCompanyAdminSession,
   companyCatalogController.updateCatalog,
@@ -60,6 +74,18 @@ router.delete(
   '/company/me/catalog/:kind/:id',
   requireCompanyAdminSession,
   companyCatalogController.deleteCatalog,
+)
+
+// Membership-scoped browse (Settings → My Companies) — after /me/catalog so "me" is not a companyId
+router.get(
+  '/company/:companyId/catalog/:kind',
+  requireAuth,
+  companyCatalogController.listCatalogForCompany,
+)
+router.get(
+  '/company/:companyId/catalog/:kind/:id',
+  requireAuth,
+  companyCatalogController.getCatalogForCompany,
 )
 
 export default router

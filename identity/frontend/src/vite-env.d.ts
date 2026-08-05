@@ -10,6 +10,8 @@ interface ImportMetaEnv {
   readonly VITE_SMS_ORIGIN?: string
   readonly VITE_WEBONONE_ORIGIN?: string
   readonly VITE_WEBONONE_API_BASE_URL?: string
+  readonly VITE_DESIGN_ORIGIN?: string
+  readonly VITE_DESIGN_API_BASE_URL?: string
   readonly VITE_WEBSITE_ORIGIN?: string
   readonly VITE_MEDIA_ORIGIN?: string
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   buildPlatformEmbedUrl,
   sendPlatformInit,
@@ -23,6 +23,9 @@ import type {
 
 /** Fallback hide if an embedded app never reports content-ready (older build). */
 const CONTENT_READY_FALLBACK_MS = 12000
+
+/** Clear stale soft-nav skip if the shell URL did not change (allowlist reject / no-op). */
+const CLIENT_NAV_SKIP_CLEAR_MS = 100
 
 export type PlatformMediaDialogResponder = {
   resolve: (items: PlatformMediaDialogItem[]) => void
@@ -73,6 +76,9 @@ export function PlatformServiceFrame({
 }: PlatformServiceFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const peerOriginNormalized = useMemo(() => new URL(peerOrigin).origin, [peerOrigin])
+  /** When true, the next `iframeSrc` change is shell URL sync only — do not reload. */
+  const skipNextSrcCommitRef = useRef(false)
+  const skipClearTimerRef = useRef<number | null>(null)
 
   const iframeSrc = useMemo(() => {
     const embedOptions: BuildPlatformEmbedUrlOptions = {
@@ -85,6 +91,20 @@ export function PlatformServiceFrame({
     return buildPlatformEmbedUrl(embedOptions)
   }, [parentOrigin, peerOrigin, peerPath, scope, searchParams])
 
+  const [frameSrc, setFrameSrc] = useState(iframeSrc)
+
+  useEffect(() => {
+    if (skipNextSrcCommitRef.current) {
+      skipNextSrcCommitRef.current = false
+      if (skipClearTimerRef.current != null) {
+        window.clearTimeout(skipClearTimerRef.current)
+        skipClearTimerRef.current = null
+      }
+      return
+    }
+    setFrameSrc((prev) => (prev === iframeSrc ? prev : iframeSrc))
+  }, [iframeSrc])
+
   useEffect(() => {
     onLoadingChange?.(true)
 
@@ -94,7 +114,7 @@ export function PlatformServiceFrame({
     }, CONTENT_READY_FALLBACK_MS)
 
     return () => window.clearTimeout(fallback)
-  }, [iframeSrc, onLoadingChange])
+  }, [frameSrc, onLoadingChange])
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -106,6 +126,17 @@ export function PlatformServiceFrame({
         const iframe = iframeRef.current
         if (!iframe || event.source !== iframe.contentWindow) {
           return
+        }
+        if (event.data.clientNavigated) {
+          skipNextSrcCommitRef.current = true
+          if (skipClearTimerRef.current != null) {
+            window.clearTimeout(skipClearTimerRef.current)
+          }
+          // If the shell ignores the path (allowlist) or URL is unchanged, clear the skip.
+          skipClearTimerRef.current = window.setTimeout(() => {
+            skipNextSrcCommitRef.current = false
+            skipClearTimerRef.current = null
+          }, CLIENT_NAV_SKIP_CLEAR_MS)
         }
         onPeerNavigate?.(event.data.path)
         return
@@ -220,12 +251,20 @@ export function PlatformServiceFrame({
 
     iframe.addEventListener('load', handleLoad)
     return () => iframe.removeEventListener('load', handleLoad)
-  }, [accessToken, iframeSrc, peerOriginNormalized])
+  }, [accessToken, frameSrc, peerOriginNormalized])
+
+  useEffect(() => {
+    return () => {
+      if (skipClearTimerRef.current != null) {
+        window.clearTimeout(skipClearTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <iframe
       ref={iframeRef}
-      src={iframeSrc}
+      src={frameSrc}
       title={title}
       className={className ?? 'block h-full min-h-0 w-full border-0 bg-transparent'}
     />

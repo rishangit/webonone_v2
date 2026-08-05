@@ -12,11 +12,14 @@ import type {
 
 type Status = 'idle' | 'loading' | 'saving' | 'error'
 
+type SessionQueueSnapshot = NonNullable<SessionDetail['queue']>
+
 interface SessionTokensState {
   eventId: string | null
   occurrenceDate: string | null
   run: SessionRun | null
   items: SessionToken[]
+  queue: SessionQueueSnapshot | null
   listStatus: Status
   createStatus: Status
   actionStatus: Status
@@ -32,6 +35,7 @@ const initialState: SessionTokensState = {
   occurrenceDate: null,
   run: null,
   items: [],
+  queue: null,
   listStatus: 'idle',
   createStatus: 'idle',
   actionStatus: 'idle',
@@ -45,6 +49,7 @@ const initialState: SessionTokensState = {
 function applyDetail(state: SessionTokensState, detail: SessionDetail) {
   state.run = detail.run
   state.items = detail.items
+  state.queue = detail.queue ?? null
 }
 
 const sessionTokensSlice = createSlice({
@@ -53,11 +58,18 @@ const sessionTokensSlice = createSlice({
   reducers: {
     fetchListRequested(
       state,
-      action: PayloadAction<{ eventId: string; occurrenceDate: string }>,
+      action: PayloadAction<{
+        eventId: string
+        occurrenceDate: string
+        silent?: boolean
+      }>,
     ) {
       state.eventId = action.payload.eventId
       state.occurrenceDate = action.payload.occurrenceDate
-      state.listStatus = 'loading'
+      const hasData = Boolean(state.run) || state.items.length > 0
+      if (!(action.payload.silent && hasData)) {
+        state.listStatus = 'loading'
+      }
       state.listError = null
     },
     fetchListSucceeded(state, action: PayloadAction<SessionDetail>) {

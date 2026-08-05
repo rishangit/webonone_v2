@@ -95,6 +95,46 @@ function resolvePeerOrigin(peer: PlatformPeerId): string {
   return getDataOrigin()
 }
 
+function listAllowedPeerDialogBodyOrigins(): Set<string> {
+  const origins = [
+    getDesignOrigin(),
+    getIdentityOrigin(),
+    getDataOrigin(),
+    getEmailOrigin(),
+    getSmsOrigin(),
+    getPaymentOrigin(),
+  ]
+  const allowed = new Set<string>()
+  for (const origin of origins) {
+    try {
+      allowed.add(new URL(origin).origin)
+    } catch {
+      // skip invalid env defaults
+    }
+  }
+  return allowed
+}
+
+/**
+ * Prefer request.bodyOrigin when it matches a known peer origin (cross-peer dialogs).
+ * Otherwise keep the requesting frame's origin.
+ */
+function resolvePeerDialogBodyOrigin(
+  requestingPeerOrigin: string,
+  bodyOrigin: string | undefined,
+): string {
+  if (!bodyOrigin?.trim()) return requestingPeerOrigin
+  try {
+    const requested = new URL(bodyOrigin.trim()).origin
+    if (listAllowedPeerDialogBodyOrigins().has(requested)) {
+      return requested
+    }
+  } catch {
+    // fall through
+  }
+  return requestingPeerOrigin
+}
+
 /**
  * Allow Email top-level routes and template nested paths
  * (`/email/templates/:id`, `/preview`, `/versions`). Path may include a query string.
@@ -190,10 +230,28 @@ function isAllowedDesignShellNavigatePath(path: string): boolean {
   if (parts[0] !== 'design' || parts.length < 2) return false
   if (parts.some((part) => !part || part.includes('..'))) return false
   if (parts[1] !== 'forms') return false
-  // /design/forms or /design/forms/:id/edit
+  // /design/forms or /design/forms/:id/edit or /design/forms/:id/fill
   if (parts.length === 2) return true
-  if (parts.length === 4 && parts[3] === 'edit') return true
+  if (parts.length === 4 && (parts[3] === 'edit' || parts[3] === 'fill')) return true
   return false
+}
+
+/**
+ * Allow `/identity/users` (list) and `/identity/users/:id` (detail) only.
+ * Path may include a query string. Kept tight to the Users list/detail shape —
+ * mirrors `isIdentityNavSentinel` / `identitySentinelToExternalPath` in
+ * `@webonone/platform-nav`.
+ */
+function isAllowedIdentityShellNavigatePath(path: string): boolean {
+  const pathname = path.split('?')[0] ?? path
+  if (!pathname.startsWith('/identity/')) return false
+  const parts = pathname.slice(1).split('/').filter(Boolean)
+  if (parts[0] !== 'identity' || parts.length < 2) return false
+  if (parts.some((part) => !part || part.includes('..'))) return false
+  if (parts[1] !== 'users') return false
+  // /identity/users or /identity/users/:id
+  if (parts.length === 2) return true
+  return parts.length === 3
 }
 
 export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
@@ -228,6 +286,18 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
     setFrameLoading(loading)
   }, [])
 
+  const handlePeerDialogRequest = useCallback(
+    (
+      request: Parameters<typeof openPeerDialog>[0],
+      responder: Parameters<typeof openPeerDialog>[1],
+      requestingPeerOrigin: string,
+    ) => {
+      const bodyOrigin = resolvePeerDialogBodyOrigin(requestingPeerOrigin, request.bodyOrigin)
+      openPeerDialog(request, responder, bodyOrigin)
+    },
+    [openPeerDialog],
+  )
+
   const handlePeerNavigate = useCallback(
     (path: string) => {
       if (peer === 'data') {
@@ -252,6 +322,13 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         if (!isAllowedDesignShellNavigatePath(path)) return
         const [pathname = path, query = ''] = path.split('?')
         navigate({ pathname, search: query ? `?${query}` : undefined })
+        return
+      }
+      if (peer === 'identity') {
+        if (!isAllowedIdentityShellNavigatePath(path)) return
+        const [pathname = path, query = ''] = path.split('?')
+        // Empty search clears prior `?tab=` (undefined can preserve it).
+        navigate({ pathname, search: query ? `?${query}` : '' })
       }
     },
     [navigate, peer],
@@ -274,9 +351,13 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         className="block h-full min-h-0 w-full flex-1 border-0 bg-transparent"
         onLoadingChange={handleLoadingChange}
         onMediaDialogRequest={openMediaDialog}
-        onPeerDialogRequest={openPeerDialog}
+        onPeerDialogRequest={handlePeerDialogRequest}
         onPeerNavigate={
-          peer === 'data' || peer === 'email' || peer === 'sms' || peer === 'design'
+          peer === 'data' ||
+          peer === 'email' ||
+          peer === 'sms' ||
+          peer === 'design' ||
+          peer === 'identity'
             ? handlePeerNavigate
             : undefined
         }

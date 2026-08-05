@@ -9,6 +9,7 @@ import {
   getLibraryService,
   listLibraryItemsByIds,
 } from '../clients/dataCatalogClient.js'
+import * as roleRepo from '../clients/identityRoleClient.js'
 import * as eventRepo from '../repositories/companyEvent.repository.js'
 import * as sessionRunRepo from '../repositories/companyEventSessionRun.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
@@ -21,6 +22,12 @@ import {
   notifySessionTokenIssued,
 } from './sessionTokenNotify.service.js'
 import { notifyAppointmentBooked } from './appointmentNotify.service.js'
+import type { PlatformRole } from '../middleware/requireSuperAdmin.js'
+
+export type EventViewer = {
+  userId: string
+  role: PlatformRole
+}
 
 export type EventGalleryImage = {
   mediaId: string
@@ -38,6 +45,8 @@ export type CompanyEventDto = {
   serviceGalleryImages: EventGalleryImage[]
   /** Effective space gallery when the event has a space; empty otherwise. */
   spaceGalleryImages: EventGalleryImage[]
+  /** Design form template id linked on the catalog service (ID copy). */
+  formTemplateId: string | null
   timeMode: 'duration' | 'window'
   staffId: string
   staffDisplayName: string
@@ -59,6 +68,11 @@ export type CompanyEventDto = {
   recurrenceUntil: string | null
   createdAt: string
   updatedAt: string
+  /**
+   * Personal (/me) window events — occurrence dates where this user holds a token.
+   * When set, Sessions UI should list only these dates.
+   */
+  tokenOccurrenceDates?: string[]
 }
 
 export type CompanyEventOccurrenceDto = CompanyEventDto & {
@@ -103,6 +117,43 @@ export type SessionRunDto = {
 export type SessionDetailDto = {
   run: SessionRunDto
   items: SessionTokenDto[]
+  /** Present on personal (/me) session views — queue labels from the full company token list. */
+  queue?: {
+    prevTokenLabel: string | null
+    currentTokenLabel: string | null
+    nextTokenLabel: string | null
+  }
+}
+
+function computeSessionQueueLabels(
+  items: SessionTokenDto[],
+  run: SessionRunDto,
+): {
+  prevTokenLabel: string | null
+  currentTokenLabel: string | null
+  nextTokenLabel: string | null
+} {
+  const current =
+    items.find((token) => token.id === run.currentTokenId) ??
+    items.find((token) => token.status === 'serving') ??
+    null
+  const prev = items
+    .filter((token) => token.status === 'completed')
+    .reduce<SessionTokenDto | null>(
+      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      null,
+    )
+  const next = items
+    .filter((token) => token.status === 'waiting')
+    .reduce<SessionTokenDto | null>(
+      (best, token) => (!best || token.tokenNumber < best.tokenNumber ? token : best),
+      null,
+    )
+  return {
+    prevTokenLabel: prev?.tokenLabel ?? null,
+    currentTokenLabel: current?.tokenLabel ?? null,
+    nextTokenLabel: next?.tokenLabel ?? null,
+  }
 }
 
 function serviceError(message: string, statusCode: number): Error & { statusCode: number } {
@@ -225,6 +276,7 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
     serviceImageUrl: null,
     serviceGalleryImages: [],
     spaceGalleryImages: [],
+    formTemplateId: null,
     timeMode: row.time_mode,
     staffId: row.staff_id,
     staffDisplayName: row.staff_display_name,
@@ -310,6 +362,25 @@ async function resolveCatalogGalleries(
   return galleryById
 }
 
+async function resolveServiceFormTemplateIds(
+  companyId: string,
+  serviceIds: string[],
+): Promise<Map<string, string | null>> {
+  const unique = [...new Set(serviceIds.filter(Boolean))]
+  const formByServiceId = new Map<string, string | null>()
+  if (unique.length === 0) return formByServiceId
+
+  const rows = await catalogRepo.findByIds(companyId, 'services', unique)
+  for (const row of rows) {
+    const mapped = catalogRepo.mapCatalogRow('services', row) as {
+      id: string
+      formTemplateId?: string | null
+    }
+    formByServiceId.set(mapped.id, mapped.formTemplateId ?? null)
+  }
+  return formByServiceId
+}
+
 /** Resolve service/space galleries for event list/detail (company gallery, else linked library). */
 async function enrichEventsWithServiceImages(
   companyId: string,
@@ -320,9 +391,10 @@ async function enrichEventsWithServiceImages(
   const serviceIds = events.map((e) => e.serviceId)
   const spaceIds = events.map((e) => e.spaceId).filter((id): id is string => Boolean(id))
 
-  const [serviceGalleries, spaceGalleries] = await Promise.all([
+  const [serviceGalleries, spaceGalleries, formByServiceId] = await Promise.all([
     resolveCatalogGalleries(companyId, 'services', serviceIds),
     resolveCatalogGalleries(companyId, 'spaces', spaceIds),
+    resolveServiceFormTemplateIds(companyId, serviceIds),
   ])
 
   return events.map((event) => {
@@ -335,6 +407,7 @@ async function enrichEventsWithServiceImages(
       serviceGalleryImages,
       spaceGalleryImages,
       serviceImageUrl: firstGalleryUrl(serviceGalleryImages),
+      formTemplateId: formByServiceId.get(event.serviceId) ?? null,
     }
   })
 }
@@ -654,7 +727,14 @@ function toOccurrence(event: CompanyEventDto, occurrenceDate: string): CompanyEv
 
 export async function listCompanyEvents(
   companyId: string,
-  opts: { q?: string; page?: number; pageSize?: number; from?: string; to?: string },
+  opts: {
+    q?: string
+    page?: number
+    pageSize?: number
+    from?: string
+    to?: string
+    viewer: EventViewer
+  },
 ): Promise<{
   items: CompanyEventDto[] | CompanyEventOccurrenceDto[]
   total: number
@@ -662,7 +742,10 @@ export async function listCompanyEvents(
   pageSize: number
   mode: 'series' | 'occurrences'
 }> {
-  const rows = await eventRepo.listEventsByCompany(companyId)
+  const rows =
+    opts.viewer.role === 'member'
+      ? await eventRepo.listEventsForMember(companyId, opts.viewer.userId)
+      : await eventRepo.listEventsByCompany(companyId)
   let series = await enrichEventsWithServiceImages(companyId, rows.map(mapEvent))
 
   const q = opts.q?.trim().toLowerCase()
@@ -700,9 +783,138 @@ export async function listCompanyEvents(
   }
 }
 
-export async function getCompanyEvent(companyId: string, eventId: string): Promise<CompanyEventDto> {
+async function enrichEventsAcrossCompanies(events: CompanyEventDto[]): Promise<CompanyEventDto[]> {
+  if (events.length === 0) return events
+  const byCompany = new Map<string, CompanyEventDto[]>()
+  for (const event of events) {
+    const list = byCompany.get(event.companyId) ?? []
+    list.push(event)
+    byCompany.set(event.companyId, list)
+  }
+  const enriched: CompanyEventDto[] = []
+  for (const [companyId, companyEvents] of byCompany) {
+    enriched.push(...(await enrichEventsWithServiceImages(companyId, companyEvents)))
+  }
+  // Preserve original order
+  const byId = new Map(enriched.map((e) => [e.id, e]))
+  return events.map((e) => byId.get(e.id) ?? e)
+}
+
+/**
+ * Default User personal calendar: events where the user is the attendee
+ * or holds a session token (any company).
+ */
+export async function listMyBookedEvents(
+  userId: string,
+  opts: { q?: string; page?: number; pageSize?: number; from?: string; to?: string },
+): Promise<{
+  items: CompanyEventDto[] | CompanyEventOccurrenceDto[]
+  total: number
+  page: number
+  pageSize: number
+  mode: 'series' | 'occurrences'
+}> {
+  const rows = await eventRepo.listEventsForUserBookings(userId)
+  let series = await enrichEventsAcrossCompanies(rows.map(mapEvent))
+
+  const q = opts.q?.trim().toLowerCase()
+  if (q) {
+    series = series.filter(
+      (e) =>
+        e.serviceName.toLowerCase().includes(q) ||
+        e.staffDisplayName.toLowerCase().includes(q) ||
+        (e.attendeeDisplayName?.toLowerCase().includes(q) ?? false) ||
+        (e.spaceName?.toLowerCase().includes(q) ?? false),
+    )
+  }
+
+  if (opts.from && opts.to) {
+    const occurrences: CompanyEventOccurrenceDto[] = []
+    for (const event of series) {
+      const expanded = expandOccurrences(event, opts.from, opts.to)
+      if (event.attendeeUserId === userId) {
+        occurrences.push(...expanded)
+        continue
+      }
+      const tokenDates = new Set(
+        await sessionTokenRepo.listOccurrenceDatesForUserEvent(userId, event.id),
+      )
+      occurrences.push(...expanded.filter((o) => tokenDates.has(o.occurrenceDate)))
+    }
+    occurrences.sort((a, b) => a.start.localeCompare(b.start))
+    return {
+      items: occurrences,
+      total: occurrences.length,
+      page: 1,
+      pageSize: occurrences.length || 20,
+      mode: 'occurrences',
+    }
+  }
+
+  const page = opts.page ?? 1
+  const pageSize = opts.pageSize ?? 20
+  const start = (page - 1) * pageSize
+  return {
+    items: series.slice(start, start + pageSize),
+    total: series.length,
+    page,
+    pageSize,
+    mode: 'series',
+  }
+}
+
+export async function getMyBookedEvent(userId: string, eventId: string): Promise<CompanyEventDto> {
+  const row = await eventRepo.findEventByIdAnyCompany(eventId)
+  if (!row) throw serviceError('Event not found', 404)
+  const allowed = await eventRepo.userCanAccessBookedEvent(userId, row)
+  if (!allowed) throw serviceError('Event not found', 404)
+  const [enriched] = await enrichEventsWithServiceImages(row.company_id, [mapEvent(row)])
+  const event = enriched!
+  if (event.timeMode !== 'window') {
+    return event
+  }
+  const tokenOccurrenceDates = await sessionTokenRepo.listOccurrenceDatesForUserEvent(
+    userId,
+    eventId,
+  )
+  return { ...event, tokenOccurrenceDates }
+}
+
+export async function getMyBookedSessionDetail(
+  userId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionDetailDto> {
+  const event = await getMyBookedEvent(userId, eventId)
+  const matches = expandOccurrences(event, occurrenceDate, occurrenceDate)
+  if (matches.length === 0) {
+    throw serviceError('This date is not part of the event series', 400)
+  }
+  if (event.attendeeUserId !== userId) {
+    const tokenDates = await sessionTokenRepo.listOccurrenceDatesForUserEvent(userId, eventId)
+    if (!tokenDates.includes(occurrenceDate)) {
+      throw serviceError('Event not found', 404)
+    }
+  }
+  const detail = await buildSessionDetail(event.companyId, eventId, occurrenceDate)
+  return {
+    run: detail.run,
+    items: detail.items.filter((token) => token.userId === userId),
+    queue: computeSessionQueueLabels(detail.items, detail.run),
+  }
+}
+
+export async function getCompanyEvent(
+  companyId: string,
+  eventId: string,
+  viewer?: EventViewer,
+): Promise<CompanyEventDto> {
   const row = await eventRepo.findEventById(companyId, eventId)
   if (!row) throw serviceError('Event not found', 404)
+  if (viewer?.role === 'member') {
+    const allowed = await eventRepo.memberCanAccessEvent(companyId, viewer.userId, row)
+    if (!allowed) throw serviceError('Event not found', 404)
+  }
   const [enriched] = await enrichEventsWithServiceImages(companyId, [mapEvent(row)])
   return enriched!
 }
@@ -943,8 +1155,9 @@ async function assertValidSessionOccurrence(
   companyId: string,
   eventId: string,
   occurrenceDate: string,
+  viewer?: EventViewer,
 ): Promise<CompanyEventDto> {
-  const event = await getCompanyEvent(companyId, eventId)
+  const event = await getCompanyEvent(companyId, eventId, viewer)
   const matches = expandOccurrences(event, occurrenceDate, occurrenceDate)
   if (matches.length === 0) {
     throw serviceError('This date is not part of the event series', 400)
@@ -1003,8 +1216,9 @@ export async function getSessionDetail(
   companyId: string,
   eventId: string,
   occurrenceDate: string,
+  viewer?: EventViewer,
 ): Promise<SessionDetailDto> {
-  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, viewer)
   return buildSessionDetail(companyId, eventId, occurrenceDate)
 }
 
@@ -1012,8 +1226,9 @@ export async function listSessionTokens(
   companyId: string,
   eventId: string,
   occurrenceDate: string,
+  viewer?: EventViewer,
 ): Promise<SessionTokenDto[]> {
-  const detail = await getSessionDetail(companyId, eventId, occurrenceDate)
+  const detail = await getSessionDetail(companyId, eventId, occurrenceDate, viewer)
   return detail.items
 }
 
@@ -1051,6 +1266,8 @@ export async function createSessionToken(
       user_display_name: body.user_display_name.trim(),
       user_email: body.user_email?.trim() || null,
     })
+
+    await roleRepo.ensureCompanyCustomerMemberRole(userId, companyId, nanoid())
 
     const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
     if (run.status === 'started' && !run.current_token_id) {
@@ -1120,6 +1337,29 @@ export async function getSessionTokenForUser(
     userId,
   )
   return row ? mapSessionToken(row) : null
+}
+
+export async function backfillSessionTokenMemberRoles(): Promise<{
+  total: number
+  ensured: number
+  failed: number
+}> {
+  const rows = await sessionTokenRepo.listDistinctTokenHolders()
+  let ensured = 0
+  let failed = 0
+  for (const row of rows) {
+    try {
+      await roleRepo.ensureCompanyCustomerMemberRole(row.user_id, row.company_id, nanoid())
+      ensured += 1
+    } catch (err) {
+      failed += 1
+      console.error(
+        `Failed to ensure member role for session token holder (user=${row.user_id}, company=${row.company_id})`,
+        err,
+      )
+    }
+  }
+  return { total: rows.length, ensured, failed }
 }
 
 export async function startSession(

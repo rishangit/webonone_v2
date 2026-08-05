@@ -35,6 +35,11 @@ export type UseRequestPlatformPeerDialogOptions = {
    * Omit or pass `null` for Close-only footers (no primary button).
    */
   submitLabel?: string | null
+  /**
+   * Optional origin for the dialog body iframe (cross-peer dialogs).
+   * Host must allowlist this origin (e.g. Design when Identity opens a fill dialog).
+   */
+  bodyOrigin?: string
   onResult?: (payload?: unknown) => void
   onCancel?: (reason?: string) => void
 }
@@ -64,6 +69,7 @@ export function useRequestPlatformPeerDialog(
     cancelLabel,
     secondaryLabel,
     submitLabel,
+    bodyOrigin,
     onResult,
     onCancel,
   } = options
@@ -97,8 +103,10 @@ export function useRequestPlatformPeerDialog(
       cancelLabel,
       secondaryLabel,
       submitLabel,
+      bodyOrigin,
     })
   }, [
+    bodyOrigin,
     cancelLabel,
     description,
     open,

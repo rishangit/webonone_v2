@@ -44,7 +44,10 @@ const companyCatalogSlice = createSlice({
   name: 'companyCatalog',
   initialState,
   reducers: {
-    listRequested(state, action: PayloadAction<{ kind: CatalogEntityKind; q?: string }>) {
+    listRequested(
+      state,
+      action: PayloadAction<{ kind: CatalogEntityKind; q?: string; companyId?: string }>,
+    ) {
       state.kind = action.payload.kind
       state.listStatus = 'loading'
       state.listError = null
@@ -58,7 +61,10 @@ const companyCatalogSlice = createSlice({
       state.listStatus = 'error'
       state.listError = action.payload
     },
-    detailRequested(state, action: PayloadAction<{ kind: CatalogEntityKind; id: string }>) {
+    detailRequested(
+      state,
+      action: PayloadAction<{ kind: CatalogEntityKind; id: string; companyId?: string }>,
+    ) {
       state.kind = action.payload.kind
       state.detailStatus = 'loading'
       state.detailError = null
@@ -163,8 +169,11 @@ const listEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.listRequested.type),
     switchMap((action: ReturnType<typeof companyCatalogActions.listRequested>) => {
-      const { kind, q } = action.payload
-      return from(companyCatalogApi.list(kind, { q })).pipe(
+      const { kind, q, companyId } = action.payload
+      const request = companyId
+        ? companyCatalogApi.listForCompany(companyId, kind, { q })
+        : companyCatalogApi.list(kind, { q })
+      return from(request).pipe(
         switchMap(async (result) => {
           const items = await hydrateLinkedCatalogItems(kind, result.items)
           return companyCatalogActions.listSucceeded({ kind, items })
@@ -178,8 +187,11 @@ const detailEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.detailRequested.type),
     switchMap((action: ReturnType<typeof companyCatalogActions.detailRequested>) => {
-      const { kind, id } = action.payload
-      return from(companyCatalogApi.get(kind, id)).pipe(
+      const { kind, id, companyId } = action.payload
+      const request = companyId
+        ? companyCatalogApi.getForCompany(companyId, kind, id)
+        : companyCatalogApi.get(kind, id)
+      return from(request).pipe(
         switchMap(async (item) => companyCatalogActions.detailSucceeded(await hydrateOne(kind, item))),
         catchError((err: Error) => of(companyCatalogActions.detailFailed(err.message))),
       )

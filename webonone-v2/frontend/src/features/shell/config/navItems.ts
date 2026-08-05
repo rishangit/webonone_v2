@@ -79,6 +79,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
 
 const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings: Settings,
+  Companies: Building2,
   Identity: Users,
   Email: Mail,
   Data: Database,

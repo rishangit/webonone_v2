@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -7,12 +7,14 @@ import {
   Button,
   FeaturePage,
   StatusTag,
+  cn,
   isStatusTagVariant,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { hasPlatformEmbedHandoff } from '@/features/auth/utils/platformReturn'
 import { ProfileView } from '@/features/profile/components/ProfileView'
+import { UserHistoryPanel } from '@/features/users/components/UserHistoryPanel'
 import { getUser } from '@/features/users/services/usersApi'
 import type { IdentityUserDetail } from '@/features/users/types'
 import {
@@ -20,6 +22,11 @@ import {
   isSessionCompanyAdmin,
   isSessionSuperAdmin,
 } from '@/features/users/utils/currentRole'
+import { useNavigateIdentity } from '@/features/shell/utils/navigateIdentity'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
+
+const USER_DETAIL_TABS = ['overview', 'history'] as const
+type UserDetailTab = (typeof USER_DETAIL_TABS)[number]
 
 function formatRoleLabel(role: string): string {
   return role
@@ -30,7 +37,7 @@ function formatRoleLabel(role: string): string {
 
 export function UserDetailsPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
+  const { goToUsersList, syncShellUserTab } = useNavigateIdentity()
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
@@ -39,6 +46,8 @@ export function UserDetailsPage() {
   const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
   const companyMode = isCompanyAdmin && Boolean(companyId)
   const canView = Boolean(accessToken) && (isSuperAdmin || companyMode)
+
+  const [tab, setTab] = useDetailTabParam<UserDetailTab>(USER_DETAIL_TABS, 'overview')
 
   const [user, setUser] = useState<IdentityUserDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -94,7 +103,14 @@ export function UserDetailsPage() {
   }
 
   function handleBack() {
-    navigate('/users')
+    goToUsersList()
+  }
+
+  function handleTabChange(next: UserDetailTab) {
+    setTab(next)
+    if (id) {
+      syncShellUserTab(id, next)
+    }
   }
 
   const backButton = (
@@ -104,32 +120,20 @@ export function UserDetailsPage() {
     </Button>
   )
 
-  if (loading && !user) {
-    return null
-  }
+  const tabs: { id: UserDetailTab; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'history', label: 'History' },
+  ]
 
-  if (error || !user) {
-    return (
-      <FeaturePage
-        title="User"
-        description="User account details."
-        actions={backButton}
-      >
-        <Alert variant="destructive">
-          <AlertDescription>{error ?? 'Unable to load user'}</AlertDescription>
-        </Alert>
-      </FeaturePage>
-    )
-  }
-
+  // Keep FeaturePage mounted while loading (no blank return) — matches Data details.
   return (
     <FeaturePage
-      title={user.displayName}
+      title={user?.displayName ?? 'User'}
       description="User account details."
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {backButton}
-          {user.role ? (
+          {user?.role ? (
             isStatusTagVariant(user.role) ? (
               <StatusTag variant={user.role} />
             ) : (
@@ -139,7 +143,51 @@ export function UserDetailsPage() {
         </div>
       }
     >
-      <ProfileView user={user} avatarUrl={user.avatarUrl} canEdit={false} />
+      {error && !user ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {user ? (
+        <div className="flex flex-col gap-6">
+          <div
+            role="tablist"
+            aria-label="User sections"
+            className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
+          >
+            {tabs.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                id={`user-tab-${item.id}`}
+                aria-selected={tab === item.id}
+                aria-controls={`user-panel-${item.id}`}
+                className={cn(
+                  'rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors',
+                  tab === item.id && 'bg-background text-foreground shadow-sm',
+                )}
+                onClick={() => handleTabChange(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div
+            role="tabpanel"
+            id={`user-panel-${tab}`}
+            aria-labelledby={`user-tab-${tab}`}
+          >
+            {tab === 'overview' ? (
+              <ProfileView user={user} avatarUrl={user.avatarUrl} canEdit={false} />
+            ) : (
+              <UserHistoryPanel user={user} />
+            )}
+          </div>
+        </div>
+      ) : null}
     </FeaturePage>
   )
 }

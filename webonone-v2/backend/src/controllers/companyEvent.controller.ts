@@ -1,4 +1,5 @@
 import type { Response } from 'express'
+import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as eventService from '../services/companyEvent.service.js'
 
@@ -14,12 +15,82 @@ function handleServiceError(err: unknown, res: Response) {
 function requireSession(
   req: CompanySessionRequest,
   res: Response,
-): { companyId: string } | null {
-  if (!req.user || !req.sessionCompanyId) {
+): { companyId: string; userId: string; role: NonNullable<CompanySessionRequest['sessionRole']> } | null {
+  if (!req.user || !req.sessionCompanyId || !req.sessionRole) {
     res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
     return null
   }
-  return { companyId: req.sessionCompanyId }
+  return {
+    companyId: req.sessionCompanyId,
+    userId: req.user.id,
+    role: req.sessionRole,
+  }
+}
+
+function viewerFromSession(session: {
+  userId: string
+  role: NonNullable<CompanySessionRequest['sessionRole']>
+}): eventService.EventViewer {
+  return { userId: session.userId, role: session.role }
+}
+
+export async function listMyEvents(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  try {
+    const q = typeof req.query.q === 'string' ? req.query.q : undefined
+    const from = typeof req.query.from === 'string' ? req.query.from : undefined
+    const to = typeof req.query.to === 'string' ? req.query.to : undefined
+    const page = req.query.page ? Number(req.query.page) : undefined
+    const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
+    const result = await eventService.listMyBookedEvents(req.user.id, {
+      q,
+      from,
+      to,
+      page: Number.isFinite(page) ? page : undefined,
+      pageSize: Number.isFinite(pageSize) ? pageSize : undefined,
+    })
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getMyEvent(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  try {
+    const item = await eventService.getMyBookedEvent(req.user.id, String(req.params.id))
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getMySession(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return
+  }
+  try {
+    const detail = await eventService.getMyBookedSessionDetail(
+      req.user.id,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(detail)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
 }
 
 export async function listEvents(req: CompanySessionRequest, res: Response) {
@@ -37,6 +108,7 @@ export async function listEvents(req: CompanySessionRequest, res: Response) {
       to,
       page: Number.isFinite(page) ? page : undefined,
       pageSize: Number.isFinite(pageSize) ? pageSize : undefined,
+      viewer: viewerFromSession(session),
     })
     res.json(result)
   } catch (err) {
@@ -48,7 +120,11 @@ export async function getEvent(req: CompanySessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return
   try {
-    const item = await eventService.getCompanyEvent(session.companyId, String(req.params.id))
+    const item = await eventService.getCompanyEvent(
+      session.companyId,
+      String(req.params.id),
+      viewerFromSession(session),
+    )
     res.json(item)
   } catch (err) {
     handleServiceError(err, res)
@@ -115,6 +191,7 @@ export async function listSessionTokens(req: CompanySessionRequest, res: Respons
       session.companyId,
       String(req.params.eventId),
       occurrenceDate,
+      viewerFromSession(session),
     )
     res.json(detail)
   } catch (err) {
@@ -165,6 +242,7 @@ export async function getSession(req: CompanySessionRequest, res: Response) {
       session.companyId,
       String(req.params.eventId),
       occurrenceDate,
+      viewerFromSession(session),
     )
     res.json(detail)
   } catch (err) {

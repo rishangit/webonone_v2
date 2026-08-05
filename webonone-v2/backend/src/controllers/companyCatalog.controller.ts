@@ -1,4 +1,5 @@
 import type { Response } from 'express'
+import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as catalogService from '../services/companyCatalog.service.js'
@@ -41,6 +42,27 @@ export async function listCatalog(req: CompanySessionRequest, res: Response) {
   }
 }
 
+/** Membership-gated list for Settings → My Companies (no active company session required). */
+export async function listCatalogForCompany(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  try {
+    const kind = catalogService.parseKindParam(String(req.params.kind))
+    const q = typeof req.query.q === 'string' ? req.query.q : undefined
+    const items = await catalogService.listCatalogItems(
+      req.user.id,
+      String(req.params.companyId),
+      kind,
+      { q },
+    )
+    res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function getCatalog(req: CompanySessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return
@@ -49,6 +71,26 @@ export async function getCatalog(req: CompanySessionRequest, res: Response) {
     const item = await catalogService.getCatalogItem(
       session.userId,
       session.companyId,
+      kind,
+      String(req.params.id),
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+/** Membership-gated detail for Settings → My Companies catalog browse. */
+export async function getCatalogForCompany(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  try {
+    const kind = catalogService.parseKindParam(String(req.params.kind))
+    const item = await catalogService.getCatalogItem(
+      req.user.id,
+      String(req.params.companyId),
       kind,
       String(req.params.id),
     )
@@ -159,6 +201,36 @@ export async function updateCatalogGallery(req: CompanyAdminSessionRequest, res:
       req.body.galleryImages,
     )
     res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function updateServiceForm(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const item = await catalogService.updateServiceFormTemplate(
+      session.userId,
+      session.companyId,
+      String(req.params.id),
+      req.body.formTemplateId ?? null,
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function listServicesWithForm(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const items = await catalogService.listServicesWithLinkedForm(
+      session.userId,
+      session.companyId,
+    )
+    res.json({ items })
   } catch (err) {
     handleServiceError(err, res)
   }

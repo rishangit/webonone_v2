@@ -19,6 +19,7 @@ export type CompanyEvent = {
   serviceImageUrl: string | null
   serviceGalleryImages: EventGalleryImage[]
   spaceGalleryImages: EventGalleryImage[]
+  formTemplateId: string | null
   timeMode: EventTimeMode
   staffId: string
   staffDisplayName: string
@@ -35,6 +36,8 @@ export type CompanyEvent = {
   recurrenceUntil: string | null
   createdAt: string
   updatedAt: string
+  /** Personal window events — dates where this user holds a token. */
+  tokenOccurrenceDates?: string[]
 }
 
 export type CompanyEventOccurrence = CompanyEvent & {
@@ -79,6 +82,12 @@ export type SessionRun = {
 export type SessionDetail = {
   run: SessionRun
   items: SessionToken[]
+  /** Personal (/me) views — Prev/Current/Next from the full company queue. */
+  queue?: {
+    prevTokenLabel: string | null
+    currentTokenLabel: string | null
+    nextTokenLabel: string | null
+  }
 }
 
 export type CreateSessionTokenBody = {

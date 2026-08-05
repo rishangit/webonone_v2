@@ -34,6 +34,25 @@ export type FormTemplate = {
   updatedAt: string
 }
 
+export type FormSubmission = {
+  id: string
+  companyId: string
+  formTemplateId: string
+  formName: string
+  subjectUserId: string
+  subjectDisplayName: string
+  subjectEmail: string | null
+  filledByUserId: string
+  filledByDisplayName: string
+  serviceId: string | null
+  serviceName: string | null
+  eventId: string | null
+  occurrenceDate: string | null
+  sessionTokenId: string | null
+  answers: Record<string, unknown>
+  createdAt: string
+}
+
 export type PaginatedResult<T> = {
   items: T[]
   total: number

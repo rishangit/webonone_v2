@@ -477,6 +477,38 @@ const IDENTITY_COMPANY_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
+const MY_COMPANY_NAV_ITEM: CoreNavLeaf = {
+  kind: 'item',
+  path: '/settings/companies',
+  label: 'My Company',
+}
+
+/** Membership list — all roles. */
+const COMPANIES_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Companies',
+  children: [MY_COMPANY_NAV_ITEM],
+}
+
+/** Super admin: membership list + platform-wide companies admin. */
+const COMPANIES_SUPER_ADMIN_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Companies',
+  children: [
+    MY_COMPANY_NAV_ITEM,
+    { kind: 'item', path: '/companies', label: 'All Companies' },
+  ],
+}
+
+const SETTINGS_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Settings',
+  children: [
+    { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
+    { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
+  ],
+}
+
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
   CALENDAR_PLATFORM_NAV_GROUP,
@@ -519,15 +551,8 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   SMS_PLATFORM_NAV_GROUP,
   PAYMENT_PLATFORM_NAV_GROUP,
   DESIGN_PLATFORM_NAV_GROUP,
-  {
-    kind: 'group',
-    label: 'Settings',
-    children: [
-      { kind: 'item', path: '/settings/companies', label: 'My Companies' },
-      { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
-      { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
-    ],
-  },
+  COMPANIES_PLATFORM_NAV_GROUP,
+  SETTINGS_PLATFORM_NAV_GROUP,
 ]
 
 export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
@@ -536,20 +561,13 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
   IDENTITY_COMPANY_NAV_GROUP,
   DATA_PLATFORM_NAV_GROUP,
   DESIGN_PLATFORM_NAV_GROUP,
-  {
-    kind: 'group',
-    label: 'Settings',
-    children: [
-      { kind: 'item', path: '/settings/companies', label: 'My Companies' },
-      { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
-      { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
-    ],
-  },
+  COMPANIES_PLATFORM_NAV_GROUP,
+  SETTINGS_PLATFORM_NAV_GROUP,
 ]
 
 export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Home' },
-  { kind: 'item', path: '/companies', label: 'Companies' },
+  COMPANIES_SUPER_ADMIN_NAV_GROUP,
   {
     kind: 'group',
     label: 'Identity',
@@ -600,15 +618,7 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   },
   SMS_PLATFORM_NAV_GROUP,
   PAYMENT_PLATFORM_NAV_GROUP,
-  {
-    kind: 'group',
-    label: 'Settings',
-    children: [
-      { kind: 'item', path: '/settings/companies', label: 'My Companies' },
-      { kind: 'item', path: '/settings/basic', label: 'Basic Settings' },
-      { kind: 'item', path: '/settings/system-theme', label: 'System Theme' },
-    ],
-  },
+  SETTINGS_PLATFORM_NAV_GROUP,
 ]
 
 export const CORE_NAV_QUERY_PARAM = 'core_nav' as const

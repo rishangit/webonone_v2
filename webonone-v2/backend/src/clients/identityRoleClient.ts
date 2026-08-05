@@ -84,6 +84,14 @@ export async function findCompanyRole(
   return roles.find((row) => row.company_id === companyId)
 }
 
+export async function findCompanyMemberRole(
+  userId: string,
+  companyId: string,
+): Promise<UserRoleRow | undefined> {
+  const roles = await findCompanyRolesByUserId(userId)
+  return roles.find((row) => row.company_id === companyId && row.role === 'member')
+}
+
 export async function insertUserRole(
   row: Omit<UserRoleRow, 'created_at' | 'updated_at'>,
 ): Promise<void> {
@@ -131,6 +139,37 @@ export async function ensureCompanyMemberRole(
     }
     // Re-check in case a concurrent request created the role under another id.
     const after = await findCompanyRole(userId, companyId)
+    if (after) return
+    throw err
+  }
+}
+
+/**
+ * Ensure a `member` row exists for the company Users (customer) list.
+ * Unlike ensureCompanyMemberRole, this also inserts member when the user is already
+ * company_admin so owners who book sessions appear on the customer Users list.
+ */
+export async function ensureCompanyCustomerMemberRole(
+  userId: string,
+  companyId: string,
+  roleId: string,
+): Promise<void> {
+  const existingMember = await findCompanyMemberRole(userId, companyId)
+  if (existingMember) return
+
+  try {
+    await insertUserRole({
+      id: roleId,
+      user_id: userId,
+      role: 'member',
+      company_id: companyId,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    if (/insert role failed \(409\)|ER_DUP_ENTRY|Duplicate/i.test(message)) {
+      return
+    }
+    const after = await findCompanyMemberRole(userId, companyId)
     if (after) return
     throw err
   }

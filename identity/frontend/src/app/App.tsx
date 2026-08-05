@@ -33,6 +33,16 @@ const UsersPage = lazy(() =>
 const UserDetailsPage = lazy(() =>
   import('@/features/users/pages/UserDetailsPage').then((m) => ({ default: m.UserDetailsPage })),
 )
+const HistoryTokenDetailPage = lazy(() =>
+  import('@/features/users/pages/HistoryTokenDetailPage').then((m) => ({
+    default: m.HistoryTokenDetailPage,
+  })),
+)
+const HistorySubmissionDetailPage = lazy(() =>
+  import('@/features/users/pages/HistorySubmissionDetailPage').then((m) => ({
+    default: m.HistorySubmissionDetailPage,
+  })),
+)
 const UserSelectionEmbedPage = lazy(() =>
   import('@/features/users/pages/UserSelectionEmbedPage').then((m) => ({
     default: m.UserSelectionEmbedPage,
@@ -129,6 +139,22 @@ export function App() {
               element={
                 <LazyRoute>
                   <UserDetailsPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/users/:id/history/tokens/:tokenId"
+              element={
+                <LazyRoute>
+                  <HistoryTokenDetailPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/users/:id/history/submissions/:submissionId"
+              element={
+                <LazyRoute>
+                  <HistorySubmissionDetailPage />
                 </LazyRoute>
               }
             />

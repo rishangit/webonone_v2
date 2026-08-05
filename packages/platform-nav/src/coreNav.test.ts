@@ -61,25 +61,40 @@ describe('coreNav', () => {
     assert.equal(found, undefined, 'Calendar should not appear on superAdmin')
   })
 
-  it('resolves super admin nav with companies', () => {
+  it('resolves super admin Companies group with My Company and All Companies', () => {
     const nav = resolvePlatformNavUrls('http://localhost:3010', 'superAdmin')
-    const companies = nav.find((item) => item.kind === 'item' && item.label === 'Companies')
-    assert.ok(companies)
-    if (companies?.kind === 'item') {
-      assert.equal(companies.href, 'http://localhost:3010/companies')
+    const companies = nav.find((item) => item.kind === 'group' && item.label === 'Companies')
+    assert.ok(companies?.kind === 'group')
+    if (companies?.kind === 'group') {
+      assert.deepEqual(
+        companies.children.map((child) => ({ href: child.href, label: child.label })),
+        [
+          { href: 'http://localhost:3010/settings/companies', label: 'My Company' },
+          { href: 'http://localhost:3010/companies', label: 'All Companies' },
+        ],
+      )
     }
   })
 
-  it('includes My Companies first under Settings for member, main, and superAdmin', () => {
+  it('includes My Company under Companies for member, main, and superAdmin', () => {
     for (const variant of ['member', 'main', 'superAdmin'] as const) {
       const nav = resolvePlatformNavUrls('http://localhost:3010', variant)
+      const companies = nav.find((item) => item.kind === 'group' && item.label === 'Companies')
+      assert.ok(companies?.kind === 'group', `Companies missing for ${variant}`)
+      if (companies?.kind === 'group') {
+        assert.equal(companies.children[0]?.label, 'My Company')
+        assert.equal(companies.children[0]?.href, 'http://localhost:3010/settings/companies')
+      }
+
       const settings = nav.find((item) => item.kind === 'group' && item.label === 'Settings')
       assert.ok(settings?.kind === 'group', `Settings missing for ${variant}`)
       if (settings?.kind === 'group') {
-        assert.equal(settings.children[0]?.label, 'My Companies')
-        assert.equal(settings.children[0]?.href, 'http://localhost:3010/settings/companies')
-        assert.equal(settings.children[1]?.label, 'Basic Settings')
-        assert.equal(settings.children[2]?.label, 'System Theme')
+        assert.equal(settings.children[0]?.label, 'Basic Settings')
+        assert.equal(settings.children[1]?.label, 'System Theme')
+        assert.equal(
+          settings.children.some((child) => child.label === 'My Company'),
+          false,
+        )
       }
     }
   })

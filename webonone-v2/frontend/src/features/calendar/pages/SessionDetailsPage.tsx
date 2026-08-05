@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
+import { PLATFORM_MESSAGE_TYPES } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -26,11 +27,22 @@ import { eventsActions, sessionTokensActions } from '@/features/calendar/store'
 import type {
   CompanyEvent,
   SessionRunStatus,
+  SessionToken,
   SessionTokenStatus,
 } from '@/features/calendar/types/event.types'
-import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
+import {
+  buildDesignFillPeerDialogPath,
+  DESIGN_FORM_FILL_DIALOG_SIZE,
+  getDesignOrigin,
+} from '@/features/design/utils/designConfig'
+import { designFormsApi } from '@/features/design/services/designFormsApi'
+import {
+  canAccessCompanySession,
+  isPersonalCalendarSession,
+} from '@/features/session/utils/canAccessCompanySession'
 import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOccurrences'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 
 function DetailField({ label, value }: { label: string; value: string }) {
@@ -90,6 +102,7 @@ export function SessionDetailsPage() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
+  const { openPeerDialog } = usePlatformPeerDialog()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
@@ -97,6 +110,7 @@ export function SessionDetailsPage() {
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
   const tokens = useAppSelector((s) => s.sessionTokens.items)
+  const queueSnapshot = useAppSelector((s) => s.sessionTokens.queue)
   const run = useAppSelector((s) => s.sessionTokens.run)
   const tokensStatus = useAppSelector((s) => s.sessionTokens.listStatus)
   const tokensError = useAppSelector((s) => s.sessionTokens.listError)
@@ -104,7 +118,10 @@ export function SessionDetailsPage() {
   const actionError = useAppSelector((s) => s.sessionTokens.actionError)
   const lastAction = useAppSelector((s) => s.sessionTokens.lastAction)
   const [issueOpen, setIssueOpen] = useState(false)
+  const [submissionByTokenId, setSubmissionByTokenId] = useState<Record<string, string>>({})
+  const [attendeeSubmissionId, setAttendeeSubmissionId] = useState<string | null>(null)
   const lastActionStatus = useRef(actionStatus)
+  const isPersonal = isPersonalCalendarSession(activeRole, activeCompanyId)
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? 'Loading session…' : null)
@@ -126,6 +143,64 @@ export function SessionDetailsPage() {
       dispatch(sessionTokensActions.reset())
     }
   }, [dispatch, eventId, occurrenceDate])
+
+  useEffect(() => {
+    if (!isPersonal || !eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
+    if (detail && detail.timeMode !== 'window') return
+
+    const tick = () => {
+      if (document.visibilityState !== 'visible') return
+      dispatch(
+        sessionTokensActions.fetchListRequested({
+          eventId,
+          occurrenceDate,
+          silent: true,
+        }),
+      )
+    }
+    const id = window.setInterval(tick, 3000)
+    return () => {
+      window.clearInterval(id)
+    }
+  }, [dispatch, eventId, occurrenceDate, isPersonal, detail?.timeMode])
+
+  useEffect(() => {
+    if (!eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
+    if (!detail?.formTemplateId) {
+      setSubmissionByTokenId({})
+      setAttendeeSubmissionId(null)
+      return
+    }
+    let cancelled = false
+    designFormsApi
+      .listSubmissionsForSession(eventId, occurrenceDate)
+      .then((result) => {
+        if (cancelled) return
+        const byToken: Record<string, string> = {}
+        let attendeeId: string | null = null
+        for (const item of result.items ?? []) {
+          if (item.sessionTokenId) {
+            byToken[item.sessionTokenId] = item.id
+          } else if (
+            detail.attendeeUserId &&
+            item.subjectUserId === detail.attendeeUserId
+          ) {
+            attendeeId = item.id
+          }
+        }
+        setSubmissionByTokenId(byToken)
+        setAttendeeSubmissionId(attendeeId)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSubmissionByTokenId({})
+          setAttendeeSubmissionId(null)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [detail?.attendeeUserId, detail?.formTemplateId, eventId, occurrenceDate])
 
   useEffect(() => {
     if (lastActionStatus.current === 'saving' && actionStatus === 'idle' && !actionError) {
@@ -184,11 +259,19 @@ export function SessionDetailsPage() {
           !best || token.tokenNumber < best.tokenNumber ? token : best,
         null,
       )
+  const prevTokenLabel = queueSnapshot?.prevTokenLabel ?? prevToken?.tokenLabel ?? null
+  const currentTokenLabel =
+    queueSnapshot?.currentTokenLabel ?? currentToken?.tokenLabel ?? null
+  const nextTokenLabel = queueSnapshot?.nextTokenLabel ?? nextToken?.tokenLabel ?? null
   const canCallPrevious = Boolean(prevToken)
   const canCallNext =
     Boolean(nextToken) || tokens.some((token) => token.status === 'serving')
 
-  if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
+  if (
+    selectionComplete &&
+    !canAccessCompanySession(activeRole, activeCompanyId) &&
+    !isPersonal
+  ) {
     return (
       <FeaturePage title="Session" description="Session details">
         <Alert variant="destructive">
@@ -270,7 +353,132 @@ export function SessionDetailsPage() {
   const isDuration = detail.timeMode === 'duration'
   const showAttendee =
     isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
+  const canOperateSession = canAccessCompanySession(activeRole, activeCompanyId)
   const titleDate = formatOccurrenceDate(session.occurrenceDate)
+  const formTemplateId = detail.formTemplateId
+  const serviceId = detail.serviceId
+  const serviceName = detail.serviceName
+
+  function openFillForm(subject: {
+    userId: string
+    displayName: string
+    email?: string | null
+    sessionTokenId?: string | null
+  }) {
+    if (!formTemplateId || !eventId || !occurrenceDate) return
+    const requestId =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `form-fill-${Date.now()}`
+    const path = buildDesignFillPeerDialogPath(formTemplateId, {
+      subjectUserId: subject.userId,
+      subjectDisplayName: subject.displayName,
+      subjectEmail: subject.email,
+      serviceId,
+      serviceName,
+      eventId,
+      occurrenceDate,
+      sessionTokenId: subject.sessionTokenId ?? null,
+    })
+    openPeerDialog(
+      {
+        type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_REQUEST,
+        requestId,
+        path,
+        title: 'Fill form',
+        description: `For ${subject.displayName}${serviceName ? ` · ${serviceName}` : ''}`,
+        submitLabel: 'Submit',
+        ...DESIGN_FORM_FILL_DIALOG_SIZE,
+      },
+      {
+        resolve: () => {
+          toast({ title: 'Form submitted', description: `Saved for ${subject.displayName}.` })
+          void designFormsApi
+            .listSubmissionsForSession(eventId, occurrenceDate)
+            .then((result) => {
+              const byToken: Record<string, string> = {}
+              let attendeeId: string | null = null
+              const attendeeUserId = detail?.attendeeUserId
+              for (const item of result.items ?? []) {
+                if (item.sessionTokenId) {
+                  byToken[item.sessionTokenId] = item.id
+                } else if (attendeeUserId && item.subjectUserId === attendeeUserId) {
+                  attendeeId = item.id
+                }
+              }
+              setSubmissionByTokenId(byToken)
+              setAttendeeSubmissionId(attendeeId)
+            })
+            .catch(() => {})
+        },
+        cancel: () => {},
+      },
+      getDesignOrigin(),
+    )
+  }
+
+  function openViewForm(subject: {
+    userId: string
+    displayName: string
+    email?: string | null
+    sessionTokenId?: string | null
+    submissionId: string
+  }) {
+    if (!formTemplateId || !eventId || !occurrenceDate) return
+    const requestId =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `form-view-${Date.now()}`
+    const path = buildDesignFillPeerDialogPath(formTemplateId, {
+      subjectUserId: subject.userId,
+      subjectDisplayName: subject.displayName,
+      subjectEmail: subject.email,
+      serviceId,
+      serviceName,
+      eventId,
+      occurrenceDate,
+      sessionTokenId: subject.sessionTokenId ?? null,
+      mode: 'edit',
+      submissionId: subject.submissionId,
+    })
+    openPeerDialog(
+      {
+        type: PLATFORM_MESSAGE_TYPES.PEER_DIALOG_REQUEST,
+        requestId,
+        path,
+        title: 'View form',
+        description: `For ${subject.displayName}${serviceName ? ` · ${serviceName}` : ''}`,
+        submitLabel: 'Save',
+        ...DESIGN_FORM_FILL_DIALOG_SIZE,
+      },
+      {
+        resolve: () => {
+          toast({ title: 'Form saved', description: `Saved for ${subject.displayName}.` })
+        },
+        cancel: () => {},
+      },
+      getDesignOrigin(),
+    )
+  }
+
+  function openTokenFill(token: SessionToken) {
+    openFillForm({
+      userId: token.userId,
+      displayName: token.userDisplayName,
+      email: token.userEmail,
+      sessionTokenId: token.id,
+    })
+  }
+
+  function openTokenView(token: SessionToken, submissionId: string) {
+    openViewForm({
+      userId: token.userId,
+      displayName: token.userDisplayName,
+      email: token.userEmail,
+      sessionTokenId: token.id,
+      submissionId,
+    })
+  }
 
   return (
     <FeaturePage
@@ -278,7 +486,7 @@ export function SessionDetailsPage() {
       description={`${detail.serviceName} session`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          {runStatus === 'started' && sessionKey ? (
+          {canOperateSession && runStatus === 'started' && sessionKey ? (
             <Button
               type="button"
               variant="outline"
@@ -318,6 +526,43 @@ export function SessionDetailsPage() {
                     {RUN_STATUS_LABEL[runStatus]}
                   </StatusTag>
                 </div>
+                {formTemplateId && detail.attendeeUserId ? (
+                  attendeeSubmissionId ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusTag variant="verified">Form submitted</StatusTag>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          openViewForm({
+                            userId: detail.attendeeUserId!,
+                            displayName: detail.attendeeDisplayName ?? 'Customer',
+                            email: detail.attendeeEmail,
+                            submissionId: attendeeSubmissionId,
+                          })
+                        }
+                      >
+                        View form
+                      </Button>
+                    </div>
+                  ) : canOperateSession ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        openFillForm({
+                          userId: detail.attendeeUserId!,
+                          displayName: detail.attendeeDisplayName ?? 'Customer',
+                          email: detail.attendeeEmail,
+                        })
+                      }
+                    >
+                      Fill form
+                    </Button>
+                  ) : null
+                ) : null}
               </CardContent>
             </Card>
           ) : (
@@ -329,10 +574,12 @@ export function SessionDetailsPage() {
                     Queue tokens issued for users at this session
                   </CardDescription>
                 </div>
-                <Button type="button" size="sm" onClick={() => setIssueOpen(true)}>
-                  <Plus className="h-4 w-4" aria-hidden />
-                  Issue new token
-                </Button>
+                {canOperateSession ? (
+                  <Button type="button" size="sm" onClick={() => setIssueOpen(true)}>
+                    <Plus className="h-4 w-4" aria-hidden />
+                    Issue new token
+                  </Button>
+                ) : null}
               </CardHeader>
               <CardContent>
                 {tokensError ? (
@@ -340,7 +587,9 @@ export function SessionDetailsPage() {
                     <AlertDescription>{tokensError}</AlertDescription>
                   </Alert>
                 ) : tokensStatus === 'loading' && tokens.length === 0 ? null : tokens.length === 0 ? (
-                  <ItemListEmpty>No tokens issued yet.</ItemListEmpty>
+                  <ItemListEmpty>
+                    {isPersonal ? 'No token for your account yet.' : 'No tokens issued yet.'}
+                  </ItemListEmpty>
                 ) : (
                   <ItemList>
                     {tokens.map((token) => (
@@ -364,6 +613,33 @@ export function SessionDetailsPage() {
                               <p className="truncate text-xs text-muted-foreground">
                                 {token.userEmail ?? 'No email'}
                               </p>
+                              {formTemplateId ? (
+                                submissionByTokenId[token.id] ? (
+                                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <StatusTag variant="verified">Form submitted</StatusTag>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        openTokenView(token, submissionByTokenId[token.id])
+                                      }
+                                    >
+                                      View form
+                                    </Button>
+                                  </div>
+                                ) : canOperateSession ? (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="mt-1"
+                                    onClick={() => openTokenFill(token)}
+                                  >
+                                    Fill form
+                                  </Button>
+                                ) : null
+                              ) : null}
                             </div>
                             <StatusTag variant={TOKEN_STATUS_VARIANT[token.status]}>
                               {TOKEN_STATUS_LABEL[token.status]}
@@ -392,7 +668,7 @@ export function SessionDetailsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {runStatus === 'scheduled' && sessionKey ? (
+              {canOperateSession && runStatus === 'scheduled' && sessionKey ? (
                 <Button
                   type="button"
                   size="sm"
@@ -412,7 +688,7 @@ export function SessionDetailsPage() {
                         Prev
                       </p>
                       <p className="text-sm font-medium text-muted-foreground">
-                        {prevToken?.tokenLabel ?? '—'}
+                        {prevTokenLabel ?? '—'}
                       </p>
                     </div>
                     <div className="space-y-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-3">
@@ -420,7 +696,7 @@ export function SessionDetailsPage() {
                         Current
                       </p>
                       <p className="text-base font-semibold text-foreground">
-                        {currentToken?.tokenLabel ?? '—'}
+                        {currentTokenLabel ?? '—'}
                       </p>
                     </div>
                     <div className="space-y-1 rounded-md border border-border/60 bg-muted/30 px-2 py-3">
@@ -428,12 +704,12 @@ export function SessionDetailsPage() {
                         Next
                       </p>
                       <p className="text-sm font-medium text-muted-foreground">
-                        {nextToken?.tokenLabel ?? '—'}
+                        {nextTokenLabel ?? '—'}
                       </p>
                     </div>
                   </div>
 
-                  {runStatus === 'started' && sessionKey ? (
+                  {canOperateSession && runStatus === 'started' && sessionKey ? (
                     <div className="flex gap-2">
                       <Button
                         type="button"
@@ -532,7 +808,7 @@ export function SessionDetailsPage() {
         </div>
       </div>
 
-      {!isDuration ? (
+      {!isDuration && canOperateSession ? (
         <IssueTokenDialog
           open={issueOpen}
           eventId={eventId}

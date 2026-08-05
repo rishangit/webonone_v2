@@ -35,8 +35,11 @@ async function assertCompanyAdmin(userId: string, companyId: string): Promise<vo
   }
 }
 
-/** Company owner or staff (member) with an Identity role for this company. */
+/** Company owner or staff (member) with an Identity role for this company; super admin may read. */
 async function assertCompanySessionAccess(userId: string, companyId: string): Promise<void> {
+  const superAdmin = await roleRepo.findSuperAdminByUserId(userId)
+  if (superAdmin) return
+
   const membership = await roleRepo.findCompanyRole(userId, companyId)
   if (membership?.role !== 'company_admin' && membership?.role !== 'member') {
     throw httpError('Company access required', 403)
@@ -249,6 +252,30 @@ export async function updateCatalogGallery(
     throw httpError('Catalog item not found', 404)
   }
   return toDto(kind, updated)
+}
+
+export async function updateServiceFormTemplate(
+  userId: string,
+  companyId: string,
+  id: string,
+  formTemplateId: string | null,
+) {
+  await assertCompanyAdmin(userId, companyId)
+  const row = await repo.findById(companyId, 'services', id)
+  if (!row) {
+    throw httpError('Catalog item not found', 404)
+  }
+  const updated = await repo.updateServiceFormTemplate(companyId, id, formTemplateId)
+  if (!updated) {
+    throw httpError('Catalog item not found', 404)
+  }
+  return toDto('services', updated)
+}
+
+export async function listServicesWithLinkedForm(userId: string, companyId: string) {
+  await assertCompanySessionAccess(userId, companyId)
+  const rows = await repo.listServicesWithForm(companyId)
+  return rows.map((row) => toDto('services', row))
 }
 
 export async function deleteCatalogItem(

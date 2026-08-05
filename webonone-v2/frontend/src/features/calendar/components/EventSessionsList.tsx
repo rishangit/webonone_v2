@@ -13,6 +13,8 @@ import { formatSessionTimingLabel } from '@/features/calendar/utils/formatSessio
 
 type EventSessionsListProps = {
   event: CompanyEvent
+  /** When true, only list window sessions where the user has a token. */
+  personalOnly?: boolean
 }
 
 function formatOccurrenceDate(ymd: string): string {
@@ -29,9 +31,16 @@ function weekdayLabel(ymd: string): string {
   return DAY_LABELS[date.getDay()] ?? `D${date.getDay()}`
 }
 
-export function EventSessionsList({ event }: EventSessionsListProps) {
+export function EventSessionsList({ event, personalOnly = false }: EventSessionsListProps) {
   const navigate = useNavigate()
-  const sessions = expandEventOccurrences(event)
+  const allSessions = expandEventOccurrences(event)
+  const tokenDates = event.tokenOccurrenceDates
+  const sessions =
+    personalOnly && event.timeMode === 'window'
+      ? allSessions.filter((session) =>
+          (tokenDates ?? []).includes(session.occurrenceDate),
+        )
+      : allSessions
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -40,7 +49,13 @@ export function EventSessionsList({ event }: EventSessionsListProps) {
   }, [])
 
   if (sessions.length === 0) {
-    return <ItemListEmpty>No sessions in this event&apos;s date range.</ItemListEmpty>
+    return (
+      <ItemListEmpty>
+        {personalOnly && event.timeMode === 'window'
+          ? 'No sessions with a token for your account.'
+          : 'No sessions in this event\u2019s date range.'}
+      </ItemListEmpty>
+    )
   }
 
   function openSession(occurrenceDate: string) {

@@ -1,4 +1,5 @@
 import { db } from '../models/db.js'
+import * as staffRepo from './companyStaff.repository.js'
 
 export interface CompanyEventRow {
   id: string
@@ -52,6 +53,71 @@ export async function listEventsByCompany(companyId: string): Promise<CompanyEve
     .where({ company_id: companyId })
     .orderBy('starts_on', 'desc')
     .orderBy('start_time', 'asc')
+}
+
+/** Events where the user is the attendee or the assigned staff for this company. */
+export async function listEventsForMember(
+  companyId: string,
+  userId: string,
+): Promise<CompanyEventRow[]> {
+  const staff = await staffRepo.findStaffByUserId(companyId, userId)
+  return db<CompanyEventRow>('company_events')
+    .where({ company_id: companyId })
+    .andWhere((qb) => {
+      qb.where({ attendee_user_id: userId })
+      if (staff) {
+        qb.orWhere({ staff_id: staff.id })
+      }
+    })
+    .orderBy('starts_on', 'desc')
+    .orderBy('start_time', 'asc')
+}
+
+/** Whether a member may view this event (attendee or assigned staff). */
+export async function memberCanAccessEvent(
+  companyId: string,
+  userId: string,
+  event: Pick<CompanyEventRow, 'attendee_user_id' | 'staff_id'>,
+): Promise<boolean> {
+  if (event.attendee_user_id === userId) return true
+  const staff = await staffRepo.findStaffByUserId(companyId, userId)
+  return Boolean(staff && event.staff_id === staff.id)
+}
+
+/** Events the user booked as attendee or holds a session token for (any company). */
+export async function listEventsForUserBookings(userId: string): Promise<CompanyEventRow[]> {
+  const tokenEventIds = await db('company_event_session_tokens')
+    .distinct('event_id')
+    .where({ user_id: userId })
+  const ids = tokenEventIds.map((row) => String((row as { event_id: string }).event_id))
+
+  return db<CompanyEventRow>('company_events')
+    .where((qb) => {
+      qb.where({ attendee_user_id: userId })
+      if (ids.length > 0) {
+        qb.orWhereIn('id', ids)
+      }
+    })
+    .orderBy('starts_on', 'desc')
+    .orderBy('start_time', 'asc')
+}
+
+export async function findEventByIdAnyCompany(
+  eventId: string,
+): Promise<CompanyEventRow | undefined> {
+  return db<CompanyEventRow>('company_events').where({ id: eventId }).first()
+}
+
+/** Whether the user is attendee or holds any session token on this event. */
+export async function userCanAccessBookedEvent(
+  userId: string,
+  event: Pick<CompanyEventRow, 'id' | 'attendee_user_id'>,
+): Promise<boolean> {
+  if (event.attendee_user_id === userId) return true
+  const token = await db('company_event_session_tokens')
+    .where({ event_id: event.id, user_id: userId })
+    .first()
+  return Boolean(token)
 }
 
 /** Specific-time (window) events for a catalog service — used by public booking. */

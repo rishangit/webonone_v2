@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -39,6 +39,7 @@ import {
 import { addCompanyCustomer } from '@/features/users/services/usersApi'
 import { usersActions } from '@/features/users/store'
 import type { UserPickerRole } from '@/features/users/types'
+import { useNavigateIdentity } from '@/features/shell/utils/navigateIdentity'
 
 const ALL_ROLES_VALUE = '__all__'
 const SEARCH_DEBOUNCE_MS = 300
@@ -53,7 +54,7 @@ function formatRoleLabel(role: string): string {
 
 export function UsersPage() {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const { goToUserDetail } = useNavigateIdentity()
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -242,7 +243,7 @@ export function UsersPage() {
                       <button
                         type="button"
                         className="flex w-full items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        onClick={() => navigate(`/users/${user.id}`)}
+                        onClick={() => goToUserDetail(user.id)}
                       >
                         <ImagePreview
                           src={user.avatarUrl}

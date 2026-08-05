@@ -25,6 +25,8 @@ export type CompanyCatalogItem = {
   description?: string | null
   /** Company-owned gallery refs; null = inherit library gallery when linked. */
   galleryImages?: CatalogGalleryImage[] | null
+  /** Design form template id (services only). */
+  formTemplateId?: string | null
   createdAt: string
   updatedAt: string
 }

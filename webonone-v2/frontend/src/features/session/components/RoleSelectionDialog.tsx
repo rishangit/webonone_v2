@@ -113,7 +113,7 @@ export function RoleSelectionDialog() {
       <ul className="flex max-h-[min(24rem,50vh)] flex-col gap-2 overflow-y-auto">
         {assumableRoles.map((option) => {
           const selected =
-            pendingRole?.role === option.role && pendingRole.companyId === option.companyId
+            pendingRole?.role === option.role && pendingRole?.companyId === option.companyId
           return (
             <li key={`${option.role}-${option.companyId ?? 'platform'}`}>
               <button

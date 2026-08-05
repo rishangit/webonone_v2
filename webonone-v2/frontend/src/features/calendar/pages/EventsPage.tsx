@@ -18,54 +18,27 @@ import { eventsActions } from '@/features/calendar/store'
 import {
   canAccessCompanySession,
   canBrowseCalendar,
+  canManageCompanyEvents,
+  isPersonalCalendarSession,
 } from '@/features/session/utils/canAccessCompanySession'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
-function EmptyEventsPage() {
-  return (
-    <FeaturePage
-      title="Events"
-      description="Manage company calendar events."
-      actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <SearchInput
-            value=""
-            onChange={() => undefined}
-            placeholder="Search events…"
-            className="w-64"
-            aria-label="Search events"
-            disabled
-          />
-        </div>
-      }
-    >
-      <ListPageBody>
-        <div className="flex-1">
-          <EventsList items={[]} onRemoved={() => undefined} />
-        </div>
-        <Pagination
-          className="mt-auto"
-          totalCount={0}
-          currentPage={1}
-          pageSize={12}
-          onPageChange={() => undefined}
-          onPageSizeChange={() => undefined}
-          pageSizeOptions={[12, 24, 48]}
-        />
-      </ListPageBody>
-    </FeaturePage>
-  )
-}
-
-function CompanyEventsPage() {
+function CompanyEventsPage({ personal }: { personal: boolean }) {
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
   const list = useEpicCatalogList((s) => s.events, eventsActions)
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
+  const canManage = !personal && canManageCompanyEvents(activeRole, activeCompanyId)
   usePlatformLoading(list.loading ? 'Loading events…' : null)
 
   return (
     <FeaturePage
       title="Events"
-      description="Manage company calendar events."
+      description={
+        personal
+          ? 'Your bookings and session tokens.'
+          : 'Manage company calendar events.'
+      }
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
@@ -76,10 +49,12 @@ function CompanyEventsPage() {
             className="w-64"
             aria-label="Search events"
           />
-          <Button type="button" size="sm" onClick={() => setDialog({})}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Add event
-          </Button>
+          {canManage ? (
+            <Button type="button" size="sm" onClick={() => setDialog({})}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add event
+            </Button>
+          ) : null}
         </div>
       }
     >
@@ -94,6 +69,7 @@ function CompanyEventsPage() {
           {!list.loading ? (
             <EventsList
               items={list.items}
+              canManage={canManage}
               onRemoved={() => list.load(list.page, list.pageSize, true)}
             />
           ) : null}
@@ -109,7 +85,7 @@ function CompanyEventsPage() {
         />
       </ListPageBody>
 
-      {dialog ? (
+      {dialog && canManage ? (
         <EventFormDialog
           open
           id={dialog.id}
@@ -132,10 +108,14 @@ export function EventsPage() {
     return <Navigate to="/" replace />
   }
 
-  // Default User (no company) — empty list; skip company-scoped API.
-  if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
-    return <EmptyEventsPage />
+  const personal = isPersonalCalendarSession(activeRole, activeCompanyId)
+  if (
+    selectionComplete &&
+    !canAccessCompanySession(activeRole, activeCompanyId) &&
+    !personal
+  ) {
+    return <Navigate to="/" replace />
   }
 
-  return <CompanyEventsPage />
+  return <CompanyEventsPage personal={personal} />
 }

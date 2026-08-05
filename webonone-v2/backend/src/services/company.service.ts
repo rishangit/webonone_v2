@@ -7,6 +7,7 @@ import type {
   UpdateCompanyStatusBody,
 } from '../schemas/companySchemas.js'
 import * as repo from '../repositories/company.repository.js'
+import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
@@ -35,6 +36,12 @@ export type CompanyTag = {
   color: string
 }
 
+export type CompanyCatalogCounts = {
+  products: number
+  services: number
+  spaces: number
+}
+
 export type CompanyDetail = {
   id: string
   name: string
@@ -56,6 +63,7 @@ export type CompanyDetail = {
   mapFormattedAddress: string | null
   tags: CompanyTag[]
   dataEntities: CompanyDataEntity[]
+  catalogCounts: CompanyCatalogCounts
   status: repo.CompanyStatus
   createdByUserId: string
   createdAt: string
@@ -126,6 +134,7 @@ function parseGalleryImages(
 function toCompanyDetail(
   row: repo.CompanyRow,
   tags: CompanyTag[] = [],
+  catalogCounts: CompanyCatalogCounts = { products: 0, services: 0, spaces: 0 },
   role?: 'member' | 'company_admin',
 ): CompanyDetail {
   return {
@@ -149,6 +158,7 @@ function toCompanyDetail(
     mapFormattedAddress: row.map_formatted_address,
     tags,
     dataEntities: parseDataEntities(row.data_entities),
+    catalogCounts,
     status: row.status,
     createdByUserId: row.created_by_user_id,
     createdAt: row.created_at.toISOString(),
@@ -171,8 +181,11 @@ async function toCompanyDetailWithTags(
   row: repo.CompanyRow,
   role?: 'member' | 'company_admin',
 ): Promise<CompanyDetail> {
-  const tags = await loadCompanyTags(row.id)
-  return toCompanyDetail(row, tags, role)
+  const [tags, catalogCounts] = await Promise.all([
+    loadCompanyTags(row.id),
+    catalogRepo.countByCompanyForEntityKinds(row.id),
+  ])
+  return toCompanyDetail(row, tags, catalogCounts, role)
 }
 
 export type CompanyWithMembership = {

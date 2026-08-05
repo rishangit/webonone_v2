@@ -21,7 +21,8 @@ description: >-
 - **Definition JSON v1:** `{ version: 1, fields: [{ id, type, label, required?, placeholder?, options? }] }`
 - **Field types:** `text` | `textarea` | `checkbox` | `radio` | `select`
 - **Designer:** toolbox click appends a field; canvas selects; props panel edits label/options/order.
-- **MVP:** designer + CRUD only — no fill UI, no documents table, no session-token attach.
+- **Fill:** published forms can be filled by company admin/staff for a customer (`/forms/:id/fill`); submissions stored in `design_form_submissions`.
+- Staff fill auth: Design checks WebOnOne internal staff endpoint when role is `member`.
 
 ## Rules
 
@@ -57,6 +58,8 @@ Reference: `design/frontend/src/features/forms/components/FormCreateDialog.tsx`,
 - Schemas: `design/backend/src/schemas/formSchemas.ts`
 - List: `design/frontend/src/features/forms/pages/FormsPage.tsx`
 - Designer: `design/frontend/src/features/forms/pages/FormDesignerPage.tsx`
+- Fill: `design/frontend/src/features/forms/pages/FormFillPage.tsx`
+- Submissions API: `design/backend/src/routes/submissions.routes.ts`
 - Store: `design/frontend/src/features/forms/store/formsStore.ts`
 
 ## Verification

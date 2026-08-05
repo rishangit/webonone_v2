@@ -45,6 +45,7 @@ type ServiceRow = ProductOrSpaceRow & {
   duration_minutes: number | null
   start_time: string | Date | null
   end_time: string | Date | null
+  form_template_id: string | null
 }
 
 export type CompanyCatalogRow =
@@ -179,10 +180,17 @@ export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unkno
   }
 
   if (kind === 'products' || kind === 'services' || kind === 'spaces') {
-    return {
+    const withGallery = {
       ...base,
       galleryImages: parseGalleryImages(row.gallery_images as string | unknown[] | null),
     }
+    if (kind === 'services') {
+      return {
+        ...withGallery,
+        formTemplateId: (row.form_template_id as string | null) ?? null,
+      }
+    }
+    return withGallery
   }
 
   return base
@@ -283,6 +291,26 @@ export async function listByCompanyAndKind(
     })
   }
   return query.orderBy('created_at', 'desc')
+}
+
+const CATALOG_COUNT_KINDS = ['products', 'services', 'spaces'] as const
+
+export type CompanyCatalogCounts = Record<(typeof CATALOG_COUNT_KINDS)[number], number>
+
+export async function countByCompanyForEntityKinds(
+  companyId: string,
+): Promise<CompanyCatalogCounts> {
+  const counts: CompanyCatalogCounts = { products: 0, services: 0, spaces: 0 }
+  await Promise.all(
+    CATALOG_COUNT_KINDS.map(async (kind) => {
+      const row = await db(CATALOG_TABLE_BY_KIND[kind])
+        .where({ company_id: companyId })
+        .count<{ count: string | number }>({ count: '*' })
+        .first()
+      counts[kind] = Number(row?.count ?? 0)
+    }),
+  )
+  return counts
 }
 
 export async function findById(
@@ -393,6 +421,33 @@ export async function updateGalleryImages(
     })
 
   return findById(companyId, kind, id)
+}
+
+/** Link / unlink a Design form template on a company service (any binding mode). */
+export async function updateServiceFormTemplate(
+  companyId: string,
+  id: string,
+  formTemplateId: string | null,
+): Promise<Record<string, unknown> | undefined> {
+  const existing = await findById(companyId, 'services', id)
+  if (!existing) return undefined
+
+  await db(CATALOG_TABLE_BY_KIND.services)
+    .where({ id, company_id: companyId })
+    .update({
+      form_template_id: formTemplateId,
+      updated_at: new Date(),
+    })
+
+  return findById(companyId, 'services', id)
+}
+
+/** Company services that have a linked Design form template. */
+export async function listServicesWithForm(companyId: string): Promise<Record<string, unknown>[]> {
+  return db(CATALOG_TABLE_BY_KIND.services)
+    .where({ company_id: companyId })
+    .whereNotNull('form_template_id')
+    .orderBy('created_at', 'desc')
 }
 
 export async function deleteItem(

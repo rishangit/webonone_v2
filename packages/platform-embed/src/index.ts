@@ -117,6 +117,7 @@ export {
   sendPlatformMediaDialogRequest,
   sendPlatformMediaDialogResult,
   sendPlatformNavigate,
+  type SendPlatformNavigateOptions,
   sendPlatformPeerDialogBusy,
   sendPlatformPeerDialogCancel,
   sendPlatformPeerDialogComplete,

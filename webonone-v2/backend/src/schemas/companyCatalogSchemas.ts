@@ -195,7 +195,12 @@ export const updateCatalogGalleryBodySchema = z.object({
   galleryImages: z.array(galleryImageSchema).max(24),
 })
 
+export const updateServiceFormBodySchema = z.object({
+  formTemplateId: z.string().length(21).nullable(),
+})
+
 export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>
+export type UpdateServiceFormBody = z.infer<typeof updateServiceFormBodySchema>
 export type ForkCatalogBody = z.infer<typeof forkCatalogBodySchema>
 
 /** Kinds that support a company-owned media gallery on the detail page. */

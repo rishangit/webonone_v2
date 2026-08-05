@@ -31,5 +31,18 @@ export function useNavigateDesign() {
     [navigate, parentOrigin, searchParams],
   )
 
-  return { goToList, goToEdit, isEmbedded: Boolean(parentOrigin) }
+  const goToFill = useCallback(
+    (id: string, query: Record<string, string>) => {
+      const qs = new URLSearchParams(query).toString()
+      const path = `/forms/${id}/fill${qs ? `?${qs}` : ''}`
+      if (parentOrigin) {
+        sendPlatformNavigate(parentOrigin, `/design${path}`)
+        return
+      }
+      navigate(path)
+    },
+    [navigate, parentOrigin],
+  )
+
+  return { goToList, goToEdit, goToFill, isEmbedded: Boolean(parentOrigin) }
 }

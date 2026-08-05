@@ -289,6 +289,7 @@ function main() {
     `VITE_PAYMENT_ORIGIN=${originPayment}`,
     `VITE_WEBSITE_ORIGIN=${originWebsite}`,
     `VITE_DESIGN_ORIGIN=${originDesign}`,
+    `VITE_DESIGN_API_BASE_URL=${apiBase(originDesign)}`,
   ];
   if (googleMapsKey) {
     webononeFeLines.push(`VITE_GOOGLE_MAPS_API_KEY=${googleMapsKey}`);
@@ -542,6 +543,15 @@ function main() {
         '',
         `DESIGN_SERVICE_API_KEY=${designKey}`,
         `FRONTEND_BASE_URL=${originDesign}`,
+        '',
+        `WEBONONE_API_BASE_URL=${originWebonone}`,
+        `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
+        '',
+        `IDENTITY_API_BASE_URL=${originIdentity}`,
+        `IDENTITY_SERVICE_API_KEY=${identityKey}`,
+        '',
+        `DATA_API_BASE_URL=${originData}`,
+        `DATA_SERVICE_API_KEY=${dataKey}`,
       ]),
     ),
   );

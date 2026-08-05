@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { db, type DesignFormTemplateRow, type FormTemplateStatus } from '../models/db.js'
-import { ensureLocalCompany } from './user.service.js'
+import { HttpError } from './httpError.js'
+import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import type { CreateFormBody, FormDefinition, UpdateFormBody } from '../schemas/formSchemas.js'
 
 export type FormTemplateDto = {
@@ -36,16 +37,7 @@ function toDto(row: DesignFormTemplateRow): FormTemplateDto {
   }
 }
 
-export class HttpError extends Error {
-  status: number
-  code: string
-
-  constructor(status: number, message: string, code: string) {
-    super(message)
-    this.status = status
-    this.code = code
-  }
-}
+export { HttpError } from './httpError.js'
 
 export async function listForms(input: {
   companyId: string
@@ -108,7 +100,8 @@ export async function createForm(input: {
   userId: string
   body: CreateFormBody
 }): Promise<FormTemplateDto> {
-  await ensureLocalCompany({ companyId: input.companyId })
+  // Confirm company exists in WebOnOne (source of truth); store only company_id locally
+  await getCompanyFromWebOnOne(input.companyId)
 
   const existing = await db('design_form_templates')
     .where({ company_id: input.companyId, slug: input.body.slug })

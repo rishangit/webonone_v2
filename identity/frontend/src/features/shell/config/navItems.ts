@@ -223,8 +223,13 @@ export function buildCoreNavFromQuery(
   return buildCoreNav(returnUrl, parsePlatformNavVariant(coreNavQuery), externalOrigins)
 }
 
+const USER_DETAIL_ROUTE_PATTERN = /^\/users\/[^/]+$/
+
 export function isIdentityShellRoute(pathname: string): boolean {
-  return (IDENTITY_SHELL_ROUTES as readonly string[]).includes(pathname)
+  if ((IDENTITY_SHELL_ROUTES as readonly string[]).includes(pathname)) {
+    return true
+  }
+  return USER_DETAIL_ROUTE_PATTERN.test(pathname) && !pathname.includes('..')
 }
 
 export { isEmailNavSentinel, isSmsNavSentinel }

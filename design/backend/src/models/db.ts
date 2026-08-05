@@ -14,21 +14,6 @@ export const db = knex({
 export type DesignRole = 'super_admin' | 'company_admin' | 'member'
 export type FormTemplateStatus = 'draft' | 'published'
 
-export interface DesignUserRow {
-  id: string
-  email: string
-  display_name: string
-  created_at: Date
-  updated_at: Date
-}
-
-export interface DesignCompanyRow {
-  id: string
-  name: string
-  created_at: Date
-  updated_at: Date
-}
-
 export interface DesignFormTemplateRow {
   id: string
   company_id: string
@@ -39,4 +24,15 @@ export interface DesignFormTemplateRow {
   created_by: string | null
   created_at: Date
   updated_at: Date
+}
+
+export interface DesignFormSubmissionRow {
+  id: string
+  company_id: string
+  form_template_id: string
+  subject_user_id: string
+  filled_by_user_id: string
+  service_id: string | null
+  answers: string | Record<string, unknown>
+  created_at: Date
 }

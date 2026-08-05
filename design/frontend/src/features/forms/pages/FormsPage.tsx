@@ -76,7 +76,7 @@ export function FormsPage() {
     return (
       <FeaturePage
         title="Forms"
-        description="Design company form templates for future documents and tokens."
+        description="Design company form templates that can be linked to services and filled for customers."
       >
         <Alert>
           <AlertDescription>
@@ -118,7 +118,7 @@ export function FormsPage() {
   return (
     <FeaturePage
       title="Forms"
-      description="Design company form templates for future documents and tokens."
+      description="Design company form templates that can be linked to services and filled for customers."
       actions={
         <>
           <SearchInput

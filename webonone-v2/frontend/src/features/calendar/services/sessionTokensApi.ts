@@ -1,18 +1,35 @@
 import { apiClient } from '@/shared/services/apiClient'
+import { isPersonalCalendarSession } from '@/features/session/utils/canAccessCompanySession'
+import { readSessionRoleStorage } from '@/features/session/utils/sessionRoleStorage'
 import type {
   CreateSessionTokenBody,
   SessionDetail,
   SessionToken,
 } from '../types/event.types'
 
+function usePersonalEventsApi(): boolean {
+  const stored = readSessionRoleStorage()
+  return isPersonalCalendarSession(stored?.activeRole, stored?.activeCompanyId)
+}
+
+function sessionPath(eventId: string, occurrenceDate: string): string {
+  const event = encodeURIComponent(eventId)
+  const date = encodeURIComponent(occurrenceDate)
+  if (usePersonalEventsApi()) {
+    return `/me/events/${event}/sessions/${date}`
+  }
+  return `/company/events/${event}/sessions/${date}`
+}
+
 export const sessionTokensApi = {
   getSession(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
-    return apiClient<SessionDetail>(
-      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}`,
-    )
+    return apiClient<SessionDetail>(sessionPath(eventId, occurrenceDate))
   },
 
   list(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
+    if (usePersonalEventsApi()) {
+      return apiClient<SessionDetail>(sessionPath(eventId, occurrenceDate))
+    }
     return apiClient<SessionDetail>(
       `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/tokens`,
     )

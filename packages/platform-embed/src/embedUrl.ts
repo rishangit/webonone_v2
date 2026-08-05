@@ -136,8 +136,20 @@ export function sendPlatformContentReady(parentOrigin: string): void {
   window.parent.postMessage({ type: PLATFORM_MESSAGE_TYPES.CONTENT_READY }, parentOrigin)
 }
 
+export type SendPlatformNavigateOptions = {
+  /**
+   * Peer already navigated its SPA. Shell updates the URL without reloading
+   * the iframe (see `PlatformServiceFrame`).
+   */
+  clientNavigated?: boolean
+}
+
 /** Embedded app -> parent shell: navigate the host SPA to a relative path. */
-export function sendPlatformNavigate(parentOrigin: string, path: string): void {
+export function sendPlatformNavigate(
+  parentOrigin: string,
+  path: string,
+  options?: SendPlatformNavigateOptions,
+): void {
   if (typeof window === 'undefined' || !parentOrigin) {
     return
   }
@@ -147,6 +159,7 @@ export function sendPlatformNavigate(parentOrigin: string, path: string): void {
   const message: PlatformNavigateMessage = {
     type: PLATFORM_MESSAGE_TYPES.NAVIGATE,
     path,
+    ...(options?.clientNavigated ? { clientNavigated: true } : {}),
   }
   window.parent.postMessage(message, parentOrigin)
 }

@@ -29,7 +29,12 @@ import {
 } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions } from '@/features/calendar/store'
 import type { CompanyEvent, EventGalleryImage } from '@/features/calendar/types/event.types'
-import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
+import { designFormsApi } from '@/features/design/services/designFormsApi'
+import {
+  canAccessCompanySession,
+  canManageCompanyEvents,
+  isPersonalCalendarSession,
+} from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 
@@ -71,6 +76,7 @@ export function EventDetailsPage() {
 
   const [dialog, setDialog] = useState<{ initialStep: EventWizardStep } | null>(null)
   const [tab, setTab] = useDetailTabParam(EVENT_DETAIL_TABS, 'overview')
+  const [linkedFormName, setLinkedFormName] = useState<string | null>(null)
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? 'Loading event…' : null)
@@ -83,14 +89,39 @@ export function EventDetailsPage() {
     }
   }, [dispatch, eventId])
 
-  const canEdit = selectionComplete && canAccessCompanySession(activeRole, activeCompanyId)
+  useEffect(() => {
+    if (!detail?.formTemplateId) {
+      setLinkedFormName(null)
+      return
+    }
+    let cancelled = false
+    designFormsApi
+      .listPublished()
+      .then((result) => {
+        if (cancelled) return
+        const match = result.items.find((item) => item.id === detail.formTemplateId)
+        setLinkedFormName(match?.name ?? detail.formTemplateId)
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedFormName(detail.formTemplateId)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [detail?.formTemplateId])
+
+  const canEdit = selectionComplete && canManageCompanyEvents(activeRole, activeCompanyId)
   const isDuration = detail?.timeMode === 'duration'
 
   function openWizard(initialStep: EventWizardStep) {
     setDialog({ initialStep })
   }
 
-  if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
+  if (
+    selectionComplete &&
+    !canAccessCompanySession(activeRole, activeCompanyId) &&
+    !isPersonalCalendarSession(activeRole, activeCompanyId)
+  ) {
     return (
       <FeaturePage title="Event" description="Event details">
         <Alert variant="destructive">
@@ -231,6 +262,34 @@ export function EventDetailsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-lg">Forms</CardTitle>
+            <CardDescription>
+              Design form linked to this event&apos;s service
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {detail.formTemplateId ? (
+              <>
+                <DetailField label="Linked form" value={linkedFormName ?? detail.formTemplateId} />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/design/forms/${detail.formTemplateId}`)}
+                >
+                  Open form
+                </Button>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No form linked to this service. Link a form on the service catalog page.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-lg">Record</CardTitle>
             <CardDescription>Event record metadata</CardDescription>
           </CardHeader>
@@ -270,10 +329,15 @@ export function EventDetailsPage() {
         tab={tab}
         onTabChange={setTab}
         overview={overviewPanel}
-        sessions={<EventSessionsList event={detail} />}
+        sessions={
+          <EventSessionsList
+            event={detail}
+            personalOnly={isPersonalCalendarSession(activeRole, activeCompanyId)}
+          />
+        }
       />
 
-      {dialog ? (
+      {dialog && canEdit ? (
         <EventFormDialog
           open
           id={eventId}

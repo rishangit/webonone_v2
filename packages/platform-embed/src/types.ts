@@ -148,6 +148,11 @@ export type PlatformContentReadyMessage = {
 export type PlatformNavigateMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.NAVIGATE
   path: string
+  /**
+   * Peer already updated its own SPA route. Shell should sync the address bar
+   * without reloading the iframe `src` (avoids double load / remount).
+   */
+  clientNavigated?: boolean
 }
 
 export type IdentityUserPickerUser = {
@@ -306,6 +311,12 @@ export type PlatformPeerDialogRequestMessage = {
    * Omit or pass `null` for Close-only footers (no primary button).
    */
   submitLabel?: string | null
+  /**
+   * Optional origin for the dialog body iframe.
+   * When set (and allowlisted by the host), the body loads from this peer instead
+   * of the requesting frame's origin — e.g. Identity opening a Design fill dialog.
+   */
+  bodyOrigin?: string
 }
 
 export type PlatformPeerDialogResultMessage = {
@@ -857,7 +868,8 @@ export function isPlatformPeerDialogRequestMessage(
     (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string') &&
     (message.submitLabel === undefined ||
       message.submitLabel === null ||
-      typeof message.submitLabel === 'string')
+      typeof message.submitLabel === 'string') &&
+    (message.bodyOrigin === undefined || typeof message.bodyOrigin === 'string')
   )
 }
 

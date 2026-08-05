@@ -29,6 +29,12 @@ const envSchema = z.object({
   IIS_NODE_HOSTED: z.string().optional(),
   DESIGN_SERVICE_API_KEY: z.string().optional(),
   FRONTEND_BASE_URL: z.string().default('http://localhost:3019'),
+  WEBONONE_API_BASE_URL: z.string().optional(),
+  WEBONONE_SERVICE_API_KEY: z.string().optional(),
+  IDENTITY_API_BASE_URL: z.string().optional(),
+  IDENTITY_SERVICE_API_KEY: z.string().optional(),
+  DATA_API_BASE_URL: z.string().optional(),
+  DATA_SERVICE_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -57,4 +63,10 @@ export const env = {
   iisHosted,
   designServiceApiKey: parsed.DESIGN_SERVICE_API_KEY ?? '',
   frontendBaseUrl: parsed.FRONTEND_BASE_URL,
+  webononeApiBaseUrl: parsed.WEBONONE_API_BASE_URL?.trim() || 'http://127.0.0.1:4010',
+  webononeServiceApiKey: parsed.WEBONONE_SERVICE_API_KEY?.trim() ?? '',
+  identityApiBaseUrl: parsed.IDENTITY_API_BASE_URL?.trim() || 'http://127.0.0.1:4011',
+  identityServiceApiKey: parsed.IDENTITY_SERVICE_API_KEY?.trim() ?? '',
+  dataApiBaseUrl: parsed.DATA_API_BASE_URL?.trim() || 'http://127.0.0.1:4015',
+  dataServiceApiKey: parsed.DATA_SERVICE_API_KEY?.trim() ?? '',
 }

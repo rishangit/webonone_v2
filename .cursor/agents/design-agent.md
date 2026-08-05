@@ -24,8 +24,6 @@ Database: `webonone_design`
 ## Do not
 
 - Implement login UI (Identity owns auth).
-- Build fill/submit documents UI until a later phase.
-- Wire session tokens to forms until a later phase.
 - Trust `company_id` from a request body — always derive from JWT.
 - Share database with other services.
 - Call Identity BE per request.

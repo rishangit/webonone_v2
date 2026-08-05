@@ -34,6 +34,10 @@ function prefetchCompanyProfile(): void {
   void import('@/features/settings/companies/pages/CompanyProfilePage')
 }
 
+function prefetchMemberCompanyCatalogDetail(): void {
+  void import('@/features/settings/companies/pages/MemberCompanyCatalogDetailPage')
+}
+
 function prefetchEventDetails(): void {
   void import('@/features/calendar/pages/EventDetailsPage')
 }
@@ -56,6 +60,11 @@ export function prefetchRoutePath(pathname: string): void {
 
   if (/^\/calendar\/events\/[^/]+$/.test(pathname)) {
     prefetchEventDetails()
+    return
+  }
+
+  if (/^\/settings\/companies\/[^/]+\/catalog\/[^/]+\/[^/]+$/.test(pathname)) {
+    prefetchMemberCompanyCatalogDetail()
     return
   }
 

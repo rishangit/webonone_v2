@@ -52,6 +52,12 @@ export type CompanyTag = {
   color: string
 }
 
+export type CompanyCatalogCounts = {
+  products: number
+  services: number
+  spaces: number
+}
+
 export type CompanyDetail = {
   id: string
   name: string
@@ -73,6 +79,7 @@ export type CompanyDetail = {
   mapFormattedAddress: string | null
   tags: CompanyTag[]
   dataEntities: CompanyDataEntity[]
+  catalogCounts?: CompanyCatalogCounts
   status: CompanyStatus
   createdByUserId: string
   createdAt: string

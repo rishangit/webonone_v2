@@ -57,7 +57,7 @@ export function AllCompaniesPage() {
 
   return (
     <FeaturePage
-      title="My Companies"
+      title="My Company"
       description="View and register companies you belong to on the platform."
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">

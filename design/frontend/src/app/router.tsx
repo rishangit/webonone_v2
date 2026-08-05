@@ -16,9 +16,17 @@ const FormsPage = lazy(() =>
 const FormDesignerPage = lazy(() =>
   import('@/features/forms/pages/FormDesignerPage').then((m) => ({ default: m.FormDesignerPage })),
 )
+const FormFillPage = lazy(() =>
+  import('@/features/forms/pages/FormFillPage').then((m) => ({ default: m.FormFillPage })),
+)
 const FormCreateEmbedPage = lazy(() =>
   import('@/features/forms/pages/FormCreateEmbedPage').then((m) => ({
     default: m.FormCreateEmbedPage,
+  })),
+)
+const FormFillEmbedPage = lazy(() =>
+  import('@/features/forms/pages/FormFillEmbedPage').then((m) => ({
+    default: m.FormFillEmbedPage,
   })),
 )
 
@@ -74,11 +82,31 @@ export function App() {
               }
             />
             <Route
+              path="/forms/:id/fill"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <FormFillPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/embed/dialogs/forms/create"
               element={
                 <RoleRoute roles={[...manageRoles]}>
                   <LazyRoute>
                     <FormCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/forms/:id/fill"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <FormFillEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

@@ -25,7 +25,10 @@ import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttribu
 import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
 import { EditableSectionCard } from '../components/EditableSectionCard'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
+import { ServiceFormLinkDialog } from '../components/ServiceFormLinkDialog'
+import { FillServiceFormDialog } from '../components/FillServiceFormDialog'
 import type { ServiceWizardStep } from '../schemas/serviceSchemas'
+import { designFormsApi } from '@/features/design/services/designFormsApi'
 import { dataLibraryApi } from '../services/dataLibraryApi'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
@@ -62,8 +65,25 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function CompanyCatalogDetailPage() {
-  const { kind: kindParam = '', id = '' } = useParams()
+export type CompanyCatalogDetailPageProps = {
+  /**
+   * When set, load via membership-scoped API (`/company/:id/catalog/…`)
+   * instead of the active company session (`/company/me/catalog/…`).
+   */
+  companyId?: string
+  /** Override back navigation target (default `/data/:kind`). */
+  backTo?: string
+  /** Force member/read-only: no Customize, Remove, or section Edit. */
+  readOnly?: boolean
+}
+
+export function CompanyCatalogDetailPage({
+  companyId: companyIdProp,
+  backTo,
+  readOnly = false,
+}: CompanyCatalogDetailPageProps = {}) {
+  const { kind: kindParam = '', id = '', companyId: companyIdParam } = useParams()
+  const companyId = companyIdProp ?? companyIdParam
   const kind = isCatalogEntityKind(kindParam) ? kindParam : null
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -79,8 +99,11 @@ export function CompanyCatalogDetailPage() {
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
     null,
   )
+  const [formLinkOpen, setFormLinkOpen] = useState(false)
+  const [fillFormOpen, setFillFormOpen] = useState(false)
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
   const [pendingRemove, setPendingRemove] = useState(false)
+  const [linkedFormName, setLinkedFormName] = useState<string | null>(null)
 
   const loading = detailStatus === 'loading'
   usePlatformLoading(
@@ -89,11 +112,38 @@ export function CompanyCatalogDetailPage() {
 
   useEffect(() => {
     if (!kind || !id) return
-    dispatch(companyCatalogActions.detailRequested({ kind, id }))
+    dispatch(
+      companyCatalogActions.detailRequested({
+        kind,
+        id,
+        ...(companyId ? { companyId } : {}),
+      }),
+    )
     return () => {
       dispatch(companyCatalogActions.clearDetail())
     }
-  }, [dispatch, kind, id])
+  }, [companyId, dispatch, kind, id])
+
+  useEffect(() => {
+    if (!detail || kind !== 'services' || !detail.formTemplateId) {
+      setLinkedFormName(null)
+      return
+    }
+    let cancelled = false
+    designFormsApi
+      .listPublished()
+      .then((result) => {
+        if (cancelled) return
+        const match = result.items.find((item) => item.id === detail.formTemplateId)
+        setLinkedFormName(match?.name ?? detail.formTemplateId ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedFormName(detail.formTemplateId ?? null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [detail, kind])
 
   useEffect(() => {
     if (!pendingEditClose) return
@@ -153,13 +203,13 @@ export function CompanyCatalogDetailPage() {
   }
 
   const busy = mutateStatus === 'saving'
-  const canManage = activeRole === 'company_admin'
+  const canManage = !readOnly && activeRole === 'company_admin'
   const canEdit =
     canManage && (detail?.bindingMode === 'forked' || detail?.bindingMode === 'custom')
   const canCustomize =
     canManage && detail?.bindingMode === 'linked' && detail.hydrated && !detail.libraryUnavailable
   const showGalleryTabs = isCatalogGalleryKind(kind)
-  const listPath = `/data/${kind}`
+  const listPath = backTo ?? `/data/${kind}`
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
   const entityPayload = detail?.payload ?? detail?.hydrated ?? null
   const overviewGalleryImages = detail?.displayGalleryImages ?? detail?.galleryImages ?? []
@@ -261,6 +311,25 @@ export function CompanyCatalogDetailPage() {
           )}
         </EditableSectionCard>
 
+        <EditableSectionCard
+          title="Form"
+          description="Design form linked to this service"
+          canEdit={canManage && !busy}
+          onEdit={() => setFormLinkOpen(true)}
+        >
+          <ReadOnlyField label="Linked form" value={linkedFormName ?? 'None'} />
+          {detail.formTemplateId && canManage ? (
+            <Button
+              type="button"
+              size="sm"
+              className="mt-2"
+              onClick={() => setFillFormOpen(true)}
+            >
+              Fill for customer
+            </Button>
+          ) : null}
+        </EditableSectionCard>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Provenance</CardTitle>
@@ -352,11 +421,13 @@ export function CompanyCatalogDetailPage() {
     <FeaturePage
       title={detail?.displayName ?? CATALOG_ENTITY_LABELS[kind]}
       description={
-        detail?.bindingMode === 'linked'
-          ? 'Live link to the Data library. Customize to keep a company-owned copy.'
-          : detail?.libraryEntityId
-            ? 'Company copy based on a library item.'
-            : 'Company-owned catalog item.'
+        readOnly
+          ? `Company ${singularLabel(kind).toLowerCase()} details.`
+          : detail?.bindingMode === 'linked'
+            ? 'Live link to the Data library. Customize to keep a company-owned copy.'
+            : detail?.libraryEntityId
+              ? 'Company copy based on a library item.'
+              : 'Company-owned catalog item.'
       }
       actions={
         <div className="flex flex-wrap items-center gap-2">
@@ -387,19 +458,25 @@ export function CompanyCatalogDetailPage() {
               Customize
             </Button>
           ) : null}
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            disabled={busy}
-            onClick={() => setPendingRemove(true)}
-          >
-            Remove
-          </Button>
+          {canManage ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => setPendingRemove(true)}
+            >
+              Remove
+            </Button>
+          ) : null}
         </div>
       }
     >
-      {detail && showGalleryTabs ? (
+      {detail && readOnly ? (
+        kind === 'services' ? serviceProfile : genericProfile
+      ) : null}
+
+      {detail && !readOnly && showGalleryTabs ? (
         <CatalogDetailSectionTabs
           ariaLabel={`${singularLabel(kind)} sections`}
           tab={tab}
@@ -438,9 +515,9 @@ export function CompanyCatalogDetailPage() {
         />
       ) : null}
 
-      {detail && !showGalleryTabs ? genericProfile : null}
+      {detail && !readOnly && !showGalleryTabs ? genericProfile : null}
 
-      {kind === 'services' ? (
+      {!readOnly && kind === 'services' ? (
         <ServiceFormDialog
           open={serviceDialog != null}
           id={id}
@@ -450,10 +527,17 @@ export function CompanyCatalogDetailPage() {
           }}
           onSaved={() => {
             setServiceDialog(null)
-            dispatch(companyCatalogActions.detailRequested({ kind: 'services', id }))
+            dispatch(
+              companyCatalogActions.detailRequested({
+                kind: 'services',
+                id,
+                ...(companyId ? { companyId } : {}),
+              }),
+            )
           }}
         />
-      ) : (
+      ) : null}
+      {!readOnly && kind !== 'services' ? (
         <CatalogFormDialog
           open={editOpen}
           kind={kind}
@@ -468,22 +552,53 @@ export function CompanyCatalogDetailPage() {
             dispatch(companyCatalogActions.updateRequested({ kind, id, payload }))
           }}
         />
-      )}
+      ) : null}
 
-      <PlatformAlertConfirmDialog
-        open={pendingRemove}
-        title={detail ? `Remove ${detail.displayName}?` : `Remove ${singularLabel(kind).toLowerCase()}?`}
-        description="This action cannot be undone. The item will be removed from your company catalog."
-        isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
-        onOpenChange={(open) => {
-          if (!open) setPendingRemove(false)
-        }}
-        onConfirm={() => {
-          dispatch(companyCatalogActions.deleteRequested({ kind, id }))
-          navigate(listPath)
-        }}
-      />
+      {!readOnly && kind === 'services' && detail ? (
+        <>
+          <ServiceFormLinkDialog
+            open={formLinkOpen}
+            serviceId={id}
+            currentFormTemplateId={detail.formTemplateId ?? null}
+            onOpenChange={setFormLinkOpen}
+            onSaved={() => {
+              dispatch(
+                companyCatalogActions.detailRequested({
+                  kind: 'services',
+                  id,
+                  ...(companyId ? { companyId } : {}),
+                }),
+              )
+            }}
+          />
+          {detail.formTemplateId ? (
+            <FillServiceFormDialog
+              open={fillFormOpen}
+              onOpenChange={setFillFormOpen}
+              formTemplateId={detail.formTemplateId}
+              serviceId={id}
+              serviceName={detail.displayName}
+            />
+          ) : null}
+        </>
+      ) : null}
+
+      {!readOnly ? (
+        <PlatformAlertConfirmDialog
+          open={pendingRemove}
+          title={detail ? `Remove ${detail.displayName}?` : `Remove ${singularLabel(kind).toLowerCase()}?`}
+          description="This action cannot be undone. The item will be removed from your company catalog."
+          isAllowedParentOrigin={isAllowedParentOrigin}
+          submitLabel="Remove"
+          onOpenChange={(open) => {
+            if (!open) setPendingRemove(false)
+          }}
+          onConfirm={() => {
+            dispatch(companyCatalogActions.deleteRequested({ kind, id }))
+            navigate(listPath)
+          }}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

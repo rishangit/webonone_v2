@@ -23,6 +23,11 @@ const MemberCompanyProfilePage = lazy(() =>
     default: m.MemberCompanyProfilePage,
   })),
 )
+const MemberCompanyCatalogDetailPage = lazy(() =>
+  import('@/features/settings/companies/pages/MemberCompanyCatalogDetailPage').then((m) => ({
+    default: m.MemberCompanyCatalogDetailPage,
+  })),
+)
 const AdminCompanyProfilePage = lazy(() =>
   import('@/features/settings/companies/pages/CompanyProfilePage').then((m) => ({
     default: m.AdminCompanyProfilePage,
@@ -51,6 +56,16 @@ const StaffPage = lazy(() =>
 )
 const StaffDetailsPage = lazy(() =>
   import('@/features/staff/pages/StaffDetailsPage').then((m) => ({ default: m.StaffDetailsPage })),
+)
+const StaffHistoryTokenDetailPage = lazy(() =>
+  import('@/features/staff/pages/StaffHistoryTokenDetailPage').then((m) => ({
+    default: m.StaffHistoryTokenDetailPage,
+  })),
+)
+const StaffHistorySubmissionDetailPage = lazy(() =>
+  import('@/features/staff/pages/StaffHistorySubmissionDetailPage').then((m) => ({
+    default: m.StaffHistorySubmissionDetailPage,
+  })),
 )
 const CalendarPage = lazy(() =>
   import('@/features/calendar/pages/CalendarPage').then((m) => ({ default: m.CalendarPage })),
@@ -200,6 +215,14 @@ export function App() {
             }
           />
           <Route
+            path="settings/companies/:companyId/catalog/:kind/:id"
+            element={
+              <LazyRoute>
+                <MemberCompanyCatalogDetailPage />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="settings/companies/:companyId"
             element={
               <LazyRoute>
@@ -244,6 +267,22 @@ export function App() {
             element={
               <LazyRoute>
                 <StaffDetailsPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="staff/:staffId/history/tokens/:tokenId"
+            element={
+              <LazyRoute>
+                <StaffHistoryTokenDetailPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="staff/:staffId/history/submissions/:submissionId"
+            element={
+              <LazyRoute>
+                <StaffHistorySubmissionDetailPage />
               </LazyRoute>
             }
           />

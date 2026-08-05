@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import * as companyEventController from '../controllers/companyEvent.controller.js'
+import { requireAuth } from '../middleware/auth.js'
 import { requireCompanySession } from '../middleware/requireCompanySession.js'
 import { validateBody } from '../middleware/validateBody.js'
 import {
@@ -9,6 +10,14 @@ import {
 } from '../schemas/companyEventSchemas.js'
 
 const router = Router()
+
+router.get('/me/events', requireAuth, companyEventController.listMyEvents)
+router.get('/me/events/:id', requireAuth, companyEventController.getMyEvent)
+router.get(
+  '/me/events/:eventId/sessions/:occurrenceDate',
+  requireAuth,
+  companyEventController.getMySession,
+)
 
 router.get('/company/events', requireCompanySession, companyEventController.listEvents)
 router.post(

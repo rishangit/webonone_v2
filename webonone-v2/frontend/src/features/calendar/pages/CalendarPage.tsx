@@ -11,6 +11,7 @@ import { eventsApi } from '@/features/calendar/services/eventsApi'
 import {
   canAccessCompanySession,
   canBrowseCalendar,
+  isPersonalCalendarSession,
 } from '@/features/session/utils/canAccessCompanySession'
 
 function toYmd(date: Date): string {
@@ -51,10 +52,12 @@ export function CalendarPage() {
   const [events, setEvents] = useState<FullCalendarEvent[]>([])
 
   const range = useMemo(() => rangeForView(anchorDate, view), [anchorDate, view])
-  const canManage = canAccessCompanySession(activeRole, activeCompanyId)
+  const canLoadCompany = canAccessCompanySession(activeRole, activeCompanyId)
+  const canLoadPersonal = isPersonalCalendarSession(activeRole, activeCompanyId)
+  const canLoad = canLoadCompany || canLoadPersonal
 
   useEffect(() => {
-    if (!canManage) {
+    if (!canLoad) {
       setEvents([])
       return
     }
@@ -78,7 +81,7 @@ export function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [range.from, range.to, canManage])
+  }, [range.from, range.to, canLoad])
 
   if (selectionComplete && !canBrowseCalendar(activeRole)) {
     return <Navigate to="/" replace />
@@ -87,7 +90,11 @@ export function CalendarPage() {
   return (
     <FeaturePage
       title="Schedule"
-      description="View your company schedule by day, week, or month."
+      description={
+        canLoadPersonal
+          ? 'View your bookings and session tokens by day, week, or month.'
+          : 'View your company schedule by day, week, or month.'
+      }
       className="min-h-full"
     >
       <FullCalendar

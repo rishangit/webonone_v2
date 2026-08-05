@@ -21,10 +21,11 @@ import type { CompanyEvent } from '@/features/calendar/types/event.types'
 
 type EventsListProps = {
   items: CompanyEvent[]
+  canManage?: boolean
   onRemoved: () => void
 }
 
-export function EventsList({ items, onRemoved }: EventsListProps) {
+export function EventsList({ items, canManage = true, onRemoved }: EventsListProps) {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
@@ -32,7 +33,11 @@ export function EventsList({ items, onRemoved }: EventsListProps) {
   const [pendingRemove, setPendingRemove] = useState<CompanyEvent | null>(null)
 
   if (items.length === 0) {
-    return <ItemListEmpty>No events yet. Add an event to get started.</ItemListEmpty>
+    return (
+      <ItemListEmpty>
+        {canManage ? 'No events yet. Add an event to get started.' : 'No bookings yet.'}
+      </ItemListEmpty>
+    )
   }
 
   function openDetails(id: string) {
@@ -83,31 +88,37 @@ export function EventsList({ items, onRemoved }: EventsListProps) {
             </ItemListContent>
             <ItemListMenu ariaLabel={`Actions for ${item.serviceName}`}>
               <DropdownMenuItem onSelect={() => openDetails(item.id)}>View details</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                disabled={removingId === item.id}
-                onSelect={() => setPendingRemove(item)}
-                className="text-destructive focus:text-destructive"
-              >
-                {removingId === item.id ? 'Removing…' : 'Remove'}
-              </DropdownMenuItem>
+              {canManage ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={removingId === item.id}
+                    onSelect={() => setPendingRemove(item)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    {removingId === item.id ? 'Removing…' : 'Remove'}
+                  </DropdownMenuItem>
+                </>
+              ) : null}
             </ItemListMenu>
           </ItemListItem>
         ))}
       </ItemList>
-      <PlatformAlertConfirmDialog
-        open={pendingRemove !== null}
-        title={pendingRemove ? `Remove ${pendingRemove.serviceName}?` : 'Remove event?'}
-        description="This action cannot be undone. The event will be permanently removed."
-        isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
-        onOpenChange={(open) => {
-          if (!open) setPendingRemove(null)
-        }}
-        onConfirm={() => {
-          if (pendingRemove) void handleRemove(pendingRemove)
-        }}
-      />
+      {canManage ? (
+        <PlatformAlertConfirmDialog
+          open={pendingRemove !== null}
+          title={pendingRemove ? `Remove ${pendingRemove.serviceName}?` : 'Remove event?'}
+          description="This action cannot be undone. The event will be permanently removed."
+          isAllowedParentOrigin={isAllowedParentOrigin}
+          submitLabel="Remove"
+          onOpenChange={(open) => {
+            if (!open) setPendingRemove(null)
+          }}
+          onConfirm={() => {
+            if (pendingRemove) void handleRemove(pendingRemove)
+          }}
+        />
+      ) : null}
     </>
   )
 }

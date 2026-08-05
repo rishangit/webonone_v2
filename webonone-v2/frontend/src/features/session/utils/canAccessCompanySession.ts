@@ -15,3 +15,19 @@ export function canAccessCompanySession(
 export function canBrowseCalendar(role: SessionRole | null | undefined): boolean {
   return role === 'member' || role === 'company_admin'
 }
+
+/** Create / edit / remove company calendar events — company_admin only. */
+export function canManageCompanyEvents(
+  role: SessionRole | null | undefined,
+  companyId?: string | null,
+): boolean {
+  return role === 'company_admin' && Boolean(companyId)
+}
+
+/** Default User browsing their own bookings/tokens (no company session). */
+export function isPersonalCalendarSession(
+  role: SessionRole | null | undefined,
+  companyId?: string | null,
+): boolean {
+  return role === 'member' && !companyId
+}

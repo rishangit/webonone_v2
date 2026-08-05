@@ -178,3 +178,35 @@ export async function clearServingTokens(
       updated_at: db.fn.now(3),
     })
 }
+
+export async function listOccurrenceDatesForUserEvent(
+  userId: string,
+  eventId: string,
+): Promise<string[]> {
+  const rows = await db('company_event_session_tokens')
+    .distinct('occurrence_date')
+    .where({ user_id: userId, event_id: eventId })
+    .orderBy('occurrence_date', 'asc')
+  return rows.map((row) => {
+    const raw = (row as { occurrence_date: string | Date }).occurrence_date
+    if (raw instanceof Date) {
+      const y = raw.getFullYear()
+      const m = String(raw.getMonth() + 1).padStart(2, '0')
+      const d = String(raw.getDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
+    }
+    return String(raw).slice(0, 10)
+  })
+}
+
+export async function listDistinctTokenHolders(): Promise<
+  Array<{ company_id: string; user_id: string }>
+> {
+  return db('company_event_session_tokens')
+    .distinct('company_id', 'user_id')
+    .select('company_id', 'user_id')
+    .orderBy([
+      { column: 'company_id', order: 'asc' },
+      { column: 'user_id', order: 'asc' },
+    ])
+}
