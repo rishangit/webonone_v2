@@ -136,7 +136,10 @@ function AppLayoutContent() {
 
   function handleProfileClick() {
     if (!accessToken) {
-      navigate('/login')
+      const returnPath = `${location.pathname}${location.search}`
+      const params = new URLSearchParams()
+      params.set('return_path', returnPath)
+      navigate(`/login?${params.toString()}`)
       return
     }
     navigate('/profile')

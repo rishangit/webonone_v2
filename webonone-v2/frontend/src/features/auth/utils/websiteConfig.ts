@@ -1,4 +1,4 @@
-import { matchesAllowedOrigin, parseAllowlistPatterns } from '@webonone/platform-nav'
+import { matchesAllowedOrigin, parseAllowlistPatterns, parseReturnUrl } from '@webonone/platform-nav'
 
 const DEFAULT_WEBSITE_ORIGIN = 'http://127.0.0.1:3018'
 
@@ -20,27 +20,16 @@ export function isAllowedWebsiteOrigin(origin: string): boolean {
   return matchesAllowedOrigin(origin, getWebsiteAllowedOriginPatterns())
 }
 
-/** Validate `return_url` query for website login handoff. */
+/**
+ * Validate `return_url` query for website login handoff.
+ * Keeps pathname + search on allowlisted origins (does not strip to origin root).
+ */
 export function parseWebsiteReturnUrl(raw: string | null): string | null {
   if (!raw) {
     return null
   }
 
-  let parsed: URL
-  try {
-    parsed = new URL(raw)
-  } catch {
-    return null
-  }
-
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    return null
-  }
-
-  if (!isAllowedWebsiteOrigin(parsed.origin)) {
-    return null
-  }
-
-  // Normalize to origin root for auth-code redirectUri stability.
-  return `${parsed.origin}/`
+  const params = new URLSearchParams()
+  params.set('return_url', raw)
+  return parseReturnUrl(params, getWebsiteAllowedOriginPatterns())
 }

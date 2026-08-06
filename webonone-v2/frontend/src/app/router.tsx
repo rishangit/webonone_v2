@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from '@/app/AppLayout'
 import { LazyRoute } from '@/app/LazyRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
@@ -111,8 +111,12 @@ const DataLibraryCatchAllRoute = lazy(() =>
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const location = useLocation()
   if (!accessToken) {
-    return <Navigate to="/login" replace />
+    const returnPath = `${location.pathname}${location.search}`
+    const params = new URLSearchParams()
+    params.set('return_path', returnPath)
+    return <Navigate to={`/login?${params.toString()}`} replace />
   }
   return children
 }

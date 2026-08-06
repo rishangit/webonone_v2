@@ -73,7 +73,9 @@ export function WebsiteHeader({ className }: WebsiteHeaderProps) {
           </DropdownMenu>
         ) : (
           <Button type="button" size="sm" asChild>
-            <a href={getWebOnOneLoginUrl()}>Login</a>
+            <a href={getWebOnOneLoginUrl(`${window.location.pathname}${window.location.search}`)}>
+              Login
+            </a>
           </Button>
         )}
       </div>
