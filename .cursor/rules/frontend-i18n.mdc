@@ -1,0 +1,44 @@
+---
+description: English/Sinhala i18n — shared common packs, per-service locales, language switchers
+globs: "**/frontend/src/**/*.{ts,tsx},packages/i18n/**/*"
+alwaysApply: false
+---
+
+# Frontend i18n (en / si)
+
+## Package
+
+`@webonone/i18n` owns plumbing only: `createAppI18n`, `common` JSON (`en`/`si`), `webonone.locale` storage, `lng` query helpers, `normalizeLocale`.
+
+- Default + fallback: **`en`**
+- Supported: **`en`**, **`si`**
+- Do **not** put feature copy in the package — only reusable chrome (`Save`, `Cancel`, …)
+
+## Per service
+
+1. `frontend/src/i18n/index.ts` — `createAppI18n({ resources, ns })` merging common + local packs
+2. `frontend/src/locales/{en,si}/*.json` — feature namespaces
+3. Call init from `main.tsx` before render
+4. Wire `AppShell` `locale` / `onLocaleChange` / `headerLabels` via `changeAppLocale`
+5. Persist preference with Identity `PATCH /auth/me` `{ locale }` when authenticated
+6. Relay `lng` with theme on redirects/embeds (`relayLocaleQueryParams` / `LOCALE_QUERY`)
+
+## UI Kit
+
+Primitives stay locale-agnostic — pass `t(...)` as props. `AppHeader` accepts language menu props only; no i18n runtime inside the kit.
+
+## Keys
+
+| Put in | Examples |
+|--------|----------|
+| `common:*` | Save, Cancel, Edit, Delete, Loading |
+| Service `ns:*` | `calendar.createEvent`, `auth.loginTitle` |
+
+Use `useTranslation('ns')` / `t('common:save')`. Missing `si` keys fall back to English.
+
+## Verification
+
+```bash
+npm run build:i18n
+npm run type-check -w @webonone/<service>-frontend
+```

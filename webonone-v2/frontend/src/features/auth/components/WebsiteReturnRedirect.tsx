@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { redirectToWebsiteWithAuthCode } from '@/features/auth/utils/redirectToWebsite'
 
 type WebsiteReturnRedirectProps = {
@@ -8,6 +9,7 @@ type WebsiteReturnRedirectProps = {
 
 /** Already authenticated on WebOnOne — send auth code back to the website. */
 export function WebsiteReturnRedirect({ accessToken, returnUrl }: WebsiteReturnRedirectProps) {
+  const { t } = useTranslation('auth')
   const startedRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -18,9 +20,9 @@ export function WebsiteReturnRedirect({ accessToken, returnUrl }: WebsiteReturnR
     startedRef.current = true
 
     redirectToWebsiteWithAuthCode(accessToken, returnUrl).catch((err: Error) => {
-      setError(err.message || 'Failed to return to website')
+      setError(err.message || t('callbackError'))
     })
-  }, [accessToken, returnUrl])
+  }, [accessToken, returnUrl, t])
 
   if (error) {
     return (
@@ -32,7 +34,7 @@ export function WebsiteReturnRedirect({ accessToken, returnUrl }: WebsiteReturnR
 
   return (
     <div className="flex h-dvh items-center justify-center px-4">
-      <p className="text-sm text-muted-foreground">Returning to website…</p>
+      <p className="text-sm text-muted-foreground">{t('returningToWebsite')}</p>
     </div>
   )
 }

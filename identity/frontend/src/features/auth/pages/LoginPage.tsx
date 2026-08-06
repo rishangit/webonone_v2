@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthLayout, FeaturePage } from '@webonone/ui-kit'
 import { decodeJwtPayload, sendAuthSuccess } from '@webonone/platform-embed'
 import { useEmbedThemeListener } from '@webonone/theme'
@@ -21,6 +22,7 @@ function resolveExpiresIn(accessToken: string): number {
 }
 
 export function LoginPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const { isRedirect, redirectUri, state } = useRedirectMode()
   const { isEmbed, parentOrigin } = useEmbedLoginMode()
@@ -55,6 +57,7 @@ export function LoginPage() {
           email: user.email ?? '',
           displayName: user.displayName,
           avatarUrl: user.avatarUrl,
+          locale: user.locale,
         },
       })
       return
@@ -83,12 +86,12 @@ export function LoginPage() {
   if (!isRedirect && !isEmbed && accessToken && user) {
     return (
       <FeaturePage
-        title={`Welcome, ${user.displayName}!`}
-        description="You are signed in to Identity."
+        title={t('welcome', { name: user.displayName })}
+        description={t('youAreSignedIn')}
       >
         <p className="text-sm text-muted-foreground">
           <Link to="/profile" className="text-primary underline-offset-4 hover:underline">
-            View your profile
+            {t('viewYourProfile')}
           </Link>
         </p>
       </FeaturePage>
@@ -101,17 +104,17 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Sign in"
-      description="Enter your credentials to continue"
+      title={t('signIn')}
+      description={t('signInDescription')}
       variant="minimal"
       footer={
         <span>
           <Link to={registerLink} className="text-primary underline-offset-4 hover:underline">
-            Create account
+            {t('createAccount')}
           </Link>
           {' · '}
           <Link to={forgotLink} className="text-primary underline-offset-4 hover:underline">
-            Forgot password?
+            {t('forgotPasswordLink')}
           </Link>
         </span>
       }
@@ -123,14 +126,14 @@ export function LoginPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+            <span className="bg-card px-2 text-muted-foreground">{t('orContinueWithEmail')}</span>
           </div>
         </div>
         <LoginForm />
       </div>
       {handoffInProgress ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Signed in as {user!.displayName}
+          {t('signedInAs', { name: user!.displayName })}
         </p>
       ) : null}
       {error ? <p className="mt-2 text-center text-sm text-destructive">{error}</p> : null}

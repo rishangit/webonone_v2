@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '../lib/utils'
-import { AppHeader, type AppHeaderUser } from '../components/AppHeader'
+import { AppHeader, type AppHeaderLocale, type AppHeaderProps, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
 
 interface PageShellProps {
@@ -12,6 +12,9 @@ interface PageShellProps {
   user?: AppHeaderUser | null
   onProfileClick?: () => void
   onLogout?: () => void
+  locale?: AppHeaderLocale
+  onLocaleChange?: (locale: AppHeaderLocale) => void
+  headerLabels?: AppHeaderProps['labels']
   className?: string
 }
 
@@ -23,6 +26,9 @@ function PageShell({
   user,
   onProfileClick,
   onLogout,
+  locale,
+  onLocaleChange,
+  headerLabels,
   className,
 }: PageShellProps) {
   const logoNode = logo ?? (title ? <BrandLogo>{title}</BrandLogo> : undefined)
@@ -35,6 +41,9 @@ function PageShell({
         user={user}
         onProfileClick={onProfileClick}
         onLogout={onLogout}
+        locale={locale}
+        onLocaleChange={onLocaleChange}
+        labels={headerLabels}
       />
       <main className="w-full px-2 py-8 sm:px-4">{children}</main>
     </div>

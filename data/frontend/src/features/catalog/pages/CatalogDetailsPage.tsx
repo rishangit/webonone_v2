@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -75,6 +76,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
+  const { t } = useTranslation('spaces')
   const config = CONFIG[kind]
   const params = useParams<{ spaceId?: string }>()
   const entityId = params[config.paramKey]
@@ -93,7 +95,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   }, [config.actions, dispatch, entityId])
 
   usePlatformLoading(
-    detailStatus === 'loading' && !detail ? `Loading ${config.singular.toLowerCase()}…` : null,
+    detailStatus === 'loading' && !detail ? t('loadingSpace') : null,
   )
 
   if (!accessToken) return <Navigate to="/login" replace />

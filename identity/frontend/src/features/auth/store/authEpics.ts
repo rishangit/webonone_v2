@@ -1,7 +1,9 @@
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of, type Observable } from 'rxjs'
-import { catchError, exhaustMap, filter, map, mergeMap, switchMap, withLatestFrom } from 'rxjs/operators'
+import { catchError, exhaustMap, filter, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators'
+import { normalizeLocale } from '@webonone/i18n'
 import { authApi } from '@/shared/services/authApi'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { clearResetSessionToken } from '../utils/resetSessionStorage'
 import { clearRegistrationWizardStorage } from '../utils/resetRegistrationWizard'
 import { authActions } from './authSlice'
@@ -118,6 +120,11 @@ const profileUpdateEpic: AuthEpic = (action$) =>
     ofType(authActions.profileUpdateRequested.type),
     exhaustMap((action: ReturnType<typeof authActions.profileUpdateRequested>) =>
       from(authApi.patchMe(action.payload.body)).pipe(
+        tap((result) => {
+          if (result.user.locale) {
+            void changeAppLocale(normalizeLocale(result.user.locale))
+          }
+        }),
         map((result) => authActions.profileUpdateSucceeded(result.user)),
         catchError((err: Error) => of(authActions.profileUpdateFailed(err.message))),
       ),

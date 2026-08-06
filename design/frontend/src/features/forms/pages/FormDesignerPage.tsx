@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Save } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import {
@@ -54,6 +55,8 @@ function defaultField(type: FormFieldType): FormField {
 }
 
 export function FormDesignerPage() {
+  const { t } = useTranslation('forms')
+
   const { id } = useParams<{ id: string }>()
   const dispatch = useAppDispatch()
   const { goToList } = useNavigateDesign()
@@ -74,7 +77,7 @@ export function FormDesignerPage() {
   const canManage = role === 'super_admin' || role === 'company_admin'
   const hasCompany = Boolean(companyId)
   const loading = hasCompany && detailStatus === 'loading' && (!detail || detail.id !== id)
-  usePlatformLoading(loading ? 'Loading form…' : null)
+  usePlatformLoading(loading ? t('loadingForm') : null)
 
   useEffect(() => {
     if (!accessToken || !id || !hasCompany) return
@@ -117,7 +120,7 @@ export function FormDesignerPage() {
 
   if (!hasCompany) {
     return (
-      <FeaturePage title="Form designer" description="Company form templates.">
+      <FeaturePage title={t('designer')} description="Company form templates.">
         <Alert>
           <AlertDescription>
             Select a company account in WebOnOne (account switcher) to design forms.

@@ -24,6 +24,7 @@ import {
   type PlatformPeerDialogRequestMessage,
   type PlatformPeerDialogResponder,
 } from '@webonone/platform-embed'
+import { getStoredLocale, LOCALE_QUERY, normalizeLocale } from '@webonone/i18n'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ import {
   CustomDialog,
 } from '@webonone/ui-kit'
 import { Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformPeerDialogContext } from '@/features/shell/PlatformPeerDialogContext'
 
@@ -73,6 +75,7 @@ function iframeHeightClass(sizeHeight: string, sizeWidth: string): string {
 }
 
 export function PlatformPeerDialogProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation('shell')
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [active, setActive] = useState<ActivePeerDialog | null>(null)
   const [nested, setNested] = useState<NestedPeerDialog | null>(null)
@@ -126,6 +129,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       scope: 'peer-dialog',
       searchParams: {
         [PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID]: active.request.requestId,
+        [LOCALE_QUERY]: normalizeLocale(getStoredLocale() ?? undefined),
       },
     })
   }, [active, hostOrigin])
@@ -146,6 +150,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       scope: 'peer-dialog-nested',
       searchParams: {
         [PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID]: nested.request.requestId,
+        [LOCALE_QUERY]: normalizeLocale(getStoredLocale() ?? undefined),
       },
     })
   }, [hostOrigin, nested])
@@ -164,6 +169,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       scope: 'peer-dialog-nested',
       searchParams: {
         [PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID]: deepNested.request.requestId,
+        [LOCALE_QUERY]: normalizeLocale(getStoredLocale() ?? undefined),
       },
     })
   }, [deepNested, hostOrigin])
@@ -763,9 +769,9 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     )
   }
 
-  const cancelLabel = active?.request.cancelLabel ?? 'Cancel'
-  const nestedCancelLabel = nested?.request.cancelLabel ?? 'Cancel'
-  const deepNestedCancelLabel = deepNested?.request.cancelLabel ?? 'Cancel'
+  const cancelLabel = active?.request.cancelLabel ?? t('common:cancel')
+  const nestedCancelLabel = nested?.request.cancelLabel ?? t('common:cancel')
+  const deepNestedCancelLabel = deepNested?.request.cancelLabel ?? t('common:cancel')
   const nestedOpen = Boolean(nested)
   const deepNestedOpen = Boolean(deepNested)
 
@@ -783,7 +789,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
             <AlertDialogHeader>
               <AlertDialogTitle>{active.request.title}</AlertDialogTitle>
               <AlertDialogDescription>
-                {description ?? 'This action cannot be undone.'}
+                {description ?? t('confirmDelete')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -803,7 +809,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                 }}
               >
                 <Trash2 className="mr-2 h-4 w-4" aria-hidden />
-                {submitLabel ?? 'Delete'}
+                {submitLabel ?? t('common:delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -855,7 +861,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
         >
           {!accessToken ? (
             <div className="flex flex-col items-center gap-3 py-8">
-              <p className="text-sm text-muted-foreground">Waiting for authentication...</p>
+              <p className="text-sm text-muted-foreground">{t('waitingAuth')}</p>
             </div>
           ) : (
             <iframe

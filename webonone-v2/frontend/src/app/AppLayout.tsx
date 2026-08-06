@@ -1,6 +1,9 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AppShell, BrandLogo, LoadingState } from '@webonone/ui-kit'
+import { translateNavItems } from '@/features/shell/utils/translateNavItems'
+import { clearIdentityEmbedSession } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
   buildLogoutClearChain,
@@ -14,13 +17,18 @@ import {
   isSmsNavSentinel,
   performPlatformLogout,
 } from '@webonone/platform-nav'
+import { normalizeLocale, type AppLocale } from '@webonone/i18n'
 import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppSelector } from '@/app/store/hooks'
 import { clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
+import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { getWebsiteOrigin } from '@/features/auth/utils/websiteConfig'
+import { clearSessionRoleStorage } from '@/features/session/utils/sessionRoleStorage'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
+import { patchIdentityLocale } from '@/features/auth/services/identityUserApi'
 import { buildNavForSessionRole } from '@/features/shell/config/navItems'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
 import { SessionRoleGate } from '@/features/session/components/SessionRoleGate'
 import {
@@ -71,10 +79,13 @@ export function AppLayout() {
 function AppLayoutContent() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t, i18n } = useTranslation('common')
+  const { t: tShell } = useTranslation('shell')
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { activeRole, activeCompanyId, assumableRoles, selectionComplete } = useAppSelector(
     (s) => s.sessionRole,
   )
+  const currentLocale = normalizeLocale(i18n.language)
 
   useIdentityUserRefresh()
 
@@ -86,14 +97,39 @@ function AppLayoutContent() {
     [navigate],
   )
 
+  const handleLocaleChange = useCallback(
+    (locale: AppLocale) => {
+      void changeAppLocale(locale, {
+        persistToIdentity: accessToken
+          ? async (lng) => {
+              await patchIdentityLocale(accessToken, lng)
+            }
+          : undefined,
+      })
+    },
+    [accessToken],
+  )
+
+  const headerLabels = useMemo(
+    () => ({
+      language: t('language'),
+      english: t('english'),
+      sinhala: t('sinhala'),
+      profile: t('profile'),
+      logout: t('logout'),
+    }),
+    [t],
+  )
+
   const nav = useMemo(() => {
     if (!activeRole) return []
     const matched = findMatchingRole(assumableRoles, activeRole, activeCompanyId)
-    if (activeRole === 'company_admin' || (activeRole === 'member' && activeCompanyId)) {
-      return buildNavForSessionRole(activeRole, matched?.dataEntities ?? [], activeCompanyId)
-    }
-    return buildNavForSessionRole(activeRole, undefined, activeCompanyId)
-  }, [activeRole, activeCompanyId, assumableRoles])
+    const items =
+      activeRole === 'company_admin' || (activeRole === 'member' && activeCompanyId)
+        ? buildNavForSessionRole(activeRole, matched?.dataEntities ?? [], activeCompanyId)
+        : buildNavForSessionRole(activeRole, undefined, activeCompanyId)
+    return translateNavItems(items, tShell)
+  }, [activeRole, activeCompanyId, assumableRoles, tShell])
 
   const sidebarSession = useMemo(() => {
     if (!user || !selectionComplete || !activeRole) {
@@ -125,18 +161,24 @@ function AppLayoutContent() {
 
   function handleLogout() {
     clearWebOnOneAuthStorage()
+    clearSessionRoleStorage()
     const websiteOrigin = getWebsiteOrigin()
     const loginUrl = appendPromptLogin(`${window.location.origin}/login`)
     const postLogoutRedirectUri = buildLogoutClearChain([websiteOrigin], loginUrl)
-    performPlatformLogout(null, {
-      identityOrigin: getIdentityOrigin(),
-      postLogoutRedirectUri,
+    const identityOrigin = getIdentityOrigin()
+
+    void clearIdentityEmbedSession({ identityOrigin }).finally(() => {
+      performPlatformLogout(null, {
+        identityOrigin,
+        postLogoutRedirectUri,
+      })
     })
   }
 
   function handleProfileClick() {
     if (!accessToken) {
-      navigate('/login')
+      const returnPath = `${location.pathname}${location.search}`
+      navigate(buildWebOnOneLoginHref(returnPath))
       return
     }
     navigate('/profile')
@@ -152,11 +194,14 @@ function AppLayoutContent() {
           embedMain={embedMain}
           nav={nav}
           activePath={location.pathname}
-          logo={<BrandLogo>WebOnOne</BrandLogo>}
+          logo={<BrandLogo>{tShell('brand')}</BrandLogo>}
           user={headerUser}
           sidebarSession={sidebarSession}
           onProfileClick={user ? handleProfileClick : undefined}
           onLogout={handleLogout}
+          locale={currentLocale}
+          onLocaleChange={handleLocaleChange}
+          headerLabels={headerLabels}
           onNavItemNavigate={onNavItemNavigate}
           onNavItemPrefetch={prefetchNavTarget}
           accordionNavGroups

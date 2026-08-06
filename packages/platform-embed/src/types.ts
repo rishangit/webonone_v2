@@ -91,11 +91,18 @@ export const IDENTITY_SSO_MESSAGE_TYPES = {
   NONE: 'webonone:identity-sso:none',
 } as const
 
+/** Identity clear-embed-session iframe → consumer parent after clearing partitioned storage. */
+export const IDENTITY_CLEAR_MESSAGE_TYPES = {
+  CLEARED: 'webonone:identity-session:cleared',
+} as const
+
 export type AuthSuccessUser = {
   id: string
   email: string
   displayName: string
   avatarUrl?: string | null
+  /** Preferred UI locale (`en` | `si`); optional for backward compatibility. */
+  locale?: string | null
 }
 
 export type AuthSuccessMessage = {
@@ -129,6 +136,10 @@ export type IdentitySsoSessionMessage = {
 
 export type IdentitySsoNoneMessage = {
   type: typeof IDENTITY_SSO_MESSAGE_TYPES.NONE
+}
+
+export type IdentitySessionClearedMessage = {
+  type: typeof IDENTITY_CLEAR_MESSAGE_TYPES.CLEARED
 }
 
 export type PlatformInitMessage = {
@@ -496,7 +507,8 @@ function isAuthSuccessUser(data: unknown): data is AuthSuccessUser {
     user.displayName.length > 0 &&
     (user.avatarUrl === undefined ||
       user.avatarUrl === null ||
-      typeof user.avatarUrl === 'string')
+      typeof user.avatarUrl === 'string') &&
+    (user.locale === undefined || user.locale === null || typeof user.locale === 'string')
   )
 }
 
@@ -571,6 +583,16 @@ export function isIdentitySsoNoneMessage(data: unknown): data is IdentitySsoNone
   }
 
   return (data as Record<string, unknown>).type === IDENTITY_SSO_MESSAGE_TYPES.NONE
+}
+
+export function isIdentitySessionClearedMessage(
+  data: unknown,
+): data is IdentitySessionClearedMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  return (data as Record<string, unknown>).type === IDENTITY_CLEAR_MESSAGE_TYPES.CLEARED
 }
 
 function hasStringProperty(data: Record<string, unknown>, property: string): boolean {

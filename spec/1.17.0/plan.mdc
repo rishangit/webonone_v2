@@ -1,0 +1,125 @@
+---
+description: Implementation plan for spec 1.17.0 — return user to requested page after login
+alwaysApply: false
+globs: webonone-v2/frontend/src/features/auth/**, website/frontend/src/features/**/webononeConfig.ts, website/frontend/src/features/auth/**, packages/platform-nav/src/returnUrl.ts
+---
+
+# Implementation plan — Spec 1.17.0
+
+## Summary
+
+Remember the guest’s **requested page** before login. After Identity iframe success (Google or email/password), restore that page instead of always navigating to WebOnOne `/`. Preserve website `return_url` **path + query** (stop stripping to origin root in `parseWebsiteReturnUrl`). Invalid targets → default homepage. No open redirects; no secrets in return URLs.
+
+Primary work: **WebOnOne FE** auth host. Secondary: **Website** CTA capture. Optional: **platform-nav** shared validation alignment. Identity login methods unchanged ([1.14.0](../1.14.0/README.md) embed + postMessage).
+
+See [01-overview.md](./01-overview.md), [02-post-login-return-page.md](./02-post-login-return-page.md), [07-implementation-plan.md](./07-implementation-plan.md).
+
+| Project | Touch |
+|---------|--------|
+| `webonone-v2/` | Fix return parse; wire `LoginPage` / postMessage restore / `WebsiteReturnRedirect` |
+| `website/` | Auth-required CTAs pass current page into `getWebOnOneLoginUrl` |
+| `packages/platform-nav/` | Optional align with `parseReturnUrl` (already keeps full URL) |
+| `identity/` | No login-method changes |
+
+---
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.17.0` |
+| Prerequisite | [1.14.0](../1.14.0/README.md) iframe login; website auth-code handoff |
+| Dev | `npm run dev:identity` · `npm run dev:webonone` · `npm run dev:website` |
+| Package build | Only if platform-nav changes: `npm run build:platform-nav` |
+| Env | None new — `VITE_WEBSITE_ORIGIN`, `VITE_WEBSITE_ALLOWED_ORIGINS` already exist |
+| Rules | `microservice-architecture.mdc`, `webonone-v2-project.mdc` |
+
+---
+
+## Phase 1 — Validate and preserve return targets
+
+**Goal:** [02-post-login-return-page.md](./02-post-login-return-page.md) — parsers keep deep links; reject unsafe URLs.
+
+**Exit criteria:** Unit tests prove path retention + allowlist rejection; validated value keeps `/some/deep` for allowlisted website URLs.
+
+| Task | Paths / detail |
+|------|----------------|
+| Fix `parseWebsiteReturnUrl` | `webonone-v2/frontend/src/features/auth/utils/websiteConfig.ts` — keep pathname + search; `null` when invalid |
+| Core return path helper | Same auth utils (or LoginPage-local) — path must start with `/`; reject `/login`, `/callback` loops; reject absolute foreign URLs |
+| Optional platform-nav align | `packages/platform-nav/src/returnUrl.ts` — reuse `parseReturnUrl` patterns if it reduces duplication |
+| Unit tests | Allowlisted deep URL kept; foreign host rejected; malformed rejected |
+
+**Verify (future implement):** `npm run type-check -w webonone-v2-root` · platform-nav tests if package changed
+
+---
+
+## Phase 2 — Wire login host + capture call sites
+
+**Goal:** [02-post-login-return-page.md](./02-post-login-return-page.md) — post-login restore; guests capture page before login.
+
+**Exit criteria:** Google and email/password both restore the requested page; invalid return → homepage.
+
+| Task | Paths / detail |
+|------|----------------|
+| Login host | `LoginPage.tsx`, `IdentityLoginFrame.tsx` — pass validated website URL and/or core `returnPath` (remove hardcoded `/`-only when valid target exists) |
+| Post-login restore | `useIdentityAuthMessage.ts`, `WebsiteReturnRedirect.tsx` — auth-code to **full** website URL; `navigate(returnPath)` for core |
+| Website CTAs | `website/frontend/src/features/webonone/utils/webononeConfig.ts` + booking / contact / protected-action call sites → `getWebOnOneLoginUrl(currentPage)` |
+| WebOnOne guards | Routes that send guests to `/login` attach return path |
+| Session gate | If choose-account / role gate runs ([1.13.1](../1.13.1/README.md)), apply return navigation **after** gate completes |
+
+**Verify (future implement):** type-check webonone + website; manual acceptance in [07](./07-implementation-plan.md)
+
+---
+
+## Cross-service integration
+
+| Channel | Use in 1.17.0 |
+|---------|----------------|
+| **iframe + postMessage** | Unchanged Identity embed login → `webonone:auth:success` ([1.14.0](../1.14.0/04-auth-postmessage-contract.md)); WebOnOne owns restore |
+| **Browser handoff** | Website ↔ WebOnOne via `return_url` + auth-code redirect to **full** validated website URL |
+| **JWT** | Existing session after login; no new claims |
+| **Events / sync API** | None |
+| **Boundaries** | No shared DB; no Identity per-request calls on hot path |
+
+---
+
+## ClickUp traceability
+
+| Subtask | ID | Phase |
+|---------|-----|-------|
+| Parent: [User Story] Spec No 1.17.0 – Return User to Requested Page After Login | [86eyhz4mr](https://app.clickup.com/t/86eyhz4mr) | All |
+| Remember page before login; return after Google / email; homepage fallback | [86eyhz6wv](https://app.clickup.com/t/86eyhz6wv) | Phase 1–2 |
+
+---
+
+## Risks and open items
+
+- **Account / role gate** — Do not navigate away before session gate finishes when it is shown.
+- **Silent SSO** — Already-authenticated `/login?return_url=…` must use full URL via `WebsiteReturnRedirect`.
+- **Multi-origin allowlist** — Only exact allowlisted origin match is valid.
+- **Open redirect** — Never accept non-allowlisted hosts; never put tokens in return URL.
+
+---
+
+## Do not
+
+- Strip website `return_url` to origin root
+- Always `navigate('/')` after iframe success when a valid return exists
+- Put JWT/password in return URL
+- Accept cross-origin returns outside the website allowlist
+- Change Identity Google / email login UI for this spec
+
+---
+
+## Final verification
+
+List only — do **not** run during `/clickup-plan`:
+
+```bash
+npm run type-check -w webonone-v2-root
+npm run type-check -w website-root
+# if platform-nav changed:
+npm run build:platform-nav
+```
+
+Manual: deep website page → login (Google + email/password) → same page; bad `return_url` → homepage; WebOnOne protected entry with return path → that path.

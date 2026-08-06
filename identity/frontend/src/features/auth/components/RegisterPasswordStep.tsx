@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -21,6 +22,7 @@ type RegisterPasswordStepProps = {
 }
 
 export function RegisterPasswordStep({ firstName, lastName, onBack }: RegisterPasswordStepProps) {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
   const { isLoading, error } = useAppSelector((s) => s.auth)
   const [values, setValues] = useState<RegisterPasswordFormValues>({
@@ -39,7 +41,7 @@ export function RegisterPasswordStep({ firstName, lastName, onBack }: RegisterPa
 
     const registrationSessionToken = loadRegistrationSessionToken()
     if (!registrationSessionToken) {
-      setFieldErrors({ password: 'Registration session expired. Start again.' })
+      setFieldErrors({ password: 'errors.registrationSessionExpired' })
       return
     }
 
@@ -62,7 +64,12 @@ export function RegisterPasswordStep({ firstName, lastName, onBack }: RegisterPa
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Password" htmlFor="register-password" required error={fieldErrors.password}>
+      <FormField
+        label={t('password')}
+        htmlFor="register-password"
+        required
+        error={fieldErrors.password ? t(fieldErrors.password) : undefined}
+      >
         <PasswordInput
           id="register-password"
           withIcon
@@ -72,10 +79,10 @@ export function RegisterPasswordStep({ firstName, lastName, onBack }: RegisterPa
         />
       </FormField>
       <FormField
-        label="Confirm password"
+        label={t('confirmPassword')}
         htmlFor="register-confirmPassword"
         required
-        error={fieldErrors.confirmPassword}
+        error={fieldErrors.confirmPassword ? t(fieldErrors.confirmPassword) : undefined}
       >
         <PasswordInput
           id="register-confirmPassword"
@@ -87,10 +94,10 @@ export function RegisterPasswordStep({ firstName, lastName, onBack }: RegisterPa
       </FormField>
       <div className="flex gap-2">
         <Button type="button" variant="outline" className="w-full" disabled={isLoading} onClick={onBack}>
-          Back
+          {t('back')}
         </Button>
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? <Spinner size="sm" /> : 'Create account'}
+          {isLoading ? <Spinner size="sm" /> : t('createAccount')}
         </Button>
       </div>
     </Form>

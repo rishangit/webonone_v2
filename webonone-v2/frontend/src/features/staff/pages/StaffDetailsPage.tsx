@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -26,10 +27,12 @@ import { StaffUserCard } from '@/features/staff/components/StaffUserCard'
 import type { StaffWizardStep } from '@/features/staff/schemas/staffSchemas'
 import { staffActions } from '@/features/staff/store'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
 type StaffDetailTab = 'overview' | 'history'
 
 export function StaffDetailsPage() {
+  const { t, i18n } = useTranslation('staff')
   const { staffId } = useParams<{ staffId: string }>()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -47,7 +50,7 @@ export function StaffDetailsPage() {
   const tab: StaffDetailTab = searchParams.get('tab') === 'history' ? 'history' : 'overview'
 
   const loading = detailStatus === 'loading' && !detail
-  usePlatformLoading(loading ? 'Loading staff…' : null)
+  usePlatformLoading(loading ? t('loadingStaff') : null)
 
   useEffect(() => {
     if (!staffId) return
@@ -83,9 +86,9 @@ export function StaffDetailsPage() {
 
   if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
     return (
-      <FeaturePage title="Staff" description="Staff details">
+      <FeaturePage title={t('title')} description={t('details')}>
         <Alert variant="destructive">
-          <AlertDescription>Company session required.</AlertDescription>
+          <AlertDescription>{t('session:companySessionRequired')}</AlertDescription>
         </Alert>
       </FeaturePage>
     )
@@ -98,12 +101,12 @@ export function StaffDetailsPage() {
   if (detailError && !detail) {
     return (
       <FeaturePage
-        title="Staff"
-        description="Staff details"
+        title={t('title')}
+        description={t('details')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={() => navigate('/staff')}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('common:back')}
           </Button>
         }
       >
@@ -119,8 +122,8 @@ export function StaffDetailsPage() {
   }
 
   const tabs: { id: StaffDetailTab; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'history', label: 'History' },
+    { id: 'overview', label: t('overview') },
+    { id: 'history', label: t('history') },
   ]
 
   const overview = (
@@ -141,20 +144,20 @@ export function StaffDetailsPage() {
         />
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Record</CardTitle>
-            <CardDescription>Staff record metadata</CardDescription>
+            <CardTitle className="text-lg">{t('record')}</CardTitle>
+            <CardDescription>{t('recordMeta')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Added</p>
+              <p className="text-xs font-medium text-muted-foreground">{t('added')}</p>
               <p className="text-sm text-foreground">
-                {new Date(detail.createdAt).toLocaleString()}
+                {formatLocaleDateTime(detail.createdAt, undefined, i18n.language)}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Updated</p>
+              <p className="text-xs font-medium text-muted-foreground">{t('updated')}</p>
               <p className="text-sm text-foreground">
-                {new Date(detail.updatedAt).toLocaleString()}
+                {formatLocaleDateTime(detail.updatedAt, undefined, i18n.language)}
               </p>
             </div>
           </CardContent>
@@ -166,11 +169,11 @@ export function StaffDetailsPage() {
   return (
     <FeaturePage
       title={detail.displayName}
-      description="Staff member details and weekly work schedule."
+      description={t('detailsDescription')}
       actions={
         <Button type="button" variant="outline" size="sm" onClick={() => navigate('/staff')}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
+          {t('common:back')}
         </Button>
       }
     >
@@ -179,7 +182,7 @@ export function StaffDetailsPage() {
         onValueChange={(value) => setTab(value as StaffDetailTab)}
         className="flex flex-col gap-6"
       >
-        <TabsList aria-label="Staff sections">
+        <TabsList aria-label={t('staffSections')}>
           {tabs.map((item) => (
             <TabsTrigger key={item.id} value={item.id}>
               {item.label}

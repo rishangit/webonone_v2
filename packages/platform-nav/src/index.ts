@@ -3,7 +3,12 @@ export { exchangeAuthCode, type ExchangeAuthCodeOptions, type ExchangeAuthCodeRe
 export { createNavItemNavigate, parseNavTarget } from './clientNav'
 export type { NavItemNavigateHandler, NavTarget } from './clientNav'
 export { buildLoginRedirectUrl, consumeOAuthState } from './loginRedirect'
-export { parseReturnUrl, stripAuthCodeFromSearch, hasPlatformRedirectHandoff } from './returnUrl'
+export {
+  parseReturnUrl,
+  parseCoreReturnPath,
+  stripAuthCodeFromSearch,
+  hasPlatformRedirectHandoff,
+} from './returnUrl'
 export {
   appendPromptLogin,
   resolvePlatformLogoutLoginUrl,

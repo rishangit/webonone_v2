@@ -45,6 +45,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [redux-store-and-epics.mdc](redux-store-and-epics.mdc) | `**/frontend/src/**/*.{ts,tsx}` | RTK slices, redux-observable epics, mandatory for all API I/O |
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 | [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc) | `**/frontend/**/*.{ts,tsx}` | Route lazy-load + `manualChunks`; no 500 kB build warnings |
+| [frontend-i18n.mdc](frontend-i18n.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `packages/i18n/**/*` | en/si i18n, `@webonone/i18n` common packs, per-service locales |
 | [toast-notifications.mdc](toast-notifications.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `useToast` for mutation API success/fail; ignore soft warnings |
 | [image-preview.mdc](image-preview.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/**/*.{ts,tsx}` | `ImagePreview` for logos/avatars; null `src` = first-upload empty state |
 

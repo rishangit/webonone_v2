@@ -1,0 +1,120 @@
+{
+  "pageTitle": "Users",
+  "pageDescription": {
+    "company": "Users belonging to your company. Add a registered user from the directory.",
+    "platform": "Browse all registered platform users."
+  },
+  "loading": {
+    "users": "Loading users…",
+    "user": "Loading user…",
+    "history": "Loading history…",
+    "submission": "Loading submission…",
+    "waitingAuth": "Waiting for authentication…"
+  },
+  "searchPlaceholder": "Search by name or email…",
+  "searchPlaceholderShort": "Search by name or email",
+  "searchAria": "Search users",
+  "filterByRoleAria": "Filter by role",
+  "addUser": "Add user",
+  "noEmail": "No email",
+  "userFallbackTitle": "User",
+  "userDetailsDescription": "User account details.",
+  "sectionsAria": "User sections",
+  "tabs": {
+    "overview": "Overview",
+    "history": "History"
+  },
+  "empty": {
+    "noneFound": "No users found.",
+    "companyNone": "No users yet. Use Add user to select someone for this company.",
+    "addDialog": "No users available to add.",
+    "history": "No company history yet.",
+    "noFormLinked": "No form linked to this service."
+  },
+  "toasts": {
+    "userAdded": "User added",
+    "addFailed": "Failed to add user"
+  },
+  "roles": {
+    "label": "Role",
+    "all": "All roles",
+    "super_admin": "Super Admin",
+    "company_admin": "Company Admin",
+    "member": "Member"
+  },
+  "addDialog": {
+    "title": "Add user",
+    "description": "Select a registered user, or create a new one. Click Done to add them to your company.",
+    "submit": "Done"
+  },
+  "createDialog": {
+    "title": "Create user",
+    "description": "Add someone who is not registered yet. They stay unverified until they set a password.",
+    "submit": "Create user",
+    "creating": "Creating…"
+  },
+  "form": {
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "phoneNumber": "Phone number",
+    "emailPlaceholder": "Optional"
+  },
+  "errors": {
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "emailInvalid": "Enter a valid email",
+    "phoneInvalid": "Enter a valid phone number with country code",
+    "createFailed": "Failed to create user",
+    "loadUsersFailed": "Failed to load users",
+    "loadUserFailed": "Unable to load user",
+    "loadHistoryFailed": "Unable to load history",
+    "loadHistoryDetailFailed": "Unable to load history detail",
+    "loadSubmissionFailed": "Unable to load submission",
+    "peerDialogOnly": "This page is available only for platform peer dialog embeds.",
+    "pickerEmbedOnly": "This page is available only for platform iframe embeds with a valid parent origin and scope."
+  },
+  "picker": {
+    "selectAria": "Select {{name}}",
+    "toggleAria": "Toggle {{name}}"
+  },
+  "history": {
+    "badgeForm": "Form",
+    "badgeSession": "Session",
+    "servicePrefix": "Service: {{name}}",
+    "filledBy": "Filled by {{name}}",
+    "statusPrefix": "Status: {{status}}",
+    "eventSessionFallback": "Event session",
+    "submissionTitle": "Form submission",
+    "submissionLoadError": "Unable to load submission.",
+    "filledFor": "Filled for {{name}}",
+    "formCardTitle": "Form",
+    "formCardDescription": "Open the submitted form in a dialog",
+    "formCardSessionDescription": "Session form for this customer visit",
+    "contextTitle": "Context",
+    "contextDescription": "Who filled this form",
+    "subject": "Subject",
+    "filledByLabel": "Filled by",
+    "service": "Service",
+    "submitted": "Submitted",
+    "sessionHistoryTitle": "Session history",
+    "sessionHistoryLoadError": "Unable to load session history.",
+    "tokenDescription": "Token {{label}} · {{date}}",
+    "sessionCardTitle": "Session",
+    "sessionCardDescription": "Occurrence and token for this visit",
+    "date": "Date",
+    "time": "Time",
+    "token": "Token",
+    "status": "Status",
+    "customer": "Customer",
+    "space": "Space",
+    "staffTitle": "Staff",
+    "staffDescription": "Staff member for this session",
+    "staffName": "Name",
+    "viewForm": "View form",
+    "fillForm": "Fill form",
+    "formDialogDescription": "For {{name}}",
+    "formDialogDescriptionWithService": "For {{name}} · {{service}}",
+    "customerFallback": "Customer"
+  }
+}

@@ -1,7 +1,9 @@
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, exhaustMap, filter, map, withLatestFrom } from 'rxjs/operators'
+import { catchError, exhaustMap, filter, map, tap, withLatestFrom } from 'rxjs/operators'
+import { normalizeLocale } from '@webonone/i18n'
 import { isFresh } from '@/shared/store/cacheUtils'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { fetchIdentityUser } from '../services/identityUserApi'
 import { authActions } from './authSlice'
 
@@ -24,6 +26,11 @@ const profileRefreshEpic: AuthEpic = (action$, state$) =>
         state as unknown as { auth: { accessToken: string | null } }
       ).auth.accessToken!
       return from(fetchIdentityUser(accessToken)).pipe(
+        tap((user) => {
+          if (user.locale) {
+            void changeAppLocale(normalizeLocale(user.locale))
+          }
+        }),
         map((user) => authActions.profileFetchSucceeded(user)),
         catchError(() => of(authActions.profileFetchSkipped())),
       )

@@ -1,20 +1,22 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthLayout } from '@webonone/ui-kit'
 import { ForgotPasswordForm } from '../components/ForgotPasswordForm'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const loginLink = withRedirectQuery('/login', searchParams)
 
   return (
     <AuthLayout
-      title="Forgot password"
-      description="We'll send a 4-digit code if the email exists"
+      title={t('forgotPasswordTitle')}
+      description={t('forgotPasswordDescription')}
       variant="minimal"
       footer={
         <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
-          Back to sign in
+          {t('backToSignIn')}
         </Link>
       }
     >

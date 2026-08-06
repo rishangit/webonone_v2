@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
@@ -26,6 +27,7 @@ type EventsListProps = {
 }
 
 export function EventsList({ items, canManage = true, onRemoved }: EventsListProps) {
+  const { t } = useTranslation('calendar')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
@@ -35,7 +37,7 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
   if (items.length === 0) {
     return (
       <ItemListEmpty>
-        {canManage ? 'No events yet. Add an event to get started.' : 'No bookings yet.'}
+        {canManage ? t('emptyEvents') : t('emptyBookings')}
       </ItemListEmpty>
     )
   }
@@ -49,11 +51,11 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
     try {
       await eventsApi.delete(item.id)
       dispatch(eventsActions.deleteSucceeded(item.id))
-      toast({ title: 'Event removed' })
+      toast({ title: t('eventRemoved') })
       onRemoved()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to remove event'
-      toast({ title: 'Failed to remove event', description: message, variant: 'destructive' })
+      const message = err instanceof Error ? err.message : t('eventRemoveFailed')
+      toast({ title: t('eventRemoveFailed'), description: message, variant: 'destructive' })
     } finally {
       setRemovingId(null)
     }
@@ -79,15 +81,19 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
                 <div className="min-w-0 space-y-1">
                   <p className="truncate font-medium text-foreground">{item.serviceName}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    Staff: {item.staffDisplayName}
-                    {item.attendeeDisplayName ? ` · Attendee: ${item.attendeeDisplayName}` : ''}
+                    {t('staffLabel', { name: item.staffDisplayName })}
+                    {item.attendeeDisplayName
+                      ? ` · ${t('attendeeLabel', { name: item.attendeeDisplayName })}`
+                      : ''}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">{formatEventWhen(item)}</p>
                 </div>
               </button>
             </ItemListContent>
-            <ItemListMenu ariaLabel={`Actions for ${item.serviceName}`}>
-              <DropdownMenuItem onSelect={() => openDetails(item.id)}>View details</DropdownMenuItem>
+            <ItemListMenu ariaLabel={t('actionsFor', { name: item.serviceName })}>
+              <DropdownMenuItem onSelect={() => openDetails(item.id)}>
+                {t('viewDetails')}
+              </DropdownMenuItem>
               {canManage ? (
                 <>
                   <DropdownMenuSeparator />
@@ -96,7 +102,7 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
                     onSelect={() => setPendingRemove(item)}
                     className="text-destructive focus:text-destructive"
                   >
-                    {removingId === item.id ? 'Removing…' : 'Remove'}
+                    {removingId === item.id ? t('removing') : t('common:remove')}
                   </DropdownMenuItem>
                 </>
               ) : null}
@@ -107,10 +113,14 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
       {canManage ? (
         <PlatformAlertConfirmDialog
           open={pendingRemove !== null}
-          title={pendingRemove ? `Remove ${pendingRemove.serviceName}?` : 'Remove event?'}
-          description="This action cannot be undone. The event will be permanently removed."
+          title={
+            pendingRemove
+              ? t('removeNamed', { name: pendingRemove.serviceName })
+              : t('removeEvent')
+          }
+          description={t('removeEventConfirm')}
           isAllowedParentOrigin={isAllowedParentOrigin}
-          submitLabel="Remove"
+          submitLabel={t('common:remove')}
           onOpenChange={(open) => {
             if (!open) setPendingRemove(null)
           }}

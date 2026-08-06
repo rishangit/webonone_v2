@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -50,6 +51,7 @@ function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode
 }
 
 export function TemplateDetailsPage() {
+  const { t } = useTranslation('templates')
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { goToList, goToPreview, goToVersions } = useNavigateEmail()
@@ -67,7 +69,7 @@ export function TemplateDetailsPage() {
   }, [dispatch, id])
 
   const template = detail?.id === id ? detail : null
-  usePlatformLoading(!template && detailStatus !== 'error' ? 'Loading template…' : null)
+  usePlatformLoading(!template && detailStatus !== 'error' ? t('loadingTemplate') : null)
 
   useEffect(() => {
     if (!awaitingUpdate || !id) return
@@ -100,7 +102,7 @@ export function TemplateDetailsPage() {
 
   return (
     <FeaturePage
-      title={template?.name ?? 'Template'}
+      title={template?.name ?? t('singular')}
       description="Email template details"
       actions={
         <div className="flex flex-wrap items-center gap-2">

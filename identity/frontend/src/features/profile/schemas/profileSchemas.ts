@@ -1,10 +1,11 @@
 import { z } from 'zod'
+import { normalizeLocale } from '@webonone/i18n'
 
 const phoneNumberSchema = z
   .string()
   .max(32)
   .nullable()
-  .refine((value) => !value || /^\+\d{7,15}$/.test(value), 'Enter a valid phone number with country code')
+  .refine((value) => !value || /^\+\d{7,15}$/.test(value), 'errors.phoneInvalid')
 
 export const PROFILE_WIZARD_TOTAL_STEPS = 5 as const
 
@@ -17,9 +18,9 @@ export function parseProfileWizardStep(raw: string | null | undefined): ProfileW
 }
 
 export const profileSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100),
-  lastName: z.string().min(1, 'Last name is required').max(100),
-  displayName: z.string().min(1, 'Display name is required').max(255),
+  firstName: z.string().min(1, 'errors.firstNameRequired').max(100),
+  lastName: z.string().min(1, 'errors.lastNameRequired').max(100),
+  displayName: z.string().min(1, 'errors.displayNameRequired').max(255),
   phoneNumber: phoneNumberSchema,
   addressLine1: z.string().max(255).nullable(),
   addressLine2: z.string().max(255).nullable(),
@@ -28,8 +29,8 @@ export const profileSchema = z.object({
   postalCode: z.string().max(20).nullable(),
   country: z
     .string()
-    .refine((value) => value === '' || value.length === 2, 'Use a 2-letter country code'),
-  locale: z.string().max(20).nullable(),
+    .refine((value) => value === '' || value.length === 2, 'errors.countryCodeInvalid'),
+  locale: z.enum(['en', 'si']).nullable(),
 })
 
 export type ProfileFormValues = z.infer<typeof profileSchema>
@@ -43,20 +44,20 @@ export const profileWizardAddressSchema = z.object({
   postalCode: z.string().max(20).nullable(),
   country: z
     .string()
-    .refine((value) => value === '' || value.length === 2, 'Use a 2-letter country code'),
+    .refine((value) => value === '' || value.length === 2, 'errors.countryCodeInvalid'),
 })
 
 /** Step 3 — Contact. */
 export const profileWizardContactSchema = z.object({
   phoneNumber: phoneNumberSchema,
-  locale: z.string().max(20).nullable(),
+  locale: z.enum(['en', 'si']).nullable(),
 })
 
 /** Step 4 — Name (required). */
 export const profileWizardNameSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100),
-  lastName: z.string().min(1, 'Last name is required').max(100),
-  displayName: z.string().min(1, 'Display name is required').max(255),
+  firstName: z.string().min(1, 'errors.firstNameRequired').max(100),
+  lastName: z.string().min(1, 'errors.lastNameRequired').max(100),
+  displayName: z.string().min(1, 'errors.displayNameRequired').max(255),
 })
 
 export function userToProfileFormValues(user: {
@@ -83,7 +84,7 @@ export function userToProfileFormValues(user: {
     stateRegion: user.stateRegion,
     postalCode: user.postalCode,
     country: user.country ?? '',
-    locale: user.locale,
+    locale: user.locale ? normalizeLocale(user.locale) : null,
   }
 }
 
@@ -99,6 +100,6 @@ export function profileFormToUpdateInput(values: ProfileFormValues) {
     stateRegion: values.stateRegion || null,
     postalCode: values.postalCode || null,
     country: values.country ? values.country.toUpperCase() : null,
-    locale: values.locale || null,
+    locale: values.locale ? normalizeLocale(values.locale) : null,
   }
 }

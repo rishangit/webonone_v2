@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FeaturePage,
   FullCalendar,
@@ -43,6 +44,7 @@ function rangeForView(anchor: Date, view: FullCalendarView): { from: string; to:
 }
 
 export function CalendarPage() {
+  const { t } = useTranslation('calendar')
   const navigate = useNavigate()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
@@ -89,11 +91,9 @@ export function CalendarPage() {
 
   return (
     <FeaturePage
-      title="Schedule"
+      title={t('schedule')}
       description={
-        canLoadPersonal
-          ? 'View your bookings and session tokens by day, week, or month.'
-          : 'View your company schedule by day, week, or month.'
+        canLoadPersonal ? t('scheduleDescriptionPersonal') : t('scheduleDescriptionCompany')
       }
       className="min-h-full"
     >

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -30,6 +31,7 @@ import { sendSmsSchema, type SendSmsFormValues } from '../schemas/sendSchemas'
 type SendMode = 'template' | 'freeform'
 
 export function SendPage() {
+  const { t } = useTranslation('send')
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const { items: templates, listStatus, listError } = useAppSelector((s) => s.templates)
@@ -48,7 +50,7 @@ export function SendPage() {
   const previewing = previewStatus === 'loading'
   const error = listError ?? sendError ?? previewError
 
-  usePlatformLoading(loading ? 'Loading send form…' : null)
+  usePlatformLoading(loading ? t('loading') : null)
 
   const activeTemplates = useMemo(() => templates.filter((t) => t.isActive), [templates])
   const selectedTemplate = useMemo(
@@ -123,8 +125,8 @@ export function SendPage() {
 
   return (
     <FeaturePage
-      title="Send SMS"
-      description="Compose a one-off SMS using a template or a freeform message."
+      title={t('title')}
+      description={t('description')}
     >
       {error ? (
         <Alert variant="destructive">

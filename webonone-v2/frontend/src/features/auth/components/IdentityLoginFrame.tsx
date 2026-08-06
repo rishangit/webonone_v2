@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@webonone/ui-kit'
 import { broadcastThemeToIframes } from '@webonone/theme'
 import { useIdentityAuthMessage } from '../hooks/useIdentityAuthMessage'
@@ -15,6 +16,7 @@ export function IdentityLoginFrame({
   returnPath = '/',
   websiteReturnUrl = null,
 }: IdentityLoginFrameProps) {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const promptLogin = searchParams.get('prompt') === 'login'
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -45,18 +47,16 @@ export function IdentityLoginFrame({
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col">
       {loadError ? (
         <div className="flex flex-col items-center gap-3 py-12">
-          <p className="text-sm text-muted-foreground">
-            Identity sign-in could not be loaded. Check that Identity is running.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('identityLoadFailed')}</p>
           <Button type="button" onClick={handleRetry}>
-            Retry
+            {t('common:retry')}
           </Button>
         </div>
       ) : null}
       <iframe
         ref={iframeRef}
         key={`${src}:${promptLogin ? 'prompt' : 'default'}`}
-        title="Sign in"
+        title={t('loginTitle')}
         src={src}
         onLoad={handleLoad}
         onError={() => setLoadError(true)}

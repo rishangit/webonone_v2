@@ -49,12 +49,14 @@ function DropdownMenuSubContent({
   ...props
 }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>) {
   return (
-    <DropdownMenuPrimitive.SubContent
-      sideOffset={sideOffset}
-      collisionPadding={8}
-      className={cn(dropdownMenuPanelClassName, 'z-[60]', className)}
-      {...props}
-    />
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.SubContent
+        sideOffset={sideOffset}
+        collisionPadding={8}
+        className={cn(dropdownMenuPanelClassName, 'z-[60]', className)}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
   )
 }
 

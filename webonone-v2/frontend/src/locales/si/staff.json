@@ -1,0 +1,133 @@
+{
+  "list": {
+    "title": "කාර්ය මණ්ඩලය",
+    "description": "සමාගම් කාර්ය මණ්ඩලය සහ ඔවුන්ගේ සතිපතා වැඩ කාලසටහන් කළමනාකරණය කරන්න.",
+    "searchPlaceholder": "කාර්ය මණ්ඩලය සොයන්න…",
+    "searchAria": "කාර්ය මණ්ඩලය සොයන්න",
+    "addStaff": "කාර්ය මණ්ඩලය එකතු කරන්න",
+    "empty": "තවම කාර්ය මණ්ඩලය නැත. ආරම්භ කිරීමට සාමාජිකයෙකු එකතු කරන්න.",
+    "loading": "කාර්ය මණ්ඩලය පූරණය වෙමින්…",
+    "viewDetails": "විස්තර බලන්න",
+    "removeTitle": "කාර්ය මණ්ඩලය ඉවත් කරන්නද?",
+    "removeTitleNamed": "{{name}} ඉවත් කරන්නද?",
+    "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. කාර්ය මණ්ඩල සාමාජිකයා සමාගමෙන් ඉවත් වේ.",
+    "toastRemoved": "කාර්ය මණ්ඩලය ඉවත් කරන ලදී",
+    "toastRemoveFailed": "කාර්ය මණ්ඩලය ඉවත් කිරීම අසාර්ථක විය"
+  },
+  "detail": {
+    "title": "කාර්ය මණ්ඩලය",
+    "description": "කාර්ය මණ්ඩල විස්තර",
+    "pageDescription": "කාර්ය මණ්ඩල සාමාජික විස්තර සහ සතිපතා වැඩ කාලසටහන.",
+    "companySessionRequired": "සමාගම් සැසිය අවශ්‍යයි.",
+    "ariaSections": "කාර්ය මණ්ඩල අංශ",
+    "tabs": {
+      "overview": "දළ විශ්ලේෂණය",
+      "history": "ඉතිහාසය"
+    },
+    "recordTitle": "වාර්තාව",
+    "recordDescription": "කාර්ය මණ්ඩල වාර්තා මෙටාදත්ත",
+    "added": "එකතු කළේ",
+    "updated": "යාවත්කාලීන කළේ",
+    "loading": "කාර්ය මණ්ඩලය පූරණය වෙමින්…"
+  },
+  "userCard": {
+    "title": "පරිශීලක",
+    "description": "සමාගම් කාර්ය මණ්ඩලය ලෙස සම්බන්ධ Identity පරිශීලක",
+    "name": "නම",
+    "email": "විද්‍යුත් තැපෑල"
+  },
+  "scheduleCard": {
+    "title": "වැඩ කාලසටහන",
+    "description": "සතිපතා වැඩ කරන දින සහ පැය",
+    "empty": "වැඩ කරන දින සකසා නැත.",
+    "working": "වැඩ කරයි",
+    "start": "ආරම්භය",
+    "end": "අවසානය",
+    "workingDayAria": "{{day}} වැඩ කරන දිනය"
+  },
+  "wizard": {
+    "steps": {
+      "user": "පරිශීලක",
+      "workSchedule": "වැඩ කාලසටහන",
+      "summary": "සාරාංශය"
+    },
+    "descriptions": {
+      "userCreate": "කාර්ය මණ්ඩලය ලෙස එකතු කිරීමට Identity පරිශීලක තෝරන්න.",
+      "userEdit": "මෙම කාර්ය මණ්ඩල වාර්තාවට සම්බන්ධ Identity පරිශීලක වෙනස් කරන්න.",
+      "schedule": "සෑම දිනකටම වැඩ කරන දින සහ පැය තෝරන්න.",
+      "summaryCreate": "සමාලෝචනය කර කාර්ය මණ්ඩල සාමාජිකයා එකතු කරන්න.",
+      "summaryEdit": "වෙනස්කම් සමාලෝචනය කර සුරකින්න."
+    },
+    "staffMember": "කාර්ය මණ්ඩල සාමාජික",
+    "selectUser": "පරිශීලක තෝරන්න…",
+    "change": "වෙනස් කරන්න",
+    "clear": "හිස් කරන්න",
+    "addStaff": "කාර්ය මණ්ඩලය එකතු කරන්න",
+    "pickerTitle": "කාර්ය මණ්ඩල පරිශීලක තෝරන්න",
+    "pickerDescription": "සමාගම් කාර්ය මණ්ඩලය ලෙස සම්බන්ධ කිරීමට Identity පරිශීලක තෝරන්න.",
+    "emptyUsers": "පරිශීලකයින් හමු නොවීය.",
+    "loading": "කාර්ය මණ්ඩලය පූරණය වෙමින්…",
+    "toastAdded": "කාර්ය මණ්ඩලය එකතු කරන ලදී",
+    "toastSaved": "කාර්ය මණ්ඩලය සුරකින ලදී",
+    "toastAddFailed": "කාර්ය මණ්ඩලය එකතු කිරීම අසාර්ථක විය",
+    "toastSaveFailed": "කාර්ය මණ්ඩලය සුරැකීම අසාර්ථක විය",
+    "failedLoad": "කාර්ය මණ්ඩලය පූරණය අසාර්ථක විය",
+    "noEmail": "විද්‍යුත් තැපෑල නැත",
+    "noWorkingDaysSelected": "වැඩ කරන දින තෝරා නැත.",
+    "noWorkingDaysSummary": "වැඩ කරන දින නැත",
+    "validation": {
+      "selectUser": "පරිශීලකයෙකු තෝරන්න",
+      "selectAtLeastOneWorkingDay": "අවම වශයෙන් වැඩ කරන දිනයක් තෝරන්න",
+      "useHhMm": "HH:mm ආකෘතිය භාවිතා කරන්න",
+      "startTimeRequired": "ආරම්භක වේලාව අවශ්‍යයි",
+      "endTimeRequired": "අවසන් වේලාව අවශ්‍යයි",
+      "endAfterStart": "අවසන් වේලාව ආරම්භක වේලාවට පසුව විය යුතුය"
+    }
+  },
+  "history": {
+    "empty": "තවම සමාගම් ඉතිහාසය නැත.",
+    "unableToLoad": "ඉතිහාසය පූරණය කළ නොහැක",
+    "kindForm": "පෝරමය",
+    "kindSession": "සැසිය",
+    "servicePrefix": "සේවාව: {{name}}",
+    "forSubject": "{{name}} සඳහා",
+    "statusPrefix": "තත්ත්වය: {{status}}",
+    "tokenDetail": {
+      "title": "සැසි ඉතිහාසය",
+      "unableToLoad": "සැසි ඉතිහාසය පූරණය කළ නොහැක.",
+      "loading": "ඉතිහාසය පූරණය වෙමින්…",
+      "sessionTitle": "සැසිය",
+      "sessionDescription": "මෙම සංචාරය සඳහා සිදුවීම සහ ටෝකනය",
+      "service": "සේවාව",
+      "date": "දිනය",
+      "time": "වේලාව",
+      "token": "ටෝකනය",
+      "status": "තත්ත්වය",
+      "customer": "පාරිභෝගිකයා",
+      "space": "අවකාශය",
+      "filledFormsTitle": "පුරවන ලද පෝරම",
+      "filledFormsDescription": "මෙම සිදුවීම් සැසිය සඳහා පුරවන ලද පෝරම",
+      "noForms": "තවම මෙම සැසිය සඳහා පෝරම පුරවා නැත.",
+      "staffTitle": "කාර්ය මණ්ඩලය",
+      "staffDescription": "මෙම සැසිය සඳහා කාර්ය මණ්ඩල සාමාජික",
+      "name": "නම",
+      "noAnswers": "පිළිතුරු වාර්තා කර නැත.",
+      "tokenSubtitle": "ටෝකනය {{label}} · {{date}}"
+    },
+    "submissionDetail": {
+      "title": "පෝරම ඉදිරිපත් කිරීම",
+      "unableToLoad": "ඉදිරිපත් කිරීම පූරණය කළ නොහැක.",
+      "loading": "ඉදිරිපත් කිරීම පූරණය වෙමින්…",
+      "filledFor": "{{name}} සඳහා පුරවන ලදී",
+      "answersTitle": "පිළිතුරු",
+      "answersDescription": "ඉදිරිපත් කළ පෝරම ප්‍රතිචාර",
+      "noAnswers": "පිළිතුරු වාර්තා කර නැත.",
+      "contextTitle": "සන්දර්භය",
+      "contextDescription": "මෙම පෝරමය පුරවූ කවුද",
+      "subject": "විෂය",
+      "filledBy": "පුරවූයේ",
+      "service": "සේවාව",
+      "submitted": "ඉදිරිපත් කළේ"
+    }
+  }
+}

@@ -7,13 +7,16 @@ import {
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { getIdentityApiBase } from '@/features/auth/utils/identityConfig'
 
-export function getWebsiteRedirectUri(path = '/'): string {
+export function getWebsiteRedirectUri(path = '/', search = ''): string {
   if (typeof window !== 'undefined') {
     const origin = window.location.origin.replace(/\/$/, '')
-    if (path === '/' || path === '') {
+    const pathname = path === '/' || path === '' ? '/' : path.startsWith('/') ? path : `/${path}`
+    const qs = search.startsWith('?') ? search.slice(1) : search
+    const withQuery = qs ? `${pathname}?${qs}` : pathname
+    if (withQuery === '/') {
       return `${origin}/`
     }
-    return `${origin}${path.startsWith('/') ? path : `/${path}`}`
+    return `${origin}${withQuery}`
   }
   return 'http://127.0.0.1:3018/'
 }
@@ -32,7 +35,16 @@ export function useWebsiteAuthCodeBootstrap(): AuthCodeBootstrapState {
   const code = searchParams.get('code')
   const isRedirectHandoff = Boolean(code)
 
-  const getRedirectUri = useCallback((path: string) => getWebsiteRedirectUri(path), [])
+  /** Must match the redirectUri used when creating the auth code (full path + search, minus code). */
+  const getRedirectUri = useCallback(
+    (path: string) => {
+      const params = new URLSearchParams(searchParams)
+      params.delete('code')
+      params.delete('state')
+      return getWebsiteRedirectUri(path, params.toString())
+    },
+    [searchParams],
+  )
 
   const onSuccess = useCallback(
     (result: ExchangeAuthCodeResult) => {

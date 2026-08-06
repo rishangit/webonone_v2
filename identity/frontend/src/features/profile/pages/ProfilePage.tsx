@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, Button, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
@@ -20,6 +21,7 @@ import {
 } from '../components/VerifyContactOtpDialog'
 
 export function ProfilePage() {
+  const { t } = useTranslation('profile')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -43,9 +45,9 @@ export function ProfilePage() {
 
   usePlatformLoading(
     isBootstrapping
-      ? 'Loading your profile…'
+      ? t('loadingYourProfile')
       : showProfileLoading
-        ? 'Loading profile…'
+        ? t('loadingProfile')
         : null,
   )
 
@@ -120,12 +122,12 @@ export function ProfilePage() {
   if (bootstrapError) {
     return (
       <FeaturePage
-        title="Profile"
-        description="Your account details."
+        title={t('profile')}
+        description={t('accountDetails')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('back')}
           </Button>
         }
       >
@@ -151,17 +153,17 @@ export function ProfilePage() {
   if (!user) {
     return (
       <FeaturePage
-        title="Profile"
-        description="Your account details."
+        title={t('profile')}
+        description={t('accountDetails')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('back')}
           </Button>
         }
       >
         <Alert variant="destructive">
-          <AlertDescription>{profileError ?? 'Unable to load profile'}</AlertDescription>
+          <AlertDescription>{profileError ?? t('unableToLoadProfile')}</AlertDescription>
         </Alert>
       </FeaturePage>
     )
@@ -169,13 +171,13 @@ export function ProfilePage() {
 
   return (
     <FeaturePage
-      title="Profile"
-      description="Your account details."
+      title={t('profile')}
+      description={t('accountDetails')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('back')}
           </Button>
         </div>
       }
@@ -188,7 +190,7 @@ export function ProfilePage() {
         ) : null}
         {profileSaveSuccess ? (
           <Alert>
-            <AlertDescription>Profile saved successfully.</AlertDescription>
+            <AlertDescription>{t('profileSavedSuccessfully')}</AlertDescription>
           </Alert>
         ) : null}
         <ProfileView
@@ -219,8 +221,8 @@ export function ProfilePage() {
           channel={verifyChannel}
           contactHint={
             verifyChannel === 'email'
-              ? (user.email?.trim() || 'your email')
-              : (user.phoneNumber?.trim() || 'your phone')
+              ? (user.email?.trim() || t('yourEmail'))
+              : (user.phoneNumber?.trim() || t('yourPhone'))
           }
           onOpenChange={(open) => {
             if (!open) setVerifyChannel(null)

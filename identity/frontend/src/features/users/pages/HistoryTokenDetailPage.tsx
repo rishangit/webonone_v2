@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -41,6 +42,7 @@ function formatOccurrenceDate(ymd: string): string {
 }
 
 export function HistoryTokenDetailPage() {
+  const { t } = useTranslation('users')
   const { id: userId, tokenId } = useParams<{ id: string; tokenId: string }>()
   const navigate = useNavigate()
   const [detail, setDetail] = useState<SessionTokenHistoryDetail | null>(null)
@@ -59,7 +61,7 @@ export function HistoryTokenDetailPage() {
 
   const { open: openFormDialog } = useOpenDesignFormDialog(reloadSubmissions)
 
-  usePlatformLoading(loading && !detail ? 'Loading history…' : null)
+  usePlatformLoading(loading && !detail ? t('loadingHistory') : null)
 
   useEffect(() => {
     if (!tokenId) return
@@ -74,7 +76,7 @@ export function HistoryTokenDetailPage() {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load history detail')
+          setError(err instanceof Error ? err.message : t('unableToLoadHistoryDetail'))
         }
       })
       .finally(() => {
@@ -95,12 +97,12 @@ export function HistoryTokenDetailPage() {
   if (error && !detail) {
     return (
       <FeaturePage
-        title="Session history"
-        description="Unable to load session history."
+        title={t('sessionHistory')}
+        description={t('unableToLoadSessionHistory')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={backToUser}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('common:back')}
           </Button>
         }
       >
@@ -152,11 +154,11 @@ export function HistoryTokenDetailPage() {
   return (
     <FeaturePage
       title={detail.serviceName}
-      description={`Token ${detail.tokenLabel} · ${formatOccurrenceDate(detail.occurrenceDate)}`}
+      description={t('tokenPrefix', { label: detail.tokenLabel, date: formatOccurrenceDate(detail.occurrenceDate) })}
       actions={
         <Button type="button" variant="outline" size="sm" onClick={backToUser}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
+          {t('common:back')}
         </Button>
       }
     >
@@ -164,35 +166,35 @@ export function HistoryTokenDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Session</CardTitle>
-              <CardDescription>Occurrence and token for this visit</CardDescription>
+              <CardTitle className="text-lg">{t('session')}</CardTitle>
+              <CardDescription>{t('sessionCardDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DetailField label="Service" value={detail.serviceName} />
-              <DetailField label="Date" value={formatOccurrenceDate(detail.occurrenceDate)} />
-              <DetailField label="Time" value={`${detail.startTime}–${detail.endTime}`} />
-              <DetailField label="Token" value={detail.tokenLabel} />
-              <DetailField label="Status" value={detail.status} />
-              <DetailField label="Customer" value={detail.userDisplayName} />
-              {detail.spaceName ? <DetailField label="Space" value={detail.spaceName} /> : null}
+              <DetailField label={t('service')} value={detail.serviceName} />
+              <DetailField label={t('date')} value={formatOccurrenceDate(detail.occurrenceDate)} />
+              <DetailField label={t('time')} value={`${detail.startTime}–${detail.endTime}`} />
+              <DetailField label={t('token')} value={detail.tokenLabel} />
+              <DetailField label={t('status')} value={detail.status} />
+              <DetailField label={t('customer')} value={detail.userDisplayName} />
+              {detail.spaceName ? <DetailField label={t('space')} value={detail.spaceName} /> : null}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Form</CardTitle>
-              <CardDescription>Session form for this customer visit</CardDescription>
+              <CardTitle className="text-lg">{t('form')}</CardTitle>
+              <CardDescription>{t('formCardDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               {!formTemplateId ? (
-                <ItemListEmpty>No form linked to this service.</ItemListEmpty>
+                <ItemListEmpty>{t('noFormLinked')}</ItemListEmpty>
               ) : primarySubmission ? (
                 <Button type="button" size="sm" variant="outline" onClick={openView}>
-                  View form
+                  {t('viewForm')}
                 </Button>
               ) : (
                 <Button type="button" size="sm" onClick={openFill}>
-                  Fill form
+                  {t('fillForm')}
                 </Button>
               )}
             </CardContent>
@@ -202,11 +204,11 @@ export function HistoryTokenDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Staff</CardTitle>
-              <CardDescription>Staff member for this session</CardDescription>
+              <CardTitle className="text-lg">{t('staff')}</CardTitle>
+              <CardDescription>{t('staffCardDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DetailField label="Name" value={detail.staffDisplayName} />
+              <DetailField label={t('name')} value={detail.staffDisplayName} />
             </CardContent>
           </Card>
         </div>

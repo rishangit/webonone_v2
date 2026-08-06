@@ -7,6 +7,7 @@ export function getWebOnOneOrigin(): string {
 
 /**
  * WebOnOne app login with return to the website.
+ * Always sets `prompt=login` so Identity shows the account chooser (no silent reuse).
  * @param returnPath Absolute path or full URL on the website origin (defaults to `/`).
  */
 export function getWebOnOneLoginUrl(returnPath?: string): string {
@@ -17,6 +18,7 @@ export function getWebOnOneLoginUrl(returnPath?: string): string {
       : `${window.location.origin}${path && path.startsWith('/') ? path : '/'}`
   const url = new URL(`${getWebOnOneOrigin()}/login`)
   url.searchParams.set('return_url', returnUrl)
+  url.searchParams.set('prompt', 'login')
   return url.toString()
 }
 

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import {
@@ -30,6 +31,7 @@ export function CreateCompanyUserForm({
   disabled,
   onSubmit,
 }: CreateCompanyUserFormProps) {
+  const { t } = useTranslation('users')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -65,10 +67,10 @@ export function CreateCompanyUserForm({
       ) : null}
 
       <FormField
-        label="First name"
+        label={t('firstName')}
         htmlFor="create-user-first-name"
         required
-        error={fieldErrors.firstName}
+        error={fieldErrors.firstName ? t(fieldErrors.firstName) : undefined}
       >
         <Input
           id="create-user-first-name"
@@ -80,10 +82,10 @@ export function CreateCompanyUserForm({
       </FormField>
 
       <FormField
-        label="Last name"
+        label={t('lastName')}
         htmlFor="create-user-last-name"
         required
-        error={fieldErrors.lastName}
+        error={fieldErrors.lastName ? t(fieldErrors.lastName) : undefined}
       >
         <Input
           id="create-user-last-name"
@@ -94,7 +96,7 @@ export function CreateCompanyUserForm({
         />
       </FormField>
 
-      <FormField label="Email" htmlFor="create-user-email" error={fieldErrors.email}>
+      <FormField label={t('email')} htmlFor="create-user-email" error={fieldErrors.email ? t(fieldErrors.email) : undefined}>
         <Input
           id="create-user-email"
           type="email"
@@ -102,15 +104,15 @@ export function CreateCompanyUserForm({
           disabled={disabled}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
-          placeholder="Optional"
+          placeholder={t('optional')}
         />
       </FormField>
 
       <FormField
-        label="Phone number"
+        label={t('phoneNumber')}
         htmlFor="create-user-phone"
         required
-        error={fieldErrors.phoneNumber}
+        error={fieldErrors.phoneNumber ? t(fieldErrors.phoneNumber) : undefined}
       >
         <PhoneInput
           id="create-user-phone"

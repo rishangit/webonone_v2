@@ -18,6 +18,7 @@ All packages here use the `@webonone/` scope:
 | `platform-embed/` | `@webonone/platform-embed` | Platform iframe/JWT contract, host-dialog bridge, Identity user-picker frame, shared service auth storage |
 | `media-embed/` | `@webonone/media-embed` | Media iframe embed URL builder + postMessage contract |
 | `theme/` | `@webonone/theme` | System theme CSS variables, URL redirect handoff, embed postMessage |
+| `i18n/` | `@webonone/i18n` | Locale plumbing (`en`/`si`), shared `common` JSON, `lng` query/storage helpers |
 | `store-kit/` | `@webonone/store-kit` | Redux Toolkit slice + redux-observable epics factories for list/detail CRUD (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), cache utils, catalog hooks |
 | *(future)* `event-schemas/` | `@webonone/event-schemas` | Shared event DTO types |
 | *(future)* `api-types/` | `@webonone/api-types` | REST contract types |
@@ -39,7 +40,13 @@ npm run build -w @webonone/platform-nav
 npm run build -w @webonone/platform-embed
 npm run build -w @webonone/media-embed
 npm run build -w @webonone/theme
+npm run build -w @webonone/i18n
 npm run build -w @webonone/store-kit
+```
+
+## i18n
+
+`@webonone/i18n` is shared locale plumbing (not product copy). It ships `common` English/Sinhala packs and helpers (`createAppI18n`, `lng` query, `webonone.locale` storage). Each service frontend adds feature namespaces under `src/locales/{en,si}/` and merges them via `createAppI18n({ resources })`. UI Kit components stay locale-agnostic — apps pass `t(...)` strings as props. Chain `build:i18n` before the frontend build; Vite-alias `@webonone/i18n` to `packages/i18n/src/index.ts` in dev.
 ```
 
 ## Store kit

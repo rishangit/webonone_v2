@@ -1,4 +1,5 @@
 import { User } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { FormField, Input, InputGroup, InputGroupIcon } from '@webonone/ui-kit'
 import type { ProfileFormValues } from '../../schemas/profileSchemas'
 
@@ -15,14 +16,16 @@ export function ProfileWizardStepName({
   isSubmitting,
   onChange,
 }: ProfileWizardStepNameProps) {
+  const { t } = useTranslation('profile')
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
-          label="First name"
+          label={t('firstName')}
           htmlFor="profile-wizard-firstName"
           required
-          error={fieldErrors.firstName}
+          error={fieldErrors.firstName ? t(fieldErrors.firstName) : undefined}
         >
           <InputGroup>
             <InputGroupIcon icon={User} />
@@ -37,10 +40,10 @@ export function ProfileWizardStepName({
           </InputGroup>
         </FormField>
         <FormField
-          label="Last name"
+          label={t('lastName')}
           htmlFor="profile-wizard-lastName"
           required
-          error={fieldErrors.lastName}
+          error={fieldErrors.lastName ? t(fieldErrors.lastName) : undefined}
         >
           <InputGroup>
             <InputGroupIcon icon={User} />
@@ -56,10 +59,10 @@ export function ProfileWizardStepName({
         </FormField>
       </div>
       <FormField
-        label="Display name"
+        label={t('displayName')}
         htmlFor="profile-wizard-displayName"
         required
-        error={fieldErrors.displayName}
+        error={fieldErrors.displayName ? t(fieldErrors.displayName) : undefined}
       >
         <InputGroup>
           <InputGroupIcon icon={User} />

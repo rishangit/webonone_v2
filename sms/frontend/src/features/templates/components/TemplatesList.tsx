@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -22,9 +23,9 @@ interface TemplatesListProps {
   canDelete: boolean
 }
 
-function formatScope(template: SmsTemplate): string {
-  if (template.isDefault) return 'Default'
-  return template.scope === 'platform' ? 'Platform' : 'Company'
+function formatScope(template: SmsTemplate, t: (k: string) => string): string {
+  if (template.isDefault) return t('scopeDefault')
+  return template.scope === 'platform' ? t('scopePlatform') : t('scopeCompany')
 }
 
 function formatDate(iso: string): string {
@@ -39,12 +40,13 @@ export function TemplatesList({
   busyId,
   canDelete,
 }: TemplatesListProps) {
+  const { t } = useTranslation('templates')
   const { goToDetail, goToPreview, goToVersions } = useNavigateSms()
   const items = Array.isArray(templates) ? templates : []
   const [pendingDelete, setPendingDelete] = useState<SmsTemplate | null>(null)
 
   if (items.length === 0) {
-    return <ItemListEmpty>No templates found for your scope.</ItemListEmpty>
+    return <ItemListEmpty>{t('emptyScope')}</ItemListEmpty>
   }
 
   return (
@@ -64,18 +66,18 @@ export function TemplatesList({
                 >
                   <p className="font-medium">{template.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {template.slug} · {formatScope(template)} ·{' '}
-                    {template.isActive ? 'Active' : 'Inactive'} · Updated{' '}
+                    {template.slug} · {formatScope(template, t)} ·{' '}
+                    {template.isActive ? t('active') : t('inactive')} · Updated{' '}
                     {formatDate(template.updatedAt)}
                   </p>
                 </button>
               </ItemListContent>
-              <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
+              <ItemListMenu ariaLabel={t('actionsFor', { name: template.name })}>
                 <DropdownMenuItem onClick={() => goToDetail(template.id)} disabled={isBusy}>
-                  View details
+                  {t('viewDetails')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
-                  {isDefault ? 'Customize' : 'Edit'}
+                  {isDefault ? t('customize') : t('common:edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => goToPreview(template.id)} disabled={isBusy}>
                   Preview

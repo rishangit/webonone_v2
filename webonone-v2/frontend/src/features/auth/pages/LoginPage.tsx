@@ -1,21 +1,28 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { QUERY, parseCoreReturnPath } from '@webonone/platform-nav'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { IdentityLoginFrame } from '../components/IdentityLoginFrame'
 import { WebsiteReturnRedirect } from '../components/WebsiteReturnRedirect'
 import { useIdentitySilentSso } from '../hooks/useIdentitySilentSso'
 import { authActions, clearWebOnOneAuthStorage } from '../store/authSlice'
-import { parseWebsiteReturnUrl } from '../utils/websiteConfig'
-
-const LOGIN_RETURN_PATH = '/'
+import { clearLoginReturnPath, peekLoginReturnPath } from '../utils/loginReturnPath'
+import { resolveWebsiteReturnTarget } from '../utils/websiteConfig'
 
 export function LoginPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const clearedPromptRef = useRef(false)
   const promptLogin = searchParams.get('prompt') === 'login'
-  const websiteReturnUrl = parseWebsiteReturnUrl(searchParams.get('return_url'))
+  const { websiteReturnUrl } = resolveWebsiteReturnTarget(searchParams.get(QUERY.RETURN_URL))
+  const queryReturnPath =
+    parseCoreReturnPath(searchParams.get(QUERY.RETURN_PATH)) ??
+    parseCoreReturnPath(searchParams.get('returnPath'))
+  const coreReturnPath = queryReturnPath ?? peekLoginReturnPath()
+  const returnPath = coreReturnPath ?? '/'
   const { isChecking, iframeSrc } = useIdentitySilentSso()
 
   // Satellite / Identity logout lands on `/login?prompt=login` — clear core JWT so
@@ -31,8 +38,14 @@ export function LoginPage() {
 
   if (accessToken && !promptLogin) {
     if (websiteReturnUrl) {
+      clearLoginReturnPath()
       return <WebsiteReturnRedirect accessToken={accessToken} returnUrl={websiteReturnUrl} />
     }
+    if (coreReturnPath) {
+      clearLoginReturnPath()
+      return <Navigate to={coreReturnPath} replace />
+    }
+    clearLoginReturnPath()
     return <Navigate to="/" replace />
   }
 
@@ -42,14 +55,14 @@ export function LoginPage() {
       <div className="flex h-dvh min-h-0 w-full flex-col items-center justify-center overflow-hidden">
         {iframeSrc ? (
           <iframe
-            title="Identity silent SSO"
+            title={t('silentSsoTitle')}
             src={iframeSrc}
             aria-hidden
             tabIndex={-1}
             className="pointer-events-none fixed h-0 w-0 border-0 opacity-0"
           />
         ) : null}
-        <p className="text-sm text-muted-foreground">Checking session…</p>
+        <p className="text-sm text-muted-foreground">{t('checkingSession')}</p>
       </div>
     )
   }
@@ -57,7 +70,7 @@ export function LoginPage() {
   // No PageShell — Identity iframe owns the auth chrome; avoid double headers.
   return (
     <div className="flex h-dvh min-h-0 w-full flex-col overflow-hidden">
-      <IdentityLoginFrame returnPath={LOGIN_RETURN_PATH} websiteReturnUrl={websiteReturnUrl} />
+      <IdentityLoginFrame returnPath={returnPath} websiteReturnUrl={websiteReturnUrl} />
     </div>
   )
 }

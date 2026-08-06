@@ -1,4 +1,5 @@
 import { Edit3 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Card,
@@ -23,6 +24,7 @@ export function EditableSectionCard({
   onEdit,
   children,
 }: EditableSectionCardProps) {
+  const { t } = useTranslation('profile')
   return (
     <Card className="group">
       <CardHeader>
@@ -38,7 +40,7 @@ export function EditableSectionCard({
               size="icon"
               className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
               onClick={onEdit}
-              aria-label={`Edit ${title}`}
+              aria-label={t('editSection', { title })}
             >
               <Edit3 className="h-4 w-4" aria-hidden />
             </Button>

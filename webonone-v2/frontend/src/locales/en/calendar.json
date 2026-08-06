@@ -1,0 +1,327 @@
+{
+  "schedule": {
+    "title": "Schedule",
+    "descriptionMember": "View your bookings and session tokens by day, week, or month.",
+    "descriptionAdmin": "View your company schedule by day, week, or month."
+  },
+  "events": {
+    "title": "Events",
+    "descriptionMember": "Your bookings and session tokens.",
+    "descriptionAdmin": "Manage company calendar events.",
+    "searchPlaceholder": "Search events…",
+    "searchAria": "Search events",
+    "addEvent": "Add event",
+    "loading": "Loading events…",
+    "emptyAdmin": "No events yet. Add an event to get started.",
+    "emptyMember": "No bookings yet.",
+    "viewDetails": "View details",
+    "remove": "Remove",
+    "removing": "Removing…",
+    "removeTitle": "Remove event?",
+    "removeTitleNamed": "Remove {{name}}?",
+    "removeDescription": "This action cannot be undone. The event will be permanently removed.",
+    "toastRemoved": "Event removed",
+    "toastRemoveFailed": "Failed to remove event"
+  },
+  "eventDetail": {
+    "title": "Event",
+    "description": "Event details",
+    "pageDescription": "Company calendar event details.",
+    "ariaSections": "Event sections",
+    "tabs": {
+      "overview": "Overview",
+      "sessions": "Sessions"
+    },
+    "loading": "Loading event…",
+    "service": {
+      "title": "Service",
+      "description": "Catalog service for this event",
+      "name": "Name",
+      "timeMode": "Time mode"
+    },
+    "when": {
+      "title": "When",
+      "descriptionDuration": "Date, start time, and optional recurrence",
+      "descriptionWindow": "Weekdays, date range, and times",
+      "schedule": "Schedule",
+      "date": "Date",
+      "from": "From",
+      "until": "Until",
+      "time": "Time",
+      "weekdays": "Weekdays"
+    },
+    "staff": {
+      "title": "Staff",
+      "description": "Staff member delivering the service",
+      "name": "Name"
+    },
+    "where": {
+      "title": "Where",
+      "description": "Space where this event happens",
+      "space": "Space"
+    },
+    "attendee": {
+      "title": "Attendee",
+      "description": "Identity user attending this event",
+      "name": "Name",
+      "email": "Email"
+    },
+    "forms": {
+      "title": "Forms",
+      "description": "Design form linked to this event's service",
+      "linkedForm": "Linked form",
+      "openForm": "Open form",
+      "noneLinked": "No form linked to this service. Link a form on the service catalog page."
+    },
+    "record": {
+      "title": "Record",
+      "description": "Event record metadata",
+      "created": "Created",
+      "updated": "Updated"
+    }
+  },
+  "sessionsList": {
+    "emptyMember": "No sessions with a token for your account.",
+    "emptyAdmin": "No sessions in this event's date range."
+  },
+  "timing": {
+    "current": "Current",
+    "ended": "Ended",
+    "minutes": "{{count}} min",
+    "oneHour": "1 hour",
+    "hours": "{{count}} hours",
+    "oneDay": "1 day",
+    "days": "{{count}} days"
+  },
+  "timeMode": {
+    "specificTime": "Specific time",
+    "duration": "Duration",
+    "specificTimeRange": "Specific time · {{start}}–{{end}}",
+    "durationMinutes": "Duration · {{minutes}} min"
+  },
+  "recurrence": {
+    "singleEvent": "Single event",
+    "everyWeek": "Every week",
+    "everyWeekOn": "Every week on {{days}}",
+    "everyTwoWeeks": "Every 2 weeks",
+    "everyTwoWeeksOn": "Every 2 weeks on {{day}}",
+    "everyMonthFirstWeek": "Every month (first week)",
+    "everyMonthFirstWeekOn": "Every month (first week {{day}})",
+    "everyMonthOnDay": "Every month on day of month",
+    "everyMonthOnOrdinal": "Every month on the {{ordinal}}",
+    "singleSummary": "Single · {{date}} · {{time}}"
+  },
+  "wizard": {
+    "stepsDuration": {
+      "service": "Service",
+      "staff": "Staff",
+      "attendee": "Attendee",
+      "when": "When",
+      "summary": "Summary"
+    },
+    "stepsWindow": {
+      "service": "Service",
+      "staff": "Staff",
+      "where": "Where",
+      "when": "When",
+      "summary": "Summary"
+    },
+    "descriptionsDuration": {
+      "service": "Select the company service for this event.",
+      "staff": "Choose which staff member will deliver the service.",
+      "attendee": "Select the Identity user attending this event.",
+      "when": "Pick the date and start time; optionally repeat weekly, biweekly, or monthly.",
+      "summaryCreate": "Review and create the event.",
+      "summaryEdit": "Review and save changes."
+    },
+    "descriptionsWindow": {
+      "service": "Select the company service for this event.",
+      "staff": "Choose which staff member will deliver the service.",
+      "where": "Choose the space where this Specific time event happens.",
+      "when": "Select working weekdays and the From–Until range (service time is fixed).",
+      "summaryCreate": "Review and create the event.",
+      "summaryEdit": "Review and save changes."
+    },
+    "createEvent": "Create event",
+    "toastCreated": "Event created",
+    "toastSaved": "Event saved",
+    "toastCreateFailed": "Failed to create event",
+    "toastSaveFailed": "Failed to save event",
+    "failedLoadWizard": "Failed to load wizard data",
+    "selectStaffFirst": "Select a staff member first",
+    "serviceHint": "Choose a company catalog service for this event.",
+    "selectService": "Select service",
+    "change": "Change",
+    "attendeeHint": "Select the Identity user attending this event.",
+    "selectAttendee": "Select attendee",
+    "whereHint": "Choose the space where this Specific time event happens.",
+    "selectSpace": "Select space",
+    "searchStaffPlaceholder": "Search staff…",
+    "searchStaffAria": "Search staff",
+    "selectStaffAria": "Select {{name}}",
+    "pickers": {
+      "serviceTitle": "Select service",
+      "serviceDescription": "Choose a company catalog service for this event.",
+      "serviceEmpty": "No services found. Add a company service first.",
+      "spaceTitle": "Select space",
+      "spaceDescription": "Choose the company space where this event happens.",
+      "spaceSearch": "Search spaces…",
+      "spaceEmpty": "No spaces found. Add a company space first.",
+      "attendeeTitle": "Select attendee",
+      "attendeeDescription": "Choose an Identity user for this event.",
+      "attendeeEmpty": "No users found."
+    },
+    "whenFields": {
+      "date": "Date",
+      "startTime": "Start time",
+      "selectDate": "Select date",
+      "repeat": "Repeat this event",
+      "frequency": "Frequency",
+      "selectFrequency": "Select frequency",
+      "everyWeek": "Every week",
+      "everyTwoWeeks": "Every two weeks",
+      "everyMonthFirstWeek": "Every month (first week)",
+      "until": "Until",
+      "seriesEnd": "Series end",
+      "seriesStart": "Series start",
+      "from": "From",
+      "workingDays": "Working days",
+      "workingDaysHint": "Choose which of this staff member's working weekdays the event repeats on.",
+      "noWorkingDays": "This staff member has no working days set.",
+      "staffNotWorking": "Staff is not working on this date.",
+      "serviceTime": "Service time",
+      "occurrencesOn": "Occurrences run on {{days}}",
+      "selectedDays": "selected days"
+    },
+    "summary": {
+      "service": "Service",
+      "timeMode": "Time mode",
+      "staff": "Staff",
+      "attendee": "Attendee",
+      "where": "Where",
+      "schedule": "Schedule",
+      "weekdays": "Weekdays",
+      "date": "Date",
+      "range": "Range",
+      "time": "Time"
+    },
+    "validation": {
+      "selectService": "Select a service",
+      "selectStaff": "Select a staff member",
+      "selectAttendee": "Select an attendee",
+      "selectSpace": "Select a space",
+      "selectAtLeastOneWeekday": "Select at least one weekday",
+      "endDateOnOrAfterStart": "End date must be on or after the start date",
+      "weekdaysMustBeWorkingDays": "Selected weekdays must be staff working days",
+      "dateMustBeWorkingDay": "Selected date must be a staff working day",
+      "endDateRequired": "End date is required",
+      "useHhMm": "Use HH:mm format",
+      "useYyyyMmDd": "Use YYYY-MM-DD format",
+      "incompleteForm": "Incomplete event form",
+      "selectWeekdaysAndEndDate": "Select weekdays and an end date",
+      "selectSpaceForWindow": "Select a space for this Specific time event"
+    }
+  },
+  "session": {
+    "title": "Session",
+    "description": "Session details",
+    "subtitle": "{{serviceName}} session",
+    "loading": "Loading session…",
+    "status": {
+      "scheduled": "Scheduled",
+      "started": "Started",
+      "ended": "Ended"
+    },
+    "tokenStatus": {
+      "waiting": "Waiting",
+      "serving": "Serving",
+      "completed": "Completed"
+    },
+    "attendee": "Attendee",
+    "email": "Email",
+    "statusLabel": "Status",
+    "formSubmitted": "Form submitted",
+    "fillForm": "Fill form",
+    "viewForm": "View form",
+    "customerFallback": "Customer",
+    "tokens": {
+      "title": "Tokens",
+      "description": "Queue tokens issued for users at this session",
+      "issueNew": "Issue new token",
+      "emptyPersonal": "No token for your account yet.",
+      "emptyAdmin": "No tokens issued yet.",
+      "noEmail": "No email"
+    },
+    "controls": {
+      "titleDuration": "Session controls",
+      "titleQueue": "Session queue",
+      "descriptionDuration": "Start or end this appointment session",
+      "descriptionQueue": "Start the session and move through tokens",
+      "start": "Start session",
+      "end": "End session",
+      "prev": "Prev",
+      "current": "Current",
+      "next": "Next",
+      "inProgress": "Session is in progress for the assigned attendee.",
+      "hasEnded": "This session has ended."
+    },
+    "fields": {
+      "date": "Date",
+      "weekday": "Weekday",
+      "time": "Time",
+      "name": "Name",
+      "timeMode": "Time mode"
+    },
+    "sideCards": {
+      "service": "Service",
+      "staff": "Staff",
+      "attendee": "Attendee"
+    },
+    "forms": {
+      "fillTitle": "Fill form",
+      "viewTitle": "View form",
+      "forSubject": "For {{name}}",
+      "forSubjectService": "For {{name}} · {{service}}",
+      "toastSubmitted": "Form submitted",
+      "toastSaved": "Form saved",
+      "toastSavedFor": "Saved for {{name}}."
+    },
+    "toasts": {
+      "started": "Session started",
+      "nextCalled": "Next token called",
+      "previousCalled": "Moved to previous token",
+      "ended": "Session ended",
+      "startFailed": "Failed to start session",
+      "callNextFailed": "Failed to call next token",
+      "callPreviousFailed": "Failed to call previous token",
+      "endFailed": "Failed to end session",
+      "actionFailed": "Session action failed"
+    },
+    "errors": {
+      "loadTokens": "Failed to load tokens",
+      "issueToken": "Failed to issue token",
+      "startSession": "Failed to start session",
+      "callNext": "Failed to call next token",
+      "callPrevious": "Failed to call previous token",
+      "endSession": "Failed to end session"
+    }
+  },
+  "issueToken": {
+    "title": "Issue token",
+    "description": "Assign the next queue token to an Identity user.",
+    "tokenNumber": "Token number",
+    "assignHint": "Assign an Identity user. New users are added to company customers.",
+    "assignUser": "Assign user",
+    "change": "Change",
+    "issuing": "Issuing…",
+    "issue": "Issue token",
+    "selectUserError": "Select a user to assign this token",
+    "companySessionRequired": "Company session required",
+    "pickerTitle": "Select user",
+    "pickerDescription": "Choose an Identity user for this token.",
+    "emptyUsers": "No users found.",
+    "toastIssued": "Token issued",
+    "toastIssueFailed": "Failed to issue token",
+    "toastAddCustomerFailed": "Failed to add company user"
+  }
+}
