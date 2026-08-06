@@ -1,6 +1,6 @@
 # Host Website on IIS — manual steps
 
-Host **www.webonone.com** with IIS physical path set to **`website\deploy`**.
+Host **webonone.com** (canonical) with IIS physical path set to **`website\deploy`**. Also bind **www.webonone.com** so it can **301** to the apex HTTPS URL.
 
 Run **`npm run deploy:website`** when you are ready to publish. That builds the app and stages output into `website\deploy\`. Normal development (`npm run dev:website`) and compile-only builds (`npm run build:website`) do **not** touch this folder.
 
@@ -40,8 +40,11 @@ On the Windows Server:
 
 ## Step 2 — DNS and certificate
 
-1. Add DNS record: **www.webonone.com** → server IP (`A` or `CNAME`)
-2. In IIS, have a TLS certificate that covers **www.webonone.com** (or `*.webonone.com` / apex as needed)
+1. Add DNS records:
+   - **webonone.com** → server IP (`A`)
+   - **www.webonone.com** → `webonone.com` (`CNAME`) or the same IP (`A`)
+2. In IIS, use a TLS certificate that covers **both** `webonone.com` and `www.webonone.com` (or issue with win-acme after both HTTP bindings exist)
+3. `web.config` permanently redirects `http://*` and `https://www.webonone.com` → `https://webonone.com/...` (ACME challenge path is excluded)
 
 ---
 
@@ -119,8 +122,14 @@ npm run clean:deploy
 2. Right-click **Sites** → **Add Website**
 3. **Site name:** `Website`
 4. **Physical path:** `C:\Projects\webonone_v2\website\deploy`
-5. **Binding:** Type `https`, Host name `www.webonone.com`, select your certificate
+5. **Bindings** (add all four):
+   - Type `http`, Host name `webonone.com`
+   - Type `http`, Host name `www.webonone.com`
+   - Type `https`, Host name `webonone.com`, select certificate covering apex
+   - Type `https`, Host name `www.webonone.com`, select certificate covering www
 6. Click **OK**
+
+Canonical public URL is **`https://webonone.com`**. Set `ORIGIN_WEBSITE=https://webonone.com` in root `production.env` (and include apex in `ALLOWED_REDIRECT_URIS`).
 
 ### Application pool
 
@@ -144,8 +153,11 @@ The app pool also needs **Write** on `website\deploy\logs`.
 
 | URL | Expected |
 |-----|----------|
-| `https://www.webonone.com/api/v1/health` | `{"status":"ok","service":"website",...}` |
-| `https://www.webonone.com/` | Public marketing UI loads |
+| `http://www.webonone.com/` | **301** → `https://webonone.com/` |
+| `http://webonone.com/` | **301** → `https://webonone.com/` |
+| `https://www.webonone.com/` | **301** → `https://webonone.com/` |
+| `https://webonone.com/api/v1/health` | `{"status":"ok","service":"website",...}` |
+| `https://webonone.com/` | Public marketing UI loads |
 | Catalog search | Returns results when WebOnOne is up and keys match |
 
 If the site fails, check `website\deploy\logs\` for Node errors.

@@ -40,6 +40,14 @@ describe('matchesRedirectUri', () => {
     assert.equal(matchesRedirectUri('javascript:alert(1)', productionPatterns), false)
   })
 
+  it('matches any path on an origin-only apex pattern', () => {
+    const patterns = parseAllowlistPatterns('https://*.webonone.com,https://webonone.com')
+    assert.equal(matchesRedirectUri('https://webonone.com/', patterns), true)
+    assert.equal(matchesRedirectUri('https://webonone.com/callback', patterns), true)
+    assert.equal(matchesRedirectUri('http://webonone.com/callback', patterns), false)
+    assert.equal(matchesRedirectUri('https://www.webonone.com/callback', patterns), true)
+  })
+
   it('matches localhost and 127.0.0.1 via either loopback pattern', () => {
     assert.equal(matchesRedirectUri('http://localhost:3010/callback', devPatterns), true)
     assert.equal(matchesRedirectUri('http://localhost:3011/profile', devPatterns), true)

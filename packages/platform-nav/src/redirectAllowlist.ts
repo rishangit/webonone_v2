@@ -117,7 +117,24 @@ function matchesExactUri(uri: URL, pattern: string): boolean {
     return false
   }
 
-  return uri.href === patternUri.href
+  if (uri.href === patternUri.href) {
+    return true
+  }
+
+  // Origin-only patterns (`https://example.com` or `…/`) match any path on that origin.
+  const isOriginOnly =
+    (patternUri.pathname === '/' || patternUri.pathname === '') &&
+    !patternUri.search &&
+    !patternUri.hash
+  if (!isOriginOnly) {
+    return false
+  }
+
+  return (
+    uri.protocol === patternUri.protocol &&
+    uri.hostname === patternUri.hostname &&
+    uri.port === patternUri.port
+  )
 }
 
 function matchesPatternUri(uri: URL, pattern: string): boolean {

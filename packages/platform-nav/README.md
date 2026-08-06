@@ -40,14 +40,15 @@ import {
 | Pattern | Matches |
 |---------|---------|
 | `https://app.webonone.com/callback` | Exact URI (legacy) |
-| `https://*.webonone.com` | Any `https` subdomain, any path |
+| `https://*.webonone.com` | Any `https` subdomain, any path (does **not** match apex) |
+| `https://webonone.com` | Apex origin only — any path (pair with the wildcard above) |
 | `http://localhost:*` | Any localhost port, any path (local dev) |
 
 Production example (backend and Identity frontend — keep in sync):
 
 ```env
-ALLOWED_REDIRECT_URIS=https://*.webonone.com
-VITE_ALLOWED_REDIRECT_URIS=https://*.webonone.com
+ALLOWED_REDIRECT_URIS=https://*.webonone.com,https://webonone.com
+VITE_ALLOWED_REDIRECT_URIS=https://*.webonone.com,https://webonone.com
 ```
 
 Consumer apps only need `VITE_IDENTITY_ORIGIN`; callback URLs use `window.location.origin + '/callback'`.
