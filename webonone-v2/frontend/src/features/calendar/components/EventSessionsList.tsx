@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ItemList,
   ItemListContent,
@@ -10,20 +11,12 @@ import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 import type { CompanyEvent } from '@/features/calendar/types/event.types'
 import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOccurrences'
 import { formatSessionTimingLabel } from '@/features/calendar/utils/formatSessionTimingLabel'
+import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
 
 type EventSessionsListProps = {
   event: CompanyEvent
   /** When true, only list window sessions where the user has a token. */
   personalOnly?: boolean
-}
-
-function formatOccurrenceDate(ymd: string): string {
-  const date = new Date(`${ymd}T12:00:00`)
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
 }
 
 function weekdayLabel(ymd: string): string {
@@ -32,6 +25,7 @@ function weekdayLabel(ymd: string): string {
 }
 
 export function EventSessionsList({ event, personalOnly = false }: EventSessionsListProps) {
+  const { t, i18n } = useTranslation('calendar')
   const navigate = useNavigate()
   const allSessions = expandEventOccurrences(event)
   const tokenDates = event.tokenOccurrenceDates
@@ -52,8 +46,8 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
     return (
       <ItemListEmpty>
         {personalOnly && event.timeMode === 'window'
-          ? 'No sessions with a token for your account.'
-          : 'No sessions in this event\u2019s date range.'}
+          ? t('noSessionsWithToken')
+          : t('noSessionsInRange')}
       </ItemListEmpty>
     )
   }
@@ -81,7 +75,11 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
               >
                 <div className="min-w-0 space-y-1">
                   <p className="truncate font-medium text-foreground">
-                    {formatOccurrenceDate(session.occurrenceDate)}
+                    {formatLocaleDate(
+                      `${session.occurrenceDate}T12:00:00`,
+                      { year: 'numeric', month: 'short', day: 'numeric' },
+                      i18n.language,
+                    )}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {weekdayLabel(session.occurrenceDate)} · {session.startTime}–

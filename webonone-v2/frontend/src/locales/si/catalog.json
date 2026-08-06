@@ -1,0 +1,287 @@
+{
+  "entities": {
+    "tags": "ටැග්",
+    "units": "ඒකක",
+    "attributes": "ගුණාංග",
+    "products": "නිෂ්පාදන",
+    "services": "සේවා",
+    "spaces": "අවකාශ",
+    "tag": "ටැගය",
+    "unit": "ඒකකය",
+    "attribute": "ගුණාංගය",
+    "product": "නිෂ්පාදනය",
+    "service": "සේවාව",
+    "space": "අවකාශය"
+  },
+  "binding": {
+    "linked": "සම්බන්ධිත",
+    "forked": "අභිරුචිකරණය",
+    "custom": "සමාගම"
+  },
+  "list": {
+    "description": "සමාගම් {{entity}} — දත්ත පුස්තකාලයෙන් සම්බන්ධ කරන්න, විස්තර පිටුවේ අභිරුචිකරණය කරන්න, හෝ ඔබේම එකක් සාදන්න.",
+    "searchPlaceholder": "{{entity}} සොයන්න",
+    "searchAria": "{{entity}} සොයන්න",
+    "add": "{{noun}} එකතු කරන්න",
+    "emptySearch": "ඔබේ සෙවුමට ගැලපෙන {{entity}} නැත.",
+    "empty": "තවම සමාගම් {{entity}} නැත.",
+    "loading": "{{entity}} පූරණය වෙමින්…",
+    "remove": "ඉවත් කරන්න",
+    "removeTitle": "{{noun}} ඉවත් කරන්නද?",
+    "removeTitleNamed": "{{name}} ඉවත් කරන්නද?",
+    "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. අයිතමය ඔබේ සමාගම් නාමාවලියෙන් ඉවත් වේ."
+  },
+  "detail": {
+    "notFoundTitle": "හමු නොවීය",
+    "notFoundDescription": "නොදන්නා නාමාවලි වර්ගය.",
+    "pageDescription": "සමාගම් {{noun}} විස්තර.",
+    "linkedHint": "දත්ත පුස්තකාලයට සජීවී සම්බන්ධතාව. සමාගම් හිමි පිටපතක් තබා ගැනීමට අභිරුචිකරණය කරන්න.",
+    "customize": "අභිරුචිකරණය",
+    "remove": "ඉවත් කරන්න",
+    "ariaSections": "{{noun}} අංශ",
+    "loading": "{{noun}} පූරණය වෙමින්…",
+    "tabs": {
+      "overview": "දළ විශ්ලේෂණය",
+      "gallery": "ගැලරිය",
+      "attributes": "ගුණාංග",
+      "variants": "ප්‍රභේද"
+    },
+    "serviceBasics": {
+      "title": "සේවාව",
+      "description": "නම සහ විස්තරය"
+    },
+    "entityBasics": {
+      "description": "නම සහ විස්තරය"
+    },
+    "time": {
+      "title": "වේලාව",
+      "description": "මෙම සේවාව කාලසටහන්ගත වන ආකාරය",
+      "timeMode": "කාල ප්‍රකාරය",
+      "duration": "කාල සීමාව",
+      "startTime": "ආරම්භක වේලාව",
+      "endTime": "අවසන් වේලාව"
+    },
+    "tags": {
+      "title": "ටැග්",
+      "description": "මෙම සේවාවට සම්බන්ධ ලේබල",
+      "descriptionEntity": "මෙම {{noun}} වෙත සම්බන්ධ ලේබල",
+      "empty": "ටැග් නැත."
+    },
+    "form": {
+      "title": "පෝරමය",
+      "description": "මෙම සේවාවට සම්බන්ධ නිර්මාණ පෝරමය",
+      "linkedForm": "සම්බන්ධිත පෝරමය",
+      "none": "කිසිවක් නැත"
+    },
+    "removeTitleNamed": "{{name}} ඉවත් කරන්නද?",
+    "removeTitleNoun": "{{noun}} ඉවත් කරන්නද?",
+    "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. අයිතමය ඔබේ සමාගම් නාමාවලියෙන් ඉවත් වේ."
+  },
+  "source": {
+    "addFromLibrary": "පුස්තකාලයෙන් එකතු කරන්න",
+    "createNew": "නව එකක් සාදන්න",
+    "createNewHint": "පුස්තකාලයට සම්බන්ධ නොවන සමාගම් හිමි {{noun}} සාදන්න."
+  },
+  "formDialog": {
+    "addFromLibraryTitle": "පුස්තකාලයෙන් {{entity}} එකතු කරන්න",
+    "addNoun": "{{noun}} එකතු කරන්න",
+    "createCompanyNoun": "සමාගම් {{noun}} සාදන්න",
+    "editCompanyNoun": "සමාගම් {{noun}} සංස්කරණය",
+    "ownedByCompany": "ඔබේ සමාගමට අයත් {{entity}}.",
+    "fields": {
+      "name": "නම",
+      "description": "විස්තරය",
+      "color": "වර්ණය",
+      "symbol": "සංකේතය"
+    }
+  },
+  "serviceWizard": {
+    "titles": {
+      "addFromLibrary": "පුස්තකාලයෙන් සේවා එකතු කරන්න",
+      "addService": "සේවාව එකතු කරන්න",
+      "createService": "සේවාව සාදන්න",
+      "editService": "සේවාව සංස්කරණය"
+    },
+    "libraryDescription": "ඔබේ සමාගමට සම්බන්ධ කිරීමට පුස්තකාල සේවාවක් තෝරන්න. පසුව සේවා විස්තර පිටුවෙන් අභිරුචිකරණය කළ හැක.",
+    "sourceDescription": "මෙම සේවාව එකතු කරන ආකාරය තෝරන්න.",
+    "steps": {
+      "basics": "මූලික",
+      "time": "වේලාව",
+      "tags": "ටැග්",
+      "attributes": "ගුණාංග",
+      "summary": "සාරාංශය"
+    },
+    "descriptions": {
+      "basics": "මෙම සේවාව නම් කර විස්තර කරන්න.",
+      "time": "මෙම සේවාව කාලසටහන්ගත වන ආකාරය තෝරන්න.",
+      "tags": "විකල්පයක් ලෙස ටැග් සමඟ මෙම සේවාව ලේබල් කරන්න.",
+      "attributes": "විකල්පයක් ලෙස අභිරුචි ගුණාංග අගයන් එකතු කරන්න.",
+      "summary": "සුරැකීමට පෙර ඔබේ විස්තර සමාලෝචනය කරන්න."
+    },
+    "createService": "සේවාව සාදන්න",
+    "fields": {
+      "name": "නම",
+      "description": "විස්තරය",
+      "status": "තත්ත්වය",
+      "unverified": "තහවුරු නොකළ",
+      "verified": "තහවුරු කළ",
+      "time": "වේලාව",
+      "duration": "කාල සීමාව",
+      "specificTime": "නිශ්චිත වේලාව",
+      "durationMinutes": "කාල සීමාව (මිනිත්තු)",
+      "startTime": "ආරම්භක වේලාව",
+      "endTime": "අවසන් වේලාව",
+      "tags": "ටැග්",
+      "chooseTags": "ටැග් තෝරන්න",
+      "openTagPickerAria": "දත්ත ටැග් තෝරකය විවෘත කරන්න"
+    },
+    "attributes": {
+      "addAttribute": "ගුණාංගය එකතු කරන්න",
+      "optionalHint": "විකල්ප. මෙම සේවාව සඳහා අභිරුචි ගුණාංග අගයන් එකතු කරන්න.",
+      "attributePlaceholder": "ගුණාංගය",
+      "valuePlaceholder": "අගය",
+      "remove": "ඉවත් කරන්න"
+    },
+    "summary": {
+      "noDescription": "විස්තරයක් නැත",
+      "status": "තත්ත්වය",
+      "timeMode": "කාල ප්‍රකාරය",
+      "time": "වේලාව",
+      "tags": "ටැග්",
+      "noAttributes": "ගුණාංග නැත"
+    },
+    "tagsDialog": {
+      "selectTitle": "ටැග් තෝරන්න",
+      "selectDescription": "එකක් හෝ කිහිපයක් තෝරා Done ක්ලික් කරන්න.",
+      "addTitle": "නව ටැගයක් එකතු කරන්න",
+      "addDescription": "ටැගයක් සාදන්න, පසුව එය තෝරකයේ ස්වයංක්‍රීයව තෝරා ගනු ලැබේ."
+    },
+    "validation": {
+      "nameRequired": "නම අවශ්‍යයි",
+      "timeModeRequired": "කාල ප්‍රකාරය අවශ්‍යයි",
+      "durationRequired": "කාල සීමාව (මිනිත්තු) අවශ්‍යයි",
+      "startTimeRequired": "ආරම්භක වේලාව අවශ්‍යයි",
+      "endTimeRequired": "අවසන් වේලාව අවශ්‍යයි",
+      "endAfterStart": "අවසන් වේලාව ආරම්භක වේලාවට පසුව විය යුතුය",
+      "timeHhMm": "වේලාව HH:mm විය යුතුය"
+    }
+  },
+  "library": {
+    "searchPlaceholder": "{{entity}} සොයන්න…",
+    "searchAria": "{{entity}} සොයන්න",
+    "addToLibrary": "පුස්තකාලයට {{noun}} එකතු කරන්න",
+    "addToLibraryTitle": "පුස්තකාලයට {{noun}} එකතු කරන්න",
+    "addToLibraryDescription": "දත්ත පුස්තකාලයේ නව {{noun}} සාදා ඔබේ සමාගම සඳහා තෝරන්න.",
+    "loading": "පුස්තකාලය පූරණය වෙමින්…",
+    "empty": "පුස්තකාල {{noun}} ලබා ගත නොහැක.",
+    "selectAria": "{{name}} තෝරන්න"
+  },
+  "gallery": {
+    "addImages": "රූප එකතු කරන්න",
+    "addGalleryImages": "ගැලරි රූප එකතු කරන්න",
+    "addTitle": "{{noun}} ගැලරි රූප එකතු කරන්න",
+    "empty": "තවම ගැලරි රූප නැත",
+    "removeAria": "ගැලරි රූපය ඉවත් කරන්න",
+    "removeTitle": "ගැලරි රූපය ඉවත් කරන්නද?",
+    "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. රූපය මෙම {{noun}} ගැලරියෙන් ඉවත් වේ."
+  },
+  "attributesTab": {
+    "loading": "ගුණාංග පූරණය වෙමින්…",
+    "empty": "තවම ගුණාංග සම්බන්ධ කර නැත.",
+    "failedLoad": "ගුණාංග පූරණය අසාර්ථක විය"
+  },
+  "variantsTab": {
+    "noLibraryProduct": "පුස්තකාල නිෂ්පාදනයක් සම්බන්ධ කර නැත. සම්බන්ධිත හෝ අභිරුචිකරණය කළ නිෂ්පාදන සඳහා ප්‍රභේද දත්ත පුස්තකාලයේ කළමනාකරණය වේ.",
+    "loading": "ප්‍රභේද පූරණය වෙමින්…",
+    "empty": "මෙම නිෂ්පාදනය සඳහා පුස්තකාලයේ ප්‍රභේද නැත.",
+    "failedLoad": "ප්‍රභේද පූරණය අසාර්ථක විය"
+  },
+  "variantDetail": {
+    "titleFallback": "ප්‍රභේදය",
+    "description": "නිෂ්පාදන ප්‍රභේද විස්තර",
+    "loading": "ප්‍රභේදය පූරණය වෙමින්…",
+    "failedLoad": "ප්‍රභේදය පූරණය අසාර්ථක විය",
+    "variantCard": {
+      "title": "ප්‍රභේදය",
+      "description": "නම, පෙරනිමි ධජය සහ SKU",
+      "default": "පෙරනිමි",
+      "sku": "SKU"
+    },
+    "attributeValues": {
+      "title": "ගුණාංග අගයන්",
+      "description": "මෙම SKU අර්ථ දක්වන අගයන්",
+      "empty": "ගුණාංග අගයන් නැත."
+    },
+    "created": "සාදන ලදී",
+    "updated": "යාවත්කාලීන කළේ"
+  },
+  "stocks": {
+    "title": "තොග",
+    "addStock": "තොග එකතු කරන්න",
+    "loading": "තොග පූරණය වෙමින්…",
+    "empty": "තවම තොග කණ්ඩායම් නැත. ආරම්භ කිරීමට කණ්ඩායමක් එකතු කරන්න.",
+    "failedLoad": "තොග පූරණය අසාර්ථක විය",
+    "batchLabel": "කණ්ඩායම {{number}}",
+    "qty": "ප්‍රමාණය {{qty}}",
+    "active": "සක්‍රිය",
+    "costSell": "පිරිවැය {{cost}} · විකුණුම {{sell}}",
+    "purchased": "මිලදී ගත් {{date}}",
+    "expires": "කල් ඉකුත් වේ {{date}}",
+    "supplier": "සැපයුම්කරු · {{name}}",
+    "setAsActive": "සක්‍රිය ලෙස සකසන්න",
+    "toastActiveUpdated": "සක්‍රිය තොග යාවත්කාලීන කරන ලදී",
+    "toastActiveFailed": "සක්‍රිය තොග යාවත්කාලීන කළ නොහැකි විය",
+    "failedSetActive": "සක්‍රිය තොග සැකසීම අසාර්ථක විය",
+    "actionsAria": "කණ්ඩායම {{number}} සඳහා ක්‍රියා"
+  },
+  "stockForm": {
+    "title": "තොග එකතු කරන්න",
+    "description": "මෙම නිෂ්පාදන ප්‍රභේදය සඳහා තොග කණ්ඩායමක් වාර්තා කරන්න.",
+    "addStock": "තොග එකතු කරන්න",
+    "saving": "සුරකිමින්…",
+    "failedCreate": "තොග සෑදීම අසාර්ථක විය",
+    "fields": {
+      "quantity": "ප්‍රමාණය",
+      "batchNumber": "කණ්ඩායම් අංකය",
+      "costPrice": "පිරිවැය මිල",
+      "sellPrice": "විකුණුම් මිල",
+      "purchaseDate": "මිලදී ගත් දිනය",
+      "expiredDate": "කල් ඉකුත් වන දිනය",
+      "supplier": "සැපයුම්කරු",
+      "selectSupplier": "සැපයුම්කරු තෝරන්න"
+    },
+    "pickerTitle": "සැපයුම්කරු තෝරන්න",
+    "pickerDescription": "තොග සැපයුම්කරු ලෙස සැකසීමට Identity වෙතින් පරිශීලකයෙකු තෝරන්න.",
+    "validation": {
+      "dateRequired": "දිනය අවශ්‍යයි",
+      "invalidDate": "අවලංගු දිනය",
+      "quantityRequired": "ප්‍රමාණය අවශ්‍යයි",
+      "quantityPositive": "ප්‍රමාණය 0 ට වඩා වැඩි විය යුතුය",
+      "batchRequired": "කණ්ඩායම් අංකය අවශ්‍යයි",
+      "costRequired": "පිරිවැය මිල අවශ්‍යයි",
+      "costMin": "පිරිවැය මිල 0 හෝ ඊට වැඩි විය යුතුය",
+      "sellRequired": "විකුණුම් මිල අවශ්‍යයි",
+      "sellMin": "විකුණුම් මිල 0 හෝ ඊට වැඩි විය යුතුය",
+      "supplierRequired": "සැපයුම්කරු අවශ්‍යයි",
+      "expiredOnOrAfterPurchase": "කල් ඉකුත් වන දිනය මිලදී ගත් දිනයට සමාන හෝ පසුව විය යුතුය"
+    }
+  },
+  "formLink": {
+    "title": "සම්බන්ධිත පෝරමය",
+    "description": "මෙම සේවාව සඳහා ප්‍රකාශිත නිර්මාණ පෝරමයක් තෝරන්න.",
+    "selectPlaceholder": "පෝරමයක් තෝරන්න",
+    "noForm": "පෝරමයක් නැත",
+    "noPublished": "තවම ප්‍රකාශිත පෝරම නැත. පළමුව නිර්මාණයේ පෝරමයක් ප්‍රකාශ කරන්න.",
+    "toastLinked": "පෝරමය සම්බන්ධ කරන ලදී",
+    "toastUpdated": "සේවා පෝරමය යාවත්කාලීන කරන ලදී.",
+    "toastUnlinked": "පෝරමය විසන්ධි කරන ලදී.",
+    "toastSaveFailed": "සුරැකීම අසාර්ථක විය"
+  },
+  "fillForm": {
+    "title": "පාරිභෝගිකයා සඳහා පෝරමය පුරවන්න",
+    "description": "{{serviceName}} සඳහා පාරිභෝගිකයෙකු තෝරන්න.",
+    "selectCustomer": "පාරිභෝගිකයා තෝරන්න",
+    "noCustomers": "මෙම සමාගම සඳහා පාරිභෝගිකයින් හමු නොවීය.",
+    "failedLoadCustomers": "පාරිභෝගිකයින් පූරණය අසාර්ථක විය"
+  }
+}

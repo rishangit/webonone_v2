@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { ImageCropDialog } from '@/features/media/components/ImageCropDialog'
@@ -10,6 +11,8 @@ const LIBRARY_SCOPE = 'media:library:default'
 const LIBRARY_ROOT = '/'
 
 export function LibraryPage() {
+  const { t } = useTranslation('library')
+
   const dispatch = useAppDispatch()
   const { currentPath } = useScopedNavigation(LIBRARY_ROOT)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -26,7 +29,7 @@ export function LibraryPage() {
       return
     }
     if (uploadStatus === 'error') {
-      setUploadError(storeUploadError ?? 'Upload failed')
+      setUploadError(storeUploadError ?? t('uploadFailed'))
       uploadPendingRef.current = false
       dispatch(mediaActions.resetUpload())
       return
@@ -74,8 +77,8 @@ export function LibraryPage() {
 
   return (
     <FeaturePage
-      title="Media Library"
-      description="Browse, upload, and manage files in your scoped library."
+      title={t('title')}
+      description={t('description')}
     >
       <ScopedFolderBrowser
         scope={LIBRARY_SCOPE}

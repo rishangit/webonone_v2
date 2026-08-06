@@ -1,49 +1,49 @@
 import { z } from 'zod'
 
 export const loginSchema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('errors.emailInvalid'),
+  password: z.string().min(1, 'errors.passwordRequired'),
 })
 
 export const registerEmailSchema = z.object({
-  email: z.string().email('Enter a valid email'),
+  email: z.string().email('errors.emailInvalid'),
 })
 
 export const verifyRegisterOtpSchema = z.object({
-  otp: z.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
+  otp: z.string().regex(/^\d{4}$/, 'errors.otpInvalid'),
 })
 
 export const registerProfileSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+  firstName: z.string().min(1, 'errors.firstNameRequired'),
+  lastName: z.string().min(1, 'errors.lastNameRequired'),
 })
 
 export const registerPasswordSchema = z
   .object({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(1, 'Confirm your password'),
+    password: z.string().min(8, 'errors.passwordMin'),
+    confirmPassword: z.string().min(1, 'errors.confirmPasswordRequired'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'errors.passwordsMismatch',
     path: ['confirmPassword'],
   })
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email('Enter a valid email'),
+  email: z.string().email('errors.emailInvalid'),
 })
 
 export const verifyResetOtpSchema = z.object({
-  otp: z.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
+  otp: z.string().regex(/^\d{4}$/, 'errors.otpInvalid'),
 })
 
 export const resetPasswordSchema = z.object({
-  resetSessionToken: z.string().min(1, 'Reset session is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  resetSessionToken: z.string().min(1, 'errors.resetSessionRequired'),
+  newPassword: z.string().min(8, 'errors.passwordMin'),
 })
 
 export const legacyResetPasswordSchema = z.object({
-  token: z.string().min(1, 'Reset token is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  token: z.string().min(1, 'errors.resetTokenRequired'),
+  newPassword: z.string().min(8, 'errors.passwordMin'),
 })
 
 export type RegisterEmailFormValues = z.infer<typeof registerEmailSchema>

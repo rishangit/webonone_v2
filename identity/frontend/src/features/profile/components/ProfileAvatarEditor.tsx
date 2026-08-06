@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ImagePreview } from '@webonone/ui-kit'
 
 interface ProfileAvatarEditorProps {
@@ -19,6 +20,7 @@ export function ProfileAvatarEditor({
   avatarUrl,
   onEditImage,
 }: ProfileAvatarEditorProps) {
+  const { t } = useTranslation('profile')
   return (
     <div className="flex flex-col items-center gap-2">
       <ImagePreview
@@ -29,7 +31,7 @@ export function ProfileAvatarEditor({
         onEdit={onEditImage}
         className="rounded-full"
       />
-      <p className="text-xs text-muted-foreground">Click the edit button to choose a new image</p>
+      <p className="text-xs text-muted-foreground">{t('clickEditToChoosePhoto')}</p>
     </div>
   )
 }

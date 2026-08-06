@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -29,6 +30,7 @@ function StatCard({ title, value }: { title: string; value: string | number }) {
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation('shell')
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { summary, status, error } = useAppSelector((s) => s.dashboard)
@@ -39,7 +41,7 @@ export function DashboardPage() {
     dispatch(dashboardActions.loadSummaryRequested())
   }, [accessToken, dispatch])
 
-  usePlatformLoading(status === 'loading' && !summary ? 'Loading dashboard…' : null)
+  usePlatformLoading(status === 'loading' && !summary ? t('loadingDashboard') : null)
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -47,30 +49,30 @@ export function DashboardPage() {
 
   if (role === 'member') {
     return (
-      <FeaturePage title="Dashboard">
+      <FeaturePage title={t('dashboard')}>
         <Alert>
-          <AlertDescription>Payment admin access requires a company admin or super admin role.</AlertDescription>
+          <AlertDescription>{t('memberDenied')}</AlertDescription>
         </Alert>
       </FeaturePage>
     )
   }
 
   return (
-    <FeaturePage title="Dashboard" description="System subscription billing overview">
+    <FeaturePage title={t('dashboard')} description={t('dashboardDescription')}>
       {error ? (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Active companies" value={summary?.activeCompaniesCount ?? '—'} />
-        <StatCard title="Issued" value={summary?.issuedCount ?? '—'} />
-        <StatCard title="Pending review" value={summary?.pendingVerificationCount ?? '—'} />
-        <StatCard title="Overdue" value={summary?.overdueCount ?? '—'} />
-        <StatCard title="Paid" value={summary?.paidCount ?? '—'} />
-        <StatCard title="Void" value={summary?.voidCount ?? '—'} />
+        <StatCard title={t('activeCompanies')} value={summary?.activeCompaniesCount ?? '—'} />
+        <StatCard title={t('issued')} value={summary?.issuedCount ?? '—'} />
+        <StatCard title={t('pendingReview')} value={summary?.pendingVerificationCount ?? '—'} />
+        <StatCard title={t('overdue')} value={summary?.overdueCount ?? '—'} />
+        <StatCard title={t('paid')} value={summary?.paidCount ?? '—'} />
+        <StatCard title={t('void')} value={summary?.voidCount ?? '—'} />
         <StatCard
-          title="Outstanding"
+          title={t('outstanding')}
           value={summary ? formatLkr(summary.outstandingAmountMinor) : '—'}
         />
       </div>

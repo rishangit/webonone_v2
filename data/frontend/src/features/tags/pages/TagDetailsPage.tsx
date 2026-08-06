@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -36,6 +37,7 @@ function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode
 }
 
 export function TagDetailsPage() {
+  const { t } = useTranslation('tags')
   const { tagId } = useParams<{ tagId: string }>()
   const { goToList } = useNavigateDataEntity()
   const dispatch = useAppDispatch()
@@ -51,7 +53,7 @@ export function TagDetailsPage() {
 
   const tag = detail?.id === tagId ? detail : null
   usePlatformLoading(
-    !tag && detailStatus !== 'error' ? 'Loading tag…' : null,
+    !tag && detailStatus !== 'error' ? t('loadingDetail') : null,
   )
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -59,8 +61,8 @@ export function TagDetailsPage() {
 
   return (
     <FeaturePage
-      title={tag?.name ?? 'Tag'}
-      description="Tag details"
+      title={tag?.name ?? t('singular')}
+      description={t('details')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => goToList('tags')}>

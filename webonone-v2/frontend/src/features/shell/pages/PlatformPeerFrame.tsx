@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PlatformServiceFrame } from '@webonone/platform-embed'
 import {
   CORE_NAV_QUERY_PARAM,
@@ -13,6 +14,7 @@ import {
   smsSentinelToExternalPath,
   toCoreNavQueryValue,
 } from '@webonone/platform-nav'
+import { getStoredLocale, LOCALE_QUERY, normalizeLocale } from '@webonone/i18n'
 import { useAppSelector } from '@/app/store/hooks'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
@@ -24,15 +26,6 @@ import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav
 import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
-
-const PEER_LABELS: Record<PlatformPeerId, string> = {
-  email: 'Email',
-  data: 'Data',
-  identity: 'Profile',
-  sms: 'SMS',
-  payment: 'Payment',
-  design: 'Design',
-}
 
 export type PlatformPeerId = 'email' | 'data' | 'identity' | 'sms' | 'payment' | 'design'
 
@@ -255,6 +248,7 @@ function isAllowedIdentityShellNavigatePath(path: string): boolean {
 }
 
 export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
+  const { t } = useTranslation('shell')
   const location = useLocation()
   const navigate = useNavigate()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -262,6 +256,8 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
   const [frameLoading, setFrameLoading] = useState(true)
   const { openMediaDialog } = usePlatformMediaDialog()
   const { openPeerDialog } = usePlatformPeerDialog()
+
+  const peerLabel = t(`nav.${peer === 'identity' ? 'profile' : peer}`)
 
   const peerPath = useMemo(
     () => resolvePeerPath(peer, location.pathname),
@@ -272,8 +268,10 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
 
   const searchParams = useMemo(() => {
     const navVariant = getNavVariantForSessionRole(activeRole)
+    const locale = normalizeLocale(getStoredLocale() ?? undefined)
     const params: Record<string, string> = {
       [CORE_NAV_QUERY_PARAM]: toCoreNavQueryValue(navVariant),
+      [LOCALE_QUERY]: locale,
     }
     const tab = new URLSearchParams(location.search).get('tab')
     if (tab) {
@@ -334,7 +332,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
     [navigate, peer],
   )
 
-  usePlatformLoading(frameLoading ? `Loading ${PEER_LABELS[peer]}…` : null)
+  usePlatformLoading(frameLoading ? t('loadingPeer', { peer: peerLabel }) : null)
 
   if (!accessToken) {
     return null
@@ -347,7 +345,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         peerPath={peerPath}
         accessToken={accessToken}
         searchParams={searchParams}
-        title={`${PEER_LABELS[peer]} workspace`}
+        title={t('peerWorkspace', { peer: peerLabel })}
         className="block h-full min-h-0 w-full flex-1 border-0 bg-transparent"
         onLoadingChange={handleLoadingChange}
         onMediaDialogRequest={openMediaDialog}

@@ -1,0 +1,129 @@
+{
+  "pageTitle": "Profile",
+  "pageDescription": "Your account details.",
+  "savedSuccess": "Profile saved successfully.",
+  "unableToLoad": "Unable to load profile",
+  "loading": "Loading profile…",
+  "loadingYour": "Loading your profile…",
+  "editProfile": "Edit profile",
+  "saveChanges": "Save changes",
+  "saving": "Saving…",
+  "stepOf": "Step {{current}} of {{total}} — {{title}}",
+  "emptyValue": "—",
+  "peerDialogOnly": "This page is available only for platform peer dialog embeds.",
+  "sections": {
+    "account": {
+      "title": "Account",
+      "description": "Identity and photo for this account"
+    },
+    "address": {
+      "title": "Address",
+      "description": "Postal / street address"
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "How others can reach you"
+    },
+    "name": {
+      "title": "Name",
+      "description": "Legal and display names"
+    },
+    "summary": {
+      "title": "Summary"
+    }
+  },
+  "wizard": {
+    "steps": {
+      "account": "Account",
+      "address": "Address",
+      "contact": "Contact",
+      "name": "Name",
+      "summary": "Summary"
+    },
+    "descriptions": {
+      "account": "Update your profile photo.",
+      "address": "Postal / street address.",
+      "contact": "How others can reach you.",
+      "name": "Legal and display names.",
+      "summary": "Review your changes before saving."
+    },
+    "reviewHint": "Review your changes, then save to update your profile.",
+    "googleImportHint": "Name and photo were imported from Google. You can change your photo here and update contact details in later steps.",
+    "googleImportViewHint": "Name and photo were imported from Google. You can update your profile with Edit on each section.",
+    "signedInWithGoogle": "Signed in with Google",
+    "clickEditImage": "Click the edit button to choose a new image",
+    "photoUpdated": "Updated",
+    "photoUnchanged": "Unchanged"
+  },
+  "fields": {
+    "firstName": "First name",
+    "lastName": "Last name",
+    "displayName": "Display name",
+    "email": "Email",
+    "phoneNumber": "Phone number",
+    "locale": "Locale",
+    "addressLine1": "Address line 1",
+    "addressLine2": "Address line 2",
+    "city": "City",
+    "stateRegion": "State / region",
+    "postalCode": "Postal code",
+    "country": "Country",
+    "countryCodeLabel": "Country (2-letter code)",
+    "address": "Address",
+    "photo": "Photo",
+    "phone": "Phone"
+  },
+  "placeholders": {
+    "country": "US",
+    "locale": "en-US",
+    "phone": "555-0100"
+  },
+  "verify": {
+    "email": {
+      "title": "Verify email",
+      "description": "Enter the 4-digit code we sent to your email.",
+      "submit": "Verify email",
+      "button": "Verify email"
+    },
+    "phone": {
+      "title": "Verify phone",
+      "description": "Enter the 6-digit code we sent by SMS.",
+      "submit": "Verify phone",
+      "button": "Verify phone"
+    },
+    "codeSentTo": "We sent a {{length}}-digit code to {{contact}}",
+    "otpLabel": "{{length}}-digit code",
+    "codeSentToast": "Code sent",
+    "couldNotSendToast": "Could not send code",
+    "emailVerifiedToast": "Email verified",
+    "phoneVerifiedToast": "Phone verified",
+    "attemptsRemaining": "{{count}} attempt(s) remaining",
+    "codeExpiresIn": "Code expires in {{seconds}}s",
+    "codeExpired": "Code expired. ",
+    "tooManyAttemptsShort": "Too many attempts. ",
+    "requestNewCode": "Request a new code",
+    "contactHintEmail": "your email",
+    "contactHintPhone": "your phone"
+  },
+  "media": {
+    "selectPhoto": "Select profile photo",
+    "waitingAuth": "Waiting for authentication…",
+    "cropTitle": "Crop Image",
+    "cropDescription": "Drag to reposition. Use zoom and aspect ratio controls to adjust the crop area.",
+    "cropAndUpload": "Crop & Upload"
+  },
+  "aria": {
+    "editSection": "Edit {{title}}"
+  },
+  "errors": {
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "displayNameRequired": "Display name is required",
+    "phoneInvalid": "Enter a valid phone number with country code",
+    "countryCode": "Use a 2-letter country code",
+    "tooManyAttempts": "Too many incorrect attempts — request a new code.",
+    "codeExpiredRequestNew": "Verification code expired — request a new code.",
+    "verificationFailed": "Verification failed",
+    "sendCodeFailed": "Failed to send verification code"
+  }
+}

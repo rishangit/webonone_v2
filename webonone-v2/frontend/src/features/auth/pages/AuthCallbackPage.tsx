@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PageShell, LoadingState } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
 import type { UserProfile } from '../types/auth.types'
 import { consumeAuthState } from '../utils/buildIdentityLoginUrl'
+import { buildWebOnOneLoginHref } from '../utils/buildWebOnOneLoginHref'
 import { getAuthCallbackUrl, getIdentityApiBase } from '../utils/identityConfig'
 
 /** Prevents duplicate exchange when React Strict Mode remounts the callback page. */
 const exchangedCodes = new Set<string>()
 
 export function AuthCallbackPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -25,7 +28,7 @@ export function AuthCallbackPage() {
     const state = searchParams.get('state')
 
     if (!code || !state) {
-      setError('Missing authorization response')
+      setError(t('missingAuthResponse'))
       return
     }
 
@@ -36,7 +39,7 @@ export function AuthCallbackPage() {
 
     const stored = consumeAuthState(state)
     if (!stored) {
-      setError('Invalid or expired sign-in session')
+      setError(t('invalidSignInSession'))
       return
     }
 
@@ -65,6 +68,7 @@ export function AuthCallbackPage() {
               email: data.user.email,
               displayName: data.user.displayName,
               avatarUrl: data.user.avatarUrl ?? null,
+              locale: data.user.locale ?? null,
             },
           }),
         )
@@ -75,10 +79,10 @@ export function AuthCallbackPage() {
         exchangedCodes.delete(code)
         setError(err.message)
       })
-  }, [dispatch, navigate, searchParams])
+  }, [dispatch, navigate, searchParams, t])
 
   return (
-    <PageShell title="WebOnOne">
+    <PageShell title={t('brand')}>
       <div className="flex flex-col items-center gap-4 py-12">
         {error ? (
           <>
@@ -86,13 +90,13 @@ export function AuthCallbackPage() {
             <button
               type="button"
               className="text-sm text-primary underline-offset-4 hover:underline"
-              onClick={() => navigate('/login', { replace: true })}
+              onClick={() => navigate(buildWebOnOneLoginHref(), { replace: true })}
             >
-              Back to sign in
+              {t('backToSignIn')}
             </button>
           </>
         ) : (
-          <LoadingState overlay label="Completing sign in…" />
+          <LoadingState overlay label={t('completingSignIn')} />
         )}
       </div>
     </PageShell>

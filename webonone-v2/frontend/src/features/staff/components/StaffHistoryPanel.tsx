@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -15,35 +16,11 @@ import {
   resolveSessionTokenId,
   type UserHistoryItem,
 } from '@/features/staff/services/staffHistoryApi'
-
-function formatWhen(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString()
-  } catch {
-    return iso
-  }
-}
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
 function historyTitle(item: UserHistoryItem): string {
   if (item.kind === 'form_submission') return item.formName
   return item.title
-}
-
-function historySubtitle(item: UserHistoryItem): string {
-  if (item.kind === 'form_submission') {
-    return [
-      item.serviceName ? `Service: ${item.serviceName}` : null,
-      `For ${item.subjectDisplayName}`,
-    ]
-      .filter(Boolean)
-      .join(' · ')
-  }
-  return [item.subtitle, item.status ? `Status: ${item.status}` : null].filter(Boolean).join(' · ')
-}
-
-function historyBadge(item: UserHistoryItem): string {
-  if (item.kind === 'form_submission') return 'Form'
-  return 'Session'
 }
 
 type StaffHistoryPanelProps = {
@@ -51,11 +28,31 @@ type StaffHistoryPanelProps = {
 }
 
 export function StaffHistoryPanel({ userId }: StaffHistoryPanelProps) {
+  const { t, i18n } = useTranslation('staff')
   const { staffId } = useParams<{ staffId: string }>()
   const navigate = useNavigate()
   const [items, setItems] = useState<UserHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  function historySubtitle(item: UserHistoryItem): string {
+    if (item.kind === 'form_submission') {
+      return [
+        item.serviceName ? `${t('service')}: ${item.serviceName}` : null,
+        `${t('subject')}: ${item.subjectDisplayName}`,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    }
+    return [item.subtitle, item.status ? `${t('status')}: ${item.status}` : null]
+      .filter(Boolean)
+      .join(' · ')
+  }
+
+  function historyBadge(item: UserHistoryItem): string {
+    if (item.kind === 'form_submission') return t('form')
+    return t('session')
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -67,7 +64,7 @@ export function StaffHistoryPanel({ userId }: StaffHistoryPanelProps) {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load history')
+          setError(err instanceof Error ? err.message : t('unableLoadHistory'))
         }
       })
       .finally(() => {
@@ -76,7 +73,7 @@ export function StaffHistoryPanel({ userId }: StaffHistoryPanelProps) {
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, t])
 
   function openHistoryItem(item: UserHistoryItem) {
     if (!staffId) return
@@ -107,13 +104,14 @@ export function StaffHistoryPanel({ userId }: StaffHistoryPanelProps) {
   }
 
   if (items.length === 0) {
-    return <ItemListEmpty>No company history yet.</ItemListEmpty>
+    return <ItemListEmpty>{t('noCompanyHistory')}</ItemListEmpty>
   }
 
   return (
     <ItemList>
       {items.map((item) => {
         const when = item.kind === 'form_submission' ? item.createdAt : item.occurredAt
+        const whenLabel = formatLocaleDateTime(when, undefined, i18n.language)
         const clickable =
           item.kind === 'form_submission' ||
           (item.kind === 'company_activity' && item.type === 'session_token')
@@ -129,7 +127,7 @@ export function StaffHistoryPanel({ userId }: StaffHistoryPanelProps) {
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="text-sm font-medium">{historyTitle(item)}</p>
                     <p className="text-xs text-muted-foreground">{historySubtitle(item)}</p>
-                    <p className="text-xs text-muted-foreground">{formatWhen(when)}</p>
+                    <p className="text-xs text-muted-foreground">{whenLabel}</p>
                   </div>
                   <span
                     className={cn(
@@ -144,7 +142,7 @@ export function StaffHistoryPanel({ userId }: StaffHistoryPanelProps) {
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="text-sm font-medium">{historyTitle(item)}</p>
                     <p className="text-xs text-muted-foreground">{historySubtitle(item)}</p>
-                    <p className="text-xs text-muted-foreground">{formatWhen(when)}</p>
+                    <p className="text-xs text-muted-foreground">{whenLabel}</p>
                   </div>
                   <span
                     className={cn(

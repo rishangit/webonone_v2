@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -38,30 +39,22 @@ type CatalogKind = 'products' | 'services' | 'spaces'
 const CONFIG: Record<
   CatalogKind,
   {
-    title: string
-    addLabel: string
     select: (s: RootState) => CatalogFeatureState<CatalogItem>
     actions: typeof productsActions
     deleteAction: (id: string) => ReturnType<typeof productsActions.deleteRequested>
   }
 > = {
   products: {
-    title: 'Products',
-    addLabel: 'Add product',
     select: (s) => s.products,
     actions: productsActions,
     deleteAction: (id) => productsActions.deleteRequested({ id }),
   },
   services: {
-    title: 'Services',
-    addLabel: 'Add service',
     select: (s) => s.services,
     actions: servicesActions,
     deleteAction: (id) => servicesActions.deleteRequested({ id }),
   },
   spaces: {
-    title: 'Spaces',
-    addLabel: 'Add space',
     select: (s) => s.spaces,
     actions: spacesActions,
     deleteAction: (id) => spacesActions.deleteRequested({ id }),
@@ -69,6 +62,8 @@ const CONFIG: Record<
 }
 
 export function CatalogListPage({ kind }: { kind: CatalogKind }) {
+  const { t } = useTranslation(kind)
+  const { t: tc } = useTranslation('common')
   const config = CONFIG[kind]
   const { goToDetail } = useNavigateDataEntity()
   const dispatch = useAppDispatch()
@@ -79,27 +74,28 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList(config.select, config.actions)
-  usePlatformLoading(list.loading ? `Loading ${kind}…` : null)
+  usePlatformLoading(list.loading ? t('loading') : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
     <FeaturePage
-      title={config.title}
-      description={`Manage catalog ${kind}.`}
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
-            placeholder={`Search ${kind}…`}
+            placeholder={t('search')}
             className="w-64"
+            aria-label={t('search')}
           />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
           {canCreate ? (
             <Button type="button" size="sm" onClick={() => setDialog({})}>
               <Plus className="h-4 w-4" aria-hidden />
-              {config.addLabel}
+              {t('add')}
             </Button>
           ) : null}
         </div>
@@ -114,15 +110,15 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
           list.load(1, list.pageSize, true)
         }}
       >
-        <FormField label="Status" htmlFor={`${kind}-status`}>
+        <FormField label={tc('status')} htmlFor={`${kind}-status`}>
           <Select value={list.status} onValueChange={list.setStatus}>
             <SelectTrigger id={`${kind}-status`}>
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={tc('all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="pending">Unverified</SelectItem>
+              <SelectItem value="all">{tc('all')}</SelectItem>
+              <SelectItem value="verified">{t('verified')}</SelectItem>
+              <SelectItem value="pending">{t('unverified')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Ticket } from 'lucide-react'
 import {
   Button,
@@ -14,6 +15,8 @@ import {
   ItemListEmpty,
   ItemListItem,
 } from '@webonone/ui-kit'
+import { LoginRequiredDialog } from '@/features/auth/components/LoginRequiredDialog'
+import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { IssueTokenDialog } from '@/features/catalog/components/IssueTokenDialog'
 import { catalogApi } from '@/features/catalog/services/catalogApi'
 import {
@@ -21,18 +24,16 @@ import {
   type CatalogDetailItem,
   type CatalogSessionItem,
 } from '@/features/catalog/types/catalog.types'
-import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { CatalogSearchMapView } from '@/features/website/components/CatalogSearchMapView'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
 import { WebsiteHeader } from '@/features/website/components/WebsiteHeader'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
-import { getWebOnOneLoginUrl } from '@/features/webonone/utils/webononeConfig'
 
-const KIND_LABEL: Record<CatalogDetailItem['kind'], string> = {
-  products: 'Product',
-  services: 'Service',
-  spaces: 'Space',
+function kindLabel(kind: CatalogDetailItem['kind'], t: (key: string) => string): string {
+  if (kind === 'products') return t('product')
+  if (kind === 'services') return t('service')
+  return t('spaceKind')
 }
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
@@ -87,6 +88,7 @@ type BookingTarget = {
 }
 
 export function CatalogDetailPage() {
+  const { t } = useTranslation('search')
   const { kind: kindParam = '', id = '' } = useParams()
   const navigate = useNavigate()
   const kind = isCatalogKind(kindParam) ? kindParam : null
@@ -112,6 +114,16 @@ export function CatalogDetailPage() {
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionsError, setSessionsError] = useState<string | null>(null)
   const [bookingTarget, setBookingTarget] = useState<BookingTarget | null>(null)
+  const [loginRequiredOpen, setLoginRequiredOpen] = useState(false)
+
+  const itemRef = useRef(item)
+  itemRef.current = item
+
+  const detailReturnPath = useMemo(() => {
+    const kindSegment = encodeURIComponent(item?.kind ?? kind ?? 'services')
+    const idSegment = encodeURIComponent(item?.id ?? id)
+    return `/catalog/${kindSegment}/${idSegment}`
+  }, [id, item?.id, item?.kind, kind])
 
   const sessionSpaces = useMemo(() => {
     const byId = new Map<string, string>()
@@ -133,7 +145,11 @@ export function CatalogDetailPage() {
     }
 
     let cancelled = false
-    setLoading(true)
+    const current = itemRef.current
+    const softRefetch = current?.kind === kind && current.id === id.trim()
+    if (!softRefetch) {
+      setLoading(true)
+    }
     setError(null)
     setNotFound(false)
 
@@ -153,7 +169,9 @@ export function CatalogDetailPage() {
           setNotFound(false)
           setError(err.message || 'Failed to load catalog item')
         }
-        setItem(null)
+        if (!softRefetch) {
+          setItem(null)
+        }
         setLoading(false)
       })
 
@@ -203,9 +221,7 @@ export function CatalogDetailPage() {
 
   function handleGetToken(session: CatalogSessionItem) {
     if (!item || !isAuthenticated || !accessToken || !user) {
-      window.location.href = getWebOnOneLoginUrl(
-        `/catalog/${encodeURIComponent(item?.kind ?? 'services')}/${encodeURIComponent(item?.id ?? id)}`,
-      )
+      setLoginRequiredOpen(true)
       return
     }
     setBookingTarget({
@@ -223,6 +239,13 @@ export function CatalogDetailPage() {
         blocked={permissionDenied}
         onAllow={requestLocation}
         onNotNow={dismissPermissionPrompt}
+      />
+
+      <LoginRequiredDialog
+        open={loginRequiredOpen}
+        onOpenChange={setLoginRequiredOpen}
+        returnPath={detailReturnPath}
+        description="You need to log in to get a queue token. After login you will return to this page."
       />
 
       {item && bookingTarget && accessToken && user ? (
@@ -271,7 +294,7 @@ export function CatalogDetailPage() {
         <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
           <div className="mx-auto w-full max-w-5xl pt-4">
             {loading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <p className="text-sm text-muted-foreground">{t('loadingDetails')}</p>
             ) : notFound ? (
               <Card>
                 <CardHeader>
@@ -303,14 +326,14 @@ export function CatalogDetailPage() {
                 <div className="flex flex-col gap-6 lg:col-span-2">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Overview</CardTitle>
+                      <CardTitle className="text-lg">{t('overview')}</CardTitle>
                       <CardDescription>Basic details for this offering.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <ImageCarousel images={detailImages(item)} alt={item.name} />
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                          {KIND_LABEL[item.kind]}
+                          {kindLabel(item.kind, t)}
                         </span>
                       </div>
                       <div>
@@ -444,7 +467,7 @@ export function CatalogDetailPage() {
                       </CardHeader>
                       <CardContent className="space-y-3">
                         {sessionsLoading ? (
-                          <p className="text-sm text-muted-foreground">Loading…</p>
+                          <p className="text-sm text-muted-foreground">{t('loadingDetails')}</p>
                         ) : sessionSpaces.length === 0 ? (
                           <p className="text-sm text-muted-foreground">
                             No space has been set for upcoming sessions yet.

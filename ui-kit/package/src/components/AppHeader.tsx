@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { LogOut, Menu, User, X } from 'lucide-react'
+import { Globe, LogOut, Menu, User, X } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
@@ -11,6 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from './DropdownMenu'
 
@@ -29,6 +32,8 @@ export interface AppHeaderUser {
    */
   roleLabel?: string
 }
+
+export type AppHeaderLocale = 'en' | 'si'
 
 function HeaderRoleTag({ role, roleLabel }: { role?: string; roleLabel?: string }) {
   if (role && isStatusTagVariant(role)) {
@@ -57,6 +62,18 @@ interface AppHeaderProps {
   user?: AppHeaderUser | null
   onProfileClick?: () => void
   onLogout?: () => void
+  /** Current UI locale when language switching is enabled. */
+  locale?: AppHeaderLocale
+  /** Called when the user picks English or Sinhala from the menu. */
+  onLocaleChange?: (locale: AppHeaderLocale) => void
+  /** Optional override labels (defaults: Language / English / සිංහල / Profile / Log out). */
+  labels?: {
+    language?: string
+    english?: string
+    sinhala?: string
+    profile?: string
+    logout?: string
+  }
   onMenuClick?: () => void
   showMenuButton?: boolean
   menuOpen?: boolean
@@ -77,12 +94,20 @@ function AppHeader({
   user,
   onProfileClick,
   onLogout,
+  locale,
+  onLocaleChange,
+  labels,
   onMenuClick,
   showMenuButton = false,
   menuOpen = false,
   className,
 }: AppHeaderProps) {
   const logoNode = logo ?? <BrandLogo href={logoHref} />
+  const languageLabel = labels?.language ?? 'Language'
+  const englishLabel = labels?.english ?? 'English'
+  const sinhalaLabel = labels?.sinhala ?? 'සිංහල'
+  const profileLabel = labels?.profile ?? 'Profile'
+  const logoutLabel = labels?.logout ?? 'Log out'
 
   return (
     <header className={cn('glass-card border-b', className)}>
@@ -139,16 +164,38 @@ function AppHeader({
                 </DropdownMenuLabel>
               )}
               <DropdownMenuSeparator />
+              {onLocaleChange ? (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Globe />
+                    {languageLabel}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onSelect={() => onLocaleChange('en')}
+                      className={locale === 'en' ? 'bg-accent' : undefined}
+                    >
+                      {englishLabel}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => onLocaleChange('si')}
+                      className={locale === 'si' ? 'bg-accent' : undefined}
+                    >
+                      {sinhalaLabel}
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              ) : null}
               {onProfileClick ? (
                 <DropdownMenuItem onClick={onProfileClick}>
                   <User />
-                  Profile
+                  {profileLabel}
                 </DropdownMenuItem>
               ) : null}
               {onLogout ? (
                 <DropdownMenuItem onClick={onLogout}>
                   <LogOut />
-                  Log out
+                  {logoutLabel}
                 </DropdownMenuItem>
               ) : null}
             </DropdownMenuContent>

@@ -1,10 +1,12 @@
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
+import { useTranslation } from 'react-i18next'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export function GoogleSignInButton() {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
 
   if (!GOOGLE_CLIENT_ID) {
@@ -21,7 +23,7 @@ export function GoogleSignInButton() {
     <div className="flex w-full flex-col items-center gap-2">
       <GoogleLogin
         onSuccess={handleSuccess}
-        onError={() => dispatch(authActions.loginFailed('Google sign-in failed'))}
+        onError={() => dispatch(authActions.loginFailed(t('googleSignInFailed')))}
         useOneTap={false}
         theme="outline"
         size="large"

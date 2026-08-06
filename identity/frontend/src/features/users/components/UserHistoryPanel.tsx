@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -30,21 +31,21 @@ function historyTitle(item: UserHistoryItem): string {
   return item.title
 }
 
-function historySubtitle(item: UserHistoryItem): string {
+function historySubtitle(item: UserHistoryItem, t: (k: string, o?: Record<string, string>) => string): string {
   if (item.kind === 'form_submission') {
     return [
-      item.serviceName ? `Service: ${item.serviceName}` : null,
-      `Filled by ${item.filledByDisplayName}`,
+      item.serviceName ? t('serviceLabel', { name: item.serviceName }) : null,
+      t('filledByLabel', { name: item.filledByDisplayName }),
     ]
       .filter(Boolean)
       .join(' · ')
   }
-  return [item.subtitle, item.status ? `Status: ${item.status}` : null].filter(Boolean).join(' · ')
+  return [item.subtitle, item.status ? t('statusLabel', { status: item.status }) : null].filter(Boolean).join(' · ')
 }
 
-function historyBadge(item: UserHistoryItem): string {
-  if (item.kind === 'form_submission') return 'Form'
-  return 'Session'
+function historyBadge(item: UserHistoryItem, t: (k: string) => string): string {
+  if (item.kind === 'form_submission') return t('form')
+  return t('session')
 }
 
 type UserHistoryPanelProps = {
@@ -52,6 +53,7 @@ type UserHistoryPanelProps = {
 }
 
 export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
+  const { t } = useTranslation('users')
   const navigate = useNavigate()
   const [items, setItems] = useState<UserHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -67,7 +69,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load history')
+          setError(err instanceof Error ? err.message : t('unableToLoadHistory'))
         }
       })
       .finally(() => {
@@ -108,7 +110,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
   return (
     <div className="flex flex-col gap-4">
       {items.length === 0 ? (
-        <ItemListEmpty>No company history yet.</ItemListEmpty>
+        <ItemListEmpty>{t('emptyHistory')}</ItemListEmpty>
       ) : (
         <ItemList>
           {items.map((item) => {
@@ -127,7 +129,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-sm font-medium">{historyTitle(item)}</p>
-                        <p className="text-xs text-muted-foreground">{historySubtitle(item)}</p>
+                        <p className="text-xs text-muted-foreground">{historySubtitle(item, t)}</p>
                         <p className="text-xs text-muted-foreground">{formatWhen(when)}</p>
                       </div>
                       <span
@@ -135,14 +137,14 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
                           'rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground',
                         )}
                       >
-                        {historyBadge(item)}
+                        {historyBadge(item, t)}
                       </span>
                     </button>
                   ) : (
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-sm font-medium">{historyTitle(item)}</p>
-                        <p className="text-xs text-muted-foreground">{historySubtitle(item)}</p>
+                        <p className="text-xs text-muted-foreground">{historySubtitle(item, t)}</p>
                         <p className="text-xs text-muted-foreground">{formatWhen(when)}</p>
                       </div>
                       <span
@@ -150,7 +152,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
                           'rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground',
                         )}
                       >
-                        {historyBadge(item)}
+                        {historyBadge(item, t)}
                       </span>
                     </div>
                   )}

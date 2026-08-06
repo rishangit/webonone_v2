@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   MediaCropDialogFrame,
   MediaSelectorFrame,
@@ -55,6 +56,7 @@ export function ProfileMediaSelectorModal({
   onSelect,
   onClose,
 }: ProfileMediaSelectorModalProps) {
+  const { t } = useTranslation('profile')
   const [searchParams] = useSearchParams()
   const [cropOpen, setCropOpen] = useState(false)
   const [cropContext, setCropContext] = useState<CropContext | null>(null)
@@ -108,7 +110,7 @@ export function ProfileMediaSelectorModal({
     hostRequestIdRef.current = requestId
     sendPlatformMediaDialogRequest(hostParentOrigin, {
       requestId,
-      title: 'Select profile photo',
+      title: t('selectProfilePhoto'),
       scope,
       folderPath: profileFolderPath,
       mode: 'single',
@@ -116,7 +118,7 @@ export function ProfileMediaSelectorModal({
       selectorUpload: true,
       cropAspectPresets: ['1:1'],
     })
-  }, [hostParentOrigin, isOpen, openKey, profileFolderPath, scope])
+  }, [hostParentOrigin, isOpen, openKey, profileFolderPath, scope, t])
 
   useEffect(() => {
     if (!hostParentOrigin) {
@@ -227,7 +229,7 @@ export function ProfileMediaSelectorModal({
       <CustomDialog
         open={isOpen}
         onOpenChange={handleSelectorOpenChange}
-        title="Select profile photo"
+        title={t('selectProfilePhoto')}
         sizeWidth="medium"
         sizeHeight="large"
         nestedDismissGuard={cropOpen || blockOuterDismiss}
@@ -236,13 +238,13 @@ export function ProfileMediaSelectorModal({
         disableContentScroll
         footer={
           <Button type="button" variant="outline" onClick={onClose}>
-            Close
+            {t('close')}
           </Button>
         }
       >
         {!accessToken ? (
           <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
+            <p className="text-sm text-muted-foreground">{t('waitingForAuthentication')}</p>
           </div>
         ) : (
           <MediaSelectorFrame
@@ -265,8 +267,8 @@ export function ProfileMediaSelectorModal({
       <CustomDialog
         open={cropOpen}
         onOpenChange={handleCropOpenChange}
-        title="Crop Image"
-        description="Drag to reposition. Use zoom and aspect ratio controls to adjust the crop area."
+        title={t('cropImage')}
+        description={t('cropImageDescription')}
         sizeWidth="large"
         sizeHeight="xlarge"
         stackLevel={1}
@@ -284,7 +286,7 @@ export function ProfileMediaSelectorModal({
                 closeCropDialog()
               }}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -297,7 +299,7 @@ export function ProfileMediaSelectorModal({
                 }
               }}
             >
-              Crop & Upload
+              {t('cropAndUpload')}
             </Button>
           </>
         }

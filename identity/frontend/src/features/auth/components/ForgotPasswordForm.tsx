@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Mail } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -20,6 +21,7 @@ import { withRedirectQuery } from '../utils/redirectQuery'
 import { saveResetEmail } from '../utils/resetEmailStorage'
 
 export function ForgotPasswordForm() {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -63,7 +65,12 @@ export function ForgotPasswordForm() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Email" htmlFor="email" required error={fieldErrors.email}>
+      <FormField
+        label={t('email')}
+        htmlFor="email"
+        required
+        error={fieldErrors.email ? t(fieldErrors.email) : undefined}
+      >
         <InputGroup>
           <InputGroupIcon icon={Mail} />
           <Input
@@ -77,7 +84,7 @@ export function ForgotPasswordForm() {
         </InputGroup>
       </FormField>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? <Spinner size="sm" /> : 'Send verification code'}
+        {isLoading ? <Spinner size="sm" /> : t('sendVerificationCode')}
       </Button>
     </Form>
   )

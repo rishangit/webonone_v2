@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -18,13 +19,14 @@ import { staffActions } from '@/features/staff/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
 export function StaffPage() {
+  const { t } = useTranslation('staff')
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
   const [addOpen, setAddOpen] = useState(false)
 
   const list = useEpicCatalogList((s) => s.staff, staffActions)
-  usePlatformLoading(list.loading ? 'Loading staff…' : null)
+  usePlatformLoading(list.loading ? t('loadingStaff') : null)
 
   const existingUserIds = useMemo(
     () => new Set(list.items.map((item) => item.userId)),
@@ -38,22 +40,22 @@ export function StaffPage() {
 
   return (
     <FeaturePage
-      title="Staff"
-      description="Manage company staff and their weekly work schedules."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
             onClear={() => list.setQ('')}
-            placeholder="Search staff…"
+            placeholder={t('searchStaffPlaceholder')}
             className="w-64"
-            aria-label="Search staff"
+            aria-label={t('searchStaff')}
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add staff
+              {t('add')}
             </Button>
           ) : null}
         </div>

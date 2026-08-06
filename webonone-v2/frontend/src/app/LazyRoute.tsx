@@ -1,8 +1,10 @@
 import { Suspense, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useDelayedRouteLoading } from '@/features/shell/context/PlatformLoadingContext'
 
 function RouteChunkLoading() {
-  useDelayedRouteLoading('Loading page…')
+  const { t } = useTranslation('shell')
+  useDelayedRouteLoading(t('loadingPage'))
   return null
 }
 

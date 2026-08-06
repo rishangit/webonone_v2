@@ -79,6 +79,7 @@ export function useIdentitySilentSso(): SilentSsoState {
               email: event.data.user.email,
               displayName: event.data.user.displayName,
               avatarUrl: event.data.user.avatarUrl ?? null,
+              locale: event.data.user.locale ?? null,
             },
           }),
         )

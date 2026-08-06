@@ -18,6 +18,7 @@ import type {
   PlatformMediaDialogResponder,
 } from '@webonone/platform-embed'
 import { Button, CustomDialog } from '@webonone/ui-kit'
+import { useTranslation } from 'react-i18next'
 import { useAppSelector } from '@/app/store/hooks'
 import { PlatformMediaDialogContext } from '@/features/media/PlatformMediaDialogContext'
 import {
@@ -39,6 +40,7 @@ interface CropContext {
 }
 
 export function PlatformMediaDialogProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation(['shell', 'common'])
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [active, setActive] = useState<ActiveMediaDialog | null>(null)
   const [cropOpen, setCropOpen] = useState(false)
@@ -212,7 +214,7 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
         <CustomDialog
           open
           onOpenChange={handleSelectorOpenChange}
-          title={active.request.title ?? 'Select media'}
+          title={active.request.title ?? t('selectMedia')}
           sizeWidth="medium"
           sizeHeight="large"
           nestedDismissGuard={cropOpen || blockOuterDismiss}
@@ -222,14 +224,14 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
           footer={
             <div className="flex w-full items-center justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => cancelActive('cancelled')}>
-                Cancel
+                {t('common:cancel')}
               </Button>
               <Button
                 type="button"
                 disabled={pendingSelection.length === 0}
                 onClick={handleSelectorDone}
               >
-                Done
+                {t('common:done')}
                 {pendingSelection.length > 0 ? ` (${pendingSelection.length})` : ''}
               </Button>
             </div>
@@ -237,7 +239,7 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
         >
           {!accessToken ? (
             <div className="flex flex-col items-center gap-3 py-8">
-              <p className="text-sm text-muted-foreground">Waiting for authentication...</p>
+              <p className="text-sm text-muted-foreground">{t('waitingAuth')}</p>
             </div>
           ) : (
             <MediaSelectorFrame
@@ -264,8 +266,8 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
         <CustomDialog
           open={cropOpen}
           onOpenChange={handleCropOpenChange}
-          title="Crop Image"
-          description="Drag to reposition. Use zoom and aspect ratio controls to adjust the crop area."
+          title={t('cropImage')}
+          description={t('cropDescription')}
           sizeWidth="large"
           sizeHeight="xlarge"
           stackLevel={1}
@@ -283,7 +285,7 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
                   closeCropDialog()
                 }}
               >
-                Cancel
+                {t('common:cancel')}
               </Button>
               <Button
                 type="button"
@@ -296,7 +298,7 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
                   }
                 }}
               >
-                Crop & Upload
+                {t('cropAndUpload')}
               </Button>
             </>
           }

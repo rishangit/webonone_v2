@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -29,6 +30,7 @@ function DetailField({ label, value }: { label: string; value: string }) {
 }
 
 export function HistorySubmissionDetailPage() {
+  const { t } = useTranslation('users')
   const { id: userId, submissionId } = useParams<{ id: string; submissionId: string }>()
   const navigate = useNavigate()
   const [detail, setDetail] = useState<FormSubmissionDetail | null>(null)
@@ -36,7 +38,7 @@ export function HistorySubmissionDetailPage() {
   const [loading, setLoading] = useState(true)
   const { open: openFormDialog } = useOpenDesignFormDialog()
 
-  usePlatformLoading(loading && !detail ? 'Loading submission…' : null)
+  usePlatformLoading(loading && !detail ? t('loadingSubmission') : null)
 
   useEffect(() => {
     if (!submissionId) return
@@ -49,7 +51,7 @@ export function HistorySubmissionDetailPage() {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load submission')
+          setError(err instanceof Error ? err.message : t('unableToLoadSubmission'))
         }
       })
       .finally(() => {
@@ -91,12 +93,12 @@ export function HistorySubmissionDetailPage() {
   if (error && !detail) {
     return (
       <FeaturePage
-        title="Form submission"
-        description="Unable to load submission."
+        title={t('formSubmission')}
+        description={t('unableToLoadSubmissionPage')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={back}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('common:back')}
           </Button>
         }
       >
@@ -112,11 +114,11 @@ export function HistorySubmissionDetailPage() {
   return (
     <FeaturePage
       title={detail.formName}
-      description={`Filled for ${detail.subjectDisplayName}`}
+      description={t('filledFor', { name: detail.subjectDisplayName })}
       actions={
         <Button type="button" variant="outline" size="sm" onClick={back}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
+          {t('common:back')}
         </Button>
       }
     >
@@ -124,12 +126,12 @@ export function HistorySubmissionDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Form</CardTitle>
-              <CardDescription>Open the submitted form in a dialog</CardDescription>
+              <CardTitle className="text-lg">{t('form')}</CardTitle>
+              <CardDescription>{t('formOpenDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button type="button" size="sm" variant="outline" onClick={openView}>
-                View form
+                {t('viewForm')}
               </Button>
             </CardContent>
           </Card>
@@ -137,15 +139,15 @@ export function HistorySubmissionDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Context</CardTitle>
-              <CardDescription>Who filled this form</CardDescription>
+              <CardTitle className="text-lg">{t('context')}</CardTitle>
+              <CardDescription>{t('contextCardDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DetailField label="Subject" value={detail.subjectDisplayName} />
-              <DetailField label="Filled by" value={detail.filledByDisplayName} />
-              <DetailField label="Service" value={detail.serviceName ?? '—'} />
+              <DetailField label={t('subject')} value={detail.subjectDisplayName} />
+              <DetailField label={t('filledBy')} value={detail.filledByDisplayName} />
+              <DetailField label={t('service')} value={detail.serviceName ?? '—'} />
               <DetailField
-                label="Submitted"
+                label={t('submitted')}
                 value={new Date(detail.createdAt).toLocaleString()}
               />
             </CardContent>

@@ -2,15 +2,18 @@ import {
   AUTH_MESSAGE_TYPES,
   DATA_TAG_PICKER_MESSAGE_TYPES,
   IDENTITY_USER_PICKER_MESSAGE_TYPES,
+  IDENTITY_CLEAR_MESSAGE_TYPES,
   IDENTITY_SSO_MESSAGE_TYPES,
   PLATFORM_EMBED_QUERY,
   PLATFORM_MESSAGE_TYPES,
   WEBSITE_SSO_MESSAGE_TYPES,
+  isIdentitySessionClearedMessage,
 } from './types'
 import type {
   AuthCancelMessage,
   AuthSuccessMessage,
   AuthSuccessUser,
+  IdentitySessionClearedMessage,
   IdentitySsoNoneMessage,
   IdentitySsoSessionMessage,
   WebsiteSsoNoneMessage,
@@ -738,4 +741,83 @@ export function buildIdentitySilentSsoUrl(identityOrigin: string, parentOrigin: 
   const url = new URL(`${base}/auth/silent-sso`)
   url.searchParams.set(PLATFORM_EMBED_QUERY.PARENT_ORIGIN, parentOrigin)
   return url.toString()
+}
+
+/** Identity clear-embed-session iframe → consumer: partitioned local session cleared. */
+export function sendIdentitySessionCleared(parentOrigin: string): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: IdentitySessionClearedMessage = {
+    type: IDENTITY_CLEAR_MESSAGE_TYPES.CLEARED,
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+/** Hidden iframe src to clear Identity storage under the consumer top-level site. */
+export function buildIdentityClearEmbedSessionUrl(
+  identityOrigin: string,
+  parentOrigin: string,
+): string {
+  const base = identityOrigin.replace(/\/$/, '')
+  const url = new URL(`${base}/auth/clear-embed-session`)
+  url.searchParams.set(PLATFORM_EMBED_QUERY.PARENT_ORIGIN, parentOrigin)
+  return url.toString()
+}
+
+const DEFAULT_CLEAR_EMBED_TIMEOUT_MS = 2000
+
+/**
+ * Mount a hidden Identity clear-embed-session iframe, wait for cleared (or timeout),
+ * then remove it. Clears the storage partition used by login/SSO iframes under this consumer.
+ */
+export function clearIdentityEmbedSession(options: {
+  identityOrigin: string
+  parentOrigin?: string
+  timeoutMs?: number
+}): Promise<void> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.resolve()
+  }
+
+  const identityOrigin = options.identityOrigin.replace(/\/$/, '')
+  const parentOrigin = (options.parentOrigin ?? window.location.origin).replace(/\/$/, '')
+  const timeoutMs = options.timeoutMs ?? DEFAULT_CLEAR_EMBED_TIMEOUT_MS
+  const src = buildIdentityClearEmbedSessionUrl(identityOrigin, parentOrigin)
+
+  return new Promise((resolve) => {
+    let settled = false
+    const iframe = document.createElement('iframe')
+    iframe.title = 'Identity clear embed session'
+    iframe.setAttribute('aria-hidden', 'true')
+    iframe.tabIndex = -1
+    iframe.style.cssText =
+      'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;'
+
+    function finish() {
+      if (settled) {
+        return
+      }
+      settled = true
+      window.clearTimeout(timeoutId)
+      window.removeEventListener('message', onMessage)
+      iframe.remove()
+      resolve()
+    }
+
+    function onMessage(event: MessageEvent) {
+      if (event.origin.replace(/\/$/, '') !== identityOrigin) {
+        return
+      }
+      if (isIdentitySessionClearedMessage(event.data)) {
+        finish()
+      }
+    }
+
+    window.addEventListener('message', onMessage)
+    const timeoutId = window.setTimeout(finish, timeoutMs)
+    iframe.src = src
+    document.body.appendChild(iframe)
+  })
 }

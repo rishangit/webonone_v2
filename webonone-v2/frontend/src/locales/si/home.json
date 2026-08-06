@@ -1,0 +1,7 @@
+{
+  "title": "සුබ පැතුම්, {{name}}!",
+  "titleFallbackName": "පරිශීලක",
+  "description": "ඔබ WebOnOne වෙත පිවිසී ඇත.",
+  "sessionActive": "Bearer JWT සමඟ සැසිය සක්‍රියයි.",
+  "notSignedIn": "පිවිසී නැත."
+}

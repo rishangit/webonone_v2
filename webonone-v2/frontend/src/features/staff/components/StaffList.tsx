@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
@@ -26,6 +27,7 @@ type StaffListProps = {
 }
 
 export function StaffList({ items, canManage = false, onRemoved }: StaffListProps) {
+  const { t } = useTranslation('staff')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
@@ -33,7 +35,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
   const [pendingRemove, setPendingRemove] = useState<CompanyStaff | null>(null)
 
   if (items.length === 0) {
-    return <ItemListEmpty>No staff yet. Add a staff member to get started.</ItemListEmpty>
+    return <ItemListEmpty>{t('empty')}</ItemListEmpty>
   }
 
   function openDetails(id: string) {
@@ -45,11 +47,11 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
     try {
       await staffApi.delete(item.id)
       dispatch(staffActions.deleteSucceeded(item.id))
-      toast({ title: 'Staff removed' })
+      toast({ title: t('staffRemoved') })
       onRemoved()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to remove staff'
-      toast({ title: 'Failed to remove staff', description: message, variant: 'destructive' })
+      const message = err instanceof Error ? err.message : t('staffRemoveFailed')
+      toast({ title: t('staffRemoveFailed'), description: message, variant: 'destructive' })
     } finally {
       setRemovingId(null)
     }
@@ -74,15 +76,19 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
                 />
                 <div className="min-w-0 space-y-1">
                   <p className="truncate font-medium text-foreground">{item.displayName}</p>
-                  <p className="truncate text-xs text-muted-foreground">{item.email ?? 'No email'}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {item.email ?? t('noEmail')}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {formatWorkingDaysSummary(item.schedule)}
                   </p>
                 </div>
               </button>
             </ItemListContent>
-            <ItemListMenu ariaLabel={`Actions for ${item.displayName}`}>
-              <DropdownMenuItem onSelect={() => openDetails(item.id)}>View details</DropdownMenuItem>
+            <ItemListMenu ariaLabel={t('actionsFor', { name: item.displayName })}>
+              <DropdownMenuItem onSelect={() => openDetails(item.id)}>
+                {t('viewDetails')}
+              </DropdownMenuItem>
               {canManage ? (
                 <>
                   <DropdownMenuSeparator />
@@ -91,7 +97,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
                     onSelect={() => setPendingRemove(item)}
                     className="text-destructive focus:text-destructive"
                   >
-                    {removingId === item.id ? 'Removing…' : 'Remove'}
+                    {removingId === item.id ? t('removing') : t('common:remove')}
                   </DropdownMenuItem>
                 </>
               ) : null}
@@ -101,10 +107,14 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
       </ItemList>
       <PlatformAlertConfirmDialog
         open={pendingRemove !== null}
-        title={pendingRemove ? `Remove ${pendingRemove.displayName}?` : 'Remove staff?'}
-        description="This action cannot be undone. The staff member will be removed from the company."
+        title={
+          pendingRemove
+            ? t('removeNamed', { name: pendingRemove.displayName })
+            : t('removeStaff')
+        }
+        description={t('removeStaffConfirm')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
+        submitLabel={t('common:remove')}
         onOpenChange={(open) => {
           if (!open) setPendingRemove(null)
         }}

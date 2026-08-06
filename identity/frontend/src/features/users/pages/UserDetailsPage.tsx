@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -39,6 +40,7 @@ function formatRoleLabel(role: string): string {
 }
 
 export function UserDetailsPage() {
+  const { t } = useTranslation('users')
   const { id } = useParams<{ id: string }>()
   const { goToUsersList, syncShellUserTab } = useNavigateIdentity()
   const [searchParams] = useSearchParams()
@@ -56,7 +58,7 @@ export function UserDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  usePlatformLoading(loading && !user ? 'Loading user…' : null)
+  usePlatformLoading(loading && !user ? t('loadingUser') : null)
 
   useEffect(() => {
     if (!canView || !id) {
@@ -76,7 +78,7 @@ export function UserDetailsPage() {
       .catch((err: unknown) => {
         if (!cancelled) {
           setUser(null)
-          setError(err instanceof Error ? err.message : 'Unable to load user')
+          setError(err instanceof Error ? err.message : t('unableToLoadUser'))
         }
       })
       .finally(() => {
@@ -119,20 +121,20 @@ export function UserDetailsPage() {
   const backButton = (
     <Button type="button" variant="outline" size="sm" onClick={handleBack}>
       <ArrowLeft className="h-4 w-4" aria-hidden />
-      Back
+      {t('common:back')}
     </Button>
   )
 
   const tabs: { id: UserDetailTab; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'history', label: 'History' },
+    { id: 'overview', label: t('overview') },
+    { id: 'history', label: t('history') },
   ]
 
   // Keep FeaturePage mounted while loading (no blank return) — matches Data details.
   return (
     <FeaturePage
-      title={user?.displayName ?? 'User'}
-      description="User account details."
+      title={user?.displayName ?? t('user')}
+      description={t('detailsDescription')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {backButton}
@@ -158,7 +160,7 @@ export function UserDetailsPage() {
           onValueChange={(value) => handleTabChange(value as UserDetailTab)}
           className="flex flex-col gap-6"
         >
-          <TabsList aria-label="User sections">
+          <TabsList aria-label={t('userSections')}>
             {tabs.map((item) => (
               <TabsTrigger key={item.id} value={item.id}>
                 {item.label}

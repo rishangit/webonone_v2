@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -53,6 +54,7 @@ function formatRoleLabel(role: string): string {
 }
 
 export function UsersPage() {
+  const { t } = useTranslation('users')
   const dispatch = useAppDispatch()
   const { goToUserDetail } = useNavigateIdentity()
   const { toast } = useToast()
@@ -75,7 +77,7 @@ export function UsersPage() {
 
   const canQuery = Boolean(accessToken) && (isSuperAdmin || companyMode)
   const loading = listStatus === 'loading' && items.length === 0
-  usePlatformLoading(loading ? 'Loading users…' : null)
+  usePlatformLoading(loading ? t('loadingUsers') : null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -107,12 +109,10 @@ export function UsersPage() {
       return null
     }
     if (items.length === 0) {
-      return companyMode
-        ? 'No users yet. Use Add user to select someone for this company.'
-        : 'No users found.'
+      return companyMode ? t('emptyCompany') : t('empty')
     }
     return null
-  }, [loading, items.length, companyMode])
+  }, [loading, items.length, companyMode, t])
 
   async function handleSelectUser(user: UserOption) {
     if (!companyId) {
@@ -124,7 +124,7 @@ export function UsersPage() {
         userId: user.id,
       })
       setAddOpen(false)
-      toast({ title: 'User added' })
+      toast({ title: t('userAdded') })
       dispatch(
         usersActions.loadListRequested({
           page: 1,
@@ -134,7 +134,7 @@ export function UsersPage() {
       )
     } catch (err) {
       toast({
-        title: 'Failed to add user',
+        title: t('failedToAddUser'),
         description: err instanceof Error ? err.message : undefined,
         variant: 'destructive',
       })
@@ -143,7 +143,7 @@ export function UsersPage() {
 
   function handleCreatedUser(_user: UserOption) {
     setAddOpen(false)
-    toast({ title: 'User added' })
+    toast({ title: t('userAdded') })
     if (!companyId) {
       return
     }
@@ -169,19 +169,15 @@ export function UsersPage() {
 
   return (
     <FeaturePage
-      title="Users"
-      description={
-        companyMode
-          ? 'Users belonging to your company. Add a registered user from the directory.'
-          : 'Browse all registered platform users.'
-      }
+      title={t('title')}
+      description={companyMode ? t('companyUsersDescription') : t('platformUsersDescription')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search by name or email…"
-            aria-label="Search users"
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('search')}
             className="w-64"
           />
           {!companyMode ? (
@@ -190,7 +186,7 @@ export function UsersPage() {
           {companyMode ? (
             <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add user
+              {t('addUser')}
             </Button>
           ) : null}
         </div>
@@ -208,16 +204,16 @@ export function UsersPage() {
             setAppliedRole(null)
           }}
         >
-          <FormField label="Role" htmlFor="users-role">
+          <FormField label={t('role')} htmlFor="users-role">
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger id="users-role">
-                <SelectValue placeholder="All roles" />
+                <SelectValue placeholder={t('allRoles')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_ROLES_VALUE}>All roles</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
-                <SelectItem value="company_admin">Company Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value={ALL_ROLES_VALUE}>{t('allRoles')}</SelectItem>
+                <SelectItem value="super_admin">{t('superAdmin')}</SelectItem>
+                <SelectItem value="company_admin">{t('companyAdmin')}</SelectItem>
+                <SelectItem value="member">{t('member')}</SelectItem>
               </SelectContent>
             </Select>
           </FormField>
@@ -255,7 +251,7 @@ export function UsersPage() {
                           <p className="truncate font-medium">{user.displayName}</p>
                           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                             <p className="truncate text-xs text-muted-foreground">
-                              {user.email?.trim() ? user.email : 'No email'}
+                              {user.email?.trim() ? user.email : t('noEmail')}
                             </p>
                             {user.email?.trim() ? (
                               <StatusTag

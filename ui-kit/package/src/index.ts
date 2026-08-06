@@ -189,7 +189,7 @@ export {
 export type { ItemListMenuProps } from './components/ItemList'
 export { BrandLogo } from './components/BrandLogo'
 export { AppHeader } from './components/AppHeader'
-export type { AppHeaderProps, AppHeaderUser } from './components/AppHeader'
+export type { AppHeaderProps, AppHeaderUser, AppHeaderLocale } from './components/AppHeader'
 export { NavItem } from './components/nav/NavItem'
 export type { NavItemProps } from './components/nav/NavItem'
 export { NavGroup } from './components/nav/NavGroup'

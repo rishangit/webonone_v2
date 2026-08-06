@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { clearWebsiteAuthSession } from '@/features/auth/utils/authStorage'
 import { parseClearSessionContinue } from '@/features/auth/utils/clearSessionContinue'
 
@@ -7,6 +8,7 @@ import { parseClearSessionContinue } from '@/features/auth/utils/clearSessionCon
  * Global logout hop: clear website_auth then continue to the next allowlisted URL.
  */
 export function ClearSessionPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const startedRef = useRef(false)
 
@@ -24,7 +26,7 @@ export function ClearSessionPage() {
 
   return (
     <div className="flex h-dvh items-center justify-center px-4">
-      <p className="text-sm text-muted-foreground">Signing out…</p>
+      <p className="text-sm text-muted-foreground">{t('clearingSession')}</p>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { LazyRoute } from '@/app/LazyRoute'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { LogoutPage } from '@/features/auth/pages/LogoutPage'
 import { SilentSsoPage } from '@/features/auth/pages/SilentSsoPage'
+import { ClearEmbedSessionPage } from '@/features/auth/pages/ClearEmbedSessionPage'
 
 const RegisterPage = lazy(() =>
   import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })),
@@ -78,6 +79,7 @@ export function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/logout" element={<LogoutPage />} />
             <Route path="/auth/silent-sso" element={<SilentSsoPage />} />
+            <Route path="/auth/clear-embed-session" element={<ClearEmbedSessionPage />} />
             <Route
               path="/register"
               element={

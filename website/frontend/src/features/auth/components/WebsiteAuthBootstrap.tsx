@@ -1,13 +1,21 @@
+import { useEffect } from 'react'
+import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { useWebsiteAuthCodeBootstrap } from '@/features/auth/hooks/useWebsiteAuthCodeBootstrap'
 import { useWebsiteSilentSso } from '@/features/auth/hooks/useWebsiteSilentSso'
 
 /**
- * Exchanges auth-code login returns and runs silent SSO against WebOnOne.
+ * Exchanges auth-code login returns and runs silent SSO against Identity.
  * Renders a hidden iframe only while a silent check is in progress.
+ * Reports combined pending state so chrome can avoid Login↔avatar flicker.
  */
 export function WebsiteAuthBootstrap() {
-  useWebsiteAuthCodeBootstrap()
-  const { iframeSrc } = useWebsiteSilentSso()
+  const { setAuthPending } = useWebsiteAuth()
+  const { isBootstrapping } = useWebsiteAuthCodeBootstrap()
+  const { isChecking, iframeSrc } = useWebsiteSilentSso()
+
+  useEffect(() => {
+    setAuthPending(isChecking || isBootstrapping)
+  }, [isBootstrapping, isChecking, setAuthPending])
 
   if (!iframeSrc) {
     return null

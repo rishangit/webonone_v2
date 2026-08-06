@@ -1,0 +1,19 @@
+{
+  "brand": "ගෙවීම්",
+  "loading": "පූරණය වෙමින්…",
+  "dashboard": "උපකරණ පුවරුව",
+  "dashboardDescription": "පද්ධති දායකත්ව බිල්පත් දළ විශ්ලේෂණය",
+  "loadingDashboard": "උපකරණ පුවරුව පූරණය වෙමින්…",
+  "memberDenied": "ගෙවීම් පරිපාලක ප්‍රවේශයට සමාගම් පරිපාලක හෝ සුපිරි පරිපාලක භූමිකාවක් අවශ්‍යයි.",
+  "activeCompanies": "සක්‍රීය සමාගම්",
+  "issued": "නිකුත් කළ",
+  "pendingReview": "සමාලෝචනයට බලාපොරොත්තු",
+  "overdue": "කල් ඉකුත්",
+  "paid": "ගෙවූ",
+  "void": "අවලංගු",
+  "outstanding": "නොගෙවූ",
+  "signInTitle": "ගෙවීම් වෙත පිවිසෙන්න",
+  "signInDescription": "ආරක්ෂිතව පිවිසීමට ඔබව Identity වෙත යොමු කෙරේ.",
+  "continueToSignIn": "පිවිසීමට ඉදිරියට",
+  "signingIn": "පිවිසෙමින්…"
+}

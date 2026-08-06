@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Check, Copy, ExternalLink, FileText, Upload } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
@@ -34,24 +35,26 @@ function statusVariant(status: InvoiceStatus): 'pending' | 'approved' | 'rejecte
   return 'pending'
 }
 
-function statusLabel(status: InvoiceStatus): string {
+function statusLabelKey(status: InvoiceStatus): string {
   switch (status) {
     case 'issued':
-      return 'Issued'
+      return 'statusIssued'
     case 'paid':
-      return 'Paid'
+      return 'statusPaid'
     case 'overdue':
-      return 'Overdue'
+      return 'statusOverdue'
     case 'void':
-      return 'Void'
+      return 'statusVoid'
     case 'pending_verification':
-      return 'Pending review'
+      return 'statusPendingReview'
     default:
       return status
   }
 }
 
 export function InvoiceDetailPage() {
+  const { t } = useTranslation('invoices')
+  const { t: tc } = useTranslation('common')
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const { toast } = useToast()
@@ -65,7 +68,7 @@ export function InvoiceDetailPage() {
   const [uploadKey, setUploadKey] = useState(0)
   const [submitting, setSubmitting] = useState(false)
 
-  usePlatformLoading(loading ? 'Loading invoice…' : null)
+  usePlatformLoading(loading ? t('loadingInvoice') : null)
 
   async function load() {
     if (!id) return
@@ -75,7 +78,7 @@ export function InvoiceDetailPage() {
       const data = await paymentApi.getInvoice(id)
       setInvoice(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load invoice')
+      setError(err instanceof Error ? err.message : t('failedLoad'))
     } finally {
       setLoading(false)
     }
@@ -92,11 +95,11 @@ export function InvoiceDetailPage() {
     try {
       const data = await paymentApi.markPaid(id)
       setInvoice(data)
-      toast({ title: 'Invoice marked paid' })
+      toast({ title: t('markedPaid') })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to mark paid'
+      const message = err instanceof Error ? err.message : t('failedMarkPaid')
       setError(message)
-      toast({ title: 'Failed to mark paid', description: message, variant: 'destructive' })
+      toast({ title: t('failedMarkPaid'), description: message, variant: 'destructive' })
     }
   }
 
@@ -106,11 +109,11 @@ export function InvoiceDetailPage() {
     try {
       const data = await paymentApi.voidInvoice(id)
       setInvoice(data)
-      toast({ title: 'Invoice voided' })
+      toast({ title: t('voided') })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to void invoice'
+      const message = err instanceof Error ? err.message : t('failedVoid')
       setError(message)
-      toast({ title: 'Failed to void invoice', description: message, variant: 'destructive' })
+      toast({ title: t('failedVoid'), description: message, variant: 'destructive' })
     }
   }
 
@@ -120,11 +123,11 @@ export function InvoiceDetailPage() {
     try {
       const data = await paymentApi.rejectPaymentProof(id)
       setInvoice(data)
-      toast({ title: 'Payment proof rejected' })
+      toast({ title: t('proofRejected') })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to reject proof'
+      const message = err instanceof Error ? err.message : t('failedRejectProof')
       setError(message)
-      toast({ title: 'Failed to reject proof', description: message, variant: 'destructive' })
+      toast({ title: t('failedRejectProof'), description: message, variant: 'destructive' })
     }
   }
 
@@ -140,12 +143,12 @@ export function InvoiceDetailPage() {
         fileName: item.fileName,
       })
       setInvoice(data)
-      toast({ title: 'Payment proof submitted' })
+      toast({ title: t('proofSubmitted') })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to submit payment proof'
+      const message = err instanceof Error ? err.message : t('failedSubmitProof')
       setError(message)
       toast({
-        title: 'Failed to submit payment proof',
+        title: t('failedSubmitProof'),
         description: message,
         variant: 'destructive',
       })
@@ -162,7 +165,7 @@ export function InvoiceDetailPage() {
       setCopied(true)
       window.setTimeout(() => setCopied(false), 2000)
     } catch {
-      setError('Could not copy reference')
+      setError(t('couldNotCopy'))
     }
   }
 
@@ -180,29 +183,29 @@ export function InvoiceDetailPage() {
 
   return (
     <FeaturePage
-      title={invoice?.invoiceNumber ?? 'Invoice'}
+      title={invoice?.invoiceNumber ?? t('singular')}
       description={invoice ? invoice.companyName : undefined}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => navigate('/invoices')}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {tc('back')}
           </Button>
           {role === 'super_admin' && invoice ? (
             <>
               {invoice.status === 'pending_verification' ? (
                 <Button type="button" variant="outline" size="sm" onClick={() => void rejectProof()}>
-                  Reject proof
+                  {t('rejectProof')}
                 </Button>
               ) : null}
               {canMarkPaid ? (
                 <Button type="button" size="sm" onClick={() => void markPaid()}>
-                  Mark paid
+                  {t('markPaid')}
                 </Button>
               ) : null}
               {invoice.status !== 'paid' && invoice.status !== 'void' ? (
                 <Button type="button" variant="outline" size="sm" onClick={() => void voidInvoice()}>
-                  Void
+                  {t('voidAction')}
                 </Button>
               ) : null}
             </>
@@ -221,34 +224,34 @@ export function InvoiceDetailPage() {
           <div className="flex flex-col gap-6 lg:col-span-2">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-4">
-                <CardTitle className="text-lg">Summary</CardTitle>
+                <CardTitle className="text-lg">{t('summary')}</CardTitle>
                 <StatusTag variant={statusVariant(invoice.status)}>
-                  {statusLabel(invoice.status)}
+                  {t(statusLabelKey(invoice.status))}
                 </StatusTag>
               </CardHeader>
               <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
                 <p>
-                  <span className="text-muted-foreground">Company: </span>
+                  <span className="text-muted-foreground">{t('company')}: </span>
                   {invoice.companyName}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">Amount: </span>
+                  <span className="text-muted-foreground">{t('amount')}: </span>
                   {formatLkr(invoice.amountMinor)}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">Period: </span>
+                  <span className="text-muted-foreground">{t('period')}: </span>
                   {formatPeriod(invoice.periodStart, invoice.periodEnd)}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">Issued: </span>
+                  <span className="text-muted-foreground">{t('issuedLabel')}: </span>
                   {formatDate(invoice.issuedAt)}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">Due: </span>
+                  <span className="text-muted-foreground">{t('due')}: </span>
                   {formatDate(invoice.dueAt)}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">Paid: </span>
+                  <span className="text-muted-foreground">{t('paidLabel')}: </span>
                   {invoice.paidAt ? formatDate(invoice.paidAt) : '—'}
                 </p>
               </CardContent>
@@ -256,7 +259,7 @@ export function InvoiceDetailPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Line items</CardTitle>
+                <CardTitle className="text-lg">{t('lineItems')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {invoice.lines.map((line) => (
@@ -266,7 +269,7 @@ export function InvoiceDetailPage() {
                   </div>
                 ))}
                 <div className="flex items-center justify-between border-t pt-2 font-semibold">
-                  <span>Total</span>
+                  <span>{t('total')}</span>
                   <span>{formatLkr(invoice.amountMinor)}</span>
                 </div>
               </CardContent>
@@ -276,7 +279,7 @@ export function InvoiceDetailPage() {
           <div className="flex flex-col gap-6 lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Invoice reference number</CardTitle>
+                <CardTitle className="text-lg">{t('referenceTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -287,8 +290,8 @@ export function InvoiceDetailPage() {
                     type="button"
                     className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => void copyReference()}
-                    aria-label={copied ? 'Reference copied' : 'Copy invoice reference number'}
-                    title={copied ? 'Copied' : 'Copy'}
+                    aria-label={copied ? t('referenceCopied') : t('copyReference')}
+                    title={copied ? t('copied') : tc('copy')}
                   >
                     {copied ? (
                       <Check className="h-4 w-4" aria-hidden />
@@ -297,16 +300,13 @@ export function InvoiceDetailPage() {
                     )}
                   </button>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Include this reference in the transfer description so payment can be matched to this
-                  invoice.
-                </p>
+                <p className="text-sm text-muted-foreground">{t('referenceHint')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Invoice receipt</CardTitle>
+                <CardTitle className="text-lg">{t('receipt')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap items-start gap-4">
@@ -317,11 +317,11 @@ export function InvoiceDetailPage() {
                       target="_blank"
                       rel="noreferrer"
                       className="block outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      aria-label="Open invoice receipt"
+                      aria-label={t('openReceipt')}
                     >
                       <ImagePreview
                         src={invoice.receiptUrl}
-                        alt={invoice.receiptFileName ?? 'Invoice receipt'}
+                        alt={invoice.receiptFileName ?? t('receipt')}
                         mode="view"
                         className="h-48 w-48"
                       />
@@ -335,17 +335,17 @@ export function InvoiceDetailPage() {
                     >
                       <FileText className="h-10 w-10 text-muted-foreground" aria-hidden />
                       <span className="line-clamp-3 text-xs text-muted-foreground">
-                        {invoice.receiptFileName ?? 'Document'}
+                        {invoice.receiptFileName ?? t('document')}
                       </span>
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
                         <ExternalLink className="h-3 w-3" aria-hidden />
-                        Open
+                        {tc('open')}
                       </span>
                     </a>
                   ) : (
                     <ImagePreview
                       src={null}
-                      alt="Invoice receipt"
+                      alt={t('receipt')}
                       mode={canSubmitProof ? 'edit' : 'view'}
                       onEdit={
                         canSubmitProof && !submitting
@@ -371,11 +371,9 @@ export function InvoiceDetailPage() {
                         }}
                       >
                         <Upload className="h-4 w-4" aria-hidden />
-                        Upload document
+                        {t('uploadDocument')}
                       </Button>
-                      <p className="max-w-[14rem] text-sm text-muted-foreground">
-                        Upload your invoice receipt (PDF or image) to submit for review.
-                      </p>
+                      <p className="max-w-[14rem] text-sm text-muted-foreground">{t('uploadHint')}</p>
                     </div>
                   ) : null}
                 </div>
@@ -383,12 +381,12 @@ export function InvoiceDetailPage() {
                 {invoice.receiptUrl ? (
                   <div className="space-y-1 text-sm">
                     <p>
-                      <span className="text-muted-foreground">File: </span>
-                      {invoice.receiptFileName ?? 'Receipt'}
+                      <span className="text-muted-foreground">{t('file')}: </span>
+                      {invoice.receiptFileName ?? t('receiptFallback')}
                     </p>
                     {invoice.receiptUploadedAt ? (
                       <p>
-                        <span className="text-muted-foreground">Uploaded: </span>
+                        <span className="text-muted-foreground">{t('uploaded')}: </span>
                         {formatDate(invoice.receiptUploadedAt)}
                       </p>
                     ) : null}

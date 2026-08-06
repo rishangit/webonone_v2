@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button, Pagination, SearchInput } from '@webonone/ui-kit'
 import { catalogApi } from '@/features/catalog/services/catalogApi'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
@@ -19,6 +20,7 @@ function parseView(value: string | null): ResultsView {
 }
 
 export function CatalogSearchPage() {
+  const { t } = useTranslation('search')
   const [searchParams, setSearchParams] = useSearchParams()
   const urlQuery = (searchParams.get('q') ?? '').trim()
   const resultsView = parseView(searchParams.get('view'))
@@ -90,7 +92,7 @@ export function CatalogSearchPage() {
       setItems([])
       setTotal(0)
       setSearched(true)
-      setError(err instanceof Error ? err.message : 'Search failed')
+      setError(err instanceof Error ? err.message : t('failedSearch'))
     } finally {
       setLoading(false)
     }
@@ -205,12 +207,12 @@ export function CatalogSearchPage() {
                 value={draftQuery}
                 onChange={(event) => setDraftQuery(event.target.value)}
                 onClear={() => setDraftQuery('')}
-                placeholder="Search by name, description, or tag…"
-                aria-label="Search catalog"
+                placeholder={t('placeholder')}
+                aria-label={t('searchAria')}
                 disabled={loading}
               />
               <Button type="submit" disabled={loading || !draftQuery.trim()}>
-                {loading ? 'Searching…' : 'Search'}
+                {loading ? t('loading') : t('cta')}
               </Button>
             </form>
 
@@ -224,7 +226,7 @@ export function CatalogSearchPage() {
               onOpenPermissionPrompt={openPermissionPrompt}
               onRetry={requestLocation}
               trailing={
-                <nav className="flex items-center gap-3" aria-label="Results view">
+                <nav className="flex items-center gap-3" aria-label={t('resultsViewAria')}>
                   <button
                     type="button"
                     className={`text-sm font-medium underline-offset-4 transition-colors ${
@@ -235,7 +237,7 @@ export function CatalogSearchPage() {
                     aria-current={resultsView === 'list' ? 'page' : undefined}
                     onClick={() => setView('list')}
                   >
-                    List
+                    {t('listView')}
                   </button>
                   <button
                     type="button"
@@ -247,7 +249,7 @@ export function CatalogSearchPage() {
                     aria-current={resultsView === 'map' ? 'page' : undefined}
                     onClick={() => setView('map')}
                   >
-                    Map
+                    {t('mapView')}
                   </button>
                 </nav>
               }
@@ -255,7 +257,7 @@ export function CatalogSearchPage() {
 
             {!isMapView && activeQuery ? (
               <h2 className="pb-2 text-sm font-medium text-muted-foreground">
-                Results for “{activeQuery}”
+                {t('resultsFor', { query: activeQuery })}
                 {searched && !loading ? ` · ${total}` : null}
               </h2>
             ) : null}

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useRef } from 'react'
 import { Button, CustomDialog } from '@webonone/ui-kit'
 
@@ -22,6 +23,7 @@ export function LocationPermissionDialog({
   onAllow,
   onNotNow,
 }: LocationPermissionDialogProps) {
+  const { t } = useTranslation('shell')
   const allowClickedRef = useRef(false)
 
   function handleAllow() {
@@ -41,21 +43,21 @@ export function LocationPermissionDialog({
         }
         onNotNow()
       }}
-      title="Allow location access?"
-      description="We use your location to sort search results by distance and show how far each offering is from you."
+      title={t('locationPromptTitle')}
+      description={t('locationPromptBody')}
       sizeWidth="auto"
       sizeHeight="auto"
       maxWidth="max-w-md"
       footer={
         <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onNotNow}>
-            Not now
+            {t('locationNotNow')}
           </Button>
           <Button
             type="button"
             onClick={handleAllow}
           >
-            Allow location
+            {t('locationAllow')}
           </Button>
         </div>
       }

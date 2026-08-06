@@ -1,4 +1,7 @@
-import { LogOut } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { Globe, LogOut } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { normalizeLocale, type AppLocale } from '@webonone/i18n'
 import {
   Avatar,
   BrandLogo,
@@ -8,9 +11,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@webonone/ui-kit'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { getWebOnOneAppUrl, getWebOnOneLoginUrl } from '@/features/webonone/utils/webononeConfig'
 
 type WebsiteHeaderProps = {
@@ -26,7 +33,25 @@ function getInitials(displayName: string): string {
 }
 
 export function WebsiteHeader({ className }: WebsiteHeaderProps) {
-  const { user, isAuthenticated, logout } = useWebsiteAuth()
+  const { user, isAuthenticated, isAuthPending, logout } = useWebsiteAuth()
+  const { t, i18n } = useTranslation('common')
+  const { t: ts } = useTranslation('shell')
+  const { t: ta } = useTranslation('auth')
+  const currentLocale = normalizeLocale(i18n.language)
+
+  const handleLocaleChange = useCallback((locale: AppLocale) => {
+    void changeAppLocale(locale)
+  }, [])
+
+  const headerLabels = useMemo(
+    () => ({
+      language: t('language'),
+      english: t('english'),
+      sinhala: t('sinhala'),
+      logout: t('logout'),
+    }),
+    [t],
+  )
 
   return (
     <header
@@ -37,7 +62,7 @@ export function WebsiteHeader({ className }: WebsiteHeaderProps) {
       </a>
       <div className="flex items-center gap-2">
         <Button type="button" size="sm" variant="outline" asChild>
-          <a href={getWebOnOneAppUrl()}>Open app</a>
+          <a href={getWebOnOneAppUrl()}>{ts('openApp')}</a>
         </Button>
         {isAuthenticated && user ? (
           <DropdownMenu>
@@ -45,7 +70,7 @@ export function WebsiteHeader({ className }: WebsiteHeaderProps) {
               <button
                 type="button"
                 className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="User menu"
+                aria-label={ts('userMenu')}
               >
                 <Avatar
                   size="sm"
@@ -65,16 +90,42 @@ export function WebsiteHeader({ className }: WebsiteHeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Globe />
+                  {headerLabels.language}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onSelect={() => handleLocaleChange('en')}
+                    className={currentLocale === 'en' ? 'bg-accent' : undefined}
+                  >
+                    {headerLabels.english}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => handleLocaleChange('si')}
+                    className={currentLocale === 'si' ? 'bg-accent' : undefined}
+                  >
+                    {headerLabels.sinhala}
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
               <DropdownMenuItem onClick={logout}>
                 <LogOut />
-                Log out
+                {headerLabels.logout}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        ) : isAuthPending ? (
+          <div
+            className="h-8 w-[4.5rem] shrink-0 rounded-md bg-muted/60"
+            role="status"
+            aria-label={ts('checkingSession')}
+          />
         ) : (
           <Button type="button" size="sm" asChild>
             <a href={getWebOnOneLoginUrl(`${window.location.pathname}${window.location.search}`)}>
-              Login
+              {ta('login')}
             </a>
           </Button>
         )}

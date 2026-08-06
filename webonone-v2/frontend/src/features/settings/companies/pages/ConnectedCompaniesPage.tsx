@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -14,6 +15,7 @@ import { isFresh } from '@/shared/store/cacheUtils'
 import { MyCompaniesList } from '../components/MyCompaniesList'
 
 export function ConnectedCompaniesPage() {
+  const { t } = useTranslation('settings')
   const dispatch = useAppDispatch()
   const {
     myCompanies,
@@ -34,7 +36,7 @@ export function ConnectedCompaniesPage() {
   const awaitingFirstLoad =
     myCompaniesFetchedAt === null && myCompanies.length === 0 && myCompaniesStatus !== 'error'
 
-  usePlatformLoading(awaitingFirstLoad ? 'Loading companies…' : null)
+  usePlatformLoading(awaitingFirstLoad ? t('loadingCompanies') : null)
 
   useEffect(() => {
     if (!isFresh(myCompaniesFetchedAt)) {
@@ -56,8 +58,8 @@ export function ConnectedCompaniesPage() {
 
   return (
     <FeaturePage
-      title="Connected Companies"
-      description="Companies you book with or buy from as a customer."
+      title={t('connectedCompanies')}
+      description={t('connectedCompaniesDescription')}
       actions={
         <SearchInput
           value={searchQuery}
@@ -65,9 +67,9 @@ export function ConnectedCompaniesPage() {
             setSearchQuery(event.target.value)
             setPage(1)
           }}
-          placeholder="Company name"
+          placeholder={t('companyName')}
           onClear={() => setPage(1)}
-          aria-label="Search connected companies"
+          aria-label={t('searchConnected')}
           className="w-64"
         />
       }
@@ -80,10 +82,7 @@ export function ConnectedCompaniesPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          <MyCompaniesList
-            items={visibleItems}
-            emptyMessage="No connected companies yet. Companies appear here when you book or buy from them."
-          />
+          <MyCompaniesList items={visibleItems} emptyMessage={t('noConnectedCompanies')} />
         </div>
         <Pagination
           className="mt-auto"

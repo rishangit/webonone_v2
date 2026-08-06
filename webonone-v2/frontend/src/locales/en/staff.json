@@ -1,0 +1,133 @@
+{
+  "list": {
+    "title": "Staff",
+    "description": "Manage company staff and their weekly work schedules.",
+    "searchPlaceholder": "Search staff…",
+    "searchAria": "Search staff",
+    "addStaff": "Add staff",
+    "empty": "No staff yet. Add a staff member to get started.",
+    "loading": "Loading staff…",
+    "viewDetails": "View details",
+    "removeTitle": "Remove staff?",
+    "removeTitleNamed": "Remove {{name}}?",
+    "removeDescription": "This action cannot be undone. The staff member will be removed from the company.",
+    "toastRemoved": "Staff removed",
+    "toastRemoveFailed": "Failed to remove staff"
+  },
+  "detail": {
+    "title": "Staff",
+    "description": "Staff details",
+    "pageDescription": "Staff member details and weekly work schedule.",
+    "companySessionRequired": "Company session required.",
+    "ariaSections": "Staff sections",
+    "tabs": {
+      "overview": "Overview",
+      "history": "History"
+    },
+    "recordTitle": "Record",
+    "recordDescription": "Staff record metadata",
+    "added": "Added",
+    "updated": "Updated",
+    "loading": "Loading staff…"
+  },
+  "userCard": {
+    "title": "User",
+    "description": "Identity user linked as company staff",
+    "name": "Name",
+    "email": "Email"
+  },
+  "scheduleCard": {
+    "title": "Work schedule",
+    "description": "Weekly working days and hours",
+    "empty": "No working days set.",
+    "working": "Working",
+    "start": "Start",
+    "end": "End",
+    "workingDayAria": "{{day}} working day"
+  },
+  "wizard": {
+    "steps": {
+      "user": "User",
+      "workSchedule": "Work schedule",
+      "summary": "Summary"
+    },
+    "descriptions": {
+      "userCreate": "Select the Identity user to add as staff.",
+      "userEdit": "Change the Identity user linked to this staff record.",
+      "schedule": "Choose working days and hours for each day.",
+      "summaryCreate": "Review and add the staff member.",
+      "summaryEdit": "Review and save changes."
+    },
+    "staffMember": "Staff member",
+    "selectUser": "Select user…",
+    "change": "Change",
+    "clear": "Clear",
+    "addStaff": "Add staff",
+    "pickerTitle": "Select staff user",
+    "pickerDescription": "Choose an Identity user to link as company staff.",
+    "emptyUsers": "No users found.",
+    "loading": "Loading staff…",
+    "toastAdded": "Staff added",
+    "toastSaved": "Staff saved",
+    "toastAddFailed": "Failed to add staff",
+    "toastSaveFailed": "Failed to save staff",
+    "failedLoad": "Failed to load staff",
+    "noEmail": "No email",
+    "noWorkingDaysSelected": "No working days selected.",
+    "noWorkingDaysSummary": "No working days",
+    "validation": {
+      "selectUser": "Select a user",
+      "selectAtLeastOneWorkingDay": "Select at least one working day",
+      "useHhMm": "Use HH:mm format",
+      "startTimeRequired": "Start time is required",
+      "endTimeRequired": "End time is required",
+      "endAfterStart": "End time must be after start time"
+    }
+  },
+  "history": {
+    "empty": "No company history yet.",
+    "unableToLoad": "Unable to load history",
+    "kindForm": "Form",
+    "kindSession": "Session",
+    "servicePrefix": "Service: {{name}}",
+    "forSubject": "For {{name}}",
+    "statusPrefix": "Status: {{status}}",
+    "tokenDetail": {
+      "title": "Session history",
+      "unableToLoad": "Unable to load session history.",
+      "loading": "Loading history…",
+      "sessionTitle": "Session",
+      "sessionDescription": "Occurrence and token for this visit",
+      "service": "Service",
+      "date": "Date",
+      "time": "Time",
+      "token": "Token",
+      "status": "Status",
+      "customer": "Customer",
+      "space": "Space",
+      "filledFormsTitle": "Filled forms",
+      "filledFormsDescription": "Forms filled for this event session",
+      "noForms": "No forms filled for this session yet.",
+      "staffTitle": "Staff",
+      "staffDescription": "Staff member for this session",
+      "name": "Name",
+      "noAnswers": "No answers recorded.",
+      "tokenSubtitle": "Token {{label}} · {{date}}"
+    },
+    "submissionDetail": {
+      "title": "Form submission",
+      "unableToLoad": "Unable to load submission.",
+      "loading": "Loading submission…",
+      "filledFor": "Filled for {{name}}",
+      "answersTitle": "Answers",
+      "answersDescription": "Submitted form responses",
+      "noAnswers": "No answers recorded.",
+      "contextTitle": "Context",
+      "contextDescription": "Who filled this form",
+      "subject": "Subject",
+      "filledBy": "Filled by",
+      "service": "Service",
+      "submitted": "Submitted"
+    }
+  }
+}

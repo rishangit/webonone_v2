@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -17,6 +18,7 @@ import type { CompanyStatus } from '../services/companyApi'
 import { companiesActions } from '../store/companiesStore'
 
 export function CompaniesPage() {
+  const { t } = useTranslation('settings')
   const dispatch = useAppDispatch()
   const { isSuperAdmin, loading: roleLoading } = useSuperAdminStatus()
   const { adminItems, adminListStatus, adminListError, updatingId, adminListFetchedAt } =
@@ -28,9 +30,7 @@ export function CompaniesPage() {
   const loading = adminListStatus === 'loading'
   const error = adminListError
 
-  usePlatformLoading(
-    roleLoading ? 'Loading…' : loading ? 'Loading companies…' : null,
-  )
+  usePlatformLoading(roleLoading ? t('common:loading') : loading ? t('loadingCompanies') : null)
 
   const filteredItems = searchQuery.trim()
     ? adminItems.filter((item) =>
@@ -57,8 +57,8 @@ export function CompaniesPage() {
 
   return (
     <FeaturePage
-      title="Companies"
-      description="Review registered companies and update approval status."
+      title={t('companies')}
+      description={t('companiesDescription')}
       actions={
         <SearchInput
           value={searchQuery}
@@ -66,9 +66,9 @@ export function CompaniesPage() {
             setSearchQuery(event.target.value)
             setPage(1)
           }}
-          placeholder="Company name"
+          placeholder={t('companyName')}
           onClear={() => setPage(1)}
-          aria-label="Search companies"
+          aria-label={t('searchCompanies')}
           className="w-64"
         />
       }

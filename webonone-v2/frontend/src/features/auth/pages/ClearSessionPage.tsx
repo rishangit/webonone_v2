@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
 import { parseClearSessionContinue } from '@/features/auth/utils/clearSessionContinue'
 import { clearSessionRoleStorage } from '@/features/session/utils/sessionRoleStorage'
@@ -8,6 +9,7 @@ import { clearSessionRoleStorage } from '@/features/session/utils/sessionRoleSto
  * Global logout hop: clear webonone_auth + session role then continue.
  */
 export function ClearSessionPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const startedRef = useRef(false)
 
@@ -27,7 +29,7 @@ export function ClearSessionPage() {
 
   return (
     <div className="flex h-dvh items-center justify-center px-4">
-      <p className="text-sm text-muted-foreground">Signing out…</p>
+      <p className="text-sm text-muted-foreground">{t('signingOut')}</p>
     </div>
   )
 }

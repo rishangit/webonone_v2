@@ -1,0 +1,6 @@
+{
+  "title": "Send SMS",
+  "description": "Compose a one-off SMS using a template or a freeform message.",
+  "submit": "Send",
+  "loading": "Loading send form…"
+}

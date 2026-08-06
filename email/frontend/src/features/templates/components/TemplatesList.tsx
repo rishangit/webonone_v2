@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenuItem,
   ItemList,
@@ -16,9 +17,9 @@ interface TemplatesListProps {
   busyId: string | null
 }
 
-function formatScope(template: EmailTemplate): string {
-  if (template.isDefault) return 'Default'
-  return template.scope === 'platform' ? 'Platform' : 'Company'
+function formatScope(template: EmailTemplate, t: (k: string) => string): string {
+  if (template.isDefault) return t('scopeDefault')
+  return template.scope === 'platform' ? t('scopePlatform') : t('scopeCompany')
 }
 
 function formatDate(iso: string): string {
@@ -26,11 +27,12 @@ function formatDate(iso: string): string {
 }
 
 export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: TemplatesListProps) {
+  const { t } = useTranslation('templates')
   const { goToDetail, goToPreview, goToVersions } = useNavigateEmail()
   const items = Array.isArray(templates) ? templates : []
 
   if (items.length === 0) {
-    return <ItemListEmpty>No templates found for your scope.</ItemListEmpty>
+    return <ItemListEmpty>{t('emptyScope')}</ItemListEmpty>
   }
 
   return (
@@ -49,30 +51,33 @@ export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: Tem
               >
                 <p className="font-medium">{template.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {template.slug} · {formatScope(template)} ·{' '}
-                  {template.isActive ? 'Active' : 'Inactive'} · Updated{' '}
-                  {formatDate(template.updatedAt)}
+                  {t('metaLine', {
+                    slug: template.slug,
+                    scope: formatScope(template, t),
+                    active: template.isActive ? t('active') : t('inactive'),
+                    date: formatDate(template.updatedAt),
+                  })}
                 </p>
               </button>
             </ItemListContent>
-            <ItemListMenu ariaLabel={`Actions for ${template.name}`}>
+            <ItemListMenu ariaLabel={t('actionsFor', { name: template.name })}>
               <DropdownMenuItem onClick={() => goToDetail(template.id)} disabled={isBusy}>
-                View details
+                {t('viewDetails')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(template)} disabled={isBusy}>
-                {isDefault ? 'Customize' : 'Edit'}
+                {isDefault ? t('customize') : t('common:edit')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => goToPreview(template.id)} disabled={isBusy}>
-                Preview
+                {t('preview')}
               </DropdownMenuItem>
               {!isDefault ? (
                 <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
-                  {template.isActive ? 'Deactivate' : 'Activate'}
+                  {template.isActive ? t('deactivate') : t('activate')}
                 </DropdownMenuItem>
               ) : null}
               {!isDefault ? (
                 <DropdownMenuItem onClick={() => goToVersions(template.id)} disabled={isBusy}>
-                  Version history
+                  {t('versionHistory')}
                 </DropdownMenuItem>
               ) : null}
             </ItemListMenu>

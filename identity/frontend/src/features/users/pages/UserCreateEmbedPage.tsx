@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
@@ -15,13 +16,12 @@ import type { CreateCompanyUserPayload } from '@/features/users/schemas/createCo
 import { createCompanyCustomer } from '@/features/users/services/usersApi'
 import { getSessionCompanyId } from '@/features/users/utils/currentRole'
 
-const CREATE_USER_SUBMIT_LABEL = 'Create user'
-
 /**
  * Body-only create form for core-hosted nested sibling dialog
  * (SelectTag create pattern — host owns Cancel/Create footer).
  */
 export function UserCreateEmbedPage() {
+  const { t } = useTranslation('users')
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const companyId = getSessionCompanyId(accessToken)
@@ -49,7 +49,7 @@ export function UserCreateEmbedPage() {
       parentOrigin,
       requestId,
       creating,
-      creating ? 'Creating…' : CREATE_USER_SUBMIT_LABEL,
+      creating ? t('creating') : t('createUser'),
     )
   }, [creating, parentOrigin, requestId])
 
@@ -75,7 +75,7 @@ export function UserCreateEmbedPage() {
         alreadyAdded: true,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create user')
+      setError(err instanceof Error ? err.message : t('failedToCreateUser'))
     } finally {
       setCreating(false)
     }
@@ -86,7 +86,7 @@ export function UserCreateEmbedPage() {
       <div className="flex min-h-[200px] items-center justify-center p-6">
         <Alert variant="destructive" className="max-w-sm">
           <AlertDescription>
-            This page is available only for platform peer dialog embeds.
+            {t('embedOnlyPeerDialog')}
           </AlertDescription>
         </Alert>
       </div>

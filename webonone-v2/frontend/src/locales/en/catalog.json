@@ -1,0 +1,287 @@
+{
+  "entities": {
+    "tags": "Tags",
+    "units": "Units",
+    "attributes": "Attributes",
+    "products": "Products",
+    "services": "Services",
+    "spaces": "Spaces",
+    "tag": "Tag",
+    "unit": "Unit",
+    "attribute": "Attribute",
+    "product": "Product",
+    "service": "Service",
+    "space": "Space"
+  },
+  "binding": {
+    "linked": "Linked",
+    "forked": "Customized",
+    "custom": "Company"
+  },
+  "list": {
+    "description": "Company {{entity}} — link from the Data library, customize linked items on the detail page, or create your own.",
+    "searchPlaceholder": "Search {{entity}}",
+    "searchAria": "Search {{entity}}",
+    "add": "Add {{noun}}",
+    "emptySearch": "No {{entity}} match your search.",
+    "empty": "No company {{entity}} yet.",
+    "loading": "Loading {{entity}}…",
+    "remove": "Remove",
+    "removeTitle": "Remove {{noun}}?",
+    "removeTitleNamed": "Remove {{name}}?",
+    "removeDescription": "This action cannot be undone. The item will be removed from your company catalog."
+  },
+  "detail": {
+    "notFoundTitle": "Not found",
+    "notFoundDescription": "Unknown catalog type.",
+    "pageDescription": "Company {{noun}} details.",
+    "linkedHint": "Live link to the Data library. Customize to keep a company-owned copy.",
+    "customize": "Customize",
+    "remove": "Remove",
+    "ariaSections": "{{noun}} sections",
+    "loading": "Loading {{noun}}…",
+    "tabs": {
+      "overview": "Overview",
+      "gallery": "Gallery",
+      "attributes": "Attributes",
+      "variants": "Variants"
+    },
+    "serviceBasics": {
+      "title": "Service",
+      "description": "Name and description"
+    },
+    "entityBasics": {
+      "description": "Name and description"
+    },
+    "time": {
+      "title": "Time",
+      "description": "How this service is scheduled",
+      "timeMode": "Time mode",
+      "duration": "Duration",
+      "startTime": "Start time",
+      "endTime": "End time"
+    },
+    "tags": {
+      "title": "Tags",
+      "description": "Labels linked to this service",
+      "descriptionEntity": "Labels linked to this {{noun}}",
+      "empty": "No tags."
+    },
+    "form": {
+      "title": "Form",
+      "description": "Design form linked to this service",
+      "linkedForm": "Linked form",
+      "none": "None"
+    },
+    "removeTitleNamed": "Remove {{name}}?",
+    "removeTitleNoun": "Remove {{noun}}?",
+    "removeDescription": "This action cannot be undone. The item will be removed from your company catalog."
+  },
+  "source": {
+    "addFromLibrary": "Add from library",
+    "createNew": "Create new",
+    "createNewHint": "Create a company-owned {{noun}} that is not linked to the library."
+  },
+  "formDialog": {
+    "addFromLibraryTitle": "Add {{entity}} from library",
+    "addNoun": "Add {{noun}}",
+    "createCompanyNoun": "Create company {{noun}}",
+    "editCompanyNoun": "Edit company {{noun}}",
+    "ownedByCompany": "{{entity}} owned by your company.",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "color": "Color",
+      "symbol": "Symbol"
+    }
+  },
+  "serviceWizard": {
+    "titles": {
+      "addFromLibrary": "Add services from library",
+      "addService": "Add service",
+      "createService": "Create service",
+      "editService": "Edit service"
+    },
+    "libraryDescription": "Select a library service to link to your company. You can customize it later from the service detail page.",
+    "sourceDescription": "Choose how to add this service.",
+    "steps": {
+      "basics": "Basics",
+      "time": "Time",
+      "tags": "Tags",
+      "attributes": "Attributes",
+      "summary": "Summary"
+    },
+    "descriptions": {
+      "basics": "Name and describe this service.",
+      "time": "Choose how this service is scheduled.",
+      "tags": "Optionally label this service with tags.",
+      "attributes": "Optionally add custom attribute values.",
+      "summary": "Review your details before saving."
+    },
+    "createService": "Create service",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "status": "Status",
+      "unverified": "Unverified",
+      "verified": "Verified",
+      "time": "Time",
+      "duration": "Duration",
+      "specificTime": "Specific time",
+      "durationMinutes": "Duration (minutes)",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "tags": "Tags",
+      "chooseTags": "Choose tags",
+      "openTagPickerAria": "Open Data tag picker"
+    },
+    "attributes": {
+      "addAttribute": "Add attribute",
+      "optionalHint": "Optional. Add custom attribute values for this service.",
+      "attributePlaceholder": "Attribute",
+      "valuePlaceholder": "Value",
+      "remove": "Remove"
+    },
+    "summary": {
+      "noDescription": "No description",
+      "status": "Status",
+      "timeMode": "Time mode",
+      "time": "Time",
+      "tags": "Tags",
+      "noAttributes": "No attributes"
+    },
+    "tagsDialog": {
+      "selectTitle": "Select tags",
+      "selectDescription": "Choose one or more tags, then click Done.",
+      "addTitle": "Add new tag",
+      "addDescription": "Create a tag, then it is selected in the picker automatically."
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "timeModeRequired": "Time mode is required",
+      "durationRequired": "Duration (minutes) is required",
+      "startTimeRequired": "Start time is required",
+      "endTimeRequired": "End time is required",
+      "endAfterStart": "End time must be after start time",
+      "timeHhMm": "Time must be HH:mm"
+    }
+  },
+  "library": {
+    "searchPlaceholder": "Search {{entity}}…",
+    "searchAria": "Search {{entity}}",
+    "addToLibrary": "Add {{noun}} to library",
+    "addToLibraryTitle": "Add {{noun}} to library",
+    "addToLibraryDescription": "Create a new {{noun}} in the Data library, then select it for your company.",
+    "loading": "Loading library…",
+    "empty": "No library {{noun}} available.",
+    "selectAria": "Select {{name}}"
+  },
+  "gallery": {
+    "addImages": "Add images",
+    "addGalleryImages": "Add gallery images",
+    "addTitle": "Add {{noun}} gallery images",
+    "empty": "No gallery images yet",
+    "removeAria": "Remove gallery image",
+    "removeTitle": "Remove gallery image?",
+    "removeDescription": "This action cannot be undone. The image will be removed from this {{noun}} gallery."
+  },
+  "attributesTab": {
+    "loading": "Loading attributes…",
+    "empty": "No attributes linked yet.",
+    "failedLoad": "Failed to load attributes"
+  },
+  "variantsTab": {
+    "noLibraryProduct": "No library product linked. Variants are managed in the Data library for linked or forked products.",
+    "loading": "Loading variants…",
+    "empty": "No variants in the library for this product.",
+    "failedLoad": "Failed to load variants"
+  },
+  "variantDetail": {
+    "titleFallback": "Variant",
+    "description": "Product variant details",
+    "loading": "Loading variant…",
+    "failedLoad": "Failed to load variant",
+    "variantCard": {
+      "title": "Variant",
+      "description": "Name, default flag, and SKU",
+      "default": "Default",
+      "sku": "SKU"
+    },
+    "attributeValues": {
+      "title": "Attribute values",
+      "description": "Values that define this SKU",
+      "empty": "No attribute values."
+    },
+    "created": "Created",
+    "updated": "Updated"
+  },
+  "stocks": {
+    "title": "Stocks",
+    "addStock": "Add stock",
+    "loading": "Loading stocks…",
+    "empty": "No stock batches yet. Add a batch to get started.",
+    "failedLoad": "Failed to load stocks",
+    "batchLabel": "Batch {{number}}",
+    "qty": "Qty {{qty}}",
+    "active": "Active",
+    "costSell": "Cost {{cost}} · Sell {{sell}}",
+    "purchased": "Purchased {{date}}",
+    "expires": "Expires {{date}}",
+    "supplier": "Supplier · {{name}}",
+    "setAsActive": "Set as active",
+    "toastActiveUpdated": "Active stock updated",
+    "toastActiveFailed": "Could not update active stock",
+    "failedSetActive": "Failed to set active stock",
+    "actionsAria": "Actions for batch {{number}}"
+  },
+  "stockForm": {
+    "title": "Add stock",
+    "description": "Record a stock batch for this product variant.",
+    "addStock": "Add stock",
+    "saving": "Saving…",
+    "failedCreate": "Failed to create stock",
+    "fields": {
+      "quantity": "Quantity",
+      "batchNumber": "Batch number",
+      "costPrice": "Cost price",
+      "sellPrice": "Sell price",
+      "purchaseDate": "Purchase date",
+      "expiredDate": "Expired date",
+      "supplier": "Supplier",
+      "selectSupplier": "Select supplier"
+    },
+    "pickerTitle": "Select supplier",
+    "pickerDescription": "Choose a user from Identity to set as the stock supplier.",
+    "validation": {
+      "dateRequired": "Date is required",
+      "invalidDate": "Invalid date",
+      "quantityRequired": "Quantity is required",
+      "quantityPositive": "Quantity must be greater than 0",
+      "batchRequired": "Batch number is required",
+      "costRequired": "Cost price is required",
+      "costMin": "Cost price must be 0 or greater",
+      "sellRequired": "Sell price is required",
+      "sellMin": "Sell price must be 0 or greater",
+      "supplierRequired": "Supplier is required",
+      "expiredOnOrAfterPurchase": "Expired date must be on or after purchase date"
+    }
+  },
+  "formLink": {
+    "title": "Linked form",
+    "description": "Choose a published Design form for this service.",
+    "selectPlaceholder": "Select a form",
+    "noForm": "No form",
+    "noPublished": "No published forms yet. Publish a form in Design first.",
+    "toastLinked": "Form linked",
+    "toastUpdated": "Service form updated.",
+    "toastUnlinked": "Form unlinked.",
+    "toastSaveFailed": "Save failed"
+  },
+  "fillForm": {
+    "title": "Fill form for customer",
+    "description": "Select a customer for {{serviceName}}.",
+    "selectCustomer": "Select customer",
+    "noCustomers": "No customers found for this company.",
+    "failedLoadCustomers": "Failed to load customers"
+  }
+}

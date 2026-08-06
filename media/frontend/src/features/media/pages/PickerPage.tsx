@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { PageShell, Spinner } from '@webonone/ui-kit'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { EmbedLayout } from '../components/EmbedLayout'
@@ -14,6 +15,7 @@ import type { MediaItemDto } from '@webonone/media-embed'
 const DEFAULT_STANDALONE_SCOPE = 'media:library:default'
 
 export function PickerPage() {
+  const { t } = useTranslation('picker')
   const embed = useEmbedMode()
   const { accessToken } = useMediaEmbedAuth(embed)
   const { postSelect, postSelectionChange } = useMediaPostMessage(embed.parentOrigin, embed.scope)
@@ -39,10 +41,10 @@ export function PickerPage() {
 
   if (embed.isEmbed && !accessToken) {
     return (
-      <EmbedLayout title="Media picker" parentOrigin={embed.parentOrigin} chromeless>
+      <EmbedLayout title={t('title')} parentOrigin={embed.parentOrigin} chromeless>
         <div className="flex h-full flex-col items-center justify-center gap-3">
           <Spinner size="lg" />
-          <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
+          <p className="text-sm text-muted-foreground">{t('waitingAuth')}</p>
         </div>
       </EmbedLayout>
     )
@@ -61,7 +63,7 @@ export function PickerPage() {
 
   if (embed.isEmbed) {
     return (
-      <EmbedLayout title="Media picker" parentOrigin={embed.parentOrigin} chromeless>
+      <EmbedLayout title={t('title')} parentOrigin={embed.parentOrigin} chromeless>
         {content}
       </EmbedLayout>
     )
@@ -69,7 +71,7 @@ export function PickerPage() {
 
   return (
     <PageShell
-      title="Media"
+      title={t('pageTitle')}
       user={user ? { email: user.email, displayName: user.displayName } : null}
       onLogout={() => {
         dispatch(authActions.logout())

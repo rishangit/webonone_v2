@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { normalizeLocale } from '@webonone/i18n'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   PLATFORM_EMBED_QUERY,
@@ -22,6 +24,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
 import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import {
   PROFILE_WIZARD_TOTAL_STEPS,
   profileFormToUpdateInput,
@@ -40,16 +43,6 @@ import { ProfileWizardStepAddress } from './profile-wizard/ProfileWizardStepAddr
 import { ProfileWizardStepContact } from './profile-wizard/ProfileWizardStepContact'
 import { ProfileWizardStepName } from './profile-wizard/ProfileWizardStepName'
 import { ProfileWizardStepSummary } from './profile-wizard/ProfileWizardStepSummary'
-
-const STEP_TITLES = ['Account', 'Address', 'Contact', 'Name', 'Summary'] as const
-
-const STEP_DESCRIPTIONS = [
-  'Update your profile photo.',
-  'Postal / street address.',
-  'How others can reach you.',
-  'Legal and display names.',
-  'Review your changes before saving.',
-] as const
 
 const PROFILE_WIZARD_DIALOG_SIZE = {
   sizeWidth: 'large' as const,
@@ -73,6 +66,7 @@ export function ProfileFormDialog({
   onSaved,
   chrome = 'dialog',
 }: ProfileFormDialogProps) {
+  const { t } = useTranslation('profile')
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
@@ -97,8 +91,24 @@ export function ProfileFormDialog({
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
 
-  const title = 'Edit profile'
-  const finalSubmitLabel = 'Save changes'
+  const STEP_TITLES = [
+    t('stepAccount'),
+    t('stepAddress'),
+    t('stepContact'),
+    t('stepName'),
+    t('stepSummary'),
+  ] as const
+
+  const STEP_DESCRIPTIONS = [
+    t('stepAccountDescription'),
+    t('stepAddressDescription'),
+    t('stepContactDescription'),
+    t('stepNameDescription'),
+    t('stepSummaryDescription'),
+  ] as const
+
+  const title = t('editProfile')
+  const finalSubmitLabel = t('saveChanges')
 
   const [step, setStep] = useState<ProfileWizardStep>(embedStep)
   const [values, setValues] = useState<ProfileFormValues | null>(null)
@@ -118,8 +128,8 @@ export function ProfileFormDialog({
   const blockTimerRef = useRef<number | null>(null)
 
   const primaryLabelForStep = (current: ProfileWizardStep, saving: boolean) => {
-    if (saving) return 'Saving…'
-    if (current < PROFILE_WIZARD_TOTAL_STEPS) return 'Next'
+    if (saving) return t('saving')
+    if (current < PROFILE_WIZARD_TOTAL_STEPS) return t('next')
     return finalSubmitLabel
   }
 
@@ -130,7 +140,7 @@ export function ProfileFormDialog({
     title,
     description: STEP_DESCRIPTIONS[embedStep - 1],
     submitLabel: primaryLabelForStep(embedStep, false),
-    secondaryLabel: embedStep > 1 ? 'Previous' : undefined,
+    secondaryLabel: embedStep > 1 ? t('previous') : undefined,
     ...PROFILE_WIZARD_DIALOG_SIZE,
     onResult: () => {
       onSaved()
@@ -179,12 +189,16 @@ export function ProfileFormDialog({
     if (!submittedRef.current || isProfileSaving) return
     submittedRef.current = false
     if (!profileError) {
+      const nextLocale = values?.locale
+      if (nextLocale) {
+        void changeAppLocale(normalizeLocale(nextLocale))
+      }
       onSaved()
       if (chrome === 'dialog') {
         onOpenChange(false)
       }
     }
-  }, [chrome, isProfileSaving, onOpenChange, onSaved, profileError])
+  }, [chrome, isProfileSaving, onOpenChange, onSaved, profileError, values?.locale])
 
   useEffect(() => {
     if (profileSaveSuccess) {
@@ -348,7 +362,7 @@ export function ProfileFormDialog({
       primaryLabelForStep(step, isProfileSaving),
       {
         description: STEP_DESCRIPTIONS[step - 1],
-        secondaryLabel: step > 1 ? 'Previous' : null,
+        secondaryLabel: step > 1 ? t('previous') : null,
       },
     )
   }, [chrome, dialogRequestId, isProfileSaving, parentOrigin, selectorOpen, step])
@@ -377,7 +391,7 @@ export function ProfileFormDialog({
     if (chrome === 'embed-page') {
       return (
         <div className="flex min-h-[200px] items-center justify-center p-6 text-sm text-muted-foreground">
-          Loading profile…
+          {t('loadingProfile')}
         </div>
       )
     }
@@ -397,7 +411,7 @@ export function ProfileFormDialog({
         onClick={() => handleFormOpenChange(false)}
         disabled={isProfileSaving}
       >
-        Cancel
+        {t('cancel')}
       </Button>
       {step > 1 ? (
         <Button
@@ -408,7 +422,7 @@ export function ProfileFormDialog({
           disabled={isProfileSaving}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
-          Previous
+          {t('previous')}
         </Button>
       ) : null}
       {step < PROFILE_WIZARD_TOTAL_STEPS ? (
@@ -418,7 +432,7 @@ export function ProfileFormDialog({
           onClick={handleNext}
           disabled={isProfileSaving || selectorOpen}
         >
-          Next
+          {t('next')}
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       ) : (
@@ -429,7 +443,7 @@ export function ProfileFormDialog({
           disabled={isProfileSaving || selectorOpen}
         >
           <Save className="mr-2 h-4 w-4" />
-          {isProfileSaving ? 'Saving…' : finalSubmitLabel}
+          {isProfileSaving ? t('saving') : finalSubmitLabel}
         </Button>
       )}
     </div>
@@ -439,7 +453,11 @@ export function ProfileFormDialog({
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Step {step} of {PROFILE_WIZARD_TOTAL_STEPS} — {STEP_TITLES[stepIndex]}
+          {t('stepOf', {
+            current: step,
+            total: PROFILE_WIZARD_TOTAL_STEPS,
+            title: STEP_TITLES[stepIndex],
+          })}
         </p>
         <ProfileWizardProgress currentStep={step} totalSteps={PROFILE_WIZARD_TOTAL_STEPS} />
       </div>
@@ -533,7 +551,7 @@ export function ProfileFormDialog({
         open={open}
         onOpenChange={handleFormOpenChange}
         title={title}
-        description={STEP_DESCRIPTIONS[stepIndex]}
+        description={stepDescriptions[stepIndex]}
         sizeWidth={PROFILE_WIZARD_DIALOG_SIZE.sizeWidth}
         sizeHeight={PROFILE_WIZARD_DIALOG_SIZE.sizeHeight}
         nestedDismissGuard={selectorOpen || blockOuterDismiss}

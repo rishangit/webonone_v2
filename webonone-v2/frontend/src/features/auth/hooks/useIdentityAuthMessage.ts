@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthCancelMessage, isAuthSuccessMessage } from '@webonone/platform-embed'
+import { normalizeLocale } from '@webonone/i18n'
 import { useAppDispatch } from '@/app/store/hooks'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { authActions } from '../store/authSlice'
 import { getIdentityOrigin } from '../utils/identityConfig'
+import { clearLoginReturnPath } from '../utils/loginReturnPath'
 import { redirectToWebsiteWithAuthCode } from '../utils/redirectToWebsite'
+import { getWebsiteHomepageUrl } from '../utils/websiteConfig'
 
 function normalizeOrigin(origin: string): string {
   return origin.replace(/\/$/, '')
@@ -52,17 +56,29 @@ export function useIdentityAuthMessage({
               email: event.data.user.email,
               displayName: event.data.user.displayName,
               avatarUrl: event.data.user.avatarUrl ?? null,
+              locale: event.data.user.locale ?? null,
             },
           }),
         )
 
+        if (event.data.user.locale) {
+          void changeAppLocale(normalizeLocale(event.data.user.locale))
+        }
+
         if (websiteReturnUrl) {
-          void redirectToWebsiteWithAuthCode(event.data.accessToken, websiteReturnUrl).catch(() => {
-            navigate(returnPath || '/', { replace: true })
-          })
+          void redirectToWebsiteWithAuthCode(event.data.accessToken, websiteReturnUrl)
+            .then(() => {
+              clearLoginReturnPath()
+            })
+            .catch(() => {
+              // Prefer website home over WebOnOne `/` when website handoff fails.
+              clearLoginReturnPath()
+              window.location.assign(getWebsiteHomepageUrl())
+            })
           return
         }
 
+        clearLoginReturnPath()
         navigate(returnPath || '/', { replace: true })
         return
       }

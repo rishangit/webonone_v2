@@ -1,0 +1,294 @@
+{
+  "basic": {
+    "title": "මූලික සැකසුම්",
+    "description": "ඔබේ සක්‍රිය ගිණුම සහ පෙනුම කළමනාකරණය කරන්න.",
+    "ariaSections": "මූලික සැකසුම් අංශ",
+    "tabs": {
+      "account": "ගිණුම",
+      "appearance": "පෙනුම"
+    }
+  },
+  "account": {
+    "title": "තෝරාගත් ගිණුම",
+    "description": "මෙම WebOnOne සැසිය සඳහා භාවිතා කරන ගිණුම.",
+    "onlyOneAvailable": "ගිණුම් එකක් පමණක් ලබා ගත හැක.",
+    "change": "වෙනස් කරන්න"
+  },
+  "appearance": {
+    "title": "පෙනුම",
+    "description": "වේදිකාව සඳහා ආලෝක හෝ අඳුරු ප්‍රකාරය තෝරන්න.",
+    "light": {
+      "title": "ආලෝක",
+      "description": "දිවා කාලයට සුදුසු දීප්තිමත් මතුපිට."
+    },
+    "dark": {
+      "title": "අඳුරු",
+      "description": "අඩු ආලෝකය සඳහා අඳුරු මතුපිට."
+    }
+  },
+  "companiesAdmin": {
+    "title": "සමාගම්",
+    "description": "ලියාපදිංචි සමාගම් සමාලෝචනය කර අනුමත තත්ත්වය යාවත්කාලීන කරන්න.",
+    "searchPlaceholder": "සමාගම් නම",
+    "searchAria": "සමාගම් සොයන්න",
+    "empty": "තවම සමාගම් ලියාපදිංචි වී නැත.",
+    "approve": "අනුමත කරන්න",
+    "setPending": "පොරොත්තුවට සකසන්න",
+    "reject": "ප්‍රතික්ෂේප කරන්න",
+    "loading": "සමාගම් පූරණය වෙමින්…"
+  },
+  "myCompanies": {
+    "title": "මගේ සමාගම්",
+    "description": "ඔබ හිමිකරු හෝ පරිපාලක වන සමාගම් බලන්න සහ ලියාපදිංචි කරන්න.",
+    "searchPlaceholder": "සමාගම් නම",
+    "searchAria": "සමාගම් සොයන්න",
+    "empty": "තවම සමාගම් නැත. ආරම්භ කිරීමට සමාගමක් එකතු කරන්න.",
+    "lookingForSettings": "වෙනත් සැකසුම් සොයනවාද?",
+    "basicSettingsLink": "මූලික සැකසුම්",
+    "registrationSubmitted": "ලියාපදිංචිය ඉදිරිපත් කරන ලදී. පරිපාලක අනුමැතිය අවශ්‍යයි — සුපිරි පරිපාලකයෙකු අනුමත හෝ ප්‍රතික්ෂේප කරන තුරු සමාගම පොරොත්තුවේ පවතී.",
+    "login": "පිවිසෙන්න",
+    "loggingIn": "පිවිසෙමින්…",
+    "loginRejected": "පිවිසීම (ප්‍රතික්ෂේපිත)",
+    "loginUnavailableRejected": "ප්‍රතික්ෂේපිත සමාගම් සඳහා පිවිසීම ලබා ගත නොහැක",
+    "failedLogin": "සමාගමට පිවිසීම අසාර්ථක විය"
+  },
+  "connectedCompanies": {
+    "title": "සම්බන්ධිත සමාගම්",
+    "description": "පාරිභෝගිකයෙකු ලෙස ඔබ වෙන්කිරීම් කරන හෝ මිලදී ගන්නා සමාගම්.",
+    "searchPlaceholder": "සමාගම් නම",
+    "searchAria": "සම්බන්ධිත සමාගම් සොයන්න",
+    "empty": "තවම සම්බන්ධිත සමාගම් නැත. ඔබ වෙන්කිරීම් කරන හෝ මිලදී ගන්නා විට සමාගම් මෙහි පෙනේ."
+  },
+  "companyProfile": {
+    "title": "සමාගම් පැතිකඩ",
+    "descriptionOwner": "සමාගම් විස්තර, ගැලරි රූප සහ දත්ත සේවා.",
+    "descriptionMember": "ඔබ වෙන්කිරීම් කරන හෝ මිලදී ගන්නා සමාගම්වල විස්තර සහ නාමාවලිය.",
+    "ariaSections": "සමාගම් පැතිකඩ අංශ",
+    "tabs": {
+      "overview": "දළ විශ්ලේෂණය",
+      "gallery": "ගැලරිය",
+      "data": "දත්ත",
+      "ourServices": "අපගේ සේවා",
+      "ourProducts": "අපගේ නිෂ්පාදන",
+      "ourSpaces": "අපගේ අවකාශ"
+    },
+    "backToMyCompanies": "මගේ සමාගම් වෙත ආපසු",
+    "backToConnectedCompanies": "සම්බන්ධිත සමාගම් වෙත ආපසු",
+    "backToCompanies": "සමාගම් වෙත ආපසු",
+    "loading": "සමාගම පූරණය වෙමින්…"
+  },
+  "companyCards": {
+    "profile": {
+      "title": "සමාගම් පැතිකඩ",
+      "description": "වේදිකාවේ සමාගමේ අනන්‍යතාව",
+      "companySize": "සමාගම් ප්‍රමාණය"
+    },
+    "contact": {
+      "title": "සම්බන්ධතා තොරතුරු",
+      "description": "පාරිභෝගිකයින් සහ වේදිකාව මෙම සමාගමට සම්බන්ධ වන ආකාරය",
+      "contactEmail": "සම්බන්ධතා විද්‍යුත් තැපෑල",
+      "contactPhone": "සම්බන්ධතා දුරකථනය",
+      "empty": "තවම සම්බන්ධතා විස්තර නැත. විද්‍යුත් තැපෑල සහ දුරකථනය එකතු කිරීමට මෙම අංශය සංස්කරණය කරන්න."
+    },
+    "address": {
+      "title": "ලිපින තොරතුරු",
+      "description": "මෙම සමාගම සඳහා තැපැල් සහ වීදි ලිපිනය",
+      "line1": "ලිපින පේළි 1",
+      "line2": "ලිපින පේළි 2",
+      "city": "නගරය",
+      "stateRegion": "ප්‍රාන්තය / කලාපය",
+      "postalCode": "තැපැල් කේතය",
+      "country": "රට",
+      "empty": "තවම ලිපින විස්තර නැත. වීදි ලිපිනය එකතු කිරීමට මෙම අංශය සංස්කරණය කරන්න."
+    },
+    "location": {
+      "title": "ස්ථාන තොරතුරු",
+      "description": "මෙම සමාගම සඳහා සිතියම් පින්",
+      "mapLocation": "සිතියම් ස්ථානය",
+      "noPinSet": "තවම සිතියම් ස්ථානයක් සකසා නැත.",
+      "loadingMap": "සිතියම පූරණය වෙමින්…",
+      "searchPlaceholder": "ස්ථානයක් සොයන්න…",
+      "searchAria": "සිතියම් ස්ථානය සොයන්න",
+      "mapAriaWithPin": "සමාගම් සිතියම් ස්ථානය",
+      "mapAriaNoPin": "සිතියම — පින් සකසා නැත",
+      "failedLoadMaps": "Google Maps පූරණය අසාර්ථක විය"
+    },
+    "tags": {
+      "title": "ටැග්",
+      "description": "මෙම සමාගමට සම්බන්ධ නාමාවලි ටැග්",
+      "empty": "තවම ටැග් නැත. නාමාවලි ටැග් සම්බන්ධ කිරීමට මෙම අංශය සංස්කරණය කරන්න."
+    },
+    "dataServices": {
+      "title": "දත්ත සේවා",
+      "description": "මෙම සමාගම භාවිතා කරන දත්ත නාමාවලි අංශ තෝරන්න. තෝරාගත් අංශ වම් සංචලනයේ දත්ත යටතේ පෙනේ.",
+      "empty": "දත්ත සේවා තෝරා නැත. මෙම සමාගම සඳහා නාමාවලි අංශ තෝරා ගැනීමට මෙම අංශය සංස්කරණය කරන්න.",
+      "toastUpdated": "දත්ත සේවා යාවත්කාලීන කරන ලදී",
+      "toastFailed": "දත්ත සේවා යාවත්කාලීන කිරීම අසාර්ථක විය"
+    },
+    "logo": {
+      "title": "සමාගම් ලාංඡනය",
+      "alt": "සමාගම් ලාංඡනය",
+      "upload": "උඩුගත කරන්න",
+      "replace": "ප්‍රතිස්ථාපනය",
+      "uploadHint": "සමාගම් ලාංඡනයක් උඩුගත කරන්න",
+      "pickerUploadTitle": "සමාගම් ලාංඡනය උඩුගත කරන්න",
+      "pickerReplaceTitle": "සමාගම් ලාංඡනය ප්‍රතිස්ථාපනය කරන්න",
+      "removeTitle": "සමාගම් ලාංඡනය ඉවත් කරන්නද?",
+      "removeDescription": "මෙය සමාගම් ලාංඡනය ඉවත් කරයි. ඔබට පසුව නව එකක් උඩුගත කළ හැක."
+    },
+    "gallery": {
+      "title": "ගැලරිය",
+      "addImages": "රූප එකතු කරන්න",
+      "addGalleryImages": "ගැලරි රූප එකතු කරන්න",
+      "empty": "තවම ගැලරි රූප නැත",
+      "removeAria": "ගැලරි රූපය ඉවත් කරන්න",
+      "removeTitle": "ගැලරි රූපය ඉවත් කරන්නද?",
+      "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. රූපය සමාගම් ගැලරියෙන් ඉවත් වේ."
+    }
+  },
+  "companyWizard": {
+    "steps": {
+      "profile": "පැතිකඩ",
+      "contact": "සම්බන්ධතා",
+      "address": "ලිපිනය",
+      "location": "ස්ථානය",
+      "tags": "ටැග්",
+      "summary": "සාරාංශය"
+    },
+    "descriptionsCreate": {
+      "profile": "ඔබේ සමාගම ගැන අපට කියන්න.",
+      "contact": "පාරිභෝගිකයින් සහ වේදිකාව ඔබට සම්බන්ධ වන ආකාරය (විකල්ප).",
+      "address": "තැපැල් සහ වීදි ලිපිනය (විකල්ප).",
+      "location": "මෙම සමාගම සඳහා සිතියම් පින් (විකල්ප).",
+      "tags": "නාමාවලි ටැග් සම්බන්ධ කරන්න (විකල්ප).",
+      "summary": "ඉදිරිපත් කිරීමට පෙර ඔබේ විස්තර සමාලෝචනය කරන්න."
+    },
+    "descriptionsEdit": {
+      "profile": "සමාගම් නම, විස්තරය සහ ප්‍රමාණය.",
+      "contact": "සම්බන්ධතා විද්‍යුත් තැපෑල සහ දුරකථනය.",
+      "address": "තැපැල් සහ වීදි ලිපිනය.",
+      "location": "මෙම සමාගම සඳහා සිතියම් පින්.",
+      "tags": "මෙම සමාගම සඳහා නාමාවලි ටැග්.",
+      "summary": "සුරැකීමට පෙර ඔබේ වෙනස්කම් සමාලෝචනය කරන්න."
+    },
+    "fields": {
+      "companyName": "සමාගම් නම",
+      "companyNamePlaceholder": "ඔබේ සමාගම් නම",
+      "description": "විස්තරය",
+      "companySize": "සමාගම් ප්‍රමාණය",
+      "companySizePlaceholder": "සමාගම් ප්‍රමාණය තෝරන්න",
+      "companySizePlaceholderOptional": "සමාගම් ප්‍රමාණය තෝරන්න (විකල්ප)",
+      "contactEmail": "සම්බන්ධතා විද්‍යුත් තැපෑල",
+      "contactEmailPlaceholder": "contact@example.com",
+      "contactPhone": "සම්බන්ධතා දුරකථනය",
+      "addressLine1": "ලිපින පේළි 1",
+      "addressLine2": "ලිපින පේළි 2",
+      "city": "නගරය",
+      "stateRegion": "ප්‍රාන්තය / කලාපය",
+      "postalCode": "තැපැල් කේතය",
+      "country": "රට",
+      "mapLocation": "සිතියම් ස්ථානය",
+      "tags": "ටැග්",
+      "chooseTags": "ටැග් තෝරන්න",
+      "openTagPickerAria": "දත්ත ටැග් තෝරකය විවෘත කරන්න"
+    },
+    "sizes": {
+      "1-10": "1-10",
+      "11-50": "11-50",
+      "51-200": "51-200",
+      "201-500": "201-500",
+      "500+": "500+"
+    },
+    "tagsDialog": {
+      "selectTitle": "ටැග් තෝරන්න",
+      "selectDescription": "එකක් හෝ කිහිපයක් තෝරා Done ක්ලික් කරන්න.",
+      "addTitle": "නව ටැගයක් එකතු කරන්න",
+      "addDescription": "ටැගයක් සාදන්න, පසුව එය තෝරකයේ ස්වයංක්‍රීයව තෝරා ගනු ලැබේ."
+    },
+    "loading": "සමාගම පූරණය වෙමින්…",
+    "validation": {
+      "companyNameRequired": "සමාගම් නම අවශ්‍යයි",
+      "descriptionRequired": "විස්තරය අවශ්‍යයි",
+      "companySizeRequired": "සමාගම් ප්‍රමාණය අවශ්‍යයි",
+      "validContactEmail": "වැලිඩ් සම්බන්ධතා විද්‍යුත් තැපෑලක් ඇතුළත් කරන්න",
+      "contactPhoneRequired": "සම්බන්ධතා දුරකථනය අවශ්‍යයි",
+      "addressRequired": "ලිපිනය අවශ්‍යයි",
+      "cityRequired": "නගරය අවශ්‍යයි",
+      "countryRequired": "රට අවශ්‍යයි"
+    }
+  },
+  "memberCatalog": {
+    "searchPlaceholder": "{{entity}} සොයන්න",
+    "searchAria": "{{entity}} සොයන්න",
+    "emptySearch": "ඔබේ සෙවුමට ගැලපෙන {{entity}} නැත.",
+    "empty": "තවම {{entity}} නැත.",
+    "loading": "{{entity}} පූරණය වෙමින්…"
+  },
+  "systemTheme": {
+    "list": {
+      "title": "පද්ධති තේමාව",
+      "description": "වේදිකා ෂෙල්ල සඳහා උද්දීපන වර්ණාවලි සාදන්න. මූලික සැකසුම්වල ආලෝක හෝ අඳුරු පෙනුම වෙනස් කරන්න.",
+      "searchPlaceholder": "තේමා නම",
+      "searchAria": "තේමා සොයන්න",
+      "createTheme": "තේමාව සාදන්න",
+      "empty": "තවම තේමා නැත.",
+      "emptySearch": "ඔබේ සෙවුමට ගැලපෙන තේමා නැත.",
+      "loading": "තේමා පූරණය වෙමින්…",
+      "deleteTitle": "තේමාව මකන්නද?",
+      "deleteTitleNamed": "{{name}} මකන්නද?",
+      "deleteDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. තේමාව ස්ථිරවම ඉවත් වේ."
+    },
+    "detail": {
+      "title": "තේමාව",
+      "description": "තේමා විස්තර සහ වර්ණාවලිය.",
+      "loading": "තේමාව පූරණය වෙමින්…"
+    },
+    "cards": {
+      "basicsTitle": "මූලික",
+      "basicsDescription": "වේදිකාවේ තේමා අනන්‍යතාව",
+      "paletteTitle": "වර්ණාවලිය",
+      "paletteDescription": "වේදිකා ෂෙල්ල සඳහා උද්දීපන වර්ණ පහක්"
+    },
+    "wizard": {
+      "steps": {
+        "basics": "මූලික",
+        "palette": "වර්ණාවලිය",
+        "summary": "සාරාංශය"
+      },
+      "descriptionsCreate": {
+        "basics": "ඔබේ තේමාවට නමක් දෙන්න.",
+        "palette": "වර්ණ පහක් අර්ථ දක්වන්න හෝ CColorPalette වෙතින් ආයාත කරන්න.",
+        "summary": "සෑදීමට පෙර ඔබේ තේමාව සමාලෝචනය කරන්න."
+      },
+      "descriptionsEdit": {
+        "basics": "තේමා නම.",
+        "palette": "වර්ණාවලි වර්ණ (ප්‍රාථමික, ද්විතීයික, උද්දීපන, පසුබිම, පෙළ).",
+        "summary": "සුරැකීමට පෙර ඔබේ වෙනස්කම් සමාලෝචනය කරන්න."
+      },
+      "themeName": "තේමා නම",
+      "defaultName": "මගේ තේමාව",
+      "loading": "තේමාව පූරණය වෙමින්…",
+      "colors": {
+        "color1": "වර්ණ 1 — ප්‍රාථමික (උද්දීපන අන්තය)",
+        "color2": "වර්ණ 2 — ද්විතීයික",
+        "color3": "වර්ණ 3 — උද්දීපන (උද්දීපන ආරම්භය)",
+        "color4": "වර්ණ 4 — පසුබිම",
+        "color5": "වර්ණ 5 — අඳුරු මතුපිට"
+      },
+      "validation": {
+        "nameRequired": "නම අවශ්‍යයි",
+        "hexFormat": "#RRGGBB ආකෘතිය භාවිතා කරන්න"
+      }
+    },
+    "importPalette": {
+      "title": "වර්ණාවලිය ආයාත කරන්න",
+      "descriptionPrefix": "CColorPalette වෙතින්",
+      "descriptionSuffix": "බ්ලොක් එක අලවන්න (Export → CSS variables).",
+      "apply": "යොදන්න",
+      "invalidPaste": "#RRGGBB ආකෘතියෙන් --color-1 සිට --color-5 දක්වා වැලිඩ් :root බ්ලොක් එකක් අලවන්න."
+    },
+    "preview": {
+      "sampleInput": "නියැදි ආදානය"
+    }
+  }
+}

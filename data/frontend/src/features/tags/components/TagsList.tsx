@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -29,6 +30,7 @@ export function TagsList({
   onVerify,
   canMutate,
 }: TagsListProps) {
+  const { t } = useTranslation('tags')
   const { goToDetail } = useNavigateDataEntity()
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
 
@@ -37,7 +39,7 @@ export function TagsList({
   }
 
   if (items.length === 0) {
-    return <ItemListEmpty>No tags found.</ItemListEmpty>
+    return <ItemListEmpty>{t('emptyFound')}</ItemListEmpty>
   }
 
   return (
@@ -54,7 +56,7 @@ export function TagsList({
                 <p className="font-medium">{item.name}</p>
                 <StatusBadge status={item.status} />
                 <span className="text-xs text-muted-foreground">
-                  Refs: {item.referenceCount ?? 0}
+                  {t('refs', { count: item.referenceCount ?? 0 })}
                 </span>
               </div>
               {item.description ? (
@@ -73,15 +75,15 @@ export function TagsList({
                   {rowBody}
                 </button>
               </ItemListContent>
-              <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+              <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
                 <DropdownMenuItem onClick={() => openDetails(item.id)}>
-                  View details
+                  {t('viewDetails')}
                 </DropdownMenuItem>
                 {canMutate && item.status === 'pending' && onVerify ? (
-                  <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
                 ) : null}
                 {canMutate ? (
-                  <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(item.id)}>{t('common:edit')}</DropdownMenuItem>
                 ) : null}
                 {canMutate ? (
                   <>
@@ -101,8 +103,8 @@ export function TagsList({
       </ItemList>
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
-        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete tag?'}
-        description="This action cannot be undone. The tag will be permanently removed."
+        title={pendingDelete ? t('deleteConfirm', { name: pendingDelete.name }) : t('deleteConfirmFallback')}
+        description={t('deleteDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)

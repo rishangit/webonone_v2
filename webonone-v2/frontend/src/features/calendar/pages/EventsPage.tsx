@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -24,35 +25,32 @@ import {
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
 function CompanyEventsPage({ personal }: { personal: boolean }) {
+  const { t } = useTranslation('calendar')
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
   const list = useEpicCatalogList((s) => s.events, eventsActions)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const canManage = !personal && canManageCompanyEvents(activeRole, activeCompanyId)
-  usePlatformLoading(list.loading ? 'Loading events…' : null)
+  usePlatformLoading(list.loading ? t('loadingEvents') : null)
 
   return (
     <FeaturePage
-      title="Events"
-      description={
-        personal
-          ? 'Your bookings and session tokens.'
-          : 'Manage company calendar events.'
-      }
+      title={t('events')}
+      description={personal ? t('eventsDescriptionPersonal') : t('eventsDescription')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
             onClear={() => list.setQ('')}
-            placeholder="Search events…"
+            placeholder={t('searchEventsPlaceholder')}
             className="w-64"
-            aria-label="Search events"
+            aria-label={t('searchEvents')}
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={() => setDialog({})}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add event
+              {t('addEvent')}
             </Button>
           ) : null}
         </div>

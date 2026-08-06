@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -29,6 +30,7 @@ type RegisterVerifyOtpStepProps = {
 }
 
 export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVerifyOtpStepProps) {
+  const { t } = useTranslation('auth')
   const [values, setValues] = useState<VerifyRegisterOtpFormValues>({ otp: '' })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof VerifyRegisterOtpFormValues, string>>>({})
   const [error, setError] = useState<string | null>(null)
@@ -71,15 +73,15 @@ export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVeri
       if (apiErr.code === 'OTP_MAX_ATTEMPTS') {
         setLocked(true)
         setAttemptsRemaining(0)
-        setError('Too many incorrect attempts — request a new code.')
+        setError(t('errors.tooManyAttempts'))
       } else if (typeof apiErr.attemptsRemaining === 'number') {
         setAttemptsRemaining(apiErr.attemptsRemaining)
         setError(apiErr.message)
       } else if (apiErr.code === 'OTP_EXPIRED') {
         setSecondsLeft(0)
-        setError('Verification code expired — request a new code.')
+        setError(t('errors.codeExpiredRequestNew'))
       } else {
-        setError(apiErr.message ?? 'Verification failed')
+        setError(apiErr.message ?? t('errors.verificationFailed'))
       }
     } finally {
       setLoading(false)
@@ -89,7 +91,7 @@ export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVeri
   return (
     <Form className="space-y-6" onSubmit={handleSubmit}>
       <p className="text-center text-sm text-muted-foreground">
-        We sent a 4-digit code to {maskEmail(email)}
+        {t('codeSentTo', { email: maskEmail(email) })}
       </p>
       {error ? (
         <Alert variant="destructive">
@@ -98,23 +100,31 @@ export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVeri
       ) : null}
       {!locked && !expired && attemptsRemaining !== null ? (
         <p className="text-center text-sm text-muted-foreground">
-          {attemptsRemaining} attempt(s) remaining
+          {t('attemptsRemaining', { count: attemptsRemaining })}
         </p>
       ) : null}
       {!locked && !expired ? (
-        <p className="text-center text-sm text-muted-foreground">Code expires in {secondsLeft}s</p>
+        <p className="text-center text-sm text-muted-foreground">
+          {t('codeExpiresIn', { seconds: secondsLeft })}
+        </p>
       ) : null}
       {expired && !locked ? (
         <Alert>
           <AlertDescription>
-            Code expired.{' '}
+            {t('codeExpired')}{' '}
             <button type="button" className="underline" onClick={onBack}>
-              Request a new code
+              {t('requestNewCode')}
             </button>
           </AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="4-digit code" htmlFor="register-otp" required error={fieldErrors.otp} className="text-center">
+      <FormField
+        label={t('fourDigitCode')}
+        htmlFor="register-otp"
+        required
+        error={fieldErrors.otp ? t(fieldErrors.otp) : undefined}
+        className="text-center"
+      >
         <OtpInput
           id="register-otp"
           length={4}
@@ -127,7 +137,7 @@ export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVeri
         />
       </FormField>
       <Button type="submit" className="w-full" disabled={disabled}>
-        {loading ? <Spinner size="sm" /> : 'Verify email'}
+        {loading ? <Spinner size="sm" /> : t('verifyEmail')}
       </Button>
     </Form>
   )

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -21,10 +22,11 @@ interface FormsListProps {
 }
 
 export function FormsList({ forms, onOpen, onDeleted, canManage }: FormsListProps) {
+  const { t } = useTranslation('forms')
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
 
   if (forms.length === 0) {
-    return <ItemListEmpty>No forms yet. Create one to start designing.</ItemListEmpty>
+    return <ItemListEmpty>{t('emptyCreate')}</ItemListEmpty>
   }
 
   return (
@@ -52,7 +54,7 @@ export function FormsList({ forms, onOpen, onDeleted, canManage }: FormsListProp
             </ItemListContent>
             {canManage ? (
               <ItemListMenu ariaLabel={`Actions for ${form.name}`}>
-                <DropdownMenuItem onClick={() => onOpen(form)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onOpen(form)}>{t('common:edit')}</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
@@ -67,8 +69,8 @@ export function FormsList({ forms, onOpen, onDeleted, canManage }: FormsListProp
       </ItemList>
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
-        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete form?'}
-        description="This action cannot be undone. The form will be permanently removed."
+        title={pendingDelete ? t('deleteConfirm', { name: pendingDelete.name }) : t('deleteConfirmFallback')}
+        description={t('deleteDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)

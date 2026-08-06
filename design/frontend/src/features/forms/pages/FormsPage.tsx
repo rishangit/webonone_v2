@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -21,6 +22,8 @@ import type { FormTemplate } from '@/shared/types/design.types'
 import type { FormCreateMetaValues } from '@/features/forms/schemas/formSchemas'
 
 export function FormsPage() {
+  const { t } = useTranslation('forms')
+
   const dispatch = useAppDispatch()
   const { goToEdit } = useNavigateDesign()
   const { toast } = useToast()
@@ -47,7 +50,7 @@ export function FormsPage() {
   const canManage = role === 'super_admin' || role === 'company_admin'
   const hasCompany = Boolean(companyId)
   const loading = hasCompany && listStatus === 'loading' && items.length === 0
-  usePlatformLoading(loading ? 'Loading forms…' : null)
+  usePlatformLoading(loading ? t('loading') : null)
 
   useEffect(() => {
     if (!accessToken || !hasCompany) return
@@ -59,7 +62,7 @@ export function FormsPage() {
     if (detailStatus === 'idle' && detail) {
       setAwaitingCreate(false)
       setDialogOpen(false)
-      toast({ title: 'Form created' })
+      toast({ title: t('formCreated') })
       goToEdit(detail.id)
       return
     }
@@ -75,14 +78,11 @@ export function FormsPage() {
   if (!hasCompany) {
     return (
       <FeaturePage
-        title="Forms"
-        description="Design company form templates that can be linked to services and filled for customers."
+        title={t('title')}
+        description={t('description')}
       >
         <Alert>
-          <AlertDescription>
-            Select a company account in WebOnOne (account switcher) to design forms. Forms are
-            scoped to your active company.
-          </AlertDescription>
+          <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
       </FeaturePage>
     )
@@ -117,20 +117,20 @@ export function FormsPage() {
 
   return (
     <FeaturePage
-      title="Forms"
-      description="Design company form templates that can be linked to services and filled for customers."
+      title={t('title')}
+      description={t('description')}
       actions={
         <>
           <SearchInput
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search forms…"
+            placeholder={t('searchPlaceholder')}
             className="w-56"
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add form
+              {t('add')}
             </Button>
           ) : null}
         </>

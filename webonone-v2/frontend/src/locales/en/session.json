@@ -1,0 +1,25 @@
+{
+  "loading": "Loading session…",
+  "chooseAccount": {
+    "title": "Choose account",
+    "descriptionInitial": "Select which account to use for this WebOnOne session. Your choice stays active until you log out.",
+    "descriptionSwitch": "Switch which account to use for this WebOnOne session."
+  },
+  "roles": {
+    "superAdmin": "Super Admin",
+    "companyOwner": "Company Owner",
+    "staff": "Staff",
+    "defaultUser": "Default User"
+  },
+  "descriptions": {
+    "superAdmin": "Platform operator — Companies nav and system-wide Email access.",
+    "companyOwnerNamed": "Company Owner — manage {{companyName}} (Email history and templates).",
+    "companyOwner": "Company Owner — company Email history and templates.",
+    "staffNamed": "Staff — work as staff for {{companyName}}.",
+    "staff": "Staff — work as staff for this company.",
+    "defaultUser": "Standard user account for this session."
+  },
+  "errors": {
+    "failedToSetSessionRole": "Failed to set session role ({{status}})"
+  }
+}

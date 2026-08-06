@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -16,10 +17,10 @@ interface QueueListProps {
   retryingId: string | null
 }
 
-function statusLabel(status: QueueItem['status']): string {
-  if (status === 'pending') return 'Pending'
-  if (status === 'processing') return 'Processing'
-  return 'Failed'
+function statusLabel(status: QueueItem['status'], t: (k: string) => string): string {
+  if (status === 'pending') return t('pending')
+  if (status === 'processing') return t('processing')
+  return t('failed')
 }
 
 function formatDate(iso: string): string {
@@ -27,10 +28,11 @@ function formatDate(iso: string): string {
 }
 
 export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListProps) {
+  const { t } = useTranslation('queue')
   const rows = Array.isArray(items) ? items : []
 
   if (rows.length === 0) {
-    return <ItemListEmpty>No queue items in this tab.</ItemListEmpty>
+    return <ItemListEmpty>{t('emptyTab')}</ItemListEmpty>
   }
 
   return (
@@ -43,7 +45,7 @@ export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListPro
             <ItemListContent>
               <p className="font-medium">{item.toNumber}</p>
               <p className="text-xs text-muted-foreground">
-                {item.templateSlug ?? 'freeform'} · {statusLabel(item.status)} · Attempts{' '}
+                {item.templateSlug ?? 'freeform'} · {statusLabel(item.status, t)} · Attempts{' '}
                 {item.retryCount} · {formatDate(item.createdAt)}
               </p>
               {item.lastError ? (
@@ -51,7 +53,7 @@ export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListPro
               ) : null}
             </ItemListContent>
             <ItemListMenu ariaLabel={`Queue actions for ${item.toNumber}`}>
-              <DropdownMenuItem disabled>{statusLabel(item.status)}</DropdownMenuItem>
+              <DropdownMenuItem disabled>{statusLabel(item.status, t)}</DropdownMenuItem>
               {canRetry && item.status === 'failed' ? (
                 <>
                   <DropdownMenuSeparator />

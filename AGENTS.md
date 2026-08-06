@@ -14,8 +14,9 @@ Cross-service libraries that are **not** UI Kit and **not** microservices. See [
 | `@webonone/platform-embed` | Platform nav iframe embed URL builder, JWT postMessage, PlatformServiceFrame |
 | `@webonone/media-embed` | Media iframe embed URL builder, postMessage types, React hooks |
 | `@webonone/store-kit` | Redux slice + redux-observable epics factories for list/detail CRUD (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), cache utils, catalog hooks |
+| `@webonone/i18n` | Locale plumbing (`en`/`si`), shared `common` JSON, `lng` query/storage helpers |
 
-Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run build:media-embed`, `npm run build:store-kit`. Parent agent owns new entries under `packages/*`.
+Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run build:media-embed`, `npm run build:store-kit`, `npm run build:i18n`. Parent agent owns new entries under `packages/*`.
 
 ### Cross-cutting skills
 

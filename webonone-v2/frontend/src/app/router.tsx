@@ -5,6 +5,7 @@ import { LazyRoute } from '@/app/LazyRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { ClearSessionPage } from '@/features/auth/pages/ClearSessionPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { useAppSelector } from '@/app/store/hooks'
 
 const HomePage = lazy(() =>
@@ -114,9 +115,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   if (!accessToken) {
     const returnPath = `${location.pathname}${location.search}`
-    const params = new URLSearchParams()
-    params.set('return_path', returnPath)
-    return <Navigate to={`/login?${params.toString()}`} replace />
+    return <Navigate to={buildWebOnOneLoginHref(returnPath)} replace />
   }
   return children
 }
@@ -384,7 +383,7 @@ export function App() {
             }
           />
         </Route>
-        <Route path="admin/companies/login" element={<Navigate to="/login" replace />} />
+        <Route path="admin/companies/login" element={<Navigate to={buildWebOnOneLoginHref()} replace />} />
         <Route path="admin/companies/pending" element={<Navigate to="/companies" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,4 +1,5 @@
 import { Globe, MapPin } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { FormField, Input, InputGroup, InputGroupIcon } from '@webonone/ui-kit'
 import type { ProfileFormValues } from '../../schemas/profileSchemas'
 
@@ -15,9 +16,15 @@ export function ProfileWizardStepAddress({
   isSubmitting,
   onChange,
 }: ProfileWizardStepAddressProps) {
+  const { t } = useTranslation('profile')
+
   return (
     <div className="space-y-4">
-      <FormField label="Address line 1" htmlFor="profile-wizard-line1" error={fieldErrors.addressLine1}>
+      <FormField
+        label={t('addressLine1')}
+        htmlFor="profile-wizard-line1"
+        error={fieldErrors.addressLine1 ? t(fieldErrors.addressLine1) : undefined}
+      >
         <InputGroup>
           <InputGroupIcon icon={MapPin} />
           <Input
@@ -30,7 +37,11 @@ export function ProfileWizardStepAddress({
           />
         </InputGroup>
       </FormField>
-      <FormField label="Address line 2" htmlFor="profile-wizard-line2" error={fieldErrors.addressLine2}>
+      <FormField
+        label={t('addressLine2')}
+        htmlFor="profile-wizard-line2"
+        error={fieldErrors.addressLine2 ? t(fieldErrors.addressLine2) : undefined}
+      >
         <InputGroup>
           <InputGroupIcon icon={MapPin} />
           <Input
@@ -44,7 +55,11 @@ export function ProfileWizardStepAddress({
         </InputGroup>
       </FormField>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label="City" htmlFor="profile-wizard-city" error={fieldErrors.city}>
+        <FormField
+          label={t('city')}
+          htmlFor="profile-wizard-city"
+          error={fieldErrors.city ? t(fieldErrors.city) : undefined}
+        >
           <InputGroup>
             <InputGroupIcon icon={MapPin} />
             <Input
@@ -58,9 +73,9 @@ export function ProfileWizardStepAddress({
           </InputGroup>
         </FormField>
         <FormField
-          label="State / region"
+          label={t('stateRegion')}
           htmlFor="profile-wizard-state"
-          error={fieldErrors.stateRegion}
+          error={fieldErrors.stateRegion ? t(fieldErrors.stateRegion) : undefined}
         >
           <InputGroup>
             <InputGroupIcon icon={MapPin} />
@@ -77,9 +92,9 @@ export function ProfileWizardStepAddress({
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
-          label="Postal code"
+          label={t('postalCode')}
           htmlFor="profile-wizard-postal"
-          error={fieldErrors.postalCode}
+          error={fieldErrors.postalCode ? t(fieldErrors.postalCode) : undefined}
         >
           <InputGroup>
             <InputGroupIcon icon={MapPin} />
@@ -94,9 +109,9 @@ export function ProfileWizardStepAddress({
           </InputGroup>
         </FormField>
         <FormField
-          label="Country (2-letter code)"
+          label={t('countryCode')}
           htmlFor="profile-wizard-country"
-          error={fieldErrors.country}
+          error={fieldErrors.country ? t(fieldErrors.country) : undefined}
         >
           <InputGroup>
             <InputGroupIcon icon={Globe} />

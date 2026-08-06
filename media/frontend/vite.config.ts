@@ -9,6 +9,7 @@ const platformNavRoot = path.resolve(configDir, '../../packages/platform-nav')
 const platformEmbedRoot = path.resolve(configDir, '../../packages/platform-embed')
 const mediaEmbedRoot = path.resolve(configDir, '../../packages/media-embed')
 const themeRoot = path.resolve(configDir, '../../packages/theme')
+const i18nRoot = path.resolve(configDir, '../../packages/i18n')
 const storeKitRoot = path.resolve(configDir, '../../packages/store-kit')
 
 export default defineConfig(({ mode }) => {
@@ -31,6 +32,7 @@ export default defineConfig(({ mode }) => {
         { find: '@webonone/platform-embed', replacement: path.join(platformEmbedRoot, 'src/index.ts') },
         { find: '@webonone/media-embed', replacement: path.join(mediaEmbedRoot, 'src/index.ts') },
         { find: '@webonone/theme', replacement: path.join(themeRoot, 'src/index.ts') },
+        { find: '@webonone/i18n', replacement: path.join(i18nRoot, 'src/index.ts') },
         { find: '@webonone/store-kit', replacement: path.join(storeKitRoot, 'src/index.ts') },
         { find: '@', replacement: path.resolve(configDir, './src') },
       ],

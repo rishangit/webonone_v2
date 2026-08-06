@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { FeaturePage, Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { AccountSettingsPanel } from '@/features/settings/basic/components/AccountSettingsPanel'
 import { AppearanceSettingsPanel } from '@/features/settings/basic/components/AppearanceSettingsPanel'
@@ -7,26 +8,24 @@ type BasicSettingsTab = 'account' | 'theme'
 
 const BASIC_SETTINGS_TABS = ['account', 'theme'] as const satisfies readonly BasicSettingsTab[]
 
-const TABS: { id: BasicSettingsTab; label: string }[] = [
-  { id: 'account', label: 'Account' },
-  { id: 'theme', label: 'Theme' },
-]
-
 export function BasicSettingsPage() {
+  const { t } = useTranslation('settings')
   const [tab, setTab] = useDetailTabParam(BASIC_SETTINGS_TABS, 'account')
 
+  const tabs: { id: BasicSettingsTab; label: string }[] = [
+    { id: 'account', label: t('account') },
+    { id: 'theme', label: t('theme') },
+  ]
+
   return (
-    <FeaturePage
-      title="Basic Settings"
-      description="Manage your active account and appearance."
-    >
+    <FeaturePage title={t('basic')} description={t('basicDescription')}>
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as BasicSettingsTab)}
         className="flex flex-col gap-6"
       >
-        <TabsList aria-label="Basic Settings sections">
-          {TABS.map((item) => (
+        <TabsList aria-label={t('basic')}>
+          {tabs.map((item) => (
             <TabsTrigger key={item.id} value={item.id}>
               {item.label}
             </TabsTrigger>

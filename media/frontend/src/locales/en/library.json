@@ -1,0 +1,8 @@
+{
+  "title": "Media Library",
+  "description": "Browse, upload, and manage files in your scoped library.",
+  "empty": "No media yet",
+  "loading": "Loading media…",
+  "searchPlaceholder": "Search media…",
+  "uploadFailed": "Upload failed"
+}
