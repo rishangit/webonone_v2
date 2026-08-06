@@ -1,0 +1,63 @@
+---
+description: Implementation plan for spec 1.17.0 — return user to requested page after login
+alwaysApply: false
+globs: webonone-v2/frontend/src/features/auth/**, website/frontend/src/features/**/webononeConfig.ts, website/frontend/src/features/auth/**, packages/platform-nav/src/returnUrl.ts
+---
+
+# Implementation plan — Spec 1.17.0
+
+## Summary
+
+Remember the guest’s **requested page** before login. After Identity iframe success (Google or email/password), restore that page instead of always navigating to WebOnOne `/`. Preserve website `return_url` **path + query** (stop stripping to origin root). Invalid targets → default homepage. No open redirects.
+
+See [02-post-login-return-page.md](./02-post-login-return-page.md).
+
+## Branch and prerequisites
+
+| Item | Value |
+|------|--------|
+| Branch | `spec/1.17.0` |
+| Prerequisite | [1.14.0](../1.14.0/README.md) iframe login + website auth-code handoff |
+| Services | WebOnOne FE, Website FE; optional platform-nav |
+| New env | None required (`VITE_WEBSITE_ORIGIN`, `VITE_WEBSITE_ALLOWED_ORIGINS` already exist) |
+
+---
+
+## Phase 1 — Validate and preserve return targets
+
+**Goal:** Parsers keep deep links; reject unsafe URLs.
+
+**Exit criteria:** Unit tests prove path retention + allowlist rejection.
+
+| Task | Paths |
+|------|-------|
+| Fix website return parse | `webonone-v2/frontend/src/features/auth/utils/websiteConfig.ts` |
+| Core return path helper | Same auth utils folder (or LoginPage-local) |
+| Optional align | `packages/platform-nav/src/returnUrl.ts` |
+
+**Verify:** `npm run type-check -w webonone-v2-root` (+ platform-nav tests if changed)
+
+---
+
+## Phase 2 — Wire login + capture
+
+**Goal:** Post-login restore; CTAs pass current page.
+
+**Exit criteria:** Manual Google + email flows return to deep page.
+
+| Task | Paths |
+|------|-------|
+| Login host | `LoginPage.tsx`, `IdentityLoginFrame.tsx`, `useIdentityAuthMessage.ts`, `WebsiteReturnRedirect.tsx` |
+| Website CTAs | `website/.../webononeConfig.ts` + auth-required call sites |
+| Guards | WebOnOne routes that send guests to `/login` |
+
+**Verify:** type-check webonone + website; manual acceptance in [07](./07-implementation-plan.md)
+
+---
+
+## Do not
+
+- Strip website `return_url` to origin root
+- Always `navigate('/')` after iframe success when a valid return exists
+- Put JWT/password in return URL
+- Accept cross-origin returns outside the website allowlist
