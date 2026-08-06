@@ -1,0 +1,16 @@
+{
+  "title": "පෝලිම",
+  "description": "Live queue status. Refreshes every 30 seconds.",
+  "empty": "පෝලිම හිස්ය",
+  "loading": "පෝලිම පූරණය වෙමින්…",
+  "searchPlaceholder": "Search queue…",
+  "refreshNow": "දැන් නැවුම් කරන්න",
+  "pending": "බලාපොරොත්තු",
+  "processing": "සකසමින්",
+  "failed": "අසාර්ථක",
+  "emptyTab": "No queue items in this tab.",
+  "attempts": "Attempts",
+  "retry": "Retry",
+  "actionsFor": "Queue actions for {{name}}",
+  "freeform": "freeform"
+}

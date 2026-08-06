@@ -1,0 +1,17 @@
+{
+  "brand": "SMS",
+  "loading": "පූරණය වෙමින්…",
+  "dashboard": "උපකරණ පුවරුව",
+  "dashboardDescription": "ඔබේ විෂය පථය සඳහා SMS බෙදාහැරීමේ සාරාංශය.",
+  "loadingDashboard": "උපකරණ පුවරුව පූරණය වෙමින්…",
+  "queuePending": "පෝලිමේ බලාපොරොත්තු",
+  "failed24h": "අසාර්ථක (පැය 24)",
+  "sent24h": "යැවූ (පැය 24)",
+  "approvedDevices": "අනුමත උපාංග",
+  "signInTitle": "SMS වෙත පිවිසෙන්න",
+  "signInDescription": "ආරක්ෂිතව පිවිසීමට ඔබව Identity වෙත යොමු කෙරේ.",
+  "continueToSignIn": "පිවිසීමට ඉදිරියට",
+  "signingIn": "පිවිසෙමින්…",
+  "historyTitle": "යැවීම් ඉතිහාසය",
+  "historyDescription": "ඔබේ විෂය පථය සඳහා පෙර SMS බෙදාහැරීම්."
+}

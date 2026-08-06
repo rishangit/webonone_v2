@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenuItem,
   ImagePreview,
@@ -16,6 +17,7 @@ import { authActions } from '@/features/auth/store/authSlice'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
 import type { MyCompanySummary } from '@/features/settings/basic/services/companyApi'
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
 type MyCompaniesListProps = {
   items: MyCompanySummary[]
@@ -26,19 +28,18 @@ function canLoginAsOwner(item: MyCompanySummary): boolean {
   return item.role === 'company_admin' && item.status !== 'rejected'
 }
 
-export function MyCompaniesList({
-  items,
-  emptyMessage = 'No companies yet. Add a company to get started.',
-}: MyCompaniesListProps) {
+export function MyCompaniesList({ items, emptyMessage }: MyCompaniesListProps) {
+  const { t, i18n } = useTranslation('settings')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [loggingInId, setLoggingInId] = useState<string | null>(null)
   const [loginError, setLoginError] = useState<string | null>(null)
   const rows = Array.isArray(items) ? items : []
+  const empty = emptyMessage ?? t('noCompanies')
 
   if (rows.length === 0) {
-    return <ItemListEmpty>{emptyMessage}</ItemListEmpty>
+    return <ItemListEmpty>{empty}</ItemListEmpty>
   }
 
   function openProfile(id: string) {
@@ -63,7 +64,7 @@ export function MyCompaniesList({
         }),
       )
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : 'Failed to log in to company')
+      setLoginError(err instanceof Error ? err.message : t('loginFailed'))
     } finally {
       setLoggingInId(null)
     }
@@ -102,7 +103,7 @@ export function MyCompaniesList({
                       </div>
                       {item.createdAt ? (
                         <p className="text-xs text-muted-foreground">
-                          {new Date(item.createdAt).toLocaleString()}
+                          {formatLocaleDateTime(item.createdAt, undefined, i18n.language)}
                         </p>
                       ) : null}
                     </div>
@@ -110,30 +111,28 @@ export function MyCompaniesList({
                 </button>
               </ItemListContent>
               {item.role === 'company_admin' ? (
-                <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+                <ItemListMenu ariaLabel={`${t('common:actions')} — ${item.name}`}>
                   <DropdownMenuItem onClick={() => openProfile(item.id)}>
-                    View details
+                    {t('viewDetails')}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={!loginEnabled || loggingInId === item.id}
                     title={
-                      item.status === 'rejected'
-                        ? 'Login is unavailable for rejected companies'
-                        : undefined
+                      item.status === 'rejected' ? t('loginUnavailableRejected') : undefined
                     }
                     onClick={() => void handleLogin(item)}
                   >
                     {loggingInId === item.id
-                      ? 'Logging in…'
+                      ? t('loggingIn')
                       : item.status === 'rejected'
-                        ? 'Login (rejected)'
-                        : 'Login'}
+                        ? t('loginRejected')
+                        : t('login')}
                   </DropdownMenuItem>
                 </ItemListMenu>
               ) : (
-                <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+                <ItemListMenu ariaLabel={`${t('common:actions')} — ${item.name}`}>
                   <DropdownMenuItem onClick={() => openProfile(item.id)}>
-                    View details
+                    {t('viewDetails')}
                   </DropdownMenuItem>
                 </ItemListMenu>
               )}

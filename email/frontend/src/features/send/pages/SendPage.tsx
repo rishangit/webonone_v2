@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -26,6 +27,8 @@ import { templatesActions } from '@/features/templates/store'
 import { sendEmailSchema, type SendEmailFormValues } from '../schemas/sendSchemas'
 
 export function SendEmailPage() {
+  const { t } = useTranslation('send')
+
   const dispatch = useAppDispatch()
   const { items: templates, listStatus, listError } = useAppSelector((s) => s.templates)
   const {
@@ -51,9 +54,9 @@ export function SendEmailPage() {
   const previewing = previewStatus === 'loading'
   const error = listError ?? sendError ?? previewError
 
-  usePlatformLoading(loading ? 'Loading send form…' : null)
+  usePlatformLoading(loading ? t('loading') : null)
 
-  const activeTemplates = useMemo(() => templates.filter((t) => t.isActive), [templates])
+  const activeTemplates = useMemo(() => templates.filter((tpl) => tpl.isActive), [templates])
 
   const selectedTemplate = useMemo(
     () => activeTemplates.find((t) => t.slug === values.templateSlug) ?? null,
@@ -103,8 +106,8 @@ export function SendEmailPage() {
 
   return (
     <FeaturePage
-      title="Send email"
-      description="Compose a one-off transactional email using a template."
+      title={t('title')}
+      description={t('description')}
     >
       {error ? (
         <Alert variant="destructive">
@@ -121,12 +124,12 @@ export function SendEmailPage() {
           <div className="grid items-start gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Compose</CardTitle>
-                <CardDescription>Choose a template, recipient, and payload values.</CardDescription>
+                <CardTitle className="text-lg">{t('compose')}</CardTitle>
+                <CardDescription>{t('composeDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
-                  label="Template"
+                  label={t('template')}
                   htmlFor="send-template"
                   required
                   error={fieldErrors.templateSlug}
@@ -138,7 +141,7 @@ export function SendEmailPage() {
                     }
                   >
                     <SelectTrigger id="send-template">
-                      <SelectValue placeholder="Select template" />
+                      <SelectValue placeholder={t('selectTemplate')} />
                     </SelectTrigger>
                     <SelectContent>
                       {activeTemplates.map((template) => (
@@ -151,7 +154,7 @@ export function SendEmailPage() {
                 </FormField>
 
                 <FormField
-                  label="Recipient email"
+                  label={t('recipientEmail')}
                   htmlFor="send-to"
                   required
                   error={fieldErrors.toEmail}
@@ -181,10 +184,10 @@ export function SendEmailPage() {
                     onClick={handlePreview}
                     disabled={previewing}
                   >
-                    {previewing ? 'Previewing…' : 'Preview'}
+                    {previewing ? t('previewing') : t('preview')}
                   </Button>
                   <Button type="submit" disabled={submitting}>
-                    {submitting ? 'Sending…' : 'Confirm send'}
+                    {submitting ? t('sending') : t('submit')}
                   </Button>
                 </div>
               </CardContent>
@@ -192,21 +195,19 @@ export function SendEmailPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Preview</CardTitle>
-                <CardDescription>Rendered HTML from the selected template.</CardDescription>
+                <CardTitle className="text-lg">{t('previewTitle')}</CardTitle>
+                <CardDescription>{t('previewDescription')}</CardDescription>
               </CardHeader>
               <CardContent>
                 {preview ? (
                   <iframe
-                    title="Send preview"
+                    title={t('previewIframeTitle')}
                     className="h-[360px] w-full rounded-lg border border-border bg-background"
                     sandbox=""
                     srcDoc={preview.html}
                   />
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Click Preview to render the email here.
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t('previewHint')}</p>
                 )}
               </CardContent>
             </Card>

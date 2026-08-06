@@ -1,0 +1,18 @@
+{
+  "title": "Send email",
+  "description": "Compose and send an email.",
+  "submit": "යවන්න",
+  "loading": "Loading send form…",
+  "sending": "Sending…",
+  "compose": "Compose",
+  "composeDescription": "Choose a template, recipient, and payload values.",
+  "template": "Template",
+  "selectTemplate": "Select template",
+  "recipientEmail": "Recipient email",
+  "preview": "Send preview",
+  "previewing": "Previewing…",
+  "previewTitle": "Preview",
+  "previewDescription": "Rendered HTML from the selected template.",
+  "previewIframeTitle": "Send preview",
+  "previewHint": "Click Preview to render the email here."
+}

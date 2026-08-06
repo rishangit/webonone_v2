@@ -1,0 +1,14 @@
+{
+  "title": "Attributes",
+  "description": "Manage catalog attributes.",
+  "empty": "No attributes yet",
+  "add": "Add attribute",
+  "search": "Search attributes…",
+  "loading": "Loading attributes…",
+  "verified": "Verified",
+  "unverified": "Unverified",
+  "valueType": "Value type",
+  "number": "Number",
+  "text": "Text",
+  "deleteDescription": "This action cannot be undone. The attribute will be permanently removed."
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import {
   getPlatformEmbedParentOrigin,
@@ -71,6 +72,7 @@ function fromIdentityPickerUser(user: IdentityUserPickerUser): UserPickerUser {
 }
 
 export function UserPickerPage() {
+  const { t } = useTranslation('users')
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((state) => state.auth.accessToken)
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
@@ -179,7 +181,7 @@ export function UserPickerPage() {
         if (requestId !== requestIdRef.current) {
           return
         }
-        setError(err instanceof Error ? err.message : 'Failed to load users')
+        setError(err instanceof Error ? err.message : t('failedToLoadUsers'))
         if (replace) {
           setUsers([])
           setHasMore(false)
@@ -261,7 +263,7 @@ export function UserPickerPage() {
       <div className="mx-auto flex min-h-[320px] w-full max-w-3xl items-center justify-center p-6">
         <Alert variant="destructive" className="max-w-xl">
           <AlertDescription>
-            This page is available only for platform iframe embeds with a valid parent origin and scope.
+            {t('embedOnlyPicker')}
           </AlertDescription>
         </Alert>
       </div>
@@ -272,7 +274,7 @@ export function UserPickerPage() {
     return (
       <div className="flex min-h-[320px] flex-1 flex-col items-center justify-center gap-3 p-6">
         <Spinner size="lg" />
-        <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
+        <p className="text-sm text-muted-foreground">{t('waitingForAuth')}</p>
       </div>
     )
   }
@@ -285,19 +287,19 @@ export function UserPickerPage() {
         <SearchInput
           value={searchInput}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchInput(event.target.value)}
-          placeholder="Search by name or email"
-          aria-label="Search users"
+          placeholder={t('searchPlaceholderShort')}
+          aria-label={t('search')}
           className="flex-1"
         />
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-full sm:w-52" aria-label="Filter by role">
-            <SelectValue placeholder="All roles" />
+          <SelectTrigger className="w-full sm:w-52" aria-label={t('filterByRole')}>
+            <SelectValue placeholder={t('allRoles')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_ROLES_VALUE}>All roles</SelectItem>
-            <SelectItem value="super_admin">Super Admin</SelectItem>
-            <SelectItem value="company_admin">Company Admin</SelectItem>
-            <SelectItem value="member">Member</SelectItem>
+            <SelectItem value={ALL_ROLES_VALUE}>{t('allRoles')}</SelectItem>
+            <SelectItem value="super_admin">{t('superAdmin')}</SelectItem>
+            <SelectItem value="company_admin">{t('companyAdmin')}</SelectItem>
+            <SelectItem value="member">{t('member')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -311,7 +313,7 @@ export function UserPickerPage() {
             <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span>{error}</span>
               <Button variant="outline" size="sm" onClick={() => void fetchPage(1, true)}>
-                Retry
+                {t('common:retry')}
               </Button>
             </AlertDescription>
           </Alert>
@@ -323,7 +325,7 @@ export function UserPickerPage() {
           </div>
         ) : null}
 
-        {showEmpty ? <ItemListEmpty>No users found.</ItemListEmpty> : null}
+        {showEmpty ? <ItemListEmpty>{t('empty')}</ItemListEmpty> : null}
 
         {!initialLoading && visibleUsers.length > 0 ? (
           <ItemList className="py-2">
@@ -338,7 +340,7 @@ export function UserPickerPage() {
                     'cursor-pointer transition-colors',
                     isSelected && itemListRowActiveClassName,
                   )}
-                  aria-label={`${multiple ? 'Toggle' : 'Select'} ${user.displayName}`}
+                  aria-label={multiple ? t('toggleAria', { name: user.displayName }) : t('selectAria', { name: user.displayName })}
                   aria-pressed={isSelected}
                   onClick={() => handleUserToggle(user)}
                   onKeyDown={(event: KeyboardEvent<HTMLLIElement>) => {
@@ -358,7 +360,7 @@ export function UserPickerPage() {
                     <p className="truncate font-medium">{user.displayName}</p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                       <p className="truncate text-xs text-muted-foreground">
-                        {user.email?.trim() ? user.email : 'No email'}
+                        {user.email?.trim() ? user.email : t('noEmail')}
                       </p>
                       {user.email?.trim() ? (
                         <StatusTag

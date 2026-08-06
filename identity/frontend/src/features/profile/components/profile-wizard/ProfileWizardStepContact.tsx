@@ -1,10 +1,13 @@
 import { Globe } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   FormField,
-  Input,
-  InputGroup,
-  InputGroupIcon,
   PhoneInput,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   type PhoneCountry,
 } from '@webonone/ui-kit'
 import type { ProfileFormValues } from '../../schemas/profileSchemas'
@@ -30,9 +33,16 @@ export function ProfileWizardStepContact({
   onPhoneCountryChange,
   onPhoneNationalChange,
 }: ProfileWizardStepContactProps) {
+  const { t } = useTranslation('profile')
+  const localeValue = values.locale === 'si' ? 'si' : values.locale === 'en' ? 'en' : ''
+
   return (
     <div className="space-y-4">
-      <FormField label="Phone number" htmlFor="profile-wizard-phone" error={fieldErrors.phoneNumber}>
+      <FormField
+        label={t('phoneNumber')}
+        htmlFor="profile-wizard-phone"
+        error={fieldErrors.phoneNumber ? t(fieldErrors.phoneNumber) : undefined}
+      >
         <PhoneInput
           id="profile-wizard-phone"
           withIcon
@@ -45,18 +55,27 @@ export function ProfileWizardStepContact({
           disabled={isSubmitting}
         />
       </FormField>
-      <FormField label="Locale" htmlFor="profile-wizard-locale" error={fieldErrors.locale}>
-        <InputGroup>
-          <InputGroupIcon icon={Globe} />
-          <Input
-            id="profile-wizard-locale"
-            inGroup
-            placeholder="en-US"
-            value={values.locale ?? ''}
-            onChange={(e) => onChange({ locale: e.target.value || null })}
+      <FormField
+        label={t('locale')}
+        htmlFor="profile-wizard-locale"
+        error={fieldErrors.locale ? t(fieldErrors.locale) : undefined}
+      >
+        <div className="relative">
+          <Globe className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Select
+            value={localeValue || undefined}
+            onValueChange={(value) => onChange({ locale: value === 'si' ? 'si' : 'en' })}
             disabled={isSubmitting}
-          />
-        </InputGroup>
+          >
+            <SelectTrigger id="profile-wizard-locale" className="pl-9">
+              <SelectValue placeholder={t('locale')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">{t('localeEnglish')}</SelectItem>
+              <SelectItem value="si">{t('localeSinhala')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </FormField>
     </div>
   )

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthLayout } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { ResetPasswordForm } from '../components/ResetPasswordForm'
@@ -7,6 +8,7 @@ import { clearResetSessionToken } from '../utils/resetSessionStorage'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -25,12 +27,12 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout
-      title="Reset password"
-      description="Choose a new password for your account"
+      title={t('resetPassword')}
+      description={t('resetPasswordDescription')}
       variant="minimal"
       footer={
         <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
-          Back to sign in
+          {t('backToSignIn')}
         </Link>
       }
     >

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { User } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Form,
@@ -18,6 +19,7 @@ type RegisterProfileStepProps = {
 }
 
 export function RegisterProfileStep({ initialValues, onSuccess, onBack }: RegisterProfileStepProps) {
+  const { t } = useTranslation('auth')
   const [values, setValues] = useState<RegisterProfileFormValues>(initialValues)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterProfileFormValues, string>>>({})
 
@@ -35,7 +37,12 @@ export function RegisterProfileStep({ initialValues, onSuccess, onBack }: Regist
   return (
     <Form className="space-y-6" onSubmit={handleSubmit}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label="First name" htmlFor="register-firstName" required error={fieldErrors.firstName}>
+        <FormField
+          label={t('firstName')}
+          htmlFor="register-firstName"
+          required
+          error={fieldErrors.firstName ? t(fieldErrors.firstName) : undefined}
+        >
           <InputGroup>
             <InputGroupIcon icon={User} />
             <Input
@@ -47,7 +54,12 @@ export function RegisterProfileStep({ initialValues, onSuccess, onBack }: Regist
             />
           </InputGroup>
         </FormField>
-        <FormField label="Last name" htmlFor="register-lastName" required error={fieldErrors.lastName}>
+        <FormField
+          label={t('lastName')}
+          htmlFor="register-lastName"
+          required
+          error={fieldErrors.lastName ? t(fieldErrors.lastName) : undefined}
+        >
           <InputGroup>
             <InputGroupIcon icon={User} />
             <Input
@@ -62,10 +74,10 @@ export function RegisterProfileStep({ initialValues, onSuccess, onBack }: Regist
       </div>
       <div className="flex gap-2">
         <Button type="button" variant="outline" className="w-full" onClick={onBack}>
-          Back
+          {t('back')}
         </Button>
         <Button type="submit" className="w-full">
-          Continue
+          {t('continue')}
         </Button>
       </div>
     </Form>

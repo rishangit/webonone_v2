@@ -1,0 +1,13 @@
+{
+  "brand": "දත්ත",
+  "loading": "පූරණය වෙමින්…",
+  "dashboard": "උපකරණ පුවරුව",
+  "dashboardDescription": "සත්‍යාපන තත්ත්වය අනුව නාමාවලි ගණන්.",
+  "loadingDashboard": "උපකරණ පුවරුව පූරණය වෙමින්…",
+  "verifiedCount": "සත්‍යාපිත: {{count}}",
+  "unverifiedCount": "නොසත්‍යාපිත: {{count}}",
+  "signInTitle": "දත්ත වෙත පිවිසෙන්න",
+  "signInDescription": "ආරක්ෂිතව පිවිසීමට ඔබව Identity වෙත යොමු කෙරේ.",
+  "continueToSignIn": "පිවිසීමට ඉදිරියට",
+  "signingIn": "පිවිසෙමින්…"
+}

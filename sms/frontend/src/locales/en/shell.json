@@ -1,0 +1,17 @@
+{
+  "brand": "SMS",
+  "loading": "Loading…",
+  "dashboard": "Dashboard",
+  "dashboardDescription": "SMS delivery summary for your scope.",
+  "loadingDashboard": "Loading dashboard…",
+  "queuePending": "Queue pending",
+  "failed24h": "Failed (24h)",
+  "sent24h": "Sent (24h)",
+  "approvedDevices": "Approved devices",
+  "signInTitle": "Sign in to SMS",
+  "signInDescription": "You will be redirected to Identity to sign in securely.",
+  "continueToSignIn": "Continue to sign in",
+  "signingIn": "Signing in…",
+  "historyTitle": "Send history",
+  "historyDescription": "Past SMS deliveries for your scope."
+}

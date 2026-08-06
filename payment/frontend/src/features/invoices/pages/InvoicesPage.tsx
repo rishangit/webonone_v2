@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -38,24 +39,27 @@ function statusVariant(status: InvoiceStatus): 'pending' | 'approved' | 'rejecte
   return 'pending'
 }
 
-function statusLabel(status: InvoiceStatus): string {
+function statusLabelKey(status: InvoiceStatus): string {
   switch (status) {
     case 'issued':
-      return 'Issued'
+      return 'statusIssued'
     case 'paid':
-      return 'Paid'
+      return 'statusPaid'
     case 'overdue':
-      return 'Overdue'
+      return 'statusOverdue'
     case 'void':
-      return 'Void'
+      return 'statusVoid'
     case 'pending_verification':
-      return 'Pending review'
+      return 'statusPendingReview'
     default:
       return status
   }
 }
 
 export function InvoicesPage() {
+  const { t } = useTranslation('invoices')
+  const { t: tc } = useTranslation('common')
+
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -69,7 +73,7 @@ export function InvoicesPage() {
   const [actionError, setActionError] = useState<string | null>(null)
 
   const loading = listStatus === 'loading' && items.length === 0
-  usePlatformLoading(loading ? 'Loading invoices…' : null)
+  usePlatformLoading(loading ? t('loading') : null)
 
   const hasActiveFilters = appliedFilters.status !== 'all'
 
@@ -109,12 +113,12 @@ export function InvoicesPage() {
     setActionError(null)
     try {
       await paymentApi.markPaid(invoice.id)
-      toast({ title: 'Invoice marked paid' })
+      toast({ title: t('markedPaid') })
       reload()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to mark paid'
+      const message = err instanceof Error ? err.message : t('failedMarkPaid')
       setActionError(message)
-      toast({ title: 'Failed to mark paid', description: message, variant: 'destructive' })
+      toast({ title: t('failedMarkPaid'), description: message, variant: 'destructive' })
     }
   }
 
@@ -122,12 +126,12 @@ export function InvoicesPage() {
     setActionError(null)
     try {
       await paymentApi.rejectPaymentProof(invoice.id)
-      toast({ title: 'Payment proof rejected' })
+      toast({ title: t('proofRejected') })
       reload()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to reject proof'
+      const message = err instanceof Error ? err.message : t('failedRejectProof')
       setActionError(message)
-      toast({ title: 'Failed to reject proof', description: message, variant: 'destructive' })
+      toast({ title: t('failedRejectProof'), description: message, variant: 'destructive' })
     }
   }
 
@@ -135,12 +139,12 @@ export function InvoicesPage() {
     setActionError(null)
     try {
       await paymentApi.voidInvoice(invoice.id)
-      toast({ title: 'Invoice voided' })
+      toast({ title: t('voided') })
       reload()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to void invoice'
+      const message = err instanceof Error ? err.message : t('failedVoid')
       setActionError(message)
-      toast({ title: 'Failed to void invoice', description: message, variant: 'destructive' })
+      toast({ title: t('failedVoid'), description: message, variant: 'destructive' })
     }
   }
 
@@ -149,20 +153,16 @@ export function InvoicesPage() {
 
   return (
     <FeaturePage
-      title="Invoices"
-      description={
-        isCompanyAdmin
-          ? 'Your company system subscription invoices'
-          : 'System subscription invoices for all companies'
-      }
+      title={t('title')}
+      description={isCompanyAdmin ? t('descriptionCompany') : t('descriptionAdmin')}
       actions={
         <div className="flex items-center gap-2">
           <SearchInput
             value={searchQuery}
             onChange={(event) => handleSearchChange(event.target.value)}
-            placeholder={isCompanyAdmin ? 'Invoice # or reference' : 'Company, invoice #, or reference'}
+            placeholder={isCompanyAdmin ? t('searchPlaceholderCompany') : t('searchPlaceholderAdmin')}
             onClear={() => handleSearchChange('')}
-            aria-label="Search invoices"
+            aria-label={t('search')}
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters || filterOpen} onClick={() => setFilterOpen(true)} />
@@ -182,18 +182,18 @@ export function InvoicesPage() {
           setFilterOpen(false)
         }}
       >
-        <FormField label="Status" htmlFor="invoice-status">
+        <FormField label={tc('status')} htmlFor="invoice-status">
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger id="invoice-status">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={tc('status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="issued">Issued</SelectItem>
-              <SelectItem value="pending_verification">Pending review</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-              <SelectItem value="void">Void</SelectItem>
+              <SelectItem value="all">{tc('all')}</SelectItem>
+              <SelectItem value="issued">{t('statusIssued')}</SelectItem>
+              <SelectItem value="pending_verification">{t('statusPendingReview')}</SelectItem>
+              <SelectItem value="paid">{t('statusPaid')}</SelectItem>
+              <SelectItem value="overdue">{t('statusOverdue')}</SelectItem>
+              <SelectItem value="void">{t('statusVoid')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>
@@ -213,7 +213,7 @@ export function InvoicesPage() {
         <ListPageBody>
           <div className="flex-1">
             {rows.length === 0 ? (
-              <ItemListEmpty>No system invoices yet.</ItemListEmpty>
+              <ItemListEmpty>{t('empty')}</ItemListEmpty>
             ) : (
               <ItemList>
                 {rows.map((invoice) => (
@@ -229,7 +229,7 @@ export function InvoicesPage() {
                             {invoice.companyName?.trim() || 'Unknown company'}
                           </p>
                           <StatusTag variant={statusVariant(invoice.status)}>
-                            {statusLabel(invoice.status)}
+                            {t(statusLabelKey(invoice.status))}
                           </StatusTag>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -254,19 +254,19 @@ export function InvoicesPage() {
                         invoice.status === 'overdue' ||
                         invoice.status === 'pending_verification') ? (
                         <DropdownMenuItem onClick={() => void markPaid(invoice)}>
-                          Mark paid
+                          {t('markPaid')}
                         </DropdownMenuItem>
                       ) : null}
                       {role === 'super_admin' && invoice.status === 'pending_verification' ? (
                         <DropdownMenuItem onClick={() => void rejectProof(invoice)}>
-                          Reject proof
+                          {t('rejectProof')}
                         </DropdownMenuItem>
                       ) : null}
                       {role === 'super_admin' &&
                       invoice.status !== 'paid' &&
                       invoice.status !== 'void' ? (
                         <DropdownMenuItem onClick={() => void voidInvoice(invoice)}>
-                          Void
+                          {t('voidAction')}
                         </DropdownMenuItem>
                       ) : null}
                     </ItemListMenu>

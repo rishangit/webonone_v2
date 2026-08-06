@@ -1,0 +1,19 @@
+{
+  "brand": "Payment",
+  "loading": "Loading…",
+  "dashboard": "Dashboard",
+  "dashboardDescription": "System subscription billing overview",
+  "loadingDashboard": "Loading dashboard…",
+  "memberDenied": "Payment admin access requires a company admin or super admin role.",
+  "activeCompanies": "Active companies",
+  "issued": "Issued",
+  "pendingReview": "Pending review",
+  "overdue": "Overdue",
+  "paid": "Paid",
+  "void": "Void",
+  "outstanding": "Outstanding",
+  "signInTitle": "Sign in to Payment",
+  "signInDescription": "You will be redirected to Identity to sign in securely.",
+  "continueToSignIn": "Continue to sign in",
+  "signingIn": "Signing in…"
+}

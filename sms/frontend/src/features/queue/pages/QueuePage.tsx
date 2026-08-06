@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -21,15 +22,14 @@ import { queueActions } from '@/features/queue/store'
 import type { QueueItem, QueueStatus } from '@/shared/types/sms.types'
 import { QueueList } from '../components/QueueList'
 
-const STATUS_OPTIONS: { key: QueueStatus; label: string }[] = [
-  { key: 'pending', label: 'Pending' },
-  { key: 'processing', label: 'Processing' },
-  { key: 'failed', label: 'Failed' },
-]
+const STATUS_KEYS: QueueStatus[] = ['pending', 'processing', 'failed']
 
 const POLL_MS = 30_000
 
 export function QueuePage() {
+  const { t } = useTranslation('queue')
+  const { t: tc } = useTranslation('common')
+
   const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
   const {
@@ -52,7 +52,7 @@ export function QueuePage() {
   const hasActiveFilters = tab !== 'pending'
   const error = listError ?? retryError
 
-  usePlatformLoading(loading ? 'Loading queue…' : null)
+  usePlatformLoading(loading ? t('loading') : null)
 
   useEffect(() => {
     dispatch(queueActions.loadListRequested({ status: tab, page: 1, pageSize }))
@@ -84,13 +84,13 @@ export function QueuePage() {
 
   return (
     <FeaturePage
-      title="Queue"
-      description="Live queue status. Refreshes every 30 seconds."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex items-center gap-2">
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
-            Refresh now
+            {t('refreshNow')}
           </Button>
         </div>
       }
@@ -101,15 +101,15 @@ export function QueuePage() {
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
       >
-        <FormField label="Status" htmlFor="queue-status">
+        <FormField label={tc('status')} htmlFor="queue-status">
           <Select value={pendingTab} onValueChange={(value) => setPendingTab(value as QueueStatus)}>
             <SelectTrigger id="queue-status">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={tc('status')} />
             </SelectTrigger>
             <SelectContent>
-              {STATUS_OPTIONS.map((option) => (
-                <SelectItem key={option.key} value={option.key}>
-                  {option.label}
+              {STATUS_KEYS.map((key) => (
+                <SelectItem key={key} value={key}>
+                  {t(key)}
                 </SelectItem>
               ))}
             </SelectContent>

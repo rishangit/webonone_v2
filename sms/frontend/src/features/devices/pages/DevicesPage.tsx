@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, Button, FeaturePage, ListPageBody } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -10,13 +11,15 @@ import { DevicesList } from '../components/DevicesList'
 const POLL_MS = 15_000
 
 export function DevicesPage() {
+  const { t } = useTranslation('devices')
+
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const { items, listStatus, listError, busyId, actionError } = useAppSelector((s) => s.devices)
 
   const loading = listStatus === 'loading' && items.length === 0
   const error = listError ?? actionError
-  usePlatformLoading(loading ? 'Loading devices…' : null)
+  usePlatformLoading(loading ? t('loading') : null)
 
   useEffect(() => {
     if (!accessToken) return
@@ -49,11 +52,11 @@ export function DevicesPage() {
 
   return (
     <FeaturePage
-      title="Gateway devices"
-      description="Approve or revoke the phones that send SMS for your scope. Live status refreshes every 15 seconds."
+      title={t('title')}
+      description={t('description')}
       actions={
         <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
-          Refresh now
+          {t('refreshNow')}
         </Button>
       }
     >

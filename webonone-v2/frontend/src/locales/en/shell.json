@@ -1,0 +1,72 @@
+{
+  "brand": "WebOnOne",
+  "loading": {
+    "session": "Loading session…",
+    "page": "Loading page…",
+    "peer": "Loading {{peer}}…"
+  },
+  "peer": {
+    "email": "Email",
+    "data": "Data",
+    "identity": "Profile",
+    "sms": "SMS",
+    "payment": "Payment",
+    "design": "Design",
+    "workspaceTitle": "{{peer}} workspace"
+  },
+  "peerDialog": {
+    "defaults": {
+      "save": "Save",
+      "create": "Create",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "confirmDestructive": "This action cannot be undone."
+  },
+  "nav": {
+    "home": "Home",
+    "calendar": "Calendar",
+    "schedule": "Schedule",
+    "events": "Events",
+    "identity": "Identity",
+    "users": "Users",
+    "staff": "Staff",
+    "email": "Email",
+    "sendEmail": "Send Email",
+    "queue": "Queue",
+    "emailHistory": "Email History",
+    "templates": "Templates",
+    "data": "Data",
+    "tags": "Tags",
+    "units": "Units",
+    "attributes": "Attributes",
+    "products": "Products",
+    "services": "Services",
+    "spaces": "Spaces",
+    "sms": "SMS",
+    "sendSms": "Send SMS",
+    "devices": "Devices",
+    "history": "History",
+    "payment": "Payment",
+    "invoices": "Invoices",
+    "design": "Design",
+    "forms": "Forms",
+    "companies": "Companies",
+    "myCompanies": "My Companies",
+    "connectedCompanies": "Connected Companies",
+    "allCompanies": "All Companies",
+    "settings": "Settings",
+    "basicSettings": "Basic Settings",
+    "systemTheme": "System Theme"
+  },
+  "header": {
+    "profile": "Profile",
+    "logout": "Log out",
+    "language": "Language",
+    "english": "English",
+    "sinhala": "සිංහල",
+    "userMenu": "User menu",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation"
+  }
+}

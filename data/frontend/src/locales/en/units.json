@@ -1,0 +1,11 @@
+{
+  "title": "Units",
+  "description": "Manage units of measure.",
+  "empty": "No units yet",
+  "add": "Add unit",
+  "search": "Search units…",
+  "loading": "Loading units…",
+  "verified": "Verified",
+  "unverified": "Unverified",
+  "deleteDescription": "This action cannot be undone. The unit will be permanently removed."
+}

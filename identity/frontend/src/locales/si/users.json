@@ -1,0 +1,120 @@
+{
+  "pageTitle": "පරිශීලකයින්",
+  "pageDescription": {
+    "company": "ඔබේ සමාගමට අයත් පරිශීලකයින්. නාමාවලියෙන් ලියාපදිංචි පරිශීලකයෙකු එකතු කරන්න.",
+    "platform": "ලියාපදිංචි සියලු වේදිකා පරිශීලකයින් පිරික්සන්න."
+  },
+  "loading": {
+    "users": "පරිශීලකයින් පූරණය වෙමින්…",
+    "user": "පරිශීලක පූරණය වෙමින්…",
+    "history": "ඉතිහාසය පූරණය වෙමින්…",
+    "submission": "ඉදිරිපත් කිරීම පූරණය වෙමින්…",
+    "waitingAuth": "සත්‍යාපනය සඳහා බලා සිටිමින්…"
+  },
+  "searchPlaceholder": "නම හෝ විද්‍යුත් තැපෑලෙන් සොයන්න…",
+  "searchPlaceholderShort": "නම හෝ විද්‍යුත් තැපෑලෙන් සොයන්න",
+  "searchAria": "පරිශීලකයින් සොයන්න",
+  "filterByRoleAria": "භූමිකාව අනුව පෙරහන් කරන්න",
+  "addUser": "පරිශීලක එකතු කරන්න",
+  "noEmail": "විද්‍යුත් තැපෑල නැත",
+  "userFallbackTitle": "පරිශීලක",
+  "userDetailsDescription": "පරිශීලක ගිණුම් විස්තර.",
+  "sectionsAria": "පරිශීලක අංශ",
+  "tabs": {
+    "overview": "දළ විශ්ලේෂණය",
+    "history": "ඉතිහාසය"
+  },
+  "empty": {
+    "noneFound": "පරිශීලකයින් හමු නොවීය.",
+    "companyNone": "තවම පරිශීලකයින් නැත. මෙම සමාගම සඳහා කෙනෙකු තෝරා ගැනීමට පරිශීලක එකතු කරන්න භාවිතා කරන්න.",
+    "addDialog": "එකතු කිරීමට පරිශීලකයින් නැත.",
+    "history": "තවම සමාගම් ඉතිහාසය නැත.",
+    "noFormLinked": "මෙම සේවාවට පෝරමයක් සම්බන්ධ කර නැත."
+  },
+  "toasts": {
+    "userAdded": "පරිශීලක එකතු කරන ලදී",
+    "addFailed": "පරිශීලක එකතු කිරීම අසාර්ථක විය"
+  },
+  "roles": {
+    "label": "භූමිකාව",
+    "all": "සියලු භූමිකා",
+    "super_admin": "සුපිරි පරිපාලක",
+    "company_admin": "සමාගම් පරිපාලක",
+    "member": "සාමාජික"
+  },
+  "addDialog": {
+    "title": "පරිශීලක එකතු කරන්න",
+    "description": "ලියාපදිංචි පරිශීලකයෙකු තෝරන්න, හෝ නව එකක් සාදන්න. ඔබේ සමාගමට එකතු කිරීමට Done ක්ලික් කරන්න.",
+    "submit": "අවසන්"
+  },
+  "createDialog": {
+    "title": "පරිශීලක සාදන්න",
+    "description": "තවම ලියාපදිංචි නොවූ කෙනෙකු එකතු කරන්න. ඔවුන් මුර පදයක් සකසන තුරු තහවුරු නොකළ ලෙස පවතී.",
+    "submit": "පරිශීලක සාදන්න",
+    "creating": "සාදමින්…"
+  },
+  "form": {
+    "firstName": "මුල් නම",
+    "lastName": "අවසාන නම",
+    "email": "විද්‍යුත් තැපෑල",
+    "phoneNumber": "දුරකථන අංකය",
+    "emailPlaceholder": "විකල්ප"
+  },
+  "errors": {
+    "firstNameRequired": "මුල් නම අවශ්‍යයි",
+    "lastNameRequired": "අවසාන නම අවශ්‍යයි",
+    "emailInvalid": "වැලිඩ් විද්‍යුත් තැපෑලක් ඇතුළත් කරන්න",
+    "phoneInvalid": "රට කේතය සමඟ වැලිඩ් දුරකථන අංකයක් ඇතුළත් කරන්න",
+    "createFailed": "පරිශීලක සෑදීම අසාර්ථක විය",
+    "loadUsersFailed": "පරිශීලකයින් පූරණය අසාර්ථක විය",
+    "loadUserFailed": "පරිශීලක පූරණය කළ නොහැක",
+    "loadHistoryFailed": "ඉතිහාසය පූරණය කළ නොහැක",
+    "loadHistoryDetailFailed": "ඉතිහාස විස්තර පූරණය කළ නොහැක",
+    "loadSubmissionFailed": "ඉදිරිපත් කිරීම පූරණය කළ නොහැක",
+    "peerDialogOnly": "මෙම පිටුව ප්ලැට්ෆෝම් peer dialog එම්බෙඩ් සඳහා පමණක් ලබා ගත හැක.",
+    "pickerEmbedOnly": "මෙම පිටුව වැලිඩ් parent origin සහ scope සහිත ප්ලැට්ෆෝම් iframe එම්බෙඩ් සඳහා පමණක් ලබා ගත හැක."
+  },
+  "picker": {
+    "selectAria": "{{name}} තෝරන්න",
+    "toggleAria": "{{name}} මාරු කරන්න"
+  },
+  "history": {
+    "badgeForm": "පෝරමය",
+    "badgeSession": "සැසිය",
+    "servicePrefix": "සේවාව: {{name}}",
+    "filledBy": "{{name}} විසින් පුරවන ලදී",
+    "statusPrefix": "තත්ත්වය: {{status}}",
+    "eventSessionFallback": "සිදුවීම් සැසිය",
+    "submissionTitle": "පෝරම ඉදිරිපත් කිරීම",
+    "submissionLoadError": "ඉදිරිපත් කිරීම පූරණය කළ නොහැක.",
+    "filledFor": "{{name}} සඳහා පුරවන ලදී",
+    "formCardTitle": "පෝරමය",
+    "formCardDescription": "ඉදිරිපත් කළ පෝරමය සංවාදයක විවෘත කරන්න",
+    "formCardSessionDescription": "මෙම පාරිභෝගික සංචාරය සඳහා සැසි පෝරමය",
+    "contextTitle": "සන්දර්භය",
+    "contextDescription": "මෙම පෝරමය පුරවූ කවුද",
+    "subject": "විෂය",
+    "filledByLabel": "පුරවූයේ",
+    "service": "සේවාව",
+    "submitted": "ඉදිරිපත් කළේ",
+    "sessionHistoryTitle": "සැසි ඉතිහාසය",
+    "sessionHistoryLoadError": "සැසි ඉතිහාසය පූරණය කළ නොහැක.",
+    "tokenDescription": "ටෝකනය {{label}} · {{date}}",
+    "sessionCardTitle": "සැසිය",
+    "sessionCardDescription": "මෙම සංචාරය සඳහා සිදුවීම සහ ටෝකනය",
+    "date": "දිනය",
+    "time": "වේලාව",
+    "token": "ටෝකනය",
+    "status": "තත්ත්වය",
+    "customer": "පාරිභෝගිකයා",
+    "space": "අවකාශය",
+    "staffTitle": "කාර්ය මණ්ඩලය",
+    "staffDescription": "මෙම සැසිය සඳහා කාර්ය මණ්ඩල සාමාජික",
+    "staffName": "නම",
+    "viewForm": "පෝරමය බලන්න",
+    "fillForm": "පෝරමය පුරවන්න",
+    "formDialogDescription": "{{name}} සඳහා",
+    "formDialogDescriptionWithService": "{{name}} · {{service}} සඳහා",
+    "customerFallback": "පාරිභෝගිකයා"
+  }
+}

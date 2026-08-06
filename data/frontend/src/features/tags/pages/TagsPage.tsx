@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -26,6 +27,8 @@ import { tagsActions } from '@/features/tags/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
 export function TagsPage() {
+  const { t } = useTranslation('tags')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canCreate = user?.role === 'super_admin' || user?.role === 'company_admin'
@@ -33,27 +36,31 @@ export function TagsPage() {
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList((s) => s.tags, tagsActions)
-  usePlatformLoading(list.loading ? 'Loading tags…' : null)
+  usePlatformLoading(list.loading ? t('loading') : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
     <FeaturePage
-      title="Tags"
-      description="Manage catalog tags."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
-            placeholder="Search tags…"
+            placeholder={t('search')}
             className="w-64"
+            aria-label={t('search')}
           />
-          <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
+          <ListFilterTrigger
+            active={list.hasActiveFilters}
+            onClick={() => list.setFilterOpen(true)}
+          />
           {canCreate ? (
             <Button type="button" size="sm" onClick={() => setDialog({})}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add tag
+              {t('add')}
             </Button>
           ) : null}
         </div>
@@ -68,15 +75,15 @@ export function TagsPage() {
           list.load(1, list.pageSize, true)
         }}
       >
-        <FormField label="Status" htmlFor="tags-status">
+        <FormField label={tc('status')} htmlFor="tags-status">
           <Select value={list.status} onValueChange={list.setStatus}>
             <SelectTrigger id="tags-status">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={tc('all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="pending">Unverified</SelectItem>
+              <SelectItem value="all">{tc('all')}</SelectItem>
+              <SelectItem value="verified">{t('verified')}</SelectItem>
+              <SelectItem value="pending">{t('unverified')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

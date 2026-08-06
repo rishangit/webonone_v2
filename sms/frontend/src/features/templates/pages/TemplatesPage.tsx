@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -21,6 +22,8 @@ import { TemplateFormDialog } from '../components/TemplateFormDialog'
 type DialogMode = 'create' | 'edit'
 
 export function TemplatesPage() {
+  const { t } = useTranslation('templates')
+
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
@@ -46,7 +49,7 @@ export function TemplatesPage() {
 
   const canManageCompany = role === 'super_admin' || role === 'company_admin'
   const loading = listStatus === 'loading' && templates.length === 0
-  usePlatformLoading(loading ? 'Loading templates…' : null)
+  usePlatformLoading(loading ? t('loading') : null)
 
   const filteredTemplates = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -135,8 +138,8 @@ export function TemplatesPage() {
 
   return (
     <FeaturePage
-      title="Templates"
-      description="Manage platform and company SMS templates. Company templates override platform defaults."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
@@ -145,15 +148,15 @@ export function TemplatesPage() {
               setSearchQuery(event.target.value)
               setPage(1)
             }}
-            placeholder="Template name or slug"
+            placeholder={t('search')}
             onClear={() => setPage(1)}
-            aria-label="Search templates"
+            aria-label={t('searchAria')}
             className="w-64"
           />
           {canManageCompany ? (
             <Button type="button" size="sm" onClick={handleOpenCreate}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add template
+              {t('add')}
             </Button>
           ) : null}
         </div>

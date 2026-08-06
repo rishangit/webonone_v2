@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button, SearchInput } from '@webonone/ui-kit'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
@@ -7,6 +8,7 @@ import { WebsiteHeader } from '@/features/website/components/WebsiteHeader'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
 
 export function WebsiteHomePage() {
+  const { t } = useTranslation('home')
   const navigate = useNavigate()
   const {
     coords,
@@ -63,12 +65,12 @@ export function WebsiteHomePage() {
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center text-center">
-          <p className="mb-3 text-sm font-medium tracking-wide text-muted-foreground">WebOnOne</p>
+          <p className="mb-3 text-sm font-medium tracking-wide text-muted-foreground">{t('brand')}</p>
           <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Find What You Need
+            {t('headline')}
           </h1>
           <p className="mt-3 max-w-lg text-pretty text-sm text-muted-foreground sm:text-base">
-            Everything you need from businesses around you, all in one place.
+            {t('subtitle')}
           </p>
 
           <form
@@ -80,11 +82,11 @@ export function WebsiteHomePage() {
               value={draftQuery}
               onChange={(event) => setDraftQuery(event.target.value)}
               onClear={() => setDraftQuery('')}
-              placeholder="Search by name, description, or tag…"
-              aria-label="Search catalog"
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchAria')}
             />
             <Button type="submit" disabled={!draftQuery.trim()}>
-              Search
+              {t('cta')}
             </Button>
           </form>
         </div>

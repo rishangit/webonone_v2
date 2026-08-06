@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -25,7 +26,6 @@ import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
   bindingModeLabel,
-  CATALOG_ENTITY_LABELS,
   isCatalogGalleryKind,
   singularLabel,
   type CatalogEntityKind,
@@ -37,6 +37,8 @@ type CompanyCatalogListPageProps = {
 }
 
 export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
+  const { t } = useTranslation('catalog')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { items, listStatus, kind: storeKind } = useAppSelector((s) => s.companyCatalog)
@@ -45,8 +47,12 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   const [addOpen, setAddOpen] = useState(false)
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null)
 
+  const entityKey =
+    kind === 'products' ? 'products' : kind === 'services' ? 'services' : 'spaces'
+  const translatedEntity = t(entityKey)
+
   const loading = listStatus === 'loading' && storeKind === kind
-  usePlatformLoading(loading ? `Loading ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}…` : null)
+  usePlatformLoading(loading ? t('loadingEntity', { entity: translatedEntity.toLowerCase() }) : null)
   const canManage = activeRole === 'company_admin'
 
   useEffect(() => {
@@ -79,22 +85,22 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
 
   return (
     <FeaturePage
-      title={CATALOG_ENTITY_LABELS[kind]}
-      description={`Company ${CATALOG_ENTITY_LABELS[kind].toLowerCase()} — link from the Data library, customize linked items on the detail page, or create your own.`}
+      title={translatedEntity}
+      description={t('companyEntityDescription', { entity: translatedEntity.toLowerCase() })}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}`}
+            placeholder={t('searchEntity', { entity: translatedEntity.toLowerCase() })}
             onClear={() => setSearch('')}
-            aria-label={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}`}
+            aria-label={t('searchEntity', { entity: translatedEntity.toLowerCase() })}
             className="w-64"
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add {noun}
+              {t('addEntity', { entity: noun })}
             </Button>
           ) : null}
         </div>
@@ -105,8 +111,8 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
           {filtered.length === 0 ? (
             <ItemListEmpty>
               {search.trim()
-                ? `No ${CATALOG_ENTITY_LABELS[kind].toLowerCase()} match your search.`
-                : `No company ${CATALOG_ENTITY_LABELS[kind].toLowerCase()} yet.`}
+                ? t('noEntityMatch', { entity: translatedEntity.toLowerCase() })
+                : t('noCompanyEntity', { entity: translatedEntity.toLowerCase() })}
             </ItemListEmpty>
           ) : (
             filtered.map((item) => (
@@ -129,7 +135,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                         <span className="font-medium">{item.displayName}</span>
                         <StatusTag variant="verified">{bindingModeLabel(item.bindingMode)}</StatusTag>
                         {item.libraryUnavailable ? (
-                          <StatusTag variant="pending">Library unavailable</StatusTag>
+                          <StatusTag variant="pending">{t('libraryUnavailable')}</StatusTag>
                         ) : null}
                       </div>
                       {item.displayDescription ? (
@@ -140,9 +146,9 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                     </div>
                   </button>
                 </ItemListContent>
-                <ItemListMenu ariaLabel={`Actions for ${item.displayName}`}>
+                <ItemListMenu ariaLabel={`${tc('actions')} ${item.displayName}`}>
                   <DropdownMenuItem onClick={() => navigate(`/data/${kind}/${item.id}`)}>
-                    View details
+                    {tc('details')}
                   </DropdownMenuItem>
                   {canManage ? (
                     <>
@@ -153,7 +159,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                           setPendingRemove({ id: item.id, name: item.displayName })
                         }
                       >
-                        Remove
+                        {tc('remove')}
                       </DropdownMenuItem>
                     </>
                   ) : null}
@@ -187,10 +193,14 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
 
       <PlatformAlertConfirmDialog
         open={pendingRemove !== null}
-        title={pendingRemove ? `Remove ${pendingRemove.name}?` : `Remove ${noun}?`}
-        description="This action cannot be undone. The item will be removed from your company catalog."
+        title={
+          pendingRemove
+            ? t('removeNamed', { name: pendingRemove.name })
+            : t('removeEntity', { entity: noun })
+        }
+        description={t('removeItemConfirm')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
+        submitLabel={tc('remove')}
         onOpenChange={(open) => {
           if (!open) setPendingRemove(null)
         }}

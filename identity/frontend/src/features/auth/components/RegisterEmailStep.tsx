@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Mail } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -21,6 +22,7 @@ type RegisterEmailStepProps = {
 }
 
 export function RegisterEmailStep({ onSuccess }: RegisterEmailStepProps) {
+  const { t } = useTranslation('auth')
   const [values, setValues] = useState<RegisterEmailFormValues>({ email: '' })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterEmailFormValues, string>>>({})
   const [error, setError] = useState<string | null>(null)
@@ -46,9 +48,9 @@ export function RegisterEmailStep({ onSuccess }: RegisterEmailStepProps) {
     } catch (err) {
       const apiErr = err as AuthApiError
       if (apiErr.code === 'EMAIL_EXISTS') {
-        setError('This email is already registered. Sign in instead.')
+        setError(t('emailAlreadyRegistered'))
       } else {
-        setError(apiErr.message ?? 'Failed to send verification code')
+        setError(apiErr.message ?? t('sendVerificationCode'))
       }
     } finally {
       setLoading(false)
@@ -62,7 +64,12 @@ export function RegisterEmailStep({ onSuccess }: RegisterEmailStepProps) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Email" htmlFor="register-email" required error={fieldErrors.email}>
+      <FormField
+        label={t('email')}
+        htmlFor="register-email"
+        required
+        error={fieldErrors.email ? t(fieldErrors.email) : undefined}
+      >
         <InputGroup>
           <InputGroupIcon icon={Mail} />
           <Input
@@ -76,7 +83,7 @@ export function RegisterEmailStep({ onSuccess }: RegisterEmailStepProps) {
         </InputGroup>
       </FormField>
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? <Spinner size="sm" /> : 'Send verification code'}
+        {loading ? <Spinner size="sm" /> : t('sendVerificationCode')}
       </Button>
     </Form>
   )

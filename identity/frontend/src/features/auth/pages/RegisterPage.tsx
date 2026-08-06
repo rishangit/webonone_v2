@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, AuthLayout, Button } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
@@ -16,26 +17,8 @@ import { withRedirectQuery } from '../utils/redirectQuery'
 
 type RegisterStep = 1 | 2 | 3 | 4
 
-const STEP_TITLES: Record<RegisterStep, { title: string; description: string }> = {
-  1: {
-    title: 'Create account',
-    description: 'Enter your email to receive a verification code',
-  },
-  2: {
-    title: 'Verify your email',
-    description: 'Enter the 4-digit code we sent you',
-  },
-  3: {
-    title: 'Personal information',
-    description: 'Tell us your name',
-  },
-  4: {
-    title: 'Set your password',
-    description: 'Choose a secure password for your account',
-  },
-}
-
 export function RegisterPage() {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const { isRedirect, redirectUri, state } = useRedirectMode()
@@ -66,12 +49,19 @@ export function RegisterPage() {
     }
   }, [accessToken, user, isLoading, isRedirect, redirectUri, state])
 
+  const stepTitles: Record<RegisterStep, { title: string; description: string }> = {
+    1: { title: t('step1Title'), description: t('step1Description') },
+    2: { title: t('step2Title'), description: t('step2Description') },
+    3: { title: t('step3Title'), description: t('step3Description') },
+    4: { title: t('step4Title'), description: t('step4Description') },
+  }
+
   const { title, description } = registrationComplete
     ? {
-        title: 'Welcome to WebOnOne',
-        description: 'Your account has been created successfully',
+        title: t('registrationCompleteTitle'),
+        description: t('registrationCompleteDescription'),
       }
-    : STEP_TITLES[step]
+    : stepTitles[step]
 
   return (
     <AuthLayout
@@ -81,7 +71,7 @@ export function RegisterPage() {
       footer={
         registrationComplete ? null : (
           <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
-            Already have an account? Sign in
+            {t('alreadyHaveAccount')}
           </Link>
         )
       }
@@ -89,10 +79,10 @@ export function RegisterPage() {
       {registrationComplete ? (
         <div className="space-y-6">
           <Alert>
-            <AlertDescription>Welcome to WebOnOne. You can sign in now.</AlertDescription>
+            <AlertDescription>{t('registrationCompleteAlert')}</AlertDescription>
           </Alert>
           <Button asChild className="w-full">
-            <Link to={loginLink}>Sign in</Link>
+            <Link to={loginLink}>{t('signIn')}</Link>
           </Button>
         </div>
       ) : (
@@ -105,7 +95,7 @@ export function RegisterPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or register with email</span>
+                  <span className="bg-card px-2 text-muted-foreground">{t('orRegisterWithEmail')}</span>
                 </div>
               </div>
               <RegisterEmailStep
@@ -144,7 +134,7 @@ export function RegisterPage() {
       )}
       {!isRedirect && accessToken && user ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Signed in as {user.displayName}
+          {t('signedInAs', { name: user.displayName })}
         </p>
       ) : null}
       {error && step === 1 ? <p className="mt-2 text-center text-sm text-destructive">{error}</p> : null}

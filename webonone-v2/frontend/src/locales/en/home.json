@@ -1,0 +1,7 @@
+{
+  "title": "Welcome, {{name}}!",
+  "titleFallbackName": "User",
+  "description": "You are signed in to WebOnOne.",
+  "sessionActive": "Session active with Bearer JWT.",
+  "notSignedIn": "Not signed in."
+}

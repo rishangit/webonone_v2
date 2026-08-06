@@ -1,5 +1,6 @@
 import { Callout, CalloutDescription, PageShell, Spinner } from '@webonone/ui-kit'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { EmbedLayout } from '../components/EmbedLayout'
@@ -11,6 +12,7 @@ import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
 const DEFAULT_STANDALONE_SCOPE = 'media:library:default'
 
 export function UploadPage() {
+  const { t } = useTranslation('upload')
   const embed = useEmbedMode()
   const { accessToken } = useMediaEmbedAuth(embed)
   const { postUploaded } = useMediaPostMessage(embed.parentOrigin, embed.scope)
@@ -22,11 +24,11 @@ export function UploadPage() {
 
   if (embed.isEmbed && !accessToken) {
     return (
-      <EmbedLayout title="Upload" parentOrigin={embed.parentOrigin}>
+      <EmbedLayout title={t('title')} parentOrigin={embed.parentOrigin}>
         <div className="flex flex-col items-center gap-3 py-8">
           <Spinner size="lg" />
           <Callout variant="muted" className="max-w-sm text-center">
-            <CalloutDescription>Waiting for authentication…</CalloutDescription>
+            <CalloutDescription>{t('waitingAuth')}</CalloutDescription>
           </Callout>
         </div>
       </EmbedLayout>
@@ -45,12 +47,12 @@ export function UploadPage() {
   )
 
   if (embed.isEmbed) {
-    return <EmbedLayout title="Upload" parentOrigin={embed.parentOrigin}>{content}</EmbedLayout>
+    return <EmbedLayout title={t('title')} parentOrigin={embed.parentOrigin}>{content}</EmbedLayout>
   }
 
   return (
     <PageShell
-      title="Media"
+      title={t('pageTitle')}
       user={user ? { email: user.email, displayName: user.displayName } : null}
       onLogout={() => {
         dispatch(authActions.logout())

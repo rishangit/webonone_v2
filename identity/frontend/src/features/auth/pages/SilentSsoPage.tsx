@@ -47,6 +47,7 @@ export function SilentSsoPage() {
           email: session.user.email,
           displayName: session.user.displayName,
           avatarUrl: session.user.avatarUrl ?? null,
+          locale: session.user.locale ?? null,
         },
       })
       return

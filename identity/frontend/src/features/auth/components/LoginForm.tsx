@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Mail } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -18,6 +19,7 @@ import { loginSchema, type LoginFormValues } from '../schemas/authSchemas'
 import { authActions } from '../store'
 
 export function LoginForm() {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
   const { isLoading, error } = useAppSelector((s) => s.auth)
   const [values, setValues] = useState<LoginFormValues>({ email: '', password: '' })
@@ -42,7 +44,12 @@ export function LoginForm() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Email" htmlFor="email" required error={fieldErrors.email}>
+      <FormField
+        label={t('email')}
+        htmlFor="email"
+        required
+        error={fieldErrors.email ? t(fieldErrors.email) : undefined}
+      >
         <InputGroup>
           <InputGroupIcon icon={Mail} />
           <Input
@@ -55,7 +62,12 @@ export function LoginForm() {
           />
         </InputGroup>
       </FormField>
-      <FormField label="Password" htmlFor="password" required error={fieldErrors.password}>
+      <FormField
+        label={t('password')}
+        htmlFor="password"
+        required
+        error={fieldErrors.password ? t(fieldErrors.password) : undefined}
+      >
         <PasswordInput
           id="password"
           withIcon
@@ -65,7 +77,7 @@ export function LoginForm() {
         />
       </FormField>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? <Spinner size="sm" /> : 'Sign in'}
+        {isLoading ? <Spinner size="sm" /> : t('signIn')}
       </Button>
     </Form>
   )

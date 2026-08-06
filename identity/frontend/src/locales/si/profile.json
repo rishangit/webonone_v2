@@ -1,0 +1,129 @@
+{
+  "pageTitle": "පැතිකඩ",
+  "pageDescription": "ඔබේ ගිණුම් විස්තර.",
+  "savedSuccess": "පැතිකඩ සාර්ථකව සුරකින ලදී.",
+  "unableToLoad": "පැතිකඩ පූරණය කළ නොහැක",
+  "loading": "පැතිකඩ පූරණය වෙමින්…",
+  "loadingYour": "ඔබේ පැතිකඩ පූරණය වෙමින්…",
+  "editProfile": "පැතිකඩ සංස්කරණය",
+  "saveChanges": "වෙනස්කම් සුරකින්න",
+  "saving": "සුරකිමින්…",
+  "stepOf": "පියවර {{current}} / {{total}} — {{title}}",
+  "emptyValue": "—",
+  "peerDialogOnly": "මෙම පිටුව ප්ලැට්ෆෝම් peer dialog එම්බෙඩ් සඳහා පමණක් ලබා ගත හැක.",
+  "sections": {
+    "account": {
+      "title": "ගිණුම",
+      "description": "මෙම ගිණුම සඳහා අනන්‍යතාව සහ ඡායාරූපය"
+    },
+    "address": {
+      "title": "ලිපිනය",
+      "description": "තැපැල් / වීදි ලිපිනය"
+    },
+    "contact": {
+      "title": "සම්බන්ධතා",
+      "description": "අන් අය ඔබට සම්බන්ධ වන ආකාරය"
+    },
+    "name": {
+      "title": "නම",
+      "description": "නීතිමය සහ ප්‍රදර්ශන නම්"
+    },
+    "summary": {
+      "title": "සාරාංශය"
+    }
+  },
+  "wizard": {
+    "steps": {
+      "account": "ගිණුම",
+      "address": "ලිපිනය",
+      "contact": "සම්බන්ධතා",
+      "name": "නම",
+      "summary": "සාරාංශය"
+    },
+    "descriptions": {
+      "account": "ඔබේ පැතිකඩ ඡායාරූපය යාවත්කාලීන කරන්න.",
+      "address": "තැපැල් / වීදි ලිපිනය.",
+      "contact": "අන් අය ඔබට සම්බන්ධ වන ආකාරය.",
+      "name": "නීතිමය සහ ප්‍රදර්ශන නම්.",
+      "summary": "සුරැකීමට පෙර ඔබේ වෙනස්කම් සමාලෝචනය කරන්න."
+    },
+    "reviewHint": "ඔබේ වෙනස්කම් සමාලෝචනය කර, පැතිකඩ යාවත්කාලීන කිරීමට සුරකින්න.",
+    "googleImportHint": "නම සහ ඡායාරූපය Google වෙතින් ආයාත කරන ලදී. ඔබට මෙහි ඡායාරූපය වෙනස් කර පසු පියවරවල සම්බන්ධතා විස්තර යාවත්කාලීන කළ හැක.",
+    "googleImportViewHint": "නම සහ ඡායාරූපය Google වෙතින් ආයාත කරන ලදී. සෑම අංශයකම සංස්කරණය සමඟ ඔබේ පැතිකඩ යාවත්කාලීන කළ හැක.",
+    "signedInWithGoogle": "Google සමඟ පිවිසී ඇත",
+    "clickEditImage": "නව රූපයක් තෝරා ගැනීමට සංස්කරණ බොත්තම ක්ලික් කරන්න",
+    "photoUpdated": "යාවත්කාලීන කළේ",
+    "photoUnchanged": "වෙනස් නොකළ"
+  },
+  "fields": {
+    "firstName": "මුල් නම",
+    "lastName": "අවසාන නම",
+    "displayName": "ප්‍රදර්ශන නම",
+    "email": "විද්‍යුත් තැපෑල",
+    "phoneNumber": "දුරකථන අංකය",
+    "locale": "භාෂාව",
+    "addressLine1": "ලිපින පේළි 1",
+    "addressLine2": "ලිපින පේළි 2",
+    "city": "නගරය",
+    "stateRegion": "ප්‍රාන්තය / කලාපය",
+    "postalCode": "තැපැල් කේතය",
+    "country": "රට",
+    "countryCodeLabel": "රට (අකුරු 2ක කේතය)",
+    "address": "ලිපිනය",
+    "photo": "ඡායාරූපය",
+    "phone": "දුරකථනය"
+  },
+  "placeholders": {
+    "country": "US",
+    "locale": "en-US",
+    "phone": "555-0100"
+  },
+  "verify": {
+    "email": {
+      "title": "විද්‍යුත් තැපෑල තහවුරු කරන්න",
+      "description": "ඔබේ විද්‍යුත් තැපෑලට අප යැවූ 4-ඉලක්කම් කේතය ඇතුළත් කරන්න.",
+      "submit": "විද්‍යුත් තැපෑල තහවුරු කරන්න",
+      "button": "විද්‍යුත් තැපෑල තහවුරු කරන්න"
+    },
+    "phone": {
+      "title": "දුරකථනය තහවුරු කරන්න",
+      "description": "SMS මගින් අප යැවූ 6-ඉලක්කම් කේතය ඇතුළත් කරන්න.",
+      "submit": "දුරකථනය තහවුරු කරන්න",
+      "button": "දුරකථනය තහවුරු කරන්න"
+    },
+    "codeSentTo": "අපි {{contact}} වෙත {{length}}-ඉලක්කම් කේතයක් යැව්වෙමු",
+    "otpLabel": "{{length}}-ඉලක්කම් කේතය",
+    "codeSentToast": "කේතය යවන ලදී",
+    "couldNotSendToast": "කේතය යැවිය නොහැකි විය",
+    "emailVerifiedToast": "විද්‍යුත් තැපෑල තහවුරු කරන ලදී",
+    "phoneVerifiedToast": "දුරකථනය තහවුරු කරන ලදී",
+    "attemptsRemaining": "උත්සාහයන් {{count}} ක් ඉතිරිව ඇත",
+    "codeExpiresIn": "කේතය තත්පර {{seconds}} කින් කල් ඉකුත් වේ",
+    "codeExpired": "කේතය කල් ඉකුත් වී ඇත. ",
+    "tooManyAttemptsShort": "උත්සාහයන් ගණනාවක්. ",
+    "requestNewCode": "නව කේතයක් ඉල්ලන්න",
+    "contactHintEmail": "ඔබේ විද්‍යුත් තැපෑල",
+    "contactHintPhone": "ඔබේ දුරකථනය"
+  },
+  "media": {
+    "selectPhoto": "පැතිකඩ ඡායාරූපය තෝරන්න",
+    "waitingAuth": "සත්‍යාපනය සඳහා බලා සිටිමින්…",
+    "cropTitle": "රූපය කපන්න",
+    "cropDescription": "නැවත ස්ථානගත කිරීමට ඇදගෙන යන්න. කැපුම් ප්‍රදේශය සකස් කිරීමට සූම් සහ අනුපාත පාලන භාවිතා කරන්න.",
+    "cropAndUpload": "කපා උඩුගත කරන්න"
+  },
+  "aria": {
+    "editSection": "{{title}} සංස්කරණය"
+  },
+  "errors": {
+    "firstNameRequired": "මුල් නම අවශ්‍යයි",
+    "lastNameRequired": "අවසාන නම අවශ්‍යයි",
+    "displayNameRequired": "ප්‍රදර්ශන නම අවශ්‍යයි",
+    "phoneInvalid": "රට කේතය සමඟ වැලිඩ් දුරකථන අංකයක් ඇතුළත් කරන්න",
+    "countryCode": "අකුරු 2ක රට කේතයක් භාවිතා කරන්න",
+    "tooManyAttempts": "වැරදි උත්සාහයන් ගණනාවක් — නව කේතයක් ඉල්ලන්න.",
+    "codeExpiredRequestNew": "තහවුරු කිරීමේ කේතය කල් ඉකුත් විය — නව කේතයක් ඉල්ලන්න.",
+    "verificationFailed": "තහවුරු කිරීම අසාර්ථක විය",
+    "sendCodeFailed": "තහවුරු කිරීමේ කේතය යැවීම අසාර්ථක විය"
+  }
+}

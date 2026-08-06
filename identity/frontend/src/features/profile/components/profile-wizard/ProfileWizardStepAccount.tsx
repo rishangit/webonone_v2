@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ProfileAvatarEditor } from '../ProfileAvatarEditor'
 
 interface ProfileWizardStepAccountProps {
@@ -17,6 +18,8 @@ export function ProfileWizardStepAccount({
   isSubmitting,
   onEditImage,
 }: ProfileWizardStepAccountProps) {
+  const { t } = useTranslation('profile')
+
   return (
     <div className="space-y-4">
       <ProfileAvatarEditor
@@ -32,10 +35,7 @@ export function ProfileWizardStepAccount({
         <p className="text-sm text-muted-foreground">{email}</p>
       </div>
       {isGoogleUser ? (
-        <p className="text-center text-sm text-muted-foreground">
-          Name and photo were imported from Google. You can change your photo here and update
-          contact details in later steps.
-        </p>
+        <p className="text-center text-sm text-muted-foreground">{t('googleImportedWizardNotice')}</p>
       ) : null}
     </div>
   )

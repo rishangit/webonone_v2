@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   buildIdentitySilentSsoUrl,
   isIdentitySsoNoneMessage,
@@ -24,20 +24,46 @@ type SilentSsoState = {
 /**
  * When the website has no local session, ask Identity (hidden iframe) whether
  * a platform session exists and adopt that JWT via postMessage.
- * Runs at most once per page load so Logout is not immediately undone.
+ * Skips when `prompt=login` (post-logout) so Logout is not immediately undone.
+ * Runs at most once per page load.
  */
 export function useWebsiteSilentSso(): SilentSsoState {
   const { isAuthenticated, login } = useWebsiteAuth()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const hasAuthCode = Boolean(searchParams.get('code'))
-  const [isChecking, setIsChecking] = useState(() => !isAuthenticated && !hasAuthCode)
+  const promptLogin = searchParams.get('prompt') === 'login'
+  const [isChecking, setIsChecking] = useState(
+    () => !isAuthenticated && !hasAuthCode && !promptLogin,
+  )
   const [iframeSrc, setIframeSrc] = useState<string | null>(null)
   const settledRef = useRef(false)
-  /** Allows a single silent attempt; stays false after logout in this page load. */
-  const allowSilentRef = useRef(!isAuthenticated && !hasAuthCode)
+  const strippedPromptRef = useRef(false)
+  /** Allows a single silent attempt; stays false after logout / prompt=login. */
+  const allowSilentRef = useRef(!isAuthenticated && !hasAuthCode && !promptLogin)
+
+  // After logout land with prompt=login: skip SSO, then strip prompt from the URL.
+  useEffect(() => {
+    if (!promptLogin || strippedPromptRef.current) {
+      return
+    }
+    strippedPromptRef.current = true
+    allowSilentRef.current = false
+    settledRef.current = true
+    setIsChecking(false)
+    setIframeSrc(null)
+
+    const next = new URLSearchParams(searchParams)
+    next.delete('prompt')
+    const search = next.toString()
+    navigate(
+      { pathname: window.location.pathname, search: search ? `?${search}` : '' },
+      { replace: true },
+    )
+  }, [navigate, promptLogin, searchParams])
 
   useEffect(() => {
-    if (isAuthenticated || hasAuthCode) {
+    if (isAuthenticated || hasAuthCode || promptLogin) {
       allowSilentRef.current = false
       settledRef.current = true
       setIsChecking(false)
@@ -98,7 +124,7 @@ export function useWebsiteSilentSso(): SilentSsoState {
       window.removeEventListener('message', onMessage)
       window.clearTimeout(timeoutId)
     }
-  }, [hasAuthCode, isAuthenticated, login])
+  }, [hasAuthCode, isAuthenticated, login, promptLogin])
 
   return { isChecking, iframeSrc }
 }

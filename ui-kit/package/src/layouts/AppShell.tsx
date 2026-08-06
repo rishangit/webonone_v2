@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { cn } from '../lib/utils'
 import type { NavConfigItem } from '../types/nav'
-import { AppHeader, type AppHeaderUser } from '../components/AppHeader'
+import { AppHeader, type AppHeaderLocale, type AppHeaderProps, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
 import { AppSidebar, type SidebarSession } from './AppSidebar'
 
@@ -16,6 +16,9 @@ interface AppShellProps {
   user?: AppHeaderUser | null
   onProfileClick?: () => void
   onLogout?: () => void
+  locale?: AppHeaderLocale
+  onLocaleChange?: (locale: AppHeaderLocale) => void
+  headerLabels?: AppHeaderProps['labels']
   onNavItemNavigate?: (to: string) => void
   onNavItemPrefetch?: (to: string) => void
   defaultCollapsed?: boolean
@@ -75,6 +78,9 @@ function AppShell({
   user,
   onProfileClick,
   onLogout,
+  locale,
+  onLocaleChange,
+  headerLabels,
   onNavItemNavigate,
   onNavItemPrefetch,
   defaultCollapsed = false,
@@ -124,6 +130,9 @@ function AppShell({
         user={user}
         onProfileClick={onProfileClick}
         onLogout={onLogout}
+        locale={locale}
+        onLocaleChange={onLocaleChange}
+        labels={headerLabels}
         showMenuButton={!isDesktop}
         menuOpen={mobileOpen}
         onMenuClick={() => setMobileOpen((open) => !open)}

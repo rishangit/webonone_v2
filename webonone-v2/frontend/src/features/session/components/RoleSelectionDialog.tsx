@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { Button, CustomDialog, cn, isStatusTagVariant, StatusTag } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -13,6 +14,7 @@ import {
 } from '@/features/session/utils/accountLabels'
 
 export function RoleSelectionDialog() {
+  const { t } = useTranslation('session')
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const { dialogOpen, dialogMode, assumableRoles, activeRole, activeCompanyId } = useAppSelector(
@@ -78,11 +80,9 @@ export function RoleSelectionDialog() {
     <CustomDialog
       open={dialogOpen}
       onOpenChange={handleOpenChange}
-      title="Choose account"
+      title={t('chooseAccount')}
       description={
-        isSettingsMode
-          ? 'Switch which account to use for this WebOnOne session.'
-          : 'Select which account to use for this WebOnOne session. Your choice stays active until you log out.'
+        isSettingsMode ? t('switchAccountDescription') : t('selectAccountDescription')
       }
       sizeWidth="medium"
       sizeHeight="auto"
@@ -96,7 +96,7 @@ export function RoleSelectionDialog() {
               disabled={submitting}
               onClick={() => dispatch(sessionRoleActions.closeDialog())}
             >
-              Cancel
+              {t('common:cancel')}
             </Button>
           ) : null}
           <Button
@@ -105,7 +105,7 @@ export function RoleSelectionDialog() {
             disabled={!pendingRole || submitting}
             onClick={() => void handleContinue()}
           >
-            Continue
+            {t('common:continue')}
           </Button>
         </>
       }

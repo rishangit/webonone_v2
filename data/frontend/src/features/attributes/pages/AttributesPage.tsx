@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -26,6 +27,8 @@ import { attributesActions } from '@/features/attributes/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
 export function AttributesPage() {
+  const { t } = useTranslation('attributes')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canCreate = user?.role === 'super_admin' || user?.role === 'company_admin'
@@ -33,27 +36,28 @@ export function AttributesPage() {
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList((s) => s.attributes, attributesActions)
-  usePlatformLoading(list.loading ? 'Loading attributes…' : null)
+  usePlatformLoading(list.loading ? t('loading') : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
     <FeaturePage
-      title="Attributes"
-      description="Manage catalog attributes."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
-            placeholder="Search attributes…"
+            placeholder={t('search')}
             className="w-64"
+            aria-label={t('search')}
           />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
           {canCreate ? (
             <Button type="button" size="sm" onClick={() => setDialog({})}>
               <Plus className="h-4 w-4" aria-hidden />
-              Add attribute
+              {t('add')}
             </Button>
           ) : null}
         </div>
@@ -69,30 +73,30 @@ export function AttributesPage() {
           list.load(1, list.pageSize, true)
         }}
       >
-        <FormField label="Status" htmlFor="attributes-status">
+        <FormField label={tc('status')} htmlFor="attributes-status">
           <Select value={list.status} onValueChange={list.setStatus}>
             <SelectTrigger id="attributes-status">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={tc('all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="pending">Unverified</SelectItem>
+              <SelectItem value="all">{tc('all')}</SelectItem>
+              <SelectItem value="verified">{t('verified')}</SelectItem>
+              <SelectItem value="pending">{t('unverified')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>
-        <FormField label="Value type" htmlFor="attributes-value-type">
+        <FormField label={t('valueType')} htmlFor="attributes-value-type">
           <Select
             value={list.extraFilters.value_type ?? 'all'}
             onValueChange={(v) => list.setExtraFilters(v === 'all' ? {} : { value_type: v })}
           >
             <SelectTrigger id="attributes-value-type">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={tc('all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="number">Number</SelectItem>
-              <SelectItem value="text">Text</SelectItem>
+              <SelectItem value="all">{tc('all')}</SelectItem>
+              <SelectItem value="number">{t('number')}</SelectItem>
+              <SelectItem value="text">{t('text')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

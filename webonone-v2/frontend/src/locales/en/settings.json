@@ -1,0 +1,294 @@
+{
+  "basic": {
+    "title": "Basic Settings",
+    "description": "Manage your active account and appearance.",
+    "ariaSections": "Basic Settings sections",
+    "tabs": {
+      "account": "Account",
+      "appearance": "Appearance"
+    }
+  },
+  "account": {
+    "title": "Selected account",
+    "description": "The account used for this WebOnOne session.",
+    "onlyOneAvailable": "Only one account is available.",
+    "change": "Change"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "description": "Choose light or dark mode for the platform.",
+    "light": {
+      "title": "Light",
+      "description": "Bright surfaces for daytime use."
+    },
+    "dark": {
+      "title": "Dark",
+      "description": "Dimmed surfaces for low light."
+    }
+  },
+  "companiesAdmin": {
+    "title": "Companies",
+    "description": "Review registered companies and update approval status.",
+    "searchPlaceholder": "Company name",
+    "searchAria": "Search companies",
+    "empty": "No companies registered yet.",
+    "approve": "Approve",
+    "setPending": "Set pending",
+    "reject": "Reject",
+    "loading": "Loading companies…"
+  },
+  "myCompanies": {
+    "title": "My Companies",
+    "description": "View and register companies you own or administer on the platform.",
+    "searchPlaceholder": "Company name",
+    "searchAria": "Search companies",
+    "empty": "No companies yet. Add a company to get started.",
+    "lookingForSettings": "Looking for other settings?",
+    "basicSettingsLink": "Basic Settings",
+    "registrationSubmitted": "Registration submitted. Admin approval is required — the company stays Pending until a super admin approves or rejects it.",
+    "login": "Login",
+    "loggingIn": "Logging in…",
+    "loginRejected": "Login (rejected)",
+    "loginUnavailableRejected": "Login is unavailable for rejected companies",
+    "failedLogin": "Failed to log in to company"
+  },
+  "connectedCompanies": {
+    "title": "Connected Companies",
+    "description": "Companies you book with or buy from as a customer.",
+    "searchPlaceholder": "Company name",
+    "searchAria": "Search connected companies",
+    "empty": "No connected companies yet. Companies appear here when you book or buy from them."
+  },
+  "companyProfile": {
+    "title": "Company profile",
+    "descriptionOwner": "Company details, gallery images, and Data services.",
+    "descriptionMember": "Company details and catalog for companies you book with or buy from.",
+    "ariaSections": "Company profile sections",
+    "tabs": {
+      "overview": "Overview",
+      "gallery": "Gallery",
+      "data": "Data",
+      "ourServices": "Our Services",
+      "ourProducts": "Our Products",
+      "ourSpaces": "Our Spaces"
+    },
+    "backToMyCompanies": "Back to My Companies",
+    "backToConnectedCompanies": "Back to Connected Companies",
+    "backToCompanies": "Back to Companies",
+    "loading": "Loading company…"
+  },
+  "companyCards": {
+    "profile": {
+      "title": "Company profile",
+      "description": "Identity of the company on the platform",
+      "companySize": "Company size"
+    },
+    "contact": {
+      "title": "Contact information",
+      "description": "How customers and the platform reach this company",
+      "contactEmail": "Contact email",
+      "contactPhone": "Contact phone",
+      "empty": "No contact details yet. Edit this section to add email and phone."
+    },
+    "address": {
+      "title": "Address information",
+      "description": "Postal and street address for this company",
+      "line1": "Address line 1",
+      "line2": "Address line 2",
+      "city": "City",
+      "stateRegion": "State / region",
+      "postalCode": "Postal code",
+      "country": "Country",
+      "empty": "No address details yet. Edit this section to add a street address."
+    },
+    "location": {
+      "title": "Location information",
+      "description": "Map pin for this company",
+      "mapLocation": "Map location",
+      "noPinSet": "No map location set yet.",
+      "loadingMap": "Loading map…",
+      "searchPlaceholder": "Search for a place…",
+      "searchAria": "Search map location",
+      "mapAriaWithPin": "Company map location",
+      "mapAriaNoPin": "Map — no pin set",
+      "failedLoadMaps": "Failed to load Google Maps"
+    },
+    "tags": {
+      "title": "Tags",
+      "description": "Catalog tags associated with this company",
+      "empty": "No tags yet. Edit this section to associate catalog tags."
+    },
+    "dataServices": {
+      "title": "Data services",
+      "description": "Choose which Data catalog sections this company uses. Selected sections appear under Data in the left navigation.",
+      "empty": "No Data services selected. Edit this section to choose catalog sections for this company.",
+      "toastUpdated": "Data services updated",
+      "toastFailed": "Failed to update data services"
+    },
+    "logo": {
+      "title": "Company logo",
+      "alt": "Company logo",
+      "upload": "Upload",
+      "replace": "Replace",
+      "uploadHint": "Upload a company logo",
+      "pickerUploadTitle": "Upload company logo",
+      "pickerReplaceTitle": "Replace company logo",
+      "removeTitle": "Remove company logo?",
+      "removeDescription": "This will clear the company logo. You can upload a new one later."
+    },
+    "gallery": {
+      "title": "Gallery",
+      "addImages": "Add images",
+      "addGalleryImages": "Add gallery images",
+      "empty": "No gallery images yet",
+      "removeAria": "Remove gallery image",
+      "removeTitle": "Remove gallery image?",
+      "removeDescription": "This action cannot be undone. The image will be removed from the company gallery."
+    }
+  },
+  "companyWizard": {
+    "steps": {
+      "profile": "Profile",
+      "contact": "Contact",
+      "address": "Address",
+      "location": "Location",
+      "tags": "Tags",
+      "summary": "Summary"
+    },
+    "descriptionsCreate": {
+      "profile": "Tell us about your company.",
+      "contact": "How customers and the platform can reach you (optional).",
+      "address": "Postal and street address (optional).",
+      "location": "Map pin for this company (optional).",
+      "tags": "Associate catalog tags (optional).",
+      "summary": "Review your details before submitting."
+    },
+    "descriptionsEdit": {
+      "profile": "Company name, description, and size.",
+      "contact": "Contact email and phone.",
+      "address": "Postal and street address.",
+      "location": "Map pin for this company.",
+      "tags": "Catalog tags for this company.",
+      "summary": "Review your changes before saving."
+    },
+    "fields": {
+      "companyName": "Company name",
+      "companyNamePlaceholder": "Your company name",
+      "description": "Description",
+      "companySize": "Company size",
+      "companySizePlaceholder": "Select company size",
+      "companySizePlaceholderOptional": "Select company size (optional)",
+      "contactEmail": "Contact email",
+      "contactEmailPlaceholder": "contact@example.com",
+      "contactPhone": "Contact phone",
+      "addressLine1": "Address line 1",
+      "addressLine2": "Address line 2",
+      "city": "City",
+      "stateRegion": "State / region",
+      "postalCode": "Postal code",
+      "country": "Country",
+      "mapLocation": "Map location",
+      "tags": "Tags",
+      "chooseTags": "Choose tags",
+      "openTagPickerAria": "Open Data tag picker"
+    },
+    "sizes": {
+      "1-10": "1-10",
+      "11-50": "11-50",
+      "51-200": "51-200",
+      "201-500": "201-500",
+      "500+": "500+"
+    },
+    "tagsDialog": {
+      "selectTitle": "Select tags",
+      "selectDescription": "Choose one or more tags, then click Done.",
+      "addTitle": "Add new tag",
+      "addDescription": "Create a tag, then it is selected in the picker automatically."
+    },
+    "loading": "Loading company…",
+    "validation": {
+      "companyNameRequired": "Company name is required",
+      "descriptionRequired": "Description is required",
+      "companySizeRequired": "Company size is required",
+      "validContactEmail": "Enter a valid contact email",
+      "contactPhoneRequired": "Contact phone is required",
+      "addressRequired": "Address is required",
+      "cityRequired": "City is required",
+      "countryRequired": "Country is required"
+    }
+  },
+  "memberCatalog": {
+    "searchPlaceholder": "Search {{entity}}",
+    "searchAria": "Search {{entity}}",
+    "emptySearch": "No {{entity}} match your search.",
+    "empty": "No {{entity}} yet.",
+    "loading": "Loading {{entity}}…"
+  },
+  "systemTheme": {
+    "list": {
+      "title": "System Theme",
+      "description": "Create accent palettes for the platform shell. Change light or dark appearance in Basic Settings.",
+      "searchPlaceholder": "Theme name",
+      "searchAria": "Search themes",
+      "createTheme": "Create theme",
+      "empty": "No themes yet.",
+      "emptySearch": "No themes match your search.",
+      "loading": "Loading themes…",
+      "deleteTitle": "Delete theme?",
+      "deleteTitleNamed": "Delete {{name}}?",
+      "deleteDescription": "This action cannot be undone. The theme will be permanently removed."
+    },
+    "detail": {
+      "title": "Theme",
+      "description": "Theme details and palette.",
+      "loading": "Loading theme…"
+    },
+    "cards": {
+      "basicsTitle": "Basics",
+      "basicsDescription": "Theme identity on the platform",
+      "paletteTitle": "Palette",
+      "paletteDescription": "Five accent colors for the platform shell"
+    },
+    "wizard": {
+      "steps": {
+        "basics": "Basics",
+        "palette": "Palette",
+        "summary": "Summary"
+      },
+      "descriptionsCreate": {
+        "basics": "Name your theme.",
+        "palette": "Define five palette colors or import them from CColorPalette.",
+        "summary": "Review your theme before creating it."
+      },
+      "descriptionsEdit": {
+        "basics": "Theme name.",
+        "palette": "Palette colors (primary, secondary, accent, background, text).",
+        "summary": "Review your changes before saving."
+      },
+      "themeName": "Theme name",
+      "defaultName": "My Theme",
+      "loading": "Loading theme…",
+      "colors": {
+        "color1": "Color 1 — Primary (accent end)",
+        "color2": "Color 2 — Secondary",
+        "color3": "Color 3 — Accent (accent start)",
+        "color4": "Color 4 — Background",
+        "color5": "Color 5 — Dark surfaces"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "hexFormat": "Use #RRGGBB format"
+      }
+    },
+    "importPalette": {
+      "title": "Import palette",
+      "descriptionPrefix": "Paste the",
+      "descriptionSuffix": "block from CColorPalette (Export → CSS variables).",
+      "apply": "Apply",
+      "invalidPaste": "Paste a valid :root block with --color-1 through --color-5 in #RRGGBB format."
+    },
+    "preview": {
+      "sampleInput": "Sample input"
+    }
+  }
+}

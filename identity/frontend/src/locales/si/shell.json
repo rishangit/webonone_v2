@@ -1,0 +1,22 @@
+{
+  "brand": {
+    "identity": "Identity",
+    "webonone": "WebOnOne"
+  },
+  "nav": {
+    "home": "මුල් පිටුව",
+    "profile": "පැතිකඩ",
+    "userRegister": "පරිශීලක ලියාපදිංචිය",
+    "resetPassword": "මුර පදය යථා තත්ත්වයට පත් කරන්න",
+    "users": "පරිශීලකයින්"
+  },
+  "loading": {
+    "route": "පූරණය වෙමින්…",
+    "signingOut": "ඉවත් වෙමින්…"
+  },
+  "groupIcons": {
+    "settings": "සැකසුම්",
+    "email": "විද්‍යුත් තැපෑල",
+    "sms": "SMS"
+  }
+}

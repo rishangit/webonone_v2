@@ -1,0 +1,22 @@
+{
+  "brand": {
+    "identity": "Identity",
+    "webonone": "WebOnOne"
+  },
+  "nav": {
+    "home": "Home",
+    "profile": "Profile",
+    "userRegister": "User register",
+    "resetPassword": "Reset password",
+    "users": "Users"
+  },
+  "loading": {
+    "route": "Loading…",
+    "signingOut": "Signing out…"
+  },
+  "groupIcons": {
+    "settings": "Settings",
+    "email": "Email",
+    "sms": "SMS"
+  }
+}

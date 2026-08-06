@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Alert,
@@ -18,6 +19,7 @@ import { CompanyFormDialog } from '../components/CompanyFormDialog'
 import { MyCompaniesList } from '../components/MyCompaniesList'
 
 export function AllCompaniesPage() {
+  const { t } = useTranslation('settings')
   const dispatch = useAppDispatch()
   const {
     myCompanies,
@@ -40,7 +42,7 @@ export function AllCompaniesPage() {
   const awaitingFirstLoad =
     myCompaniesFetchedAt === null && myCompanies.length === 0 && myCompaniesStatus !== 'error'
 
-  usePlatformLoading(awaitingFirstLoad ? 'Loading companies…' : null)
+  usePlatformLoading(awaitingFirstLoad ? t('loadingCompanies') : null)
 
   useEffect(() => {
     if (!isFresh(myCompaniesFetchedAt)) {
@@ -62,8 +64,8 @@ export function AllCompaniesPage() {
 
   return (
     <FeaturePage
-      title="My Companies"
-      description="View and register companies you own or administer on the platform."
+      title={t('myCompanies')}
+      description={t('myCompaniesDescription')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
@@ -72,14 +74,14 @@ export function AllCompaniesPage() {
               setSearchQuery(event.target.value)
               setPage(1)
             }}
-            placeholder="Company name"
+            placeholder={t('companyName')}
             onClear={() => setPage(1)}
-            aria-label="Search companies"
+            aria-label={t('searchCompanies')}
             className="w-64"
           />
           <Button type="button" size="sm" onClick={() => setRegisterOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden />
-            Add company
+            {t('addCompany')}
           </Button>
         </div>
       }
@@ -94,10 +96,7 @@ export function AllCompaniesPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          <MyCompaniesList
-            items={visibleItems}
-            emptyMessage="No companies yet. Add a company to get started."
-          />
+          <MyCompaniesList items={visibleItems} emptyMessage={t('noCompanies')} />
         </div>
         <Pagination
           className="mt-auto"
@@ -114,9 +113,9 @@ export function AllCompaniesPage() {
       </ListPageBody>
 
       <p className="text-sm text-muted-foreground">
-        Looking for other settings?{' '}
+        {t('lookingForSettings')}{' '}
         <Link to="/settings/basic" className="text-primary underline-offset-4 hover:underline">
-          Basic Settings
+          {t('basic')}
         </Link>
       </p>
 
@@ -124,9 +123,7 @@ export function AllCompaniesPage() {
         open={registerOpen}
         onOpenChange={setRegisterOpen}
         onSaved={() => {
-          setSuccessMessage(
-            'Registration submitted. Admin approval is required — the company stays Pending until a super admin approves or rejects it.',
-          )
+          setSuccessMessage(t('registrationSubmitted'))
         }}
       />
     </FeaturePage>

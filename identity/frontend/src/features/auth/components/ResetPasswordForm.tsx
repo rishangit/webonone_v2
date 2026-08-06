@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -25,6 +26,7 @@ interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ resetSessionToken, legacyToken = '' }: ResetPasswordFormProps) {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
   const { isLoading, error } = useAppSelector((s) => s.auth)
   const sessionToken = useMemo(
@@ -81,9 +83,7 @@ export function ResetPasswordForm({ resetSessionToken, legacyToken = '' }: Reset
   if (!sessionToken && !legacyToken) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>
-          Your reset session expired. Request a new verification code from forgot password.
-        </AlertDescription>
+        <AlertDescription>{t('resetSessionExpired')}</AlertDescription>
       </Alert>
     )
   }
@@ -96,7 +96,12 @@ export function ResetPasswordForm({ resetSessionToken, legacyToken = '' }: Reset
         </Alert>
       ) : null}
       {isLegacyMode ? (
-        <FormField label="Reset token" htmlFor="token" required error={fieldErrors.token}>
+        <FormField
+          label={t('resetToken')}
+          htmlFor="token"
+          required
+          error={fieldErrors.token ? t(fieldErrors.token) : undefined}
+        >
           <Input
             id="token"
             value={legacyValues.token}
@@ -104,7 +109,12 @@ export function ResetPasswordForm({ resetSessionToken, legacyToken = '' }: Reset
           />
         </FormField>
       ) : null}
-      <FormField label="New password" htmlFor="newPassword" required error={fieldErrors.newPassword}>
+      <FormField
+        label={t('newPassword')}
+        htmlFor="newPassword"
+        required
+        error={fieldErrors.newPassword ? t(fieldErrors.newPassword) : undefined}
+      >
         <Input
           id="newPassword"
           type="password"
@@ -118,7 +128,7 @@ export function ResetPasswordForm({ resetSessionToken, legacyToken = '' }: Reset
         />
       </FormField>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? <Spinner size="sm" /> : 'Reset password'}
+        {isLoading ? <Spinner size="sm" /> : t('resetPassword')}
       </Button>
     </Form>
   )

@@ -1,0 +1,22 @@
+{
+  "title": "Gateway devices",
+  "description": "Approve or revoke the phones that send SMS for your scope. Live status refreshes every 15 seconds.",
+  "empty": "No devices yet",
+  "loading": "Loading devices…",
+  "searchPlaceholder": "Search devices…",
+  "refreshNow": "Refresh now",
+  "emptyScope": "No gateway devices registered for your scope.",
+  "approved": "Approved",
+  "revoked": "Revoked",
+  "pending": "Pending",
+  "never": "never",
+  "platform": "Platform",
+  "company": "Company",
+  "online": "Online",
+  "offline": "Offline",
+  "lastSeen": "Last seen",
+  "approve": "Approve",
+  "revoke": "Revoke",
+  "actionsFor": "Actions for {{name}}",
+  "deleteDescription": "This action cannot be undone. The gateway device will lose permission to send SMS."
+}

@@ -1,6 +1,9 @@
 import { QUERY } from './constants'
 import { matchesAllowedOrigin } from './redirectAllowlist'
 
+/** Same-app paths that must not be used as post-login return targets (redirect loops). */
+const AUTH_LOOP_PATHS = new Set(['/login', '/callback', '/auth/clear-session'])
+
 export function parseReturnUrl(
   searchParams: URLSearchParams,
   allowedOriginPatterns: string[],
@@ -23,7 +26,41 @@ export function parseReturnUrl(
     return null
   }
 
-  return parsed.toString()
+  // Keep pathname + search; drop hash (unused for auth-code matching).
+  parsed.hash = ''
+  return `${parsed.origin}${parsed.pathname}${parsed.search}`
+}
+
+/**
+ * Validate a same-origin app return path (e.g. `return_path` on WebOnOne `/login`).
+ * Rejects absolute URLs, protocol-relative URLs, and auth loop routes.
+ */
+export function parseCoreReturnPath(raw: string | null | undefined): string | null {
+  if (!raw) {
+    return null
+  }
+
+  const trimmed = raw.trim()
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//')) {
+    return null
+  }
+
+  if (/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)) {
+    return null
+  }
+
+  let parsed: URL
+  try {
+    parsed = new URL(trimmed, 'https://app.local')
+  } catch {
+    return null
+  }
+
+  if (AUTH_LOOP_PATHS.has(parsed.pathname) || parsed.pathname.startsWith('/login/')) {
+    return null
+  }
+
+  return `${parsed.pathname}${parsed.search}`
 }
 
 export function stripAuthCodeFromSearch(searchParams: URLSearchParams): string {

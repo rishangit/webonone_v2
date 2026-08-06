@@ -1,0 +1,9 @@
+{
+  "brand": "Media",
+  "loading": "Loading…",
+  "signInTitle": "Sign in to Media",
+  "signInDescription": "You will be redirected to Identity to sign in securely.",
+  "continueToSignIn": "Continue to sign in",
+  "signingIn": "Signing in…",
+  "waitingAuth": "Waiting for authentication…"
+}

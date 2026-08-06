@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -27,12 +28,14 @@ export function ThemeList({
   onApply,
   onEdit,
   onDelete,
-  emptyMessage = 'No themes yet.',
+  emptyMessage,
 }: ThemeListProps) {
+  const { t } = useTranslation('settings')
   const items = Array.isArray(themes) ? themes : []
+  const empty = emptyMessage ?? t('noThemes')
 
   if (items.length === 0) {
-    return <ItemListEmpty>{emptyMessage}</ItemListEmpty>
+    return <ItemListEmpty>{empty}</ItemListEmpty>
   }
 
   return (
@@ -50,7 +53,7 @@ export function ThemeList({
               >
                 <p className="font-medium">{theme.name}</p>
                 {theme.isSystem ? (
-                  <p className="text-xs text-muted-foreground">System theme</p>
+                  <p className="text-xs text-muted-foreground">{t('systemThemeType')}</p>
                 ) : null}
                 <div className="mt-2 flex gap-1">
                   {[theme.color1, theme.color2, theme.color3, theme.color4, theme.color5].map(
@@ -66,22 +69,26 @@ export function ThemeList({
                 </div>
               </button>
             </ItemListContent>
-            <ItemListMenu ariaLabel={`Actions for ${theme.name}`}>
-              <DropdownMenuItem onClick={() => onOpen(theme.id)}>View details</DropdownMenuItem>
+            <ItemListMenu ariaLabel={`${t('common:actions')} — ${theme.name}`}>
+              <DropdownMenuItem onClick={() => onOpen(theme.id)}>
+                {t('viewDetails')}
+              </DropdownMenuItem>
               {isActive ? (
-                <DropdownMenuItem disabled>Active</DropdownMenuItem>
+                <DropdownMenuItem disabled>{t('active')}</DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => onApply(theme.id)}>Apply</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onApply(theme.id)}>{t('apply')}</DropdownMenuItem>
               )}
               {!theme.isSystem ? (
                 <>
-                  <DropdownMenuItem onClick={() => onEdit(theme)}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(theme)}>
+                    {t('common:edit')}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
                     onClick={() => onDelete(theme.id)}
                   >
-                    Delete
+                    {t('common:delete')}
                   </DropdownMenuItem>
                 </>
               ) : null}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -27,6 +28,7 @@ function maskEmail(email: string): string {
 }
 
 export function VerifyResetOtpPage() {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const emailFromQuery = searchParams.get('email') ?? ''
@@ -86,15 +88,15 @@ export function VerifyResetOtpPage() {
       if (apiErr.code === 'OTP_MAX_ATTEMPTS') {
         setLocked(true)
         setAttemptsRemaining(0)
-        setError('Too many incorrect attempts — request a new code.')
+        setError(t('errors.tooManyAttempts'))
       } else if (typeof apiErr.attemptsRemaining === 'number') {
         setAttemptsRemaining(apiErr.attemptsRemaining)
         setError(apiErr.message)
       } else if (apiErr.code === 'OTP_EXPIRED') {
         setSecondsLeft(0)
-        setError('Verification code expired — request a new code.')
+        setError(t('errors.codeExpiredRequestNew'))
       } else {
-        setError(apiErr.message ?? 'Verification failed')
+        setError(apiErr.message ?? t('errors.verificationFailed'))
       }
     } finally {
       setLoading(false)
@@ -107,12 +109,12 @@ export function VerifyResetOtpPage() {
 
   return (
     <AuthLayout
-      title="Enter verification code"
-      description={`We sent a 4-digit code to ${maskEmail(email)}`}
+      title={t('enterVerificationCode')}
+      description={t('codeSentTo', { email: maskEmail(email) })}
       variant="minimal"
       footer={
         <Link to={forgotLink} className="text-primary underline-offset-4 hover:underline">
-          Request a new code
+          {t('requestNewCode')}
         </Link>
       }
     >
@@ -123,24 +125,32 @@ export function VerifyResetOtpPage() {
           </Alert>
         ) : null}
         {!locked && !expired && attemptsRemaining !== null ? (
-          <p className="text-center text-sm text-muted-foreground">{attemptsRemaining} attempt(s) remaining</p>
+          <p className="text-center text-sm text-muted-foreground">
+            {t('attemptsRemaining', { count: attemptsRemaining })}
+          </p>
         ) : null}
         {!locked && !expired ? (
           <p className="text-center text-sm text-muted-foreground">
-            Code expires in {secondsLeft}s
+            {t('codeExpiresIn', { seconds: secondsLeft })}
           </p>
         ) : null}
         {expired && !locked ? (
           <Alert>
             <AlertDescription>
-              Code expired.{' '}
+              {t('codeExpired')}{' '}
               <Link to={forgotLink} className="underline">
-                Request a new code
+                {t('requestNewCode')}
               </Link>
             </AlertDescription>
           </Alert>
         ) : null}
-        <FormField label="4-digit code" htmlFor="otp" required error={fieldErrors.otp} className="text-center">
+        <FormField
+          label={t('fourDigitCode')}
+          htmlFor="otp"
+          required
+          error={fieldErrors.otp ? t(fieldErrors.otp) : undefined}
+          className="text-center"
+        >
           <OtpInput
             id="otp"
             length={4}
@@ -153,7 +163,7 @@ export function VerifyResetOtpPage() {
           />
         </FormField>
         <Button type="submit" className="w-full" disabled={disabled}>
-          {loading ? <Spinner size="sm" /> : 'Verify code'}
+          {loading ? <Spinner size="sm" /> : t('verifyCode')}
         </Button>
       </Form>
     </AuthLayout>

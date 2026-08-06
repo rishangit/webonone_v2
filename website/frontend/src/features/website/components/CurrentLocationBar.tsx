@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@webonone/ui-kit'
 import {
@@ -27,28 +28,29 @@ function statusMessage(
   placeLabel: string | null,
   source: UserLocationSource | null,
   showPermissionPrompt: boolean,
+  t: (key: string, options?: Record<string, string>) => string,
 ): string {
   if (showPermissionPrompt && status !== 'ready') {
-    return 'Allow location to sort results by distance.'
+    return t('locationHintAllow')
   }
   switch (status) {
     case 'idle':
-      return 'Allow location to sort results by distance.'
+      return t('locationHintAllow')
     case 'pending':
-      return 'Waiting for browser permission…'
+      return t('locationWaiting')
     case 'ready':
       if (source === 'ip') {
         return placeLabel
-          ? `Approximate: ${placeLabel}`
+          ? t('locationApprox', { label: placeLabel })
           : coords
-            ? `Approximate: ${formatUserCoords(coords)}`
-            : 'Approximate location ready'
+            ? t('locationApprox', { label: formatUserCoords(coords) })
+            : t('locationApproxReady')
       }
-      return placeLabel ?? (coords ? formatUserCoords(coords) : 'Location ready')
+      return placeLabel ?? (coords ? formatUserCoords(coords) : t('locationReady'))
     case 'denied':
-      return 'Location blocked for this site. Open Allow location access? to see how to unlock it.'
+      return t('locationDenied')
     case 'unavailable':
-      return 'Location unavailable in this browser.'
+      return t('locationUnavailable')
     default:
       return ''
   }
@@ -65,6 +67,7 @@ export function CurrentLocationBar({
   onRetry,
   trailing,
 }: CurrentLocationBarProps) {
+  const { t } = useTranslation('shell')
   const showOpenPrompt =
     !showPermissionPrompt &&
     (status === 'idle' ||
@@ -75,7 +78,7 @@ export function CurrentLocationBar({
 
   const showRefresh = status === 'ready' && source === 'gps'
 
-  const primary = statusMessage(status, coords, placeLabel, source, showPermissionPrompt)
+  const primary = statusMessage(status, coords, placeLabel, source, showPermissionPrompt, t)
   const coordsLabel =
     status === 'ready' && coords && placeLabel && placeLabel !== formatUserCoords(coords)
       ? formatUserCoords(coords)
@@ -91,13 +94,13 @@ export function CurrentLocationBar({
     <div className="bg-transparent py-1">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
         <p className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-foreground">
-          <span className="shrink-0 font-medium text-muted-foreground">Your location</span>
+          <span className="shrink-0 font-medium text-muted-foreground">{t('currentLocation')}</span>
           {showRefresh ? (
             <button
               type="button"
               className="inline-flex shrink-0 rounded-md p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Refresh location"
-              title="Refresh location"
+              aria-label={t('locationRefresh')}
+              title={t('locationRefresh')}
               onClick={onRetry}
             >
               <RefreshCw className="h-3.5 w-3.5" aria-hidden />
@@ -110,7 +113,7 @@ export function CurrentLocationBar({
           <div className="flex shrink-0 items-center gap-3">
             {showOpenPrompt ? (
               <Button type="button" size="sm" variant="default" onClick={onOpenPermissionPrompt}>
-                Allow location access?
+                {t('locationPromptTitle')}
               </Button>
             ) : null}
             {trailing}

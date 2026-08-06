@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -19,10 +20,10 @@ interface DevicesListProps {
   onRevoke: (device: SmsDevice) => void
 }
 
-function statusLabel(status: SmsDevice['status']): string {
-  if (status === 'approved') return 'Approved'
-  if (status === 'revoked') return 'Revoked'
-  return 'Pending'
+function statusLabel(status: SmsDevice['status'], t: (k: string) => string): string {
+  if (status === 'approved') return t('approved')
+  if (status === 'revoked') return t('revoked')
+  return t('pending')
 }
 
 function formatSeen(iso: string | null): string {
@@ -31,11 +32,12 @@ function formatSeen(iso: string | null): string {
 }
 
 export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesListProps) {
+  const { t } = useTranslation('devices')
   const rows = Array.isArray(devices) ? devices : []
   const [pendingRevoke, setPendingRevoke] = useState<SmsDevice | null>(null)
 
   if (rows.length === 0) {
-    return <ItemListEmpty>No gateway devices registered for your scope.</ItemListEmpty>
+    return <ItemListEmpty>{t('emptyScope')}</ItemListEmpty>
   }
 
   return (
@@ -57,18 +59,18 @@ export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesLis
                   />
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {device.scope === 'platform' ? 'Platform' : 'Company'} · {statusLabel(device.status)}{' '}
-                  · {device.online ? 'Online' : 'Offline'} · Last seen {formatSeen(device.lastSeenAt)}
+                  {device.scope === 'platform' ? t('platform') : t('company')} · {statusLabel(device.status, t)}{' '}
+                  · {device.online ? t('online') : t('offline')} · Last seen {formatSeen(device.lastSeenAt)}
                   {device.appVersion ? ` · v${device.appVersion}` : ''}
                 </p>
               </ItemListContent>
               <ItemListMenu ariaLabel={`Actions for ${device.name}`}>
-                <DropdownMenuItem disabled>{statusLabel(device.status)}</DropdownMenuItem>
+                <DropdownMenuItem disabled>{statusLabel(device.status, t)}</DropdownMenuItem>
                 {device.status !== 'approved' ? (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => onApprove(device)} disabled={isBusy}>
-                      Approve
+                      {t('approve')}
                     </DropdownMenuItem>
                   </>
                 ) : null}

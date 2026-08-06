@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Save } from 'lucide-react'
 import {
   isPlatformPeerDialogNestedCancelMessage,
@@ -33,12 +34,6 @@ import { getSessionCompanyId } from '@/features/users/utils/currentRole'
 
 const ADD_USER_DIALOG_PATH = '/embed/dialogs/users/add'
 const CREATE_USER_DIALOG_PATH = '/embed/dialogs/users/create'
-const ADD_USER_TITLE = 'Add user'
-const ADD_USER_DESCRIPTION =
-  'Select a registered user, or create a new one. Click Done to add them to your company.'
-const ADD_USER_SUBMIT_LABEL = 'Done'
-const CREATE_USER_SUBMIT_LABEL = 'Create user'
-const ADD_USER_EMPTY = 'No users available to add.'
 
 const CREATE_DIALOG_SIZE = {
   sizeWidth: 'small' as const,
@@ -89,6 +84,7 @@ export function AddCompanyUserDialog({
   onCreated,
   chrome = 'dialog',
 }: AddCompanyUserDialogProps) {
+  const { t } = useTranslation('users')
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const companyId = getSessionCompanyId(accessToken)
@@ -112,9 +108,9 @@ export function AddCompanyUserDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
     open: chrome === 'dialog' && open,
     path: ADD_USER_DIALOG_PATH,
-    title: ADD_USER_TITLE,
-    description: ADD_USER_DESCRIPTION,
-    submitLabel: ADD_USER_SUBMIT_LABEL,
+    title: t('addUserTitle'),
+    description: t('addUserDescription'),
+    submitLabel: t('done'),
     ...USER_SELECTION_DIALOG_SIZE,
     onResult: (payload) => {
       if (payload && typeof payload === 'object' && isUserOption(payload)) {
@@ -187,10 +183,9 @@ export function AddCompanyUserDialog({
         parentRequestId: dialogRequestId,
         requestId: nestedRequestId,
         path: CREATE_USER_DIALOG_PATH,
-        title: 'Create user',
-        description:
-          'Add someone who is not registered yet. They stay unverified until they set a password.',
-        submitLabel: CREATE_USER_SUBMIT_LABEL,
+        title: t('createUser'),
+        description: t('createUserDescription'),
+        submitLabel: t('createUser'),
         ...CREATE_DIALOG_SIZE,
       })
       return
@@ -198,7 +193,7 @@ export function AddCompanyUserDialog({
     createOpenRef.current = true
     setCreateOpen(true)
     setCreateError(null)
-  }, [chrome, dialogRequestId, parentOrigin])
+  }, [chrome, dialogRequestId, parentOrigin, t])
 
   useEffect(() => {
     return () => {
@@ -285,7 +280,7 @@ export function AddCompanyUserDialog({
       onCreated(user)
       onOpenChange(false)
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : 'Failed to create user')
+      setCreateError(err instanceof Error ? err.message : t('failedToCreateUser'))
     } finally {
       setCreating(false)
     }
@@ -310,14 +305,14 @@ export function AddCompanyUserDialog({
       return
     }
     if (createOpen) {
-      sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, true, ADD_USER_SUBMIT_LABEL)
+      sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, true, t('done'))
       return
     }
     sendPlatformPeerDialogBusy(
       parentOrigin,
       dialogRequestId,
       !pendingSelection,
-      ADD_USER_SUBMIT_LABEL,
+      t('done'),
     )
   }, [chrome, createOpen, dialogRequestId, parentOrigin, pendingSelection])
 
@@ -350,7 +345,7 @@ export function AddCompanyUserDialog({
         onPendingChange={setPendingSelection}
         onAddUser={openCreateDialog}
         loadUsers={loadUsersForPicker}
-        emptyMessage={ADD_USER_EMPTY}
+        emptyMessage={t('addUserEmpty')}
       />
     )
   }
@@ -366,9 +361,9 @@ export function AddCompanyUserDialog({
         onOpenChange={handlePickerOpenChange}
         onSelect={onSelect}
         loadUsers={loadUsersForPicker}
-        title={ADD_USER_TITLE}
-        description={ADD_USER_DESCRIPTION}
-        emptyMessage={ADD_USER_EMPTY}
+        title={t('addUserTitle')}
+        description={t('addUserDescription')}
+        emptyMessage={t('addUserEmpty')}
         onAddUser={openCreateDialog}
         nestedDismissGuard={createOpen || blockOuterDismiss}
       />
@@ -379,8 +374,8 @@ export function AddCompanyUserDialog({
             closeCreateDialog()
           }
         }}
-        title="Create user"
-        description="Add someone who is not registered yet. They stay unverified until they set a password."
+        title={t('createUser')}
+        description={t('createUserDescription')}
         stackLevel={1}
         sizeWidth={CREATE_DIALOG_SIZE.sizeWidth}
         sizeHeight={CREATE_DIALOG_SIZE.sizeHeight}
@@ -396,7 +391,7 @@ export function AddCompanyUserDialog({
               }}
               disabled={creating}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -405,7 +400,7 @@ export function AddCompanyUserDialog({
               disabled={creating}
             >
               <Save className="mr-2 h-4 w-4" aria-hidden />
-              {creating ? 'Creating…' : CREATE_USER_SUBMIT_LABEL}
+              {creating ? t('creating') : t('createUser')}
             </Button>
           </>
         }

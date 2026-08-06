@@ -1,10 +1,11 @@
 import { lazy } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from '@/app/AppLayout'
 import { LazyRoute } from '@/app/LazyRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { ClearSessionPage } from '@/features/auth/pages/ClearSessionPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { useAppSelector } from '@/app/store/hooks'
 
 const HomePage = lazy(() =>
@@ -111,8 +112,10 @@ const DataLibraryCatchAllRoute = lazy(() =>
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const location = useLocation()
   if (!accessToken) {
-    return <Navigate to="/login" replace />
+    const returnPath = `${location.pathname}${location.search}`
+    return <Navigate to={buildWebOnOneLoginHref(returnPath)} replace />
   }
   return children
 }
@@ -380,7 +383,7 @@ export function App() {
             }
           />
         </Route>
-        <Route path="admin/companies/login" element={<Navigate to="/login" replace />} />
+        <Route path="admin/companies/login" element={<Navigate to={buildWebOnOneLoginHref()} replace />} />
         <Route path="admin/companies/pending" element={<Navigate to="/companies" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

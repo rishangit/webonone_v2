@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import { Button, FeaturePage, ListPageBody, SearchInput, Pagination } from '@webonone/ui-kit'
@@ -15,6 +16,7 @@ import { systemThemeActions } from '../store/systemThemeSlice'
 type DialogState = { id?: string } | null
 
 export function SystemThemePage() {
+  const { t } = useTranslation('settings')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { themes, preferences, status, error, themesFetchedAt, preferencesFetchedAt } =
@@ -33,7 +35,7 @@ export function SystemThemePage() {
 
   const loading = status === 'loading'
 
-  usePlatformLoading(loading ? 'Loading themes…' : null)
+  usePlatformLoading(loading ? t('loadingThemes') : null)
 
   useEffect(() => {
     if (!isFresh(themesFetchedAt)) {
@@ -51,14 +53,12 @@ export function SystemThemePage() {
   }, [deleteTarget, dispatch])
 
   const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
-  const emptyMessage = themeSearchQuery.trim()
-    ? 'No themes match your search.'
-    : 'No themes yet.'
+  const emptyMessage = themeSearchQuery.trim() ? t('noThemesMatch') : t('noThemes')
 
   return (
     <FeaturePage
-      title="System Theme"
-      description="Create accent palettes for the platform shell. Change light or dark appearance in Basic Settings."
+      title={t('systemTheme')}
+      description={t('systemThemeDescription')}
       actions={
         <div className="flex items-center gap-2">
           <SearchInput
@@ -67,14 +67,14 @@ export function SystemThemePage() {
               setThemeSearchQuery(event.target.value)
               setThemePage(1)
             }}
-            placeholder="Theme name"
+            placeholder={t('themeName')}
             onClear={() => setThemePage(1)}
-            aria-label="Search themes"
+            aria-label={t('searchThemes')}
             className="w-64"
           />
           <Button type="button" size="sm" onClick={() => setDialog({})}>
             <Plus className="h-4 w-4" aria-hidden />
-            Create theme
+            {t('createTheme')}
           </Button>
         </div>
       }
@@ -96,7 +96,7 @@ export function SystemThemePage() {
               }
               onEdit={(theme) => setDialog({ id: theme.id })}
               onDelete={(id) => {
-                const theme = themes.find((t) => t.id === id)
+                const theme = themes.find((item) => item.id === id)
                 if (theme) setDeleteTarget(theme)
               }}
             />
@@ -132,8 +132,10 @@ export function SystemThemePage() {
 
       <PlatformAlertConfirmDialog
         open={deleteTarget !== null}
-        title={deleteTarget ? `Delete ${deleteTarget.name}?` : 'Delete theme?'}
-        description="This action cannot be undone. The theme will be permanently removed."
+        title={
+          deleteTarget ? t('deleteNamed', { name: deleteTarget.name }) : t('deleteTheme')
+        }
+        description={t('deleteThemeConfirm')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null)

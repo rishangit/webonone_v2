@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { LoadingState } from '@webonone/ui-kit'
 import { appendPromptLogin, matchesAllowedOrigin, parseAllowlistPatterns } from '@webonone/platform-nav'
 import {
@@ -42,6 +43,7 @@ async function revokeIdentitySessions(accessToken: string): Promise<void> {
 }
 
 export function LogoutPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const startedRef = useRef(false)
 
@@ -70,7 +72,7 @@ export function LogoutPage() {
   // No PageShell / AppHeader — logout is a transient hop back to the consumer login.
   return (
     <div className="relative flex h-dvh w-full items-center justify-center">
-      <LoadingState overlay label="Signing out…" />
+      <LoadingState overlay label={t('signingOut')} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PLATFORM_EMBED_APP_HOST_CLASS, resolvePlatformEmbedParentOrigin } from '@webonone/platform-embed'
 import {
   CORE_NAV_QUERY_PARAM,
@@ -8,6 +9,7 @@ import {
   performPlatformLogout,
   useServiceRedirect,
 } from '@webonone/platform-nav'
+import { normalizeLocale, relayLocaleQueryParams, type AppLocale } from '@webonone/i18n'
 import { Alert, AlertDescription, AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { prefetchNavTarget } from '@/app/routePrefetch'
@@ -25,6 +27,7 @@ import { getIdentityOrigin, isAllowedParentOrigin } from '@/features/auth/utils/
 import { PlatformEmbedLayout } from '@/features/auth/components/PlatformEmbedLayout'
 import { hasPlatformHandoff, parsePlatformReturnUrl } from '@/features/auth/utils/platformReturn'
 import type { SmsRole } from '@/features/auth/types/auth.types'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
 
 export function AppLayout() {
@@ -54,11 +57,13 @@ function AppLayoutShellContent() {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { t, i18n } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { accessToken, user, platform } = useAppSelector((s) => s.auth)
   const { redirect, error: profileError, clearError } = useServiceRedirect()
   const { isBootstrapping, bootstrapError } = usePlatformSessionBootstrap()
   const roleReady = useRefreshSmsRole(isBootstrapping)
+  const currentLocale = normalizeLocale(i18n.language)
 
   const returnUrlFromQuery = parsePlatformReturnUrl(searchParams)
   const isPlatformHandoff = hasPlatformHandoff(searchParams)
@@ -68,6 +73,29 @@ function AppLayoutShellContent() {
   const usePlatformShell = isPlatformMode && (isAuthenticated || isPlatformHandoff)
 
   const role: SmsRole = user?.role ?? 'member'
+
+  const handoffSearchParams = useMemo(
+    () => ({
+      ...relayThemeQueryParams(searchParams),
+      ...relayLocaleQueryParams(searchParams),
+    }),
+    [searchParams],
+  )
+
+  const handleLocaleChange = useCallback((locale: AppLocale) => {
+    void changeAppLocale(locale)
+  }, [])
+
+  const headerLabels = useMemo(
+    () => ({
+      language: t('language'),
+      english: t('english'),
+      sinhala: t('sinhala'),
+      profile: t('profile'),
+      logout: t('logout'),
+    }),
+    [t],
+  )
 
   const onNavItemNavigate = useMemo(
     () =>
@@ -118,7 +146,7 @@ function AppLayoutShellContent() {
         getIdentityProfileRedirectOptions({
           accessToken,
           returnUrl: effectiveReturnUrl,
-          extraSearchParams: relayThemeQueryParams(searchParams),
+          extraSearchParams: handoffSearchParams,
           navVariant: platform.coreNavVariant ?? 'main',
         }),
       )
@@ -167,6 +195,9 @@ function AppLayoutShellContent() {
     onNavItemPrefetch: prefetchNavTarget,
     user: headerUser,
     onLogout: handleLogout,
+    locale: currentLocale,
+    onLocaleChange: handleLocaleChange,
+    headerLabels,
   }
 
   if (usePlatformShell) {
@@ -187,7 +218,13 @@ function AppLayoutShellContent() {
   }
 
   return (
-    <PageShell user={headerUser} onLogout={headerUser ? handleLogout : undefined}>
+    <PageShell
+      user={headerUser}
+      onLogout={headerUser ? handleLogout : undefined}
+      locale={currentLocale}
+      onLocaleChange={handleLocaleChange}
+      headerLabels={headerLabels}
+    >
       <div className="flex min-h-[calc(100vh-3.5rem)] w-full items-center justify-center py-4">
         {mainContent}
       </div>

@@ -1,25 +1,28 @@
 import { useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { dashboardActions } from '@/features/dashboard/store'
 
-const ENTITY_LINKS: { key: string; label: string; path: string }[] = [
-  { key: 'tags', label: 'Tags', path: '/tags' },
-  { key: 'units', label: 'Units', path: '/units' },
-  { key: 'attributes', label: 'Attributes', path: '/attributes' },
-  { key: 'products', label: 'Products', path: '/products' },
-  { key: 'services', label: 'Services', path: '/services' },
-  { key: 'spaces', label: 'Spaces', path: '/spaces' },
+const ENTITY_LINKS: { key: string; labelKey: string; path: string }[] = [
+  { key: 'tags', labelKey: 'tags:title', path: '/tags' },
+  { key: 'units', labelKey: 'units:title', path: '/units' },
+  { key: 'attributes', labelKey: 'attributes:title', path: '/attributes' },
+  { key: 'products', labelKey: 'products:title', path: '/products' },
+  { key: 'services', labelKey: 'services:title', path: '/services' },
+  { key: 'spaces', labelKey: 'spaces:title', path: '/spaces' },
 ]
 
 export function DashboardPage() {
+  const { t } = useTranslation('shell')
+  const { t: tAny } = useTranslation()
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const { stats, status, error } = useAppSelector((s) => s.dashboard)
   const loading = status === 'loading' && !stats
-  usePlatformLoading(loading ? 'Loading dashboard…' : null)
+  usePlatformLoading(loading ? t('loadingDashboard') : null)
 
   useEffect(() => {
     if (!accessToken) return
@@ -29,7 +32,7 @@ export function DashboardPage() {
   if (!accessToken) return <Navigate to="/login" replace />
 
   return (
-    <FeaturePage title="Dashboard" description="Catalog counts by verification status.">
+    <FeaturePage title={t('dashboard')} description={t('dashboardDescription')}>
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -43,11 +46,11 @@ export function DashboardPage() {
               <Link key={entity.key} to={entity.path} className="block">
                 <Card className="transition-shadow hover:shadow-md">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">{entity.label}</CardTitle>
+                    <CardTitle className="text-base">{tAny(entity.labelKey)}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm text-muted-foreground">
-                    <p>Verified: {counts.verified}</p>
-                    <p>Unverified: {counts.pending}</p>
+                    <p>{t('verifiedCount', { count: counts.verified })}</p>
+                    <p>{t('unverifiedCount', { count: counts.pending })}</p>
                   </CardContent>
                 </Card>
               </Link>

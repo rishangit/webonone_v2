@@ -6,9 +6,11 @@ import { applyThemeFromQueryParams } from '@webonone/theme'
 import '@webonone/ui-kit/styles'
 import { store } from '@/app/store'
 import { Root } from '@/app/Root'
+import { initIdentityI18n } from '@/i18n'
 
 ensurePlatformEmbedCanvas()
 applyThemeFromQueryParams(new URLSearchParams(window.location.search))
+initIdentityI18n()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

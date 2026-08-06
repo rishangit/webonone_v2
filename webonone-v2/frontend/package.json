@@ -25,7 +25,10 @@
     "redux": "^5.0.1",
     "redux-observable": "3.0.0-rc.3",
     "rxjs": "^7.8.2",
-    "zod": "^3.25.56"
+    "zod": "^3.25.56",
+    "@webonone/i18n": "*",
+    "i18next": "^25.3.2",
+    "react-i18next": "^15.6.1"
   },
   "devDependencies": {
     "@types/react": "^19.1.6",

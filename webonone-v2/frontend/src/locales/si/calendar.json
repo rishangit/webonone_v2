@@ -1,0 +1,327 @@
+{
+  "schedule": {
+    "title": "කාලසටහන",
+    "descriptionMember": "දිනය, සතිය හෝ මාසය අනුව ඔබේ වෙන්කිරීම් සහ සැසි ටෝකන බලන්න.",
+    "descriptionAdmin": "දිනය, සතිය හෝ මාසය අනුව ඔබේ සමාගම් කාලසටහන බලන්න."
+  },
+  "events": {
+    "title": "සිදුවීම්",
+    "descriptionMember": "ඔබේ වෙන්කිරීම් සහ සැසි ටෝකන.",
+    "descriptionAdmin": "සමාගම් දින දසුන් සිදුවීම් කළමනාකරණය කරන්න.",
+    "searchPlaceholder": "සිදුවීම් සොයන්න…",
+    "searchAria": "සිදුවීම් සොයන්න",
+    "addEvent": "සිදුවීම එකතු කරන්න",
+    "loading": "සිදුවීම් පූරණය වෙමින්…",
+    "emptyAdmin": "තවම සිදුවීම් නැත. ආරම්භ කිරීමට සිදුවීමක් එකතු කරන්න.",
+    "emptyMember": "තවම වෙන්කිරීම් නැත.",
+    "viewDetails": "විස්තර බලන්න",
+    "remove": "ඉවත් කරන්න",
+    "removing": "ඉවත් කරමින්…",
+    "removeTitle": "සිදුවීම ඉවත් කරන්නද?",
+    "removeTitleNamed": "{{name}} ඉවත් කරන්නද?",
+    "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. සිදුවීම ස්ථිරවම ඉවත් වේ.",
+    "toastRemoved": "සිදුවීම ඉවත් කරන ලදී",
+    "toastRemoveFailed": "සිදුවීම ඉවත් කිරීම අසාර්ථක විය"
+  },
+  "eventDetail": {
+    "title": "සිදුවීම",
+    "description": "සිදුවීම් විස්තර",
+    "pageDescription": "සමාගම් දින දසුන් සිදුවීම් විස්තර.",
+    "ariaSections": "සිදුවීම් අංශ",
+    "tabs": {
+      "overview": "දළ විශ්ලේෂණය",
+      "sessions": "සැසි"
+    },
+    "loading": "සිදුවීම පූරණය වෙමින්…",
+    "service": {
+      "title": "සේවාව",
+      "description": "මෙම සිදුවීම සඳහා නාමාවලි සේවාව",
+      "name": "නම",
+      "timeMode": "කාල ප්‍රකාරය"
+    },
+    "when": {
+      "title": "කවදාද",
+      "descriptionDuration": "දිනය, ආරම්භක වේලාව සහ විකල්ප පුනරාවර්තනය",
+      "descriptionWindow": "සතියේ දින, දින පරාසය සහ වේලාවන්",
+      "schedule": "කාලසටහන",
+      "date": "දිනය",
+      "from": "සිට",
+      "until": "දක්වා",
+      "time": "වේලාව",
+      "weekdays": "සතියේ දින"
+    },
+    "staff": {
+      "title": "කාර්ය මණ්ඩලය",
+      "description": "සේවාව සපයන කාර්ය මණ්ඩල සාමාජික",
+      "name": "නම"
+    },
+    "where": {
+      "title": "කොහේද",
+      "description": "මෙම සිදුවීම සිදුවන අවකාශය",
+      "space": "අවකාශය"
+    },
+    "attendee": {
+      "title": "සහභාගිවන්නා",
+      "description": "මෙම සිදුවීමට සහභාගී වන Identity පරිශීලක",
+      "name": "නම",
+      "email": "විද්‍යුත් තැපෑල"
+    },
+    "forms": {
+      "title": "පෝරම",
+      "description": "මෙම සිදුවීමේ සේවාවට සම්බන්ධ නිර්මාණ පෝරමය",
+      "linkedForm": "සම්බන්ධිත පෝරමය",
+      "openForm": "පෝරමය විවෘත කරන්න",
+      "noneLinked": "මෙම සේවාවට පෝරමයක් සම්බන්ධ කර නැත. සේවා නාමාවලි පිටුවේ පෝරමයක් සම්බන්ධ කරන්න."
+    },
+    "record": {
+      "title": "වාර්තාව",
+      "description": "සිදුවීම් වාර්තා මෙටාදත්ත",
+      "created": "සාදන ලදී",
+      "updated": "යාවත්කාලීන කළේ"
+    }
+  },
+  "sessionsList": {
+    "emptyMember": "ඔබේ ගිණුම සඳහා ටෝකනයක් සහිත සැසි නැත.",
+    "emptyAdmin": "මෙම සිදුවීමේ දින පරාසයේ සැසි නැත."
+  },
+  "timing": {
+    "current": "වත්මන්",
+    "ended": "අවසන් විය",
+    "minutes": "මිනිත්තු {{count}}",
+    "oneHour": "පැය 1",
+    "hours": "පැය {{count}}",
+    "oneDay": "දින 1",
+    "days": "දින {{count}}"
+  },
+  "timeMode": {
+    "specificTime": "නිශ්චිත වේලාව",
+    "duration": "කාල සීමාව",
+    "specificTimeRange": "නිශ්චිත වේලාව · {{start}}–{{end}}",
+    "durationMinutes": "කාල සීමාව · මිනිත්තු {{minutes}}"
+  },
+  "recurrence": {
+    "singleEvent": "තනි සිදුවීම",
+    "everyWeek": "සෑම සතියකම",
+    "everyWeekOn": "සෑම සතියකම {{days}}",
+    "everyTwoWeeks": "සෑම සති 2කට වරක්",
+    "everyTwoWeeksOn": "සෑම සති 2කට වරක් {{day}}",
+    "everyMonthFirstWeek": "සෑම මාසයකම (පළමු සතිය)",
+    "everyMonthFirstWeekOn": "සෑම මාසයකම (පළමු සතිය {{day}})",
+    "everyMonthOnDay": "සෑම මාසයකම මාසයේ දිනයේ",
+    "everyMonthOnOrdinal": "සෑම මාසයකම {{ordinal}}",
+    "singleSummary": "තනි · {{date}} · {{time}}"
+  },
+  "wizard": {
+    "stepsDuration": {
+      "service": "සේවාව",
+      "staff": "කාර්ය මණ්ඩලය",
+      "attendee": "සහභාගිවන්නා",
+      "when": "කවදාද",
+      "summary": "සාරාංශය"
+    },
+    "stepsWindow": {
+      "service": "සේවාව",
+      "staff": "කාර්ය මණ්ඩලය",
+      "where": "කොහේද",
+      "when": "කවදාද",
+      "summary": "සාරාංශය"
+    },
+    "descriptionsDuration": {
+      "service": "මෙම සිදුවීම සඳහා සමාගම් සේවාව තෝරන්න.",
+      "staff": "සේවාව සපයන කාර්ය මණ්ඩල සාමාජික තෝරන්න.",
+      "attendee": "මෙම සිදුවීමට සහභාගී වන Identity පරිශීලක තෝරන්න.",
+      "when": "දිනය සහ ආරම්භක වේලාව තෝරන්න; විකල්පයක් ලෙස සතිපතා, දෙසතිපතා හෝ මාසිකව පුනරාවර්තනය කරන්න.",
+      "summaryCreate": "සමාලෝචනය කර සිදුවීම සාදන්න.",
+      "summaryEdit": "වෙනස්කම් සමාලෝචනය කර සුරකින්න."
+    },
+    "descriptionsWindow": {
+      "service": "මෙම සිදුවීම සඳහා සමාගම් සේවාව තෝරන්න.",
+      "staff": "සේවාව සපයන කාර්ය මණ්ඩල සාමාජික තෝරන්න.",
+      "where": "මෙම නිශ්චිත වේලා සිදුවීම සිදුවන අවකාශය තෝරන්න.",
+      "when": "වැඩ කරන සතියේ දින සහ සිට–දක්වා පරාසය තෝරන්න (සේවා වේලාව ස්ථිරයි).",
+      "summaryCreate": "සමාලෝචනය කර සිදුවීම සාදන්න.",
+      "summaryEdit": "වෙනස්කම් සමාලෝචනය කර සුරකින්න."
+    },
+    "createEvent": "සිදුවීම සාදන්න",
+    "toastCreated": "සිදුවීම සාදන ලදී",
+    "toastSaved": "සිදුවීම සුරකින ලදී",
+    "toastCreateFailed": "සිදුවීම සෑදීම අසාර්ථක විය",
+    "toastSaveFailed": "සිදුවීම සුරැකීම අසාර්ථක විය",
+    "failedLoadWizard": "විශාරද දත්ත පූරණය අසාර්ථක විය",
+    "selectStaffFirst": "පළමුව කාර්ය මණ්ඩල සාමාජිකයෙකු තෝරන්න",
+    "serviceHint": "මෙම සිදුවීම සඳහා සමාගම් නාමාවලි සේවාවක් තෝරන්න.",
+    "selectService": "සේවාව තෝරන්න",
+    "change": "වෙනස් කරන්න",
+    "attendeeHint": "මෙම සිදුවීමට සහභාගී වන Identity පරිශීලක තෝරන්න.",
+    "selectAttendee": "සහභාගිවන්නා තෝරන්න",
+    "whereHint": "මෙම නිශ්චිත වේලා සිදුවීම සිදුවන අවකාශය තෝරන්න.",
+    "selectSpace": "අවකාශය තෝරන්න",
+    "searchStaffPlaceholder": "කාර්ය මණ්ඩලය සොයන්න…",
+    "searchStaffAria": "කාර්ය මණ්ඩලය සොයන්න",
+    "selectStaffAria": "{{name}} තෝරන්න",
+    "pickers": {
+      "serviceTitle": "සේවාව තෝරන්න",
+      "serviceDescription": "මෙම සිදුවීම සඳහා සමාගම් නාමාවලි සේවාවක් තෝරන්න.",
+      "serviceEmpty": "සේවා හමු නොවීය. පළමුව සමාගම් සේවාවක් එකතු කරන්න.",
+      "spaceTitle": "අවකාශය තෝරන්න",
+      "spaceDescription": "මෙම සිදුවීම සිදුවන සමාගම් අවකාශය තෝරන්න.",
+      "spaceSearch": "අවකාශ සොයන්න…",
+      "spaceEmpty": "අවකාශ හමු නොවීය. පළමුව සමාගම් අවකාශයක් එකතු කරන්න.",
+      "attendeeTitle": "සහභාගිවන්නා තෝරන්න",
+      "attendeeDescription": "මෙම සිදුවීම සඳහා Identity පරිශීලක තෝරන්න.",
+      "attendeeEmpty": "පරිශීලකයින් හමු නොවීය."
+    },
+    "whenFields": {
+      "date": "දිනය",
+      "startTime": "ආරම්භක වේලාව",
+      "selectDate": "දිනය තෝරන්න",
+      "repeat": "මෙම සිදුවීම පුනරාවර්තනය කරන්න",
+      "frequency": "සංඛ්‍යාතය",
+      "selectFrequency": "සංඛ්‍යාතය තෝරන්න",
+      "everyWeek": "සෑම සතියකම",
+      "everyTwoWeeks": "සෑම සති දෙකකට වරක්",
+      "everyMonthFirstWeek": "සෑම මාසයකම (පළමු සතිය)",
+      "until": "දක්වා",
+      "seriesEnd": "ශ්‍රේණි අවසානය",
+      "seriesStart": "ශ්‍රේණි ආරම්භය",
+      "from": "සිට",
+      "workingDays": "වැඩ කරන දින",
+      "workingDaysHint": "මෙම කාර්ය මණ්ඩල සාමාජිකයාගේ වැඩ කරන සතියේ දිනවලින් සිදුවීම පුනරාවර්තනය වන ඒවා තෝරන්න.",
+      "noWorkingDays": "මෙම කාර්ය මණ්ඩල සාමාජිකයාට වැඩ කරන දින සකසා නැත.",
+      "staffNotWorking": "මෙම දිනයේ කාර්ය මණ්ඩලය වැඩ නොකරයි.",
+      "serviceTime": "සේවා වේලාව",
+      "occurrencesOn": "සිදුවීම් ධාවනය වන්නේ {{days}}",
+      "selectedDays": "තෝරාගත් දින"
+    },
+    "summary": {
+      "service": "සේවාව",
+      "timeMode": "කාල ප්‍රකාරය",
+      "staff": "කාර්ය මණ්ඩලය",
+      "attendee": "සහභාගිවන්නා",
+      "where": "කොහේද",
+      "schedule": "කාලසටහන",
+      "weekdays": "සතියේ දින",
+      "date": "දිනය",
+      "range": "පරාසය",
+      "time": "වේලාව"
+    },
+    "validation": {
+      "selectService": "සේවාවක් තෝරන්න",
+      "selectStaff": "කාර්ය මණ්ඩල සාමාජිකයෙකු තෝරන්න",
+      "selectAttendee": "සහභාගිවන්නෙකු තෝරන්න",
+      "selectSpace": "අවකාශයක් තෝරන්න",
+      "selectAtLeastOneWeekday": "අවම වශයෙන් සතියේ දිනයක් තෝරන්න",
+      "endDateOnOrAfterStart": "අවසන් දිනය ආරම්භක දිනයට සමාන හෝ පසුව විය යුතුය",
+      "weekdaysMustBeWorkingDays": "තෝරාගත් සතියේ දින කාර්ය මණ්ඩල වැඩ කරන දින විය යුතුය",
+      "dateMustBeWorkingDay": "තෝරාගත් දිනය කාර්ය මණ්ඩල වැඩ කරන දිනයක් විය යුතුය",
+      "endDateRequired": "අවසන් දිනය අවශ්‍යයි",
+      "useHhMm": "HH:mm ආකෘතිය භාවිතා කරන්න",
+      "useYyyyMmDd": "YYYY-MM-DD ආකෘතිය භාවිතා කරන්න",
+      "incompleteForm": "අසම්පූර්ණ සිදුවීම් පෝරමය",
+      "selectWeekdaysAndEndDate": "සතියේ දින සහ අවසන් දිනය තෝරන්න",
+      "selectSpaceForWindow": "මෙම නිශ්චිත වේලා සිදුවීම සඳහා අවකාශයක් තෝරන්න"
+    }
+  },
+  "session": {
+    "title": "සැසිය",
+    "description": "සැසි විස්තර",
+    "subtitle": "{{serviceName}} සැසිය",
+    "loading": "සැසිය පූරණය වෙමින්…",
+    "status": {
+      "scheduled": "කාලසටහන්ගත",
+      "started": "ආරම්භ විය",
+      "ended": "අවසන් විය"
+    },
+    "tokenStatus": {
+      "waiting": "බලා සිටී",
+      "serving": "සේවා සපයමින්",
+      "completed": "සම්පූර්ණයි"
+    },
+    "attendee": "සහභාගිවන්නා",
+    "email": "විද්‍යුත් තැපෑල",
+    "statusLabel": "තත්ත්වය",
+    "formSubmitted": "පෝරමය ඉදිරිපත් කරන ලදී",
+    "fillForm": "පෝරමය පුරවන්න",
+    "viewForm": "පෝරමය බලන්න",
+    "customerFallback": "පාරිභෝගිකයා",
+    "tokens": {
+      "title": "ටෝකන",
+      "description": "මෙම සැසියේ පරිශීලකයින්ට නිකුත් කළ පෝලිම් ටෝකන",
+      "issueNew": "නව ටෝකනයක් නිකුත් කරන්න",
+      "emptyPersonal": "තවම ඔබේ ගිණුම සඳහා ටෝකනයක් නැත.",
+      "emptyAdmin": "තවම ටෝකන නිකුත් කර නැත.",
+      "noEmail": "විද්‍යුත් තැපෑල නැත"
+    },
+    "controls": {
+      "titleDuration": "සැසි පාලන",
+      "titleQueue": "සැසි පෝලිම",
+      "descriptionDuration": "මෙම හමුවීම් සැසිය ආරම්භ හෝ අවසන් කරන්න",
+      "descriptionQueue": "සැසිය ආරම්භ කර ටෝකන හරහා ගමන් කරන්න",
+      "start": "සැසිය ආරම්භ කරන්න",
+      "end": "සැසිය අවසන් කරන්න",
+      "prev": "පෙර",
+      "current": "වත්මන්",
+      "next": "ඊළඟ",
+      "inProgress": "පවරන ලද සහභාගිවන්නා සඳහා සැසිය ප්‍රගතියේ ඇත.",
+      "hasEnded": "මෙම සැසිය අවසන් වී ඇත."
+    },
+    "fields": {
+      "date": "දිනය",
+      "weekday": "සතියේ දිනය",
+      "time": "වේලාව",
+      "name": "නම",
+      "timeMode": "කාල ප්‍රකාරය"
+    },
+    "sideCards": {
+      "service": "සේවාව",
+      "staff": "කාර්ය මණ්ඩලය",
+      "attendee": "සහභාගිවන්නා"
+    },
+    "forms": {
+      "fillTitle": "පෝරමය පුරවන්න",
+      "viewTitle": "පෝරමය බලන්න",
+      "forSubject": "{{name}} සඳහා",
+      "forSubjectService": "{{name}} · {{service}} සඳහා",
+      "toastSubmitted": "පෝරමය ඉදිරිපත් කරන ලදී",
+      "toastSaved": "පෝරමය සුරකින ලදී",
+      "toastSavedFor": "{{name}} සඳහා සුරකින ලදී."
+    },
+    "toasts": {
+      "started": "සැසිය ආරම්භ විය",
+      "nextCalled": "ඊළඟ ටෝකනය කැඳවන ලදී",
+      "previousCalled": "පෙර ටෝකනයට ගමන් කරන ලදී",
+      "ended": "සැසිය අවසන් විය",
+      "startFailed": "සැසිය ආරම්භ කිරීම අසාර්ථක විය",
+      "callNextFailed": "ඊළඟ ටෝකනය කැඳවීම අසාර්ථක විය",
+      "callPreviousFailed": "පෙර ටෝකනය කැඳවීම අසාර්ථක විය",
+      "endFailed": "සැසිය අවසන් කිරීම අසාර්ථක විය",
+      "actionFailed": "සැසි ක්‍රියාව අසාර්ථක විය"
+    },
+    "errors": {
+      "loadTokens": "ටෝකන පූරණය අසාර්ථක විය",
+      "issueToken": "ටෝකනය නිකුත් කිරීම අසාර්ථක විය",
+      "startSession": "සැසිය ආරම්භ කිරීම අසාර්ථක විය",
+      "callNext": "ඊළඟ ටෝකනය කැඳවීම අසාර්ථක විය",
+      "callPrevious": "පෙර ටෝකනය කැඳවීම අසාර්ථක විය",
+      "endSession": "සැසිය අවසන් කිරීම අසාර්ථක විය"
+    }
+  },
+  "issueToken": {
+    "title": "ටෝකනය නිකුත් කරන්න",
+    "description": "ඊළඟ පෝලිම් ටෝකනය Identity පරිශීලකයෙකුට පවරන්න.",
+    "tokenNumber": "ටෝකන අංකය",
+    "assignHint": "Identity පරිශීලකයෙකු පවරන්න. නව පරිශීලකයින් සමාගම් පාරිභෝගිකයින්ට එකතු වේ.",
+    "assignUser": "පරිශීලක පවරන්න",
+    "change": "වෙනස් කරන්න",
+    "issuing": "නිකුත් කරමින්…",
+    "issue": "ටෝකනය නිකුත් කරන්න",
+    "selectUserError": "මෙම ටෝකනය පැවරීමට පරිශීලකයෙකු තෝරන්න",
+    "companySessionRequired": "සමාගම් සැසිය අවශ්‍යයි",
+    "pickerTitle": "පරිශීලක තෝරන්න",
+    "pickerDescription": "මෙම ටෝකනය සඳහා Identity පරිශීලක තෝරන්න.",
+    "emptyUsers": "පරිශීලකයින් හමු නොවීය.",
+    "toastIssued": "ටෝකනය නිකුත් කරන ලදී",
+    "toastIssueFailed": "ටෝකනය නිකුත් කිරීම අසාර්ථක විය",
+    "toastAddCustomerFailed": "සමාගම් පරිශීලක එකතු කිරීම අසාර්ථක විය"
+  }
+}

@@ -1,10 +1,13 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AuthLayout, Button, PageShell } from '@webonone/ui-kit'
 import { buildIdentityLoginUrl } from '../utils/buildIdentityLoginUrl'
 
 const LOGIN_RETURN_PATH = '/'
 
 export function LoginPage() {
+  const { t } = useTranslation('shell')
+
   useEffect(() => {
     window.location.assign(buildIdentityLoginUrl(LOGIN_RETURN_PATH))
   }, [])
@@ -14,14 +17,14 @@ export function LoginPage() {
   }
 
   return (
-    <PageShell title="Data">
+    <PageShell title={t('brand')}>
       <AuthLayout
-        title="Sign in to Data"
-        description="You will be redirected to Identity to sign in securely."
+        title={t('signInTitle')}
+        description={t('signInDescription')}
         variant="minimal"
       >
         <Button className="w-full" onClick={handleSignIn}>
-          Continue to sign in
+          {t('continueToSignIn')}
         </Button>
       </AuthLayout>
     </PageShell>

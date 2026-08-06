@@ -70,7 +70,15 @@ const patchMeSchema = z.object({
   postalCode: z.string().max(20).nullable().optional(),
   country: z.string().length(2).nullable().optional(),
   avatarUrl: z.string().max(512).nullable().optional(),
-  locale: z.string().max(20).nullable().optional(),
+  locale: z.preprocess((val) => {
+    if (val === undefined) return undefined
+    if (val === null || val === '') return null
+    if (typeof val !== 'string') return val
+    const lower = val.trim().toLowerCase()
+    if (lower === 'en' || lower.startsWith('en-') || lower.startsWith('en_')) return 'en'
+    if (lower === 'si' || lower.startsWith('si-') || lower.startsWith('si_')) return 'si'
+    return 'en'
+  }, z.enum(['en', 'si']).nullable().optional()),
 })
 
 const forgotPasswordSchema = z.object({

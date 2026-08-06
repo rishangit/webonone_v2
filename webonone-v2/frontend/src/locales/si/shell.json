@@ -1,0 +1,72 @@
+{
+  "brand": "WebOnOne",
+  "loading": {
+    "session": "සැසිය පූරණය වෙමින්…",
+    "page": "පිටුව පූරණය වෙමින්…",
+    "peer": "{{peer}} පූරණය වෙමින්…"
+  },
+  "peer": {
+    "email": "විද්‍යුත් තැපෑල",
+    "data": "දත්ත",
+    "identity": "පැතිකඩ",
+    "sms": "SMS",
+    "payment": "ගෙවීම්",
+    "design": "නිර්මාණය",
+    "workspaceTitle": "{{peer}} කාර්යාලය"
+  },
+  "peerDialog": {
+    "defaults": {
+      "save": "සුරකින්න",
+      "create": "සාදන්න",
+      "cancel": "අවලංගු කරන්න",
+      "delete": "මකන්න"
+    },
+    "confirmDestructive": "මෙම ක්‍රියාව අහෝසි කළ නොහැක."
+  },
+  "nav": {
+    "home": "මුල් පිටුව",
+    "calendar": "දින දසුන",
+    "schedule": "කාලසටහන",
+    "events": "සිදුවීම්",
+    "identity": "Identity",
+    "users": "පරිශීලකයින්",
+    "staff": "කාර්ය මණ්ඩලය",
+    "email": "විද්‍යුත් තැපෑල",
+    "sendEmail": "විද්‍යුත් තැපෑල යවන්න",
+    "queue": "පෝලිම",
+    "emailHistory": "විද්‍යුත් තැපැල් ඉතිහාසය",
+    "templates": "ආකෘති",
+    "data": "දත්ත",
+    "tags": "ටැග්",
+    "units": "ඒකක",
+    "attributes": "ගුණාංග",
+    "products": "නිෂ්පාදන",
+    "services": "සේවා",
+    "spaces": "අවකාශ",
+    "sms": "SMS",
+    "sendSms": "SMS යවන්න",
+    "devices": "උපාංග",
+    "history": "ඉතිහාසය",
+    "payment": "ගෙවීම්",
+    "invoices": "ඉන්වොයිස්",
+    "design": "නිර්මාණය",
+    "forms": "පෝරම",
+    "companies": "සමාගම්",
+    "myCompanies": "මගේ සමාගම්",
+    "connectedCompanies": "සම්බන්ධිත සමාගම්",
+    "allCompanies": "සියලු සමාගම්",
+    "settings": "සැකසුම්",
+    "basicSettings": "මූලික සැකසුම්",
+    "systemTheme": "පද්ධති තේමාව"
+  },
+  "header": {
+    "profile": "පැතිකඩ",
+    "logout": "ඉවත් වන්න",
+    "language": "භාෂාව",
+    "english": "English",
+    "sinhala": "සිංහල",
+    "userMenu": "පරිශීලක මෙනුව",
+    "openNavigation": "සංචලනය විවෘත කරන්න",
+    "closeNavigation": "සංචලනය වසන්න"
+  }
+}

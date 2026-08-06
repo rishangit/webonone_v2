@@ -1,0 +1,13 @@
+{
+  "brand": "Data",
+  "loading": "Loading…",
+  "dashboard": "Dashboard",
+  "dashboardDescription": "Catalog counts by verification status.",
+  "loadingDashboard": "Loading dashboard…",
+  "verifiedCount": "Verified: {{count}}",
+  "unverifiedCount": "Unverified: {{count}}",
+  "signInTitle": "Sign in to Data",
+  "signInDescription": "You will be redirected to Identity to sign in securely.",
+  "continueToSignIn": "Continue to sign in",
+  "signingIn": "Signing in…"
+}
