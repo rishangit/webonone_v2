@@ -551,7 +551,7 @@ export function ProfileFormDialog({
         open={open}
         onOpenChange={handleFormOpenChange}
         title={title}
-        description={stepDescriptions[stepIndex]}
+        description={STEP_DESCRIPTIONS[stepIndex]}
         sizeWidth={PROFILE_WIZARD_DIALOG_SIZE.sizeWidth}
         sizeHeight={PROFILE_WIZARD_DIALOG_SIZE.sizeHeight}
         nestedDismissGuard={selectorOpen || blockOuterDismiss}
