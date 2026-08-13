@@ -9,6 +9,7 @@ import type {
   TemplatePreviewResult,
   TemplateVersion,
 } from '@/shared/types/sms.types'
+import type { GatewayConfig, GatewayMode } from '@/features/gateway/types/gateway.types'
 
 export type CreateTemplateBody = {
   slug: string
@@ -161,5 +162,23 @@ export const smsApi = {
     return apiClient<{ device: SmsDevice }>(`/devices/${id}/revoke`, { method: 'POST' }).then(
       (data) => data.device,
     )
+  },
+
+  getGatewayConfig() {
+    return apiClient<GatewayConfig>('/gateway')
+  },
+
+  updateGatewayConfig(body: { mode: GatewayMode; senderId?: string; apiToken?: string }) {
+    return apiClient<GatewayConfig>('/gateway', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    })
+  },
+
+  testGateway(body: { toNumber: string }) {
+    return apiClient<{ ok: boolean; providerMessageRef: string }>('/gateway/test', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
   },
 }

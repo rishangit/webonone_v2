@@ -25,6 +25,7 @@ const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/history': History,
   '/templates': Mail,
   '/sms/send': MessageSquare,
+  '/sms/gateway': MessageSquare,
   '/sms/devices': MessageSquare,
   '/sms/queue': MessageSquare,
   '/sms/history': History,
@@ -84,6 +85,9 @@ function smsHrefToSentinel(href: string, smsOrigin: string): string {
     const subPath = href.slice(normalizedOrigin.length)
     if (subPath === '/send') {
       return SMS_NAV_SENTINELS.send
+    }
+    if (subPath === '/gateway') {
+      return SMS_NAV_SENTINELS.gateway
     }
     if (subPath === '/devices') {
       return SMS_NAV_SENTINELS.devices

@@ -20,6 +20,19 @@ export type DeviceStatus = 'pending' | 'approved' | 'revoked'
 export type TemplateScope = 'platform' | 'company'
 export type QueueStatus = 'pending' | 'processing' | 'sent' | 'failed'
 export type HistoryStatus = 'sent' | 'failed'
+export type GatewayMode = 'mobile_device' | 'text_lk'
+
+export interface SmsGatewayConfigRow {
+  id: string
+  scope: DeviceScope
+  company_id: string | null
+  mode: GatewayMode
+  sender_id: string | null
+  api_token_enc: string | null
+  updated_by: string | null
+  updated_at: Date
+  created_at: Date
+}
 
 export interface SmsUserRow {
   id: string

@@ -3,6 +3,7 @@ import { createEpicMiddleware } from 'redux-observable'
 import { authReducer } from '@/features/auth/store/authSlice'
 import { dashboardReducer } from '@/features/dashboard/store'
 import { devicesReducer } from '@/features/devices/store'
+import { gatewayReducer } from '@/features/gateway/store'
 import { historyReducer } from '@/features/history/store'
 import { queueReducer } from '@/features/queue/store'
 import { sendReducer } from '@/features/send/store'
@@ -17,6 +18,7 @@ export const store = configureStore({
     auth: authReducer,
     dashboard: dashboardReducer,
     devices: devicesReducer,
+    gateway: gatewayReducer,
     history: historyReducer,
     queue: queueReducer,
     send: sendReducer,

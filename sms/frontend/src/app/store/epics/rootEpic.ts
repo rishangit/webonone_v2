@@ -2,6 +2,7 @@ import { combineEpics } from 'redux-observable'
 import { authEpics } from '@/features/auth/store/authEpics'
 import { dashboardEpics } from '@/features/dashboard/store'
 import { devicesEpics } from '@/features/devices/store'
+import { gatewayEpics } from '@/features/gateway/store'
 import { historyEpics } from '@/features/history/store'
 import { queueEpics } from '@/features/queue/store'
 import { sendEpics } from '@/features/send/store'
@@ -11,6 +12,7 @@ export const rootEpic = combineEpics(
   authEpics,
   dashboardEpics,
   devicesEpics,
+  gatewayEpics,
   historyEpics,
   queueEpics,
   sendEpics,

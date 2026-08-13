@@ -72,6 +72,8 @@ export async function sendTransactionalSms(params: SendSmsParams): Promise<boole
 export type GatewayStatus = {
   configured: boolean
   activeDeviceCount: number
+  /** Present when SMS service returns mode awareness (mobile_device | text_lk | none). */
+  mode?: 'mobile_device' | 'text_lk' | 'none'
 }
 
 /** Best-effort gateway status; returns null when unconfigured or request fails. */

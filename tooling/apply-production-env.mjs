@@ -152,6 +152,7 @@ function main() {
 
   const emailKey = get(master, 'EMAIL_SERVICE_API_KEY');
   const smsKey = get(master, 'SMS_SERVICE_API_KEY');
+  const smsGatewayEncryptionKey = get(master, 'SMS_GATEWAY_ENCRYPTION_KEY');
   const identityKey = get(master, 'IDENTITY_SERVICE_API_KEY');
   const dataKey = get(master, 'DATA_SERVICE_API_KEY');
   const paymentKey = get(master, 'PAYMENT_SERVICE_API_KEY');
@@ -464,6 +465,8 @@ function main() {
         `JWT_SECRET=${jwt}`,
         '',
         `SMS_SERVICE_API_KEY=${smsKey}`,
+        '',
+        `SMS_GATEWAY_ENCRYPTION_KEY=${smsGatewayEncryptionKey}`,
         '',
         `OTP_TTL_SECONDS=${get(master, 'OTP_TTL_SECONDS') || '300'}`,
         `OTP_MAX_ATTEMPTS=${get(master, 'OTP_MAX_ATTEMPTS') || '3'}`,

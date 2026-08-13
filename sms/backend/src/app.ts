@@ -12,6 +12,7 @@ import templatesRoutes from './routes/templates.routes.js'
 import queueRoutes from './routes/queue.routes.js'
 import historyRoutes from './routes/history.routes.js'
 import dashboardRoutes from './routes/dashboard.routes.js'
+import gatewayRoutes from './routes/gateway.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -33,6 +34,7 @@ export function createApp() {
   app.use('/api/v1', queueRoutes)
   app.use('/api/v1', historyRoutes)
   app.use('/api/v1', dashboardRoutes)
+  app.use('/api/v1', gatewayRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

@@ -200,11 +200,13 @@ describe('coreNav', () => {
 
   it('maps SMS sentinels to external paths', () => {
     assert.equal(isSmsNavSentinel(SMS_NAV_SENTINELS.send), true)
+    assert.equal(isSmsNavSentinel(SMS_NAV_SENTINELS.gateway), true)
     assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1`), true)
     assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1/preview`), true)
     assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1/versions`), true)
     assert.equal(isSmsNavSentinel('/email/history'), false)
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.send), '/send')
+    assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.gateway), '/devices?tab=settings')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.devices), '/devices')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.queue), '/queue')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.history), '/history')

@@ -34,6 +34,13 @@ const envSchema = z.object({
   PROCESSING_TIMEOUT_MS: z.coerce.number().default(120_000),
   QUEUE_WORKER_INTERVAL_MS: z.coerce.number().default(5000),
   FRONTEND_BASE_URL: z.string().default('http://localhost:3016'),
+  /** 32-byte key as 64 hex chars or base64 — encrypts Text.lk API tokens at rest */
+  SMS_GATEWAY_ENCRYPTION_KEY: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z
+      .string()
+      .default('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
+  ),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -67,4 +74,5 @@ export const env = {
   processingTimeoutMs: parsed.PROCESSING_TIMEOUT_MS,
   queueWorkerIntervalMs: parsed.QUEUE_WORKER_INTERVAL_MS,
   frontendBaseUrl: parsed.FRONTEND_BASE_URL,
+  smsGatewayEncryptionKey: parsed.SMS_GATEWAY_ENCRYPTION_KEY,
 }

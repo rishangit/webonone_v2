@@ -9,8 +9,10 @@ import enDevices from '@/locales/en/devices.json'
 import siDevices from '@/locales/si/devices.json'
 import enSend from '@/locales/en/send.json'
 import siSend from '@/locales/si/send.json'
+import enGateway from '@/locales/en/gateway.json'
+import siGateway from '@/locales/si/gateway.json'
 
-export const NAMESPACES = ['shell', 'templates', 'queue', 'devices', 'send'] as const
+export const NAMESPACES = ['shell', 'templates', 'queue', 'devices', 'send', 'gateway'] as const
 
 export function initSmsI18n() {
   return createAppI18n({
@@ -22,6 +24,7 @@ export function initSmsI18n() {
         queue: enQueue,
         devices: enDevices,
         send: enSend,
+        gateway: enGateway,
       },
       si: {
         shell: siShell,
@@ -29,6 +32,7 @@ export function initSmsI18n() {
         queue: siQueue,
         devices: siDevices,
         send: siSend,
+        gateway: siGateway,
       },
     },
   })

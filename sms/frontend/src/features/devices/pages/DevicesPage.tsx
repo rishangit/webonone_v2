@@ -1,14 +1,29 @@
 import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Alert, AlertDescription, Button, FeaturePage, ListPageBody } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  FeaturePage,
+  ListPageBody,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { devicesActions } from '@/features/devices/store'
+import { GatewaySettingsCard } from '@/features/gateway/components/GatewaySettingsCard'
+import { gatewayActions } from '@/features/gateway/store'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import type { SmsDevice } from '@/shared/types/sms.types'
 import { DevicesList } from '../components/DevicesList'
 
 const POLL_MS = 15_000
+const DEVICE_TABS = ['devices', 'settings'] as const
+type DeviceTab = (typeof DEVICE_TABS)[number]
 
 export function DevicesPage() {
   const { t } = useTranslation('devices')
@@ -16,23 +31,26 @@ export function DevicesPage() {
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const { items, listStatus, listError, busyId, actionError } = useAppSelector((s) => s.devices)
+  const gatewayMode = useAppSelector((s) => s.gateway.config?.mode)
+  const [tab, setTab] = useDetailTabParam(DEVICE_TABS, 'devices')
 
   const loading = listStatus === 'loading' && items.length === 0
   const error = listError ?? actionError
-  usePlatformLoading(loading ? t('loading') : null)
+  usePlatformLoading(tab === 'devices' && loading ? t('loading') : null)
 
   useEffect(() => {
     if (!accessToken) return
     dispatch(devicesActions.loadListRequested())
+    dispatch(gatewayActions.loadRequested())
   }, [accessToken, dispatch])
 
   useEffect(() => {
-    if (!accessToken) return
+    if (!accessToken || tab !== 'devices') return
     const timer = window.setInterval(() => {
       dispatch(devicesActions.loadListRequested({ force: true }))
     }, POLL_MS)
     return () => window.clearInterval(timer)
-  }, [accessToken, dispatch])
+  }, [accessToken, dispatch, tab])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -52,31 +70,49 @@ export function DevicesPage() {
 
   return (
     <FeaturePage
-      title={t('title')}
-      description={t('description')}
+      title={t('pageTitle')}
+      description={t('pageDescription')}
       actions={
-        <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
-          {t('refreshNow')}
-        </Button>
+        tab === 'devices' ? (
+          <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
+            {t('refreshNow')}
+          </Button>
+        ) : null
       }
     >
-      {error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
-      {!loading ? (
-        <ListPageBody>
-          <div className="flex-1">
-            <DevicesList
-              devices={items}
-              busyId={busyId}
-              onApprove={handleApprove}
-              onRevoke={handleRevoke}
-            />
-          </div>
-        </ListPageBody>
-      ) : null}
+      <Tabs value={tab} onValueChange={(value) => setTab(value as DeviceTab)}>
+        <TabsList>
+          <TabsTrigger value="devices">{t('tabDevices')}</TabsTrigger>
+          <TabsTrigger value="settings">{t('tabSettings')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="devices" className="space-y-4">
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+          {gatewayMode === 'text_lk' ? (
+            <Alert>
+              <AlertDescription>{t('textLkActive')}</AlertDescription>
+            </Alert>
+          ) : null}
+          {!loading ? (
+            <ListPageBody>
+              <div className="flex-1">
+                <DevicesList
+                  devices={items}
+                  busyId={busyId}
+                  onApprove={handleApprove}
+                  onRevoke={handleRevoke}
+                />
+              </div>
+            </ListPageBody>
+          ) : null}
+        </TabsContent>
+        <TabsContent value="settings">
+          <GatewaySettingsCard />
+        </TabsContent>
+      </Tabs>
     </FeaturePage>
   )
 }

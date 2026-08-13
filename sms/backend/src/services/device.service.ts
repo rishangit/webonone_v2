@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
 import { db } from '../models/db.js'
 import type { DeviceScope, SmsDeviceRow } from '../models/db.js'
+import { getGatewayMode, isTextLkReady } from './gatewayConfig.service.js'
 
 export interface DeviceDto {
   id: string
@@ -124,11 +125,23 @@ export async function setDeviceStatus(id: string, status: 'approved' | 'revoked'
   return deviceRowToDto(row)
 }
 
-/** True when the company has at least one approved gateway device. */
+/** True when the company has Text.lk configured or at least one approved gateway device. */
 export async function getGatewayStatus(companyId: string): Promise<{
   configured: boolean
+  mode: 'mobile_device' | 'text_lk' | 'none'
   activeDeviceCount: number
 }> {
+  const mode = await getGatewayMode('company', companyId)
+
+  if (mode === 'text_lk') {
+    const ready = await isTextLkReady('company', companyId)
+    return {
+      configured: ready,
+      mode: ready ? 'text_lk' : 'none',
+      activeDeviceCount: 0,
+    }
+  }
+
   const row = await db<SmsDeviceRow>('sms_devices')
     .where({
       scope: 'company',
@@ -141,6 +154,7 @@ export async function getGatewayStatus(companyId: string): Promise<{
   const activeDeviceCount = Number(row?.count ?? 0)
   return {
     configured: activeDeviceCount > 0,
+    mode: activeDeviceCount > 0 ? 'mobile_device' : 'none',
     activeDeviceCount,
   }
 }

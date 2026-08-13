@@ -174,7 +174,7 @@ function isAllowedSmsShellNavigatePath(path: string): boolean {
   if (parts.some((part) => !part || part.includes('..'))) return false
 
   const section = parts[1]
-  const topLevel = new Set(['send', 'devices', 'queue', 'history', 'templates'])
+  const topLevel = new Set(['send', 'gateway', 'devices', 'queue', 'history', 'templates'])
   if (!topLevel.has(section ?? '')) return false
 
   if (section === 'templates') {
