@@ -6,7 +6,7 @@ import { translateNavItems } from '@/features/shell/utils/translateNavItems'
 import { clearIdentityEmbedSession } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
-  buildLogoutClearChain,
+  buildClearFirstLogoutUrl,
   createNavItemNavigate,
   isDataNavSentinel,
   isEmailNavSentinel,
@@ -15,7 +15,6 @@ import {
   isPaymentNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
-  performPlatformLogout,
 } from '@webonone/platform-nav'
 import { normalizeLocale, type AppLocale } from '@webonone/i18n'
 import { prefetchNavTarget } from '@/app/routePrefetch'
@@ -160,19 +159,25 @@ function AppLayoutContent() {
   }, [user, activeRole, activeCompanyId, assumableRoles])
 
   function handleLogout() {
-    clearWebOnOneAuthStorage()
-    clearSessionRoleStorage()
     const websiteOrigin = getWebsiteOrigin()
     const loginUrl = appendPromptLogin(`${window.location.origin}/login`)
-    const postLogoutRedirectUri = buildLogoutClearChain([websiteOrigin], loginUrl)
     const identityOrigin = getIdentityOrigin()
+    const logoutUrl = buildClearFirstLogoutUrl([websiteOrigin], identityOrigin, loginUrl)
 
-    void clearIdentityEmbedSession({ identityOrigin }).finally(() => {
-      performPlatformLogout(null, {
-        identityOrigin,
-        postLogoutRedirectUri,
-      })
+    console.log('[webonone-auth]', 'logout() start', {
+      href: window.location.href,
+      logoutUrl,
+      websiteOrigin,
+      identityOrigin,
     })
+
+    clearWebOnOneAuthStorage()
+    clearSessionRoleStorage()
+
+    // Navigate immediately — do not await embed clear (same race as website logout).
+    void clearIdentityEmbedSession({ identityOrigin })
+    console.log('[webonone-auth]', 'logout() → replace clear-first chain', { logoutUrl })
+    window.location.replace(logoutUrl)
   }
 
   function handleProfileClick() {

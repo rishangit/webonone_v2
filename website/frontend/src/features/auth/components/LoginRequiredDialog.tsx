@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { LogIn } from 'lucide-react'
 import { Button, CustomDialog } from '@webonone/ui-kit'
-import { getWebOnOneLoginUrl } from '@/features/webonone/utils/webononeConfig'
+import { getWebsiteLoginHref } from '@/features/auth/utils/identityConfig'
 
 const OUTLINE_FOOTER =
   'h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent'
@@ -17,7 +17,7 @@ export type LoginRequiredDialogProps = {
 
 /**
  * Confirms that the guest must log in before a protected action, then starts
- * the WebOnOne login handoff with return_url.
+ * website `/login` (Identity iframe on this origin).
  */
 export function LoginRequiredDialog({
   open,
@@ -38,7 +38,7 @@ export function LoginRequiredDialog({
 
   function handleLogin() {
     setRedirecting(true)
-    window.location.assign(getWebOnOneLoginUrl(returnPath))
+    window.location.assign(getWebsiteLoginHref(returnPath))
   }
 
   return (

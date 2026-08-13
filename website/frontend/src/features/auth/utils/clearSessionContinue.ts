@@ -1,4 +1,5 @@
 import { matchesAllowedOrigin, parseAllowlistPatterns } from '@webonone/platform-nav'
+import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getWebOnOneOrigin } from '@/features/webonone/utils/webononeConfig'
 
 /** Origins allowed for clear-session `continue` redirects. */
@@ -7,7 +8,8 @@ export function getWebsiteContinueAllowlist(): string[] {
   if (fromEnv) {
     return parseAllowlistPatterns(fromEnv)
   }
-  return [window.location.origin, getWebOnOneOrigin()]
+  // Identity `/logout` is a continue hop after peer clear (clear-first logout).
+  return [window.location.origin, getWebOnOneOrigin(), getIdentityOrigin()]
 }
 
 export function parseClearSessionContinue(raw: string | null): string | null {

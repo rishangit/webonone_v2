@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 
+const LOG = '[webonone-auth]'
 const SILENT_SSO_TIMEOUT_MS = 4000
 
 function normalizeOrigin(origin: string): string {
@@ -22,25 +23,39 @@ type SilentSsoState = {
 
 /**
  * When WebOnOne has no local session, ask Identity for an existing platform session.
- * Used on `/login` (without prompt=login) so cold loads pick up SSO.
+ * Pass `enabled: false` while a website SSO bridge probe is still in flight.
  */
-export function useIdentitySilentSso(): SilentSsoState {
+export function useIdentitySilentSso(options?: { enabled?: boolean }): SilentSsoState {
+  const enabled = options?.enabled !== false
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [searchParams] = useSearchParams()
   const promptLogin = searchParams.get('prompt') === 'login'
-  const [isChecking, setIsChecking] = useState(() => !accessToken && !promptLogin)
+  const canRun = enabled && !accessToken && !promptLogin
+  const [isChecking, setIsChecking] = useState(() => canRun)
   const [iframeSrc, setIframeSrc] = useState<string | null>(null)
   const settledRef = useRef(false)
-  const allowSilentRef = useRef(!accessToken && !promptLogin)
+  const allowSilentRef = useRef(canRun)
+  const startedForEnabledRef = useRef(false)
 
   useEffect(() => {
-    if (accessToken || promptLogin) {
+    if (accessToken || promptLogin || !enabled) {
       allowSilentRef.current = false
       settledRef.current = true
+      startedForEnabledRef.current = false
       setIsChecking(false)
       setIframeSrc(null)
+      if (!enabled && !accessToken && !promptLogin) {
+        console.log(LOG, 'Identity silent waiting (website bridge)')
+      }
       return
+    }
+
+    // Re-arm when enabled flips true after website bridge.
+    if (!startedForEnabledRef.current) {
+      allowSilentRef.current = true
+      settledRef.current = false
+      startedForEnabledRef.current = true
     }
 
     if (!allowSilentRef.current) {
@@ -53,16 +68,18 @@ export function useIdentitySilentSso(): SilentSsoState {
     settledRef.current = false
     const identityOrigin = normalizeOrigin(getIdentityOrigin())
     const parentOrigin = window.location.origin
+    console.log(LOG, 'Identity silent start', { identityOrigin })
     setIframeSrc(buildIdentitySilentSsoUrl(identityOrigin, parentOrigin))
     setIsChecking(true)
 
-    function settle() {
+    function settle(reason: string) {
       if (settledRef.current) {
         return
       }
       settledRef.current = true
       setIsChecking(false)
       setIframeSrc(null)
+      console.log(LOG, 'Identity silent settle', { reason })
     }
 
     function onMessage(event: MessageEvent) {
@@ -71,6 +88,7 @@ export function useIdentitySilentSso(): SilentSsoState {
       }
 
       if (isIdentitySsoSessionMessage(event.data)) {
+        console.log(LOG, 'Identity silent → session', { userId: event.data.user.id })
         dispatch(
           authActions.loginSuccess({
             accessToken: event.data.accessToken,
@@ -83,23 +101,23 @@ export function useIdentitySilentSso(): SilentSsoState {
             },
           }),
         )
-        settle()
+        settle('session')
         return
       }
 
       if (isIdentitySsoNoneMessage(event.data)) {
-        settle()
+        settle('none')
       }
     }
 
     window.addEventListener('message', onMessage)
-    const timeoutId = window.setTimeout(settle, SILENT_SSO_TIMEOUT_MS)
+    const timeoutId = window.setTimeout(() => settle('timeout'), SILENT_SSO_TIMEOUT_MS)
 
     return () => {
       window.removeEventListener('message', onMessage)
       window.clearTimeout(timeoutId)
     }
-  }, [accessToken, dispatch, promptLogin])
+  }, [accessToken, dispatch, enabled, promptLogin])
 
   return { isChecking, iframeSrc }
 }

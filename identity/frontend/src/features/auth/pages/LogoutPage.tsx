@@ -27,6 +27,11 @@ function parsePostLogoutRedirectUri(raw: string | null): string | null {
       return null
     }
 
+    // Clear-session hops already carry prompt=login on the final continue URL.
+    if (parsed.pathname.replace(/\/$/, '') === '/auth/clear-session') {
+      return parsed.toString()
+    }
+
     return appendPromptLogin(parsed.toString())
   } catch {
     return null
@@ -52,8 +57,15 @@ export function LogoutPage() {
     startedRef.current = true
 
     const fallbackTarget = appendPromptLogin(`${window.location.origin}/login`)
+    const postLogoutRaw = searchParams.get(POST_LOGOUT_PARAM)
     const postLogout =
-      parsePostLogoutRedirectUri(searchParams.get(POST_LOGOUT_PARAM)) ?? fallbackTarget
+      parsePostLogoutRedirectUri(postLogoutRaw) ?? fallbackTarget
+
+    console.log('[identity-logout]', 'start', {
+      postLogoutRaw,
+      postLogoutAccepted: Boolean(parsePostLogoutRedirectUri(postLogoutRaw)),
+      postLogout,
+    })
 
     // Clear local session first so a failed network revoke cannot leave SSO intact.
     const session = loadStoredAuthSession()
@@ -63,6 +75,7 @@ export function LogoutPage() {
       if (session?.accessToken) {
         await revokeIdentitySessions(session.accessToken)
       }
+      console.log('[identity-logout]', '→ redirect', { postLogout })
       window.location.replace(postLogout)
     }
 

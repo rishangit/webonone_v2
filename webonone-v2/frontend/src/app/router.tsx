@@ -4,7 +4,10 @@ import { AppLayout } from '@/app/AppLayout'
 import { LazyRoute } from '@/app/LazyRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { ClearSessionPage } from '@/features/auth/pages/ClearSessionPage'
+import { AuthHandoffPage } from '@/features/auth/pages/AuthHandoffPage'
+import { AuthSsoBridgePage } from '@/features/auth/pages/AuthSsoBridgePage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { useAuthStorageSync } from '@/features/auth/hooks/useAuthStorageSync'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { useAppSelector } from '@/app/store/hooks'
 
@@ -132,13 +135,21 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   return children
 }
 
+function AuthStorageSync() {
+  useAuthStorageSync()
+  return null
+}
+
 export function App() {
   return (
     <BrowserRouter>
+      <AuthStorageSync />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/callback" element={<AuthCallbackPage />} />
         <Route path="/auth/clear-session" element={<ClearSessionPage />} />
+        <Route path="/auth/sso-bridge" element={<AuthSsoBridgePage />} />
+        <Route path="/auth/handoff" element={<AuthHandoffPage />} />
         <Route
           element={
             <PrivateRoute>
