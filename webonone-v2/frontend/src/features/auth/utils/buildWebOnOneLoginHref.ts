@@ -1,13 +1,24 @@
 import { QUERY } from '@webonone/platform-nav'
 import { storeLoginReturnPath } from '@/features/auth/utils/loginReturnPath'
 
+export type BuildWebOnOneLoginHrefOptions = {
+  /** When true, force Identity account chooser and skip silent SSO (logout / switch account). */
+  promptLogin?: boolean
+}
+
 /**
- * Build WebOnOne `/login` query for intentional sign-in.
- * Always includes `prompt=login` so Identity clears the embed partition and shows the chooser.
+ * Build WebOnOne `/login` query.
+ * Default omits `prompt=login` so Identity silent SSO can run (route guards, Open App).
+ * Pass `{ promptLogin: true }` for logout / explicit re-auth.
  */
-export function buildWebOnOneLoginSearch(returnPath?: string): string {
+export function buildWebOnOneLoginSearch(
+  returnPath?: string,
+  options?: BuildWebOnOneLoginHrefOptions,
+): string {
   const params = new URLSearchParams()
-  params.set('prompt', 'login')
+  if (options?.promptLogin) {
+    params.set('prompt', 'login')
+  }
   const path = returnPath?.trim()
   if (path) {
     storeLoginReturnPath(path)
@@ -16,6 +27,10 @@ export function buildWebOnOneLoginSearch(returnPath?: string): string {
   return params.toString()
 }
 
-export function buildWebOnOneLoginHref(returnPath?: string): string {
-  return `/login?${buildWebOnOneLoginSearch(returnPath)}`
+export function buildWebOnOneLoginHref(
+  returnPath?: string,
+  options?: BuildWebOnOneLoginHrefOptions,
+): string {
+  const search = buildWebOnOneLoginSearch(returnPath, options)
+  return search ? `/login?${search}` : '/login'
 }

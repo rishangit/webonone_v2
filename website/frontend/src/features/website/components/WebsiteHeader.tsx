@@ -17,8 +17,12 @@ import {
   DropdownMenuTrigger,
 } from '@webonone/ui-kit'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
+import { getWebsiteLoginHref } from '@/features/auth/utils/identityConfig'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
-import { getWebOnOneAppUrl, getWebOnOneLoginUrl } from '@/features/webonone/utils/webononeConfig'
+import {
+  getWebOnOneAppUrl,
+  redirectToWebOnOneApp,
+} from '@/features/webonone/utils/webononeConfig'
 
 type WebsiteHeaderProps = {
   className?: string
@@ -33,15 +37,25 @@ function getInitials(displayName: string): string {
 }
 
 export function WebsiteHeader({ className }: WebsiteHeaderProps) {
-  const { user, isAuthenticated, isAuthPending, logout } = useWebsiteAuth()
+  const { user, accessToken, isAuthenticated, isAuthPending, logout } = useWebsiteAuth()
   const { t, i18n } = useTranslation('common')
   const { t: ts } = useTranslation('shell')
   const { t: ta } = useTranslation('auth')
   const currentLocale = normalizeLocale(i18n.language)
+  const isLoginPage =
+    typeof window !== 'undefined' && window.location.pathname === '/login'
 
   const handleLocaleChange = useCallback((locale: AppLocale) => {
     void changeAppLocale(locale)
   }, [])
+
+  const handleOpenApp = useCallback(() => {
+    if (accessToken) {
+      void redirectToWebOnOneApp(accessToken)
+      return
+    }
+    window.location.assign(getWebOnOneAppUrl())
+  }, [accessToken])
 
   const headerLabels = useMemo(
     () => ({
@@ -61,8 +75,8 @@ export function WebsiteHeader({ className }: WebsiteHeaderProps) {
         <BrandLogo>WebOnOne</BrandLogo>
       </a>
       <div className="flex items-center gap-2">
-        <Button type="button" size="sm" variant="outline" asChild>
-          <a href={getWebOnOneAppUrl()}>{ts('openApp')}</a>
+        <Button type="button" size="sm" variant="outline" onClick={handleOpenApp}>
+          {ts('openApp')}
         </Button>
         {isAuthenticated && user ? (
           <DropdownMenu>
@@ -122,9 +136,9 @@ export function WebsiteHeader({ className }: WebsiteHeaderProps) {
             role="status"
             aria-label={ts('checkingSession')}
           />
-        ) : (
+        ) : isLoginPage ? null : (
           <Button type="button" size="sm" asChild>
-            <a href={getWebOnOneLoginUrl(`${window.location.pathname}${window.location.search}`)}>
+            <a href={getWebsiteLoginHref(`${window.location.pathname}${window.location.search}`)}>
               {ta('login')}
             </a>
           </Button>

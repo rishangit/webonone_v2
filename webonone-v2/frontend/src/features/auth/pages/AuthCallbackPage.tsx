@@ -90,7 +90,11 @@ export function AuthCallbackPage() {
             <button
               type="button"
               className="text-sm text-primary underline-offset-4 hover:underline"
-              onClick={() => navigate(buildWebOnOneLoginHref(), { replace: true })}
+              onClick={() =>
+                navigate(buildWebOnOneLoginHref(undefined, { promptLogin: true }), {
+                  replace: true,
+                })
+              }
             >
               {t('backToSignIn')}
             </button>

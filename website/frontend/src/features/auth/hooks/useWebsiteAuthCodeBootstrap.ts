@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   usePlatformRedirectBootstrap,
@@ -6,6 +6,8 @@ import {
 } from '@webonone/platform-nav'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { getIdentityApiBase } from '@/features/auth/utils/identityConfig'
+
+const LOG = '[website-sso]'
 
 export function getWebsiteRedirectUri(path = '/', search = ''): string {
   if (typeof window !== 'undefined') {
@@ -35,6 +37,16 @@ export function useWebsiteAuthCodeBootstrap(): AuthCodeBootstrapState {
   const code = searchParams.get('code')
   const isRedirectHandoff = Boolean(code)
 
+  useEffect(() => {
+    if (!code) {
+      return
+    }
+    console.warn(LOG, 'auth-code bootstrap will exchange ?code=', {
+      href: window.location.href,
+      codePrefix: `${code.slice(0, 8)}…`,
+    })
+  }, [code])
+
   /** Must match the redirectUri used when creating the auth code (full path + search, minus code). */
   const getRedirectUri = useCallback(
     (path: string) => {
@@ -48,6 +60,10 @@ export function useWebsiteAuthCodeBootstrap(): AuthCodeBootstrapState {
 
   const onSuccess = useCallback(
     (result: ExchangeAuthCodeResult) => {
+      console.warn(LOG, 'auth-code exchange success → website login', {
+        userId: result.user.id,
+        email: result.user.email,
+      })
       login({
         accessToken: result.accessToken,
         user: {

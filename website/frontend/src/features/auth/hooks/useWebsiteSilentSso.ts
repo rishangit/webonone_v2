@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import {
   buildIdentitySilentSsoUrl,
   isIdentitySsoNoneMessage,
@@ -7,7 +7,12 @@ import {
 } from '@webonone/platform-embed'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
+import {
+  isWebsiteSsoSkipped,
+  markWebsiteSsoSkipped,
+} from '@/features/auth/utils/ssoPeerGuard'
 
+const LOG = '[website-sso]'
 const SILENT_SSO_TIMEOUT_MS = 4000
 
 function normalizeOrigin(origin: string): string {
@@ -15,90 +20,111 @@ function normalizeOrigin(origin: string): string {
 }
 
 type SilentSsoState = {
-  /** True while waiting for the Identity SSO iframe reply (or timeout). */
   isChecking: boolean
-  /** Iframe src when a silent check is in progress; null otherwise. */
   iframeSrc: string | null
 }
 
 /**
- * When the website has no local session, ask Identity (hidden iframe) whether
- * a platform session exists and adopt that JWT via postMessage.
- * Skips when `prompt=login` (post-logout) so Logout is not immediately undone.
- * Runs at most once per page load.
+ * Guest website SSO via a hidden Identity iframe only.
+ * Never hops to the WebOnOne app — login stays on this origin.
  */
 export function useWebsiteSilentSso(): SilentSsoState {
-  const { isAuthenticated, login } = useWebsiteAuth()
+  const { isAuthenticated, login, ssoProbeEpoch } = useWebsiteAuth()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
+  const isAuthRoute = location.pathname.startsWith('/auth/')
+  const isLoginRoute = location.pathname === '/login'
   const hasAuthCode = Boolean(searchParams.get('code'))
   const promptLogin = searchParams.get('prompt') === 'login'
-  const [isChecking, setIsChecking] = useState(
-    () => !isAuthenticated && !hasAuthCode && !promptLogin,
-  )
+  const shouldSkip =
+    isAuthRoute ||
+    isLoginRoute ||
+    isAuthenticated ||
+    hasAuthCode ||
+    promptLogin ||
+    isWebsiteSsoSkipped()
+
+  const [isChecking, setIsChecking] = useState(() => !shouldSkip)
   const [iframeSrc, setIframeSrc] = useState<string | null>(null)
   const settledRef = useRef(false)
-  const strippedPromptRef = useRef(false)
-  /** Allows a single silent attempt; stays false after logout / prompt=login. */
-  const allowSilentRef = useRef(!isAuthenticated && !hasAuthCode && !promptLogin)
+  const timeoutRef = useRef<number | null>(null)
+  const lastProbeEpochRef = useRef(ssoProbeEpoch)
 
-  // After logout land with prompt=login: skip SSO, then strip prompt from the URL.
   useEffect(() => {
-    if (!promptLogin || strippedPromptRef.current) {
+    console.log(LOG, 'silent-sso mount', {
+      href: window.location.href,
+      isAuthRoute,
+      isLoginRoute,
+      isAuthenticated,
+      hasAuthCode,
+      promptLogin,
+      documentSkip: isWebsiteSsoSkipped(),
+      shouldSkip,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount snapshot
+  }, [])
+
+  useEffect(() => {
+    if (promptLogin) {
+      markWebsiteSsoSkipped('prompt=login')
+    }
+  }, [promptLogin])
+
+  useEffect(() => {
+    if (ssoProbeEpoch === lastProbeEpochRef.current) {
       return
     }
-    strippedPromptRef.current = true
-    allowSilentRef.current = false
-    settledRef.current = true
-    setIsChecking(false)
-    setIframeSrc(null)
-
-    const next = new URLSearchParams(searchParams)
-    next.delete('prompt')
-    const search = next.toString()
-    navigate(
-      { pathname: window.location.pathname, search: search ? `?${search}` : '' },
-      { replace: true },
-    )
-  }, [navigate, promptLogin, searchParams])
+    lastProbeEpochRef.current = ssoProbeEpoch
+    if (shouldSkip) {
+      return
+    }
+    console.log(LOG, 'probe epoch → re-run Identity silent', { ssoProbeEpoch })
+    settledRef.current = false
+    setIsChecking(true)
+  }, [shouldSkip, ssoProbeEpoch])
 
   useEffect(() => {
-    if (isAuthenticated || hasAuthCode || promptLogin) {
-      allowSilentRef.current = false
+    if (shouldSkip) {
       settledRef.current = true
       setIsChecking(false)
       setIframeSrc(null)
       return
     }
 
-    if (!allowSilentRef.current) {
-      setIsChecking(false)
-      setIframeSrc(null)
-      return
-    }
-
-    allowSilentRef.current = false
     settledRef.current = false
     const identityOrigin = normalizeOrigin(getIdentityOrigin())
     const parentOrigin = window.location.origin
-    setIframeSrc(buildIdentitySilentSsoUrl(identityOrigin, parentOrigin))
-    setIsChecking(true)
+    let cancelled = false
 
-    function settle() {
-      if (settledRef.current) {
+    function clearPhaseTimeout() {
+      if (timeoutRef.current != null) {
+        window.clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+    }
+
+    function settle(reason: string) {
+      if (cancelled || settledRef.current) {
         return
       }
       settledRef.current = true
+      clearPhaseTimeout()
       setIsChecking(false)
       setIframeSrc(null)
+      console.log(LOG, 'Identity silent settle', { reason })
     }
+
+    console.log(LOG, 'Identity silent iframe start', { identityOrigin, parentOrigin })
+    setIframeSrc(buildIdentitySilentSsoUrl(identityOrigin, parentOrigin))
+    setIsChecking(true)
+    timeoutRef.current = window.setTimeout(() => settle('timeout'), SILENT_SSO_TIMEOUT_MS)
 
     function onMessage(event: MessageEvent) {
       if (normalizeOrigin(event.origin) !== identityOrigin) {
         return
       }
-
       if (isIdentitySsoSessionMessage(event.data)) {
+        console.log(LOG, 'Identity silent → session', { userId: event.data.user.id })
         login({
           accessToken: event.data.accessToken,
           user: {
@@ -108,23 +134,23 @@ export function useWebsiteSilentSso(): SilentSsoState {
             avatarUrl: event.data.user.avatarUrl ?? null,
           },
         })
-        settle()
+        settle('session')
         return
       }
-
       if (isIdentitySsoNoneMessage(event.data)) {
-        settle()
+        settle('none')
       }
     }
 
     window.addEventListener('message', onMessage)
-    const timeoutId = window.setTimeout(settle, SILENT_SSO_TIMEOUT_MS)
-
     return () => {
+      cancelled = true
       window.removeEventListener('message', onMessage)
-      window.clearTimeout(timeoutId)
+      clearPhaseTimeout()
+      // Strict Mode remounts must not leave isChecking stuck true.
+      setIframeSrc(null)
     }
-  }, [hasAuthCode, isAuthenticated, login, promptLogin])
+  }, [login, shouldSkip, ssoProbeEpoch])
 
   return { isChecking, iframeSrc }
 }

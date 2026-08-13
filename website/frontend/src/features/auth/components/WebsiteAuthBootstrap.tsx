@@ -4,8 +4,7 @@ import { useWebsiteAuthCodeBootstrap } from '@/features/auth/hooks/useWebsiteAut
 import { useWebsiteSilentSso } from '@/features/auth/hooks/useWebsiteSilentSso'
 
 /**
- * Exchanges auth-code login returns and runs silent SSO against Identity.
- * Renders a hidden iframe only while a silent check is in progress.
+ * Exchanges auth-code login returns and runs Identity silent SSO (iframe).
  * Reports combined pending state so chrome can avoid Login↔avatar flicker.
  */
 export function WebsiteAuthBootstrap() {

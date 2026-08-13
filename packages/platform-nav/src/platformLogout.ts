@@ -83,14 +83,26 @@ export function buildClearSessionUrl(serviceOrigin: string, continueUrl: string)
 }
 
 /**
- * Nest clear-session hops (first origin clears first after Identity logout),
- * then land on `finalUrl`.
+ * Nest clear-session hops (first origin clears first), then continue to `finalUrl`.
  */
 export function buildLogoutClearChain(clearOrigins: string[], finalUrl: string): string {
   return clearOrigins.reduceRight(
     (continueUrl, origin) => buildClearSessionUrl(origin, continueUrl),
     finalUrl,
   )
+}
+
+/**
+ * Peer clear-session hop(s) first, then Identity `/logout`, then `finalUrl`.
+ * Clearing peers before Identity prevents SSO re-login when Identity redirect fails
+ * or the tab remounts before a post-Identity clear hop runs.
+ */
+export function buildClearFirstLogoutUrl(
+  clearOrigins: string[],
+  identityOrigin: string,
+  finalUrl: string,
+): string {
+  return buildLogoutClearChain(clearOrigins, buildIdentityLogoutUrl(identityOrigin, finalUrl))
 }
 
 /**

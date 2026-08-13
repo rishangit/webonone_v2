@@ -16,6 +16,7 @@ export {
   buildIdentityLogoutUrl,
   buildClearSessionUrl,
   buildLogoutClearChain,
+  buildClearFirstLogoutUrl,
   performPlatformLogout,
 } from './platformLogout'
 export type { PlatformLogoutOptions } from './platformLogout'

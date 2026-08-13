@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
   appendPromptLogin,
+  buildClearFirstLogoutUrl,
   buildIdentityLogoutUrl,
   performPlatformLogout,
   resolveAbsolutePostLogoutLoginUrl,
@@ -64,6 +65,20 @@ describe('buildIdentityLogoutUrl', () => {
 describe('resolveAbsolutePostLogoutLoginUrl', () => {
   it('returns relative local login path with prompt=login', () => {
     assert.equal(resolveAbsolutePostLogoutLoginUrl(null, '/login'), '/login?prompt=login')
+  })
+})
+
+describe('buildClearFirstLogoutUrl', () => {
+  it('clears peer origin before Identity logout and lands on finalUrl', () => {
+    const url = buildClearFirstLogoutUrl(
+      ['http://127.0.0.1:3010'],
+      'http://127.0.0.1:3011',
+      'http://127.0.0.1:3018/?prompt=login',
+    )
+    assert.equal(
+      url,
+      'http://127.0.0.1:3010/auth/clear-session?continue=http%3A%2F%2F127.0.0.1%3A3011%2Flogout%3Fpost_logout_redirect_uri%3Dhttp%253A%252F%252F127.0.0.1%253A3018%252F%253Fprompt%253Dlogin',
+    )
   })
 })
 
