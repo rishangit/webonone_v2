@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -30,7 +31,6 @@ import { CompanyTagsCard } from '../components/CompanyTagsCard'
 
 type CompanyProfilePageProps = {
   backTo?: string
-  backLabel?: string
   /**
    * Route shell: `admin` = super-admin companies list (always Gallery/Data).
    * `member` = settings route — tab mode follows membership role
@@ -49,18 +49,6 @@ const ADMIN_TABS = [
   'data',
 ] as const satisfies readonly AdminProfileTab[]
 
-const ADMIN_TAB_ITEMS: { id: AdminProfileTab; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'gallery', label: 'Gallery' },
-  { id: 'data', label: 'Data' },
-]
-
-const MEMBER_CATALOG_TAB_LABELS: Record<MemberCatalogTab, string> = {
-  services: 'Our Services',
-  products: 'Our Products',
-  spaces: 'Our Spaces',
-}
-
 const ALL_MEMBER_TABS = [
   'overview',
   'services',
@@ -68,24 +56,16 @@ const ALL_MEMBER_TABS = [
   'spaces',
 ] as const satisfies readonly MemberProfileTab[]
 
-function membershipBackNav(role: 'member' | 'company_admin' | undefined): {
-  backTo: string
-  backLabel: string
-} {
-  if (role === 'company_admin') {
-    return { backTo: '/settings/companies', backLabel: 'Back to My Companies' }
-  }
-  return {
-    backTo: '/settings/connected-companies',
-    backLabel: 'Back to Connected Companies',
-  }
+function membershipBackTo(role: 'member' | 'company_admin' | undefined): string {
+  if (role === 'company_admin') return '/settings/companies'
+  return '/settings/connected-companies'
 }
 
 export function CompanyProfilePage({
   backTo: backToProp,
-  backLabel: backLabelProp,
   variant = 'admin',
 }: CompanyProfilePageProps) {
+  const { t } = useTranslation('settings')
   const { companyId } = useParams<{ companyId: string }>()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -101,11 +81,15 @@ export function CompanyProfilePage({
   const loading = detailStatus === 'loading' && !detail
   const saving = detailStatus === 'saving'
 
-  const membershipBack = membershipBackNav(detail?.role)
-  const backTo = backToProp ?? membershipBack.backTo
-  const backLabel = backLabelProp ?? membershipBack.backLabel
+  const backTo = backToProp ?? membershipBackTo(detail?.role)
+  const backLabel =
+    variant === 'admin'
+      ? t('companyProfile.backToCompanies')
+      : detail?.role === 'company_admin'
+        ? t('companyProfile.backToMyCompanies')
+        : t('companyProfile.backToConnectedCompanies')
 
-  usePlatformLoading(loading ? 'Loading company…' : null)
+  usePlatformLoading(loading ? t('companyProfile.loading') : null)
 
   useEffect(() => {
     if (!companyId) return
@@ -128,13 +112,19 @@ export function CompanyProfilePage({
 
   const memberTabItems = useMemo(() => {
     const items: { id: MemberProfileTab; label: string }[] = [
-      { id: 'overview', label: 'Overview' },
+      { id: 'overview', label: t('companyProfile.tabs.overview') },
     ]
     for (const key of memberCatalogTabs) {
-      items.push({ id: key, label: MEMBER_CATALOG_TAB_LABELS[key] })
+      const labelKey =
+        key === 'services'
+          ? 'companyProfile.tabs.ourServices'
+          : key === 'products'
+            ? 'companyProfile.tabs.ourProducts'
+            : 'companyProfile.tabs.ourSpaces'
+      items.push({ id: key, label: t(labelKey) })
     }
     return items
-  }, [memberCatalogTabs])
+  }, [memberCatalogTabs, t])
 
   const activeMemberTab: MemberProfileTab =
     memberTab !== 'overview' && !memberCatalogTabs.includes(memberTab) ? 'overview' : memberTab
@@ -149,13 +139,13 @@ export function CompanyProfilePage({
 
   const pageDescription =
     variant === 'admin' || detail?.role === 'company_admin'
-      ? 'Company details, gallery images, and Data services.'
-      : 'Company details and catalog for companies you book with or buy from.'
+      ? t('companyProfile.descriptionOwner')
+      : t('companyProfile.descriptionMember')
 
   if (detailError && !detail) {
     return (
       <FeaturePage
-        title="Company profile"
+        title={t('companyProfile.title')}
         description={pageDescription}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={() => navigate(backTo)}>
@@ -227,10 +217,10 @@ export function CompanyProfilePage({
       onValueChange={(value) => setAdminTab(value as AdminProfileTab)}
       className="flex flex-col gap-6"
     >
-      <TabsList aria-label="Company profile sections">
-        {ADMIN_TAB_ITEMS.map((item) => (
-          <TabsTrigger key={item.id} value={item.id}>
-            {item.label}
+      <TabsList aria-label={t('companyProfile.ariaSections')}>
+        {ADMIN_TABS.map((id) => (
+          <TabsTrigger key={id} value={id}>
+            {t(`companyProfile.tabs.${id}`)}
           </TabsTrigger>
         ))}
       </TabsList>
@@ -274,7 +264,7 @@ export function CompanyProfilePage({
       className="flex flex-col gap-6"
     >
       {showConnectedCatalogTabs ? (
-        <TabsList aria-label="Company profile sections">
+        <TabsList aria-label={t('companyProfile.ariaSections')}>
           {memberTabItems.map((item) => (
             <TabsTrigger key={item.id} value={item.id}>
               {item.label}
@@ -339,5 +329,5 @@ export function MemberCompanyProfilePage() {
 }
 
 export function AdminCompanyProfilePage() {
-  return <CompanyProfilePage backTo="/companies" backLabel="Back to Companies" variant="admin" />
+  return <CompanyProfilePage backTo="/companies" variant="admin" />
 }

@@ -61,7 +61,7 @@ export function HistoryTokenDetailPage() {
 
   const { open: openFormDialog } = useOpenDesignFormDialog(reloadSubmissions)
 
-  usePlatformLoading(loading && !detail ? t('loadingHistory') : null)
+  usePlatformLoading(loading && !detail ? t('loading.history') : null)
 
   useEffect(() => {
     if (!tokenId) return
@@ -76,7 +76,7 @@ export function HistoryTokenDetailPage() {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t('unableToLoadHistoryDetail'))
+          setError(err instanceof Error ? err.message : t('errors.loadHistoryDetailFailed'))
         }
       })
       .finally(() => {
@@ -97,8 +97,8 @@ export function HistoryTokenDetailPage() {
   if (error && !detail) {
     return (
       <FeaturePage
-        title={t('sessionHistory')}
-        description={t('unableToLoadSessionHistory')}
+        title={t('history.sessionHistoryTitle')}
+        description={t('history.sessionHistoryLoadError')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={backToUser}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -154,7 +154,7 @@ export function HistoryTokenDetailPage() {
   return (
     <FeaturePage
       title={detail.serviceName}
-      description={t('tokenPrefix', { label: detail.tokenLabel, date: formatOccurrenceDate(detail.occurrenceDate) })}
+      description={t('history.tokenDescription', { label: detail.tokenLabel, date: formatOccurrenceDate(detail.occurrenceDate) })}
       actions={
         <Button type="button" variant="outline" size="sm" onClick={backToUser}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -166,35 +166,35 @@ export function HistoryTokenDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t('session')}</CardTitle>
-              <CardDescription>{t('sessionCardDescription')}</CardDescription>
+              <CardTitle className="text-lg">{t('history.sessionCardTitle')}</CardTitle>
+              <CardDescription>{t('history.sessionCardDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DetailField label={t('service')} value={detail.serviceName} />
-              <DetailField label={t('date')} value={formatOccurrenceDate(detail.occurrenceDate)} />
-              <DetailField label={t('time')} value={`${detail.startTime}–${detail.endTime}`} />
-              <DetailField label={t('token')} value={detail.tokenLabel} />
-              <DetailField label={t('status')} value={detail.status} />
-              <DetailField label={t('customer')} value={detail.userDisplayName} />
-              {detail.spaceName ? <DetailField label={t('space')} value={detail.spaceName} /> : null}
+              <DetailField label={t('history.service')} value={detail.serviceName} />
+              <DetailField label={t('history.date')} value={formatOccurrenceDate(detail.occurrenceDate)} />
+              <DetailField label={t('history.time')} value={`${detail.startTime}–${detail.endTime}`} />
+              <DetailField label={t('history.token')} value={detail.tokenLabel} />
+              <DetailField label={t('history.status')} value={detail.status} />
+              <DetailField label={t('history.customer')} value={detail.userDisplayName} />
+              {detail.spaceName ? <DetailField label={t('history.space')} value={detail.spaceName} /> : null}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t('form')}</CardTitle>
-              <CardDescription>{t('formCardDescription')}</CardDescription>
+              <CardTitle className="text-lg">{t('history.formCardTitle')}</CardTitle>
+              <CardDescription>{t('history.formCardSessionDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               {!formTemplateId ? (
-                <ItemListEmpty>{t('noFormLinked')}</ItemListEmpty>
+                <ItemListEmpty>{t('empty.noFormLinked')}</ItemListEmpty>
               ) : primarySubmission ? (
                 <Button type="button" size="sm" variant="outline" onClick={openView}>
-                  {t('viewForm')}
+                  {t('history.viewForm')}
                 </Button>
               ) : (
                 <Button type="button" size="sm" onClick={openFill}>
-                  {t('fillForm')}
+                  {t('history.fillForm')}
                 </Button>
               )}
             </CardContent>
@@ -204,11 +204,11 @@ export function HistoryTokenDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t('staff')}</CardTitle>
-              <CardDescription>{t('staffCardDescription')}</CardDescription>
+              <CardTitle className="text-lg">{t('history.staffTitle')}</CardTitle>
+              <CardDescription>{t('history.staffDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DetailField label={t('name')} value={detail.staffDisplayName} />
+              <DetailField label={t('history.staffName')} value={detail.staffDisplayName} />
             </CardContent>
           </Card>
         </div>

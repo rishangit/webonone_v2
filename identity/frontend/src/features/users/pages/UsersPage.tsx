@@ -77,7 +77,7 @@ export function UsersPage() {
 
   const canQuery = Boolean(accessToken) && (isSuperAdmin || companyMode)
   const loading = listStatus === 'loading' && items.length === 0
-  usePlatformLoading(loading ? t('loadingUsers') : null)
+  usePlatformLoading(loading ? t('loading.users') : null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -109,7 +109,7 @@ export function UsersPage() {
       return null
     }
     if (items.length === 0) {
-      return companyMode ? t('emptyCompany') : t('empty')
+      return companyMode ? t('empty.companyNone') : t('empty.noneFound')
     }
     return null
   }, [loading, items.length, companyMode, t])
@@ -124,7 +124,7 @@ export function UsersPage() {
         userId: user.id,
       })
       setAddOpen(false)
-      toast({ title: t('userAdded') })
+      toast({ title: t('toasts.userAdded') })
       dispatch(
         usersActions.loadListRequested({
           page: 1,
@@ -134,7 +134,7 @@ export function UsersPage() {
       )
     } catch (err) {
       toast({
-        title: t('failedToAddUser'),
+        title: t('toasts.addFailed'),
         description: err instanceof Error ? err.message : undefined,
         variant: 'destructive',
       })
@@ -143,7 +143,7 @@ export function UsersPage() {
 
   function handleCreatedUser(_user: UserOption) {
     setAddOpen(false)
-    toast({ title: t('userAdded') })
+    toast({ title: t('toasts.userAdded') })
     if (!companyId) {
       return
     }
@@ -169,15 +169,15 @@ export function UsersPage() {
 
   return (
     <FeaturePage
-      title={t('title')}
-      description={companyMode ? t('companyUsersDescription') : t('platformUsersDescription')}
+      title={t('pageTitle')}
+      description={companyMode ? t('pageDescription.company') : t('pageDescription.platform')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder={t('searchPlaceholder')}
-            aria-label={t('search')}
+            aria-label={t('searchAria')}
             className="w-64"
           />
           {!companyMode ? (
@@ -204,16 +204,16 @@ export function UsersPage() {
             setAppliedRole(null)
           }}
         >
-          <FormField label={t('role')} htmlFor="users-role">
+          <FormField label={t('roles.label')} htmlFor="users-role">
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger id="users-role">
-                <SelectValue placeholder={t('allRoles')} />
+                <SelectValue placeholder={t('roles.all')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_ROLES_VALUE}>{t('allRoles')}</SelectItem>
-                <SelectItem value="super_admin">{t('superAdmin')}</SelectItem>
-                <SelectItem value="company_admin">{t('companyAdmin')}</SelectItem>
-                <SelectItem value="member">{t('member')}</SelectItem>
+                <SelectItem value={ALL_ROLES_VALUE}>{t('roles.all')}</SelectItem>
+                <SelectItem value="super_admin">{t('roles.super_admin')}</SelectItem>
+                <SelectItem value="company_admin">{t('roles.company_admin')}</SelectItem>
+                <SelectItem value="member">{t('roles.member')}</SelectItem>
               </SelectContent>
             </Select>
           </FormField>

@@ -35,7 +35,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
   const [pendingRemove, setPendingRemove] = useState<CompanyStaff | null>(null)
 
   if (items.length === 0) {
-    return <ItemListEmpty>{t('empty')}</ItemListEmpty>
+    return <ItemListEmpty>{t('list.empty')}</ItemListEmpty>
   }
 
   function openDetails(id: string) {
@@ -47,11 +47,11 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
     try {
       await staffApi.delete(item.id)
       dispatch(staffActions.deleteSucceeded(item.id))
-      toast({ title: t('staffRemoved') })
+      toast({ title: t('list.toastRemoved') })
       onRemoved()
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('staffRemoveFailed')
-      toast({ title: t('staffRemoveFailed'), description: message, variant: 'destructive' })
+      const message = err instanceof Error ? err.message : t('list.toastRemoveFailed')
+      toast({ title: t('list.toastRemoveFailed'), description: message, variant: 'destructive' })
     } finally {
       setRemovingId(null)
     }
@@ -77,7 +77,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
                 <div className="min-w-0 space-y-1">
                   <p className="truncate font-medium text-foreground">{item.displayName}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {item.email ?? t('noEmail')}
+                    {item.email ?? t('common:email')}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {formatWorkingDaysSummary(item.schedule)}
@@ -87,7 +87,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
             </ItemListContent>
             <ItemListMenu ariaLabel={t('actionsFor', { name: item.displayName })}>
               <DropdownMenuItem onSelect={() => openDetails(item.id)}>
-                {t('viewDetails')}
+                {t('list.viewDetails')}
               </DropdownMenuItem>
               {canManage ? (
                 <>
@@ -97,7 +97,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
                     onSelect={() => setPendingRemove(item)}
                     className="text-destructive focus:text-destructive"
                   >
-                    {removingId === item.id ? t('removing') : t('common:remove')}
+                    {removingId === item.id ? t('common:loading') : t('common:remove')}
                   </DropdownMenuItem>
                 </>
               ) : null}
@@ -109,10 +109,10 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
         open={pendingRemove !== null}
         title={
           pendingRemove
-            ? t('removeNamed', { name: pendingRemove.displayName })
-            : t('removeStaff')
+            ? t('list.removeTitleNamed', { name: pendingRemove.displayName })
+            : t('list.removeTitle')
         }
-        description={t('removeStaffConfirm')}
+        description={t('list.removeDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         submitLabel={t('common:remove')}
         onOpenChange={(open) => {

@@ -9,7 +9,7 @@ import {
   performPlatformLogout,
   useServiceRedirect,
 } from '@webonone/platform-nav'
-import { normalizeLocale, relayLocaleQueryParams, type AppLocale } from '@webonone/i18n'
+import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { Alert, AlertDescription, AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { prefetchNavTarget } from '@/app/routePrefetch'
@@ -61,6 +61,7 @@ function AppLayoutShellContent() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { t, i18n } = useTranslation('common')
+  const { t: ts } = useTranslation('shell')
   const dispatch = useAppDispatch()
   const { accessToken, user, platform } = useAppSelector((s) => s.auth)
   const { redirect, error: profileError, clearError } = useServiceRedirect()
@@ -179,9 +180,12 @@ function AppLayoutShellContent() {
       searchParams: isPlatformMode ? searchParams : undefined,
     })
     if (!effectiveReturnUrl) {
-      return base
+      return translateNavItems(base, t)
     }
-    return withSmsNavActions(withDataNavActions(base, handleDataNavClick), handleSmsNavClick)
+    return translateNavItems(
+      withSmsNavActions(withDataNavActions(base, handleDataNavClick), handleSmsNavClick),
+      t,
+    )
   }, [
     effectiveReturnUrl,
     handleDataNavClick,
@@ -191,6 +195,7 @@ function AppLayoutShellContent() {
     returnUrlFromQuery,
     role,
     searchParams,
+    t,
   ])
 
   useEffect(() => {
@@ -247,7 +252,7 @@ function AppLayoutShellContent() {
       : null
 
   const sessionLoading = Boolean(accessToken) && !roleReady
-  usePlatformLoading(sessionLoading ? 'Loading session…' : null)
+  usePlatformLoading(sessionLoading ? ts('loadingSession') : null)
   const overlayLabel = usePlatformOverlayLabel()
 
   const mainContent = (

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { normalizeLocale, type AppLocale } from '@webonone/i18n'
+import { normalizeLocale, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { AppShell, BrandLogo, LoadingState } from '@webonone/ui-kit'
 import { performPlatformLogout } from '@webonone/platform-nav'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -26,6 +26,7 @@ function AppLayoutContent() {
   const dispatch = useAppDispatch()
   const location = useLocation()
   const { t, i18n } = useTranslation('common')
+  const { t: tShell } = useTranslation('shell')
   const { user } = useAppSelector((s) => s.auth)
   const overlayLabel = usePlatformOverlayLabel()
   const currentLocale = normalizeLocale(i18n.language)
@@ -45,6 +46,8 @@ function AppLayoutContent() {
     [t],
   )
 
+  const nav = useMemo(() => translateNavItems(mainNav, t), [t])
+
   function handleLogout() {
     dispatch(authActions.logout())
     performPlatformLogout(null, { identityOrigin: getIdentityOrigin() })
@@ -52,9 +55,9 @@ function AppLayoutContent() {
 
   return (
     <AppShell
-      nav={mainNav}
+      nav={nav}
       activePath={location.pathname}
-      logo={<BrandLogo>Media</BrandLogo>}
+      logo={<BrandLogo>{tShell('brand')}</BrandLogo>}
       user={
         user
           ? {

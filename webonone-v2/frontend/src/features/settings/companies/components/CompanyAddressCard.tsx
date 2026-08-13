@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
 import { EditableSectionCard } from './EditableSectionCard'
 
@@ -17,30 +18,29 @@ type CompanyAddressCardProps = {
 }
 
 export function CompanyAddressCard({ detail, canEdit, onEdit }: CompanyAddressCardProps) {
+  const { t } = useTranslation('settings')
   const isEmpty =
     !detail.addressLine1 && !detail.city && !detail.country && !detail.addressLine2
 
   return (
     <EditableSectionCard
-      title="Address information"
-      description="Postal and street address for this company"
+      title={t('companyCards.address.title')}
+      description={t('companyCards.address.description')}
       canEdit={canEdit}
       onEdit={onEdit}
     >
       {isEmpty ? (
-        <p className="text-sm text-muted-foreground">
-          No address details yet. Edit this section to add a street address.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('companyCards.address.empty')}</p>
       ) : null}
-      <ReadOnlyField label="Address line 1" value={detail.addressLine1} />
-      <ReadOnlyField label="Address line 2" value={detail.addressLine2} />
+      <ReadOnlyField label={t('companyCards.address.line1')} value={detail.addressLine1} />
+      <ReadOnlyField label={t('companyCards.address.line2')} value={detail.addressLine2} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <ReadOnlyField label="City" value={detail.city} />
-        <ReadOnlyField label="State / region" value={detail.stateRegion} />
+        <ReadOnlyField label={t('companyCards.address.city')} value={detail.city} />
+        <ReadOnlyField label={t('companyCards.address.stateRegion')} value={detail.stateRegion} />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <ReadOnlyField label="Postal code" value={detail.postalCode} />
-        <ReadOnlyField label="Country" value={detail.country} />
+        <ReadOnlyField label={t('companyCards.address.postalCode')} value={detail.postalCode} />
+        <ReadOnlyField label={t('companyCards.address.country')} value={detail.country} />
       </div>
     </EditableSectionCard>
   )

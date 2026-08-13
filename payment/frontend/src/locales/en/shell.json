@@ -15,5 +15,8 @@
   "signInTitle": "Sign in to Payment",
   "signInDescription": "You will be redirected to Identity to sign in securely.",
   "continueToSignIn": "Continue to sign in",
-  "signingIn": "Signing in…"
+  "signingIn": "Signing in…",
+  "completingSignIn": "Completing sign in…",
+  "backToSignIn": "Back to sign in",
+  "loadingSession": "Loading session…"
 }

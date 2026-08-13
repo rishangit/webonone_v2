@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -34,6 +35,8 @@ function parseMode(mode: string | null): FormFillMode {
 }
 
 export function FormFillPage() {
+  const { t } = useTranslation('forms')
+  const { t: tc } = useTranslation('common')
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -43,7 +46,7 @@ export function FormFillPage() {
   const user = useAppSelector((s) => s.auth.user)
 
   const subjectUserId = searchParams.get('subjectUserId') ?? ''
-  const subjectDisplayName = searchParams.get('subjectDisplayName') ?? 'Customer'
+  const subjectDisplayName = searchParams.get('subjectDisplayName') ?? t('customerFallback')
   const serviceId = searchParams.get('serviceId')
   const serviceName = searchParams.get('serviceName')
   const eventId = searchParams.get('eventId')
@@ -62,7 +65,7 @@ export function FormFillPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  usePlatformLoading(loading && !form ? 'Loading form…' : null)
+  usePlatformLoading(loading && !form ? t('loadingForm') : null)
 
   const canFill =
     !isReadOnly && Boolean(user?.companyId) && Boolean(subjectUserId) && subjectUserId !== user?.id
@@ -94,7 +97,7 @@ export function FormFillPage() {
     load()
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load form')
+          setError(err instanceof Error ? err.message : t('unableToLoad'))
         }
       })
       .finally(() => {
@@ -103,7 +106,7 @@ export function FormFillPage() {
     return () => {
       cancelled = true
     }
-  }, [accessToken, id, isEdit, isView, submissionId, user?.companyId])
+  }, [accessToken, id, isEdit, isView, submissionId, t, user?.companyId])
 
   const fields = useMemo(() => form?.definition.fields ?? [], [form])
 
@@ -125,7 +128,7 @@ export function FormFillPage() {
       if (!field.required) continue
       if (field.type === 'checkbox') continue
       if (value == null || value === '') {
-        next[field.id] = `${field.label} is required`
+        next[field.id] = t('fieldRequired', { label: field.label })
       }
     }
     setFieldErrors(next)
@@ -135,11 +138,11 @@ export function FormFillPage() {
   async function handleSubmit() {
     if (isReadOnly || !form || !id) return
     if (!canFill) {
-      setError('A customer subject is required and you cannot fill for yourself.')
+      setError(t('cannotFillSelf'))
       return
     }
     if (form.status !== 'published') {
-      setError('Only published forms can be filled.')
+      setError(t('onlyPublished'))
       return
     }
     if (!validate(fields)) return
@@ -157,8 +160,8 @@ export function FormFillPage() {
         answers,
       })
       toast({
-        title: isEdit ? 'Form saved' : 'Form submitted',
-        description: `Saved for ${subjectDisplayName}.`,
+        title: isEdit ? t('saved') : t('formSubmitted'),
+        description: t('savedFor', { name: subjectDisplayName }),
       })
       if (isEmbedded) {
         goToList()
@@ -166,10 +169,10 @@ export function FormFillPage() {
         navigate('/forms')
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unable to submit form'
+      const message = err instanceof Error ? err.message : t('unableToSubmit')
       setError(message)
       toast({
-        title: isEdit ? 'Save failed' : 'Submit failed',
+        title: isEdit ? t('saveFailed') : t('submitFailed'),
         description: message,
         variant: 'destructive',
       })
@@ -184,11 +187,9 @@ export function FormFillPage() {
 
   if (!subjectUserId) {
     return (
-      <FeaturePage title="Fill form" description="Customer is required.">
+      <FeaturePage title={t('fill')} description={t('customerRequired')}>
         <Alert variant="destructive">
-          <AlertDescription>
-            Missing subjectUserId. Open fill from a customer or service with a selected customer.
-          </AlertDescription>
+          <AlertDescription>{t('missingSubject')}</AlertDescription>
         </Alert>
       </FeaturePage>
     )
@@ -201,8 +202,8 @@ export function FormFillPage() {
   if (error && !form) {
     return (
       <FeaturePage
-        title={isView || isEdit ? 'View form' : 'Fill form'}
-        description="Unable to load form."
+        title={isView || isEdit ? t('viewForm') : t('fill')}
+        description={t('unableToLoad')}
       >
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -216,16 +217,20 @@ export function FormFillPage() {
   }
 
   const pageTitle =
-    isView || isEdit ? `View: ${form.name}` : `Fill: ${form.name}`
+    isView || isEdit ? t('viewNamed', { name: form.name }) : t('fillNamed', { name: form.name })
 
   return (
     <FeaturePage
       title={pageTitle}
-      description={`For ${subjectDisplayName}${serviceName ? ` · ${serviceName}` : ''}`}
+      description={
+        serviceName
+          ? t('forSubjectService', { name: subjectDisplayName, service: serviceName })
+          : t('forSubject', { name: subjectDisplayName })
+      }
       actions={
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" onClick={goToList}>
-            {isView ? 'Close' : 'Cancel'}
+            {isView ? tc('close') : tc('cancel')}
           </Button>
           {!isView ? (
             <Button
@@ -236,11 +241,11 @@ export function FormFillPage() {
             >
               {submitting
                 ? isEdit
-                  ? 'Saving…'
-                  : 'Submitting…'
+                  ? t('saving')
+                  : t('submitting')
                 : isEdit
-                  ? 'Save'
-                  : 'Submit'}
+                  ? tc('save')
+                  : tc('submit')}
             </Button>
           ) : null}
         </div>
@@ -305,7 +310,7 @@ export function FormFillPage() {
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={field.placeholder || 'Select…'} />
+                    <SelectValue placeholder={field.placeholder || t('selectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {(field.options ?? []).map((opt) => (
@@ -371,7 +376,7 @@ export function FormFillPage() {
         })}
 
         {fields.length === 0 ? (
-          <p className="text-sm text-muted-foreground">This form has no fields yet.</p>
+          <p className="text-sm text-muted-foreground">{t('noFields')}</p>
         ) : null}
       </div>
     </FeaturePage>

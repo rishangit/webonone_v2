@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ImagePreview,
   ItemList,
@@ -14,8 +15,6 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { companyCatalogActions } from '@/features/company-catalog/store/companyCatalogStore'
 import {
-  bindingModeLabel,
-  CATALOG_ENTITY_LABELS,
   isCatalogGalleryKind,
   type CatalogEntityKind,
 } from '@/features/company-catalog/types/companyCatalog.types'
@@ -27,13 +26,15 @@ type MemberCompanyCatalogPanelProps = {
 }
 
 export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCatalogPanelProps) {
+  const { t } = useTranslation('catalog')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { items, listStatus, kind: storeKind } = useAppSelector((s) => s.companyCatalog)
   const [search, setSearch] = useState('')
 
+  const entity = t(`entities.${kind}`)
   const loading = listStatus === 'loading' && storeKind === kind
-  usePlatformLoading(loading ? `Loading ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}…` : null)
+  usePlatformLoading(loading ? t('list.loading', { entity }) : null)
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -59,7 +60,6 @@ export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCata
   }, [items, search])
 
   const showThumbnails = isCatalogGalleryKind(kind)
-  const label = CATALOG_ENTITY_LABELS[kind]
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,9 +67,9 @@ export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCata
         <SearchInput
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={`Search ${label.toLowerCase()}`}
+          placeholder={t('list.searchPlaceholder', { entity })}
           onClear={() => setSearch('')}
-          aria-label={`Search ${label.toLowerCase()}`}
+          aria-label={t('list.searchAria', { entity })}
           className="w-64"
         />
       </div>
@@ -78,9 +78,7 @@ export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCata
         <ItemList>
           {filtered.length === 0 ? (
             <ItemListEmpty>
-              {search.trim()
-                ? `No ${label.toLowerCase()} match your search.`
-                : `No ${label.toLowerCase()} yet.`}
+              {search.trim() ? t('list.emptySearch', { entity }) : t('list.empty', { entity })}
             </ItemListEmpty>
           ) : (
             filtered.map((item) => (
@@ -103,9 +101,9 @@ export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCata
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{item.displayName}</span>
-                        <StatusTag variant="verified">{bindingModeLabel(item.bindingMode)}</StatusTag>
+                        <StatusTag variant="verified">{t(`binding.${item.bindingMode}`)}</StatusTag>
                         {item.libraryUnavailable ? (
-                          <StatusTag variant="pending">Library unavailable</StatusTag>
+                          <StatusTag variant="pending">{t('list.libraryUnavailable')}</StatusTag>
                         ) : null}
                       </div>
                       {item.displayDescription ? (

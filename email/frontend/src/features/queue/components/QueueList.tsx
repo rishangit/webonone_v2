@@ -45,20 +45,20 @@ export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListPro
             <ItemListContent>
               <p className="font-medium">{item.toEmail}</p>
               <p className="text-xs text-muted-foreground">
-                {item.templateSlug} · {statusLabel(item.status, t)} · Attempts {item.retryCount} ·{' '}
-                {formatDate(item.createdAt)}
+                {item.templateSlug} · {statusLabel(item.status, t)} ·{' '}
+                {t('attemptsCount', { count: item.retryCount })} · {formatDate(item.createdAt)}
               </p>
               {item.lastError ? (
                 <p className="mt-1 text-xs text-destructive line-clamp-2">{item.lastError}</p>
               ) : null}
             </ItemListContent>
-            <ItemListMenu ariaLabel={`Queue actions for ${item.toEmail}`}>
+            <ItemListMenu ariaLabel={t('actionsFor', { name: item.toEmail })}>
               <DropdownMenuItem disabled>{statusLabel(item.status, t)}</DropdownMenuItem>
               {canRetry && item.status === 'failed' ? (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onRetry(item)} disabled={isRetrying}>
-                    Retry
+                    {t('retry')}
                   </DropdownMenuItem>
                 </>
               ) : null}

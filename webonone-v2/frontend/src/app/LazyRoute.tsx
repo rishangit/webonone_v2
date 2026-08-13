@@ -4,7 +4,7 @@ import { useDelayedRouteLoading } from '@/features/shell/context/PlatformLoading
 
 function RouteChunkLoading() {
   const { t } = useTranslation('shell')
-  useDelayedRouteLoading(t('loadingPage'))
+  useDelayedRouteLoading(t('loading.page'))
   return null
 }
 

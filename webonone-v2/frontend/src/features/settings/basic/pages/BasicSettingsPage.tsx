@@ -13,18 +13,18 @@ export function BasicSettingsPage() {
   const [tab, setTab] = useDetailTabParam(BASIC_SETTINGS_TABS, 'account')
 
   const tabs: { id: BasicSettingsTab; label: string }[] = [
-    { id: 'account', label: t('account') },
-    { id: 'theme', label: t('theme') },
+    { id: 'account', label: t('basic.tabs.account') },
+    { id: 'theme', label: t('basic.tabs.appearance') },
   ]
 
   return (
-    <FeaturePage title={t('basic')} description={t('basicDescription')}>
+    <FeaturePage title={t('basic.title')} description={t('basic.description')}>
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as BasicSettingsTab)}
         className="flex flex-col gap-6"
       >
-        <TabsList aria-label={t('basic')}>
+        <TabsList aria-label={t('basic.ariaSections')}>
           {tabs.map((item) => (
             <TabsTrigger key={item.id} value={item.id}>
               {item.label}

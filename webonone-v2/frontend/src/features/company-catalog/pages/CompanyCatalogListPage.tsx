@@ -25,9 +25,8 @@ import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
-  bindingModeLabel,
+  CATALOG_ENTITY_SINGULAR_KEYS,
   isCatalogGalleryKind,
-  singularLabel,
   type CatalogEntityKind,
 } from '../types/companyCatalog.types'
 import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
@@ -47,12 +46,11 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   const [addOpen, setAddOpen] = useState(false)
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null)
 
-  const entityKey =
-    kind === 'products' ? 'products' : kind === 'services' ? 'services' : 'spaces'
-  const translatedEntity = t(entityKey)
+  const entity = t(`entities.${kind}`)
+  const noun = t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`)
 
   const loading = listStatus === 'loading' && storeKind === kind
-  usePlatformLoading(loading ? t('loadingEntity', { entity: translatedEntity.toLowerCase() }) : null)
+  usePlatformLoading(loading ? t('list.loading', { entity }) : null)
   const canManage = activeRole === 'company_admin'
 
   useEffect(() => {
@@ -80,27 +78,26 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
     [items],
   )
 
-  const noun = singularLabel(kind).toLowerCase()
   const showThumbnails = isCatalogGalleryKind(kind)
 
   return (
     <FeaturePage
-      title={translatedEntity}
-      description={t('companyEntityDescription', { entity: translatedEntity.toLowerCase() })}
+      title={entity}
+      description={t('list.description', { entity })}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('searchEntity', { entity: translatedEntity.toLowerCase() })}
+            placeholder={t('list.searchPlaceholder', { entity })}
             onClear={() => setSearch('')}
-            aria-label={t('searchEntity', { entity: translatedEntity.toLowerCase() })}
+            aria-label={t('list.searchAria', { entity })}
             className="w-64"
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden />
-              {t('addEntity', { entity: noun })}
+              {t('list.add', { noun })}
             </Button>
           ) : null}
         </div>
@@ -111,8 +108,8 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
           {filtered.length === 0 ? (
             <ItemListEmpty>
               {search.trim()
-                ? t('noEntityMatch', { entity: translatedEntity.toLowerCase() })
-                : t('noCompanyEntity', { entity: translatedEntity.toLowerCase() })}
+                ? t('list.emptySearch', { entity })
+                : t('list.empty', { entity })}
             </ItemListEmpty>
           ) : (
             filtered.map((item) => (
@@ -133,9 +130,9 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{item.displayName}</span>
-                        <StatusTag variant="verified">{bindingModeLabel(item.bindingMode)}</StatusTag>
+                        <StatusTag variant="verified">{t(`binding.${item.bindingMode}`)}</StatusTag>
                         {item.libraryUnavailable ? (
-                          <StatusTag variant="pending">{t('libraryUnavailable')}</StatusTag>
+                          <StatusTag variant="pending">{t('list.libraryUnavailable')}</StatusTag>
                         ) : null}
                       </div>
                       {item.displayDescription ? (
@@ -195,10 +192,10 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
         open={pendingRemove !== null}
         title={
           pendingRemove
-            ? t('removeNamed', { name: pendingRemove.name })
-            : t('removeEntity', { entity: noun })
+            ? t('list.removeTitleNamed', { name: pendingRemove.name })
+            : t('list.removeTitle', { noun })
         }
-        description={t('removeItemConfirm')}
+        description={t('list.removeDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         submitLabel={tc('remove')}
         onOpenChange={(open) => {

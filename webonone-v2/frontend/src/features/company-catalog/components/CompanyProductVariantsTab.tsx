@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ItemList,
   ItemListContent,
@@ -23,6 +24,7 @@ export function CompanyProductVariantsTab({
   productId,
   libraryEntityId,
 }: CompanyProductVariantsTabProps) {
+  const { t } = useTranslation('catalog')
   const navigate = useNavigate()
   const [items, setItems] = useState<LibraryProductVariant[]>([])
   const [loading, setLoading] = useState(Boolean(libraryEntityId))
@@ -46,7 +48,7 @@ export function CompanyProductVariantsTab({
         setItems(result.items)
       } catch (err) {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : 'Failed to load variants')
+        setError(err instanceof Error ? err.message : t('variantsTab.failedLoad'))
         setItems([])
       } finally {
         if (!cancelled) setLoading(false)
@@ -56,30 +58,25 @@ export function CompanyProductVariantsTab({
     return () => {
       cancelled = true
     }
-  }, [libraryEntityId])
+  }, [libraryEntityId, t])
 
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-medium text-foreground">Variants</h2>
+        <h2 className="text-lg font-medium text-foreground">{t('variantsTab.title')}</h2>
         <p className="text-sm text-muted-foreground">
-          {libraryEntityId
-            ? "SKUs built from this product's library attribute values."
-            : 'Variants are available for products linked to the Data library.'}
+          {libraryEntityId ? t('variantsTab.librarySkus') : t('variantsTab.linkedOnly')}
         </p>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {!libraryEntityId ? (
-        <ItemListEmpty>
-          No library product linked. Variants are managed in the Data library for linked or forked
-          products.
-        </ItemListEmpty>
+        <ItemListEmpty>{t('variantsTab.noLibraryProduct')}</ItemListEmpty>
       ) : loading && items.length === 0 ? (
-        <ItemListEmpty>Loading variants…</ItemListEmpty>
+        <ItemListEmpty>{t('variantsTab.loading')}</ItemListEmpty>
       ) : items.length === 0 ? (
-        <ItemListEmpty>No variants in the library for this product.</ItemListEmpty>
+        <ItemListEmpty>{t('variantsTab.empty')}</ItemListEmpty>
       ) : (
         <ItemList>
           {items.map((variant) => {
@@ -89,11 +86,13 @@ export function CompanyProductVariantsTab({
                   <p className="truncate font-medium">{variant.name}</p>
                   {variant.isDefault ? (
                     <StatusTag variant="verified" className="shrink-0">
-                      Default
+                      {t('variantDetail.variantCard.default')}
                     </StatusTag>
                   ) : null}
                 </div>
-                <p className="truncate text-sm text-muted-foreground">SKU · {variant.sku}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  {t('variantsTab.sku', { sku: variant.sku })}
+                </p>
                 {variant.values.length > 0 ? (
                   <p className="truncate text-sm text-muted-foreground">
                     {variant.values

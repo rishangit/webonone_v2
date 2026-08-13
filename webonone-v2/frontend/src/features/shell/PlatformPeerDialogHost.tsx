@@ -789,7 +789,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
             <AlertDialogHeader>
               <AlertDialogTitle>{active.request.title}</AlertDialogTitle>
               <AlertDialogDescription>
-                {description ?? t('confirmDelete')}
+                {description ?? t('peerDialog.confirmDestructive')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -29,7 +29,8 @@
     "remove": "Remove",
     "removeTitle": "Remove {{noun}}?",
     "removeTitleNamed": "Remove {{name}}?",
-    "removeDescription": "This action cannot be undone. The item will be removed from your company catalog."
+    "removeDescription": "This action cannot be undone. The item will be removed from your company catalog.",
+    "libraryUnavailable": "Library unavailable"
   },
   "detail": {
     "notFoundTitle": "Not found",
@@ -75,7 +76,17 @@
     },
     "removeTitleNamed": "Remove {{name}}?",
     "removeTitleNoun": "Remove {{noun}}?",
-    "removeDescription": "This action cannot be undone. The item will be removed from your company catalog."
+    "removeDescription": "This action cannot be undone. The item will be removed from your company catalog.",
+    "libraryItemUnavailable": "Library item is unavailable right now.",
+    "forkedHint": "Company copy based on a library item.",
+    "customHint": "Company-owned catalog item.",
+    "fillForCustomer": "Fill for customer",
+    "durationMinutes": "{{count}} minutes",
+    "provenance": {
+      "title": "Provenance",
+      "mode": "Mode",
+      "libraryId": "Library id"
+    }
   },
   "source": {
     "addFromLibrary": "Add from library",
@@ -183,24 +194,34 @@
     "empty": "No gallery images yet",
     "removeAria": "Remove gallery image",
     "removeTitle": "Remove gallery image?",
-    "removeDescription": "This action cannot be undone. The image will be removed from this {{noun}} gallery."
+    "removeDescription": "This action cannot be undone. The image will be removed from this {{noun}} gallery.",
+    "inheritsLibrary": "Using library gallery. Changes stay on this company and do not customize details (up to {{max}}).",
+    "imagesForNoun": "Images for this {{noun}} (up to {{max}})",
+    "alt": "{{noun}} gallery"
   },
   "attributesTab": {
     "loading": "Loading attributes…",
     "empty": "No attributes linked yet.",
-    "failedLoad": "Failed to load attributes"
+    "failedLoad": "Failed to load attributes",
+    "libraryLinked": "Library attributes linked to this {{noun}}.",
+    "customValues": "Custom attribute values for this {{noun}}."
   },
   "variantsTab": {
+    "title": "Variants",
+    "librarySkus": "SKUs built from this product's library attribute values.",
+    "linkedOnly": "Variants are available for products linked to the Data library.",
     "noLibraryProduct": "No library product linked. Variants are managed in the Data library for linked or forked products.",
     "loading": "Loading variants…",
     "empty": "No variants in the library for this product.",
-    "failedLoad": "Failed to load variants"
+    "failedLoad": "Failed to load variants",
+    "sku": "SKU · {{sku}}"
   },
   "variantDetail": {
     "titleFallback": "Variant",
     "description": "Product variant details",
     "loading": "Loading variant…",
     "failedLoad": "Failed to load variant",
+    "notLinked": "This product is not linked to the Data library, so variants are unavailable.",
     "variantCard": {
       "title": "Variant",
       "description": "Name, default flag, and SKU",
@@ -213,10 +234,15 @@
       "empty": "No attribute values."
     },
     "created": "Created",
-    "updated": "Updated"
+    "updated": "Updated",
+    "meta": {
+      "title": "Meta",
+      "description": "Record timestamps"
+    }
   },
   "stocks": {
     "title": "Stocks",
+    "description": "Batch inventory for this variant SKU. One batch is the active stock.",
     "addStock": "Add stock",
     "loading": "Loading stocks…",
     "empty": "No stock batches yet. Add a batch to get started.",

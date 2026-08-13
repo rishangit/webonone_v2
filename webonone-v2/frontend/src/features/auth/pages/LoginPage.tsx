@@ -75,14 +75,14 @@ export function LoginPage() {
       <div className="flex h-dvh min-h-0 w-full flex-col items-center justify-center overflow-hidden">
         {iframeSrc ? (
           <iframe
-            title={t('silentSsoTitle')}
+            title={t('silentSso.iframeTitle')}
             src={iframeSrc}
             aria-hidden
             tabIndex={-1}
             className="pointer-events-none fixed h-0 w-0 border-0 opacity-0"
           />
         ) : null}
-        <p className="text-sm text-muted-foreground">{t('checkingSession')}</p>
+        <p className="text-sm text-muted-foreground">{t('silentSso.checkingSession')}</p>
       </div>
     )
   }

@@ -135,7 +135,7 @@ export function SendPage() {
       ) : null}
       {sendSuccess ? (
         <Alert>
-          <AlertDescription>{sendSuccess}</AlertDescription>
+          <AlertDescription>{t('queued', { queueId: sendSuccess })}</AlertDescription>
         </Alert>
       ) : null}
       {!loading ? (
@@ -143,26 +143,24 @@ export function SendPage() {
           <div className="grid items-start gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Compose</CardTitle>
-                <CardDescription>
-                  Choose template or freeform, recipient, and message values.
-                </CardDescription>
+                <CardTitle className="text-lg">{t('compose')}</CardTitle>
+                <CardDescription>{t('composeDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField label="Mode" htmlFor="send-mode">
+                <FormField label={t('mode')} htmlFor="send-mode">
                   <Select value={mode} onValueChange={(value) => setMode(value as SendMode)}>
                     <SelectTrigger id="send-mode">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="template">Template</SelectItem>
-                      <SelectItem value="freeform">Freeform</SelectItem>
+                      <SelectItem value="template">{t('template')}</SelectItem>
+                      <SelectItem value="freeform">{t('freeform')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormField>
 
                 <FormField
-                  label="Recipient number"
+                  label={t('recipientNumber')}
                   htmlFor="send-to"
                   required
                   error={fieldErrors.toNumber}
@@ -179,14 +177,14 @@ export function SendPage() {
                 {mode === 'template' ? (
                   <>
                     <FormField
-                      label="Template"
+                      label={t('template')}
                       htmlFor="send-template"
                       required
                       error={fieldErrors.templateSlug}
                     >
                       <Select value={templateSlug} onValueChange={setTemplateSlug}>
                         <SelectTrigger id="send-template">
-                          <SelectValue placeholder="Select template" />
+                          <SelectValue placeholder={t('selectTemplate')} />
                         </SelectTrigger>
                         <SelectContent>
                           {activeTemplates.map((template) => (
@@ -209,7 +207,7 @@ export function SendPage() {
                     ))}
                   </>
                 ) : (
-                  <FormField label="Message" htmlFor="send-body" required error={fieldErrors.body}>
+                  <FormField label={t('message')} htmlFor="send-body" required error={fieldErrors.body}>
                     <Textarea
                       id="send-body"
                       rows={4}
@@ -217,8 +215,11 @@ export function SendPage() {
                       onChange={(e) => setBody(e.target.value)}
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {freeformInfo.chars} chars · {freeformInfo.segments} segment(s) ·{' '}
-                      {freeformInfo.encoding}
+                      {t('segmentLine', {
+                        chars: freeformInfo.chars,
+                        segments: freeformInfo.segments,
+                        encoding: freeformInfo.encoding,
+                      })}
                     </p>
                   </FormField>
                 )}
@@ -231,11 +232,11 @@ export function SendPage() {
                       onClick={handlePreview}
                       disabled={previewing || !selectedTemplate}
                     >
-                      {previewing ? 'Previewing…' : 'Preview'}
+                      {previewing ? t('previewing') : t('preview')}
                     </Button>
                   ) : null}
                   <Button type="submit" disabled={submitting}>
-                    {submitting ? 'Sending…' : 'Confirm send'}
+                    {submitting ? t('sending') : t('submit')}
                   </Button>
                 </div>
               </CardContent>
@@ -243,8 +244,8 @@ export function SendPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Preview</CardTitle>
-                <CardDescription>Rendered message from the selected template.</CardDescription>
+                <CardTitle className="text-lg">{t('previewTitle')}</CardTitle>
+                <CardDescription>{t('previewDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {preview ? (
@@ -253,14 +254,16 @@ export function SendPage() {
                       {preview.body}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {preview.chars} chars · {preview.segments} segment(s) · {preview.encoding}
+                      {t('segmentLine', {
+                        chars: preview.chars,
+                        segments: preview.segments,
+                        encoding: preview.encoding,
+                      })}
                     </p>
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    {mode === 'template'
-                      ? 'Click Preview to render the SMS here.'
-                      : 'Preview is available for template messages.'}
+                    {mode === 'template' ? t('previewHint') : t('previewTemplateOnly')}
                   </p>
                 )}
               </CardContent>

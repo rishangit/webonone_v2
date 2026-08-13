@@ -36,7 +36,7 @@ export function MyCompaniesList({ items, emptyMessage }: MyCompaniesListProps) {
   const [loggingInId, setLoggingInId] = useState<string | null>(null)
   const [loginError, setLoginError] = useState<string | null>(null)
   const rows = Array.isArray(items) ? items : []
-  const empty = emptyMessage ?? t('noCompanies')
+  const empty = emptyMessage ?? t('myCompanies.empty')
 
   if (rows.length === 0) {
     return <ItemListEmpty>{empty}</ItemListEmpty>
@@ -64,7 +64,7 @@ export function MyCompaniesList({ items, emptyMessage }: MyCompaniesListProps) {
         }),
       )
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : t('loginFailed'))
+      setLoginError(err instanceof Error ? err.message : t('myCompanies.failedLogin'))
     } finally {
       setLoggingInId(null)
     }
@@ -113,26 +113,26 @@ export function MyCompaniesList({ items, emptyMessage }: MyCompaniesListProps) {
               {item.role === 'company_admin' ? (
                 <ItemListMenu ariaLabel={`${t('common:actions')} — ${item.name}`}>
                   <DropdownMenuItem onClick={() => openProfile(item.id)}>
-                    {t('viewDetails')}
+                    {t('myCompanies.viewDetails')}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={!loginEnabled || loggingInId === item.id}
                     title={
-                      item.status === 'rejected' ? t('loginUnavailableRejected') : undefined
+                      item.status === 'rejected' ? t('myCompanies.loginUnavailableRejected') : undefined
                     }
                     onClick={() => void handleLogin(item)}
                   >
                     {loggingInId === item.id
-                      ? t('loggingIn')
+                      ? t('myCompanies.loggingIn')
                       : item.status === 'rejected'
-                        ? t('loginRejected')
-                        : t('login')}
+                        ? t('myCompanies.loginRejected')
+                        : t('myCompanies.login')}
                   </DropdownMenuItem>
                 </ItemListMenu>
               ) : (
                 <ItemListMenu ariaLabel={`${t('common:actions')} — ${item.name}`}>
                   <DropdownMenuItem onClick={() => openProfile(item.id)}>
-                    {t('viewDetails')}
+                    {t('myCompanies.viewDetails')}
                   </DropdownMenuItem>
                 </ItemListMenu>
               )}

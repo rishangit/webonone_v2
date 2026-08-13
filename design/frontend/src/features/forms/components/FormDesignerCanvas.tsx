@@ -12,6 +12,7 @@ import {
   Textarea,
   cn,
 } from '@webonone/ui-kit'
+import { useTranslation } from 'react-i18next'
 import type { FormField } from '@/shared/types/design.types'
 
 interface FormDesignerCanvasProps {
@@ -21,6 +22,7 @@ interface FormDesignerCanvasProps {
 }
 
 function FieldPreview({ field }: { field: FormField }) {
+  const { t } = useTranslation('forms')
   const label = (
     <Label className="mb-1.5 block">
       {field.label}
@@ -33,14 +35,14 @@ function FieldPreview({ field }: { field: FormField }) {
       return (
         <div>
           {label}
-          <Input disabled placeholder={field.placeholder || 'Text input'} />
+          <Input disabled placeholder={field.placeholder || t('placeholderText')} />
         </div>
       )
     case 'textarea':
       return (
         <div>
           {label}
-          <Textarea disabled placeholder={field.placeholder || 'Long text'} rows={3} />
+          <Textarea disabled placeholder={field.placeholder || t('placeholderLong')} rows={3} />
         </div>
       )
     case 'checkbox':
@@ -73,7 +75,7 @@ function FieldPreview({ field }: { field: FormField }) {
           {label}
           <Select disabled>
             <SelectTrigger>
-              <SelectValue placeholder={field.placeholder || 'Select…'} />
+              <SelectValue placeholder={field.placeholder || t('selectPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {(field.options ?? []).map((opt) => (
@@ -91,10 +93,12 @@ function FieldPreview({ field }: { field: FormField }) {
 }
 
 export function FormDesignerCanvas({ fields, selectedId, onSelect }: FormDesignerCanvasProps) {
+  const { t } = useTranslation('forms')
+
   if (fields.length === 0) {
     return (
       <div className="flex min-h-[240px] items-center justify-center rounded-lg border border-dashed border-[hsl(var(--glass-border))] p-6 text-center text-sm text-muted-foreground">
-        Click a toolbox control to add fields to this form.
+        {t('canvasEmpty')}
       </div>
     )
   }

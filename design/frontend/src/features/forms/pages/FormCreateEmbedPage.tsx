@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
@@ -16,6 +17,7 @@ import type { FormCreateMetaValues } from '@/features/forms/schemas/formSchemas'
 
 /** Peer-dialog body for create form (host chrome owned by WebOnOne). */
 export function FormCreateEmbedPage() {
+  const { t } = useTranslation('forms')
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const { goToEdit } = useNavigateDesign()
@@ -31,14 +33,14 @@ export function FormCreateEmbedPage() {
     if (!awaitingCreate || !parentOrigin || !requestId) return
     if (detailStatus === 'idle' && detail) {
       setAwaitingCreate(false)
-      toast({ title: 'Form created' })
+      toast({ title: t('formCreated') })
       sendPlatformPeerDialogComplete(parentOrigin, requestId)
       goToEdit(detail.id)
     }
     if (detailStatus === 'error') {
       setAwaitingCreate(false)
     }
-  }, [awaitingCreate, detail, detailStatus, goToEdit, parentOrigin, requestId, toast])
+  }, [awaitingCreate, detail, detailStatus, goToEdit, parentOrigin, requestId, t, toast])
 
   function handleCreate(values: FormCreateMetaValues) {
     setAwaitingCreate(true)

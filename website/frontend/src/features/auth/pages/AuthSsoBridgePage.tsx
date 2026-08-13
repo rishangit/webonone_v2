@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { QUERY, redirectWithAuthCode } from '@webonone/platform-nav'
 import { readWebsiteAuthSession } from '@/features/auth/utils/authStorage'
 import {
@@ -38,6 +39,7 @@ function returnUrlRequestsLogin(url: string): boolean {
  * (typically app `/auth/handoff`).
  */
 export function AuthSsoBridgePage() {
+  const { t } = useTranslation('shell')
   const [searchParams] = useSearchParams()
   const startedRef = useRef(false)
 
@@ -92,7 +94,7 @@ export function AuthSsoBridgePage() {
 
   return (
     <div className="flex h-dvh items-center justify-center px-4">
-      <p className="text-sm text-muted-foreground">Checking session…</p>
+      <p className="text-sm text-muted-foreground">{t('checkingSession')}</p>
     </div>
   )
 }

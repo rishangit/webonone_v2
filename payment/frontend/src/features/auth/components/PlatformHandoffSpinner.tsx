@@ -1,10 +1,12 @@
 import { LoadingState } from '@webonone/ui-kit'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { useAppSelector } from '@/app/store/hooks'
 import { hasAnyPlatformHandoff } from '@/features/auth/utils/platformReturn'
 
 export function PlatformHandoffSpinner() {
-  return <LoadingState overlay label="Loading…" />
+  const { t } = useTranslation('common')
+  return <LoadingState overlay label={t('loading')} />
 }
 
 /**

@@ -226,28 +226,30 @@ export function InvoicesPage() {
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium">
-                            {invoice.companyName?.trim() || 'Unknown company'}
+                            {invoice.companyName?.trim() || t('unknownCompany')}
                           </p>
                           <StatusTag variant={statusVariant(invoice.status)}>
                             {t(statusLabelKey(invoice.status))}
                           </StatusTag>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {invoice.invoiceNumber} · Ref {invoice.paymentReference}
+                          {invoice.invoiceNumber} · {t('refLabel', { ref: invoice.paymentReference })}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {formatPeriod(invoice.periodStart, invoice.periodEnd)}
                         </p>
                         <p className="mt-1 text-sm">
-                          {formatLkr(invoice.amountMinor)} · Due {formatDate(invoice.dueAt)}
+                          {formatLkr(invoice.amountMinor)} · {t('dueLabel', { date: formatDate(invoice.dueAt) })}
                         </p>
                       </button>
                     </ItemListContent>
                     <ItemListMenu
-                      ariaLabel={`Actions for ${invoice.companyName || invoice.invoiceNumber}`}
+                      ariaLabel={t('actionsFor', {
+                        name: invoice.companyName || invoice.invoiceNumber,
+                      })}
                     >
                       <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}`)}>
-                        View
+                        {tc('view')}
                       </DropdownMenuItem>
                       {role === 'super_admin' &&
                       (invoice.status === 'issued' ||

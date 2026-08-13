@@ -58,7 +58,7 @@ export function UserDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  usePlatformLoading(loading && !user ? t('loadingUser') : null)
+  usePlatformLoading(loading && !user ? t('loading.user') : null)
 
   useEffect(() => {
     if (!canView || !id) {
@@ -78,7 +78,7 @@ export function UserDetailsPage() {
       .catch((err: unknown) => {
         if (!cancelled) {
           setUser(null)
-          setError(err instanceof Error ? err.message : t('unableToLoadUser'))
+          setError(err instanceof Error ? err.message : t('errors.loadUserFailed'))
         }
       })
       .finally(() => {
@@ -126,15 +126,15 @@ export function UserDetailsPage() {
   )
 
   const tabs: { id: UserDetailTab; label: string }[] = [
-    { id: 'overview', label: t('overview') },
-    { id: 'history', label: t('history') },
+    { id: 'overview', label: t('tabs.overview') },
+    { id: 'history', label: t('tabs.history') },
   ]
 
   // Keep FeaturePage mounted while loading (no blank return) — matches Data details.
   return (
     <FeaturePage
-      title={user?.displayName ?? t('user')}
-      description={t('detailsDescription')}
+      title={user?.displayName ?? t('userFallbackTitle')}
+      description={t('userDetailsDescription')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {backButton}
@@ -160,7 +160,7 @@ export function UserDetailsPage() {
           onValueChange={(value) => handleTabChange(value as UserDetailTab)}
           className="flex flex-col gap-6"
         >
-          <TabsList aria-label={t('userSections')}>
+          <TabsList aria-label={t('sectionsAria')}>
             {tabs.map((item) => (
               <TabsTrigger key={item.id} value={item.id}>
                 {item.label}

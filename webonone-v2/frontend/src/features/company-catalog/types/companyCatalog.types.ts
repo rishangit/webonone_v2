@@ -41,6 +41,15 @@ export type HydratedCatalogItem = CompanyCatalogItem & {
   hydrated?: CatalogPayload | null
 }
 
+export const CATALOG_ENTITY_SINGULAR_KEYS = {
+  tags: 'tag',
+  units: 'unit',
+  attributes: 'attribute',
+  products: 'product',
+  services: 'service',
+  spaces: 'space',
+} as const satisfies Record<CatalogEntityKind, string>
+
 export function singularLabel(kind: CatalogEntityKind): string {
   const label = CATALOG_ENTITY_LABELS[kind]
   return label.endsWith('s') ? label.slice(0, -1) : label
@@ -51,15 +60,4 @@ export type CatalogGalleryKind = (typeof CATALOG_GALLERY_KINDS)[number]
 
 export function isCatalogGalleryKind(kind: CatalogEntityKind): kind is CatalogGalleryKind {
   return (CATALOG_GALLERY_KINDS as readonly string[]).includes(kind)
-}
-
-export function bindingModeLabel(mode: CatalogBindingMode): string {
-  switch (mode) {
-    case 'linked':
-      return 'Linked'
-    case 'forked':
-      return 'Customized'
-    case 'custom':
-      return 'Company'
-  }
 }

@@ -16,5 +16,17 @@
   "continueToSignIn": "Continue to sign in",
   "signingIn": "Signing in…",
   "historyTitle": "Send history",
-  "historyDescription": "Past SMS deliveries for your scope."
+  "historyDescription": "Past SMS deliveries for your scope.",
+  "historyDescriptionCompany": "Company-scoped send history. Platform system messages (such as OTP) are not listed here.",
+  "historySearchPlaceholder": "Phone number or template",
+  "historySearchAria": "Search by recipient number or template name",
+  "loadingHistory": "Loading history…",
+  "allStatuses": "All statuses",
+  "statusSent": "Sent",
+  "statusFailed": "Failed",
+  "historyEmpty": "No send history for the selected filters.",
+  "historyActionsFor": "History for {{name}}",
+  "completingSignIn": "Completing sign in…",
+  "backToSignIn": "Back to sign in",
+  "loadingSession": "Loading session…"
 }

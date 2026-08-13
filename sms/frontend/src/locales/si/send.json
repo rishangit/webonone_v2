@@ -1,6 +1,23 @@
 {
   "title": "SMS යවන්න",
   "description": "සැකිල්ලක් හෝ නිදහස් පණිවිඩයක් භාවිතයෙන් එක් වරක් SMS ලියන්න.",
-  "submit": "යවන්න",
-  "loading": "යැවීමේ පෝරමය පූරණය වෙමින්…"
+  "submit": "යැවීම තහවුරු කරන්න",
+  "loading": "යැවීමේ පෝරමය පූරණය වෙමින්…",
+  "sending": "යවමින්…",
+  "compose": "ලියන්න",
+  "composeDescription": "සැකිල්ල හෝ නිදහස් පණිවිඩය, ලබන්නා සහ පණිවිඩ අගයන් තෝරන්න.",
+  "mode": "මාදිලිය",
+  "template": "සැකිල්ල",
+  "freeform": "නිදහස් පණිවිඩය",
+  "selectTemplate": "සැකිල්ල තෝරන්න",
+  "recipientNumber": "ලබන්නාගේ අංකය",
+  "message": "පණිවිඩය",
+  "segmentLine": "{{chars}} අකුරු · කොටස් {{segments}} · {{encoding}}",
+  "preview": "පෙරදසුන",
+  "previewing": "පෙරදසුන සකසමින්…",
+  "previewTitle": "පෙරදසුන",
+  "previewDescription": "තෝරාගත් සැකිල්ලෙන් රෙන්ඩර් කළ පණිවිඩය.",
+  "previewHint": "SMS මෙහි රෙන්ඩර් කිරීමට පෙරදසුන ක්ලික් කරන්න.",
+  "previewTemplateOnly": "පෙරදසුන සැකිලි පණිවිඩ සඳහා ලබා ගත හැක.",
+  "queued": "SMS පෝලිමට එකතු විය ({{queueId}})."
 }

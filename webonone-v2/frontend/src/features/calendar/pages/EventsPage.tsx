@@ -31,26 +31,26 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const canManage = !personal && canManageCompanyEvents(activeRole, activeCompanyId)
-  usePlatformLoading(list.loading ? t('loadingEvents') : null)
+  usePlatformLoading(list.loading ? t('events.loading') : null)
 
   return (
     <FeaturePage
-      title={t('events')}
-      description={personal ? t('eventsDescriptionPersonal') : t('eventsDescription')}
+      title={t('events.title')}
+      description={personal ? t('events.descriptionMember') : t('events.descriptionAdmin')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
             onClear={() => list.setQ('')}
-            placeholder={t('searchEventsPlaceholder')}
+            placeholder={t('events.searchPlaceholder')}
             className="w-64"
-            aria-label={t('searchEvents')}
+            aria-label={t('events.searchAria')}
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={() => setDialog({})}>
               <Plus className="h-4 w-4" aria-hidden />
-              {t('addEvent')}
+              {t('events.addEvent')}
             </Button>
           ) : null}
         </div>

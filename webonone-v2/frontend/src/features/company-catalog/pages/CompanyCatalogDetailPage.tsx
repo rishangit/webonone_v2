@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -32,11 +33,9 @@ import { designFormsApi } from '@/features/design/services/designFormsApi'
 import { dataLibraryApi } from '../services/dataLibraryApi'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
-  bindingModeLabel,
   CATALOG_ENTITY_KINDS,
-  CATALOG_ENTITY_LABELS,
+  CATALOG_ENTITY_SINGULAR_KEYS,
   isCatalogGalleryKind,
-  singularLabel,
   type CatalogEntityKind,
   type CatalogPayload,
 } from '../types/companyCatalog.types'
@@ -82,6 +81,8 @@ export function CompanyCatalogDetailPage({
   backTo,
   readOnly = false,
 }: CompanyCatalogDetailPageProps = {}) {
+  const { t } = useTranslation('catalog')
+  const { t: tc } = useTranslation('common')
   const { kind: kindParam = '', id = '', companyId: companyIdParam } = useParams()
   const companyId = companyIdProp ?? companyIdParam
   const kind = isCatalogEntityKind(kindParam) ? kindParam : null
@@ -107,7 +108,7 @@ export function CompanyCatalogDetailPage({
 
   const loading = detailStatus === 'loading'
   usePlatformLoading(
-    loading && kind ? `Loading ${singularLabel(kind).toLowerCase()}…` : null,
+    loading && kind ? t('detail.loading', { noun: t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`) }) : null,
   )
 
   useEffect(() => {
@@ -193,15 +194,16 @@ export function CompanyCatalogDetailPage({
 
   if (!kind) {
     return (
-      <FeaturePage title="Not found" description="Unknown catalog type.">
+      <FeaturePage title={t('detail.notFoundTitle')} description={t('detail.notFoundDescription')}>
         <Button type="button" variant="outline" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
+          {tc('back')}
         </Button>
       </FeaturePage>
     )
   }
 
+  const noun = t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`)
   const busy = mutateStatus === 'saving'
   const canManage = !readOnly && activeRole === 'company_admin'
   const canEdit =
@@ -233,47 +235,47 @@ export function CompanyCatalogDetailPage({
           </Card>
         ) : null}
         <EditableSectionCard
-          title="Service"
-          description="Name and description"
+          title={t('detail.serviceBasics.title')}
+          description={t('detail.serviceBasics.description')}
           titleExtra={
-            <StatusTag variant="verified">{bindingModeLabel(detail.bindingMode)}</StatusTag>
+            <StatusTag variant="verified">{t(`binding.${detail.bindingMode}`)}</StatusTag>
           }
           canEdit={canEdit && !busy}
           onEdit={() => setServiceDialog({ initialStep: 1 })}
         >
-          <ReadOnlyField label="Name" value={detail.displayName} />
+          <ReadOnlyField label={tc('name')} value={detail.displayName} />
           <ReadOnlyField
-            label="Description"
+            label={tc('description')}
             value={detail.displayDescription?.trim() ? detail.displayDescription : '—'}
           />
           {detail.libraryUnavailable ? (
-            <div className="text-destructive">Library item is unavailable right now.</div>
+            <div className="text-destructive">{t('detail.libraryItemUnavailable')}</div>
           ) : null}
         </EditableSectionCard>
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
         <EditableSectionCard
-          title="Time"
-          description="How this service is scheduled"
+          title={t('detail.time.title')}
+          description={t('detail.time.description')}
           canEdit={canEdit && !busy}
           onEdit={() => setServiceDialog({ initialStep: 2 })}
         >
           <ReadOnlyField
-            label="Time mode"
+            label={t('detail.time.timeMode')}
             value={
               servicePayload?.timeMode === 'window'
-                ? 'Specific time'
+                ? t('serviceWizard.fields.specificTime')
                 : servicePayload?.timeMode === 'duration'
-                  ? 'Duration'
+                  ? t('serviceWizard.fields.duration')
                   : '—'
             }
           />
           {servicePayload?.timeMode === 'duration' ? (
             <ReadOnlyField
-              label="Duration"
+              label={t('detail.time.duration')}
               value={
                 servicePayload.durationMinutes != null
-                  ? `${String(servicePayload.durationMinutes)} minutes`
+                  ? t('detail.durationMinutes', { count: servicePayload.durationMinutes })
                   : '—'
               }
             />
@@ -281,13 +283,13 @@ export function CompanyCatalogDetailPage({
           {servicePayload?.timeMode === 'window' ? (
             <>
               <ReadOnlyField
-                label="Start time"
+                label={t('detail.time.startTime')}
                 value={
                   typeof servicePayload.startTime === 'string' ? servicePayload.startTime : '—'
                 }
               />
               <ReadOnlyField
-                label="End time"
+                label={t('detail.time.endTime')}
                 value={typeof servicePayload.endTime === 'string' ? servicePayload.endTime : '—'}
               />
             </>
@@ -295,13 +297,13 @@ export function CompanyCatalogDetailPage({
         </EditableSectionCard>
 
         <EditableSectionCard
-          title="Tags"
-          description="Labels linked to this service"
+          title={t('detail.tags.title')}
+          description={t('detail.tags.description')}
           canEdit={canEdit && !busy}
           onEdit={() => setServiceDialog({ initialStep: 3 })}
         >
           {resolvedTags.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tags.</p>
+            <p className="text-sm text-muted-foreground">{t('detail.tags.empty')}</p>
           ) : (
             <div className="flex flex-wrap gap-1">
               {resolvedTags.map((tag) => (
@@ -312,12 +314,12 @@ export function CompanyCatalogDetailPage({
         </EditableSectionCard>
 
         <EditableSectionCard
-          title="Form"
-          description="Design form linked to this service"
+          title={t('detail.form.title')}
+          description={t('detail.form.description')}
           canEdit={canManage && !busy}
           onEdit={() => setFormLinkOpen(true)}
         >
-          <ReadOnlyField label="Linked form" value={linkedFormName ?? 'None'} />
+          <ReadOnlyField label={t('detail.form.linkedForm')} value={linkedFormName ?? t('detail.form.none')} />
           {detail.formTemplateId && canManage ? (
             <Button
               type="button"
@@ -325,22 +327,22 @@ export function CompanyCatalogDetailPage({
               className="mt-2"
               onClick={() => setFillFormOpen(true)}
             >
-              Fill for customer
+              {t('detail.fillForCustomer')}
             </Button>
           ) : null}
         </EditableSectionCard>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Provenance</CardTitle>
+            <CardTitle className="text-lg">{t('detail.provenance.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div>
-              <div className="text-muted-foreground">Mode</div>
-              <div>{bindingModeLabel(detail.bindingMode)}</div>
+              <div className="text-muted-foreground">{t('detail.provenance.mode')}</div>
+              <div>{t(`binding.${detail.bindingMode}`)}</div>
             </div>
             <div>
-              <div className="text-muted-foreground">Library id</div>
+              <div className="text-muted-foreground">{t('detail.provenance.libraryId')}</div>
               <div className="break-all">{detail.libraryEntityId ?? '—'}</div>
             </div>
           </CardContent>
@@ -360,34 +362,34 @@ export function CompanyCatalogDetailPage({
           </Card>
         ) : null}
         <EditableSectionCard
-          title={singularLabel(kind)}
-          description="Name and description"
+          title={noun}
+          description={t('detail.entityBasics.description')}
           titleExtra={
-            <StatusTag variant="verified">{bindingModeLabel(detail.bindingMode)}</StatusTag>
+            <StatusTag variant="verified">{t(`binding.${detail.bindingMode}`)}</StatusTag>
           }
           canEdit={canEdit && !busy}
           onEdit={() => setEditOpen(true)}
         >
-          <ReadOnlyField label="Name" value={detail.displayName} />
+          <ReadOnlyField label={tc('name')} value={detail.displayName} />
           <ReadOnlyField
-            label="Description"
+            label={tc('description')}
             value={detail.displayDescription?.trim() ? detail.displayDescription : '—'}
           />
           {detail.libraryUnavailable ? (
-            <div className="text-destructive">Library item is unavailable right now.</div>
+            <div className="text-destructive">{t('detail.libraryItemUnavailable')}</div>
           ) : null}
         </EditableSectionCard>
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
         {kind === 'products' || kind === 'spaces' ? (
           <EditableSectionCard
-            title="Tags"
-            description={`Labels linked to this ${singularLabel(kind).toLowerCase()}`}
+            title={t('detail.tags.title')}
+            description={t('detail.tags.descriptionEntity', { noun })}
             canEdit={canEdit && !busy}
             onEdit={() => setEditOpen(true)}
           >
             {resolvedTags.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tags.</p>
+              <p className="text-sm text-muted-foreground">{t('detail.tags.empty')}</p>
             ) : (
               <div className="flex flex-wrap gap-1">
                 {resolvedTags.map((tag) => (
@@ -400,15 +402,15 @@ export function CompanyCatalogDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Provenance</CardTitle>
+            <CardTitle className="text-lg">{t('detail.provenance.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div>
-              <div className="text-muted-foreground">Mode</div>
-              <div>{bindingModeLabel(detail.bindingMode)}</div>
+              <div className="text-muted-foreground">{t('detail.provenance.mode')}</div>
+              <div>{t(`binding.${detail.bindingMode}`)}</div>
             </div>
             <div>
-              <div className="text-muted-foreground">Library id</div>
+              <div className="text-muted-foreground">{t('detail.provenance.libraryId')}</div>
               <div className="break-all">{detail.libraryEntityId ?? '—'}</div>
             </div>
           </CardContent>
@@ -419,21 +421,21 @@ export function CompanyCatalogDetailPage({
 
   return (
     <FeaturePage
-      title={detail?.displayName ?? CATALOG_ENTITY_LABELS[kind]}
+      title={detail?.displayName ?? t(`entities.${kind}`)}
       description={
         readOnly
-          ? `Company ${singularLabel(kind).toLowerCase()} details.`
+          ? t('detail.pageDescription', { noun })
           : detail?.bindingMode === 'linked'
-            ? 'Live link to the Data library. Customize to keep a company-owned copy.'
+            ? t('detail.linkedHint')
             : detail?.libraryEntityId
-              ? 'Company copy based on a library item.'
-              : 'Company-owned catalog item.'
+              ? t('detail.forkedHint')
+              : t('detail.customHint')
       }
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => navigate(listPath)}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {tc('back')}
           </Button>
           {canCustomize ? (
             <Button
@@ -455,7 +457,7 @@ export function CompanyCatalogDetailPage({
               }}
               disabled={busy}
             >
-              Customize
+              {t('detail.customize')}
             </Button>
           ) : null}
           {canManage ? (
@@ -466,7 +468,7 @@ export function CompanyCatalogDetailPage({
               disabled={busy}
               onClick={() => setPendingRemove(true)}
             >
-              Remove
+              {t('detail.remove')}
             </Button>
           ) : null}
         </div>
@@ -478,7 +480,7 @@ export function CompanyCatalogDetailPage({
 
       {detail && !readOnly && showGalleryTabs ? (
         <CatalogDetailSectionTabs
-          ariaLabel={`${singularLabel(kind)} sections`}
+          ariaLabel={t('detail.ariaSections', { noun })}
           tab={tab}
           onTabChange={setTab}
           overview={kind === 'services' ? serviceProfile : genericProfile}
@@ -586,10 +588,14 @@ export function CompanyCatalogDetailPage({
       {!readOnly ? (
         <PlatformAlertConfirmDialog
           open={pendingRemove}
-          title={detail ? `Remove ${detail.displayName}?` : `Remove ${singularLabel(kind).toLowerCase()}?`}
-          description="This action cannot be undone. The item will be removed from your company catalog."
+          title={
+            detail
+              ? t('detail.removeTitleNamed', { name: detail.displayName })
+              : t('detail.removeTitleNoun', { noun })
+          }
+          description={t('detail.removeDescription')}
           isAllowedParentOrigin={isAllowedParentOrigin}
-          submitLabel="Remove"
+          submitLabel={tc('remove')}
           onOpenChange={(open) => {
             if (!open) setPendingRemove(false)
           }}

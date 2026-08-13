@@ -6,7 +6,7 @@ import {
   resolvePlatformEmbedParentOrigin,
 } from '@webonone/platform-embed'
 import { CORE_NAV_QUERY_PARAM, appendPromptLogin, buildLogoutClearChain, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
-import { normalizeLocale, relayLocaleQueryParams, type AppLocale } from '@webonone/i18n'
+import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
@@ -116,6 +116,7 @@ function AppLayoutShellContent() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const { t, i18n } = useTranslation('common')
+  const { t: tShell } = useTranslation('shell')
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { redirect, error: navError, clearError } = useServiceRedirect()
   const overlayLabel = usePlatformOverlayLabel()
@@ -220,10 +221,11 @@ function AppLayoutShellContent() {
     const base = returnUrl
       ? buildCoreNavFromQuery(returnUrl, searchParams.get(CORE_NAV_QUERY_PARAM))
       : buildStandaloneNav({ isSuperAdmin, isCompanyAdmin })
-    return returnUrl ? withPeerNavActions(base, handleEmailNavClick, handleSmsNavClick) : base
-  }, [handleEmailNavClick, handleSmsNavClick, isCompanyAdmin, isSuperAdmin, returnUrl, searchParams])
+    const resolved = returnUrl ? withPeerNavActions(base, handleEmailNavClick, handleSmsNavClick) : base
+    return translateNavItems(resolved, t)
+  }, [handleEmailNavClick, handleSmsNavClick, isCompanyAdmin, isSuperAdmin, returnUrl, searchParams, t])
 
-  const brand = returnUrl ? 'WebOnOne' : 'Identity'
+  const brand = returnUrl ? tShell('brand.webonone') : tShell('brand.identity')
   const isAuthenticated = Boolean(accessToken && user)
   const useShell =
     isAuthenticated && isIdentityShellRoute(location.pathname) && !isHandoffLogin

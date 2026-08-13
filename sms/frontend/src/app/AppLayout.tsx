@@ -9,7 +9,7 @@ import {
   performPlatformLogout,
   useServiceRedirect,
 } from '@webonone/platform-nav'
-import { normalizeLocale, relayLocaleQueryParams, type AppLocale } from '@webonone/i18n'
+import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { Alert, AlertDescription, AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { prefetchNavTarget } from '@/app/routePrefetch'
@@ -58,6 +58,7 @@ function AppLayoutShellContent() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { t, i18n } = useTranslation('common')
+  const { t: ts } = useTranslation('shell')
   const dispatch = useAppDispatch()
   const { accessToken, user, platform } = useAppSelector((s) => s.auth)
   const { redirect, error: profileError, clearError } = useServiceRedirect()
@@ -107,14 +108,17 @@ function AppLayoutShellContent() {
 
   const nav = useMemo(
     () =>
-      buildAppNav(role, {
-        returnUrl: effectiveReturnUrl,
-        coreNavVariant:
-          platform.coreNavVariant ??
-          (returnUrlFromQuery ? parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM)) : null),
-        searchParams: isPlatformMode ? searchParams : undefined,
-      }),
-    [effectiveReturnUrl, isPlatformMode, platform.coreNavVariant, returnUrlFromQuery, role, searchParams],
+      translateNavItems(
+        buildAppNav(role, {
+          returnUrl: effectiveReturnUrl,
+          coreNavVariant:
+            platform.coreNavVariant ??
+            (returnUrlFromQuery ? parsePlatformNavVariant(searchParams.get(CORE_NAV_QUERY_PARAM)) : null),
+          searchParams: isPlatformMode ? searchParams : undefined,
+        }),
+        t,
+      ),
+    [effectiveReturnUrl, isPlatformMode, platform.coreNavVariant, returnUrlFromQuery, role, searchParams, t],
   )
 
   useEffect(() => {
@@ -171,7 +175,7 @@ function AppLayoutShellContent() {
       : null
 
   const sessionLoading = Boolean(accessToken) && !roleReady
-  usePlatformLoading(sessionLoading ? 'Loading session…' : null)
+  usePlatformLoading(sessionLoading ? ts('loadingSession') : null)
   const overlayLabel = usePlatformOverlayLabel()
 
   const mainContent = (

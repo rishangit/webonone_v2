@@ -8,7 +8,7 @@ export function HomePage() {
 
   return (
     <FeaturePage
-      title={t('welcome', { name: user?.displayName ?? t('welcomeFallbackName') })}
+      title={t('title', { name: user?.displayName ?? t('titleFallbackName') })}
       description={t('description')}
     >
       <p className="text-sm text-muted-foreground">

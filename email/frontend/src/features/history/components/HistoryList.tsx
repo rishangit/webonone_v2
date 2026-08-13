@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenuItem,
   ItemList,
@@ -12,22 +13,23 @@ interface HistoryListProps {
   items: HistoryItem[]
 }
 
-function statusLabel(status: HistoryItem['status']): string {
-  if (status === 'sent') return 'Sent'
-  return 'Failed'
-}
-
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleString()
 }
 
 export function HistoryList({ items }: HistoryListProps) {
+  const { t } = useTranslation('shell')
   const rows = Array.isArray(items) ? items : []
+
+  function statusLabel(status: HistoryItem['status']): string {
+    if (status === 'sent') return t('statusSent')
+    return t('statusFailed')
+  }
 
   if (rows.length === 0) {
     return (
-      <ItemListEmpty>No send history for the selected filters.</ItemListEmpty>
+      <ItemListEmpty>{t('historyEmpty')}</ItemListEmpty>
     )
   }
 
@@ -45,7 +47,7 @@ export function HistoryList({ items }: HistoryListProps) {
               <p className="mt-1 text-xs text-destructive line-clamp-2">{item.errorMessage}</p>
             ) : null}
           </ItemListContent>
-          <ItemListMenu ariaLabel={`History for ${item.recipient}`}>
+          <ItemListMenu ariaLabel={t('historyActionsFor', { name: item.recipient })}>
             <DropdownMenuItem disabled>{statusLabel(item.status)}</DropdownMenuItem>
           </ItemListMenu>
         </ItemListItem>

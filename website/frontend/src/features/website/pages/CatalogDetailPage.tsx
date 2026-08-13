@@ -36,13 +36,16 @@ function kindLabel(kind: CatalogDetailItem['kind'], t: (key: string) => string):
   return t('spaceKind')
 }
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
-function formatDistanceKm(distanceKm: number): string {
+function formatDistanceKm(
+  distanceKm: number,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
   if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)} m away`
+    return t('metersAway', { meters: String(Math.round(distanceKm * 1000)) })
   }
-  return `${distanceKm.toFixed(1)} km away`
+  return t('kmAway', { km: distanceKm.toFixed(1) })
 }
 
 function hasMapLocation(item: CatalogDetailItem): boolean {
@@ -58,18 +61,19 @@ function hasServiceTime(item: CatalogDetailItem): boolean {
   return item.kind === 'services' && (item.timeMode === 'window' || item.timeMode === 'duration')
 }
 
-function formatOccurrenceDate(ymd: string): string {
+function formatOccurrenceDate(ymd: string, locale: string): string {
   const date = new Date(`${ymd}T12:00:00`)
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(locale === 'si' ? 'si-LK' : 'en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
 }
 
-function weekdayLabel(ymd: string): string {
+function weekdayLabel(ymd: string, t: (key: string) => string): string {
   const date = new Date(`${ymd}T12:00:00`)
-  return DAY_LABELS[date.getDay()] ?? `D${date.getDay()}`
+  const key = DAY_KEYS[date.getDay()]
+  return key ? t(key) : `D${date.getDay()}`
 }
 
 function detailImages(item: CatalogDetailItem) {
@@ -88,7 +92,7 @@ type BookingTarget = {
 }
 
 export function CatalogDetailPage() {
-  const { t } = useTranslation('search')
+  const { t, i18n } = useTranslation('search')
   const { kind: kindParam = '', id = '' } = useParams()
   const navigate = useNavigate()
   const kind = isCatalogKind(kindParam) ? kindParam : null
@@ -167,7 +171,7 @@ export function CatalogDetailPage() {
           setError(null)
         } else {
           setNotFound(false)
-          setError(err.message || 'Failed to load catalog item')
+          setError(err.message || t('failedLoadItem'))
         }
         if (!softRefetch) {
           setItem(null)
@@ -202,7 +206,7 @@ export function CatalogDetailPage() {
       .catch((err: Error) => {
         if (cancelled) return
         setSessions([])
-        setSessionsError(err.message || 'Failed to load sessions')
+        setSessionsError(err.message || t('failedLoadSessions'))
         setSessionsLoading(false)
       })
 
@@ -245,7 +249,7 @@ export function CatalogDetailPage() {
         open={loginRequiredOpen}
         onOpenChange={setLoginRequiredOpen}
         returnPath={detailReturnPath}
-        description="You need to log in to get a queue token. After login you will return to this page."
+        description={t('loginRequired')}
       />
 
       {item && bookingTarget && accessToken && user ? (
@@ -274,7 +278,7 @@ export function CatalogDetailPage() {
                 onClick={handleBack}
               >
                 <ArrowLeft className="size-4" aria-hidden />
-                Back
+                {t('back')}
               </Button>
             </div>
 
@@ -298,26 +302,26 @@ export function CatalogDetailPage() {
             ) : notFound ? (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Not found</CardTitle>
+                  <CardTitle className="text-lg">{t('notFound')}</CardTitle>
                   <CardDescription>
-                    This offering is unavailable or no longer listed.
+                    {t('notFoundDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button type="button" variant="outline" size="sm" asChild>
-                    <Link to="/search">Back to search</Link>
+                    <Link to="/search">{t('backToSearch')}</Link>
                   </Button>
                 </CardContent>
               </Card>
             ) : error ? (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Something went wrong</CardTitle>
+                  <CardTitle className="text-lg">{t('somethingWrong')}</CardTitle>
                   <CardDescription>{error}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button type="button" variant="outline" size="sm" asChild>
-                    <Link to="/search">Back to search</Link>
+                    <Link to="/search">{t('backToSearch')}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -327,7 +331,7 @@ export function CatalogDetailPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">{t('overview')}</CardTitle>
-                      <CardDescription>Basic details for this offering.</CardDescription>
+                      <CardDescription>{t('overviewDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <ImageCarousel images={detailImages(item)} alt={item.name} />
@@ -347,7 +351,7 @@ export function CatalogDetailPage() {
                           {item.description}
                         </p>
                       ) : (
-                        <p className="text-sm text-muted-foreground">No description provided.</p>
+                        <p className="text-sm text-muted-foreground">{t('noDescription')}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -356,19 +360,19 @@ export function CatalogDetailPage() {
                     <CardHeader>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0 space-y-1.5">
-                          <CardTitle className="text-lg">Location</CardTitle>
+                          <CardTitle className="text-lg">{t('location')}</CardTitle>
                           <CardDescription>
                             {hasMapLocation(item)
                               ? item.companyName
-                              : 'No map pin is available for this offering.'}
+                              : t('noMapPinOffering')}
                           </CardDescription>
                         </div>
                         {item.distanceKm != null ? (
                           <span className="rounded-md border border-border bg-muted/60 px-2 py-1 text-xs font-semibold text-foreground">
-                            {formatDistanceKm(item.distanceKm)}
+                            {formatDistanceKm(item.distanceKm, t)}
                           </span>
                         ) : locationStatus === 'ready' && !hasMapLocation(item) ? (
-                          <span className="text-xs text-muted-foreground">No map pin</span>
+                          <span className="text-xs text-muted-foreground">{t('noMapPin')}</span>
                         ) : null}
                       </div>
                     </CardHeader>
@@ -383,8 +387,8 @@ export function CatalogDetailPage() {
                           focusKey={`${item.kind}-${item.id}`}
                         />
                       ) : (
-                        <p className="text-sm text-muted-foreground">
-                          This company has not set a map location yet.
+                          <p className="text-sm text-muted-foreground">
+                          {t('noCompanyMap')}
                         </p>
                       )}
                     </CardContent>
@@ -395,22 +399,22 @@ export function CatalogDetailPage() {
                   {hasServiceTime(item) ? (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Time</CardTitle>
-                        <CardDescription>How this service is scheduled.</CardDescription>
+                        <CardTitle className="text-lg">{t('time')}</CardTitle>
+                        <CardDescription>{t('timeScheduled')}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div>
-                          <p className="text-xs font-medium text-muted-foreground">Time mode</p>
+                          <p className="text-xs font-medium text-muted-foreground">{t('timeMode')}</p>
                           <p className="text-sm text-foreground">
-                            {item.timeMode === 'window' ? 'Specific time' : 'Duration'}
+                            {item.timeMode === 'window' ? t('specificTime') : t('duration')}
                           </p>
                         </div>
                         {item.timeMode === 'duration' ? (
                           <div>
-                            <p className="text-xs font-medium text-muted-foreground">Duration</p>
+                            <p className="text-xs font-medium text-muted-foreground">{t('duration')}</p>
                             <p className="text-sm text-foreground">
                               {item.durationMinutes != null
-                                ? `${String(item.durationMinutes)} minutes`
+                                ? t('durationMinutes', { minutes: String(item.durationMinutes) })
                                 : '—'}
                             </p>
                           </div>
@@ -419,12 +423,12 @@ export function CatalogDetailPage() {
                           <>
                             <div>
                               <p className="text-xs font-medium text-muted-foreground">
-                                Start time
+                                {t('startTime')}
                               </p>
                               <p className="text-sm text-foreground">{item.startTime ?? '—'}</p>
                             </div>
                             <div>
-                              <p className="text-xs font-medium text-muted-foreground">End time</p>
+                              <p className="text-xs font-medium text-muted-foreground">{t('endTime')}</p>
                               <p className="text-sm text-foreground">{item.endTime ?? '—'}</p>
                             </div>
                           </>
@@ -436,8 +440,8 @@ export function CatalogDetailPage() {
                   {item.tags.length > 0 ? (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Tags</CardTitle>
-                        <CardDescription>Categories linked to this offering.</CardDescription>
+                        <CardTitle className="text-lg">{t('tags')}</CardTitle>
+                        <CardDescription>{t('tagsDescription')}</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="flex flex-wrap gap-1.5">
@@ -460,9 +464,9 @@ export function CatalogDetailPage() {
                   {item.kind === 'services' && item.timeMode === 'window' ? (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Where</CardTitle>
+                        <CardTitle className="text-lg">{t('where')}</CardTitle>
                         <CardDescription>
-                          Space where upcoming Specific time sessions happen.
+                          {t('whereDescription')}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-3">
@@ -470,12 +474,12 @@ export function CatalogDetailPage() {
                           <p className="text-sm text-muted-foreground">{t('loadingDetails')}</p>
                         ) : sessionSpaces.length === 0 ? (
                           <p className="text-sm text-muted-foreground">
-                            No space has been set for upcoming sessions yet.
+                            {t('noSpaceYet')}
                           </p>
                         ) : (
                           sessionSpaces.map((space) => (
                             <div key={space.spaceId}>
-                              <p className="text-xs font-medium text-muted-foreground">Space</p>
+                              <p className="text-xs font-medium text-muted-foreground">{t('space')}</p>
                               <p className="text-sm text-foreground">{space.spaceName}</p>
                             </div>
                           ))
@@ -487,18 +491,18 @@ export function CatalogDetailPage() {
                   {item.kind === 'services' && item.timeMode === 'window' ? (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Sessions</CardTitle>
+                        <CardTitle className="text-lg">{t('sessions')}</CardTitle>
                         <CardDescription>
-                          Book a queue token for an upcoming Specific time session.
+                          {t('sessionsDescription')}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         {sessionsLoading ? (
-                          <p className="text-sm text-muted-foreground">Loading sessions…</p>
+                          <p className="text-sm text-muted-foreground">{t('loadingSessions')}</p>
                         ) : sessionsError ? (
                           <p className="text-sm text-destructive">{sessionsError}</p>
                         ) : sessions.length === 0 ? (
-                          <ItemListEmpty>No upcoming sessions for this service.</ItemListEmpty>
+                          <ItemListEmpty>{t('noSessions')}</ItemListEmpty>
                         ) : (
                           <ItemList>
                             {sessions.map((session) => (
@@ -509,10 +513,10 @@ export function CatalogDetailPage() {
                                   <div className="flex w-full flex-col gap-2">
                                     <div className="min-w-0 space-y-1">
                                       <p className="truncate font-medium text-foreground">
-                                        {formatOccurrenceDate(session.occurrenceDate)}
+                                        {formatOccurrenceDate(session.occurrenceDate, i18n.language)}
                                       </p>
                                       <p className="truncate text-xs text-muted-foreground">
-                                        {weekdayLabel(session.occurrenceDate)} ·{' '}
+                                        {weekdayLabel(session.occurrenceDate, t)} ·{' '}
                                         {session.startTime}–{session.endTime}
                                         {session.spaceName?.trim()
                                           ? ` · ${session.spaceName.trim()}`
@@ -526,7 +530,7 @@ export function CatalogDetailPage() {
                                       onClick={() => handleGetToken(session)}
                                     >
                                       <Ticket className="size-3.5" aria-hidden />
-                                      Get the token
+                                      {t('getToken')}
                                     </Button>
                                   </div>
                                 </ItemListContent>

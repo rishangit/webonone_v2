@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
 import { EditableSectionCard } from './EditableSectionCard'
 
@@ -17,22 +18,21 @@ type CompanyContactCardProps = {
 }
 
 export function CompanyContactCard({ detail, canEdit, onEdit }: CompanyContactCardProps) {
+  const { t } = useTranslation('settings')
   const isEmpty = !detail.contactEmail && !detail.contactPhone
 
   return (
     <EditableSectionCard
-      title="Contact information"
-      description="How customers and the platform reach this company"
+      title={t('companyCards.contact.title')}
+      description={t('companyCards.contact.description')}
       canEdit={canEdit}
       onEdit={onEdit}
     >
       {isEmpty ? (
-        <p className="text-sm text-muted-foreground">
-          No contact details yet. Edit this section to add email and phone.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('companyCards.contact.empty')}</p>
       ) : null}
-      <ReadOnlyField label="Contact email" value={detail.contactEmail} />
-      <ReadOnlyField label="Contact phone" value={detail.contactPhone} />
+      <ReadOnlyField label={t('companyCards.contact.contactEmail')} value={detail.contactEmail} />
+      <ReadOnlyField label={t('companyCards.contact.contactPhone')} value={detail.contactPhone} />
     </EditableSectionCard>
   )
 }

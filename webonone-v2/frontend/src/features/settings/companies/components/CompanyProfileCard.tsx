@@ -2,6 +2,7 @@ import {
   isStatusTagVariant,
   StatusTag,
 } from '@webonone/ui-kit'
+import { useTranslation } from 'react-i18next'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
 import { EditableSectionCard } from './EditableSectionCard'
 
@@ -21,10 +22,13 @@ type CompanyProfileCardProps = {
 }
 
 export function CompanyProfileCard({ detail, canEdit, onEdit }: CompanyProfileCardProps) {
+  const { t } = useTranslation('settings')
+  const { t: tc } = useTranslation('common')
+
   return (
     <EditableSectionCard
-      title="Company profile"
-      description="Identity of the company on the platform"
+      title={t('companyCards.profile.title')}
+      description={t('companyCards.profile.description')}
       canEdit={canEdit}
       onEdit={onEdit}
     >
@@ -39,10 +43,10 @@ export function CompanyProfileCard({ detail, canEdit, onEdit }: CompanyProfileCa
           <span className="text-sm text-muted-foreground">{detail.role}</span>
         )
       ) : (
-        <p className="text-sm text-muted-foreground">Super admin view</p>
+        <p className="text-sm text-muted-foreground">{t('companyCards.profile.superAdminView')}</p>
       )}
-      <ReadOnlyField label="Description" value={detail.description} />
-      <ReadOnlyField label="Company size" value={detail.companySize} />
+      <ReadOnlyField label={tc('description')} value={detail.description} />
+      <ReadOnlyField label={t('companyCards.profile.companySize')} value={detail.companySize} />
     </EditableSectionCard>
   )
 }

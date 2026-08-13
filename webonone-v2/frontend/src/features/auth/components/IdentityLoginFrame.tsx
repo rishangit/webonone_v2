@@ -47,7 +47,7 @@ export function IdentityLoginFrame({
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col">
       {loadError ? (
         <div className="flex flex-col items-center gap-3 py-12">
-          <p className="text-sm text-muted-foreground">{t('identityLoadFailed')}</p>
+          <p className="text-sm text-muted-foreground">{t('loginFrame.loadFailed')}</p>
           <Button type="button" onClick={handleRetry}>
             {t('common:retry')}
           </Button>
@@ -56,7 +56,7 @@ export function IdentityLoginFrame({
       <iframe
         ref={iframeRef}
         key={`${src}:${promptLogin ? 'prompt' : 'default'}`}
-        title={t('loginTitle')}
+        title={t('loginFrame.iframeTitle')}
         src={src}
         onLoad={handleLoad}
         onError={() => setLoadError(true)}

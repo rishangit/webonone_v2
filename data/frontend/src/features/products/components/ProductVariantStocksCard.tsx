@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Button,
@@ -44,6 +45,7 @@ export function ProductVariantStocksCard({
   variantId,
   canEdit,
 }: ProductVariantStocksCardProps) {
+  const { t } = useTranslation('products')
   const { toast } = useToast()
   const [items, setItems] = useState<ProductVariantStock[]>([])
   const [loading, setLoading] = useState(true)
@@ -58,7 +60,7 @@ export function ProductVariantStocksCard({
       const result = await dataApi.listProductVariantStocks(productId, variantId)
       setItems(result.items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load stocks')
+      setError(err instanceof Error ? err.message : t('stock.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -74,12 +76,12 @@ export function ProductVariantStocksCard({
     setError(null)
     try {
       await dataApi.setProductVariantStockActive(productId, variantId, stock.id)
-      toast({ title: 'Active stock updated' })
+      toast({ title: t('stock.activeUpdated') })
       await load()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to set active stock'
+      const message = err instanceof Error ? err.message : t('stock.setActiveFailed')
       setError(message)
-      toast({ title: 'Could not update active stock', description: message, variant: 'destructive' })
+      toast({ title: t('stock.activeUpdateFailed'), description: message, variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -89,15 +91,15 @@ export function ProductVariantStocksCard({
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
         <div className="space-y-1.5">
-          <CardTitle className="text-lg">Stocks</CardTitle>
+          <CardTitle className="text-lg">{t('stock.title')}</CardTitle>
           <CardDescription>
-            Batch inventory for this variant SKU. One batch is the active stock.
+            {t('stock.description')}
           </CardDescription>
         </div>
         {canEdit ? (
           <Button type="button" size="sm" onClick={() => setDialogOpen(true)} disabled={loading || saving}>
             <Plus className="h-4 w-4" aria-hidden />
-            Add
+            {t('stock.add')}
           </Button>
         ) : null}
       </CardHeader>
@@ -105,9 +107,9 @@ export function ProductVariantStocksCard({
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
         {loading && items.length === 0 ? (
-          <ItemListEmpty>Loading stocks…</ItemListEmpty>
+          <ItemListEmpty>{t('stock.loading')}</ItemListEmpty>
         ) : items.length === 0 ? (
-          <ItemListEmpty>No stock batches yet. Add a batch to get started.</ItemListEmpty>
+          <ItemListEmpty>{t('stock.empty')}</ItemListEmpty>
         ) : (
           <ItemList>
             {items.map((stock) => (
@@ -116,38 +118,34 @@ export function ProductVariantStocksCard({
                   <div className="space-y-1">
                     <div className="flex min-w-0 items-center gap-2">
                       <p className="truncate font-medium">
-                        Batch {stock.batchNumber}
-                        <span className="font-normal text-muted-foreground">
-                          {' '}
-                          · Qty {formatMoney(stock.quantity)}
-                        </span>
+                        {t('stock.batchQty', { number: stock.batchNumber, qty: formatMoney(stock.quantity) })}
                       </p>
                       {stock.isActive ? (
                         <StatusTag variant="verified" className="shrink-0">
-                          Active
+                          {t('stock.active')}
                         </StatusTag>
                       ) : null}
                     </div>
                     <p className="truncate text-sm text-muted-foreground">
-                      Cost {formatMoney(stock.costPrice)} · Sell {formatMoney(stock.sellPrice)}
+                      {t('stock.costSell', { cost: formatMoney(stock.costPrice), sell: formatMoney(stock.sellPrice) })}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
-                      Purchased {formatDate(stock.purchaseDate)}
-                      {stock.expiredDate ? ` · Expires ${formatDate(stock.expiredDate)}` : ''}
+                      {t('stock.purchased', { date: formatDate(stock.purchaseDate) })}
+                      {stock.expiredDate ? t('stock.expires', { date: formatDate(stock.expiredDate) }) : ''}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
-                      Supplier · {stock.supplierDisplayName}
+                      {t('stock.supplierLine', { name: stock.supplierDisplayName })}
                       {stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}
                     </p>
                   </div>
                 </ItemListContent>
                 {canEdit && !stock.isActive ? (
-                  <ItemListMenu ariaLabel={`Actions for batch ${stock.batchNumber}`}>
+                  <ItemListMenu ariaLabel={t('stock.actionsForBatch', { number: stock.batchNumber })}>
                     <DropdownMenuItem
                       disabled={saving}
                       onClick={() => void handleSetActive(stock)}
                     >
-                      Set as active
+                      {t('stock.setActive')}
                     </DropdownMenuItem>
                   </ItemListMenu>
                 ) : null}

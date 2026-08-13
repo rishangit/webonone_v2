@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Card,
@@ -17,6 +18,7 @@ import {
 } from '@/features/session/utils/accountLabels'
 
 export function AccountSettingsPanel() {
+  const { t } = useTranslation('settings')
   const dispatch = useAppDispatch()
   const { activeRole, activeCompanyId, assumableRoles, loading, selectionComplete } =
     useAppSelector((s) => s.sessionRole)
@@ -39,8 +41,8 @@ export function AccountSettingsPanel() {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div className="space-y-1.5">
-          <CardTitle>Selected account</CardTitle>
-          <CardDescription>The account used for this WebOnOne session.</CardDescription>
+          <CardTitle>{t('account.title')}</CardTitle>
+          <CardDescription>{t('account.description')}</CardDescription>
         </div>
         {canChange ? (
           <Button
@@ -50,7 +52,7 @@ export function AccountSettingsPanel() {
             disabled={changeDisabled}
             onClick={() => dispatch(sessionRoleActions.openChangeDialog())}
           >
-            Change
+            {t('account.change')}
           </Button>
         ) : null}
       </CardHeader>
@@ -69,7 +71,7 @@ export function AccountSettingsPanel() {
         </div>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         {!canChange && selectionComplete ? (
-          <p className="mt-3 text-sm text-muted-foreground">Only one account is available.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t('account.onlyOneAvailable')}</p>
         ) : null}
       </CardContent>
     </Card>

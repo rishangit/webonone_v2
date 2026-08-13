@@ -42,7 +42,7 @@ export function AllCompaniesPage() {
   const awaitingFirstLoad =
     myCompaniesFetchedAt === null && myCompanies.length === 0 && myCompaniesStatus !== 'error'
 
-  usePlatformLoading(awaitingFirstLoad ? t('loadingCompanies') : null)
+  usePlatformLoading(awaitingFirstLoad ? t('myCompanies.loading') : null)
 
   useEffect(() => {
     if (!isFresh(myCompaniesFetchedAt)) {
@@ -64,8 +64,8 @@ export function AllCompaniesPage() {
 
   return (
     <FeaturePage
-      title={t('myCompanies')}
-      description={t('myCompaniesDescription')}
+      title={t('myCompanies.title')}
+      description={t('myCompanies.description')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
@@ -74,14 +74,14 @@ export function AllCompaniesPage() {
               setSearchQuery(event.target.value)
               setPage(1)
             }}
-            placeholder={t('companyName')}
+            placeholder={t('myCompanies.searchPlaceholder')}
             onClear={() => setPage(1)}
-            aria-label={t('searchCompanies')}
+            aria-label={t('myCompanies.searchAria')}
             className="w-64"
           />
           <Button type="button" size="sm" onClick={() => setRegisterOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden />
-            {t('addCompany')}
+            {t('myCompanies.addCompany')}
           </Button>
         </div>
       }
@@ -96,7 +96,7 @@ export function AllCompaniesPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          <MyCompaniesList items={visibleItems} emptyMessage={t('noCompanies')} />
+          <MyCompaniesList items={visibleItems} emptyMessage={t('myCompanies.empty')} />
         </div>
         <Pagination
           className="mt-auto"
@@ -113,9 +113,9 @@ export function AllCompaniesPage() {
       </ListPageBody>
 
       <p className="text-sm text-muted-foreground">
-        {t('lookingForSettings')}{' '}
+        {t('myCompanies.lookingForSettings')}{' '}
         <Link to="/settings/basic" className="text-primary underline-offset-4 hover:underline">
-          {t('basic')}
+          {t('myCompanies.basicSettingsLink')}
         </Link>
       </p>
 
@@ -123,7 +123,7 @@ export function AllCompaniesPage() {
         open={registerOpen}
         onOpenChange={setRegisterOpen}
         onSaved={() => {
-          setSuccessMessage(t('registrationSubmitted'))
+          setSuccessMessage(t('myCompanies.registrationSubmitted'))
         }}
       />
     </FeaturePage>

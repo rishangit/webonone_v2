@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, Button, LoadingState, PageShell } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { authActions } from '../store/authSlice'
@@ -11,6 +12,7 @@ import { apiClient } from '@/shared/services/apiClient'
 const exchangedCodes = new Set<string>()
 
 export function AuthCallbackPage() {
+  const { t } = useTranslation('shell')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -80,7 +82,7 @@ export function AuthCallbackPage() {
   }, [dispatch, navigate, searchParams])
 
   return (
-    <PageShell title="SMS">
+    <PageShell title={t('brand')}>
       <div className="flex flex-col items-center gap-4 py-12">
         {error ? (
           <>
@@ -93,11 +95,11 @@ export function AuthCallbackPage() {
               className="px-0"
               onClick={() => navigate('/login', { replace: true })}
             >
-              Back to sign in
+              {t('backToSignIn')}
             </Button>
           </>
         ) : (
-          <LoadingState overlay label="Completing sign in…" />
+          <LoadingState overlay label={t('completingSignIn')} />
         )}
       </div>
     </PageShell>

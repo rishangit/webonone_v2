@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -85,6 +86,7 @@ function templateDialogPath(mode: TemplateFormMode, templateId?: string | null):
 
 export function getTemplateFormCopy(
   mode: TemplateFormMode,
+  t: (key: string) => string,
   template?: EmailTemplate | null,
 ): {
   title: string
@@ -92,15 +94,15 @@ export function getTemplateFormCopy(
 } {
   if (mode === 'create') {
     return {
-      title: 'New email template',
-      description: 'Create a scoped email template. Use {{placeholder}} for dynamic values.',
+      title: t('form.createTitle'),
+      description: t('form.createDescription'),
     }
   }
   return {
-    title: template?.isDefault ? 'Customize default template' : 'Edit template',
+    title: template?.isDefault ? t('form.customizeTitle') : t('form.editTitle'),
     description: template?.isDefault
-      ? 'Saving creates your company copy of this default. Until then, the platform default is used.'
-      : 'Update subject and body content. Saving creates a new version.',
+      ? t('form.customizeDescription')
+      : t('form.editDescription'),
   }
 }
 
@@ -116,15 +118,17 @@ export function TemplateFormDialog({
   onHostedSaved,
   chrome = 'dialog',
 }: TemplateFormDialogProps) {
+  const { t } = useTranslation('templates')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [createValues, setCreateValues] = useState<TemplateCreateFormValues>({ ...EMPTY_CREATE })
   const [editValues, setEditValues] = useState<TemplateEditorFormValues>({ ...EMPTY_EDIT })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
 
-  const copy = getTemplateFormCopy(mode, template)
+  const copy = getTemplateFormCopy(mode, t, template)
   const dialogPath = templateDialogPath(mode, template?.id)
-  const idleSubmitLabel = mode === 'create' ? 'Create template' : 'Save'
+  const idleSubmitLabel = mode === 'create' ? t('form.create') : tc('save')
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
@@ -159,9 +163,9 @@ export function TemplateFormDialog({
       parentOrigin,
       dialogRequestId,
       isSaving,
-      isSaving ? (mode === 'create' ? 'Creating…' : 'Saving…') : idleSubmitLabel,
+      isSaving ? (mode === 'create' ? t('form.creating') : t('form.saving')) : idleSubmitLabel,
     )
-  }, [chrome, dialogRequestId, idleSubmitLabel, isSaving, mode, parentOrigin])
+  }, [chrome, dialogRequestId, idleSubmitLabel, isSaving, mode, parentOrigin, t])
 
   useEffect(() => {
     if (!open && chrome === 'dialog') return
@@ -214,15 +218,15 @@ export function TemplateFormDialog({
 
   const submitLabel = isSaving
     ? mode === 'create'
-      ? 'Creating…'
-      : 'Saving…'
+      ? t('form.creating')
+      : t('form.saving')
     : idleSubmitLabel
 
   const formBody = (
     <>
       <Form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         {mode === 'create' ? (
-          <FormField label="Slug" htmlFor="template-slug" required error={fieldErrors.slug}>
+          <FormField label={t('slug')} htmlFor="template-slug" required error={fieldErrors.slug}>
             <Input
               id="template-slug"
               placeholder="welcome_email"
@@ -232,11 +236,11 @@ export function TemplateFormDialog({
           </FormField>
         ) : template ? (
           <p className="text-sm text-muted-foreground">
-            Slug: <code>{template.slug}</code>
+            {t('form.slugValue', { slug: template.slug })}
           </p>
         ) : null}
 
-        <FormField label="Name" htmlFor="template-name" required error={fieldErrors.name}>
+        <FormField label={tc('name')} htmlFor="template-name" required error={fieldErrors.name}>
           <Input
             id="template-name"
             value={values.name}
@@ -244,7 +248,7 @@ export function TemplateFormDialog({
           />
         </FormField>
 
-        <FormField label="Subject" htmlFor="template-subject" required error={fieldErrors.subject}>
+        <FormField label={t('subject')} htmlFor="template-subject" required error={fieldErrors.subject}>
           <Input
             id="template-subject"
             value={values.subject}
@@ -252,7 +256,7 @@ export function TemplateFormDialog({
           />
         </FormField>
 
-        <FormField label="HTML body" htmlFor="template-html" required error={fieldErrors.htmlBody}>
+        <FormField label={t('htmlBody')} htmlFor="template-html" required error={fieldErrors.htmlBody}>
           <Textarea
             id="template-html"
             rows={8}
@@ -262,7 +266,7 @@ export function TemplateFormDialog({
         </FormField>
 
         <FormField
-          label="Plain text body"
+          label={t('textBody')}
           htmlFor="template-text"
           required
           error={fieldErrors.textBody}
@@ -276,9 +280,11 @@ export function TemplateFormDialog({
         </FormField>
 
         <p className="text-sm text-muted-foreground">
-          Allowed placeholders: {PLACEHOLDER_HELP.join(', ')}
+          {t('form.placeholders', { list: PLACEHOLDER_HELP.join(', ') })}
           {mode === 'edit' && template && template.requiredKeys.length > 0
-            ? ` · Template-specific: ${template.requiredKeys.map((p) => `{{${p}}}`).join(', ')}`
+            ? ` · ${t('form.templateSpecific', {
+                list: template.requiredKeys.map((p) => `{{${p}}}`).join(', '),
+              })}`
             : ''}
         </p>
       </Form>
@@ -299,7 +305,7 @@ export function TemplateFormDialog({
         onClick={() => onOpenChange(false)}
         disabled={isSaving}
       >
-        Cancel
+        {tc('cancel')}
       </Button>
       <Button type="button" onClick={handleSubmit} disabled={isSaving}>
         {submitLabel}

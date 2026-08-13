@@ -16,5 +16,17 @@
   "continueToSignIn": "පිවිසීමට ඉදිරියට",
   "signingIn": "පිවිසෙමින්…",
   "historyTitle": "යැවීම් ඉතිහාසය",
-  "historyDescription": "ඔබේ විෂය පථය සඳහා පෙර SMS බෙදාහැරීම්."
+  "historyDescription": "ඔබේ විෂය පථය සඳහා පෙර SMS බෙදාහැරීම්.",
+  "historyDescriptionCompany": "සමාගම් විෂය පථයේ යැවීම් ඉතිහාසය. වේදිකා පද්ධති පණිවිඩ (OTP වැනි) මෙහි නොමැත.",
+  "historySearchPlaceholder": "දුරකථන අංකය හෝ ආකෘතිය",
+  "historySearchAria": "ලබන්නාගේ අංකය හෝ ආකෘති නම අනුව සොයන්න",
+  "loadingHistory": "ඉතිහාසය පූරණය වෙමින්…",
+  "allStatuses": "සියලු තත්ත්ව",
+  "statusSent": "යැවූ",
+  "statusFailed": "අසාර්ථක",
+  "historyEmpty": "තෝරාගත් පෙරහන් සඳහා යැවීම් ඉතිහාසයක් නැත.",
+  "historyActionsFor": "{{name}} සඳහා ඉතිහාසය",
+  "completingSignIn": "පිවිසීම සම්පූර්ණ කරමින්…",
+  "backToSignIn": "පිවිසීමට ආපසු",
+  "loadingSession": "සැසිය පූරණය වෙමින්…"
 }

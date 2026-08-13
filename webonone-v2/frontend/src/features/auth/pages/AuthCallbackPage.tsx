@@ -28,7 +28,7 @@ export function AuthCallbackPage() {
     const state = searchParams.get('state')
 
     if (!code || !state) {
-      setError(t('missingAuthResponse'))
+      setError(t('callback.missingAuthorization'))
       return
     }
 
@@ -39,7 +39,7 @@ export function AuthCallbackPage() {
 
     const stored = consumeAuthState(state)
     if (!stored) {
-      setError(t('invalidSignInSession'))
+      setError(t('callback.invalidOrExpired'))
       return
     }
 
@@ -82,7 +82,7 @@ export function AuthCallbackPage() {
   }, [dispatch, navigate, searchParams, t])
 
   return (
-    <PageShell title={t('brand')}>
+    <PageShell title={t('callback.pageTitle')}>
       <div className="flex flex-col items-center gap-4 py-12">
         {error ? (
           <>
@@ -96,11 +96,11 @@ export function AuthCallbackPage() {
                 })
               }
             >
-              {t('backToSignIn')}
+              {t('callback.backToSignIn')}
             </button>
           </>
         ) : (
-          <LoadingState overlay label={t('completingSignIn')} />
+          <LoadingState overlay label={t('callback.completing')} />
         )}
       </div>
     </PageShell>

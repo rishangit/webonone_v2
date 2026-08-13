@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -11,7 +12,7 @@ import {
 } from '@webonone/ui-kit'
 import { CatalogLibraryGalleryMediaModal } from '@/features/catalog/components/CatalogLibraryGalleryMediaModal'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { libraryKindSingular, type LibraryGalleryKind } from '@/features/media/utils/mediaConfig'
+import { type LibraryGalleryKind } from '@/features/media/utils/mediaConfig'
 import { dataApi } from '@/shared/services/dataApi'
 import type { CatalogGalleryImage } from '@/shared/types/data.types'
 
@@ -34,13 +35,13 @@ export function CatalogLibraryGalleryCard({
   canEdit,
   onSaved,
 }: CatalogLibraryGalleryCardProps) {
+  const { t } = useTranslation(kind)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerKey, setPickerKey] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const images = galleryImages ?? []
-  const noun = libraryKindSingular(kind)
 
   async function persistGallery(next: CatalogGalleryImage[]) {
     setSaving(true)
@@ -54,7 +55,7 @@ export function CatalogLibraryGalleryCard({
             : await dataApi.updateSpaceGallery(entityId, next)
       onSaved(updated.galleryImages ?? next)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update gallery')
+      setError(err instanceof Error ? err.message : t('catalog.galleryUpdateFailed'))
     } finally {
       setSaving(false)
     }
@@ -76,9 +77,9 @@ export function CatalogLibraryGalleryCard({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1.5">
-              <CardTitle className="text-lg">Gallery</CardTitle>
+              <CardTitle className="text-lg">{t('catalog.galleryTitle')}</CardTitle>
               <CardDescription>
-                Images for this {noun} (up to {MAX_GALLERY_IMAGES})
+                {t('catalog.galleryDescription', { max: MAX_GALLERY_IMAGES })}
               </CardDescription>
             </div>
             {canEdit ? (
@@ -89,7 +90,7 @@ export function CatalogLibraryGalleryCard({
                 disabled={saving || images.length >= MAX_GALLERY_IMAGES}
               >
                 <ImagePlus className="h-4 w-4" aria-hidden />
-                Add images
+                {t('catalog.addImages')}
               </Button>
             ) : null}
           </div>
@@ -99,7 +100,7 @@ export function CatalogLibraryGalleryCard({
           {images.length === 0 ? (
             <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                {canEdit ? 'Add gallery images' : 'No gallery images yet'}
+                {canEdit ? t('catalog.addGalleryImages') : t('catalog.noGalleryImages')}
               </p>
             </div>
           ) : (
@@ -108,7 +109,7 @@ export function CatalogLibraryGalleryCard({
                 <li key={img.mediaId} className="group relative overflow-hidden rounded-lg border">
                   <img
                     src={img.url}
-                    alt={`${noun} gallery`}
+                    alt={t('catalog.galleryAlt')}
                     className="aspect-square w-full object-cover"
                   />
                   {canEdit ? (
@@ -119,7 +120,7 @@ export function CatalogLibraryGalleryCard({
                       className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                       onClick={() => setPendingRemoveId(img.mediaId)}
                       disabled={saving}
-                      aria-label="Remove gallery image"
+                      aria-label={t('catalog.removeGalleryImage')}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden />
                     </Button>
@@ -152,10 +153,10 @@ export function CatalogLibraryGalleryCard({
 
       <PlatformAlertConfirmDialog
         open={pendingRemoveId !== null}
-        title="Remove gallery image?"
-        description={`This action cannot be undone. The image will be removed from this ${noun} gallery.`}
+        title={t('catalog.removeGalleryTitle')}
+        description={t('catalog.removeGalleryDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
+        submitLabel={t('common:remove')}
         onOpenChange={(open) => {
           if (!open) setPendingRemoveId(null)
         }}

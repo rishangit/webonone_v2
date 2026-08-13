@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { cn, FormField, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
 import {
   formatAttributeValueLabel,
@@ -23,12 +24,13 @@ export function ProductVariantWizardStepType({
   isSubmitting,
   onChange,
 }: ProductVariantWizardStepTypeProps) {
+  const { t } = useTranslation('products')
   const multi = multiValueAttributes(attributes)
 
   return (
     <div className="space-y-6">
       <fieldset className="space-y-3" disabled={isSubmitting}>
-        <legend className="text-sm font-medium text-foreground">Variant type</legend>
+        <legend className="text-sm font-medium text-foreground">{t('variant.typeLegend')}</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           <button
             type="button"
@@ -43,13 +45,13 @@ export function ProductVariantWizardStepType({
             )}
             onClick={() => onChange({ kind: 'default' })}
           >
-            <p className="font-medium text-foreground">Default</p>
+            <p className="font-medium text-foreground">{t('variant.default')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Uses each attribute&apos;s default value. One per product.
+              {t('variant.defaultHint')}
             </p>
             {hasDefaultVariant ? (
               <p className="mt-2 text-xs text-muted-foreground">
-                A default variant already exists for this product.
+                {t('variant.defaultExists')}
               </p>
             ) : null}
           </button>
@@ -66,9 +68,9 @@ export function ProductVariantWizardStepType({
             )}
             onClick={() => onChange({ kind: 'custom' })}
           >
-            <p className="font-medium text-foreground">Custom</p>
+            <p className="font-medium text-foreground">{t('variant.custom')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Choose values from attributes that have multiple options.
+              {t('variant.customHint')}
             </p>
           </button>
         </div>
@@ -81,8 +83,7 @@ export function ProductVariantWizardStepType({
         <div className="space-y-4">
           {multi.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No attributes with multiple values. Add more values on the Attributes tab, or
-              create a Default variant instead.
+              {t('variant.noMultiValues')}
             </p>
           ) : (
             multi.map((attr) => {
@@ -109,13 +110,13 @@ export function ProductVariantWizardStepType({
                     disabled={isSubmitting}
                   >
                     <SelectTrigger id={`variant-attr-${attr.attributeId}`} className="w-full">
-                      <SelectValue placeholder="Select a value" />
+                      <SelectValue placeholder={t('variant.selectValue')} />
                     </SelectTrigger>
                     <SelectContent>
                       {attr.values.map((value) => (
                         <SelectItem key={value.id} value={value.id}>
                           {formatAttributeValueLabel(value, attr.unit?.symbol)}
-                          {value.isDefault ? ' (default)' : ''}
+                          {value.isDefault ? t('variant.defaultSuffix') : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>

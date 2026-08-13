@@ -55,7 +55,7 @@ export function AuthHandoffPage() {
         window.location.replace(`${window.location.origin}/login?sso_bridge=done`)
         return
       }
-      setError(t('missingAuthResponse'))
+      setError(t('callback.missingAuthorization'))
       return
     }
 
@@ -100,7 +100,7 @@ export function AuthHandoffPage() {
   }, [dispatch, navigate, searchParams, t])
 
   return (
-    <PageShell title={t('brand')}>
+    <PageShell title={t('callback.pageTitle')}>
       <div className="flex flex-col items-center gap-4 py-12">
         {error ? (
           <>
@@ -114,11 +114,11 @@ export function AuthHandoffPage() {
                 })
               }
             >
-              {t('backToSignIn')}
+              {t('callback.backToSignIn')}
             </button>
           </>
         ) : (
-          <LoadingState overlay label={t('completingSignIn')} />
+          <LoadingState overlay label={t('callback.completing')} />
         )}
       </div>
     </PageShell>

@@ -86,7 +86,7 @@ export function DashboardPage() {
                       <p className="font-medium">{item.toNumber}</p>
                       <p className="text-xs text-muted-foreground">
                         {item.templateSlug ?? tq('freeform')} ·{' '}
-                        {item.status === 'sent' ? 'Sent' : 'Failed'}
+                        {item.status === 'sent' ? t('statusSent') : t('statusFailed')}
                         {item.createdAt ? ` · ${new Date(item.createdAt).toLocaleString()}` : ''}
                       </p>
                     </ItemListContent>

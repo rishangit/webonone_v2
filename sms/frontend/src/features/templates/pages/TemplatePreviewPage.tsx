@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -24,6 +25,8 @@ function buildSamplePayload(template: SmsTemplate): Record<string, string> {
 }
 
 export function TemplatePreviewPage() {
+  const { t } = useTranslation('templates')
+  const { t: tc } = useTranslation('common')
   const { id } = useParams<{ id: string }>()
   const { goToDetail, goToList } = useNavigateSms()
   const dispatch = useAppDispatch()
@@ -41,7 +44,7 @@ export function TemplatePreviewPage() {
   const rendering = previewStatus === 'loading'
   const error = detailError ?? previewError
 
-  usePlatformLoading(loading ? 'Loading preview…' : null)
+  usePlatformLoading(loading ? t('previewPage.loading') : null)
 
   useEffect(() => {
     if (!id) return
@@ -71,15 +74,17 @@ export function TemplatePreviewPage() {
       dispatch(templatesActions.previewRequested({ id, payload }))
     } catch {
       dispatch(
-        templatesActions.previewFailed('Failed to render preview. Check sample payload JSON.'),
+        templatesActions.previewFailed(t('previewPage.renderFailed')),
       )
     }
   }
 
   return (
     <FeaturePage
-      title={template ? `Preview: ${template.name}` : 'Template preview'}
-      description="Render the template with a sample payload."
+      title={
+        template ? t('previewPage.title', { name: template.name }) : t('previewPage.titleFallback')
+      }
+      description={t('previewPage.description')}
       actions={
         <div className="flex flex-wrap gap-2">
           <Button
@@ -89,7 +94,7 @@ export function TemplatePreviewPage() {
             onClick={() => (id ? goToDetail(id) : goToList())}
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {tc('back')}
           </Button>
         </div>
       }
@@ -102,7 +107,7 @@ export function TemplatePreviewPage() {
       {!loading && template ? (
         <div className="space-y-6">
           <div className="grid gap-4 lg:grid-cols-2">
-            <FormField label="Sample payload (JSON)" htmlFor="preview-payload">
+            <FormField label={t('previewPage.samplePayload')} htmlFor="preview-payload">
               <Textarea
                 id="preview-payload"
                 rows={10}
@@ -111,23 +116,25 @@ export function TemplatePreviewPage() {
               />
             </FormField>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Preview resolves placeholders and shows segment encoding for the rendered message.
-              </p>
+              <p className="text-sm text-muted-foreground">{t('previewPage.hint')}</p>
               <Button type="button" onClick={handleRender} disabled={rendering}>
-                {rendering ? 'Rendering…' : 'Render preview'}
+                {rendering ? t('previewPage.rendering') : t('previewPage.render')}
               </Button>
             </div>
           </div>
 
           {preview ? (
             <section className="space-y-2">
-              <h2 className="text-lg font-medium">Rendered message</h2>
+              <h2 className="text-lg font-medium">{t('previewPage.renderedMessage')}</h2>
               <pre className="whitespace-pre-wrap rounded-lg border border-border p-4 text-sm">
                 {preview.body}
               </pre>
               <p className="text-xs text-muted-foreground">
-                {preview.chars} chars · {preview.segments} segment(s) · {preview.encoding}
+                {t('form.segmentLine', {
+                  chars: preview.chars,
+                  segments: preview.segments,
+                  encoding: preview.encoding,
+                })}
               </p>
             </section>
           ) : null}

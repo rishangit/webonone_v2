@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import {
   PLATFORM_EMBED_QUERY,
@@ -40,13 +41,6 @@ const VARIANT_WIZARD_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
   sizeHeight: 'large' as const,
 }
-
-const STEP_TITLES = ['Type', 'Identity', 'Summary'] as const
-const STEP_DESCRIPTIONS = [
-  'Choose Default or Custom and select attribute values.',
-  'Set the variant name and SKU.',
-  'Review and create the variant.',
-] as const
 
 export interface ProductVariantFormDialogProps {
   open: boolean
@@ -92,9 +86,11 @@ export function ProductVariantFormDialog({
   onSaved,
   chrome = 'dialog',
 }: ProductVariantFormDialogProps) {
+  const { t } = useTranslation('products')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
-  const title = 'Add variant'
+  const title = t('variant.addTitle')
   const embedStep =
     chrome === 'embed-page'
       ? parseProductVariantWizardStep(searchParams.get('step'))
@@ -104,6 +100,16 @@ export function ProductVariantFormDialog({
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
+  const stepTitles = [
+    t('variant.wizardStepType'),
+    t('variant.wizardStepIdentity'),
+    t('variant.wizardStepSummary'),
+  ]
+  const stepDescriptions = [
+    t('variant.descType'),
+    t('variant.descIdentity'),
+    t('variant.descSummary'),
+  ]
 
   const [step, setStep] = useState<ProductVariantWizardStep>(embedStep)
   const [values, setValues] = useState<ProductVariantWizardFormValues>(() => ({
@@ -115,9 +121,9 @@ export function ProductVariantFormDialog({
   const [error, setError] = useState<string | null>(null)
 
   const primaryLabelForStep = (current: ProductVariantWizardStep, isSaving: boolean) => {
-    if (isSaving) return 'Saving…'
-    if (current < TOTAL_STEPS) return 'Next'
-    return 'Add variant'
+    if (isSaving) return t('saving')
+    if (current < TOTAL_STEPS) return tc('next')
+    return t('variant.addTitle')
   }
 
   const { isHosted } = useRequestPlatformPeerDialog({
@@ -125,9 +131,9 @@ export function ProductVariantFormDialog({
     open: chrome === 'dialog' && open,
     path,
     title,
-    description: STEP_DESCRIPTIONS[embedStep - 1],
+    description: stepDescriptions[embedStep - 1],
     submitLabel: primaryLabelForStep(embedStep, false),
-    secondaryLabel: embedStep > 1 ? 'Previous' : undefined,
+    secondaryLabel: embedStep > 1 ? tc('previous') : undefined,
     ...VARIANT_WIZARD_DIALOG_SIZE,
     onResult: () => {
       onSaved({} as ProductVariant)
@@ -265,8 +271,8 @@ export function ProductVariantFormDialog({
       saving,
       primaryLabelForStep(step, saving),
       {
-        description: STEP_DESCRIPTIONS[step - 1],
-        secondaryLabel: step > 1 ? 'Previous' : null,
+        description: stepDescriptions[step - 1],
+        secondaryLabel: step > 1 ? tc('previous') : null,
       },
     )
   }, [chrome, dialogRequestId, parentOrigin, saving, step])
@@ -283,7 +289,7 @@ export function ProductVariantFormDialog({
         onClick={() => onOpenChange(false)}
         disabled={isSubmitting}
       >
-        Cancel
+        {tc('cancel')}
       </Button>
       {step > 1 ? (
         <Button
@@ -294,12 +300,12 @@ export function ProductVariantFormDialog({
           disabled={isSubmitting}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
-          Previous
+          {tc('previous')}
         </Button>
       ) : null}
       {step < TOTAL_STEPS ? (
         <Button type="button" className="h-10 px-4" onClick={handleNext} disabled={isSubmitting}>
-          Next
+          {tc('next')}
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       ) : (
@@ -310,7 +316,7 @@ export function ProductVariantFormDialog({
           disabled={isSubmitting}
         >
           <Save className="mr-2 h-4 w-4" />
-          {isSubmitting ? 'Saving…' : 'Add variant'}
+          {isSubmitting ? t('saving') : t('variant.addTitle')}
         </Button>
       )}
     </div>
@@ -320,7 +326,7 @@ export function ProductVariantFormDialog({
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Step {step} of {TOTAL_STEPS} — {STEP_TITLES[stepIndex]}
+          {t('stepOf', { current: step, total: TOTAL_STEPS, title: stepTitles[stepIndex] })}
         </p>
         <ProductWizardProgress currentStep={step} totalSteps={TOTAL_STEPS} />
       </div>
@@ -370,7 +376,7 @@ export function ProductVariantFormDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={title}
-      description={STEP_DESCRIPTIONS[stepIndex]}
+      description={stepDescriptions[stepIndex]}
       sizeWidth={VARIANT_WIZARD_DIALOG_SIZE.sizeWidth}
       sizeHeight={VARIANT_WIZARD_DIALOG_SIZE.sizeHeight}
       footer={footer}

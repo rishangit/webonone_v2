@@ -36,7 +36,7 @@ export function ConnectedCompaniesPage() {
   const awaitingFirstLoad =
     myCompaniesFetchedAt === null && myCompanies.length === 0 && myCompaniesStatus !== 'error'
 
-  usePlatformLoading(awaitingFirstLoad ? t('loadingCompanies') : null)
+  usePlatformLoading(awaitingFirstLoad ? t('connectedCompanies.loading') : null)
 
   useEffect(() => {
     if (!isFresh(myCompaniesFetchedAt)) {
@@ -58,8 +58,8 @@ export function ConnectedCompaniesPage() {
 
   return (
     <FeaturePage
-      title={t('connectedCompanies')}
-      description={t('connectedCompaniesDescription')}
+      title={t('connectedCompanies.title')}
+      description={t('connectedCompanies.description')}
       actions={
         <SearchInput
           value={searchQuery}
@@ -67,9 +67,9 @@ export function ConnectedCompaniesPage() {
             setSearchQuery(event.target.value)
             setPage(1)
           }}
-          placeholder={t('companyName')}
+          placeholder={t('connectedCompanies.searchPlaceholder')}
           onClear={() => setPage(1)}
-          aria-label={t('searchConnected')}
+          aria-label={t('connectedCompanies.searchAria')}
           className="w-64"
         />
       }
@@ -82,7 +82,7 @@ export function ConnectedCompaniesPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          <MyCompaniesList items={visibleItems} emptyMessage={t('noConnectedCompanies')} />
+          <MyCompaniesList items={visibleItems} emptyMessage={t('connectedCompanies.empty')} />
         </div>
         <Pagination
           className="mt-auto"

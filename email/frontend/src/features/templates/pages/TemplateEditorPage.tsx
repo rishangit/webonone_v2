@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -20,6 +21,8 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { templatesActions } from '@/features/templates/store'
 
 export function TemplateEditorPage() {
+  const { t } = useTranslation('templates')
+  const { t: tc } = useTranslation('common')
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -38,7 +41,9 @@ export function TemplateEditorPage() {
   const loading = detailStatus === 'loading' && !template
   const versionsLoading = versionsStatus === 'loading' && versions.length === 0
 
-  usePlatformLoading(loading ? 'Loading template…' : versionsLoading ? 'Loading versions…' : null)
+  usePlatformLoading(
+    loading ? t('loadingTemplate') : versionsLoading ? t('versions.loading') : null,
+  )
 
   const visibleVersions = versions.slice(
     (versionPage - 1) * versionPageSize,
@@ -54,10 +59,10 @@ export function TemplateEditorPage() {
   useEffect(() => {
     if (restoringId && detailStatus === 'idle' && template) {
       setRestoringId(null)
-      setSuccess('Version restored.')
+      setSuccess(t('versions.restored'))
       dispatch(templatesActions.loadVersionsRequested({ id: template.id, force: true }))
     }
-  }, [detailStatus, dispatch, restoringId, template])
+  }, [detailStatus, dispatch, restoringId, t, template])
 
   function handleRestoreVersion(versionId: string) {
     if (!id) return
@@ -68,9 +73,9 @@ export function TemplateEditorPage() {
 
   if (!id) {
     return (
-      <FeaturePage title="Version history" description="Missing template id.">
+      <FeaturePage title={t('versions.pageTitleFallback')} description={t('versions.missingId')}>
         <Button type="button" variant="outline" onClick={() => navigate('/templates')}>
-          Back to templates
+          {t('versions.backToTemplates')}
         </Button>
       </FeaturePage>
     )
@@ -78,18 +83,20 @@ export function TemplateEditorPage() {
 
   return (
     <FeaturePage
-      title={template ? `Versions: ${template.name}` : 'Version history'}
-      description="Restore a previous version of this template."
+      title={
+        template ? t('versions.pageTitle', { name: template.name }) : t('versions.pageTitleFallback')
+      }
+      description={t('versions.pageDescription')}
       actions={
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" asChild>
             <Link to={`/templates/${id}`}>
               <ArrowLeft className="h-4 w-4" aria-hidden />
-              Back
+              {tc('back')}
             </Link>
           </Button>
           <Button type="button" variant="outline" size="sm" asChild>
-            <Link to={`/templates/${id}/preview`}>Preview</Link>
+            <Link to={`/templates/${id}/preview`}>{t('preview')}</Link>
           </Button>
         </div>
       }
@@ -108,7 +115,7 @@ export function TemplateEditorPage() {
         <ListPageBody>
           <div className="flex-1">
             {versions.length === 0 ? (
-              <ItemListEmpty>No versions yet.</ItemListEmpty>
+              <ItemListEmpty>{t('versions.empty')}</ItemListEmpty>
             ) : (
               <ItemList>
                 {visibleVersions.map((version) => (
@@ -119,12 +126,12 @@ export function TemplateEditorPage() {
                         {version.subject} · {new Date(version.createdAt).toLocaleString()}
                       </p>
                     </ItemListContent>
-                    <ItemListMenu ariaLabel={`Actions for version ${version.versionNumber}`}>
+                    <ItemListMenu ariaLabel={t('versions.actionsFor', { number: version.versionNumber })}>
                       <DropdownMenuItem
                         disabled={restoringId === version.id || detailStatus === 'saving'}
                         onClick={() => handleRestoreVersion(version.id)}
                       >
-                        Restore
+                        {t('versions.restore')}
                       </DropdownMenuItem>
                     </ItemListMenu>
                   </ItemListItem>

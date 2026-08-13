@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
   Button,
@@ -27,6 +28,7 @@ export function ProductVariantsTab({
   attributes,
   canEdit,
 }: ProductVariantsTabProps) {
+  const { t } = useTranslation('products')
   const { goToVariantDetail } = useNavigateDataEntity()
   const [items, setItems] = useState<ProductVariant[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,7 +42,7 @@ export function ProductVariantsTab({
       const result = await dataApi.listProductVariants(productId)
       setItems(result.items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load variants')
+      setError(err instanceof Error ? err.message : t('variant.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -56,15 +58,15 @@ export function ProductVariantsTab({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-medium text-foreground">Variants</h2>
+          <h2 className="text-lg font-medium text-foreground">{t('variants')}</h2>
           <p className="text-sm text-muted-foreground">
-            SKUs built from this product&apos;s attribute values.
+            {t('variant.tabDescription')}
           </p>
         </div>
         {canEdit ? (
           <Button type="button" size="sm" onClick={() => setDialogOpen(true)} disabled={loading}>
             <Plus className="h-4 w-4" aria-hidden />
-            Add new variant
+            {t('variant.addNew')}
           </Button>
         ) : null}
       </div>
@@ -72,9 +74,9 @@ export function ProductVariantsTab({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {loading && items.length === 0 ? (
-        <ItemListEmpty>Loading variants…</ItemListEmpty>
+        <ItemListEmpty>{t('variant.loadingList')}</ItemListEmpty>
       ) : items.length === 0 ? (
-        <ItemListEmpty>No variants yet. Add a default or custom variant to get started.</ItemListEmpty>
+        <ItemListEmpty>{t('variant.empty')}</ItemListEmpty>
       ) : (
         <ItemList>
           {items.map((variant) => {
@@ -84,11 +86,11 @@ export function ProductVariantsTab({
                   <p className="truncate font-medium">{variant.name}</p>
                   {variant.isDefault ? (
                     <StatusTag variant="verified" className="shrink-0">
-                      Default
+                      {t('variant.default')}
                     </StatusTag>
                   ) : null}
                 </div>
-                <p className="truncate text-sm text-muted-foreground">SKU · {variant.sku}</p>
+                <p className="truncate text-sm text-muted-foreground">{t('variant.skuLine', { sku: variant.sku })}</p>
                 {variant.values.length > 0 ? (
                   <p className="truncate text-sm text-muted-foreground">
                     {variant.values

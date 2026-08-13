@@ -29,9 +29,13 @@ function formatTimestamp(value: string): string {
   return date.toLocaleString()
 }
 
-function formatScope(scope: string, isDefault?: boolean): string {
-  if (isDefault) return 'Default'
-  return scope === 'platform' ? 'Platform' : 'Company'
+function formatScope(
+  scope: string,
+  t: (key: 'scopeDefault' | 'scopePlatform' | 'scopeCompany') => string,
+  isDefault?: boolean,
+): string {
+  if (isDefault) return t('scopeDefault')
+  return scope === 'platform' ? t('scopePlatform') : t('scopeCompany')
 }
 
 function truncateBody(value: string, max = 160): string {
@@ -52,6 +56,7 @@ function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode
 
 export function TemplateDetailsPage() {
   const { t } = useTranslation('templates')
+  const { t: tc } = useTranslation('common')
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { goToList, goToPreview, goToVersions } = useNavigateEmail()
@@ -76,7 +81,7 @@ export function TemplateDetailsPage() {
     if (detailStatus === 'idle' && detail && !detailError) {
       setAwaitingUpdate(false)
       setEditOpen(false)
-      toast({ title: 'Template saved' })
+      toast({ title: t('toastSaved') })
       if (detail.id !== id) {
         navigate(`/templates/${detail.id}`, { replace: true })
       }
@@ -84,12 +89,12 @@ export function TemplateDetailsPage() {
     if (detailStatus === 'error' && detailError) {
       setAwaitingUpdate(false)
       toast({
-        title: 'Failed to save template',
+        title: t('toastSaveFailed'),
         description: detailError,
         variant: 'destructive',
       })
     }
-  }, [awaitingUpdate, detail, detailError, detailStatus, id, navigate, toast])
+  }, [awaitingUpdate, detail, detailError, detailStatus, id, navigate, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (!id) return <Navigate to="/templates" replace />
@@ -103,16 +108,16 @@ export function TemplateDetailsPage() {
   return (
     <FeaturePage
       title={template?.name ?? t('singular')}
-      description="Email template details"
+      description={t('pageDescription')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={goToList}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {tc('back')}
           </Button>
           {template ? (
             <Button type="button" variant="outline" size="sm" onClick={() => goToPreview(id)}>
-              Preview
+              {t('preview')}
             </Button>
           ) : null}
         </div>
@@ -128,21 +133,21 @@ export function TemplateDetailsPage() {
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="flex flex-col gap-6 lg:col-span-2">
             <EditableSectionCard
-              title="Template"
-              description="Name, subject, and body summary"
+              title={t('singular')}
+              description={t('cardDescription')}
               canEdit={canEdit}
               onEdit={() => setEditOpen(true)}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-semibold">{template.name}</h2>
                 <StatusTag variant={template.isActive ? 'approved' : 'rejected'}>
-                  {template.isActive ? 'Active' : 'Inactive'}
+                  {template.isActive ? t('active') : t('inactive')}
                 </StatusTag>
-                {template.isDefault ? <StatusTag variant="pending">Default</StatusTag> : null}
+                {template.isDefault ? <StatusTag variant="pending">{t('scopeDefault')}</StatusTag> : null}
               </div>
-              <ReadOnlyField label="Subject" value={template.subject} />
+              <ReadOnlyField label={t('subject')} value={template.subject} />
               <ReadOnlyField
-                label="HTML body"
+                label={t('htmlBody')}
                 value={
                   <p className="line-clamp-3 break-all font-mono text-xs text-muted-foreground">
                     {truncateBody(template.htmlBody)}
@@ -150,7 +155,7 @@ export function TemplateDetailsPage() {
                 }
               />
               <ReadOnlyField
-                label="Plain text body"
+                label={t('textBody')}
                 value={
                   <p className="line-clamp-3 break-words text-muted-foreground">
                     {truncateBody(template.textBody)}
@@ -158,10 +163,10 @@ export function TemplateDetailsPage() {
                 }
               />
               <ReadOnlyField
-                label="Required placeholders"
+                label={t('requiredPlaceholders')}
                 value={
                   template.requiredKeys.length === 0 ? (
-                    'None'
+                    tc('none')
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {template.requiredKeys.map((key) => (
@@ -182,18 +187,18 @@ export function TemplateDetailsPage() {
           <div className="flex flex-col gap-6 lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Meta</CardTitle>
-                <CardDescription>Scope, slug, and timestamps</CardDescription>
+                <CardTitle className="text-lg">{t('meta.title')}</CardTitle>
+                <CardDescription>{t('meta.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label="Slug" value={<code>{template.slug}</code>} />
+                <ReadOnlyField label={t('slug')} value={<code>{template.slug}</code>} />
                 <ReadOnlyField
-                  label="Scope"
-                  value={formatScope(template.scope, template.isDefault)}
+                  label={t('scope')}
+                  value={formatScope(template.scope, t, template.isDefault)}
                 />
-                <ReadOnlyField label="Updated" value={formatTimestamp(template.updatedAt)} />
+                <ReadOnlyField label={t('updated')} value={formatTimestamp(template.updatedAt)} />
                 {template.createdAt ? (
-                  <ReadOnlyField label="Created" value={formatTimestamp(template.createdAt)} />
+                  <ReadOnlyField label={t('created')} value={formatTimestamp(template.createdAt)} />
                 ) : null}
               </CardContent>
             </Card>
@@ -201,12 +206,12 @@ export function TemplateDetailsPage() {
             {!template.isDefault ? (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Versions</CardTitle>
-                  <CardDescription>Restore a previous version of this template</CardDescription>
+                  <CardTitle className="text-lg">{t('versions.title')}</CardTitle>
+                  <CardDescription>{t('versions.cardDescription')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button type="button" variant="outline" size="sm" onClick={() => goToVersions(id)}>
-                    Version history
+                    {t('versionHistory')}
                   </Button>
                 </CardContent>
               </Card>
@@ -231,7 +236,7 @@ export function TemplateDetailsPage() {
           onHostedSaved={() => {
             setEditOpen(false)
             setAwaitingUpdate(false)
-            toast({ title: 'Template saved' })
+            toast({ title: t('toastSaved') })
             dispatch(templatesActions.fetchDetailRequested({ id, force: true }))
             dispatch(templatesActions.loadListRequested({ force: true }))
           }}

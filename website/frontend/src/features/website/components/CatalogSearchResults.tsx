@@ -1,19 +1,20 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ImagePreview, ItemList, ItemListContent, ItemListEmpty, ItemListItem } from '@webonone/ui-kit'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
 import type { UserLocationStatus } from '@/features/website/hooks/useUserLocation'
 
-const KIND_LABEL: Record<CatalogSearchItem['kind'], string> = {
-  products: 'Product',
-  services: 'Service',
-  spaces: 'Space',
+function kindLabel(kind: CatalogSearchItem['kind'], t: (key: string) => string): string {
+  if (kind === 'products') return t('product')
+  if (kind === 'services') return t('service')
+  return t('spaceKind')
 }
 
-function formatDistanceKm(distanceKm: number): string {
+function formatDistanceKm(distanceKm: number, t: (key: string, options?: Record<string, string>) => string): string {
   if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)} m`
+    return t('metersAway', { meters: String(Math.round(distanceKm * 1000)) })
   }
-  return `${distanceKm.toFixed(1)} km away`
+  return t('kmAway', { km: distanceKm.toFixed(1) })
 }
 
 function hasMapLocation(item: CatalogSearchItem): boolean {
@@ -40,26 +41,26 @@ export function CatalogSearchResults({
   locationStatus,
   onViewInMap,
 }: CatalogSearchResultsProps) {
+  const { t } = useTranslation('search')
+
   if (error) {
     return <ItemListEmpty>{error}</ItemListEmpty>
   }
 
   if (!searched) {
-    return (
-      <ItemListEmpty>Search products, services, and spaces from companies on WebOnOne.</ItemListEmpty>
-    )
+    return <ItemListEmpty>{t('searchHint')}</ItemListEmpty>
   }
 
   const rows = Array.isArray(items) ? items : []
   if (rows.length === 0) {
-    return <ItemListEmpty>No matching offerings found. Try another search.</ItemListEmpty>
+    return <ItemListEmpty>{t('noMatching')}</ItemListEmpty>
   }
 
   const locationNote =
     locationStatus === 'denied' || locationStatus === 'unavailable'
-      ? 'Location unavailable — results are sorted by name. Enable location above to see distance.'
+      ? t('locationUnavailableNote')
       : locationStatus === 'pending'
-        ? 'Detecting your location… distances appear when ready.'
+        ? t('locationPendingNote')
         : null
 
   return (
@@ -89,7 +90,7 @@ export function CatalogSearchResults({
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                            {KIND_LABEL[item.kind]}
+                            {kindLabel(item.kind, t)}
                           </span>
                           <span className="text-sm font-medium text-foreground hover:underline">
                             {item.name}
@@ -108,15 +109,15 @@ export function CatalogSearchResults({
                               onViewInMap(item)
                             }}
                           >
-                            View in map
+                            {t('viewInMap')}
                           </button>
                         ) : null}
                         {item.distanceKm != null ? (
                           <span className="rounded-md border border-border bg-muted/60 px-2 py-1 text-xs font-semibold text-foreground">
-                            {formatDistanceKm(item.distanceKm)}
+                            {formatDistanceKm(item.distanceKm, t)}
                           </span>
                         ) : locationStatus === 'ready' && !mappable ? (
-                          <span className="text-xs text-muted-foreground">No map pin</span>
+                          <span className="text-xs text-muted-foreground">{t('noMapPin')}</span>
                         ) : null}
                       </div>
                     </div>

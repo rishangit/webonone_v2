@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -38,6 +39,7 @@ export function CatalogAttributesTab({
   canEdit,
   onChanged,
 }: CatalogAttributesTabProps) {
+  const { t } = useTranslation(kind)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [valueDialogAttributeId, setValueDialogAttributeId] = useState<string | null>(null)
   const [pendingRemoveAttribute, setPendingRemoveAttribute] = useState<CatalogAttributeValue | null>(
@@ -99,9 +101,9 @@ export function CatalogAttributesTab({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-medium text-foreground">Attributes</h2>
+          <h2 className="text-lg font-medium text-foreground">{t('catalog.attributesTitle')}</h2>
           <p className="text-sm text-muted-foreground">
-            Linked attributes and their values for this {kind.slice(0, -1)}.
+            {t('catalog.attributesDescription')}
           </p>
         </div>
         {canEdit ? (
@@ -112,13 +114,13 @@ export function CatalogAttributesTab({
             disabled={busy}
           >
             <Plus className="h-4 w-4" aria-hidden />
-            Add attribute
+            {t('catalog.addAttribute')}
           </Button>
         ) : null}
       </div>
 
       {attributes.length === 0 ? (
-        <ItemListEmpty>No attributes linked yet.</ItemListEmpty>
+        <ItemListEmpty>{t('catalog.noAttributes')}</ItemListEmpty>
       ) : (
         <ItemList>
           {attributes.map((attr) => (
@@ -128,16 +130,16 @@ export function CatalogAttributesTab({
                 <p className="truncate text-sm text-muted-foreground">
                   <span className="capitalize">{attr.valueType}</span>
                   {attr.unit ? ` · ${attr.unit.name} (${attr.unit.symbol})` : ''}
-                  {` · ${attr.values.length} value${attr.values.length === 1 ? '' : 's'}`}
+                  {` · ${t('catalog.valueCount', { count: attr.values.length })}`}
                 </p>
               </ItemListContent>
               {canEdit ? (
-                <ItemListMenu ariaLabel={`Actions for ${attr.name}`}>
+                <ItemListMenu ariaLabel={t('actionsFor', { name: attr.name })}>
                   <DropdownMenuItem
                     disabled={busy}
                     onClick={() => setValueDialogAttributeId(attr.attributeId)}
                   >
-                    Add value
+                    {t('catalog.addValue')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -145,7 +147,7 @@ export function CatalogAttributesTab({
                     disabled={busy}
                     onClick={() => setPendingRemoveAttribute(attr)}
                   >
-                    Remove attribute
+                    {t('catalog.removeAttribute')}
                   </DropdownMenuItem>
                 </ItemListMenu>
               ) : null}
@@ -184,12 +186,12 @@ export function CatalogAttributesTab({
         open={pendingRemoveAttribute !== null}
         title={
           pendingRemoveAttribute
-            ? `Remove ${pendingRemoveAttribute.name}?`
-            : 'Remove attribute?'
+            ? t('catalog.removeAttributeConfirm', { name: pendingRemoveAttribute.name })
+            : t('catalog.removeAttributeFallback')
         }
-        description="Remove this attribute and all of its values from this item? This cannot be undone."
+        description={t('catalog.removeAttributeDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
+        submitLabel={t('common:remove')}
         onOpenChange={(open) => {
           if (!open) setPendingRemoveAttribute(null)
         }}

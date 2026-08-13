@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -38,6 +39,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 export function ProductVariantDetailsPage() {
+  const { t } = useTranslation('products')
   const { productId, variantId } = useParams<{ productId: string; variantId: string }>()
   const { goToDetail } = useNavigateDataEntity()
   const { accessToken, user } = useAppSelector((s) => s.auth)
@@ -55,7 +57,7 @@ export function ProductVariantDetailsPage() {
       setVariant(result)
     } catch (err) {
       setVariant(null)
-      setError(err instanceof Error ? err.message : 'Failed to load variant')
+      setError(err instanceof Error ? err.message : t('variant.loadDetailFailed'))
     } finally {
       setLoading(false)
     }
@@ -65,15 +67,15 @@ export function ProductVariantDetailsPage() {
     void load()
   }, [load])
 
-  usePlatformLoading(loading && !variant ? 'Loading variant…' : null)
+  usePlatformLoading(loading && !variant ? t('loadingVariant') : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (!productId || !variantId) return <Navigate to="/products" replace />
 
   return (
     <FeaturePage
-      title={variant?.name ?? 'Variant'}
-      description="Product variant details"
+      title={variant?.name ?? t('variant.singular')}
+      description={t('variantDetails')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -83,7 +85,7 @@ export function ProductVariantDetailsPage() {
             onClick={() => goToDetail('products', productId, { tab: 'variants' })}
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('common:back')}
           </Button>
         </div>
       }
@@ -98,18 +100,18 @@ export function ProductVariantDetailsPage() {
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="flex flex-col gap-6 lg:col-span-2">
             <EditableSectionCard
-              title="Variant"
-              description="Name, default flag, and SKU"
+              title={t('variant.singular')}
+              description={t('variant.sectionDescription')}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-semibold">{variant.name}</h2>
                 {variant.isDefault ? (
                   <StatusTag variant="verified" className="shrink-0">
-                    Default
+                    {t('variant.default')}
                   </StatusTag>
                 ) : null}
               </div>
-              <ReadOnlyField label="SKU" value={variant.sku} />
+              <ReadOnlyField label={t('variant.sku')} value={variant.sku} />
             </EditableSectionCard>
 
             <ProductVariantStocksCard
@@ -121,11 +123,11 @@ export function ProductVariantDetailsPage() {
 
           <div className="flex flex-col gap-6 lg:col-span-1">
             <EditableSectionCard
-              title="Attribute values"
-              description="Values that define this SKU"
+              title={t('variant.attributeValues')}
+              description={t('variant.attributeValuesDescription')}
             >
               {variant.values.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No attribute values.</p>
+                <p className="text-sm text-muted-foreground">{t('variant.noAttributeValues')}</p>
               ) : (
                 <div className="space-y-4">
                   {variant.values.map((value) => (
@@ -141,12 +143,12 @@ export function ProductVariantDetailsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Meta</CardTitle>
-                <CardDescription>Record timestamps</CardDescription>
+                <CardTitle className="text-lg">{t('metadata')}</CardTitle>
+                <CardDescription>{t('metadataTimestamps')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label="Created" value={formatTimestamp(variant.createdAt)} />
-                <ReadOnlyField label="Updated" value={formatTimestamp(variant.updatedAt)} />
+                <ReadOnlyField label={t('created')} value={formatTimestamp(variant.createdAt)} />
+                <ReadOnlyField label={t('updated')} value={formatTimestamp(variant.updatedAt)} />
               </CardContent>
             </Card>
           </div>

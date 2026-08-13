@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
 
 export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants'
 
 type CatalogDetailSectionTabsProps = {
+  ns: 'products' | 'services' | 'spaces'
   ariaLabel: string
   tab: CatalogDetailTabId
   onTabChange: (tab: CatalogDetailTabId) => void
@@ -15,6 +17,7 @@ type CatalogDetailSectionTabsProps = {
 }
 
 export function CatalogDetailSectionTabs({
+  ns,
   ariaLabel,
   tab,
   onTabChange,
@@ -23,13 +26,14 @@ export function CatalogDetailSectionTabs({
   gallery,
   variants,
 }: CatalogDetailSectionTabsProps) {
+  const { t } = useTranslation(ns)
   const tabs: { id: CatalogDetailTabId; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'gallery', label: 'Gallery' },
-    { id: 'attributes', label: 'Attributes' },
+    { id: 'overview', label: t('overview') },
+    { id: 'gallery', label: t('gallery') },
+    { id: 'attributes', label: t('attributes') },
   ]
   if (variants != null) {
-    tabs.push({ id: 'variants', label: 'Variants' })
+    tabs.push({ id: 'variants', label: t('variants') })
   }
 
   const panel =

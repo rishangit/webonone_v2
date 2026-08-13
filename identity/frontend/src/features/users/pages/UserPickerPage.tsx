@@ -181,7 +181,7 @@ export function UserPickerPage() {
         if (requestId !== requestIdRef.current) {
           return
         }
-        setError(err instanceof Error ? err.message : t('failedToLoadUsers'))
+        setError(err instanceof Error ? err.message : t('errors.loadUsersFailed'))
         if (replace) {
           setUsers([])
           setHasMore(false)
@@ -263,7 +263,7 @@ export function UserPickerPage() {
       <div className="mx-auto flex min-h-[320px] w-full max-w-3xl items-center justify-center p-6">
         <Alert variant="destructive" className="max-w-xl">
           <AlertDescription>
-            {t('embedOnlyPicker')}
+            {t('errors.pickerEmbedOnly')}
           </AlertDescription>
         </Alert>
       </div>
@@ -274,7 +274,7 @@ export function UserPickerPage() {
     return (
       <div className="flex min-h-[320px] flex-1 flex-col items-center justify-center gap-3 p-6">
         <Spinner size="lg" />
-        <p className="text-sm text-muted-foreground">{t('waitingForAuth')}</p>
+        <p className="text-sm text-muted-foreground">{t('loading.waitingAuth')}</p>
       </div>
     )
   }
@@ -288,18 +288,18 @@ export function UserPickerPage() {
           value={searchInput}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchInput(event.target.value)}
           placeholder={t('searchPlaceholderShort')}
-          aria-label={t('search')}
+          aria-label={t('searchAria')}
           className="flex-1"
         />
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-full sm:w-52" aria-label={t('filterByRole')}>
-            <SelectValue placeholder={t('allRoles')} />
+          <SelectTrigger className="w-full sm:w-52" aria-label={t('filterByRoleAria')}>
+            <SelectValue placeholder={t('roles.all')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_ROLES_VALUE}>{t('allRoles')}</SelectItem>
-            <SelectItem value="super_admin">{t('superAdmin')}</SelectItem>
-            <SelectItem value="company_admin">{t('companyAdmin')}</SelectItem>
-            <SelectItem value="member">{t('member')}</SelectItem>
+            <SelectItem value={ALL_ROLES_VALUE}>{t('roles.all')}</SelectItem>
+            <SelectItem value="super_admin">{t('roles.super_admin')}</SelectItem>
+            <SelectItem value="company_admin">{t('roles.company_admin')}</SelectItem>
+            <SelectItem value="member">{t('roles.member')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -325,7 +325,7 @@ export function UserPickerPage() {
           </div>
         ) : null}
 
-        {showEmpty ? <ItemListEmpty>{t('empty')}</ItemListEmpty> : null}
+        {showEmpty ? <ItemListEmpty>{t('empty.noneFound')}</ItemListEmpty> : null}
 
         {!initialLoading && visibleUsers.length > 0 ? (
           <ItemList className="py-2">
@@ -340,7 +340,7 @@ export function UserPickerPage() {
                     'cursor-pointer transition-colors',
                     isSelected && itemListRowActiveClassName,
                   )}
-                  aria-label={multiple ? t('toggleAria', { name: user.displayName }) : t('selectAria', { name: user.displayName })}
+                  aria-label={multiple ? t('picker.toggleAria', { name: user.displayName }) : t('picker.selectAria', { name: user.displayName })}
                   aria-pressed={isSelected}
                   onClick={() => handleUserToggle(user)}
                   onKeyDown={(event: KeyboardEvent<HTMLLIElement>) => {

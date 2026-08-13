@@ -1,6 +1,23 @@
 {
   "title": "Send SMS",
   "description": "Compose a one-off SMS using a template or a freeform message.",
-  "submit": "Send",
-  "loading": "Loading send form…"
+  "submit": "Confirm send",
+  "loading": "Loading send form…",
+  "sending": "Sending…",
+  "compose": "Compose",
+  "composeDescription": "Choose template or freeform, recipient, and message values.",
+  "mode": "Mode",
+  "template": "Template",
+  "freeform": "Freeform",
+  "selectTemplate": "Select template",
+  "recipientNumber": "Recipient number",
+  "message": "Message",
+  "segmentLine": "{{chars}} chars · {{segments}} segment(s) · {{encoding}}",
+  "preview": "Preview",
+  "previewing": "Previewing…",
+  "previewTitle": "Preview",
+  "previewDescription": "Rendered message from the selected template.",
+  "previewHint": "Click Preview to render the SMS here.",
+  "previewTemplateOnly": "Preview is available for template messages.",
+  "queued": "SMS queued ({{queueId}})."
 }

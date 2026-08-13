@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ImagePlus, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PLATFORM_MESSAGE_TYPES, PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
@@ -35,6 +36,8 @@ export function CompanyGalleryCard({
   canEdit,
   saving,
 }: CompanyGalleryCardProps) {
+  const { t } = useTranslation('settings')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { openMediaDialog } = usePlatformMediaDialog()
   const images = galleryImages ?? []
@@ -57,7 +60,7 @@ export function CompanyGalleryCard({
       {
         type: PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_REQUEST,
         requestId: crypto.randomUUID(),
-        title: 'Add gallery images',
+        title: t('companyCards.gallery.addGalleryImages'),
         scope: buildCompanyMediaScope(companyId),
         scopedRoot: COMPANY_MEDIA_SCOPED_ROOT,
         folderPath: buildCompanyGalleryFolderPath(companyId),
@@ -92,10 +95,8 @@ export function CompanyGalleryCard({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1.5">
-              <CardTitle className="text-lg">Gallery</CardTitle>
-              <CardDescription>
-                Additional company images (marketing, office, products, etc.)
-              </CardDescription>
+              <CardTitle className="text-lg">{t('companyCards.gallery.title')}</CardTitle>
+              <CardDescription>{t('companyCards.gallery.cardDescription')}</CardDescription>
             </div>
             {canEdit ? (
               <Button
@@ -105,7 +106,7 @@ export function CompanyGalleryCard({
                 disabled={saving || images.length >= MAX_GALLERY_IMAGES}
               >
                 <ImagePlus className="h-4 w-4" aria-hidden />
-                Add images
+                {t('companyCards.gallery.addImages')}
               </Button>
             ) : null}
           </div>
@@ -114,7 +115,7 @@ export function CompanyGalleryCard({
           {images.length === 0 ? (
             <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                {canEdit ? 'Add gallery images' : 'No gallery images yet'}
+                {canEdit ? t('companyCards.gallery.addGalleryImages') : t('companyCards.gallery.empty')}
               </p>
             </div>
           ) : (
@@ -123,7 +124,7 @@ export function CompanyGalleryCard({
                 <li key={img.mediaId} className="group relative overflow-hidden rounded-lg border">
                   <img
                     src={img.url}
-                    alt="Company gallery"
+                    alt={t('companyCards.gallery.alt')}
                     className="aspect-square w-full object-cover"
                   />
                   {canEdit ? (
@@ -134,7 +135,7 @@ export function CompanyGalleryCard({
                       className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                       onClick={() => setPendingRemoveId(img.mediaId)}
                       disabled={saving}
-                      aria-label="Remove gallery image"
+                      aria-label={t('companyCards.gallery.removeAria')}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden />
                     </Button>
@@ -147,10 +148,10 @@ export function CompanyGalleryCard({
       </Card>
       <PlatformAlertConfirmDialog
         open={pendingRemoveId !== null}
-        title="Remove gallery image?"
-        description="This action cannot be undone. The image will be removed from the company gallery."
+        title={t('companyCards.gallery.removeTitle')}
+        description={t('companyCards.gallery.removeDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
+        submitLabel={tc('remove')}
         onOpenChange={(open) => {
           if (!open) setPendingRemoveId(null)
         }}

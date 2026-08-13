@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -35,6 +36,7 @@ function brandingToFormValues(branding: CompanyBranding): BrandingFormValues {
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation('shell')
   const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
   const companyId = useAppSelector((s) => s.auth.user?.companyId ?? null)
@@ -62,7 +64,7 @@ export function SettingsPage() {
   const loading = tab === 'branding' && status === 'loading' && !branding
   const saving = status === 'saving'
 
-  usePlatformLoading(loading ? 'Loading settings…' : null)
+  usePlatformLoading(loading ? t('settings.loading') : null)
 
   useEffect(() => {
     if (tab !== 'branding' || !companyId) return
@@ -77,13 +79,13 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (awaitingSave && status === 'idle' && !error) {
-      setSuccess('Branding saved.')
+      setSuccess(t('settings.saved'))
       setAwaitingSave(false)
     }
     if (awaitingSave && status === 'error') {
       setAwaitingSave(false)
     }
-  }, [awaitingSave, error, status])
+  }, [awaitingSave, error, status, t])
 
   function patchValues(patch: Partial<BrandingFormValues>) {
     setValues((prev) => ({ ...prev, ...patch }))
@@ -125,21 +127,19 @@ export function SettingsPage() {
   const settingsTabs = useMemo(() => {
     const items: { id: SettingsTab; label: string }[] = []
     if (isSuperAdmin) {
-      items.push({ id: 'global', label: 'Global defaults' })
+      items.push({ id: 'global', label: t('settings.global') })
     }
     if ((isSuperAdmin || role === 'company_admin') && companyId) {
-      items.push({ id: 'branding', label: 'Branding' })
+      items.push({ id: 'branding', label: t('settings.branding') })
     }
     return items
-  }, [companyId, isSuperAdmin, role])
+  }, [companyId, isSuperAdmin, role, t])
 
   return (
     <FeaturePage
-      title="Settings"
+      title={t('settingsTitle')}
       description={
-        isSuperAdmin
-          ? 'Global email defaults and company branding.'
-          : 'Customize email branding for your company.'
+        isSuperAdmin ? t('settings.descriptionSuperAdmin') : t('settings.descriptionCompany')
       }
     >
       <Tabs
@@ -148,7 +148,7 @@ export function SettingsPage() {
         className="flex flex-col gap-6"
       >
         {settingsTabs.length > 0 ? (
-          <TabsList aria-label="Settings sections">
+          <TabsList aria-label={t('settings.ariaSections')}>
             {settingsTabs.map((item) => (
               <TabsTrigger key={item.id} value={item.id}>
                 {item.label}
@@ -171,26 +171,21 @@ export function SettingsPage() {
         <TabsContent value="global" className="mt-0 outline-none">
           {isSuperAdmin ? (
             <section className="space-y-3 rounded-lg border border-border p-6">
-              <h2 className="text-lg font-medium">Global defaults</h2>
-              <p className="text-sm text-muted-foreground">
-                Platform-wide from-name overrides and audit settings are managed on the server. Use
-                the audit log in your operations tooling for send history exports.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                SMTP provider configuration is available under Providers.
-              </p>
+              <h2 className="text-lg font-medium">{t('settings.global')}</h2>
+              <p className="text-sm text-muted-foreground">{t('settings.globalBody')}</p>
+              <p className="text-sm text-muted-foreground">{t('settings.globalSmtpHint')}</p>
             </section>
           ) : null}
         </TabsContent>
 
         <TabsContent value="branding" className="mt-0 outline-none">
           {!companyId ? (
-            <p className="text-sm text-muted-foreground">No company is linked to your account.</p>
+            <p className="text-sm text-muted-foreground">{t('settings.noCompany')}</p>
           ) : loading ? null : (
             <div className="grid gap-8 lg:grid-cols-2">
               <Form onSubmit={handleSaveBranding} className="space-y-4">
                 <FormField
-                  label="Company name"
+                  label={t('settings.companyName')}
                   htmlFor="branding-name"
                   required
                   error={fieldErrors.companyName}
@@ -202,7 +197,7 @@ export function SettingsPage() {
                   />
                 </FormField>
 
-                <FormField label="Logo URL" htmlFor="branding-logo" error={fieldErrors.logoUrl}>
+                <FormField label={t('settings.logoUrl')} htmlFor="branding-logo" error={fieldErrors.logoUrl}>
                   <Input
                     id="branding-logo"
                     value={values.logoUrl ?? ''}
@@ -212,7 +207,7 @@ export function SettingsPage() {
                 </FormField>
 
                 <FormField
-                  label="Primary color"
+                  label={t('settings.primaryColor')}
                   htmlFor="branding-color"
                   required
                   error={fieldErrors.primaryColor}
@@ -225,7 +220,7 @@ export function SettingsPage() {
                 </FormField>
 
                 <FormField
-                  label="Contact email"
+                  label={t('settings.contactEmail')}
                   htmlFor="branding-contact"
                   required
                   error={fieldErrors.contactEmail}
@@ -239,7 +234,7 @@ export function SettingsPage() {
                 </FormField>
 
                 <FormField
-                  label="Footer HTML"
+                  label={t('settings.footerHtml')}
                   htmlFor="branding-footer"
                   error={fieldErrors.footerHtml}
                 >
@@ -252,12 +247,12 @@ export function SettingsPage() {
                 </FormField>
 
                 <Button type="submit" disabled={saving}>
-                  {saving ? 'Saving…' : 'Save branding'}
+                  {saving ? t('settings.saving') : t('settings.saveBranding')}
                 </Button>
               </Form>
 
               <section className="space-y-3 rounded-lg border border-border p-6">
-                <h2 className="text-lg font-medium">Live preview</h2>
+                <h2 className="text-lg font-medium">{t('settings.livePreview')}</h2>
                 <div
                   className="rounded-lg border border-border p-4"
                   style={{ borderTopColor: values.primaryColor, borderTopWidth: 4 }}
@@ -270,10 +265,12 @@ export function SettingsPage() {
                     />
                   ) : null}
                   <p className="font-semibold" style={{ color: values.primaryColor }}>
-                    {values.companyName || 'Company name'}
+                    {values.companyName || t('settings.companyNameFallback')}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Contact: {values.contactEmail || 'contact@example.com'}
+                    {t('settings.contactLine', {
+                      email: values.contactEmail || t('settings.contactFallback'),
+                    })}
                   </p>
                   {values.footerHtml ? (
                     <div
@@ -281,7 +278,7 @@ export function SettingsPage() {
                       dangerouslySetInnerHTML={{ __html: values.footerHtml }}
                     />
                   ) : (
-                    <p className="mt-4 text-xs text-muted-foreground">Footer content appears here.</p>
+                    <p className="mt-4 text-xs text-muted-foreground">{t('settings.footerPlaceholder')}</p>
                   )}
                 </div>
               </section>

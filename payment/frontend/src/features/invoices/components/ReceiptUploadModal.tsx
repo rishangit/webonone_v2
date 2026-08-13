@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   MediaSelectorFrame,
   useMediaEmbedMessage,
@@ -47,6 +48,8 @@ export function ReceiptUploadModal({
   onSelect,
   onClose,
 }: ReceiptUploadModalProps) {
+  const { t } = useTranslation('invoices')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const hostRequestIdRef = useRef<string | null>(null)
   const hostParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
@@ -63,14 +66,14 @@ export function ReceiptUploadModal({
     hostRequestIdRef.current = requestId
     sendPlatformMediaDialogRequest(hostParentOrigin, {
       requestId,
-      title: 'Upload invoice receipt',
+      title: t('uploadReceipt'),
       scope,
       folderPath,
       mode: 'single',
       accept: RECEIPT_ACCEPT,
       selectorUpload: true,
     })
-  }, [folderPath, hostParentOrigin, isOpen, openKey, scope])
+  }, [folderPath, hostParentOrigin, isOpen, openKey, scope, t])
 
   useEffect(() => {
     if (!hostParentOrigin) {
@@ -131,7 +134,7 @@ export function ReceiptUploadModal({
       onOpenChange={(open) => {
         if (!open) onClose()
       }}
-      title="Upload invoice receipt"
+      title={t('uploadReceipt')}
       sizeWidth="medium"
       sizeHeight="large"
       className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
@@ -139,13 +142,13 @@ export function ReceiptUploadModal({
       disableContentScroll
       footer={
         <Button type="button" variant="outline" onClick={onClose}>
-          Close
+          {tc('close')}
         </Button>
       }
     >
       {!accessToken ? (
         <div className="flex flex-col items-center gap-3 py-8">
-          <p className="text-sm text-muted-foreground">Waiting for authentication…</p>
+          <p className="text-sm text-muted-foreground">{t('waitingAuth')}</p>
         </div>
       ) : (
         <MediaSelectorFrame

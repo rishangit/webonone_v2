@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import {
   isPlatformPeerDialogNestedCancelMessage,
@@ -66,14 +67,6 @@ const TAG_PICKER_PEER_SIZE = {
   sizeWidth: 'small' as const,
   sizeHeight: 'large' as const,
 }
-
-const STEP_TITLES = ['Basics', 'Tags', 'Attributes', 'Summary'] as const
-const STEP_DESCRIPTIONS = [
-  'Name and describe this product.',
-  'Optionally label this product with tags.',
-  'Optionally select attributes for this product.',
-  'Review your details before saving.',
-] as const
 
 function isSelectTagValue(value: unknown): value is SelectTagValue {
   if (!value || typeof value !== 'object') return false
@@ -174,10 +167,12 @@ export function ProductFormDialog({
   onSaved,
   chrome = 'dialog',
 }: ProductFormDialogProps) {
+  const { t } = useTranslation('products')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isNew = !id
-  const title = isNew ? 'Create product' : 'Edit product'
+  const title = isNew ? t('createTitle') : t('editTitle')
   const embedStep =
     chrome === 'embed-page'
       ? parseProductWizardStep(searchParams.get('step'))
@@ -186,7 +181,19 @@ export function ProductFormDialog({
   const path = isNew
     ? `/embed/dialogs/products/create${stepQuery}`
     : `/embed/dialogs/products/${id}/edit${stepQuery}`
-  const finalSubmitLabel = isNew ? 'Create product' : 'Save changes'
+  const finalSubmitLabel = isNew ? t('createTitle') : t('saveChanges')
+  const stepTitles = [
+    t('wizard.stepBasics'),
+    t('wizard.stepTags'),
+    t('wizard.stepAttributes'),
+    t('wizard.stepSummary'),
+  ]
+  const stepDescriptions = [
+    t('wizard.descBasics'),
+    t('wizard.descTags'),
+    t('wizard.descAttributes'),
+    t('wizard.descSummary'),
+  ]
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
@@ -224,8 +231,8 @@ export function ProductFormDialog({
   const showLoading = Boolean(!isNew && editor.loading && !detailForForm)
 
   const primaryLabelForStep = (current: ProductWizardStep, saving: boolean) => {
-    if (saving) return 'Saving…'
-    if (current < TOTAL_STEPS) return 'Next'
+    if (saving) return t('saving')
+    if (current < TOTAL_STEPS) return tc('next')
     return finalSubmitLabel
   }
 
@@ -234,9 +241,9 @@ export function ProductFormDialog({
     open: chrome === 'dialog' && open,
     path,
     title,
-    description: STEP_DESCRIPTIONS[embedStep - 1],
+    description: stepDescriptions[embedStep - 1],
     submitLabel: primaryLabelForStep(embedStep, false),
-    secondaryLabel: embedStep > 1 ? 'Previous' : undefined,
+    secondaryLabel: embedStep > 1 ? tc('previous') : undefined,
     ...PRODUCT_WIZARD_DIALOG_SIZE,
     onResult: () => {
       onSaved()
@@ -336,9 +343,9 @@ export function ProductFormDialog({
         parentRequestId: dialogRequestId,
         requestId: nestedRequestId,
         path: TAG_SELECT_EMBED_PATH,
-        title: 'Select tags',
-        description: 'Choose one or more tags, then click Done.',
-        submitLabel: 'Done',
+        title: t('selectTagsTitle'),
+        description: t('selectTagsDescription'),
+        submitLabel: tc('done'),
         ...TAG_PICKER_PEER_SIZE,
       })
       return
@@ -579,8 +586,8 @@ export function ProductFormDialog({
       editor.saving || nestedPickerOpen,
       primaryLabelForStep(step, editor.saving),
       {
-        description: STEP_DESCRIPTIONS[step - 1],
-        secondaryLabel: step > 1 ? 'Previous' : null,
+        description: stepDescriptions[step - 1],
+        secondaryLabel: step > 1 ? tc('previous') : null,
       },
     )
   }, [
@@ -631,7 +638,7 @@ export function ProductFormDialog({
         onClick={() => handleFormOpenChange(false)}
         disabled={isSubmitting}
       >
-        Cancel
+        {tc('cancel')}
       </Button>
       {step > 1 ? (
         <Button
@@ -642,7 +649,7 @@ export function ProductFormDialog({
           disabled={isSubmitting}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
-          Previous
+          {tc('previous')}
         </Button>
       ) : null}
       {step < TOTAL_STEPS ? (
@@ -652,7 +659,7 @@ export function ProductFormDialog({
           onClick={handleNext}
           disabled={isSubmitting || showLoading || nestedPickerOpen}
         >
-          Next
+          {tc('next')}
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       ) : (
@@ -663,7 +670,7 @@ export function ProductFormDialog({
           disabled={isSubmitting || showLoading || nestedPickerOpen}
         >
           <Save className="mr-2 h-4 w-4" />
-          {isSubmitting ? 'Saving…' : finalSubmitLabel}
+          {isSubmitting ? t('saving') : finalSubmitLabel}
         </Button>
       )}
     </div>
@@ -677,7 +684,7 @@ export function ProductFormDialog({
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Step {step} of {TOTAL_STEPS} — {STEP_TITLES[stepIndex]}
+          {t('stepOf', { current: step, total: TOTAL_STEPS, title: stepTitles[stepIndex] })}
         </p>
         <ProductWizardProgress currentStep={step} totalSteps={TOTAL_STEPS} />
       </div>
@@ -736,7 +743,7 @@ export function ProductFormDialog({
         open={open}
         onOpenChange={handleFormOpenChange}
         title={title}
-        description={STEP_DESCRIPTIONS[stepIndex]}
+        description={stepDescriptions[stepIndex]}
         sizeWidth={PRODUCT_WIZARD_DIALOG_SIZE.sizeWidth}
         sizeHeight={PRODUCT_WIZARD_DIALOG_SIZE.sizeHeight}
         nestedDismissGuard={nestedPickerOpen || blockOuterDismiss}

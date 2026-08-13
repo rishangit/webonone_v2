@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -60,6 +61,7 @@ function templateDialogPath(mode: TemplateFormMode, templateId?: string | null):
 
 export function getSmsTemplateFormCopy(
   mode: TemplateFormMode,
+  t: (key: string) => string,
   template?: SmsTemplate | null,
 ): {
   title: string
@@ -67,15 +69,15 @@ export function getSmsTemplateFormCopy(
 } {
   if (mode === 'create') {
     return {
-      title: 'New company template',
-      description: 'Create a company-scoped SMS template. Use {{placeholder}} for dynamic values.',
+      title: t('form.createTitle'),
+      description: t('form.createDescription'),
     }
   }
   return {
-    title: template?.isDefault ? 'Customize default template' : 'Edit template',
+    title: template?.isDefault ? t('form.customizeTitle') : t('form.editTitle'),
     description: template?.isDefault
-      ? 'Saving creates your company copy of this default. Until then, the platform default is used.'
-      : 'Update the message body. Saving creates a new version.',
+      ? t('form.customizeDescription')
+      : t('form.editDescription'),
   }
 }
 
@@ -91,15 +93,17 @@ export function TemplateFormDialog({
   onHostedSaved,
   chrome = 'dialog',
 }: TemplateFormDialogProps) {
+  const { t } = useTranslation('templates')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [createValues, setCreateValues] = useState<TemplateCreateFormValues>({ ...EMPTY_CREATE })
   const [editValues, setEditValues] = useState<TemplateEditorFormValues>({ ...EMPTY_EDIT })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
 
-  const copy = getSmsTemplateFormCopy(mode, template)
+  const copy = getSmsTemplateFormCopy(mode, t, template)
   const dialogPath = templateDialogPath(mode, template?.id)
-  const idleSubmitLabel = mode === 'create' ? 'Create template' : 'Save'
+  const idleSubmitLabel = mode === 'create' ? t('form.create') : tc('save')
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
@@ -169,21 +173,21 @@ export function TemplateFormDialog({
       parentOrigin,
       dialogRequestId,
       isSaving,
-      isSaving ? (mode === 'create' ? 'Creating…' : 'Saving…') : idleSubmitLabel,
+      isSaving ? (mode === 'create' ? t('form.creating') : t('form.saving')) : idleSubmitLabel,
     )
-  }, [chrome, dialogRequestId, idleSubmitLabel, isSaving, mode, parentOrigin])
+  }, [chrome, dialogRequestId, idleSubmitLabel, isSaving, mode, parentOrigin, t])
 
   const submitLabel = isSaving
     ? mode === 'create'
-      ? 'Creating…'
-      : 'Saving…'
+      ? t('form.creating')
+      : t('form.saving')
     : idleSubmitLabel
 
   const formBody = (
     <>
       <Form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         {mode === 'create' ? (
-          <FormField label="Slug" htmlFor="template-slug" required error={fieldErrors.slug}>
+          <FormField label={t('slug')} htmlFor="template-slug" required error={fieldErrors.slug}>
             <Input
               id="template-slug"
               placeholder="order_confirmation"
@@ -193,11 +197,11 @@ export function TemplateFormDialog({
           </FormField>
         ) : template ? (
           <p className="text-sm text-muted-foreground">
-            Slug: <code>{template.slug}</code>
+            {t('form.slugValue', { slug: template.slug })}
           </p>
         ) : null}
 
-        <FormField label="Name" htmlFor="template-name" required error={fieldErrors.name}>
+        <FormField label={tc('name')} htmlFor="template-name" required error={fieldErrors.name}>
           <Input
             id="template-name"
             value={mode === 'create' ? createValues.name : editValues.name}
@@ -212,7 +216,7 @@ export function TemplateFormDialog({
           />
         </FormField>
 
-        <FormField label="Message body" htmlFor="template-body" required error={fieldErrors.body}>
+        <FormField label={t('messageBody')} htmlFor="template-body" required error={fieldErrors.body}>
           <Textarea
             id="template-body"
             rows={5}
@@ -227,7 +231,11 @@ export function TemplateFormDialog({
             }}
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            {info.chars} chars · {info.segments} segment(s) · {info.encoding}
+            {t('form.segmentLine', {
+              chars: info.chars,
+              segments: info.segments,
+              encoding: info.encoding,
+            })}
           </p>
         </FormField>
       </Form>
@@ -248,7 +256,7 @@ export function TemplateFormDialog({
         onClick={() => onOpenChange(false)}
         disabled={isSaving}
       >
-        Cancel
+        {tc('cancel')}
       </Button>
       <Button type="button" onClick={handleSubmit} disabled={isSaving}>
         {submitLabel}

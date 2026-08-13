@@ -68,29 +68,29 @@ export function GatewaySettingsCard() {
     if (!awaitingSave) return
     if (status === 'idle' && saveMessage === 'saved') {
       setAwaitingSave(false)
-      toast({ title: 'Gateway settings saved' })
+      toast({ title: t('toastSaved') })
       dispatch(gatewayActions.clearMessages())
     }
     if (status === 'error') {
       setAwaitingSave(false)
-      toast({ title: 'Failed to save gateway', description: error ?? undefined, variant: 'destructive' })
+      toast({ title: t('toastSaveFailed'), description: error ?? undefined, variant: 'destructive' })
       dispatch(gatewayActions.clearMessages())
     }
-  }, [awaitingSave, dispatch, error, saveMessage, status, toast])
+  }, [awaitingSave, dispatch, error, saveMessage, status, t, toast])
 
   useEffect(() => {
     if (!awaitingTest) return
     if (testStatus === 'idle' && testMessage) {
       setAwaitingTest(false)
-      toast({ title: 'Test SMS sent', description: testMessage })
+      toast({ title: t('toastTestSent'), description: testMessage })
       dispatch(gatewayActions.clearMessages())
     }
     if (testStatus === 'error') {
       setAwaitingTest(false)
-      toast({ title: 'Failed to send test SMS', description: error ?? undefined, variant: 'destructive' })
+      toast({ title: t('toastTestFailed'), description: error ?? undefined, variant: 'destructive' })
       dispatch(gatewayActions.clearMessages())
     }
-  }, [awaitingTest, dispatch, error, testMessage, testStatus, toast])
+  }, [awaitingTest, dispatch, error, t, testMessage, testStatus, toast])
 
   function handleSave(event: React.FormEvent) {
     event.preventDefault()
@@ -102,7 +102,7 @@ export function GatewaySettingsCard() {
     setFieldErrors({})
 
     if (parsed.data.mode === 'text_lk' && !parsed.data.apiToken?.trim() && !config?.hasApiToken) {
-      setFieldErrors({ apiToken: 'API token is required for Text.lk' })
+      setFieldErrors({ apiToken: t('apiTokenRequired') })
       return
     }
 

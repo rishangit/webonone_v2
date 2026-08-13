@@ -38,7 +38,7 @@ export function HistorySubmissionDetailPage() {
   const [loading, setLoading] = useState(true)
   const { open: openFormDialog } = useOpenDesignFormDialog()
 
-  usePlatformLoading(loading && !detail ? t('loadingSubmission') : null)
+  usePlatformLoading(loading && !detail ? t('loading.submission') : null)
 
   useEffect(() => {
     if (!submissionId) return
@@ -51,7 +51,7 @@ export function HistorySubmissionDetailPage() {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t('unableToLoadSubmission'))
+          setError(err instanceof Error ? err.message : t('errors.loadSubmissionFailed'))
         }
       })
       .finally(() => {
@@ -93,8 +93,8 @@ export function HistorySubmissionDetailPage() {
   if (error && !detail) {
     return (
       <FeaturePage
-        title={t('formSubmission')}
-        description={t('unableToLoadSubmissionPage')}
+        title={t('history.submissionTitle')}
+        description={t('history.submissionLoadError')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={back}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -114,7 +114,7 @@ export function HistorySubmissionDetailPage() {
   return (
     <FeaturePage
       title={detail.formName}
-      description={t('filledFor', { name: detail.subjectDisplayName })}
+      description={t('history.filledFor', { name: detail.subjectDisplayName })}
       actions={
         <Button type="button" variant="outline" size="sm" onClick={back}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -126,12 +126,12 @@ export function HistorySubmissionDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t('form')}</CardTitle>
-              <CardDescription>{t('formOpenDescription')}</CardDescription>
+              <CardTitle className="text-lg">{t('history.formCardTitle')}</CardTitle>
+              <CardDescription>{t('history.formCardDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button type="button" size="sm" variant="outline" onClick={openView}>
-                {t('viewForm')}
+                {t('history.viewForm')}
               </Button>
             </CardContent>
           </Card>
@@ -139,15 +139,15 @@ export function HistorySubmissionDetailPage() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t('context')}</CardTitle>
-              <CardDescription>{t('contextCardDescription')}</CardDescription>
+              <CardTitle className="text-lg">{t('history.contextTitle')}</CardTitle>
+              <CardDescription>{t('history.contextDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DetailField label={t('subject')} value={detail.subjectDisplayName} />
-              <DetailField label={t('filledBy')} value={detail.filledByDisplayName} />
-              <DetailField label={t('service')} value={detail.serviceName ?? '—'} />
+              <DetailField label={t('history.subject')} value={detail.subjectDisplayName} />
+              <DetailField label={t('history.filledByLabel')} value={detail.filledByDisplayName} />
+              <DetailField label={t('history.service')} value={detail.serviceName ?? '—'} />
               <DetailField
-                label={t('submitted')}
+                label={t('history.submitted')}
                 value={new Date(detail.createdAt).toLocaleString()}
               />
             </CardContent>

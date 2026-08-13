@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LogIn } from 'lucide-react'
 import { Button, CustomDialog } from '@webonone/ui-kit'
 import { getWebsiteLoginHref } from '@/features/auth/utils/identityConfig'
@@ -23,9 +24,11 @@ export function LoginRequiredDialog({
   open,
   onOpenChange,
   returnPath,
-  title = 'Login required',
-  description = 'You need to log in to continue. After login you will return to this page.',
+  title,
+  description,
 }: LoginRequiredDialogProps) {
+  const { t } = useTranslation('auth')
+  const { t: tc } = useTranslation('common')
   const [redirecting, setRedirecting] = useState(false)
 
   function handleOpenChange(next: boolean) {
@@ -45,8 +48,8 @@ export function LoginRequiredDialog({
     <CustomDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={title}
-      description={description}
+      title={title ?? t('loginRequiredTitle')}
+      description={description ?? t('loginRequiredBody')}
       sizeWidth="small"
       sizeHeight="auto"
       maxWidth="max-w-md"
@@ -60,18 +63,16 @@ export function LoginRequiredDialog({
             disabled={redirecting}
             onClick={() => handleOpenChange(false)}
           >
-            Cancel
+            {tc('cancel')}
           </Button>
           <Button type="button" disabled={redirecting} onClick={handleLogin}>
             <LogIn className="mr-2 h-4 w-4" aria-hidden />
-            {redirecting ? 'Continuing to login…' : 'Login'}
+            {redirecting ? t('continuingToLogin') : t('login')}
           </Button>
         </>
       }
     >
-      <p className="text-sm text-muted-foreground">
-        Sign in with your WebOnOne account to book a queue token and use signed-in features.
-      </p>
+      <p className="text-sm text-muted-foreground">{t('loginRequiredHint')}</p>
     </CustomDialog>
   )
 }

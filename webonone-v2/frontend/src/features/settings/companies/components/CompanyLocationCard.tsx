@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
 import { CompanyMapPicker } from './CompanyMapPicker'
 import { EditableSectionCard } from './EditableSectionCard'
@@ -16,10 +17,11 @@ export function CompanyLocationCard({
   onEdit,
   fillHeight = false,
 }: CompanyLocationCardProps) {
+  const { t } = useTranslation('settings')
   return (
     <EditableSectionCard
-      title="Location information"
-      description="Map pin for this company"
+      title={t('companyCards.location.title')}
+      description={t('companyCards.location.description')}
       canEdit={canEdit}
       onEdit={onEdit}
       className={fillHeight ? 'flex h-full min-h-[20rem] flex-col' : undefined}
@@ -36,7 +38,7 @@ export function CompanyLocationCard({
       {detail.mapFormattedAddress ? (
         <div className="shrink-0 space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Map address
+            {t('companyCards.location.mapAddress')}
           </p>
           <p className="text-sm">{detail.mapFormattedAddress}</p>
         </div>

@@ -22,5 +22,10 @@
   "testing": "Sending…",
   "statusConfigured": "Configured",
   "statusNotConfigured": "Not configured",
-  "developersLink": "Text.lk Developers"
+  "developersLink": "Text.lk Developers",
+  "toastSaved": "Gateway settings saved",
+  "toastSaveFailed": "Failed to save gateway",
+  "toastTestSent": "Test SMS sent",
+  "toastTestFailed": "Failed to send test SMS",
+  "apiTokenRequired": "API token is required for Text.lk"
 }

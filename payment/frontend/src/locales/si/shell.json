@@ -15,5 +15,8 @@
   "signInTitle": "ගෙවීම් වෙත පිවිසෙන්න",
   "signInDescription": "ආරක්ෂිතව පිවිසීමට ඔබව Identity වෙත යොමු කෙරේ.",
   "continueToSignIn": "පිවිසීමට ඉදිරියට",
-  "signingIn": "පිවිසෙමින්…"
+  "signingIn": "පිවිසෙමින්…",
+  "completingSignIn": "පිවිසීම සම්පූර්ණ කරමින්…",
+  "backToSignIn": "පිවිසීමට ආපසු",
+  "loadingSession": "සැසිය පූරණය වෙමින්…"
 }

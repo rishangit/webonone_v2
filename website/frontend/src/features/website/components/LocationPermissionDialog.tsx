@@ -64,29 +64,16 @@ export function LocationPermissionDialog({
     >
       {blocked ? (
         <div className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            Location is currently <span className="font-medium text-foreground">blocked</span> for
-            this site. Unlock it first, then click Allow location:
-          </p>
+          <p>{t('locationBlockedIntro')}</p>
           <ol className="list-decimal space-y-1 pl-4">
-            <li>Click the lock (or tune) icon next to the address bar</li>
-            <li>
-              Open <span className="font-medium text-foreground">Site settings</span>
-            </li>
-            <li>
-              Set <span className="font-medium text-foreground">Location</span> to{' '}
-              <span className="font-medium text-foreground">Allow</span>
-            </li>
-            <li>Return here and click Allow location</li>
+            <li>{t('locationUnlockStep1')}</li>
+            <li>{t('locationUnlockStep2')}</li>
+            <li>{t('locationUnlockStep3')}</li>
+            <li>{t('locationUnlockStep4')}</li>
           </ol>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          Clicking <span className="font-medium text-foreground">Allow location</span> opens your
-          browser’s permission popup. Choose{' '}
-          <span className="font-medium text-foreground">Allow</span> there to share your precise
-          location.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('locationAllowBrowserHint')}</p>
       )}
     </CustomDialog>
   )

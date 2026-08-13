@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   FormField,
   Input,
@@ -25,9 +26,10 @@ export function ServiceWizardStepBasics({
   canSetStatus,
   onChange,
 }: ServiceWizardStepBasicsProps) {
+  const { t } = useTranslation('services')
   return (
     <div className="space-y-4">
-      <FormField label="Name" htmlFor="service-wizard-name" required error={fieldErrors.name}>
+      <FormField label={t('common:name')} htmlFor="service-wizard-name" required error={fieldErrors.name}>
         <Input
           id="service-wizard-name"
           value={values.name}
@@ -38,7 +40,7 @@ export function ServiceWizardStepBasics({
       </FormField>
 
       <FormField
-        label="Description"
+        label={t('common:description')}
         htmlFor="service-wizard-description"
         error={fieldErrors.description}
       >
@@ -53,7 +55,7 @@ export function ServiceWizardStepBasics({
       </FormField>
 
       {canSetStatus ? (
-        <FormField label="Status" htmlFor="service-wizard-status" required error={fieldErrors.status}>
+        <FormField label={t('common:status')} htmlFor="service-wizard-status" required error={fieldErrors.status}>
           <Select
             value={values.status}
             onValueChange={(status) =>
@@ -65,8 +67,8 @@ export function ServiceWizardStepBasics({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">Unverified</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
+              <SelectItem value="pending">{t('unverified')}</SelectItem>
+              <SelectItem value="verified">{t('verified')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

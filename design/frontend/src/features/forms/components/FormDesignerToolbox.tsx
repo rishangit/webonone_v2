@@ -1,13 +1,14 @@
 import { CheckSquare, ChevronDown, CircleDot, Type, AlignLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@webonone/ui-kit'
 import type { FormFieldType } from '@/shared/types/design.types'
 
-const TOOLS: { type: FormFieldType; label: string; icon: typeof Type }[] = [
-  { type: 'text', label: 'Text box', icon: Type },
-  { type: 'textarea', label: 'Text area', icon: AlignLeft },
-  { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },
-  { type: 'radio', label: 'Radio', icon: CircleDot },
-  { type: 'select', label: 'Dropdown', icon: ChevronDown },
+const TOOLS: { type: FormFieldType; labelKey: string; icon: typeof Type }[] = [
+  { type: 'text', labelKey: 'toolText', icon: Type },
+  { type: 'textarea', labelKey: 'toolTextarea', icon: AlignLeft },
+  { type: 'checkbox', labelKey: 'toolCheckbox', icon: CheckSquare },
+  { type: 'radio', labelKey: 'toolRadio', icon: CircleDot },
+  { type: 'select', labelKey: 'toolSelect', icon: ChevronDown },
 ]
 
 interface FormDesignerToolboxProps {
@@ -16,10 +17,12 @@ interface FormDesignerToolboxProps {
 }
 
 export function FormDesignerToolbox({ onAdd, disabled }: FormDesignerToolboxProps) {
+  const { t } = useTranslation('forms')
+
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">Toolbox</p>
-      <p className="text-xs text-muted-foreground">Click to add a field to the form.</p>
+      <p className="text-sm font-medium">{t('toolbox')}</p>
+      <p className="text-xs text-muted-foreground">{t('toolboxHint')}</p>
       <div className="flex flex-col gap-2">
         {TOOLS.map((tool) => {
           const Icon = tool.icon
@@ -33,7 +36,7 @@ export function FormDesignerToolbox({ onAdd, disabled }: FormDesignerToolboxProp
               onClick={() => onAdd(tool.type)}
             >
               <Icon className="h-4 w-4" aria-hidden />
-              {tool.label}
+              {t(tool.labelKey)}
             </Button>
           )
         })}

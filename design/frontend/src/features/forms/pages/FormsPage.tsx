@@ -69,7 +69,7 @@ export function FormsPage() {
     if (detailStatus === 'error') {
       setAwaitingCreate(false)
     }
-  }, [awaitingCreate, detail, detailStatus, goToEdit, toast])
+  }, [awaitingCreate, detail, detailStatus, goToEdit, t, toast])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />

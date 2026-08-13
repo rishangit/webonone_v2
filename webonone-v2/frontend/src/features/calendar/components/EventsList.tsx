@@ -37,7 +37,7 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
   if (items.length === 0) {
     return (
       <ItemListEmpty>
-        {canManage ? t('emptyEvents') : t('emptyBookings')}
+        {canManage ? t('events.emptyAdmin') : t('events.emptyMember')}
       </ItemListEmpty>
     )
   }
@@ -51,11 +51,11 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
     try {
       await eventsApi.delete(item.id)
       dispatch(eventsActions.deleteSucceeded(item.id))
-      toast({ title: t('eventRemoved') })
+      toast({ title: t('events.toastRemoved') })
       onRemoved()
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('eventRemoveFailed')
-      toast({ title: t('eventRemoveFailed'), description: message, variant: 'destructive' })
+      const message = err instanceof Error ? err.message : t('events.toastRemoveFailed')
+      toast({ title: t('events.toastRemoveFailed'), description: message, variant: 'destructive' })
     } finally {
       setRemovingId(null)
     }
@@ -92,7 +92,7 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
             </ItemListContent>
             <ItemListMenu ariaLabel={t('actionsFor', { name: item.serviceName })}>
               <DropdownMenuItem onSelect={() => openDetails(item.id)}>
-                {t('viewDetails')}
+                {t('events.viewDetails')}
               </DropdownMenuItem>
               {canManage ? (
                 <>
@@ -102,7 +102,7 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
                     onSelect={() => setPendingRemove(item)}
                     className="text-destructive focus:text-destructive"
                   >
-                    {removingId === item.id ? t('removing') : t('common:remove')}
+                    {removingId === item.id ? t('events.removing') : t('common:remove')}
                   </DropdownMenuItem>
                 </>
               ) : null}
@@ -115,10 +115,10 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
           open={pendingRemove !== null}
           title={
             pendingRemove
-              ? t('removeNamed', { name: pendingRemove.serviceName })
-              : t('removeEvent')
+              ? t('events.removeTitleNamed', { name: pendingRemove.serviceName })
+              : t('events.removeTitle')
           }
-          description={t('removeEventConfirm')}
+          description={t('events.removeDescription')}
           isAllowedParentOrigin={isAllowedParentOrigin}
           submitLabel={t('common:remove')}
           onOpenChange={(open) => {

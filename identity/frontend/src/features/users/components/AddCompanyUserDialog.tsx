@@ -108,9 +108,9 @@ export function AddCompanyUserDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
     open: chrome === 'dialog' && open,
     path: ADD_USER_DIALOG_PATH,
-    title: t('addUserTitle'),
-    description: t('addUserDescription'),
-    submitLabel: t('done'),
+    title: t('addDialog.title'),
+    description: t('addDialog.description'),
+    submitLabel: t('addDialog.submit'),
     ...USER_SELECTION_DIALOG_SIZE,
     onResult: (payload) => {
       if (payload && typeof payload === 'object' && isUserOption(payload)) {
@@ -183,9 +183,9 @@ export function AddCompanyUserDialog({
         parentRequestId: dialogRequestId,
         requestId: nestedRequestId,
         path: CREATE_USER_DIALOG_PATH,
-        title: t('createUser'),
-        description: t('createUserDescription'),
-        submitLabel: t('createUser'),
+        title: t('createDialog.title'),
+        description: t('createDialog.description'),
+        submitLabel: t('createDialog.submit'),
         ...CREATE_DIALOG_SIZE,
       })
       return
@@ -280,7 +280,7 @@ export function AddCompanyUserDialog({
       onCreated(user)
       onOpenChange(false)
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : t('failedToCreateUser'))
+      setCreateError(err instanceof Error ? err.message : t('errors.createFailed'))
     } finally {
       setCreating(false)
     }
@@ -305,14 +305,14 @@ export function AddCompanyUserDialog({
       return
     }
     if (createOpen) {
-      sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, true, t('done'))
+      sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, true, t('addDialog.submit'))
       return
     }
     sendPlatformPeerDialogBusy(
       parentOrigin,
       dialogRequestId,
       !pendingSelection,
-      t('done'),
+      t('addDialog.submit'),
     )
   }, [chrome, createOpen, dialogRequestId, parentOrigin, pendingSelection])
 
@@ -345,7 +345,7 @@ export function AddCompanyUserDialog({
         onPendingChange={setPendingSelection}
         onAddUser={openCreateDialog}
         loadUsers={loadUsersForPicker}
-        emptyMessage={t('addUserEmpty')}
+        emptyMessage={t('empty.addDialog')}
       />
     )
   }
@@ -361,9 +361,9 @@ export function AddCompanyUserDialog({
         onOpenChange={handlePickerOpenChange}
         onSelect={onSelect}
         loadUsers={loadUsersForPicker}
-        title={t('addUserTitle')}
-        description={t('addUserDescription')}
-        emptyMessage={t('addUserEmpty')}
+        title={t('addDialog.title')}
+        description={t('addDialog.description')}
+        emptyMessage={t('empty.addDialog')}
         onAddUser={openCreateDialog}
         nestedDismissGuard={createOpen || blockOuterDismiss}
       />
@@ -374,8 +374,8 @@ export function AddCompanyUserDialog({
             closeCreateDialog()
           }
         }}
-        title={t('createUser')}
-        description={t('createUserDescription')}
+        title={t('createDialog.title')}
+        description={t('createDialog.description')}
         stackLevel={1}
         sizeWidth={CREATE_DIALOG_SIZE.sizeWidth}
         sizeHeight={CREATE_DIALOG_SIZE.sizeHeight}
@@ -391,7 +391,7 @@ export function AddCompanyUserDialog({
               }}
               disabled={creating}
             >
-              {t('cancel')}
+              {t('common:cancel')}
             </Button>
             <Button
               type="submit"
@@ -400,7 +400,7 @@ export function AddCompanyUserDialog({
               disabled={creating}
             >
               <Save className="mr-2 h-4 w-4" aria-hidden />
-              {creating ? t('creating') : t('createUser')}
+              {creating ? t('createDialog.creating') : t('createDialog.submit')}
             </Button>
           </>
         }

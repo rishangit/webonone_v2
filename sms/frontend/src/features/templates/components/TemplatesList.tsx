@@ -66,9 +66,12 @@ export function TemplatesList({
                 >
                   <p className="font-medium">{template.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {template.slug} · {formatScope(template, t)} ·{' '}
-                    {template.isActive ? t('active') : t('inactive')} · Updated{' '}
-                    {formatDate(template.updatedAt)}
+                    {t('metaLine', {
+                      slug: template.slug,
+                      scope: formatScope(template, t),
+                      active: template.isActive ? t('active') : t('inactive'),
+                      date: formatDate(template.updatedAt),
+                    })}
                   </p>
                 </button>
               </ItemListContent>
@@ -80,16 +83,16 @@ export function TemplatesList({
                   {isDefault ? t('customize') : t('common:edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => goToPreview(template.id)} disabled={isBusy}>
-                  Preview
+                  {t('preview')}
                 </DropdownMenuItem>
                 {!isDefault ? (
                   <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
-                    {template.isActive ? 'Deactivate' : 'Activate'}
+                    {template.isActive ? t('deactivate') : t('activate')}
                   </DropdownMenuItem>
                 ) : null}
                 {!isDefault ? (
                   <DropdownMenuItem onClick={() => goToVersions(template.id)} disabled={isBusy}>
-                    Version history
+                    {t('versionHistory')}
                   </DropdownMenuItem>
                 ) : null}
                 {canDelete && template.scope === 'company' && !isDefault ? (
@@ -100,7 +103,7 @@ export function TemplatesList({
                       onClick={() => setPendingDelete(template)}
                       disabled={isBusy}
                     >
-                      Delete
+                      {t('common:delete')}
                     </DropdownMenuItem>
                   </>
                 ) : null}
@@ -111,9 +114,14 @@ export function TemplatesList({
       </ItemList>
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
-        title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete template?'}
-        description="This action cannot be undone. The SMS template will be permanently removed."
+        title={
+          pendingDelete
+            ? t('deleteTitleNamed', { name: pendingDelete.name })
+            : t('deleteTitle')
+        }
+        description={t('deleteDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel={t('common:delete')}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)
         }}

@@ -34,18 +34,18 @@ function historyTitle(item: UserHistoryItem): string {
 function historySubtitle(item: UserHistoryItem, t: (k: string, o?: Record<string, string>) => string): string {
   if (item.kind === 'form_submission') {
     return [
-      item.serviceName ? t('serviceLabel', { name: item.serviceName }) : null,
-      t('filledByLabel', { name: item.filledByDisplayName }),
+      item.serviceName ? t('history.servicePrefix', { name: item.serviceName }) : null,
+      t('history.filledBy', { name: item.filledByDisplayName }),
     ]
       .filter(Boolean)
       .join(' · ')
   }
-  return [item.subtitle, item.status ? t('statusLabel', { status: item.status }) : null].filter(Boolean).join(' · ')
+  return [item.subtitle, item.status ? t('history.statusPrefix', { status: item.status }) : null].filter(Boolean).join(' · ')
 }
 
 function historyBadge(item: UserHistoryItem, t: (k: string) => string): string {
-  if (item.kind === 'form_submission') return t('form')
-  return t('session')
+  if (item.kind === 'form_submission') return t('history.badgeForm')
+  return t('history.badgeSession')
 }
 
 type UserHistoryPanelProps = {
@@ -69,7 +69,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t('unableToLoadHistory'))
+          setError(err instanceof Error ? err.message : t('errors.loadHistoryFailed'))
         }
       })
       .finally(() => {
@@ -110,7 +110,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
   return (
     <div className="flex flex-col gap-4">
       {items.length === 0 ? (
-        <ItemListEmpty>{t('emptyHistory')}</ItemListEmpty>
+        <ItemListEmpty>{t('empty.history')}</ItemListEmpty>
       ) : (
         <ItemList>
           {items.map((item) => {

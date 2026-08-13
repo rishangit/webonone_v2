@@ -35,7 +35,7 @@ export function SystemThemePage() {
 
   const loading = status === 'loading'
 
-  usePlatformLoading(loading ? t('loadingThemes') : null)
+  usePlatformLoading(loading ? t('systemTheme.list.loading') : null)
 
   useEffect(() => {
     if (!isFresh(themesFetchedAt)) {
@@ -53,12 +53,12 @@ export function SystemThemePage() {
   }, [deleteTarget, dispatch])
 
   const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
-  const emptyMessage = themeSearchQuery.trim() ? t('noThemesMatch') : t('noThemes')
+  const emptyMessage = themeSearchQuery.trim() ? t('systemTheme.list.emptySearch') : t('systemTheme.list.empty')
 
   return (
     <FeaturePage
-      title={t('systemTheme')}
-      description={t('systemThemeDescription')}
+      title={t('systemTheme.list.title')}
+      description={t('systemTheme.list.description')}
       actions={
         <div className="flex items-center gap-2">
           <SearchInput
@@ -67,14 +67,14 @@ export function SystemThemePage() {
               setThemeSearchQuery(event.target.value)
               setThemePage(1)
             }}
-            placeholder={t('themeName')}
+            placeholder={t('systemTheme.list.searchPlaceholder')}
             onClear={() => setThemePage(1)}
-            aria-label={t('searchThemes')}
+            aria-label={t('systemTheme.list.searchAria')}
             className="w-64"
           />
           <Button type="button" size="sm" onClick={() => setDialog({})}>
             <Plus className="h-4 w-4" aria-hidden />
-            {t('createTheme')}
+            {t('systemTheme.list.createTheme')}
           </Button>
         </div>
       }
@@ -133,9 +133,9 @@ export function SystemThemePage() {
       <PlatformAlertConfirmDialog
         open={deleteTarget !== null}
         title={
-          deleteTarget ? t('deleteNamed', { name: deleteTarget.name }) : t('deleteTheme')
+          deleteTarget ? t('systemTheme.list.deleteTitleNamed', { name: deleteTarget.name }) : t('systemTheme.list.deleteTitle')
         }
-        description={t('deleteThemeConfirm')}
+        description={t('systemTheme.list.deleteDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null)

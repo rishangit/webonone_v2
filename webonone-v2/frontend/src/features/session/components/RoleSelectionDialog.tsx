@@ -80,9 +80,9 @@ export function RoleSelectionDialog() {
     <CustomDialog
       open={dialogOpen}
       onOpenChange={handleOpenChange}
-      title={t('chooseAccount')}
+      title={t('chooseAccount.title')}
       description={
-        isSettingsMode ? t('switchAccountDescription') : t('selectAccountDescription')
+        isSettingsMode ? t('chooseAccount.descriptionSwitch') : t('chooseAccount.descriptionInitial')
       }
       sizeWidth="medium"
       sizeHeight="auto"

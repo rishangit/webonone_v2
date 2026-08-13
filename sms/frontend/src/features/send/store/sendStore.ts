@@ -38,7 +38,7 @@ export const sendSlice = createSlice({
     },
     sendSmsSucceeded(state, action: PayloadAction<{ queueId: string }>) {
       state.sendStatus = 'idle'
-      state.sendSuccess = `SMS queued (${action.payload.queueId}).`
+      state.sendSuccess = action.payload.queueId
       state.preview = null
     },
     sendSmsFailed(state, action: PayloadAction<string>) {

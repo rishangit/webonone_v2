@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Save } from 'lucide-react'
 import {
   Alert,
@@ -36,6 +37,8 @@ export function IssueTokenDialog({
   onIssued,
 }: IssueTokenDialogProps) {
   const { toast } = useToast()
+  const { t } = useTranslation('search')
+  const { t: tc } = useTranslation('common')
   const [tokenLabel, setTokenLabel] = useState('…')
   const [existing, setExisting] = useState<SessionTokenItem | null>(null)
   const [loading, setLoading] = useState(false)
@@ -61,7 +64,7 @@ export function IssueTokenDialog({
       })
       .catch((err: Error) => {
         if (cancelled) return
-        setSubmitError(err.message || 'Failed to load token info')
+        setSubmitError(err.message || t('failedLoadToken'))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -90,14 +93,14 @@ export function IssueTokenDialog({
           user_email: user.email ?? null,
         },
       )
-      toast({ title: 'Token issued', description: `Your token is ${item.tokenLabel}` })
+      toast({ title: t('tokenIssued'), description: t('yourTokenIs', { label: item.tokenLabel }) })
       onIssued?.(item)
       onOpenChange(false)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to issue token'
+      const message = err instanceof Error ? err.message : t('failedIssueToken')
       setSubmitError(message)
       toast({
-        title: 'Failed to issue token',
+        title: t('failedIssueToken'),
         description: message,
         variant: 'destructive',
       })
@@ -110,12 +113,8 @@ export function IssueTokenDialog({
     <CustomDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Issue token"
-      description={
-        existing
-          ? 'You already have a token for this session.'
-          : 'Confirm to book the next queue token for your account.'
-      }
+      title={t('issueToken')}
+      description={existing ? t('alreadyHaveToken') : t('confirmBookToken')}
       sizeWidth="medium"
       sizeHeight="auto"
       footer={
@@ -127,12 +126,12 @@ export function IssueTokenDialog({
             disabled={saving}
             onClick={() => onOpenChange(false)}
           >
-            {existing ? 'Close' : 'Cancel'}
+            {existing ? tc('close') : tc('cancel')}
           </Button>
           {!existing ? (
             <Button type="button" disabled={saving || loading} onClick={() => void handleIssue()}>
               <Save className="mr-2 h-4 w-4" aria-hidden />
-              {saving ? 'Issuing…' : 'Issue token'}
+              {saving ? t('issuing') : t('issueToken')}
             </Button>
           ) : null}
         </>
@@ -147,7 +146,7 @@ export function IssueTokenDialog({
 
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground">
-            {existing ? 'Your token' : 'Token number'}
+            {existing ? t('yourToken') : t('tokenNumber')}
           </p>
           <p className="text-2xl font-semibold tracking-wide text-foreground">
             {existing ? existing.tokenLabel : loading ? '…' : tokenLabel}

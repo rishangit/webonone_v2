@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -14,8 +15,10 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { CatalogItem } from '@/shared/types/data.types'
 
+type CatalogListKind = 'products' | 'services' | 'spaces'
+
 interface CatalogListProps {
-  itemType: string
+  itemType: CatalogListKind
   items: CatalogItem[]
   onEdit: (id: string) => void
   onDeleted: (id: string) => void
@@ -35,17 +38,10 @@ export function CatalogList({
   canEdit,
   canDelete,
 }: CatalogListProps) {
+  const { t } = useTranslation(itemType)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
-  const singularLabel =
-    itemType === 'products'
-      ? 'product'
-      : itemType === 'services'
-        ? 'service'
-        : itemType === 'spaces'
-          ? 'space'
-          : itemType.replace(/s$/, '') || itemType
 
-  if (items.length === 0) return <ItemListEmpty>No {itemType} found.</ItemListEmpty>
+  if (items.length === 0) return <ItemListEmpty>{t('emptyFound')}</ItemListEmpty>
 
   return (
     <>
@@ -58,7 +54,7 @@ export function CatalogList({
                 <p className="font-medium">{item.name}</p>
                 <StatusBadge status={item.status} />
                 <span className="text-xs text-muted-foreground">
-                  Refs: {item.referenceCount ?? 0}
+                  {t('refs', { count: item.referenceCount ?? 0 })}
                 </span>
               </div>
               <div className="flex flex-wrap gap-1">
@@ -87,15 +83,15 @@ export function CatalogList({
                 )}
               </ItemListContent>
               {showMenu ? (
-                <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
+                <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
                   {onView ? (
-                    <DropdownMenuItem onClick={() => onView(item.id)}>View details</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onView(item.id)}>{t('viewDetails')}</DropdownMenuItem>
                   ) : null}
                   {canDelete && item.status === 'pending' && onVerify ? (
-                    <DropdownMenuItem onClick={() => onVerify(item.id)}>Verify</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
                   ) : null}
                   {canEdit ? (
-                    <DropdownMenuItem onClick={() => onEdit(item.id)}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(item.id)}>{t('common:edit')}</DropdownMenuItem>
                   ) : null}
                   {canDelete ? (
                     <>
@@ -104,7 +100,7 @@ export function CatalogList({
                         className="text-destructive focus:text-destructive"
                         onClick={() => setPendingDelete({ id: item.id, name: item.name })}
                       >
-                        Delete
+                        {t('common:delete')}
                       </DropdownMenuItem>
                     </>
                   ) : null}
@@ -116,10 +112,8 @@ export function CatalogList({
       </ItemList>
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
-        title={
-          pendingDelete ? `Delete ${pendingDelete.name}?` : `Delete ${singularLabel}?`
-        }
-        description={`This action cannot be undone. The ${singularLabel} will be permanently removed.`}
+        title={pendingDelete ? t('deleteConfirm', { name: pendingDelete.name }) : t('deleteConfirmFallback')}
+        description={t('deleteDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)

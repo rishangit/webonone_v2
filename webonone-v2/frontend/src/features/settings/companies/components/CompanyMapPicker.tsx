@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@webonone/ui-kit'
 import { getGoogleMapsApiKey } from '../utils/googleMapsConfig'
 
@@ -147,6 +148,7 @@ export function CompanyMapPicker({
   onPlaceSelected,
   fillHeight = false,
 }: CompanyMapPickerProps) {
+  const { t } = useTranslation('settings')
   const apiKey = getGoogleMapsApiKey()
   const mapRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -321,8 +323,7 @@ export function CompanyMapPicker({
   if (!apiKey) {
     return (
       <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-        Set location on the map is unavailable until <code>VITE_GOOGLE_MAPS_API_KEY</code> is
-        configured. You can still save postal address details in the Address step.
+        {t('companyCards.location.mapsKeyMissing')}
       </div>
     )
   }
@@ -337,8 +338,8 @@ export function CompanyMapPicker({
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search for a place…"
-          aria-label="Search map location"
+          placeholder={t('companyCards.location.searchPlaceholder')}
+          aria-label={t('companyCards.location.searchAria')}
         />
       ) : null}
       <div
@@ -349,16 +350,20 @@ export function CompanyMapPicker({
             : 'h-56 w-full overflow-hidden rounded-md border border-border bg-muted'
         }
         role="img"
-        aria-label={hasPin ? 'Company map location' : 'Map — no pin set'}
+        aria-label={
+          hasPin
+            ? t('companyCards.location.mapAriaWithPin')
+            : t('companyCards.location.mapAriaNoPin')
+        }
       />
-      {!ready ? <p className="text-sm text-muted-foreground">Loading map…</p> : null}
+      {!ready ? (
+        <p className="text-sm text-muted-foreground">{t('companyCards.location.loadingMap')}</p>
+      ) : null}
       {ready && !hasPin && mode === 'view' ? (
-        <p className="text-sm text-muted-foreground">No map location set yet.</p>
+        <p className="text-sm text-muted-foreground">{t('companyCards.location.noPinSet')}</p>
       ) : null}
       {mode === 'edit' && !hasPin ? (
-        <p className="text-sm text-muted-foreground">
-          Search for a place or click the map to set a pin.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('companyCards.location.editHint')}</p>
       ) : null}
     </div>
   )

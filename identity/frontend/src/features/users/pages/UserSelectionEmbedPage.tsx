@@ -19,7 +19,7 @@ export function UserSelectionEmbedPage() {
       <div className="flex min-h-[200px] items-center justify-center p-6">
         <Alert variant="destructive" className="max-w-sm">
           <AlertDescription>
-            {t('embedOnlyPeerDialog')}
+            {t('errors.peerDialogOnly')}
           </AlertDescription>
         </Alert>
       </div>

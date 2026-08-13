@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   COMPANY_DATA_ENTITY_KEYS,
-  DATA_ENTITY_LABELS,
   filterCompanyDataEntities,
   type DataEntityKey,
 } from '@webonone/platform-nav'
@@ -29,6 +29,8 @@ export function CompanyDataEntitiesCard({
   canEdit,
   saving,
 }: CompanyDataEntitiesCardProps) {
+  const { t } = useTranslation('settings')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const detail = useAppSelector((s) => s.companies.detail)
@@ -62,7 +64,7 @@ export function CompanyDataEntitiesCard({
     setPendingSave(false)
 
     if (detailStatus === 'idle') {
-      toast({ title: 'Data services updated' })
+      toast({ title: t('companyCards.dataServices.toastUpdated') })
       setEditing(false)
       const saved = filterCompanyDataEntities(
         detail?.id === companyId ? (detail.dataEntities ?? []) : draft,
@@ -80,7 +82,7 @@ export function CompanyDataEntitiesCard({
 
     if (detailStatus === 'error') {
       toast({
-        title: 'Failed to update data services',
+        title: t('companyCards.dataServices.toastFailed'),
         description: detailError ?? undefined,
         variant: 'destructive',
       })
@@ -95,6 +97,7 @@ export function CompanyDataEntitiesCard({
     draft,
     detail,
     dispatch,
+    t,
   ])
 
   function toggleEntity(key: DataEntityKey, checked: boolean) {
@@ -122,14 +125,12 @@ export function CompanyDataEntitiesCard({
     setEditing(false)
   }
 
-  const selectedLabels = filterCompanyDataEntities(dataEntities).map(
-    (key) => DATA_ENTITY_LABELS[key],
-  )
+  const selectedKeys = filterCompanyDataEntities(dataEntities)
 
   return (
     <EditableSectionCard
-      title="Data services"
-      description="Choose which Data catalog sections this company uses. Selected sections appear under Data in the left navigation."
+      title={t('companyCards.dataServices.title')}
+      description={t('companyCards.dataServices.description')}
       canEdit={canEdit && !editing}
       onEdit={() => {
         setDraft(filterCompanyDataEntities(dataEntities))
@@ -151,7 +152,7 @@ export function CompanyDataEntitiesCard({
                     onCheckedChange={(value) => toggleEntity(key, value === true)}
                   />
                   <Label htmlFor={id} className="cursor-pointer font-normal">
-                    {DATA_ENTITY_LABELS[key]}
+                    {tc(`nav.${key}`)}
                   </Label>
                 </li>
               )
@@ -159,7 +160,7 @@ export function CompanyDataEntitiesCard({
           </ul>
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" onClick={handleSave} disabled={saving}>
-              Save
+              {tc('save')}
             </Button>
             <Button
               type="button"
@@ -168,18 +169,16 @@ export function CompanyDataEntitiesCard({
               onClick={handleCancel}
               disabled={saving}
             >
-              Cancel
+              {tc('cancel')}
             </Button>
           </div>
         </div>
-      ) : selectedLabels.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No Data services selected. Edit this section to choose catalog sections for this company.
-        </p>
+      ) : selectedKeys.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t('companyCards.dataServices.empty')}</p>
       ) : (
         <ul className="list-inside list-disc space-y-1 text-sm text-foreground">
-          {selectedLabels.map((label) => (
-            <li key={label}>{label}</li>
+          {selectedKeys.map((key) => (
+            <li key={key}>{tc(`nav.${key}`)}</li>
           ))}
         </ul>
       )}

@@ -43,6 +43,9 @@
     "searchPlaceholder": "Company name",
     "searchAria": "Search companies",
     "empty": "No companies yet. Add a company to get started.",
+    "loading": "Loading companies…",
+    "addCompany": "Add company",
+    "viewDetails": "View details",
     "lookingForSettings": "Looking for other settings?",
     "basicSettingsLink": "Basic Settings",
     "registrationSubmitted": "Registration submitted. Admin approval is required — the company stays Pending until a super admin approves or rejects it.",
@@ -57,7 +60,8 @@
     "description": "Companies you book with or buy from as a customer.",
     "searchPlaceholder": "Company name",
     "searchAria": "Search connected companies",
-    "empty": "No connected companies yet. Companies appear here when you book or buy from them."
+    "empty": "No connected companies yet. Companies appear here when you book or buy from them.",
+    "loading": "Loading companies…"
   },
   "companyProfile": {
     "title": "Company profile",
@@ -81,7 +85,8 @@
     "profile": {
       "title": "Company profile",
       "description": "Identity of the company on the platform",
-      "companySize": "Company size"
+      "companySize": "Company size",
+      "superAdminView": "Super admin view"
     },
     "contact": {
       "title": "Contact information",
@@ -111,7 +116,10 @@
       "searchAria": "Search map location",
       "mapAriaWithPin": "Company map location",
       "mapAriaNoPin": "Map — no pin set",
-      "failedLoadMaps": "Failed to load Google Maps"
+      "failedLoadMaps": "Failed to load Google Maps",
+      "mapAddress": "Map address",
+      "editHint": "Search for a place or click the map to set a pin.",
+      "mapsKeyMissing": "Map location is unavailable until Google Maps is configured. You can still save postal address details."
     },
     "tags": {
       "title": "Tags",
@@ -127,6 +135,7 @@
     },
     "logo": {
       "title": "Company logo",
+      "cardDescription": "Shown on company lists and profile identity surfaces",
       "alt": "Company logo",
       "upload": "Upload",
       "replace": "Replace",
@@ -138,6 +147,8 @@
     },
     "gallery": {
       "title": "Gallery",
+      "cardDescription": "Additional company images (marketing, office, products, etc.)",
+      "alt": "Company gallery",
       "addImages": "Add images",
       "addGalleryImages": "Add gallery images",
       "empty": "No gallery images yet",

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -54,6 +55,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 export function ProductDetailsPage() {
+  const { t } = useTranslation('products')
   const { productId } = useParams<{ productId: string }>()
   const { goToList } = useNavigateDataEntity()
   const dispatch = useAppDispatch()
@@ -70,7 +72,7 @@ export function ProductDetailsPage() {
   }, [dispatch, productId])
 
   usePlatformLoading(
-    detailStatus === 'loading' && !detail ? 'Loading product…' : null,
+    detailStatus === 'loading' && !detail ? t('loadingProduct') : null,
   )
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -98,8 +100,8 @@ export function ProductDetailsPage() {
           </Card>
         ) : null}
         <EditableSectionCard
-          title="Product"
-          description="Name, status, and description"
+          title={t('singular')}
+          description={t('sectionDescription')}
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
@@ -108,21 +110,21 @@ export function ProductDetailsPage() {
             <StatusBadge status={product.status} />
           </div>
           <ReadOnlyField
-            label="Description"
-            value={product.description?.trim() ? product.description : '—'}
+            label={t('common:description')}
+            value={product.description?.trim() ? product.description : t('noDescription')}
           />
         </EditableSectionCard>
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
         <EditableSectionCard
-          title="Tags"
-          description="Labels linked to this product"
+          title={t('tags')}
+          description={t('tagsDescription')}
           canEdit={canEdit}
           onEdit={() => openWizard(2)}
         >
           {product.tags.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tags.</p>
+            <p className="text-sm text-muted-foreground">{t('noTags')}</p>
           ) : (
             <div className="flex flex-wrap gap-1">
               {product.tags.map((tag) => (
@@ -134,14 +136,14 @@ export function ProductDetailsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Meta</CardTitle>
-            <CardDescription>Record timestamps and references</CardDescription>
+            <CardTitle className="text-lg">{t('metadata')}</CardTitle>
+            <CardDescription>{t('metadataDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ReadOnlyField label="Created" value={formatTimestamp(product.createdAt)} />
-            <ReadOnlyField label="Updated" value={formatTimestamp(product.updatedAt)} />
+            <ReadOnlyField label={t('created')} value={formatTimestamp(product.createdAt)} />
+            <ReadOnlyField label={t('updated')} value={formatTimestamp(product.updatedAt)} />
             <ReadOnlyField
-              label="References"
+              label={t('references')}
               value={String(product.referenceCount ?? 0)}
             />
           </CardContent>
@@ -152,13 +154,13 @@ export function ProductDetailsPage() {
 
   return (
     <FeaturePage
-      title={product?.name ?? 'Product'}
-      description="Product details"
+      title={product?.name ?? t('singular')}
+      description={t('details')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => goToList('products')}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('common:back')}
           </Button>
         </div>
       }
@@ -171,7 +173,8 @@ export function ProductDetailsPage() {
 
       {product ? (
         <CatalogDetailSectionTabs
-          ariaLabel="Product sections"
+          ns="products"
+          ariaLabel={t('sectionsAria')}
           tab={tab}
           onTabChange={setTab}
           overview={overview}

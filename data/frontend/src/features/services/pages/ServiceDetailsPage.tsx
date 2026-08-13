@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -53,25 +54,26 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function ServiceTimeContent({ service }: { service: CatalogItem }) {
+  const { t } = useTranslation('services')
   const mode = service.timeMode
   return (
     <>
       <ReadOnlyField
-        label="Time mode"
-        value={mode === 'window' ? 'Specific time' : mode === 'duration' ? 'Duration' : '—'}
+        label={t('timeMode')}
+        value={mode === 'window' ? t('timeModeWindow') : mode === 'duration' ? t('timeModeDuration') : t('noDescription')}
       />
       {mode === 'duration' ? (
         <ReadOnlyField
-          label="Duration"
+          label={t('duration')}
           value={
-            service.durationMinutes != null ? `${service.durationMinutes} minutes` : '—'
+            service.durationMinutes != null ? t('durationValue', { count: service.durationMinutes }) : t('noDescription')
           }
         />
       ) : null}
       {mode === 'window' ? (
         <>
-          <ReadOnlyField label="Start time" value={service.startTime ?? '—'} />
-          <ReadOnlyField label="End time" value={service.endTime ?? '—'} />
+          <ReadOnlyField label={t('startTime')} value={service.startTime ?? t('noDescription')} />
+          <ReadOnlyField label={t('endTime')} value={service.endTime ?? t('noDescription')} />
         </>
       ) : null}
     </>
@@ -79,6 +81,7 @@ function ServiceTimeContent({ service }: { service: CatalogItem }) {
 }
 
 export function ServiceDetailsPage() {
+  const { t } = useTranslation('services')
   const { serviceId } = useParams<{ serviceId: string }>()
   const { goToList } = useNavigateDataEntity()
   const dispatch = useAppDispatch()
@@ -95,7 +98,7 @@ export function ServiceDetailsPage() {
   }, [dispatch, serviceId])
 
   usePlatformLoading(
-    detailStatus === 'loading' && !detail ? 'Loading service…' : null,
+    detailStatus === 'loading' && !detail ? t('loadingService') : null,
   )
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -123,8 +126,8 @@ export function ServiceDetailsPage() {
           </Card>
         ) : null}
         <EditableSectionCard
-          title="Service"
-          description="Name, status, and description"
+          title={t('singular')}
+          description={t('sectionDescription')}
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
@@ -133,16 +136,16 @@ export function ServiceDetailsPage() {
             <StatusBadge status={service.status} />
           </div>
           <ReadOnlyField
-            label="Description"
-            value={service.description?.trim() ? service.description : '—'}
+            label={t('common:description')}
+            value={service.description?.trim() ? service.description : t('noDescription')}
           />
         </EditableSectionCard>
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
         <EditableSectionCard
-          title="Time"
-          description="How this service is scheduled"
+          title={t('time')}
+          description={t('timeDescription')}
           canEdit={canEdit}
           onEdit={() => openWizard(2)}
         >
@@ -150,13 +153,13 @@ export function ServiceDetailsPage() {
         </EditableSectionCard>
 
         <EditableSectionCard
-          title="Tags"
-          description="Labels linked to this service"
+          title={t('tags')}
+          description={t('tagsDescription')}
           canEdit={canEdit}
           onEdit={() => openWizard(3)}
         >
           {service.tags.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tags.</p>
+            <p className="text-sm text-muted-foreground">{t('noTags')}</p>
           ) : (
             <div className="flex flex-wrap gap-1">
               {service.tags.map((tag) => (
@@ -168,14 +171,14 @@ export function ServiceDetailsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Meta</CardTitle>
-            <CardDescription>Record timestamps and references</CardDescription>
+            <CardTitle className="text-lg">{t('metadata')}</CardTitle>
+            <CardDescription>{t('metadataDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ReadOnlyField label="Created" value={formatTimestamp(service.createdAt)} />
-            <ReadOnlyField label="Updated" value={formatTimestamp(service.updatedAt)} />
+            <ReadOnlyField label={t('created')} value={formatTimestamp(service.createdAt)} />
+            <ReadOnlyField label={t('updated')} value={formatTimestamp(service.updatedAt)} />
             <ReadOnlyField
-              label="References"
+              label={t('references')}
               value={String(service.referenceCount ?? 0)}
             />
           </CardContent>
@@ -186,13 +189,13 @@ export function ServiceDetailsPage() {
 
   return (
     <FeaturePage
-      title={service?.name ?? 'Service'}
-      description="Service details"
+      title={service?.name ?? t('singular')}
+      description={t('details')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => goToList('services')}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t('common:back')}
           </Button>
         </div>
       }
@@ -205,7 +208,8 @@ export function ServiceDetailsPage() {
 
       {service ? (
         <CatalogDetailSectionTabs
-          ariaLabel="Service sections"
+          ns="services"
+          ariaLabel={t('sectionsAria')}
           tab={tab}
           onTabChange={setTab}
           overview={overview}

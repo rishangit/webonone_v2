@@ -67,7 +67,7 @@ export function CreateCompanyUserForm({
       ) : null}
 
       <FormField
-        label={t('firstName')}
+        label={t('form.firstName')}
         htmlFor="create-user-first-name"
         required
         error={fieldErrors.firstName ? t(fieldErrors.firstName) : undefined}
@@ -82,7 +82,7 @@ export function CreateCompanyUserForm({
       </FormField>
 
       <FormField
-        label={t('lastName')}
+        label={t('form.lastName')}
         htmlFor="create-user-last-name"
         required
         error={fieldErrors.lastName ? t(fieldErrors.lastName) : undefined}
@@ -96,7 +96,7 @@ export function CreateCompanyUserForm({
         />
       </FormField>
 
-      <FormField label={t('email')} htmlFor="create-user-email" error={fieldErrors.email ? t(fieldErrors.email) : undefined}>
+      <FormField label={t('form.email')} htmlFor="create-user-email" error={fieldErrors.email ? t(fieldErrors.email) : undefined}>
         <Input
           id="create-user-email"
           type="email"
@@ -104,12 +104,12 @@ export function CreateCompanyUserForm({
           disabled={disabled}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
-          placeholder={t('optional')}
+          placeholder={t('form.emailPlaceholder')}
         />
       </FormField>
 
       <FormField
-        label={t('phoneNumber')}
+        label={t('form.phoneNumber')}
         htmlFor="create-user-phone"
         required
         error={fieldErrors.phoneNumber ? t(fieldErrors.phoneNumber) : undefined}

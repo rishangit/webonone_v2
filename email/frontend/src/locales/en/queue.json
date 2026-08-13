@@ -10,6 +10,7 @@
   "failed": "Failed",
   "emptyTab": "No queue items in this tab.",
   "attempts": "Attempts",
+  "attemptsCount": "Attempts {{count}}",
   "retry": "Retry",
   "actionsFor": "Queue actions for {{name}}",
   "freeform": "freeform"

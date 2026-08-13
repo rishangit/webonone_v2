@@ -9,7 +9,7 @@ import {
   performPlatformLogout,
   useServiceRedirect,
 } from '@webonone/platform-nav'
-import { normalizeLocale, relayLocaleQueryParams, type AppLocale } from '@webonone/i18n'
+import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { Alert, AlertDescription, AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
 import { relayThemeQueryParams } from '@webonone/theme'
 import { prefetchNavTarget } from '@/app/routePrefetch'
@@ -179,9 +179,12 @@ function AppLayoutShellContent() {
       searchParams: isPlatformMode ? searchParams : undefined,
     })
     if (!effectiveReturnUrl) {
-      return base
+      return translateNavItems(base, t)
     }
-    return withSmsNavActions(withEmailNavActions(base, handleEmailNavClick), handleSmsNavClick)
+    return translateNavItems(
+      withSmsNavActions(withEmailNavActions(base, handleEmailNavClick), handleSmsNavClick),
+      t,
+    )
   }, [
     effectiveReturnUrl,
     handleEmailNavClick,
@@ -191,6 +194,7 @@ function AppLayoutShellContent() {
     returnUrlFromQuery,
     role,
     searchParams,
+    t,
   ])
 
   useEffect(() => {

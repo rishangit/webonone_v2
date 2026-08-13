@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -21,18 +22,18 @@ function statusVariant(status: InvoiceStatus): 'pending' | 'approved' | 'rejecte
   return 'pending'
 }
 
-function statusLabel(status: InvoiceStatus): string {
+function statusLabelKey(status: InvoiceStatus): string {
   switch (status) {
     case 'issued':
-      return 'Issued'
+      return 'statusIssued'
     case 'paid':
-      return 'Paid'
+      return 'statusPaid'
     case 'overdue':
-      return 'Overdue'
+      return 'statusOverdue'
     case 'void':
-      return 'Void'
+      return 'statusVoid'
     case 'pending_verification':
-      return 'Pending review'
+      return 'statusPendingReview'
     default:
       return status
   }
@@ -43,6 +44,7 @@ type ConfirmPaymentByReferencePanelProps = {
 }
 
 export function ConfirmPaymentByReferencePanel({ onConfirmed }: ConfirmPaymentByReferencePanelProps) {
+  const { t } = useTranslation('invoices')
   const [reference, setReference] = useState('')
   const [lookup, setLookup] = useState<InvoiceDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +55,7 @@ export function ConfirmPaymentByReferencePanel({ onConfirmed }: ConfirmPaymentBy
     setLookup(null)
     const value = reference.trim()
     if (!value) {
-      setError('Enter a payment reference')
+      setError(t('enterReference'))
       return
     }
     setBusy(true)
@@ -61,7 +63,7 @@ export function ConfirmPaymentByReferencePanel({ onConfirmed }: ConfirmPaymentBy
       const invoice = await paymentApi.getInvoiceByReference(value)
       setLookup(invoice)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invoice not found for that reference')
+      setError(err instanceof Error ? err.message : t('notFoundByReference'))
     } finally {
       setBusy(false)
     }
@@ -76,7 +78,7 @@ export function ConfirmPaymentByReferencePanel({ onConfirmed }: ConfirmPaymentBy
       setLookup(invoice)
       onConfirmed()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mark paid')
+      setError(err instanceof Error ? err.message : t('failedMarkPaid'))
     } finally {
       setBusy(false)
     }
@@ -87,12 +89,12 @@ export function ConfirmPaymentByReferencePanel({ onConfirmed }: ConfirmPaymentBy
   return (
     <Card className="mb-4">
       <CardHeader>
-        <CardTitle className="text-base">Confirm payment by reference</CardTitle>
+        <CardTitle className="text-base">{t('confirmByReference')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <FormField
-            label="Invoice reference number"
+            label={t('referenceTitle')}
             htmlFor="confirm-payment-reference"
             className="min-w-0 flex-1"
           >
@@ -111,7 +113,7 @@ export function ConfirmPaymentByReferencePanel({ onConfirmed }: ConfirmPaymentBy
             />
           </FormField>
           <Button type="button" variant="outline" disabled={busy} onClick={() => void handleLookup()}>
-            Look up
+            {t('lookUp')}
           </Button>
         </div>
 
@@ -126,25 +128,23 @@ export function ConfirmPaymentByReferencePanel({ onConfirmed }: ConfirmPaymentBy
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium">{lookup.companyName}</span>
               <StatusTag variant={statusVariant(lookup.status)}>
-                {statusLabel(lookup.status)}
+                {t(statusLabelKey(lookup.status))}
               </StatusTag>
             </div>
             <p className="text-muted-foreground">
-              {lookup.invoiceNumber} · Ref {lookup.paymentReference}
+              {lookup.invoiceNumber} · {t('refLabel', { ref: lookup.paymentReference })}
             </p>
             <p>
-              {formatLkr(lookup.amountMinor)} · {formatPeriod(lookup.periodStart, lookup.periodEnd)} ·
-              Due {formatDate(lookup.dueAt)}
+              {formatLkr(lookup.amountMinor)} · {formatPeriod(lookup.periodStart, lookup.periodEnd)} ·{' '}
+              {t('dueLabel', { date: formatDate(lookup.dueAt) })}
             </p>
             {canMarkPaid ? (
               <Button type="button" disabled={busy} onClick={() => void handleMarkPaid()}>
-                Mark paid
+                {t('markPaid')}
               </Button>
             ) : (
               <p className="text-muted-foreground">
-                {lookup.status === 'paid'
-                  ? 'This invoice is already paid.'
-                  : 'This invoice cannot be marked paid.'}
+                {lookup.status === 'paid' ? t('alreadyPaid') : t('cannotMarkPaid')}
               </p>
             )}
           </div>

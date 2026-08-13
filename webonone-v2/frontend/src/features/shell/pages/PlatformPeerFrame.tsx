@@ -332,7 +332,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
     [navigate, peer],
   )
 
-  usePlatformLoading(frameLoading ? t('loadingPeer', { peer: peerLabel }) : null)
+  usePlatformLoading(frameLoading ? t('loading.peer', { peer: peerLabel }) : null)
 
   if (!accessToken) {
     return null
@@ -345,7 +345,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         peerPath={peerPath}
         accessToken={accessToken}
         searchParams={searchParams}
-        title={t('peerWorkspace', { peer: peerLabel })}
+        title={t('peer.workspaceTitle', { peer: peerLabel })}
         className="block h-full min-h-0 w-full flex-1 border-0 bg-transparent"
         onLoadingChange={handleLoadingChange}
         onMediaDialogRequest={openMediaDialog}

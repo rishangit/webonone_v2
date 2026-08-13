@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -23,6 +24,7 @@ import { templatesActions } from '@/features/templates/store'
 import { testEmailSchema, type TestEmailFormValues } from '../schemas/testSchemas'
 
 function TestEmailForm() {
+  const { t } = useTranslation('shell')
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((s) => s.auth)
   const { items: templates, listStatus, listError } = useAppSelector((s) => s.templates)
@@ -40,7 +42,7 @@ function TestEmailForm() {
   const submitting = testStatus === 'sending'
   const activeTemplates = templates.filter((t) => t.isActive)
 
-  usePlatformLoading(loading ? 'Loading test page…' : null)
+  usePlatformLoading(loading ? t('test.loading') : null)
 
   useEffect(() => {
     dispatch(templatesActions.loadListRequested())
@@ -54,13 +56,16 @@ function TestEmailForm() {
 
   useEffect(() => {
     if (lastTestStatus.current === 'sending' && testStatus === 'idle') {
-      toast({ title: 'Test email queued', description: `Sending to ${values.toEmail}` })
+      toast({
+        title: t('test.toastQueued'),
+        description: t('test.toastQueuedDescription', { email: values.toEmail }),
+      })
     }
     if (testError) {
-      toast({ title: 'Test send failed', description: testError, variant: 'destructive' })
+      toast({ title: t('test.toastFailed'), description: testError, variant: 'destructive' })
     }
     lastTestStatus.current = testStatus
-  }, [testError, testStatus, toast, values.toEmail])
+  }, [t, testError, testStatus, toast, values.toEmail])
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -82,13 +87,18 @@ function TestEmailForm() {
       ) : null}
       {!loading ? (
         <Form onSubmit={handleSubmit} className="max-w-xl space-y-4">
-          <FormField label="Template" htmlFor="test-template" required error={fieldErrors.templateSlug}>
+          <FormField
+            label={t('test.template')}
+            htmlFor="test-template"
+            required
+            error={fieldErrors.templateSlug}
+          >
             <Select
               value={values.templateSlug}
               onValueChange={(templateSlug) => setValues((prev) => ({ ...prev, templateSlug }))}
             >
               <SelectTrigger id="test-template">
-                <SelectValue placeholder="Select template" />
+                <SelectValue placeholder={t('test.selectTemplate')} />
               </SelectTrigger>
               <SelectContent>
                 {activeTemplates.map((template) => (
@@ -100,7 +110,12 @@ function TestEmailForm() {
             </Select>
           </FormField>
 
-          <FormField label="Recipient email" htmlFor="test-to" required error={fieldErrors.toEmail}>
+          <FormField
+            label={t('test.recipientEmail')}
+            htmlFor="test-to"
+            required
+            error={fieldErrors.toEmail}
+          >
             <Input
               id="test-to"
               type="email"
@@ -110,7 +125,7 @@ function TestEmailForm() {
           </FormField>
 
           <Button type="submit" disabled={submitting}>
-            {submitting ? 'Sending…' : 'Send test email'}
+            {submitting ? t('test.sending') : t('test.send')}
           </Button>
         </Form>
       ) : null}
@@ -119,12 +134,10 @@ function TestEmailForm() {
 }
 
 export function TestEmailPage() {
+  const { t } = useTranslation('shell')
   return (
     <ToastProvider>
-      <FeaturePage
-        title="Test email"
-        description="Send a test message using a template to verify delivery."
-      >
+      <FeaturePage title={t('testTitle')} description={t('testDescription')}>
         <TestEmailForm />
       </FeaturePage>
     </ToastProvider>

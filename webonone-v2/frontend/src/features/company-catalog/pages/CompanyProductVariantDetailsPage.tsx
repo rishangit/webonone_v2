@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
@@ -40,6 +41,8 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 export function CompanyProductVariantDetailsPage() {
+  const { t } = useTranslation('catalog')
+  const { t: tc } = useTranslation('common')
   const { productId = '', variantId = '' } = useParams()
   const navigate = useNavigate()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
@@ -58,7 +61,7 @@ export function CompanyProductVariantDetailsPage() {
       if (!product.libraryEntityId) {
         setVariant(null)
         setLibraryProductId(null)
-        setError('This product is not linked to the Data library, so variants are unavailable.')
+        setError(t('variantDetail.notLinked'))
         return
       }
       setLibraryProductId(product.libraryEntityId)
@@ -67,17 +70,17 @@ export function CompanyProductVariantDetailsPage() {
     } catch (err) {
       setVariant(null)
       setLibraryProductId(null)
-      setError(err instanceof Error ? err.message : 'Failed to load variant')
+      setError(err instanceof Error ? err.message : t('variantDetail.failedLoad'))
     } finally {
       setLoading(false)
     }
-  }, [productId, variantId])
+  }, [productId, variantId, t])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  usePlatformLoading(loading && !variant ? 'Loading variant…' : null)
+  usePlatformLoading(loading && !variant ? t('variantDetail.loading') : null)
 
   if (!productId || !variantId) {
     return <Navigate to="/data/products" replace />
@@ -85,8 +88,8 @@ export function CompanyProductVariantDetailsPage() {
 
   return (
     <FeaturePage
-      title={variant?.name ?? 'Variant'}
-      description="Product variant details"
+      title={variant?.name ?? t('variantDetail.titleFallback')}
+      description={t('variantDetail.description')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -96,7 +99,7 @@ export function CompanyProductVariantDetailsPage() {
             onClick={() => navigate(`/data/products/${productId}?tab=variants`)}
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {tc('back')}
           </Button>
         </div>
       }
@@ -110,16 +113,19 @@ export function CompanyProductVariantDetailsPage() {
       {variant && libraryProductId ? (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="flex flex-col gap-6 lg:col-span-2">
-            <EditableSectionCard title="Variant" description="Name, default flag, and SKU">
+            <EditableSectionCard
+              title={t('variantDetail.variantCard.title')}
+              description={t('variantDetail.variantCard.description')}
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-semibold">{variant.name}</h2>
                 {variant.isDefault ? (
                   <StatusTag variant="verified" className="shrink-0">
-                    Default
+                    {t('variantDetail.variantCard.default')}
                   </StatusTag>
                 ) : null}
               </div>
-              <ReadOnlyField label="SKU" value={variant.sku} />
+              <ReadOnlyField label={t('variantDetail.variantCard.sku')} value={variant.sku} />
             </EditableSectionCard>
 
             <CompanyProductVariantStocksCard
@@ -131,11 +137,11 @@ export function CompanyProductVariantDetailsPage() {
 
           <div className="flex flex-col gap-6 lg:col-span-1">
             <EditableSectionCard
-              title="Attribute values"
-              description="Values that define this SKU"
+              title={t('variantDetail.attributeValues.title')}
+              description={t('variantDetail.attributeValues.description')}
             >
               {variant.values.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No attribute values.</p>
+                <p className="text-sm text-muted-foreground">{t('variantDetail.attributeValues.empty')}</p>
               ) : (
                 <div className="space-y-4">
                   {variant.values.map((value) => (
@@ -151,12 +157,12 @@ export function CompanyProductVariantDetailsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Meta</CardTitle>
-                <CardDescription>Record timestamps</CardDescription>
+                <CardTitle className="text-lg">{t('variantDetail.meta.title')}</CardTitle>
+                <CardDescription>{t('variantDetail.meta.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label="Created" value={formatTimestamp(variant.createdAt)} />
-                <ReadOnlyField label="Updated" value={formatTimestamp(variant.updatedAt)} />
+                <ReadOnlyField label={t('variantDetail.created')} value={formatTimestamp(variant.createdAt)} />
+                <ReadOnlyField label={t('variantDetail.updated')} value={formatTimestamp(variant.updatedAt)} />
               </CardContent>
             </Card>
           </div>

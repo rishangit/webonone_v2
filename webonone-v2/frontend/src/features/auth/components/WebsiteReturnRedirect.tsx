@@ -20,7 +20,7 @@ export function WebsiteReturnRedirect({ accessToken, returnUrl }: WebsiteReturnR
     startedRef.current = true
 
     redirectToWebsiteWithAuthCode(accessToken, returnUrl).catch((err: Error) => {
-      setError(err.message || t('callbackError'))
+      setError(err.message || t('websiteReturn.failed'))
     })
   }, [accessToken, returnUrl, t])
 
@@ -34,7 +34,7 @@ export function WebsiteReturnRedirect({ accessToken, returnUrl }: WebsiteReturnR
 
   return (
     <div className="flex h-dvh items-center justify-center px-4">
-      <p className="text-sm text-muted-foreground">{t('returningToWebsite')}</p>
+      <p className="text-sm text-muted-foreground">{t('websiteReturn.returning')}</p>
     </div>
   )
 }

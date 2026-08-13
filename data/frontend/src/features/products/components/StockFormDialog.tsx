@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   isPlatformPeerDialogNestedCancelMessage,
   isPlatformPeerDialogNestedResultMessage,
@@ -46,10 +47,6 @@ const STOCK_FORM_DIALOG_SIZE = {
   sizeHeight: 'large' as const,
 }
 
-const TITLE = 'Add stock'
-const DESCRIPTION = 'Record a stock batch for this product variant.'
-const SUBMIT_LABEL = 'Add stock'
-
 function toYmd(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -86,6 +83,8 @@ export function StockFormDialog({
   onSaved,
   chrome = 'dialog',
 }: StockFormDialogProps) {
+  const { t } = useTranslation('products')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -94,6 +93,9 @@ export function StockFormDialog({
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
+  const title = t('stock.addTitle')
+  const description = t('stock.addDescription')
+  const submitLabel = t('stock.addTitle')
 
   const [values, setValues] = useState<StockFormDraft>(createEmptyStockFormDraft)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -106,9 +108,9 @@ export function StockFormDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
     open: chrome === 'dialog' && open,
     path,
-    title: TITLE,
-    description: DESCRIPTION,
-    submitLabel: SUBMIT_LABEL,
+    title,
+    description,
+    submitLabel,
     ...STOCK_FORM_DIALOG_SIZE,
     onResult: (payload) => {
       if (payload && typeof payload === 'object' && typeof (payload as ProductVariantStock).id === 'string') {
@@ -281,7 +283,7 @@ export function StockFormDialog({
       parentOrigin,
       dialogRequestId,
       saving || Boolean(nestedSupplierRequestIdRef.current),
-      saving ? 'Saving…' : SUBMIT_LABEL,
+      saving ? t('saving') : submitLabel,
     )
   }, [chrome, dialogRequestId, parentOrigin, saving, supplierPickerOpen])
 
@@ -294,7 +296,7 @@ export function StockFormDialog({
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Quantity" htmlFor="stock-quantity" required error={fieldErrors.quantity}>
+        <FormField label={t('stock.quantity')} htmlFor="stock-quantity" required error={fieldErrors.quantity}>
           <Input
             id="stock-quantity"
             type="number"
@@ -306,7 +308,7 @@ export function StockFormDialog({
           />
         </FormField>
         <FormField
-          label="Batch number"
+          label={t('stock.batchNumber')}
           htmlFor="stock-batch-number"
           required
           error={fieldErrors.batchNumber}
@@ -320,7 +322,7 @@ export function StockFormDialog({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Cost price" htmlFor="stock-cost-price" required error={fieldErrors.costPrice}>
+        <FormField label={t('stock.costPrice')} htmlFor="stock-cost-price" required error={fieldErrors.costPrice}>
           <Input
             id="stock-cost-price"
             type="number"
@@ -331,7 +333,7 @@ export function StockFormDialog({
             onChange={(e) => updateField('costPrice', e.target.value)}
           />
         </FormField>
-        <FormField label="Sell price" htmlFor="stock-sell-price" required error={fieldErrors.sellPrice}>
+        <FormField label={t('stock.sellPrice')} htmlFor="stock-sell-price" required error={fieldErrors.sellPrice}>
           <Input
             id="stock-sell-price"
             type="number"
@@ -346,7 +348,7 @@ export function StockFormDialog({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField
-          label="Purchase date"
+          label={t('stock.purchaseDate')}
           htmlFor="stock-purchase-date"
           required
           error={fieldErrors.purchaseDate}
@@ -356,11 +358,11 @@ export function StockFormDialog({
             value={parseYmd(values.purchaseDate)}
             onChange={(date) => updateField('purchaseDate', date ? toYmd(date) : '')}
             withIcon
-            placeholder="Purchase date"
+            placeholder={t('stock.purchaseDate')}
           />
         </FormField>
         <FormField
-          label="Expired date"
+          label={t('stock.expiredDate')}
           htmlFor="stock-expired-date"
           error={fieldErrors.expiredDate}
         >
@@ -369,13 +371,13 @@ export function StockFormDialog({
             value={parseYmd(values.expiredDate)}
             onChange={(date) => updateField('expiredDate', date ? toYmd(date) : '')}
             withIcon
-            placeholder="Expired date"
+            placeholder={t('stock.expiredDate')}
           />
         </FormField>
       </div>
 
       <FormField
-        label="Supplier"
+        label={t('stock.supplier')}
         htmlFor="stock-supplier"
         required
         error={fieldErrors.supplierUserId ?? fieldErrors.supplierDisplayName}
@@ -383,7 +385,7 @@ export function StockFormDialog({
         <SelectUser
           id="stock-supplier"
           selectedUser={selectedSupplier}
-          placeholder="Select supplier"
+          placeholder={t('stock.selectSupplier')}
           onClick={openSupplierPicker}
         />
       </FormField>
@@ -398,10 +400,10 @@ export function StockFormDialog({
         onClick={() => onOpenChange(false)}
         disabled={saving}
       >
-        Cancel
+        {tc('cancel')}
       </Button>
       <Button type="button" onClick={() => void handleSubmit()} disabled={saving}>
-        {saving ? 'Saving…' : SUBMIT_LABEL}
+        {saving ? t('saving') : submitLabel}
       </Button>
     </>
   )
@@ -419,8 +421,8 @@ export function StockFormDialog({
       <CustomDialog
         open={open}
         onOpenChange={onOpenChange}
-        title={TITLE}
-        description={DESCRIPTION}
+        title={title}
+        description={description}
         sizeWidth={STOCK_FORM_DIALOG_SIZE.sizeWidth}
         sizeHeight={STOCK_FORM_DIALOG_SIZE.sizeHeight}
         footer={actions}

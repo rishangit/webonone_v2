@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   FormField,
   Input,
@@ -25,10 +26,11 @@ export function ServiceWizardStepTime({
   isSubmitting,
   onChange,
 }: ServiceWizardStepTimeProps) {
+  const { t } = useTranslation('services')
   return (
     <div className="space-y-4">
       <FormField
-        label="Time"
+        label={t('time')}
         htmlFor="service-wizard-time-mode"
         required
         error={fieldErrors.time_mode}
@@ -42,15 +44,15 @@ export function ServiceWizardStepTime({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="duration">Duration</SelectItem>
-            <SelectItem value="window">Specific time</SelectItem>
+            <SelectItem value="duration">{t('timeModeDuration')}</SelectItem>
+            <SelectItem value="window">{t('timeModeWindow')}</SelectItem>
           </SelectContent>
         </Select>
       </FormField>
 
       {values.time_mode === 'duration' ? (
         <FormField
-          label="Duration (minutes)"
+          label={t('durationMinutes')}
           htmlFor="service-wizard-duration"
           required
           error={fieldErrors.duration_minutes}
@@ -69,7 +71,7 @@ export function ServiceWizardStepTime({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
-            label="Start time"
+            label={t('startTime')}
             htmlFor="service-wizard-start-time"
             required
             error={fieldErrors.start_time}
@@ -84,7 +86,7 @@ export function ServiceWizardStepTime({
             />
           </FormField>
           <FormField
-            label="End time"
+            label={t('endTime')}
             htmlFor="service-wizard-end-time"
             required
             error={fieldErrors.end_time}

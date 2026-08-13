@@ -1,4 +1,5 @@
 import { Moon, Sun } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Card,
   CardContent,
@@ -13,30 +14,31 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { systemThemeActions } from '@/features/settings/system-theme/store/systemThemeSlice'
 
-const APPEARANCE_OPTIONS: {
-  mode: ColorMode
-  title: string
-  description: string
-  Icon: typeof Sun
-}[] = [
-  {
-    mode: 'light',
-    title: 'Light',
-    description: 'Bright surfaces for daytime use.',
-    Icon: Sun,
-  },
-  {
-    mode: 'dark',
-    title: 'Dark',
-    description: 'Dimmed surfaces for low light.',
-    Icon: Moon,
-  },
-]
-
 export function AppearanceSettingsPanel() {
+  const { t } = useTranslation('settings')
   const dispatch = useAppDispatch()
   const { preferences, preferencesFetchedAt } = useAppSelector((s) => s.systemTheme)
   const colorMode = preferences?.colorMode ?? 'light'
+
+  const appearanceOptions: {
+    mode: ColorMode
+    title: string
+    description: string
+    Icon: typeof Sun
+  }[] = [
+    {
+      mode: 'light',
+      title: t('appearance.light.title'),
+      description: t('appearance.light.description'),
+      Icon: Sun,
+    },
+    {
+      mode: 'dark',
+      title: t('appearance.dark.title'),
+      description: t('appearance.dark.description'),
+      Icon: Moon,
+    },
+  ]
 
   useEffect(() => {
     if (!isFresh(preferencesFetchedAt)) {
@@ -54,12 +56,12 @@ export function AppearanceSettingsPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Appearance</CardTitle>
-        <CardDescription>Choose light or dark mode for the platform.</CardDescription>
+        <CardTitle>{t('appearance.title')}</CardTitle>
+        <CardDescription>{t('appearance.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="grid gap-3 sm:grid-cols-2">
-          {APPEARANCE_OPTIONS.map(({ mode, title, description, Icon }) => {
+          {appearanceOptions.map(({ mode, title, description, Icon }) => {
             const selected = colorMode === mode
             return (
               <li key={mode}>

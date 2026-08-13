@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Trash2, Upload } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PLATFORM_MESSAGE_TYPES, PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
@@ -28,6 +29,8 @@ type CompanyLogoCardProps = {
 }
 
 export function CompanyLogoCard({ companyId, logoUrl, canEdit, saving }: CompanyLogoCardProps) {
+  const { t } = useTranslation('settings')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { openMediaDialog } = usePlatformMediaDialog()
   const [confirmRemove, setConfirmRemove] = useState(false)
@@ -37,7 +40,7 @@ export function CompanyLogoCard({ companyId, logoUrl, canEdit, saving }: Company
       {
         type: PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_REQUEST,
         requestId: crypto.randomUUID(),
-        title: logoUrl ? 'Replace company logo' : 'Upload company logo',
+        title: logoUrl ? t('companyCards.logo.pickerReplaceTitle') : t('companyCards.logo.pickerUploadTitle'),
         scope: buildCompanyMediaScope(companyId),
         scopedRoot: COMPANY_MEDIA_SCOPED_ROOT,
         folderPath: buildCompanyProfileFolderPath(companyId),
@@ -75,14 +78,14 @@ export function CompanyLogoCard({ companyId, logoUrl, canEdit, saving }: Company
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Company logo</CardTitle>
-          <CardDescription>Shown on company lists and profile identity surfaces</CardDescription>
+          <CardTitle className="text-lg">{t('companyCards.logo.title')}</CardTitle>
+          <CardDescription>{t('companyCards.logo.cardDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-start gap-4">
             <ImagePreview
               src={logoUrl}
-              alt="Company logo"
+              alt={t('companyCards.logo.alt')}
               mode={canEdit ? 'edit' : 'view'}
               onEdit={canEdit && !saving ? openLogoPicker : undefined}
             />
@@ -90,7 +93,7 @@ export function CompanyLogoCard({ companyId, logoUrl, canEdit, saving }: Company
               <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" onClick={openLogoPicker} disabled={saving}>
                   <Upload className="h-4 w-4" aria-hidden />
-                  {logoUrl ? 'Replace' : 'Upload'}
+                  {logoUrl ? t('companyCards.logo.replace') : t('companyCards.logo.upload')}
                 </Button>
                 {logoUrl ? (
                   <Button
@@ -101,23 +104,23 @@ export function CompanyLogoCard({ companyId, logoUrl, canEdit, saving }: Company
                     disabled={saving}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
-                    Remove
+                    {tc('remove')}
                   </Button>
                 ) : null}
               </div>
             ) : null}
           </div>
           {!logoUrl && canEdit ? (
-            <p className="text-sm text-muted-foreground">Upload a company logo</p>
+            <p className="text-sm text-muted-foreground">{t('companyCards.logo.uploadHint')}</p>
           ) : null}
         </CardContent>
       </Card>
       <PlatformAlertConfirmDialog
         open={confirmRemove}
-        title="Remove company logo?"
-        description="This will clear the company logo. You can upload a new one later."
+        title={t('companyCards.logo.removeTitle')}
+        description={t('companyCards.logo.removeDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
+        submitLabel={tc('remove')}
         onOpenChange={setConfirmRemove}
         onConfirm={handleRemove}
       />

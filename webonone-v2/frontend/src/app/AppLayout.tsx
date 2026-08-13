@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AppShell, BrandLogo, LoadingState } from '@webonone/ui-kit'
-import { translateNavItems } from '@/features/shell/utils/translateNavItems'
 import { clearIdentityEmbedSession } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
@@ -16,7 +15,7 @@ import {
   isProfileNavSentinel,
   isSmsNavSentinel,
 } from '@webonone/platform-nav'
-import { normalizeLocale, type AppLocale } from '@webonone/i18n'
+import { normalizeLocale, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppSelector } from '@/app/store/hooks'
 import { clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
@@ -127,8 +126,8 @@ function AppLayoutContent() {
       activeRole === 'company_admin' || (activeRole === 'member' && activeCompanyId)
         ? buildNavForSessionRole(activeRole, matched?.dataEntities ?? [], activeCompanyId)
         : buildNavForSessionRole(activeRole, undefined, activeCompanyId)
-    return translateNavItems(items, tShell)
-  }, [activeRole, activeCompanyId, assumableRoles, tShell])
+    return translateNavItems(items, t)
+  }, [activeRole, activeCompanyId, assumableRoles, t])
 
   const sidebarSession = useMemo(() => {
     if (!user || !selectionComplete || !activeRole) {

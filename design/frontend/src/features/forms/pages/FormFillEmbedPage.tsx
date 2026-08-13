@@ -1,4 +1,5 @@
 import { useSearchParams, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
@@ -10,13 +11,14 @@ import { FormFillDialog, type FormFillMode } from '@/features/forms/components/F
 
 /** Peer-dialog body for fill/view form (host chrome owned by WebOnOne). */
 export function FormFillEmbedPage() {
+  const { t } = useTranslation('forms')
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
 
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
   const subjectUserId = searchParams.get('subjectUserId') ?? ''
-  const subjectDisplayName = searchParams.get('subjectDisplayName') ?? 'Customer'
+  const subjectDisplayName = searchParams.get('subjectDisplayName') ?? t('customerFallback')
   const subjectEmail = searchParams.get('subjectEmail')
   const serviceId = searchParams.get('serviceId')
   const serviceName = searchParams.get('serviceName')

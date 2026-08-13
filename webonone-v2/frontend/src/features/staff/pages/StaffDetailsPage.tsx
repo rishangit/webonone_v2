@@ -50,7 +50,7 @@ export function StaffDetailsPage() {
   const tab: StaffDetailTab = searchParams.get('tab') === 'history' ? 'history' : 'overview'
 
   const loading = detailStatus === 'loading' && !detail
-  usePlatformLoading(loading ? t('loadingStaff') : null)
+  usePlatformLoading(loading ? t('detail.loading') : null)
 
   useEffect(() => {
     if (!staffId) return
@@ -86,7 +86,7 @@ export function StaffDetailsPage() {
 
   if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
     return (
-      <FeaturePage title={t('title')} description={t('details')}>
+      <FeaturePage title={t('detail.title')} description={t('detail.description')}>
         <Alert variant="destructive">
           <AlertDescription>{t('session:companySessionRequired')}</AlertDescription>
         </Alert>
@@ -101,8 +101,8 @@ export function StaffDetailsPage() {
   if (detailError && !detail) {
     return (
       <FeaturePage
-        title={t('title')}
-        description={t('details')}
+        title={t('detail.title')}
+        description={t('detail.description')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={() => navigate('/staff')}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -122,8 +122,8 @@ export function StaffDetailsPage() {
   }
 
   const tabs: { id: StaffDetailTab; label: string }[] = [
-    { id: 'overview', label: t('overview') },
-    { id: 'history', label: t('history') },
+    { id: 'overview', label: t('detail.tabs.overview') },
+    { id: 'history', label: t('detail.tabs.history') },
   ]
 
   const overview = (
@@ -144,18 +144,18 @@ export function StaffDetailsPage() {
         />
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{t('record')}</CardTitle>
-            <CardDescription>{t('recordMeta')}</CardDescription>
+            <CardTitle className="text-lg">{t('detail.recordTitle')}</CardTitle>
+            <CardDescription>{t('detail.recordDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">{t('added')}</p>
+              <p className="text-xs font-medium text-muted-foreground">{t('detail.added')}</p>
               <p className="text-sm text-foreground">
                 {formatLocaleDateTime(detail.createdAt, undefined, i18n.language)}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">{t('updated')}</p>
+              <p className="text-xs font-medium text-muted-foreground">{t('detail.updated')}</p>
               <p className="text-sm text-foreground">
                 {formatLocaleDateTime(detail.updatedAt, undefined, i18n.language)}
               </p>
@@ -169,7 +169,7 @@ export function StaffDetailsPage() {
   return (
     <FeaturePage
       title={detail.displayName}
-      description={t('detailsDescription')}
+      description={t('detail.pageDescription')}
       actions={
         <Button type="button" variant="outline" size="sm" onClick={() => navigate('/staff')}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -182,7 +182,7 @@ export function StaffDetailsPage() {
         onValueChange={(value) => setTab(value as StaffDetailTab)}
         className="flex flex-col gap-6"
       >
-        <TabsList aria-label={t('staffSections')}>
+        <TabsList aria-label={t('detail.ariaSections')}>
           {tabs.map((item) => (
             <TabsTrigger key={item.id} value={item.id}>
               {item.label}

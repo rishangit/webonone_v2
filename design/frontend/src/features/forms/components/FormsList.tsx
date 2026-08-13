@@ -43,24 +43,23 @@ export function FormsList({ forms, onOpen, onDeleted, canManage }: FormsListProp
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{form.name}</p>
                   <StatusTag variant={form.status === 'published' ? 'approved' : 'pending'}>
-                    {form.status}
+                    {form.status === 'published' ? t('published') : t('draft')}
                   </StatusTag>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {form.slug} · {form.definition.fields.length} field
-                  {form.definition.fields.length === 1 ? '' : 's'}
+                  {form.slug} · {t('fields', { count: form.definition.fields.length })}
                 </p>
               </button>
             </ItemListContent>
             {canManage ? (
-              <ItemListMenu ariaLabel={`Actions for ${form.name}`}>
+              <ItemListMenu ariaLabel={t('actionsFor', { name: form.name })}>
                 <DropdownMenuItem onClick={() => onOpen(form)}>{t('common:edit')}</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onClick={() => setPendingDelete({ id: form.id, name: form.name })}
                 >
-                  Delete
+                  {t('common:delete')}
                 </DropdownMenuItem>
               </ItemListMenu>
             ) : null}

@@ -192,7 +192,8 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
 
       {item ? (
         <CatalogDetailSectionTabs
-          ariaLabel={`${config.singular} sections`}
+          ns="spaces"
+          ariaLabel={t('sectionsAria')}
           tab={tab}
           onTabChange={setTab}
           overview={overview}

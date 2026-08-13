@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@webonone/ui-kit'
 import { isAuthCancelMessage, isAuthSuccessMessage } from '@webonone/platform-embed'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
@@ -20,6 +21,8 @@ type IdentityLoginFrameProps = {
 
 /** Identity login UI framed on the website — no hop to the WebOnOne app. */
 export function IdentityLoginFrame({ returnPath = '/' }: IdentityLoginFrameProps) {
+  const { t } = useTranslation('auth')
+  const { t: tc } = useTranslation('common')
   const navigate = useNavigate()
   const { login } = useWebsiteAuth()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -73,15 +76,15 @@ export function IdentityLoginFrame({ returnPath = '/' }: IdentityLoginFrameProps
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col">
       {loadError ? (
         <div className="flex flex-col items-center gap-3 py-12">
-          <p className="text-sm text-muted-foreground">Could not load sign-in.</p>
+          <p className="text-sm text-muted-foreground">{t('loginLoadFailed')}</p>
           <Button type="button" onClick={handleRetry}>
-            Retry
+            {tc('retry')}
           </Button>
         </div>
       ) : null}
       <iframe
         ref={iframeRef}
-        title="Sign in"
+        title={t('login')}
         src={src}
         onLoad={() => setLoadError(false)}
         onError={() => setLoadError(true)}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import { PLATFORM_MESSAGE_TYPES, PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -18,11 +19,11 @@ import {
   COMPANY_MEDIA_SCOPED_ROOT,
 } from '@/features/media/utils/mediaConfig'
 import { companyCatalogActions } from '@/features/company-catalog/store/companyCatalogStore'
-import type {
-  CatalogGalleryImage,
-  CatalogGalleryKind,
+import {
+  CATALOG_ENTITY_SINGULAR_KEYS,
+  type CatalogGalleryImage,
+  type CatalogGalleryKind,
 } from '@/features/company-catalog/types/companyCatalog.types'
-import { singularLabel } from '@/features/company-catalog/types/companyCatalog.types'
 
 const MAX_GALLERY_IMAGES = 24
 
@@ -46,10 +47,12 @@ export function CatalogEntityGalleryCard({
   saving,
   inheritsLibraryGallery = false,
 }: CatalogEntityGalleryCardProps) {
+  const { t } = useTranslation('catalog')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { openMediaDialog } = usePlatformMediaDialog()
   const images = galleryImages ?? []
-  const noun = singularLabel(kind).toLowerCase()
+  const noun = t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
 
   function persistGallery(next: CatalogGalleryImage[]) {
@@ -70,7 +73,7 @@ export function CatalogEntityGalleryCard({
       {
         type: PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_REQUEST,
         requestId: crypto.randomUUID(),
-        title: `Add ${noun} gallery images`,
+        title: t('gallery.addTitle', { noun }),
         scope: buildCompanyMediaScope(companyId),
         scopedRoot: COMPANY_MEDIA_SCOPED_ROOT,
         folderPath: buildCatalogEntityGalleryFolderPath(companyId, kind, entityId),
@@ -105,11 +108,11 @@ export function CatalogEntityGalleryCard({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1.5">
-              <CardTitle className="text-lg">Gallery</CardTitle>
+              <CardTitle className="text-lg">{t('detail.tabs.gallery')}</CardTitle>
               <CardDescription>
                 {inheritsLibraryGallery
-                  ? `Using library gallery. Changes stay on this company and do not customize details (up to ${MAX_GALLERY_IMAGES}).`
-                  : `Images for this ${noun} (up to ${MAX_GALLERY_IMAGES})`}
+                  ? t('gallery.inheritsLibrary', { max: MAX_GALLERY_IMAGES })
+                  : t('gallery.imagesForNoun', { noun, max: MAX_GALLERY_IMAGES })}
               </CardDescription>
             </div>
             {canEdit ? (
@@ -120,7 +123,7 @@ export function CatalogEntityGalleryCard({
                 disabled={saving || images.length >= MAX_GALLERY_IMAGES}
               >
                 <ImagePlus className="h-4 w-4" aria-hidden />
-                Add images
+                {t('gallery.addImages')}
               </Button>
             ) : null}
           </div>
@@ -129,7 +132,7 @@ export function CatalogEntityGalleryCard({
           {images.length === 0 ? (
             <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                {canEdit ? 'Add gallery images' : 'No gallery images yet'}
+                {canEdit ? t('gallery.addGalleryImages') : t('gallery.empty')}
               </p>
             </div>
           ) : (
@@ -138,7 +141,7 @@ export function CatalogEntityGalleryCard({
                 <li key={img.mediaId} className="group relative overflow-hidden rounded-lg border">
                   <img
                     src={img.url}
-                    alt={`${noun} gallery`}
+                    alt={t('gallery.alt', { noun })}
                     className="aspect-square w-full object-cover"
                   />
                   {canEdit ? (
@@ -149,7 +152,7 @@ export function CatalogEntityGalleryCard({
                       className="absolute right-2 top-2 h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                       onClick={() => setPendingRemoveId(img.mediaId)}
                       disabled={saving}
-                      aria-label="Remove gallery image"
+                      aria-label={t('gallery.removeAria')}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden />
                     </Button>
@@ -162,10 +165,10 @@ export function CatalogEntityGalleryCard({
       </Card>
       <PlatformAlertConfirmDialog
         open={pendingRemoveId !== null}
-        title="Remove gallery image?"
-        description={`This action cannot be undone. The image will be removed from this ${noun} gallery.`}
+        title={t('gallery.removeTitle')}
+        description={t('gallery.removeDescription', { noun })}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Remove"
+        submitLabel={tc('remove')}
         onOpenChange={(open) => {
           if (!open) setPendingRemoveId(null)
         }}

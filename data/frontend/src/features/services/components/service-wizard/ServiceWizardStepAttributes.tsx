@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Input,
@@ -28,6 +29,7 @@ export function ServiceWizardStepAttributes({
   isSubmitting,
   onChange,
 }: ServiceWizardStepAttributesProps) {
+  const { t } = useTranslation('services')
   function addAttributeRow() {
     onChange({
       attributes: [
@@ -57,7 +59,7 @@ export function ServiceWizardStepAttributes({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-foreground">Attributes</p>
+        <p className="text-sm font-medium text-foreground">{t('attributes')}</p>
         <Button
           type="button"
           size="sm"
@@ -65,13 +67,13 @@ export function ServiceWizardStepAttributes({
           onClick={addAttributeRow}
           disabled={isSubmitting}
         >
-          Add attribute
+          {t('wizard.addAttribute')}
         </Button>
       </div>
 
       {values.attributes.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Optional. Add custom attribute values for this service.
+          {t('wizard.attributesEmpty')}
         </p>
       ) : null}
 
@@ -88,7 +90,7 @@ export function ServiceWizardStepAttributes({
               disabled={isSubmitting}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Attribute" />
+                <SelectValue placeholder={t('wizard.attributePlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {attributeOptions.map((a) => (
@@ -101,14 +103,14 @@ export function ServiceWizardStepAttributes({
             {attr?.valueType === 'number' ? (
               <Input
                 type="number"
-                placeholder="Value"
+                placeholder={t('wizard.valuePlaceholder')}
                 value={row.valueNumber}
                 onChange={(e) => updateRow(index, { valueNumber: e.target.value })}
                 disabled={isSubmitting}
               />
             ) : (
               <Input
-                placeholder="Value"
+                placeholder={t('wizard.valuePlaceholder')}
                 value={row.valueText}
                 onChange={(e) => updateRow(index, { valueText: e.target.value })}
                 disabled={isSubmitting}
@@ -120,7 +122,7 @@ export function ServiceWizardStepAttributes({
               onClick={() => removeRow(index)}
               disabled={isSubmitting}
             >
-              Remove
+              {t('common:remove')}
             </Button>
           </div>
         )

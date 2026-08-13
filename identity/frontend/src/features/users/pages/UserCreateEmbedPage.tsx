@@ -49,7 +49,7 @@ export function UserCreateEmbedPage() {
       parentOrigin,
       requestId,
       creating,
-      creating ? t('creating') : t('createUser'),
+      creating ? t('createDialog.creating') : t('createDialog.submit'),
     )
   }, [creating, parentOrigin, requestId])
 
@@ -75,7 +75,7 @@ export function UserCreateEmbedPage() {
         alreadyAdded: true,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('failedToCreateUser'))
+      setError(err instanceof Error ? err.message : t('errors.createFailed'))
     } finally {
       setCreating(false)
     }
@@ -86,7 +86,7 @@ export function UserCreateEmbedPage() {
       <div className="flex min-h-[200px] items-center justify-center p-6">
         <Alert variant="destructive" className="max-w-sm">
           <AlertDescription>
-            {t('embedOnlyPeerDialog')}
+            {t('errors.peerDialogOnly')}
           </AlertDescription>
         </Alert>
       </div>

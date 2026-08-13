@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -31,6 +32,8 @@ function endOfDayIso(date: Date): string {
 }
 
 export function HistoryPage() {
+  const { t } = useTranslation('shell')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const userRole = useAppSelector((s) => s.auth.user?.role)
@@ -49,7 +52,7 @@ export function HistoryPage() {
   })
 
   const loading = listStatus === 'loading' && items.length === 0
-  usePlatformLoading(loading ? 'Loading history…' : null)
+  usePlatformLoading(loading ? t('loadingHistory') : null)
 
   const hasActiveFilters =
     appliedFilters.status !== 'all' ||
@@ -124,20 +127,18 @@ export function HistoryPage() {
 
   return (
     <FeaturePage
-      title="Send history"
+      title={t('historyTitle')}
       description={
-        userRole === 'company_admin'
-          ? 'Company-scoped send history. Platform system emails (such as password reset OTP) are not listed here.'
-          : 'Audit trail of sent and failed messages for your scope.'
+        userRole === 'company_admin' ? t('historyDescriptionCompany') : t('historyDescription')
       }
       actions={
         <div className="flex items-center gap-2">
           <SearchInput
             value={searchQuery}
             onChange={(event) => handleSearchChange(event.target.value)}
-            placeholder="Email or template name"
+            placeholder={t('historySearchPlaceholder')}
             onClear={handleClearSearch}
-            aria-label="Search by recipient email or template name"
+            aria-label={t('historySearchAria')}
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
@@ -150,36 +151,36 @@ export function HistoryPage() {
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
       >
-        <FormField label="Status" htmlFor="history-status">
+        <FormField label={tc('status')} htmlFor="history-status">
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger id="history-status">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue placeholder={t('allStatuses')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="all">{tc('all')}</SelectItem>
+              <SelectItem value="sent">{t('statusSent')}</SelectItem>
+              <SelectItem value="failed">{t('statusFailed')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>
 
-        <FormField label="From date" htmlFor="history-from">
+        <FormField label={t('fromDate')} htmlFor="history-from">
           <DatePicker
             id="history-from"
             withIcon
             value={from}
             onChange={setFrom}
-            placeholder="Start date"
+            placeholder={t('startDate')}
           />
         </FormField>
 
-        <FormField label="To date" htmlFor="history-to">
+        <FormField label={t('toDate')} htmlFor="history-to">
           <DatePicker
             id="history-to"
             withIcon
             value={to}
             onChange={setTo}
-            placeholder="End date"
+            placeholder={t('endDate')}
           />
         </FormField>
       </ListFilterPanel>

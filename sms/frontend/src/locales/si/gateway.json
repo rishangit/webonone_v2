@@ -22,5 +22,10 @@
   "testing": "යවමින්…",
   "statusConfigured": "සකසා ඇත",
   "statusNotConfigured": "සකසා නැත",
-  "developersLink": "Text.lk Developers"
+  "developersLink": "Text.lk Developers",
+  "toastSaved": "ගේට්වේ සැකසුම් සුරකින ලදී",
+  "toastSaveFailed": "ගේට්වේ සුරැකීම අසාර්ථක විය",
+  "toastTestSent": "පරීක්ෂණ SMS යවන ලදී",
+  "toastTestFailed": "පරීක්ෂණ SMS යැවීම අසාර්ථක විය",
+  "apiTokenRequired": "Text.lk සඳහා API ටෝකනය අවශ්‍යයි"
 }

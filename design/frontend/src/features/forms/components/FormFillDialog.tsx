@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -69,19 +70,23 @@ function parseFormFillMode(mode: string | null | undefined): FormFillMode {
 }
 
 export function getFormFillCopy(
+  t: (key: string, opts?: Record<string, string>) => string,
   subjectDisplayName: string,
   serviceName?: string | null,
   mode: FormFillMode = 'fill',
 ) {
+  const description = serviceName
+    ? t('forSubjectService', { name: subjectDisplayName, service: serviceName })
+    : t('forSubject', { name: subjectDisplayName })
   if (mode === 'view' || mode === 'edit') {
     return {
-      title: 'View form',
-      description: `For ${subjectDisplayName}${serviceName ? ` · ${serviceName}` : ''}`,
+      title: t('viewForm'),
+      description,
     }
   }
   return {
-    title: 'Fill form',
-    description: `For ${subjectDisplayName}${serviceName ? ` · ${serviceName}` : ''}`,
+    title: t('fill'),
+    description,
   }
 }
 
@@ -114,6 +119,7 @@ function FormFillFields({
   disabled: boolean
   onAnswer: (fieldId: string, value: unknown) => void
 }) {
+  const { t } = useTranslation('forms')
   return (
     <div className="flex flex-col gap-6">
       {fields.map((field) => {
@@ -168,7 +174,7 @@ function FormFillFields({
                 disabled={disabled}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={field.placeholder || 'Select…'} />
+                  <SelectValue placeholder={field.placeholder || t('selectPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {(field.options ?? []).map((opt) => (
@@ -243,6 +249,8 @@ export function FormFillDialog({
   onSubmitted,
   chrome = 'dialog',
 }: FormFillDialogProps) {
+  const { t } = useTranslation('forms')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const { toast } = useToast()
@@ -251,7 +259,7 @@ export function FormFillDialog({
 
   const formTemplateId = subject?.formTemplateId ?? ''
   const subjectUserId = subject?.subjectUserId ?? ''
-  const subjectDisplayName = subject?.subjectDisplayName ?? 'Customer'
+  const subjectDisplayName = subject?.subjectDisplayName ?? t('customerFallback')
   const serviceId = subject?.serviceId ?? null
   const serviceName = subject?.serviceName ?? null
   const eventId = subject?.eventId ?? null
@@ -263,7 +271,7 @@ export function FormFillDialog({
   const isEdit = mode === 'edit'
   const isReadOnly = isView
 
-  const copy = getFormFillCopy(subjectDisplayName, serviceName, mode)
+  const copy = getFormFillCopy(t, subjectDisplayName, serviceName, mode)
   const dialogPath = subject ? buildFormFillEmbedPath(subject) : '/embed/dialogs/forms/fill'
   const dialogRequestId =
     chrome === 'embed-page'
@@ -277,7 +285,7 @@ export function FormFillDialog({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const submitLabel = isView ? null : isEdit ? 'Save' : 'Submit'
+  const submitLabel = isView ? null : isEdit ? tc('save') : tc('submit')
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
@@ -285,7 +293,7 @@ export function FormFillDialog({
     path: dialogPath,
     title: copy.title,
     description: copy.description,
-    cancelLabel: isView ? 'Close' : 'Cancel',
+    cancelLabel: isView ? tc('close') : tc('cancel'),
     submitLabel,
     ...DESIGN_FORM_FILL_DIALOG_SIZE,
     onResult: () => {
@@ -336,7 +344,7 @@ export function FormFillDialog({
     load()
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load form')
+          setError(err instanceof Error ? err.message : t('unableToLoad'))
         }
       })
       .finally(() => {
@@ -355,6 +363,7 @@ export function FormFillDialog({
     open,
     submissionId,
     user?.companyId,
+    t,
   ])
 
   useEffect(() => {
@@ -382,7 +391,7 @@ export function FormFillDialog({
       if (!field.required) continue
       if (field.type === 'checkbox') continue
       if (value == null || value === '') {
-        next[field.id] = `${field.label} is required`
+        next[field.id] = t('fieldRequired', { label: field.label })
       }
     }
     setFieldErrors(next)
@@ -392,11 +401,11 @@ export function FormFillDialog({
   async function submit() {
     if (isReadOnly || !form || !formTemplateId) return
     if (!canFill) {
-      setError('A customer subject is required and you cannot fill for yourself.')
+      setError(t('cannotFillSelf'))
       return
     }
     if (form.status !== 'published') {
-      setError('Only published forms can be filled.')
+      setError(t('onlyPublished'))
       return
     }
     if (!validate(fields)) return
@@ -417,17 +426,17 @@ export function FormFillDialog({
         sendPlatformPeerDialogComplete(parentOrigin, dialogRequestId)
       } else {
         toast({
-          title: isEdit ? 'Form saved' : 'Form submitted',
-          description: `Saved for ${subjectDisplayName}.`,
+          title: isEdit ? t('saved') : t('formSubmitted'),
+          description: t('savedFor', { name: subjectDisplayName }),
         })
         onOpenChange(false)
         onSubmitted?.()
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unable to submit form'
+      const message = err instanceof Error ? err.message : t('unableToSubmit')
       setError(message)
       toast({
-        title: isEdit ? 'Save failed' : 'Submit failed',
+        title: isEdit ? t('saveFailed') : t('submitFailed'),
         description: message,
         variant: 'destructive',
       })
@@ -454,7 +463,7 @@ export function FormFillDialog({
       {!isReadOnly && !canFill && subjectUserId ? (
         <Alert variant="destructive">
           <AlertDescription>
-            A customer subject is required and you cannot fill for yourself.
+            {t('cannotFillSelf')}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -484,7 +493,7 @@ export function FormFillDialog({
       className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
       onClick={() => onOpenChange(false)}
     >
-      Close
+      {tc('close')}
     </Button>
   ) : (
     <>
@@ -495,7 +504,7 @@ export function FormFillDialog({
         onClick={() => onOpenChange(false)}
         disabled={submitting}
       >
-        Cancel
+        {tc('cancel')}
       </Button>
       <Button
         type="button"
@@ -503,7 +512,7 @@ export function FormFillDialog({
         onClick={() => void submit()}
         disabled={submitting || loading || !canFill || !form}
       >
-        {submitting ? (isEdit ? 'Saving…' : 'Submitting…') : isEdit ? 'Save' : 'Submit'}
+        {submitting ? (isEdit ? t('saving') : t('submitting')) : isEdit ? tc('save') : tc('submit')}
       </Button>
     </>
   )

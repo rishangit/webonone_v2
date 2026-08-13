@@ -30,7 +30,7 @@ export function CompaniesPage() {
   const loading = adminListStatus === 'loading'
   const error = adminListError
 
-  usePlatformLoading(roleLoading ? t('common:loading') : loading ? t('loadingCompanies') : null)
+  usePlatformLoading(roleLoading ? t('common:loading') : loading ? t('companiesAdmin.loading') : null)
 
   const filteredItems = searchQuery.trim()
     ? adminItems.filter((item) =>
@@ -57,8 +57,8 @@ export function CompaniesPage() {
 
   return (
     <FeaturePage
-      title={t('companies')}
-      description={t('companiesDescription')}
+      title={t('companiesAdmin.title')}
+      description={t('companiesAdmin.description')}
       actions={
         <SearchInput
           value={searchQuery}
@@ -66,9 +66,9 @@ export function CompaniesPage() {
             setSearchQuery(event.target.value)
             setPage(1)
           }}
-          placeholder={t('companyName')}
+          placeholder={t('companiesAdmin.searchPlaceholder')}
           onClear={() => setPage(1)}
-          aria-label={t('searchCompanies')}
+          aria-label={t('companiesAdmin.searchAria')}
           className="w-64"
         />
       }

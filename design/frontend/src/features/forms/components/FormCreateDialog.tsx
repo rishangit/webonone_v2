@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -46,10 +47,10 @@ interface FormCreateDialogProps {
   chrome?: 'dialog' | 'embed-page'
 }
 
-export function getFormCreateCopy() {
+export function getFormCreateCopy(t: (key: string) => string) {
   return {
-    title: 'New form',
-    description: 'Create a company form template, then design its fields in the editor.',
+    title: t('createTitle'),
+    description: t('createDescription'),
   }
 }
 
@@ -62,13 +63,15 @@ export function FormCreateDialog({
   onHostedSaved,
   chrome = 'dialog',
 }: FormCreateDialogProps) {
+  const { t } = useTranslation('forms')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [values, setValues] = useState<FormCreateMetaValues>({ ...EMPTY })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const [slugTouched, setSlugTouched] = useState(false)
 
-  const copy = getFormCreateCopy()
+  const copy = getFormCreateCopy(t)
   const dialogPath = '/embed/dialogs/forms/create'
   const dialogRequestId =
     chrome === 'embed-page'
@@ -81,7 +84,7 @@ export function FormCreateDialog({
     path: dialogPath,
     title: copy.title,
     description: copy.description,
-    submitLabel: 'Create form',
+    submitLabel: t('create'),
     ...DESIGN_FORM_CREATE_DIALOG_SIZE,
     onResult: () => {
       onOpenChange(false)
@@ -125,7 +128,7 @@ export function FormCreateDialog({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <FormField label="Name" htmlFor="form-name" required error={fieldErrors.name}>
+      <FormField label={tc('name')} htmlFor="form-name" required error={fieldErrors.name}>
         <Input
           id="form-name"
           value={values.name}
@@ -139,7 +142,7 @@ export function FormCreateDialog({
           disabled={isSaving}
         />
       </FormField>
-      <FormField label="Slug" htmlFor="form-slug" required error={fieldErrors.slug}>
+      <FormField label={t('slug')} htmlFor="form-slug" required error={fieldErrors.slug}>
         <Input
           id="form-slug"
           value={values.slug}
@@ -162,10 +165,10 @@ export function FormCreateDialog({
         onClick={() => onOpenChange(false)}
         disabled={isSaving}
       >
-        Cancel
+        {tc('cancel')}
       </Button>
       <Button type="button" className="h-10 px-4" onClick={submit} disabled={isSaving}>
-        {isSaving ? 'Creating…' : 'Create form'}
+        {isSaving ? t('creating') : t('create')}
       </Button>
     </>
   )

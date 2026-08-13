@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   FormField,
   Input,
@@ -25,9 +26,10 @@ export function ProductWizardStepBasics({
   canSetStatus,
   onChange,
 }: ProductWizardStepBasicsProps) {
+  const { t } = useTranslation('products')
   return (
     <div className="space-y-4">
-      <FormField label="Name" htmlFor="product-wizard-name" required error={fieldErrors.name}>
+      <FormField label={t('common:name')} htmlFor="product-wizard-name" required error={fieldErrors.name}>
         <Input
           id="product-wizard-name"
           value={values.name}
@@ -38,7 +40,7 @@ export function ProductWizardStepBasics({
       </FormField>
 
       <FormField
-        label="Description"
+        label={t('common:description')}
         htmlFor="product-wizard-description"
         error={fieldErrors.description}
       >
@@ -54,7 +56,7 @@ export function ProductWizardStepBasics({
 
       {canSetStatus ? (
         <FormField
-          label="Status"
+          label={t('common:status')}
           htmlFor="product-wizard-status"
           required
           error={fieldErrors.status}
@@ -70,8 +72,8 @@ export function ProductWizardStepBasics({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">Unverified</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
+              <SelectItem value="pending">{t('unverified')}</SelectItem>
+              <SelectItem value="verified">{t('verified')}</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

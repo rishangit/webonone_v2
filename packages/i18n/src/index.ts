@@ -30,3 +30,4 @@ export {
   COMMON_NAMESPACE,
   type CreateAppI18nOptions,
 } from './createAppI18n'
+export { translateNavItems, NAV_LABEL_KEYS } from './translateNavItems'

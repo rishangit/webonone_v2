@@ -25,27 +25,27 @@ import { formDefinitionSchema } from '@/features/forms/schemas/formSchemas'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import type { FormDefinition, FormField, FormFieldType, FormTemplateStatus } from '@/shared/types/design.types'
 
-function defaultField(type: FormFieldType): FormField {
+function defaultField(type: FormFieldType, t: (key: string) => string): FormField {
   const id = nanoid(10)
   const base: FormField = {
     id,
     type,
     label:
       type === 'text'
-        ? 'Text field'
+        ? t('textField')
         : type === 'textarea'
-          ? 'Text area'
+          ? t('textArea')
           : type === 'checkbox'
-            ? 'Checkbox'
+            ? t('checkbox')
             : type === 'radio'
-              ? 'Radio group'
-              : 'Dropdown',
+              ? t('radioGroup')
+              : t('dropdown'),
     required: false,
   }
   if (type === 'radio' || type === 'select') {
     base.options = [
-      { id: nanoid(8), label: 'Option 1' },
-      { id: nanoid(8), label: 'Option 2' },
+      { id: nanoid(8), label: t('option1') },
+      { id: nanoid(8), label: t('option2') },
     ]
   }
   if (type === 'text' || type === 'textarea' || type === 'select') {
@@ -56,6 +56,7 @@ function defaultField(type: FormFieldType): FormField {
 
 export function FormDesignerPage() {
   const { t } = useTranslation('forms')
+  const { t: tc } = useTranslation('common')
 
   const { id } = useParams<{ id: string }>()
   const dispatch = useAppDispatch()
@@ -96,7 +97,7 @@ export function FormDesignerPage() {
     if (!awaitingSave) return
     if (detailStatus === 'idle' && detail) {
       setAwaitingSave(false)
-      toast({ title: 'Form saved' })
+      toast({ title: t('saved') })
       setDefinition(detail.definition)
       setName(detail.name)
       setStatus(detail.status)
@@ -104,7 +105,7 @@ export function FormDesignerPage() {
     if (detailStatus === 'error') {
       setAwaitingSave(false)
     }
-  }, [awaitingSave, detail, detailStatus, toast])
+  }, [awaitingSave, detail, detailStatus, t, toast])
 
   const selectedField = useMemo(
     () => definition.fields.find((f) => f.id === selectedId) ?? null,
@@ -120,14 +121,12 @@ export function FormDesignerPage() {
 
   if (!hasCompany) {
     return (
-      <FeaturePage title={t('designer')} description="Company form templates.">
+      <FeaturePage title={t('designer')} description={t('companyTemplates')}>
         <Alert>
-          <AlertDescription>
-            Select a company account in WebOnOne (account switcher) to design forms.
-          </AlertDescription>
+          <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
         <Button type="button" variant="outline" className="mt-4" onClick={goToList}>
-          Back to forms
+          {t('backToForms')}
         </Button>
       </FeaturePage>
     )
@@ -138,7 +137,7 @@ export function FormDesignerPage() {
   }
 
   function addField(type: FormFieldType) {
-    const field = defaultField(type)
+    const field = defaultField(type, t)
     setDefinition((prev) => ({ ...prev, fields: [...prev.fields, field] }))
     setSelectedId(field.id)
   }
@@ -174,7 +173,7 @@ export function FormDesignerPage() {
   function handleSave() {
     const parsed = formDefinitionSchema.safeParse(definition)
     if (!parsed.success) {
-      setLocalError(parsed.error.issues[0]?.message ?? 'Invalid form definition')
+      setLocalError(parsed.error.issues[0]?.message ?? t('invalidDefinition'))
       return
     }
     setLocalError(null)
@@ -193,12 +192,12 @@ export function FormDesignerPage() {
 
   return (
     <FeaturePage
-      title={name || 'Form designer'}
-      description="Add fields from the toolbox, then configure labels and options."
+      title={name || t('designer')}
+      description={t('designerDescription')}
       actions={
         <>
           <Button type="button" variant="outline" size="sm" onClick={goToList}>
-            Back
+            {tc('back')}
           </Button>
           {canManage ? (
             <>
@@ -207,8 +206,8 @@ export function FormDesignerPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">{t('draft')}</SelectItem>
+                  <SelectItem value="published">{t('published')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -218,7 +217,7 @@ export function FormDesignerPage() {
                 disabled={detailStatus === 'saving'}
               >
                 <Save className="h-4 w-4" aria-hidden />
-                {detailStatus === 'saving' ? 'Saving…' : 'Save'}
+                {detailStatus === 'saving' ? t('saving') : tc('save')}
               </Button>
             </>
           ) : null}

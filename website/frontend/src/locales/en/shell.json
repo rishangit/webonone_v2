@@ -11,6 +11,11 @@
   "locationRetry": "Retry",
   "currentLocation": "Current location",
   "locationBlockedIntro": "Location is currently blocked for this site. Unlock it first, then click Allow location:",
+  "locationUnlockStep1": "Click the lock (or tune) icon next to the address bar",
+  "locationUnlockStep2": "Open Site settings",
+  "locationUnlockStep3": "Set Location to Allow",
+  "locationUnlockStep4": "Return here and click Allow location",
+  "locationAllowBrowserHint": "Clicking Allow location opens your browser’s permission popup. Choose Allow there to share your precise location.",
   "locationHintAllow": "Allow location to sort results by distance.",
   "locationWaiting": "Waiting for browser permission…",
   "locationApprox": "Approximate: {{label}}",
@@ -19,8 +24,9 @@
   "locationDenied": "Location blocked for this site. Open Allow location access? to see how to unlock it.",
   "locationRefresh": "Refresh location",
   "locationOpenPrompt": "Allow location",
+  "yourLocation": "Your location",
   "openApp": "Open app",
   "userMenu": "User menu",
-  "checkingSession": "Checking session",
+  "checkingSession": "Checking session…",
   "login": "Login"
 }

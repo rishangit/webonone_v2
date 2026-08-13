@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Edit3 } from 'lucide-react'
 import {
   Button,
@@ -13,8 +14,11 @@ import {
   parseLibraryAttributes,
   type LibraryCatalogAttribute,
 } from '../services/dataLibraryApi'
-import type { CatalogGalleryKind, CatalogPayload } from '../types/companyCatalog.types'
-import { singularLabel } from '../types/companyCatalog.types'
+import {
+  CATALOG_ENTITY_SINGULAR_KEYS,
+  type CatalogGalleryKind,
+  type CatalogPayload,
+} from '../types/companyCatalog.types'
 
 type CompanyCatalogAttributesTabProps = {
   kind: CatalogGalleryKind
@@ -54,6 +58,8 @@ export function CompanyCatalogAttributesTab({
   canEdit,
   onEdit,
 }: CompanyCatalogAttributesTabProps) {
+  const { t } = useTranslation('catalog')
+  const { t: tc } = useTranslation('common')
   const [attributes, setAttributes] = useState<LibraryCatalogAttribute[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -124,7 +130,7 @@ export function CompanyCatalogAttributesTab({
         )
       } catch (err) {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : 'Failed to load attributes')
+        setError(err instanceof Error ? err.message : t('attributesTab.failedLoad'))
         setAttributes([])
       } finally {
         if (!cancelled) setLoading(false)
@@ -134,25 +140,25 @@ export function CompanyCatalogAttributesTab({
     return () => {
       cancelled = true
     }
-  }, [kind, libraryEntityId, payload])
+  }, [kind, libraryEntityId, payload, t])
 
-  const entityLabel = singularLabel(kind).toLowerCase()
+  const noun = t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`)
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-medium text-foreground">Attributes</h2>
+          <h2 className="text-lg font-medium text-foreground">{t('detail.tabs.attributes')}</h2>
           <p className="text-sm text-muted-foreground">
             {libraryEntityId
-              ? `Library attributes linked to this ${entityLabel}.`
-              : `Custom attribute values for this ${entityLabel}.`}
+              ? t('attributesTab.libraryLinked', { noun })
+              : t('attributesTab.customValues', { noun })}
           </p>
         </div>
         {canEdit ? (
           <Button type="button" size="sm" onClick={onEdit} disabled={loading}>
             <Edit3 className="h-4 w-4" aria-hidden />
-            Edit
+            {tc('edit')}
           </Button>
         ) : null}
       </div>
@@ -160,9 +166,9 @@ export function CompanyCatalogAttributesTab({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {loading && attributes.length === 0 ? (
-        <ItemListEmpty>Loading attributes…</ItemListEmpty>
+        <ItemListEmpty>{t('attributesTab.loading')}</ItemListEmpty>
       ) : attributes.length === 0 ? (
-        <ItemListEmpty>No attributes linked yet.</ItemListEmpty>
+        <ItemListEmpty>{t('attributesTab.empty')}</ItemListEmpty>
       ) : (
         <ItemList>
           {attributes.map((attr) => (

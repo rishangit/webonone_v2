@@ -26,7 +26,7 @@ export function StaffPage() {
   const [addOpen, setAddOpen] = useState(false)
 
   const list = useEpicCatalogList((s) => s.staff, staffActions)
-  usePlatformLoading(list.loading ? t('loadingStaff') : null)
+  usePlatformLoading(list.loading ? t('list.loading') : null)
 
   const existingUserIds = useMemo(
     () => new Set(list.items.map((item) => item.userId)),
@@ -40,22 +40,22 @@ export function StaffPage() {
 
   return (
     <FeaturePage
-      title={t('title')}
-      description={t('description')}
+      title={t('list.title')}
+      description={t('list.description')}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
             onClear={() => list.setQ('')}
-            placeholder={t('searchStaffPlaceholder')}
+            placeholder={t('list.searchPlaceholder')}
             className="w-64"
-            aria-label={t('searchStaff')}
+            aria-label={t('list.searchAria')}
           />
           {canManage ? (
             <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden />
-              {t('add')}
+              {t('list.addStaff')}
             </Button>
           ) : null}
         </div>

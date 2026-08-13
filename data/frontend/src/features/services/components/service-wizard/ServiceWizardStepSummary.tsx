@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { ServiceWizardFormValues } from '@/features/services/schemas/serviceSchemas'
 
 type AttributeOption = {
@@ -36,10 +37,13 @@ export function ServiceWizardStepSummary({
   attributeOptions,
   showStatus,
 }: ServiceWizardStepSummaryProps) {
+  const { t } = useTranslation('services')
   const timeSummary =
     values.time_mode === 'duration'
-      ? `${values.duration_minutes || '—'} minutes`
-      : `${values.start_time || '—'} – ${values.end_time || '—'}`
+      ? values.duration_minutes.trim()
+        ? t('durationValue', { count: Number(values.duration_minutes) || 0 })
+        : t('noDescription')
+      : `${values.start_time || t('noDescription')} – ${values.end_time || t('noDescription')}`
 
   const attributeRows = values.attributes.filter((row) => row.attributeId)
 
@@ -47,28 +51,28 @@ export function ServiceWizardStepSummary({
     <div className="space-y-4">
       <div className="space-y-4 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg))] p-4">
         <div className="min-w-0 space-y-1">
-          <h3 className="text-lg font-medium text-foreground">{values.name || '—'}</h3>
+          <h3 className="text-lg font-medium text-foreground">{values.name || t('noDescription')}</h3>
           {values.description.trim() ? (
             <p className="text-sm text-muted-foreground">{values.description}</p>
           ) : (
-            <p className="text-sm text-muted-foreground">No description</p>
+            <p className="text-sm text-muted-foreground">{t('wizard.noDescription')}</p>
           )}
         </div>
 
         <dl className="space-y-3 border-t border-[hsl(var(--glass-border))] pt-4">
           {showStatus ? (
             <SummaryRow
-              label="Status"
-              value={values.status === 'verified' ? 'Verified' : 'Unverified'}
+              label={t('common:status')}
+              value={values.status === 'verified' ? t('verified') : t('unverified')}
             />
           ) : null}
           <SummaryRow
-            label="Time mode"
-            value={values.time_mode === 'window' ? 'Specific time' : 'Duration'}
+            label={t('timeMode')}
+            value={values.time_mode === 'window' ? t('timeModeWindow') : t('timeModeDuration')}
           />
-          <SummaryRow label="Time" value={timeSummary} />
+          <SummaryRow label={t('time')} value={timeSummary} />
           <SummaryRow
-            label="Tags"
+            label={t('tags')}
             value={
               values.tags.length > 0
                 ? values.tags.map((tag) => tag.name).join(', ')
@@ -79,9 +83,9 @@ export function ServiceWizardStepSummary({
       </div>
 
       <div className="space-y-3 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg))] p-4">
-        <h4 className="text-sm font-medium text-foreground">Attributes</h4>
+        <h4 className="text-sm font-medium text-foreground">{t('attributes')}</h4>
         {attributeRows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No attributes</p>
+          <p className="text-sm text-muted-foreground">{t('wizard.noAttributes')}</p>
         ) : (
           <dl className="space-y-3">
             {attributeRows.map((row) => {

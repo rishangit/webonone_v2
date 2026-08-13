@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -14,22 +15,19 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { providersActions } from '@/features/providers/store'
 import type { ProviderInfo } from '@/shared/types/email.types'
 
-function statusLabel(status: ProviderInfo['connectionStatus']): string {
-  return status === 'connected' ? 'Connected' : 'Disconnected'
-}
-
 function statusClassName(status: ProviderInfo['connectionStatus']): string {
   return status === 'connected' ? 'text-primary' : 'text-destructive'
 }
 
 export function ProvidersPage() {
+  const { t } = useTranslation('shell')
   const dispatch = useAppDispatch()
   const { provider, status, error, testStatus, testMessage } = useAppSelector((s) => s.providers)
 
   const loading = status === 'loading' && !provider
   const testing = testStatus === 'testing'
 
-  usePlatformLoading(loading ? 'Loading providers…' : null)
+  usePlatformLoading(loading ? t('providers.loading') : null)
 
   useEffect(() => {
     dispatch(providersActions.loadRequested())
@@ -40,10 +38,7 @@ export function ProvidersPage() {
   }
 
   return (
-    <FeaturePage
-      title="Email providers"
-      description="SMTP configuration (non-secret values). Passwords are stored in server environment only."
-    >
+    <FeaturePage title={t('providersTitle')} description={t('providersDescription')}>
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -58,29 +53,29 @@ export function ProvidersPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between gap-4 text-base">
-              <span>SMTP provider</span>
+              <span>{t('providers.smtpTitle')}</span>
               <span className={`text-sm font-normal ${statusClassName(provider.connectionStatus)}`}>
-                {statusLabel(provider.connectionStatus)}
+                {provider.connectionStatus === 'connected'
+                  ? t('providers.connected')
+                  : t('providers.disconnected')}
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p>
-              <span className="text-muted-foreground">Host:</span> {provider.host || '—'}
+              <span className="text-muted-foreground">{t('providers.host')}:</span>{' '}
+              {provider.host || '—'}
             </p>
             <p>
-              <span className="text-muted-foreground">Port:</span> {provider.port}
+              <span className="text-muted-foreground">{t('providers.port')}:</span> {provider.port}
             </p>
             <p>
-              <span className="text-muted-foreground">From:</span>{' '}
+              <span className="text-muted-foreground">{t('providers.from')}:</span>{' '}
               {provider.fromName ? `${provider.fromName} <${provider.fromAddress}>` : provider.fromAddress}
             </p>
-            <p className="text-muted-foreground">
-              SMTP credentials are not shown here. Configure `SMTP_USER` and `SMTP_PASSWORD` in the
-              backend `.env` file.
-            </p>
+            <p className="text-muted-foreground">{t('providers.credentialsHint')}</p>
             <Button type="button" onClick={handleTestConnection} disabled={testing}>
-              {testing ? 'Testing…' : 'Test connection'}
+              {testing ? t('providers.testing') : t('providers.testConnection')}
             </Button>
           </CardContent>
         </Card>

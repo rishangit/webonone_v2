@@ -9,7 +9,7 @@ export function SessionRoleGate({ children }: { children: React.ReactNode }) {
   useSessionRoleBootstrap()
   const { selectionComplete, loading, dialogOpen } = useAppSelector((s) => s.sessionRole)
 
-  usePlatformLoading(!selectionComplete && loading && !dialogOpen ? t('loadingSession') : null)
+  usePlatformLoading(!selectionComplete && loading && !dialogOpen ? t('loading.session') : null)
 
   return (
     <>

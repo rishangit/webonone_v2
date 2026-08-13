@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Button, FormField, Input } from '@webonone/ui-kit'
 import {
   generateVariantSku,
@@ -23,9 +24,10 @@ export function ProductVariantWizardStepIdentity({
   isSubmitting,
   onChange,
 }: ProductVariantWizardStepIdentityProps) {
+  const { t } = useTranslation('products')
   return (
     <div className="space-y-4">
-      <FormField label="Variant name" htmlFor="variant-wizard-name" required error={fieldErrors.name}>
+      <FormField label={t('variant.nameLabel')} htmlFor="variant-wizard-name" required error={fieldErrors.name}>
         <div className="flex flex-wrap gap-2">
           <Input
             id="variant-wizard-name"
@@ -40,12 +42,12 @@ export function ProductVariantWizardStepIdentity({
             disabled={isSubmitting}
             onClick={() => onChange({ name: suggestVariantName(values, attributes) })}
           >
-            Suggest
+            {t('variant.suggest')}
           </Button>
         </div>
       </FormField>
 
-      <FormField label="SKU" htmlFor="variant-wizard-sku" required error={fieldErrors.sku}>
+      <FormField label={t('variant.sku')} htmlFor="variant-wizard-sku" required error={fieldErrors.sku}>
         <div className="flex flex-wrap gap-2">
           <Input
             id="variant-wizard-sku"
@@ -60,7 +62,7 @@ export function ProductVariantWizardStepIdentity({
             disabled={isSubmitting}
             onClick={() => onChange({ sku: generateVariantSku(productName) })}
           >
-            Generate
+            {t('variant.generate')}
           </Button>
         </div>
       </FormField>

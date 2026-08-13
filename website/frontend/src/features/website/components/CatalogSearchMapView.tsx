@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ItemListEmpty } from '@webonone/ui-kit'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
 import type { UserLocationCoords } from '@/features/website/hooks/useUserLocation'
@@ -116,17 +117,23 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
   return window.__websiteMapsPromise
 }
 
-function formatDistanceKm(distanceKm: number): string {
+function formatDistanceKm(
+  distanceKm: number,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
   if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)} m away`
+    return t('metersAway', { meters: String(Math.round(distanceKm * 1000)) })
   }
-  return `${distanceKm.toFixed(1)} km away`
+  return t('kmAway', { km: distanceKm.toFixed(1) })
 }
 
-function infoWindowHtml(item: CatalogSearchItem): string {
+function infoWindowHtml(
+  item: CatalogSearchItem,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
   const distance =
     item.distanceKm != null
-      ? `<div style="margin-top:4px;color:#666;font-size:12px">${formatDistanceKm(item.distanceKm)}</div>`
+      ? `<div style="margin-top:4px;color:#666;font-size:12px">${formatDistanceKm(item.distanceKm, t)}</div>`
       : ''
   const detailHref = `/catalog/${encodeURIComponent(item.kind)}/${encodeURIComponent(item.id)}`
   return `<div style="max-width:220px;padding:2px 0">
@@ -134,7 +141,7 @@ function infoWindowHtml(item: CatalogSearchItem): string {
     <div style="color:#555;font-size:12px;margin-top:2px">${escapeHtml(item.companyName)}</div>
     ${distance}
     <div style="margin-top:8px">
-      <a href="${detailHref}" style="font-size:12px;font-weight:600;color:#111;text-decoration:underline">View details</a>
+      <a href="${detailHref}" style="font-size:12px;font-weight:600;color:#111;text-decoration:underline">${escapeHtml(t('viewDetails'))}</a>
     </div>
   </div>`
 }
@@ -153,6 +160,8 @@ export function CatalogSearchMapView({
   variant = 'fullscreen',
   focusKey = null,
 }: CatalogSearchMapViewProps) {
+  const { t } = useTranslation('search')
+  const { t: ts } = useTranslation('shell')
   const apiKey = getGoogleMapsApiKey()
   const mapRef = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(mapsApiReady)
@@ -224,7 +233,7 @@ export function CatalogSearchMapView({
         position,
         title: `${item.name} — ${item.companyName}`,
       })
-      const content = infoWindowHtml(item)
+      const content = infoWindowHtml(item, t)
       marker.addListener('click', () => {
         infoWindow.setContent(content)
         infoWindow.open({ map, anchor: marker })
@@ -242,7 +251,7 @@ export function CatalogSearchMapView({
       const userMarker = new maps.Marker({
         map,
         position: userCoords,
-        title: 'Your location',
+        title: ts('yourLocation'),
         icon: {
           path: maps.SymbolPath.CIRCLE,
           scale: 8,
@@ -253,7 +262,9 @@ export function CatalogSearchMapView({
         },
       })
       userMarker.addListener('click', () => {
-        infoWindow.setContent('<div style="font-weight:600;font-size:13px">Your location</div>')
+        infoWindow.setContent(
+          `<div style="font-weight:600;font-size:13px">${escapeHtml(ts('yourLocation'))}</div>`,
+        )
         infoWindow.open({ map, anchor: userMarker })
       })
       bounds.extend(userCoords)
@@ -279,15 +290,12 @@ export function CatalogSearchMapView({
         marker.setMap(null)
       }
     }
-  }, [ready, apiKey, mappableItems, userCoords, focusItem])
+  }, [ready, apiKey, mappableItems, userCoords, focusItem, t, ts])
 
   if (!apiKey) {
     return (
       <div className={isFullscreen ? 'flex h-full items-center justify-center bg-muted/40 p-6' : undefined}>
-        <ItemListEmpty>
-          Map view needs a Google Maps API key. Add VITE_GOOGLE_MAPS_API_KEY to the website frontend
-          env.
-        </ItemListEmpty>
+        <ItemListEmpty>{t('mapsKeyMissing')}</ItemListEmpty>
       </div>
     )
   }
@@ -295,7 +303,7 @@ export function CatalogSearchMapView({
   if (loadError) {
     return (
       <div className={isFullscreen ? 'flex h-full items-center justify-center bg-muted/40 p-6' : undefined}>
-        <ItemListEmpty>{loadError}</ItemListEmpty>
+        <ItemListEmpty>{t('mapsLoadFailed')}</ItemListEmpty>
       </div>
     )
   }
@@ -303,7 +311,7 @@ export function CatalogSearchMapView({
   if (mappableItems.length === 0) {
     return (
       <div className={isFullscreen ? 'flex h-full items-center justify-center bg-muted/40 p-6' : undefined}>
-        <ItemListEmpty>No map locations for these results.</ItemListEmpty>
+        <ItemListEmpty>{t('noMapLocations')}</ItemListEmpty>
       </div>
     )
   }

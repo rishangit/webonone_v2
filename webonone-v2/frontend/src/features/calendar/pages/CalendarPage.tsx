@@ -91,9 +91,9 @@ export function CalendarPage() {
 
   return (
     <FeaturePage
-      title={t('schedule')}
+      title={t('schedule.title')}
       description={
-        canLoadPersonal ? t('scheduleDescriptionPersonal') : t('scheduleDescriptionCompany')
+        canLoadPersonal ? t('schedule.descriptionMember') : t('schedule.descriptionAdmin')
       }
       className="min-h-full"
     >

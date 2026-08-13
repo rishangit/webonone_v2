@@ -87,7 +87,7 @@ export function AuthSsoBridgePage() {
 
   return (
     <div className="flex h-dvh items-center justify-center px-4">
-      <p className="text-sm text-muted-foreground">{t('completingSignIn')}</p>
+      <p className="text-sm text-muted-foreground">{t('callback.completing')}</p>
     </div>
   )
 }

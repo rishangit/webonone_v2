@@ -1,4 +1,5 @@
 import { TagChip } from '@webonone/ui-kit'
+import { useTranslation } from 'react-i18next'
 import type { CompanyTag } from '@/features/settings/basic/services/companyApi'
 import { EditableSectionCard } from './EditableSectionCard'
 
@@ -9,17 +10,16 @@ type CompanyTagsCardProps = {
 }
 
 export function CompanyTagsCard({ tags, canEdit, onEdit }: CompanyTagsCardProps) {
+  const { t } = useTranslation('settings')
   return (
     <EditableSectionCard
-      title="Tags"
-      description="Catalog tags associated with this company"
+      title={t('companyCards.tags.title')}
+      description={t('companyCards.tags.description')}
       canEdit={canEdit}
       onEdit={onEdit}
     >
       {tags.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No tags yet. Edit this section to associate catalog tags.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('companyCards.tags.empty')}</p>
       ) : (
         <div className="flex flex-wrap items-center gap-1.5">
           {tags.map((tag) => (

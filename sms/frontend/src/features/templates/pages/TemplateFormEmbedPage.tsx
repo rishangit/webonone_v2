@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
@@ -15,6 +16,7 @@ import type { CreateTemplateBody, UpdateTemplateBody } from '@/shared/services/s
 import { TemplateFormDialog } from '../components/TemplateFormDialog'
 
 export function TemplateFormEmbedPage() {
+  const { t } = useTranslation('common')
   const { id } = useParams<{ id?: string }>()
   const [searchParams] = useSearchParams()
   const dispatch = useAppDispatch()
@@ -97,7 +99,7 @@ export function TemplateFormEmbedPage() {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 p-6">
         <Spinner size="lg" />
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       </div>
     )
   }
