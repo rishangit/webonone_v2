@@ -29,7 +29,7 @@ export const profileSchema = z.object({
   postalCode: z.string().max(20).nullable(),
   country: z
     .string()
-    .refine((value) => value === '' || value.length === 2, 'errors.countryCodeInvalid'),
+    .refine((value) => value === '' || value.length === 2, 'errors.countryCode'),
   locale: z.enum(['en', 'si']).nullable(),
 })
 
@@ -44,7 +44,7 @@ export const profileWizardAddressSchema = z.object({
   postalCode: z.string().max(20).nullable(),
   country: z
     .string()
-    .refine((value) => value === '' || value.length === 2, 'errors.countryCodeInvalid'),
+    .refine((value) => value === '' || value.length === 2, 'errors.countryCode'),
 })
 
 /** Step 3 — Contact. */

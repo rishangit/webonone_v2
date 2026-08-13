@@ -22,7 +22,7 @@ export function ProfileWizardStepName({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
-          label={t('firstName')}
+          label={t('fields.firstName')}
           htmlFor="profile-wizard-firstName"
           required
           error={fieldErrors.firstName ? t(fieldErrors.firstName) : undefined}
@@ -40,7 +40,7 @@ export function ProfileWizardStepName({
           </InputGroup>
         </FormField>
         <FormField
-          label={t('lastName')}
+          label={t('fields.lastName')}
           htmlFor="profile-wizard-lastName"
           required
           error={fieldErrors.lastName ? t(fieldErrors.lastName) : undefined}
@@ -59,7 +59,7 @@ export function ProfileWizardStepName({
         </FormField>
       </div>
       <FormField
-        label={t('displayName')}
+        label={t('fields.displayName')}
         htmlFor="profile-wizard-displayName"
         required
         error={fieldErrors.displayName ? t(fieldErrors.displayName) : undefined}

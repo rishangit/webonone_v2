@@ -40,7 +40,7 @@ export function EditableSectionCard({
               size="icon"
               className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
               onClick={onEdit}
-              aria-label={t('editSection', { title })}
+              aria-label={t('aria.editSection', { title })}
             >
               <Edit3 className="h-4 w-4" aria-hidden />
             </Button>

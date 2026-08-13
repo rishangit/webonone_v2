@@ -24,8 +24,9 @@ export function ProfileWizardStepSummary({
   avatarUrl,
 }: ProfileWizardStepSummaryProps) {
   const { t } = useTranslation('profile')
+  const { t: tc } = useTranslation('common')
   const localeLabel =
-    values.locale === 'si' ? t('localeSinhala') : values.locale === 'en' ? t('localeEnglish') : ''
+    values.locale === 'si' ? tc('sinhala') : values.locale === 'en' ? tc('english') : ''
 
   return (
     <div className="space-y-6">
@@ -36,22 +37,22 @@ export function ProfileWizardStepSummary({
         </div>
 
         <dl className="space-y-3 border-t border-[hsl(var(--glass-border))] pt-4">
-          <SummaryRow label={t('firstName')} value={values.firstName} />
-          <SummaryRow label={t('lastName')} value={values.lastName} />
-          <SummaryRow label={t('phone')} value={phoneDisplay} />
-          <SummaryRow label={t('locale')} value={localeLabel} />
+          <SummaryRow label={t('fields.firstName')} value={values.firstName} />
+          <SummaryRow label={t('fields.lastName')} value={values.lastName} />
+          <SummaryRow label={t('fields.phone')} value={phoneDisplay} />
+          <SummaryRow label={t('fields.locale')} value={localeLabel} />
           <SummaryRow
-            label={t('address')}
+            label={t('fields.address')}
             value={[values.addressLine1, values.city, values.country].filter(Boolean).join(', ')}
           />
           <SummaryRow
-            label={t('photo')}
-            value={avatarUrl ? t('photoUpdated') : t('photoUnchanged')}
+            label={t('fields.photo')}
+            value={avatarUrl ? t('wizard.photoUpdated') : t('wizard.photoUnchanged')}
           />
         </dl>
       </div>
 
-      <p className="text-center text-sm text-muted-foreground">{t('reviewBeforeSave')}</p>
+      <p className="text-center text-sm text-muted-foreground">{t('wizard.reviewHint')}</p>
     </div>
   )
 }

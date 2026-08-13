@@ -57,6 +57,7 @@ export function ProfileMediaSelectorModal({
   onClose,
 }: ProfileMediaSelectorModalProps) {
   const { t } = useTranslation('profile')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const [cropOpen, setCropOpen] = useState(false)
   const [cropContext, setCropContext] = useState<CropContext | null>(null)
@@ -110,7 +111,7 @@ export function ProfileMediaSelectorModal({
     hostRequestIdRef.current = requestId
     sendPlatformMediaDialogRequest(hostParentOrigin, {
       requestId,
-      title: t('selectProfilePhoto'),
+      title: t('media.selectPhoto'),
       scope,
       folderPath: profileFolderPath,
       mode: 'single',
@@ -229,7 +230,7 @@ export function ProfileMediaSelectorModal({
       <CustomDialog
         open={isOpen}
         onOpenChange={handleSelectorOpenChange}
-        title={t('selectProfilePhoto')}
+        title={t('media.selectPhoto')}
         sizeWidth="medium"
         sizeHeight="large"
         nestedDismissGuard={cropOpen || blockOuterDismiss}
@@ -238,13 +239,13 @@ export function ProfileMediaSelectorModal({
         disableContentScroll
         footer={
           <Button type="button" variant="outline" onClick={onClose}>
-            {t('close')}
+            {tc('close')}
           </Button>
         }
       >
         {!accessToken ? (
           <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-sm text-muted-foreground">{t('waitingForAuthentication')}</p>
+            <p className="text-sm text-muted-foreground">{t('media.waitingAuth')}</p>
           </div>
         ) : (
           <MediaSelectorFrame
@@ -267,8 +268,8 @@ export function ProfileMediaSelectorModal({
       <CustomDialog
         open={cropOpen}
         onOpenChange={handleCropOpenChange}
-        title={t('cropImage')}
-        description={t('cropImageDescription')}
+        title={t('media.cropTitle')}
+        description={t('media.cropDescription')}
         sizeWidth="large"
         sizeHeight="xlarge"
         stackLevel={1}
@@ -286,7 +287,7 @@ export function ProfileMediaSelectorModal({
                 closeCropDialog()
               }}
             >
-              {t('cancel')}
+              {tc('cancel')}
             </Button>
             <Button
               type="button"
@@ -299,7 +300,7 @@ export function ProfileMediaSelectorModal({
                 }
               }}
             >
-              {t('cropAndUpload')}
+              {t('media.cropAndUpload')}
             </Button>
           </>
         }

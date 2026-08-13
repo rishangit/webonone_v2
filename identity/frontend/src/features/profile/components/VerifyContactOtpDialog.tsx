@@ -39,9 +39,9 @@ const DIALOG_SIZE = {
 function buildChannelConfig(t: TFunction<'profile'>) {
   return {
     email: {
-      title: t('verifyEmail'),
-      description: t('verifyEmailDialogDescription'),
-      submitLabel: t('verifyEmail'),
+      title: t('verify.email.title'),
+      description: t('verify.email.description'),
+      submitLabel: t('verify.email.submit'),
       otpLength: 4,
       embedPath: '/embed/dialogs/profile/verify-email',
       formId: 'verify-email-otp-form',
@@ -49,9 +49,9 @@ function buildChannelConfig(t: TFunction<'profile'>) {
       verify: (otp: string) => authApi.verifyProfileEmailOtp({ otp }),
     },
     phone: {
-      title: t('verifyPhone'),
-      description: t('verifyPhoneDialogDescription'),
-      submitLabel: t('verifyPhone'),
+      title: t('verify.phone.title'),
+      description: t('verify.phone.description'),
+      submitLabel: t('verify.phone.submit'),
       otpLength: 6,
       embedPath: '/embed/dialogs/profile/verify-phone',
       formId: 'verify-phone-otp-form',
@@ -79,6 +79,7 @@ export function VerifyContactOtpDialog({
   chrome = 'dialog',
 }: VerifyContactOtpDialogProps) {
   const { t } = useTranslation('profile')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
@@ -105,7 +106,7 @@ export function VerifyContactOtpDialog({
     title: config.title,
     description: config.description,
     submitLabel: config.submitLabel,
-    cancelLabel: t('cancel'),
+    cancelLabel: tc('cancel'),
     ...DIALOG_SIZE,
     onResult: (payload) => {
       if (payload && typeof payload === 'object' && 'user' in payload) {
@@ -129,12 +130,12 @@ export function VerifyContactOtpDialog({
       setLocked(false)
       setAttemptsRemaining(null)
       setOtp('')
-      toast({ title: t('codeSent') })
+      toast({ title: t('verify.codeSentToast') })
     } catch (err) {
       const apiErr = err as AuthApiError
-      setError(apiErr.message ?? t('failedToSendCode'))
+      setError(apiErr.message ?? t('errors.sendCodeFailed'))
       toast({
-        title: t('couldNotSendCode'),
+        title: t('verify.couldNotSendToast'),
         description: apiErr.message,
         variant: 'destructive',
       })
@@ -198,7 +199,7 @@ export function VerifyContactOtpDialog({
     try {
       const result = await config.verify(otp)
       dispatch(authActions.profileUpdateSucceeded(result.user))
-      toast({ title: channel === 'email' ? t('emailVerified') : t('phoneVerified') })
+      toast({ title: channel === 'email' ? t('verify.emailVerifiedToast') : t('verify.phoneVerifiedToast') })
       if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {
         sendPlatformPeerDialogComplete(parentOrigin, dialogRequestId, { user: result.user })
       } else {
@@ -210,15 +211,15 @@ export function VerifyContactOtpDialog({
       if (apiErr.code === 'OTP_MAX_ATTEMPTS') {
         setLocked(true)
         setAttemptsRemaining(0)
-        setError(t('tooManyAttemptsRequestNew'))
+        setError(t('errors.tooManyAttempts'))
       } else if (typeof apiErr.attemptsRemaining === 'number') {
         setAttemptsRemaining(apiErr.attemptsRemaining)
         setError(apiErr.message)
       } else if (apiErr.code === 'OTP_EXPIRED') {
         setSecondsLeft(0)
-        setError(t('codeExpiredRequestNew'))
+        setError(t('errors.codeExpiredRequestNew'))
       } else {
-        setError(apiErr.message ?? t('verificationFailed'))
+        setError(apiErr.message ?? t('errors.verificationFailed'))
       }
     } finally {
       setLoading(false)
@@ -262,7 +263,7 @@ export function VerifyContactOtpDialog({
       }}
     >
       <p className="text-sm text-muted-foreground">
-        {t('weSentCodeTo', { count: config.otpLength, contact: contactHint })}
+        {t('verify.codeSentTo', { length: config.otpLength, contact: contactHint })}
       </p>
       {error ? (
         <Alert variant="destructive">
@@ -271,24 +272,24 @@ export function VerifyContactOtpDialog({
       ) : null}
       {!locked && !expired && attemptsRemaining !== null ? (
         <p className="text-sm text-muted-foreground">
-          {t('attemptsRemaining', { count: attemptsRemaining })}
+          {t('verify.attemptsRemaining', { count: attemptsRemaining })}
         </p>
       ) : null}
       {!locked && !expired ? (
-        <p className="text-sm text-muted-foreground">{t('codeExpiresIn', { seconds: secondsLeft })}</p>
+        <p className="text-sm text-muted-foreground">{t('verify.codeExpiresIn', { seconds: secondsLeft })}</p>
       ) : null}
       {(expired || locked) && !sending ? (
         <Alert>
           <AlertDescription>
-            {locked ? `${t('tooManyAttemptsShort')} ` : `${t('codeExpiredShort')} `}
+            {locked ? `${t('verify.tooManyAttemptsShort')} ` : `${t('verify.codeExpired')} `}
             <button type="button" className="underline" onClick={() => void sendOtp()}>
-              {t('requestNewCode')}
+              {t('verify.requestNewCode')}
             </button>
           </AlertDescription>
         </Alert>
       ) : null}
       <FormField
-        label={t('digitCode', { count: config.otpLength })}
+        label={t('verify.otpLabel', { length: config.otpLength })}
         htmlFor={`verify-${channel}-otp`}
         required
         className="text-center"
@@ -320,7 +321,7 @@ export function VerifyContactOtpDialog({
       footer={
         <>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t('cancel')}
+            {tc('cancel')}
           </Button>
           <Button type="submit" form={config.formId} disabled={disabled}>
             {loading || sending ? <Spinner size="sm" /> : config.submitLabel}

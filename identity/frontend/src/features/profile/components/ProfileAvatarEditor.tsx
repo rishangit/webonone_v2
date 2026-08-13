@@ -31,7 +31,7 @@ export function ProfileAvatarEditor({
         onEdit={onEditImage}
         className="rounded-full"
       />
-      <p className="text-xs text-muted-foreground">{t('clickEditToChoosePhoto')}</p>
+      <p className="text-xs text-muted-foreground">{t('wizard.clickEditImage')}</p>
     </div>
   )
 }

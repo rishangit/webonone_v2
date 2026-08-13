@@ -67,6 +67,7 @@ export function ProfileFormDialog({
   chrome = 'dialog',
 }: ProfileFormDialogProps) {
   const { t } = useTranslation('profile')
+  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
@@ -92,19 +93,19 @@ export function ProfileFormDialog({
       : null
 
   const STEP_TITLES = [
-    t('stepAccount'),
-    t('stepAddress'),
-    t('stepContact'),
-    t('stepName'),
-    t('stepSummary'),
+    t('wizard.steps.account'),
+    t('wizard.steps.address'),
+    t('wizard.steps.contact'),
+    t('wizard.steps.name'),
+    t('wizard.steps.summary'),
   ] as const
 
   const STEP_DESCRIPTIONS = [
-    t('stepAccountDescription'),
-    t('stepAddressDescription'),
-    t('stepContactDescription'),
-    t('stepNameDescription'),
-    t('stepSummaryDescription'),
+    t('wizard.descriptions.account'),
+    t('wizard.descriptions.address'),
+    t('wizard.descriptions.contact'),
+    t('wizard.descriptions.name'),
+    t('wizard.descriptions.summary'),
   ] as const
 
   const title = t('editProfile')
@@ -129,7 +130,7 @@ export function ProfileFormDialog({
 
   const primaryLabelForStep = (current: ProfileWizardStep, saving: boolean) => {
     if (saving) return t('saving')
-    if (current < PROFILE_WIZARD_TOTAL_STEPS) return t('next')
+    if (current < PROFILE_WIZARD_TOTAL_STEPS) return tc('next')
     return finalSubmitLabel
   }
 
@@ -140,7 +141,7 @@ export function ProfileFormDialog({
     title,
     description: STEP_DESCRIPTIONS[embedStep - 1],
     submitLabel: primaryLabelForStep(embedStep, false),
-    secondaryLabel: embedStep > 1 ? t('previous') : undefined,
+    secondaryLabel: embedStep > 1 ? tc('previous') : undefined,
     ...PROFILE_WIZARD_DIALOG_SIZE,
     onResult: () => {
       onSaved()
@@ -362,7 +363,7 @@ export function ProfileFormDialog({
       primaryLabelForStep(step, isProfileSaving),
       {
         description: STEP_DESCRIPTIONS[step - 1],
-        secondaryLabel: step > 1 ? t('previous') : null,
+        secondaryLabel: step > 1 ? tc('previous') : null,
       },
     )
   }, [chrome, dialogRequestId, isProfileSaving, parentOrigin, selectorOpen, step])
@@ -391,7 +392,7 @@ export function ProfileFormDialog({
     if (chrome === 'embed-page') {
       return (
         <div className="flex min-h-[200px] items-center justify-center p-6 text-sm text-muted-foreground">
-          {t('loadingProfile')}
+          {t('loading')}
         </div>
       )
     }
@@ -411,7 +412,7 @@ export function ProfileFormDialog({
         onClick={() => handleFormOpenChange(false)}
         disabled={isProfileSaving}
       >
-        {t('cancel')}
+        {tc('cancel')}
       </Button>
       {step > 1 ? (
         <Button
@@ -422,7 +423,7 @@ export function ProfileFormDialog({
           disabled={isProfileSaving}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
-          {t('previous')}
+          {tc('previous')}
         </Button>
       ) : null}
       {step < PROFILE_WIZARD_TOTAL_STEPS ? (
@@ -432,7 +433,7 @@ export function ProfileFormDialog({
           onClick={handleNext}
           disabled={isProfileSaving || selectorOpen}
         >
-          {t('next')}
+          {tc('next')}
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       ) : (

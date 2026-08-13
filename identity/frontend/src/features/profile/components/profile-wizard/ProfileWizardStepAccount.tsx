@@ -35,7 +35,7 @@ export function ProfileWizardStepAccount({
         <p className="text-sm text-muted-foreground">{email}</p>
       </div>
       {isGoogleUser ? (
-        <p className="text-center text-sm text-muted-foreground">{t('googleImportedWizardNotice')}</p>
+        <p className="text-center text-sm text-muted-foreground">{t('wizard.googleImportHint')}</p>
       ) : null}
     </div>
   )

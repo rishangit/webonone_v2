@@ -34,12 +34,13 @@ export function ProfileWizardStepContact({
   onPhoneNationalChange,
 }: ProfileWizardStepContactProps) {
   const { t } = useTranslation('profile')
+  const { t: tc } = useTranslation('common')
   const localeValue = values.locale === 'si' ? 'si' : values.locale === 'en' ? 'en' : ''
 
   return (
     <div className="space-y-4">
       <FormField
-        label={t('phoneNumber')}
+        label={t('fields.phoneNumber')}
         htmlFor="profile-wizard-phone"
         error={fieldErrors.phoneNumber ? t(fieldErrors.phoneNumber) : undefined}
       >
@@ -49,14 +50,14 @@ export function ProfileWizardStepContact({
           country={phoneCountry}
           onCountryChange={onPhoneCountryChange}
           autoComplete="tel"
-          placeholder="555-0100"
+          placeholder={t('placeholders.phone')}
           value={phoneNational}
           onChange={(e) => onPhoneNationalChange(e.target.value)}
           disabled={isSubmitting}
         />
       </FormField>
       <FormField
-        label={t('locale')}
+        label={t('fields.locale')}
         htmlFor="profile-wizard-locale"
         error={fieldErrors.locale ? t(fieldErrors.locale) : undefined}
       >
@@ -68,11 +69,11 @@ export function ProfileWizardStepContact({
             disabled={isSubmitting}
           >
             <SelectTrigger id="profile-wizard-locale" className="pl-9">
-              <SelectValue placeholder={t('locale')} />
+              <SelectValue placeholder={t('fields.locale')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">{t('localeEnglish')}</SelectItem>
-              <SelectItem value="si">{t('localeSinhala')}</SelectItem>
+              <SelectItem value="en">{tc('english')}</SelectItem>
+              <SelectItem value="si">{tc('sinhala')}</SelectItem>
             </SelectContent>
           </Select>
         </div>

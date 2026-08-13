@@ -21,7 +21,7 @@ export function ProfileWizardStepAddress({
   return (
     <div className="space-y-4">
       <FormField
-        label={t('addressLine1')}
+        label={t('fields.addressLine1')}
         htmlFor="profile-wizard-line1"
         error={fieldErrors.addressLine1 ? t(fieldErrors.addressLine1) : undefined}
       >
@@ -38,7 +38,7 @@ export function ProfileWizardStepAddress({
         </InputGroup>
       </FormField>
       <FormField
-        label={t('addressLine2')}
+        label={t('fields.addressLine2')}
         htmlFor="profile-wizard-line2"
         error={fieldErrors.addressLine2 ? t(fieldErrors.addressLine2) : undefined}
       >
@@ -56,7 +56,7 @@ export function ProfileWizardStepAddress({
       </FormField>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
-          label={t('city')}
+          label={t('fields.city')}
           htmlFor="profile-wizard-city"
           error={fieldErrors.city ? t(fieldErrors.city) : undefined}
         >
@@ -73,7 +73,7 @@ export function ProfileWizardStepAddress({
           </InputGroup>
         </FormField>
         <FormField
-          label={t('stateRegion')}
+          label={t('fields.stateRegion')}
           htmlFor="profile-wizard-state"
           error={fieldErrors.stateRegion ? t(fieldErrors.stateRegion) : undefined}
         >
@@ -92,7 +92,7 @@ export function ProfileWizardStepAddress({
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
-          label={t('postalCode')}
+          label={t('fields.postalCode')}
           htmlFor="profile-wizard-postal"
           error={fieldErrors.postalCode ? t(fieldErrors.postalCode) : undefined}
         >
@@ -109,7 +109,7 @@ export function ProfileWizardStepAddress({
           </InputGroup>
         </FormField>
         <FormField
-          label={t('countryCode')}
+          label={t('fields.countryCodeLabel')}
           htmlFor="profile-wizard-country"
           error={fieldErrors.country ? t(fieldErrors.country) : undefined}
         >
@@ -119,7 +119,7 @@ export function ProfileWizardStepAddress({
               id="profile-wizard-country"
               inGroup
               autoComplete="country"
-              placeholder="US"
+              placeholder={t('placeholders.country')}
               maxLength={2}
               value={values.country ?? ''}
               onChange={(e) => onChange({ country: e.target.value.toUpperCase() })}

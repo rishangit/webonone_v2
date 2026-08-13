@@ -45,13 +45,14 @@ export function ProfileView({
   onVerifyPhone,
 }: ProfileViewProps) {
   const { t } = useTranslation('profile')
+  const { t: tc } = useTranslation('common')
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
         <EditableSectionCard
-          title={t('account')}
-          description={t('accountDescription')}
+          title={t('sections.account.title')}
+          description={t('sections.account.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(1) : undefined}
         >
@@ -65,66 +66,66 @@ export function ProfileView({
             <div className="min-w-0 flex-1 space-y-3">
               <h2 className="text-xl font-semibold">{user.displayName}</h2>
               <ContactVerifiedRow
-                label={t('email')}
+                label={t('fields.email')}
                 value={user.email}
                 verified={user.isEmailVerified}
                 canVerify={canEdit}
                 onVerify={onVerifyEmail}
-                verifyLabel={t('verifyEmail')}
+                verifyLabel={t('verify.email.button')}
               />
               {user.isGoogleUser ? (
                 <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
-                  <span>{t('signedInWithGoogle')}</span>
+                  <span>{t('wizard.signedInWithGoogle')}</span>
                 </div>
               ) : null}
               {user.isGoogleUser ? (
-                <p className="text-sm text-muted-foreground">{t('googleImportedNotice')}</p>
+                <p className="text-sm text-muted-foreground">{t('wizard.googleImportViewHint')}</p>
               ) : null}
             </div>
           </div>
         </EditableSectionCard>
 
         <EditableSectionCard
-          title={t('address')}
-          description={t('addressDescription')}
+          title={t('sections.address.title')}
+          description={t('sections.address.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(2) : undefined}
         >
-          <ReadOnlyField label={t('addressLine1')} value={user.addressLine1} icon={MapPin} />
-          <ReadOnlyField label={t('addressLine2')} value={user.addressLine2} icon={MapPin} />
+          <ReadOnlyField label={t('fields.addressLine1')} value={user.addressLine1} icon={MapPin} />
+          <ReadOnlyField label={t('fields.addressLine2')} value={user.addressLine2} icon={MapPin} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <ReadOnlyField label={t('city')} value={user.city} icon={MapPin} />
-            <ReadOnlyField label={t('stateRegion')} value={user.stateRegion} icon={MapPin} />
+            <ReadOnlyField label={t('fields.city')} value={user.city} icon={MapPin} />
+            <ReadOnlyField label={t('fields.stateRegion')} value={user.stateRegion} icon={MapPin} />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <ReadOnlyField label={t('postalCode')} value={user.postalCode} icon={MapPin} />
-            <ReadOnlyField label={t('country')} value={user.country} icon={Globe} />
+            <ReadOnlyField label={t('fields.postalCode')} value={user.postalCode} icon={MapPin} />
+            <ReadOnlyField label={t('fields.country')} value={user.country} icon={Globe} />
           </div>
         </EditableSectionCard>
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
         <EditableSectionCard
-          title={t('contact')}
-          description={t('contactDescription')}
+          title={t('sections.contact.title')}
+          description={t('sections.contact.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(3) : undefined}
         >
           <ContactVerifiedRow
-            label={t('phoneNumber')}
+            label={t('fields.phoneNumber')}
             value={user.phoneNumber}
             verified={user.isPhoneVerified}
             canVerify={canEdit}
             onVerify={onVerifyPhone}
-            verifyLabel={t('verifyPhone')}
+            verifyLabel={t('verify.phone.button')}
           />
           <ReadOnlyField
-            label={t('language')}
+            label={tc('language')}
             value={
               user.locale === 'si'
-                ? t('localeSinhala')
+                ? tc('sinhala')
                 : user.locale
-                  ? t('localeEnglish')
+                  ? tc('english')
                   : null
             }
             icon={Globe}
@@ -132,16 +133,16 @@ export function ProfileView({
         </EditableSectionCard>
 
         <EditableSectionCard
-          title={t('name')}
-          description={t('nameDescription')}
+          title={t('sections.name.title')}
+          description={t('sections.name.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(4) : undefined}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <ReadOnlyField label={t('firstName')} value={user.firstName} icon={User} />
-            <ReadOnlyField label={t('lastName')} value={user.lastName} icon={User} />
+            <ReadOnlyField label={t('fields.firstName')} value={user.firstName} icon={User} />
+            <ReadOnlyField label={t('fields.lastName')} value={user.lastName} icon={User} />
           </div>
-          <ReadOnlyField label={t('displayName')} value={user.displayName} icon={User} />
+          <ReadOnlyField label={t('fields.displayName')} value={user.displayName} icon={User} />
         </EditableSectionCard>
       </div>
     </div>

@@ -22,6 +22,7 @@ import {
 
 export function ProfilePage() {
   const { t } = useTranslation('profile')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -45,9 +46,9 @@ export function ProfilePage() {
 
   usePlatformLoading(
     isBootstrapping
-      ? t('loadingYourProfile')
+      ? t('loadingYour')
       : showProfileLoading
-        ? t('loadingProfile')
+        ? t('loading')
         : null,
   )
 
@@ -122,12 +123,12 @@ export function ProfilePage() {
   if (bootstrapError) {
     return (
       <FeaturePage
-        title={t('profile')}
-        description={t('accountDetails')}
+        title={t('pageTitle')}
+        description={t('pageDescription')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            {t('back')}
+            {tc('back')}
           </Button>
         }
       >
@@ -153,17 +154,17 @@ export function ProfilePage() {
   if (!user) {
     return (
       <FeaturePage
-        title={t('profile')}
-        description={t('accountDetails')}
+        title={t('pageTitle')}
+        description={t('pageDescription')}
         actions={
           <Button type="button" variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            {t('back')}
+            {tc('back')}
           </Button>
         }
       >
         <Alert variant="destructive">
-          <AlertDescription>{profileError ?? t('unableToLoadProfile')}</AlertDescription>
+          <AlertDescription>{profileError ?? t('unableToLoad')}</AlertDescription>
         </Alert>
       </FeaturePage>
     )
@@ -171,13 +172,13 @@ export function ProfilePage() {
 
   return (
     <FeaturePage
-      title={t('profile')}
-      description={t('accountDetails')}
+      title={t('pageTitle')}
+      description={t('pageDescription')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            {t('back')}
+            {tc('back')}
           </Button>
         </div>
       }
@@ -190,7 +191,7 @@ export function ProfilePage() {
         ) : null}
         {profileSaveSuccess ? (
           <Alert>
-            <AlertDescription>{t('profileSavedSuccessfully')}</AlertDescription>
+            <AlertDescription>{t('savedSuccess')}</AlertDescription>
           </Alert>
         ) : null}
         <ProfileView
@@ -221,8 +222,8 @@ export function ProfilePage() {
           channel={verifyChannel}
           contactHint={
             verifyChannel === 'email'
-              ? (user.email?.trim() || t('yourEmail'))
-              : (user.phoneNumber?.trim() || t('yourPhone'))
+              ? (user.email?.trim() || t('verify.contactHintEmail'))
+              : (user.phoneNumber?.trim() || t('verify.contactHintPhone'))
           }
           onOpenChange={(open) => {
             if (!open) setVerifyChannel(null)
