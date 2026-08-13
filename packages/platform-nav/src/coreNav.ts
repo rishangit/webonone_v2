@@ -245,6 +245,7 @@ export function identitySentinelToExternalPath(sentinel: string): string | null 
 /** Internal sentinels for SMS sub-nav in consumer AppLayouts (not routed on core origin). */
 export const SMS_NAV_SENTINELS = {
   send: '/sms/send',
+  gateway: '/sms/gateway',
   devices: '/sms/devices',
   queue: '/sms/queue',
   history: '/sms/history',
@@ -254,6 +255,7 @@ export const SMS_NAV_SENTINELS = {
 export function isSmsNavSentinel(to: string): boolean {
   if (
     to === SMS_NAV_SENTINELS.send ||
+    to === SMS_NAV_SENTINELS.gateway ||
     to === SMS_NAV_SENTINELS.devices ||
     to === SMS_NAV_SENTINELS.queue ||
     to === SMS_NAV_SENTINELS.history ||
@@ -273,6 +275,8 @@ export function smsSentinelToExternalPath(sentinel: string): string | null {
   switch (sentinel) {
     case SMS_NAV_SENTINELS.send:
       return '/send'
+    case SMS_NAV_SENTINELS.gateway:
+      return '/devices?tab=settings'
     case SMS_NAV_SENTINELS.devices:
       return '/devices'
     case SMS_NAV_SENTINELS.queue:

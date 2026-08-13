@@ -1,11 +1,13 @@
 import { createApp } from './app.js'
 import { env } from './config/env.js'
+import { startProviderWorker } from './workers/providerWorker.js'
 import { startReaper } from './workers/reaper.js'
 
 const app = createApp()
 
 const onListen = () => {
   startReaper()
+  startProviderWorker()
   if (env.iisHosted) {
     console.log(`SMS API listening on IIS HttpPlatform port ${env.port}`)
     return

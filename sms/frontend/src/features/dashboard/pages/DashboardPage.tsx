@@ -18,7 +18,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { dashboardActions } from '@/features/dashboard/store'
 
-function StatCard({ title, value }: { title: string; value: number }) {
+function StatCard({ title, value }: { title: string; value: number | string }) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -64,7 +64,14 @@ export function DashboardPage() {
             <StatCard title={t('queuePending')} value={stats.pendingCount} />
             <StatCard title={t('failed24h')} value={stats.failedCount24h} />
             <StatCard title={t('sent24h')} value={stats.sentCount24h} />
-            <StatCard title={t('approvedDevices')} value={stats.approvedDevices} />
+            {stats.gatewayMode === 'text_lk' ? (
+              <StatCard
+                title={t('gatewayMode')}
+                value={stats.gatewayConfigured ? t('gatewayTextLk') : t('gatewayTextLkNotReady')}
+              />
+            ) : (
+              <StatCard title={t('approvedDevices')} value={stats.approvedDevices} />
+            )}
           </div>
 
           <section className="space-y-3">

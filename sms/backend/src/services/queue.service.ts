@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import type { DeviceScope, QueueStatus, SmsDeviceRow, SmsHistoryRow, SmsQueueRow } from '../models/db.js'
+import { getGatewayMode, isTextLkReady } from './gatewayConfig.service.js'
 import { renderBody, resolveTemplate, validateTemplatePayload } from './template.service.js'
 import { ensureLocalCompany } from './user.service.js'
 
@@ -148,6 +149,11 @@ export async function enqueue(input: EnqueueInput): Promise<{ queueId: string; s
 
 /** Atomically claim up to `max` due pending rows matching the device scope. */
 export async function claimMessagesForDevice(device: SmsDeviceRow, max: number): Promise<DeviceMessageDto[]> {
+  const mode = await getGatewayMode(device.scope, device.company_id)
+  if (mode === 'text_lk') {
+    return []
+  }
+
   return db.transaction(async (trx) => {
     const query = trx<SmsQueueRow>('sms_queue')
       .where('status', 'pending')
@@ -182,11 +188,88 @@ export async function claimMessagesForDevice(device: SmsDeviceRow, max: number):
   })
 }
 
+/** Atomically claim pending rows for Text.lk provider delivery (no device assignment). */
+export async function claimMessagesForProvider(
+  scope: DeviceScope,
+  companyId: string | null,
+  max: number,
+): Promise<DeviceMessageDto[]> {
+  const mode = await getGatewayMode(scope, companyId)
+  if (mode !== 'text_lk') {
+    return []
+  }
+
+  return db.transaction(async (trx) => {
+    const query = trx<SmsQueueRow>('sms_queue')
+      .where('status', 'pending')
+      .andWhere('scheduled_at', '<=', trx.fn.now(3))
+      .andWhere('scope', scope)
+
+    if (scope === 'company' && companyId) {
+      query.andWhere('company_id', companyId)
+    } else {
+      query.whereNull('company_id')
+    }
+
+    const rows = await query
+      .orderBy('priority', 'desc')
+      .orderBy('scheduled_at', 'asc')
+      .limit(max)
+      .forUpdate()
+      .skipLocked()
+
+    if (rows.length === 0) return []
+
+    const ids = rows.map((r) => r.id)
+    await trx('sms_queue')
+      .whereIn('id', ids)
+      .update({
+        status: 'processing',
+        assigned_device_id: null,
+        dispatched_at: trx.fn.now(3),
+      })
+
+    return rows.map((r) => ({ id: r.id, toNumber: r.to_number, body: r.body, simSlot: r.sim_slot }))
+  })
+}
+
 /** Device reports the outcome of a send. Handles retry/backoff and history. */
 export async function reportStatus(
   queueId: string,
   deviceId: string,
   input: { status: 'sent' | 'failed'; simSlot?: number; providerMessageRef?: string; error?: string },
+): Promise<void> {
+  return finalizeQueueOutcome(queueId, {
+    status: input.status,
+    deviceId,
+    simSlot: input.simSlot,
+    providerMessageRef: input.providerMessageRef,
+    error: input.error,
+  })
+}
+
+/** Provider (Text.lk) reports the outcome of a send — no device id. */
+export async function reportProviderStatus(
+  queueId: string,
+  input: { status: 'sent' | 'failed'; providerMessageRef?: string; error?: string },
+): Promise<void> {
+  return finalizeQueueOutcome(queueId, {
+    status: input.status,
+    deviceId: null,
+    providerMessageRef: input.providerMessageRef,
+    error: input.error,
+  })
+}
+
+async function finalizeQueueOutcome(
+  queueId: string,
+  input: {
+    status: 'sent' | 'failed'
+    deviceId: string | null
+    simSlot?: number
+    providerMessageRef?: string
+    error?: string
+  },
 ): Promise<void> {
   const row = await db<SmsQueueRow>('sms_queue').where({ id: queueId }).first()
   if (!row) {
@@ -206,7 +289,7 @@ export async function reportStatus(
         queue_id: queueId,
         to_number: row.to_number,
         status: 'sent',
-        device_id: deviceId,
+        device_id: input.deviceId,
         sim_slot: input.simSlot ?? row.sim_slot ?? null,
         provider_message_ref: input.providerMessageRef ?? null,
         template_slug: row.template_slug,
@@ -246,7 +329,7 @@ export async function reportStatus(
       queue_id: queueId,
       to_number: row.to_number,
       status: 'failed',
-      device_id: deviceId,
+      device_id: input.deviceId,
       sim_slot: input.simSlot ?? row.sim_slot ?? null,
       provider_message_ref: null,
       template_slug: row.template_slug,
@@ -345,6 +428,7 @@ export async function listHistory(filters: {
 
 export async function getDashboardStats(companyId?: string) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  const scope = companyId ? ('company' as const) : ('platform' as const)
 
   const baseQueue = db<SmsQueueRow>('sms_queue')
   const baseHistory = db<SmsHistoryRow>('sms_history').where('created_at', '>=', since)
@@ -354,26 +438,40 @@ export async function getDashboardStats(companyId?: string) {
     baseQueue.where({ company_id: companyId })
     baseHistory.where({ company_id: companyId })
     baseDevices.where({ scope: 'company', company_id: companyId })
+  } else {
+    baseDevices.where({ scope: 'platform' })
   }
 
-  const [pendingCount, failedCount, sentCount, approvedDevices, recentHistory] = await Promise.all([
-    baseQueue.clone().where({ status: 'pending' }).count<{ count: number }[]>('* as count'),
-    baseQueue.clone().where({ status: 'failed' }).where('created_at', '>=', since).count<{ count: number }[]>('* as count'),
-    baseHistory.clone().where({ status: 'sent' }).count<{ count: number }[]>('* as count'),
-    baseDevices.clone().where({ status: 'approved' }).count<{ count: number }[]>('* as count'),
-    db<SmsHistoryRow>('sms_history')
-      .modify((qb) => {
-        if (companyId) qb.where({ company_id: companyId })
-      })
-      .orderBy('created_at', 'desc')
-      .limit(10),
-  ])
+  const [pendingCount, failedCount, sentCount, approvedDevices, recentHistory, gatewayMode, textLkReady] =
+    await Promise.all([
+      baseQueue.clone().where({ status: 'pending' }).count<{ count: number }[]>('* as count'),
+      baseQueue
+        .clone()
+        .where({ status: 'failed' })
+        .where('created_at', '>=', since)
+        .count<{ count: number }[]>('* as count'),
+      baseHistory.clone().where({ status: 'sent' }).count<{ count: number }[]>('* as count'),
+      baseDevices.clone().where({ status: 'approved' }).count<{ count: number }[]>('* as count'),
+      db<SmsHistoryRow>('sms_history')
+        .modify((qb) => {
+          if (companyId) qb.where({ company_id: companyId })
+        })
+        .orderBy('created_at', 'desc')
+        .limit(10),
+      getGatewayMode(scope, companyId ?? null),
+      isTextLkReady(scope, companyId ?? null),
+    ])
+
+  const approved = Number(approvedDevices[0]?.count ?? 0)
+  const gatewayConfigured = gatewayMode === 'text_lk' ? textLkReady : approved > 0
 
   return {
     pendingCount: Number(pendingCount[0]?.count ?? 0),
     failedCount24h: Number(failedCount[0]?.count ?? 0),
     sentCount24h: Number(sentCount[0]?.count ?? 0),
-    approvedDevices: Number(approvedDevices[0]?.count ?? 0),
+    approvedDevices: approved,
+    gatewayMode,
+    gatewayConfigured,
     recentActivity: recentHistory.map(historyRowToDto),
   }
 }

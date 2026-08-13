@@ -26,8 +26,8 @@ function statusLabel(status: SmsDevice['status'], t: (k: string) => string): str
   return t('pending')
 }
 
-function formatSeen(iso: string | null): string {
-  if (!iso) return 'never'
+function formatSeen(iso: string | null, neverLabel: string): string {
+  if (!iso) return neverLabel
   return new Date(iso).toLocaleString()
 }
 
@@ -55,16 +55,17 @@ export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesLis
                     className={`ml-2 inline-block h-2 w-2 rounded-full ${
                       device.online ? 'bg-green-500' : 'bg-muted-foreground/40'
                     }`}
-                    aria-label={device.online ? 'online' : 'offline'}
+                    aria-label={device.online ? t('online') : t('offline')}
                   />
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {device.scope === 'platform' ? t('platform') : t('company')} · {statusLabel(device.status, t)}{' '}
-                  · {device.online ? t('online') : t('offline')} · Last seen {formatSeen(device.lastSeenAt)}
+                  · {device.online ? t('online') : t('offline')} · {t('lastSeen')}{' '}
+                  {formatSeen(device.lastSeenAt, t('never'))}
                   {device.appVersion ? ` · v${device.appVersion}` : ''}
                 </p>
               </ItemListContent>
-              <ItemListMenu ariaLabel={`Actions for ${device.name}`}>
+              <ItemListMenu ariaLabel={t('actionsFor', { name: device.name })}>
                 <DropdownMenuItem disabled>{statusLabel(device.status, t)}</DropdownMenuItem>
                 {device.status !== 'approved' ? (
                   <>
@@ -82,7 +83,7 @@ export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesLis
                       onClick={() => setPendingRevoke(device)}
                       disabled={isBusy}
                     >
-                      Revoke
+                      {t('revoke')}
                     </DropdownMenuItem>
                   </>
                 ) : null}
@@ -93,10 +94,10 @@ export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesLis
       </ItemList>
       <PlatformAlertConfirmDialog
         open={pendingRevoke !== null}
-        title={pendingRevoke ? `Revoke ${pendingRevoke.name}?` : 'Revoke device?'}
-        description="This action cannot be undone. The gateway device will lose permission to send SMS."
+        title={pendingRevoke ? `${t('revoke')} ${pendingRevoke.name}?` : t('revoke')}
+        description={t('deleteDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel="Revoke"
+        submitLabel={t('revoke')}
         onOpenChange={(open) => {
           if (!open) setPendingRevoke(null)
         }}

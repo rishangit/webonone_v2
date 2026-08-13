@@ -105,6 +105,14 @@ export function App() {
             }
           />
           <Route
+            path="/gateway"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <Navigate to="/devices?tab=settings" replace />
+              </RoleRoute>
+            }
+          />
+          <Route
             path="/queue"
             element={
               <RoleRoute roles={[...adminRoles]}>

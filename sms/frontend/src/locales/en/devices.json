@@ -1,9 +1,9 @@
 {
-  "title": "Gateway devices",
-  "description": "Approve or revoke the phones that send SMS for your scope. Live status refreshes every 15 seconds.",
-  "empty": "No devices yet",
+  "pageTitle": "Gateway",
+  "pageDescription": "Choose how outbound SMS is delivered, and manage phones for the mobile device gateway.",
+  "tabDevices": "Devices",
+  "tabSettings": "Settings",
   "loading": "Loading devices…",
-  "searchPlaceholder": "Search devices…",
   "refreshNow": "Refresh now",
   "emptyScope": "No gateway devices registered for your scope.",
   "approved": "Approved",
@@ -18,5 +18,6 @@
   "approve": "Approve",
   "revoke": "Revoke",
   "actionsFor": "Actions for {{name}}",
-  "deleteDescription": "This action cannot be undone. The gateway device will lose permission to send SMS."
+  "deleteDescription": "This action cannot be undone. The gateway device will lose permission to send SMS.",
+  "textLkActive": "Gateway is set to Text.lk — device approval is not used for delivery. Switch to mobile device on the Settings tab."
 }

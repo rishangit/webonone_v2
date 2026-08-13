@@ -69,6 +69,8 @@ export interface DashboardStats {
   failedCount24h: number
   sentCount24h: number
   approvedDevices: number
+  gatewayMode?: 'mobile_device' | 'text_lk'
+  gatewayConfigured?: boolean
   recentActivity: HistoryItem[]
 }
 

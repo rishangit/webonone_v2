@@ -1,9 +1,9 @@
 {
-  "title": "ගේට්වේ උපාංග",
-  "description": "Approve or revoke the phones that send SMS for your scope. Live status refreshes every 15 seconds.",
-  "empty": "තවම උපාංග නැත",
+  "pageTitle": "ගේට්වේ",
+  "pageDescription": "SMS බෙදාහැරීමේ ආකාරය තෝරන්න, සහ ජංගම උපාංග ගේට්වේ සඳහා දුරකථන කළමනාකරණය කරන්න.",
+  "tabDevices": "උපාංග",
+  "tabSettings": "සැකසුම්",
   "loading": "උපාංග පූරණය වෙමින්…",
-  "searchPlaceholder": "Search devices…",
   "refreshNow": "දැන් නැවුම් කරන්න",
   "emptyScope": "No gateway devices registered for your scope.",
   "approved": "Approved",
@@ -18,5 +18,6 @@
   "approve": "Approve",
   "revoke": "Revoke",
   "actionsFor": "Actions for {{name}}",
-  "deleteDescription": "This action cannot be undone. The gateway device will lose permission to send SMS."
+  "deleteDescription": "This action cannot be undone. The gateway device will lose permission to send SMS.",
+  "textLkActive": "ගේට්වේ Text.lk ලෙස සකසා ඇත — උපාංග අනුමත කිරීම බෙදාහැරීමට භාවිතා නොවේ. සැකසුම් ටැබයෙන් ජංගම උපාංගයට මාරු වන්න."
 }
