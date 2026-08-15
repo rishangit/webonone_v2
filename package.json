@@ -68,7 +68,7 @@
     "build:theme": "npm run build -w @webonone/theme",
     "build:i18n": "npm run build -w @webonone/i18n",
     "build:store-kit": "npm run build -w @webonone/store-kit",
-    "build:packages": "npm run build:platform-nav && npm run build:platform-embed && npm run build:theme && npm run build:i18n && npm run build:store-kit && npm run build:ui-kit && npm run build:media-embed",
+    "build:packages": "npm run build:platform-nav && npm run build:ui-kit && npm run build:platform-embed && npm run build:theme && npm run build:i18n && npm run build:store-kit && npm run build:media-embed",
     "build:all": "npm run install:all && npm run build:packages && npm run build -w @webonone/identity-frontend && npm run build -w @webonone/identity-backend && npm run build -w @webonone/webonone-frontend && npm run build -w @webonone/webonone-backend && npm run build -w @webonone/media-frontend && npm run build -w @webonone/media-backend && npm run build -w @webonone/email-frontend && npm run build -w @webonone/email-backend && npm run build -w @webonone/data-frontend && npm run build -w @webonone/data-backend && npm run build -w @webonone/sms-frontend && npm run build -w @webonone/sms-backend && npm run build -w @webonone/payment-frontend && npm run build -w @webonone/payment-backend && npm run build -w @webonone/website-frontend && npm run build -w @webonone/website-backend && npm run build -w @webonone/design-frontend && npm run build -w @webonone/design-backend",
     "build:identity": "npm run build -w identity-root",
     "env:apply": "node tooling/apply-production-env.mjs",
@@ -121,5 +121,8 @@
     },
     "react": "19.1.0",
     "react-dom": "19.1.0"
+  },
+  "dependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.62.2"
   }
 }
