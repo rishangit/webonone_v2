@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -156,14 +154,8 @@ export function ProductDetailsPage() {
     <FeaturePage
       title={product?.name ?? t('singular')}
       description={t('details')}
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => goToList('products')}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {t('common:back')}
-          </Button>
-        </div>
-      }
+      onBack={() => goToList('products')}
+      backLabel={t('common:back')}
     >
       {detailError ? (
         <Alert variant="destructive">

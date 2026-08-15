@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
   Tabs,
   TabsContent,
@@ -147,12 +145,8 @@ export function CompanyProfilePage({
       <FeaturePage
         title={t('companyProfile.title')}
         description={pageDescription}
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={() => navigate(backTo)}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {backLabel}
-          </Button>
-        }
+        onBack={() => navigate(backTo)}
+        backLabel={backLabel}
       >
         <Alert variant="destructive">
           <AlertDescription>{detailError}</AlertDescription>
@@ -287,14 +281,8 @@ export function CompanyProfilePage({
     <FeaturePage
       title={detail.name}
       description={pageDescription}
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => navigate(backTo)}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {backLabel}
-          </Button>
-        </div>
-      }
+      onBack={() => navigate(backTo)}
+      backLabel={backLabel}
     >
       <div className="flex flex-col gap-6">
         {detailError ? (

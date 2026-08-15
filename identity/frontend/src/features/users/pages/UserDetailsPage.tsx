@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
   StatusTag,
   Tabs,
@@ -118,13 +116,6 @@ export function UserDetailsPage() {
     }
   }
 
-  const backButton = (
-    <Button type="button" variant="outline" size="sm" onClick={handleBack}>
-      <ArrowLeft className="h-4 w-4" aria-hidden />
-      {t('common:back')}
-    </Button>
-  )
-
   const tabs: { id: UserDetailTab; label: string }[] = [
     { id: 'overview', label: t('tabs.overview') },
     { id: 'history', label: t('tabs.history') },
@@ -135,17 +126,16 @@ export function UserDetailsPage() {
     <FeaturePage
       title={user?.displayName ?? t('userFallbackTitle')}
       description={t('userDetailsDescription')}
+      onBack={handleBack}
+      backLabel={t('common:back')}
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          {backButton}
-          {user?.role ? (
-            isStatusTagVariant(user.role) ? (
-              <StatusTag variant={user.role} />
-            ) : (
-              <StatusTag variant="member">{formatRoleLabel(user.role)}</StatusTag>
-            )
-          ) : null}
-        </div>
+        user?.role ? (
+          isStatusTagVariant(user.role) ? (
+            <StatusTag variant={user.role} />
+          ) : (
+            <StatusTag variant="member">{formatRoleLabel(user.role)}</StatusTag>
+          )
+        ) : undefined
       }
     >
       {error && !user ? (

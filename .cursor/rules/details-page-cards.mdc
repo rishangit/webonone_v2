@@ -16,7 +16,7 @@ Use this pattern for **simple multi-field** details pages with **inline** page-l
 
 ```text
 FeaturePage
-  actions: Back (always) + Edit | Cancel + Save (page-level — not per card)
+  onBack (icon before title) + actions: Edit | Cancel + Save (page-level — not per card)
   Outer grid: grid grid-cols-1 items-start gap-6 lg:grid-cols-3
               (Form wrap in edit → also space-y-0)
     Left stack:  flex flex-col gap-6 lg:col-span-2   ← wide cards
@@ -27,7 +27,7 @@ FeaturePage
 | Piece | Requirement |
 |-------|-------------|
 | Shell | `FeaturePage` — full width; no `max-w-*` on body |
-| Back | Always in `actions`: `Button variant="outline" size="sm"` + `ArrowLeft` + label (e.g. list name) |
+| Back | Always `onBack` + `backLabel` — ghost icon-only `ArrowLeft` immediately before the title (`aria-label` only; not in `actions`) |
 | Edit | **One** page-level `Edit` in `actions` (view). Edit toggles **all** cards to fields |
 | Save / Cancel | Page-level in `actions` while editing; `Save` uses `form="<id>"` on the page `Form` |
 | Cards | Presentational only — no per-card Edit / Save / Cancel |
@@ -39,25 +39,25 @@ FeaturePage
 ## Page actions skeleton
 
 ```tsx
-actions={
-  <div className="flex flex-wrap items-center gap-2">
-    <Button type="button" variant="outline" size="sm" onClick={onBack}>
-      <ArrowLeft className="h-4 w-4" aria-hidden />
-      Back
-    </Button>
-    {mode === 'view' ? (
+<FeaturePage
+  title={title}
+  description={description}
+  onBack={onBack}
+  backLabel="Back"
+  actions={
+    mode === 'view' ? (
       <Button type="button" size="sm" onClick={() => setMode('edit')}>
         <Edit3 className="h-4 w-4" aria-hidden />
         Edit
       </Button>
     ) : (
-      <>
+      <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
         <Button type="submit" size="sm" form="details-form">Save</Button>
-      </>
-    )}
-  </div>
-}
+      </div>
+    )
+  }
+>
 ```
 
 ## Forbidden (this pattern)
@@ -82,4 +82,4 @@ npm run type-check
 npm run lint
 ```
 
-Confirm: Back always visible; one Edit toggles all cards; Cancel/Save only in page header; equal `gap-6`; columns top-aligned.
+Confirm: Back icon always visible before the title; one Edit toggles all cards; Cancel/Save only in page header; equal `gap-6`; columns top-aligned.

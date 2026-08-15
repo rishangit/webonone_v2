@@ -54,10 +54,10 @@ Any UI that filters a list or catalog by typed query must use **`SearchInput`** 
 
 | Context | Placement |
 |---------|-----------|
-| Collection `FeaturePage` | In `actions` (often `className="w-64"`), left of `ListFilterTrigger` / CTA |
-| Dialog / wizard / picker / embed body | Inline above the list (e.g. library pickers) |
+| Collection `FeaturePage` | In `actions` (often `className="w-64"`), left of `ListFilterTrigger` / **`ListAddButton`**. When `description` is set, `PageHeader` renders title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that row (right edge stays fixed on the icon). |
+| Dialog / wizard / picker / embed body | Inline above the list (e.g. library pickers) — full field, not the header icon |
 
-Wire `value` + `onChange`; pass `onClear` when clearing should reset query state; set `aria-label` (and optional `placeholder`) for the domain.
+Wire `value` + `onChange`; pass `onClear` when clearing should reset query state; set `aria-label` (and optional `placeholder`) for the domain. Optional `compactOnMobile` overrides header auto-compact.
 
 Reference: `ui-kit/package/src/components/SearchInput.tsx`, `email/.../HistoryPage.tsx`, `webonone-v2/.../LibraryPickerPanel.tsx`, `data/.../CatalogLibrarySelectEmbedPage.tsx`.
 

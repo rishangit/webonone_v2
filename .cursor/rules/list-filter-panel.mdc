@@ -52,6 +52,7 @@ Reference: `ui-kit/package/src/components/SearchInput.tsx`, `ListFilterPanel.tsx
 | Rule | Detail |
 |------|--------|
 | Search left of filter | `SearchInput` always **before** `ListFilterTrigger` in `actions` |
+| Compact on small screens | When `description` is set, actions (Search + filter + CTA) sit on their own row below the wrapping description. Below `sm`, tap the search icon to expand the field leftward across that row (right edge stays on the icon). **`ListAddButton`** shows **+ Add** until tapped, then expands left with the same motion. Dialogs/pickers stay a full field. |
 | Right-aligned row | Wrap actions in `flex w-full flex-wrap items-center justify-end gap-2` |
 | Forbidden body search on list pages | Do **not** place `SearchInput` as a `FeaturePage` child above the list |
 | Text search in header | Use **`SearchInput`** — not plain `Input` / `Label` |

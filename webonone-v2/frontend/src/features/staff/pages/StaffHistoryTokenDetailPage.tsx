@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -125,12 +123,8 @@ export function StaffHistoryTokenDetailPage() {
       <FeaturePage
         title="Session history"
         description="Unable to load session history."
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={backToStaff}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
-          </Button>
-        }
+        onBack={backToStaff}
+        backLabel="Back"
       >
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -145,12 +139,8 @@ export function StaffHistoryTokenDetailPage() {
     <FeaturePage
       title={detail.serviceName}
       description={`Token ${detail.tokenLabel} · ${formatOccurrenceDate(detail.occurrenceDate)}`}
-      actions={
-        <Button type="button" variant="outline" size="sm" onClick={backToStaff}>
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
-        </Button>
-      }
+      onBack={backToStaff}
+      backLabel="Back"
     >
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
@@ -194,11 +193,13 @@ export function CompanyCatalogDetailPage({
 
   if (!kind) {
     return (
-      <FeaturePage title={t('detail.notFoundTitle')} description={t('detail.notFoundDescription')}>
-        <Button type="button" variant="outline" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          {tc('back')}
-        </Button>
+      <FeaturePage
+        title={t('detail.notFoundTitle')}
+        description={t('detail.notFoundDescription')}
+        onBack={() => navigate(-1)}
+        backLabel={tc('back')}
+      >
+        {null}
       </FeaturePage>
     )
   }
@@ -431,12 +432,11 @@ export function CompanyCatalogDetailPage({
               ? t('detail.forkedHint')
               : t('detail.customHint')
       }
+      onBack={() => navigate(listPath)}
+      backLabel={tc('back')}
       actions={
+        canCustomize || canManage ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => navigate(listPath)}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
-          </Button>
           {canCustomize ? (
             <Button
               type="button"
@@ -472,6 +472,7 @@ export function CompanyCatalogDetailPage({
             </Button>
           ) : null}
         </div>
+        ) : undefined
       }
     >
       {detail && readOnly ? (

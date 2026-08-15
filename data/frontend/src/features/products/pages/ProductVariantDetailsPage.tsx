@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -76,19 +74,8 @@ export function ProductVariantDetailsPage() {
     <FeaturePage
       title={variant?.name ?? t('variant.singular')}
       description={t('variantDetails')}
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => goToDetail('products', productId, { tab: 'variants' })}
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {t('common:back')}
-          </Button>
-        </div>
-      }
+      onBack={() => goToDetail('products', productId, { tab: 'variants' })}
+      backLabel={t('common:back')}
     >
       {error ? (
         <Alert variant="destructive">

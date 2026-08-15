@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
+  ListAddButton,
   ListPageBody,
   Pagination,
   SearchInput,
@@ -48,10 +47,7 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
             aria-label={t('events.searchAria')}
           />
           {canManage ? (
-            <Button type="button" size="sm" onClick={() => setDialog({})}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t('events.addEvent')}
-            </Button>
+            <ListAddButton onClick={() => setDialog({})}>{t('events.addEvent')}</ListAddButton>
           ) : null}
         </div>
       }

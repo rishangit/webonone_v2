@@ -16,7 +16,7 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 - **Width:** full width of the shell main content (`w-full`) — do not add `max-w-*` on feature page wrappers.
 - **Title block:** `title` + optional `description` props, or a custom `header={<PageHeader … />}`.
 - **Header actions:** pass primary page actions via `actions` (e.g. “Create theme”).
-- **Spacing:** rely on `FeaturePage` **`gap-6`** between header and body — do not add extra top margin on the first child.
+- **Spacing:** rely on `FeaturePage` **`gap-3`** between header and body — do not add extra top margin on the first child.
 - **Horizontal padding:** do not add `px-*` on `FeaturePage` — `AppShell` / `PageShell` own shell padding (`px-2 sm:px-6` on mobile/desktop). Page content should align with the app header automatically.
 
 ## Typography
@@ -48,9 +48,9 @@ FeaturePage (title, description, actions: SearchInput + ListFilterTrigger + CTA)
 
 | Rule | Detail |
 |------|--------|
-| Search | **`SearchInput`** in `FeaturePage` `actions` — never plain `Input`; never in page body on list pages ([ui-kit-consumption.mdc](ui-kit-consumption.mdc)) |
+| Search | **`SearchInput`** in `FeaturePage` `actions` — never plain `Input`; never in page body on list pages ([ui-kit-consumption.mdc](ui-kit-consumption.mdc)). When `description` is set: title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that actions row. |
 | Filters | `ListFilterTrigger` + `ListFilterPanel` for status/date/MIME filters |
-| Primary CTA | `Button type="button" size="sm"` with a leading `Plus` icon (`h-4 w-4`, `aria-hidden`) **and** a visible label (e.g. `Add tag`) — icon **+ text**, not icon-only; last in `actions`, gated on permission |
+| Primary CTA | **`ListAddButton`** last in `actions`, gated on permission. Children are the full label (e.g. `Add tag`). Below `sm` it shows **+ Add** until tapped, then expands left (same 300ms motion as search) to the full label; a second tap runs `onClick`. Search stays in place. Opening search or tapping outside collapses add. Do **not** use a raw `Button` + `Plus` for list-page create. |
 | Loading | `usePlatformLoading('Loading …')` — AppLayout owns overlay; hide list body while loading |
 | Row actions | `ItemListMenu` — no inline row `Button` groups; destructive item last, after `DropdownMenuSeparator`, styled `text-destructive focus:text-destructive` |
 | Embed peers | Same markup + `min-h-full` flex chain — [platform-shell-navigation.mdc](platform-shell-navigation.mdc) |
@@ -58,10 +58,7 @@ FeaturePage (title, description, actions: SearchInput + ListFilterTrigger + CTA)
 Header CTA reference:
 
 ```tsx
-<Button type="button" size="sm" onClick={() => setDialog({})}>
-  <Plus className="h-4 w-4" aria-hidden />
-  Add tag
-</Button>
+<ListAddButton onClick={() => setDialog({})}>Add tag</ListAddButton>
 ```
 
 Canonical demo: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` (`ListPageDemo`). Production references: `data/.../CatalogListPage.tsx`, `email/.../HistoryPage.tsx`, `media/.../LibraryPage.tsx`.
@@ -74,11 +71,11 @@ Multi-section details pages must use the **card grid** (`gap-6`, left span-2 / r
 
 | Create UX | Details chrome | Docs |
 |-----------|----------------|------|
-| Inline / single form | Back + **one page-level Edit** → Cancel/Save; cards become fields | [details-page-cards.mdc](details-page-cards.mdc) · [skill](../skills/details-page-cards/SKILL.md) |
-| Multi-step wizard | Back only; **per-card Edit** → shared create/edit wizard | [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) · [skill](../skills/details-page-wizard-edit/SKILL.md) |
+| Inline / single form | `onBack` + **one page-level Edit** in `actions` → Cancel/Save; cards become fields | [details-page-cards.mdc](details-page-cards.mdc) · [skill](../skills/details-page-cards/SKILL.md) |
+| Multi-step wizard | `onBack` only; **per-card Edit** → shared create/edit wizard | [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) · [skill](../skills/details-page-wizard-edit/SKILL.md) |
 
 ```text
-FeaturePage actions: Back (+ Edit | Cancel + Save when inline)
+FeaturePage onBack (icon before title); actions: Edit | Cancel + Save when inline
   grid gap-6 lg:grid-cols-3 (Form → also space-y-0 items-start)
     left flex-col gap-6 lg:col-span-2  → wide Cards
     right flex-col gap-6 lg:col-span-1 → narrow Cards

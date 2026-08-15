@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
+  ListAddButton,
   ListPageBody,
   SearchInput,
   Pagination,
@@ -79,10 +78,7 @@ export function AllCompaniesPage() {
             aria-label={t('myCompanies.searchAria')}
             className="w-64"
           />
-          <Button type="button" size="sm" onClick={() => setRegisterOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden />
-            {t('myCompanies.addCompany')}
-          </Button>
+          <ListAddButton onClick={() => setRegisterOpen(true)}>{t('myCompanies.addCompany')}</ListAddButton>
         </div>
       }
     >

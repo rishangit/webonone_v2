@@ -269,19 +269,6 @@ export function CatalogDetailPage() {
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="relative z-10 shrink-0 bg-background px-4 pt-2 sm:px-8">
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={handleBack}
-              >
-                <ArrowLeft className="size-4" aria-hidden />
-                {t('back')}
-              </Button>
-            </div>
-
             <CurrentLocationBar
               coords={coords}
               placeLabel={placeLabel}
@@ -340,11 +327,23 @@ export function CatalogDetailPage() {
                           {kindLabel(item.kind, t)}
                         </span>
                       </div>
-                      <div>
-                        <h1 className="text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                          {item.name}
-                        </h1>
-                        <p className="mt-1 text-sm text-muted-foreground">{item.companyName}</p>
+                      <div className="flex items-start gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="mt-0.5 h-9 w-9 shrink-0"
+                          aria-label={t('back')}
+                          onClick={handleBack}
+                        >
+                          <ArrowLeft className="h-5 w-5" aria-hidden />
+                        </Button>
+                        <div>
+                          <h1 className="text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                            {item.name}
+                          </h1>
+                          <p className="mt-1 text-sm text-muted-foreground">{item.companyName}</p>
+                        </div>
                       </div>
                       {item.description ? (
                         <p className="whitespace-pre-wrap text-pretty text-sm leading-relaxed text-foreground">

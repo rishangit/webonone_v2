@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
+  ListAddButton,
   ListPageBody,
   SearchInput,
 } from '@webonone/ui-kit'
@@ -53,10 +52,7 @@ export function StaffPage() {
             aria-label={t('list.searchAria')}
           />
           {canManage ? (
-            <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t('list.addStaff')}
-            </Button>
+            <ListAddButton onClick={() => setAddOpen(true)}>{t('list.addStaff')}</ListAddButton>
           ) : null}
         </div>
       }

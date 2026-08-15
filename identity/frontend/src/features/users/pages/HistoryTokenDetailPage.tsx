@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -99,12 +98,8 @@ export function HistoryTokenDetailPage() {
       <FeaturePage
         title={t('history.sessionHistoryTitle')}
         description={t('history.sessionHistoryLoadError')}
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={backToUser}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {t('common:back')}
-          </Button>
-        }
+        onBack={backToUser}
+        backLabel={t('common:back')}
       >
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -155,12 +150,8 @@ export function HistoryTokenDetailPage() {
     <FeaturePage
       title={detail.serviceName}
       description={t('history.tokenDescription', { label: detail.tokenLabel, date: formatOccurrenceDate(detail.occurrenceDate) })}
-      actions={
-        <Button type="button" variant="outline" size="sm" onClick={backToUser}>
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          {t('common:back')}
-        </Button>
-      }
+      onBack={backToUser}
+      backLabel={t('common:back')}
     >
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">

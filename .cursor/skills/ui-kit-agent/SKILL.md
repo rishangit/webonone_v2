@@ -37,7 +37,7 @@ After breaking API or style changes, note consumer impact for the parent agent. 
 
 | Demo | Hash | Pattern |
 |------|------|---------|
-| `ListPageDemo` | `#pages-list` | [item-list](../item-list/SKILL.md) |
+| `ListPageDemo` | `#pages-list` | [item-list](../item-list/SKILL.md) — `ListAddButton` compact **+ Add** on small screens |
 | `DetailsPageDemo` | `#pages-details` | [details-page-cards](../details-page-cards/SKILL.md) |
 
 Shared selection dialogs: `UserSelectionDialog`, `ServiceSelectionDialog` (Dialogs showcase — mock `loadUsers` / `loadServices`).

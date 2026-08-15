@@ -46,15 +46,12 @@ For paginated collection **pages** (not embed pickers), compose:
 
 `FeaturePage` → optional `ListFilterPanel` → `ListPageBody` → `ItemList` / `ItemListEmpty` → `Pagination className="mt-auto"`.
 
-Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + primary CTA. Never use plain `Input` for text search ([ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc)). Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
+Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + **`ListAddButton`**. Never use plain `Input` for text search ([ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc)). When `description` is set, `PageHeader` renders title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that row. Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
 
-**Primary CTA (Add button):** `Button type="button" size="sm"` with a leading `Plus` icon (`h-4 w-4`, `aria-hidden`) **and** a visible text label (e.g. `Add tag`). It is **icon + text**, not icon-only — matches `ListPageDemo`. Gate it on the caller's mutate permission.
+**Primary CTA (`ListAddButton`):** last in `actions`, permission-gated. Pass the full label as children (e.g. `Add tag`). The Plus icon is built in. Below `sm` the button shows **+ Add** until tapped, then grows left (`duration-300 ease-out`, same as header search) and pushes search/filter left; the second tap runs `onClick`. Opening search or tapping outside collapses add. Optional `compactLabel` for i18n (default `Add`). Do **not** hand-roll `Button` + `Plus` for list-page create.
 
 ```tsx
-<Button type="button" size="sm" onClick={() => setDialog({})}>
-  <Plus className="h-4 w-4" aria-hidden />
-  Add tag
-</Button>
+<ListAddButton onClick={() => setDialog({})}>Add tag</ListAddButton>
 ```
 
 Canonical demo: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` (`ListPageDemo`). Rule: [feature-page-layout.mdc](../../rules/feature-page-layout.mdc).
@@ -171,7 +168,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Paginated collections use `Pagination` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
 - [ ] Paginated pages wrap list + pagination in `ListPageBody`; list in `flex-1`; `Pagination` has `className="mt-auto"`
 - [ ] Filterable collections use `ListFilterTrigger` + `ListFilterPanel` ([list-filter-panel.mdc](../../rules/list-filter-panel.mdc))
-- [ ] Primary CTA is `Button size="sm"` with leading `Plus` icon **+ text label** (not icon-only), last in header `actions`, permission-gated
+- [ ] Primary CTA is **`ListAddButton`** (full label as children, last in header `actions`, permission-gated) — not a raw `Button` + `Plus`
 - [ ] Page loads use **`usePlatformLoading`** (AppLayout owns the overlay); empty results use `ItemListEmpty`
 
 ## Rules

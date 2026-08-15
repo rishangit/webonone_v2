@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -109,18 +108,14 @@ export function TemplateDetailsPage() {
     <FeaturePage
       title={template?.name ?? t('singular')}
       description={t('pageDescription')}
+      onBack={goToList}
+      backLabel={tc('back')}
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={goToList}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
+        template ? (
+          <Button type="button" variant="outline" size="sm" onClick={() => goToPreview(id)}>
+            {t('preview')}
           </Button>
-          {template ? (
-            <Button type="button" variant="outline" size="sm" onClick={() => goToPreview(id)}>
-              {t('preview')}
-            </Button>
-          ) : null}
-        </div>
+        ) : undefined
       }
     >
       {detailError && !awaitingUpdate ? (

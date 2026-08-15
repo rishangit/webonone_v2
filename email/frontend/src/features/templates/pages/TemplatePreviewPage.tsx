@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -28,6 +27,7 @@ export function TemplatePreviewPage() {
   const { t } = useTranslation('templates')
   const { t: tc } = useTranslation('common')
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const {
     detail: template,
@@ -82,16 +82,8 @@ export function TemplatePreviewPage() {
         template ? t('previewPage.title', { name: template.name }) : t('previewPage.titleFallback')
       }
       description={t('previewPage.description')}
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" asChild>
-            <Link to={id ? `/templates/${id}` : '/templates'}>
-              <ArrowLeft className="h-4 w-4" aria-hidden />
-              {tc('back')}
-            </Link>
-          </Button>
-        </div>
-      }
+      onBack={() => navigate(id ? `/templates/${id}` : '/templates')}
+      backLabel={tc('back')}
     >
       {error ? (
         <Alert variant="destructive">

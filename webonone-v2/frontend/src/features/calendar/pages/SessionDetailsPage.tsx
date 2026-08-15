@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { PLATFORM_MESSAGE_TYPES } from '@webonone/platform-embed'
 import {
   Alert,
@@ -273,7 +273,12 @@ export function SessionDetailsPage() {
     !isPersonal
   ) {
     return (
-      <FeaturePage title="Session" description="Session details">
+      <FeaturePage
+        title="Session"
+        description="Session details"
+        onBack={backToEvent}
+        backLabel="Back"
+      >
         <Alert variant="destructive">
           <AlertDescription>Company session required.</AlertDescription>
         </Alert>
@@ -290,12 +295,8 @@ export function SessionDetailsPage() {
       <FeaturePage
         title="Session"
         description="Session details"
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={backToEvent}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
-          </Button>
-        }
+        onBack={backToEvent}
+        backLabel="Back"
       >
         <Alert variant="destructive">
           <AlertDescription>Invalid session date.</AlertDescription>
@@ -309,12 +310,8 @@ export function SessionDetailsPage() {
       <FeaturePage
         title="Session"
         description="Session details"
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={backToEvent}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
-          </Button>
-        }
+        onBack={backToEvent}
+        backLabel="Back"
       >
         <Alert variant="destructive">
           <AlertDescription>{detailError}</AlertDescription>
@@ -336,12 +333,8 @@ export function SessionDetailsPage() {
       <FeaturePage
         title="Session"
         description="Session details"
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={backToEvent}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
-          </Button>
-        }
+        onBack={backToEvent}
+        backLabel="Back"
       >
         <Alert variant="destructive">
           <AlertDescription>This session is not part of the event series.</AlertDescription>
@@ -484,24 +477,20 @@ export function SessionDetailsPage() {
     <FeaturePage
       title={titleDate}
       description={`${detail.serviceName} session`}
+      onBack={backToEvent}
+      backLabel="Back"
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          {canOperateSession && runStatus === 'started' && sessionKey ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={actionBusy}
-              onClick={() => dispatch(sessionTokensActions.endRequested(sessionKey))}
-            >
-              End session
-            </Button>
-          ) : null}
-          <Button type="button" variant="outline" size="sm" onClick={backToEvent}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+        canOperateSession && runStatus === 'started' && sessionKey ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={actionBusy}
+            onClick={() => dispatch(sessionTokensActions.endRequested(sessionKey))}
+          >
+            End session
           </Button>
-        </div>
+        ) : undefined
       }
     >
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">

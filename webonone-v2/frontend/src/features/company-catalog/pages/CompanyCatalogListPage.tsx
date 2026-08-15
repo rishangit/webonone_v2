@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
-  Button,
   DropdownMenuItem,
   DropdownMenuSeparator,
   FeaturePage,
@@ -14,6 +12,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ListAddButton,
   ListPageBody,
   SearchInput,
   StatusTag,
@@ -95,10 +94,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
             className="w-64"
           />
           {canManage ? (
-            <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t('list.add', { noun })}
-            </Button>
+            <ListAddButton onClick={() => setAddOpen(true)}>{t('list.add', { noun })}</ListAddButton>
           ) : null}
         </div>
       }

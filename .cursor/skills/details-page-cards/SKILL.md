@@ -11,7 +11,7 @@ description: >-
 
 # Details page cards
 
-Standard workflow for **profile / company / simple multi-field** details pages with **inline** edit. Sections are **`Card`** surfaces in a **3-column** grid (left **2-col** stack, right **1-col** stack). **Back** and a single **Edit** live in `FeaturePage` `actions` — cards have no per-card edit chrome.
+Standard workflow for **profile / company / simple multi-field** details pages with **inline** edit. Sections are **`Card`** surfaces in a **3-column** grid (left **2-col** stack, right **1-col** stack). **Back** is `FeaturePage` `onBack` (icon before title); a single **Edit** lives in `actions` — cards have no per-card edit chrome.
 
 **Wizard-backed entities** (create is a multi-step dialog): use [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md) instead (read-only cards + per-card Edit → shared wizard).
 
@@ -33,11 +33,11 @@ Collection lists that lead to this page must wire **row body click → detail ro
 
 | Export | Role |
 |--------|------|
-| `FeaturePage` | Page shell; owns Back + Edit / Cancel / Save |
+| `FeaturePage` | Page shell; owns `onBack` (icon before title) + Edit / Cancel / Save in `actions` |
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` | Section surface (view + edit content only) |
 | `Form`, `FormField` | One page `Form` wrapping the card grid in edit mode |
 | `ImagePreview` | Logos / avatars — `src={null}` shows first-upload empty state ([image-preview.mdc](../../rules/image-preview.mdc)) |
-| `ArrowLeft`, `Edit3` (lucide) | Back and Edit icons in `actions` |
+| `Edit3` (lucide) | Edit icon in `actions` |
 
 `CardTitle` → `className="text-lg"`.
 
@@ -45,7 +45,7 @@ Collection lists that lead to this page must wire **row body click → detail ro
 
 ```text
 FeaturePage
-  actions: Back (always) | view → Edit | edit → Cancel + Save
+  onBack (icon before title) | view → Edit in actions | edit → Cancel + Save
   Outer: grid items-start gap-6 lg:grid-cols-3
          (Form: also space-y-0)
     Left:  flex flex-col gap-6 lg:col-span-2
@@ -54,7 +54,7 @@ FeaturePage
 
 | Rule | Detail |
 |------|--------|
-| Back | Outline `size="sm"`; navigates to parent list (or showcase nested list tab) |
+| Back | `onBack` + `backLabel`; ghost icon-only `ArrowLeft` immediately before the title; navigates to parent list (or showcase nested list tab) |
 | Edit | **One** control — switches **all** cards to edit fields |
 | Save | Validates all sections; one submit; returns to view |
 | Cancel | Discards drafts for all cards; returns to view |
@@ -63,7 +63,7 @@ FeaturePage
 
 ## Steps
 
-1. `FeaturePage` with Back + page-level Edit / Cancel / Save in `actions`.
+1. `FeaturePage` with `onBack` + page-level Edit / Cancel / Save in `actions`.
 2. Split sections: wide → left; compact → right.
 3. Cards render view or fields from page `mode` / draft state — no local edit mode.
 4. View: outer `<div className="grid …">`. Edit: same classes on `<Form id=… space-y-0>`.
@@ -89,4 +89,4 @@ npm run type-check
 npm run lint
 ```
 
-Back always present; one Edit edits every card; Save/Cancel only in the page header.
+Back icon always present before the title; one Edit edits every card; Save/Cancel only in the page header.

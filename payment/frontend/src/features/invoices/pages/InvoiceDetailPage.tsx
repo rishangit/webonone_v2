@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Check, Copy, ExternalLink, FileText, Upload } from 'lucide-react'
+import { Check, Copy, ExternalLink, FileText, Upload } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
@@ -185,32 +185,28 @@ export function InvoiceDetailPage() {
     <FeaturePage
       title={invoice?.invoiceNumber ?? t('singular')}
       description={invoice ? invoice.companyName : undefined}
+      onBack={() => navigate('/invoices')}
+      backLabel={tc('back')}
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => navigate('/invoices')}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
-          </Button>
-          {role === 'super_admin' && invoice ? (
-            <>
-              {invoice.status === 'pending_verification' ? (
-                <Button type="button" variant="outline" size="sm" onClick={() => void rejectProof()}>
-                  {t('rejectProof')}
-                </Button>
-              ) : null}
-              {canMarkPaid ? (
-                <Button type="button" size="sm" onClick={() => void markPaid()}>
-                  {t('markPaid')}
-                </Button>
-              ) : null}
-              {invoice.status !== 'paid' && invoice.status !== 'void' ? (
-                <Button type="button" variant="outline" size="sm" onClick={() => void voidInvoice()}>
-                  {t('voidAction')}
-                </Button>
-              ) : null}
-            </>
-          ) : null}
-        </div>
+        role === 'super_admin' && invoice ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {invoice.status === 'pending_verification' ? (
+              <Button type="button" variant="outline" size="sm" onClick={() => void rejectProof()}>
+                {t('rejectProof')}
+              </Button>
+            ) : null}
+            {canMarkPaid ? (
+              <Button type="button" size="sm" onClick={() => void markPaid()}>
+                {t('markPaid')}
+              </Button>
+            ) : null}
+            {invoice.status !== 'paid' && invoice.status !== 'void' ? (
+              <Button type="button" variant="outline" size="sm" onClick={() => void voidInvoice()}>
+                {t('voidAction')}
+              </Button>
+            ) : null}
+          </div>
+        ) : undefined
       }
     >
       {error ? (

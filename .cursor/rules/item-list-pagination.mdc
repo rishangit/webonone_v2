@@ -27,7 +27,7 @@ Always initialize `useState(12)` for `pageSize`. Pass `pageSizeOptions={[12, 24,
 ## Layout and spacing
 
 ```text
-FeaturePage                    ← gap-6 between direct children
+FeaturePage                    ← gap-3 between direct children
   filters / tabs (optional)
   ListPageBody                 ← flex-1 column; pagination mt-auto (AppShell + embed fill via ui-kit CSS)
     ItemList                   ← flex-1; current page rows only
@@ -42,18 +42,20 @@ FeaturePage                    ← gap-6 between direct children
 | Bottom alignment | Wrap list + pagination in **`ListPageBody`**; list in **`flex-1`** wrapper; **`Pagination`** gets **`className="mt-auto"`**. AppShell pages: `#main-content` host uses **`flex min-h-full flex-col`**; ui-kit `app-shell-active` CSS fills height — do not add `min-h-0` on `ListPageBody` |
 | **WebOnOne iframe embed** | Same markup + **`min-h-full`** flex chain on outlet/`FeaturePage`/`ListPageBody`; scroll on **`PlatformEmbedShell` `<main>`** only — [platform-shell-navigation.mdc](platform-shell-navigation.mdc) |
 | Forbidden | Do not place `SearchInput` in the page body on list pages — it belongs in `FeaturePage` `actions` with `ListFilterTrigger` ([list-filter-panel.mdc](list-filter-panel.mdc)); never use plain `Input` for search |
-| FeaturePage | Rely on `FeaturePage` `gap-6` between header and body — **do not** add extra `mt-*` on `Pagination` beyond `mt-auto` inside `ListPageBody` |
+| FeaturePage | Rely on `FeaturePage` `gap-3` between header and body — **do not** add extra `mt-*` on `Pagination` beyond `mt-auto` inside `ListPageBody` |
 | Section wrapper | If the list lives in `<section>`, apply `ListPageBody` inside the section for paginated blocks |
 | Filters | Filters/tabs stay **above** the list; pagination stays **below** the list |
 
 ## Mobile pagination
 
-On viewports below `sm`, `Pagination` renders two rows:
+On viewports below `sm`, `Pagination` renders two rows **when page controls are visible** (`hideWhenSinglePage` is false, or there is more than one page):
 
 1. **Row 1:** "Showing X–Y of Z" (left) and rows-per-page select (right)
 2. **Row 2:** page controls centered
 
-Desktop (`sm+`) keeps a single row: summary left, page size + nav right.
+When pagination is hidden (`hideWhenSinglePage` default and a single page), mobile matches desktop: **summary only** — no rows-per-page select and no page buttons.
+
+Desktop (`sm+`) keeps a single row: summary left, page size + nav right (page size + nav only when controls are shown).
 
 ```tsx
 {!loading ? (

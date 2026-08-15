@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
-import { Alert, AlertDescription, Button, FeaturePage } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { isFresh } from '@/shared/store/cacheUtils'
@@ -58,17 +57,8 @@ export function ThemeDetailPage() {
       <FeaturePage
         title="Theme"
         description="Theme details and palette."
-        actions={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/settings/system-theme')}
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back to System Theme
-          </Button>
-        }
+        onBack={() => navigate('/settings/system-theme')}
+        backLabel="Back to System Theme"
       >
         <Alert variant="destructive">
           <AlertDescription>{error ?? 'Theme not found.'}</AlertDescription>
@@ -88,17 +78,8 @@ export function ThemeDetailPage() {
     <FeaturePage
       title={theme.name}
       description="Theme details and palette."
-      actions={
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/settings/system-theme')}
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back to System Theme
-        </Button>
-      }
+      onBack={() => navigate('/settings/system-theme')}
+      backLabel="Back to System Theme"
     >
       {error ? (
         <Alert variant="destructive" className="mb-6">
