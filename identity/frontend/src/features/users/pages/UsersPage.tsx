@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
   FormField,
   ImagePreview,
@@ -15,6 +13,7 @@ import {
   ItemListItem,
   ListFilterPanel,
   ListFilterTrigger,
+  ListAddButton,
   ListPageBody,
   SearchInput,
   Pagination,
@@ -184,10 +183,7 @@ export function UsersPage() {
             <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           ) : null}
           {companyMode ? (
-            <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t('addUser')}
-            </Button>
+            <ListAddButton onClick={() => setAddOpen(true)}>{t('addUser')}</ListAddButton>
           ) : null}
         </div>
       }

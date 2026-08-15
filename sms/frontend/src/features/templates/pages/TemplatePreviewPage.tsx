@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -85,19 +84,8 @@ export function TemplatePreviewPage() {
         template ? t('previewPage.title', { name: template.name }) : t('previewPage.titleFallback')
       }
       description={t('previewPage.description')}
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => (id ? goToDetail(id) : goToList())}
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
-          </Button>
-        </div>
-      }
+      onBack={() => (id ? goToDetail(id) : goToList())}
+      backLabel={tc('back')}
     >
       {error ? (
         <Alert variant="destructive">

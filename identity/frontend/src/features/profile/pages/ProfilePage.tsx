@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Alert, AlertDescription, Button, FeaturePage } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
 import type { UserProfile } from '@/shared/types/auth.types'
@@ -125,12 +124,8 @@ export function ProfilePage() {
       <FeaturePage
         title={t('pageTitle')}
         description={t('pageDescription')}
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
-          </Button>
-        }
+        onBack={handleBack}
+        backLabel={tc('back')}
       >
         <Alert variant="destructive">
           <AlertDescription>{bootstrapError}</AlertDescription>
@@ -156,12 +151,8 @@ export function ProfilePage() {
       <FeaturePage
         title={t('pageTitle')}
         description={t('pageDescription')}
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
-          </Button>
-        }
+        onBack={handleBack}
+        backLabel={tc('back')}
       >
         <Alert variant="destructive">
           <AlertDescription>{profileError ?? t('unableToLoad')}</AlertDescription>
@@ -174,14 +165,8 @@ export function ProfilePage() {
     <FeaturePage
       title={t('pageTitle')}
       description={t('pageDescription')}
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
-          </Button>
-        </div>
-      }
+      onBack={handleBack}
+      backLabel={tc('back')}
     >
       <div className="flex flex-col gap-6">
         {profileError ? (

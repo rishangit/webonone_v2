@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -103,12 +101,8 @@ export function StaffDetailsPage() {
       <FeaturePage
         title={t('detail.title')}
         description={t('detail.description')}
-        actions={
-          <Button type="button" variant="outline" size="sm" onClick={() => navigate('/staff')}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {t('common:back')}
-          </Button>
-        }
+        onBack={() => navigate('/staff')}
+        backLabel={t('common:back')}
       >
         <Alert variant="destructive">
           <AlertDescription>{detailError}</AlertDescription>
@@ -170,12 +164,8 @@ export function StaffDetailsPage() {
     <FeaturePage
       title={detail.displayName}
       description={t('detail.pageDescription')}
-      actions={
-        <Button type="button" variant="outline" size="sm" onClick={() => navigate('/staff')}>
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          {t('common:back')}
-        </Button>
-      }
+      onBack={() => navigate('/staff')}
+      backLabel={t('common:back')}
     >
       <Tabs
         value={tab}

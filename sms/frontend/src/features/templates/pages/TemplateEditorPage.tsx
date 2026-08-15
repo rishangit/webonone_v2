@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -89,16 +88,12 @@ export function TemplateEditorPage() {
         template ? t('versions.pageTitle', { name: template.name }) : t('versions.pageTitleFallback')
       }
       description={t('versions.pageDescription')}
+      onBack={() => goToDetail(id)}
+      backLabel={tc('back')}
       actions={
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => goToDetail(id)}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            {tc('back')}
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => goToPreview(id)}>
-            {t('preview')}
-          </Button>
-        </div>
+        <Button type="button" variant="outline" size="sm" onClick={() => goToPreview(id)}>
+          {t('preview')}
+        </Button>
       }
     >
       {detailError ? (

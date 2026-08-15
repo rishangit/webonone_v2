@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
-import { Button, FeaturePage, ListPageBody, SearchInput, Pagination } from '@webonone/ui-kit'
+import { FeaturePage, ListAddButton, ListPageBody, SearchInput, Pagination } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -72,10 +71,7 @@ export function SystemThemePage() {
             aria-label={t('systemTheme.list.searchAria')}
             className="w-64"
           />
-          <Button type="button" size="sm" onClick={() => setDialog({})}>
-            <Plus className="h-4 w-4" aria-hidden />
-            {t('systemTheme.list.createTheme')}
-          </Button>
+          <ListAddButton onClick={() => setDialog({})}>{t('systemTheme.list.createTheme')}</ListAddButton>
         </div>
       }
     >

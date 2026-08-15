@@ -23,7 +23,7 @@ function ListFilterTrigger({
       size="icon"
       aria-label={ariaLabel}
       aria-pressed={active}
-      className={cn('h-9 w-9', active && 'border-primary text-primary', className)}
+      className={cn('h-9 w-9 shrink-0', active && 'border-primary text-primary', className)}
       onClick={onClick}
     >
       <SlidersHorizontal className="h-4 w-4" />

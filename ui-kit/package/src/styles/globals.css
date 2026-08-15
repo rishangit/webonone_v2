@@ -299,6 +299,40 @@
     );
   }
 
+  /**
+   * ListAddButton grows in-flow on small screens. Paint the primary gradient on
+   * ::before so it always covers the live border box (same colors as a normal
+   * primary button, no restretch flash from `transition: background`).
+   */
+  .btn-primary-gradient[data-list-add-button] {
+    position: relative;
+    isolation: isolate;
+    background: transparent;
+    color: hsl(var(--accent-button-text));
+    transition: box-shadow 0.3s ease;
+  }
+
+  .btn-primary-gradient[data-list-add-button]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(
+      to right,
+      hsl(var(--accent-secondary)),
+      hsl(var(--accent-primary))
+    );
+  }
+
+  .btn-primary-gradient[data-list-add-button]:hover:not(:disabled)::before {
+    background: linear-gradient(
+      to right,
+      hsl(var(--accent-primary-hover)),
+      hsl(var(--accent-primary))
+    );
+  }
+
   .surface-glass,
   .shell-glass {
     @apply glass-card;

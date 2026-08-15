@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
+  ListAddButton,
   ListPageBody,
   SearchInput,
   Pagination,
@@ -151,10 +150,7 @@ export function TemplatesPage() {
             className="w-64"
           />
           {canManage ? (
-            <Button type="button" size="sm" onClick={handleOpenCreate}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t('add')}
-            </Button>
+            <ListAddButton onClick={handleOpenCreate}>{t('add')}</ListAddButton>
           ) : null}
         </div>
       }

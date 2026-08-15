@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -140,17 +139,8 @@ export function EventDetailsPage() {
       <FeaturePage
         title="Event"
         description="Event details"
-        actions={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/calendar/events')}
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
-          </Button>
-        }
+        onBack={() => navigate('/calendar/events')}
+        backLabel="Back"
       >
         <Alert variant="destructive">
           <AlertDescription>{detailError}</AlertDescription>
@@ -312,17 +302,8 @@ export function EventDetailsPage() {
     <FeaturePage
       title={detail.serviceName}
       description="Company calendar event details."
-      actions={
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/calendar/events')}
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
-        </Button>
-      }
+      onBack={() => navigate('/calendar/events')}
+      backLabel="Back"
     >
       <EventDetailSectionTabs
         ariaLabel="Event sections"

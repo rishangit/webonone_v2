@@ -9,6 +9,8 @@ interface FeaturePageProps {
   title?: string
   description?: string
   actions?: ReactNode
+  onBack?: () => void
+  backLabel?: string
   className?: string
 }
 
@@ -18,16 +20,24 @@ function FeaturePage({
   title,
   description,
   actions,
+  onBack,
+  backLabel,
   className,
 }: FeaturePageProps) {
   const headerNode =
     header ??
     (title ? (
-      <PageHeader title={title} description={description} actions={actions} />
+      <PageHeader
+        title={title}
+        description={description}
+        actions={actions}
+        onBack={onBack}
+        backLabel={backLabel}
+      />
     ) : null)
 
   return (
-    <div className={cn('feature-page flex min-h-0 w-full flex-1 flex-col gap-6', shellPagePadding, className)}>
+    <div className={cn('feature-page flex min-h-0 w-full flex-1 flex-col gap-3', shellPagePadding, className)}>
       {headerNode}
       <div className="feature-page-body flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
     </div>

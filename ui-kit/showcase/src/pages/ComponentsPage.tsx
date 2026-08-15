@@ -49,6 +49,7 @@ import {
   Label,
   ListFilterPanel,
   ListFilterTrigger,
+  ListAddButton,
   LoadingState,
   Pagination,
   mapZodIssuesToFieldErrors,
@@ -502,7 +503,7 @@ export function ComponentsPage() {
       <DemoSection
         id="list-filters"
         title="List filters"
-        description="SearchInput filters the list; ListFilterTrigger opens the panel. Highlight the filter trigger when panel filters are active."
+        description="SearchInput filters the list; ListFilterTrigger opens the panel; ListAddButton stays compact (+ Add) on small screens until tapped."
       >
         <FeaturePage
           title="Filtered collection"
@@ -521,6 +522,7 @@ export function ComponentsPage() {
                 className="w-64"
               />
               <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+              <ListAddButton>Add theme</ListAddButton>
             </div>
           }
         >
@@ -720,7 +722,7 @@ export function ComponentsPage() {
       <DemoSection
         id="layout"
         title="Layout"
-        description="FeaturePage — full-width column with PageHeader title block and gap-6 between header and body."
+        description="FeaturePage — full-width column with PageHeader title block and gap-3 between header and body."
       >
         <div className="space-y-8 rounded-lg border bg-muted/20 p-4">
           <FeaturePage
@@ -728,7 +730,7 @@ export function ComponentsPage() {
             description="Full-width layout with consistent header spacing."
           >
             <Card>
-              <CardContent className="pt-6">Page body content sits below the header with gap-6.</CardContent>
+              <CardContent className="pt-6">Page body content sits below the header with gap-3.</CardContent>
             </Card>
           </FeaturePage>
           <FeaturePage

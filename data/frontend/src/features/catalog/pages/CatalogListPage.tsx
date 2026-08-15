@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
+  ListAddButton,
   FormField,
   ListFilterPanel,
   ListFilterTrigger,
@@ -93,10 +92,9 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
           />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
           {canCreate ? (
-            <Button type="button" size="sm" onClick={() => setDialog({})}>
-              <Plus className="h-4 w-4" aria-hidden />
+            <ListAddButton onClick={() => setDialog({})} compactLabel={tc('add')}>
               {t('add')}
-            </Button>
+            </ListAddButton>
           ) : null}
         </div>
       }

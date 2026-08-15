@@ -214,7 +214,7 @@ function Pagination({
       <div className="flex flex-col gap-3 sm:hidden">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">{summary}</p>
-          {pageSizeControl}
+          {showControls ? pageSizeControl : null}
         </div>
         {navControls}
       </div>

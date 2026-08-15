@@ -28,7 +28,7 @@ Detail card Edit ──┘         create: no id, step 1
 
 ```text
 FeaturePage
-  actions: Back only (no page-level Edit / Cancel / Save)
+  onBack (icon before title); actions: extra CTAs only (no page-level Edit / Cancel / Save)
   Outer: grid items-start gap-6 lg:grid-cols-3
     Left:  flex flex-col gap-6 lg:col-span-2
     Right: flex flex-col gap-6 lg:col-span-1
@@ -39,7 +39,7 @@ FeaturePage
 | Piece | Requirement |
 |-------|-------------|
 | Shell | `FeaturePage` — full width; same 3-col grid as details-page-cards |
-| Back | Always in `actions`: outline `size="sm"` + `ArrowLeft` → parent list |
+| Back | Always `onBack` + `backLabel` — ghost icon-only `ArrowLeft` immediately before the title → parent list |
 | Overview gallery | When the entity (or linked catalog items) has images → `ImageCarousel` first in left stack (see below) |
 | Cards | View-only content; no inline fields on the details page |
 | Per-card Edit | `EditableSectionCard` with `canEdit` + `onEdit` → `openWizard(n)` |

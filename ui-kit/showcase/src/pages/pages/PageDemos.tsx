@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeft, Edit3, Globe, Mail, MapPin, Phone, Plus, User } from 'lucide-react'
+import { Edit3, Globe, Mail, MapPin, Phone, User } from 'lucide-react'
 import { z } from 'zod'
 import {
   Button,
@@ -23,6 +23,7 @@ import {
   ItemListMenu,
   itemListRowActiveClassName,
   Label,
+  ListAddButton,
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
@@ -73,7 +74,7 @@ export function ListPageDemo() {
   return (
     <FeaturePage
       title="List page"
-      description="Production list composition: FeaturePage actions, ListFilterPanel, ListPageBody, ItemList, and Pagination."
+      description="Production list composition: FeaturePage actions, ListFilterPanel, ListPageBody, ItemList, and Pagination. On small screens the add button shows + Add until tapped."
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
@@ -88,10 +89,7 @@ export function ListPageDemo() {
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
-          <Button type="button" size="sm">
-            <Plus className="h-4 w-4" aria-hidden />
-            Add item
-          </Button>
+          <ListAddButton>Add item</ListAddButton>
         </div>
       }
     >
@@ -251,28 +249,24 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
     <FeaturePage
       title="Details page"
       description="Profile-style details composition with view mode and edit mode."
+      onBack={onBack}
+      backLabel="Back"
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+        mode === 'view' ? (
+          <Button type="button" size="sm" onClick={() => setMode('edit')}>
+            <Edit3 className="h-4 w-4" aria-hidden />
+            Edit
           </Button>
-          {mode === 'view' ? (
-            <Button type="button" size="sm" onClick={() => setMode('edit')}>
-              <Edit3 className="h-4 w-4" aria-hidden />
-              Edit
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={handleCancelEdit}>
+              Cancel
             </Button>
-          ) : (
-            <>
-              <Button type="button" variant="outline" size="sm" onClick={handleCancelEdit}>
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" form="pages-details-form">
-                Save
-              </Button>
-            </>
-          )}
-        </div>
+            <Button type="submit" size="sm" form="pages-details-form">
+              Save
+            </Button>
+          </div>
+        )
       }
     >
       {mode === 'view' ? (
