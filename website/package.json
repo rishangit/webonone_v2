@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -n fe,be -c blue,green \"npm run dev -w @webonone/website-frontend\" \"npm run dev -w @webonone/website-backend\"",
-    "build": "npm run build:platform-nav --prefix .. && npm run build:platform-embed --prefix .. && npm run build:theme --prefix .. && npm run build:i18n --prefix .. && npm run build:ui-kit --prefix .. && npm run build -w @webonone/website-frontend && npm run build -w @webonone/website-backend",
+    "build": "npm run build:platform-nav --prefix .. && npm run build:ui-kit --prefix .. && npm run build:platform-embed --prefix .. && npm run build:theme --prefix .. && npm run build:i18n --prefix .. && npm run build -w @webonone/website-frontend && npm run build -w @webonone/website-backend",
     "deploy": "npm run env:apply --prefix .. && npm run build && npm run stage:deploy",
     "stage:deploy": "node ../tooling/stage-iis-deploy.mjs website/deploy",
     "clean:deploy": "node ../tooling/stage-iis-deploy.mjs website/deploy --clean-only",
