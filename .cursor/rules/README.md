@@ -17,6 +17,8 @@
 | [webonone-v2-project.mdc](webonone-v2-project.mdc) | `webonone-v2/**/*` | Scaffold, iframe login, JWT verify |
 | [media-project.mdc](media-project.mdc) | `media/**/*` | Media service ports, embed routes, storage |
 | [email-project.mdc](email-project.mdc) | `email/**/*` | Email service ports, platform shell nav, queue/SMTP |
+| [ai-project.mdc](ai-project.mdc) | `ai/**/*` | AI conversations, providers, guest sessions |
+| [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic AI completer; peers publish schemas + `argCompletion` |
 
 ## Deployment
 
@@ -56,6 +58,7 @@ Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email
 | Rule | Globs | Description |
 |------|-------|-------------|
 | [nodejs-express.mdc](nodejs-express.mdc) | `backend/**/*.{ts,js}` | Express layout, REST, JWT, handlers |
+| [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic completer; peers publish schemas + `argCompletion` |
 | [mysql-database-architecture.mdc](mysql-database-architecture.mdc) | `backend/**/{migrations,prisma,models,db,repositories}/**` | MySQL schema, nanoid, migrations, per-service DB |
 
 ## Agents (`.cursor/agents/` + `.cursor/skills/`)
@@ -68,6 +71,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | Identity | [identity-agent](../agents/identity-agent.md) | [skill](../skills/identity-agent/SKILL.md) |
 | UI Kit | [ui-kit-agent](../agents/ui-kit-agent.md) | [skill](../skills/ui-kit-agent/SKILL.md) |
 | WebOnOne v2 | [webonone-agent](../agents/webonone-agent.md) | [skill](../skills/webonone-agent/SKILL.md) |
+| AI | [ai-agent](../agents/ai-agent.md) | [skill](../skills/ai-agent/SKILL.md) |
 
 ### Cross-cutting skills
 
@@ -92,6 +96,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Core nav / auth-code handoff between services | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) — Profile is reference; all peers mirror same three layers |
 | Tables, migrations, nanoid `CHAR(21)` | `mysql-database-architecture.mdc` |
 | Express routes, JWT, HTTP errors | `nodejs-express.mdc` |
+| AI tool schemas / `argCompletion` (peers publish; AI stays generic) | [ai-capabilities.mdc](ai-capabilities.mdc) |
 | Feature folders, `@/shared` between features | `front-end-structure.mdc` |
 | Feature page layout (`FeaturePage`, `PageHeader`) | `feature-page-layout.mdc` |
 | Details / profile card grid (`Card` 2+1 stacks) | `details-page-cards.mdc` |

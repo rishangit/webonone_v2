@@ -24,8 +24,9 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `webonone-v2/` | `.cursor/agents/webonone-agent.md` | `.cursor/skills/webonone-agent/SKILL.md` |
 | `media/`, `packages/media-embed/` | `.cursor/agents/media-agent.md` | `.cursor/skills/media-agent/SKILL.md` |
 | `design/` | `.cursor/agents/design-agent.md` | `.cursor/skills/design-agent/SKILL.md` |
+| `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
 
-Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop).
+Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop). AI tool schemas / `argCompletion` → **owning service** (`data/`, `webonone-v2/`); generic completer only → **AI**. See [ai-capabilities.mdc](../../rules/ai-capabilities.mdc).
 
 **Parent handles directly:** root `package.json`, workspace wiring, non-service `.cursor/` config.
 
@@ -36,6 +37,8 @@ Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code
 | `identity/**` only | Delegate identity-agent | `generalPurpose` |
 | `ui-kit/**` only | Delegate ui-kit-agent | `generalPurpose` |
 | `webonone-v2/**` only | Delegate webonone-agent | `generalPurpose` |
+| `ai/**` only | Delegate ai-agent (generic completer) | `generalPurpose` |
+| AI tool schema / `argCompletion` on a peer | Delegate that peer (`data/`, `webonone-v2/`) | `generalPurpose` |
 | `media/**` or `packages/media-embed/**` only | Delegate media-agent | `generalPurpose` |
 | Media embed in consumer | Sequential: media then consumer FE agent | `generalPurpose` × 2 |
 | iframe/postMessage/JWT across services | Sequential: identity then webonone | `generalPurpose` × 2 |

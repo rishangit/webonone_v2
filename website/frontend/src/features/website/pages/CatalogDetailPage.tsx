@@ -27,7 +27,6 @@ import {
 import { CatalogSearchMapView } from '@/features/website/components/CatalogSearchMapView'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
-import { WebsiteHeader } from '@/features/website/components/WebsiteHeader'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
 
 function kindLabel(kind: CatalogDetailItem['kind'], t: (key: string) => string): string {
@@ -235,9 +234,7 @@ export function CatalogDetailPage() {
   }
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-      <WebsiteHeader className="shrink-0 z-20" />
-
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <LocationPermissionDialog
         open={showPermissionPrompt}
         blocked={permissionDenied}

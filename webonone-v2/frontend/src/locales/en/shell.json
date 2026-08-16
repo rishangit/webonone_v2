@@ -69,5 +69,23 @@
     "userMenu": "User menu",
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation"
+  },
+  "assistant": {
+    "open": "ai chat",
+    "close": "Close",
+    "title": "WebOnOne AI",
+    "hint": "Ask to search or change company catalog, events, and staff. Writes wait for Confirm.",
+    "placeholder": "Message the assistant…",
+    "send": "Send",
+    "you": "You",
+    "name": "Assistant",
+    "failed": "The assistant is unavailable right now.",
+    "starting": "Starting conversation…",
+    "thinking": "Assistant is thinking…",
+    "confirm": "Confirm",
+    "cancelChange": "Cancel",
+    "pendingChange": "Confirm each new item to apply it.",
+    "itemAdded": "{{name}} added",
+    "itemCanceled": "{{name}} canceled"
   }
 }

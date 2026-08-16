@@ -1,5 +1,6 @@
 import knex, { type Knex } from 'knex'
 import { env } from '../config/env.js'
+import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 
 export const db = knex({
   client: 'mysql2',
@@ -107,7 +108,7 @@ export function toUserProfile(user: UserRow): UserProfile {
     stateRegion: user.state_region,
     postalCode: user.postal_code,
     country: user.country,
-    avatarUrl: user.avatar_url,
+    avatarUrl: rewriteOptionalMediaFileUrl(user.avatar_url),
     locale: user.locale,
     isEmailVerified: Boolean(user.is_email_verified),
     isPhoneVerified: Boolean(user.is_phone_verified),

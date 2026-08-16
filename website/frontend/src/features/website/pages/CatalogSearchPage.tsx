@@ -8,7 +8,6 @@ import { CatalogSearchMapView } from '@/features/website/components/CatalogSearc
 import { CatalogSearchResults } from '@/features/website/components/CatalogSearchResults'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
-import { WebsiteHeader } from '@/features/website/components/WebsiteHeader'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
 
 const PAGE_SIZE = 20
@@ -168,9 +167,7 @@ export function CatalogSearchPage() {
   const showResultsChrome = searched && !error
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-      <WebsiteHeader className="shrink-0 z-20" />
-
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <LocationPermissionDialog
         open={showPermissionPrompt}
         blocked={permissionDenied}

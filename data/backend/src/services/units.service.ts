@@ -4,10 +4,13 @@ import type { CreateUnitBody, UpdateUnitBody } from '../schemas/units.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
   applyIdsFilter,
+  applyNamesFilter,
   applySearchFilter,
   applyStatusFilter,
   assertUniqueName,
+  bulkListPaging,
   parseIdsParam,
+  parseNamesParam,
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
@@ -41,13 +44,17 @@ async function rowToDto(row: UnitRow): Promise<UnitDto> {
   }
 }
 
-export async function listUnits(query: ListQueryInput & { is_base?: string; ids?: string | string[] }) {
+export async function listUnits(
+  query: ListQueryInput & { is_base?: string; ids?: string | string[]; names?: string | string[] },
+) {
   const parsed = parseListQuery(query)
   const base = db<UnitRow>('data_units')
   applyStatusFilter(base, parsed.status)
   applySearchFilter(base, parsed.q, ['name', 'description', 'symbol'])
   const ids = parseIdsParam(query.ids)
+  const names = parseNamesParam(query.names)
   applyIdsFilter(base, ids)
+  applyNamesFilter(base, names)
 
   if (query.is_base === 'true') base.where({ is_base: true })
   if (query.is_base === 'false') base.where({ is_base: false })
@@ -55,8 +62,7 @@ export async function listUnits(query: ListQueryInput & { is_base?: string; ids?
   const countResult = await base.clone().count<{ count: number }[]>('* as count')
   const total = Number(countResult[0]?.count ?? 0)
 
-  const pageSize = ids.length > 0 ? Math.min(100, Math.max(parsed.pageSize, ids.length)) : parsed.pageSize
-  const page = ids.length > 0 ? 1 : parsed.page
+  const { pageSize, page } = bulkListPaging(parsed, ids, names)
 
   const rows = await base
     .clone()

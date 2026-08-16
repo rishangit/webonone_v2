@@ -76,5 +76,16 @@
   "wed": "බදා",
   "thu": "බ්‍රහ",
   "fri": "සිකු",
-  "sat": "සෙන"
+  "sat": "සෙන",
+  "assistantOpen": "ai chat",
+  "assistantClose": "වසන්න",
+  "assistantTitle": "WebOnOne AI",
+  "assistantHint": "සේවා ගැන අසන්න. අමුත්තන්ට පොදු නාමාවලිය සෙවිය හැක; සමාගම් වෙනස්කම් මෙහි නැත.",
+  "assistantPlaceholder": "සේවාවක් ගැන අසන්න…",
+  "assistantSend": "යවන්න",
+  "assistantYou": "ඔබ",
+  "assistantName": "සහායක",
+  "assistantFailed": "සහායකයා දැන් ලබා ගත නොහැක.",
+  "assistantStarting": "සංවාදය ආරම්භ වෙමින්…",
+  "assistantThinking": "සහායකයා පිළිතුර සකසමින්…"
 }

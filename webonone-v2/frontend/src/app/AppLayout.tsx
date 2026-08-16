@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { AppShell, BrandLogo, ListPageModeProvider, LoadingState } from '@webonone/ui-kit'
+import { MessageCircle } from 'lucide-react'
+import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, cn } from '@webonone/ui-kit'
 import { clearIdentityEmbedSession } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
@@ -35,6 +36,7 @@ import {
 } from '@/features/session/utils/accountLabels'
 import { PlatformMediaDialogProvider } from '@/features/media/PlatformMediaDialogHost'
 import { PlatformPeerDialogProvider } from '@/features/shell/PlatformPeerDialogHost'
+import { AppAssistant } from '@/features/ai/components/AppAssistant'
 import {
   PlatformLoadingProvider,
   usePlatformOverlayLabel,
@@ -191,6 +193,7 @@ function AppLayoutContent() {
   const overlayLabel = usePlatformOverlayLabel()
   const embedMain = isPlatformPeerEmbedPath(location.pathname, activeRole)
   const listPageMode = useAppSelector((s) => s.systemTheme.preferences?.listPageMode ?? 'pagination')
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   return (
     <ThemeProviderBridge>
@@ -211,6 +214,26 @@ function AppLayoutContent() {
           onNavItemNavigate={onNavItemNavigate}
           onNavItemPrefetch={prefetchNavTarget}
           accordionNavGroups
+          headerActions={
+            accessToken ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
+                aria-label={tShell('assistant.open')}
+                aria-pressed={assistantOpen}
+                onClick={() => setAssistantOpen((open) => !open)}
+              >
+                <MessageCircle className="h-4 w-4" />
+              </Button>
+            ) : undefined
+          }
+          aside={
+            accessToken ? (
+              <AppAssistant open={assistantOpen} onClose={() => setAssistantOpen(false)} />
+            ) : undefined
+          }
         >
           <div className={embedMain ? 'relative flex h-full min-h-0 flex-col' : 'relative flex min-h-full flex-col'}>
             <Outlet />

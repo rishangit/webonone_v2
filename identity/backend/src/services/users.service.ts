@@ -6,6 +6,7 @@ import {
   type IdentityUserRole,
 } from '../repositories/users.repository.js'
 import { AuthError } from './auth.service.js'
+import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 
 export type ListUsersQuery = {
   search: string
@@ -62,7 +63,7 @@ export async function listIdentityUsers(query: ListUsersQuery): Promise<ListUser
       displayName: item.display_name,
       email: item.email ?? null,
       role: item.role,
-      avatarUrl: item.avatar_url,
+      avatarUrl: rewriteOptionalMediaFileUrl(item.avatar_url),
       phoneNumber: item.phone_number ?? null,
       isEmailVerified: Boolean(item.is_email_verified),
       isPhoneVerified: Boolean(item.is_phone_verified),

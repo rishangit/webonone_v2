@@ -29,6 +29,7 @@ description: >-
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) — library/picker selection rows show Check on the right
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
+- [ai-capabilities.mdc](../../rules/ai-capabilities.mdc) — catalog AI tools in `webonone-v2/backend/src/ai/capabilities.ts` (schemas + optional `argCompletion`; not in `ai/`)
 
 ## Platform loading overlay
 

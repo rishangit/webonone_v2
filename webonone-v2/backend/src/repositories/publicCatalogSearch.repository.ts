@@ -1,4 +1,5 @@
 import { db } from '../models/db.js'
+import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import type { CatalogKind } from '../clients/dataCatalogClient.js'
 import { CATALOG_TABLE_BY_KIND } from './companyCatalog.repository.js'
 
@@ -64,13 +65,15 @@ export function parseGalleryImages(
     }
   }
   if (!Array.isArray(parsed)) return []
-  return parsed.filter(
-    (item): item is { mediaId: string; url: string } =>
-      Boolean(item) &&
-      typeof item === 'object' &&
-      typeof (item as { mediaId?: unknown }).mediaId === 'string' &&
-      typeof (item as { url?: unknown }).url === 'string',
-  )
+  return parsed
+    .filter(
+      (item): item is { mediaId: string; url: string } =>
+        Boolean(item) &&
+        typeof item === 'object' &&
+        typeof (item as { mediaId?: unknown }).mediaId === 'string' &&
+        typeof (item as { url?: unknown }).url === 'string',
+    )
+    .map((item) => ({ ...item, url: rewriteMediaFileUrl(item.url) }))
 }
 
 function parseJsonStringArray(value: string | unknown[] | null): string[] {

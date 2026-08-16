@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
-import { Home, Image, MoreVertical, Palette, Settings, ClipboardPaste } from 'lucide-react'
+import { Home, Image, MessageCircle, MoreVertical, Palette, Settings, ClipboardPaste } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
   AlertTitle,
+  AppEndPanel,
   AppHeader,
   AppShell,
   AuthLayout,
@@ -352,6 +353,54 @@ function FullCalendarDemo() {
   )
 }
 
+function AppShellDemo() {
+  const [endPanelOpen, setEndPanelOpen] = useState(true)
+
+  return (
+    <AppShell
+      className="h-[28rem]"
+      lockDocumentScroll={false}
+      nav={showcaseNav}
+      activePath="#home"
+      user={{
+        displayName: 'Demo User',
+        email: 'demo@example.com',
+        role: 'company_admin',
+      }}
+      sidebarSession={{
+        title: 'Acme Corp',
+        role: 'company_admin',
+        imageUrl: 'https://placehold.co/72x72/1e293b/f8fafc/png?text=AC',
+      }}
+      headerActions={
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 shrink-0"
+          aria-label="Open assistant"
+          aria-pressed={endPanelOpen}
+          onClick={() => setEndPanelOpen((open) => !open)}
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
+      }
+      aside={
+        endPanelOpen ? (
+          <AppEndPanel title="Assistant" onClose={() => setEndPanelOpen(false)}>
+            <p className="text-sm text-muted-foreground">
+              Overlays the page on small screens; sits beside main content from md up.
+            </p>
+          </AppEndPanel>
+        ) : null
+      }
+    >
+      <h1 className="text-2xl font-semibold">Home</h1>
+      <p className="mt-2 text-muted-foreground">Main content area.</p>
+    </AppShell>
+  )
+}
+
 export function ComponentsPage() {
   const { toast } = useToast()
   const [listPage, setListPage] = useState(1)
@@ -675,25 +724,7 @@ export function ComponentsPage() {
           <div className="border-b bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
             Narrow container simulates mobile; resize viewport for hamburger vs fixed sidebar.
           </div>
-          <AppShell
-            className="h-[28rem]"
-            lockDocumentScroll={false}
-            nav={showcaseNav}
-            activePath="#home"
-            user={{
-              displayName: 'Demo User',
-              email: 'demo@example.com',
-              role: 'company_admin',
-            }}
-            sidebarSession={{
-              title: 'Acme Corp',
-              role: 'company_admin',
-              imageUrl: 'https://placehold.co/72x72/1e293b/f8fafc/png?text=AC',
-            }}
-          >
-            <h1 className="text-2xl font-semibold">Home</h1>
-            <p className="mt-2 text-muted-foreground">Main content area.</p>
-          </AppShell>
+          <AppShellDemo />
         </div>
       </DemoSection>
 

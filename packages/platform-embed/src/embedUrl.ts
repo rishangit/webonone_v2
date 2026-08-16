@@ -38,6 +38,7 @@ import type {
   PlatformMediaDialogRequestMessage,
   PlatformMediaDialogResultMessage,
   PlatformNavigateMessage,
+  PlatformAiMutationMessage,
   PlatformPeerDialogCancelMessage,
   PlatformPeerDialogCompleteMessage,
   PlatformPeerDialogBusyMessage,
@@ -129,6 +130,19 @@ export function sendPlatformInit(
     { type: PLATFORM_MESSAGE_TYPES.INIT, accessToken },
     peerOrigin,
   )
+}
+
+/** Shell → embedded peer: a confirmed AI write succeeded. */
+export function sendPlatformAiMutation(
+  iframe: HTMLIFrameElement,
+  peerOrigin: string,
+  toolName: string,
+): void {
+  const message: PlatformAiMutationMessage = {
+    type: PLATFORM_MESSAGE_TYPES.AI_MUTATION,
+    toolName,
+  }
+  iframe.contentWindow?.postMessage(message, peerOrigin)
 }
 
 /** Embedded app -> parent shell: first page content is fully loaded. */

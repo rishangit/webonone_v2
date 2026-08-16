@@ -12,6 +12,7 @@ import companyEventRoutes from './routes/companyEvent.routes.js'
 import siteMediaRefsRoutes from './routes/siteMediaRefs.routes.js'
 import themesRoutes from './routes/themes.routes.js'
 import publicCatalogSearchRoutes from './routes/publicCatalogSearch.routes.js'
+import aiCapabilitiesRoutes from './routes/aiCapabilities.routes.js'
 import userActivityRoutes from './routes/userActivity.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
@@ -32,6 +33,7 @@ export function createApp() {
   app.use('/api/v1', themesRoutes)
   app.use('/api/v1', preferencesRoutes)
   app.use('/api/v1', publicCatalogSearchRoutes)
+  app.use('/api/v1', aiCapabilitiesRoutes)
   app.use('/api/v1', userActivityRoutes)
   app.use('/api/v1', companyCatalogRoutes)
   app.use('/api/v1', companyStaffRoutes)

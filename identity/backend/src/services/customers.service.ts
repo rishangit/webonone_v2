@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
 import { AuthError } from './auth.service.js'
+import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import {
   createPasswordResetToken,
   createUser,
@@ -52,7 +53,7 @@ function toCustomerDto(row: CompanyCustomerRow): CustomerDto {
     id: row.id,
     displayName: row.display_name,
     email: row.email,
-    avatarUrl: row.avatar_url,
+    avatarUrl: rewriteOptionalMediaFileUrl(row.avatar_url),
     phoneNumber: row.phone_number,
     role: 'member',
     companyId: row.company_id,
@@ -87,7 +88,7 @@ async function loadCustomerDto(userId: string, companyId: string): Promise<Custo
     id: user.id,
     displayName: user.display_name,
     email: user.email,
-    avatarUrl: user.avatar_url,
+    avatarUrl: rewriteOptionalMediaFileUrl(user.avatar_url),
     phoneNumber: user.phone_number,
     role: 'member',
     companyId,
