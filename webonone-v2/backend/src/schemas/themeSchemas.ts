@@ -15,14 +15,23 @@ export const updateThemeBodySchema = createThemeBodySchema
   .partial()
   .refine((data) => Object.keys(data).length > 0, { message: 'At least one field is required' })
 
+export const listPageModeSchema = z.enum(['pagination', 'on-scroll'])
+
 export const patchPreferencesBodySchema = z
   .object({
     activeThemeId: z.string().length(21).optional(),
     colorMode: z.enum(['light', 'dark']).optional(),
+    listPageMode: listPageModeSchema.optional(),
   })
-  .refine((data) => data.activeThemeId !== undefined || data.colorMode !== undefined, {
-    message: 'At least one field is required',
-  })
+  .refine(
+    (data) =>
+      data.activeThemeId !== undefined ||
+      data.colorMode !== undefined ||
+      data.listPageMode !== undefined,
+    {
+      message: 'At least one field is required',
+    },
+  )
 
 export type CreateThemeBody = z.infer<typeof createThemeBodySchema>
 export type UpdateThemeBody = z.infer<typeof updateThemeBodySchema>

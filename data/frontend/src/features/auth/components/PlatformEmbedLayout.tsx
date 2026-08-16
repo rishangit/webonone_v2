@@ -11,7 +11,10 @@ import {
 import { LoadingState } from '@webonone/ui-kit'
 import { useEmbedThemeListener } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { usePlatformOverlayLabel } from '@/features/auth/context/PlatformLoadingContext'
+import {
+  usePlatformActiveLabel,
+  usePlatformOverlayLabel,
+} from '@/features/auth/context/PlatformLoadingContext'
 import { authActions, DATA_AUTH_STORAGE_KEY } from '@/features/auth/store/authSlice'
 import { useRefreshDataRole } from '@/features/auth/hooks/useRefreshDataRole'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -38,6 +41,7 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const overlayLabel = usePlatformOverlayLabel()
+  const activeLabel = usePlatformActiveLabel()
 
   const handleAccessToken = useCallback(
     (token: string) => {
@@ -88,7 +92,7 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
 
   const { hasReported } = usePlatformEmbedContentReady({
     parentOrigin,
-    isContentReady: !isAwaitingToken && overlayLabel === null,
+    isContentReady: !isAwaitingToken && activeLabel === null,
   })
   const displayLabel = hasReported ? overlayLabel : null
 

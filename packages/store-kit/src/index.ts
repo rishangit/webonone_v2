@@ -1,4 +1,5 @@
 export { DEFAULT_CACHE_TTL_MS, isFresh, serializeQuery } from './cacheUtils'
+export { mergeAppendedItems } from './mergeAppendedItems'
 export type {
   CatalogFeatureState,
   CatalogListQuery,

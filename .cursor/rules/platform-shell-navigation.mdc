@@ -130,7 +130,7 @@ Reference: `packages/platform-embed/src/useRequestPlatformPeerDialog.ts`, `packa
 
 **Peers (Identity, Email, Data):** early `embed=platform` branch in `app/AppLayout.tsx` → `features/auth/components/PlatformEmbedLayout.tsx`. `hasAnyPlatformHandoff` allows embed (`embed=platform`) or redirect (`code` + `return_url`).
 
-**Layout / height (embed):** `ensurePlatformEmbedCanvas()` full-height `#root`. **`PlatformEmbedShell` `<main>`** scrolls (`overflow-y-auto scrollbar-themed`). Page chain uses **`min-h-full`** so short content fills the iframe and **`Pagination` `mt-auto`** stays at the bottom; tall content grows the page and scrolls on `<main>`.
+**Layout / height (embed):** `ensurePlatformEmbedCanvas()` full-height `#root`. **`PlatformEmbedShell` `<main>`** scrolls (`overflow-y-auto scrollbar-themed`). Page chain uses **`min-h-full`** so short content fills the iframe and **`ListPageFooter` `mt-auto`** stays at the bottom; tall content grows the page and scrolls on `<main>`. On-scroll load-more observes this `<main>` (`.platform-embed-shell-main`), not the viewport.
 
 ### Embed page content (required — all peer FEs)
 
@@ -139,14 +139,14 @@ Every route inside `PlatformEmbedLayout` **must** use **`FeaturePage`** (`shellP
 | Concern | Rule |
 |---------|------|
 | **Fill height** | `platform-embed-outlet` → `FeaturePage` → `.feature-page-body` → `ListPageBody` — **`min-h-full` / `flex-1`** chain (embed CSS in `globals.css`) |
-| **Pagination bottom** | `ListPageBody` + list in `flex-1` + `Pagination className="mt-auto"` — same markup as standalone |
+| **List footer bottom** | `ListPageBody` + list in `flex-1` + `ListPageFooter className="mt-auto"` — same markup as standalone |
 | **Scroll** | **Only** on `.platform-embed-shell-main` when content exceeds iframe — **never** `overflow-auto` on list wrappers |
 
 ```tsx
 <FeaturePage title="Tags" …>
   <ListPageBody>
     <div className="flex-1"><ItemList … /></div>
-    <Pagination className="mt-auto" … />
+    <ListPageFooter className="mt-auto" … />
   </ListPageBody>
 </FeaturePage>
 ```

@@ -104,6 +104,25 @@ const list = useEpicCatalogList((s) => s.things, thingsActions)       // list pa
 const editor = useEpicCatalogEditor<Thing>(id, isNew, (s) => s.things, thingsActions) // dialog
 ```
 
+Collection pages use **`ListPageFooter`** (not raw `Pagination`) with `list.loadMore`, `list.hasMore`, `list.loadingMore`. Appearance `on-scroll` appends pages; `pagination` keeps the pager. See [item-list-pagination.mdc](../../rules/item-list-pagination.mdc).
+
+## List append (on-scroll)
+
+`loadListRequested({ append?: boolean })` on both factories:
+
+| Request | Reducer | Epic |
+|---------|---------|------|
+| Page **1** (or omit `append`) | **replace** `items` | `switchMap` (cancels in-flight) |
+| `append: true` and `page > 1` | **concat** + **dedupe by `id`** | `exhaustMap` (ignore extra scroll while a page is in flight) |
+
+Do not set `page` on the slice when `append` is true until success (avoids a page jump if load-more fails). Filter / search / pageSize change still `dispatchLoad(1)` replace. Mode switch → reload page 1 replace (`onModeChange` on `ListPageFooter`). Overlay loading stays first-page-only (`items.length === 0`).
+
+`useEpicCatalogList` exposes `loadMore()`, `hasMore` (`items.length < total`), `loadingMore` (`listStatus === 'loading' && items.length > 0`).
+
+Client-sliced lists (no API pages): `useClientListPage(items)` — on-scroll grows `slice(0, loadedCount)` via `nextVisibleCount`. Hand-written list stores that use `ListPageFooter` must implement the same replace-vs-append on success. Queue poll in on-scroll must not wipe appended rows (refetch page 1 with `pageSize = max(loadedCount, 12)`, or skip poll-replace while `items.length > pageSize`).
+
+Do **not** import ui-kit from store-kit.
+
 ## Register in the store (unchanged per-service ownership)
 
 ```ts

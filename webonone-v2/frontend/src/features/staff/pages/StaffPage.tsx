@@ -7,6 +7,7 @@ import {
   FeaturePage,
   ListAddButton,
   ListPageBody,
+  ListPageFooter,
   SearchInput,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -73,6 +74,20 @@ export function StaffPage() {
             />
           ) : null}
         </div>
+        <ListPageFooter
+          className="mt-auto"
+          totalCount={list.total}
+          currentPage={list.page}
+          pageSize={list.pageSize}
+          pageSizeOptions={[12, 24, 48]}
+          loadedCount={list.items.length}
+          hasMore={list.hasMore}
+          loadingMore={list.loadingMore}
+          onPageChange={(p) => list.load(p)}
+          onPageSizeChange={(size) => list.load(1, size, true)}
+          onLoadMore={list.loadMore}
+          onModeChange={() => list.load(1, list.pageSize, true)}
+        />
       </ListPageBody>
 
       {canManage ? (

@@ -16,7 +16,7 @@ import {
   ListAddButton,
   ListPageBody,
   SearchInput,
-  Pagination,
+  ListPageFooter,
   Select,
   SelectContent,
   SelectItem,
@@ -65,7 +65,9 @@ export function UsersPage() {
   const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
   const companyMode = isCompanyAdmin && Boolean(companyId)
 
-  const { items, total, page, pageSize, listStatus, listError } = useAppSelector((s) => s.users)
+  const { items, total, page, pageSize, listStatus, listError, lastFetchedAt } = useAppSelector(
+    (s) => s.users,
+  )
 
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -75,7 +77,11 @@ export function UsersPage() {
   const [addOpen, setAddOpen] = useState(false)
 
   const canQuery = Boolean(accessToken) && (isSuperAdmin || companyMode)
-  const loading = listStatus === 'loading' && items.length === 0
+  const loading =
+    canQuery &&
+    (lastFetchedAt === null
+      ? listStatus !== 'error'
+      : listStatus === 'loading' && items.length === 0)
   usePlatformLoading(loading ? t('loading.users') : null)
 
   useEffect(() => {
@@ -285,12 +291,15 @@ export function UsersPage() {
             )
           ) : null}
         </div>
-        <Pagination
+        <ListPageFooter
           className="mt-auto"
           totalCount={total}
           currentPage={page}
           pageSize={pageSize}
           pageSizeOptions={PAGE_SIZE_OPTIONS}
+          loadedCount={items.length}
+          hasMore={items.length < total}
+          loadingMore={listStatus === 'loading' && items.length > 0}
           onPageChange={(p) =>
             dispatch(
               usersActions.loadListRequested({
@@ -307,6 +316,30 @@ export function UsersPage() {
               usersActions.loadListRequested({
                 page: 1,
                 pageSize: size,
+                extra: companyMode
+                  ? { search: debouncedSearch || undefined, companyId: companyId! }
+                  : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
+              }),
+            )
+          }
+          onLoadMore={() =>
+            dispatch(
+              usersActions.loadListRequested({
+                page: page + 1,
+                pageSize,
+                append: true,
+                extra: companyMode
+                  ? { search: debouncedSearch || undefined, companyId: companyId! }
+                  : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
+              }),
+            )
+          }
+          onModeChange={() =>
+            dispatch(
+              usersActions.loadListRequested({
+                page: 1,
+                pageSize,
+                force: true,
                 extra: companyMode
                   ? { search: debouncedSearch || undefined, companyId: companyId! }
                   : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },

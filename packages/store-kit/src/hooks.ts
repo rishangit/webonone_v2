@@ -65,6 +65,13 @@ export function useEpicCatalogList<T, S = unknown>(
     [dispatchLoad, listState.page, pageSize],
   )
 
+  const loadMore = useCallback(() => {
+    if (listState.listStatus === 'loading') return
+    if (listState.items.length >= listState.total) return
+    const nextPage = (listState.page || 1) + 1
+    dispatch(actions.loadListRequested({ ...buildQuery(nextPage), append: true }))
+  }, [actions, buildQuery, dispatch, listState.items.length, listState.listStatus, listState.page, listState.total])
+
   return {
     items: listState.items,
     page: listState.page || 1,
@@ -76,11 +83,17 @@ export function useEpicCatalogList<T, S = unknown>(
     setStatus,
     extraFilters,
     setExtraFilters,
-    loading: listState.listStatus === 'loading' && listState.items.length === 0,
+    loading:
+      listState.lastFetchedAt === null
+        ? listState.listStatus !== 'error'
+        : listState.listStatus === 'loading' && listState.items.length === 0,
+    loadingMore: listState.listStatus === 'loading' && listState.items.length > 0,
+    hasMore: listState.items.length < listState.total,
     error: listState.listError,
     filterOpen,
     setFilterOpen,
     load,
+    loadMore,
     setPage: (p: number) => load(p),
     setPageSize,
     hasActiveFilters: status !== 'all' || Object.keys(extraFilters).length > 0,

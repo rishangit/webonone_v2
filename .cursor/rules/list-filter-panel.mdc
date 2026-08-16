@@ -6,7 +6,7 @@ alwaysApply: false
 
 # List filter panel
 
-Use `@webonone/ui-kit` **`SearchInput`**, **`ListFilterTrigger`**, and **`ListFilterPanel`** on any `FeaturePage` that displays a filterable collection (`ItemList` + `Pagination`).
+Use `@webonone/ui-kit` **`SearchInput`**, **`ListFilterTrigger`**, and **`ListFilterPanel`** on any `FeaturePage` that displays a filterable collection (`ItemList` + `ListPageFooter`).
 
 Skill: [.cursor/skills/item-list/SKILL.md](../skills/item-list/SKILL.md) · pagination: [item-list-pagination.mdc](item-list-pagination.mdc) · search primitive: [ui-kit-consumption.mdc](ui-kit-consumption.mdc) · data loading: [redux-store-and-epics.mdc](redux-store-and-epics.mdc).
 
@@ -45,7 +45,7 @@ Reference: `ui-kit/package/src/components/SearchInput.tsx`, `ListFilterPanel.tsx
     {/* FormField + Select / DatePicker — not text search */}
   </ListFilterPanel>
   <ItemList>…</ItemList>
-  <Pagination … />
+  <ListPageFooter … />
 </FeaturePage>
 ```
 

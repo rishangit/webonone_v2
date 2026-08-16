@@ -1,10 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
-import { from, of } from 'rxjs'
+import { from, merge, of } from 'rxjs'
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  exhaustMap,
   filter,
   map,
   switchMap,
@@ -12,6 +13,7 @@ import {
 } from 'rxjs/operators'
 import type { PaginatedFeatureState, PaginatedListQuery, PaginatedResult } from './types'
 import { isFresh, serializeQuery } from './cacheUtils'
+import { mergeAppendedItems } from './mergeAppendedItems'
 
 type ListLoader<T> = (
   query: PaginatedListQuery & { page: number; pageSize: number },
@@ -65,7 +67,9 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
         state.listStatus = 'loading'
         state.listError = null
         if (action.payload.status !== undefined) state.status = action.payload.status ?? 'all'
-        if (action.payload.page !== undefined) state.page = action.payload.page
+        if (action.payload.page !== undefined && !action.payload.append) {
+          state.page = action.payload.page
+        }
         if (action.payload.pageSize !== undefined) state.pageSize = action.payload.pageSize
       },
       loadListSucceeded(
@@ -76,9 +80,14 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
           total: number
           page: number
           pageSize: number
+          append?: boolean
         }>,
       ) {
-        state.items = action.payload.items as typeof state.items
+        const incoming = action.payload.items as typeof state.items
+        state.items =
+          action.payload.append && action.payload.page > 1
+            ? (mergeAppendedItems(state.items, incoming) as typeof state.items)
+            : incoming
         state.total = action.payload.total
         state.page = action.payload.page
         state.pageSize = action.payload.pageSize
@@ -100,10 +109,44 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
 
   type RootStateWithFeature = { [K in typeof config.name]: PaginatedFeatureState<T> }
 
-  const loadListEpic: Epic = (action$, state$) =>
-    action$.pipe(
+  const loadListEpic: Epic = (action$, state$) => {
+    const toRequest = (action: ReturnType<typeof actions.loadListRequested>, state: unknown) => {
+      const payload = action.payload
+      const featureState = (state as RootStateWithFeature)[config.name]
+      const page = payload.page ?? featureState.page
+      const pageSize = payload.pageSize ?? featureState.pageSize
+      const status = payload.status ?? featureState.status
+      const query = {
+        page,
+        pageSize,
+        status: status === 'all' ? undefined : status,
+        force: payload.force,
+        extra: payload.extra,
+      }
+      const queryKey = serializeQuery({
+        page,
+        pageSize,
+        status,
+        ...payload.extra,
+      })
+      const append = Boolean(payload.append && page > 1)
+      return from(config.list(query)).pipe(
+        map((result) =>
+          actions.loadListSucceeded({
+            queryKey,
+            items: result.items,
+            total: result.total,
+            page: result.page,
+            pageSize: result.pageSize,
+            append,
+          }),
+        ),
+        catchError((err: Error) => of(actions.loadListFailed(err.message))),
+      )
+    }
+
+    const prepared$ = action$.pipe(
       ofType(actions.loadListRequested.type),
-      debounceTime(400),
       withLatestFrom(state$),
       filter(([action, state]) => {
         const payload = (action as ReturnType<typeof actions.loadListRequested>).payload
@@ -114,7 +157,7 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
           status: payload.status ?? featureState.status,
           ...payload.extra,
         })
-        if (payload.force) return true
+        if (payload.force || payload.append) return true
         if (
           featureState.queryKey === queryKey &&
           isFresh(featureState.lastFetchedAt, cacheTtlMs)
@@ -123,44 +166,30 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
         }
         return true
       }),
+    )
+
+    const replace$ = prepared$.pipe(
+      filter(([action]) => !Boolean((action as ReturnType<typeof actions.loadListRequested>).payload.append)),
+      debounceTime(400),
       distinctUntilChanged(
         ([a], [b]) =>
           serializeQuery((a as ReturnType<typeof actions.loadListRequested>).payload) ===
           serializeQuery((b as ReturnType<typeof actions.loadListRequested>).payload),
       ),
-      switchMap(([action, state]) => {
-        const payload = (action as ReturnType<typeof actions.loadListRequested>).payload
-        const featureState = (state as unknown as RootStateWithFeature)[config.name]
-        const page = payload.page ?? featureState.page
-        const pageSize = payload.pageSize ?? featureState.pageSize
-        const status = payload.status ?? featureState.status
-        const query = {
-          page,
-          pageSize,
-          status: status === 'all' ? undefined : status,
-          force: payload.force,
-          extra: payload.extra,
-        }
-        const queryKey = serializeQuery({
-          page,
-          pageSize,
-          status,
-          ...payload.extra,
-        })
-        return from(config.list(query)).pipe(
-          map((result) =>
-            actions.loadListSucceeded({
-              queryKey,
-              items: result.items,
-              total: result.total,
-              page: result.page,
-              pageSize: result.pageSize,
-            }),
-          ),
-          catchError((err: Error) => of(actions.loadListFailed(err.message))),
-        )
-      }),
+      switchMap(([action, state]) =>
+        toRequest(action as ReturnType<typeof actions.loadListRequested>, state),
+      ),
     )
+
+    const append$ = prepared$.pipe(
+      filter(([action]) => Boolean((action as ReturnType<typeof actions.loadListRequested>).payload.append)),
+      exhaustMap(([action, state]) =>
+        toRequest(action as ReturnType<typeof actions.loadListRequested>, state),
+      ),
+    )
+
+    return merge(replace$, append$)
+  }
 
   const epics = combineEpics(loadListEpic)
 

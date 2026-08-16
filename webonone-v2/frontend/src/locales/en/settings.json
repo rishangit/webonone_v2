@@ -24,6 +24,18 @@
     "dark": {
       "title": "Dark",
       "description": "Dimmed surfaces for low light."
+    },
+    "listPage": {
+      "title": "List pages",
+      "description": "Choose how collection pages load more results.",
+      "pagination": {
+        "title": "Pagination",
+        "description": "Jump between pages with numbered controls."
+      },
+      "onScroll": {
+        "title": "On scroll",
+        "description": "Load the next page when you reach the bottom."
+      }
     }
   },
   "companiesAdmin": {

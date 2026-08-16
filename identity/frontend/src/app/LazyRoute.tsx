@@ -1,10 +1,11 @@
 import { Suspense, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LoadingState } from '@webonone/ui-kit'
+import { useDelayedRouteLoading } from '@/features/auth/context/PlatformLoadingContext'
 
 function RouteChunkLoading() {
   const { t } = useTranslation('shell')
-  return <LoadingState overlay label={t('loading.route')} />
+  useDelayedRouteLoading(t('loading.route'))
+  return null
 }
 
 export function LazyRoute({ children }: { children: ReactNode }) {

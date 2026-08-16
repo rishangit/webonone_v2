@@ -7,7 +7,7 @@ import {
   FeaturePage,
   ListAddButton,
   ListPageBody,
-  Pagination,
+  ListPageFooter,
   SearchInput,
   useToast,
 } from '@webonone/ui-kit'
@@ -144,16 +144,25 @@ export function FormsPage() {
           onDeleted={handleDeleted}
           canManage={canManage}
         />
-        <Pagination
+        <ListPageFooter
           className="mt-auto"
           currentPage={page}
           pageSize={pageSize}
           totalCount={total}
+          loadedCount={items.length}
+          hasMore={items.length < total}
+          loadingMore={listStatus === 'loading' && items.length > 0}
           onPageChange={(next) =>
             dispatch(formsActions.loadListRequested({ page: next, force: true }))
           }
           onPageSizeChange={(next) =>
             dispatch(formsActions.loadListRequested({ page: 1, pageSize: next, force: true }))
+          }
+          onLoadMore={() =>
+            dispatch(formsActions.loadListRequested({ page: page + 1, append: true }))
+          }
+          onModeChange={() =>
+            dispatch(formsActions.loadListRequested({ page: 1, pageSize, force: true }))
           }
         />
       </ListPageBody>

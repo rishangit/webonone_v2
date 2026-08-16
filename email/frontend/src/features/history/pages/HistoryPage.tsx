@@ -11,7 +11,7 @@ import {
   ListFilterTrigger,
   ListPageBody,
   SearchInput,
-  Pagination,
+  ListPageFooter,
   Select,
   SelectContent,
   SelectItem,
@@ -82,12 +82,13 @@ export function HistoryPage() {
     return <Navigate to="/login" replace />
   }
 
-  function dispatchLoad(nextPage: number, nextPageSize: number, filters = appliedFilters) {
+  function dispatchLoad(nextPage: number, nextPageSize: number, filters = appliedFilters, append = false) {
     dispatch(
       historyActions.loadListRequested({
         page: nextPage,
         pageSize: nextPageSize,
         status: filters.status,
+        append,
         extra: {
           from: filters.from ? startOfDayIso(filters.from) : undefined,
           to: filters.to ? endOfDayIso(filters.to) : undefined,
@@ -195,14 +196,19 @@ export function HistoryPage() {
           <div className="flex-1">
             <HistoryList items={items} />
           </div>
-          <Pagination
+          <ListPageFooter
             className="mt-auto"
             totalCount={total}
             currentPage={page}
             pageSize={pageSize}
             pageSizeOptions={[12, 24, 48]}
+            loadedCount={items.length}
+            hasMore={items.length < total}
+            loadingMore={listStatus === 'loading' && items.length > 0}
             onPageChange={(nextPage) => dispatchLoad(nextPage, pageSize)}
             onPageSizeChange={(nextPageSize) => dispatchLoad(1, nextPageSize)}
+            onLoadMore={() => dispatchLoad(page + 1, pageSize, appliedFilters, true)}
+            onModeChange={() => dispatchLoad(1, pageSize)}
           />
         </ListPageBody>
       ) : null}

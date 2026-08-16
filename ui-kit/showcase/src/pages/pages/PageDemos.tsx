@@ -27,9 +27,9 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
+  ListPageFooter,
+  ListPageModeProvider,
   SearchInput,
-  mapZodIssuesToFieldErrors,
-  Pagination,
   Select,
   SelectContent,
   SelectItem,
@@ -37,6 +37,9 @@ import {
   SelectValue,
   Switch,
   Textarea,
+  mapZodIssuesToFieldErrors,
+  useClientListPage,
+  type ListPageMode,
 } from '@webonone/ui-kit'
 
 type MockItem = {
@@ -52,8 +55,7 @@ const MOCK_ITEMS: MockItem[] = Array.from({ length: 36 }, (_, index) => ({
 }))
 
 export function ListPageDemo() {
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(12)
+  const [mode, setMode] = useState<ListPageMode>('pagination')
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -68,23 +70,66 @@ export function ListPageDemo() {
     })
   }, [filterStatus, searchQuery])
 
-  const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
+  return (
+    <ListPageModeProvider mode={mode}>
+      <ListPageDemoBody
+        filteredItems={filteredItems}
+        filterOpen={filterOpen}
+        setFilterOpen={setFilterOpen}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedId={selectedId}
+        setSelectedId={setSelectedId}
+        mode={mode}
+        setMode={setMode}
+      />
+    </ListPageModeProvider>
+  )
+}
+
+function ListPageDemoBody({
+  filteredItems,
+  filterOpen,
+  setFilterOpen,
+  filterStatus,
+  setFilterStatus,
+  searchQuery,
+  setSearchQuery,
+  selectedId,
+  setSelectedId,
+  mode,
+  setMode,
+}: {
+  filteredItems: MockItem[]
+  filterOpen: boolean
+  setFilterOpen: (open: boolean) => void
+  filterStatus: string
+  setFilterStatus: (status: string) => void
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+  selectedId: string | null
+  setSelectedId: (id: string | null) => void
+  mode: ListPageMode
+  setMode: (mode: ListPageMode) => void
+}) {
+  const listPage = useClientListPage(filteredItems)
+  const visibleItems = listPage.visible
   const hasActiveFilters = filterStatus !== 'all'
 
   return (
     <FeaturePage
       title="List page"
-      description="Production list composition: FeaturePage actions, ListFilterPanel, ListPageBody, ItemList, and Pagination. On small screens the add button shows + Add until tapped."
+      description="Production list composition: FeaturePage actions, ListFilterPanel, ListPageBody, ItemList, and ListPageFooter. Toggle pagination vs on-scroll."
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             value={searchQuery}
             onChange={(event) => {
               setSearchQuery(event.target.value)
-              setPage(1)
             }}
             placeholder="Item name"
-            onClear={() => setPage(1)}
             aria-label="Search catalog items"
             className="w-64"
           />
@@ -93,13 +138,30 @@ export function ListPageDemo() {
         </div>
       }
     >
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={mode === 'pagination' ? 'default' : 'outline'}
+          onClick={() => setMode('pagination')}
+        >
+          Pagination
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={mode === 'on-scroll' ? 'default' : 'outline'}
+          onClick={() => setMode('on-scroll')}
+        >
+          On scroll
+        </Button>
+      </div>
       <ListFilterPanel
         open={filterOpen}
         onOpenChange={setFilterOpen}
-        onApply={() => setPage(1)}
+        onApply={() => undefined}
         onClear={() => {
           setFilterStatus('all')
-          setPage(1)
         }}
       >
         <FormField label="Status" htmlFor="pages-list-filter-status">
@@ -154,17 +216,17 @@ export function ListPageDemo() {
             </ItemList>
           )}
         </div>
-        <Pagination
+        <ListPageFooter
           className="mt-auto"
-          totalCount={filteredItems.length}
-          currentPage={page}
-          pageSize={pageSize}
+          totalCount={listPage.total}
+          currentPage={listPage.page}
+          pageSize={listPage.pageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={setPage}
-          onPageSizeChange={(nextSize) => {
-            setPageSize(nextSize)
-            setPage(1)
-          }}
+          loadedCount={listPage.loadedCount}
+          hasMore={listPage.hasMore}
+          onPageChange={listPage.setPage}
+          onPageSizeChange={listPage.setPageSize}
+          onLoadMore={listPage.loadMore}
         />
       </ListPageBody>
     </FeaturePage>

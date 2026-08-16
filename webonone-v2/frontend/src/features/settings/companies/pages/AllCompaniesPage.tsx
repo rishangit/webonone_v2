@@ -7,8 +7,9 @@ import {
   FeaturePage,
   ListAddButton,
   ListPageBody,
+  ListPageFooter,
   SearchInput,
-  Pagination,
+  useClientListPage,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
@@ -27,8 +28,6 @@ export function AllCompaniesPage() {
     myCompaniesFetchedAt,
   } = useAppSelector((s) => s.companies)
 
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
   const [registerOpen, setRegisterOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -55,7 +54,8 @@ export function AllCompaniesPage() {
       )
     : ownedCompanies
 
-  const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
+  const listPage = useClientListPage(filteredItems)
+  const visibleItems = listPage.visible
 
   if (awaitingFirstLoad) {
     return null
@@ -71,10 +71,8 @@ export function AllCompaniesPage() {
             value={searchQuery}
             onChange={(event) => {
               setSearchQuery(event.target.value)
-              setPage(1)
             }}
             placeholder={t('myCompanies.searchPlaceholder')}
-            onClear={() => setPage(1)}
             aria-label={t('myCompanies.searchAria')}
             className="w-64"
           />
@@ -94,17 +92,17 @@ export function AllCompaniesPage() {
         <div className="flex-1">
           <MyCompaniesList items={visibleItems} emptyMessage={t('myCompanies.empty')} />
         </div>
-        <Pagination
+        <ListPageFooter
           className="mt-auto"
-          totalCount={filteredItems.length}
-          currentPage={page}
-          pageSize={pageSize}
+          totalCount={listPage.total}
+          currentPage={listPage.page}
+          pageSize={listPage.pageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={setPage}
-          onPageSizeChange={(nextSize) => {
-            setPageSize(nextSize)
-            setPage(1)
-          }}
+          loadedCount={listPage.loadedCount}
+          hasMore={listPage.hasMore}
+          onPageChange={listPage.setPage}
+          onPageSizeChange={listPage.setPageSize}
+          onLoadMore={listPage.loadMore}
         />
       </ListPageBody>
 

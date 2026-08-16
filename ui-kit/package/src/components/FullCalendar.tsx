@@ -52,6 +52,77 @@ const VIEW_LABELS: Record<FullCalendarView, string> = {
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const MONTH_EVENT_LIMIT = 3
 
+function TodayButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button type="button" variant="outline" size="sm" onClick={onClick}>
+      Today
+    </Button>
+  )
+}
+
+function PeriodNav({
+  label,
+  onPrev,
+  onNext,
+}: {
+  label: string
+  onPrev: () => void
+  onNext: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between md:col-start-2 md:row-start-1 md:justify-center md:gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-8 w-8 shrink-0"
+        aria-label="Previous period"
+        onClick={onPrev}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <span className="px-2 text-center text-sm font-medium" aria-live="polite">
+        {label}
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-8 w-8 shrink-0"
+        aria-label="Next period"
+        onClick={onNext}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+}
+
+function ViewSwitcher({
+  view,
+  onViewChange,
+}: {
+  view: FullCalendarView
+  onViewChange: (view: FullCalendarView) => void
+}) {
+  return (
+    <div role="group" aria-label="Calendar view" className="flex items-center gap-1">
+      {VIEWS.map((v) => (
+        <Button
+          key={v}
+          type="button"
+          size="sm"
+          variant={view === v ? 'default' : 'outline'}
+          aria-pressed={view === v}
+          onClick={() => onViewChange(v)}
+        >
+          {VIEW_LABELS[v]}
+        </Button>
+      ))}
+    </div>
+  )
+}
+
 function EventChip({
   event,
   style,
@@ -397,57 +468,21 @@ function FullCalendar({
       )}
     >
       {showToolbar ? (
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-[hsl(var(--background-base))] p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onAnchorDateChange(startOfLocalDay(new Date()))}
-            >
-              Today
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              aria-label="Previous period"
-              onClick={() => onAnchorDateChange(shiftAnchor(anchorDate, view, -1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              aria-label="Next period"
-              onClick={() => onAnchorDateChange(shiftAnchor(anchorDate, view, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <span className="text-sm font-medium" aria-live="polite">
-              {label}
-            </span>
-          </div>
-          <div
-            role="group"
-            aria-label="Calendar view"
-            className="flex items-center gap-1"
-          >
-            {VIEWS.map((v) => (
-              <Button
-                key={v}
-                type="button"
-                size="sm"
-                variant={view === v ? 'default' : 'outline'}
-                aria-pressed={view === v}
-                onClick={() => onViewChange(v)}
-              >
-                {VIEW_LABELS[v]}
-              </Button>
-            ))}
+        <div className="flex shrink-0 flex-col gap-2 border-b border-border bg-[hsl(var(--background-base))] p-3 md:grid md:grid-cols-3 md:items-center">
+          <PeriodNav
+            label={label}
+            onPrev={() => onAnchorDateChange(shiftAnchor(anchorDate, view, -1))}
+            onNext={() => onAnchorDateChange(shiftAnchor(anchorDate, view, 1))}
+          />
+          <div className="flex items-center justify-between md:contents">
+            <div className="md:col-start-1 md:row-start-1 md:justify-self-start">
+              <TodayButton
+                onClick={() => onAnchorDateChange(startOfLocalDay(new Date()))}
+              />
+            </div>
+            <div className="md:col-start-3 md:row-start-1 md:justify-self-end">
+              <ViewSwitcher view={view} onViewChange={onViewChange} />
+            </div>
           </div>
         </div>
       ) : null}

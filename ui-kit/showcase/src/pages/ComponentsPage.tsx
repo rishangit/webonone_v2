@@ -569,7 +569,7 @@ export function ComponentsPage() {
       <DemoSection
         id="pagination"
         title="Pagination"
-        description="Place Pagination below ItemList on list pages. Parent owns page state and data fetching."
+        description="Pager primitive. Collection pages use ListPageFooter (pagination or on-scroll) instead of this component directly."
       >
         <div className="space-y-4">
           <ItemList>

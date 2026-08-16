@@ -43,7 +43,7 @@ FeaturePage (title, description, actions: SearchInput + ListFilterTrigger + CTA)
   Alert (optional errors)
   ListPageBody
     div.flex-1 → ItemList | ItemListEmpty (row actions in ItemListMenu)
-    Pagination className="mt-auto" pageSizeOptions={[12, 24, 48]}
+    ListPageFooter className="mt-auto" pageSizeOptions={[12, 24, 48]}
 ```
 
 | Rule | Detail |

@@ -11,6 +11,7 @@ export type CatalogListQuery = {
   q?: string
   status?: string
   force?: boolean
+  append?: boolean
   extra?: Record<string, string>
 }
 
@@ -19,6 +20,7 @@ export type PaginatedListQuery = {
   pageSize?: number
   status?: string
   force?: boolean
+  append?: boolean
   extra?: Record<string, string | undefined>
 }
 

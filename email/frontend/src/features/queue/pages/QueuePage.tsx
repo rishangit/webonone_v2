@@ -9,12 +9,13 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  Pagination,
+  ListPageFooter,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  useListPageMode,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -51,6 +52,7 @@ export function QueuePage() {
   const canRetry = role === 'super_admin'
   const hasActiveFilters = tab !== 'pending'
   const error = listError ?? retryError
+  const listPageMode = useListPageMode()
 
   usePlatformLoading(loading ? t('loading') : null)
 
@@ -60,10 +62,21 @@ export function QueuePage() {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
+      if (listPageMode === 'on-scroll' && items.length > pageSize) {
+        dispatch(
+          queueActions.loadListRequested({
+            status: tab,
+            page: 1,
+            pageSize: Math.max(items.length, 12),
+            force: true,
+          }),
+        )
+        return
+      }
       dispatch(queueActions.loadListRequested({ status: tab, page, pageSize, force: true }))
     }, POLL_MS)
     return () => window.clearInterval(timer)
-  }, [dispatch, tab, page, pageSize])
+  }, [dispatch, tab, page, pageSize, listPageMode, items.length])
 
   function handleRetry(item: QueueItem) {
     dispatch(queueActions.retryRequested({ id: item.id }))
@@ -132,12 +145,15 @@ export function QueuePage() {
               retryingId={retryingId}
             />
           </div>
-          <Pagination
+          <ListPageFooter
             className="mt-auto"
             totalCount={total}
             currentPage={page}
             pageSize={pageSize}
             pageSizeOptions={[12, 24, 48]}
+            loadedCount={items.length}
+            hasMore={items.length < total}
+            loadingMore={listStatus === 'loading' && items.length > 0}
             onPageChange={(nextPage) =>
               dispatch(queueActions.loadListRequested({ status: tab, page: nextPage, pageSize }))
             }
@@ -146,6 +162,19 @@ export function QueuePage() {
                 queueActions.loadListRequested({ status: tab, page: 1, pageSize: nextPageSize }),
               )
             }}
+            onLoadMore={() =>
+              dispatch(
+                queueActions.loadListRequested({
+                  status: tab,
+                  page: page + 1,
+                  pageSize,
+                  append: true,
+                }),
+              )
+            }
+            onModeChange={() =>
+              dispatch(queueActions.loadListRequested({ status: tab, page: 1, pageSize, force: true }))
+            }
           />
         </ListPageBody>
       ) : null}

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { AppShell, BrandLogo, LoadingState } from '@webonone/ui-kit'
+import { AppShell, BrandLogo, ListPageModeProvider, LoadingState } from '@webonone/ui-kit'
 import { clearIdentityEmbedSession } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
@@ -190,9 +190,11 @@ function AppLayoutContent() {
 
   const overlayLabel = usePlatformOverlayLabel()
   const embedMain = isPlatformPeerEmbedPath(location.pathname, activeRole)
+  const listPageMode = useAppSelector((s) => s.systemTheme.preferences?.listPageMode ?? 'pagination')
 
   return (
     <ThemeProviderBridge>
+      <ListPageModeProvider mode={listPageMode}>
       <SessionRoleGate>
         <AppShell
           embedMain={embedMain}
@@ -218,6 +220,7 @@ function AppLayoutContent() {
           </div>
         </AppShell>
       </SessionRoleGate>
+      </ListPageModeProvider>
     </ThemeProviderBridge>
   )
 }

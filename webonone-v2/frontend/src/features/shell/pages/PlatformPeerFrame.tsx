@@ -257,7 +257,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
   const { openMediaDialog } = usePlatformMediaDialog()
   const { openPeerDialog } = usePlatformPeerDialog()
 
-  const peerLabel = t(`nav.${peer === 'identity' ? 'profile' : peer}`)
+  const peerLabel = t(`peer.${peer}`)
 
   const peerPath = useMemo(
     () => resolvePeerPath(peer, location.pathname),

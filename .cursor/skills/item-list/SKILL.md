@@ -44,7 +44,7 @@ If primitives are missing or need API changes, update **`ui-kit/package` first**
 
 For paginated collection **pages** (not embed pickers), compose:
 
-`FeaturePage` → optional `ListFilterPanel` → `ListPageBody` → `ItemList` / `ItemListEmpty` → `Pagination className="mt-auto"`.
+`FeaturePage` → optional `ListFilterPanel` → `ListPageBody` → `ItemList` / `ItemListEmpty` → `ListPageFooter className="mt-auto"`.
 
 Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + **`ListAddButton`**. Never use plain `Input` for text search ([ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc)). When `description` is set, `PageHeader` renders title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that row. Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
 
@@ -165,8 +165,8 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Destructive action last in menu with destructive styling
 - [ ] Per-row `ariaLabel` on `ItemListMenu`
 - [ ] `@/` imports in service frontends ([code-cleanliness.mdc](../../rules/code-cleanliness.mdc))
-- [ ] Paginated collections use `Pagination` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
-- [ ] Paginated pages wrap list + pagination in `ListPageBody`; list in `flex-1`; `Pagination` has `className="mt-auto"`
+- [ ] Paginated collections use `ListPageFooter` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
+- [ ] Paginated pages wrap list + footer in `ListPageBody`; list in `flex-1`; `ListPageFooter` has `className="mt-auto"`
 - [ ] Filterable collections use `ListFilterTrigger` + `ListFilterPanel` ([list-filter-panel.mdc](../../rules/list-filter-panel.mdc))
 - [ ] Primary CTA is **`ListAddButton`** (full label as children, last in header `actions`, permission-gated) — not a raw `Button` + `Plus`
 - [ ] Page loads use **`usePlatformLoading`** (AppLayout owns the overlay); empty results use `ItemListEmpty`
@@ -179,7 +179,7 @@ Cross-link only — do not duplicate:
 - [react-typescript.mdc](../../rules/react-typescript.mdc) — components, a11y
 - [front-end-structure.mdc](../../rules/front-end-structure.mdc) — feature folders
 - [ui-kit-project.mdc](../../rules/ui-kit-project.mdc) — build and export workflow
-- [item-list-pagination.mdc](../../rules/item-list-pagination.mdc) — `Pagination` with `ItemList`
+- [item-list-pagination.mdc](../../rules/item-list-pagination.mdc) — `ListPageFooter` with `ItemList`
 - [list-filter-panel.mdc](../../rules/list-filter-panel.mdc) — `ListFilterPanel` on collection pages
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified platform overlay; `usePlatformLoading`; button `Spinner`
 - [details-page-cards skill](../details-page-cards/SKILL.md) — when row click opens a details/profile page

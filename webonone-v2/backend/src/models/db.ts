@@ -38,9 +38,12 @@ export interface SystemThemeRow {
   updated_at: Date
 }
 
+export type ListPageMode = 'pagination' | 'on-scroll'
+
 export interface UserPreferenceRow {
   user_id: string
   active_theme_id: string
   color_mode: 'light' | 'dark'
+  list_page_mode: ListPageMode
   updated_at: Date
 }
