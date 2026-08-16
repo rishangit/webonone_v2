@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
 import { db, type SiteMediaRefRow } from '../models/db.js'
+import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 
 export interface SiteMediaRefDto {
   id: string
@@ -14,7 +15,7 @@ function rowToDto(row: SiteMediaRefRow): SiteMediaRefDto {
     id: row.id,
     siteId: row.site_id,
     mediaId: row.media_id,
-    mediaUrl: row.media_url,
+    mediaUrl: rewriteMediaFileUrl(row.media_url),
     label: row.label,
   }
 }

@@ -36,6 +36,7 @@ MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, **
 - JWT **verification** locally; no per-request Identity HTTP on hot paths.
 - Basic Settings (`/settings/basic`) — company registration wizard and company section.
 - Company API is **native** to WebOnOne BE (`/api/v1/company/*`) — not a separate microservice.
+- **AI tools** — publish catalog tools in `backend/src/ai/capabilities.ts` (`jsonSchema`, optional `argCompletion`). Do not put WebOnOne domain into `ai/`. See [ai-capabilities.mdc](ai-capabilities.mdc).
 - **Unified loading overlay** — one AppLayout overlay for session (`SessionRoleGate`), lazy routes (`LazyRoute`), and page fetches (`usePlatformLoading`). See [loading-empty-states.mdc](loading-empty-states.mdc).
 - **Core-hosted peer dialogs** — `PlatformPeerDialogHost` + `PlatformMediaDialogHost` in `AppLayout`; peer form dialogs use `peer-dialog-*` (host header/footer, peer `/embed/dialogs/…` body). New peer dialogs need **no** WebOnOne changes. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
 

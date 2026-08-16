@@ -39,7 +39,7 @@ function rowToDto(row: MediaItemRow): MediaItemDto {
     sizeBytes: Number(row.size_bytes),
     width: row.width,
     height: row.height,
-    url: row.public_url,
+    url: buildPublicUrl(row.id, row.file_name),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }

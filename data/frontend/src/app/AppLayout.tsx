@@ -32,6 +32,7 @@ import { getSmsRedirectOptions } from '@/features/sms/utils/redirectToSms'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
 import { withEmailNavActions, withSmsNavActions } from '@/features/shell/utils/externalNavActions'
+import { useAiMutationListRefresh } from '@/features/shell/hooks/useAiMutationListRefresh'
 
 export function AppLayout() {
   return (
@@ -45,6 +46,7 @@ function AppLayoutContent() {
   const [searchParams] = useSearchParams()
   const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const listPageMode = useListPageModeValue(embedParentOrigin)
+  useAiMutationListRefresh()
 
   const body = embedParentOrigin ? (
     <div className={PLATFORM_EMBED_APP_HOST_CLASS}>

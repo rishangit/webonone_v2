@@ -23,6 +23,7 @@ Follow the user's task and existing code in `webonone-v2/`. Use `.cursor/rules/`
 - Service boundaries: `.cursor/rules/microservice-architecture.mdc`
 - WebOnOne globs: `.cursor/rules/webonone-v2-project.mdc`
 - Platform shell / peer dialogs: `.cursor/rules/platform-shell-navigation.mdc` · skill § Core-hosted peer dialogs
+- AI catalog tools: `.cursor/rules/ai-capabilities.mdc` (`webonone-v2/backend/src/ai/capabilities.ts`)
 
 ## Verification
 

@@ -4,10 +4,13 @@ import type { CreateAttributeBody, UpdateAttributeBody } from '../schemas/attrib
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import {
   applyIdsFilter,
+  applyNamesFilter,
   applySearchFilter,
   applyStatusFilter,
   assertUniqueName,
+  bulkListPaging,
   parseIdsParam,
+  parseNamesParam,
   parseListQuery,
   type ListQueryInput,
 } from '../utils/listQuery.js'
@@ -74,14 +77,16 @@ async function rowToDto(
 }
 
 export async function listAttributes(
-  query: ListQueryInput & { value_type?: string; ids?: string | string[] },
+  query: ListQueryInput & { value_type?: string; ids?: string | string[]; names?: string | string[] },
 ) {
   const parsed = parseListQuery(query)
   const base = db<AttributeRow>('data_attributes')
   applyStatusFilter(base, parsed.status)
   applySearchFilter(base, parsed.q)
   const ids = parseIdsParam(query.ids)
+  const names = parseNamesParam(query.names)
   applyIdsFilter(base, ids)
+  applyNamesFilter(base, names)
 
   if (query.value_type === 'number' || query.value_type === 'text') {
     base.where({ value_type: query.value_type })
@@ -90,8 +95,7 @@ export async function listAttributes(
   const countResult = await base.clone().count<{ count: number }[]>('* as count')
   const total = Number(countResult[0]?.count ?? 0)
 
-  const pageSize = ids.length > 0 ? Math.min(100, Math.max(parsed.pageSize, ids.length)) : parsed.pageSize
-  const page = ids.length > 0 ? 1 : parsed.page
+  const { pageSize, page } = bulkListPaging(parsed, ids, names)
 
   const rows = await base
     .clone()

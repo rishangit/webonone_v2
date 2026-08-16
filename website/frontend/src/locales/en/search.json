@@ -76,5 +76,16 @@
   "wed": "Wed",
   "thu": "Thu",
   "fri": "Fri",
-  "sat": "Sat"
+  "sat": "Sat",
+  "assistantOpen": "ai chat",
+  "assistantClose": "Close",
+  "assistantTitle": "WebOnOne AI",
+  "assistantHint": "Ask about services. Guests can search the public catalog; company changes are not available here.",
+  "assistantPlaceholder": "Ask about a service…",
+  "assistantSend": "Send",
+  "assistantYou": "You",
+  "assistantName": "Assistant",
+  "assistantFailed": "The assistant is unavailable right now.",
+  "assistantStarting": "Starting conversation…",
+  "assistantThinking": "Assistant is thinking…"
 }

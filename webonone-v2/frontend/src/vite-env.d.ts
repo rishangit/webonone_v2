@@ -15,6 +15,8 @@ interface ImportMetaEnv {
   readonly VITE_CLEAR_SESSION_ALLOWED_ORIGINS?: string
   readonly VITE_DESIGN_ORIGIN?: string
   readonly VITE_DESIGN_API_BASE_URL?: string
+  readonly VITE_AI_ORIGIN?: string
+  readonly VITE_AI_API_BASE_URL?: string
   readonly VITE_GOOGLE_MAPS_API_KEY?: string
 }
 interface ImportMeta {

@@ -1,0 +1,54 @@
+---
+description: AI microservice conventions (conversations, providers, guest sessions)
+globs: ai/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# AI project
+
+Agent skill: [.cursor/skills/ai-agent/SKILL.md](../skills/ai-agent/SKILL.md)
+
+## Scope
+
+`ai/frontend`, `ai/backend`, `ai/backend/migrations`. Website catalog widget lives under `website/frontend/src/features/ai/`.
+
+## Ports and env
+
+| Layer | Port | Env file |
+|-------|------|----------|
+| Frontend | 3020 | `ai/frontend/.env` (`VITE_*` only) |
+| Backend | 4020 | `ai/backend/.env` |
+
+Backend loads only `ai/backend/.env`. Provider URL, model, and API keys are env-only — never hard-code or commit them.
+
+## Auth
+
+- Identity JWT: `iss=webonone-identity`, `aud=webonone-api`, same `JWT_SECRET`.
+- Guest JWT: issued by AI (`iss=webonone-ai`) via `POST /api/v1/guest-sessions`.
+- `company_id` is optional. Do not use `requireCompanyContext`.
+- Owner is always from the verified token. Ignore body/query `companyId` / `userId` / `guestId`.
+
+## Isolation
+
+Identity: `user_id = sub AND company_id <=> jwt.companyId AND guest_id IS NULL`.
+Guest: `guest_id = sub AND user_id IS NULL AND company_id IS NULL`.
+Cross-principal ids return 404.
+
+## Tools
+
+Discover peer tools from `GET /api/v1/internal/ai/capabilities`. AI applies generic `completeCreateArgs` only. Domain schemas, palettes, and `argCompletion` live on the owning service — [ai-capabilities.mdc](ai-capabilities.mdc).
+
+## Do not
+
+- Put domain data in AI (tag palettes, `create_data_tag` switches, status rules, clinic/health colors).
+- Let the model access MySQL, execute SQL/JS/shell, touch the filesystem, or call arbitrary URLs.
+- Send JWT, API keys, or DB credentials to the provider.
+- Implement login UI (Identity owns auth).
+- Log secrets, tokens, or stack traces to clients.
+
+## Verification
+
+```bash
+npm run type-check -w ai-root
+npm test -w @webonone/ai-backend
+```

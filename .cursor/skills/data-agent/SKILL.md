@@ -28,6 +28,7 @@ description: >-
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified AppLayout loading overlay
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports
 - [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) — tag/library selection rows show Check on the right
+- [ai-capabilities.mdc](../../rules/ai-capabilities.mdc) — Data AI tools: schemas + `argCompletion` on `data/backend/src/ai/capabilities.ts` (not in `ai/`)
 
 ## Ports and env
 
@@ -77,6 +78,7 @@ When core nav includes Email items from Data satellite:
 - API routes: `data/backend/src/routes/`
 - Services: `data/backend/src/services/`
 - Admin UI: `data/frontend/src/features/{tags,units,attributes,products,services,spaces}/`
+- AI tools: `data/backend/src/ai/capabilities.ts` (palette, defaults, `forceByRole` — [ai-capabilities.mdc](../../rules/ai-capabilities.mdc))
 - WebOnOne config: `webonone-v2/frontend/src/features/data/utils/dataConfig.ts`
 
 ## Verification

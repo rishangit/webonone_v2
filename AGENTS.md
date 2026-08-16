@@ -1,6 +1,6 @@
 # Agent delegation map
 
-This monorepo has five runnable services, a shared UI library, and shared contract packages under `packages/`. Each service has a **subagent** (`.cursor/agents/`) and a **skill** (`.cursor/skills/`). Agents and skills are scoped by service folder and `.cursor/rules/` — they do not depend on `spec/`.
+This monorepo has multiple runnable services, a shared UI library, and shared contract packages under `packages/`. Each service has a **subagent** (`.cursor/agents/`) and a **skill** (`.cursor/skills/`). Agents and skills are scoped by service folder and `.cursor/rules/` — they do not depend on `spec/`.
 
 **Orchestrator:** [.cursor/agents/platform-orchestrator.md](.cursor/agents/platform-orchestrator.md) · [skill](.cursor/skills/platform-orchestrator/SKILL.md)
 
@@ -42,7 +42,10 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | SMS | `sms/` + `mobile/` | [sms-agent](.cursor/agents/sms-agent.md) | [skill](.cursor/skills/sms-agent/SKILL.md) |
 | Payment | `payment/` | [payment-agent](.cursor/agents/payment-agent.md) | [skill](.cursor/skills/payment-agent/SKILL.md) |
 | Design | `design/` | [design-agent](.cursor/agents/design-agent.md) | [skill](.cursor/skills/design-agent/SKILL.md) |
+| AI | `ai/` | [ai-agent](.cursor/agents/ai-agent.md) | [skill](.cursor/skills/ai-agent/SKILL.md) |
 | Website | `website/` | — | Public marketing/search site (FE :3018, BE :4018); proxies catalog search to WebOnOne |
+
+AI tools: peers publish `jsonSchema` + optional `argCompletion`; AI stays generic — [.cursor/rules/ai-capabilities.mdc](.cursor/rules/ai-capabilities.mdc).
 
 Company registration, memberships, platform roles, and super-admin approval are a **WebOnOne v2 feature** (backend + Basic Settings UI). See [spec/1.6.0](../spec/1.6.0/README.md).
 
@@ -66,6 +69,7 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:sms` | SMS FE + BE |
 | `npm run dev:payment` | Payment FE + BE |
 | `npm run dev:design` | Design FE + BE |
+| `npm run dev:ai` | AI FE + BE |
 | `npm run dev:website` | Website FE + BE |
 | `npm run mobile` | Mobile Expo app (not in root `dev`) |
 | `npm run mobile:web` | Mobile app via RN Web |

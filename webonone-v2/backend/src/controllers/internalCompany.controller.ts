@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import * as companyRepo from '../repositories/company.repository.js'
+import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 
 /** Internal: peers resolve company details from WebOnOne (no shared DB). */
 export async function getCompanyInternal(req: Request, res: Response) {
@@ -19,7 +20,7 @@ export async function getCompanyInternal(req: Request, res: Response) {
     id: company.id,
     name: company.name,
     status: company.status,
-    logoUrl: company.logo_url,
+    logoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
     contactEmail: company.contact_email,
   })
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { ActionCreatorWithPayload } from '@reduxjs/toolkit'
 import type { CatalogFeatureState, CatalogListQuery } from './types'
@@ -25,6 +25,8 @@ export function useEpicCatalogList<T, S = unknown>(
   const [pageSize, setPageSize] = useState(listState.pageSize || 12)
   const [filterOpen, setFilterOpen] = useState(false)
   const [extraFilters, setExtraFilters] = useState<Record<string, string>>({})
+  const listStateRef = useRef(listState)
+  listStateRef.current = listState
 
   const buildQuery = useCallback(
     (nextPage: number, nextPageSize = pageSize): CatalogListQuery => ({
@@ -39,23 +41,22 @@ export function useEpicCatalogList<T, S = unknown>(
 
   const dispatchLoad = useCallback(
     (nextPage: number, nextPageSize = pageSize, force = false) => {
+      const current = listStateRef.current
       const query = buildQuery(nextPage, nextPageSize)
       const queryKey = serializeQuery({ ...query, extra: query.extra })
-      if (
-        !force &&
-        listState.queryKey === queryKey &&
-        isFresh(listState.lastFetchedAt)
-      ) {
+      if (!force && current.queryKey === queryKey && isFresh(current.lastFetchedAt)) {
         return
       }
       dispatch(actions.loadListRequested({ ...query, force }))
     },
-    [actions, buildQuery, dispatch, listState.lastFetchedAt, listState.queryKey, pageSize],
+    [actions, buildQuery, dispatch, pageSize],
   )
 
+  // Reload page 1 when filters or page size change. Cache timestamps must not be
+  // in dispatchLoad's identity — a completed page-2 fetch would otherwise bounce back to page 1.
   useEffect(() => {
     dispatchLoad(1)
-  }, [q, status, extraFilters, dispatchLoad])
+  }, [dispatchLoad])
 
   const load = useCallback(
     (nextPage = listState.page || 1, nextPageSize = pageSize, force = false) => {

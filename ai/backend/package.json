@@ -1,0 +1,32 @@
+{
+  "name": "@webonone/ai-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "node --import tsx --test src/app.test.ts src/middleware/rateLimit.test.ts src/ai/requestContext.test.ts src/ai/tools/filterTools.test.ts src/ai/tools/executor.test.ts src/ai/tools/discoverCapabilities.test.ts src/ai/tools/invokePath.test.ts src/ai/tools/createDefaults.test.ts src/ai/tools/uniqueValues.test.ts src/ai/tools/formatRecord.test.ts",
+    "migrate": "node --import tsx ../../node_modules/knex/bin/cli.js migrate:latest --knexfile knexfile.ts",
+    "migrate:status": "node --import tsx ../../node_modules/knex/bin/cli.js migrate:status --knexfile knexfile.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "mysql2": "^3.14.1",
+    "nanoid": "^5.1.5",
+    "zod": "^3.25.56"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.15.29",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

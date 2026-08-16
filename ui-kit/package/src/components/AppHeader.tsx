@@ -77,6 +77,8 @@ interface AppHeaderProps {
   onMenuClick?: () => void
   showMenuButton?: boolean
   menuOpen?: boolean
+  /** Optional header actions (e.g. chat toggle), rendered before the user avatar. */
+  actions?: ReactNode
   className?: string
 }
 
@@ -100,6 +102,7 @@ function AppHeader({
   onMenuClick,
   showMenuButton = false,
   menuOpen = false,
+  actions,
   className,
 }: AppHeaderProps) {
   const logoNode = logo ?? <BrandLogo href={logoHref} />
@@ -125,81 +128,86 @@ function AppHeader({
           ) : null}
           {logoNode}
         </div>
-        {user ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="User menu"
-              >
-                <Avatar
-                  size="sm"
-                  src={user.avatarUrl}
-                  alt={user.displayName}
-                  fallback={getInitials(user.displayName)}
-                />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 shadow-lg">
-              {onProfileClick ? (
-                <DropdownMenuItem onClick={onProfileClick} className="cursor-pointer p-0">
-                  <div className="flex w-full flex-col space-y-1.5 px-2 py-1.5">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                    {user.email ? (
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    ) : null}
-                    <HeaderRoleTag role={user.role} roleLabel={user.roleLabel} />
-                  </div>
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1.5">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                    {user.email ? (
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    ) : null}
-                    <HeaderRoleTag role={user.role} roleLabel={user.roleLabel} />
-                  </div>
-                </DropdownMenuLabel>
-              )}
-              <DropdownMenuSeparator />
-              {onLocaleChange ? (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Globe />
-                    {languageLabel}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem
-                      onSelect={() => onLocaleChange('en')}
-                      className={locale === 'en' ? 'bg-accent' : undefined}
-                    >
-                      {englishLabel}
+        {actions || user ? (
+          <div className="flex shrink-0 items-center gap-2">
+            {actions}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="User menu"
+                  >
+                    <Avatar
+                      size="sm"
+                      src={user.avatarUrl}
+                      alt={user.displayName}
+                      fallback={getInitials(user.displayName)}
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 shadow-lg">
+                  {onProfileClick ? (
+                    <DropdownMenuItem onClick={onProfileClick} className="cursor-pointer p-0">
+                      <div className="flex w-full flex-col space-y-1.5 px-2 py-1.5">
+                        <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                        {user.email ? (
+                          <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                        ) : null}
+                        <HeaderRoleTag role={user.role} roleLabel={user.roleLabel} />
+                      </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => onLocaleChange('si')}
-                      className={locale === 'si' ? 'bg-accent' : undefined}
-                    >
-                      {sinhalaLabel}
+                  ) : (
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1.5">
+                        <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                        {user.email ? (
+                          <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                        ) : null}
+                        <HeaderRoleTag role={user.role} roleLabel={user.roleLabel} />
+                      </div>
+                    </DropdownMenuLabel>
+                  )}
+                  <DropdownMenuSeparator />
+                  {onLocaleChange ? (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Globe />
+                        {languageLabel}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onSelect={() => onLocaleChange('en')}
+                          className={locale === 'en' ? 'bg-accent' : undefined}
+                        >
+                          {englishLabel}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => onLocaleChange('si')}
+                          className={locale === 'si' ? 'bg-accent' : undefined}
+                        >
+                          {sinhalaLabel}
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  ) : null}
+                  {onProfileClick ? (
+                    <DropdownMenuItem onClick={onProfileClick}>
+                      <User />
+                      {profileLabel}
                     </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              ) : null}
-              {onProfileClick ? (
-                <DropdownMenuItem onClick={onProfileClick}>
-                  <User />
-                  {profileLabel}
-                </DropdownMenuItem>
-              ) : null}
-              {onLogout ? (
-                <DropdownMenuItem onClick={onLogout}>
-                  <LogOut />
-                  {logoutLabel}
-                </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  ) : null}
+                  {onLogout ? (
+                    <DropdownMenuItem onClick={onLogout}>
+                      <LogOut />
+                      {logoutLabel}
+                    </DropdownMenuItem>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </header>

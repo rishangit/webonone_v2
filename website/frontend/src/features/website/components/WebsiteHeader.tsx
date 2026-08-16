@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { Globe, LogOut } from 'lucide-react'
+import { Globe, LogOut, MessageCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { normalizeLocale, type AppLocale } from '@webonone/i18n'
 import {
@@ -15,6 +15,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
+  cn,
 } from '@webonone/ui-kit'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { getWebsiteLoginHref } from '@/features/auth/utils/identityConfig'
@@ -26,6 +27,8 @@ import {
 
 type WebsiteHeaderProps = {
   className?: string
+  assistantOpen?: boolean
+  onAssistantOpenChange?: (open: boolean) => void
 }
 
 function getInitials(displayName: string): string {
@@ -36,11 +39,16 @@ function getInitials(displayName: string): string {
   return displayName.slice(0, 2).toUpperCase() || '?'
 }
 
-export function WebsiteHeader({ className }: WebsiteHeaderProps) {
+export function WebsiteHeader({
+  className,
+  assistantOpen = false,
+  onAssistantOpenChange,
+}: WebsiteHeaderProps) {
   const { user, accessToken, isAuthenticated, isAuthPending, logout } = useWebsiteAuth()
   const { t, i18n } = useTranslation('common')
   const { t: ts } = useTranslation('shell')
   const { t: ta } = useTranslation('auth')
+  const { t: tSearch } = useTranslation('search')
   const currentLocale = normalizeLocale(i18n.language)
   const isLoginPage =
     typeof window !== 'undefined' && window.location.pathname === '/login'
@@ -75,6 +83,19 @@ export function WebsiteHeader({ className }: WebsiteHeaderProps) {
         <BrandLogo>WebOnOne</BrandLogo>
       </a>
       <div className="flex items-center gap-2">
+        {onAssistantOpenChange ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
+            aria-label={tSearch('assistantOpen')}
+            aria-pressed={assistantOpen}
+            onClick={() => onAssistantOpenChange(!assistantOpen)}
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+        ) : null}
         <Button type="button" size="sm" variant="outline" onClick={handleOpenApp}>
           {ts('openApp')}
         </Button>

@@ -23,7 +23,7 @@ Read [AGENTS.md](../../AGENTS.md) for the delegation map.
 
 Before coding, list which roots the task affects.
 
-Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `peer-dialog` → often **Identity/Email/Data/SMS + WebOnOne** (see `.cursor/rules/platform-shell-navigation.mdc` and `.cursor/skills/platform-orchestrator/SKILL.md`).
+Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `peer-dialog` → often **Identity/Email/Data/SMS + WebOnOne** (see `.cursor/rules/platform-shell-navigation.mdc` and `.cursor/skills/platform-orchestrator/SKILL.md`). AI tool schemas / `argCompletion` → owning service; generic completer → `ai/` (`.cursor/rules/ai-capabilities.mdc`).
 
 **Parent handles directly (no subagent):** root `package.json`, workspace wiring, `.cursor/` config that is not service-specific.
 
@@ -34,6 +34,8 @@ Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `
 | `identity/**` only | Delegate `identity-agent` |
 | `ui-kit/**` only | Delegate `ui-kit-agent` |
 | `webonone-v2/**` only | Delegate `webonone-agent` |
+| `ai/**` only | Delegate `ai-agent` (generic completer only) |
+| AI tool schema / `argCompletion` on a peer | Delegate that peer (`data/`, `webonone-v2/`) — not AI |
 | iframe/postMessage/JWT across services | Sequential: identity then webonone |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent |
 | Read-only exploration in one service | Scoped explore subagent |

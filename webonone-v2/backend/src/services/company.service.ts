@@ -1,5 +1,9 @@
 import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
+import {
+  rewriteMediaFileUrl,
+  rewriteOptionalMediaFileUrl,
+} from '../utils/rewriteMediaFileUrl.js'
 import type {
   CompanyDataEntity,
   RegisterCompanyBody,
@@ -128,6 +132,7 @@ function parseGalleryImages(
         typeof (item as CompanyGalleryImage).mediaId === 'string' &&
         typeof (item as CompanyGalleryImage).url === 'string',
     )
+    .map((item) => ({ ...item, url: rewriteMediaFileUrl(item.url) }))
     .slice(0, 24)
 }
 
@@ -142,7 +147,7 @@ function toCompanyDetail(
     name: row.name,
     description: row.description,
     companySize: row.company_size,
-    logoUrl: row.logo_url,
+    logoUrl: rewriteOptionalMediaFileUrl(row.logo_url),
     galleryImages: parseGalleryImages(row.gallery_images),
     contactEmail: row.contact_email,
     contactPhone: row.contact_phone,
@@ -232,7 +237,7 @@ function toCompanyWithMembership(
     company: {
       id: company.id,
       name: company.name,
-      logoUrl: company.logo_url,
+      logoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
       status: company.status,
       createdAt: company.created_at.toISOString(),
       approvedAt: company.approved_at ? company.approved_at.toISOString() : null,
@@ -247,7 +252,7 @@ function toAdminCompanySummary(row: repo.CompanyRow): AdminCompanySummary {
   return {
     id: row.id,
     name: row.name,
-    logoUrl: row.logo_url,
+    logoUrl: rewriteOptionalMediaFileUrl(row.logo_url),
     status: row.status,
     createdByUserId: row.created_by_user_id,
     createdAt: row.created_at.toISOString(),
@@ -294,7 +299,7 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
     byId.set(company.id, {
       id: company.id,
       name: company.name,
-      logoUrl: company.logo_url,
+      logoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
       status: company.status,
       role: nextRole,
       dataEntities: parseDataEntities(company.data_entities),
@@ -321,7 +326,7 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
     byId.set(company.id, {
       id: company.id,
       name: company.name,
-      logoUrl: company.logo_url,
+      logoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
       status: company.status,
       role: 'company_admin',
       dataEntities: parseDataEntities(company.data_entities),
@@ -694,7 +699,7 @@ export async function getAssumableRoles(userId: string): Promise<AssumableRolesR
       companyId: company.id,
       label: company.name,
       companyName: company.name,
-      companyLogoUrl: company.logo_url,
+      companyLogoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
       dataEntities: parseDataEntities(company.data_entities),
     })
   }
@@ -705,7 +710,7 @@ export async function getAssumableRoles(userId: string): Promise<AssumableRolesR
       companyId: company.id,
       label: `${company.name} (Staff)`,
       companyName: company.name,
-      companyLogoUrl: company.logo_url,
+      companyLogoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
       dataEntities: parseDataEntities(company.data_entities),
       accountKind: 'staff',
     })

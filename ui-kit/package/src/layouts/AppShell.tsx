@@ -37,6 +37,10 @@ interface AppShellProps {
    * Hidden when the sidebar is collapsed; shown in the mobile drawer when open.
    */
   sidebarSession?: SidebarSession | null
+  /** Optional right rail: overlays the page on small screens; in-flow beside main from md up. */
+  aside?: ReactNode
+  /** Optional header actions, rendered before the user avatar. */
+  headerActions?: ReactNode
   className?: string
 }
 
@@ -88,6 +92,8 @@ function AppShell({
   lockDocumentScroll = true,
   accordionNavGroups = false,
   sidebarSession,
+  aside,
+  headerActions,
   className,
 }: AppShellProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -136,6 +142,7 @@ function AppShell({
         showMenuButton={!isDesktop}
         menuOpen={mobileOpen}
         onMenuClick={() => setMobileOpen((open) => !open)}
+        actions={headerActions}
       />
       <div className="flex min-h-0 flex-1">
         {mobileOpen && !isDesktop ? (
@@ -167,6 +174,7 @@ function AppShell({
         >
           {children}
         </main>
+        {aside}
       </div>
     </div>
   )

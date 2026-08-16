@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid'
+import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import type {
   CreateCompanyEventBody,
   CreateSessionTokenBody,
@@ -305,13 +306,15 @@ function normalizeGalleryImages(
   images: { mediaId: string; url: string }[] | null | undefined,
 ): EventGalleryImage[] {
   if (!Array.isArray(images)) return []
-  return images.filter(
-    (entry): entry is EventGalleryImage =>
-      Boolean(entry) &&
-      typeof entry === 'object' &&
-      typeof entry.mediaId === 'string' &&
-      typeof entry.url === 'string',
-  )
+  return images
+    .filter(
+      (entry): entry is EventGalleryImage =>
+        Boolean(entry) &&
+        typeof entry === 'object' &&
+        typeof entry.mediaId === 'string' &&
+        typeof entry.url === 'string',
+    )
+    .map((entry) => ({ ...entry, url: rewriteMediaFileUrl(entry.url) }))
 }
 
 /**

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { Button, SearchInput } from '@webonone/ui-kit'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
-import { WebsiteHeader } from '@/features/website/components/WebsiteHeader'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
 
 export function WebsiteHomePage() {
@@ -31,9 +30,7 @@ export function WebsiteHomePage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
-      <WebsiteHeader className="sticky top-0 z-20" />
-
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background text-foreground">
       <LocationPermissionDialog
         open={showPermissionPrompt}
         blocked={permissionDenied}

@@ -1,0 +1,53 @@
+---
+description: AI tools stay generic; owning services publish schemas and argCompletion
+globs: "ai/backend/src/ai/**/*.{ts,tsx},**/backend/src/ai/capabilities.ts,**/backend/src/ai/capabilityTypes.ts"
+alwaysApply: false
+---
+
+# AI capabilities
+
+Owning services publish tools. AI discovers them and applies **generic** completion only.
+
+Related: [ai-project.mdc](ai-project.mdc), [ai-agent skill](../skills/ai-agent/SKILL.md).
+
+## Ownership
+
+| Layer | Owns | Must not |
+|-------|------|----------|
+| AI (`ai/backend/src/ai/tools`) | `parseTool`, `completeCreateArgs`, `pickHexColor`, executor, generic system prompt | Tool-name switches, palettes, status rules, `create_*` field copy |
+| Peer (`<service>/backend/src/ai/capabilities.ts`) | `jsonSchema`, tool `description`, optional `argCompletion` | Putting domain rules in the AI service |
+
+## `argCompletion` (optional, on write tools)
+
+```ts
+argCompletion?: {
+  allowedKeys?: string[]
+  defaults?: Record<string, unknown>
+  forceByRole?: Partial<Record<ToolRole, Record<string, unknown>>>
+  uniqueBy?: string
+  uniqueLookup?: { method: 'GET'; path: string; queryParam: 'names' }
+}
+```
+
+AI applies, in order: missing `defaults` → random hex color from schema `enum` or a generic fallback palette (same `Math.random` index as the tag create form) → `forceByRole[role]` → drop keys not in `allowedKeys`. If `jsonSchema.required` keys are still missing, the executor returns `MISSING_REQUIRED_ARGS` to the model instead of asking the user to confirm.
+
+When parking create writes, AI looks up `uniqueBy` values via `uniqueLookup` (`GET path?names=`). Existing names and in-batch duplicates are skipped; only missing unique values are shown for confirm. Never switch on tool names such as `create_data_tag`.
+
+Keep the type in sync on peer `capabilityTypes.ts` and `ai/backend/src/ai/tools/registry.ts`. `parseTool` must copy `argCompletion` through.
+
+## Color
+
+- Peer: publish `#RRGGBB` `enum` on the color property (same list as that service’s UI).
+- AI: `pickHexColor(palette)` only — random index from the published enum, matching Data UI `randomTagColor`. No meaning maps (clinic/health), no copied tag palettes.
+
+## Prompts
+
+`DEFAULT_SYSTEM_PROMPT` and `withAvailableToolsPrompt` stay generic (fill schema properties, do not invent IDs). Suggest/list/recommend N names → numbered list and wait; do not call `create_*` until the user asks to add or create. Several named creates in one turn → one `create_*` call per item; existing unique names are skipped; remaining items confirm one at a time. Field rules belong on the tool `description`.
+
+Reference: `data/backend/src/ai/capabilities.ts` (`create_data_tag`), `ai/backend/src/ai/tools/createDefaults.ts`.
+
+## Verification
+
+```bash
+npm test -w @webonone/ai-backend
+```

@@ -53,6 +53,8 @@ export const PLATFORM_MESSAGE_TYPES = {
   PEER_DIALOG_NESTED_RESULT: 'webonone:platform:peer-dialog-nested-result',
   /** Peer iframe → shell: request shell SPA navigation (e.g. Data detail `/data/{entity}/:id`). */
   NAVIGATE: 'webonone:platform:navigate',
+  /** Shell → peer iframe: a confirmed AI write succeeded; refresh matching lists. */
+  AI_MUTATION: 'webonone:platform:ai-mutation',
 } as const
 
 export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
@@ -164,6 +166,12 @@ export type PlatformNavigateMessage = {
    * without reloading the iframe `src` (avoids double load / remount).
    */
   clientNavigated?: boolean
+}
+
+/** Shell → peer iframe: confirmed AI tool write; peer should refetch the matching list. */
+export type PlatformAiMutationMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.AI_MUTATION
+  toolName: string
 }
 
 export type IdentityUserPickerUser = {
@@ -418,6 +426,7 @@ export type PlatformEmbedMessage =
   | PlatformReadyMessage
   | PlatformContentReadyMessage
   | PlatformNavigateMessage
+  | PlatformAiMutationMessage
   | AuthSuccessMessage
   | AuthCancelMessage
   | IdentityUserPickerSelectMessage
@@ -477,6 +486,18 @@ export function isPlatformContentReadyMessage(
   }
 
   return (data as PlatformContentReadyMessage).type === PLATFORM_MESSAGE_TYPES.CONTENT_READY
+}
+
+export function isPlatformAiMutationMessage(data: unknown): data is PlatformAiMutationMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+  const message = data as PlatformAiMutationMessage
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.AI_MUTATION &&
+    typeof message.toolName === 'string' &&
+    message.toolName.length > 0
+  )
 }
 
 export function isPlatformNavigateMessage(data: unknown): data is PlatformNavigateMessage {

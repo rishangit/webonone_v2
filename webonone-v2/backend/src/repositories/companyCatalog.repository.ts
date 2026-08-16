@@ -1,4 +1,5 @@
 import { db } from '../models/db.js'
+import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import type {
   CatalogBindingMode,
   CatalogEntityKind,
@@ -155,13 +156,15 @@ function parseGalleryImages(
     }
   }
   if (!Array.isArray(parsed)) return []
-  return parsed.filter(
-    (item): item is { mediaId: string; url: string } =>
-      Boolean(item) &&
-      typeof item === 'object' &&
-      typeof (item as { mediaId?: unknown }).mediaId === 'string' &&
-      typeof (item as { url?: unknown }).url === 'string',
-  )
+  return parsed
+    .filter(
+      (item): item is { mediaId: string; url: string } =>
+        Boolean(item) &&
+        typeof item === 'object' &&
+        typeof (item as { mediaId?: unknown }).mediaId === 'string' &&
+        typeof (item as { url?: unknown }).url === 'string',
+    )
+    .map((item) => ({ ...item, url: rewriteMediaFileUrl(item.url) }))
 }
 
 export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unknown>) {

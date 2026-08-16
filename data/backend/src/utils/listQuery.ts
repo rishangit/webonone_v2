@@ -84,6 +84,30 @@ export function applyIdsFilter(query: Knex.QueryBuilder, ids: string[]) {
   return query
 }
 
+/** Accepts repeated `names=` query params and/or comma-separated values. Caps at 100. */
+export function parseNamesParam(names?: string | string[]): string[] {
+  return parseIdsParam(names).slice(0, 100)
+}
+
+export function applyNamesFilter(query: Knex.QueryBuilder, names: string[]) {
+  if (names.length === 0) {
+    return query
+  }
+  const lowered = names.map((name) => name.toLowerCase())
+  return query.whereRaw(
+    `LOWER(name) IN (${lowered.map(() => '?').join(', ')})`,
+    lowered,
+  )
+}
+
+export function bulkListPaging(parsed: ParsedListQuery, ...bulkSets: string[][]) {
+  const bulkCount = Math.max(0, ...bulkSets.map((set) => set.length))
+  return {
+    pageSize: bulkCount > 0 ? Math.min(100, Math.max(parsed.pageSize, bulkCount)) : parsed.pageSize,
+    page: bulkCount > 0 ? 1 : parsed.page,
+  }
+}
+
 export async function assertUniqueName(
   table: string,
   name: string,
