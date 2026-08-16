@@ -5,6 +5,7 @@ import * as themeService from './themeService.js'
 export interface PreferencesDto {
   activeThemeId: string
   colorMode: 'light' | 'dark'
+  listPageMode: 'pagination' | 'on-scroll'
   theme: themeService.ThemeDto
 }
 
@@ -18,6 +19,7 @@ async function ensurePreferencesRow(userId: string): Promise<UserPreferenceRow> 
     user_id: userId,
     active_theme_id: themeService.PLATFORM_DEFAULT_THEME_ID,
     color_mode: 'light',
+    list_page_mode: 'pagination',
     updated_at: db.fn.now(3),
   })
 
@@ -54,6 +56,7 @@ export async function getPreferences(userId: string): Promise<PreferencesDto> {
   return {
     activeThemeId: theme.id,
     colorMode: pref.color_mode,
+    listPageMode: pref.list_page_mode ?? 'pagination',
     theme,
   }
 }
@@ -81,6 +84,9 @@ export async function patchPreferences(
   }
   if (body.colorMode !== undefined) {
     patch.color_mode = body.colorMode
+  }
+  if (body.listPageMode !== undefined) {
+    patch.list_page_mode = body.listPageMode
   }
 
   await db('user_preferences').where({ user_id: userId }).update(patch)

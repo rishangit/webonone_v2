@@ -22,8 +22,6 @@ type PlatformLoadingContextValue = {
 const PlatformLoadingContext = createContext<PlatformLoadingContextValue | null>(null)
 
 const DEFAULT_ROUTE_LOADING_DELAY_MS = 175
-/** Keep the overlay up briefly after the last loader clears to bridge hand-off gaps. */
-const HIDE_LINGER_MS = 200
 
 /** Dev diagnostic: trace loader register/unregister and warn when overlays stack. */
 function logLoaders(
@@ -42,7 +40,7 @@ function logLoaders(
   }
   if (total > 1) {
     console.warn(
-      `[PlatformLoading] ${action} → ${total} concurrent loaders (possible stacked loading)`,
+      `[PlatformLoading] ${action} → ${total} concurrent loaders (possible stacked overlay)`,
       snapshot,
     )
   } else {
@@ -50,23 +48,23 @@ function logLoaders(
   }
 }
 
+function resolveLabel(page: Map<string, string>, route: Map<string, string>): string | null {
+  if (page.size > 0) {
+    return Array.from(page.values()).pop() ?? null
+  }
+  if (route.size > 0) {
+    return Array.from(route.values()).pop() ?? null
+  }
+  return null
+}
+
 export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
   const pageLoaders = useRef(new Map<string, string>())
   const routeLoaders = useRef(new Map<string, string>())
-  const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [overlayLabel, setOverlayLabel] = useState<string | null>(null)
-  const hideTimer = useRef<number | null>(null)
 
   const recompute = useCallback(() => {
-    const page = pageLoaders.current
-    const route = routeLoaders.current
-    let next: string | null = null
-    if (page.size > 0) {
-      next = Array.from(page.values()).pop() ?? null
-    } else if (route.size > 0) {
-      next = Array.from(route.values()).pop() ?? null
-    }
-    setActiveLabel(next)
+    setOverlayLabel(resolveLabel(pageLoaders.current, routeLoaders.current))
   }, [])
 
   const register = useCallback(
@@ -88,29 +86,6 @@ export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
     },
     [recompute],
   )
-
-  useEffect(() => {
-    if (activeLabel) {
-      if (hideTimer.current !== null) {
-        window.clearTimeout(hideTimer.current)
-        hideTimer.current = null
-      }
-      setOverlayLabel(activeLabel)
-      return
-    }
-
-    hideTimer.current = window.setTimeout(() => {
-      setOverlayLabel(null)
-      hideTimer.current = null
-    }, HIDE_LINGER_MS)
-
-    return () => {
-      if (hideTimer.current !== null) {
-        window.clearTimeout(hideTimer.current)
-        hideTimer.current = null
-      }
-    }
-  }, [activeLabel])
 
   const value = useMemo(
     () => ({ register, unregister, overlayLabel }),
@@ -156,7 +131,10 @@ export function useRouteLoading(label: string | null | false): void {
 }
 
 /** Delay route overlay to avoid flash when lazy chunks are already cached. */
-export function useDelayedRouteLoading(label: string, delayMs = DEFAULT_ROUTE_LOADING_DELAY_MS): void {
+export function useDelayedRouteLoading(
+  label: string,
+  delayMs = DEFAULT_ROUTE_LOADING_DELAY_MS,
+): void {
   const [showLabel, setShowLabel] = useState(false)
 
   useEffect(() => {
@@ -170,7 +148,7 @@ export function useDelayedRouteLoading(label: string, delayMs = DEFAULT_ROUTE_LO
   useRouteLoading(showLabel ? label : null)
 }
 
-/** Single, flicker-free overlay label (lingers briefly after the last loader clears). */
+/** Single overlay label — updates in the same layout pass as loaders register/clear. */
 export function usePlatformOverlayLabel(): string | null {
   return usePlatformLoadingContext().overlayLabel
 }

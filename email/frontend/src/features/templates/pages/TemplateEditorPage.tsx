@@ -13,7 +13,8 @@ import {
   ItemListItem,
   ItemListMenu,
   ListPageBody,
-  Pagination,
+  ListPageFooter,
+  useClientListPage,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -34,19 +35,14 @@ export function TemplateEditorPage() {
   } = useAppSelector((s) => s.templates)
   const [success, setSuccess] = useState<string | null>(null)
   const [restoringId, setRestoringId] = useState<string | null>(null)
-  const [versionPage, setVersionPage] = useState(1)
-  const [versionPageSize, setVersionPageSize] = useState(12)
+  const versionList = useClientListPage(versions)
+  const visibleVersions = versionList.visible
 
   const loading = detailStatus === 'loading' && !template
   const versionsLoading = versionsStatus === 'loading' && versions.length === 0
 
   usePlatformLoading(
     loading ? t('loadingTemplate') : versionsLoading ? t('versions.loading') : null,
-  )
-
-  const visibleVersions = versions.slice(
-    (versionPage - 1) * versionPageSize,
-    versionPage * versionPageSize,
   )
 
   useEffect(() => {
@@ -133,17 +129,17 @@ export function TemplateEditorPage() {
             )}
           </div>
           {versions.length > 0 ? (
-            <Pagination
+            <ListPageFooter
               className="mt-auto"
-              totalCount={versions.length}
-              currentPage={versionPage}
-              pageSize={versionPageSize}
+              totalCount={versionList.total}
+              currentPage={versionList.page}
+              pageSize={versionList.pageSize}
               pageSizeOptions={[12, 24, 48]}
-              onPageChange={setVersionPage}
-              onPageSizeChange={(nextSize) => {
-                setVersionPageSize(nextSize)
-                setVersionPage(1)
-              }}
+              loadedCount={versionList.loadedCount}
+              hasMore={versionList.hasMore}
+              onPageChange={versionList.setPage}
+              onPageSizeChange={versionList.setPageSize}
+              onLoadMore={versionList.loadMore}
             />
           ) : null}
         </ListPageBody>

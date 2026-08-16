@@ -19,7 +19,7 @@ import {
   ListPageBody,
   SearchInput,
   LoadingState,
-  Pagination,
+  ListPageFooter,
   Select,
   SelectContent,
   SelectItem,
@@ -102,6 +102,7 @@ export function ScopedFolderBrowser({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [mediaPage, setMediaPage] = useState(1)
   const [mediaPageSize, setMediaPageSize] = useState(12)
+  const [listScrollRoot, setListScrollRoot] = useState<HTMLDivElement | null>(null)
   const [viewMode, setViewMode] = useState<BrowserViewMode>('thumb')
   const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [previewItem, setPreviewItem] = useState<MediaItemDto | null>(null)
@@ -115,24 +116,26 @@ export function ScopedFolderBrowser({
   const [fileNameQuery, setFileNameQuery] = useState('')
   const [mimeFilter, setMimeFilter] = useState<'all' | 'image' | 'other'>('all')
 
-  const listQueryKey = getMediaListQueryKey({
-    scope,
-    folderPath: currentPath,
-    page: mediaPage,
-    pageSize: mediaPageSize,
-  })
-
   const {
     items,
     folders,
     total,
+    page: storePage,
     listError,
     listStatus,
     listQueryKey: storeQueryKey,
   } = useAppSelector((s) => s.media)
 
+  const listQueryKey = getMediaListQueryKey({
+    scope,
+    folderPath: currentPath,
+    page: storePage,
+    pageSize: mediaPageSize,
+  })
+
   const listReady = storeQueryKey === listQueryKey
-  const loading = !listReady || listStatus === 'loading'
+  const loading = !listReady || (listStatus === 'loading' && items.length === 0)
+  const loadingMore = listStatus === 'loading' && items.length > 0
   const error = localError ?? (listReady ? listError : null)
   const mediaTotal = listReady ? total : 0
   const loadingLabel = isUploading ? 'Uploading…' : loading ? 'Loading media…' : null
@@ -164,13 +167,14 @@ export function ScopedFolderBrowser({
   }, [items, fileNameQuery, listReady, mimeFilter])
 
   const loadList = useCallback(
-    (nextPage: number, nextPageSize: number) => {
+    (nextPage: number, nextPageSize: number, append = false) => {
       dispatch(
         mediaActions.loadListRequested({
           scope,
           folderPath: currentPath,
           page: nextPage,
           pageSize: nextPageSize,
+          append,
         }),
       )
     },
@@ -424,7 +428,7 @@ export function ScopedFolderBrowser({
     }
 
     return (
-      <ItemList className="min-h-0 flex-1 overflow-auto scrollbar-themed">
+      <ItemList className="min-h-0 flex-1">
         {filteredFolders.map((folder) => (
           <ItemListItem key={folder.id}>
             <ItemListContent>
@@ -491,7 +495,7 @@ export function ScopedFolderBrowser({
     }
 
     return (
-      <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-auto scrollbar-themed sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6">
+      <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6">
         {filteredFolders.map((folder) => (
           <div
             key={folder.id}
@@ -629,7 +633,8 @@ export function ScopedFolderBrowser({
 
       <ListPageBody className="min-h-0 flex-1">
         <div
-          className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-md transition-colors ${
+          ref={setListScrollRoot}
+          className={`flex min-h-0 flex-1 flex-col overflow-auto scrollbar-themed rounded-md transition-colors ${
             dropZoneEnabled && isDragging ? 'bg-primary/5 ring-2 ring-primary/30' : ''
           }`}
           onDragOver={(e) => {
@@ -657,12 +662,16 @@ export function ScopedFolderBrowser({
         </div>
 
         {showListContent ? (
-          <Pagination
+          <ListPageFooter
             className="mt-auto shrink-0"
             totalCount={mediaTotal}
             currentPage={mediaPage}
             pageSize={mediaPageSize}
             pageSizeOptions={[12, 24, 48]}
+            loadedCount={items.length}
+            hasMore={items.length < mediaTotal}
+            loadingMore={loadingMore}
+            scrollRoot={listScrollRoot}
             onPageChange={(nextPage) => {
               setMediaPage(nextPage)
               loadList(nextPage, mediaPageSize)
@@ -671,6 +680,15 @@ export function ScopedFolderBrowser({
               setMediaPageSize(nextSize)
               setMediaPage(1)
               loadList(1, nextSize)
+            }}
+            onLoadMore={() => {
+              const nextPage = mediaPage + 1
+              setMediaPage(nextPage)
+              loadList(nextPage, mediaPageSize, true)
+            }}
+            onModeChange={() => {
+              setMediaPage(1)
+              loadList(1, mediaPageSize)
             }}
           />
         ) : null}

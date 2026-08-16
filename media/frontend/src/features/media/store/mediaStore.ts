@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { MediaItemDto } from '@webonone/media-embed'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
-import { forkJoin, from, of } from 'rxjs'
+import { forkJoin, from, merge, of } from 'rxjs'
 import {
   catchError,
   debounceTime,
@@ -15,6 +15,7 @@ import {
 } from 'rxjs/operators'
 import { authActions } from '@/features/auth/store/authSlice'
 import { isFresh, serializeQuery } from '@/shared/store/cacheUtils'
+import { mergeAppendedItems } from '@webonone/store-kit'
 import {
   getMediaItem,
   listFolders,
@@ -31,6 +32,7 @@ export type MediaListQuery = {
   pageSize?: number
   mimeType?: string
   force?: boolean
+  append?: boolean
 }
 
 interface MediaState {
@@ -102,6 +104,7 @@ export const mediaSlice = createSlice({
       })
       if (
         !action.payload.force &&
+        !action.payload.append &&
         state.listQueryKey === queryKey &&
         isFresh(state.lastFetchedAt)
       ) {
@@ -109,7 +112,9 @@ export const mediaSlice = createSlice({
       }
       state.listStatus = 'loading'
       state.listError = null
-      if (action.payload.page !== undefined) state.page = action.payload.page
+      if (action.payload.page !== undefined && !action.payload.append) {
+        state.page = action.payload.page
+      }
       if (action.payload.pageSize !== undefined) state.pageSize = action.payload.pageSize
     },
     loadListSucceeded(
@@ -121,10 +126,16 @@ export const mediaSlice = createSlice({
         total: number
         page: number
         pageSize: number
+        append?: boolean
       }>,
     ) {
-      state.items = action.payload.items
-      state.folders = action.payload.folders
+      state.items =
+        action.payload.append && action.payload.page > 1
+          ? mergeAppendedItems(state.items, action.payload.items)
+          : action.payload.items
+      if (!action.payload.append) {
+        state.folders = action.payload.folders
+      }
       state.total = action.payload.total
       state.page = action.payload.page
       state.pageSize = action.payload.pageSize
@@ -222,10 +233,52 @@ export const mediaActions = mediaSlice.actions
 
 type RootStateWithMedia = { media: MediaState }
 
-const loadListEpic: Epic = (action$, state$) =>
-  action$.pipe(
+const loadListEpic: Epic = (action$, state$) => {
+  const toRequest = (
+    action: ReturnType<typeof mediaActions.loadListRequested>,
+    state: unknown,
+  ) => {
+    const payload = action.payload
+    const media = (state as RootStateWithMedia).media
+    const folderPath = payload.folderPath ?? '/'
+    const page = payload.page ?? media.page
+    const pageSize = payload.pageSize ?? media.pageSize
+    const queryKey = buildListQueryKey({
+      scope: payload.scope,
+      folderPath,
+      page,
+      pageSize,
+      mimeType: payload.mimeType,
+    })
+    return forkJoin({
+      media: from(
+        listMediaItems({
+          scope: payload.scope,
+          folderPath,
+          page,
+          pageSize,
+          mimeType: payload.mimeType,
+        }),
+      ),
+      folders: from(listFolders(payload.scope, folderPath)),
+    }).pipe(
+      map(({ media: mediaResult, folders: folderResult }) =>
+        mediaActions.loadListSucceeded({
+          queryKey,
+          items: mediaResult.items,
+          folders: folderResult.folders,
+          total: mediaResult.total,
+          page: mediaResult.page,
+          pageSize,
+          append: Boolean(payload.append && page > 1),
+        }),
+      ),
+      catchError((err: Error) => of(mediaActions.loadListFailed(err.message))),
+    )
+  }
+
+  const prepared$ = action$.pipe(
     ofType(mediaActions.loadListRequested.type),
-    debounceTime(400),
     withLatestFrom(state$),
     filter(([action, state]) => {
       const payload = (action as ReturnType<typeof mediaActions.loadListRequested>).payload
@@ -238,12 +291,20 @@ const loadListEpic: Epic = (action$, state$) =>
         mimeType: payload.mimeType,
       }
       const queryKey = buildListQueryKey(query)
-      if (payload.force) return true
+      if (payload.force || payload.append) return true
       if (media.listQueryKey === queryKey && isFresh(media.lastFetchedAt)) {
         return false
       }
       return true
     }),
+  )
+
+  const replace$ = prepared$.pipe(
+    filter(
+      ([action]) =>
+        !Boolean((action as ReturnType<typeof mediaActions.loadListRequested>).payload.append),
+    ),
+    debounceTime(400),
     distinctUntilChanged(([a], [b]) => {
       const payloadA = (a as ReturnType<typeof mediaActions.loadListRequested>).payload
       const payloadB = (b as ReturnType<typeof mediaActions.loadListRequested>).payload
@@ -264,45 +325,22 @@ const loadListEpic: Epic = (action$, state$) =>
         })
       )
     }),
-    switchMap(([action, state]) => {
-      const payload = (action as ReturnType<typeof mediaActions.loadListRequested>).payload
-      const media = (state as unknown as RootStateWithMedia).media
-      const folderPath = payload.folderPath ?? '/'
-      const page = payload.page ?? media.page
-      const pageSize = payload.pageSize ?? media.pageSize
-      const queryKey = buildListQueryKey({
-        scope: payload.scope,
-        folderPath,
-        page,
-        pageSize,
-        mimeType: payload.mimeType,
-      })
-      return forkJoin({
-        media: from(
-          listMediaItems({
-            scope: payload.scope,
-            folderPath,
-            page,
-            pageSize,
-            mimeType: payload.mimeType,
-          }),
-        ),
-        folders: from(listFolders(payload.scope, folderPath)),
-      }).pipe(
-        map(({ media: mediaResult, folders: folderResult }) =>
-          mediaActions.loadListSucceeded({
-            queryKey,
-            items: mediaResult.items,
-            folders: folderResult.folders,
-            total: mediaResult.total,
-            page: mediaResult.page,
-            pageSize,
-          }),
-        ),
-        catchError((err: Error) => of(mediaActions.loadListFailed(err.message))),
-      )
-    }),
+    switchMap(([action, state]) =>
+      toRequest(action as ReturnType<typeof mediaActions.loadListRequested>, state),
+    ),
   )
+
+  const append$ = prepared$.pipe(
+    filter(([action]) =>
+      Boolean((action as ReturnType<typeof mediaActions.loadListRequested>).payload.append),
+    ),
+    exhaustMap(([action, state]) =>
+      toRequest(action as ReturnType<typeof mediaActions.loadListRequested>, state),
+    ),
+  )
+
+  return merge(replace$, append$)
+}
 
 const fetchDetailEpic: Epic = (action$, state$) =>
   action$.pipe(

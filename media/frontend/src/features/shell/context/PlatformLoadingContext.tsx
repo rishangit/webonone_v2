@@ -22,7 +22,6 @@ type PlatformLoadingContextValue = {
 const PlatformLoadingContext = createContext<PlatformLoadingContextValue | null>(null)
 
 const DEFAULT_ROUTE_LOADING_DELAY_MS = 175
-const HIDE_LINGER_MS = 200
 
 /** Dev diagnostic: trace loader register/unregister and warn when overlays stack. */
 function logLoaders(
@@ -52,9 +51,7 @@ function logLoaders(
 export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
   const pageLoaders = useRef(new Map<string, string>())
   const routeLoaders = useRef(new Map<string, string>())
-  const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [overlayLabel, setOverlayLabel] = useState<string | null>(null)
-  const hideTimer = useRef<number | null>(null)
 
   const recompute = useCallback(() => {
     const page = pageLoaders.current
@@ -65,7 +62,7 @@ export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
     } else if (route.size > 0) {
       next = Array.from(route.values()).pop() ?? null
     }
-    setActiveLabel(next)
+    setOverlayLabel(next)
   }, [])
 
   const register = useCallback(
@@ -87,29 +84,6 @@ export function PlatformLoadingProvider({ children }: { children: ReactNode }) {
     },
     [recompute],
   )
-
-  useEffect(() => {
-    if (activeLabel) {
-      if (hideTimer.current !== null) {
-        window.clearTimeout(hideTimer.current)
-        hideTimer.current = null
-      }
-      setOverlayLabel(activeLabel)
-      return
-    }
-
-    hideTimer.current = window.setTimeout(() => {
-      setOverlayLabel(null)
-      hideTimer.current = null
-    }, HIDE_LINGER_MS)
-
-    return () => {
-      if (hideTimer.current !== null) {
-        window.clearTimeout(hideTimer.current)
-        hideTimer.current = null
-      }
-    }
-  }, [activeLabel])
 
   const value = useMemo(
     () => ({ register, unregister, overlayLabel }),

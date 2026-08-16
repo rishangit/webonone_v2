@@ -7,8 +7,9 @@ import {
   FeaturePage,
   ListAddButton,
   ListPageBody,
+  ListPageFooter,
   SearchInput,
-  Pagination,
+  useClientListPage,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -37,8 +38,6 @@ export function TemplatesPage() {
     detailStatus,
     detailError,
   } = useAppSelector((s) => s.templates)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<DialogMode>('create')
@@ -58,6 +57,8 @@ export function TemplatesPage() {
         template.slug.toLowerCase().includes(query),
     )
   }, [templates, searchQuery])
+
+  const listPage = useClientListPage(filteredTemplates)
 
   useEffect(() => {
     if (!accessToken) return
@@ -127,7 +128,7 @@ export function TemplatesPage() {
     }
   }
 
-  const visibleTemplates = filteredTemplates.slice((page - 1) * pageSize, page * pageSize)
+  const visibleTemplates = listPage.visible
   const isSaving =
     dialogMode === 'create' ? createStatus === 'saving' : detailStatus === 'saving'
   const dialogError = dialogMode === 'create' ? createError : awaitingUpdate ? detailError : null
@@ -142,10 +143,8 @@ export function TemplatesPage() {
             value={searchQuery}
             onChange={(event) => {
               setSearchQuery(event.target.value)
-              setPage(1)
             }}
             placeholder={t('search')}
-            onClear={() => setPage(1)}
             aria-label={t('searchAria')}
             className="w-64"
           />
@@ -170,17 +169,17 @@ export function TemplatesPage() {
               busyId={togglingId}
             />
           </div>
-          <Pagination
+          <ListPageFooter
             className="mt-auto"
-            totalCount={filteredTemplates.length}
-            currentPage={page}
-            pageSize={pageSize}
+            totalCount={listPage.total}
+            currentPage={listPage.page}
+            pageSize={listPage.pageSize}
             pageSizeOptions={[12, 24, 48]}
-            onPageChange={setPage}
-            onPageSizeChange={(nextSize) => {
-              setPageSize(nextSize)
-              setPage(1)
-            }}
+            loadedCount={listPage.loadedCount}
+            hasMore={listPage.hasMore}
+            onPageChange={listPage.setPage}
+            onPageSizeChange={listPage.setPageSize}
+            onLoadMore={listPage.loadMore}
           />
         </ListPageBody>
       ) : null}

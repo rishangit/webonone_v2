@@ -7,8 +7,8 @@ import {
 } from '@webonone/platform-embed'
 import { CORE_NAV_QUERY_PARAM, appendPromptLogin, buildLogoutClearChain, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
-import { relayThemeQueryParams } from '@webonone/theme'
-import { AppShell, BrandLogo, LoadingState, PageShell } from '@webonone/ui-kit'
+import { relayListPageModeQueryParams, relayThemeQueryParams, useListPageModeValue } from '@webonone/theme'
+import { AppShell, BrandLogo, ListPageModeProvider, LoadingState, PageShell } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { useEmbedLoginMode } from '@/features/auth/hooks/useEmbedLoginMode'
@@ -93,22 +93,20 @@ export function AppLayout() {
 function AppLayoutContent() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
+  const embedParentOrigin = isGuestAuthPath(location.pathname)
+    ? null
+    : resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const listPageMode = useListPageModeValue(embedParentOrigin)
 
-  // Guest auth (WebOnOne login iframe uses parentOrigin without embed=platform) must
-  // never use PlatformEmbedLayout — that layout waits for webonone:platform:init.
-  // Skip stale platform-embed sessionStorage restore on these routes.
-  if (!isGuestAuthPath(location.pathname)) {
-    const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
-    if (embedParentOrigin) {
-      return (
-        <div className={PLATFORM_EMBED_APP_HOST_CLASS}>
-          <PlatformEmbedLayout parentOrigin={embedParentOrigin} />
-        </div>
-      )
-    }
-  }
+  const body = embedParentOrigin ? (
+    <div className={PLATFORM_EMBED_APP_HOST_CLASS}>
+      <PlatformEmbedLayout parentOrigin={embedParentOrigin} />
+    </div>
+  ) : (
+    <AppLayoutShellContent />
+  )
 
-  return <AppLayoutShellContent />
+  return <ListPageModeProvider mode={listPageMode}>{body}</ListPageModeProvider>
 }
 
 function AppLayoutShellContent() {
@@ -125,6 +123,7 @@ function AppLayoutShellContent() {
   const handoffSearchParams = useMemo(
     () => ({
       ...relayThemeQueryParams(searchParams),
+      ...relayListPageModeQueryParams(searchParams),
       ...relayLocaleQueryParams(searchParams),
     }),
     [searchParams],

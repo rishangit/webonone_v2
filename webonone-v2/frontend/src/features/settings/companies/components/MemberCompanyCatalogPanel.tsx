@@ -33,7 +33,8 @@ export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCata
   const [search, setSearch] = useState('')
 
   const entity = t(`entities.${kind}`)
-  const loading = listStatus === 'loading' && storeKind === kind
+  const loading =
+    listStatus !== 'error' && (storeKind !== kind || (listStatus === 'loading' && items.length === 0))
   usePlatformLoading(loading ? t('list.loading', { entity }) : null)
 
   useEffect(() => {

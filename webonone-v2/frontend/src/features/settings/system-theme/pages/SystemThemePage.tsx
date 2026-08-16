@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
-import { FeaturePage, ListAddButton, ListPageBody, SearchInput, Pagination } from '@webonone/ui-kit'
+import { FeaturePage, ListAddButton, ListPageBody, ListPageFooter, SearchInput, useClientListPage } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -22,8 +22,6 @@ export function SystemThemePage() {
     useAppSelector((s) => s.systemTheme)
   const [dialog, setDialog] = useState<DialogState>(null)
   const [deleteTarget, setDeleteTarget] = useState<ApiTheme | null>(null)
-  const [themePage, setThemePage] = useState(1)
-  const [themePageSize, setThemePageSize] = useState(12)
   const [themeSearchQuery, setThemeSearchQuery] = useState('')
 
   const filteredThemes = useMemo(() => {
@@ -51,7 +49,8 @@ export function SystemThemePage() {
     }
   }, [deleteTarget, dispatch])
 
-  const visibleThemes = filteredThemes.slice((themePage - 1) * themePageSize, themePage * themePageSize)
+  const themeList = useClientListPage(filteredThemes)
+  const visibleThemes = themeList.visible
   const emptyMessage = themeSearchQuery.trim() ? t('systemTheme.list.emptySearch') : t('systemTheme.list.empty')
 
   return (
@@ -64,10 +63,8 @@ export function SystemThemePage() {
             value={themeSearchQuery}
             onChange={(event) => {
               setThemeSearchQuery(event.target.value)
-              setThemePage(1)
             }}
             placeholder={t('systemTheme.list.searchPlaceholder')}
-            onClear={() => setThemePage(1)}
             aria-label={t('systemTheme.list.searchAria')}
             className="w-64"
           />
@@ -98,17 +95,17 @@ export function SystemThemePage() {
             />
           ) : null}
         </div>
-        <Pagination
+        <ListPageFooter
           className="mt-auto"
-          totalCount={filteredThemes.length}
-          currentPage={themePage}
-          pageSize={themePageSize}
+          totalCount={themeList.total}
+          currentPage={themeList.page}
+          pageSize={themeList.pageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={setThemePage}
-          onPageSizeChange={(nextSize) => {
-            setThemePageSize(nextSize)
-            setThemePage(1)
-          }}
+          loadedCount={themeList.loadedCount}
+          hasMore={themeList.hasMore}
+          onPageChange={themeList.setPage}
+          onPageSizeChange={themeList.setPageSize}
+          onLoadMore={themeList.loadMore}
         />
       </ListPageBody>
 

@@ -7,7 +7,7 @@ import {
   FeaturePage,
   ListAddButton,
   ListPageBody,
-  Pagination,
+  ListPageFooter,
   SearchInput,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -68,14 +68,19 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
             />
           ) : null}
         </div>
-        <Pagination
+        <ListPageFooter
           className="mt-auto"
           totalCount={list.total}
           currentPage={list.page}
           pageSize={list.pageSize}
+          loadedCount={list.items.length}
+          hasMore={list.hasMore}
+          loadingMore={list.loadingMore}
           onPageChange={(page) => list.load(page, list.pageSize)}
           onPageSizeChange={(pageSize) => list.load(1, pageSize, true)}
           pageSizeOptions={[12, 24, 48]}
+          onLoadMore={list.loadMore}
+          onModeChange={() => list.load(1, list.pageSize, true)}
         />
       </ListPageBody>
 

@@ -38,7 +38,7 @@ Specs: `spec/1.1.0/03-media-project.md`, `spec/1.1.0/08-media-consumer-integrati
 
 ## List pages
 
-Standalone Media collection pages use the UI Kit list page composition (`FeaturePage` + `ListPageBody` + `ItemList` + `Pagination`). `LibraryPage` is the reference; embed routes (`/selector`, `/picker`) keep `EmbedLayout` and may use inline loading overlays.
+Standalone Media collection pages use the UI Kit list page composition (`FeaturePage` + `ListPageBody` + `ItemList` + `ListPageFooter`). `LibraryPage` / `ScopedFolderBrowser` is the reference (`scrollRoot` on the inner `overflow-auto` scroller); embed routes (`/selector`, `/picker`) keep `EmbedLayout` and may use inline loading overlays.
 
 Rule: [feature-page-layout.mdc](../../rules/feature-page-layout.mdc) · Skill: [item-list](../item-list/SKILL.md).
 

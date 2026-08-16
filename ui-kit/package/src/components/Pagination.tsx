@@ -210,7 +210,7 @@ function Pagination({
   ) : null
 
   return (
-    <div id={id} className={cn('shrink-0', className)}>
+    <div id={id} className={cn('shrink-0 pb-4 sm:pb-6', className)}>
       <div className="flex flex-col gap-3 sm:hidden">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">{summary}</p>

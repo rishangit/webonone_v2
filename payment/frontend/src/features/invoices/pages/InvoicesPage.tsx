@@ -15,7 +15,7 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  Pagination,
+  ListPageFooter,
   SearchInput,
   Select,
   SelectContent,
@@ -277,12 +277,15 @@ export function InvoicesPage() {
               </ItemList>
             )}
           </div>
-          <Pagination
+          <ListPageFooter
             className="mt-auto"
             totalCount={total}
             currentPage={page}
             pageSize={pageSize}
             pageSizeOptions={[12, 24, 48]}
+            loadedCount={items.length}
+            hasMore={items.length < total}
+            loadingMore={listStatus === 'loading' && items.length > 0}
             onPageChange={(next) => reload(next)}
             onPageSizeChange={(nextPageSize) =>
               dispatch(
@@ -295,6 +298,18 @@ export function InvoicesPage() {
                 }),
               )
             }
+            onLoadMore={() =>
+              dispatch(
+                invoicesActions.loadListRequested({
+                  page: page + 1,
+                  pageSize,
+                  status: appliedFilters.status,
+                  extra: { q: appliedFilters.q.trim() || undefined },
+                  append: true,
+                }),
+              )
+            }
+            onModeChange={() => reload(1)}
           />
         </ListPageBody>
       ) : null}

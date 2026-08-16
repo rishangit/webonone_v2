@@ -5,8 +5,9 @@ import {
   AlertDescription,
   FeaturePage,
   ListPageBody,
+  ListPageFooter,
   SearchInput,
-  Pagination,
+  useClientListPage,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
@@ -24,8 +25,6 @@ export function ConnectedCompaniesPage() {
     myCompaniesFetchedAt,
   } = useAppSelector((s) => s.companies)
 
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
 
   const connectedCompanies = useMemo(
@@ -50,7 +49,8 @@ export function ConnectedCompaniesPage() {
       )
     : connectedCompanies
 
-  const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
+  const listPage = useClientListPage(filteredItems)
+  const visibleItems = listPage.visible
 
   if (awaitingFirstLoad) {
     return null
@@ -65,10 +65,8 @@ export function ConnectedCompaniesPage() {
           value={searchQuery}
           onChange={(event) => {
             setSearchQuery(event.target.value)
-            setPage(1)
           }}
           placeholder={t('connectedCompanies.searchPlaceholder')}
-          onClear={() => setPage(1)}
           aria-label={t('connectedCompanies.searchAria')}
           className="w-64"
         />
@@ -84,17 +82,17 @@ export function ConnectedCompaniesPage() {
         <div className="flex-1">
           <MyCompaniesList items={visibleItems} emptyMessage={t('connectedCompanies.empty')} />
         </div>
-        <Pagination
+        <ListPageFooter
           className="mt-auto"
-          totalCount={filteredItems.length}
-          currentPage={page}
-          pageSize={pageSize}
+          totalCount={listPage.total}
+          currentPage={listPage.page}
+          pageSize={listPage.pageSize}
           pageSizeOptions={[12, 24, 48]}
-          onPageChange={setPage}
-          onPageSizeChange={(nextSize) => {
-            setPageSize(nextSize)
-            setPage(1)
-          }}
+          loadedCount={listPage.loadedCount}
+          hasMore={listPage.hasMore}
+          onPageChange={listPage.setPage}
+          onPageSizeChange={listPage.setPageSize}
+          onLoadMore={listPage.loadMore}
         />
       </ListPageBody>
     </FeaturePage>

@@ -18,7 +18,7 @@ import {
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
-  Pagination,
+  ListPageFooter,
   Select,
   SelectContent,
   SelectItem,
@@ -99,13 +99,13 @@ export function DashboardPage() {
     const toIso = appliedFilters.to ? endOfDayIso(appliedFilters.to) : undefined
     dispatch(
       historyActions.loadListRequested({
-        page: recentPage,
+        page: 1,
         pageSize: recentPageSize,
         status: appliedFilters.status,
         extra: { from: fromIso, to: toIso },
       }),
     )
-  }, [accessToken, appliedFilters, dispatch, recentPage, recentPageSize])
+  }, [accessToken, appliedFilters, dispatch, recentPageSize])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
@@ -262,14 +262,45 @@ export function DashboardPage() {
                   </ItemList>
                 )}
               </div>
-              <Pagination
+              <ListPageFooter
                 className="mt-auto"
                 totalCount={recentTotal}
                 currentPage={recentPage}
                 pageSize={recentPageSize}
                 pageSizeOptions={[12, 24, 48]}
+                loadedCount={recentItems.length}
+                hasMore={recentItems.length < recentTotal}
+                loadingMore={recentListStatus === 'loading' && recentItems.length > 0}
                 onPageChange={handleRecentPageChange}
                 onPageSizeChange={handleRecentPageSizeChange}
+                onLoadMore={() =>
+                  dispatch(
+                    historyActions.loadListRequested({
+                      page: recentPage + 1,
+                      pageSize: recentPageSize,
+                      status: appliedFilters.status,
+                      append: true,
+                      extra: {
+                        from: appliedFilters.from ? startOfDayIso(appliedFilters.from) : undefined,
+                        to: appliedFilters.to ? endOfDayIso(appliedFilters.to) : undefined,
+                      },
+                    }),
+                  )
+                }
+                onModeChange={() =>
+                  dispatch(
+                    historyActions.loadListRequested({
+                      page: 1,
+                      pageSize: recentPageSize,
+                      status: appliedFilters.status,
+                      force: true,
+                      extra: {
+                        from: appliedFilters.from ? startOfDayIso(appliedFilters.from) : undefined,
+                        to: appliedFilters.to ? endOfDayIso(appliedFilters.to) : undefined,
+                      },
+                    }),
+                  )
+                }
               />
             </ListPageBody>
           </section>

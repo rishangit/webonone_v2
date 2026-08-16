@@ -13,7 +13,7 @@ import {
 } from 'rxjs/operators'
 import { smsApi } from '@/shared/services/smsApi'
 import type { QueueItem, QueueStatus } from '@/shared/types/sms.types'
-import { isFresh, serializeQuery } from '@/shared/store/cacheUtils'
+import { isFresh, mergeAppendedItems, serializeQuery } from '@webonone/store-kit'
 
 const POLL_CACHE_TTL_MS = 30_000
 
@@ -56,6 +56,7 @@ export const queueSlice = createSlice({
         pageSize?: number
         status?: QueueStatus
         force?: boolean
+        append?: boolean
       }>,
     ) {
       const page = action.payload.page ?? state.page
@@ -72,7 +73,9 @@ export const queueSlice = createSlice({
       state.listStatus = 'loading'
       state.listError = null
       if (action.payload.status !== undefined) state.status = action.payload.status
-      if (action.payload.page !== undefined) state.page = action.payload.page
+      if (action.payload.page !== undefined && !action.payload.append) {
+        state.page = action.payload.page
+      }
       if (action.payload.pageSize !== undefined) state.pageSize = action.payload.pageSize
     },
     loadListSucceeded(
@@ -83,9 +86,13 @@ export const queueSlice = createSlice({
         total: number
         page: number
         pageSize: number
+        append?: boolean
       }>,
     ) {
-      state.items = action.payload.items
+      state.items =
+        action.payload.append && action.payload.page > 1
+          ? mergeAppendedItems(state.items, action.payload.items)
+          : action.payload.items
       state.total = action.payload.total
       state.page = action.payload.page
       state.pageSize = action.payload.pageSize
@@ -131,7 +138,7 @@ const loadListEpic: Epic = (action$, state$) =>
         pageSize: payload.pageSize ?? feature.pageSize,
         status: payload.status ?? feature.status,
       })
-      if (payload.force) return true
+        if (payload.force || payload.append) return true
       if (feature.queryKey === queryKey && isFresh(feature.lastFetchedAt, POLL_CACHE_TTL_MS)) {
         return false
       }
@@ -157,6 +164,7 @@ const loadListEpic: Epic = (action$, state$) =>
             total: result.total,
             page: result.page,
             pageSize: result.pageSize,
+            append: Boolean(payload.append && page > 1),
           }),
         ),
         catchError((err: Error) => of(queueActions.loadListFailed(err.message))),

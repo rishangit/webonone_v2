@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
@@ -48,11 +48,21 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   const entity = t(`entities.${kind}`)
   const noun = t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`)
 
-  const loading = listStatus === 'loading' && storeKind === kind
+  const loading =
+    listStatus !== 'error' && (storeKind !== kind || (listStatus === 'loading' && items.length === 0))
   usePlatformLoading(loading ? t('list.loading', { entity }) : null)
   const canManage = activeRole === 'company_admin'
+  const searchRef = useRef(search)
 
   useEffect(() => {
+    dispatch(
+      companyCatalogActions.listRequested({ kind, q: searchRef.current.trim() || undefined }),
+    )
+  }, [dispatch, kind])
+
+  useEffect(() => {
+    if (searchRef.current === search) return
+    searchRef.current = search
     const handle = window.setTimeout(() => {
       dispatch(companyCatalogActions.listRequested({ kind, q: search.trim() || undefined }))
     }, 250)
@@ -100,15 +110,16 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
       }
     >
       <ListPageBody>
-        <ItemList>
-          {filtered.length === 0 ? (
-            <ItemListEmpty>
-              {search.trim()
-                ? t('list.emptySearch', { entity })
-                : t('list.empty', { entity })}
-            </ItemListEmpty>
-          ) : (
-            filtered.map((item) => (
+        {!loading ? (
+          <ItemList>
+            {filtered.length === 0 ? (
+              <ItemListEmpty>
+                {search.trim()
+                  ? t('list.emptySearch', { entity })
+                  : t('list.empty', { entity })}
+              </ItemListEmpty>
+            ) : (
+              filtered.map((item) => (
               <ItemListItem key={item.id}>
                 <ItemListContent>
                   <button
@@ -161,6 +172,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
             ))
           )}
         </ItemList>
+        ) : null}
       </ListPageBody>
 
       {canManage && kind === 'services' ? (

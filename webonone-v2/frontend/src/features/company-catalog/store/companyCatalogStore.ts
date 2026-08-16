@@ -48,6 +48,9 @@ const companyCatalogSlice = createSlice({
       state,
       action: PayloadAction<{ kind: CatalogEntityKind; q?: string; companyId?: string }>,
     ) {
+      if (state.kind !== action.payload.kind) {
+        state.items = []
+      }
       state.kind = action.payload.kind
       state.listStatus = 'loading'
       state.listError = null

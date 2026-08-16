@@ -35,7 +35,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [feature-page-layout.mdc](feature-page-layout.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}` | `FeaturePage` / `PageHeader` for AppShell feature pages |
 | [details-page-cards.mdc](details-page-cards.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `ui-kit/showcase/src/pages/**/*.{ts,tsx}` | Card-based details/profile pages — 3-col stacks, equal `gap-6`, **page-level** Edit |
 | [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc) | `**/frontend/src/features/**/pages/**/*.{ts,tsx}`, `**/…/*Dialog*.{ts,tsx}`, showcase pages | Wizard-backed details — Overview `ImageCarousel` when images exist; per-card Edit → shared wizard; `?tab=` sync |
-| [item-list-pagination.mdc](item-list-pagination.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `Pagination` below `ItemList` on collection pages |
+| [item-list-pagination.mdc](item-list-pagination.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `ListPageFooter` below `ItemList` on collection pages (pagination or on-scroll) |
 | [list-filter-panel.mdc](list-filter-panel.mdc) | `**/frontend/src/features/**/*.{ts,tsx}` | `SearchInput` + `ListFilterPanel` + trigger on collection pages |
 | [loading-empty-states.mdc](loading-empty-states.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Unified platform loading overlay; `LoadingState`; `ItemListEmpty` |
 | [react-typescript.mdc](react-typescript.mdc) | `**/frontend/**/*.{ts,tsx}` | Components, TypeScript, hooks, forms |

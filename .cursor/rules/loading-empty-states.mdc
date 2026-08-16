@@ -34,9 +34,9 @@ Pages / list fetches → usePlatformLoading(loading ? 'Loading …' : null)
 
 Hooks use **`useLayoutEffect`** to set/clear labels (avoids one-frame overlay gaps).
 
-### Ref-counted registry + hide-linger (required)
+### Ref-counted registry (required)
 
-`PlatformLoadingContext` keeps **`Map<id, label>`** loaders (one per `useId()`), split by `page` and `route` kind — **never a single label slot** (concurrent loaders would stomp each other and flicker). The overlay label resolves as: newest `page` loader if any, else newest `route` loader, else `null`. When the last loader clears, the overlay lingers **`HIDE_LINGER_MS` (200ms)** before hiding, so a quick clear→set hand-off (route chunk → page fetch) shows **one continuous overlay** instead of an off/on blink. Reference: `webonone-v2/frontend/src/features/shell/context/PlatformLoadingContext.tsx` (copy per service).
+`PlatformLoadingContext` keeps **`Map<id, label>`** loaders (one per `useId()`), split by `page` and `route` kind — **never a single label slot** (concurrent loaders would stomp each other and flicker). The overlay label resolves as: newest `page` loader if any, else newest `route` loader, else `null`. Hide **immediately** when the last loader clears — do **not** add a hide-linger timer. List pages must report loading from the first paint until the first fetch completes (`lastFetchedAt === null`, or `listStatus === 'loading' && items.length === 0`) so route-chunk → page-fetch stays one continuous overlay. Reference: `webonone-v2/frontend/src/features/shell/context/PlatformLoadingContext.tsx` (copy per service).
 
 **Route every loading state through the registry** — including session loading. `AppLayout` calls `usePlatformLoading(sessionLoading ? 'Loading session…' : null)` and reads the final label from `usePlatformOverlayLabel()`; do not `??`-chain page/route/session labels by hand.
 
@@ -49,7 +49,7 @@ Hooks use **`useLayoutEffect`** to set/clear labels (avoids one-frame overlay ga
 | Data / Email satellite | `usePlatformLoading(sessionLoading ? 'Loading session…' : null)` in `AppLayout` — `sessionLoading = Boolean(accessToken) && !roleReady`; **exclude** `isBootstrapping` |
 | WebOnOne core | Session via `SessionRoleGate` → `usePlatformLoading('Loading session…')` |
 
-Do **not** manually compose `sessionLoading ? … : pageLabel ?? routeLabel` in `AppLayout` — the registry already resolves priority and applies hide-linger.
+Do **not** manually compose `sessionLoading ? … : pageLabel ?? routeLabel` in `AppLayout` — the registry already resolves priority. Hide as soon as the last loader unregisters.
 
 Context module (same API — copy per service):
 

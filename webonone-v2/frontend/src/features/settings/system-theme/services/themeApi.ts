@@ -15,9 +15,12 @@ export type ApiTheme = {
   updatedAt: string
 }
 
+export type ListPageMode = 'pagination' | 'on-scroll'
+
 export type PreferencesResponse = {
   activeThemeId: string
   colorMode: 'light' | 'dark'
+  listPageMode: ListPageMode
   theme: ApiTheme
 }
 
@@ -67,7 +70,11 @@ export const themeApi = {
   getPreferences() {
     return apiClient<PreferencesResponse>('/me/preferences')
   },
-  patchPreferences(body: { activeThemeId?: string; colorMode?: 'light' | 'dark' }) {
+  patchPreferences(body: {
+    activeThemeId?: string
+    colorMode?: 'light' | 'dark'
+    listPageMode?: ListPageMode
+  }) {
     return apiClient<PreferencesResponse>('/me/preferences', {
       method: 'PATCH',
       body: JSON.stringify(body),

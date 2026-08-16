@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
-import { from, of } from 'rxjs'
+import { from, merge, of } from 'rxjs'
 import {
   catchError,
   debounceTime,
@@ -13,6 +13,7 @@ import {
 } from 'rxjs/operators'
 import type { CatalogFeatureState, CatalogListQuery, PaginatedResult } from './types'
 import { isFresh, serializeQuery } from './cacheUtils'
+import { mergeAppendedItems } from './mergeAppendedItems'
 
 type ListLoader<T> = (query: CatalogListQuery) => Promise<PaginatedResult<T>>
 type GetLoader<T> = (id: string) => Promise<T>
@@ -77,7 +78,9 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
         state.listError = null
         if (action.payload.q !== undefined) state.q = action.payload.q
         if (action.payload.status !== undefined) state.status = action.payload.status ?? 'all'
-        if (action.payload.page !== undefined) state.page = action.payload.page
+        if (action.payload.page !== undefined && !action.payload.append) {
+          state.page = action.payload.page
+        }
         if (action.payload.pageSize !== undefined) state.pageSize = action.payload.pageSize
       },
       loadListSucceeded(
@@ -88,9 +91,14 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
           total: number
           page: number
           pageSize: number
+          append?: boolean
         }>,
       ) {
-        state.items = action.payload.items as typeof state.items
+        const incoming = action.payload.items as typeof state.items
+        state.items =
+          action.payload.append && action.payload.page > 1
+            ? (mergeAppendedItems(state.items, incoming) as typeof state.items)
+            : incoming
         state.total = action.payload.total
         state.page = action.payload.page
         state.pageSize = action.payload.pageSize
@@ -170,10 +178,39 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
 
   type RootStateWithFeature = { [K in typeof config.name]: CatalogFeatureState<T> }
 
-  const loadListEpic: Epic = (action$, state$) =>
-    action$.pipe(
+  const loadListEpic: Epic = (action$, state$) => {
+    const toRequest = (action: ReturnType<typeof actions.loadListRequested>, state: unknown) => {
+      const payload = action.payload
+      const featureState = (state as RootStateWithFeature)[config.name]
+      const query = {
+        page: payload.page ?? featureState.page,
+        pageSize: payload.pageSize ?? featureState.pageSize,
+        q: (payload.q ?? featureState.q).trim() || undefined,
+        status:
+          (payload.status ?? featureState.status) === 'all'
+            ? undefined
+            : payload.status ?? featureState.status,
+        ...payload.extra,
+      }
+      const queryKey = serializeQuery(query)
+      const append = Boolean(payload.append && (query.page ?? 1) > 1)
+      return from(config.list(query)).pipe(
+        map((result) =>
+          actions.loadListSucceeded({
+            queryKey,
+            items: result.items,
+            total: result.total,
+            page: result.page,
+            pageSize: query.pageSize ?? featureState.pageSize,
+            append,
+          }),
+        ),
+        catchError((err: Error) => of(actions.loadListFailed(err.message))),
+      )
+    }
+
+    const prepared$ = action$.pipe(
       ofType(actions.loadListRequested.type),
-      debounceTime(400),
       withLatestFrom(state$),
       filter(([action, state]) => {
         const payload = (action as ReturnType<typeof actions.loadListRequested>).payload
@@ -185,45 +222,36 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
           status: payload.status ?? featureState.status,
           ...payload.extra,
         })
-        if (payload.force) return true
+        if (payload.force || payload.append) return true
         if (featureState.queryKey === queryKey && isFresh(featureState.lastFetchedAt)) {
           return false
         }
         return true
       }),
+    )
+
+    const replace$ = prepared$.pipe(
+      filter(([action]) => !Boolean((action as ReturnType<typeof actions.loadListRequested>).payload.append)),
+      debounceTime(400),
       distinctUntilChanged(
         ([a], [b]) =>
           serializeQuery((a as ReturnType<typeof actions.loadListRequested>).payload) ===
           serializeQuery((b as ReturnType<typeof actions.loadListRequested>).payload),
       ),
-      switchMap(([action, state]) => {
-        const payload = (action as ReturnType<typeof actions.loadListRequested>).payload
-        const featureState = (state as unknown as RootStateWithFeature)[config.name]
-        const query = {
-          page: payload.page ?? featureState.page,
-          pageSize: payload.pageSize ?? featureState.pageSize,
-          q: (payload.q ?? featureState.q).trim() || undefined,
-          status:
-            (payload.status ?? featureState.status) === 'all'
-              ? undefined
-              : payload.status ?? featureState.status,
-          ...payload.extra,
-        }
-        const queryKey = serializeQuery(query)
-        return from(config.list(query)).pipe(
-          map((result) =>
-            actions.loadListSucceeded({
-              queryKey,
-              items: result.items,
-              total: result.total,
-              page: result.page,
-              pageSize: query.pageSize ?? featureState.pageSize,
-            }),
-          ),
-          catchError((err: Error) => of(actions.loadListFailed(err.message))),
-        )
-      }),
+      switchMap(([action, state]) =>
+        toRequest(action as ReturnType<typeof actions.loadListRequested>, state),
+      ),
     )
+
+    const append$ = prepared$.pipe(
+      filter(([action]) => Boolean((action as ReturnType<typeof actions.loadListRequested>).payload.append)),
+      exhaustMap(([action, state]) =>
+        toRequest(action as ReturnType<typeof actions.loadListRequested>, state),
+      ),
+    )
+
+    return merge(replace$, append$)
+  }
 
   const fetchDetailEpic: Epic = (action$, state$) =>
     action$.pipe(

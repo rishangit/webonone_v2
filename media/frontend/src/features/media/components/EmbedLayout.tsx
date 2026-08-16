@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { useEmbedThemeListener } from '@webonone/theme'
-import { cn } from '@webonone/ui-kit'
+import { useEmbedThemeListener, useListPageModeValue } from '@webonone/theme'
+import { cn, ListPageModeProvider } from '@webonone/ui-kit'
 
 interface EmbedLayoutProps {
   title: string
@@ -22,29 +22,34 @@ export function EmbedLayout({
   inset = false,
 }: EmbedLayoutProps) {
   useEmbedThemeListener(parentOrigin)
+  const listPageMode = useListPageModeValue(parentOrigin)
 
   if (chromeless) {
     return (
-      <div className={cn('flex h-dvh min-h-0 w-full flex-col overflow-hidden text-foreground')}>
-        <main
-          className={cn(
-            'flex min-h-0 flex-1 flex-col overflow-hidden',
-            inset && 'px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5',
-          )}
-        >
-          {children}
-        </main>
-      </div>
+      <ListPageModeProvider mode={listPageMode}>
+        <div className={cn('flex h-dvh min-h-0 w-full flex-col overflow-hidden text-foreground')}>
+          <main
+            className={cn(
+              'flex min-h-0 flex-1 flex-col overflow-hidden',
+              inset && 'px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5',
+            )}
+          >
+            {children}
+          </main>
+        </div>
+      </ListPageModeProvider>
     )
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex items-center justify-between border-b px-4 py-3">
-        <h1 className="text-sm font-semibold">{title}</h1>
-        {actions}
-      </header>
-      <main className="min-h-0 flex-1 overflow-auto p-4 scrollbar-themed">{children}</main>
-    </div>
+    <ListPageModeProvider mode={listPageMode}>
+      <div className="flex h-screen flex-col bg-background text-foreground">
+        <header className="flex items-center justify-between border-b px-4 py-3">
+          <h1 className="text-sm font-semibold">{title}</h1>
+          {actions}
+        </header>
+        <main className="min-h-0 flex-1 overflow-auto p-4 scrollbar-themed">{children}</main>
+      </div>
+    </ListPageModeProvider>
   )
 }
