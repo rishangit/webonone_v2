@@ -29,6 +29,7 @@ import { hasPlatformHandoff, parsePlatformReturnUrl } from '@/features/auth/util
 import type { DesignRole } from '@/features/auth/types/auth.types'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
+import { isWebsiteDesignerPath } from '@/features/shell/utils/navigateDesign'
 
 export function AppLayout() {
   return (
@@ -179,9 +180,10 @@ function AppLayoutShellContent() {
   const sessionLoading = Boolean(accessToken) && !roleReady
   usePlatformLoading(sessionLoading ? ts('loadingSession') : null)
   const overlayLabel = usePlatformOverlayLabel()
+  const isWebsiteDesigner = isWebsiteDesignerPath(location.pathname)
 
   const mainContent = (
-    <div className="relative flex min-h-full flex-col">
+    <div className={isWebsiteDesigner ? 'relative flex h-full min-h-0 flex-col' : 'relative flex min-h-full flex-col'}>
       <Outlet />
       {bootstrapError ? (
         <Alert variant="destructive" className="mt-4">
@@ -204,6 +206,14 @@ function AppLayoutShellContent() {
     locale: currentLocale,
     onLocaleChange: handleLocaleChange,
     headerLabels,
+  }
+
+  if (isWebsiteDesigner && isAuthenticated) {
+    return (
+      <div className="relative flex h-svh min-h-0 w-full flex-col overflow-hidden bg-background">
+        {mainContent}
+      </div>
+    )
   }
 
   if (usePlatformShell) {

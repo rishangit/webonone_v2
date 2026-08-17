@@ -4,7 +4,10 @@ import siShell from '@/locales/si/shell.json'
 import enForms from '@/locales/en/forms.json'
 import siForms from '@/locales/si/forms.json'
 
-export const NAMESPACES = ['shell', 'forms'] as const
+import enWebsite from '@/locales/en/website.json'
+import siWebsite from '@/locales/si/website.json'
+
+export const NAMESPACES = ['shell', 'forms', 'website'] as const
 
 export function initDesignI18n() {
   return createAppI18n({
@@ -13,10 +16,12 @@ export function initDesignI18n() {
       en: {
         shell: enShell,
         forms: enForms,
+        website: enWebsite,
       },
       si: {
         shell: siShell,
         forms: siForms,
+        website: siWebsite,
       },
     },
   })

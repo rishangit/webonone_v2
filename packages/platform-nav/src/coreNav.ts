@@ -373,12 +373,17 @@ const PAYMENT_PLATFORM_NAV_GROUP: CoreNavGroup = {
 /** Internal sentinels for Design sub-nav in consumer AppLayouts (not routed on core origin). */
 export const DESIGN_NAV_SENTINELS = {
   forms: '/design/forms',
+  website: '/design/website',
 } as const
 
 export function isDesignNavSentinel(to: string): boolean {
-  if (to === DESIGN_NAV_SENTINELS.forms) return true
+  if (to === DESIGN_NAV_SENTINELS.forms || to === DESIGN_NAV_SENTINELS.website) return true
   if (to.startsWith(`${DESIGN_NAV_SENTINELS.forms}/`)) {
     const rest = to.slice(`${DESIGN_NAV_SENTINELS.forms}/`.length)
+    return Boolean(rest) && !rest.includes('..')
+  }
+  if (to.startsWith(`${DESIGN_NAV_SENTINELS.website}/`)) {
+    const rest = to.slice(`${DESIGN_NAV_SENTINELS.website}/`.length)
     return Boolean(rest) && !rest.includes('..')
   }
   return false
@@ -386,10 +391,16 @@ export function isDesignNavSentinel(to: string): boolean {
 
 export function designSentinelToExternalPath(sentinel: string): string | null {
   if (sentinel === DESIGN_NAV_SENTINELS.forms) return '/forms'
+  if (sentinel === DESIGN_NAV_SENTINELS.website) return '/website'
   if (sentinel.startsWith(`${DESIGN_NAV_SENTINELS.forms}/`)) {
     const rest = sentinel.slice(DESIGN_NAV_SENTINELS.forms.length)
     if (!rest || rest.includes('..')) return null
     return `/forms${rest}`
+  }
+  if (sentinel.startsWith(`${DESIGN_NAV_SENTINELS.website}/`)) {
+    const rest = sentinel.slice(DESIGN_NAV_SENTINELS.website.length)
+    if (!rest || rest.includes('..')) return null
+    return `/website${rest}`
   }
   return null
 }
@@ -404,6 +415,13 @@ const DESIGN_PLATFORM_NAV_GROUP: CoreNavGroup = {
       label: 'Forms',
       externalService: 'design',
       externalPath: '/forms',
+    },
+    {
+      kind: 'item',
+      path: DESIGN_NAV_SENTINELS.website,
+      label: 'Website',
+      externalService: 'design',
+      externalPath: '/website',
     },
   ],
 }

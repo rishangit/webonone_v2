@@ -222,10 +222,20 @@ function isAllowedDesignShellNavigatePath(path: string): boolean {
   const parts = pathname.slice(1).split('/').filter(Boolean)
   if (parts[0] !== 'design' || parts.length < 2) return false
   if (parts.some((part) => !part || part.includes('..'))) return false
-  if (parts[1] !== 'forms') return false
-  // /design/forms or /design/forms/:id/edit or /design/forms/:id/fill
-  if (parts.length === 2) return true
-  if (parts.length === 4 && (parts[3] === 'edit' || parts[3] === 'fill')) return true
+  const section = parts[1]
+  if (section === 'forms') {
+    // /design/forms or /design/forms/:id/edit or /design/forms/:id/fill
+    if (parts.length === 2) return true
+    if (parts.length === 4 && (parts[3] === 'edit' || parts[3] === 'fill')) return true
+    return false
+  }
+  if (section === 'website') {
+    // /design/website, /design/website/pages, …/:id/edit, /design/website/themes/:id
+    if (parts.length === 2) return true
+    const rest = parts.slice(2)
+    if (rest.some((part) => !part || part.includes('..'))) return false
+    return rest.length >= 1 && rest.length <= 4
+  }
   return false
 }
 
