@@ -19,10 +19,13 @@ import {
   isSmsNavSentinel,
   parsePlatformNavVariant,
   resolvePlatformNavUrls,
+  DESIGN_NAV_SENTINELS,
+  designSentinelToExternalPath,
+  isDesignNavSentinel,
   SMS_NAV_SENTINELS,
   smsSentinelToExternalPath,
   toCoreNavQueryValue,
-} from './coreNav.ts'
+} from './coreNav'
 
 describe('coreNav', () => {
   it('parses core origin from return URL', () => {
@@ -316,5 +319,27 @@ describe('coreNav', () => {
       filterCompanyDataEntities(['tags', 'units', 'attributes', 'products', 'spaces']),
       ['products', 'spaces'],
     )
+  })
+
+  it('maps Design Forms and Website sentinels', () => {
+    assert.equal(isDesignNavSentinel(DESIGN_NAV_SENTINELS.forms), true)
+    assert.equal(isDesignNavSentinel(DESIGN_NAV_SENTINELS.website), true)
+    assert.equal(isDesignNavSentinel(`${DESIGN_NAV_SENTINELS.website}/pages`), true)
+    assert.equal(isDesignNavSentinel(`${DESIGN_NAV_SENTINELS.website}/pages/abc/edit`), true)
+    assert.equal(designSentinelToExternalPath(DESIGN_NAV_SENTINELS.forms), '/forms')
+    assert.equal(designSentinelToExternalPath(DESIGN_NAV_SENTINELS.website), '/website')
+    assert.equal(
+      designSentinelToExternalPath(`${DESIGN_NAV_SENTINELS.website}/pages/abc/edit`),
+      '/website/pages/abc/edit',
+    )
+    const defs = getPlatformNavDefs('main')
+    const design = defs.find((item) => item.kind === 'group' && item.label === 'Design')
+    assert.ok(design?.kind === 'group')
+    if (design?.kind === 'group') {
+      assert.deepEqual(
+        design.children.map((child) => child.label),
+        ['Forms', 'Website'],
+      )
+    }
   })
 })

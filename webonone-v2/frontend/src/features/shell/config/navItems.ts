@@ -3,6 +3,7 @@ import {
   Calendar,
   CalendarDays,
   Database,
+  Globe,
   History,
   Home,
   Layers,
@@ -73,6 +74,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
   [SMS_NAV_SENTINELS.templates]: MessageSquare,
   [PAYMENT_NAV_SENTINELS.invoices]: Wallet,
   [DESIGN_NAV_SENTINELS.forms]: Palette,
+  [DESIGN_NAV_SENTINELS.website]: Globe,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
 }

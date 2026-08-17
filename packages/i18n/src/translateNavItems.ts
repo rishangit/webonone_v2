@@ -40,6 +40,7 @@ export const NAV_LABEL_KEYS: Record<string, string> = {
   Devices: 'nav.devices',
   Invoices: 'nav.invoices',
   Forms: 'nav.forms',
+  Website: 'nav.website',
   'Test Email': 'nav.testEmail',
   Providers: 'nav.providers',
   Library: 'nav.library',

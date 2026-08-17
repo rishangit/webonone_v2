@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react'
+import { FileText, Globe } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import type { DesignRole } from '@/features/auth/types/auth.types'
@@ -15,6 +15,12 @@ const TOP_LEVEL_ITEMS: DesignNavItem[] = [
     to: '/forms',
     label: 'Forms',
     icon: FileText,
+    roles: ['super_admin', 'company_admin', 'member'],
+  },
+  {
+    to: '/website',
+    label: 'Website',
+    icon: Globe,
     roles: ['super_admin', 'company_admin', 'member'],
   },
 ]

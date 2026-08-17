@@ -38,7 +38,7 @@ export function WebsiteHomePage() {
         onNotNow={dismissPermissionPrompt}
       />
 
-      <section className="relative flex min-h-[min(70vh,36rem)] flex-1 flex-col overflow-hidden px-4 pb-16 pt-1 sm:px-8">
+      <section className="relative flex min-h-[min(70vh,36rem)] flex-1 flex-col overflow-hidden px-4 pb-16 pt-0 sm:px-8">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--accent-primary)/0.18),_transparent_55%),linear-gradient(160deg,_hsl(var(--background))_0%,_hsl(var(--muted)/0.45)_50%,_hsl(var(--background))_100%)]"
@@ -61,7 +61,7 @@ export function WebsiteHomePage() {
           />
         </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center text-center">
+        <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-start pt-10 text-center sm:pt-14">
           <p className="mb-3 text-sm font-medium tracking-wide text-muted-foreground">{t('brand')}</p>
           <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             {t('headline')}

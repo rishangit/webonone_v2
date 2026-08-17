@@ -103,31 +103,34 @@ function usePlatformLoadingContext(): PlatformLoadingContextValue {
   return context
 }
 
-function useLoadingLabel(kind: LoadingKind, label: string | null | false): void {
-  const { register, unregister } = usePlatformLoadingContext()
+function useLoadingLabel(kind: LoadingKind, label: string | null | false, enabled = true): void {
+  const context = useContext(PlatformLoadingContext)
   const id = useId()
-  const nextLabel = label || null
+  const nextLabel = enabled && label ? label : null
 
   useLayoutEffect(() => {
+    if (!context) {
+      return
+    }
     if (nextLabel) {
-      register(id, kind, nextLabel)
+      context.register(id, kind, nextLabel)
     } else {
-      unregister(id)
+      context.unregister(id)
     }
     return () => {
-      unregister(id)
+      context.unregister(id)
     }
-  }, [id, kind, nextLabel, register, unregister])
+  }, [context, id, kind, nextLabel])
 }
 
-/** Report page data loading to AppLayout overlay. */
-export function usePlatformLoading(label: string | null | false): void {
-  useLoadingLabel('page', label)
+/** Report page data loading to AppLayout overlay. No-ops on public routes outside the provider. */
+export function usePlatformLoading(label: string | null | false, enabled = true): void {
+  useLoadingLabel('page', label, enabled)
 }
 
 /** Report lazy route chunk loading to AppLayout overlay. */
 export function useRouteLoading(label: string | null | false): void {
-  useLoadingLabel('route', label)
+  useLoadingLabel('route', label, true)
 }
 
 /** Delay route overlay to avoid flash when lazy chunks are already cached. */

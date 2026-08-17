@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import healthRoutes from './routes/health.routes.js'
 import formsRoutes from './routes/forms.routes.js'
 import submissionsRoutes from './routes/submissions.routes.js'
+import websiteRoutes from './routes/website.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -19,10 +20,11 @@ export function createApp() {
   const app = express()
 
   app.use(cors({ origin: true, credentials: true }))
-  app.use(express.json({ limit: '2mb' }))
+  app.use(express.json({ limit: '4mb' }))
   app.use('/api/v1', healthRoutes)
   app.use('/api/v1', formsRoutes)
   app.use('/api/v1', submissionsRoutes)
+  app.use('/api/v1', websiteRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

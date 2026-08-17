@@ -2,7 +2,8 @@
 name: design-agent
 description: >-
   Design service agent for webonone-platform. Handles design/ frontend, backend,
-  migrations — company form templates and visual form designer (toolbox + canvas).
+  migrations — company form templates, visual form designer, and the company
+  website designer (pages, headers, footers, themes).
   Use when tasks touch design/, Design API, WebOnOne Design nav, or Design
   create/edit dialog boxes — also read core-hosted-peer-dialog and dialog-windows
   for any dialog or modal.
@@ -18,6 +19,7 @@ description: >-
 ## Model
 
 - **Form templates** are company-scoped (`design_form_templates.company_id` from JWT).
+- **Website designer** is company-scoped: pages, headers, footers, and themes under Design → Website. Design documents are nested 12-column JSON (container → blocks → add-ons). Images come from Media; the live site is a public renderer at `/s/:companyId/:path`.
 - **Definition JSON v1:** `{ version: 1, fields: [{ id, type, label, required?, placeholder?, options? }] }`
 - **Field types:** `text` | `textarea` | `checkbox` | `radio` | `select`
 - **Designer:** toolbox click appends a field; canvas selects; props panel edits label/options/order.
@@ -45,11 +47,11 @@ description: >-
 
 ## Core-hosted form dialogs
 
-Create-form dialog uses **peer-dialog** when embedded: host owns sizes/header/footer; `/embed/dialogs/forms/create` is body-only.
+Create-form and website create/edit-details dialogs use **peer-dialog** when embedded: host owns sizes/header/footer; `/embed/dialogs/forms/create` and `/embed/dialogs/website/…` are body-only. Image pick in the website designer uses **media-dialog** when Design is embedded.
 
 **Follow:** [core-hosted-peer-dialog skill](../core-hosted-peer-dialog/SKILL.md)
 
-Reference: `design/frontend/src/features/forms/components/FormCreateDialog.tsx`, `…/pages/FormCreateEmbedPage.tsx`.
+Reference: `design/frontend/src/features/forms/components/FormCreateDialog.tsx`, `…/pages/FormCreateEmbedPage.tsx`, `…/website/components/WebsiteEntityDialogs.tsx`.
 
 ## Key paths
 
@@ -61,6 +63,8 @@ Reference: `design/frontend/src/features/forms/components/FormCreateDialog.tsx`,
 - Fill: `design/frontend/src/features/forms/pages/FormFillPage.tsx`
 - Submissions API: `design/backend/src/routes/submissions.routes.ts`
 - Store: `design/frontend/src/features/forms/store/formsStore.ts`
+- Website: `design/frontend/src/features/website/` (pages, designer, themes, media, public `/s/:companyId`)
+- Website API: `design/backend/src/routes/website.routes.ts`
 
 ## Verification
 
