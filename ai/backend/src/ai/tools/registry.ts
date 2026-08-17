@@ -32,6 +32,7 @@ export type ArgCompletion = {
   forceByRole?: Partial<Record<ToolRole, Record<string, unknown>>>
   uniqueBy?: string
   uniqueLookup?: { method: 'GET'; path: string; queryParam: 'names' }
+  pascalCaseKeys?: string[]
 }
 
 export type ToolDefinition = {
@@ -46,6 +47,8 @@ export type ToolDefinition = {
   invoke: { method: HttpMethod; path: string }
   capabilityVersion: string
   argCompletion?: ArgCompletion
+  /** Owning-frontend path template, e.g. `/services/{id}` or `/data/{kind}/{id}`. */
+  viewPath?: string
 }
 
 export type ToolCall = {

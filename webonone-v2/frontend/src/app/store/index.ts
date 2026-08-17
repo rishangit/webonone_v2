@@ -8,6 +8,7 @@ import { staffReducer } from '@/features/staff/store'
 import { eventsReducer, sessionTokensReducer } from '@/features/calendar/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
+import { aiSettingsReducer } from '@/features/settings/basic/store/aiSettingsSlice'
 import { rootEpic } from '@/app/store/epics/rootEpic'
 import { initApiClient } from '@/shared/services/apiClient'
 
@@ -23,6 +24,7 @@ export const store = configureStore({
     events: eventsReducer,
     sessionTokens: sessionTokensReducer,
     systemTheme: systemThemeReducer,
+    aiSettings: aiSettingsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ thunk: false }).concat(epicMiddleware),

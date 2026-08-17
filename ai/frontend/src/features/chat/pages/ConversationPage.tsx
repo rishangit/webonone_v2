@@ -1,15 +1,13 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
   Button,
+  ConfirmItemList,
   FeaturePage,
   FormField,
-  ItemList,
-  ItemListContent,
-  ItemListItem,
   Textarea,
   useToast,
 } from '@webonone/ui-kit'
@@ -17,12 +15,15 @@ import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { sendMessageSchema } from '@/features/chat/schemas/chatSchemas'
 import {
-  RecordLines,
   RecordResultList,
   parseRecordsFromText,
+  readRecordOpen,
   visibleAssistantText,
+  webononePathForOpen,
 } from '@/features/chat/utils/recordView'
 import { aiApi } from '@/shared/services/aiApi'
+import { getWebOnOneOrigin } from '@/features/auth/utils/identityConfig'
+import { redirectToWebOnOnePath } from '@/features/auth/utils/redirectToWebOnOne'
 import type { ChatMessage, PendingTool, PendingToolCall } from '@/shared/types/ai.types'
 
 function pendingRows(pending: PendingTool): PendingToolCall[] {
@@ -58,11 +59,28 @@ export function ConversationPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [missing, setMissing] = useState(false)
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(null)
   const toolDecisionLock = useRef(false)
   usePlatformLoading(loading ? t('loading') : null)
 
   useEffect(() => {
-    if (!accessToken || !id) return
+    if (!accessToken) return
+    let cancelled = false
+    aiApi
+      .getAiSettings()
+      .then((settings) => {
+        if (!cancelled) setAiConfigured(settings.configured)
+      })
+      .catch(() => {
+        if (!cancelled) setAiConfigured(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken])
+
+  useEffect(() => {
+    if (!accessToken || !id || aiConfigured !== true) return
     let cancelled = false
     setLoading(true)
     Promise.all([aiApi.getConversation(id), aiApi.listMessages(id)])
@@ -81,10 +99,41 @@ export function ConversationPage() {
     return () => {
       cancelled = true
     }
-  }, [accessToken, id])
+  }, [accessToken, aiConfigured, id])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
+  }
+
+  if (aiConfigured === null) {
+    return (
+      <FeaturePage title={t('chatTitle')}>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
+      </FeaturePage>
+    )
+  }
+
+  if (aiConfigured === false) {
+    const settingsUrl = `${getWebOnOneOrigin()}/settings/basic?tab=ai`
+    return (
+      <FeaturePage title={t('chatTitle')}>
+        <Alert>
+          <AlertDescription>{t('setupRequired')}</AlertDescription>
+        </Alert>
+        <p className="text-sm text-muted-foreground">{t('setupDescription')}</p>
+        <Button asChild variant="outline" className="mt-2 w-fit">
+          <a href={settingsUrl} target="_blank" rel="noreferrer">
+            {t('openSettings')}
+          </a>
+        </Button>
+      </FeaturePage>
+    )
+  }
+
+  function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
+    event.preventDefault()
+    event.currentTarget.form?.requestSubmit()
   }
 
   async function handleSend(event: FormEvent) {
@@ -114,10 +163,7 @@ export function ConversationPage() {
     }
   }
 
-  async function handleToolDecision(
-    toolCallId: string,
-    action: 'confirm' | 'reject' | 'rejectRemaining',
-  ) {
+  async function handleToolDecision(toolCallId: string, action: 'confirm' | 'reject') {
     if (!id || toolDecisionLock.current) return
     toolDecisionLock.current = true
     setSending(true)
@@ -125,7 +171,7 @@ export function ConversationPage() {
       const result =
         action === 'confirm'
           ? await aiApi.confirmToolCall(id, toolCallId)
-          : await aiApi.rejectToolCall(id, toolCallId, action === 'rejectRemaining')
+          : await aiApi.rejectToolCall(id, toolCallId)
       setMessages((current) => {
         const returned = result.assistantMessage
         const exists = current.some((message) => message.id === returned.id)
@@ -186,76 +232,44 @@ export function ConversationPage() {
                 {text ? <p className="whitespace-pre-wrap text-sm">{text}</p> : null}
                 {!pending && resultRecords.length > 0 ? (
                   <div className="mt-2">
-                    <RecordResultList records={resultRecords} />
+                    <RecordResultList
+                      records={resultRecords}
+                      openLabel={t('openRecord')}
+                      hrefForRecord={(record) => {
+                        const open = readRecordOpen(record)
+                        if (!open || open.path.startsWith('/catalog/')) return null
+                        return `${getWebOnOneOrigin()}${webononePathForOpen(open)}`
+                      }}
+                      onOpen={(href) => {
+                        try {
+                          const path = new URL(href).pathname
+                          void redirectToWebOnOnePath(accessToken, path)
+                        } catch {
+                          window.location.assign(href)
+                        }
+                      }}
+                    />
                   </div>
                 ) : null}
                 {rows.length > 0 ? (
-                  <div className="mt-2 flex flex-col gap-2">
-                    {hasPending ? (
-                      <p className="text-xs text-muted-foreground">{t('pendingChange')}</p>
-                    ) : null}
-                    <ItemList>
-                      {rows.map((call) => (
-                        <ItemListItem key={call.toolCallId}>
-                          <ItemListContent>
-                            {call.status === 'confirmed' ? (
-                              <p className="truncate text-xs">
-                                {t('itemAdded', { name: callItemName(call) })}
-                              </p>
-                            ) : call.status === 'rejected' ? (
-                              <p className="truncate text-xs">
-                                {t('itemCanceled', { name: callItemName(call) })}
-                              </p>
-                            ) : (
-                              <>
-                                <RecordLines
-                                  record={
-                                    call.arguments && Object.keys(call.arguments).length > 0
-                                      ? call.arguments
-                                      : { summary: call.summary }
-                                  }
-                                />
-                                <div className="mt-2 flex justify-end gap-2">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="link"
-                                    className="h-auto px-0"
-                                    disabled={sending}
-                                    onClick={() => void handleToolDecision(call.toolCallId, 'confirm')}
-                                  >
-                                    {t('confirm')}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="link"
-                                    className="h-auto px-0"
-                                    disabled={sending}
-                                    onClick={() => void handleToolDecision(call.toolCallId, 'reject')}
-                                  >
-                                    {t('skip')}
-                                  </Button>
-                                </div>
-                              </>
-                            )}
-                          </ItemListContent>
-                        </ItemListItem>
-                      ))}
-                    </ItemList>
-                    {hasPending && pending ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="link"
-                        className="h-auto self-start px-0"
-                        disabled={sending}
-                        onClick={() => void handleToolDecision(pending.toolCallId, 'rejectRemaining')}
-                      >
-                        {t('cancelRemaining')}
-                      </Button>
-                    ) : null}
-                  </div>
+                  <ConfirmItemList
+                    items={rows.map((call) => ({
+                      id: call.toolCallId,
+                      status: call.status,
+                      record:
+                        call.arguments && Object.keys(call.arguments).length > 0
+                          ? call.arguments
+                          : { summary: call.summary },
+                      confirmedLabel: t('itemAdded', { name: callItemName(call) }),
+                      canceledLabel: t('itemCanceled', { name: callItemName(call) }),
+                    }))}
+                    pendingHint={hasPending ? t('pendingChange') : undefined}
+                    confirmLabel={t('confirm')}
+                    skipLabel={t('skip')}
+                    disabled={sending}
+                    onConfirm={(toolCallId) => void handleToolDecision(toolCallId, 'confirm')}
+                    onSkip={(toolCallId) => void handleToolDecision(toolCallId, 'reject')}
+                  />
                 ) : null}
               </div>
             )
@@ -267,6 +281,7 @@ export function ConversationPage() {
               id="ai-message"
               value={content}
               onChange={(event) => setContent(event.target.value)}
+              onKeyDown={handleComposerKeyDown}
               disabled={sending}
               rows={3}
             />

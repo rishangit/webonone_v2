@@ -41,6 +41,15 @@ export function ConversationsPage() {
 
   async function handleCreate() {
     try {
+      const settings = await aiApi.getAiSettings()
+      if (!settings.configured) {
+        toast({
+          title: t('setupRequired'),
+          description: t('setupDescription'),
+          variant: 'destructive',
+        })
+        return
+      }
       const conversation = await aiApi.createConversation()
       toast({ title: t('created') })
       navigate(`/conversations/${conversation.id}`)

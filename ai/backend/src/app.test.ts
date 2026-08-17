@@ -38,6 +38,9 @@ class FakeProvider implements AiProvider {
   lastTools: ChatCompletionInput['tools']
   toolOnce: ToolCall | null = null
   toolBatch: ToolCall[] | null = null
+  contentOnce: string | null = null
+  secondContent: string | null = null
+  secondToolBatch: ToolCall[] | null = null
   rounds = 0
 
   async complete(input: ChatCompletionInput): Promise<ChatCompletionResult> {
@@ -48,14 +51,76 @@ class FakeProvider implements AiProvider {
     }
     if (this.toolBatch && this.rounds === 0) {
       this.rounds += 1
-      return { content: '', toolCalls: this.toolBatch }
+      return { content: this.contentOnce ?? '', toolCalls: this.toolBatch }
     }
     if (this.toolOnce && this.rounds === 0) {
       this.rounds += 1
-      return { content: '', toolCalls: [this.toolOnce] }
+      return { content: this.contentOnce ?? '', toolCalls: [this.toolOnce] }
+    }
+    if (this.contentOnce && this.rounds === 0) {
+      this.rounds += 1
+      return { content: this.contentOnce }
+    }
+    if (this.secondContent && this.rounds === 1) {
+      this.rounds += 1
+      return { content: this.secondContent }
+    }
+    if (this.secondToolBatch && this.rounds >= 1) {
+      this.rounds += 1
+      const batch = this.secondToolBatch
+      this.secondToolBatch = null
+      return { content: '', toolCalls: batch }
     }
     this.rounds += 1
     return { content: `echo:${input.messages.at(-1)?.content ?? ''}` }
+  }
+}
+
+import type { AiSettingsService } from './services/aiSettings.service.js'
+
+function testAiSettingsService(provider: FakeProvider, systemPrompt = 'backend-system-prompt'): AiSettingsService {
+  return {
+    getUserSettings: async () => ({
+      configured: true,
+      provider: 'ollama',
+      model: 'test',
+      baseUrl: 'https://ollama.com',
+      timeoutMs: 60_000,
+      hasApiKey: true,
+      apiKeyHint: '15d6dfe098c14477a7a2d7f3d706751e',
+      apiKey: '15d6dfe098c14477a7a2d7f3d706751e.exampleSecretSuffix',
+    }),
+    patchUserSettings: async () => ({
+      configured: true,
+      provider: 'ollama',
+      model: 'test',
+      baseUrl: 'https://ollama.com',
+      timeoutMs: 60_000,
+      hasApiKey: true,
+      apiKeyHint: '15d6dfe098c14477a7a2d7f3d706751e',
+      apiKey: '15d6dfe098c14477a7a2d7f3d706751e.exampleSecretSuffix',
+    }),
+    getPlatformSettings: async () => ({
+      configured: true,
+      provider: 'ollama',
+      model: 'test',
+      baseUrl: 'https://ollama.com',
+      timeoutMs: 60_000,
+      hasApiKey: true,
+      apiKeyHint: '15d6dfe098c14477a7a2d7f3d706751e',
+      apiKey: '15d6dfe098c14477a7a2d7f3d706751e.exampleSecretSuffix',
+    }),
+    patchPlatformSettings: async () => ({
+      configured: true,
+      provider: 'ollama',
+      model: 'test',
+      baseUrl: 'https://ollama.com',
+      timeoutMs: 60_000,
+      hasApiKey: true,
+      apiKeyHint: '15d6dfe098c14477a7a2d7f3d706751e',
+      apiKey: '15d6dfe098c14477a7a2d7f3d706751e.exampleSecretSuffix',
+    }),
+    resolveProvider: async () => ({ provider, systemPrompt }),
   }
 }
 
@@ -64,16 +129,19 @@ async function withApi(
   fn: (base: string) => Promise<void>,
   rate?: { max: number; windowMs: number },
   tools?: { registry: ToolRegistry; executor: ToolExecutor },
+  settings?: AiSettingsService,
 ) {
   const limiter = rate ?? { max: 100, windowMs: 60_000 }
+  const aiSettingsService = settings ?? testAiSettingsService(provider)
   const app = createApp({
     conversationService: createConversationService({
       repository: createMemoryConversationRepository(),
-      provider,
-      systemPrompt: 'backend-system-prompt',
+      resolveProvider: (ctx) => aiSettingsService.resolveProvider(ctx),
+      defaultSystemPrompt: 'backend-system-prompt',
       registry: tools?.registry,
       executor: tools?.executor,
     }),
+    aiSettingsService,
     rateLimiter: createMemoryRateLimiter(limiter),
   })
   const server = createServer(app)
@@ -682,6 +750,246 @@ describe('AI auth and conversations', () => {
       assert.equal(skippedCalls.filter((call) => call.status === 'rejected').length, 1)
     }, undefined, { registry, executor })
   })
+
+  it('parks create-ready markdown tables as confirm rows', async () => {
+    const provider = new FakeProvider()
+    provider.contentOnce = `| Tag Name (camelCase) | Description |
+|---|---|
+| **GeneralPractice** | General Practice – Primary-care services. |
+| **Pediatrics** | Pediatrics – Child health services. |`
+    const writeTool = {
+      name: 'create_data_tag',
+      description: 'Create a Data library tag.',
+      jsonSchema: {
+        type: 'object',
+        required: ['name', 'description', 'status'],
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          status: { type: 'string' },
+        },
+      },
+      riskLevel: 'write' as const,
+      requiredRoles: ['company_admin' as const, 'super_admin' as const],
+      requiredPermissions: ['ai:data_library:write'],
+      service: 'data' as const,
+      auth: 'user_jwt' as const,
+      invoke: { method: 'POST' as const, path: '/api/v1/tags' },
+      capabilityVersion: '1',
+      argCompletion: {
+        allowedKeys: ['name', 'description', 'color', 'status'],
+        defaults: { status: 'pending' },
+      },
+    }
+    const registry = new ToolRegistry([writeTool])
+    const fetches: string[] = []
+    const executor = new HttpToolExecutor({
+      registry,
+      peers: {
+        data: {
+          apiBaseUrl: 'http://127.0.0.1:4015',
+          serviceApiKey: 'key',
+        },
+      },
+      timeoutMs: 1000,
+      fetchImpl: async (url, init) => {
+        fetches.push(String(init?.body ?? url))
+        return new Response(JSON.stringify({ id: `tag${fetches.length}` }), { status: 201 })
+      },
+    })
+    const token = identityToken({
+      sub: 'companyadmin0000000014',
+      platform_role: 'company_admin',
+      company_id: 'company00000000000014',
+    })
+    await withApi(provider, async (base) => {
+      const created = await json(`${base}/conversations`, { method: 'POST', token, body: '{}' })
+      const id = (created.body.conversation as { id: string }).id
+      const sent = await json(`${base}/conversations/${id}/messages`, {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ content: 'Add Data library tags for a medical-center catalog' }),
+      })
+      assert.equal(sent.res.status, 201)
+      const pending = sent.body.assistantMessage as {
+        content: string
+        pendingTool?: { calls?: { arguments: { name?: string } }[] }
+      }
+      assert.equal(pending.content.includes('GeneralPractice'), false)
+      assert.equal(pending.pendingTool?.calls?.length, 2)
+      assert.equal(pending.pendingTool?.calls?.[0]?.arguments.name, 'GeneralPractice')
+      assert.equal(pending.pendingTool?.calls?.[1]?.arguments.name, 'Pediatrics')
+      assert.equal(fetches.length, 0)
+    }, undefined, { registry, executor })
+  })
+
+  it('retries until the requested number of create items are parked', async () => {
+    const provider = new FakeProvider()
+    provider.toolOnce = {
+      id: 'toolcall0000000000041',
+      name: 'create_data_tag',
+      arguments: {
+        name: 'ClinicHours',
+        description: 'Clinic Hours - Opening times of the medical clinic.',
+        status: 'pending',
+      },
+    }
+    provider.secondContent = `| name | description |
+|---|---|
+| Pediatrics | Pediatrics - Child health services. |
+| Radiology | Radiology - Diagnostic imaging. |`
+    const writeTool = {
+      name: 'create_data_tag',
+      description: 'Create a Data library tag.',
+      jsonSchema: {
+        type: 'object',
+        required: ['name', 'description', 'status'],
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          status: { type: 'string' },
+        },
+      },
+      riskLevel: 'write' as const,
+      requiredRoles: ['company_admin' as const, 'super_admin' as const],
+      requiredPermissions: ['ai:data_library:write'],
+      service: 'data' as const,
+      auth: 'user_jwt' as const,
+      invoke: { method: 'POST' as const, path: '/api/v1/tags' },
+      capabilityVersion: '1',
+      argCompletion: {
+        allowedKeys: ['name', 'description', 'color', 'status'],
+        defaults: { status: 'pending' },
+      },
+    }
+    const registry = new ToolRegistry([writeTool])
+    const executor = new HttpToolExecutor({
+      registry,
+      peers: { data: { apiBaseUrl: 'http://127.0.0.1:4015', serviceApiKey: 'key' } },
+      timeoutMs: 1000,
+      fetchImpl: async () => new Response(JSON.stringify({ id: 'tag1' }), { status: 201 }),
+    })
+    const token = identityToken({
+      sub: 'companyadmin0000000017',
+      platform_role: 'company_admin',
+      company_id: 'company00000000000017',
+    })
+    await withApi(provider, async (base) => {
+      const created = await json(`${base}/conversations`, { method: 'POST', token, body: '{}' })
+      const id = (created.body.conversation as { id: string }).id
+      const sent = await json(`${base}/conversations/${id}/messages`, {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ content: 'need to add 3 tag to the data library related to medical clinic' }),
+      })
+      assert.equal(sent.res.status, 201)
+      const pending = sent.body.assistantMessage as {
+        pendingTool?: { calls?: { arguments: { name?: string } }[] }
+      }
+      const names = pending.pendingTool?.calls?.map((call) => call.arguments.name) ?? []
+      assert.deepEqual(names, ['ClinicHours', 'Pediatrics', 'Radiology'])
+      assert.equal(provider.rounds, 2)
+    }, undefined, { registry, executor })
+  })
+
+  it('leaves a markdown table as text when no create tool is available', async () => {
+    const provider = new FakeProvider()
+    provider.contentOnce = `| Tag Name | Description |
+|---|---|
+| **GeneralPractice** | General Practice – Primary-care services. |`
+    const registry = new ToolRegistry([])
+    const executor = new HttpToolExecutor({
+      registry,
+      peers: {},
+      timeoutMs: 1000,
+      fetchImpl: async () => new Response('{}', { status: 404 }),
+    })
+    const token = identityToken({
+      sub: 'companyadmin0000000016',
+      platform_role: 'company_admin',
+      company_id: 'company00000000000016',
+    })
+    await withApi(provider, async (base) => {
+      const created = await json(`${base}/conversations`, { method: 'POST', token, body: '{}' })
+      const id = (created.body.conversation as { id: string }).id
+      const sent = await json(`${base}/conversations/${id}/messages`, {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ content: 'Add Data library tags' }),
+      })
+      assert.equal(sent.res.status, 201)
+      const message = sent.body.assistantMessage as { content: string; pendingTool?: unknown }
+      assert.match(message.content, /GeneralPractice/)
+      assert.equal(message.pendingTool ?? null, null)
+    }, undefined, { registry, executor })
+  })
+
+  it('does not park when two create tools could consume the same records', async () => {
+    const provider = new FakeProvider()
+    provider.contentOnce = `| Name | Description |
+|---|---|
+| Clinic | A clinic label. |`
+    const tagTool = {
+      name: 'create_data_tag',
+      description: 'Create a Data library tag.',
+      jsonSchema: {
+        type: 'object',
+        required: ['name', 'description'],
+        properties: { name: { type: 'string' }, description: { type: 'string' } },
+      },
+      riskLevel: 'write' as const,
+      requiredRoles: ['company_admin' as const],
+      requiredPermissions: ['ai:data_library:write'],
+      service: 'data' as const,
+      auth: 'user_jwt' as const,
+      invoke: { method: 'POST' as const, path: '/api/v1/tags' },
+      capabilityVersion: '1',
+    }
+    const catalogTool = {
+      name: 'create_catalog_item',
+      description: 'Create a company catalog item.',
+      jsonSchema: {
+        type: 'object',
+        required: ['name', 'description'],
+        properties: { name: { type: 'string' }, description: { type: 'string' } },
+      },
+      riskLevel: 'write' as const,
+      requiredRoles: ['company_admin' as const],
+      requiredPermissions: ['ai:catalog:write'],
+      service: 'webonone' as const,
+      auth: 'user_jwt' as const,
+      invoke: { method: 'POST' as const, path: '/api/v1/company/me/catalog/:kind/custom' },
+      capabilityVersion: '1',
+    }
+    const registry = new ToolRegistry([tagTool, catalogTool])
+    const executor = new HttpToolExecutor({
+      registry,
+      peers: {
+        data: { apiBaseUrl: 'http://127.0.0.1:4015', serviceApiKey: 'key' },
+        webonone: { apiBaseUrl: 'http://127.0.0.1:4010', serviceApiKey: 'key' },
+      },
+      timeoutMs: 1000,
+      fetchImpl: async () => new Response(JSON.stringify({ id: 'x' }), { status: 201 }),
+    })
+    const token = identityToken({
+      sub: 'companyadmin0000000015',
+      platform_role: 'company_admin',
+      company_id: 'company00000000000015',
+    })
+    await withApi(provider, async (base) => {
+      const created = await json(`${base}/conversations`, { method: 'POST', token, body: '{}' })
+      const id = (created.body.conversation as { id: string }).id
+      const sent = await json(`${base}/conversations/${id}/messages`, {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ content: 'please handle these' }),
+      })
+      assert.equal(sent.res.status, 201)
+      const message = sent.body.assistantMessage as { content: string; pendingTool?: unknown }
+      assert.match(message.content, /Clinic/)
+      assert.equal(message.pendingTool, null)
+    }, undefined, { registry, executor })
+  })
 })
 
 describe('withAvailableToolsPrompt', () => {
@@ -706,8 +1014,9 @@ describe('withAvailableToolsPrompt', () => {
     assert.match(prompt, /Do not invent IDs/)
     assert.match(prompt, /Do not call a write tool until entity, action, and target are known/)
     assert.match(prompt, /numbered list of options/)
-    assert.match(prompt, /suggest, recommend, or list names/)
+    assert.match(prompt, /Do not ask which items to create in text/)
     assert.match(prompt, /once per item in the same turn/)
+    assert.match(prompt, /10 tags/)
   })
 
   it('leaves the base prompt unchanged when no tools are listed', () => {

@@ -1,9 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
-import { from, merge, of } from 'rxjs'
+import { from, merge, of, timer } from 'rxjs'
 import {
   catchError,
-  debounceTime,
+  debounce,
   distinctUntilChanged,
   exhaustMap,
   filter,
@@ -14,6 +14,7 @@ import {
 import type { CatalogFeatureState, CatalogListQuery, PaginatedResult } from './types'
 import { isFresh, serializeQuery } from './cacheUtils'
 import { mergeAppendedItems } from './mergeAppendedItems'
+import { isCollapsedReplaceRequest, resolveListPage } from './resolveListPage'
 
 type ListLoader<T> = (query: CatalogListQuery) => Promise<PaginatedResult<T>>
 type GetLoader<T> = (id: string) => Promise<T>
@@ -56,7 +57,7 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
     initialState: initialCatalogState<T>(),
     reducers: {
       loadListRequested(state, action: PayloadAction<CatalogListQuery>) {
-        const page = action.payload.page ?? state.page
+        const page = resolveListPage(action.payload, state)
         const pageSize = action.payload.pageSize ?? state.pageSize
         const q = action.payload.q ?? state.q
         const status = action.payload.status ?? state.status
@@ -78,8 +79,8 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
         state.listError = null
         if (action.payload.q !== undefined) state.q = action.payload.q
         if (action.payload.status !== undefined) state.status = action.payload.status ?? 'all'
-        if (action.payload.page !== undefined && !action.payload.append) {
-          state.page = action.payload.page
+        if (!action.payload.append) {
+          state.page = page
         }
         if (action.payload.pageSize !== undefined) state.pageSize = action.payload.pageSize
       },
@@ -183,7 +184,7 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
       const payload = action.payload
       const featureState = (state as RootStateWithFeature)[config.name]
       const query = {
-        page: payload.page ?? featureState.page,
+        page: resolveListPage(payload, featureState),
         pageSize: payload.pageSize ?? featureState.pageSize,
         q: (payload.q ?? featureState.q).trim() || undefined,
         status:
@@ -216,7 +217,7 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
         const payload = (action as ReturnType<typeof actions.loadListRequested>).payload
         const featureState = (state as unknown as RootStateWithFeature)[config.name]
         const queryKey = serializeQuery({
-          page: payload.page ?? featureState.page,
+          page: resolveListPage(payload, featureState),
           pageSize: payload.pageSize ?? featureState.pageSize,
           q: payload.q ?? featureState.q,
           status: payload.status ?? featureState.status,
@@ -232,11 +233,14 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
 
     const replace$ = prepared$.pipe(
       filter(([action]) => !Boolean((action as ReturnType<typeof actions.loadListRequested>).payload.append)),
-      debounceTime(400),
-      distinctUntilChanged(
-        ([a], [b]) =>
-          serializeQuery((a as ReturnType<typeof actions.loadListRequested>).payload) ===
-          serializeQuery((b as ReturnType<typeof actions.loadListRequested>).payload),
+      debounce(([action]) =>
+        (action as ReturnType<typeof actions.loadListRequested>).payload.force ? timer(0) : timer(400),
+      ),
+      distinctUntilChanged(([a], [b]) =>
+        isCollapsedReplaceRequest(
+          (a as ReturnType<typeof actions.loadListRequested>).payload,
+          (b as ReturnType<typeof actions.loadListRequested>).payload,
+        ),
       ),
       switchMap(([action, state]) =>
         toRequest(action as ReturnType<typeof actions.loadListRequested>, state),

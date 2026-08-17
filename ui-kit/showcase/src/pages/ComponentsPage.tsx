@@ -47,6 +47,7 @@ import {
   ItemListItem,
   ItemListMenu,
   itemListRowActiveClassName,
+  ConfirmItemList,
   Label,
   ListFilterPanel,
   ListFilterTrigger,
@@ -66,6 +67,7 @@ import {
   Switch,
   Textarea,
   useToast,
+  type ConfirmListItem,
   type FullCalendarEvent,
   type FullCalendarView,
   type NavConfigItem,
@@ -278,6 +280,44 @@ function LoadingStateDemo() {
         </div>
       ) : null}
     </div>
+  )
+}
+
+function ConfirmItemListDemo() {
+  const [items, setItems] = useState<ConfirmListItem[]>([
+    {
+      id: '1',
+      status: 'pending_confirmation',
+      record: { name: 'GeneralPractice', description: 'Primary-care services.' },
+      confirmedLabel: 'GeneralPractice added',
+      canceledLabel: 'GeneralPractice canceled',
+    },
+    {
+      id: '2',
+      status: 'pending_confirmation',
+      record: { name: 'Pediatrics', description: 'Care for infants and children.' },
+      confirmedLabel: 'Pediatrics added',
+      canceledLabel: 'Pediatrics canceled',
+    },
+  ])
+
+  return (
+    <ConfirmItemList
+      items={items}
+      pendingHint="Confirm each new item to apply it."
+      confirmLabel="Confirm"
+      skipLabel="Skip"
+      onConfirm={(id) =>
+        setItems((current) =>
+          current.map((item) => (item.id === id ? { ...item, status: 'confirmed' } : item)),
+        )
+      }
+      onSkip={(id) =>
+        setItems((current) =>
+          current.map((item) => (item.id === id ? { ...item, status: 'rejected' } : item)),
+        )
+      }
+    />
   )
 }
 
@@ -547,6 +587,14 @@ export function ComponentsPage() {
         <div className="mt-4">
           <ItemListEmpty>No items to show.</ItemListEmpty>
         </div>
+      </DemoSection>
+
+      <DemoSection
+        id="confirm-item-list"
+        title="Confirm item list"
+        description="Pending addable records with Confirm and Skip links. Used by the WebOnOne assistant."
+      >
+        <ConfirmItemListDemo />
       </DemoSection>
 
       <DemoSection

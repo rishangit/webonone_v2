@@ -69,9 +69,22 @@ export function useEpicCatalogList<T, S = unknown>(
   const loadMore = useCallback(() => {
     if (listState.listStatus === 'loading') return
     if (listState.items.length >= listState.total) return
+    const size = listState.pageSize || pageSize
+    const maxPage = Math.max(1, Math.ceil(listState.total / size))
+    if ((listState.page || 1) >= maxPage) return
     const nextPage = (listState.page || 1) + 1
     dispatch(actions.loadListRequested({ ...buildQuery(nextPage), append: true }))
-  }, [actions, buildQuery, dispatch, listState.items.length, listState.listStatus, listState.page, listState.total])
+  }, [
+    actions,
+    buildQuery,
+    dispatch,
+    listState.items.length,
+    listState.listStatus,
+    listState.page,
+    listState.pageSize,
+    listState.total,
+    pageSize,
+  ])
 
   return {
     items: listState.items,

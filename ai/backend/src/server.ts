@@ -1,10 +1,10 @@
 import { env } from './config/env.js'
 import { createApp } from './app.js'
 import { db } from './models/db.js'
-import { createAiProvider } from './ai/providers/createAiProvider.js'
 import { discoverAllCapabilities, type CapabilityPeer } from './ai/tools/discoverCapabilities.js'
 import { HttpToolExecutor } from './ai/tools/executor.js'
 import { ToolRegistry } from './ai/tools/registry.js'
+import { createAiSettingsService } from './services/aiSettings.service.js'
 import { createKnexConversationRepository } from './services/conversation.repository.js'
 import { createConversationService } from './services/conversation.service.js'
 import { createMemoryRateLimiter } from './middleware/rateLimit.js'
@@ -49,16 +49,19 @@ async function refreshCapabilities() {
   registry.replace(tools)
 }
 
+const aiSettingsService = createAiSettingsService()
+
 const conversationService = createConversationService({
   repository: createKnexConversationRepository(db),
-  provider: createAiProvider(),
-  systemPrompt: env.aiSystemPrompt,
+  resolveProvider: (ctx) => aiSettingsService.resolveProvider(ctx),
+  defaultSystemPrompt: env.aiSystemPrompt,
   registry,
   executor,
 })
 
 const app = createApp({
   conversationService,
+  aiSettingsService,
   rateLimiter: createMemoryRateLimiter({
     max: env.guestRateLimitMax,
     windowMs: env.guestRateLimitWindowMs,

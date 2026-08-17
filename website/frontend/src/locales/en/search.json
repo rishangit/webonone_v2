@@ -87,5 +87,8 @@
   "assistantName": "Assistant",
   "assistantFailed": "The assistant is unavailable right now.",
   "assistantStarting": "Starting conversation…",
-  "assistantThinking": "Assistant is thinking…"
+  "assistantThinking": "Assistant is thinking…",
+  "assistantSignedInSetup": "Signed-in chat uses your personal Ollama Cloud key. Set it up in WebOnOne Basic Settings → AI.",
+  "assistantOpenSettings": "Open AI settings in WebOnOne",
+  "assistantOpenRecord": "Open"
 }

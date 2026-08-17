@@ -1,7 +1,42 @@
-import { ItemList, ItemListContent, ItemListItem } from '@webonone/ui-kit'
+import { Button, ItemList, ItemListContent, ItemListItem } from '@webonone/ui-kit'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+const RECORD_OPEN_KEY = '__open'
+
+export type RecordOpenMeta = {
+  service: string
+  path: string
+}
+
+export function readRecordOpen(record: Record<string, unknown>): RecordOpenMeta | null {
+  const raw = record[RECORD_OPEN_KEY]
+  if (!isRecord(raw)) {
+    return null
+  }
+  if (typeof raw.service !== 'string' || typeof raw.path !== 'string') {
+    return null
+  }
+  if (!raw.path.startsWith('/') || raw.path.startsWith('//')) {
+    return null
+  }
+  return { service: raw.service, path: raw.path }
+}
+
+export function webononePathForOpen(open: RecordOpenMeta): string {
+  if (open.path.startsWith('/catalog/')) {
+    return open.path
+  }
+  if (open.service === 'data' && !open.path.startsWith('/data/')) {
+    return `/data${open.path}`
+  }
+  return open.path
+}
+
+function isVisibleRecordKey(key: string): boolean {
+  return !key.startsWith('__')
 }
 
 export function formatDisplayValue(value: unknown): string {
@@ -25,7 +60,7 @@ export function formatDisplayValue(value: unknown): string {
 
 export function formatRecordLines(record: Record<string, unknown>): string {
   return Object.entries(record)
-    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .filter(([key, value]) => isVisibleRecordKey(key) && value !== undefined && value !== null && value !== '')
     .map(([key, value]) => `${key}:${formatDisplayValue(value)}`)
     .join('\n')
 }
@@ -75,7 +110,7 @@ export function RecordLines({ record }: { record: Record<string, unknown> }) {
   return (
     <div className="space-y-0.5 text-xs">
       {Object.entries(record)
-        .filter(([, value]) => value !== undefined && value !== null && value !== '')
+        .filter(([key, value]) => isVisibleRecordKey(key) && value !== undefined && value !== null && value !== '')
         .map(([key, value]) => (
           <p key={key} className="whitespace-pre-wrap break-words">
             <span className="text-muted-foreground">{key}:</span>
@@ -86,19 +121,43 @@ export function RecordLines({ record }: { record: Record<string, unknown> }) {
   )
 }
 
-export function RecordResultList({ records }: { records: Record<string, unknown>[] }) {
+type RecordResultListProps = {
+  records: Record<string, unknown>[]
+  openLabel?: string
+  hrefForRecord?: (record: Record<string, unknown>) => string | null
+  onOpen?: (href: string) => void
+}
+
+export function RecordResultList({ records, openLabel, hrefForRecord, onOpen }: RecordResultListProps) {
   if (records.length === 0) {
     return null
   }
   return (
     <ItemList>
-      {records.map((record, index) => (
-        <ItemListItem key={typeof record.id === 'string' ? record.id : `record-${index}`}>
-          <ItemListContent>
-            <RecordLines record={record} />
-          </ItemListContent>
-        </ItemListItem>
-      ))}
+      {records.map((record, index) => {
+        const href = hrefForRecord?.(record) ?? null
+        return (
+          <ItemListItem key={typeof record.id === 'string' ? record.id : `record-${index}`}>
+            <ItemListContent>
+              <RecordLines record={record} />
+              {href && openLabel ? (
+                <Button asChild variant="link" className="mt-1 h-auto px-0">
+                  <a
+                    href={href}
+                    onClick={(event) => {
+                      if (!onOpen) return
+                      event.preventDefault()
+                      onOpen(href)
+                    }}
+                  >
+                    {openLabel}
+                  </a>
+                </Button>
+              ) : null}
+            </ItemListContent>
+          </ItemListItem>
+        )
+      })}
     </ItemList>
   )
 }

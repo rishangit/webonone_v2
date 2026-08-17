@@ -2,9 +2,17 @@ import { nanoid } from 'nanoid'
 import type { AiRequestContext } from '../ai/requestContext.js'
 import { ownerFromContext } from '../ai/requestContext.js'
 import type { AiProvider, ChatMessage, ProviderTool } from '../ai/providers/types.js'
+import {
+  expandCreateCalls,
+  listedCreateNames,
+  mergeUniqueCreateCalls,
+  remainingItemsTablePrompt,
+  requestedItemCount,
+  uniqueCreateNameCount,
+} from '../ai/tools/extractCreateItems.js'
 import { filterToolsForContext } from '../ai/tools/filterTools.js'
 import type { ToolCall, ToolDefinition, ToolExecutor, ToolRegistry } from '../ai/tools/registry.js'
-import { recordsFromUnknown } from '../ai/tools/formatRecord.js'
+import { recordsFromUnknown, withRecordOpen } from '../ai/tools/formatRecord.js'
 import { partitionUniquePendingWrites, type PendingWrite } from '../ai/tools/uniqueValues.js'
 import type { AiConversationRow, AiMessageRow, MessageRole } from '../models/db.js'
 import { HttpError } from './httpError.js'
@@ -180,19 +188,30 @@ function toMessageDto(row: AiMessageRow, resultRecords?: Record<string, unknown>
   }
 }
 
-function collectResultRecords(rows: AiMessageRow[]): Record<string, unknown>[] {
+function collectResultRecords(rows: AiMessageRow[], tools: ToolDefinition[]): Record<string, unknown>[] {
+  const argsByCallId = new Map<string, Record<string, unknown>>()
+  for (const row of rows) {
+    if (row.role !== 'tool' || !row.tool_call_id) {
+      continue
+    }
+    const payload = parsePayload(row.tool_payload)
+    argsByCallId.set(row.tool_call_id, isRecord(payload?.arguments) ? payload.arguments : {})
+  }
   const records: Record<string, unknown>[] = []
   for (const row of rows) {
     if (row.role !== 'tool_result') {
       continue
     }
     const payload = parsePayload(row.tool_payload)
-    records.push(...recordsFromUnknown(payload ?? parsePayload(row.content)))
+    const extracted = recordsFromUnknown(payload ?? parsePayload(row.content))
+    const tool = tools.find((item) => item.name === row.tool_name)
+    const args = row.tool_call_id ? (argsByCallId.get(row.tool_call_id) ?? {}) : {}
+    records.push(...withRecordOpen(extracted, tool, args))
   }
   return records
 }
 
-function messagesToDtos(rows: AiMessageRow[]): MessageDto[] {
+function messagesToDtos(rows: AiMessageRow[], tools: ToolDefinition[]): MessageDto[] {
   const items: MessageDto[] = []
   let batch: AiMessageRow[] = []
   for (const row of rows) {
@@ -201,7 +220,7 @@ function messagesToDtos(rows: AiMessageRow[]): MessageDto[] {
       continue
     }
     if (row.role === 'user' || row.role === 'assistant') {
-      items.push(toMessageDto(row, collectResultRecords(batch)))
+      items.push(toMessageDto(row, collectResultRecords(batch, tools)))
       batch = []
       continue
     }
@@ -229,7 +248,17 @@ export function withAvailableToolsPrompt(base: string, tools: ToolDefinition[]):
   if (tools.length === 0) {
     return base
   }
-  return `${base} Tools available in this request: ${tools.map((tool) => tool.name).join(', ')}. When the user asks to suggest, recommend, or list names (for example 10 tags), reply with a numbered list of complete suggestions and wait — do not call create_* until they ask to add or create those items. When they ask to create several named items, call the matching create_* tool once per item in the same turn. When creating, include every required schema property in the tool arguments. Copy name from the user message. Fill remaining descriptive properties (especially description, and color or symbol when present) with a complete suggested value. Do not invent IDs or emails. Names are not ids. Do not call a write tool until entity, action, and target are known; if any is missing, ask a short numbered list of options and wait.`
+  return `${base} Tools available in this request: ${tools.map((tool) => tool.name).join(', ')}. When listing create-ready records (name plus description, and other required schema fields), call the matching create_* tool once per item in the same turn so the chat UI can show Confirm and Skip. If the user asks for N items (for example 10 tags), make N create_* calls in that turn — one per item — not a single call. Do not ask which items to create in text. When creating, include every required schema property in the tool arguments. Copy name from the user message. Fill remaining descriptive properties (especially description, and color or symbol when present) with a complete suggested value. Do not invent IDs or emails. Names are not ids. Do not call a write tool until entity, action, and target are known; if the entity type is unclear, ask a short numbered list of options and wait.`
+}
+
+function lastUserContent(rows: AiMessageRow[]): string {
+  for (let index = rows.length - 1; index >= 0; index -= 1) {
+    const row = rows[index]
+    if (row?.role === 'user') {
+      return row.content
+    }
+  }
+  return ''
 }
 
 function historyToProviderMessages(rows: AiMessageRow[]): ChatMessage[] {
@@ -308,8 +337,8 @@ export type ConversationService = ReturnType<typeof createConversationService>
 
 export function createConversationService(deps: {
   repository: ConversationRepository
-  provider: AiProvider
-  systemPrompt: string
+  resolveProvider: (ctx: AiRequestContext) => Promise<{ provider: AiProvider; systemPrompt: string }>
+  defaultSystemPrompt: string
   registry?: ToolRegistry
   executor?: ToolExecutor
   now?: () => Date
@@ -340,28 +369,106 @@ export function createConversationService(deps: {
     return row
   }
 
+  const listedTools = () => deps.registry?.list() ?? []
+
   const dtoFor = async (row: AiMessageRow): Promise<MessageDto> => {
     const rows = await deps.repository.listMessages(row.conversation_id)
-    return messagesToDtos(rows).find((item) => item.id === row.id) ?? toMessageDto(row)
+    return messagesToDtos(rows, listedTools()).find((item) => item.id === row.id) ?? toMessageDto(row)
   }
 
   const runProviderLoop = async (
     ctx: AiRequestContext,
     conversation: AiConversationRow,
+    provider: AiProvider,
+    baseSystemPrompt: string,
   ): Promise<AiMessageRow> => {
     const tools = filterToolsForContext(deps.registry?.list() ?? [], ctx)
     const providerTools = toProviderTools(tools)
-    const systemPrompt = withAvailableToolsPrompt(deps.systemPrompt, tools)
+    const systemPrompt = withAvailableToolsPrompt(baseSystemPrompt, tools)
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
       const history = await deps.repository.listMessages(conversation.id)
-      const completion = await deps.provider.complete({
+      const completion = await provider.complete({
         systemPrompt,
         messages: historyToProviderMessages(history),
         tools: providerTools.length ? providerTools : undefined,
       })
 
-      if (!completion.toolCalls?.length) {
+      let toolCalls: ToolCall[] = completion.toolCalls ?? []
+      let leadContent = completion.content
+      const userMessage = lastUserContent(history)
+      if (ctx.role !== 'guest' && deps.executor) {
+        const before = uniqueCreateNameCount(toolCalls)
+        toolCalls = expandCreateCalls({
+          content: completion.content,
+          tools,
+          userMessage,
+          role: ctx.role,
+          existingCalls: toolCalls,
+        })
+        if (uniqueCreateNameCount(toolCalls) > before) {
+          leadContent = ''
+        }
+        const requested = requestedItemCount(userMessage)
+        if (requested && uniqueCreateNameCount(toolCalls) < requested) {
+          const table = await provider.complete({
+            systemPrompt: `${systemPrompt} When the user asks for N items, output a markdown table of exactly those N items. Do not call tools.`,
+            messages: [
+              ...historyToProviderMessages(history),
+              {
+                role: 'assistant',
+                content: completion.content || `Prepared ${uniqueCreateNameCount(toolCalls) || 0} item(s).`,
+              },
+              {
+                role: 'user',
+                content: remainingItemsTablePrompt(requested, listedCreateNames(toolCalls)),
+              },
+            ],
+          })
+          if (table.content) {
+            toolCalls = expandCreateCalls({
+              content: table.content,
+              tools,
+              userMessage,
+              role: ctx.role,
+              existingCalls: toolCalls,
+            })
+          }
+        }
+        if (requested && uniqueCreateNameCount(toolCalls) < requested) {
+          const retry = await provider.complete({
+            systemPrompt: `${systemPrompt} The user asked for ${requested} items. Call the matching create_* tool once per item for all ${requested} items in this turn. Include name and a complete description on every call. Do not stop after one item.`,
+            messages: [
+              ...historyToProviderMessages(history),
+              {
+                role: 'assistant',
+                content: completion.content || `Prepared ${uniqueCreateNameCount(toolCalls) || 0} item(s).`,
+              },
+              {
+                role: 'user',
+                content: `Add all ${requested} items now. Call create_* once per item (${requested} calls).`,
+              },
+            ],
+            tools: providerTools.length ? providerTools : undefined,
+          })
+          if (retry.toolCalls?.length) {
+            toolCalls = mergeUniqueCreateCalls(toolCalls, retry.toolCalls)
+          }
+          if (retry.content) {
+            toolCalls = expandCreateCalls({
+              content: retry.content,
+              tools,
+              userMessage,
+              role: ctx.role,
+              existingCalls: toolCalls,
+            })
+          }
+        }
+        if (requested && uniqueCreateNameCount(toolCalls) > 0) {
+          leadContent = ''
+        }
+      }
+      if (toolCalls.length === 0) {
         return insertRow({
           conversation_id: conversation.id,
           company_id: conversation.company_id,
@@ -374,7 +481,7 @@ export function createConversationService(deps: {
       }
 
       const pendingWrites: PendingWrite[] = []
-      for (const call of completion.toolCalls) {
+      for (const call of toolCalls) {
         await insertRow({
           conversation_id: conversation.id,
           company_id: conversation.company_id,
@@ -478,7 +585,7 @@ export function createConversationService(deps: {
           conversation_id: conversation.id,
           company_id: conversation.company_id,
           role: 'assistant',
-          content: [completion.content, skippedLine, confirmLine].filter(Boolean).join('\n') || confirmLine,
+          content: [leadContent, skippedLine, confirmLine].filter(Boolean).join('\n') || confirmLine,
           tool_name: firstWrite.call.name,
           tool_call_id: firstWrite.call.id,
           tool_payload: {
@@ -499,7 +606,7 @@ export function createConversationService(deps: {
           company_id: conversation.company_id,
           role: 'assistant',
           content:
-            completion.content ||
+            leadContent ||
             `All of these names are already in the library: ${skippedExisting.join(', ')}.`,
           tool_name: null,
           tool_call_id: null,
@@ -554,7 +661,7 @@ export function createConversationService(deps: {
     async listMessages(ctx: AiRequestContext, id: string) {
       await getOwnedOrThrow(id, ctx)
       const rows = await deps.repository.listMessages(id)
-      return { items: messagesToDtos(rows) }
+      return { items: messagesToDtos(rows, listedTools()) }
     },
 
     async sendMessage(ctx: AiRequestContext, conversationId: string, content: string) {
@@ -574,9 +681,12 @@ export function createConversationService(deps: {
       }
 
       try {
+        const { provider, systemPrompt } = await deps.resolveProvider(ctx)
         const assistantMessage = await runProviderLoop(
           { ...ctx, conversationId: conversation.id },
           conversation,
+          provider,
+          systemPrompt,
         )
         return {
           userMessage: toMessageDto(userMessage),

@@ -26,14 +26,19 @@ argCompletion?: {
   forceByRole?: Partial<Record<ToolRole, Record<string, unknown>>>
   uniqueBy?: string
   uniqueLookup?: { method: 'GET'; path: string; queryParam: 'names' }
+  pascalCaseKeys?: string[]
 }
 ```
 
-AI applies, in order: missing `defaults` → random hex color from schema `enum` or a generic fallback palette (same `Math.random` index as the tag create form) → `forceByRole[role]` → drop keys not in `allowedKeys`. If `jsonSchema.required` keys are still missing, the executor returns `MISSING_REQUIRED_ARGS` to the model instead of asking the user to confirm.
+AI applies, in order: missing `defaults` → random hex color from schema `enum` or a generic fallback palette (same `Math.random` index as the tag create form) → `forceByRole[role]` → capitalize the first letter of each `pascalCaseKeys` string (PharmacyInventory, not pharmacyInventory) → drop keys not in `allowedKeys`. If `jsonSchema.required` keys are still missing, the executor returns `MISSING_REQUIRED_ARGS` to the model instead of asking the user to confirm.
 
 When parking create writes, AI looks up `uniqueBy` values via `uniqueLookup` (`GET path?names=`). Existing names and in-batch duplicates are skipped; only missing unique values are shown for confirm. Never switch on tool names such as `create_data_tag`.
 
 Keep the type in sync on peer `capabilityTypes.ts` and `ai/backend/src/ai/tools/registry.ts`. `parseTool` must copy `argCompletion` through.
+
+## `viewPath` (optional, on tools that return records)
+
+Owning service publishes a frontend path template (`/services/{id}`, `/data/{kind}/{id}`). AI interpolates `{id}` / `{kind}` from the record (and tool args) and attaches `__open` for the chat UI. Do not hard-code tool names in AI. Data paths are the Data FE routes; WebOnOne prefixes `/data` when opening them.
 
 ## Color
 
@@ -42,7 +47,7 @@ Keep the type in sync on peer `capabilityTypes.ts` and `ai/backend/src/ai/tools/
 
 ## Prompts
 
-`DEFAULT_SYSTEM_PROMPT` and `withAvailableToolsPrompt` stay generic (fill schema properties, do not invent IDs). Suggest/list/recommend N names → numbered list and wait; do not call `create_*` until the user asks to add or create. Several named creates in one turn → one `create_*` call per item; existing unique names are skipped; remaining items confirm one at a time. Field rules belong on the tool `description`.
+`DEFAULT_SYSTEM_PROMPT` and `withAvailableToolsPrompt` stay generic (fill schema properties, do not invent IDs). When the model lists create-ready records (name plus description, and other required schema fields), it should call `create_*` once per item. If the user asks for N items, park N confirm rows. Models often emit one `create_*` call; AI then asks for a markdown table of the remaining items (no tools) and lifts those rows. Existing unique names are skipped. Never ask which items to create in text — the shared Confirm ItemList is the picker (Confirm / Skip per row). Field rules belong on the tool `description`. Do not switch on tool names such as `create_data_tag`.
 
 Reference: `data/backend/src/ai/capabilities.ts` (`create_data_tag`), `ai/backend/src/ai/tools/createDefaults.ts`.
 

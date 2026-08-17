@@ -62,7 +62,7 @@ export class OllamaProvider implements AiProvider {
   readonly id = 'ollama' as const
 
   constructor(
-    private readonly options: { baseUrl: string; model: string; timeoutMs: number },
+    private readonly options: { baseUrl: string; model: string; timeoutMs: number; apiKey?: string },
   ) {}
 
   async complete(input: ChatCompletionInput): Promise<ChatCompletionResult> {
@@ -81,9 +81,15 @@ export class OllamaProvider implements AiProvider {
         body.tools = input.tools
       }
 
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      const apiKey = this.options.apiKey?.trim()
+      if (apiKey) {
+        headers.Authorization = `Bearer ${apiKey}`
+      }
+
       const res = await fetch(`${this.options.baseUrl}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         signal: controller.signal,
         body: JSON.stringify(body),
       })
@@ -93,7 +99,14 @@ export class OllamaProvider implements AiProvider {
         const providerMessage = typeof data.error === 'string' ? data.error : 'http_error'
         console.error('[ai]', 'provider_http_error', this.id, providerMessage)
         if (providerMessage.toLowerCase().includes('not found')) {
-          throw new HttpError(502, 'AI model is not installed. Check AI_MODEL against `ollama list`.', 'PROVIDER_ERROR')
+          throw new HttpError(502, 'AI model is not available. Check AI_MODEL against the configured Ollama host.', 'PROVIDER_ERROR')
+        }
+        if (res.status === 401 || providerMessage.toLowerCase().includes('unauthorized')) {
+          throw new HttpError(
+            502,
+            'Ollama Cloud rejected the API key. Paste the full key from ollama.com/settings/keys (it includes a dot) in Basic Settings → AI.',
+            'PROVIDER_AUTH_ERROR',
+          )
         }
         throw new HttpError(502, 'AI provider unavailable', 'PROVIDER_ERROR')
       }

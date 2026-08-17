@@ -57,8 +57,10 @@ function libraryCrud(options: {
   createProperties: Record<string, unknown>
   updateProperties: Record<string, unknown>
   createArgCompletion?: ToolDefinition['argCompletion']
+  viewPath?: string
 }): ToolDefinition[] {
   const { resource, singular } = options
+  const viewPath = options.viewPath
   return [
     dataTool({
       name: `list_data_${resource}`,
@@ -69,6 +71,7 @@ function libraryCrud(options: {
       requiredPermissions: ['ai:data_library:read'],
       auth: 'user_jwt',
       invoke: { method: 'GET', path: `/api/v1/${resource}` },
+      ...(viewPath ? { viewPath } : {}),
     }),
     dataTool({
       name: `get_data_${singular}`,
@@ -79,6 +82,7 @@ function libraryCrud(options: {
       requiredPermissions: ['ai:data_library:read'],
       auth: 'user_jwt',
       invoke: { method: 'GET', path: `/api/v1/${resource}/:id` },
+      ...(viewPath ? { viewPath } : {}),
     }),
     dataTool({
       name: `create_data_${singular}`,
@@ -95,6 +99,7 @@ function libraryCrud(options: {
       auth: 'user_jwt',
       invoke: { method: 'POST', path: `/api/v1/${resource}` },
       argCompletion: uniqueNameArgCompletion(resource, options.createArgCompletion),
+      ...(viewPath ? { viewPath } : {}),
     }),
     dataTool({
       name: `update_data_${singular}`,
@@ -110,6 +115,7 @@ function libraryCrud(options: {
       requiredPermissions: ['ai:data_library:admin'],
       auth: 'user_jwt',
       invoke: { method: 'PATCH', path: `/api/v1/${resource}/:id` },
+      ...(viewPath ? { viewPath } : {}),
     }),
     dataTool({
       name: `delete_data_${singular}`,
@@ -148,6 +154,7 @@ function catalogCrud(options: {
 }): ToolDefinition[] {
   const { resource, singular } = options
   const createProperties = { ...catalogCreateProperties, ...options.extraCreate }
+  const viewPath = `/${resource}/{id}`
   return [
     dataTool({
       name: `list_data_${resource}`,
@@ -158,6 +165,7 @@ function catalogCrud(options: {
       requiredPermissions: ['ai:data_library:read'],
       auth: 'user_jwt',
       invoke: { method: 'GET', path: `/api/v1/${resource}` },
+      viewPath,
     }),
     dataTool({
       name: `get_data_${singular}`,
@@ -168,6 +176,7 @@ function catalogCrud(options: {
       requiredPermissions: ['ai:data_library:read'],
       auth: 'user_jwt',
       invoke: { method: 'GET', path: `/api/v1/${resource}/:id` },
+      viewPath,
     }),
     dataTool({
       name: `create_data_${singular}`,
@@ -184,6 +193,7 @@ function catalogCrud(options: {
       auth: 'user_jwt',
       invoke: { method: 'POST', path: `/api/v1/${resource}` },
       argCompletion: uniqueNameArgCompletion(resource),
+      viewPath,
     }),
     dataTool({
       name: `update_data_${singular}`,
@@ -199,6 +209,7 @@ function catalogCrud(options: {
       requiredPermissions: ['ai:data_catalog:write'],
       auth: 'user_jwt',
       invoke: { method: 'PATCH', path: `/api/v1/${resource}/:id` },
+      viewPath,
     }),
     dataTool({
       name: `delete_data_${singular}`,
@@ -246,7 +257,7 @@ const TAG_COLOR_PALETTE = [
 ] as const
 
 const tagProperties = {
-  name: { type: 'string', description: 'Tag display name (form field Name).' },
+  name: { type: 'string', description: 'Tag display name (form field Name). PascalCase with no spaces; first letter capital (PharmacyInventory, not pharmacyInventory).' },
   description: {
     type: 'string',
     description:
@@ -295,14 +306,16 @@ export const dataAiCapabilities: ToolDefinition[] = [
     singular: 'tag',
     listDescription: 'List Data library tags. Use this for the shared platform tag library, not the public marketplace.',
     createDescription:
-      'Create a new Data library tag only (the shared tag library). Do not use this to create a product, service, or space, and do not use it to attach a tag to an existing item. Always pass name, description, and status (pending = Unverified; verified only if super-admin asked). Keep name camelCase with no spaces (HealthServices). Description is tags-only: Spaced Name - 1-3 descriptive sentences (HealthServices → Health Services - Health care services and providers that deliver medical advice, treatment, and related support). Split the name into separate words in front of the description so search can match Health and Services; do not write Healthcare as one word. Write about the topic, not about tags or labels. Omit color unless the user asked for a specific hex; a random palette color is applied like the create-tag form. Company-admin creates stay Unverified until a super admin verifies them.',
+      'Create a new Data library tag only (the shared tag library). Do not use this to create a product, service, or space, and do not use it to attach a tag to an existing item. Always pass name, description, and status (pending = Unverified; verified only if super-admin asked). Keep name PascalCase with no spaces and a capital first letter (PharmacyInventory, not pharmacyInventory; HealthServices). Description is tags-only: Spaced Name - 1-3 descriptive sentences (HealthServices → Health Services - Health care services and providers that deliver medical advice, treatment, and related support). Split the name into separate words in front of the description so search can match Health and Services; do not write Healthcare as one word. Write about the topic, not about tags or labels. Omit color unless the user asked for a specific hex; a random palette color is applied like the create-tag form. Company-admin creates stay Unverified until a super admin verifies them.',
     createRequired: ['name', 'description', 'status'],
     createProperties: tagProperties,
     updateProperties: tagProperties,
+    viewPath: '/tags/{id}',
     createArgCompletion: {
       allowedKeys: ['name', 'description', 'color', 'status'],
       defaults: { status: 'pending' },
       forceByRole: { company_admin: { status: 'pending' } },
+      pascalCaseKeys: ['name'],
     },
   }),
   ...libraryCrud({

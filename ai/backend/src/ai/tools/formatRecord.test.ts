@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { formatRecordLines, recordsFromUnknown } from './formatRecord.js'
+import { formatRecordLines, recordsFromUnknown, withRecordOpen } from './formatRecord.js'
 
 describe('formatRecordLines', () => {
   it('renders key:value lines without JSON quotes', () => {
@@ -40,5 +40,38 @@ describe('recordsFromUnknown', () => {
       }),
       [],
     )
+  })
+})
+
+describe('withRecordOpen', () => {
+  it('interpolates Data library service paths', () => {
+    const [record] = withRecordOpen(
+      [{ id: 'XBhm6jUMTSWw1Xydmmmi-', name: 'General Consultation' }],
+      { service: 'data', viewPath: '/services/{id}' },
+    )
+    assert.deepEqual(record?.__open, {
+      service: 'data',
+      path: '/services/XBhm6jUMTSWw1Xydmmmi-',
+    })
+  })
+
+  it('uses entityKind from the record when kind is in tool args', () => {
+    const [record] = withRecordOpen(
+      [{ id: 'abc12345', entityKind: 'services', name: 'General Consultation' }],
+      { service: 'webonone', viewPath: '/data/{kind}/{id}' },
+      { kind: 'products' },
+    )
+    assert.deepEqual(record?.__open, {
+      service: 'webonone',
+      path: '/data/services/abc12345',
+    })
+  })
+
+  it('omits open when id is missing', () => {
+    const [record] = withRecordOpen([{ name: 'General Consultation' }], {
+      service: 'data',
+      viewPath: '/services/{id}',
+    })
+    assert.equal(record?.__open, undefined)
   })
 })
