@@ -90,6 +90,7 @@ describe('discoverAllCapabilities', () => {
         forceByRole: { company_admin: { status: 'pending' } },
         uniqueBy: 'name',
         uniqueLookup: { method: 'GET', path: '/api/v1/tags', queryParam: 'names' },
+        pascalCaseKeys: ['name'],
       },
     })
     assert.deepEqual(parsed?.argCompletion, {
@@ -98,6 +99,17 @@ describe('discoverAllCapabilities', () => {
       forceByRole: { company_admin: { status: 'pending' } },
       uniqueBy: 'name',
       uniqueLookup: { method: 'GET', path: '/api/v1/tags', queryParam: 'names' },
+      pascalCaseKeys: ['name'],
     })
+  })
+
+  it('keeps viewPath from the owning service', () => {
+    const parsed = parseTool({
+      ...dataTool,
+      name: 'get_data_service',
+      invoke: { method: 'GET', path: '/api/v1/services/:id' },
+      viewPath: '/services/{id}',
+    })
+    assert.equal(parsed?.viewPath, '/services/{id}')
   })
 })

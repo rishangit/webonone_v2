@@ -609,9 +609,12 @@ function main() {
         `AI_PROVIDER_API_KEY=${get(master, 'AI_PROVIDER_API_KEY')}`,
         `AI_PROVIDER_TIMEOUT_MS=${get(master, 'AI_PROVIDER_TIMEOUT_MS') || '60000'}`,
         `AI_SYSTEM_PROMPT=${get(master, 'AI_SYSTEM_PROMPT')}`,
+        `AI_CREDENTIALS_ENCRYPTION_KEY=${get(master, 'AI_CREDENTIALS_ENCRYPTION_KEY')}`,
         `AI_GUEST_TOKEN_EXPIRY_SECONDS=${get(master, 'AI_GUEST_TOKEN_EXPIRY_SECONDS') || '86400'}`,
         `AI_GUEST_RATE_LIMIT_MAX=${get(master, 'AI_GUEST_RATE_LIMIT_MAX') || '30'}`,
         `AI_GUEST_RATE_LIMIT_WINDOW_MS=${get(master, 'AI_GUEST_RATE_LIMIT_WINDOW_MS') || '60000'}`,
+        `AI_CAPABILITY_REFRESH_MS=${get(master, 'AI_CAPABILITY_REFRESH_MS') || '300000'}`,
+        `AI_TOOL_HTTP_TIMEOUT_MS=${get(master, 'AI_TOOL_HTTP_TIMEOUT_MS') || '15000'}`,
       ]),
     ),
   );

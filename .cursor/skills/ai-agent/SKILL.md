@@ -39,13 +39,14 @@ description: >-
 | Frontend | 3020 | `ai/frontend/.env` |
 | Backend | 4020 | `ai/backend/.env` |
 
-`JWT_SECRET` must match Identity. Database: `webonone_ai`. Provider URL/key/model come from env only.
+`JWT_SECRET` must match Identity. Database: `webonone_ai`. Per-user provider settings live in `ai_provider_settings`; env `AI_*` is guest/bootstrap fallback only.
 
 ## Key paths
 
 - Auth: `ai/backend/src/middleware/auth.ts`
 - Context: `ai/backend/src/ai/requestContext.ts`
 - Provider factory: `ai/backend/src/ai/providers/createAiProvider.ts`
+- Settings: `ai/backend/src/services/aiSettings.service.ts`, WebOnOne `features/settings/basic/components/AiSettingsPanel.tsx`
 - Tools seam: `ai/backend/src/ai/tools/registry.ts`
 - Completer: `ai/backend/src/ai/tools/createDefaults.ts`
 - Discovery: `ai/backend/src/ai/tools/discoverCapabilities.ts`

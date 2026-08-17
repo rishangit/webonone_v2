@@ -36,3 +36,19 @@ export interface AiMessageRow {
   tool_payload: string | Record<string, unknown> | null
   created_at: Date
 }
+
+export type AiProviderSettingsScope = 'user' | 'platform'
+
+export interface AiProviderSettingsRow {
+  id: string
+  scope: AiProviderSettingsScope
+  user_id: string | null
+  provider: 'ollama' | 'openai' | 'gemini' | 'anthropic'
+  model: string
+  base_url: string
+  api_key_cipher: string | null
+  timeout_ms: number
+  extra_system_prompt: string | null
+  created_at: Date
+  updated_at: Date
+}

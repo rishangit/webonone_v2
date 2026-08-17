@@ -5,7 +5,8 @@
     "ariaSections": "මූලික සැකසුම් අංශ",
     "tabs": {
       "account": "ගිණුම",
-      "appearance": "පෙනුම"
+      "appearance": "පෙනුම",
+      "ai": "AI"
     }
   },
   "account": {
@@ -35,6 +36,53 @@
       "onScroll": {
         "title": "අනුචලනයේදී",
         "description": "පිටුවේ පහළට ළඟා වූ විට ඊළඟ පිටුව පූරණය කරන්න."
+      }
+    }
+  },
+  "ai": {
+    "title": "AI සහායක",
+    "description": "යෙදුම් සහායක සඳහා ඔබේම Ollama Cloud ගිණුම සම්බන්ධ කරන්න.",
+    "setup": {
+      "step1": "නොමිලේ ගිණුමක් සාදන්න",
+      "step2": "විවෘත කරන්න",
+      "step3": "මෙම කාඩ්පතේ Edit එබී API key ඇතුළත් කර සුරකින්න."
+    },
+    "configuredSummary": "Model {{model}} භාවිතා කරයි. API key: {{hasKey}}.",
+    "keySaved": "සුරකින ලදී",
+    "keyMissing": "සුරකි නැත",
+    "loading": "AI සැකසුම් පූරණය වෙමින්…",
+    "cancel": "අවලංගු කරන්න",
+    "editTitle": "AI සහායක සංස්කරණය",
+    "save": "වෙනස්කම් සුරකින්න",
+    "saveAndEnable": "සුරකින්න සහ සහායක සක්‍රිය කරන්න",
+    "toast": {
+      "saved": "AI සැකසුම් සුරකින ලදී",
+      "saveFailed": "AI සැකසුම් සුරැකිය නොහැක"
+    },
+    "advanced": {
+      "show": "උසස් සැකසුම්",
+      "hide": "උසස් සැකසුම් සඟවන්න"
+    },
+    "fields": {
+      "apiKey": "Ollama Cloud API key",
+      "apiKeyRequired": "පළමු වර සැකසීම සඳහා API key අවශ්‍යයි",
+      "apiKeyPlaceholder": "ollama.com/settings/keys වෙතින් සම්පූර්ණ key ඇතුළත් කරන්න (dot එක ඇතුළත්)",
+      "apiKeyPlaceholderSaved": "පවතින key එක වෙනුවට අලුත් සම්පූර්ණ key එකක් ඇතුළත් කරන්න",
+      "apiKeyPlaceholderOptional": "දේශීය Ollama සඳහා අනිවාර්ය නොවේ",
+      "model": "Model",
+      "baseUrl": "Provider base URL",
+      "timeoutMs": "ඉල්ලීම් කල් ඉකුත් (ms)"
+    },
+    "platform": {
+      "title": "වෙබ් අඩවි අමුත්තා සහායක",
+      "editTitle": "වෙබ් අඩවි අමුත්තා සහායක සංස්කරණය",
+      "description": "පොදු වෙබ් අඩවියේ අමුත්තන් සඳහා භාවිතා කරන provider.",
+      "extraPrompt": "අමතර guest prompt",
+      "extraPromptDescription": "වෙබ් අඩවි අමුත්තන් සඳහා පමණක් system prompt ට එකතු කරන optional පෙළ.",
+      "save": "Guest provider සුරකින්න",
+      "toast": {
+        "saved": "Guest assistant සැකසුම් සුරකින ලදී",
+        "saveFailed": "Guest assistant සැකසුම් සුරැකිය නොහැක"
       }
     }
   },

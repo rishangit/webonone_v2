@@ -71,6 +71,14 @@ export function missingRequiredArgs(
   return required.filter((key) => !isPresent(args[key]))
 }
 
+function pascalCaseValue(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return trimmed
+  }
+  return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`
+}
+
 export function completeCreateArgs(
   tool: Pick<ToolDefinition, 'name' | 'jsonSchema' | 'argCompletion'>,
   args: Record<string, unknown>,
@@ -102,6 +110,15 @@ export function completeCreateArgs(
   const forced = completion?.forceByRole?.[role]
   if (forced) {
     Object.assign(next, forced)
+  }
+
+  if (completion?.pascalCaseKeys) {
+    for (const key of completion.pascalCaseKeys) {
+      const current = asString(next[key])
+      if (current) {
+        next[key] = pascalCaseValue(current)
+      }
+    }
   }
 
   if (completion?.allowedKeys) {

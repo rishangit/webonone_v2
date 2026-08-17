@@ -65,13 +65,36 @@ function parseArgCompletion(raw: unknown): ArgCompletion | undefined {
       completion.uniqueLookup = { method: 'GET', path, queryParam: 'names' }
     }
   }
+  if (Array.isArray(raw.pascalCaseKeys)) {
+    const pascalCaseKeys = raw.pascalCaseKeys.filter(
+      (key): key is string => typeof key === 'string' && key.trim().length > 0,
+    )
+    if (pascalCaseKeys.length > 0) {
+      completion.pascalCaseKeys = pascalCaseKeys
+    }
+  }
   return completion.allowedKeys ||
     completion.defaults ||
     completion.forceByRole ||
     completion.uniqueBy ||
-    completion.uniqueLookup
+    completion.uniqueLookup ||
+    completion.pascalCaseKeys
     ? completion
     : undefined
+}
+
+function parseViewPath(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') {
+    return undefined
+  }
+  const path = raw.trim()
+  if (!path.startsWith('/') || path.startsWith('//')) {
+    return undefined
+  }
+  if (path.includes('..') || path.includes('\\') || path.includes('://')) {
+    return undefined
+  }
+  return path
 }
 
 export function parseTool(raw: unknown): ToolDefinition | null {
@@ -105,6 +128,7 @@ export function parseTool(raw: unknown): ToolDefinition | null {
     return null
   }
   const argCompletion = parseArgCompletion(raw.argCompletion)
+  const viewPath = parseViewPath(raw.viewPath)
   return {
     name: raw.name,
     description: raw.description,
@@ -123,6 +147,7 @@ export function parseTool(raw: unknown): ToolDefinition | null {
     },
     capabilityVersion: typeof raw.capabilityVersion === 'string' ? raw.capabilityVersion : '1',
     ...(argCompletion ? { argCompletion } : {}),
+    ...(viewPath ? { viewPath } : {}),
   }
 }
 

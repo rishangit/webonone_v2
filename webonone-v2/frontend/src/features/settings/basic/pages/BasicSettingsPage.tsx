@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next'
 import { FeaturePage, Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { AccountSettingsPanel } from '@/features/settings/basic/components/AccountSettingsPanel'
+import { AiSettingsPanel } from '@/features/settings/basic/components/AiSettingsPanel'
 import { AppearanceSettingsPanel } from '@/features/settings/basic/components/AppearanceSettingsPanel'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 
-type BasicSettingsTab = 'account' | 'theme'
+type BasicSettingsTab = 'account' | 'theme' | 'ai'
 
-const BASIC_SETTINGS_TABS = ['account', 'theme'] as const satisfies readonly BasicSettingsTab[]
+const BASIC_SETTINGS_TABS = ['account', 'theme', 'ai'] as const satisfies readonly BasicSettingsTab[]
 
 export function BasicSettingsPage() {
   const { t } = useTranslation('settings')
@@ -15,6 +16,7 @@ export function BasicSettingsPage() {
   const tabs: { id: BasicSettingsTab; label: string }[] = [
     { id: 'account', label: t('basic.tabs.account') },
     { id: 'theme', label: t('basic.tabs.appearance') },
+    { id: 'ai', label: t('basic.tabs.ai') },
   ]
 
   return (
@@ -33,7 +35,13 @@ export function BasicSettingsPage() {
         </TabsList>
 
         <TabsContent value={tab} className="mt-0 outline-none">
-          {tab === 'account' ? <AccountSettingsPanel /> : <AppearanceSettingsPanel />}
+          {tab === 'account' ? (
+            <AccountSettingsPanel />
+          ) : tab === 'theme' ? (
+            <AppearanceSettingsPanel />
+          ) : (
+            <AiSettingsPanel />
+          )}
         </TabsContent>
       </Tabs>
     </FeaturePage>

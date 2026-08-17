@@ -2,6 +2,18 @@ import { apiClient } from '@/shared/services/apiClient'
 import type { ChatMessage, Conversation, PaginatedConversations } from '@/shared/types/ai.types'
 import type { CatalogListQuery, PaginatedResult } from '@webonone/store-kit'
 
+export type AiSettingsResponse = {
+  configured: boolean
+  provider: 'ollama' | 'openai' | 'gemini' | 'anthropic'
+  model: string
+  baseUrl: string
+  timeoutMs: number
+  hasApiKey: boolean
+  apiKeyHint: string | null
+  apiKey: string | null
+  extraSystemPrompt?: string | null
+}
+
 export const aiApi = {
   listConversations: (query: CatalogListQuery): Promise<PaginatedResult<Conversation>> =>
     apiClient<PaginatedConversations>(
@@ -40,4 +52,5 @@ export const aiApi = {
       `/conversations/${conversationId}/tool-calls/${encodeURIComponent(toolCallId)}/reject`,
       { method: 'POST', body: JSON.stringify({ remaining }) },
     ),
+  getAiSettings: () => apiClient<AiSettingsResponse>('/me/ai-settings'),
 }

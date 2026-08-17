@@ -19,7 +19,7 @@ Agent skill: [.cursor/skills/ai-agent/SKILL.md](../skills/ai-agent/SKILL.md)
 | Frontend | 3020 | `ai/frontend/.env` (`VITE_*` only) |
 | Backend | 4020 | `ai/backend/.env` |
 
-Backend loads only `ai/backend/.env`. Provider URL, model, and API keys are env-only — never hard-code or commit them.
+Backend loads only `ai/backend/.env`. `AI_*` provider vars are **guest/bootstrap fallback** only. Signed-in users store provider/model/API key in `ai_provider_settings` via WebOnOne Basic Settings → AI (`GET/PATCH /api/v1/me/ai-settings`). Super-admin sets website guest provider via `/api/v1/admin/ai-settings`. Keys encrypted with `AI_CREDENTIALS_ENCRYPTION_KEY`.
 
 ## Auth
 

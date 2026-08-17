@@ -20,13 +20,15 @@ copy ai\frontend\.env.example ai\frontend\.env
 
 2. Use the same `JWT_SECRET` as Identity (`identity/backend/.env`).
 3. Create MySQL database `webonone_ai`.
-4. Run Ollama locally (default `AI_PROVIDER_BASE_URL=http://127.0.0.1:11434`) and pull a model matching `AI_MODEL`.
-5. Migrate and start:
+4. Migrate and start:
 
 ```bash
 npm run migrate:ai
 npm run dev:ai
 ```
+
+5. **Signed-in chat:** each user saves their own Ollama Cloud API key in WebOnOne **Settings → Basic Settings → AI** ([ollama.com/settings/keys](https://ollama.com/settings/keys)).
+6. **Website guests:** super-admin sets the guest provider in the same AI tab (**Website guest assistant** card), or leave `AI_*` env as bootstrap fallback.
 
 Health: `http://127.0.0.1:4020/api/v1/health`
 
@@ -40,19 +42,36 @@ Website catalog search (`http://127.0.0.1:3018`) shows a guest-capable assistant
 - Guest JWT from `POST /api/v1/guest-sessions` (`iss=webonone-ai`) for website visitors. This is not a second login product.
 - `company_id` is optional. Never taken from the request body.
 
-## Provider config (env only)
+## Provider config
+
+| Who | Source |
+|-----|--------|
+| Signed-in user | `ai_provider_settings` row (`scope=user`) via WebOnOne Basic Settings → AI |
+| Website guest | Super-admin platform row (`scope=platform`) or `AI_*` env bootstrap |
+| System prompt | `DEFAULT_SYSTEM_PROMPT` in code; optional guest extra prompt on platform row only |
+
+Per-user and platform API keys are encrypted at rest (`AI_CREDENTIALS_ENCRYPTION_KEY`). Never returned from GET APIs.
+
+### Env (guest bootstrap + ops)
 
 | Variable | Purpose |
 |----------|---------|
 | `AI_PROVIDER` | `ollama` (implemented) / `openai` / `gemini` / `anthropic` (stubs) |
-| `AI_MODEL` | Model name |
+| `AI_MODEL` | Model name when no platform DB row |
 | `AI_PROVIDER_BASE_URL` | Provider origin (no trailing path) |
-| `AI_PROVIDER_API_KEY` | Secret; empty for local Ollama |
-| `AI_SYSTEM_PROMPT` | Optional override; never accept from the client |
+| `AI_PROVIDER_API_KEY` | Guest bootstrap secret; empty for local Ollama |
+| `AI_CREDENTIALS_ENCRYPTION_KEY` | 32-byte hex or base64 — encrypts stored user/platform keys |
+| `AI_SYSTEM_PROMPT` | Optional override of default system prompt |
+| `AI_GUEST_*` | Guest JWT expiry and rate limits |
 | `WEBONONE_API_BASE_URL` | WebOnOne origin for capability discovery and tool HTTP |
 | `WEBONONE_SERVICE_API_KEY` | Same key as WebOnOne `WEBONONE_SERVICE_API_KEY` |
 | `DATA_API_BASE_URL` | Data origin for library capability discovery and tool HTTP |
 | `DATA_SERVICE_API_KEY` | Same key as Data `DATA_SERVICE_API_KEY` |
+
+### Settings API
+
+- `GET/PATCH /api/v1/me/ai-settings` — Identity users only
+- `GET/PATCH /api/v1/admin/ai-settings` — super-admin platform guest provider
 
 ## Tests
 

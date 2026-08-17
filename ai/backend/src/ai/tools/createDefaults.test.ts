@@ -21,6 +21,7 @@ const createTag: Pick<ToolDefinition, 'name' | 'jsonSchema' | 'argCompletion'> =
     allowedKeys: ['name', 'description', 'color', 'status'],
     defaults: { status: 'pending' },
     forceByRole: { company_admin: { status: 'pending' } },
+    pascalCaseKeys: ['name'],
   },
 }
 
@@ -59,5 +60,14 @@ describe('completeCreateArgs', () => {
       'company_admin',
     )
     assert.equal(args.color, '#059669')
+  })
+
+  it('capitalizes the first letter of pascalCaseKeys', () => {
+    const args = completeCreateArgs(
+      createTag,
+      { name: 'pharmacyInventory', description: 'Pharmacy Inventory - Medication stock.' },
+      'company_admin',
+    )
+    assert.equal(args.name, 'PharmacyInventory')
   })
 })

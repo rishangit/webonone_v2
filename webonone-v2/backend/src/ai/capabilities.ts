@@ -36,6 +36,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:public_catalog:read'],
     auth: 'service_key',
     invoke: { method: 'GET', path: '/api/v1/internal/catalog/search' },
+    viewPath: '/catalog/{kind}/{id}',
   }),
   webononeTool({
     name: 'search_company_catalog',
@@ -55,6 +56,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:catalog:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/me/catalog/:kind' },
+    viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
     name: 'get_catalog_item',
@@ -73,6 +75,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:catalog:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/me/catalog/:kind/:id' },
+    viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
     name: 'create_catalog_item',
@@ -109,6 +112,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:catalog:write'],
     auth: 'user_jwt',
     invoke: { method: 'POST', path: '/api/v1/company/me/catalog/:kind/custom' },
+    viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
     name: 'update_catalog_item',
@@ -133,6 +137,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:catalog:write'],
     auth: 'user_jwt',
     invoke: { method: 'PATCH', path: '/api/v1/company/me/catalog/:kind/:id' },
+    viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
     name: 'delete_catalog_item',
@@ -170,6 +175,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:catalog:write'],
     auth: 'user_jwt',
     invoke: { method: 'POST', path: '/api/v1/company/me/catalog/:kind/link' },
+    viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
     name: 'from_library_catalog',
@@ -191,6 +197,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:catalog:write'],
     auth: 'user_jwt',
     invoke: { method: 'POST', path: '/api/v1/company/me/catalog/:kind/from-library' },
+    viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
     name: 'fork_catalog_item',
@@ -210,6 +217,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:catalog:write'],
     auth: 'user_jwt',
     invoke: { method: 'POST', path: '/api/v1/company/me/catalog/:kind/:id/fork' },
+    viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
     name: 'list_events',
@@ -230,6 +238,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:events:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/events' },
+    viewPath: '/calendar/events/{id}',
   }),
   webononeTool({
     name: 'get_event',
@@ -245,6 +254,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:events:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/events/:id' },
+    viewPath: '/calendar/events/{id}',
   }),
   webononeTool({
     name: 'create_event',
@@ -281,6 +291,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:events:write'],
     auth: 'user_jwt',
     invoke: { method: 'POST', path: '/api/v1/company/events' },
+    viewPath: '/calendar/events/{id}',
   }),
   webononeTool({
     name: 'update_event',
@@ -311,6 +322,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:events:write'],
     auth: 'user_jwt',
     invoke: { method: 'PATCH', path: '/api/v1/company/events/:id' },
+    viewPath: '/calendar/events/{id}',
   }),
   webononeTool({
     name: 'delete_event',
@@ -340,6 +352,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:staff:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/staff' },
+    viewPath: '/staff/{id}',
   }),
   webononeTool({
     name: 'get_staff',
@@ -355,6 +368,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:staff:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/staff/:id' },
+    viewPath: '/staff/{id}',
   }),
   webononeTool({
     name: 'create_staff',
@@ -390,6 +404,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:staff:write'],
     auth: 'user_jwt',
     invoke: { method: 'POST', path: '/api/v1/company/staff' },
+    viewPath: '/staff/{id}',
   }),
   webononeTool({
     name: 'update_staff',
@@ -421,6 +436,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:staff:write'],
     auth: 'user_jwt',
     invoke: { method: 'PATCH', path: '/api/v1/company/staff/:id' },
+    viewPath: '/staff/{id}',
   }),
   webononeTool({
     name: 'delete_staff',
@@ -450,6 +466,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:company:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/me' },
+    viewPath: '/settings/basic',
   }),
   webononeTool({
     name: 'update_company',
@@ -483,6 +500,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:company:admin'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/admin/pending' },
+    viewPath: '/settings/companies/{id}',
   }),
   webononeTool({
     name: 'list_all_companies',
@@ -493,6 +511,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:company:admin'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/admin/companies' },
+    viewPath: '/settings/companies/{id}',
   }),
   webononeTool({
     name: 'approve_company',
@@ -508,6 +527,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:company:admin'],
     auth: 'user_jwt',
     invoke: { method: 'POST', path: '/api/v1/company/admin/:id/approve' },
+    viewPath: '/settings/companies/{id}',
   }),
   webononeTool({
     name: 'set_company_status',
@@ -526,5 +546,6 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:company:admin'],
     auth: 'user_jwt',
     invoke: { method: 'PATCH', path: '/api/v1/company/admin/:id/status' },
+    viewPath: '/settings/companies/{id}',
   }),
 ]

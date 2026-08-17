@@ -5,7 +5,8 @@
     "ariaSections": "Basic Settings sections",
     "tabs": {
       "account": "Account",
-      "appearance": "Appearance"
+      "appearance": "Appearance",
+      "ai": "AI"
     }
   },
   "account": {
@@ -35,6 +36,53 @@
       "onScroll": {
         "title": "On scroll",
         "description": "Load the next page when you reach the bottom."
+      }
+    }
+  },
+  "ai": {
+    "title": "AI assistant",
+    "description": "Connect your own Ollama Cloud account for the in-app assistant.",
+    "setup": {
+      "step1": "Create a free account at",
+      "step2": "Open",
+      "step3": "Use Edit on this card, paste your API key, and save."
+    },
+    "configuredSummary": "Using model {{model}}. API key: {{hasKey}}.",
+    "keySaved": "saved",
+    "keyMissing": "not saved",
+    "loading": "Loading AI settings…",
+    "cancel": "Cancel",
+    "editTitle": "Edit AI assistant",
+    "save": "Save changes",
+    "saveAndEnable": "Save and enable assistant",
+    "toast": {
+      "saved": "AI settings saved",
+      "saveFailed": "Could not save AI settings"
+    },
+    "advanced": {
+      "show": "Advanced settings",
+      "hide": "Hide advanced settings"
+    },
+    "fields": {
+      "apiKey": "Ollama Cloud API key",
+      "apiKeyRequired": "API key is required for first-time setup",
+      "apiKeyPlaceholder": "Paste the full key from ollama.com/settings/keys (includes a dot)",
+      "apiKeyPlaceholderSaved": "Paste a new full key to replace the saved one",
+      "apiKeyPlaceholderOptional": "Optional for local Ollama",
+      "model": "Model",
+      "baseUrl": "Provider base URL",
+      "timeoutMs": "Request timeout (ms)"
+    },
+    "platform": {
+      "title": "Website guest assistant",
+      "editTitle": "Edit website guest assistant",
+      "description": "Provider used by anonymous visitors on the public website catalog assistant.",
+      "extraPrompt": "Extra guest prompt",
+      "extraPromptDescription": "Optional text appended to the system prompt for website guests only.",
+      "save": "Save guest provider",
+      "toast": {
+        "saved": "Guest assistant settings saved",
+        "saveFailed": "Could not save guest assistant settings"
       }
     }
   },

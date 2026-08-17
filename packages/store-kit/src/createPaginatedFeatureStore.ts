@@ -1,9 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
-import { from, merge, of } from 'rxjs'
+import { from, merge, of, timer } from 'rxjs'
 import {
   catchError,
-  debounceTime,
+  debounce,
   distinctUntilChanged,
   exhaustMap,
   filter,
@@ -14,6 +14,7 @@ import {
 import type { PaginatedFeatureState, PaginatedListQuery, PaginatedResult } from './types'
 import { isFresh, serializeQuery } from './cacheUtils'
 import { mergeAppendedItems } from './mergeAppendedItems'
+import { isCollapsedReplaceRequest, resolveListPage } from './resolveListPage'
 
 type ListLoader<T> = (
   query: PaginatedListQuery & { page: number; pageSize: number },
@@ -48,7 +49,7 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
     initialState: initialPaginatedState<T>(),
     reducers: {
       loadListRequested(state, action: PayloadAction<PaginatedListQuery>) {
-        const page = action.payload.page ?? state.page
+        const page = resolveListPage(action.payload, state)
         const pageSize = action.payload.pageSize ?? state.pageSize
         const status = action.payload.status ?? state.status
         const queryKey = serializeQuery({
@@ -67,8 +68,8 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
         state.listStatus = 'loading'
         state.listError = null
         if (action.payload.status !== undefined) state.status = action.payload.status ?? 'all'
-        if (action.payload.page !== undefined && !action.payload.append) {
-          state.page = action.payload.page
+        if (!action.payload.append) {
+          state.page = page
         }
         if (action.payload.pageSize !== undefined) state.pageSize = action.payload.pageSize
       },
@@ -113,7 +114,7 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
     const toRequest = (action: ReturnType<typeof actions.loadListRequested>, state: unknown) => {
       const payload = action.payload
       const featureState = (state as RootStateWithFeature)[config.name]
-      const page = payload.page ?? featureState.page
+      const page = resolveListPage(payload, featureState)
       const pageSize = payload.pageSize ?? featureState.pageSize
       const status = payload.status ?? featureState.status
       const query = {
@@ -152,7 +153,7 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
         const payload = (action as ReturnType<typeof actions.loadListRequested>).payload
         const featureState = (state as unknown as RootStateWithFeature)[config.name]
         const queryKey = serializeQuery({
-          page: payload.page ?? featureState.page,
+          page: resolveListPage(payload, featureState),
           pageSize: payload.pageSize ?? featureState.pageSize,
           status: payload.status ?? featureState.status,
           ...payload.extra,
@@ -170,11 +171,14 @@ export function createPaginatedFeatureStore<T>(config: PaginatedFeatureConfig<T>
 
     const replace$ = prepared$.pipe(
       filter(([action]) => !Boolean((action as ReturnType<typeof actions.loadListRequested>).payload.append)),
-      debounceTime(400),
-      distinctUntilChanged(
-        ([a], [b]) =>
-          serializeQuery((a as ReturnType<typeof actions.loadListRequested>).payload) ===
-          serializeQuery((b as ReturnType<typeof actions.loadListRequested>).payload),
+      debounce(([action]) =>
+        (action as ReturnType<typeof actions.loadListRequested>).payload.force ? timer(0) : timer(400),
+      ),
+      distinctUntilChanged(([a], [b]) =>
+        isCollapsedReplaceRequest(
+          (a as ReturnType<typeof actions.loadListRequested>).payload,
+          (b as ReturnType<typeof actions.loadListRequested>).payload,
+        ),
       ),
       switchMap(([action, state]) =>
         toRequest(action as ReturnType<typeof actions.loadListRequested>, state),

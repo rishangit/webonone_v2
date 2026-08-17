@@ -43,7 +43,9 @@ export function useAiMutationListRefresh() {
       if (!resource) {
         return
       }
-      dispatch(DATA_LIST_ACTIONS[resource].loadListRequested({ force: true }))
+      // Replace from page 1. On-scroll lists store the last appended page; refreshing
+      // that page wipes earlier rows and leaves load-more looping on empty pages.
+      dispatch(DATA_LIST_ACTIONS[resource].loadListRequested({ page: 1, force: true }))
     }
 
     window.addEventListener('message', onMessage)

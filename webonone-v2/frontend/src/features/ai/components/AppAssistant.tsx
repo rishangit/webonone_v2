@@ -1,11 +1,10 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   AppEndPanel,
   Button,
-  ItemList,
-  ItemListContent,
-  ItemListItem,
+  ConfirmItemList,
   Spinner,
   Textarea,
   cn,
@@ -14,11 +13,13 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { aiFetch } from '@/features/ai/utils/aiClient'
 import { notifyPeerAiMutation } from '@/features/ai/utils/notifyPeerAiMutation'
 import {
-  RecordLines,
   RecordResultList,
   parseRecordsFromText,
+  readRecordOpen,
   visibleAssistantText,
+  webononePathForOpen,
 } from '@/features/ai/utils/recordView'
+import { getWebsiteOrigin } from '@/features/auth/utils/websiteConfig'
 import { companyCatalogActions } from '@/features/company-catalog/store/companyCatalogStore'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 
@@ -94,6 +95,7 @@ function toolNameForCall(pending: PendingTool, toolCallId: string): string | nul
 
 export function AppAssistant({ open, onClose }: AppAssistantProps) {
   const { t } = useTranslation('shell')
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const catalogKind = useAppSelector((s) => s.companyCatalog.kind)
@@ -103,15 +105,37 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
   const [starting, setStarting] = useState(false)
   const [pendingReply, setPendingReply] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setConversationId(null)
     setMessages([])
+    setAiConfigured(null)
   }, [accessToken])
 
   useEffect(() => {
-    if (!open || !accessToken || conversationId) return
+    if (!open || !accessToken) return
+    let cancelled = false
+    setSettingsLoading(true)
+    aiFetch<{ configured: boolean }>('/me/ai-settings', accessToken)
+      .then((data) => {
+        if (!cancelled) setAiConfigured(data.configured)
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setSettingsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken, open])
+
+  useEffect(() => {
+    if (!open || !accessToken || conversationId || aiConfigured !== true) return
     let cancelled = false
     setStarting(true)
     setError(null)
@@ -131,11 +155,17 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
     return () => {
       cancelled = true
     }
-  }, [accessToken, conversationId, open])
+  }, [accessToken, aiConfigured, conversationId, open])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, pendingReply, starting])
+
+  function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
+    event.preventDefault()
+    event.currentTarget.form?.requestSubmit()
+  }
 
   async function handleSend(event: FormEvent) {
     event.preventDefault()
@@ -175,9 +205,14 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
     setError(null)
     try {
       const result = await aiFetch<{ assistantMessage: ChatLine }>(
-        `/conversations/${conversationId}/tool-calls/${encodeURIComponent(toolCallId)}/${action}`,
+        `/conversations/${conversationId}/tool-calls/${encodeURIComponent(toolCallId)}/${
+          action === 'confirm' ? 'confirm' : 'reject'
+        }`,
         accessToken,
-        { method: 'POST', body: '{}' },
+        {
+          method: 'POST',
+          body: '{}',
+        },
       )
       setMessages((current) => {
         const returned = result.assistantMessage
@@ -224,13 +259,14 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
             <Textarea
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={handleComposerKeyDown}
               placeholder={t('assistant.placeholder')}
               rows={2}
-              disabled={starting || !conversationId}
+              disabled={starting || settingsLoading || aiConfigured !== true || !conversationId}
             />
             <Button
               type="submit"
-              disabled={starting || pendingReply || !conversationId || !draft.trim()}
+              disabled={starting || pendingReply || settingsLoading || aiConfigured !== true || !conversationId || !draft.trim()}
             >
               <span className="inline-flex items-center gap-2">
                 {pendingReply ? <Spinner size="sm" /> : null}
@@ -242,6 +278,24 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
       }
     >
       <p className="text-xs text-muted-foreground">{t('assistant.hint')}</p>
+      {settingsLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner size="sm" />
+          <span>{t('assistant.checkingSettings')}</span>
+        </div>
+      ) : aiConfigured === false ? (
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <p>{t('assistant.setupRequired')}</p>
+          <ol className="list-decimal space-y-1 pl-5">
+            <li>{t('assistant.setupStep1')}</li>
+            <li>{t('assistant.setupStep2')}</li>
+            <li>{t('assistant.setupStep3')}</li>
+          </ol>
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/settings/basic?tab=ai">{t('assistant.openSettings')}</Link>
+          </Button>
+        </div>
+      ) : (
       <div className="flex flex-col gap-3" aria-live="polite">
         {starting && messages.length === 0 ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -271,63 +325,46 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
               </p>
               {text ? <p className="whitespace-pre-wrap">{text}</p> : null}
               {!pending && resultRecords.length > 0 ? (
-                <RecordResultList records={resultRecords} />
+                <RecordResultList
+                  records={resultRecords}
+                  openLabel={t('assistant.openRecord')}
+                  hrefForRecord={(record) => {
+                    const open = readRecordOpen(record)
+                    if (!open) return null
+                    if (open.path.startsWith('/catalog/')) {
+                      return `${getWebsiteOrigin()}${open.path}`
+                    }
+                    return webononePathForOpen(open)
+                  }}
+                  onOpen={(href) => {
+                    if (/^https?:\/\//i.test(href)) {
+                      window.location.assign(href)
+                      return
+                    }
+                    onClose()
+                    navigate(href)
+                  }}
+                />
               ) : null}
               {rows.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {hasPending ? (
-                    <p className="text-xs text-muted-foreground">{t('assistant.pendingChange')}</p>
-                  ) : null}
-                  <ItemList>
-                    {rows.map((call) => (
-                      <ItemListItem key={call.toolCallId}>
-                        <ItemListContent>
-                          {call.status === 'confirmed' ? (
-                            <p className="truncate text-xs">
-                              {t('assistant.itemAdded', { name: callItemName(call) })}
-                            </p>
-                          ) : call.status === 'rejected' ? (
-                            <p className="truncate text-xs">
-                              {t('assistant.itemCanceled', { name: callItemName(call) })}
-                            </p>
-                          ) : (
-                            <>
-                              <RecordLines
-                                record={
-                                  call.arguments && Object.keys(call.arguments).length > 0
-                                    ? call.arguments
-                                    : { summary: call.summary }
-                                }
-                              />
-                              <div className="mt-2 flex justify-end gap-2">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="link"
-                                  className="h-auto px-0"
-                                  disabled={pendingReply}
-                                  onClick={() => void handleToolDecision(call.toolCallId, 'confirm')}
-                                >
-                                  {t('assistant.confirm')}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="link"
-                                  className="h-auto px-0"
-                                  disabled={pendingReply}
-                                  onClick={() => void handleToolDecision(call.toolCallId, 'reject')}
-                                >
-                                  {t('assistant.cancelChange')}
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </ItemListContent>
-                      </ItemListItem>
-                    ))}
-                  </ItemList>
-                </div>
+                <ConfirmItemList
+                  items={rows.map((call) => ({
+                    id: call.toolCallId,
+                    status: call.status,
+                    record:
+                      call.arguments && Object.keys(call.arguments).length > 0
+                        ? call.arguments
+                        : { summary: call.summary },
+                    confirmedLabel: t('assistant.itemAdded', { name: callItemName(call) }),
+                    canceledLabel: t('assistant.itemCanceled', { name: callItemName(call) }),
+                  }))}
+                  pendingHint={hasPending ? t('assistant.pendingChange') : undefined}
+                  confirmLabel={t('assistant.confirm')}
+                  skipLabel={t('assistant.skip')}
+                  disabled={pendingReply}
+                  onConfirm={(toolCallId) => void handleToolDecision(toolCallId, 'confirm')}
+                  onSkip={(toolCallId) => void handleToolDecision(toolCallId, 'reject')}
+                />
               ) : null}
             </div>
           )
@@ -340,6 +377,7 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
         ) : null}
         <div ref={endRef} />
       </div>
+      )}
     </AppEndPanel>
   )
 }

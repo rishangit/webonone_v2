@@ -34,4 +34,4 @@ IIS site: host `ai.webonone.com`, physical path `ai\deploy`, app pool **No Manag
 | `https://ai.webonone.com/api/v1/health` | `{"status":"ok","service":"ai"}` |
 | `https://ai.webonone.com/` | AI UI loads |
 
-Provider keys (`AI_PROVIDER`, `AI_PROVIDER_BASE_URL`, `AI_PROVIDER_API_KEY`) come from root `production.env`. Never commit them.
+Provider env (`AI_PROVIDER`, `AI_PROVIDER_BASE_URL`, `AI_PROVIDER_API_KEY`) is **guest/bootstrap fallback only**. Per-user and super-admin guest settings live in `ai_provider_settings` (requires `AI_CREDENTIALS_ENCRYPTION_KEY` in `production.env`). Never commit real keys.
