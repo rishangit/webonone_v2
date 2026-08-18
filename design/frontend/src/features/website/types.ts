@@ -28,7 +28,7 @@ export type LayoutByBreakpoint = { '2xl': LayoutRect } & Partial<
   Record<Exclude<WebsiteBreakpoint, '2xl'>, LayoutRect>
 >
 
-export type MediaRef = { fileId: string; url: string }
+export type MediaRef = { fileId: string; url: string; fileName?: string; mimeType?: string }
 
 export type ImageAddonProps = {
   mediaByBreakpoint: Partial<Record<WebsiteBreakpoint, MediaRef>>

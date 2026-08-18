@@ -1,4 +1,4 @@
-import { ArrowRight, Mail, Plus, RefreshCw, Tags, User } from 'lucide-react'
+import { ArrowRight, Calendar, CalendarDays, CalendarRange, Mail, Plus, RefreshCw, Tags, User } from 'lucide-react'
 import {
   Button,
   Checkbox,
@@ -18,6 +18,8 @@ import {
   SearchInput,
   RadioGroup,
   RadioGroupItem,
+  SegmentedSwitch,
+  SegmentedSwitchItem,
   Select,
   SelectContent,
   SelectItem,
@@ -49,6 +51,9 @@ export function ControlsPage() {
   const [plan, setPlan] = useState('starter')
   const [terms, setTerms] = useState(false)
   const [notifications, setNotifications] = useState(true)
+  const [period, setPeriod] = useState('week')
+  const [iconPeriod, setIconPeriod] = useState('week')
+  const [smPeriod, setSmPeriod] = useState('day')
   const [phoneCountry, setPhoneCountry] = useState(() => getBrowserDefaultCountryIso2())
   const [phoneNational, setPhoneNational] = useState('')
   const [phoneWithIconNational, setPhoneWithIconNational] = useState('')
@@ -274,6 +279,57 @@ export function ControlsPage() {
         <div className="flex items-center gap-2">
           <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
           <Label htmlFor="notifications">Email notifications</Label>
+        </div>
+      </DemoSection>
+
+      <DemoSection
+        id="segmented-switch"
+        title="Segmented switch"
+        description="Exclusive pick among several items. One selected at a time; not tabs and not radio circles."
+      >
+        <div className="flex flex-col gap-6">
+          <div className="space-y-2">
+            <Label>Period</Label>
+            <SegmentedSwitch value={period} onValueChange={setPeriod} aria-label="Period">
+              <SegmentedSwitchItem value="day">Day</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">Week</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">Month</SegmentedSwitchItem>
+            </SegmentedSwitch>
+            <p className="text-sm text-muted-foreground">Selected: {period}</p>
+          </div>
+          <div className="space-y-2">
+            <Label>With icons</Label>
+            <SegmentedSwitch value={iconPeriod} onValueChange={setIconPeriod} aria-label="Period with icons">
+              <SegmentedSwitchItem value="day">
+                <Calendar className="h-4 w-4" />
+                Day
+              </SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">
+                <CalendarRange className="h-4 w-4" />
+                Week
+              </SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">
+                <CalendarDays className="h-4 w-4" />
+                Month
+              </SegmentedSwitchItem>
+            </SegmentedSwitch>
+          </div>
+          <div className="space-y-2">
+            <Label>Small</Label>
+            <SegmentedSwitch value={smPeriod} onValueChange={setSmPeriod} size="sm" aria-label="Small period">
+              <SegmentedSwitchItem value="day">Day</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">Week</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">Month</SegmentedSwitchItem>
+            </SegmentedSwitch>
+          </div>
+          <div className="space-y-2">
+            <Label>Disabled</Label>
+            <SegmentedSwitch value="week" disabled aria-label="Disabled period">
+              <SegmentedSwitchItem value="day">Day</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">Week</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">Month</SegmentedSwitchItem>
+            </SegmentedSwitch>
+          </div>
         </div>
       </DemoSection>
 

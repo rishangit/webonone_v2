@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
 import { getAddonModuleByType } from '../addons/registry'
+import { DEFAULT_CONTENT_BLOCK_COL_SPAN, DEFAULT_CONTENT_BLOCK_HEIGHT } from './layout'
 import { emptyLayoutByBreakpoint } from '../types'
 import type { WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
 
@@ -11,13 +12,25 @@ export {
 } from './theme'
 
 export function addBlock(document: WebsiteDocumentV1): WebsiteDocumentV1 {
+  const top = 16 + document.blocks.length * 24
+  const height = DEFAULT_CONTENT_BLOCK_HEIGHT
   const block: WebsiteBlock = {
     id: nanoid(10),
     zIndex: document.blocks.length,
-    layout: emptyLayoutByBreakpoint({ top: 16 + document.blocks.length * 24, height: 180 }),
+    layout: emptyLayoutByBreakpoint({
+      col: 1,
+      colSpan: DEFAULT_CONTENT_BLOCK_COL_SPAN,
+      top,
+      height,
+    }),
     addons: [],
   }
-  return { ...document, blocks: [...document.blocks, block] }
+  const containerHeight = Math.max(document.container.height, top + height + 16)
+  return {
+    ...document,
+    container: { ...document.container, height: containerHeight },
+    blocks: [...document.blocks, block],
+  }
 }
 
 export function addAddon(document: WebsiteDocumentV1, blockId: string, type: WebsiteAddon['type']): WebsiteDocumentV1 {

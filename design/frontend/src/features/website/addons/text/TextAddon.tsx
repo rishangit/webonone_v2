@@ -10,7 +10,7 @@ function TextAddonRenderer({ addon, breakpoint, theme, interactive }: AddonRende
   const { t } = useTranslation('website')
   if (addon.type !== 'text') return null
   const style = theme?.textStyles.find((item) => item.id === addon.props.textStyleId)
-  const snap = style ? resolveTextStyle(theme ?? null, style) : addon.props.snapshot
+  const snap = style ? resolveTextStyle(theme ?? null, style, breakpoint) : addon.props.snapshot
   const size = addon.props.fontSizeByBreakpoint?.[breakpoint] ?? snap.size
   return (
     <div

@@ -70,6 +70,11 @@ const WebsiteThemeCreateEmbedPage = lazy(() =>
     default: m.WebsiteThemeCreateEmbedPage,
   })),
 )
+const WebsiteThemeTokenEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteThemeTokenEmbedPage').then((m) => ({
+    default: m.WebsiteThemeTokenEmbedPage,
+  })),
+)
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -297,6 +302,86 @@ export function App() {
                 <RoleRoute roles={[...manageRoles]}>
                   <LazyRoute>
                     <WebsiteThemeCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/fonts/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="fonts" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/fonts/:tokenId"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="fonts" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/colors/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="colors" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/colors/:tokenId"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="colors" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/texts/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="texts" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/texts/:tokenId"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="texts" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/buttons/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="buttons" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/buttons/:tokenId"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTokenEmbedPage kind="buttons" />
                   </LazyRoute>
                 </RoleRoute>
               }

@@ -37,6 +37,8 @@ export const layoutByBreakpointSchema = z
 export const mediaRefSchema = z.object({
   fileId: z.string().min(1).max(64),
   url: z.string().min(1).max(2048),
+  fileName: z.string().max(255).optional(),
+  mimeType: z.string().max(128).optional(),
 })
 
 export const imageAddonPropsSchema = z.object({

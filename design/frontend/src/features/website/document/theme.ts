@@ -1,5 +1,6 @@
 import type {
   WebsiteAddon,
+  WebsiteBreakpoint,
   WebsiteButtonStyle,
   WebsiteColorToken,
   WebsiteDocumentV1,
@@ -11,18 +12,45 @@ function colorValue(colors: WebsiteColorToken[], id: string, fallback: string): 
   return colors.find((color) => color.id === id)?.value ?? fallback
 }
 
-export function textStyleSnapshot(theme: WebsiteTheme | null, style: WebsiteTextStyle | undefined) {
+export function fallbackTextSize(sizeByBreakpoint?: WebsiteTextStyle['sizeByBreakpoint']): number {
+  return (
+    sizeByBreakpoint?.md ??
+    sizeByBreakpoint?.lg ??
+    sizeByBreakpoint?.sm ??
+    sizeByBreakpoint?.xl ??
+    sizeByBreakpoint?.['2xl'] ??
+    16
+  )
+}
+
+export function resolveFontSize(style: WebsiteTextStyle | undefined, breakpoint?: WebsiteBreakpoint): number {
+  if (!style) return 16
+  if (breakpoint != null && style.sizeByBreakpoint?.[breakpoint] != null) {
+    return style.sizeByBreakpoint[breakpoint] as number
+  }
+  return style.size ?? 16
+}
+
+export function textStyleSnapshot(
+  theme: WebsiteTheme | null,
+  style: WebsiteTextStyle | undefined,
+  breakpoint?: WebsiteBreakpoint,
+) {
   const font = theme?.fonts.find((item) => item.id === style?.fontId)
   return {
     fontFamily: font?.family ?? 'inherit',
     googleFontUrl: font?.googleFontUrl || undefined,
-    size: style?.size ?? 16,
+    size: resolveFontSize(style, breakpoint),
     color: colorValue(theme?.colors ?? [], style?.colorId ?? '', theme?.bodyTextColor ?? '#111827'),
   }
 }
 
-export function resolveTextStyle(theme: WebsiteTheme | null, style: WebsiteTextStyle | undefined) {
-  return textStyleSnapshot(theme, style)
+export function resolveTextStyle(
+  theme: WebsiteTheme | null,
+  style: WebsiteTextStyle | undefined,
+  breakpoint?: WebsiteBreakpoint,
+) {
+  return textStyleSnapshot(theme, style, breakpoint)
 }
 
 export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteButtonStyle | undefined) {

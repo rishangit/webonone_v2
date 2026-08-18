@@ -277,7 +277,8 @@
   }
 
   /** Primary button — palette accent (color3 → color1) with hover + tinted shadow. */
-  .btn-primary-gradient {
+  .btn-primary-gradient,
+  .ui-segmented-switch-item[data-state='checked'] {
     border: 0;
     background: linear-gradient(
       to right,
@@ -291,7 +292,8 @@
       box-shadow 0.3s ease;
   }
 
-  .btn-primary-gradient:hover:not(:disabled) {
+  .btn-primary-gradient:hover:not(:disabled),
+  .ui-segmented-switch-item[data-state='checked']:hover:not(:disabled) {
     background: linear-gradient(
       to right,
       hsl(var(--accent-primary-hover)),

@@ -1,6 +1,15 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
+import { cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
 import { resolveLayoutRect, rectToStyle, type ResizeHandle } from '../document/layout'
+import {
+  ADDON_FRAME,
+  ADDON_OUTLINE,
+  CONTENT_ELEMENT_FRAME,
+  CONTENT_ELEMENT_OUTLINE,
+  CONTENT_ELEMENT_PARENT_FRAME,
+  CONTENT_ELEMENT_PARENT_OUTLINE,
+} from '../document/selectionOutline'
 import { SelectionChrome } from './SelectionChrome'
 import type {
   DesignerMode,
@@ -23,7 +32,7 @@ interface DocumentRendererProps {
   companyId?: string
   canManage?: boolean
   onSelect?: (selection: DesignerSelection) => void
-  onMovePointerDown?: (event: ReactPointerEvent) => void
+  onMovePointerDown?: (event: ReactPointerEvent, grabbed: DesignerSelection) => void
   onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
   onAddAddon?: () => void
   onOpenBlockSettings?: () => void
@@ -55,10 +64,11 @@ export function DocumentRenderer({
   const interactive = mode === 'edit'
   const publish = mode === 'publish'
   const sortedBlocks = [...document.blocks].sort((a, b) => a.zIndex - b.zIndex)
+  const containerSelected = interactive && selection?.kind === 'container'
 
   return (
     <div
-      className="relative w-full overflow-hidden"
+      className={cn('relative w-full', containerSelected && CONTENT_ELEMENT_OUTLINE)}
       style={{
         height: document.container.height,
         backgroundColor: document.container.backgroundColor || theme?.pageBackground || '#ffffff',
@@ -130,7 +140,7 @@ function BlockView({
   publish: boolean
   canManage: boolean
   onSelect?: (selection: DesignerSelection) => void
-  onMovePointerDown?: (event: ReactPointerEvent) => void
+  onMovePointerDown?: (event: ReactPointerEvent, grabbed: DesignerSelection) => void
   onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
   onAddAddon?: () => void
   onOpenBlockSettings?: () => void
@@ -145,30 +155,60 @@ function BlockView({
   const addons = [...block.addons].sort((a, b) => a.zIndex - b.zIndex)
   return (
     <div
-      className={selected ? 'ring-2 ring-primary' : undefined}
+      className={cn(
+        'overflow-hidden',
+        interactive && !block.backgroundColor && 'bg-primary/5',
+        selected && CONTENT_ELEMENT_OUTLINE,
+        childSelected && CONTENT_ELEMENT_PARENT_OUTLINE,
+      )}
       style={{
         ...rectToStyle(rect),
-        backgroundColor: block.backgroundColor || 'transparent',
+        backgroundColor: block.backgroundColor || undefined,
         zIndex: selected || childSelected ? 10000 + block.zIndex : block.zIndex,
-        cursor: interactive ? (selected ? 'move' : 'pointer') : undefined,
+        cursor: interactive ? 'move' : undefined,
+        touchAction: interactive ? 'none' : undefined,
+        userSelect: interactive ? 'none' : undefined,
       }}
       onPointerDown={(event) => {
         if (!interactive) return
+        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action]')) {
+          return
+        }
+        if (!selected && event.target instanceof Element && event.target.closest('[data-addon-node]')) return
+        event.preventDefault()
         event.stopPropagation()
-        if (selected) onMovePointerDown?.(event)
+        const grabbed: DesignerSelection = { kind: 'block', blockId: block.id }
+        onMovePointerDown?.(event, grabbed)
+        onSelect?.(grabbed)
       }}
       onClick={(event) => {
         event.stopPropagation()
+        if (selected) {
+          const addonId = addonIdAtPoint(event.currentTarget, event.clientX, event.clientY)
+          if (addonId) {
+            onSelect?.({ kind: 'addon', blockId: block.id, addonId })
+            return
+          }
+        }
         onSelect?.({ kind: 'block', blockId: block.id })
       }}
     >
       {interactive ? (
-        <div className="pointer-events-none absolute inset-0 grid grid-cols-12">
+        <div
+          data-block-drag=""
+          className={cn('absolute inset-0 cursor-move', selected ? 'z-[25]' : 'z-[1]')}
+          style={{ touchAction: 'none' }}
+        />
+      ) : null}
+      {interactive ? (
+        <div className="pointer-events-none absolute inset-0 z-[2] grid grid-cols-12">
           {Array.from({ length: 12 }, (_, index) => (
             <div key={index} className="border-r border-dashed border-primary/25 last:border-r-0" />
           ))}
         </div>
       ) : null}
+      {selected ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
+      {childSelected ? <div className={CONTENT_ELEMENT_PARENT_FRAME} /> : null}
       {addons.map((addon) => (
         <AddonView
           key={addon.id}
@@ -177,6 +217,7 @@ function BlockView({
           breakpoint={breakpoint}
           theme={theme}
           selected={selection?.kind === 'addon' && selection.addonId === addon.id}
+          blockSelected={selected}
           pages={pages}
           companyId={companyId}
           interactive={interactive}
@@ -212,6 +253,7 @@ function AddonView({
   breakpoint,
   theme,
   selected,
+  blockSelected,
   pages,
   companyId,
   interactive,
@@ -230,13 +272,14 @@ function AddonView({
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
   selected: boolean
+  blockSelected: boolean
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   companyId?: string
   interactive: boolean
   publish: boolean
   canManage: boolean
   onSelect?: (selection: DesignerSelection) => void
-  onMovePointerDown?: (event: ReactPointerEvent) => void
+  onMovePointerDown?: (event: ReactPointerEvent, grabbed: DesignerSelection) => void
   onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
   onOpenAddonSettings?: () => void
   onLayer?: (direction: 'up' | 'down') => void
@@ -248,17 +291,28 @@ function AddonView({
   const rect = resolveLayoutRect(addon.layout, breakpoint)
   return (
     <div
-      className={selected ? 'ring-2 ring-primary' : undefined}
+      className={cn(selected && ADDON_OUTLINE)}
+      data-addon-node=""
+      data-addon-id={addon.id}
       style={{
         ...rectToStyle(rect),
-        zIndex: selected ? 10000 + addon.zIndex : addon.zIndex,
+        zIndex: selected ? 10000 + addon.zIndex : addon.zIndex + 2,
         overflow: 'visible',
-        cursor: interactive && selected ? 'move' : interactive ? 'pointer' : undefined,
+        cursor: interactive && !blockSelected ? 'move' : undefined,
+        touchAction: interactive && !blockSelected ? 'none' : undefined,
+        userSelect: interactive ? 'none' : undefined,
+        pointerEvents: blockSelected ? 'none' : undefined,
       }}
       onPointerDown={(event) => {
-        if (!interactive) return
+        if (!interactive || blockSelected) return
+        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action]')) {
+          return
+        }
+        event.preventDefault()
         event.stopPropagation()
-        if (selected) onMovePointerDown?.(event)
+        const grabbed: DesignerSelection = { kind: 'addon', blockId, addonId: addon.id }
+        onMovePointerDown?.(event, grabbed)
+        onSelect?.(grabbed)
       }}
       onClick={(event) => {
         event.stopPropagation()
@@ -279,6 +333,7 @@ function AddonView({
           />
         ) : null}
       </div>
+      {selected ? <div className={ADDON_FRAME} /> : null}
       {interactive && selected && onResizePointerDown ? (
         <SelectionChrome
           kind="addon"
@@ -291,4 +346,20 @@ function AddonView({
       ) : null}
     </div>
   )
+}
+
+function addonIdAtPoint(blockEl: HTMLElement, clientX: number, clientY: number) {
+  const nodes = blockEl.querySelectorAll<HTMLElement>('[data-addon-id]')
+  let hitId: string | null = null
+  let hitZ = -Infinity
+  for (const node of nodes) {
+    const rect = node.getBoundingClientRect()
+    if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) continue
+    const z = Number.parseFloat(node.style.zIndex || '0')
+    if (z >= hitZ) {
+      hitZ = z
+      hitId = node.dataset.addonId ?? null
+    }
+  }
+  return hitId
 }
