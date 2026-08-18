@@ -1,18 +1,42 @@
-import { useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Button } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import { AddAddonDialog } from '../addons/components/AddAddonDialog'
 import { DocumentRenderer } from './DocumentRenderer'
-import { pointerToRect, resolveLayoutRect, writeLayoutRect, type ResizeHandle } from '../document/layout'
+import {
+  ADDON_LAYOUT_LIMITS,
+  CONTENT_BLOCK_LAYOUT_LIMITS,
+  pointerToRect,
+  resolveLayoutRect,
+  writeLayoutRect,
+  type LayoutLimits,
+  type ResizeHandle,
+} from '../document/layout'
 import type {
   DesignerMode,
   DesignerSelection,
+  LayoutRect,
   WebsiteAddon,
   WebsiteBreakpoint,
   WebsiteDocumentV1,
   WebsitePage,
   WebsiteTheme,
 } from '../types'
+
+type CanvasDragSession = {
+  pointerId: number
+  handle: ResizeHandle | 'move'
+  startX: number
+  startY: number
+  startRect: LayoutRect
+  parentWidth: number
+  scale: number
+  selection: DesignerSelection
+  blockId: string
+  addonId?: string
+  layoutLimits: LayoutLimits
+  startDocument: WebsiteDocumentV1
+}
 
 interface DesignerCanvasProps {
   document: WebsiteDocumentV1
@@ -57,6 +81,10 @@ export function DesignerCanvas({
 }: DesignerCanvasProps) {
   const { t } = useTranslation('website')
   const viewportRef = useRef<HTMLDivElement>(null)
+  const canvasRootRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<CanvasDragSession | null>(null)
+  const changeDocumentRef = useRef(onChangeDocument)
+  changeDocumentRef.current = onChangeDocument
   const [addAddonOpen, setAddAddonOpen] = useState(false)
   const [viewportWidth, setViewportWidth] = useState(0)
 
@@ -81,53 +109,39 @@ export function DesignerCanvas({
     return () => observer.disconnect()
   }, [])
 
-  const scale = viewportWidth > 0 ? Math.min(1, viewportWidth / canvasWidth) : 1
-  const logicalHeight =
-    (mode === 'visual' && headerDocument ? headerDocument.container.height : 0) +
-    document.container.height +
-    (mode === 'visual' && footerDocument ? footerDocument.container.height : 0)
-
-  function onHandlePointerDown(event: ReactPointerEvent, handle: ResizeHandle | 'move') {
-    if (mode !== 'edit' || !selection || selection.kind === 'container') return
-    event.preventDefault()
-    event.stopPropagation()
-    const startX = event.clientX
-    const startY = event.clientY
-    const block = document.blocks.find((item) => item.id === selection.blockId)
-    if (!block) return
-    const addon = selection.kind === 'addon' ? block.addons.find((item) => item.id === selection.addonId) : null
-    const startLayout = addon ? addon.layout : block.layout
-    const startRect = resolveLayoutRect(startLayout, breakpoint)
-    const parentWidth =
-      selection.kind === 'addon'
-        ? canvasWidth * (resolveLayoutRect(block.layout, breakpoint).colSpan / 12)
-        : canvasWidth
-    const currentScale = scale
-
-    const currentSelection = selection
-    const currentBlock = block
-    const addonId = currentSelection.kind === 'addon' ? currentSelection.addonId : undefined
-
-    function onMove(moveEvent: PointerEvent) {
+  useEffect(() => {
+    function onMove(event: PointerEvent) {
+      const drag = dragRef.current
+      if (!drag || event.pointerId !== drag.pointerId) return
+      event.preventDefault()
       const nextRect = pointerToRect(
-        startRect,
-        (moveEvent.clientX - startX) / currentScale,
-        (moveEvent.clientY - startY) / currentScale,
-        parentWidth,
-        handle,
+        drag.startRect,
+        (event.clientX - drag.startX) / drag.scale,
+        (event.clientY - drag.startY) / drag.scale,
+        drag.parentWidth,
+        drag.handle,
+        drag.layoutLimits,
       )
-      onChangeDocument({
-        ...document,
-        blocks: document.blocks.map((item) => {
-          if (item.id !== currentBlock.id) return item
-          if (currentSelection.kind === 'block') {
-            return { ...item, layout: writeLayoutRect(item.layout, breakpoint, nextRect) }
+      const nextBottom = nextRect.top + nextRect.height
+      changeDocumentRef.current({
+        ...drag.startDocument,
+        container:
+          drag.selection.kind === 'block'
+            ? {
+                ...drag.startDocument.container,
+                height: Math.max(drag.startDocument.container.height, nextBottom + 16),
+              }
+            : drag.startDocument.container,
+        blocks: drag.startDocument.blocks.map((item) => {
+          if (item.id !== drag.blockId) return item
+          if (drag.selection.kind === 'block') {
+            return { ...item, layout: writeLayoutRect(item.layout, breakpoint, nextRect, drag.layoutLimits) }
           }
           return {
             ...item,
             addons: item.addons.map((child) =>
-              child.id === addonId
-                ? { ...child, layout: writeLayoutRect(child.layout, breakpoint, nextRect) }
+              child.id === drag.addonId
+                ? { ...child, layout: writeLayoutRect(child.layout, breakpoint, nextRect, drag.layoutLimits) }
                 : child,
             ),
           }
@@ -135,12 +149,77 @@ export function DesignerCanvas({
       })
     }
 
-    function onUp() {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
+    function swallowClick(event: MouseEvent) {
+      event.preventDefault()
+      event.stopPropagation()
+      window.removeEventListener('click', swallowClick, true)
     }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+
+    function endDrag(event: PointerEvent) {
+      const drag = dragRef.current
+      if (!drag || event.pointerId !== drag.pointerId) return
+      const moved =
+        Math.abs(event.clientX - drag.startX) > 3 || Math.abs(event.clientY - drag.startY) > 3
+      dragRef.current = null
+      try {
+        canvasRootRef.current?.releasePointerCapture(event.pointerId)
+      } catch {
+        /* capture already released */
+      }
+      if (moved) {
+        window.addEventListener('click', swallowClick, true)
+      }
+    }
+
+    window.addEventListener('pointermove', onMove, { capture: true, passive: false })
+    window.addEventListener('pointerup', endDrag, { capture: true })
+    return () => {
+      window.removeEventListener('pointermove', onMove, true)
+      window.removeEventListener('pointerup', endDrag, true)
+      window.removeEventListener('click', swallowClick, true)
+    }
+  }, [breakpoint])
+
+  const scale = viewportWidth > 0 ? Math.min(1, viewportWidth / canvasWidth) : 1
+  const logicalHeight =
+    (mode === 'visual' && headerDocument ? headerDocument.container.height : 0) +
+    document.container.height +
+    (mode === 'visual' && footerDocument ? footerDocument.container.height : 0)
+
+  function onHandlePointerDown(
+    event: ReactPointerEvent,
+    handle: ResizeHandle | 'move',
+    grabbed: DesignerSelection | null = selection,
+  ) {
+    if (mode !== 'edit' || !grabbed || grabbed.kind === 'container') return
+    event.preventDefault()
+    event.stopPropagation()
+    const block = document.blocks.find((item) => item.id === grabbed.blockId)
+    if (!block) return
+    const addon = grabbed.kind === 'addon' ? block.addons.find((item) => item.id === grabbed.addonId) : null
+    const startLayout = addon ? addon.layout : block.layout
+    dragRef.current = {
+      pointerId: event.pointerId,
+      handle,
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect: resolveLayoutRect(startLayout, breakpoint),
+      parentWidth:
+        grabbed.kind === 'addon'
+          ? canvasWidth * (resolveLayoutRect(block.layout, breakpoint).colSpan / 12)
+          : canvasWidth,
+      scale,
+      selection: grabbed,
+      blockId: block.id,
+      addonId: grabbed.kind === 'addon' ? grabbed.addonId : undefined,
+      layoutLimits: grabbed.kind === 'addon' ? ADDON_LAYOUT_LIMITS : CONTENT_BLOCK_LAYOUT_LIMITS,
+      startDocument: document,
+    }
+    try {
+      canvasRootRef.current?.setPointerCapture(event.pointerId)
+    } catch {
+      /* capture requires an active pointer; window listeners still run */
+    }
   }
 
   function onContainerResize(event: ReactPointerEvent) {
@@ -170,11 +249,13 @@ export function DesignerCanvas({
         }}
       >
         <div
+          ref={canvasRootRef}
           className="relative"
           style={{
             width: canvasWidth,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
+            touchAction: mode === 'edit' ? 'none' : undefined,
           }}
         >
       {mode === 'visual' && headerDocument ? (
@@ -195,7 +276,7 @@ export function DesignerCanvas({
         pages={pages}
         canManage={canManage}
         onSelect={onSelect}
-        onMovePointerDown={(event) => onHandlePointerDown(event, 'move')}
+        onMovePointerDown={(event, grabbed) => onHandlePointerDown(event, 'move', grabbed)}
         onResizePointerDown={(event, handle) => onHandlePointerDown(event, handle)}
         onAddAddon={() => setAddAddonOpen(true)}
         onOpenBlockSettings={onOpenBlockSettings}

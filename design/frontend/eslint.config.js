@@ -1,3 +1,6 @@
 import { createReactAppConfig } from '../../eslint.react.config.mjs'
 
-export default createReactAppConfig(import.meta.dirname)
+export default [
+  { ignores: ['src/**/*.test.ts'] },
+  ...createReactAppConfig(import.meta.dirname),
+]

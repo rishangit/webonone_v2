@@ -210,7 +210,7 @@ function AppLayoutShellContent() {
 
   if (isWebsiteDesigner && isAuthenticated) {
     return (
-      <div className="relative flex h-svh min-h-0 w-full flex-col overflow-hidden bg-background">
+      <div className="relative flex h-svh min-h-0 w-full flex-col overflow-hidden">
         {mainContent}
       </div>
     )

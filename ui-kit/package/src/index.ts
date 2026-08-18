@@ -80,6 +80,12 @@ export type { TextareaProps } from './components/Textarea'
 export { Label } from './components/Label'
 export { Checkbox } from './components/Checkbox'
 export { Switch } from './components/Switch'
+export { SegmentedSwitch, SegmentedSwitchItem } from './components/SegmentedSwitch'
+export type {
+  SegmentedSwitchProps,
+  SegmentedSwitchItemProps,
+  SegmentedSwitchSize,
+} from './components/SegmentedSwitch'
 export { RadioGroup, RadioGroupItem } from './components/RadioGroup'
 export {
   Tabs,

@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
+import {
+  FormField,
+  ImagePreview,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
 import { WebsiteImagePicker } from '../../components/WebsiteImagePicker'
 import { emptyLayoutByBreakpoint } from '../../types'
@@ -56,12 +65,20 @@ function ImageAddonPropsFields({ addon, breakpoint, onChange, onNestedDialogOpen
     onNestedDialogOpenChange?.(open)
   }
 
+  const media = mediaForBreakpoint(addon.props.mediaByBreakpoint, breakpoint)
+
   return (
     <>
-      <Button type="button" onClick={() => setPicker(true)}>
-        {t('pickImage')}
-      </Button>
-      <p className="text-sm text-muted-foreground">{t('perBreakpointImage')}</p>
+      <FormField label={t('perBreakpointImage')} htmlFor="image-pick">
+        <div>
+          <ImagePreview
+            src={media?.url ?? null}
+            alt={t('image')}
+            mode="edit"
+            onEdit={() => setPicker(true)}
+          />
+        </div>
+      </FormField>
       <Select
         value={addon.props.fit}
         onValueChange={(fit) =>
@@ -114,12 +131,12 @@ function ImageAddonPropsFields({ addon, breakpoint, onChange, onNestedDialogOpen
       <WebsiteImagePicker
         open={pickerOpen}
         onClose={() => setPicker(false)}
-        onSelect={(media) =>
+        onSelect={(picked) =>
           onChange({
             ...addon,
             props: {
               ...addon.props,
-              mediaByBreakpoint: { ...addon.props.mediaByBreakpoint, [breakpoint]: media },
+              mediaByBreakpoint: { ...addon.props.mediaByBreakpoint, [breakpoint]: picked },
             },
           })
         }

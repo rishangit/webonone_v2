@@ -15,7 +15,9 @@ import {
   toCoreNavQueryValue,
 } from '@webonone/platform-nav'
 import { getStoredLocale, LOCALE_QUERY, normalizeLocale } from '@webonone/i18n'
+import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
 import { useAppSelector } from '@/app/store/hooks'
+import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
 import { getDesignOrigin } from '@/features/design/utils/designConfig'
@@ -263,6 +265,7 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
   const navigate = useNavigate()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const themePreferences = useAppSelector((s) => s.systemTheme.preferences)
   const [frameLoading, setFrameLoading] = useState(true)
   const { openMediaDialog } = usePlatformMediaDialog()
   const { openPeerDialog } = usePlatformPeerDialog()
@@ -287,8 +290,16 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
     if (tab) {
       params.tab = tab
     }
+    if (themePreferences) {
+      Object.assign(
+        params,
+        serializeThemeQueryParams(
+          buildThemePayload(toThemeDto(themePreferences.theme), themePreferences.colorMode),
+        ),
+      )
+    }
     return params
-  }, [activeRole, location.search])
+  }, [activeRole, location.search, themePreferences])
 
   const handleLoadingChange = useCallback((loading: boolean) => {
     setFrameLoading(loading)

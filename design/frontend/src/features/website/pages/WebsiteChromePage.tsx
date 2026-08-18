@@ -23,7 +23,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
+import { websiteDesignerUrl } from '@/features/shell/utils/navigateDesign'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 import { websiteFootersActions, websiteHeadersActions } from '../store'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
@@ -43,7 +43,6 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
-  const { goToWebsiteEdit } = useNavigateDesign()
   const { toast } = useToast()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const user = useAppSelector((s) => s.auth.user)
@@ -74,23 +73,25 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
     <FeaturePage
       title={t('title')}
       description={kind === 'headers' ? t('headersDescription') : t('footersDescription')}
-      actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <SearchInput
-            value={list.q}
-            onChange={(event) => list.setQ(event.target.value)}
-            placeholder={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
-            className="w-64"
-          />
-          {canManage ? (
-            <ListAddButton onClick={() => setDialogOpen(true)} compactLabel={tc('add')}>
-              {kind === 'headers' ? t('addHeader') : t('addFooter')}
-            </ListAddButton>
-          ) : null}
-        </div>
-      }
     >
-      <WebsiteHubTabs section={kind} />
+      <WebsiteHubTabs
+        section={kind}
+        actions={
+          <>
+            <SearchInput
+              value={list.q}
+              onChange={(event) => list.setQ(event.target.value)}
+              placeholder={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
+              className="w-64"
+            />
+            {canManage ? (
+              <ListAddButton onClick={() => setDialogOpen(true)} compactLabel={tc('add')}>
+                {kind === 'headers' ? t('addHeader') : t('addFooter')}
+              </ListAddButton>
+            ) : null}
+          </>
+        }
+      />
       {list.error ? (
         <Alert variant="destructive">
           <AlertDescription>{list.error}</AlertDescription>
@@ -105,17 +106,24 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
               {(list.items as WebsiteChrome[]).map((item) => (
                 <ItemListItem key={item.id}>
                   <ItemListContent>
-                    <button type="button" className="w-full text-left" onClick={() => goToWebsiteEdit(kind, item.id)}>
+                    <a
+                      href={websiteDesignerUrl(kind, item.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full text-left"
+                    >
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
                       </div>
-                    </button>
+                    </a>
                   </ItemListContent>
                   {canManage ? (
                     <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
-                      <DropdownMenuItem onClick={() => goToWebsiteEdit(kind, item.id)}>
-                        {t('openDesigner')}
+                      <DropdownMenuItem asChild>
+                        <a href={websiteDesignerUrl(kind, item.id)} target="_blank" rel="noopener noreferrer">
+                          {t('openDesigner')}
+                        </a>
                       </DropdownMenuItem>
                       {!item.isDefault ? (
                         <DropdownMenuItem

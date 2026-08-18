@@ -85,7 +85,7 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
       if (!requestId) return
       if (isPlatformMediaDialogResultMessage(event.data) && event.data.requestId === requestId) {
         const item = event.data.items[0]
-        if (item) onSelect({ fileId: item.id, url: item.url })
+        if (item) onSelect({ fileId: item.id, url: item.url, fileName: item.fileName, mimeType: item.mimeType })
         hostRequestIdRef.current = null
         onClose()
       }
@@ -102,7 +102,7 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
     (items: MediaItemDto[]) => {
       const item = items[0]
       if (!item) return
-      onSelect({ fileId: item.id, url: item.url })
+      onSelect({ fileId: item.id, url: item.url, fileName: item.fileName, mimeType: item.mimeType })
       onClose()
     },
     [onClose, onSelect],

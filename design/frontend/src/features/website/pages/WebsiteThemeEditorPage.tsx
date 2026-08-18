@@ -1,21 +1,63 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { nanoid } from 'nanoid'
 import {
+  Alert,
+  AlertDescription,
   Button,
-  Card,
-  ColorInput,
   FeaturePage,
-  FormField,
-  Input,
+  Form,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
+import { fallbackTextSize } from '../document/theme'
+import { websiteThemeEditorSchema } from '../schemas/websiteThemeSchemas'
 import { websiteThemesActions } from '../store'
-import type { WebsiteTheme } from '../types'
+import { WEBSITE_BREAKPOINTS } from '../types'
+import type { WebsiteTextStyle, WebsiteTheme } from '../types'
+import { mapThemeFieldErrors } from '../utils/mapThemeFieldErrors'
+import { parseGoogleFontFamily } from '../utils/parseGoogleFontFamily'
+import { ThemeBasicSettingsTab } from '../components/theme-editor/ThemeBasicSettingsTab'
+import { ThemeButtonsTab } from '../components/theme-editor/ThemeButtonsTab'
+import { ThemeColorsTab } from '../components/theme-editor/ThemeColorsTab'
+import { ThemeFontsTab } from '../components/theme-editor/ThemeFontsTab'
+import { ThemeTextsTab } from '../components/theme-editor/ThemeTextsTab'
+
+const THEME_TABS = [
+  { id: 'basic', labelKey: 'basicSettings' },
+  { id: 'fonts', labelKey: 'fonts' },
+  { id: 'colors', labelKey: 'colors' },
+  { id: 'texts', labelKey: 'texts' },
+  { id: 'buttons', labelKey: 'buttons' },
+] as const
+type ThemeTabId = (typeof THEME_TABS)[number]['id']
+
+function hydrateTextStyle(style: WebsiteTextStyle): WebsiteTextStyle {
+  const sizeByBreakpoint = Object.fromEntries(
+    WEBSITE_BREAKPOINTS.map((breakpoint) => [
+      breakpoint,
+      style.sizeByBreakpoint?.[breakpoint] ?? style.size ?? 16,
+    ]),
+  ) as NonNullable<WebsiteTextStyle['sizeByBreakpoint']>
+  return {
+    ...style,
+    sizeByBreakpoint,
+    size: fallbackTextSize(sizeByBreakpoint),
+  }
+}
+
+function hydrateThemeDraft(theme: WebsiteTheme): WebsiteTheme {
+  return {
+    ...theme,
+    textStyles: theme.textStyles.map(hydrateTextStyle),
+  }
+}
 
 export function WebsiteThemeEditorPage() {
   const { t } = useTranslation('website')
@@ -27,6 +69,9 @@ export function WebsiteThemeEditorPage() {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websiteThemes)
   const [theme, setTheme] = useState<WebsiteTheme | null>(null)
+  const [tab, setTab] = useState<ThemeTabId>('basic')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [awaitingSave, setAwaitingSave] = useState(false)
 
   usePlatformLoading(detailStatus === 'loading' && !detail ? t('loading') : null)
 
@@ -35,8 +80,34 @@ export function WebsiteThemeEditorPage() {
   }, [dispatch, id])
 
   useEffect(() => {
-    if (detail && detail.id === id) setTheme(detail)
-  }, [detail, id])
+    if (awaitingSave) return
+    if (detail && detail.id === id) setTheme(hydrateThemeDraft(detail))
+  }, [awaitingSave, detail, id])
+
+  useEffect(() => {
+    if (!awaitingSave) return
+    if (detailStatus === 'idle' && detail) {
+      setAwaitingSave(false)
+      toast({ title: t('saved') })
+      setTheme(hydrateThemeDraft(detail))
+    }
+    if (detailStatus === 'error') {
+      setAwaitingSave(false)
+      toast({
+        title: t('saveFailed'),
+        description: detailError ?? undefined,
+        variant: 'destructive',
+      })
+    }
+  }, [awaitingSave, detail, detailError, detailStatus, t, toast])
+
+  const fontUrls = useMemo(
+    () =>
+      (theme?.fonts ?? [])
+        .map((font) => font.googleFontUrl)
+        .filter((url) => Boolean(url) && parseGoogleFontFamily(url)),
+    [theme?.fonts],
+  )
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (!id || !theme) {
@@ -49,258 +120,110 @@ export function WebsiteThemeEditorPage() {
 
   function save() {
     if (!theme) return
+    const parsed = websiteThemeEditorSchema.safeParse({
+      name: theme.name,
+      pageBackground: theme.pageBackground,
+      bodyTextColor: theme.bodyTextColor,
+      fonts: theme.fonts,
+      colors: theme.colors,
+      textStyles: theme.textStyles,
+      buttonStyles: theme.buttonStyles,
+    })
+    if (!parsed.success) {
+      setFieldErrors(mapThemeFieldErrors(parsed.error.issues))
+      return
+    }
+    setFieldErrors({})
+    setAwaitingSave(true)
     dispatch(
       websiteThemesActions.saveDetailRequested({
         id: theme.id,
         body: {
-          name: theme.name,
-          pageBackground: theme.pageBackground,
-          bodyTextColor: theme.bodyTextColor,
+          name: parsed.data.name,
+          pageBackground: parsed.data.pageBackground,
+          bodyTextColor: parsed.data.bodyTextColor,
           isActive: theme.isActive,
           isDefault: theme.isDefault,
-          fonts: theme.fonts,
-          colors: theme.colors,
-          textStyles: theme.textStyles,
-          buttonStyles: theme.buttonStyles,
+          fonts: parsed.data.fonts,
+          colors: parsed.data.colors,
+          textStyles: parsed.data.textStyles,
+          buttonStyles: parsed.data.buttonStyles,
         },
       }),
     )
-    toast({ title: t('saved') })
+  }
+
+  const tabProps = {
+    theme,
+    onChange: (next: WebsiteTheme) => {
+      setTheme(next)
+      setFieldErrors({})
+    },
+    fieldErrors,
   }
 
   return (
     <FeaturePage
-      title={theme.name}
+      title={theme.name || t('themes')}
       onBack={() => goToWebsite('/website/themes')}
       actions={
-        <Button type="button" onClick={save} disabled={detailStatus === 'saving'}>
+        <Button
+          type="submit"
+          form="theme-editor-form"
+          disabled={detailStatus === 'saving'}
+        >
           {detailStatus === 'saving' ? t('saving') : tc('save')}
         </Button>
       }
     >
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="space-y-4 p-4">
-          <FormField label={t('name')} htmlFor="theme-name" required>
-            <Input id="theme-name" value={theme.name} onChange={(e) => setTheme({ ...theme, name: e.target.value })} />
-          </FormField>
-          <FormField label={t('pageBackground')} htmlFor="theme-page-bg">
-            <ColorInput
-              id="theme-page-bg"
-              value={theme.pageBackground}
-              onChange={(value) => setTheme({ ...theme, pageBackground: value })}
+      {fontUrls.map((url) => (
+        <link key={url} rel="stylesheet" href={url} />
+      ))}
+      {detailError && !awaitingSave && detailStatus === 'error' ? (
+        <Alert variant="destructive">
+          <AlertDescription>{detailError}</AlertDescription>
+        </Alert>
+      ) : null}
+      <Form
+        id="theme-editor-form"
+        className="space-y-0"
+        onSubmit={(event) => {
+          event.preventDefault()
+          save()
+        }}
+      >
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as ThemeTabId)}
+          className="flex flex-col gap-6"
+        >
+          <TabsList aria-label={t('themeSections')}>
+            {THEME_TABS.map((item) => (
+              <TabsTrigger key={item.id} value={item.id}>
+                {t(item.labelKey)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value="basic" className="mt-0 outline-none">
+            <ThemeBasicSettingsTab {...tabProps} />
+          </TabsContent>
+          <TabsContent value="fonts" className="mt-0 outline-none">
+            <ThemeFontsTab {...tabProps} onFontInUse={() => toast({ title: t('fontInUse') })} />
+          </TabsContent>
+          <TabsContent value="colors" className="mt-0 outline-none">
+            <ThemeColorsTab {...tabProps} onColorInUse={() => toast({ title: t('colorInUse') })} />
+          </TabsContent>
+          <TabsContent value="texts" className="mt-0 outline-none">
+            <ThemeTextsTab
+              {...tabProps}
+              onTextStyleInUse={() => toast({ title: t('textStyleInUse') })}
             />
-          </FormField>
-          <FormField label={t('bodyTextColor')} htmlFor="theme-body">
-            <ColorInput
-              id="theme-body"
-              value={theme.bodyTextColor}
-              onChange={(value) => setTheme({ ...theme, bodyTextColor: value })}
-            />
-          </FormField>
-        </Card>
-        <Card className="space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <p className="font-medium">{t('fonts')}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setTheme({
-                  ...theme,
-                  fonts: [...theme.fonts, { id: nanoid(8), name: 'Font', googleFontUrl: '', family: 'Inter' }],
-                })
-              }
-            >
-              {t('addFont')}
-            </Button>
-          </div>
-          {theme.fonts.map((font, index) => (
-            <div key={font.id} className="grid gap-2 sm:grid-cols-3">
-              <Input
-                value={font.name}
-                onChange={(e) => {
-                  const fonts = [...theme.fonts]
-                  fonts[index] = { ...font, name: e.target.value }
-                  setTheme({ ...theme, fonts })
-                }}
-              />
-              <Input
-                value={font.family}
-                onChange={(e) => {
-                  const fonts = [...theme.fonts]
-                  fonts[index] = { ...font, family: e.target.value }
-                  setTheme({ ...theme, fonts })
-                }}
-              />
-              <Input
-                value={font.googleFontUrl}
-                placeholder={t('googleFontUrl')}
-                onChange={(e) => {
-                  const fonts = [...theme.fonts]
-                  fonts[index] = { ...font, googleFontUrl: e.target.value }
-                  setTheme({ ...theme, fonts })
-                }}
-              />
-            </div>
-          ))}
-        </Card>
-        <Card className="space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <p className="font-medium">{t('colors')}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setTheme({
-                  ...theme,
-                  colors: [...theme.colors, { id: nanoid(8), name: 'Color', value: '#111827' }],
-                })
-              }
-            >
-              {t('addColor')}
-            </Button>
-          </div>
-          {theme.colors.map((color, index) => (
-            <div key={color.id} className="grid gap-2 sm:grid-cols-2">
-              <Input
-                value={color.name}
-                onChange={(e) => {
-                  const colors = [...theme.colors]
-                  colors[index] = { ...color, name: e.target.value }
-                  setTheme({ ...theme, colors })
-                }}
-              />
-              <ColorInput
-                value={color.value}
-                onChange={(value) => {
-                  const colors = [...theme.colors]
-                  colors[index] = { ...color, value }
-                  setTheme({ ...theme, colors })
-                }}
-              />
-            </div>
-          ))}
-        </Card>
-        <Card className="space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <p className="font-medium">{t('textStyles')}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setTheme({
-                  ...theme,
-                  textStyles: [
-                    ...theme.textStyles,
-                    { id: nanoid(8), name: 'Body', fontId: theme.fonts[0]?.id ?? '', size: 16, colorId: theme.colors[0]?.id ?? '' },
-                  ],
-                })
-              }
-            >
-              {t('addTextStyle')}
-            </Button>
-          </div>
-          {theme.textStyles.map((style, index) => (
-            <div key={style.id} className="grid gap-2 sm:grid-cols-3">
-              <Input
-                value={style.name}
-                onChange={(e) => {
-                  const textStyles = [...theme.textStyles]
-                  textStyles[index] = { ...style, name: e.target.value }
-                  setTheme({ ...theme, textStyles })
-                }}
-              />
-              <Input
-                type="number"
-                value={style.size}
-                onChange={(e) => {
-                  const textStyles = [...theme.textStyles]
-                  textStyles[index] = { ...style, size: Number(e.target.value) || 16 }
-                  setTheme({ ...theme, textStyles })
-                }}
-              />
-              <Input
-                value={style.fontId}
-                onChange={(e) => {
-                  const textStyles = [...theme.textStyles]
-                  textStyles[index] = { ...style, fontId: e.target.value }
-                  setTheme({ ...theme, textStyles })
-                }}
-              />
-            </div>
-          ))}
-        </Card>
-        <Card className="space-y-3 p-4 lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <p className="font-medium">{t('buttonStyles')}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setTheme({
-                  ...theme,
-                  buttonStyles: [
-                    ...theme.buttonStyles,
-                    {
-                      id: nanoid(8),
-                      name: 'Primary',
-                      backgroundColorId: theme.colors[0]?.id ?? '',
-                      textColorId: theme.colors[1]?.id ?? theme.colors[0]?.id ?? '',
-                      textStyleId: theme.textStyles[0]?.id ?? '',
-                      borderColorId: '',
-                      borderWidth: 0,
-                      radius: 6,
-                    },
-                  ],
-                })
-              }
-            >
-              {t('addButtonStyle')}
-            </Button>
-          </div>
-          {theme.buttonStyles.map((style, index) => (
-            <div key={style.id} className="grid gap-2 sm:grid-cols-4">
-              <Input
-                value={style.name}
-                onChange={(e) => {
-                  const buttonStyles = [...theme.buttonStyles]
-                  buttonStyles[index] = { ...style, name: e.target.value }
-                  setTheme({ ...theme, buttonStyles })
-                }}
-              />
-              <Input
-                type="number"
-                value={style.radius}
-                onChange={(e) => {
-                  const buttonStyles = [...theme.buttonStyles]
-                  buttonStyles[index] = { ...style, radius: Number(e.target.value) || 0 }
-                  setTheme({ ...theme, buttonStyles })
-                }}
-              />
-              <Input
-                value={style.backgroundColorId}
-                onChange={(e) => {
-                  const buttonStyles = [...theme.buttonStyles]
-                  buttonStyles[index] = { ...style, backgroundColorId: e.target.value }
-                  setTheme({ ...theme, buttonStyles })
-                }}
-              />
-              <Input
-                value={style.textStyleId}
-                onChange={(e) => {
-                  const buttonStyles = [...theme.buttonStyles]
-                  buttonStyles[index] = { ...style, textStyleId: e.target.value }
-                  setTheme({ ...theme, buttonStyles })
-                }}
-              />
-            </div>
-          ))}
-        </Card>
-      </div>
+          </TabsContent>
+          <TabsContent value="buttons" className="mt-0 outline-none">
+            <ThemeButtonsTab {...tabProps} />
+          </TabsContent>
+        </Tabs>
+      </Form>
     </FeaturePage>
   )
 }

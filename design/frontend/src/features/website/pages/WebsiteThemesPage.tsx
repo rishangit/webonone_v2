@@ -59,26 +59,25 @@ export function WebsiteThemesPage() {
   }
 
   return (
-    <FeaturePage
-      title={t('title')}
-      description={t('themesDescription')}
-      actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <SearchInput
-            value={list.q}
-            onChange={(event) => list.setQ(event.target.value)}
-            placeholder={t('searchThemes')}
-            className="w-64"
-          />
-          {canManage ? (
-            <ListAddButton onClick={() => setDialogOpen(true)} compactLabel={tc('add')}>
-              {t('addTheme')}
-            </ListAddButton>
-          ) : null}
-        </div>
-      }
-    >
-      <WebsiteHubTabs section="themes" />
+    <FeaturePage title={t('title')} description={t('themesDescription')}>
+      <WebsiteHubTabs
+        section="themes"
+        actions={
+          <>
+            <SearchInput
+              value={list.q}
+              onChange={(event) => list.setQ(event.target.value)}
+              placeholder={t('searchThemes')}
+              className="w-64"
+            />
+            {canManage ? (
+              <ListAddButton onClick={() => setDialogOpen(true)} compactLabel={tc('add')}>
+                {t('addTheme')}
+              </ListAddButton>
+            ) : null}
+          </>
+        }
+      />
       {list.error ? (
         <Alert variant="destructive">
           <AlertDescription>{list.error}</AlertDescription>

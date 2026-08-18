@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
   Button,
-  FeaturePage,
   Tabs,
   TabsList,
   TabsTrigger,
   useToast,
 } from '@webonone/ui-kit'
+import { resolvePlatformEmbedParentOrigin, sendPlatformNavigate } from '@webonone/platform-embed'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { openWebsiteDesigner } from '@/features/shell/utils/navigateDesign'
 import { websiteFootersActions, websiteHeadersActions, websitePagesActions, websiteThemesActions } from '../store'
 import { ContentTree } from '../components/ContentTree'
 import { DesignerCanvas } from '../components/DesignerCanvas'
@@ -45,6 +47,9 @@ import type {
 export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const { t } = useTranslation('website')
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -76,6 +81,14 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const defaultFooter = kind === 'pages' ? footersState.items.find((item) => item.isDefault) ?? null : null
 
   usePlatformLoading(feature.detailStatus === 'loading' && !feature.detail ? t('loadingDesigner') : null)
+
+  useLayoutEffect(() => {
+    if (!embedParentOrigin || !id) return
+    openWebsiteDesigner(kind, id)
+    const listPath = `/website/${kind}`
+    sendPlatformNavigate(embedParentOrigin, `/design${listPath}`, { clientNavigated: true })
+    navigate({ pathname: listPath, search: searchParams.toString() }, { replace: true })
+  }, [embedParentOrigin, id, kind, navigate, searchParams])
 
   useEffect(() => {
     if (!id || !accessToken) return
@@ -125,6 +138,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     }
   }, [name, t])
 
+  if (embedParentOrigin) return null
   if (!accessToken) return <Navigate to="/login" replace />
   if (!id) return <Navigate to="/website/pages" replace />
 
@@ -140,6 +154,13 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     toast({ title: t('saved') })
   }
 
+  function handleAddBlock() {
+    const next = addBlock(document)
+    const newId = next.blocks.at(-1)?.id
+    setDocument(next)
+    if (newId) setSelection({ kind: 'block', blockId: newId })
+  }
+
   function selectedBlockId() {
     if (selection.kind === 'block' || selection.kind === 'addon') return selection.blockId
     return document.blocks.at(-1)?.id
@@ -150,7 +171,10 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     if (!blockId) {
       const withBlock = addBlock(document)
       const newId = withBlock.blocks.at(-1)?.id
-      if (newId) setDocument(addAddon(withBlock, newId, type))
+      if (newId) {
+        setDocument(addAddon(withBlock, newId, type))
+        setSelection({ kind: 'block', blockId: newId })
+      }
       return
     }
     setDocument(addAddon(document, blockId, type))
@@ -201,27 +225,32 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     : null
 
   return (
-    <FeaturePage
-      className="h-full min-h-0"
-      header={
-        <header className="space-y-3">
-          <h1 className="truncate text-2xl font-semibold text-foreground">{name ?? t('designer')}</h1>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-            <div className="flex flex-wrap items-center justify-start gap-2">
-              <Button type="button" variant={mode === 'visual' ? 'default' : 'outline'} onClick={() => setMode('visual')}>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      {fontUrls.map((url) => (
+        <link key={url} rel="stylesheet" href={url} />
+      ))}
+      <header className="glass-card z-50 shrink-0 border-b">
+        <div className="flex h-14 w-full items-center gap-2 px-2 sm:px-6">
+          <h1 className="min-w-0 shrink truncate text-sm font-semibold text-foreground md:text-base">
+            {name ?? t('designer')}
+          </h1>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" size="sm" variant={mode === 'visual' ? 'default' : 'outline'} onClick={() => setMode('visual')}>
                 {t('visual')}
               </Button>
-              <Button type="button" variant={mode === 'edit' ? 'default' : 'outline'} onClick={() => setMode('edit')}>
+              <Button type="button" size="sm" variant={mode === 'edit' ? 'default' : 'outline'} onClick={() => setMode('edit')}>
                 {t('edit')}
               </Button>
               {mode === 'edit' ? (
-                <Button type="button" variant="outline" onClick={() => setDocument(addBlock(document))} disabled={!canManage}>
+                <Button type="button" size="sm" variant="outline" onClick={handleAddBlock} disabled={!canManage}>
                   {t('addBlock')}
                 </Button>
               ) : null}
               {kind === 'pages' && pagesState.detail ? (
                 <Button
                   type="button"
+                  size="sm"
                   variant="outline"
                   onClick={() =>
                     window.open(websiteLiveUrl(pagesState.detail!.companyId, pagesState.detail!.path), '_blank', 'noopener')
@@ -231,37 +260,28 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                 </Button>
               ) : null}
             </div>
-            <Tabs value={breakpoint} onValueChange={(value) => setBreakpoint(value as WebsiteBreakpoint)}>
-              <TabsList className="w-auto min-w-0 px-0" aria-label={t('breakpoint')}>
-                {WEBSITE_BREAKPOINTS.map((item) => (
-                  <TabsTrigger key={item} value={item} className="px-3">
-                    {item}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            <div className="flex items-center justify-end">
+            <div className="ml-auto flex items-center gap-2">
+              <Tabs value={breakpoint} onValueChange={(value) => setBreakpoint(value as WebsiteBreakpoint)}>
+                <TabsList className="h-8 w-auto min-w-0 px-0" aria-label={t('breakpoint')}>
+                  {WEBSITE_BREAKPOINTS.map((item) => (
+                    <TabsTrigger key={item} value={item} className="h-7 px-2 text-xs">
+                      {item}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
               {canManage ? (
-                <Button type="button" onClick={save} disabled={feature.detailStatus === 'saving'}>
+                <Button type="button" size="sm" onClick={save} disabled={feature.detailStatus === 'saving'}>
                   {feature.detailStatus === 'saving' ? t('saving') : t('save')}
                 </Button>
               ) : null}
             </div>
           </div>
-        </header>
-      }
-    >
-      {fontUrls.map((url) => (
-        <link key={url} rel="stylesheet" href={url} />
-      ))}
-      {feature.detailError ? (
-        <Alert variant="destructive">
-          <AlertDescription>{feature.detailError}</AlertDescription>
-        </Alert>
-      ) : null}
-      <div className={mode === 'edit' ? 'grid min-h-0 min-w-0 flex-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)]' : 'min-h-0 min-w-0 flex-1'}>
+        </div>
+      </header>
+      <div className="flex min-h-0 flex-1">
         {mode === 'edit' ? (
-          <aside className="min-h-0 min-w-0 overflow-auto">
+          <aside className="glass-card flex w-64 shrink-0 flex-col border-r" aria-label={t('contentTree')}>
             <ContentTree
               document={document}
               selection={selection}
@@ -284,7 +304,12 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             />
           </aside>
         ) : null}
-        <section className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto">
+        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto scrollbar-themed">
+          {feature.detailError ? (
+            <Alert variant="destructive" className="m-4">
+              <AlertDescription>{feature.detailError}</AlertDescription>
+            </Alert>
+          ) : null}
           <DesignerCanvas
             document={document}
             headerDocument={mode === 'visual' ? defaultHeader?.document ?? null : null}
@@ -307,7 +332,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             onOpenBlockSettings={() => openBlockSettings()}
             onOpenAddonSettings={() => openAddonSettings()}
           />
-        </section>
+        </main>
       </div>
       <ContentContainerSettingsDialog
         open={containerSettingsOpen}
@@ -342,6 +367,6 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           setDocument(updateAddon(document, addonSettings.blockId, next))
         }}
       />
-    </FeaturePage>
+    </div>
   )
 }

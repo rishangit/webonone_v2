@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Button } from './Button'
+import { SegmentedSwitch, SegmentedSwitchItem } from './SegmentedSwitch'
 import {
   HOUR_HEIGHT_PX,
   WEEKDAY_LABELS,
@@ -106,20 +107,18 @@ function ViewSwitcher({
   onViewChange: (view: FullCalendarView) => void
 }) {
   return (
-    <div role="group" aria-label="Calendar view" className="flex items-center gap-1">
+    <SegmentedSwitch
+      value={view}
+      onValueChange={(next) => onViewChange(next as FullCalendarView)}
+      aria-label="Calendar view"
+      size="sm"
+    >
       {VIEWS.map((v) => (
-        <Button
-          key={v}
-          type="button"
-          size="sm"
-          variant={view === v ? 'default' : 'outline'}
-          aria-pressed={view === v}
-          onClick={() => onViewChange(v)}
-        >
+        <SegmentedSwitchItem key={v} value={v}>
           {VIEW_LABELS[v]}
-        </Button>
+        </SegmentedSwitchItem>
       ))}
-    </div>
+    </SegmentedSwitch>
   )
 }
 

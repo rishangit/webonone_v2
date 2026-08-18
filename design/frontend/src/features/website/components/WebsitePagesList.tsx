@@ -12,13 +12,12 @@ import {
   StatusTag,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { websiteDesignerUrl } from '@/features/shell/utils/navigateDesign'
 import type { WebsitePage } from '../types'
 
 interface WebsitePagesListProps {
   pages: WebsitePage[]
-  view: 'list' | 'grid'
   canManage: boolean
-  onOpen: (page: WebsitePage) => void
   onBrowse: (page: WebsitePage) => void
   onEditDetails: (page: WebsitePage) => void
   onDeleted: (id: string) => void
@@ -26,9 +25,7 @@ interface WebsitePagesListProps {
 
 export function WebsitePagesList({
   pages,
-  view,
   canManage,
-  onOpen,
   onBrowse,
   onEditDetails,
   onDeleted,
@@ -43,7 +40,11 @@ export function WebsitePagesList({
   const menu = (page: WebsitePage) =>
     canManage ? (
       <ItemListMenu ariaLabel={t('actionsFor', { name: page.name })}>
-        <DropdownMenuItem onClick={() => onOpen(page)}>{t('openDesigner')}</DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={websiteDesignerUrl('pages', page.id)} target="_blank" rel="noopener noreferrer">
+            {t('openDesigner')}
+          </a>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onBrowse(page)}>{t('browseLive')}</DropdownMenuItem>
         <DropdownMenuItem onClick={() => onEditDetails(page)}>{t('editDetails')}</DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -71,41 +72,18 @@ export function WebsitePagesList({
     />
   )
 
-  if (view === 'grid') {
-    return (
-      <>
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {pages.map((page) => (
-            <li key={page.id}>
-              <ItemListItem>
-                <ItemListContent>
-                  <button type="button" className="w-full text-left" onClick={() => onOpen(page)}>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{page.name}</p>
-                      <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
-                        {page.status === 'active' ? t('active') : t('inactive')}
-                      </StatusTag>
-                    </div>
-                    <p className="text-sm text-muted-foreground">/{page.path || ''}</p>
-                  </button>
-                </ItemListContent>
-                {menu(page)}
-              </ItemListItem>
-            </li>
-          ))}
-        </ul>
-        {confirm}
-      </>
-    )
-  }
-
   return (
     <>
       <ItemList>
         {pages.map((page) => (
           <ItemListItem key={page.id}>
             <ItemListContent>
-              <button type="button" className="w-full text-left" onClick={() => onOpen(page)}>
+              <a
+                href={websiteDesignerUrl('pages', page.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-left"
+              >
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{page.name}</p>
                   <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
@@ -113,7 +91,7 @@ export function WebsitePagesList({
                   </StatusTag>
                 </div>
                 <p className="text-sm text-muted-foreground">/{page.path || ''}</p>
-              </button>
+              </a>
             </ItemListContent>
             {menu(page)}
           </ItemListItem>

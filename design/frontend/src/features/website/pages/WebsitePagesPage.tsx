@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LayoutGrid, List } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -43,7 +42,6 @@ export function WebsitePagesPage() {
   const companyId = user?.companyId ?? null
   const [dialog, setDialog] = useState<{ initial?: PageMetaValues; id?: string } | null>(null)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
-  const [view, setView] = useState<'list' | 'grid'>('list')
 
   const list = useEpicCatalogList((s) => s.websitePages, websitePagesActions)
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websitePages)
@@ -85,36 +83,27 @@ export function WebsitePagesPage() {
   }
 
   return (
-    <FeaturePage
-      title={t('title')}
-      description={t('pagesDescription')}
-      actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <SearchInput
-            value={list.q}
-            onChange={(event) => list.setQ(event.target.value)}
-            placeholder={t('searchPages')}
-            className="w-64"
-            aria-label={t('searchPages')}
-          />
-          <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[hsl(var(--glass-border))]"
-            aria-label={view === 'list' ? t('gridView') : t('listView')}
-            onClick={() => setView((current) => (current === 'list' ? 'grid' : 'list'))}
-          >
-            {view === 'list' ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
-          </button>
-          {canManage ? (
-            <ListAddButton onClick={() => setDialog({})} compactLabel={tc('add')}>
-              {t('addPage')}
-            </ListAddButton>
-          ) : null}
-        </div>
-      }
-    >
-      <WebsiteHubTabs section="pages" />
+    <FeaturePage title={t('title')} description={t('pagesDescription')}>
+      <WebsiteHubTabs
+        section="pages"
+        actions={
+          <>
+            <SearchInput
+              value={list.q}
+              onChange={(event) => list.setQ(event.target.value)}
+              placeholder={t('searchPages')}
+              className="w-64"
+              aria-label={t('searchPages')}
+            />
+            <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
+            {canManage ? (
+              <ListAddButton onClick={() => setDialog({})} compactLabel={tc('add')}>
+                {t('addPage')}
+              </ListAddButton>
+            ) : null}
+          </>
+        }
+      />
       <ListFilterPanel
         open={list.filterOpen}
         onOpenChange={list.setFilterOpen}
@@ -146,9 +135,7 @@ export function WebsitePagesPage() {
         <div className="flex-1">
           <WebsitePagesList
             pages={list.items as WebsitePage[]}
-            view={view}
             canManage={canManage}
-            onOpen={(page) => goToWebsiteEdit('pages', page.id)}
             onBrowse={(page) => window.open(websiteLiveUrl(page.companyId, page.path), '_blank', 'noopener')}
             onEditDetails={(page) =>
               setDialog({ id: page.id, initial: { name: page.name, path: page.path, status: page.status } })

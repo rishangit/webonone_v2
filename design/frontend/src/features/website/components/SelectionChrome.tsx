@@ -34,6 +34,7 @@ export function SelectionChrome({
       {canManage ? (
         <div
           className="absolute right-1 top-1 z-40 flex max-w-[calc(100%-0.5rem)] flex-wrap justify-end gap-1 rounded-md border border-border bg-background p-0.5 shadow-sm"
+          data-chrome-action=""
           onPointerDown={stop}
           onClick={stop}
         >
@@ -114,8 +115,9 @@ export function SelectionChrome({
         <button
           key={handle}
           type="button"
+          data-resize-handle={handle}
           aria-label={t('resizeHandle', { handle })}
-          className={resizeHandleClassName(handle)}
+          className={resizeHandleClassName(handle, kind)}
           onPointerDown={(event) => {
             event.stopPropagation()
             onResizePointerDown(event, handle)

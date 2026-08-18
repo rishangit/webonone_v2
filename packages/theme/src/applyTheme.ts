@@ -1,5 +1,6 @@
 import type { ColorMode, ThemeDto, ThemePayload } from './types'
 import { PLATFORM_DESTRUCTIVE_HEX } from './constants'
+import { persistAppliedTheme } from './themeSession'
 import {
   deriveDarkenedHex,
   deriveInputBackgroundHex,
@@ -111,6 +112,9 @@ export function applyThemeVariables(
   root.style.setProperty('--scrollbar-thumb', `${hexToHslComponents(theme.color3)} / 0.6`)
 
   applyColorMode(colorMode, root)
+  if (root === document.documentElement) {
+    persistAppliedTheme(buildThemePayload(theme, colorMode))
+  }
 }
 
 export function buildThemePayload(theme: ThemeDto, colorMode: ColorMode): ThemePayload {
