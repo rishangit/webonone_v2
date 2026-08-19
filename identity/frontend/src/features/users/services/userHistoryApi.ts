@@ -41,7 +41,7 @@ export type FormSubmissionItem = {
 
 export type CompanyActivityItem = {
   id: string
-  type: 'session_token' | 'event_attendee' | 'event_staff'
+  type: 'session_token' | 'event_attendee' | 'event_staff' | 'sale'
   title: string
   subtitle: string | null
   status: string | null
@@ -95,7 +95,7 @@ export type FormSubmissionDetail = {
 
 type ActivityRaw = {
   id: string
-  type: 'session_token' | 'event_attendee' | 'event_staff'
+  type: 'session_token' | 'event_attendee' | 'event_staff' | 'sale'
   title: string
   subtitle: string | null
   status: string | null
@@ -130,6 +130,7 @@ export function mergeSessionHistory(
   activityItems: CompanyActivityItem[],
 ): UserHistoryItem[] {
   const sessionItems = activityItems.filter((item) => item.type === 'session_token')
+  const saleItems = activityItems.filter((item) => item.type === 'sale')
   const knownTokenIds = new Set(
     sessionItems
       .map((item) => resolveSessionTokenId(item))
@@ -169,7 +170,7 @@ export function mergeSessionHistory(
     })
   }
 
-  return [...sessionItems, ...syntheticByToken.values(), ...orphanForms].sort(
+  return [...sessionItems, ...saleItems, ...syntheticByToken.values(), ...orphanForms].sort(
     (a, b) => historyTime(b) - historyTime(a),
   )
 }
@@ -270,6 +271,45 @@ export function resolveSessionTokenId(item: CompanyActivityItem): string | null 
   if (typeof fromMeta === 'string' && fromMeta.length === 21) return fromMeta
   if (item.id.startsWith('token:')) return item.id.slice('token:'.length)
   return null
+}
+
+export function resolveSaleId(item: CompanyActivityItem): string | null {
+  if (item.type !== 'sale') return null
+  const fromMeta = item.meta?.saleId
+  if (typeof fromMeta === 'string' && fromMeta.length === 21) return fromMeta
+  if (item.id.startsWith('sale:')) return item.id.slice('sale:'.length)
+  return null
+}
+
+export type SaleHistoryDetail = {
+  id: string
+  billNumber: string
+  customerUserId: string
+  customerDisplayName: string
+  customerEmail: string | null
+  status: string
+  paymentMethod: string
+  currency: string
+  subtotal: number
+  total: number
+  notes: string | null
+  createdAt: string
+  lines: Array<{
+    id: string
+    lineNo: number
+    itemKind: string
+    name: string
+    quantity: number
+    unitPrice: number
+    lineTotal: number
+  }>
+}
+
+export async function getSaleHistoryDetail(saleId: string): Promise<SaleHistoryDetail> {
+  return peerFetch<SaleHistoryDetail>(
+    getWebOnOneApiBase(),
+    `/company/me/sales/${encodeURIComponent(saleId)}`,
+  )
 }
 
 export function getDesignOrigin(): string {

@@ -195,6 +195,15 @@ export function CatalogFormDialog({
           ? values.description.trim()
           : null,
     }
+    if (kind === 'products' || kind === 'spaces') {
+      const raw = values.listPrice
+      if (raw == null || raw === '') {
+        payload.listPrice = null
+      } else {
+        const parsed = Number(raw)
+        payload.listPrice = Number.isFinite(parsed) ? parsed : null
+      }
+    }
 
     if (ownsMutate) {
       dispatch(companyCatalogActions.clearMutateError())
@@ -246,6 +255,28 @@ export function CatalogFormDialog({
           rows={3}
         />
       </FormField>
+
+      {kind === 'products' || kind === 'spaces' ? (
+        <FormField label="List price (LKR)" htmlFor="catalog-list-price">
+          <Input
+            id="catalog-list-price"
+            type="number"
+            min={0}
+            step="0.01"
+            value={
+              typeof values.listPrice === 'number'
+                ? String(values.listPrice)
+                : typeof values.listPrice === 'string'
+                  ? values.listPrice
+                  : ''
+            }
+            onChange={(e) => {
+              const next = e.target.value.trim()
+              setField('listPrice', next === '' ? null : Number(next))
+            }}
+          />
+        </FormField>
+      ) : null}
 
       {kind === 'tags' ? (
         <FormField label="Color" htmlFor="catalog-color" required>

@@ -21,6 +21,7 @@ import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import { CatalogDetailSectionTabs, type CatalogDetailTabId } from '../components/CatalogDetailSectionTabs'
 import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
+import { CatalogPricingDialog } from '../components/CatalogPricingDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
 import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
 import { EditableSectionCard } from '../components/EditableSectionCard'
@@ -63,6 +64,11 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
+function formatListPrice(value: number | null | undefined): string {
+  if (value == null) return '—'
+  return `LKR ${value.toFixed(2)}`
+}
+
 export type CompanyCatalogDetailPageProps = {
   /**
    * When set, load via membership-scoped API (`/company/:id/catalog/…`)
@@ -101,6 +107,7 @@ export function CompanyCatalogDetailPage({
   )
   const [formLinkOpen, setFormLinkOpen] = useState(false)
   const [fillFormOpen, setFillFormOpen] = useState(false)
+  const [pricingOpen, setPricingOpen] = useState(false)
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
   const [pendingRemove, setPendingRemove] = useState(false)
   const [linkedFormName, setLinkedFormName] = useState<string | null>(null)
@@ -256,6 +263,15 @@ export function CompanyCatalogDetailPage({
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
         <EditableSectionCard
+          title={t('detail.pricing.title')}
+          description={t('detail.pricing.description')}
+          canEdit={canManage && !busy}
+          onEdit={() => setPricingOpen(true)}
+        >
+          <ReadOnlyField label={t('detail.pricing.listPrice')} value={formatListPrice(detail.listPrice)} />
+        </EditableSectionCard>
+
+        <EditableSectionCard
           title={t('detail.time.title')}
           description={t('detail.time.description')}
           canEdit={canEdit && !busy}
@@ -382,6 +398,17 @@ export function CompanyCatalogDetailPage({
         </EditableSectionCard>
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
+        {kind === 'products' || kind === 'spaces' ? (
+          <EditableSectionCard
+            title={t('detail.pricing.title')}
+            description={t('detail.pricing.description')}
+            canEdit={canManage && !busy}
+            onEdit={() => setPricingOpen(true)}
+          >
+            <ReadOnlyField label={t('detail.pricing.listPrice')} value={formatListPrice(detail.listPrice)} />
+          </EditableSectionCard>
+        ) : null}
+
         {kind === 'products' || kind === 'spaces' ? (
           <EditableSectionCard
             title={t('detail.tags.title')}
@@ -545,7 +572,14 @@ export function CompanyCatalogDetailPage({
           open={editOpen}
           kind={kind}
           mode="edit"
-          initialPayload={detail?.payload}
+          initialPayload={
+            detail
+              ? {
+                  ...(detail.payload ?? {}),
+                  listPrice: detail.listPrice ?? null,
+                }
+              : undefined
+          }
           onOpenChange={setEditOpen}
           busy={busy}
           error={mutateError}
@@ -584,6 +618,16 @@ export function CompanyCatalogDetailPage({
             />
           ) : null}
         </>
+      ) : null}
+
+      {!readOnly && kind && isCatalogGalleryKind(kind) && detail ? (
+        <CatalogPricingDialog
+          open={pricingOpen}
+          kind={kind}
+          id={id}
+          listPrice={detail.listPrice}
+          onOpenChange={setPricingOpen}
+        />
       ) : null}
 
       {!readOnly ? (

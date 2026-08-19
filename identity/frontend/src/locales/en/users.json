@@ -81,6 +81,7 @@
   "history": {
     "badgeForm": "Form",
     "badgeSession": "Session",
+    "badgeSale": "Sale",
     "servicePrefix": "Service: {{name}}",
     "filledBy": "Filled by {{name}}",
     "statusPrefix": "Status: {{status}}",
@@ -115,6 +116,15 @@
     "fillForm": "Fill form",
     "formDialogDescription": "For {{name}}",
     "formDialogDescriptionWithService": "For {{name}} · {{service}}",
-    "customerFallback": "Customer"
+    "customerFallback": "Customer",
+    "saleHistoryTitle": "Sale",
+    "saleHistoryLoadError": "Unable to load sale.",
+    "saleLinesTitle": "Items",
+    "saleDetailsTitle": "Bill details",
+    "item": "Item",
+    "qty": "Qty",
+    "unit": "Unit",
+    "lineTotal": "Total",
+    "payment": "Payment"
   }
 }

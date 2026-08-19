@@ -67,6 +67,7 @@ export type ServiceWizardFormValues = {
   name: string
   description: string
   status: 'verified' | 'pending'
+  listPrice: string
   time_mode: ServiceTimeMode
   duration_minutes: string
   start_time: string
@@ -79,6 +80,7 @@ export const EMPTY_SERVICE_WIZARD_VALUES: ServiceWizardFormValues = {
   name: '',
   description: '',
   status: 'pending',
+  listPrice: '',
   time_mode: 'duration',
   duration_minutes: '60',
   start_time: '',
@@ -155,6 +157,7 @@ export function toCompanyServicePayload(
     name: values.name.trim(),
     description: values.description.trim() || null,
     ...(options.canSetStatus ? { status: values.status } : { status: 'pending' as const }),
+    listPrice: values.listPrice.trim() === '' ? null : Number(values.listPrice),
     tagIds: values.tags.map((tag) => tag.id),
     attributes: values.attributes
       .filter((row) => row.attributeId)
@@ -180,10 +183,18 @@ export function valuesFromServicePayload(
   const timeMode = payload.timeMode === 'window' ? 'window' : 'duration'
   const attrs = Array.isArray(payload.attributes) ? payload.attributes : []
 
+  const listPrice =
+    typeof payload.listPrice === 'number'
+      ? String(payload.listPrice)
+      : payload.listPrice == null
+        ? ''
+        : String(payload.listPrice)
+
   return {
     name: typeof payload.name === 'string' ? payload.name : '',
     description: typeof payload.description === 'string' ? payload.description : '',
     status,
+    listPrice,
     time_mode: timeMode,
     duration_minutes:
       payload.durationMinutes != null ? String(payload.durationMinutes) : '60',

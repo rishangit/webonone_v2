@@ -76,6 +76,19 @@ export function ServiceWizardStepBasics({
           </Select>
         </FormField>
       ) : null}
+
+      <FormField label="List price (LKR)" htmlFor="company-service-wizard-list-price">
+        <Input
+          id="company-service-wizard-list-price"
+          type="number"
+          min={0}
+          step="0.01"
+          value={values.listPrice}
+          onChange={(e) => onChange({ listPrice: e.target.value })}
+          disabled={isSubmitting}
+          className="w-full"
+        />
+      </FormField>
     </div>
   )
 }

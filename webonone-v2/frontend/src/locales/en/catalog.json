@@ -54,6 +54,11 @@
     "entityBasics": {
       "description": "Name and description"
     },
+    "pricing": {
+      "title": "Pricing",
+      "description": "Company selling price for Point of Sale",
+      "listPrice": "List price"
+    },
     "time": {
       "title": "Time",
       "description": "How this service is scheduled",

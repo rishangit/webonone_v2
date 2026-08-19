@@ -40,6 +40,7 @@ type AttributeRow = CommonRow & {
 type ProductOrSpaceRow = CommonRow & {
   tag_ids: string | unknown[] | null
   attributes: string | unknown[] | null
+  list_price: string | number | null
 }
 type ServiceRow = ProductOrSpaceRow & {
   time_mode: 'duration' | 'window' | null
@@ -68,6 +69,26 @@ function parseJsonArray(value: string | unknown[] | null): unknown[] | undefined
     }
   }
   return undefined
+}
+
+export const CATALOG_PRICED_KINDS = ['products', 'services', 'spaces'] as const
+export type CatalogPricedKind = (typeof CATALOG_PRICED_KINDS)[number]
+
+export function isCatalogPricedKind(kind: CatalogEntityKind): kind is CatalogPricedKind {
+  return (CATALOG_PRICED_KINDS as readonly string[]).includes(kind)
+}
+
+export function parseMoney(value: unknown): number | null {
+  if (value == null || value === '') return null
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
+function extractListPrice(payload: CatalogPayload | null): number | null | undefined {
+  if (!payload || typeof payload !== 'object' || !('listPrice' in payload)) return undefined
+  const raw = (payload as { listPrice?: unknown }).listPrice
+  if (raw == null || raw === '') return null
+  return parseMoney(raw)
 }
 
 function formatTime(value: string | Date | null): string | null {
@@ -123,6 +144,7 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
               valueNumber?: number | null
             }[]
           | undefined,
+        listPrice: parseMoney(row.list_price),
       }
     case 'services':
       return {
@@ -139,6 +161,7 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
         durationMinutes: (row.duration_minutes as number | null) ?? null,
         startTime: formatTime((row.start_time as string | Date | null) ?? null),
         endTime: formatTime((row.end_time as string | Date | null) ?? null),
+        listPrice: parseMoney(row.list_price),
       }
   }
 }
@@ -186,6 +209,7 @@ export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unkno
     const withGallery = {
       ...base,
       galleryImages: parseGalleryImages(row.gallery_images as string | unknown[] | null),
+      listPrice: parseMoney(row.list_price),
     }
     if (kind === 'services') {
       return {
@@ -357,6 +381,9 @@ export async function insertItem(input: {
 }): Promise<Record<string, unknown>> {
   const now = new Date()
   const table = CATALOG_TABLE_BY_KIND[input.entityKind]
+  const listPrice = isCatalogPricedKind(input.entityKind)
+    ? (extractListPrice(input.payload) ?? null)
+    : undefined
   await db(table).insert({
     id: input.id,
     company_id: input.companyId,
@@ -366,6 +393,7 @@ export async function insertItem(input: {
       input.libraryEntityId,
       input.payload,
     ),
+    ...(listPrice !== undefined ? { list_price: listPrice } : {}),
     created_at: now,
     updated_at: now,
   })
@@ -397,10 +425,13 @@ export async function updateItem(
   const payload =
     patch.payload !== undefined ? patch.payload : payloadFromRow(kind, existing)
 
+  const listPrice = isCatalogPricedKind(kind) ? extractListPrice(payload) : undefined
+
   await db(CATALOG_TABLE_BY_KIND[kind])
     .where({ id, company_id: companyId })
     .update({
       ...columnsFromPayload(kind, bindingMode, libraryEntityId, payload),
+      ...(listPrice !== undefined ? { list_price: listPrice } : {}),
       updated_at: new Date(),
     })
 
@@ -420,6 +451,26 @@ export async function updateGalleryImages(
     .where({ id, company_id: companyId })
     .update({
       gallery_images: JSON.stringify(galleryImages),
+      updated_at: new Date(),
+    })
+
+  return findById(companyId, kind, id)
+}
+
+/** Company-owned list price — independent of binding mode (including linked). */
+export async function updateListPrice(
+  companyId: string,
+  kind: CatalogPricedKind,
+  id: string,
+  listPrice: number | null,
+): Promise<Record<string, unknown> | undefined> {
+  const existing = await findById(companyId, kind, id)
+  if (!existing) return undefined
+
+  await db(CATALOG_TABLE_BY_KIND[kind])
+    .where({ id, company_id: companyId })
+    .update({
+      list_price: listPrice,
       updated_at: new Date(),
     })
 

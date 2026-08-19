@@ -254,6 +254,28 @@ export async function updateCatalogGallery(
   return toDto(kind, updated)
 }
 
+export async function updateCatalogPricing(
+  userId: string,
+  companyId: string,
+  kind: CatalogEntityKind,
+  id: string,
+  listPrice: number | null,
+) {
+  await assertCompanyAdmin(userId, companyId)
+  if (!repo.isCatalogPricedKind(kind)) {
+    throw httpError('List price is only supported for products, services, and spaces', 400)
+  }
+  const row = await repo.findById(companyId, kind, id)
+  if (!row) {
+    throw httpError('Catalog item not found', 404)
+  }
+  const updated = await repo.updateListPrice(companyId, kind, id, listPrice)
+  if (!updated) {
+    throw httpError('Catalog item not found', 404)
+  }
+  return toDto(kind, updated)
+}
+
 export async function updateServiceFormTemplate(
   userId: string,
   companyId: string,

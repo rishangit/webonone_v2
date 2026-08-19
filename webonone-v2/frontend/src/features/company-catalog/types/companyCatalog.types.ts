@@ -27,6 +27,8 @@ export type CompanyCatalogItem = {
   galleryImages?: CatalogGalleryImage[] | null
   /** Design form template id (services only). */
   formTemplateId?: string | null
+  /** Company-owned selling price (products, services, spaces) — independent of binding mode. */
+  listPrice?: number | null
   createdAt: string
   updatedAt: string
 }

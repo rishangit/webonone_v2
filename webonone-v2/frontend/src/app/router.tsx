@@ -76,6 +76,15 @@ const StaffHistorySubmissionDetailPage = lazy(() =>
     default: m.StaffHistorySubmissionDetailPage,
   })),
 )
+const PosPage = lazy(() =>
+  import('@/features/sales/pages/PosPage').then((m) => ({ default: m.PosPage })),
+)
+const SalesHistoryPage = lazy(() =>
+  import('@/features/sales/pages/SalesHistoryPage').then((m) => ({ default: m.SalesHistoryPage })),
+)
+const SaleBillPage = lazy(() =>
+  import('@/features/sales/pages/SaleBillPage').then((m) => ({ default: m.SaleBillPage })),
+)
 const CalendarPage = lazy(() =>
   import('@/features/calendar/pages/CalendarPage').then((m) => ({ default: m.CalendarPage })),
 )
@@ -310,6 +319,30 @@ export function App() {
             element={
               <LazyRoute>
                 <StaffHistorySubmissionDetailPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="sales/pos"
+            element={
+              <LazyRoute>
+                <PosPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="sales"
+            element={
+              <LazyRoute>
+                <SalesHistoryPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="sales/:id"
+            element={
+              <LazyRoute>
+                <SaleBillPage />
               </LazyRoute>
             }
           />

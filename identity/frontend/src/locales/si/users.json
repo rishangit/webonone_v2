@@ -81,6 +81,7 @@
   "history": {
     "badgeForm": "පෝරමය",
     "badgeSession": "සැසිය",
+    "badgeSale": "විකිණීම",
     "servicePrefix": "සේවාව: {{name}}",
     "filledBy": "{{name}} විසින් පුරවන ලදී",
     "statusPrefix": "තත්ත්වය: {{status}}",
@@ -115,6 +116,15 @@
     "fillForm": "පෝරමය පුරවන්න",
     "formDialogDescription": "{{name}} සඳහා",
     "formDialogDescriptionWithService": "{{name}} · {{service}} සඳහා",
-    "customerFallback": "පාරිභෝගිකයා"
+    "customerFallback": "පාරිභෝගිකයා",
+    "saleHistoryTitle": "විකිණීම",
+    "saleHistoryLoadError": "විකිණීම පූරණය කළ නොහැක.",
+    "saleLinesTitle": "අයිතම",
+    "saleDetailsTitle": "බිල්පත් විස්තර",
+    "item": "අයිතමය",
+    "qty": "ප්‍රමාණය",
+    "unit": "ඒකකය",
+    "lineTotal": "එකතුව",
+    "payment": "ගෙවීම"
   }
 }

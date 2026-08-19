@@ -54,6 +54,11 @@
     "entityBasics": {
       "description": "නම සහ විස්තරය"
     },
+    "pricing": {
+      "title": "මිල",
+      "description": "විකුණුම් ස්ථානය සඳහා සමාගම් විකුණුම් මිල",
+      "listPrice": "ලැයිස්තු මිල"
+    },
     "time": {
       "title": "වේලාව",
       "description": "මෙම සේවාව කාලසටහන්ගත වන ආකාරය",

@@ -370,6 +370,15 @@ const PAYMENT_PLATFORM_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
+const SALES_PLATFORM_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Sales',
+  children: [
+    { kind: 'item', path: '/sales/pos', label: 'Point of Sale' },
+    { kind: 'item', path: '/sales', label: 'History' },
+  ],
+}
+
 /** Internal sentinels for Design sub-nav in consumer AppLayouts (not routed on core origin). */
 export const DESIGN_NAV_SENTINELS = {
   forms: '/design/forms',
@@ -578,6 +587,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
     ],
   },
   SMS_PLATFORM_NAV_GROUP,
+  SALES_PLATFORM_NAV_GROUP,
   PAYMENT_PLATFORM_NAV_GROUP,
   DESIGN_PLATFORM_NAV_GROUP,
   COMPANIES_PLATFORM_NAV_GROUP,
