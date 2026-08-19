@@ -8,12 +8,23 @@ export type Conversation = {
   updatedAt: string
 }
 
+export type RelatedConfirmNode = {
+  path: string
+  displayKey: string
+  exists: boolean
+  selected: boolean
+  record: Record<string, unknown>
+  children?: RelatedConfirmNode[]
+}
+
 export type PendingToolCall = {
   toolCallId: string
   name: string
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
+  displayArguments?: Record<string, unknown>
+  relatedTree?: RelatedConfirmNode[]
   status: 'pending_confirmation' | 'confirmed' | 'rejected'
 }
 
@@ -23,6 +34,7 @@ export type PendingTool = {
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
+  displayArguments?: Record<string, unknown>
   status: 'pending_confirmation' | 'confirmed' | 'rejected'
   calls?: PendingToolCall[]
 }

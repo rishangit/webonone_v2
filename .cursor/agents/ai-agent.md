@@ -9,7 +9,7 @@ Skill: [.cursor/skills/ai-agent/SKILL.md](../skills/ai-agent/SKILL.md)
 - Standalone AI microservice: conversations, messages, provider abstraction.
 - Verify Identity JWTs locally (same `JWT_SECRET`). Issue short-lived guest tokens for website visitors.
 - Tenant isolation by JWT `user_id` + NULL-safe `company_id`, or `guest_id`. Never trust body/query/model identity.
-- Discover peer tools and apply **generic** `completeCreateArgs` only. Domain schemas live on the owning service — [ai-capabilities.mdc](../rules/ai-capabilities.mdc).
+- Discover peer tools and apply **generic** `completeCreateArgs` only. Domain schemas live on the owning service — [ai-capabilities.mdc](../rules/ai-capabilities.mdc). Create suggestions fill every schema property and related `list_*` ids.
 
 ## Ports
 

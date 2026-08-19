@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Menu, X } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -8,6 +9,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  cn,
   useToast,
 } from '@webonone/ui-kit'
 import { resolvePlatformEmbedParentOrigin, sendPlatformNavigate } from '@webonone/platform-embed'
@@ -69,6 +71,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const [containerSettingsOpen, setContainerSettingsOpen] = useState(false)
   const [blockSettingsId, setBlockSettingsId] = useState<string | null>(null)
   const [addonSettings, setAddonSettings] = useState<{ blockId: string; addonId: string } | null>(null)
+  const [treeOpen, setTreeOpen] = useState(false)
 
   const theme = themesState.items.find((item) => item.isDefault) ?? themesState.items[0] ?? themesState.detail
   const name =
@@ -137,6 +140,19 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       window.document.title = previous
     }
   }, [name, t])
+
+  useEffect(() => {
+    if (mode !== 'edit') setTreeOpen(false)
+  }, [mode])
+
+  useEffect(() => {
+    if (!treeOpen) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setTreeOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [treeOpen])
 
   if (embedParentOrigin) return null
   if (!accessToken) return <Navigate to="/login" replace />
@@ -224,6 +240,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       null
     : null
 
+  function selectFromTree(next: DesignerSelection) {
+    setSelection(next)
+    setTreeOpen(false)
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {fontUrls.map((url) => (
@@ -231,11 +252,23 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       ))}
       <header className="glass-card z-50 shrink-0 border-b">
         <div className="flex h-14 w-full items-center gap-2 px-2 sm:px-6">
+          {mode === 'edit' ? (
+            <button
+              type="button"
+              className="rounded-md p-2 text-foreground outline-none ring-offset-background hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+              aria-label={treeOpen ? t('closeContentTree') : t('openContentTree')}
+              aria-expanded={treeOpen}
+              aria-controls="website-content-tree"
+              onClick={() => setTreeOpen((open) => !open)}
+            >
+              {treeOpen ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
+            </button>
+          ) : null}
           <h1 className="min-w-0 shrink truncate text-sm font-semibold text-foreground md:text-base">
             {name ?? t('designer')}
           </h1>
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-themed">
+            <div className="flex shrink-0 items-center gap-2">
               <Button type="button" size="sm" variant={mode === 'visual' ? 'default' : 'outline'} onClick={() => setMode('visual')}>
                 {t('visual')}
               </Button>
@@ -260,7 +293,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                 </Button>
               ) : null}
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               <Tabs value={breakpoint} onValueChange={(value) => setBreakpoint(value as WebsiteBreakpoint)}>
                 <TabsList className="h-8 w-auto min-w-0 px-0" aria-label={t('breakpoint')}>
                   {WEBSITE_BREAKPOINTS.map((item) => (
@@ -279,28 +312,53 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           </div>
         </div>
       </header>
-      <div className="flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1">
+        {mode === 'edit' && treeOpen ? (
+          <button
+            type="button"
+            className="fixed inset-0 top-14 z-30 bg-black/50 md:hidden"
+            aria-label={t('closeContentTree')}
+            onClick={() => setTreeOpen(false)}
+          />
+        ) : null}
         {mode === 'edit' ? (
-          <aside className="glass-card flex w-64 shrink-0 flex-col border-r" aria-label={t('contentTree')}>
+          <aside
+            id="website-content-tree"
+            className={cn(
+              'glass-card z-40 flex w-64 shrink-0 flex-col border-r transition-transform duration-200',
+              'fixed bottom-0 left-0 top-14 md:static md:z-auto md:h-auto md:translate-x-0',
+              treeOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+            )}
+            aria-label={t('contentTree')}
+          >
             <ContentTree
               document={document}
               selection={selection}
               canManage={canManage}
-              onSelect={setSelection}
+              onSelect={selectFromTree}
               onReorderAddon={(blockId, from, to) => setDocument(reorderAddons(document, blockId, from, to))}
               onReorderBlock={(from, to) => setDocument(reorderBlocks(document, from, to))}
               onLayer={(target, direction) => setDocument(changeLayer(document, target, direction))}
               onDeleteBlock={(blockId) => {
                 setDocument(deleteBlock(document, blockId))
-                setSelection({ kind: 'container' })
+                selectFromTree({ kind: 'container' })
               }}
               onDeleteAddon={(blockId, addonId) => {
                 setDocument(deleteAddon(document, blockId, addonId))
-                setSelection({ kind: 'container' })
+                selectFromTree({ kind: 'container' })
               }}
-              onOpenContainerSettings={() => setContainerSettingsOpen(true)}
-              onOpenBlockSettings={(blockId) => openBlockSettings(blockId)}
-              onOpenAddonSettings={(blockId, addonId) => openAddonSettings(blockId, addonId)}
+              onOpenContainerSettings={() => {
+                setContainerSettingsOpen(true)
+                setTreeOpen(false)
+              }}
+              onOpenBlockSettings={(blockId) => {
+                openBlockSettings(blockId)
+                setTreeOpen(false)
+              }}
+              onOpenAddonSettings={(blockId, addonId) => {
+                openAddonSettings(blockId, addonId)
+                setTreeOpen(false)
+              }}
             />
           </aside>
         ) : null}

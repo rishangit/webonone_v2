@@ -14,6 +14,7 @@ import { companiesActions } from '@/features/settings/basic/store/companiesStore
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { MyCompaniesList } from '../components/MyCompaniesList'
+import { CONNECTED_COMPANIES_PATH } from '../utils/companySettingsPaths'
 
 export function ConnectedCompaniesPage() {
   const { t } = useTranslation('settings')
@@ -80,7 +81,11 @@ export function ConnectedCompaniesPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          <MyCompaniesList items={visibleItems} emptyMessage={t('connectedCompanies.empty')} />
+          <MyCompaniesList
+            items={visibleItems}
+            emptyMessage={t('connectedCompanies.empty')}
+            listPath={CONNECTED_COMPANIES_PATH}
+          />
         </div>
         <ListPageFooter
           className="mt-auto"

@@ -65,7 +65,11 @@ export function AiPlatformSettingsDialog({
   const saving = status === 'saving'
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      wasSaving.current = false
+      return
+    }
+    if (wasSaving.current) return
     setForm({
       provider: settings?.provider ?? PLATFORM_DEFAULTS.provider,
       model: settings?.model ?? PLATFORM_DEFAULTS.model,
@@ -75,7 +79,6 @@ export function AiPlatformSettingsDialog({
     })
     setApiKey(settings?.apiKey ?? '')
     setFieldErrors({})
-    wasSaving.current = false
   }, [open, settings])
 
   useEffect(() => {

@@ -42,10 +42,10 @@ export const aiApi = {
         body: JSON.stringify({ content }),
       },
     ),
-  confirmToolCall: (conversationId: string, toolCallId: string) =>
+  confirmToolCall: (conversationId: string, toolCallId: string, relatedSelections?: Record<string, boolean>) =>
     apiClient<{ assistantMessage: ChatMessage }>(
       `/conversations/${conversationId}/tool-calls/${encodeURIComponent(toolCallId)}/confirm`,
-      { method: 'POST', body: '{}' },
+      { method: 'POST', body: JSON.stringify({ relatedSelections: relatedSelections ?? {} }) },
     ),
   rejectToolCall: (conversationId: string, toolCallId: string, remaining = false) =>
     apiClient<{ assistantMessage: ChatMessage }>(

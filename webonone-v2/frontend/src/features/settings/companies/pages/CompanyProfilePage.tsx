@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
@@ -26,6 +26,11 @@ import { CompanyLocationCard } from '../components/CompanyLocationCard'
 import { CompanyLogoCard } from '../components/CompanyLogoCard'
 import { CompanyProfileCard } from '../components/CompanyProfileCard'
 import { CompanyTagsCard } from '../components/CompanyTagsCard'
+import {
+  CONNECTED_COMPANIES_PATH,
+  MY_COMPANIES_PATH,
+  companySettingsListPath,
+} from '../utils/companySettingsPaths'
 
 type CompanyProfilePageProps = {
   backTo?: string
@@ -54,9 +59,15 @@ const ALL_MEMBER_TABS = [
   'spaces',
 ] as const satisfies readonly MemberProfileTab[]
 
-function membershipBackTo(role: 'member' | 'company_admin' | undefined): string {
-  if (role === 'company_admin') return '/settings/companies'
-  return '/settings/connected-companies'
+function membershipBackTo(
+  pathname: string,
+  role: 'member' | 'company_admin' | undefined,
+): string {
+  if (pathname.startsWith(CONNECTED_COMPANIES_PATH) || pathname.startsWith(MY_COMPANIES_PATH)) {
+    return companySettingsListPath(pathname)
+  }
+  if (role === 'company_admin') return MY_COMPANIES_PATH
+  return CONNECTED_COMPANIES_PATH
 }
 
 export function CompanyProfilePage({
@@ -65,6 +76,7 @@ export function CompanyProfilePage({
 }: CompanyProfilePageProps) {
   const { t } = useTranslation('settings')
   const { companyId } = useParams<{ companyId: string }>()
+  const { pathname } = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const detail = useAppSelector((s) => s.companies.detail)
@@ -79,13 +91,13 @@ export function CompanyProfilePage({
   const loading = detailStatus === 'loading' && !detail
   const saving = detailStatus === 'saving'
 
-  const backTo = backToProp ?? membershipBackTo(detail?.role)
+  const backTo = backToProp ?? membershipBackTo(pathname, detail?.role)
   const backLabel =
     variant === 'admin'
       ? t('companyProfile.backToCompanies')
-      : detail?.role === 'company_admin'
-        ? t('companyProfile.backToMyCompanies')
-        : t('companyProfile.backToConnectedCompanies')
+      : backTo === CONNECTED_COMPANIES_PATH
+        ? t('companyProfile.backToConnectedCompanies')
+        : t('companyProfile.backToMyCompanies')
 
   usePlatformLoading(loading ? t('companyProfile.loading') : null)
 

@@ -1,7 +1,17 @@
 {
-  "title": "Welcome, {{name}}!",
-  "titleFallbackName": "User",
-  "description": "You are signed in to WebOnOne.",
-  "sessionActive": "Session active with Bearer JWT.",
-  "notSignedIn": "Not signed in."
+  "pageTitle": "Dashboard",
+  "pageDescription": "Your day at a glance.",
+  "todayTitle": "Today's events",
+  "upcomingTitle": "Upcoming events",
+  "loading": "Loading dashboard…",
+  "emptyTodayMember": "No bookings today.",
+  "emptyUpcomingMember": "No upcoming bookings.",
+  "emptyTodayAdmin": "No company events today.",
+  "emptyUpcomingAdmin": "No upcoming company events.",
+  "emptyTodayStaff": "No assigned events today.",
+  "emptyUpcomingStaff": "No upcoming assigned events.",
+  "viewDetails": "View details",
+  "actionsFor": "Actions for {{name}}",
+  "staffName": "{{name}}",
+  "metaWithAttendee": "{{staff}} · {{attendee}}"
 }

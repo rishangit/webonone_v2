@@ -18,7 +18,7 @@
 | [media-project.mdc](media-project.mdc) | `media/**/*` | Media service ports, embed routes, storage |
 | [email-project.mdc](email-project.mdc) | `email/**/*` | Email service ports, platform shell nav, queue/SMTP |
 | [ai-project.mdc](ai-project.mdc) | `ai/**/*` | AI conversations, providers, guest sessions |
-| [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic AI completer; peers publish schemas + `argCompletion` |
+| [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic AI completer; peers publish schemas + `argCompletion`; create suggestions fill every property + related `list_*` ids |
 
 ## Deployment
 
@@ -58,7 +58,7 @@ Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email
 | Rule | Globs | Description |
 |------|-------|-------------|
 | [nodejs-express.mdc](nodejs-express.mdc) | `backend/**/*.{ts,js}` | Express layout, REST, JWT, handlers |
-| [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic completer; peers publish schemas + `argCompletion` |
+| [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic completer; peers publish schemas + `argCompletion`; create fills every property + related ids |
 | [mysql-database-architecture.mdc](mysql-database-architecture.mdc) | `backend/**/{migrations,prisma,models,db,repositories}/**` | MySQL schema, nanoid, migrations, per-service DB |
 
 ## Agents (`.cursor/agents/` + `.cursor/skills/`)

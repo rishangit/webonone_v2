@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
+  Button,
   FeaturePage,
   ItemList,
   ItemListContent,
@@ -17,8 +18,14 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { conversationsActions } from '@/features/chat/store'
+import { redirectToWebOnOnePath } from '@/features/auth/utils/redirectToWebOnOne'
 import { aiApi } from '@/shared/services/aiApi'
 import type { Conversation } from '@/shared/types/ai.types'
+
+const OLLAMA_HOME_URL = 'https://ollama.com'
+const OLLAMA_KEYS_URL = 'https://ollama.com/settings/keys'
+const AI_SETTINGS_PATH = '/settings/basic?tab=ai'
+const setupLinkClassName = 'text-primary underline-offset-4 hover:underline'
 
 export function ConversationsPage() {
   const { t } = useTranslation('chat')
@@ -27,29 +34,84 @@ export function ConversationsPage() {
   const { toast } = useToast()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const { items, total, page, pageSize, listStatus, listError } = useAppSelector((s) => s.conversations)
-  const loading = listStatus === 'loading' && items.length === 0
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(null)
+  const loading = (listStatus === 'loading' && items.length === 0) || aiConfigured === null
   usePlatformLoading(loading ? t('loading') : null)
 
   useEffect(() => {
     if (!accessToken) return
+    let cancelled = false
+    aiApi
+      .getAiSettings()
+      .then((settings) => {
+        if (!cancelled) setAiConfigured(settings.configured)
+      })
+      .catch(() => {
+        if (!cancelled) setAiConfigured(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken])
+
+  useEffect(() => {
+    if (!accessToken || aiConfigured !== true) return
     dispatch(conversationsActions.loadListRequested({ page: 1, pageSize: 12, force: true }))
-  }, [accessToken, dispatch])
+  }, [accessToken, aiConfigured, dispatch])
 
   if (!accessToken) {
     return <Navigate to="/login" replace />
   }
 
+  const sessionToken = accessToken
+
+  function openAiSettings() {
+    void redirectToWebOnOnePath(sessionToken, AI_SETTINGS_PATH)
+  }
+
+  if (aiConfigured === null) {
+    return (
+      <FeaturePage title={t('title')}>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
+      </FeaturePage>
+    )
+  }
+
+  if (aiConfigured === false) {
+    return (
+      <FeaturePage title={t('title')}>
+        <Alert>
+          <AlertDescription>{t('setupRequired')}</AlertDescription>
+        </Alert>
+        <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+          <li>
+            {t('setupStep1')}{' '}
+            <a href={OLLAMA_HOME_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+              ollama.com
+            </a>
+          </li>
+          <li>
+            {t('setupStep2')}{' '}
+            <a href={OLLAMA_KEYS_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+              ollama.com/settings/keys
+            </a>
+          </li>
+          <li>
+            {t('setupStep3')}{' '}
+            <button type="button" className={setupLinkClassName} onClick={openAiSettings}>
+              {t('setupSettingsLink')}
+            </button>
+          </li>
+        </ol>
+        <Button variant="outline" className="mt-2 w-fit" onClick={openAiSettings}>
+          {t('openSettings')}
+        </Button>
+      </FeaturePage>
+    )
+  }
+
   async function handleCreate() {
     try {
-      const settings = await aiApi.getAiSettings()
-      if (!settings.configured) {
-        toast({
-          title: t('setupRequired'),
-          description: t('setupDescription'),
-          variant: 'destructive',
-        })
-        return
-      }
       const conversation = await aiApi.createConversation()
       toast({ title: t('created') })
       navigate(`/conversations/${conversation.id}`)

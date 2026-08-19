@@ -100,6 +100,14 @@ export function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/callback" element={<AuthCallbackPage />} />
           <Route
+            path="/s/:companyId"
+            element={
+              <LazyRoute>
+                <WebsitePublicPage />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="/s/:companyId/*"
             element={
               <LazyRoute>

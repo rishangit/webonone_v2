@@ -41,7 +41,7 @@ export const authApi = {
       body: JSON.stringify(body),
     })
   },
-  googleLogin(body: { idToken: string }) {
+  googleLogin(body: { idToken?: string; accessToken?: string }) {
     return apiClient<AuthSuccessPayload>('/auth/google', {
       method: 'POST',
       body: JSON.stringify(body),

@@ -5,6 +5,7 @@ import { LoadingState } from '@webonone/ui-kit'
 import { fetchPublicWebsiteSite } from '../api'
 import { DocumentRenderer } from '../components/DocumentRenderer'
 import { collectGoogleFontUrls } from '../document/mutate'
+import { documentContentHeight } from '../document/layout'
 import { emptyWebsiteDocument, getBreakpointFromWidth } from '../types'
 import type { PublicWebsiteSite, WebsiteBreakpoint } from '../types'
 
@@ -76,6 +77,10 @@ export function WebsitePublicPage() {
   }
 
   const pages = site.pages.length > 0 ? site.pages : [{ id: site.page.id, path: site.page.path, name: site.page.name }]
+  const headerDocument = site.header?.document ?? emptyWebsiteDocument()
+  const footerDocument = site.footer?.document ?? emptyWebsiteDocument()
+  const showHeader = Boolean(site.header) && documentContentHeight(headerDocument, breakpoint) > 0
+  const showFooter = Boolean(site.footer) && documentContentHeight(footerDocument, breakpoint) > 0
 
   return (
     <div
@@ -85,42 +90,43 @@ export function WebsitePublicPage() {
       {fonts.map((url) => (
         <link key={url} rel="stylesheet" href={url} />
       ))}
-      {site.header ? (
+      {showHeader ? (
         <div className="sticky top-0 z-20">
           <DocumentRenderer
-            document={site.header.document ?? emptyWebsiteDocument()}
+            document={headerDocument}
             breakpoint={breakpoint}
             theme={site.theme}
             mode="publish"
+            fit="content"
             pages={pages}
             companyId={companyId}
             onNavigatePage={(next) => navigate(`/s/${companyId}${next ? `/${next}` : ''}`)}
           />
         </div>
       ) : null}
-      <div className="flex-1 overflow-auto">
+      <div className="flex min-h-0 flex-1 flex-col">
         <DocumentRenderer
           document={site.page.document}
           breakpoint={breakpoint}
           theme={site.theme}
           mode="publish"
+          fit="page"
           pages={pages}
           companyId={companyId}
           onNavigatePage={(next) => navigate(`/s/${companyId}${next ? `/${next}` : ''}`)}
         />
       </div>
-      {site.footer ? (
-        <div className="sticky bottom-0 z-20">
-          <DocumentRenderer
-            document={site.footer.document ?? emptyWebsiteDocument()}
-            breakpoint={breakpoint}
-            theme={site.theme}
-            mode="publish"
-            pages={pages}
-            companyId={companyId}
-            onNavigatePage={(next) => navigate(`/s/${companyId}${next ? `/${next}` : ''}`)}
-          />
-        </div>
+      {showFooter ? (
+        <DocumentRenderer
+          document={footerDocument}
+          breakpoint={breakpoint}
+          theme={site.theme}
+          mode="publish"
+          fit="content"
+          pages={pages}
+          companyId={companyId}
+          onNavigatePage={(next) => navigate(`/s/${companyId}${next ? `/${next}` : ''}`)}
+        />
       ) : null}
     </div>
   )

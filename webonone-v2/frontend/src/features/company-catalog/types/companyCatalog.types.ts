@@ -63,3 +63,28 @@ export type CatalogGalleryKind = (typeof CATALOG_GALLERY_KINDS)[number]
 export function isCatalogGalleryKind(kind: CatalogEntityKind): kind is CatalogGalleryKind {
   return (CATALOG_GALLERY_KINDS as readonly string[]).includes(kind)
 }
+
+export type CatalogSessionItem = {
+  eventId: string
+  occurrenceDate: string
+  startTime: string
+  endTime: string
+  serviceName: string
+  companyId: string
+  spaceId: string | null
+  spaceName: string | null
+}
+
+export type CatalogSessionTokenItem = {
+  id: string
+  companyId: string
+  eventId: string
+  occurrenceDate: string
+  tokenNumber: number
+  tokenLabel: string
+  userId: string
+  userDisplayName: string
+  userEmail: string | null
+  createdAt: string
+  updatedAt: string
+}

@@ -28,6 +28,7 @@ import { EditableSectionCard } from '../components/EditableSectionCard'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { ServiceFormLinkDialog } from '../components/ServiceFormLinkDialog'
 import { FillServiceFormDialog } from '../components/FillServiceFormDialog'
+import { MemberServiceSessionsCard } from '../components/MemberServiceSessionsCard'
 import type { ServiceWizardStep } from '../schemas/serviceSchemas'
 import { designFormsApi } from '@/features/design/services/designFormsApi'
 import { dataLibraryApi } from '../services/dataLibraryApi'
@@ -312,6 +313,10 @@ export function CompanyCatalogDetailPage({
             </>
           ) : null}
         </EditableSectionCard>
+
+        {readOnly && companyId && servicePayload?.timeMode === 'window' ? (
+          <MemberServiceSessionsCard companyId={companyId} serviceId={id} />
+        ) : null}
 
         <EditableSectionCard
           title={t('detail.tags.title')}

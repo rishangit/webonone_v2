@@ -728,6 +728,61 @@ function toOccurrence(event: CompanyEventDto, occurrenceDate: string): CompanyEv
   }
 }
 
+export type CatalogSessionItemDto = {
+  eventId: string
+  occurrenceDate: string
+  startTime: string
+  endTime: string
+  serviceName: string
+  companyId: string
+  spaceId: string | null
+  spaceName: string | null
+}
+
+export function parseSessionDateRange(
+  from?: unknown,
+  to?: unknown,
+): { from: string; to: string } | null {
+  const today = toDateOnly(new Date())
+  const start = typeof from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(from) ? from : today
+  const end = typeof to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(to) ? to : addDaysYmd(today, 30)
+  if (end < start) return null
+  return { from: start, to: end }
+}
+
+export async function buildWindowSessionItems(
+  companyId: string,
+  serviceId: string,
+  from: string,
+  to: string,
+): Promise<CatalogSessionItemDto[]> {
+  const eventRows = await eventRepo.listWindowEventsByService(companyId, serviceId)
+  const items: CatalogSessionItemDto[] = []
+  for (const eventRow of eventRows) {
+    const event = mapEventRow(eventRow)
+    for (const occurrence of expandOccurrences(event, from, to)) {
+      items.push({
+        eventId: occurrence.id,
+        occurrenceDate: occurrence.occurrenceDate,
+        startTime: occurrence.startTime,
+        endTime: occurrence.endTime,
+        serviceName: occurrence.serviceName,
+        companyId: occurrence.companyId,
+        spaceId: occurrence.spaceId,
+        spaceName: occurrence.spaceName,
+      })
+    }
+  }
+
+  items.sort((a, b) => {
+    const byDate = a.occurrenceDate.localeCompare(b.occurrenceDate)
+    if (byDate !== 0) return byDate
+    return a.startTime.localeCompare(b.startTime)
+  })
+
+  return items
+}
+
 export async function listCompanyEvents(
   companyId: string,
   opts: {

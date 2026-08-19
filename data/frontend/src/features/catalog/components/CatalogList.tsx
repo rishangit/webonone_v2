@@ -4,6 +4,7 @@ import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -13,7 +14,12 @@ import {
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { StatusBadge } from '@/shared/components/StatusBadge'
-import type { CatalogItem } from '@/shared/types/data.types'
+import type { CatalogGalleryImage, CatalogItem } from '@/shared/types/data.types'
+
+function firstGalleryImageUrl(images: CatalogGalleryImage[] | null | undefined): string | null {
+  const url = images?.[0]?.url
+  return typeof url === 'string' && url.trim() ? url : null
+}
 
 type CatalogListKind = 'products' | 'services' | 'spaces'
 
@@ -50,20 +56,27 @@ export function CatalogList({
           const showMenu = Boolean(onView) || canEdit || canDelete
           const rowBody = (
             <>
-              <div className="flex items-center gap-2">
-                <p className="font-medium">{item.name}</p>
-                <StatusBadge status={item.status} />
-                <span className="text-xs text-muted-foreground">
-                  {t('refs', { count: item.referenceCount ?? 0 })}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {item.tags.slice(0, 3).map((tag) => (
-                  <TagChip key={tag.id} name={tag.name} color={tag.color} />
-                ))}
-                {item.tags.length > 3 ? (
-                  <span className="text-xs text-muted-foreground">+{item.tags.length - 3}</span>
-                ) : null}
+              <ImagePreview
+                src={firstGalleryImageUrl(item.galleryImages)}
+                alt=""
+                className="h-12 w-12"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{item.name}</p>
+                  <StatusBadge status={item.status} />
+                  <span className="text-xs text-muted-foreground">
+                    {t('refs', { count: item.referenceCount ?? 0 })}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {item.tags.slice(0, 3).map((tag) => (
+                    <TagChip key={tag.id} name={tag.name} color={tag.color} />
+                  ))}
+                  {item.tags.length > 3 ? (
+                    <span className="text-xs text-muted-foreground">+{item.tags.length - 3}</span>
+                  ) : null}
+                </div>
               </div>
             </>
           )
@@ -73,13 +86,13 @@ export function CatalogList({
                 {onView ? (
                   <button
                     type="button"
-                    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => onView(item.id)}
                   >
                     {rowBody}
                   </button>
                 ) : (
-                  rowBody
+                  <div className="flex w-full items-start gap-3">{rowBody}</div>
                 )}
               </ItemListContent>
               {showMenu ? (

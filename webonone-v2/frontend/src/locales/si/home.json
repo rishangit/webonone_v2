@@ -1,7 +1,17 @@
 {
-  "title": "සුබ පැතුම්, {{name}}!",
-  "titleFallbackName": "පරිශීලක",
-  "description": "ඔබ WebOnOne වෙත පිවිසී ඇත.",
-  "sessionActive": "Bearer JWT සමඟ සැසිය සක්‍රියයි.",
-  "notSignedIn": "පිවිසී නැත."
+  "pageTitle": "උපකරණ පුවරුව",
+  "pageDescription": "ඔබේ දිනය එක් බැල්මකින්.",
+  "todayTitle": "අද දිනයේ ඉසව්",
+  "upcomingTitle": "ඉදිරි ඉසව්",
+  "loading": "උපකරණ පුවරුව පූරණය වෙමින්…",
+  "emptyTodayMember": "අද දිනයේ වෙන්කිරීම් නැත.",
+  "emptyUpcomingMember": "ඉදිරි වෙන්කිරීම් නැත.",
+  "emptyTodayAdmin": "අද දිනයේ සමාගම් ඉසව් නැත.",
+  "emptyUpcomingAdmin": "ඉදිරි සමාගම් ඉසව් නැත.",
+  "emptyTodayStaff": "අද දිනයේ පැවරූ ඉසව් නැත.",
+  "emptyUpcomingStaff": "ඉදිරි පැවරූ ඉසව් නැත.",
+  "viewDetails": "විස්තර බලන්න",
+  "actionsFor": "{{name}} සඳහා ක්‍රියා",
+  "staffName": "{{name}}",
+  "metaWithAttendee": "{{staff}} · {{attendee}}"
 }

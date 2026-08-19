@@ -88,7 +88,11 @@
   "assistantFailed": "සහායකයා දැන් ලබා ගත නොහැක.",
   "assistantStarting": "සංවාදය ආරම්භ වෙමින්…",
   "assistantThinking": "සහායකයා පිළිතුර සකසමින්…",
-  "assistantSignedInSetup": "පිවිසි චැට් ඔබේ Ollama Cloud key භාවිතා කරයි. WebOnOne මූලික සැකසුම් → AI හි සකසන්න.",
+  "assistantSignedInSetup": "පිවිසි චැට් ඔබේ Ollama Cloud key භාවිතා කරයි.",
+  "assistantSetupStep1": "නොමිලේ ගිණුමක් සාදන්න",
+  "assistantSetupStep2": "API key සාදන්න",
+  "assistantSetupStep3": "key සුරකින්න",
+  "assistantSetupSettingsLink": "සැකසුම් → AI",
   "assistantOpenSettings": "WebOnOne හි AI සැකසුම් විවෘත කරන්න",
   "assistantOpenRecord": "විවෘත කරන්න"
 }

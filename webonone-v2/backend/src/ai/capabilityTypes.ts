@@ -13,6 +13,16 @@ export type ArgCompletion = {
   pascalCaseKeys?: string[]
 }
 
+export type RelatedArg = {
+  argKey: string
+  displayKey: string
+  getPath: string
+  listPath: string
+  createTool: string
+  cardinality?: 'one' | 'many'
+  itemIdKey?: string
+}
+
 export type ToolDefinition = {
   name: string
   description: string
@@ -25,6 +35,7 @@ export type ToolDefinition = {
   invoke: { method: HttpMethod; path: string }
   capabilityVersion: string
   argCompletion?: ArgCompletion
+  relatedArgs?: RelatedArg[]
   /** Owning-frontend path template, e.g. `/data/{kind}/{id}`. */
   viewPath?: string
 }

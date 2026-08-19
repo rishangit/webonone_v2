@@ -1,7 +1,7 @@
 import type { NextFunction, Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { ConversationService } from '../services/conversation.service.js'
-import { createConversationSchema, sendMessageSchema } from '../schemas/conversationSchemas.js'
+import { createConversationSchema, sendMessageSchema, confirmToolCallSchema } from '../schemas/conversationSchemas.js'
 
 function contextOrThrow(req: AuthenticatedRequest) {
   if (!req.aiContext) {
@@ -63,10 +63,12 @@ export function createConversationControllers(service: ConversationService) {
 
     confirmToolCall: async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
       try {
+        const body = confirmToolCallSchema.parse(req.body ?? {})
         const result = await service.confirmToolCall(
           contextOrThrow(req),
           String(req.params.id),
           String(req.params.toolCallId),
+          body.relatedSelections,
         )
         res.json(result)
       } catch (err) {

@@ -6,6 +6,7 @@ import { companyCatalogEpics } from '@/features/company-catalog/store/companyCat
 import { staffEpics } from '@/features/staff/store'
 import { salesEpics } from '@/features/sales/store'
 import { eventsEpics, sessionTokensEpics } from '@/features/calendar/store'
+import { homeDashboardEpics } from '@/features/home/store'
 import { systemThemeEpics } from '@/features/settings/system-theme/store/systemThemeEpics'
 import { aiSettingsEpics } from '@/features/settings/basic/store/aiSettingsEpics'
 
@@ -18,6 +19,7 @@ export const rootEpic = combineEpics(
   salesEpics,
   eventsEpics,
   sessionTokensEpics,
+  homeDashboardEpics,
   systemThemeEpics,
   aiSettingsEpics,
 )

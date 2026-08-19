@@ -20,5 +20,8 @@ export const sendMessageSchema = z
   })
   .strict()
 
-export type CreateConversationBody = z.infer<typeof createConversationSchema>
-export type SendMessageBody = z.infer<typeof sendMessageSchema>
+export const confirmToolCallSchema = z
+  .object({
+    relatedSelections: z.record(z.boolean()).optional(),
+  })
+  .strict()

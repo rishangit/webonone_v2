@@ -98,7 +98,10 @@ export const authSlice = createSlice({
       state.isLoading = false
       state.error = action.payload
     },
-    googleLoginRequested(state, _action: PayloadAction<{ idToken: string }>) {
+    googleLoginRequested(
+      state,
+      _action: PayloadAction<{ idToken?: string; accessToken?: string }>,
+    ) {
       state.isLoading = true
       state.error = null
     },

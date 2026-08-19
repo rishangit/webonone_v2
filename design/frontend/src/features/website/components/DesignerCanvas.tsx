@@ -6,6 +6,7 @@ import { DocumentRenderer } from './DocumentRenderer'
 import {
   ADDON_LAYOUT_LIMITS,
   CONTENT_BLOCK_LAYOUT_LIMITS,
+  documentContentHeight,
   pointerToRect,
   resolveLayoutRect,
   writeLayoutRect,
@@ -181,10 +182,11 @@ export function DesignerCanvas({
   }, [breakpoint])
 
   const scale = viewportWidth > 0 ? Math.min(1, viewportWidth / canvasWidth) : 1
-  const logicalHeight =
-    (mode === 'visual' && headerDocument ? headerDocument.container.height : 0) +
-    document.container.height +
-    (mode === 'visual' && footerDocument ? footerDocument.container.height : 0)
+  const headerHeight =
+    mode === 'visual' && headerDocument ? documentContentHeight(headerDocument, breakpoint) : 0
+  const footerHeight =
+    mode === 'visual' && footerDocument ? documentContentHeight(footerDocument, breakpoint) : 0
+  const logicalHeight = headerHeight + document.container.height + footerHeight
 
   function onHandlePointerDown(
     event: ReactPointerEvent,
@@ -240,7 +242,7 @@ export function DesignerCanvas({
   }
 
   return (
-    <div ref={viewportRef} className="flex w-full min-w-0 justify-center p-6">
+    <div ref={viewportRef} className="flex w-full min-w-0 justify-center p-3 sm:p-6">
       <div
         className="min-w-0 overflow-hidden"
         style={{
@@ -258,12 +260,13 @@ export function DesignerCanvas({
             touchAction: mode === 'edit' ? 'none' : undefined,
           }}
         >
-      {mode === 'visual' && headerDocument ? (
+      {mode === 'visual' && headerDocument && headerHeight > 0 ? (
         <DocumentRenderer
           document={headerDocument}
           breakpoint={breakpoint}
           theme={theme}
           mode="visual"
+          fit="content"
           pages={pages}
         />
       ) : null}
@@ -293,12 +296,13 @@ export function DesignerCanvas({
           onPointerDown={onContainerResize}
         />
       ) : null}
-      {mode === 'visual' && footerDocument ? (
+      {mode === 'visual' && footerDocument && footerHeight > 0 ? (
         <DocumentRenderer
           document={footerDocument}
           breakpoint={breakpoint}
           theme={theme}
           mode="visual"
+          fit="content"
           pages={pages}
         />
       ) : null}

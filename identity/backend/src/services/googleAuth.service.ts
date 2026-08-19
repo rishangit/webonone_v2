@@ -12,8 +12,19 @@ import { env } from '../config/env.js'
 
 interface GoogleTokenPayload {
   sub: string
-  email?: string
+  email: string
   email_verified?: boolean
+  given_name?: string
+  family_name?: string
+  name?: string
+  picture?: string
+  locale?: string
+}
+
+interface GoogleUserInfo {
+  sub?: string
+  email?: string
+  email_verified?: boolean | string
   given_name?: string
   family_name?: string
   name?: string
@@ -28,7 +39,15 @@ function getGoogleClient() {
   return new OAuth2Client(env.googleClientId)
 }
 
-export async function loginWithGoogle(idToken: string) {
+function isOurGoogleClient(audience: string | undefined, authorizedParty: string | undefined) {
+  return audience === env.googleClientId || authorizedParty === env.googleClientId
+}
+
+function asVerifiedFlag(value: boolean | string | undefined) {
+  return value === true || value === 'true'
+}
+
+async function verifyGoogleIdToken(idToken: string): Promise<GoogleTokenPayload> {
   const client = getGoogleClient()
   let ticket
   try {
@@ -44,7 +63,49 @@ export async function loginWithGoogle(idToken: string) {
   if (!payload?.sub || !payload.email) {
     throw new AuthError('Invalid Google token', 401, 'INVALID_GOOGLE_TOKEN')
   }
+  return payload
+}
 
+async function verifyGoogleAccessToken(accessToken: string): Promise<GoogleTokenPayload> {
+  const client = getGoogleClient()
+  let tokenInfo
+  try {
+    tokenInfo = await client.getTokenInfo(accessToken)
+  } catch {
+    throw new AuthError('Invalid Google token', 401, 'INVALID_GOOGLE_TOKEN')
+  }
+
+  if (!isOurGoogleClient(tokenInfo.aud, tokenInfo.azp)) {
+    throw new AuthError('Invalid Google token', 401, 'INVALID_GOOGLE_TOKEN')
+  }
+
+  const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!userinfoRes.ok) {
+    throw new AuthError('Invalid Google token', 401, 'INVALID_GOOGLE_TOKEN')
+  }
+
+  const userinfo = (await userinfoRes.json()) as GoogleUserInfo
+  const sub = userinfo.sub || tokenInfo.sub
+  const email = userinfo.email || tokenInfo.email
+  if (!sub || !email) {
+    throw new AuthError('Invalid Google token', 401, 'INVALID_GOOGLE_TOKEN')
+  }
+
+  return {
+    sub,
+    email,
+    email_verified: asVerifiedFlag(userinfo.email_verified ?? tokenInfo.email_verified),
+    given_name: userinfo.given_name,
+    family_name: userinfo.family_name,
+    name: userinfo.name,
+    picture: userinfo.picture,
+    locale: userinfo.locale,
+  }
+}
+
+async function issueSessionForGoogleProfile(payload: GoogleTokenPayload) {
   const firstName = payload.given_name ?? payload.name?.split(' ')[0] ?? 'User'
   const lastName =
     payload.family_name ?? payload.name?.split(' ').slice(1).join(' ') ?? ''
@@ -89,4 +150,14 @@ export async function loginWithGoogle(idToken: string) {
   }
 
   return issueAuthTokens(user!)
+}
+
+export async function loginWithGoogle(input: { idToken?: string; accessToken?: string }) {
+  if (input.idToken) {
+    return issueSessionForGoogleProfile(await verifyGoogleIdToken(input.idToken))
+  }
+  if (input.accessToken) {
+    return issueSessionForGoogleProfile(await verifyGoogleAccessToken(input.accessToken))
+  }
+  throw new AuthError('Invalid Google token', 401, 'INVALID_GOOGLE_TOKEN')
 }

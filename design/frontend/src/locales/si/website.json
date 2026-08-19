@@ -93,6 +93,8 @@
   "colorPreview": "පෙරදසුන",
   "background": "පසුබිම",
   "contentTree": "අන්තර්ගත ගස",
+  "openContentTree": "අන්තර්ගත ගස විවෘත කරන්න",
+  "closeContentTree": "අන්තර්ගත ගස වසන්න",
   "noBlocks": "මෙම {{kind}} සැකසීමට අන්තර්ගත අංගයක් එක් කරන්න.",
   "emptyAddon": "හිස් ඇඩෝනය",
   "layerUp": "ඉදිරියට ගෙන එන්න",

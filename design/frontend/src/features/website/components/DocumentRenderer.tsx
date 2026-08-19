@@ -1,7 +1,12 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
-import { resolveLayoutRect, rectToStyle, type ResizeHandle } from '../document/layout'
+import {
+  documentContentHeight,
+  resolveLayoutRect,
+  rectToStyle,
+  type ResizeHandle,
+} from '../document/layout'
 import {
   ADDON_FRAME,
   ADDON_OUTLINE,
@@ -27,6 +32,8 @@ interface DocumentRendererProps {
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
   mode?: DesignerMode | 'publish'
+  /** `content` shrink-wraps header/footer; `page` fills leftover viewport height. */
+  fit?: 'canvas' | 'content' | 'page'
   selection?: DesignerSelection | null
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   companyId?: string
@@ -47,6 +54,7 @@ export function DocumentRenderer({
   breakpoint,
   theme,
   mode = 'visual',
+  fit = 'canvas',
   selection,
   pages = [],
   companyId,
@@ -65,12 +73,20 @@ export function DocumentRenderer({
   const publish = mode === 'publish'
   const sortedBlocks = [...document.blocks].sort((a, b) => a.zIndex - b.zIndex)
   const containerSelected = interactive && selection?.kind === 'container'
+  const contentHeight = documentContentHeight(document, breakpoint)
+  const canvasHeight = document.container.height
+  const sizeStyle =
+    fit === 'content'
+      ? { height: contentHeight }
+      : fit === 'page'
+        ? { minHeight: `max(100%, ${Math.max(canvasHeight, contentHeight)}px)` }
+        : { height: canvasHeight }
 
   return (
     <div
-      className={cn('relative w-full', containerSelected && CONTENT_ELEMENT_OUTLINE)}
+      className={cn('relative w-full', fit === 'page' && 'flex-1', containerSelected && CONTENT_ELEMENT_OUTLINE)}
       style={{
-        height: document.container.height,
+        ...sizeStyle,
         backgroundColor: document.container.backgroundColor || theme?.pageBackground || '#ffffff',
         color: theme?.bodyTextColor || '#111827',
       }}

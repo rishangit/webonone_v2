@@ -58,6 +58,7 @@ export function IdentityLoginFrame({
         key={`${src}:${promptLogin ? 'prompt' : 'default'}`}
         title={t('loginFrame.iframeTitle')}
         src={src}
+        allow="identity-credentials-get"
         onLoad={handleLoad}
         onError={() => setLoadError(true)}
         className={`block h-full min-h-0 w-full flex-1 border-0 bg-transparent ${loadError ? 'hidden' : ''}`}

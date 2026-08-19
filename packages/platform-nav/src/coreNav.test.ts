@@ -38,7 +38,7 @@ describe('coreNav', () => {
     assert.equal(nav[0]?.kind, 'item')
     if (nav[0]?.kind === 'item') {
       assert.equal(nav[0].href, 'http://localhost:3010/')
-      assert.equal(nav[0].label, 'Home')
+      assert.equal(nav[0].label, 'Dashboard')
     }
   })
 

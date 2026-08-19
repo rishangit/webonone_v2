@@ -8,7 +8,16 @@ import {
   toQueryString,
 } from './invokePath.js'
 import {
+  applyRelatedSelections,
+  buildRelatedTree,
+  looksLikeRecordId,
+  materializeRelatedTree,
+  schemaPropertyArgs,
+} from './relatedArgs.js'
+import {
   SERVICE_KEY_HEADERS,
+  type RelatedArg,
+  type RelatedNode,
   type ToolCall,
   type ToolDefinition,
   type ToolExecutor,
@@ -29,6 +38,28 @@ export type ExecutorContext = Pick<
 
 function summaryFor(args: Record<string, unknown>): string {
   return formatRecordLines(args)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function peerErrorMessage(body: unknown): string {
+  const record = isRecord(body) ? body : {}
+  const message = typeof record.message === 'string' && record.message.trim() ? record.message : 'Request failed'
+  const details = isRecord(record.details) ? record.details : null
+  const fieldErrors = details && isRecord(details.fieldErrors) ? details.fieldErrors : null
+  if (!fieldErrors) {
+    return message
+  }
+  const parts: string[] = []
+  for (const [key, msgs] of Object.entries(fieldErrors)) {
+    const text = Array.isArray(msgs) ? msgs.filter((item) => typeof item === 'string').join(', ') : ''
+    if (text) {
+      parts.push(`${key}: ${text}`)
+    }
+  }
+  return parts.length > 0 ? `${message} (${parts.join('; ')})` : message
 }
 
 function canUseTool(tool: ToolDefinition, ctx: ExecutorContext): boolean {
@@ -52,7 +83,11 @@ export class HttpToolExecutor implements ToolExecutor {
   async execute(
     call: ToolCall,
     ctx: ExecutorContext,
-    options?: { confirmed?: boolean },
+    options?: {
+      confirmed?: boolean
+      relatedTree?: RelatedNode[]
+      relatedSelections?: Record<string, boolean>
+    },
   ): Promise<ToolResult> {
     const tool = this.options.registry.get(call.name)
     if (!tool) {
@@ -66,7 +101,44 @@ export class HttpToolExecutor implements ToolExecutor {
     }
 
     const rawArgs = call.arguments && typeof call.arguments === 'object' ? call.arguments : {}
-    const args = completeCreateArgs(tool, rawArgs, ctx.role)
+    let args = completeCreateArgs(tool, rawArgs, ctx.role)
+    const shouldResolveRelated =
+      Boolean(options?.confirmed && tool.relatedArgs && tool.relatedArgs.length > 0) &&
+      (options?.relatedTree === undefined || options.relatedTree.length > 0)
+    if (shouldResolveRelated && tool.relatedArgs) {
+      const lookup = (spec: RelatedArg, query: { id?: string; name?: string }) =>
+        this.lookupRelatedRecord(tool, spec, ctx, query)
+      const tree =
+        options?.relatedTree ??
+        (await buildRelatedTree(tool, args, {
+          getTool: (name) => this.options.registry.get(name),
+          lookup,
+          role: ctx.role,
+        }))
+      const selected = applyRelatedSelections(tree, options?.relatedSelections)
+      const materialized = await materializeRelatedTree(tool, args, selected, {
+        getTool: (name) => this.options.registry.get(name),
+        createdIds: new Map(),
+        execute: (nested) =>
+          this.execute(
+            { id: `${call.id}:${nested.name}`, name: nested.name, arguments: nested.arguments },
+            ctx,
+            { confirmed: true, relatedTree: [] },
+          ),
+      })
+      if (materialized.error) {
+        return { ...materialized.error, toolCallId: call.id, name: call.name }
+      }
+      args = schemaPropertyArgs(tool.jsonSchema, materialized.arguments)
+      for (const spec of tool.relatedArgs) {
+        const value = args[spec.argKey]
+        if (typeof value === 'string' && !looksLikeRecordId(value)) {
+          delete args[spec.argKey]
+        }
+      }
+    } else if (options?.confirmed && Object.keys(schemaPropertyArgs(tool.jsonSchema, args)).length > 0) {
+      args = schemaPropertyArgs(tool.jsonSchema, args)
+    }
     const missing = missingRequiredArgs(tool.jsonSchema, args)
     if (missing.length > 0) {
       return {
@@ -141,7 +213,7 @@ export class HttpToolExecutor implements ToolExecutor {
             output: {
               code: typeof body.code === 'string' ? body.code : 'PEER_HTTP_ERROR',
               status: res.status,
-              message: typeof body.message === 'string' ? body.message : 'Request failed',
+              message: peerErrorMessage(body),
             },
           }
         }
@@ -211,6 +283,75 @@ export class HttpToolExecutor implements ToolExecutor {
       return []
     } finally {
       clearTimeout(timer)
+    }
+  }
+
+  async lookupRelatedRecord(
+    tool: ToolDefinition,
+    spec: RelatedArg,
+    ctx: ExecutorContext,
+    query: { id?: string; name?: string },
+  ): Promise<Record<string, unknown> | null> {
+    if (!ctx.accessToken || ctx.role === 'guest') {
+      return null
+    }
+    if (query.id && isAllowedInvokePath(tool.service, spec.getPath)) {
+      const record = await this.peerJson(tool, spec.getPath, { id: query.id }, ctx)
+      if (record && typeof record === 'object' && !Array.isArray(record) && typeof record.id === 'string') {
+        return record
+      }
+    }
+    const name = query.name?.trim()
+    if (!name || !isAllowedInvokePath(tool.service, spec.listPath)) {
+      return null
+    }
+    const body = await this.peerJson(tool, spec.listPath, { names: name }, ctx)
+    const items = body && typeof body === 'object' && Array.isArray(body.items) ? body.items : []
+    const match = items.find(
+      (item) =>
+        item &&
+        typeof item === 'object' &&
+        'name' in item &&
+        typeof item.name === 'string' &&
+        item.name.trim().toLowerCase() === name.toLowerCase(),
+    )
+    return match && typeof match === 'object' ? (match as Record<string, unknown>) : null
+  }
+
+  private async peerJson(
+    tool: ToolDefinition,
+    pathTemplate: string,
+    args: Record<string, unknown>,
+    ctx: ExecutorContext,
+  ): Promise<Record<string, unknown> | null> {
+    const peer = this.options.peers[tool.service]
+    const origin = peer ? peerApiOrigin(peer.apiBaseUrl) : ''
+    if (!peer || !origin || !ctx.accessToken) {
+      return null
+    }
+    try {
+      const built = buildInvokeRequest(pathTemplate, args, ctx.companyId)
+      const query = toQueryString(built.remaining)
+      const url = `${origin}${built.path}${query}`
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), this.options.timeoutMs)
+      try {
+        const fetchImpl = this.options.fetchImpl ?? fetch
+        const res = await fetchImpl(url, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${ctx.accessToken}` },
+          signal: controller.signal,
+        })
+        if (!res.ok) {
+          return null
+        }
+        const body = (await res.json().catch(() => null)) as unknown
+        return body && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, unknown>) : null
+      } finally {
+        clearTimeout(timer)
+      }
+    } catch {
+      return null
     }
   }
 }

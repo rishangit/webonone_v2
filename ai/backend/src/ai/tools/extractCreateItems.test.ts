@@ -6,8 +6,10 @@ import {
   liftCreateCallsFromText,
   normalizeHeaderKey,
   pickCreateTool,
+  remainingCreateCallsPrompt,
   remainingItemsTablePrompt,
   requestedItemCount,
+  resolveCreateTool,
 } from './extractCreateItems.js'
 import type { ToolDefinition } from './registry.js'
 
@@ -67,6 +69,9 @@ const createUnit: ToolDefinition = {
       name: { type: 'string' },
       symbol: { type: 'string' },
       description: { type: 'string' },
+      is_base: { type: 'boolean' },
+      base_unit_id: { type: 'string' },
+      status: { type: 'string' },
     },
   },
   riskLevel: 'write',
@@ -76,6 +81,15 @@ const createUnit: ToolDefinition = {
   auth: 'user_jwt',
   invoke: { method: 'POST', path: '/api/v1/units' },
   capabilityVersion: '1',
+  relatedArgs: [
+    {
+      argKey: 'base_unit_id',
+      displayKey: 'base_unit',
+      getPath: '/api/v1/units/:id',
+      listPath: '/api/v1/units',
+      createTool: 'create_data_unit',
+    },
+  ],
 }
 
 const medicalTable = `
@@ -86,6 +100,21 @@ Here's the complete list of the 10 tags you can add to the Data Library:
 | 1 | **GeneralPractice** | General Practice – Primary-care services. |
 | 2 | **Pediatrics** | Pediatrics – Care for infants, children, and adolescents. |
 | 3 | **Radiology** | Radiology – Diagnostic imaging services. |
+`
+
+const medicalUnitTable = `
+| name | symbol | description | is_base | base_unit_id | status |
+|------|--------|-------------|---------|--------------|--------|
+| Milligram | mg | Milligram - One-thousandth of a gram for small medication dosages. | false | RtxUMRE5AoLlxkmYmbBsX | pending |
+| Liter | L | Liter - Base unit for liquid volume in infusions and solutions. | true | - | pending |
+| Milliliter | mL | Milliliter - One-thousandth of a liter for liquid medication volumes. | false | - | pending |
+| Microgram | mcg | Microgram - One-millionth of a gram for very small drug doses. | false | - | pending |
+| InternationalUnit | IU | International Unit - Biological activity measure for vitamins and hormones. | true | - | pending |
+| Milliequivalent | mEq | Milliequivalent - Electrolyte concentration in IV fluids. | false | - | pending |
+| Drop | gtt | Drop - Approximate liquid volume for eye and ear medications. | true | - | pending |
+| Unit | U | Unit - Insulin and other biologic dosing. | true | - | pending |
+| Millimole | mmol | Millimole - Amount of substance in lab values and infusions. | false | - | pending |
+| Microliter | uL | Microliter - Very small liquid volume for lab samples. | false | - | pending |
 `
 
 describe('normalizeHeaderKey', () => {
@@ -149,6 +178,12 @@ describe('pickCreateTool', () => {
     const tool = pickCreateTool([createUnit], records, 'company_admin', 'add units')
     assert.equal(tool, null)
   })
+
+  it('picks a unit tool when symbol is present', () => {
+    const records = extractRecordsFromText(medicalUnitTable)
+    const tool = pickCreateTool([createUnit], records, 'company_admin', 'add 10 units')
+    assert.equal(tool?.name, 'create_data_unit')
+  })
 })
 
 describe('liftCreateCallsFromText', () => {
@@ -184,15 +219,75 @@ describe('liftCreateCallsFromText', () => {
     })
     assert.equal(lifted, null)
   })
+
+  it('synthesizes one create_data_unit call per unit table row', () => {
+    const lifted = liftCreateCallsFromText({
+      content: medicalUnitTable,
+      tools: [createUnit, createTag],
+      userMessage: 'add around 10 unit of measures to the library related to medical field',
+      role: 'company_admin',
+    })
+    assert.equal(lifted?.tool.name, 'create_data_unit')
+    assert.equal(lifted?.calls.length, 10)
+    assert.equal(lifted?.calls[0]?.arguments.name, 'Milligram')
+    assert.equal(lifted?.calls[0]?.arguments.symbol, 'mg')
+    assert.equal(lifted?.calls[0]?.arguments.is_base, false)
+    assert.equal(lifted?.calls[0]?.arguments.base_unit_id, 'RtxUMRE5AoLlxkmYmbBsX')
+    assert.equal(lifted?.calls[1]?.arguments.symbol, 'L')
+    assert.equal(lifted?.calls[1]?.arguments.is_base, true)
+    assert.equal(lifted?.calls[1]?.arguments.base_unit_id, undefined)
+  })
 })
 
 describe('remainingItemsTablePrompt', () => {
   it('asks for the remaining rows and excludes names already listed', () => {
-    const prompt = remainingItemsTablePrompt(10, ['ClinicHours'])
+    const prompt = remainingItemsTablePrompt(10, ['ClinicHours'], createTag)
     assert.match(prompt, /exactly 9 items/)
     assert.match(prompt, /ClinicHours/)
     assert.match(prompt, /PharmacyInventory/)
     assert.match(prompt, /markdown table/)
+    assert.match(prompt, /name \| description \| status/)
+  })
+
+  it('asks for every unit schema column including optional related names', () => {
+    const prompt = remainingItemsTablePrompt(10, ['Milligram', 'Liter'], createUnit)
+    assert.match(prompt, /exactly 8 items/)
+    assert.match(prompt, /name \| symbol \| description \| is_base \| base_unit \| status/)
+    assert.match(prompt, /base_unit/)
+    assert.doesNotMatch(prompt, /base_unit_id/)
+    assert.match(prompt, /Milligram/)
+    assert.doesNotMatch(prompt, /PharmacyInventory/)
+  })
+})
+
+describe('remainingCreateCallsPrompt', () => {
+  it('asks for every unit schema field on each create call', () => {
+    const prompt = remainingCreateCallsPrompt(10, createUnit)
+    assert.match(prompt, /create_data_unit/)
+    assert.match(prompt, /symbol/)
+    assert.match(prompt, /is_base/)
+    assert.match(prompt, /base_unit/)
+    assert.match(prompt, /10 items/)
+  })
+})
+
+describe('resolveCreateTool', () => {
+  it('prefers an existing create tool call', () => {
+    const tool = resolveCreateTool({
+      tools: [createTag, createUnit],
+      existingCalls: [{ id: 'c1', name: 'create_data_unit', arguments: { name: 'Liter' } }],
+      userMessage: 'add tags',
+    })
+    assert.equal(tool?.name, 'create_data_unit')
+  })
+
+  it('picks a unit tool from the user message when there are no calls yet', () => {
+    const tool = resolveCreateTool({
+      tools: [createTag, createUnit],
+      existingCalls: [],
+      userMessage: 'add around 10 unit of measures to the library related to medical field',
+    })
+    assert.equal(tool?.name, 'create_data_unit')
   })
 })
 
@@ -200,6 +295,7 @@ describe('requestedItemCount', () => {
   it('reads a requested tag count from the user message', () => {
     assert.equal(requestedItemCount('need to add 10 tag to the data library related to medical clinic'), 10)
     assert.equal(requestedItemCount('Add 10 Data library tags'), 10)
+    assert.equal(requestedItemCount('add around 10 unit of measures to the library related to medical feild'), 10)
     assert.equal(requestedItemCount('hello'), null)
   })
 })
@@ -228,5 +324,38 @@ describe('expandCreateCalls', () => {
       expanded.map((call) => call.arguments.name),
       ['ClinicHours', 'GeneralPractice', 'Pediatrics', 'Radiology'],
     )
+  })
+
+  it('keeps two unit creates and adds remaining rows from a unit table', () => {
+    const expanded = expandCreateCalls({
+      content: medicalUnitTable,
+      tools: [createUnit, createTag],
+      userMessage: 'add around 10 unit of measures to the library related to medical field',
+      role: 'company_admin',
+      existingCalls: [
+        {
+          id: 'toolcall0000000000200',
+          name: 'create_data_unit',
+          arguments: {
+            name: 'Milligram',
+            symbol: 'mg',
+            description: 'Milligram - One-thousandth of a gram.',
+          },
+        },
+        {
+          id: 'toolcall0000000000201',
+          name: 'create_data_unit',
+          arguments: {
+            name: 'Liter',
+            symbol: 'L',
+            description: 'Liter - Base unit for liquid volume.',
+          },
+        },
+      ],
+    })
+    assert.equal(expanded.length, 10)
+    assert.equal(expanded[0]?.arguments.symbol, 'mg')
+    assert.equal(expanded[2]?.arguments.name, 'Milliliter')
+    assert.equal(expanded[2]?.arguments.symbol, 'mL')
   })
 })

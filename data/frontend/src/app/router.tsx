@@ -31,6 +31,9 @@ const TagSelectEmbedPage = lazy(() =>
 const UnitsPage = lazy(() =>
   import('@/features/units/pages/UnitsPage').then((m) => ({ default: m.UnitsPage })),
 )
+const UnitDetailsPage = lazy(() =>
+  import('@/features/units/pages/UnitDetailsPage').then((m) => ({ default: m.UnitDetailsPage })),
+)
 const UnitFormEmbedPage = lazy(() =>
   import('@/features/units/pages/UnitFormEmbedPage').then((m) => ({ default: m.UnitFormEmbedPage })),
 )
@@ -41,6 +44,11 @@ const UnitSelectEmbedPage = lazy(() =>
 )
 const AttributesPage = lazy(() =>
   import('@/features/attributes/pages/AttributesPage').then((m) => ({ default: m.AttributesPage })),
+)
+const AttributeDetailsPage = lazy(() =>
+  import('@/features/attributes/pages/AttributeDetailsPage').then((m) => ({
+    default: m.AttributeDetailsPage,
+  })),
 )
 const AttributeFormEmbedPage = lazy(() =>
   import('@/features/attributes/pages/AttributeFormEmbedPage').then((m) => ({
@@ -236,7 +244,23 @@ export function App() {
             }
           />
           {entityRoutes('/units', UnitsPage)}
+          <Route
+            path="/units/:unitId"
+            element={
+              <LazyRoute>
+                <UnitDetailsPage />
+              </LazyRoute>
+            }
+          />
           {entityRoutes('/attributes', AttributesPage)}
+          <Route
+            path="/attributes/:attributeId"
+            element={
+              <LazyRoute>
+                <AttributeDetailsPage />
+              </LazyRoute>
+            }
+          />
           {entityRoutes('/products', ProductsPage)}
           <Route
             path="/products/:productId/variants/:variantId"
