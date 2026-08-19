@@ -36,7 +36,7 @@ Cross-principal ids return 404.
 
 ## Tools
 
-Discover peer tools from `GET /api/v1/internal/ai/capabilities`. AI applies generic `completeCreateArgs` only. Domain schemas, palettes, and `argCompletion` live on the owning service — [ai-capabilities.mdc](ai-capabilities.mdc).
+Discover peer tools from `GET /api/v1/internal/ai/capabilities`. AI applies generic `completeCreateArgs` only. Domain schemas, palettes, and `argCompletion` live on the owning service — [ai-capabilities.mdc](ai-capabilities.mdc). Create suggestions fill **every** schema property plus related `list_*` ids; never invent IDs.
 
 ## Do not
 

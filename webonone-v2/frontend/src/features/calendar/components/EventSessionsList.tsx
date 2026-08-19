@@ -6,11 +6,11 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  RemainingTime,
 } from '@webonone/ui-kit'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 import type { CompanyEvent } from '@/features/calendar/types/event.types'
 import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOccurrences'
-import { formatSessionTimingLabel } from '@/features/calendar/utils/formatSessionTimingLabel'
 import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
 
 type EventSessionsListProps = {
@@ -58,14 +58,7 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
 
   return (
     <ItemList>
-      {sessions.map((session) => {
-        const timing = formatSessionTimingLabel(session.start, session.end, now)
-        const timingClassName =
-          timing.kind === 'current'
-            ? 'shrink-0 text-right text-xs font-medium text-primary'
-            : 'shrink-0 text-right text-xs text-muted-foreground'
-
-        return (
+      {sessions.map((session) => (
           <ItemListItem key={session.occurrenceDate}>
             <ItemListContent>
               <button
@@ -86,12 +79,16 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
                     {session.endTime}
                   </p>
                 </div>
-                <span className={timingClassName}>{timing.label}</span>
+                <RemainingTime
+                  start={session.start}
+                  end={session.end}
+                  now={now}
+                  labels={{ ended: t('timing.ended') }}
+                />
               </button>
             </ItemListContent>
           </ItemListItem>
-        )
-      })}
+        ))}
     </ItemList>
   )
 }

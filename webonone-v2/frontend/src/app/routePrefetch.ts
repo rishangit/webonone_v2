@@ -19,6 +19,8 @@ const ROUTE_PREFETCHERS: Record<string, () => Promise<unknown>> = {
   '/sales': () => import('@/features/sales/pages/SalesHistoryPage'),
   '/sales/pos': () => import('@/features/sales/pages/PosPage'),
   '/settings/companies': () => import('@/features/settings/companies/pages/AllCompaniesPage'),
+  '/settings/connected-companies': () =>
+    import('@/features/settings/companies/pages/ConnectedCompaniesPage'),
   '/settings/basic': () => import('@/features/settings/basic/pages/BasicSettingsPage'),
   '/settings/system-theme': () =>
     import('@/features/settings/system-theme/pages/SystemThemePage'),
@@ -65,13 +67,18 @@ export function prefetchRoutePath(pathname: string): void {
     return
   }
 
-  if (/^\/settings\/companies\/[^/]+\/catalog\/[^/]+\/[^/]+$/.test(pathname)) {
+  if (
+    /^\/settings\/(?:companies|connected-companies)\/[^/]+\/catalog\/[^/]+\/[^/]+$/.test(
+      pathname,
+    )
+  ) {
     prefetchMemberCompanyCatalogDetail()
     return
   }
 
   if (
     pathname.startsWith('/settings/companies/') ||
+    pathname.startsWith('/settings/connected-companies/') ||
     /^\/companies\/[^/]+$/.test(pathname)
   ) {
     prefetchCompanyProfile()

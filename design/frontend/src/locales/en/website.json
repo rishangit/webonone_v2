@@ -93,6 +93,8 @@
   "colorPreview": "Preview",
   "background": "Background",
   "contentTree": "Content tree",
+  "openContentTree": "Open content tree",
+  "closeContentTree": "Close content tree",
   "noBlocks": "Add a content element to start laying out this {{kind}}.",
   "emptyAddon": "Empty add-on",
   "layerUp": "Bring forward",

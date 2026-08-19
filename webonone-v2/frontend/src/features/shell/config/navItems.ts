@@ -7,6 +7,7 @@ import {
   History,
   Home,
   Layers,
+  LayoutDashboard,
   List,
   Mail,
   MessageSquare,
@@ -52,11 +53,12 @@ import type { NavConfigItem } from '@webonone/ui-kit'
 import type { SessionRole } from '@/features/session/types/sessionRole.types'
 
 const ICON_BY_PATH: Record<string, LucideIcon> = {
-  '/': Home,
+  '/': LayoutDashboard,
   '/calendar/schedule': CalendarDays,
   '/calendar/events': List,
   '/companies': Building2,
   '/settings/companies': Building2,
+  '/settings/connected-companies': Building2,
   '/staff': Users,
   '/sales/pos': ShoppingCart,
   '/sales': Receipt,

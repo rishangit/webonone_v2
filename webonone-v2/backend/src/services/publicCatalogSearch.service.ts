@@ -7,7 +7,6 @@ import {
   type DataLibraryCatalogItem,
   type DataTagSummary,
 } from '../clients/dataCatalogClient.js'
-import { listWindowEventsByService } from '../repositories/companyEvent.repository.js'
 import {
   findApprovedCompanyCatalogById,
   isSellableCatalogKind,
@@ -16,7 +15,7 @@ import {
   searchApprovedCompanyCatalog,
   type PublicCatalogSearchRow,
 } from '../repositories/publicCatalogSearch.repository.js'
-import { expandOccurrences, mapEventRow } from './companyEvent.service.js'
+import { buildWindowSessionItems, parseSessionDateRange } from './companyEvent.service.js'
 import { distanceKm, parseLatLng, toFiniteNumber } from '../utils/geo.js'
 
 export type PublicCatalogGalleryImage = {
@@ -417,25 +416,6 @@ export async function getPublicCatalogItem(options: {
   }
 }
 
-function toDateOnly(value: Date): string {
-  const y = value.getFullYear()
-  const m = String(value.getMonth() + 1).padStart(2, '0')
-  const d = String(value.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-function addDaysYmd(ymd: string, days: number): string {
-  const [y, m, d] = ymd.split('-').map(Number)
-  const date = new Date(y!, m! - 1, d!)
-  date.setDate(date.getDate() + days)
-  return toDateOnly(date)
-}
-
-function parseYmdParam(raw: unknown, fallback: string): string {
-  if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
-  return fallback
-}
-
 /**
  * Upcoming Specific-time (window) event sessions for a public marketplace service.
  */
@@ -450,34 +430,9 @@ export async function listPublicServiceSessions(options: {
   const row = await findApprovedCompanyCatalogById('services', serviceId)
   if (!row) return { items: [] }
 
-  const today = toDateOnly(new Date())
-  const from = parseYmdParam(options.from, today)
-  const to = parseYmdParam(options.to, addDaysYmd(today, 30))
-  if (to < from) return { items: [] }
+  const range = parseSessionDateRange(options.from, options.to)
+  if (!range) return { items: [] }
 
-  const eventRows = await listWindowEventsByService(row.company_id, serviceId)
-  const items: PublicCatalogSessionItem[] = []
-  for (const eventRow of eventRows) {
-    const event = mapEventRow(eventRow)
-    for (const occurrence of expandOccurrences(event, from, to)) {
-      items.push({
-        eventId: occurrence.id,
-        occurrenceDate: occurrence.occurrenceDate,
-        startTime: occurrence.startTime,
-        endTime: occurrence.endTime,
-        serviceName: occurrence.serviceName,
-        companyId: occurrence.companyId,
-        spaceId: occurrence.spaceId,
-        spaceName: occurrence.spaceName,
-      })
-    }
-  }
-
-  items.sort((a, b) => {
-    const byDate = a.occurrenceDate.localeCompare(b.occurrenceDate)
-    if (byDate !== 0) return byDate
-    return a.startTime.localeCompare(b.startTime)
-  })
-
+  const items = await buildWindowSessionItems(row.company_id, serviceId, range.from, range.to)
   return { items }
 }

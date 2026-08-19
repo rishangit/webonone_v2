@@ -7,6 +7,7 @@ import { companyCatalogReducer } from '@/features/company-catalog/store/companyC
 import { staffReducer } from '@/features/staff/store'
 import { salesReducer } from '@/features/sales/store'
 import { eventsReducer, sessionTokensReducer } from '@/features/calendar/store'
+import { homeDashboardReducer } from '@/features/home/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { aiSettingsReducer } from '@/features/settings/basic/store/aiSettingsSlice'
@@ -25,6 +26,7 @@ export const store = configureStore({
     sales: salesReducer,
     events: eventsReducer,
     sessionTokens: sessionTokensReducer,
+    homeDashboard: homeDashboardReducer,
     systemTheme: systemThemeReducer,
     aiSettings: aiSettingsReducer,
   },

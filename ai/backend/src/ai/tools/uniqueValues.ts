@@ -1,4 +1,4 @@
-import type { ToolCall, ToolDefinition } from './registry.js'
+import type { RelatedNode, ToolCall, ToolDefinition } from './registry.js'
 
 export type PendingWrite = {
   call: ToolCall
@@ -6,6 +6,8 @@ export type PendingWrite = {
     name: string
     riskLevel: string
     arguments: Record<string, unknown>
+    displayArguments?: Record<string, unknown>
+    relatedTree?: RelatedNode[]
     summary: string
   }
 }

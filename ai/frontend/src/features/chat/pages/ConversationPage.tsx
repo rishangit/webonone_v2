@@ -37,6 +37,7 @@ function pendingRows(pending: PendingTool): PendingToolCall[] {
       riskLevel: pending.riskLevel,
       summary: pending.summary,
       arguments: pending.arguments,
+      displayArguments: pending.displayArguments,
       status: pending.status,
     },
   ]
@@ -46,6 +47,11 @@ function callItemName(call: PendingToolCall): string {
   const name = call.arguments?.name
   return typeof name === 'string' && name.trim() ? name.trim() : 'Item'
 }
+
+const OLLAMA_HOME_URL = 'https://ollama.com'
+const OLLAMA_KEYS_URL = 'https://ollama.com/settings/keys'
+const AI_SETTINGS_PATH = '/settings/basic?tab=ai'
+const setupLinkClassName = 'text-primary underline-offset-4 hover:underline'
 
 export function ConversationPage() {
   const { t } = useTranslation('chat')
@@ -105,6 +111,12 @@ export function ConversationPage() {
     return <Navigate to="/login" replace />
   }
 
+  const sessionToken = accessToken
+
+  function openAiSettings() {
+    void redirectToWebOnOnePath(sessionToken, AI_SETTINGS_PATH)
+  }
+
   if (aiConfigured === null) {
     return (
       <FeaturePage title={t('chatTitle')}>
@@ -114,17 +126,33 @@ export function ConversationPage() {
   }
 
   if (aiConfigured === false) {
-    const settingsUrl = `${getWebOnOneOrigin()}/settings/basic?tab=ai`
     return (
       <FeaturePage title={t('chatTitle')}>
         <Alert>
           <AlertDescription>{t('setupRequired')}</AlertDescription>
         </Alert>
-        <p className="text-sm text-muted-foreground">{t('setupDescription')}</p>
-        <Button asChild variant="outline" className="mt-2 w-fit">
-          <a href={settingsUrl} target="_blank" rel="noreferrer">
-            {t('openSettings')}
-          </a>
+        <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+          <li>
+            {t('setupStep1')}{' '}
+            <a href={OLLAMA_HOME_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+              ollama.com
+            </a>
+          </li>
+          <li>
+            {t('setupStep2')}{' '}
+            <a href={OLLAMA_KEYS_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+              ollama.com/settings/keys
+            </a>
+          </li>
+          <li>
+            {t('setupStep3')}{' '}
+            <button type="button" className={setupLinkClassName} onClick={openAiSettings}>
+              {t('setupSettingsLink')}
+            </button>
+          </li>
+        </ol>
+        <Button variant="outline" className="mt-2 w-fit" onClick={openAiSettings}>
+          {t('openSettings')}
         </Button>
       </FeaturePage>
     )
@@ -163,14 +191,18 @@ export function ConversationPage() {
     }
   }
 
-  async function handleToolDecision(toolCallId: string, action: 'confirm' | 'reject') {
+  async function handleToolDecision(
+    toolCallId: string,
+    action: 'confirm' | 'reject',
+    relatedSelections?: Record<string, boolean>,
+  ) {
     if (!id || toolDecisionLock.current) return
     toolDecisionLock.current = true
     setSending(true)
     try {
       const result =
         action === 'confirm'
-          ? await aiApi.confirmToolCall(id, toolCallId)
+          ? await aiApi.confirmToolCall(id, toolCallId, relatedSelections)
           : await aiApi.rejectToolCall(id, toolCallId)
       setMessages((current) => {
         const returned = result.assistantMessage
@@ -256,10 +288,13 @@ export function ConversationPage() {
                     items={rows.map((call) => ({
                       id: call.toolCallId,
                       status: call.status,
-                      record:
-                        call.arguments && Object.keys(call.arguments).length > 0
+                    record:
+                      call.displayArguments && Object.keys(call.displayArguments).length > 0
+                        ? call.displayArguments
+                        : call.arguments && Object.keys(call.arguments).length > 0
                           ? call.arguments
                           : { summary: call.summary },
+                      relatedTree: call.relatedTree,
                       confirmedLabel: t('itemAdded', { name: callItemName(call) }),
                       canceledLabel: t('itemCanceled', { name: callItemName(call) }),
                     }))}
@@ -267,7 +302,9 @@ export function ConversationPage() {
                     confirmLabel={t('confirm')}
                     skipLabel={t('skip')}
                     disabled={sending}
-                    onConfirm={(toolCallId) => void handleToolDecision(toolCallId, 'confirm')}
+                    onConfirm={(toolCallId, selections) =>
+                      void handleToolDecision(toolCallId, 'confirm', selections)
+                    }
                     onSkip={(toolCallId) => void handleToolDecision(toolCallId, 'reject')}
                   />
                 ) : null}

@@ -35,6 +35,28 @@ export type ArgCompletion = {
   pascalCaseKeys?: string[]
 }
 
+export type RelatedArg = {
+  argKey: string
+  displayKey: string
+  getPath: string
+  listPath: string
+  createTool: string
+  cardinality?: 'one' | 'many'
+  itemIdKey?: string
+}
+
+export type RelatedNode = {
+  path: string
+  displayKey: string
+  exists: boolean
+  selected: boolean
+  record: Record<string, unknown>
+  createTool?: string
+  createArgs?: Record<string, unknown>
+  recordId?: string
+  children?: RelatedNode[]
+}
+
 export type ToolDefinition = {
   name: string
   description: string
@@ -47,6 +69,7 @@ export type ToolDefinition = {
   invoke: { method: HttpMethod; path: string }
   capabilityVersion: string
   argCompletion?: ArgCompletion
+  relatedArgs?: RelatedArg[]
   /** Owning-frontend path template, e.g. `/services/{id}` or `/data/{kind}/{id}`. */
   viewPath?: string
 }
@@ -89,7 +112,11 @@ export interface ToolExecutor {
       companyId: string | null
       accessToken: string | null
     },
-    options?: { confirmed?: boolean },
+    options?: {
+      confirmed?: boolean
+      relatedTree?: RelatedNode[]
+      relatedSelections?: Record<string, boolean>
+    },
   ): Promise<ToolResult>
   lookupExistingUniqueValues?(
     tool: ToolDefinition,
@@ -101,6 +128,17 @@ export interface ToolExecutor {
     },
     values: string[],
   ): Promise<string[]>
+  lookupRelatedRecord?(
+    tool: ToolDefinition,
+    spec: RelatedArg,
+    ctx: {
+      role: ToolRole
+      permissions: readonly string[]
+      companyId: string | null
+      accessToken: string | null
+    },
+    query: { id?: string; name?: string },
+  ): Promise<Record<string, unknown> | null>
 }
 
 export class NoopToolExecutor implements ToolExecutor {
@@ -115,6 +153,10 @@ export class NoopToolExecutor implements ToolExecutor {
 
   async lookupExistingUniqueValues(): Promise<string[]> {
     return []
+  }
+
+  async lookupRelatedRecord(): Promise<Record<string, unknown> | null> {
+    return null
   }
 }
 

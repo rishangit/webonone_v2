@@ -85,13 +85,7 @@
     "emptyAdmin": "මෙම සිදුවීමේ දින පරාසයේ සැසි නැත."
   },
   "timing": {
-    "current": "වත්මන්",
-    "ended": "අවසන් විය",
-    "minutes": "මිනිත්තු {{count}}",
-    "oneHour": "පැය 1",
-    "hours": "පැය {{count}}",
-    "oneDay": "දින 1",
-    "days": "දින {{count}}"
+    "ended": "අවසන් විය"
   },
   "timeMode": {
     "specificTime": "නිශ්චිත වේලාව",

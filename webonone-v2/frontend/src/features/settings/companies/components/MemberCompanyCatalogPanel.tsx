@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ImagePreview,
@@ -19,6 +19,10 @@ import {
   type CatalogEntityKind,
 } from '@/features/company-catalog/types/companyCatalog.types'
 import { firstGalleryImageUrl } from '@/features/company-catalog/utils/firstGalleryImageUrl'
+import {
+  companySettingsCatalogItemPath,
+  companySettingsListPath,
+} from '../utils/companySettingsPaths'
 
 type MemberCompanyCatalogPanelProps = {
   companyId: string
@@ -29,6 +33,7 @@ export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCata
   const { t } = useTranslation('catalog')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { items, listStatus, kind: storeKind } = useAppSelector((s) => s.companyCatalog)
   const [search, setSearch] = useState('')
 
@@ -89,7 +94,14 @@ export function MemberCompanyCatalogPanel({ companyId, kind }: MemberCompanyCata
                     type="button"
                     className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() =>
-                      navigate(`/settings/companies/${companyId}/catalog/${kind}/${item.id}`)
+                      navigate(
+                        companySettingsCatalogItemPath(
+                          companySettingsListPath(pathname),
+                          companyId,
+                          kind,
+                          item.id,
+                        ),
+                      )
                     }
                   >
                     {showThumbnails ? (

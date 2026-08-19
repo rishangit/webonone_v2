@@ -34,7 +34,30 @@ AI applies, in order: missing `defaults` → random hex color from schema `enum`
 
 When parking create writes, AI looks up `uniqueBy` values via `uniqueLookup` (`GET path?names=`). Existing names and in-batch duplicates are skipped; only missing unique values are shown for confirm. Never switch on tool names such as `create_data_tag`.
 
-Keep the type in sync on peer `capabilityTypes.ts` and `ai/backend/src/ai/tools/registry.ts`. `parseTool` must copy `argCompletion` through.
+Keep the type in sync on peer `capabilityTypes.ts` and `ai/backend/src/ai/tools/registry.ts`. `parseTool` must copy `argCompletion` and `relatedArgs` through.
+
+## `relatedArgs` (optional, on write tools)
+
+```ts
+relatedArgs?: {
+  argKey: string
+  displayKey: string
+  getPath: string
+  listPath: string
+  createTool: string
+  cardinality?: 'one' | 'many'
+  itemIdKey?: string
+}[]
+```
+
+Confirm UI never shows opaque `*_id` values. AI looks up related records (GET by id or list `?names=`), nests them under the **parent** confirm row as a checkbox tree, and fills every related `jsonSchema` property. Recurse into `createTool.relatedArgs` (depth cap 3). Do not park related creates as sibling confirm rows.
+
+- `exists`: already in the library — checkbox checked and disabled; confirm only links the id.
+- new: checkbox checked by default; uncheck to skip create and skip the FK.
+- Confirm `POST .../confirm` may send `{ relatedSelections: { [path]: boolean } }`. Unchecked new nodes are omitted. Existing nodes always attach.
+- `cardinality: 'many'` plus optional `itemIdKey` maps selected ids onto arrays (`tag_ids` or `attributes: [{ attribute_id }]`).
+
+Never switch on tool names such as `create_data_attribute`.
 
 ## `viewPath` (optional, on tools that return records)
 
@@ -47,7 +70,9 @@ Owning service publishes a frontend path template (`/services/{id}`, `/data/{kin
 
 ## Prompts
 
-`DEFAULT_SYSTEM_PROMPT` and `withAvailableToolsPrompt` stay generic (fill schema properties, do not invent IDs). When the model lists create-ready records (name plus description, and other required schema fields), it should call `create_*` once per item. If the user asks for N items, park N confirm rows. Models often emit one `create_*` call; AI then asks for a markdown table of the remaining items (no tools) and lifts those rows. Existing unique names are skipped. Never ask which items to create in text — the shared Confirm ItemList is the picker (Confirm / Skip per row). Field rules belong on the tool `description`. Do not switch on tool names such as `create_data_tag`.
+`DEFAULT_SYSTEM_PROMPT` and `withAvailableToolsPrompt` stay generic. On every create suggestion, fill **all** `jsonSchema.properties` (required and optional), not only `required`. Remainder tables use `suggestCreateKeys` (required first, then the rest). List related records with matching `list_*` tools first; copy `*_id` / `*_ids` from those results — never invent IDs. When the model lists create-ready records, call `create_*` once per item. If the user asks for N items, park N confirm rows. Models often emit one `create_*` call; AI then asks for a markdown table of the remaining items (all schema columns, no tools) and lifts those rows. Existing unique names are skipped. Never ask which items to create in text — the shared Confirm ItemList is the picker (Confirm / Skip per row). Field rules belong on the tool `description`. Do not switch on tool names such as `create_data_tag`.
+
+Peer `create_*` `description` must tell the model to suggest every published property. Related records use names (via `relatedArgs`), not opaque ids, with matching `list_*` tools. Suggest only related records that fit the parent — do not dump the whole library.
 
 Reference: `data/backend/src/ai/capabilities.ts` (`create_data_tag`), `ai/backend/src/ai/tools/createDefaults.ts`.
 

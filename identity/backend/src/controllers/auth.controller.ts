@@ -49,9 +49,14 @@ const loginSchema = z.object({
   password: z.string().min(1),
 })
 
-const googleSchema = z.object({
-  idToken: z.string().min(1),
-})
+const googleSchema = z
+  .object({
+    idToken: z.string().min(1).optional(),
+    accessToken: z.string().min(1).optional(),
+  })
+  .refine((data) => Boolean(data.idToken || data.accessToken), {
+    message: 'Google id token or access token is required',
+  })
 
 const patchMeSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
@@ -180,7 +185,7 @@ export async function login(req: AuthenticatedRequest, res: Response) {
 export async function googleLogin(req: AuthenticatedRequest, res: Response) {
   try {
     const body = googleSchema.parse(req.body)
-    const result = await loginWithGoogle(body.idToken)
+    const result = await loginWithGoogle(body)
     res.json(result)
   } catch (err) {
     if (handleAuthError(err, res)) return

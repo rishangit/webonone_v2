@@ -29,6 +29,11 @@ function newLocalId() {
   return `local-${crypto.randomUUID()}`
 }
 
+const OLLAMA_HOME_URL = 'https://ollama.com'
+const OLLAMA_KEYS_URL = 'https://ollama.com/settings/keys'
+const AI_SETTINGS_PATH = '/settings/basic?tab=ai'
+const setupLinkClassName = 'text-primary underline-offset-4 hover:underline'
+
 export function CatalogAssistant({ open, onClose }: CatalogAssistantProps) {
   const { t } = useTranslation('search')
   const { accessToken } = useWebsiteAuth()
@@ -123,6 +128,14 @@ export function CatalogAssistant({ open, onClose }: CatalogAssistantProps) {
     }
   }
 
+  function openAiSettings() {
+    if (accessToken) {
+      void redirectToWebOnOneApp(accessToken, AI_SETTINGS_PATH)
+      return
+    }
+    window.location.assign(getWebOnOneAiSettingsUrl())
+  }
+
   if (!open) {
     return null
   }
@@ -161,10 +174,28 @@ export function CatalogAssistant({ open, onClose }: CatalogAssistantProps) {
       {needsUserSetup ? (
         <div className="space-y-3 text-sm text-muted-foreground">
           <p>{t('assistantSignedInSetup')}</p>
-          <Button asChild variant="outline" className="w-full">
-            <a href={getWebOnOneAiSettingsUrl()} target="_blank" rel="noreferrer">
-              {t('assistantOpenSettings')}
-            </a>
+          <ol className="list-decimal space-y-1 pl-5">
+            <li>
+              {t('assistantSetupStep1')}{' '}
+              <a href={OLLAMA_HOME_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+                ollama.com
+              </a>
+            </li>
+            <li>
+              {t('assistantSetupStep2')}{' '}
+              <a href={OLLAMA_KEYS_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+                ollama.com/settings/keys
+              </a>
+            </li>
+            <li>
+              {t('assistantSetupStep3')}{' '}
+              <button type="button" className={setupLinkClassName} onClick={openAiSettings}>
+                {t('assistantSetupSettingsLink')}
+              </button>
+            </li>
+          </ol>
+          <Button variant="outline" className="w-full" onClick={openAiSettings}>
+            {t('assistantOpenSettings')}
           </Button>
         </div>
       ) : (

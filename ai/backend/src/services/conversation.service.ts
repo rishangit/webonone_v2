@@ -6,12 +6,15 @@ import {
   expandCreateCalls,
   listedCreateNames,
   mergeUniqueCreateCalls,
+  remainingCreateCallsPrompt,
   remainingItemsTablePrompt,
   requestedItemCount,
+  resolveCreateTool,
   uniqueCreateNameCount,
 } from '../ai/tools/extractCreateItems.js'
 import { filterToolsForContext } from '../ai/tools/filterTools.js'
-import type { ToolCall, ToolDefinition, ToolExecutor, ToolRegistry } from '../ai/tools/registry.js'
+import { attachRelatedDisplay, displayCreateArguments, parseRelatedTree } from '../ai/tools/relatedArgs.js'
+import type { RelatedNode, ToolCall, ToolDefinition, ToolExecutor, ToolRegistry } from '../ai/tools/registry.js'
 import { recordsFromUnknown, withRecordOpen } from '../ai/tools/formatRecord.js'
 import { partitionUniquePendingWrites, type PendingWrite } from '../ai/tools/uniqueValues.js'
 import type { AiConversationRow, AiMessageRow, MessageRole } from '../models/db.js'
@@ -28,6 +31,8 @@ export type PendingToolCall = {
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
+  displayArguments?: Record<string, unknown>
+  relatedTree?: RelatedNode[]
   status: PendingCallStatus
 }
 
@@ -37,6 +42,8 @@ export type PendingTool = {
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
+  displayArguments?: Record<string, unknown>
+  relatedTree?: RelatedNode[]
   status: PendingCallStatus
   calls?: PendingToolCall[]
 }
@@ -104,6 +111,8 @@ function storedCallsFromPayload(payload: Record<string, unknown> | null, pending
         riskLevel: typeof entry.riskLevel === 'string' ? entry.riskLevel : pending.riskLevel,
         summary: typeof entry.summary === 'string' ? entry.summary : entry.name,
         arguments: isRecord(entry.arguments) ? entry.arguments : {},
+        displayArguments: isRecord(entry.displayArguments) ? entry.displayArguments : undefined,
+        relatedTree: parseRelatedTree(entry.relatedTree),
         status: callStatus(entry.status),
       })
     }
@@ -118,6 +127,8 @@ function storedCallsFromPayload(payload: Record<string, unknown> | null, pending
       riskLevel: pending.riskLevel,
       summary: pending.summary,
       arguments: pending.arguments,
+      displayArguments: pending.displayArguments,
+      relatedTree: pending.relatedTree,
       status: pending.status,
     },
   ]
@@ -146,6 +157,8 @@ function pendingFromPayload(row: AiMessageRow): PendingTool | null {
     riskLevel: typeof payload.riskLevel === 'string' ? payload.riskLevel : 'write',
     summary: typeof payload.summary === 'string' ? payload.summary : payload.name,
     arguments: isRecord(payload.arguments) ? payload.arguments : {},
+    displayArguments: isRecord(payload.displayArguments) ? payload.displayArguments : undefined,
+    relatedTree: parseRelatedTree(payload.relatedTree),
     status: payload.status,
   }
   const calls = storedCallsFromPayload(payload, pending)
@@ -248,7 +261,7 @@ export function withAvailableToolsPrompt(base: string, tools: ToolDefinition[]):
   if (tools.length === 0) {
     return base
   }
-  return `${base} Tools available in this request: ${tools.map((tool) => tool.name).join(', ')}. When listing create-ready records (name plus description, and other required schema fields), call the matching create_* tool once per item in the same turn so the chat UI can show Confirm and Skip. If the user asks for N items (for example 10 tags), make N create_* calls in that turn — one per item — not a single call. Do not ask which items to create in text. When creating, include every required schema property in the tool arguments. Copy name from the user message. Fill remaining descriptive properties (especially description, and color or symbol when present) with a complete suggested value. Do not invent IDs or emails. Names are not ids. Do not call a write tool until entity, action, and target are known; if the entity type is unclear, ask a short numbered list of options and wait.`
+  return `${base} Tools available in this request: ${tools.map((tool) => tool.name).join(', ')}. When listing create-ready records, fill every jsonSchema property on the matching create_* tool (required and optional) and call that tool once per item in the same turn so the chat UI can show Confirm and Skip. If the user asks for N items (for example 10 tags), make N create_* calls in that turn — one per item — not a single call. Do not ask which items to create in text. When creating, include every schema property in the tool arguments. Copy name from the user message. Suggest remaining fields (description, symbol, is_base, status, color) with complete values. For related records, put the related name (and symbol) instead of an opaque id; list matching records first (list_*). never invent IDs or emails. Do not call a write tool until entity, action, and target are known; if the entity type is unclear, ask a short numbered list of options and wait.`
 }
 
 function lastUserContent(rows: AiMessageRow[]): string {
@@ -410,9 +423,22 @@ export function createConversationService(deps: {
           leadContent = ''
         }
         const requested = requestedItemCount(userMessage)
-        if (requested && uniqueCreateNameCount(toolCalls) < requested) {
+        const liftFromText = (content: string | undefined) => {
+          if (!content) {
+            return
+          }
+          toolCalls = expandCreateCalls({
+            content,
+            tools,
+            userMessage,
+            role: ctx.role,
+            existingCalls: toolCalls,
+          })
+        }
+        const fillRemainingTable = async (count: number) => {
+          const createTool = resolveCreateTool({ tools, existingCalls: toolCalls, userMessage })
           const table = await provider.complete({
-            systemPrompt: `${systemPrompt} When the user asks for N items, output a markdown table of exactly those N items. Do not call tools.`,
+            systemPrompt: `${systemPrompt} When the user asks for N items, output a markdown table of exactly those N items including every schema column (required and optional). Do not call tools.`,
             messages: [
               ...historyToProviderMessages(history),
               {
@@ -421,23 +447,20 @@ export function createConversationService(deps: {
               },
               {
                 role: 'user',
-                content: remainingItemsTablePrompt(requested, listedCreateNames(toolCalls)),
+                content: remainingItemsTablePrompt(count, listedCreateNames(toolCalls), createTool),
               },
             ],
           })
-          if (table.content) {
-            toolCalls = expandCreateCalls({
-              content: table.content,
-              tools,
-              userMessage,
-              role: ctx.role,
-              existingCalls: toolCalls,
-            })
-          }
+          liftFromText(table.content)
         }
         if (requested && uniqueCreateNameCount(toolCalls) < requested) {
+          await fillRemainingTable(requested)
+        }
+        if (requested && uniqueCreateNameCount(toolCalls) < requested) {
+          const createTool = resolveCreateTool({ tools, existingCalls: toolCalls, userMessage })
+          const retryPrompt = remainingCreateCallsPrompt(requested, createTool)
           const retry = await provider.complete({
-            systemPrompt: `${systemPrompt} The user asked for ${requested} items. Call the matching create_* tool once per item for all ${requested} items in this turn. Include name and a complete description on every call. Do not stop after one item.`,
+            systemPrompt: `${systemPrompt} ${retryPrompt}`,
             messages: [
               ...historyToProviderMessages(history),
               {
@@ -446,7 +469,7 @@ export function createConversationService(deps: {
               },
               {
                 role: 'user',
-                content: `Add all ${requested} items now. Call create_* once per item (${requested} calls).`,
+                content: retryPrompt,
               },
             ],
             tools: providerTools.length ? providerTools : undefined,
@@ -454,15 +477,10 @@ export function createConversationService(deps: {
           if (retry.toolCalls?.length) {
             toolCalls = mergeUniqueCreateCalls(toolCalls, retry.toolCalls)
           }
-          if (retry.content) {
-            toolCalls = expandCreateCalls({
-              content: retry.content,
-              tools,
-              userMessage,
-              role: ctx.role,
-              existingCalls: toolCalls,
-            })
-          }
+          liftFromText(retry.content)
+        }
+        if (requested && uniqueCreateNameCount(toolCalls) < requested) {
+          await fillRemainingTable(requested)
         }
         if (requested && uniqueCreateNameCount(toolCalls) > 0) {
           leadContent = ''
@@ -509,6 +527,17 @@ export function createConversationService(deps: {
         if (isPendingOutput(result.output)) {
           pendingWrites.push({ call, output: result.output })
         }
+      }
+
+      if (pendingWrites.length > 0 && deps.executor?.lookupRelatedRecord && deps.registry) {
+        const attached = await attachRelatedDisplay(pendingWrites, {
+          getTool: (name) => deps.registry?.get(name),
+          lookup: (tool, spec, query) =>
+            deps.executor!.lookupRelatedRecord!(tool, spec, ctx, query),
+          role: ctx.role,
+        })
+        pendingWrites.length = 0
+        pendingWrites.push(...attached.writes)
       }
 
       const existingNamesByTool = new Map<string, Set<string>>()
@@ -571,6 +600,8 @@ export function createConversationService(deps: {
           name: output.name,
           riskLevel: output.riskLevel,
           arguments: output.arguments,
+          displayArguments: output.displayArguments ?? displayCreateArguments(output.arguments, []),
+          relatedTree: output.relatedTree ?? [],
           summary: output.summary,
           status: 'pending_confirmation' as const,
         }))
@@ -594,6 +625,8 @@ export function createConversationService(deps: {
             name: firstWrite.output.name,
             riskLevel: firstWrite.output.riskLevel,
             arguments: firstWrite.output.arguments,
+            displayArguments: firstWrite.output.displayArguments,
+            relatedTree: firstWrite.output.relatedTree ?? [],
             summary,
             calls,
           },
@@ -700,7 +733,12 @@ export function createConversationService(deps: {
       }
     },
 
-    async confirmToolCall(ctx: AiRequestContext, conversationId: string, toolCallId: string) {
+    async confirmToolCall(
+      ctx: AiRequestContext,
+      conversationId: string,
+      toolCallId: string,
+      relatedSelections?: Record<string, boolean>,
+    ) {
       const conversation = await getOwnedOrThrow(conversationId, ctx)
       const related = await deps.repository.listMessagesByToolCallId(conversation.id, toolCallId)
       let assistant = related.find((row) => row.role === 'assistant') ?? null
@@ -745,8 +783,23 @@ export function createConversationService(deps: {
         name: toolRowForCall?.tool_name ?? target.name,
         arguments: target.arguments,
       }
-      const result = await deps.executor.execute(call, ctx, { confirmed: true })
+      const result = await deps.executor.execute(call, ctx, {
+        confirmed: true,
+        relatedTree: target.relatedTree,
+        relatedSelections,
+      })
       const output = result.output && isRecord(result.output) ? result.output : { output: result.output }
+      if (!result.ok) {
+        const message =
+          typeof output.message === 'string' && output.message.trim()
+            ? output.message
+            : 'Could not add this item. It is still waiting for confirmation.'
+        throw new HttpError(
+          400,
+          message,
+          typeof output.code === 'string' ? output.code : 'TOOL_FAILED',
+        )
+      }
       if (resultRowForCall) {
         await deps.repository.updateMessageToolPayload(resultRowForCall.id, output, JSON.stringify(output))
       } else {
@@ -760,7 +813,7 @@ export function createConversationService(deps: {
           tool_payload: output,
         })
       }
-      target.status = result.ok ? 'confirmed' : 'rejected'
+      target.status = 'confirmed'
       const remaining = remainingPendingCalls(stored)
       const anyOk = stored.some((item) => item.status === 'confirmed')
       const nextPayload = {

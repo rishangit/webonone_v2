@@ -18,17 +18,24 @@ import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
 import type { MyCompanySummary } from '@/features/settings/basic/services/companyApi'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
+import { MY_COMPANIES_PATH, companySettingsProfilePath } from '../utils/companySettingsPaths'
 
 type MyCompaniesListProps = {
   items: MyCompanySummary[]
   emptyMessage?: string
+  /** List page that opened this row — keeps sidebar/breadcrumb on that nav item. */
+  listPath?: string
 }
 
 function canLoginAsOwner(item: MyCompanySummary): boolean {
   return item.role === 'company_admin' && item.status !== 'rejected'
 }
 
-export function MyCompaniesList({ items, emptyMessage }: MyCompaniesListProps) {
+export function MyCompaniesList({
+  items,
+  emptyMessage,
+  listPath = MY_COMPANIES_PATH,
+}: MyCompaniesListProps) {
   const { t, i18n } = useTranslation('settings')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -43,7 +50,7 @@ export function MyCompaniesList({ items, emptyMessage }: MyCompaniesListProps) {
   }
 
   function openProfile(id: string) {
-    navigate(`/settings/companies/${id}`)
+    navigate(companySettingsProfilePath(listPath, id))
   }
 
   async function handleLogin(item: MyCompanySummary) {

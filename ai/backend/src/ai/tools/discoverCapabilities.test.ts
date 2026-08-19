@@ -103,6 +103,37 @@ describe('discoverAllCapabilities', () => {
     })
   })
 
+  it('keeps relatedArgs from the owning service', () => {
+    const parsed = parseTool({
+      ...dataTool,
+      name: 'create_data_attribute',
+      riskLevel: 'write',
+      invoke: { method: 'POST', path: '/api/v1/attributes' },
+      relatedArgs: [
+        {
+          argKey: 'unit_id',
+          displayKey: 'unit',
+          getPath: '/api/v1/units/:id',
+          listPath: '/api/v1/units',
+          createTool: 'create_data_unit',
+          cardinality: 'one',
+          itemIdKey: 'attribute_id',
+        },
+      ],
+    })
+    assert.deepEqual(parsed?.relatedArgs, [
+      {
+        argKey: 'unit_id',
+        displayKey: 'unit',
+        getPath: '/api/v1/units/:id',
+        listPath: '/api/v1/units',
+        createTool: 'create_data_unit',
+        cardinality: 'one',
+        itemIdKey: 'attribute_id',
+      },
+    ])
+  })
+
   it('keeps viewPath from the owning service', () => {
     const parsed = parseTool({
       ...dataTool,

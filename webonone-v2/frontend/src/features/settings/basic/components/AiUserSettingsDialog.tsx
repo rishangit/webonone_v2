@@ -55,7 +55,11 @@ export function AiUserSettingsDialog({ open, settings, onOpenChange }: AiUserSet
   const saving = status === 'saving'
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      wasSaving.current = false
+      return
+    }
+    if (wasSaving.current) return
     setForm({
       provider: settings?.provider ?? OLLAMA_CLOUD_DEFAULTS.provider,
       model: settings?.model ?? OLLAMA_CLOUD_DEFAULTS.model,
@@ -64,7 +68,6 @@ export function AiUserSettingsDialog({ open, settings, onOpenChange }: AiUserSet
     })
     setApiKey(settings?.apiKey ?? '')
     setFieldErrors({})
-    wasSaving.current = false
   }, [open, settings])
 
   useEffect(() => {

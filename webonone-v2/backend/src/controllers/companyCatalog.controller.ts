@@ -3,6 +3,7 @@ import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as catalogService from '../services/companyCatalog.service.js'
+import * as memberCatalogBookingService from '../services/memberCatalogBooking.service.js'
 
 function handleServiceError(err: unknown, res: Response) {
   const statusCode = (err as Error & { statusCode?: number }).statusCode ?? 500
@@ -95,6 +96,106 @@ export async function getCatalogForCompany(req: AuthenticatedRequest, res: Respo
       String(req.params.id),
     )
     res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+function parseOccurrenceDate(raw: string, res: Response): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return null
+  }
+  return raw
+}
+
+function requireCatalogUser(req: AuthenticatedRequest, res: Response): { userId: string } | null {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return null
+  }
+  return { userId: req.user.id }
+}
+
+export async function listServiceSessionsForCompany(req: AuthenticatedRequest, res: Response) {
+  const user = requireCatalogUser(req, res)
+  if (!user) return
+  try {
+    const result = await memberCatalogBookingService.listMemberServiceSessions({
+      userId: user.userId,
+      companyId: String(req.params.companyId),
+      serviceId: String(req.params.id),
+      from: req.query.from,
+      to: req.query.to,
+    })
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getNextTokenForCompany(req: AuthenticatedRequest, res: Response) {
+  const user = requireCatalogUser(req, res)
+  if (!user) return
+  const occurrenceDate = parseOccurrenceDate(String(req.params.occurrenceDate), res)
+  if (!occurrenceDate) return
+  try {
+    const result = await memberCatalogBookingService.getMemberNextToken({
+      userId: user.userId,
+      companyId: String(req.params.companyId),
+      serviceId: String(req.params.id),
+      eventId: String(req.params.eventId),
+      occurrenceDate,
+    })
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getMyTokenForCompany(req: AuthenticatedRequest, res: Response) {
+  const user = requireCatalogUser(req, res)
+  if (!user) return
+  const occurrenceDate = parseOccurrenceDate(String(req.params.occurrenceDate), res)
+  if (!occurrenceDate) return
+  try {
+    const item = await memberCatalogBookingService.getMemberMyToken({
+      userId: user.userId,
+      companyId: String(req.params.companyId),
+      serviceId: String(req.params.id),
+      eventId: String(req.params.eventId),
+      occurrenceDate,
+    })
+    if (!item) {
+      res.status(404).json({ message: 'No token for this session', code: 'NOT_FOUND' })
+      return
+    }
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function bookTokenForCompany(req: AuthenticatedRequest, res: Response) {
+  const user = requireCatalogUser(req, res)
+  if (!user) return
+  const occurrenceDate = parseOccurrenceDate(String(req.params.occurrenceDate), res)
+  if (!occurrenceDate) return
+  try {
+    const body = req.body as {
+      user_display_name: string
+      user_email?: string | null
+    }
+    const item = await memberCatalogBookingService.bookMemberSessionToken({
+      userId: user.userId,
+      companyId: String(req.params.companyId),
+      serviceId: String(req.params.id),
+      eventId: String(req.params.eventId),
+      occurrenceDate,
+      userDisplayName: body.user_display_name,
+      userEmail: body.user_email ?? req.user?.email ?? null,
+    })
+    res.status(201).json(item)
   } catch (err) {
     handleServiceError(err, res)
   }

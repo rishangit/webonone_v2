@@ -21,6 +21,7 @@ description: >-
 - Provider calls use a backend-only system prompt. Client cannot override it.
 - Tools are discovered from peer `GET /api/v1/internal/ai/capabilities` and invoked over versioned HTTP — never MySQL.
 - AI completion is generic (`completeCreateArgs`, `pickHexColor`). Palettes, required fields, and `argCompletion` belong on the owning service — [ai-capabilities.mdc](../../rules/ai-capabilities.mdc).
+- Create / remainder prompts suggest **every** `jsonSchema` property (not only `required`) and copy related `*_id` values from `list_*` results. Never invent IDs.
 
 ## Rules
 
@@ -49,6 +50,7 @@ description: >-
 - Settings: `ai/backend/src/services/aiSettings.service.ts`, WebOnOne `features/settings/basic/components/AiSettingsPanel.tsx`
 - Tools seam: `ai/backend/src/ai/tools/registry.ts`
 - Completer: `ai/backend/src/ai/tools/createDefaults.ts`
+- Create batching: `ai/backend/src/ai/tools/extractCreateItems.ts` (`suggestCreateKeys`, remainder table of all schema columns)
 - Discovery: `ai/backend/src/ai/tools/discoverCapabilities.ts`
 - Conversations: `ai/backend/src/services/conversation.service.ts`
 - Website widget: `website/frontend/src/features/ai/components/CatalogAssistant.tsx`

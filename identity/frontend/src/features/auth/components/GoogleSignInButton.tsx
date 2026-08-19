@@ -1,13 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
+import { useGoogleLogin } from '@react-oauth/google'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@webonone/ui-kit'
-import { useAppDispatch } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '../store'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
-/** GIS Sign in with Google buttons cap at 400px; we scale to match Sign in width. */
-const GIS_MAX_WIDTH = 400
 
 function GoogleGIcon() {
   return (
@@ -32,64 +29,50 @@ function GoogleGIcon() {
   )
 }
 
+/** GIS overlay buttons are not clickable in Edge (opacity/transform + nested iframe). */
 export function GoogleSignInButton() {
-  const { t, i18n } = useTranslation('auth')
-  const dispatch = useAppDispatch()
-  const hostRef = useRef<HTMLDivElement>(null)
-  const [hostWidth, setHostWidth] = useState(0)
-
-  useEffect(() => {
-    const el = hostRef.current
-    if (!el) return
-    const update = () => setHostWidth(Math.floor(el.getBoundingClientRect().width))
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
   if (!GOOGLE_CLIENT_ID) {
     return null
   }
+  return <GoogleSignInButtonInner />
+}
 
-  function handleSuccess(response: CredentialResponse) {
-    if (!response.credential) return
-    dispatch(authActions.clearAuthError())
-    dispatch(authActions.googleLoginRequested({ idToken: response.credential }))
+function GoogleSignInButtonInner() {
+  const { t } = useTranslation('auth')
+  const dispatch = useAppDispatch()
+  const isLoading = useAppSelector((s) => s.auth.isLoading)
+
+  function fail() {
+    dispatch(authActions.loginFailed(t('googleSignInFailed')))
   }
 
-  const gisWidth = Math.min(Math.max(hostWidth, 200), GIS_MAX_WIDTH)
-  const scaleX = hostWidth > 0 ? hostWidth / gisWidth : 1
+  const login = useGoogleLogin({
+    flow: 'implicit',
+    onSuccess: (tokenResponse) => {
+      if (!tokenResponse.access_token) {
+        fail()
+        return
+      }
+      dispatch(authActions.clearAuthError())
+      dispatch(authActions.googleLoginRequested({ accessToken: tokenResponse.access_token }))
+    },
+    onError: fail,
+    onNonOAuthError: (error) => {
+      if (error.type === 'popup_closed') return
+      fail()
+    },
+  })
 
   return (
-    <div ref={hostRef} className="relative h-10 w-full">
-      <Button
-        type="button"
-        variant="outline"
-        className="pointer-events-none w-full bg-white text-neutral-900 hover:bg-white hover:text-neutral-900"
-        tabIndex={-1}
-        aria-hidden
-      >
-        <GoogleGIcon />
-        {t('continueWithGoogle')}
-      </Button>
-      <div className="absolute inset-0 z-10 overflow-hidden opacity-0">
-        {hostWidth > 0 ? (
-          <div className="origin-top-left" style={{ width: gisWidth, transform: `scaleX(${scaleX})` }}>
-            <GoogleLogin
-              onSuccess={handleSuccess}
-              onError={() => dispatch(authActions.loginFailed(t('googleSignInFailed')))}
-              useOneTap={false}
-              theme="outline"
-              size="large"
-              shape="rectangular"
-              width={String(gisWidth)}
-              text="continue_with"
-              locale={i18n.language.startsWith('si') ? 'si' : 'en'}
-            />
-          </div>
-        ) : null}
-      </div>
-    </div>
+    <Button
+      type="button"
+      variant="outline"
+      className="w-full bg-white text-neutral-900 hover:bg-white hover:text-neutral-900"
+      disabled={isLoading}
+      onClick={() => login()}
+    >
+      <GoogleGIcon />
+      {t('continueWithGoogle')}
+    </Button>
   )
 }

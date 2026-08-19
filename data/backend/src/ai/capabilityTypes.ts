@@ -13,6 +13,17 @@ export type ArgCompletion = {
   pascalCaseKeys?: string[]
 }
 
+/** Foreign-key create args: resolve by id/name and display nested record props (never the raw id). */
+export type RelatedArg = {
+  argKey: string
+  displayKey: string
+  getPath: string
+  listPath: string
+  createTool: string
+  cardinality?: 'one' | 'many'
+  itemIdKey?: string
+}
+
 export type ToolDefinition = {
   name: string
   description: string
@@ -25,6 +36,7 @@ export type ToolDefinition = {
   invoke: { method: HttpMethod; path: string }
   capabilityVersion: string
   argCompletion?: ArgCompletion
+  relatedArgs?: RelatedArg[]
   /** Owning-frontend path template, e.g. `/services/{id}`. */
   viewPath?: string
 }

@@ -3,6 +3,7 @@ import {
   isToolServiceId,
   SERVICE_KEY_HEADERS,
   type ArgCompletion,
+  type RelatedArg,
   type ToolDefinition,
   type ToolRole,
   type ToolServiceId,
@@ -83,6 +84,38 @@ function parseArgCompletion(raw: unknown): ArgCompletion | undefined {
     : undefined
 }
 
+function parseRelatedArgs(raw: unknown): RelatedArg[] | undefined {
+  if (!Array.isArray(raw)) {
+    return undefined
+  }
+  const items: RelatedArg[] = []
+  for (const entry of raw) {
+    if (!isRecord(entry)) {
+      continue
+    }
+    const argKey = typeof entry.argKey === 'string' ? entry.argKey.trim() : ''
+    const displayKey = typeof entry.displayKey === 'string' ? entry.displayKey.trim() : ''
+    const getPath = typeof entry.getPath === 'string' ? entry.getPath.trim() : ''
+    const listPath = typeof entry.listPath === 'string' ? entry.listPath.trim() : ''
+    const createTool = typeof entry.createTool === 'string' ? entry.createTool.trim() : ''
+    if (!argKey || !displayKey || !getPath || !listPath || !createTool) {
+      continue
+    }
+    if (!getPath.startsWith('/api/v1/') || !listPath.startsWith('/api/v1/')) {
+      continue
+    }
+    const related: RelatedArg = { argKey, displayKey, getPath, listPath, createTool }
+    if (entry.cardinality === 'one' || entry.cardinality === 'many') {
+      related.cardinality = entry.cardinality
+    }
+    if (typeof entry.itemIdKey === 'string' && entry.itemIdKey.trim()) {
+      related.itemIdKey = entry.itemIdKey.trim()
+    }
+    items.push(related)
+  }
+  return items.length > 0 ? items : undefined
+}
+
 function parseViewPath(raw: unknown): string | undefined {
   if (typeof raw !== 'string') {
     return undefined
@@ -128,6 +161,7 @@ export function parseTool(raw: unknown): ToolDefinition | null {
     return null
   }
   const argCompletion = parseArgCompletion(raw.argCompletion)
+  const relatedArgs = parseRelatedArgs(raw.relatedArgs)
   const viewPath = parseViewPath(raw.viewPath)
   return {
     name: raw.name,
@@ -147,6 +181,7 @@ export function parseTool(raw: unknown): ToolDefinition | null {
     },
     capabilityVersion: typeof raw.capabilityVersion === 'string' ? raw.capabilityVersion : '1',
     ...(argCompletion ? { argCompletion } : {}),
+    ...(relatedArgs ? { relatedArgs } : {}),
     ...(viewPath ? { viewPath } : {}),
   }
 }

@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js'
 import { requireCompanyAdminSession } from '../middleware/requireCompanyAdminSession.js'
 import { requireCompanySession } from '../middleware/requireCompanySession.js'
 import { validateBody } from '../middleware/validateBody.js'
+import { bookPublicSessionTokenBodySchema } from '../schemas/companyEventSchemas.js'
 import {
   forkCatalogBodySchema,
   fromLibraryBodySchema,
@@ -84,6 +85,27 @@ router.delete(
 )
 
 // Membership-scoped browse (Settings → My Companies) — after /me/catalog so "me" is not a companyId
+router.get(
+  '/company/:companyId/catalog/services/:id/sessions',
+  requireAuth,
+  companyCatalogController.listServiceSessionsForCompany,
+)
+router.get(
+  '/company/:companyId/catalog/services/:id/sessions/:eventId/:occurrenceDate/tokens/next',
+  requireAuth,
+  companyCatalogController.getNextTokenForCompany,
+)
+router.get(
+  '/company/:companyId/catalog/services/:id/sessions/:eventId/:occurrenceDate/tokens/mine',
+  requireAuth,
+  companyCatalogController.getMyTokenForCompany,
+)
+router.post(
+  '/company/:companyId/catalog/services/:id/sessions/:eventId/:occurrenceDate/tokens',
+  requireAuth,
+  validateBody(bookPublicSessionTokenBodySchema),
+  companyCatalogController.bookTokenForCompany,
+)
 router.get(
   '/company/:companyId/catalog/:kind',
   requireAuth,

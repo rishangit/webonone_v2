@@ -79,12 +79,73 @@ function pascalCaseValue(value: string): string {
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`
 }
 
+function camelCaseKey(key: string): string {
+  return key.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase())
+}
+
+export function coercePropertyValue(prop: unknown, value: unknown): unknown {
+  if (value === undefined || value === null) {
+    return undefined
+  }
+  if (typeof value === 'string' && !value.trim()) {
+    return undefined
+  }
+  if (isRecord(prop) && prop.type === 'boolean') {
+    if (typeof value === 'boolean') {
+      return value
+    }
+    if (typeof value === 'string') {
+      const lower = value.trim().toLowerCase()
+      if (lower === 'true' || lower === 'yes') {
+        return true
+      }
+      if (lower === 'false' || lower === 'no') {
+        return false
+      }
+    }
+    return undefined
+  }
+  if (isRecord(prop) && Array.isArray(prop.enum) && prop.enum.length > 0) {
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      const match = prop.enum.find(
+        (item) => typeof item === 'string' && item.toLowerCase() === trimmed.toLowerCase(),
+      )
+      return match
+    }
+    return prop.enum.includes(value) ? value : undefined
+  }
+  return value
+}
+
 export function completeCreateArgs(
   tool: Pick<ToolDefinition, 'name' | 'jsonSchema' | 'argCompletion'>,
   args: Record<string, unknown>,
   role: ToolRole,
 ): Record<string, unknown> {
   const next: Record<string, unknown> = { ...args }
+  const props = schemaProperties(tool.jsonSchema)
+  for (const key of Object.keys(props)) {
+    if (next[key] !== undefined) {
+      continue
+    }
+    const camel = camelCaseKey(key)
+    if (camel !== key && next[camel] !== undefined) {
+      next[key] = next[camel]
+      delete next[camel]
+    }
+  }
+  for (const [key, prop] of Object.entries(props)) {
+    if (next[key] === undefined) {
+      continue
+    }
+    const coerced = coercePropertyValue(prop, next[key])
+    if (coerced === undefined) {
+      delete next[key]
+    } else {
+      next[key] = coerced
+    }
+  }
   const completion = tool.argCompletion
 
   if (completion?.defaults) {

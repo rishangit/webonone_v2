@@ -425,6 +425,66 @@ describe('AI auth and conversations', () => {
     }, undefined, { registry, executor })
   })
 
+  it('keeps a write pending when confirm execute fails', async () => {
+    const provider = new FakeProvider()
+    provider.toolOnce = {
+      id: 'toolcall0000000000008',
+      name: 'create_catalog_item',
+      arguments: { kind: 'products', name: 'Rice' },
+    }
+    const writeTool = {
+      name: 'create_catalog_item',
+      description: 'create',
+      jsonSchema: { type: 'object', properties: {} },
+      riskLevel: 'write' as const,
+      requiredRoles: ['company_admin' as const],
+      requiredPermissions: ['ai:catalog:write'],
+      service: 'webonone' as const,
+      auth: 'user_jwt' as const,
+      invoke: { method: 'POST' as const, path: '/api/v1/company/me/catalog/:kind/custom' },
+      capabilityVersion: '1',
+    }
+    const registry = new ToolRegistry([writeTool])
+    const executor = new HttpToolExecutor({
+      registry,
+      peers: {
+        webonone: {
+          apiBaseUrl: 'http://127.0.0.1:4010',
+          serviceApiKey: 'key',
+        },
+      },
+      timeoutMs: 1000,
+      fetchImpl: async () =>
+        new Response(JSON.stringify({ message: 'Name is invalid', code: 'VALIDATION_ERROR' }), { status: 400 }),
+    })
+    const token = identityToken({
+      sub: 'companyadmin0000000009',
+      platform_role: 'company_admin',
+      company_id: 'company00000000000009',
+    })
+    await withApi(provider, async (base) => {
+      const created = await json(`${base}/conversations`, { method: 'POST', token, body: '{}' })
+      const id = (created.body.conversation as { id: string }).id
+      const sent = await json(`${base}/conversations/${id}/messages`, {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ content: 'add product Rice' }),
+      })
+      const pending = (sent.body.assistantMessage as { pendingTool?: { toolCallId: string; status: string } })
+        .pendingTool
+      const confirmed = await json(
+        `${base}/conversations/${id}/tool-calls/${pending?.toolCallId}/confirm`,
+        { method: 'POST', token, body: '{}' },
+      )
+      assert.equal(confirmed.res.status, 400)
+      const listed = await json(`${base}/conversations/${id}/messages`, { method: 'GET', token })
+      const assistant = (listed.body.items as Array<{ pendingTool?: { status?: string; calls?: Array<{ status: string }> } }>)
+        .find((message) => message.pendingTool)
+      assert.equal(assistant?.pendingTool?.status, 'pending_confirmation')
+      assert.equal(assistant?.pendingTool?.calls?.every((call) => call.status === 'pending_confirmation'), true)
+    }, undefined, { registry, executor })
+  })
+
   it('keeps a confirmed write when the follow-up provider call fails', async () => {
     const provider = new FakeProvider()
     provider.toolOnce = {
@@ -1009,9 +1069,10 @@ describe('withAvailableToolsPrompt', () => {
       },
     ])
     assert.match(prompt, /create_data_tag/)
-    assert.match(prompt, /include every required schema property/)
+    assert.match(prompt, /include every schema property/)
     assert.match(prompt, /Copy name from the user message/)
-    assert.match(prompt, /Do not invent IDs/)
+    assert.match(prompt, /never invent IDs/)
+    assert.match(prompt, /list_\*/)
     assert.match(prompt, /Do not call a write tool until entity, action, and target are known/)
     assert.match(prompt, /numbered list of options/)
     assert.match(prompt, /Do not ask which items to create in text/)

@@ -4,6 +4,8 @@ import type {
   CatalogEntityKind,
   CatalogGalleryImage,
   CatalogPayload,
+  CatalogSessionItem,
+  CatalogSessionTokenItem,
   CompanyCatalogItem,
 } from '../types/companyCatalog.types'
 
@@ -107,4 +109,64 @@ export const companyCatalogApi = {
   async remove(kind: CatalogEntityKind, id: string) {
     await apiClient<unknown>(`/company/me/catalog/${kind}/${id}`, { method: 'DELETE' })
   },
+
+  listSessionsForCompany(
+    companyId: string,
+    serviceId: string,
+    range?: { from?: string; to?: string },
+  ) {
+    const params = new URLSearchParams()
+    if (range?.from) params.set('from', range.from)
+    if (range?.to) params.set('to', range.to)
+    const qs = params.toString()
+    return apiClient<{ items: CatalogSessionItem[] }>(
+      `/company/${encodeURIComponent(companyId)}/catalog/services/${encodeURIComponent(serviceId)}/sessions${qs ? `?${qs}` : ''}`,
+    ).then((data) => data.items ?? [])
+  },
+
+  getNextToken(companyId: string, serviceId: string, eventId: string, occurrenceDate: string) {
+    return apiClient<{ tokenNumber: number; tokenLabel: string }>(
+      memberSessionTokenPath(companyId, serviceId, eventId, occurrenceDate, 'next'),
+    )
+  },
+
+  async getMyToken(
+    companyId: string,
+    serviceId: string,
+    eventId: string,
+    occurrenceDate: string,
+  ): Promise<CatalogSessionTokenItem | null> {
+    try {
+      return await apiClient<CatalogSessionTokenItem>(
+        memberSessionTokenPath(companyId, serviceId, eventId, occurrenceDate, 'mine'),
+      )
+    } catch (err) {
+      if (err instanceof Error && err.message === 'No token for this session') return null
+      throw err
+    }
+  },
+
+  bookToken(
+    companyId: string,
+    serviceId: string,
+    eventId: string,
+    occurrenceDate: string,
+    body: { user_display_name: string; user_email?: string | null },
+  ) {
+    return apiClient<CatalogSessionTokenItem>(
+      memberSessionTokenPath(companyId, serviceId, eventId, occurrenceDate),
+      { method: 'POST', body: JSON.stringify(body) },
+    )
+  },
+}
+
+function memberSessionTokenPath(
+  companyId: string,
+  serviceId: string,
+  eventId: string,
+  occurrenceDate: string,
+  suffix?: 'next' | 'mine',
+): string {
+  const base = `/company/${encodeURIComponent(companyId)}/catalog/services/${encodeURIComponent(serviceId)}/sessions/${encodeURIComponent(eventId)}/${encodeURIComponent(occurrenceDate)}/tokens`
+  return suffix ? `${base}/${suffix}` : base
 }

@@ -329,4 +329,174 @@ describe('HttpToolExecutor', () => {
     assert.match(urls[0] ?? '', /\/api\/v1\/tags\?names=/)
     assert.deepEqual(names, ['Healthcare', 'Medicine'])
   })
+
+  it('confirms an attribute without posting a name mistaken for unit_id', async () => {
+    const createAttribute: ToolDefinition = {
+      ...createUnit,
+      name: 'create_data_attribute',
+      jsonSchema: {
+        type: 'object',
+        required: ['name', 'value_type', 'description'],
+        properties: {
+          name: { type: 'string' },
+          value_type: { type: 'string', enum: ['number', 'text'] },
+          description: { type: 'string' },
+          unit_id: { type: 'string' },
+          status: { type: 'string' },
+        },
+      },
+      relatedArgs: [
+        {
+          argKey: 'unit_id',
+          displayKey: 'unit',
+          getPath: '/api/v1/units/:id',
+          listPath: '/api/v1/units',
+          createTool: 'create_data_unit',
+        },
+      ],
+      invoke: { method: 'POST', path: '/api/v1/attributes' },
+    }
+    const bodies: string[] = []
+    const executor = new HttpToolExecutor({
+      registry: new ToolRegistry([createAttribute, createUnit]),
+      peers: { data: dataPeer },
+      timeoutMs: 1000,
+      fetchImpl: async (url, init) => {
+        bodies.push(`${String(init?.method ?? 'GET')} ${String(url)} ${String(init?.body ?? '')}`)
+        if (String(url).includes('/api/v1/units')) {
+          return new Response(JSON.stringify({ items: [] }), { status: 200 })
+        }
+        return new Response(JSON.stringify({ id: 'attr000000000000000001', name: 'LabResultGlucose' }), {
+          status: 201,
+        })
+      },
+    })
+    const confirmed = await executor.execute(
+      {
+        id: 'call-attr',
+        name: 'create_data_attribute',
+        arguments: {
+          name: 'LabResultGlucose',
+          unit_id: 'LabResultGlucose',
+          valueType: 'Number',
+          description: 'Lab Result Glucose - Blood glucose concentration from laboratory testing.',
+        },
+      },
+      {
+        role: 'super_admin',
+        permissions: ['ai:data_library:write'],
+        companyId: null,
+        accessToken: 'jwt',
+      },
+      { confirmed: true },
+    )
+    assert.equal(confirmed.ok, true)
+    const post = bodies.find((line) => line.startsWith('POST http://127.0.0.1:4015/api/v1/attributes'))
+    assert.ok(post)
+    assert.match(post ?? '', /"value_type":"number"/)
+    assert.equal(/"unit_id"/.test(post ?? ''), false)
+  })
+
+  it('creates a related unit and ignores status active', async () => {
+    const unitTool: ToolDefinition = {
+      ...createUnit,
+      jsonSchema: {
+        type: 'object',
+        required: ['name', 'symbol', 'description'],
+        properties: {
+          name: { type: 'string' },
+          symbol: { type: 'string' },
+          description: { type: 'string' },
+          status: { type: 'string', enum: ['verified', 'pending'] },
+        },
+      },
+      argCompletion: { defaults: { status: 'pending' } },
+    }
+    const createAttribute: ToolDefinition = {
+      ...unitTool,
+      name: 'create_data_attribute',
+      jsonSchema: {
+        type: 'object',
+        required: ['name', 'value_type', 'description'],
+        properties: {
+          name: { type: 'string' },
+          value_type: { type: 'string', enum: ['number', 'text'] },
+          description: { type: 'string' },
+          unit_id: { type: 'string' },
+          status: { type: 'string', enum: ['verified', 'pending'] },
+        },
+      },
+      relatedArgs: [
+        {
+          argKey: 'unit_id',
+          displayKey: 'unit',
+          getPath: '/api/v1/units/:id',
+          listPath: '/api/v1/units',
+          createTool: 'create_data_unit',
+        },
+      ],
+      invoke: { method: 'POST', path: '/api/v1/attributes' },
+    }
+    const unitId = 'unit00000000000000001'
+    let unitCreated = false
+    const posts: string[] = []
+    const executor = new HttpToolExecutor({
+      registry: new ToolRegistry([createAttribute, unitTool]),
+      peers: { data: dataPeer },
+      timeoutMs: 1000,
+      fetchImpl: async (url, init) => {
+        const method = String(init?.method ?? 'GET')
+        const href = String(url)
+        if (method === 'POST') {
+          posts.push(`${href} ${String(init?.body ?? '')}`)
+        }
+        if (href.includes('/api/v1/units') && method === 'GET') {
+          return new Response(
+            JSON.stringify({
+              items: unitCreated
+                ? [{ id: unitId, name: 'Grams per deciliter', symbol: 'g/dL', status: 'pending' }]
+                : [],
+            }),
+            { status: 200 },
+          )
+        }
+        if (href.includes('/api/v1/units') && method === 'POST') {
+          unitCreated = true
+          return new Response(JSON.stringify({ id: unitId, name: 'Grams per deciliter', symbol: 'g/dL' }), {
+            status: 201,
+          })
+        }
+        return new Response(JSON.stringify({ id: 'attr000000000000000001', name: 'Hemoglobin Level' }), {
+          status: 201,
+        })
+      },
+    })
+    const confirmed = await executor.execute(
+      {
+        id: 'call-hemoglobin',
+        name: 'create_data_attribute',
+        arguments: {
+          name: 'Hemoglobin Level',
+          value_type: 'number',
+          description: 'Concentration of hemoglobin in blood',
+          unit: { name: 'Grams per deciliter', symbol: 'g/dL', status: 'active' },
+        },
+      },
+      {
+        role: 'super_admin',
+        permissions: ['ai:data_library:write'],
+        companyId: null,
+        accessToken: 'jwt',
+      },
+      { confirmed: true },
+    )
+    assert.equal(confirmed.ok, true)
+    const unitPost = posts.find((line) => line.startsWith('http://127.0.0.1:4015/api/v1/units '))
+    const attrPost = posts.find((line) => line.startsWith('http://127.0.0.1:4015/api/v1/attributes '))
+    assert.ok(unitPost)
+    assert.ok(attrPost)
+    assert.equal(/"active"/.test(unitPost ?? ''), false)
+    assert.match(unitPost ?? '', /"status":"pending"/)
+    assert.match(attrPost ?? '', /"unit_id":"unit00000000000000001"/)
+  })
 })

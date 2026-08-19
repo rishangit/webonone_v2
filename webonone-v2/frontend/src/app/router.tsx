@@ -251,6 +251,22 @@ export function App() {
             }
           />
           <Route
+            path="settings/connected-companies/:companyId/catalog/:kind/:id"
+            element={
+              <LazyRoute>
+                <MemberCompanyCatalogDetailPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="settings/connected-companies/:companyId"
+            element={
+              <LazyRoute>
+                <MemberCompanyProfilePage />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="settings/companies/:companyId/catalog/:kind/:id"
             element={
               <LazyRoute>

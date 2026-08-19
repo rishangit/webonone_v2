@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import type { LayoutByBreakpoint, LayoutRect, WebsiteBreakpoint } from '../types'
+import type { LayoutByBreakpoint, LayoutRect, WebsiteBreakpoint, WebsiteDocumentV1 } from '../types'
 import { WEBSITE_BREAKPOINTS } from '../types'
 
 export const MIN_CONTENT_BLOCK_COL_SPAN = 4
@@ -65,6 +65,19 @@ export function rectToStyle(rect: LayoutRect): CSSProperties {
     top: `${rect.top}px`,
     height: `${rect.height}px`,
   }
+}
+
+/** Lowest pixel edge of any block — used so live header/footer do not keep empty designer canvas. */
+export function documentContentHeight(
+  document: WebsiteDocumentV1,
+  breakpoint: WebsiteBreakpoint,
+): number {
+  let bottom = 0
+  for (const block of document.blocks) {
+    const rect = resolveLayoutRect(block.layout, breakpoint)
+    bottom = Math.max(bottom, rect.top + rect.height)
+  }
+  return bottom
 }
 
 export function pointerToRect(

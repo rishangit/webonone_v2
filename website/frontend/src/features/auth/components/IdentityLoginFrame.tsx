@@ -86,6 +86,7 @@ export function IdentityLoginFrame({ returnPath = '/' }: IdentityLoginFrameProps
         ref={iframeRef}
         title={t('login')}
         src={src}
+        allow="identity-credentials-get"
         onLoad={() => setLoadError(false)}
         onError={() => setLoadError(true)}
         className={`block h-full min-h-0 w-full flex-1 border-0 bg-transparent ${loadError ? 'hidden' : ''}`}

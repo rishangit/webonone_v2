@@ -8,6 +8,7 @@ import {
   Spinner,
   Textarea,
   cn,
+  type ConfirmRelatedNode,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { aiFetch } from '@/features/ai/utils/aiClient'
@@ -31,6 +32,8 @@ type PendingToolCall = {
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
+  displayArguments?: Record<string, unknown>
+  relatedTree?: ConfirmRelatedNode[]
   status: PendingCallStatus
 }
 
@@ -40,6 +43,7 @@ type PendingTool = {
   riskLevel: string
   summary: string
   arguments?: Record<string, unknown>
+  displayArguments?: Record<string, unknown>
   status: PendingCallStatus
   calls?: PendingToolCall[]
 }
@@ -72,6 +76,7 @@ function pendingRows(pending: PendingTool): PendingToolCall[] {
       riskLevel: pending.riskLevel,
       summary: pending.summary,
       arguments: pending.arguments ?? {},
+      displayArguments: pending.displayArguments,
       status: pending.status,
     },
   ]
@@ -81,6 +86,11 @@ function callItemName(call: PendingToolCall): string {
   const name = call.arguments?.name
   return typeof name === 'string' && name.trim() ? name.trim() : 'Item'
 }
+
+const OLLAMA_HOME_URL = 'https://ollama.com'
+const OLLAMA_KEYS_URL = 'https://ollama.com/settings/keys'
+const AI_SETTINGS_PATH = '/settings/basic?tab=ai'
+const setupLinkClassName = 'text-primary underline-offset-4 hover:underline'
 
 function toolNameForCall(pending: PendingTool, toolCallId: string): string | null {
   const row = pending.calls?.find((call) => call.toolCallId === toolCallId)
@@ -196,7 +206,11 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
     }
   }
 
-  async function handleToolDecision(toolCallId: string, action: 'confirm' | 'reject') {
+  async function handleToolDecision(
+    toolCallId: string,
+    action: 'confirm' | 'reject',
+    relatedSelections?: Record<string, boolean>,
+  ) {
     if (!conversationId || !accessToken || pendingReply) return
     const pendingName = messages
       .map((message) => (message.pendingTool ? toolNameForCall(message.pendingTool, toolCallId) : null))
@@ -211,7 +225,10 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
         accessToken,
         {
           method: 'POST',
-          body: '{}',
+          body:
+            action === 'confirm'
+              ? JSON.stringify({ relatedSelections: relatedSelections ?? {} })
+              : '{}',
         },
       )
       setMessages((current) => {
@@ -287,12 +304,29 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
         <div className="space-y-3 text-sm text-muted-foreground">
           <p>{t('assistant.setupRequired')}</p>
           <ol className="list-decimal space-y-1 pl-5">
-            <li>{t('assistant.setupStep1')}</li>
-            <li>{t('assistant.setupStep2')}</li>
-            <li>{t('assistant.setupStep3')}</li>
+            <li>
+              {t('assistant.setupStep1')}{' '}
+              <a href={OLLAMA_HOME_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+                ollama.com
+              </a>
+            </li>
+            <li>
+              {t('assistant.setupStep2')}{' '}
+              <a href={OLLAMA_KEYS_URL} target="_blank" rel="noreferrer" className={setupLinkClassName}>
+                ollama.com/settings/keys
+              </a>
+            </li>
+            <li>
+              {t('assistant.setupStep3')}{' '}
+              <Link to={AI_SETTINGS_PATH} className={setupLinkClassName} onClick={onClose}>
+                {t('assistant.setupSettingsLink')}
+              </Link>
+            </li>
           </ol>
           <Button asChild variant="outline" className="w-full">
-            <Link to="/settings/basic?tab=ai">{t('assistant.openSettings')}</Link>
+            <Link to={AI_SETTINGS_PATH} onClick={onClose}>
+              {t('assistant.openSettings')}
+            </Link>
           </Button>
         </div>
       ) : (
@@ -352,9 +386,12 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
                     id: call.toolCallId,
                     status: call.status,
                     record:
-                      call.arguments && Object.keys(call.arguments).length > 0
-                        ? call.arguments
-                        : { summary: call.summary },
+                      call.displayArguments && Object.keys(call.displayArguments).length > 0
+                        ? call.displayArguments
+                        : call.arguments && Object.keys(call.arguments).length > 0
+                          ? call.arguments
+                          : { summary: call.summary },
+                    relatedTree: call.relatedTree,
                     confirmedLabel: t('assistant.itemAdded', { name: callItemName(call) }),
                     canceledLabel: t('assistant.itemCanceled', { name: callItemName(call) }),
                   }))}
@@ -362,7 +399,9 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
                   confirmLabel={t('assistant.confirm')}
                   skipLabel={t('assistant.skip')}
                   disabled={pendingReply}
-                  onConfirm={(toolCallId) => void handleToolDecision(toolCallId, 'confirm')}
+                  onConfirm={(toolCallId, selections) =>
+                    void handleToolDecision(toolCallId, 'confirm', selections)
+                  }
                   onSkip={(toolCallId) => void handleToolDecision(toolCallId, 'reject')}
                 />
               ) : null}

@@ -26,6 +26,12 @@ const HEADER_ALIASES: Record<string, string> = {
   color: 'color',
   status: 'status',
   kind: 'kind',
+  is_base: 'is_base',
+  unit: 'unit_id',
+  unit_id: 'unit_id',
+  base_unit: 'base_unit_id',
+  base_unit_id: 'base_unit_id',
+  value_type: 'value_type',
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -187,6 +193,48 @@ export function extractRecordsFromText(content: string): Record<string, unknown>
   return extractListRecords(content)
 }
 
+function schemaPropertyMap(schema: Record<string, unknown>): Record<string, unknown> {
+  return isRecord(schema.properties) ? schema.properties : {}
+}
+
+function coerceSchemaValue(prop: unknown, value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value
+  }
+  const trimmed = value.trim()
+  if (!trimmed || /^(n\/a|none|null|-)$/i.test(trimmed)) {
+    return undefined
+  }
+  if (!isRecord(prop)) {
+    return trimmed
+  }
+  if (prop.type === 'boolean') {
+    const lower = trimmed.toLowerCase()
+    if (lower === 'true' || lower === 'yes' || lower === '1') {
+      return true
+    }
+    if (lower === 'false' || lower === 'no' || lower === '0') {
+      return false
+    }
+  }
+  return trimmed
+}
+
+function coerceRecordToSchema(
+  tool: Pick<ToolDefinition, 'jsonSchema'>,
+  record: Record<string, unknown>,
+): Record<string, unknown> {
+  const props = schemaPropertyMap(tool.jsonSchema)
+  const next: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    const coerced = coerceSchemaValue(props[key], value)
+    if (coerced !== undefined) {
+      next[key] = coerced
+    }
+  }
+  return next
+}
+
 function isCreateWriteTool(tool: ToolDefinition): boolean {
   return tool.riskLevel === 'write' && tool.name.startsWith('create_')
 }
@@ -196,7 +244,7 @@ function filledArgs(
   record: Record<string, unknown>,
   role: ToolRole,
 ): Record<string, unknown> | null {
-  const args = completeCreateArgs(tool, record, role)
+  const args = completeCreateArgs(tool, coerceRecordToSchema(tool, record), role)
   if (missingRequiredArgs(tool.jsonSchema, args).length > 0) {
     return null
   }
@@ -244,11 +292,106 @@ export function listedCreateNames(calls: ToolCall[]): string[] {
   return names
 }
 
-export function remainingItemsTablePrompt(requested: number, excludeNames: string[]): string {
+export function requiredCreateKeys(tool: Pick<ToolDefinition, 'jsonSchema'>): string[] {
+  const required = Array.isArray(tool.jsonSchema.required)
+    ? tool.jsonSchema.required.filter((key): key is string => typeof key === 'string')
+    : []
+  return required.length > 0 ? required : ['name', 'description']
+}
+
+export function suggestCreateKeys(
+  tool: Pick<ToolDefinition, 'jsonSchema' | 'argCompletion' | 'relatedArgs'>,
+): string[] {
+  const props = Object.keys(schemaPropertyMap(tool.jsonSchema))
+  const allowed = tool.argCompletion?.allowedKeys
+  const keys = allowed ? props.filter((key) => allowed.includes(key)) : props
+  const ordered = [...requiredCreateKeys(tool)]
+  for (const key of keys) {
+    if (!ordered.includes(key)) {
+      ordered.push(key)
+    }
+  }
+  const related = tool.relatedArgs ?? []
+  return ordered.map((key) => related.find((item) => item.argKey === key)?.displayKey ?? key)
+}
+
+export function relatedIdKeys(tool: Pick<ToolDefinition, 'jsonSchema' | 'argCompletion' | 'relatedArgs'>): string[] {
+  return suggestCreateKeys(tool).filter((key) => /_ids?$/i.test(key))
+}
+
+function relatedItemsHint(
+  tool?: Pick<ToolDefinition, 'jsonSchema' | 'argCompletion' | 'relatedArgs'> | null,
+): string {
+  if (!tool) {
+    return ' For related records, put the related name (and symbol) instead of an opaque id. Never invent ids.'
+  }
+  const related = tool.relatedArgs ?? []
+  if (related.length > 0) {
+    const labels = related.map((item) => item.displayKey).join(', ')
+    return ` Related columns (${labels}): put the related record name (and other create properties if it is new), not an opaque id. Existing records are matched by name; missing related records nest under the parent confirm row with checkboxes.`
+  }
+  const ids = relatedIdKeys(tool)
+  if (ids.length === 0) {
+    return ' List related library records first when they help the user confirm. Never invent ids.'
+  }
+  return ` Related columns (${ids.join(', ')}): put the related record name, not an opaque id. Never invent ids.`
+}
+
+export function pickCreateToolFromHint(tools: ToolDefinition[], hint: string): ToolDefinition | null {
+  const scored = tools
+    .filter(isCreateWriteTool)
+    .map((tool) => ({ tool, score: scoreTool(tool, hint) }))
+    .filter((entry) => entry.score > 0)
+  if (scored.length === 0) {
+    return null
+  }
+  scored.sort((a, b) => b.score - a.score)
+  const best = scored[0]
+  const second = scored[1]
+  if (!best || best.score <= 0 || (second && best.score === second.score)) {
+    return null
+  }
+  return best.tool
+}
+
+export function resolveCreateTool(options: {
+  tools: ToolDefinition[]
+  existingCalls: ToolCall[]
+  userMessage: string
+}): ToolDefinition | null {
+  const preferredName = options.existingCalls.find((call) => call.name.startsWith('create_'))?.name
+  if (preferredName) {
+    const found = options.tools.find((tool) => tool.name === preferredName && isCreateWriteTool(tool))
+    if (found) {
+      return found
+    }
+  }
+  return pickCreateToolFromHint(options.tools, options.userMessage)
+}
+
+export function remainingItemsTablePrompt(
+  requested: number,
+  excludeNames: string[],
+  tool?: Pick<ToolDefinition, 'jsonSchema' | 'argCompletion' | 'relatedArgs'> | null,
+): string {
   const have = new Set(excludeNames.map((name) => name.trim()).filter(Boolean))
   const remaining = Math.max(1, requested - have.size)
+  const keys = tool ? suggestCreateKeys(tool) : ['name', 'description']
+  const columns = keys.join(' | ')
+  const pascal = tool?.argCompletion?.pascalCaseKeys?.includes('name')
+    ? ' Names start with a capital letter (PascalCase, no spaces), for example PharmacyInventory not pharmacyInventory. Description is "Spaced Name - 1-3 sentences".'
+    : ' Fill every column with a complete suggested value, including optional properties.'
   const avoid = have.size > 0 ? ` Do not reuse these names: ${[...have].join(', ')}.` : ''
-  return `The user asked for ${requested} items. Reply with a markdown table of exactly ${remaining} items. Columns: name | description. Names start with a capital letter (PascalCase, no spaces), for example PharmacyInventory not pharmacyInventory. Description is "Spaced Name - 1-3 sentences". One row per item.${avoid} Output only the table. Do not call tools.`
+  return `The user asked for ${requested} items. Reply with a markdown table of exactly ${remaining} items. Columns: ${columns}.${pascal}${relatedItemsHint(tool)} One row per item.${avoid} Output only the table. Do not call tools.`
+}
+
+export function remainingCreateCallsPrompt(
+  requested: number,
+  tool?: Pick<ToolDefinition, 'name' | 'jsonSchema' | 'argCompletion' | 'relatedArgs'> | null,
+): string {
+  const keys = tool ? suggestCreateKeys(tool).join(', ') : 'every schema property (required and optional)'
+  const toolName = tool?.name ?? 'create_*'
+  return `The user asked for ${requested} items. Call ${toolName} once per item for all ${requested} items in this turn. Include ${keys} on every call.${relatedItemsHint(tool)} Do not stop after one item.`
 }
 
 export function requestedItemCount(message: string): number | null {

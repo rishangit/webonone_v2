@@ -85,13 +85,7 @@
     "emptyAdmin": "No sessions in this event's date range."
   },
   "timing": {
-    "current": "Current",
-    "ended": "Ended",
-    "minutes": "{{count}} min",
-    "oneHour": "1 hour",
-    "hours": "{{count}} hours",
-    "oneDay": "1 day",
-    "days": "{{count}} days"
+    "ended": "Ended"
   },
   "timeMode": {
     "specificTime": "Specific time",

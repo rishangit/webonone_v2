@@ -70,4 +70,13 @@ describe('completeCreateArgs', () => {
     )
     assert.equal(args.name, 'PharmacyInventory')
   })
+
+  it('drops invalid status values then applies the pending default', () => {
+    const args = completeCreateArgs(
+      createTag,
+      { name: 'Clinic', description: 'Medical facility labels.', status: 'active' },
+      'company_admin',
+    )
+    assert.equal(args.status, 'pending')
+  })
 })
