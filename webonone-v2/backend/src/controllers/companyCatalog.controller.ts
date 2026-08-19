@@ -206,6 +206,24 @@ export async function updateCatalogGallery(req: CompanyAdminSessionRequest, res:
   }
 }
 
+export async function updateCatalogPricing(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const kind = catalogService.parseKindParam(String(req.params.kind))
+    const item = await catalogService.updateCatalogPricing(
+      session.userId,
+      session.companyId,
+      kind,
+      String(req.params.id),
+      req.body.listPrice ?? null,
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function updateServiceForm(req: CompanyAdminSessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return

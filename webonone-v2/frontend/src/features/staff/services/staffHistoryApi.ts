@@ -177,7 +177,7 @@ export async function loadStaffHistory(userId: string): Promise<UserHistoryItem[
     apiClient<{
       items: Array<{
         id: string
-        type: 'session_token' | 'event_attendee' | 'event_staff'
+        type: 'session_token' | 'event_attendee' | 'event_staff' | 'sale'
         title: string
         subtitle: string | null
         status: string | null
@@ -191,10 +191,17 @@ export async function loadStaffHistory(userId: string): Promise<UserHistoryItem[
     ...item,
     kind: 'form_submission' as const,
   }))
-  const activityItems: CompanyActivityItem[] = (activity.items ?? []).map((item) => ({
-    ...item,
-    kind: 'company_activity' as const,
-  }))
+  const activityItems: CompanyActivityItem[] = (activity.items ?? [])
+    .filter(
+      (item): item is typeof item & { type: CompanyActivityItem['type'] } =>
+        item.type === 'session_token' ||
+        item.type === 'event_attendee' ||
+        item.type === 'event_staff',
+    )
+    .map((item) => ({
+      ...item,
+      kind: 'company_activity' as const,
+    }))
 
   return mergeSessionHistory(formItems, activityItems)
 }

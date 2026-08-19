@@ -9,6 +9,7 @@ import {
   fromLibraryBodySchema,
   linkCatalogBodySchema,
   updateCatalogGalleryBodySchema,
+  updateCatalogPricingBodySchema,
   updateServiceFormBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
 
@@ -58,6 +59,12 @@ router.patch(
   requireCompanyAdminSession,
   validateBody(updateCatalogGalleryBodySchema),
   companyCatalogController.updateCatalogGallery,
+)
+router.patch(
+  '/company/me/catalog/:kind/:id/pricing',
+  requireCompanyAdminSession,
+  validateBody(updateCatalogPricingBodySchema),
+  companyCatalogController.updateCatalogPricing,
 )
 router.patch(
   '/company/me/catalog/services/:id/form',

@@ -59,6 +59,13 @@ const attributePayloadSchema = z.object({
   status: entityStatusSchema.optional(),
 })
 
+export const catalogListPriceSchema = z
+  .number()
+  .min(0)
+  .max(99_999_999.99)
+  .nullable()
+  .optional()
+
 const catalogBasePayloadSchema = z.object({
   name: z.string().trim().min(1).max(255),
   description: z.string().trim().max(5000).optional().nullable(),
@@ -133,6 +140,7 @@ function refineServiceTime(
 
 const servicePayloadSchema = catalogBasePayloadSchema
   .extend({
+    listPrice: catalogListPriceSchema,
     timeMode: z.enum(['duration', 'window']),
     durationMinutes: z.number().int().positive().optional().nullable(),
     startTime: timeOfDaySchema.optional().nullable(),
@@ -140,7 +148,9 @@ const servicePayloadSchema = catalogBasePayloadSchema
   })
   .superRefine((data, ctx) => refineServiceTime(data, ctx, { requireMode: true }))
 
-const productOrSpacePayloadSchema = catalogBasePayloadSchema
+const productOrSpacePayloadSchema = catalogBasePayloadSchema.extend({
+  listPrice: catalogListPriceSchema,
+})
 
 export const catalogPayloadByKind = {
   tags: tagPayloadSchema,
@@ -199,8 +209,13 @@ export const updateServiceFormBodySchema = z.object({
   formTemplateId: z.string().length(21).nullable(),
 })
 
+export const updateCatalogPricingBodySchema = z.object({
+  listPrice: z.number().min(0).max(99_999_999.99).nullable(),
+})
+
 export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>
 export type UpdateServiceFormBody = z.infer<typeof updateServiceFormBodySchema>
+export type UpdateCatalogPricingBody = z.infer<typeof updateCatalogPricingBodySchema>
 export type ForkCatalogBody = z.infer<typeof forkCatalogBodySchema>
 
 /** Kinds that support a company-owned media gallery on the detail page. */

@@ -2,10 +2,11 @@ import { db } from '../models/db.js'
 import type { CompanyEventRow } from '../repositories/companyEvent.repository.js'
 import type { CompanyEventSessionTokenRow } from '../repositories/companyEventSessionToken.repository.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
+import * as saleRepo from '../repositories/companySale.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 
-export type UserActivityType = 'session_token' | 'event_attendee' | 'event_staff'
+export type UserActivityType = 'session_token' | 'event_attendee' | 'event_staff' | 'sale'
 
 export type UserActivityItem = {
   id: string
@@ -164,7 +165,28 @@ export async function listUserActivity(input: {
     }))
   }
 
-  const merged = [...tokenItems, ...attendeeItems, ...staffItems].sort(
+  const sales = await saleRepo.listSalesForCustomer(input.companyId, input.userId, 200)
+  const saleItems: UserActivityItem[] = sales.map((sale) => {
+    const total = catalogRepo.parseMoney(sale.total) ?? 0
+    return {
+      id: `sale:${sale.id}`,
+      type: 'sale' as const,
+      title: sale.bill_number,
+      subtitle: `${sale.currency} ${total.toFixed(2)} · ${sale.payment_method}`,
+      status: sale.status,
+      occurredAt: toIso(sale.created_at),
+      meta: {
+        saleId: sale.id,
+        billNumber: sale.bill_number,
+        total,
+        currency: sale.currency,
+        paymentMethod: sale.payment_method,
+        status: sale.status,
+      },
+    }
+  })
+
+  const merged = [...tokenItems, ...attendeeItems, ...staffItems, ...saleItems].sort(
     (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
   )
 

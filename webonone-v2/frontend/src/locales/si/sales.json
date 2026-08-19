@@ -1,0 +1,82 @@
+{
+  "pos": {
+    "title": "විකුණුම් ස්ථානය",
+    "description": "පාරිභෝගිකයෙකු තෝරා, අයිතම එකතු කර, ගෙවීම ලබා බිල්පතක් සාදන්න.",
+    "addItem": "අයිතමය එකතු කරන්න",
+    "cartTitle": "අයිතම",
+    "customerTitle": "පාරිභෝගිකයා",
+    "noCustomer": "පාරිභෝගිකයෙකු තෝරා නැත",
+    "selectCustomer": "පාරිභෝගිකයා තෝරන්න",
+    "selectCustomerTitle": "පාරිභෝගිකයා තෝරන්න",
+    "selectCustomerDescription": "මෙම විකිණීම සඳහා සමාගමේ පාරිභෝගිකයෙකු තෝරන්න.",
+    "noCustomers": "පාරිභෝගිකයන් හමු නොවීය.",
+    "paymentTitle": "ගෙවීම",
+    "paymentMethod": "ගෙවීම් ක්‍රමය",
+    "notes": "සටහන්",
+    "total": "එකතුව {{amount}}",
+    "complete": "විකිණීම සම්පූර්ණ කරන්න",
+    "completing": "විකිණීම සම්පූර්ණ කරමින්…",
+    "completed": "විකිණීම සම්පූර්ණයි",
+    "completeFailed": "විකිණීම සම්පූර්ණ කිරීම අසාර්ථකයි",
+    "validationFailed": "විස්තර පරීක්ෂා කර නැවත උත්සාහ කරන්න",
+    "cartEmpty": "මෙම විකිණීමේ අයිතම නැත.",
+    "qty": "ප්‍රමාණය",
+    "unitLkr": "ඒකකය (LKR)",
+    "remove": "ඉවත් කරන්න",
+    "quantityAria": "{{name}} සඳහා ප්‍රමාණය",
+    "unitPriceAria": "{{name}} සඳහා ඒකක මිල",
+    "lineActionsAria": "{{name}} සඳහා ක්‍රියා"
+  },
+  "history": {
+    "title": "විකුණුම් ඉතිහාසය",
+    "description": "මෙම සමාගමේ සම්පූර්ණ සහ අවලංගු බිල්පත්.",
+    "loading": "විකුණුම් පූරණය වෙමින්…",
+    "searchPlaceholder": "බිල්පත් හෝ පාරිභෝගිකයන් සොයන්න",
+    "searchAria": "විකුණුම් සොයන්න",
+    "newSale": "නව විකිණීම",
+    "status": "තත්ත්වය",
+    "statusAll": "සියලු තත්ත්ව",
+    "from": "සිට",
+    "to": "දක්වා",
+    "applyFilters": "පෙරහන් යොදන්න",
+    "empty": "විකුණුම් නැත.",
+    "viewBill": "බිල්පත බලන්න"
+  },
+  "bill": {
+    "title": "බිල්පත",
+    "description": "විකුණුම් රිසිට්පත",
+    "loading": "බිල්පත පූරණය වෙමින්…",
+    "print": "මුද්‍රණය",
+    "void": "අවලංගු කරන්න",
+    "voidTitle": "මෙම විකිණීම අවලංගු කරන්නද?",
+    "voidDescription": "බිල්පත ඉතිහාසයේ අවලංගු ලෙස රැඳේ. මෙය අහෝසි කළ නොහැක.",
+    "voided": "විකිණීම අවලංගුයි",
+    "voidFailed": "විකිණීම අවලංගු කිරීම අසාර්ථකයි",
+    "linesTitle": "අයිතම",
+    "detailsTitle": "බිල්පත් විස්තර",
+    "item": "අයිතමය",
+    "kind": "වර්ගය",
+    "qty": "ප්‍රමාණය",
+    "unit": "ඒකකය",
+    "lineTotal": "එකතුව",
+    "total": "එකතුව {{amount}}",
+    "customer": "පාරිභෝගිකයා",
+    "email": "විද්‍යුත් තැපෑල",
+    "payment": "ගෙවීම",
+    "when": "විකුණු දිනය"
+  },
+  "status": {
+    "completed": "සම්පූර්ණයි",
+    "void": "අවලංගුයි"
+  },
+  "payment": {
+    "cash": "මුදල්",
+    "card": "කාඩ්පත",
+    "other": "වෙනත්"
+  },
+  "kinds": {
+    "product": "නිෂ්පාදනය",
+    "service": "සේවාව",
+    "space": "අවකාශය"
+  }
+}

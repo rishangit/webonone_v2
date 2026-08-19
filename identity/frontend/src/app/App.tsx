@@ -39,6 +39,11 @@ const HistoryTokenDetailPage = lazy(() =>
     default: m.HistoryTokenDetailPage,
   })),
 )
+const HistorySaleDetailPage = lazy(() =>
+  import('@/features/users/pages/HistorySaleDetailPage').then((m) => ({
+    default: m.HistorySaleDetailPage,
+  })),
+)
 const HistorySubmissionDetailPage = lazy(() =>
   import('@/features/users/pages/HistorySubmissionDetailPage').then((m) => ({
     default: m.HistorySubmissionDetailPage,
@@ -149,6 +154,14 @@ export function App() {
               element={
                 <LazyRoute>
                   <HistoryTokenDetailPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/users/:id/history/sales/:saleId"
+              element={
+                <LazyRoute>
+                  <HistorySaleDetailPage />
                 </LazyRoute>
               }
             />

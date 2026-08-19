@@ -13,6 +13,7 @@ import {
 } from '@webonone/ui-kit'
 import {
   loadCustomerHistory,
+  resolveSaleId,
   resolveSessionTokenId,
   type UserHistoryItem,
 } from '@/features/users/services/userHistoryApi'
@@ -45,6 +46,7 @@ function historySubtitle(item: UserHistoryItem, t: (k: string, o?: Record<string
 
 function historyBadge(item: UserHistoryItem, t: (k: string) => string): string {
   if (item.kind === 'form_submission') return t('history.badgeForm')
+  if (item.kind === 'company_activity' && item.type === 'sale') return t('history.badgeSale')
   return t('history.badgeSession')
 }
 
@@ -88,6 +90,11 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
     if (item.type === 'session_token') {
       const tokenId = resolveSessionTokenId(item)
       if (tokenId) navigate(`/users/${user.id}/history/tokens/${tokenId}`)
+      return
+    }
+    if (item.type === 'sale') {
+      const saleId = resolveSaleId(item)
+      if (saleId) navigate(`/users/${user.id}/history/sales/${saleId}`)
     }
   }
 
@@ -117,7 +124,8 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
             const when = item.kind === 'form_submission' ? item.createdAt : item.occurredAt
             const clickable =
               item.kind === 'form_submission' ||
-              (item.kind === 'company_activity' && item.type === 'session_token')
+              (item.kind === 'company_activity' &&
+                (item.type === 'session_token' || item.type === 'sale'))
             return (
               <ItemListItem key={item.id}>
                 <ItemListContent>

@@ -134,6 +134,17 @@ const companyCatalogSlice = createSlice({
       state.mutateStatus = 'saving'
       state.mutateError = null
     },
+    updatePricingRequested(
+      state,
+      _action: PayloadAction<{
+        kind: CatalogGalleryKind
+        id: string
+        listPrice: number | null
+      }>,
+    ) {
+      state.mutateStatus = 'saving'
+      state.mutateError = null
+    },
     deleteRequested(state, _action: PayloadAction<{ kind: CatalogEntityKind; id: string }>) {
       state.mutateStatus = 'saving'
       state.mutateError = null
@@ -305,6 +316,28 @@ const updateGalleryEpic: CatalogEpic = (action$) =>
     }),
   )
 
+const updatePricingEpic: CatalogEpic = (action$) =>
+  action$.pipe(
+    ofType(companyCatalogActions.updatePricingRequested.type),
+    exhaustMap((action: ReturnType<typeof companyCatalogActions.updatePricingRequested>) => {
+      const { kind, id, listPrice } = action.payload
+      return from(companyCatalogApi.updatePricing(kind, id, listPrice)).pipe(
+        mergeMap((item) =>
+          from(hydrateOne(kind, item)).pipe(
+            mergeMap((hydrated) =>
+              of(
+                companyCatalogActions.mutateSucceeded(item),
+                companyCatalogActions.detailSucceeded(hydrated),
+                companyCatalogActions.listRequested({ kind }),
+              ),
+            ),
+          ),
+        ),
+        catchError((err: Error) => of(companyCatalogActions.mutateFailed(err.message))),
+      )
+    }),
+  )
+
 const deleteEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.deleteRequested.type),
@@ -330,5 +363,6 @@ export const companyCatalogEpics = combineEpics(
   forkEpic,
   updateEpic,
   updateGalleryEpic,
+  updatePricingEpic,
   deleteEpic,
 )

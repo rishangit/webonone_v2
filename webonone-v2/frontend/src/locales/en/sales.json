@@ -1,0 +1,82 @@
+{
+  "pos": {
+    "title": "Point of Sale",
+    "description": "Assign a customer, add catalog items, take payment, and generate a bill.",
+    "addItem": "Add item",
+    "cartTitle": "Items",
+    "customerTitle": "Customer",
+    "noCustomer": "No customer selected",
+    "selectCustomer": "Select customer",
+    "selectCustomerTitle": "Select customer",
+    "selectCustomerDescription": "Choose a company customer for this sale.",
+    "noCustomers": "No customers found.",
+    "paymentTitle": "Payment",
+    "paymentMethod": "Payment method",
+    "notes": "Notes",
+    "total": "Total {{amount}}",
+    "complete": "Complete sale",
+    "completing": "Completing sale…",
+    "completed": "Sale completed",
+    "completeFailed": "Failed to complete sale",
+    "validationFailed": "Check the sale details and try again",
+    "cartEmpty": "No items in this sale yet.",
+    "qty": "Qty",
+    "unitLkr": "Unit (LKR)",
+    "remove": "Remove",
+    "quantityAria": "Quantity for {{name}}",
+    "unitPriceAria": "Unit price for {{name}}",
+    "lineActionsAria": "Actions for {{name}}"
+  },
+  "history": {
+    "title": "Sales history",
+    "description": "Completed and voided bills for this company.",
+    "loading": "Loading sales…",
+    "searchPlaceholder": "Search bills or customers",
+    "searchAria": "Search sales",
+    "newSale": "New sale",
+    "status": "Status",
+    "statusAll": "All statuses",
+    "from": "From",
+    "to": "To",
+    "applyFilters": "Apply filters",
+    "empty": "No sales yet.",
+    "viewBill": "View bill"
+  },
+  "bill": {
+    "title": "Bill",
+    "description": "Sale receipt",
+    "loading": "Loading bill…",
+    "print": "Print",
+    "void": "Void",
+    "voidTitle": "Void this sale?",
+    "voidDescription": "The bill stays in history as voided. This cannot be undone.",
+    "voided": "Sale voided",
+    "voidFailed": "Failed to void sale",
+    "linesTitle": "Items",
+    "detailsTitle": "Bill details",
+    "item": "Item",
+    "kind": "Kind",
+    "qty": "Qty",
+    "unit": "Unit",
+    "lineTotal": "Total",
+    "total": "Total {{amount}}",
+    "customer": "Customer",
+    "email": "Email",
+    "payment": "Payment",
+    "when": "Sold"
+  },
+  "status": {
+    "completed": "Completed",
+    "void": "Void"
+  },
+  "payment": {
+    "cash": "Cash",
+    "card": "Card",
+    "other": "Other"
+  },
+  "kinds": {
+    "product": "Product",
+    "service": "Service",
+    "space": "Space"
+  }
+}

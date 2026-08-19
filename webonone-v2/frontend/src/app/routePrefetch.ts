@@ -16,6 +16,8 @@ const ROUTE_PREFETCHERS: Record<string, () => Promise<unknown>> = {
   '/calendar/events': () => import('@/features/calendar/pages/EventsPage'),
   '/companies': () => import('@/features/settings/basic/pages/CompaniesPage'),
   '/staff': () => import('@/features/staff/pages/StaffPage'),
+  '/sales': () => import('@/features/sales/pages/SalesHistoryPage'),
+  '/sales/pos': () => import('@/features/sales/pages/PosPage'),
   '/settings/companies': () => import('@/features/settings/companies/pages/AllCompaniesPage'),
   '/settings/basic': () => import('@/features/settings/basic/pages/BasicSettingsPage'),
   '/settings/system-theme': () =>

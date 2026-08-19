@@ -82,6 +82,17 @@ export const companyCatalogApi = {
     })
   },
 
+  updatePricing(
+    kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
+    id: string,
+    listPrice: number | null,
+  ) {
+    return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/pricing`, {
+      method: 'PATCH',
+      body: JSON.stringify({ listPrice }),
+    })
+  },
+
   updateServiceForm(id: string, formTemplateId: string | null) {
     return apiClient<CompanyCatalogItem>(`/company/me/catalog/services/${id}/form`, {
       method: 'PATCH',
