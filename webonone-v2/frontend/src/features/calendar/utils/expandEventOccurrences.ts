@@ -76,6 +76,11 @@ function toOccurrence(event: CompanyEvent, occurrenceDate: string): CompanyEvent
     start: `${occurrenceDate}T${event.startTime}:00`,
     end: `${occurrenceDate}T${event.endTime}:00`,
     title: event.serviceName,
+    runStatus: 'scheduled',
+    scheduleChanged: false,
+    scheduleChangeKind: null,
+    originalStartTime: event.startTime,
+    originalEndTime: event.endTime,
   }
 }
 

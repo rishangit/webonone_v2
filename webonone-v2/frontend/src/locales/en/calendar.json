@@ -4,6 +4,8 @@
     "descriptionMember": "View your bookings and session tokens by day, week, or month.",
     "descriptionAdmin": "View your company schedule by day, week, or month."
   },
+  "staffLabel": "{{name}}",
+  "attendeeLabel": "{{name}}",
   "events": {
     "title": "Events",
     "descriptionMember": "Your bookings and session tokens.",
@@ -81,11 +83,23 @@
     }
   },
   "sessionsList": {
+    "upcomingTitle": "Upcoming sessions",
+    "upcomingDescription": "Sessions that are current or still to come",
+    "pastTitle": "Past sessions",
+    "pastDescription": "Sessions that have already ended",
     "emptyMember": "No sessions with a token for your account.",
-    "emptyAdmin": "No sessions in this event's date range."
+    "emptyAdmin": "No sessions in this event's date range.",
+    "emptyPast": "No past sessions yet."
   },
   "timing": {
     "ended": "Ended"
+  },
+  "sessionStatus": {
+    "scheduled": "Not started",
+    "started": "Started",
+    "ended": "Session ended",
+    "delayed": "Delayed",
+    "early": "Early"
   },
   "timeMode": {
     "specificTime": "Specific time",
@@ -221,6 +235,7 @@
     "description": "Session details",
     "subtitle": "{{serviceName}} session",
     "loading": "Loading session…",
+    "wasTime": "Was {{start}}–{{end}}",
     "status": {
       "scheduled": "Scheduled",
       "started": "Started",
@@ -258,6 +273,28 @@
       "next": "Next",
       "inProgress": "Session is in progress for the assigned attendee.",
       "hasEnded": "This session has ended."
+    },
+    "changeSession": {
+      "title": "Change session",
+      "description": "Delay this session’s start and optionally notify attendees",
+      "button": "Change session",
+      "onlyScheduled": "Schedule can only be changed while the session is scheduled.",
+      "dialogDescription": "Delay this session’s start time and optionally notify related members.",
+      "currentTime": "Current time",
+      "delayHours": "Delay hours",
+      "delayMinutes": "Delay minutes",
+      "newTime": "New time",
+      "minDelay": "Enter a delay of at least 1 minute.",
+      "pastMidnight": "Delay would move the session past midnight.",
+      "notifyOne": "Notify {{count}} related member about the new schedule.",
+      "notifyMany": "Notify {{count}} related members about the new schedule.",
+      "notifyNone": "No related members to notify yet.",
+      "sendEmail": "Send email",
+      "sendSms": "Send SMS",
+      "save": "Save",
+      "saving": "Saving…",
+      "toastSuccess": "Session time updated",
+      "toastFailed": "Failed to change session"
     },
     "fields": {
       "date": "Date",

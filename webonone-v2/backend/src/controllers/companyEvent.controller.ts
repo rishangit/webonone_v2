@@ -318,3 +318,22 @@ export async function endSession(req: CompanySessionRequest, res: Response) {
     handleServiceError(err, res)
   }
 }
+
+export async function changeSessionSchedule(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = parseOccurrenceDate(req, res)
+  if (!occurrenceDate) return
+  try {
+    const result = await eventService.changeSessionSchedule(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+      { userId: session.userId, role: session.role },
+      req.body,
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}

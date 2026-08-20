@@ -71,6 +71,7 @@ const SESSION_COMPANY_PLATFORM_SLUGS = [
   'session_started',
   'session_ended',
   'session_token_called',
+  'session_schedule_changed',
   'appointment_booked',
   'appointment_reminder_24h',
 ] as const

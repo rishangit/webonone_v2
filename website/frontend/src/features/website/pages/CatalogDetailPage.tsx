@@ -23,6 +23,7 @@ import {
   isCatalogKind,
   type CatalogDetailItem,
   type CatalogSessionItem,
+  type SessionTokenItem,
 } from '@/features/catalog/types/catalog.types'
 import { CatalogSearchMapView } from '@/features/website/components/CatalogSearchMapView'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
@@ -116,6 +117,7 @@ export function CatalogDetailPage() {
   const [sessions, setSessions] = useState<CatalogSessionItem[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionsError, setSessionsError] = useState<string | null>(null)
+  const [tokensBySessionKey, setTokensBySessionKey] = useState<Record<string, SessionTokenItem>>({})
   const [bookingTarget, setBookingTarget] = useState<BookingTarget | null>(null)
   const [loginRequiredOpen, setLoginRequiredOpen] = useState(false)
 
@@ -200,11 +202,13 @@ export function CatalogDetailPage() {
       .then((items) => {
         if (cancelled) return
         setSessions(items)
+        setTokensBySessionKey({})
         setSessionsLoading(false)
       })
       .catch((err: Error) => {
         if (cancelled) return
         setSessions([])
+        setTokensBySessionKey({})
         setSessionsError(err.message || t('failedLoadSessions'))
         setSessionsLoading(false)
       })
@@ -213,6 +217,42 @@ export function CatalogDetailPage() {
       cancelled = true
     }
   }, [item])
+
+  useEffect(() => {
+    if (!item || !isAuthenticated || !accessToken || sessions.length === 0) {
+      setTokensBySessionKey({})
+      return
+    }
+
+    let cancelled = false
+    void Promise.all(
+      sessions.map(async (session) => {
+        const token = await catalogApi.getMyToken(
+          item.id,
+          session.eventId,
+          session.occurrenceDate,
+          accessToken,
+        )
+        return { session, token }
+      }),
+    )
+      .then((results) => {
+        if (cancelled) return
+        const next: Record<string, SessionTokenItem> = {}
+        for (const { session, token } of results) {
+          if (!token) continue
+          next[sessionKey(session.eventId, session.occurrenceDate)] = token
+        }
+        setTokensBySessionKey(next)
+      })
+      .catch(() => {
+        if (cancelled) return
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [item, isAuthenticated, accessToken, sessions])
 
   function handleBack() {
     if (window.history.length > 1) {
@@ -257,6 +297,12 @@ export function CatalogDetailPage() {
           occurrenceDate={bookingTarget.occurrenceDate}
           accessToken={accessToken}
           user={user}
+          onIssued={(token) => {
+            setTokensBySessionKey((prev) => ({
+              ...prev,
+              [sessionKey(token.eventId, token.occurrenceDate)]: token,
+            }))
+          }}
           onOpenChange={(open) => {
             if (!open) setBookingTarget(null)
           }}
@@ -501,7 +547,10 @@ export function CatalogDetailPage() {
                           <ItemListEmpty>{t('noSessions')}</ItemListEmpty>
                         ) : (
                           <ItemList>
-                            {sessions.map((session) => (
+                            {sessions.map((session) => {
+                              const token =
+                                tokensBySessionKey[sessionKey(session.eventId, session.occurrenceDate)]
+                              return (
                               <ItemListItem
                                 key={`${session.eventId}-${session.occurrenceDate}`}
                               >
@@ -519,6 +568,16 @@ export function CatalogDetailPage() {
                                           : ''}
                                       </p>
                                     </div>
+                                    {token ? (
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-primary">
+                                          {t('alreadyBooked')}
+                                        </span>
+                                        <span className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-sm font-bold tracking-wide text-primary shadow-sm">
+                                          {token.tokenLabel}
+                                        </span>
+                                      </div>
+                                    ) : null}
                                     <Button
                                       type="button"
                                       size="sm"
@@ -531,7 +590,8 @@ export function CatalogDetailPage() {
                                   </div>
                                 </ItemListContent>
                               </ItemListItem>
-                            ))}
+                              )
+                            })}
                           </ItemList>
                         )}
                       </CardContent>
@@ -545,4 +605,8 @@ export function CatalogDetailPage() {
       </div>
     </div>
   )
+}
+
+function sessionKey(eventId: string, occurrenceDate: string): string {
+  return `${eventId}:${occurrenceDate}`
 }

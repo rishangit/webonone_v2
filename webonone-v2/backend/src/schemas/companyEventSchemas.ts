@@ -103,7 +103,33 @@ export const bookPublicSessionTokenBodySchema = z.object({
   user_email: z.string().trim().email().max(255).nullable().optional(),
 })
 
+export const changeSessionScheduleBodySchema = z
+  .object({
+    delayHours: z.number().int().min(0).max(24),
+    delayMinutes: z.number().int().min(0).max(59),
+    sendEmail: z.boolean(),
+    sendSms: z.boolean(),
+  })
+  .superRefine((body, ctx) => {
+    const total = body.delayHours * 60 + body.delayMinutes
+    if (total < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Delay must be at least 1 minute',
+        path: ['delayMinutes'],
+      })
+    }
+    if (total > 24 * 60) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Delay cannot exceed 24 hours',
+        path: ['delayHours'],
+      })
+    }
+  })
+
 export type CreateCompanyEventBody = z.infer<typeof createCompanyEventBodySchema>
 export type UpdateCompanyEventBody = z.infer<typeof updateCompanyEventBodySchema>
 export type CreateSessionTokenBody = z.infer<typeof createSessionTokenBodySchema>
 export type BookPublicSessionTokenBody = z.infer<typeof bookPublicSessionTokenBodySchema>
+export type ChangeSessionScheduleBody = z.infer<typeof changeSessionScheduleBodySchema>

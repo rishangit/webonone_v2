@@ -73,6 +73,10 @@ export type CatalogSessionItem = {
   companyId: string
   spaceId: string | null
   spaceName: string | null
+  scheduleChanged?: boolean
+  scheduleChangeKind?: 'delayed' | 'early' | null
+  originalStartTime?: string
+  originalEndTime?: string
 }
 
 export type CatalogSessionTokenItem = {

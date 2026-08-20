@@ -82,6 +82,7 @@ const SESSION_COMPANY_PLATFORM_SLUGS = [
   'session_started',
   'session_ended',
   'session_token_called',
+  'session_schedule_changed',
   'appointment_booked',
   'appointment_reminder_24h',
 ] as const
@@ -99,6 +100,15 @@ export async function listTemplates(filters: {
   role?: string
 }): Promise<TemplateDto[]> {
   if (filters.role === 'company_admin' && filters.companyId) {
+    // Existing companies may lack a company-scoped welcome; provision so admins
+    // see company-branded copy instead of platform "Welcome to WebOnOne".
+    const hasCompanyWelcome = await db<EmailTemplateRow>('email_templates')
+      .where({ slug: 'welcome', scope: 'company', company_id: filters.companyId })
+      .first()
+    if (!hasCompanyWelcome) {
+      await ensureWelcomeTemplate(filters.companyId)
+    }
+
     const companyRows = await db<EmailTemplateRow>('email_templates')
       .where({ scope: 'company', company_id: filters.companyId })
       .orderBy('updated_at', 'desc')

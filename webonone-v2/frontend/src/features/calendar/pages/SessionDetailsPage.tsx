@@ -22,6 +22,8 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { IssueTokenDialog } from '@/features/calendar/components/IssueTokenDialog'
+import { ChangeSessionDialog } from '@/features/calendar/components/ChangeSessionDialog'
+import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
 import { formatTimeModeLabel } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions, sessionTokensActions } from '@/features/calendar/store'
 import type {
@@ -38,11 +40,13 @@ import {
 import { designFormsApi } from '@/features/design/services/designFormsApi'
 import {
   canAccessCompanySession,
+  canChangeSession,
   isPersonalCalendarSession,
 } from '@/features/session/utils/canAccessCompanySession'
 import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOccurrences'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
+import { staffApi } from '@/features/staff/services/staffApi'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 
 function DetailField({ label, value }: { label: string; value: string }) {
@@ -106,18 +110,23 @@ export function SessionDetailsPage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
+  const authUser = useAppSelector((s) => s.auth.user)
   const detail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
   const tokens = useAppSelector((s) => s.sessionTokens.items)
   const queueSnapshot = useAppSelector((s) => s.sessionTokens.queue)
   const run = useAppSelector((s) => s.sessionTokens.run)
+  const sessionStartTime = useAppSelector((s) => s.sessionTokens.sessionStartTime)
+  const sessionEndTime = useAppSelector((s) => s.sessionTokens.sessionEndTime)
   const tokensStatus = useAppSelector((s) => s.sessionTokens.listStatus)
   const tokensError = useAppSelector((s) => s.sessionTokens.listError)
   const actionStatus = useAppSelector((s) => s.sessionTokens.actionStatus)
   const actionError = useAppSelector((s) => s.sessionTokens.actionError)
   const lastAction = useAppSelector((s) => s.sessionTokens.lastAction)
   const [issueOpen, setIssueOpen] = useState(false)
+  const [changeOpen, setChangeOpen] = useState(false)
+  const [isAssignedStaff, setIsAssignedStaff] = useState(false)
   const [submissionByTokenId, setSubmissionByTokenId] = useState<Record<string, string>>({})
   const [attendeeSubmissionId, setAttendeeSubmissionId] = useState<string | null>(null)
   const lastActionStatus = useRef(actionStatus)
@@ -201,6 +210,25 @@ export function SessionDetailsPage() {
       cancelled = true
     }
   }, [detail?.attendeeUserId, detail?.formTemplateId, eventId, occurrenceDate])
+
+  useEffect(() => {
+    if (!detail?.staffId || !authUser?.id || activeRole !== 'member' || !activeCompanyId) {
+      setIsAssignedStaff(false)
+      return
+    }
+    let cancelled = false
+    staffApi
+      .get(detail.staffId)
+      .then((staff) => {
+        if (!cancelled) setIsAssignedStaff(staff.userId === authUser.id)
+      })
+      .catch(() => {
+        if (!cancelled) setIsAssignedStaff(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeCompanyId, activeRole, authUser?.id, detail?.staffId])
 
   useEffect(() => {
     if (lastActionStatus.current === 'saving' && actionStatus === 'idle' && !actionError) {
@@ -347,6 +375,29 @@ export function SessionDetailsPage() {
   const showAttendee =
     isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
   const canOperateSession = canAccessCompanySession(activeRole, activeCompanyId)
+  const canEditSessionSchedule =
+    canChangeSession(activeRole, activeCompanyId, isAssignedStaff) && runStatus === 'scheduled'
+  const effectiveStartTime = sessionStartTime ?? session.startTime
+  const effectiveEndTime = sessionEndTime ?? session.endTime
+  const scheduleChanged = Boolean(
+    run?.scheduledStartTime && run?.scheduledEndTime,
+  )
+  const scheduleChangeKind = scheduleChanged
+    ? (() => {
+        const [oh, om] = detail.startTime.split(':').map(Number)
+        const [nh, nm] = effectiveStartTime.split(':').map(Number)
+        const delta = (nh ?? 0) * 60 + (nm ?? 0) - ((oh ?? 0) * 60 + (om ?? 0))
+        if (delta > 0) return 'delayed' as const
+        if (delta < 0) return 'early' as const
+        return null
+      })()
+    : null
+  const relatedMemberCount =
+    tokens.length > 0
+      ? tokens.length
+      : detail.attendeeUserId
+        ? 1
+        : 0
   const titleDate = formatOccurrenceDate(session.occurrenceDate)
   const formTemplateId = detail.formTemplateId
   const serviceId = detail.serviceId
@@ -750,7 +801,13 @@ export function SessionDetailsPage() {
               <DetailField label="Weekday" value={weekdayLabel(session.occurrenceDate)} />
               <DetailField
                 label="Time"
-                value={`${session.startTime}–${session.endTime}`}
+                value={`${effectiveStartTime}–${effectiveEndTime}`}
+              />
+              <SessionScheduleChangeMeta
+                scheduleChanged={scheduleChanged}
+                scheduleChangeKind={scheduleChangeKind}
+                originalStartTime={detail.startTime}
+                originalEndTime={detail.endTime}
               />
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">Status</p>
@@ -760,6 +817,33 @@ export function SessionDetailsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {canChangeSession(activeRole, activeCompanyId, isAssignedStaff) ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Change session</CardTitle>
+                <CardDescription>
+                  Delay this session’s start and optionally notify attendees
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {canEditSessionSchedule ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setChangeOpen(true)}
+                  >
+                    Change session
+                  </Button>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Schedule can only be changed while the session is scheduled.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>
@@ -803,6 +887,20 @@ export function SessionDetailsPage() {
           eventId={eventId}
           occurrenceDate={occurrenceDate}
           onOpenChange={setIssueOpen}
+        />
+      ) : null}
+
+      {canChangeSession(activeRole, activeCompanyId, isAssignedStaff) &&
+      eventId &&
+      occurrenceDate ? (
+        <ChangeSessionDialog
+          open={changeOpen}
+          eventId={eventId}
+          occurrenceDate={occurrenceDate}
+          currentStartTime={effectiveStartTime}
+          currentEndTime={effectiveEndTime}
+          relatedMemberCount={relatedMemberCount}
+          onOpenChange={setChangeOpen}
         />
       ) : null}
     </FeaturePage>

@@ -51,7 +51,7 @@ export function RemainingTimeDemo() {
     <DemoSection
       id="remaining-time"
       title="Remaining time"
-      description="Compact remaining duration on the right of a list row: 12min, 3hrs 15 min, 2days 5hrs, 5days. In-progress rows show time until end; ended rows show Ended."
+      description="Colored badge on the right of a list row: amber for upcoming (12min, 3hrs 15 min), emerald for in-progress (time until end), muted for ended. Formats: 12min, 3hrs 15 min, 2days 5hrs, 5days."
     >
       <ItemList>
         {SAMPLES.map((sample) => (

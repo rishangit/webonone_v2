@@ -6,6 +6,7 @@ import { validateBody } from '../middleware/validateBody.js'
 import {
   createCompanyEventBodySchema,
   createSessionTokenBodySchema,
+  changeSessionScheduleBodySchema,
   updateCompanyEventBodySchema,
 } from '../schemas/companyEventSchemas.js'
 
@@ -59,6 +60,12 @@ router.post(
   '/company/events/:eventId/sessions/:occurrenceDate/end',
   requireCompanySession,
   companyEventController.endSession,
+)
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/change',
+  requireCompanySession,
+  validateBody(changeSessionScheduleBodySchema),
+  companyEventController.changeSessionSchedule,
 )
 router.get(
   '/company/events/:eventId/sessions/:occurrenceDate/tokens',

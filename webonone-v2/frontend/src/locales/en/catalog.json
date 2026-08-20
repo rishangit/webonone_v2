@@ -105,6 +105,7 @@
       "failedIssueToken": "Failed to issue token",
       "failedLoadToken": "Failed to load token info",
       "alreadyHaveToken": "You already have a token for this session.",
+      "alreadyBooked": "Already booked",
       "confirmBookToken": "Confirm to book the next queue token for your account.",
       "yourToken": "Your token",
       "tokenNumber": "Token number",

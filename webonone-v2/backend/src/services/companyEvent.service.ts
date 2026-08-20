@@ -18,6 +18,7 @@ import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import {
   notifySessionEnded,
+  notifySessionScheduleChanged,
   notifySessionStarted,
   notifySessionTokenCalled,
   notifySessionTokenIssued,
@@ -76,15 +77,27 @@ export type CompanyEventDto = {
   tokenOccurrenceDates?: string[]
 }
 
+export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
+export type SessionRunStatus = 'scheduled' | 'started' | 'ended'
+
+export type SessionScheduleChangeKind = 'delayed' | 'early'
+
 export type CompanyEventOccurrenceDto = CompanyEventDto & {
   occurrenceDate: string
   start: string
   end: string
   title: string
+  /** Session run status; `scheduled` when no run row exists yet. */
+  runStatus: SessionRunStatus
+  /** True when this occurrence has a delayed/overridden start/end on the session run. */
+  scheduleChanged: boolean
+  /** Relative to series start time when scheduleChanged. */
+  scheduleChangeKind: SessionScheduleChangeKind | null
+  /** Series start before occurrence override (same as startTime when unchanged). */
+  originalStartTime: string
+  /** Series end before occurrence override (same as endTime when unchanged). */
+  originalEndTime: string
 }
-
-export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
-export type SessionRunStatus = 'scheduled' | 'started' | 'ended'
 
 export type SessionTokenDto = {
   id: string
@@ -111,6 +124,9 @@ export type SessionRunDto = {
   startedAt: string | null
   startedByUserId: string | null
   endedAt: string | null
+  /** Occurrence override; null means use parent event times. */
+  scheduledStartTime: string | null
+  scheduledEndTime: string | null
   createdAt: string
   updatedAt: string
 }
@@ -118,6 +134,10 @@ export type SessionRunDto = {
 export type SessionDetailDto = {
   run: SessionRunDto
   items: SessionTokenDto[]
+  /** Effective start for this occurrence (override ?? event). */
+  sessionStartTime: string
+  /** Effective end for this occurrence (override ?? event). */
+  sessionEndTime: string
   /** Present on personal (/me) session views — queue labels from the full company token list. */
   queue?: {
     prevTokenLabel: string | null
@@ -725,7 +745,79 @@ function toOccurrence(event: CompanyEventDto, occurrenceDate: string): CompanyEv
     start: `${occurrenceDate}T${event.startTime}:00`,
     end: `${occurrenceDate}T${event.endTime}:00`,
     title: event.serviceName,
+    runStatus: 'scheduled',
+    scheduleChanged: false,
+    scheduleChangeKind: null,
+    originalStartTime: event.startTime,
+    originalEndTime: event.endTime,
   }
+}
+
+function scheduleChangeKindFor(
+  originalStart: string,
+  newStart: string,
+): SessionScheduleChangeKind | null {
+  const delta = timeToMinutes(newStart) - timeToMinutes(originalStart)
+  if (delta > 0) return 'delayed'
+  if (delta < 0) return 'early'
+  return null
+}
+
+function applyOccurrenceScheduleOverride(
+  item: CompanyEventOccurrenceDto,
+  run: sessionRunRepo.CompanyEventSessionRunRow | undefined,
+): CompanyEventOccurrenceDto {
+  const originalStartTime = item.originalStartTime || item.startTime
+  const originalEndTime = item.originalEndTime || item.endTime
+
+  if (!run) {
+    return {
+      ...item,
+      runStatus: 'scheduled',
+      scheduleChanged: false,
+      scheduleChangeKind: null,
+      originalStartTime,
+      originalEndTime,
+    }
+  }
+
+  const scheduledStart = normalizeTime(run.scheduled_start_time)
+  const scheduledEnd = normalizeTime(run.scheduled_end_time)
+  const scheduleChanged = Boolean(scheduledStart && scheduledEnd)
+  const startTime = scheduleChanged ? scheduledStart! : originalStartTime
+  const endTime = scheduleChanged ? scheduledEnd! : originalEndTime
+  const scheduleChangeKind = scheduleChanged
+    ? scheduleChangeKindFor(originalStartTime, startTime)
+    : null
+
+  return {
+    ...item,
+    startTime,
+    endTime,
+    start: `${item.occurrenceDate}T${startTime}:00`,
+    end: `${item.occurrenceDate}T${endTime}:00`,
+    runStatus: run.status,
+    scheduleChanged,
+    scheduleChangeKind,
+    originalStartTime,
+    originalEndTime,
+  }
+}
+
+async function attachOccurrenceRunStatuses(
+  occurrences: CompanyEventOccurrenceDto[],
+  from: string,
+  to: string,
+): Promise<CompanyEventOccurrenceDto[]> {
+  if (occurrences.length === 0) return occurrences
+  const eventIds = [...new Set(occurrences.map((item) => item.id))]
+  const runs = await sessionRunRepo.listRunsForEventsInRange(eventIds, from, to)
+  const runByKey = new Map(
+    runs.map((row) => [`${row.event_id}:${toDateOnly(row.occurrence_date)}`, row]),
+  )
+  return occurrences.map((item) =>
+    applyOccurrenceScheduleOverride(item, runByKey.get(`${item.id}:${item.occurrenceDate}`)),
+  )
 }
 
 export type CatalogSessionItemDto = {
@@ -737,6 +829,10 @@ export type CatalogSessionItemDto = {
   companyId: string
   spaceId: string | null
   spaceName: string | null
+  scheduleChanged: boolean
+  scheduleChangeKind: SessionScheduleChangeKind | null
+  originalStartTime: string
+  originalEndTime: string
 }
 
 export function parseSessionDateRange(
@@ -757,22 +853,26 @@ export async function buildWindowSessionItems(
   to: string,
 ): Promise<CatalogSessionItemDto[]> {
   const eventRows = await eventRepo.listWindowEventsByService(companyId, serviceId)
-  const items: CatalogSessionItemDto[] = []
+  const occurrences: CompanyEventOccurrenceDto[] = []
   for (const eventRow of eventRows) {
     const event = mapEventRow(eventRow)
-    for (const occurrence of expandOccurrences(event, from, to)) {
-      items.push({
-        eventId: occurrence.id,
-        occurrenceDate: occurrence.occurrenceDate,
-        startTime: occurrence.startTime,
-        endTime: occurrence.endTime,
-        serviceName: occurrence.serviceName,
-        companyId: occurrence.companyId,
-        spaceId: occurrence.spaceId,
-        spaceName: occurrence.spaceName,
-      })
-    }
+    occurrences.push(...expandOccurrences(event, from, to))
   }
+  const withOverrides = await attachOccurrenceRunStatuses(occurrences, from, to)
+  const items: CatalogSessionItemDto[] = withOverrides.map((occurrence) => ({
+    eventId: occurrence.id,
+    occurrenceDate: occurrence.occurrenceDate,
+    startTime: occurrence.startTime,
+    endTime: occurrence.endTime,
+    serviceName: occurrence.serviceName,
+    companyId: occurrence.companyId,
+    spaceId: occurrence.spaceId,
+    spaceName: occurrence.spaceName,
+    scheduleChanged: occurrence.scheduleChanged,
+    scheduleChangeKind: occurrence.scheduleChangeKind,
+    originalStartTime: occurrence.originalStartTime,
+    originalEndTime: occurrence.originalEndTime,
+  }))
 
   items.sort((a, b) => {
     const byDate = a.occurrenceDate.localeCompare(b.occurrenceDate)
@@ -820,11 +920,12 @@ export async function listCompanyEvents(
   if (opts.from && opts.to) {
     const occurrences = series.flatMap((e) => expandOccurrences(e, opts.from!, opts.to!))
     occurrences.sort((a, b) => a.start.localeCompare(b.start))
+    const withStatus = await attachOccurrenceRunStatuses(occurrences, opts.from, opts.to)
     return {
-      items: occurrences,
-      total: occurrences.length,
+      items: withStatus,
+      total: withStatus.length,
       page: 1,
-      pageSize: occurrences.length || 20,
+      pageSize: withStatus.length || 20,
       mode: 'occurrences',
     }
   }
@@ -900,11 +1001,12 @@ export async function listMyBookedEvents(
       occurrences.push(...expanded.filter((o) => tokenDates.has(o.occurrenceDate)))
     }
     occurrences.sort((a, b) => a.start.localeCompare(b.start))
+    const withStatus = await attachOccurrenceRunStatuses(occurrences, opts.from, opts.to)
     return {
-      items: occurrences,
-      total: occurrences.length,
+      items: withStatus,
+      total: withStatus.length,
       page: 1,
-      pageSize: occurrences.length || 20,
+      pageSize: withStatus.length || 20,
       mode: 'occurrences',
     }
   }
@@ -954,10 +1056,12 @@ export async function getMyBookedSessionDetail(
       throw serviceError('Event not found', 404)
     }
   }
-  const detail = await buildSessionDetail(event.companyId, eventId, occurrenceDate)
+  const detail = await buildSessionDetail(event.companyId, eventId, occurrenceDate, event)
   return {
     run: detail.run,
     items: detail.items.filter((token) => token.userId === userId),
+    sessionStartTime: detail.sessionStartTime,
+    sessionEndTime: detail.sessionEndTime,
     queue: computeSessionQueueLabels(detail.items, detail.run),
   }
 }
@@ -1204,8 +1308,21 @@ function mapSessionRun(row: sessionRunRepo.CompanyEventSessionRunRow): SessionRu
     startedAt: row.started_at ? row.started_at.toISOString() : null,
     startedByUserId: row.started_by_user_id,
     endedAt: row.ended_at ? row.ended_at.toISOString() : null,
+    scheduledStartTime: normalizeTime(row.scheduled_start_time),
+    scheduledEndTime: normalizeTime(row.scheduled_end_time),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
+  }
+}
+
+function resolveEffectiveSessionTimes(
+  event: CompanyEventDto,
+  scheduledStartTime: string | null | undefined,
+  scheduledEndTime: string | null | undefined,
+): { sessionStartTime: string; sessionEndTime: string } {
+  return {
+    sessionStartTime: normalizeTime(scheduledStartTime) ?? event.startTime,
+    sessionEndTime: normalizeTime(scheduledEndTime) ?? event.endTime,
   }
 }
 
@@ -1252,12 +1369,21 @@ async function buildSessionDetail(
   companyId: string,
   eventId: string,
   occurrenceDate: string,
+  event?: CompanyEventDto,
 ): Promise<SessionDetailDto> {
+  const resolvedEvent = event ?? (await getCompanyEvent(companyId, eventId))
   const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
   const rows = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
+  const times = resolveEffectiveSessionTimes(
+    resolvedEvent,
+    run.scheduled_start_time,
+    run.scheduled_end_time,
+  )
   return {
     run: mapSessionRun(run),
     items: rows.map(mapSessionToken),
+    sessionStartTime: times.sessionStartTime,
+    sessionEndTime: times.sessionEndTime,
   }
 }
 
@@ -1276,8 +1402,8 @@ export async function getSessionDetail(
   occurrenceDate: string,
   viewer?: EventViewer,
 ): Promise<SessionDetailDto> {
-  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, viewer)
-  return buildSessionDetail(companyId, eventId, occurrenceDate)
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, viewer)
+  return buildSessionDetail(companyId, eventId, occurrenceDate, event)
 }
 
 export async function listSessionTokens(
@@ -1575,5 +1701,123 @@ export async function endSession(
     tokens: tokens.map(mapSessionToken),
   })
 
-  return buildSessionDetail(companyId, eventId, occurrenceDate)
+  return buildSessionDetail(companyId, eventId, occurrenceDate, event)
+}
+
+const MAX_SESSION_DELAY_MINUTES = 24 * 60
+
+async function assertCanChangeSession(
+  companyId: string,
+  userId: string,
+  role: PlatformRole,
+  event: CompanyEventDto,
+): Promise<void> {
+  if (role === 'company_admin') return
+  if (role === 'member') {
+    const staff = await staffRepo.findStaffByUserId(companyId, userId)
+    if (staff && staff.id === event.staffId) return
+  }
+  throw serviceError('Only company admins or assigned staff can change this session', 403)
+}
+
+export type ChangeSessionResultDto = SessionDetailDto & {
+  notifiedCount: number
+  emailQueued: number
+  smsQueued: number
+}
+
+export async function changeSessionSchedule(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  actor: { userId: string; role: PlatformRole },
+  body: {
+    delayHours: number
+    delayMinutes: number
+    sendEmail: boolean
+    sendSms: boolean
+  },
+): Promise<ChangeSessionResultDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, {
+    userId: actor.userId,
+    role: actor.role,
+  })
+  await assertCanChangeSession(companyId, actor.userId, actor.role, event)
+
+  const delayTotal = body.delayHours * 60 + body.delayMinutes
+  if (delayTotal < 1) {
+    throw serviceError('Delay must be at least 1 minute', 400)
+  }
+  if (delayTotal > MAX_SESSION_DELAY_MINUTES) {
+    throw serviceError('Delay cannot exceed 24 hours', 400)
+  }
+
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+  if (run.status !== 'scheduled') {
+    throw serviceError('Only scheduled sessions can have their time changed', 409)
+  }
+
+  const previous = resolveEffectiveSessionTimes(
+    event,
+    run.scheduled_start_time,
+    run.scheduled_end_time,
+  )
+  const previousStartMinutes = timeToMinutes(previous.sessionStartTime)
+  const previousEndMinutes = timeToMinutes(previous.sessionEndTime)
+  if (
+    previousStartMinutes + delayTotal >= 24 * 60 ||
+    previousEndMinutes + delayTotal >= 24 * 60
+  ) {
+    throw serviceError('Delay would move the session past midnight; choose a shorter delay', 400)
+  }
+
+  const newStart = addMinutesToTime(previous.sessionStartTime, delayTotal)
+  const newEnd = addMinutesToTime(previous.sessionEndTime, delayTotal)
+
+  await sessionRunRepo.updateRun(run.id, {
+    scheduled_start_time: newStart,
+    scheduled_end_time: newEnd,
+  })
+
+  const tokens = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
+  const tokenDtos = tokens.map(mapSessionToken)
+
+  let notifiedCount = 0
+  let emailQueued = 0
+  let smsQueued = 0
+
+  if (body.sendEmail || body.sendSms) {
+    const location = event.spaceName?.trim() || '—'
+    const result = await notifySessionScheduleChanged({
+      companyId,
+      event,
+      occurrenceDate,
+      tokens: tokenDtos,
+      attendee:
+        tokenDtos.length === 0 && event.attendeeUserId
+          ? {
+              userId: event.attendeeUserId,
+              userDisplayName: event.attendeeDisplayName ?? 'Customer',
+              userEmail: event.attendeeEmail,
+            }
+          : null,
+      previousSessionTime: previous.sessionStartTime,
+      sessionTime: newStart,
+      sessionEndTime: newEnd,
+      location,
+      sendEmail: body.sendEmail,
+      sendSms: body.sendSms,
+    })
+    notifiedCount = result.notifiedCount
+    emailQueued = result.emailQueued
+    smsQueued = result.smsQueued
+  }
+
+  const detail = await buildSessionDetail(companyId, eventId, occurrenceDate, event)
+  return {
+    ...detail,
+    notifiedCount,
+    emailQueued,
+    smsQueued,
+  }
 }

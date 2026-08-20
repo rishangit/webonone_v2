@@ -40,15 +40,24 @@ export type CompanyEvent = {
   tokenOccurrenceDates?: string[]
 }
 
+export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
+export type SessionRunStatus = 'scheduled' | 'started' | 'ended'
+
+export type SessionScheduleChangeKind = 'delayed' | 'early'
+
 export type CompanyEventOccurrence = CompanyEvent & {
   occurrenceDate: string
   start: string
   end: string
   title: string
+  /** Session run status; defaults to scheduled when no run exists yet. */
+  runStatus: SessionRunStatus
+  /** True when this occurrence has a delayed/overridden start/end. */
+  scheduleChanged?: boolean
+  scheduleChangeKind?: SessionScheduleChangeKind | null
+  originalStartTime?: string
+  originalEndTime?: string
 }
-
-export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
-export type SessionRunStatus = 'scheduled' | 'started' | 'ended'
 
 export type SessionToken = {
   id: string
@@ -75,6 +84,8 @@ export type SessionRun = {
   startedAt: string | null
   startedByUserId: string | null
   endedAt: string | null
+  scheduledStartTime: string | null
+  scheduledEndTime: string | null
   createdAt: string
   updatedAt: string
 }
@@ -82,12 +93,27 @@ export type SessionRun = {
 export type SessionDetail = {
   run: SessionRun
   items: SessionToken[]
+  sessionStartTime: string
+  sessionEndTime: string
   /** Personal (/me) views — Prev/Current/Next from the full company queue. */
   queue?: {
     prevTokenLabel: string | null
     currentTokenLabel: string | null
     nextTokenLabel: string | null
   }
+}
+
+export type ChangeSessionScheduleBody = {
+  delayHours: number
+  delayMinutes: number
+  sendEmail: boolean
+  sendSms: boolean
+}
+
+export type ChangeSessionScheduleResult = SessionDetail & {
+  notifiedCount: number
+  emailQueued: number
+  smsQueued: number
 }
 
 export type CreateSessionTokenBody = {

@@ -11,6 +11,21 @@ export function canAccessCompanySession(
   return false
 }
 
+/**
+ * Delay / notify on a session — company_admin or assigned event staff only
+ * (not super_admin; not non-assigned members).
+ */
+export function canChangeSession(
+  role: SessionRole | null | undefined,
+  companyId?: string | null,
+  isAssignedStaff?: boolean,
+): boolean {
+  if (!companyId) return false
+  if (role === 'company_admin') return true
+  if (role === 'member' && isAssignedStaff) return true
+  return false
+}
+
 /** Schedule/Events list pages — Default User (member, no company) and company sessions. */
 export function canBrowseCalendar(role: SessionRole | null | undefined): boolean {
   return role === 'member' || role === 'company_admin'

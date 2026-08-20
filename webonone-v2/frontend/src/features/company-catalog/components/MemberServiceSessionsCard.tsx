@@ -14,9 +14,10 @@ import {
   ItemListItem,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
 import { MemberIssueTokenDialog } from './MemberIssueTokenDialog'
 import { companyCatalogApi } from '../services/companyCatalogApi'
-import type { CatalogSessionItem } from '../types/companyCatalog.types'
+import type { CatalogSessionItem, CatalogSessionTokenItem } from '../types/companyCatalog.types'
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
@@ -49,6 +50,9 @@ export function MemberServiceSessionsCard({
   const [sessions, setSessions] = useState<CatalogSessionItem[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionsError, setSessionsError] = useState<string | null>(null)
+  const [tokensBySessionKey, setTokensBySessionKey] = useState<
+    Record<string, CatalogSessionTokenItem>
+  >({})
   const [bookingTarget, setBookingTarget] = useState<{
     eventId: string
     occurrenceDate: string
@@ -64,11 +68,13 @@ export function MemberServiceSessionsCard({
       .then((items) => {
         if (cancelled) return
         setSessions(items)
+        setTokensBySessionKey({})
         setSessionsLoading(false)
       })
       .catch((err: Error) => {
         if (cancelled) return
         setSessions([])
+        setTokensBySessionKey({})
         setSessionsError(err.message || t('detail.sessions.failedLoadSessions'))
         setSessionsLoading(false)
       })
@@ -77,6 +83,42 @@ export function MemberServiceSessionsCard({
       cancelled = true
     }
   }, [companyId, serviceId, t])
+
+  useEffect(() => {
+    if (!user || sessions.length === 0) {
+      setTokensBySessionKey({})
+      return
+    }
+
+    let cancelled = false
+    void Promise.all(
+      sessions.map(async (session) => {
+        const token = await companyCatalogApi.getMyToken(
+          companyId,
+          serviceId,
+          session.eventId,
+          session.occurrenceDate,
+        )
+        return { session, token }
+      }),
+    )
+      .then((results) => {
+        if (cancelled) return
+        const next: Record<string, CatalogSessionTokenItem> = {}
+        for (const { session, token } of results) {
+          if (!token) continue
+          next[sessionKey(session.eventId, session.occurrenceDate)] = token
+        }
+        setTokensBySessionKey(next)
+      })
+      .catch(() => {
+        if (cancelled) return
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [companyId, serviceId, sessions, user])
 
   const sessionSpaces = useMemo(() => {
     const byId = new Map<string, string>()
@@ -135,7 +177,9 @@ export function MemberServiceSessionsCard({
             <ItemListEmpty>{t('detail.sessions.noSessions')}</ItemListEmpty>
           ) : (
             <ItemList>
-              {sessions.map((session) => (
+              {sessions.map((session) => {
+                const token = tokensBySessionKey[sessionKey(session.eventId, session.occurrenceDate)]
+                return (
                 <ItemListItem key={`${session.eventId}-${session.occurrenceDate}`}>
                   <ItemListContent>
                     <div className="flex w-full flex-col gap-2">
@@ -148,7 +192,23 @@ export function MemberServiceSessionsCard({
                           {session.endTime}
                           {session.spaceName?.trim() ? ` · ${session.spaceName.trim()}` : ''}
                         </p>
+                        <SessionScheduleChangeMeta
+                          scheduleChanged={session.scheduleChanged}
+                          scheduleChangeKind={session.scheduleChangeKind}
+                          originalStartTime={session.originalStartTime}
+                          originalEndTime={session.originalEndTime}
+                        />
                       </div>
+                      {token ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-primary">
+                            {t('detail.sessions.alreadyBooked')}
+                          </span>
+                          <span className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-sm font-bold tracking-wide text-primary shadow-sm">
+                            {token.tokenLabel}
+                          </span>
+                        </div>
+                      ) : null}
                       <Button
                         type="button"
                         size="sm"
@@ -161,7 +221,8 @@ export function MemberServiceSessionsCard({
                     </div>
                   </ItemListContent>
                 </ItemListItem>
-              ))}
+                )
+              })}
             </ItemList>
           )}
         </CardContent>
@@ -175,6 +236,12 @@ export function MemberServiceSessionsCard({
           eventId={bookingTarget.eventId}
           occurrenceDate={bookingTarget.occurrenceDate}
           user={user}
+          onIssued={(token) => {
+            setTokensBySessionKey((prev) => ({
+              ...prev,
+              [sessionKey(token.eventId, token.occurrenceDate)]: token,
+            }))
+          }}
           onOpenChange={(open) => {
             if (!open) setBookingTarget(null)
           }}
@@ -182,4 +249,8 @@ export function MemberServiceSessionsCard({
       ) : null}
     </>
   )
+}
+
+function sessionKey(eventId: string, occurrenceDate: string): string {
+  return `${eventId}:${occurrenceDate}`
 }
