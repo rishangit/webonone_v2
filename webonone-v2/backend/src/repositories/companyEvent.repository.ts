@@ -102,6 +102,10 @@ export async function listEventsForUserBookings(userId: string): Promise<Company
     .orderBy('start_time', 'asc')
 }
 
+export async function listAllEvents(): Promise<CompanyEventRow[]> {
+  return db<CompanyEventRow>('company_events').orderBy('starts_on', 'asc').orderBy('start_time', 'asc')
+}
+
 export async function findEventByIdAnyCompany(
   eventId: string,
 ): Promise<CompanyEventRow | undefined> {

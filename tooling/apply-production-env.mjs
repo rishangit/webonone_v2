@@ -219,6 +219,9 @@ function main() {
         `SUPER_ADMIN_DISPLAY_NAME=${superAdminName}`,
         '',
         `IDENTITY_SERVICE_API_KEY=${identityKey}`,
+        '',
+        `WEBONONE_API_BASE_URL=${originWebonone}`,
+        `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
       ]),
     ),
   );

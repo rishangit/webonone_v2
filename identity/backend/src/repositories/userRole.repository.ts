@@ -23,6 +23,21 @@ export async function findSuperAdminByUserId(userId: string): Promise<UserRoleRo
     .first()
 }
 
+export async function listSuperAdminUserIds(): Promise<string[]> {
+  const rows = await db<UserRoleRow>('users_roles')
+    .where({ role: 'super_admin' as UserRoleType })
+    .whereNull('company_id')
+    .select('user_id')
+  return [...new Set(rows.map((row) => row.user_id))]
+}
+
+export async function listCompanyAdminUserIds(companyId: string): Promise<string[]> {
+  const rows = await db<UserRoleRow>('users_roles')
+    .where({ company_id: companyId, role: 'company_admin' as UserRoleType })
+    .select('user_id')
+  return [...new Set(rows.map((row) => row.user_id))]
+}
+
 export async function findCompanyRolesByUserId(userId: string): Promise<UserRoleRow[]> {
   return db<UserRoleRow>('users_roles')
     .where({ user_id: userId })

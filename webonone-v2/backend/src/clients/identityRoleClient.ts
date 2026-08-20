@@ -65,6 +65,31 @@ export async function findSuperAdminByUserId(userId: string): Promise<UserRoleRo
   return roles.find((row) => row.role === 'super_admin' && row.company_id == null)
 }
 
+export async function listSuperAdminUserIds(): Promise<string[]> {
+  const res = await fetch(`${apiBase()}/api/v1/internal/roles/super-admins`, {
+    headers: serviceHeaders(),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Identity list super admins failed (${res.status}): ${text}`)
+  }
+  const data = (await res.json()) as { userIds: string[] }
+  return Array.isArray(data.userIds) ? data.userIds : []
+}
+
+export async function listCompanyAdminUserIds(companyId: string): Promise<string[]> {
+  const res = await fetch(
+    `${apiBase()}/api/v1/internal/roles/company/${encodeURIComponent(companyId)}/admins`,
+    { headers: serviceHeaders() },
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Identity list company admins failed (${res.status}): ${text}`)
+  }
+  const data = (await res.json()) as { userIds: string[] }
+  return Array.isArray(data.userIds) ? data.userIds : []
+}
+
 export async function findCompanyRolesByUserId(userId: string): Promise<UserRoleRow[]> {
   const roles = await listUserRoles(userId)
   return roles.filter((row) => row.company_id != null).sort((a, b) => a.created_at.getTime() - b.created_at.getTime())

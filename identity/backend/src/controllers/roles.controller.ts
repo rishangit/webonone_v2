@@ -42,6 +42,17 @@ export async function listUserRolesInternal(req: Request, res: Response) {
   })
 }
 
+export async function listSuperAdminsInternal(_req: Request, res: Response) {
+  const userIds = await roleRepo.listSuperAdminUserIds()
+  res.json({ userIds })
+}
+
+export async function listCompanyAdminsInternal(req: Request, res: Response) {
+  const companyId = String(req.params.companyId)
+  const userIds = await roleRepo.listCompanyAdminUserIds(companyId)
+  res.json({ userIds })
+}
+
 export async function insertUserRoleInternal(req: Request, res: Response) {
   const body = insertRoleSchema.parse(req.body)
   await roleRepo.insertUserRole({

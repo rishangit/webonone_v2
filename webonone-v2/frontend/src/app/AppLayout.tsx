@@ -37,6 +37,7 @@ import {
 import { PlatformMediaDialogProvider } from '@/features/media/PlatformMediaDialogHost'
 import { PlatformPeerDialogProvider } from '@/features/shell/PlatformPeerDialogHost'
 import { AppAssistant } from '@/features/ai/components/AppAssistant'
+import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 import {
   PlatformLoadingProvider,
   usePlatformOverlayLabel,
@@ -216,17 +217,20 @@ function AppLayoutContent() {
           accordionNavGroups
           headerActions={
             accessToken ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
-                aria-label={tShell('assistant.open')}
-                aria-pressed={assistantOpen}
-                onClick={() => setAssistantOpen((open) => !open)}
-              >
-                <MessageCircle className="h-4 w-4" />
-              </Button>
+              <>
+                <NotificationBell />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
+                  aria-label={tShell('assistant.open')}
+                  aria-pressed={assistantOpen}
+                  onClick={() => setAssistantOpen((open) => !open)}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </>
             ) : undefined
           }
           aside={

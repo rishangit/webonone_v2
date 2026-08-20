@@ -19,6 +19,7 @@ import {
 import { sendTransactionalEmail } from './emailClient.service.js'
 import { getGatewayStatus, sendTransactionalSms } from './smsClient.service.js'
 import { generatePasswordResetToken, hashToken } from './token.service.js'
+import { notifyCompanyAdminsCustomerAdded } from './webononeNotify.service.js'
 
 const INVITE_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 const E164_PHONE = /^\+\d{7,15}$/
@@ -95,6 +96,27 @@ async function loadCustomerDto(userId: string, companyId: string): Promise<Custo
     addedAt: memberRole.created_at.toISOString(),
     isEmailVerified: Boolean(user.is_email_verified),
     isPhoneVerified: Boolean(user.is_phone_verified),
+  }
+}
+
+async function notifyCompanyAdminsInApp(input: {
+  companyId: string
+  companyName: string
+  customerUserId: string
+  customerDisplayName: string
+}): Promise<void> {
+  try {
+    const adminUserIds = await roleRepo.listCompanyAdminUserIds(input.companyId)
+    if (adminUserIds.length === 0) return
+    await notifyCompanyAdminsCustomerAdded({
+      companyId: input.companyId,
+      companyName: input.companyName,
+      customerUserId: input.customerUserId,
+      customerDisplayName: input.customerDisplayName,
+      adminUserIds,
+    })
+  } catch (err) {
+    console.error('[customers] in-app customer_added notify failed:', err)
   }
 }
 
@@ -251,6 +273,15 @@ export async function addCompanyCustomer(input: {
       })
     : []
 
+  if (created) {
+    void notifyCompanyAdminsInApp({
+      companyId: input.companyId,
+      companyName: input.companyName,
+      customerUserId: user.id,
+      customerDisplayName: user.display_name,
+    })
+  }
+
   return { customer, warnings }
 }
 
@@ -332,6 +363,13 @@ export async function createCompanyCustomer(input: {
       phoneNumber,
     },
     actionUrl,
+  })
+
+  void notifyCompanyAdminsInApp({
+    companyId: input.companyId,
+    companyName: input.companyName,
+    customerUserId: userId,
+    customerDisplayName: displayName,
   })
 
   const customer = await loadCustomerDto(userId, input.companyId)

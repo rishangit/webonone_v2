@@ -8,6 +8,16 @@ const router = Router()
 router.get('/roles/me/assumable', requireAuth, rolesController.getMyAssumableRoles)
 
 router.get('/internal/roles/user/:userId', requireServiceKey, rolesController.listUserRolesInternal)
+router.get(
+  '/internal/roles/super-admins',
+  requireServiceKey,
+  rolesController.listSuperAdminsInternal,
+)
+router.get(
+  '/internal/roles/company/:companyId/admins',
+  requireServiceKey,
+  rolesController.listCompanyAdminsInternal,
+)
 router.post('/internal/roles', requireServiceKey, rolesController.insertUserRoleInternal)
 router.post('/internal/roles/upsert-super-admin', requireServiceKey, rolesController.upsertSuperAdminInternal)
 router.post('/internal/roles/promote-company-admin', requireServiceKey, rolesController.promoteCompanyAdminInternal)

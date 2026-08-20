@@ -92,7 +92,8 @@
     "emptyPast": "තවම අතීත සැසි නැත."
   },
   "timing": {
-    "ended": "අවසන් විය"
+    "ended": "අවසන් විය",
+    "due": "නියමිතයි"
   },
   "sessionStatus": {
     "scheduled": "ආරම්භ කර නැත",

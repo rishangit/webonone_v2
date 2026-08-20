@@ -42,6 +42,8 @@ const envSchema = z.object({
   SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
   SUPER_ADMIN_DISPLAY_NAME: z.string().default('Super Admin'),
   IDENTITY_SERVICE_API_KEY: z.string().default('dev-identity-service-key'),
+  WEBONONE_API_BASE_URL: z.string().optional(),
+  WEBONONE_SERVICE_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -84,4 +86,6 @@ export const env = {
   superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
   superAdminDisplayName: parsed.SUPER_ADMIN_DISPLAY_NAME,
   identityServiceApiKey: parsed.IDENTITY_SERVICE_API_KEY,
+  webononeApiBaseUrl: parsed.WEBONONE_API_BASE_URL?.trim() ?? '',
+  webononeServiceApiKey: parsed.WEBONONE_SERVICE_API_KEY?.trim() ?? '',
 }

@@ -52,6 +52,7 @@ function SessionRow({
   language,
   onOpen,
   showRemainingTime,
+  dueLabel,
 }: {
   session: CompanyEventOccurrence
   now: Date
@@ -60,6 +61,7 @@ function SessionRow({
   onOpen: (occurrenceDate: string) => void
   /** Hide countdown when the session is past — StatusTag already covers ended state. */
   showRemainingTime: boolean
+  dueLabel: string
 }) {
   const runStatus = session.runStatus ?? 'scheduled'
 
@@ -99,6 +101,8 @@ function SessionRow({
           start={session.start}
           end={session.end}
           now={now}
+          runStatus={runStatus}
+          labels={{ due: dueLabel }}
           appearance="plain"
         />
       ) : null}
@@ -195,6 +199,7 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
   )
 
   const endedLabel = t('timing.ended')
+  const dueLabel = t('timing.due')
   const emptyLabel =
     personalOnly && event.timeMode === 'window'
       ? t('sessionsList.emptyMember')
@@ -203,9 +208,13 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
   const upcoming: CompanyEventOccurrence[] = []
   const past: CompanyEventOccurrence[] = []
   for (const session of sessions) {
-    const timing = resolveRemainingTime(session.start, session.end, now, {
-      ended: endedLabel,
-    })
+    const timing = resolveRemainingTime(
+      session.start,
+      session.end,
+      now,
+      { ended: endedLabel, due: dueLabel },
+      session.runStatus ?? 'scheduled',
+    )
     if (timing.kind === 'ended') {
       past.push(session)
     } else {
@@ -233,7 +242,7 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
               <ItemListEmpty>{emptyLabel}</ItemListEmpty>
             ) : (
               <ItemList>
-                {upcoming.map((session) => (
+                {                upcoming.map((session) => (
                   <SessionRow
                     key={session.occurrenceDate}
                     session={session}
@@ -242,6 +251,7 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
                     language={i18n.language}
                     onOpen={openSession}
                     showRemainingTime
+                    dueLabel={dueLabel}
                   />
                 ))}
               </ItemList>
@@ -261,7 +271,7 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
               <ItemListEmpty>{t('sessionsList.emptyPast')}</ItemListEmpty>
             ) : (
               <ItemList>
-                {past.map((session) => (
+                {                past.map((session) => (
                   <SessionRow
                     key={session.occurrenceDate}
                     session={session}
@@ -270,6 +280,7 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
                     language={i18n.language}
                     onOpen={openSession}
                     showRemainingTime={false}
+                    dueLabel={dueLabel}
                   />
                 ))}
               </ItemList>

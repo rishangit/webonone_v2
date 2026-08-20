@@ -8,7 +8,12 @@ import { DemoSection } from '@/components/DemoSection'
 
 const NOW = new Date('2026-08-20T12:00:00')
 
-const SAMPLES: { title: string; start: string; end: string }[] = [
+const SAMPLES: {
+  title: string
+  start: string
+  end: string
+  runStatus?: 'scheduled' | 'started' | 'ended'
+}[] = [
   {
     title: 'Minutes remaining',
     start: '2026-08-20T12:12:00',
@@ -35,9 +40,16 @@ const SAMPLES: { title: string; start: string; end: string }[] = [
     end: '2026-08-25T13:00:00',
   },
   {
-    title: 'In progress',
+    title: 'In progress (started)',
     start: '2026-08-20T11:00:00',
     end: '2026-08-20T12:45:00',
+    runStatus: 'started',
+  },
+  {
+    title: 'Past start but not started → Due',
+    start: '2026-08-20T11:00:00',
+    end: '2026-08-20T16:00:00',
+    runStatus: 'scheduled',
   },
   {
     title: 'Ended',
@@ -51,7 +63,7 @@ export function RemainingTimeDemo() {
     <DemoSection
       id="remaining-time"
       title="Remaining time"
-      description="Colored badge on the right of a list row: amber for upcoming (12min, 3hrs 15 min), emerald for in-progress (time until end), muted for ended. Formats: 12min, 3hrs 15 min, 2days 5hrs, 5days."
+      description="Colored badge on the right of a list row: amber for upcoming (12min, 3hrs 15 min), emerald for in-progress (time until end), muted for ended. When runStatus is scheduled and start has passed, shows Due — not a live-session countdown."
     >
       <ItemList>
         {SAMPLES.map((sample) => (
@@ -59,7 +71,13 @@ export function RemainingTimeDemo() {
             <ItemListContent>
               <p className="truncate font-medium text-foreground">{sample.title}</p>
             </ItemListContent>
-            <RemainingTime start={sample.start} end={sample.end} now={NOW} />
+            <RemainingTime
+              start={sample.start}
+              end={sample.end}
+              now={NOW}
+              runStatus={sample.runStatus}
+              labels={{ due: 'Due' }}
+            />
           </ItemListItem>
         ))}
       </ItemList>

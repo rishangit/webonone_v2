@@ -116,7 +116,11 @@ export function DashboardEventList({
               start={item.start}
               end={item.end}
               now={now}
-              labels={{ ended: tCalendar('timing.ended') }}
+              runStatus={runStatus}
+              labels={{
+                ended: tCalendar('timing.ended'),
+                due: tCalendar('timing.due'),
+              }}
               appearance="plain"
             />
           </ItemListItem>

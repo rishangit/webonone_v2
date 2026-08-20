@@ -92,7 +92,8 @@
     "emptyPast": "No past sessions yet."
   },
   "timing": {
-    "ended": "Ended"
+    "ended": "Ended",
+    "due": "Due"
   },
   "sessionStatus": {
     "scheduled": "Not started",

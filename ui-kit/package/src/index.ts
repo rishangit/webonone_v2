@@ -242,6 +242,7 @@ export type {
   RemainingTimeKind,
   RemainingTimeLabels,
   RemainingTimeProps,
+  RemainingTimeRunStatus,
   RemainingTimeState,
 } from './components/RemainingTime'
 export { formatRemainingDuration } from './lib/formatRemainingDuration'

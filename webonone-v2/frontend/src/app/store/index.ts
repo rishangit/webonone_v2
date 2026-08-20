@@ -11,6 +11,7 @@ import { homeDashboardReducer } from '@/features/home/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { aiSettingsReducer } from '@/features/settings/basic/store/aiSettingsSlice'
+import { notificationsReducer } from '@/features/notifications/store/notificationsSlice'
 import { rootEpic } from '@/app/store/epics/rootEpic'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { initApiClient, setAuthRequiredHandler } from '@/shared/services/apiClient'
@@ -30,6 +31,7 @@ export const store = configureStore({
     homeDashboard: homeDashboardReducer,
     systemTheme: systemThemeReducer,
     aiSettings: aiSettingsReducer,
+    notifications: notificationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ thunk: false }).concat(epicMiddleware),

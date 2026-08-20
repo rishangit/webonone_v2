@@ -24,6 +24,13 @@ import {
   notifySessionTokenIssued,
 } from './sessionTokenNotify.service.js'
 import { notifyAppointmentBooked } from './appointmentNotify.service.js'
+import {
+  notifyAppointmentBookedInApp,
+  notifySessionEndedInApp,
+  notifySessionScheduleChangedInApp,
+  notifySessionStartedInApp,
+  notifySessionTokenCalledInApp,
+} from './inAppNotify.service.js'
 import type { PlatformRole } from '../middleware/requireSuperAdmin.js'
 
 export type EventViewer = {
@@ -1193,6 +1200,15 @@ export async function createCompanyEvent(
       event: created,
       durationMinutes: service.durationMinutes,
     })
+    void notifyAppointmentBookedInApp({
+      companyId,
+      eventId: created.id,
+      serviceName: created.serviceName,
+      staffId: created.staffId,
+      attendeeDisplayName: created.attendeeDisplayName,
+    }).catch((err) => {
+      console.error('[companyEvent] in-app appointment booked notify failed:', err)
+    })
   }
   return created
 }
@@ -1473,6 +1489,16 @@ export async function createSessionToken(
             preferredEmail: body.user_email,
           })
           notifySessionTokenCalled({ companyId, event, token })
+          void notifySessionTokenCalledInApp({
+            companyId,
+            eventId,
+            occurrenceDate,
+            serviceName: event.serviceName,
+            userId: token.userId,
+            tokenNumber: token.tokenNumber,
+          }).catch((err) => {
+            console.error('[companyEvent] in-app token called notify failed:', err)
+          })
           return token
         }
       }
@@ -1590,8 +1616,27 @@ export async function startSession(
     event,
     tokens: tokens.map(mapSessionToken),
   })
+  void notifySessionStartedInApp({
+    companyId,
+    eventId,
+    occurrenceDate,
+    serviceName: event.serviceName,
+    attendeeUserId: event.attendeeUserId,
+  }).catch((err) => {
+    console.error('[companyEvent] in-app session started notify failed:', err)
+  })
   if (firstServingToken) {
     notifySessionTokenCalled({ companyId, event, token: firstServingToken })
+    void notifySessionTokenCalledInApp({
+      companyId,
+      eventId,
+      occurrenceDate,
+      serviceName: event.serviceName,
+      userId: firstServingToken.userId,
+      tokenNumber: firstServingToken.tokenNumber,
+    }).catch((err) => {
+      console.error('[companyEvent] in-app token called notify failed:', err)
+    })
   }
 
   return buildSessionDetail(companyId, eventId, occurrenceDate)
@@ -1633,6 +1678,16 @@ export async function callNextSessionToken(
 
   const nextToken = mapSessionToken({ ...nextWaiting, status: 'serving' })
   notifySessionTokenCalled({ companyId, event, token: nextToken })
+  void notifySessionTokenCalledInApp({
+    companyId,
+    eventId,
+    occurrenceDate,
+    serviceName: event.serviceName,
+    userId: nextToken.userId,
+    tokenNumber: nextToken.tokenNumber,
+  }).catch((err) => {
+    console.error('[companyEvent] in-app token called notify failed:', err)
+  })
 
   return buildSessionDetail(companyId, eventId, occurrenceDate)
 }
@@ -1699,6 +1754,15 @@ export async function endSession(
     companyId,
     event,
     tokens: tokens.map(mapSessionToken),
+  })
+  void notifySessionEndedInApp({
+    companyId,
+    eventId,
+    occurrenceDate,
+    serviceName: event.serviceName,
+    attendeeUserId: event.attendeeUserId,
+  }).catch((err) => {
+    console.error('[companyEvent] in-app session ended notify failed:', err)
   })
 
   return buildSessionDetail(companyId, eventId, occurrenceDate, event)
@@ -1812,6 +1876,16 @@ export async function changeSessionSchedule(
     emailQueued = result.emailQueued
     smsQueued = result.smsQueued
   }
+
+  void notifySessionScheduleChangedInApp({
+    companyId,
+    eventId,
+    occurrenceDate,
+    serviceName: event.serviceName,
+    attendeeUserId: event.attendeeUserId,
+  }).catch((err) => {
+    console.error('[companyEvent] in-app schedule changed notify failed:', err)
+  })
 
   const detail = await buildSessionDetail(companyId, eventId, occurrenceDate, event)
   return {

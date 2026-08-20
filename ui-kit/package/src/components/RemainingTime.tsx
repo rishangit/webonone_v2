@@ -59,6 +59,8 @@ const remainingTimeVariants = cva(
 
 export type RemainingTimeKind = 'upcoming' | 'current' | 'ended'
 
+export type RemainingTimeRunStatus = 'scheduled' | 'started' | 'ended'
+
 export type RemainingTimeState = {
   kind: RemainingTimeKind
   label: string
@@ -66,12 +68,19 @@ export type RemainingTimeState = {
 
 export type RemainingTimeLabels = {
   ended?: string
+  /** Shown when clock start has passed but the session run is still not started. */
+  due?: string
 }
 
 export type RemainingTimeProps = {
   start: string
   end: string
   now?: Date
+  /**
+   * Session run status. When `scheduled`, clock-past-start does **not** count as
+   * in-progress (avoids showing time-until-end while status is still "Not started").
+   */
+  runStatus?: RemainingTimeRunStatus
   labels?: RemainingTimeLabels
   /** `chip` = bordered tag; `plain` = theme text only (no background/border). */
   appearance?: 'chip' | 'plain'
@@ -83,8 +92,10 @@ export function resolveRemainingTime(
   endIso: string,
   now: Date = new Date(),
   labels?: RemainingTimeLabels,
+  runStatus?: RemainingTimeRunStatus,
 ): RemainingTimeState {
   const endedLabel = labels?.ended ?? 'Ended'
+  const dueLabel = labels?.due ?? 'Due'
   const start = new Date(startIso)
   const end = new Date(endIso)
   const nowMs = now.getTime()
@@ -93,6 +104,23 @@ export function resolveRemainingTime(
     return { kind: 'ended', label: endedLabel }
   }
 
+  if (runStatus === 'ended') {
+    return { kind: 'ended', label: endedLabel }
+  }
+
+  // Not started: never treat the window as "in progress" — countdown to start, or Due.
+  if (runStatus === 'scheduled') {
+    if (nowMs < start.getTime()) {
+      const remaining = formatRemainingDuration(start.getTime() - nowMs)
+      return { kind: 'upcoming', label: remaining || dueLabel }
+    }
+    if (nowMs < end.getTime()) {
+      return { kind: 'upcoming', label: dueLabel }
+    }
+    return { kind: 'ended', label: endedLabel }
+  }
+
+  // Started (or unknown status): clock-based current / upcoming / ended.
   if (nowMs >= start.getTime() && nowMs < end.getTime()) {
     const remaining = formatRemainingDuration(end.getTime() - nowMs)
     return { kind: 'current', label: remaining || endedLabel }
@@ -110,11 +138,12 @@ function RemainingTime({
   start,
   end,
   now,
+  runStatus,
   labels,
   appearance = 'chip',
   className,
 }: RemainingTimeProps) {
-  const timing = resolveRemainingTime(start, end, now, labels)
+  const timing = resolveRemainingTime(start, end, now, labels, runStatus)
 
   return (
     <span

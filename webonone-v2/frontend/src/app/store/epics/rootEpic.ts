@@ -9,6 +9,7 @@ import { eventsEpics, sessionTokensEpics } from '@/features/calendar/store'
 import { homeDashboardEpics } from '@/features/home/store'
 import { systemThemeEpics } from '@/features/settings/system-theme/store/systemThemeEpics'
 import { aiSettingsEpics } from '@/features/settings/basic/store/aiSettingsEpics'
+import { notificationsEpics } from '@/features/notifications/store/notificationsEpics'
 
 export const rootEpic = combineEpics(
   authEpics,
@@ -22,4 +23,5 @@ export const rootEpic = combineEpics(
   homeDashboardEpics,
   systemThemeEpics,
   aiSettingsEpics,
+  ...notificationsEpics,
 )

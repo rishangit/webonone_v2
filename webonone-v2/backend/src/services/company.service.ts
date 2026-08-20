@@ -17,6 +17,10 @@ import * as roleRepo from '../clients/identityRoleClient.js'
 import { ensureWelcomeTemplate as ensureEmailWelcomeTemplate, sendTransactionalEmail } from './emailClient.service.js'
 import { ensureWelcomeTemplate as ensureSmsWelcomeTemplate } from './smsClient.service.js'
 import { upsertPaymentCompany } from './paymentClient.service.js'
+import {
+  notifyCompanyPendingReview,
+  notifyCompanyStatusChange,
+} from './inAppNotify.service.js'
 
 function httpError(message: string, statusCode: number): Error & { statusCode: number } {
   const err = new Error(message) as Error & { statusCode: number }
@@ -392,6 +396,12 @@ export async function registerCompany(
   }
 
   sendCompanyEmail('company_registered', company)
+  void notifyCompanyPendingReview({
+    companyId: company.id,
+    companyName: company.name,
+  }).catch((err) => {
+    console.error('[company] in-app pending review notify failed:', err)
+  })
 
   // Soft-fail: registration succeeds even if Email/SMS are down.
   void ensureEmailWelcomeTemplate(companyId, company.name).catch((err) => {
@@ -575,6 +585,14 @@ export async function updateCompanyStatus(
 
   if (input.status === 'approved') {
     sendCompanyEmail('company_approved', company)
+    void notifyCompanyStatusChange({
+      companyId: company.id,
+      companyName: company.name,
+      status: 'approved',
+      registrantUserId: company.created_by_user_id,
+    }).catch((err) => {
+      console.error('[company] in-app approved notify failed:', err)
+    })
     void upsertPaymentCompany({
       companyId: company.id,
       name: company.name,
@@ -583,6 +601,14 @@ export async function updateCompanyStatus(
     })
   } else if (input.status === 'rejected') {
     sendCompanyEmail('company_rejected', company)
+    void notifyCompanyStatusChange({
+      companyId: company.id,
+      companyName: company.name,
+      status: 'rejected',
+      registrantUserId: company.created_by_user_id,
+    }).catch((err) => {
+      console.error('[company] in-app rejected notify failed:', err)
+    })
     void upsertPaymentCompany({
       companyId: company.id,
       name: company.name,

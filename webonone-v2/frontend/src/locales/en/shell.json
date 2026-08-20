@@ -97,5 +97,16 @@
     "pendingChange": "Confirm each new item to apply it.",
     "itemAdded": "{{name}} added",
     "itemCanceled": "{{name}} canceled"
+  },
+  "notifications": {
+    "open": "Notifications",
+    "title": "Notifications",
+    "empty": "No notifications yet",
+    "loading": "Loading…",
+    "markAllRead": "Mark all read",
+    "seeAll": "See all",
+    "listTitle": "Notifications",
+    "listDescription": "All of your recent notifications.",
+    "loadMore": "Load more"
   }
 }

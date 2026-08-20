@@ -60,6 +60,11 @@ const ThemeDetailPage = lazy(() =>
 const PlatformPeerFrame = lazy(() =>
   import('@/features/shell/pages/PlatformPeerFrame').then((m) => ({ default: m.PlatformPeerFrame })),
 )
+const NotificationsPage = lazy(() =>
+  import('@/features/notifications/pages/NotificationsPage').then((m) => ({
+    default: m.NotificationsPage,
+  })),
+)
 const StaffPage = lazy(() =>
   import('@/features/staff/pages/StaffPage').then((m) => ({ default: m.StaffPage })),
 )
@@ -303,6 +308,14 @@ export function App() {
             element={
               <LazyRoute>
                 <ThemeDetailPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="notifications"
+            element={
+              <LazyRoute>
+                <NotificationsPage />
               </LazyRoute>
             }
           />
