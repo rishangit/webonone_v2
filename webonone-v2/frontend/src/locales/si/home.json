@@ -10,8 +10,6 @@
   "emptyUpcomingAdmin": "ඉදිරි සමාගම් ඉසව් නැත.",
   "emptyTodayStaff": "අද දිනයේ පැවරූ ඉසව් නැත.",
   "emptyUpcomingStaff": "ඉදිරි පැවරූ ඉසව් නැත.",
-  "viewDetails": "විස්තර බලන්න",
-  "actionsFor": "{{name}} සඳහා ක්‍රියා",
   "staffName": "{{name}}",
   "metaWithAttendee": "{{staff}} · {{attendee}}"
 }

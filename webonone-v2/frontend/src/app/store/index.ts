@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { createEpicMiddleware } from 'redux-observable'
-import { authReducer } from '@/features/auth/store/authSlice'
+import { authActions, authReducer } from '@/features/auth/store/authSlice'
 import { sessionRoleReducer } from '@/features/session/store/sessionRoleSlice'
 import { companiesReducer } from '@/features/settings/basic/store/companiesStore'
 import { companyCatalogReducer } from '@/features/company-catalog/store/companyCatalogStore'
@@ -12,7 +12,8 @@ import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/d
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { aiSettingsReducer } from '@/features/settings/basic/store/aiSettingsSlice'
 import { rootEpic } from '@/app/store/epics/rootEpic'
-import { initApiClient } from '@/shared/services/apiClient'
+import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
+import { initApiClient, setAuthRequiredHandler } from '@/shared/services/apiClient'
 
 const epicMiddleware = createEpicMiddleware()
 
@@ -36,6 +37,23 @@ export const store = configureStore({
 
 initApiClient(store)
 setDataLibraryTokenGetter(() => store.getState().auth.accessToken)
+let authRequiredHandled = false
+setAuthRequiredHandler(() => {
+  if (authRequiredHandled) {
+    return
+  }
+  authRequiredHandled = true
+  const returnPath =
+    typeof window === 'undefined'
+      ? '/'
+      : `${window.location.pathname}${window.location.search}`
+  store.dispatch(authActions.logout())
+
+  if (typeof window !== 'undefined') {
+    const loginHref = buildWebOnOneLoginHref(returnPath, { promptLogin: true })
+    window.location.assign(loginHref)
+  }
+})
 
 epicMiddleware.run(rootEpic)
 

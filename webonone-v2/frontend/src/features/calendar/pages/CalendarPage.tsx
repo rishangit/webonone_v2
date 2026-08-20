@@ -14,6 +14,7 @@ import {
   canBrowseCalendar,
   isPersonalCalendarSession,
 } from '@/features/session/utils/canAccessCompanySession'
+import { scheduleChangeKindLabel } from '@/features/calendar/components/SessionScheduleChangeMeta'
 
 function toYmd(date: Date): string {
   const y = date.getFullYear()
@@ -69,12 +70,15 @@ export function CalendarPage() {
       .then((occurrences) => {
         if (cancelled) return
         setEvents(
-          occurrences.map((item) => ({
-            id: `${item.id}:${item.occurrenceDate}`,
-            title: item.title,
-            start: new Date(item.start),
-            end: new Date(item.end),
-          })),
+          occurrences.map((item) => {
+            const kindLabel = scheduleChangeKindLabel(item.scheduleChangeKind, t)
+            return {
+              id: `${item.id}:${item.occurrenceDate}`,
+              title: kindLabel ? `${item.title} · ${kindLabel}` : item.title,
+              start: new Date(item.start),
+              end: new Date(item.end),
+            }
+          }),
         )
       })
       .catch(() => {
@@ -83,7 +87,7 @@ export function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [range.from, range.to, canLoad])
+  }, [range.from, range.to, canLoad, t])
 
   if (selectionComplete && !canBrowseCalendar(activeRole)) {
     return <Navigate to="/" replace />

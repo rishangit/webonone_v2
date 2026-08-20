@@ -2,6 +2,8 @@ import { apiClient } from '@/shared/services/apiClient'
 import { isPersonalCalendarSession } from '@/features/session/utils/canAccessCompanySession'
 import { readSessionRoleStorage } from '@/features/session/utils/sessionRoleStorage'
 import type {
+  ChangeSessionScheduleBody,
+  ChangeSessionScheduleResult,
   CreateSessionTokenBody,
   SessionDetail,
   SessionToken,
@@ -74,6 +76,20 @@ export const sessionTokensApi = {
     return apiClient<SessionDetail>(
       `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/end`,
       { method: 'POST' },
+    )
+  },
+
+  changeSchedule(
+    eventId: string,
+    occurrenceDate: string,
+    body: ChangeSessionScheduleBody,
+  ): Promise<ChangeSessionScheduleResult> {
+    return apiClient<ChangeSessionScheduleResult>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/change`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
     )
   },
 }

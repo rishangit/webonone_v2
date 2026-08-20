@@ -2,22 +2,32 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  DropdownMenuItem,
   ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
-  ItemListMenu,
   RemainingTime,
+  StatusTag,
+  type StatusTagVariant,
 } from '@webonone/ui-kit'
-import type { CompanyEventOccurrence } from '@/features/calendar/types/event.types'
+import type {
+  CompanyEventOccurrence,
+  SessionRunStatus,
+} from '@/features/calendar/types/event.types'
+import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
 import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
 
 type DashboardEventListProps = {
   items: CompanyEventOccurrence[]
   emptyMessage: string
   showDate?: boolean
+}
+
+const RUN_STATUS_VARIANT: Record<SessionRunStatus, StatusTagVariant> = {
+  scheduled: 'pending',
+  started: 'verified',
+  ended: 'member',
 }
 
 function occurrenceMeta(item: CompanyEventOccurrence, t: ReturnType<typeof useTranslation>['t']) {
@@ -28,6 +38,10 @@ function occurrenceMeta(item: CompanyEventOccurrence, t: ReturnType<typeof useTr
     })
   }
   return t('staffName', { name: item.staffDisplayName })
+}
+
+function occurrenceRunStatus(item: CompanyEventOccurrence): SessionRunStatus {
+  return item.runStatus ?? 'scheduled'
 }
 
 export function DashboardEventList({
@@ -41,10 +55,9 @@ export function DashboardEventList({
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
-    if (showDate) return
     const id = window.setInterval(() => setNow(new Date()), 60_000)
     return () => window.clearInterval(id)
-  }, [showDate])
+  }, [])
 
   if (items.length === 0) {
     return <ItemListEmpty>{emptyMessage}</ItemListEmpty>
@@ -65,6 +78,7 @@ export function DashboardEventList({
               i18n.language,
             )} · ${time}`
           : time
+        const runStatus = occurrenceRunStatus(item)
 
         return (
           <ItemListItem key={`${item.id}:${item.occurrenceDate}`}>
@@ -84,22 +98,27 @@ export function DashboardEventList({
                   <p className="truncate font-medium text-foreground">{item.serviceName}</p>
                   <p className="truncate text-xs text-muted-foreground">{occurrenceMeta(item, t)}</p>
                   <p className="truncate text-xs text-muted-foreground">{when}</p>
+                  <SessionScheduleChangeMeta
+                    scheduleChanged={item.scheduleChanged}
+                    scheduleChangeKind={item.scheduleChangeKind}
+                    originalStartTime={item.originalStartTime}
+                    originalEndTime={item.originalEndTime}
+                  />
                 </div>
               </button>
             </ItemListContent>
             {!showDate ? (
-              <RemainingTime
-                start={item.start}
-                end={item.end}
-                now={now}
-                labels={{ ended: tCalendar('timing.ended') }}
-              />
+              <StatusTag variant={RUN_STATUS_VARIANT[runStatus]} className="shrink-0 self-center">
+                {tCalendar(`sessionStatus.${runStatus}`)}
+              </StatusTag>
             ) : null}
-            <ItemListMenu ariaLabel={t('actionsFor', { name: item.serviceName })}>
-              <DropdownMenuItem onSelect={() => openSession(item)}>
-                {t('viewDetails')}
-              </DropdownMenuItem>
-            </ItemListMenu>
+            <RemainingTime
+              start={item.start}
+              end={item.end}
+              now={now}
+              labels={{ ended: tCalendar('timing.ended') }}
+              appearance="plain"
+            />
           </ItemListItem>
         )
       })}

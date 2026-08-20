@@ -1,9 +1,14 @@
 import type { RootState } from '@/app/store'
 
 let getToken: () => string | null = () => null
+let onAuthRequired: (() => void) | null = null
 
 export function setTokenGetter(getter: () => string | null) {
   getToken = getter
+}
+
+export function setAuthRequiredHandler(handler: (() => void) | null) {
+  onAuthRequired = handler
 }
 
 export function initApiClient(store: { getState: () => RootState }) {
@@ -38,6 +43,9 @@ export async function apiClient<T>(path: string, options?: RequestInit): Promise
   }
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
+    if (res.status === 401) {
+      onAuthRequired?.()
+    }
     throw new Error(data.message ?? 'Request failed')
   }
   return data as T

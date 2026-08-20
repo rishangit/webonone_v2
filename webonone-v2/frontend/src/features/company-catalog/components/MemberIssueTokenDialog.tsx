@@ -23,6 +23,7 @@ export type MemberIssueTokenDialogProps = {
   occurrenceDate: string
   user: UserProfile
   onOpenChange: (open: boolean) => void
+  onIssued?: (token: CatalogSessionTokenItem) => void
 }
 
 export function MemberIssueTokenDialog({
@@ -33,6 +34,7 @@ export function MemberIssueTokenDialog({
   occurrenceDate,
   user,
   onOpenChange,
+  onIssued,
 }: MemberIssueTokenDialogProps) {
   const { toast } = useToast()
   const { t } = useTranslation('catalog')
@@ -95,6 +97,7 @@ export function MemberIssueTokenDialog({
         title: t('detail.sessions.tokenIssued'),
         description: t('detail.sessions.yourTokenIs', { label: item.tokenLabel }),
       })
+      onIssued?.(item)
       onOpenChange(false)
     } catch (err) {
       const message = err instanceof Error ? err.message : t('detail.sessions.failedIssueToken')

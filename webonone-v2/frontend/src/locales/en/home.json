@@ -10,8 +10,6 @@
   "emptyUpcomingAdmin": "No upcoming company events.",
   "emptyTodayStaff": "No assigned events today.",
   "emptyUpcomingStaff": "No upcoming assigned events.",
-  "viewDetails": "View details",
-  "actionsFor": "Actions for {{name}}",
   "staffName": "{{name}}",
   "metaWithAttendee": "{{staff}} · {{attendee}}"
 }

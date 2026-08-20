@@ -14,7 +14,8 @@ import * as repo from '../repositories/company.repository.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
-import { sendTransactionalEmail } from './emailClient.service.js'
+import { ensureWelcomeTemplate as ensureEmailWelcomeTemplate, sendTransactionalEmail } from './emailClient.service.js'
+import { ensureWelcomeTemplate as ensureSmsWelcomeTemplate } from './smsClient.service.js'
 import { upsertPaymentCompany } from './paymentClient.service.js'
 
 function httpError(message: string, statusCode: number): Error & { statusCode: number } {
@@ -392,8 +393,13 @@ export async function registerCompany(
 
   sendCompanyEmail('company_registered', company)
 
-  // Welcome templates are shown as platform defaults until the company customizes them.
-  // Sending resolves company override → platform fallback (no eager company seed).
+  // Soft-fail: registration succeeds even if Email/SMS are down.
+  void ensureEmailWelcomeTemplate(companyId, company.name).catch((err) => {
+    console.error('[company] ensure email welcome template failed:', err)
+  })
+  void ensureSmsWelcomeTemplate(companyId, company.name).catch((err) => {
+    console.error('[company] ensure SMS welcome template failed:', err)
+  })
 
   return toCompanyWithMembership(company, role)
 }

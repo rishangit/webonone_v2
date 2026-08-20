@@ -20,6 +20,8 @@ interface SessionTokensState {
   run: SessionRun | null
   items: SessionToken[]
   queue: SessionQueueSnapshot | null
+  sessionStartTime: string | null
+  sessionEndTime: string | null
   listStatus: Status
   createStatus: Status
   actionStatus: Status
@@ -36,6 +38,8 @@ const initialState: SessionTokensState = {
   run: null,
   items: [],
   queue: null,
+  sessionStartTime: null,
+  sessionEndTime: null,
   listStatus: 'idle',
   createStatus: 'idle',
   actionStatus: 'idle',
@@ -50,6 +54,8 @@ function applyDetail(state: SessionTokensState, detail: SessionDetail) {
   state.run = detail.run
   state.items = detail.items
   state.queue = detail.queue ?? null
+  state.sessionStartTime = detail.sessionStartTime
+  state.sessionEndTime = detail.sessionEndTime
 }
 
 const sessionTokensSlice = createSlice({

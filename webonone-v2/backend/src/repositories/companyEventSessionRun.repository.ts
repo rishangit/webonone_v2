@@ -12,6 +12,9 @@ export interface CompanyEventSessionRunRow {
   started_at: Date | null
   started_by_user_id: string | null
   ended_at: Date | null
+  /** Occurrence override; null means use parent event times. */
+  scheduled_start_time: string | null
+  scheduled_end_time: string | null
   created_at: Date
   updated_at: Date
 }
@@ -28,6 +31,18 @@ export async function findRunForSession(
       occurrence_date: occurrenceDate,
     })
     .first()
+}
+
+/** Batch load runs for occurrence lists (dashboard / calendar range). */
+export async function listRunsForEventsInRange(
+  eventIds: string[],
+  from: string,
+  to: string,
+): Promise<CompanyEventSessionRunRow[]> {
+  if (eventIds.length === 0) return []
+  return db<CompanyEventSessionRunRow>('company_event_session_runs')
+    .whereIn('event_id', eventIds)
+    .whereBetween('occurrence_date', [from, to])
 }
 
 export async function insertRun(row: {
@@ -65,6 +80,8 @@ export async function updateRun(
     started_at?: Date | null
     started_by_user_id?: string | null
     ended_at?: Date | null
+    scheduled_start_time?: string | null
+    scheduled_end_time?: string | null
   },
 ): Promise<CompanyEventSessionRunRow> {
   await db('company_event_session_runs')
