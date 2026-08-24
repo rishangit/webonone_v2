@@ -11,6 +11,7 @@ import {
   FeaturePage,
   ItemListEmpty,
 } from '@webonone/ui-kit'
+import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import {
   getSessionTokenHistoryDetail,
@@ -154,6 +155,12 @@ export function StaffHistoryTokenDetailPage() {
               <DetailField label="Date" value={formatOccurrenceDate(detail.occurrenceDate)} />
               <DetailField label="Time" value={`${detail.startTime}–${detail.endTime}`} />
               <DetailField label="Token" value={detail.tokenLabel} />
+              {detail.workflowProgress ? (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">Progress</p>
+                  <TokenWorkflowProgress progress={detail.workflowProgress} />
+                </div>
+              ) : null}
               <DetailField label="Status" value={detail.status} />
               <DetailField label="Customer" value={detail.userDisplayName} />
               {detail.spaceName ? <DetailField label="Space" value={detail.spaceName} /> : null}

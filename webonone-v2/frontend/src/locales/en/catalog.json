@@ -45,7 +45,8 @@
       "overview": "Overview",
       "gallery": "Gallery",
       "attributes": "Attributes",
-      "variants": "Variants"
+      "variants": "Variants",
+      "workflow": "Workflow"
     },
     "serviceBasics": {
       "title": "Service",
@@ -73,12 +74,17 @@
       "descriptionEntity": "Labels linked to this {{noun}}",
       "empty": "No tags."
     },
-    "form": {
-      "title": "Form",
-      "description": "Design form linked to this service",
-      "linkedForm": "Linked form",
-      "none": "None"
-    },
+        "form": {
+          "title": "Form",
+          "description": "Design form linked to this service",
+          "linkedForm": "Linked form",
+          "none": "None"
+        },
+        "workflow": {
+          "title": "Workflow",
+          "description": "Spaces, staff, and forms assigned to this service",
+          "empty": "No workflow items yet."
+        },
     "removeTitleNamed": "Remove {{name}}?",
     "removeTitleNoun": "Remove {{noun}}?",
     "removeDescription": "This action cannot be undone. The item will be removed from your company catalog.",
@@ -252,6 +258,46 @@
     "empty": "No variants in the library for this product.",
     "failedLoad": "Failed to load variants",
     "sku": "SKU · {{sku}}"
+  },
+  "workflowTab": {
+    "title": "Workflow",
+    "description": "Ordered steps for this service. Each item has a space, staff, and forms.",
+    "checkIn": "Check-in",
+    "spaceOptional": "Optional space",
+    "clearSpace": "Clear space",
+    "add": "Add workflow item",
+    "empty": "No workflow items yet.",
+    "loading": "Loading workflow…",
+    "loadFailed": "Failed to load workflow.",
+    "edit": "Edit",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove item",
+    "removeConfirm": "Remove {{name}}?",
+    "removeFallback": "Remove workflow item?",
+    "removeDescription": "This step is removed from the service workflow. Spaces, staff, and forms are not deleted.",
+    "actionsFor": "Actions for {{name}}",
+    "staffLine": "Staff: {{value}}",
+    "formsLine": "Forms: {{value}}",
+    "queueLine": "Session queue: {{value}}",
+    "yes": "Yes",
+    "no": "No",
+    "none": "None",
+    "addTitle": "Add workflow item",
+    "editTitle": "Edit workflow item",
+    "dialogDescription": "Assign one space, and optionally staff and forms.",
+    "space": "Space",
+    "staff": "Staff",
+    "forms": "Forms",
+    "searchSpaces": "Search spaces…",
+    "searchStaff": "Search staff…",
+    "searchForms": "Search forms…",
+    "noSpaces": "No company spaces available.",
+    "noStaff": "No staff found.",
+    "noForms": "No published forms found.",
+    "selectSpace": "Select {{name}}",
+    "toggleStaff": "Toggle {{name}}",
+    "toggleForm": "Toggle {{name}}"
   },
   "variantDetail": {
     "titleFallback": "Variant",

@@ -14,8 +14,17 @@ import * as roleRepo from '../clients/identityRoleClient.js'
 import * as eventRepo from '../repositories/companyEvent.repository.js'
 import * as sessionRunRepo from '../repositories/companyEventSessionRun.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
+import * as sessionCheckInRepo from '../repositories/companyEventSessionCheckIn.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
+import {
+  effectiveStaffId,
+  isRunCancelled,
+  loadApprovedLeaveDatesByStaff,
+  resolveSessionIssue,
+  staffOnApprovedLeave,
+  type SessionIssueKind,
+} from './sessionOccurrenceIssue.js'
 import {
   notifySessionEnded,
   notifySessionScheduleChanged,
@@ -24,6 +33,13 @@ import {
   notifySessionTokenIssued,
 } from './sessionTokenNotify.service.js'
 import { notifyAppointmentBooked } from './appointmentNotify.service.js'
+import {
+  buildWorkflowProgress,
+  firstWorkflowItemId,
+  loadWorkflowStepDefs,
+  nextWorkflowState,
+  type TokenWorkflowProgressDto,
+} from './tokenWorkflowProgress.js'
 import {
   notifyAppointmentBookedInApp,
   notifySessionEndedInApp,
@@ -104,6 +120,10 @@ export type CompanyEventOccurrenceDto = CompanyEventDto & {
   originalStartTime: string
   /** Series end before occurrence override (same as endTime when unchanged). */
   originalEndTime: string
+  sessionCancelled: boolean
+  effectiveStaffId: string
+  effectiveStaffDisplayName: string
+  sessionIssue: SessionIssueKind
 }
 
 export type SessionTokenDto = {
@@ -119,6 +139,7 @@ export type SessionTokenDto = {
   userEmail: string | null
   createdAt: string
   updatedAt: string
+  workflowProgress: TokenWorkflowProgressDto
 }
 
 export type SessionRunDto = {
@@ -145,6 +166,10 @@ export type SessionDetailDto = {
   sessionStartTime: string
   /** Effective end for this occurrence (override ?? event). */
   sessionEndTime: string
+  sessionCancelled: boolean
+  effectiveStaffId: string
+  effectiveStaffDisplayName: string
+  sessionIssue: SessionIssueKind
   /** Present on personal (/me) session views — queue labels from the full company token list. */
   queue?: {
     prevTokenLabel: string | null
@@ -156,6 +181,7 @@ export type SessionDetailDto = {
 function computeSessionQueueLabels(
   items: SessionTokenDto[],
   run: SessionRunDto,
+  checkedInUserIds: Set<string>,
 ): {
   prevTokenLabel: string | null
   currentTokenLabel: string | null
@@ -172,7 +198,7 @@ function computeSessionQueueLabels(
       null,
     )
   const next = items
-    .filter((token) => token.status === 'waiting')
+    .filter((token) => token.status === 'waiting' && checkedInUserIds.has(token.userId))
     .reduce<SessionTokenDto | null>(
       (best, token) => (!best || token.tokenNumber < best.tokenNumber ? token : best),
       null,
@@ -757,6 +783,10 @@ function toOccurrence(event: CompanyEventDto, occurrenceDate: string): CompanyEv
     scheduleChangeKind: null,
     originalStartTime: event.startTime,
     originalEndTime: event.endTime,
+    sessionCancelled: false,
+    effectiveStaffId: event.staffId,
+    effectiveStaffDisplayName: event.staffDisplayName,
+    sessionIssue: null,
   }
 }
 
@@ -785,6 +815,10 @@ function applyOccurrenceScheduleOverride(
       scheduleChangeKind: null,
       originalStartTime,
       originalEndTime,
+      sessionCancelled: false,
+      effectiveStaffId: item.staffId,
+      effectiveStaffDisplayName: item.staffDisplayName,
+      sessionIssue: null,
     }
   }
 
@@ -808,6 +842,10 @@ function applyOccurrenceScheduleOverride(
     scheduleChangeKind,
     originalStartTime,
     originalEndTime,
+    sessionCancelled: isRunCancelled(run),
+    effectiveStaffId: effectiveStaffId(item.staffId, run),
+    effectiveStaffDisplayName: item.staffDisplayName,
+    sessionIssue: isRunCancelled(run) ? 'cancelled' : null,
   }
 }
 
@@ -822,9 +860,41 @@ async function attachOccurrenceRunStatuses(
   const runByKey = new Map(
     runs.map((row) => [`${row.event_id}:${toDateOnly(row.occurrence_date)}`, row]),
   )
-  return occurrences.map((item) =>
+  const withSchedule = occurrences.map((item) =>
     applyOccurrenceScheduleOverride(item, runByKey.get(`${item.id}:${item.occurrenceDate}`)),
   )
+  const companyId = withSchedule[0]?.companyId
+  if (!companyId) return withSchedule
+
+  const staffIds = [...new Set(withSchedule.map((item) => item.effectiveStaffId))]
+  const leaveByStaff = await loadApprovedLeaveDatesByStaff(companyId, staffIds, from, to)
+  const staffNameById = new Map<string, string>()
+  const extraStaffIds = staffIds.filter((id) => !withSchedule.some((item) => item.staffId === id))
+  await Promise.all(
+    extraStaffIds.map(async (staffId) => {
+      const staff = await staffRepo.findStaffById(companyId, staffId)
+      if (staff) staffNameById.set(staff.id, staff.display_name)
+    }),
+  )
+
+  return withSchedule.map((item) => {
+    const displayName =
+      staffNameById.get(item.effectiveStaffId) ??
+      (item.effectiveStaffId === item.staffId ? item.staffDisplayName : item.staffDisplayName)
+    const staffOnLeave = staffOnApprovedLeave(
+      leaveByStaff,
+      item.effectiveStaffId,
+      item.occurrenceDate,
+    )
+    return {
+      ...item,
+      effectiveStaffDisplayName: displayName,
+      sessionIssue: resolveSessionIssue({
+        cancelled: item.sessionCancelled,
+        staffOnLeave,
+      }),
+    }
+  })
 }
 
 export type CatalogSessionItemDto = {
@@ -866,7 +936,17 @@ export async function buildWindowSessionItems(
     occurrences.push(...expandOccurrences(event, from, to))
   }
   const withOverrides = await attachOccurrenceRunStatuses(occurrences, from, to)
-  const items: CatalogSessionItemDto[] = withOverrides.map((occurrence) => ({
+  const blockedServiceDays = new Set(
+    withOverrides
+      .filter((occurrence) => occurrence.sessionIssue === 'staff_leave')
+      .map((occurrence) => `${occurrence.serviceId}:${occurrence.occurrenceDate}`),
+  )
+  const bookable = withOverrides.filter(
+    (occurrence) =>
+      !occurrence.sessionIssue &&
+      !blockedServiceDays.has(`${occurrence.serviceId}:${occurrence.occurrenceDate}`),
+  )
+  const items: CatalogSessionItemDto[] = bookable.map((occurrence) => ({
     eventId: occurrence.id,
     occurrenceDate: occurrence.occurrenceDate,
     startTime: occurrence.startTime,
@@ -928,11 +1008,15 @@ export async function listCompanyEvents(
     const occurrences = series.flatMap((e) => expandOccurrences(e, opts.from!, opts.to!))
     occurrences.sort((a, b) => a.start.localeCompare(b.start))
     const withStatus = await attachOccurrenceRunStatuses(occurrences, opts.from, opts.to)
+    const visible =
+      opts.viewer.role === 'company_admin'
+        ? withStatus
+        : withStatus.filter((item) => !item.sessionIssue)
     return {
-      items: withStatus,
-      total: withStatus.length,
+      items: visible,
+      total: visible.length,
       page: 1,
-      pageSize: withStatus.length || 20,
+      pageSize: visible.length || 20,
       mode: 'occurrences',
     }
   }
@@ -1063,13 +1147,28 @@ export async function getMyBookedSessionDetail(
       throw serviceError('Event not found', 404)
     }
   }
-  const detail = await buildSessionDetail(event.companyId, eventId, occurrenceDate, event)
+  const detail = await decorateSessionDetail(
+    event.companyId,
+    event,
+    occurrenceDate,
+    await buildSessionDetail(event.companyId, eventId, occurrenceDate, event),
+  )
+  const checkIns = await sessionCheckInRepo.listCheckInsForSession(
+    event.companyId,
+    eventId,
+    occurrenceDate,
+  )
+  const checkedInUserIds = new Set(checkIns.map((row) => row.user_id))
   return {
     run: detail.run,
     items: detail.items.filter((token) => token.userId === userId),
     sessionStartTime: detail.sessionStartTime,
     sessionEndTime: detail.sessionEndTime,
-    queue: computeSessionQueueLabels(detail.items, detail.run),
+    sessionCancelled: detail.sessionCancelled,
+    effectiveStaffId: detail.effectiveStaffId,
+    effectiveStaffDisplayName: detail.effectiveStaffDisplayName,
+    sessionIssue: detail.sessionIssue,
+    queue: computeSessionQueueLabels(detail.items, detail.run, checkedInUserIds),
   }
 }
 
@@ -1164,6 +1263,10 @@ export async function createCompanyEvent(
     body.recurrence_until,
   )
   assertStaffWorksOnWeekdays(schedules, schedule.weekdays, times.startTime, times.endTime)
+  if (service.timeMode === 'duration') {
+    await assertStaffNotOnLeaveForDates(companyId, staff.id, [body.starts_on])
+    await assertServiceDayHasNoStaffLeaveIssue(companyId, service.id, body.starts_on)
+  }
   const attendee = resolveAttendee(service.timeMode, body)
   const space = await resolveSpace(
     service.timeMode,
@@ -1295,7 +1398,10 @@ function formatTokenLabel(tokenNumber: number): string {
   return String(tokenNumber).padStart(3, '0')
 }
 
-function mapSessionToken(row: sessionTokenRepo.CompanyEventSessionTokenRow): SessionTokenDto {
+function mapSessionToken(
+  row: sessionTokenRepo.CompanyEventSessionTokenRow,
+  workflowProgress: TokenWorkflowProgressDto,
+): SessionTokenDto {
   const occurrenceDate = toDateOnly(row.occurrence_date)
   return {
     id: row.id,
@@ -1310,6 +1416,100 @@ function mapSessionToken(row: sessionTokenRepo.CompanyEventSessionTokenRow): Ses
     userEmail: row.user_email,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
+    workflowProgress,
+  }
+}
+
+async function mapSessionTokens(
+  companyId: string,
+  serviceId: string,
+  rows: sessionTokenRepo.CompanyEventSessionTokenRow[],
+): Promise<SessionTokenDto[]> {
+  const defs = await loadWorkflowStepDefs(companyId, serviceId)
+  if (rows.length === 0) return []
+  const eventId = rows[0]!.event_id
+  const occurrenceDate = toDateOnly(rows[0]!.occurrence_date)
+  const [run, checkIns] = await Promise.all([
+    sessionRunRepo.findRunForSession(companyId, eventId, occurrenceDate),
+    sessionCheckInRepo.listCheckInsForSession(companyId, eventId, occurrenceDate),
+  ])
+  const checkedInUserIds = new Set(checkIns.map((row) => row.user_id))
+  const sessionStarted = run?.status === 'started'
+  return rows.map((row) =>
+    mapSessionToken(
+      row,
+      buildWorkflowProgress(defs, row, {
+        checkedIn: checkedInUserIds.has(row.user_id),
+        sessionStarted,
+      }),
+    ),
+  )
+}
+
+async function mapSessionTokenWithProgress(
+  companyId: string,
+  serviceId: string,
+  row: sessionTokenRepo.CompanyEventSessionTokenRow,
+): Promise<SessionTokenDto> {
+  const [dto] = await mapSessionTokens(companyId, serviceId, [row])
+  return dto
+}
+
+const EMPTY_WORKFLOW_PROGRESS: TokenWorkflowProgressDto = {
+  steps: [],
+  currentIndex: 0,
+  done: false,
+}
+
+function mapSessionTokenNotify(
+  row: sessionTokenRepo.CompanyEventSessionTokenRow,
+): SessionTokenDto {
+  return mapSessionToken(row, EMPTY_WORKFLOW_PROGRESS)
+}
+
+async function advanceTokenPastCheckIn(
+  companyId: string,
+  serviceId: string,
+  token: sessionTokenRepo.CompanyEventSessionTokenRow,
+): Promise<sessionTokenRepo.CompanyEventSessionTokenRow> {
+  if (token.workflow_completed_at) return token
+  const defs = await loadWorkflowStepDefs(companyId, serviceId)
+  const currentId = token.current_workflow_item_id ?? firstWorkflowItemId(defs)
+  const current = defs.find((def) => def.id === currentId)
+  if (current && current.kind !== 'check_in') return token
+  const next = nextWorkflowState(defs, currentId)
+  return sessionTokenRepo.updateTokenWorkflow(token.id, next)
+}
+
+async function maybeAdvanceTokenPastCheckIn(
+  companyId: string,
+  serviceId: string,
+  eventId: string,
+  occurrenceDate: string,
+  token: sessionTokenRepo.CompanyEventSessionTokenRow,
+): Promise<sessionTokenRepo.CompanyEventSessionTokenRow> {
+  const run = await sessionRunRepo.findRunForSession(companyId, eventId, occurrenceDate)
+  if (run?.status !== 'started') return token
+  return advanceTokenPastCheckIn(companyId, serviceId, token)
+}
+
+async function advanceCheckedInTokensPastCheckIn(
+  companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+): Promise<void> {
+  const checkIns = await sessionCheckInRepo.listCheckInsForSession(
+    companyId,
+    event.id,
+    occurrenceDate,
+  )
+  if (checkIns.length === 0) return
+  const checkedIn = new Set(checkIns.map((row) => row.user_id))
+  const tokens = await sessionTokenRepo.listTokensForSession(companyId, event.id, occurrenceDate)
+  for (const token of tokens) {
+    if (checkedIn.has(token.user_id)) {
+      await advanceTokenPastCheckIn(companyId, event.serviceId, token)
+    }
   }
 }
 
@@ -1381,6 +1581,48 @@ async function getOrCreateSessionRun(
   }
 }
 
+async function ensureDurationAttendeeToken(
+  companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+): Promise<void> {
+  if (event.timeMode !== 'duration' || !event.attendeeUserId) return
+  const existing = await sessionTokenRepo.findTokenByUser(
+    companyId,
+    event.id,
+    occurrenceDate,
+    event.attendeeUserId,
+  )
+  if (existing) return
+
+  const workflowDefs = await loadWorkflowStepDefs(companyId, event.serviceId)
+  const nextNumber =
+    (await sessionTokenRepo.getMaxTokenNumber(companyId, event.id, occurrenceDate)) + 1
+  try {
+    await sessionTokenRepo.insertToken({
+      id: nanoid(),
+      company_id: companyId,
+      event_id: event.id,
+      occurrence_date: occurrenceDate,
+      token_number: nextNumber,
+      user_id: event.attendeeUserId,
+      user_display_name: event.attendeeDisplayName ?? 'Customer',
+      user_email: event.attendeeEmail,
+      current_workflow_item_id: firstWorkflowItemId(workflowDefs),
+    })
+    await roleRepo.ensureCompanyCustomerMemberRole(event.attendeeUserId, companyId, nanoid())
+  } catch (err) {
+    const raced = await sessionTokenRepo.findTokenByUser(
+      companyId,
+      event.id,
+      occurrenceDate,
+      event.attendeeUserId,
+    )
+    if (raced) return
+    throw err
+  }
+}
+
 async function buildSessionDetail(
   companyId: string,
   eventId: string,
@@ -1388,6 +1630,7 @@ async function buildSessionDetail(
   event?: CompanyEventDto,
 ): Promise<SessionDetailDto> {
   const resolvedEvent = event ?? (await getCompanyEvent(companyId, eventId))
+  await ensureDurationAttendeeToken(companyId, resolvedEvent, occurrenceDate)
   const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
   const rows = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
   const times = resolveEffectiveSessionTimes(
@@ -1397,10 +1640,93 @@ async function buildSessionDetail(
   )
   return {
     run: mapSessionRun(run),
-    items: rows.map(mapSessionToken),
+    items: await mapSessionTokens(companyId, resolvedEvent.serviceId, rows),
     sessionStartTime: times.sessionStartTime,
     sessionEndTime: times.sessionEndTime,
+    sessionCancelled: false,
+    effectiveStaffId: resolvedEvent.staffId,
+    effectiveStaffDisplayName: resolvedEvent.staffDisplayName,
+    sessionIssue: null,
   }
+}
+
+async function decorateSessionDetail(
+  _companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+  detail: SessionDetailDto,
+): Promise<SessionDetailDto> {
+  const [decorated] = await attachOccurrenceRunStatuses(
+    expandOccurrences(event, occurrenceDate, occurrenceDate).map((item) => ({
+      ...item,
+      startTime: detail.sessionStartTime,
+      endTime: detail.sessionEndTime,
+    })),
+    occurrenceDate,
+    occurrenceDate,
+  )
+  const occurrence = decorated
+  return {
+    ...detail,
+    sessionCancelled: occurrence?.sessionCancelled ?? false,
+    effectiveStaffId: occurrence?.effectiveStaffId ?? event.staffId,
+    effectiveStaffDisplayName:
+      occurrence?.effectiveStaffDisplayName ?? event.staffDisplayName,
+    sessionIssue: occurrence?.sessionIssue ?? null,
+  }
+}
+
+async function assertStaffNotOnLeaveForDates(
+  companyId: string,
+  staffId: string,
+  dates: string[],
+): Promise<void> {
+  if (dates.length === 0) return
+  const from = dates.reduce((a, b) => (a < b ? a : b))
+  const to = dates.reduce((a, b) => (a > b ? a : b))
+  const leaveByStaff = await loadApprovedLeaveDatesByStaff(companyId, [staffId], from, to)
+  const blocked = dates.find((date) => staffOnApprovedLeave(leaveByStaff, staffId, date))
+  if (blocked) {
+    throw serviceError(`Assigned staff is on approved leave on ${blocked}`, 409)
+  }
+}
+
+async function assertServiceDayHasNoStaffLeaveIssue(
+  companyId: string,
+  serviceId: string,
+  date: string,
+): Promise<void> {
+  const eventRows = await eventRepo.listWindowEventsByService(companyId, serviceId)
+  const occurrences: CompanyEventOccurrenceDto[] = []
+  for (const eventRow of eventRows) {
+    occurrences.push(...expandOccurrences(mapEventRow(eventRow), date, date))
+  }
+  const withIssues = await attachOccurrenceRunStatuses(occurrences, date, date)
+  if (withIssues.some((item) => item.sessionIssue === 'staff_leave')) {
+    throw serviceError(
+      'This service cannot be booked on this date because assigned staff is on leave',
+      409,
+    )
+  }
+}
+
+async function assertSessionIsBookable(
+  companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+): Promise<void> {
+  const [occurrence] = await attachOccurrenceRunStatuses(
+    expandOccurrences(event, occurrenceDate, occurrenceDate),
+    occurrenceDate,
+    occurrenceDate,
+  )
+  if (occurrence?.sessionIssue === 'cancelled') {
+    throw serviceError('This session has been cancelled', 409)
+  }
+  if (occurrence?.sessionIssue === 'staff_leave') {
+    throw serviceError('This session is unavailable because assigned staff is on leave', 409)
+  }
+  await assertServiceDayHasNoStaffLeaveIssue(companyId, event.serviceId, occurrenceDate)
 }
 
 function assertWindowTokensAllowed(event: CompanyEventDto): void {
@@ -1419,7 +1745,22 @@ export async function getSessionDetail(
   viewer?: EventViewer,
 ): Promise<SessionDetailDto> {
   const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, viewer)
-  return buildSessionDetail(companyId, eventId, occurrenceDate, event)
+  const detail = await decorateSessionDetail(
+    companyId,
+    event,
+    occurrenceDate,
+    await buildSessionDetail(companyId, eventId, occurrenceDate, event),
+  )
+  if (viewer?.role === 'member' && detail.sessionIssue) {
+    const token = await sessionTokenRepo.findTokenByUser(
+      companyId,
+      eventId,
+      occurrenceDate,
+      viewer.userId,
+    )
+    if (!token) throw serviceError('Event not found', 404)
+  }
+  return detail
 }
 
 export async function listSessionTokens(
@@ -1440,6 +1781,7 @@ export async function createSessionToken(
 ): Promise<SessionTokenDto> {
   const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
   assertWindowTokensAllowed(event)
+  await assertSessionIsBookable(companyId, event, occurrenceDate)
 
   const userId = body.user_id.trim()
   const existing = await sessionTokenRepo.findTokenByUser(
@@ -1456,6 +1798,7 @@ export async function createSessionToken(
     (await sessionTokenRepo.getMaxTokenNumber(companyId, eventId, occurrenceDate)) + 1
   const id = nanoid()
   try {
+    const workflowDefs = await loadWorkflowStepDefs(companyId, event.serviceId)
     const row = await sessionTokenRepo.insertToken({
       id,
       company_id: companyId,
@@ -1465,6 +1808,7 @@ export async function createSessionToken(
       user_id: userId,
       user_display_name: body.user_display_name.trim(),
       user_email: body.user_email?.trim() || null,
+      current_workflow_item_id: firstWorkflowItemId(workflowDefs),
     })
 
     await roleRepo.ensureCompanyCustomerMemberRole(userId, companyId, nanoid())
@@ -1476,12 +1820,18 @@ export async function createSessionToken(
         eventId,
         occurrenceDate,
       )
-      if (!serving) {
+      const alreadyCheckedIn = await sessionCheckInRepo.findCheckInByUser(
+        companyId,
+        eventId,
+        occurrenceDate,
+        userId,
+      )
+      if (!serving && alreadyCheckedIn) {
         await sessionTokenRepo.updateTokenStatus(row.id, 'serving')
         await sessionRunRepo.updateRun(run.id, { current_token_id: row.id })
         const updated = await sessionTokenRepo.findTokenById(companyId, row.id)
         if (updated) {
-          const token = mapSessionToken(updated)
+          const token = await mapSessionTokenWithProgress(companyId, event.serviceId, updated)
           notifySessionTokenIssued({
             companyId,
             event,
@@ -1504,7 +1854,7 @@ export async function createSessionToken(
       }
     }
 
-    const token = mapSessionToken(row)
+    const token = await mapSessionTokenWithProgress(companyId, event.serviceId, row)
     notifySessionTokenIssued({
       companyId,
       event,
@@ -1539,14 +1889,69 @@ export async function getSessionTokenForUser(
   occurrenceDate: string,
   userId: string,
 ): Promise<SessionTokenDto | null> {
-  await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
   const row = await sessionTokenRepo.findTokenByUser(
     companyId,
     eventId,
     occurrenceDate,
     userId,
   )
-  return row ? mapSessionToken(row) : null
+  return row ? mapSessionTokenWithProgress(companyId, event.serviceId, row) : null
+}
+
+export async function completeSessionTokenWorkflow(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  tokenId: string,
+  viewer?: EventViewer,
+): Promise<SessionTokenDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, viewer)
+  const token = await sessionTokenRepo.findTokenById(companyId, tokenId)
+  if (
+    !token ||
+    token.event_id !== eventId ||
+    toDateOnly(token.occurrence_date) !== occurrenceDate
+  ) {
+    throw serviceError('Session token not found', 404)
+  }
+  if (token.workflow_completed_at) {
+    return mapSessionTokenWithProgress(companyId, event.serviceId, token)
+  }
+  const defs = await loadWorkflowStepDefs(companyId, event.serviceId)
+  const currentId = token.current_workflow_item_id ?? firstWorkflowItemId(defs)
+  const current = defs.find((def) => def.id === currentId)
+  if (current?.kind === 'check_in') {
+    const existing = await sessionCheckInRepo.findCheckInByUser(
+      companyId,
+      eventId,
+      occurrenceDate,
+      token.user_id,
+    )
+    if (!existing) {
+      await sessionCheckInRepo.insertCheckIn({
+        id: nanoid(),
+        companyId,
+        eventId,
+        occurrenceDate,
+        userId: token.user_id,
+        userDisplayName: token.user_display_name,
+        userEmail: token.user_email,
+      })
+      await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate, token.user_id)
+    }
+    const updated = await maybeAdvanceTokenPastCheckIn(
+      companyId,
+      event.serviceId,
+      eventId,
+      occurrenceDate,
+      token,
+    )
+    return mapSessionTokenWithProgress(companyId, event.serviceId, updated)
+  }
+  const next = nextWorkflowState(defs, currentId)
+  const updated = await sessionTokenRepo.updateTokenWorkflow(token.id, next)
+  return mapSessionTokenWithProgress(companyId, event.serviceId, updated)
 }
 
 export async function backfillSessionTokenMemberRoles(): Promise<{
@@ -1579,6 +1984,8 @@ export async function startSession(
   startedByUserId: string,
 ): Promise<SessionDetailDto> {
   const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  await assertSessionIsBookable(companyId, event, occurrenceDate)
+  await ensureDurationAttendeeToken(companyId, event, occurrenceDate)
   const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
 
   if (run.status === 'ended') {
@@ -1599,7 +2006,7 @@ export async function startSession(
   if (firstWaiting) {
     await sessionTokenRepo.updateTokenStatus(firstWaiting.id, 'serving')
     currentTokenId = firstWaiting.id
-    firstServingToken = mapSessionToken({ ...firstWaiting, status: 'serving' })
+    firstServingToken = mapSessionTokenNotify({ ...firstWaiting, status: 'serving' })
   }
 
   await sessionRunRepo.updateRun(run.id, {
@@ -1610,11 +2017,13 @@ export async function startSession(
     ended_at: null,
   })
 
+  await advanceCheckedInTokensPastCheckIn(companyId, event, occurrenceDate)
+
   const tokens = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
   notifySessionStarted({
     companyId,
     event,
-    tokens: tokens.map(mapSessionToken),
+    tokens: tokens.map(mapSessionTokenNotify),
   })
   void notifySessionStartedInApp({
     companyId,
@@ -1625,7 +2034,7 @@ export async function startSession(
   }).catch((err) => {
     console.error('[companyEvent] in-app session started notify failed:', err)
   })
-  if (firstServingToken) {
+  if (firstServingToken && event.timeMode !== 'duration') {
     notifySessionTokenCalled({ companyId, event, token: firstServingToken })
     void notifySessionTokenCalledInApp({
       companyId,
@@ -1676,7 +2085,7 @@ export async function callNextSessionToken(
   await sessionTokenRepo.updateTokenStatus(nextWaiting.id, 'serving')
   await sessionRunRepo.updateRun(run.id, { current_token_id: nextWaiting.id })
 
-  const nextToken = mapSessionToken({ ...nextWaiting, status: 'serving' })
+  const nextToken = mapSessionTokenNotify({ ...nextWaiting, status: 'serving' })
   notifySessionTokenCalled({ companyId, event, token: nextToken })
   void notifySessionTokenCalledInApp({
     companyId,
@@ -1753,7 +2162,7 @@ export async function endSession(
   notifySessionEnded({
     companyId,
     event,
-    tokens: tokens.map(mapSessionToken),
+    tokens: tokens.map(mapSessionTokenNotify),
   })
   void notifySessionEndedInApp({
     companyId,
@@ -1844,7 +2253,7 @@ export async function changeSessionSchedule(
   })
 
   const tokens = await sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate)
-  const tokenDtos = tokens.map(mapSessionToken)
+  const tokenDtos = tokens.map(mapSessionTokenNotify)
 
   let notifiedCount = 0
   let emailQueued = 0
@@ -1894,4 +2303,294 @@ export async function changeSessionSchedule(
     emailQueued,
     smsQueued,
   }
+}
+
+export async function cancelSessionOccurrence(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionDetailDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+  if (run.status === 'ended') {
+    throw serviceError('Ended sessions cannot be cancelled', 409)
+  }
+  await sessionRunRepo.updateRun(run.id, { cancelled_at: new Date() })
+  return decorateSessionDetail(
+    companyId,
+    event,
+    occurrenceDate,
+    await buildSessionDetail(companyId, eventId, occurrenceDate, event),
+  )
+}
+
+export async function reassignSessionStaff(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  staffId: string,
+): Promise<SessionDetailDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
+  const staff = await staffRepo.findStaffById(companyId, staffId.trim())
+  if (!staff) throw serviceError('Staff not found', 404)
+  await assertStaffNotOnLeaveForDates(companyId, staff.id, [occurrenceDate])
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+  if (run.status === 'ended') {
+    throw serviceError('Ended sessions cannot be reassigned', 409)
+  }
+  await sessionRunRepo.updateRun(run.id, {
+    staff_id: staff.id,
+    cancelled_at: null,
+  })
+  return decorateSessionDetail(
+    companyId,
+    event,
+    occurrenceDate,
+    await buildSessionDetail(companyId, eventId, occurrenceDate, event),
+  )
+}
+
+export type SessionCheckInDto = {
+  id: string
+  userId: string
+  userDisplayName: string
+  userEmail: string | null
+  checkedInAt: string
+}
+
+export type SessionCheckInsDto = {
+  items: SessionCheckInDto[]
+  canCheckIn: boolean
+  checkedIn: boolean
+}
+
+function toCheckInDto(row: sessionCheckInRepo.SessionCheckInRow): SessionCheckInDto {
+  const checkedInAt =
+    row.checked_in_at instanceof Date
+      ? row.checked_in_at.toISOString()
+      : new Date(row.checked_in_at).toISOString()
+  return {
+    id: row.id,
+    userId: row.user_id,
+    userDisplayName: row.user_display_name,
+    userEmail: row.user_email,
+    checkedInAt,
+  }
+}
+
+async function resolveBookedCheckInSubject(
+  companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+  userId: string,
+): Promise<{ userId: string; userDisplayName: string; userEmail: string | null } | null> {
+  const token = await sessionTokenRepo.findTokenByUser(
+    companyId,
+    event.id,
+    occurrenceDate,
+    userId,
+  )
+  if (token) {
+    return {
+      userId: token.user_id,
+      userDisplayName: token.user_display_name,
+      userEmail: token.user_email,
+    }
+  }
+  if (event.attendeeUserId === userId) {
+    return {
+      userId,
+      userDisplayName: event.attendeeDisplayName?.trim() || 'Member',
+      userEmail: event.attendeeEmail,
+    }
+  }
+  return null
+}
+
+async function buildCheckInsDto(
+  companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+  userId: string,
+  options: { selfOnly: boolean },
+): Promise<SessionCheckInsDto> {
+  const [rows, subject, existing] = await Promise.all([
+    sessionCheckInRepo.listCheckInsForSession(companyId, event.id, occurrenceDate),
+    resolveBookedCheckInSubject(companyId, event, occurrenceDate, userId),
+    sessionCheckInRepo.findCheckInByUser(companyId, event.id, occurrenceDate, userId),
+  ])
+  const items = options.selfOnly
+    ? rows.filter((row) => row.user_id === userId).map(toCheckInDto)
+    : rows.map(toCheckInDto)
+  return {
+    items,
+    canCheckIn: Boolean(subject) && !existing,
+    checkedIn: Boolean(existing),
+  }
+}
+
+async function maybePromoteCheckedInWaitingToken(
+  companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+  userId: string,
+): Promise<void> {
+  const run = await getOrCreateSessionRun(companyId, event.id, occurrenceDate)
+  if (run.status !== 'started') return
+  const serving = await sessionTokenRepo.findServingToken(
+    companyId,
+    event.id,
+    occurrenceDate,
+  )
+  if (serving) return
+  const waiting = await sessionTokenRepo.findTokenByUser(
+    companyId,
+    event.id,
+    occurrenceDate,
+    userId,
+  )
+  if (!waiting || waiting.status !== 'waiting') return
+  await sessionTokenRepo.updateTokenStatus(waiting.id, 'serving')
+  await sessionRunRepo.updateRun(run.id, { current_token_id: waiting.id })
+  const token = mapSessionTokenNotify({ ...waiting, status: 'serving' })
+  notifySessionTokenCalled({ companyId, event, token })
+  void notifySessionTokenCalledInApp({
+    companyId,
+    eventId: event.id,
+    occurrenceDate,
+    serviceName: event.serviceName,
+    userId: token.userId,
+    tokenNumber: token.tokenNumber,
+  }).catch((err) => {
+    console.error('[companyEvent] in-app token called notify failed:', err)
+  })
+}
+
+export async function listSessionCheckIns(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  viewer: EventViewer,
+): Promise<SessionCheckInsDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, viewer)
+  return buildCheckInsDto(companyId, event, occurrenceDate, viewer.userId, { selfOnly: false })
+}
+
+export async function listMySessionCheckIns(
+  userId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionCheckInsDto> {
+  await getMyBookedSessionDetail(userId, eventId, occurrenceDate)
+  const event = await getMyBookedEvent(userId, eventId)
+  return buildCheckInsDto(event.companyId, event, occurrenceDate, userId, { selfOnly: true })
+}
+
+export async function createSessionCheckIn(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  viewer: EventViewer,
+): Promise<SessionCheckInsDto> {
+  const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate, viewer)
+  const subject = await resolveBookedCheckInSubject(
+    companyId,
+    event,
+    occurrenceDate,
+    viewer.userId,
+  )
+  if (!subject) {
+    throw serviceError('Only booked customers can check in to this session', 403)
+  }
+  const existing = await sessionCheckInRepo.findCheckInByUser(
+    companyId,
+    eventId,
+    occurrenceDate,
+    viewer.userId,
+  )
+  if (!existing) {
+    await sessionCheckInRepo.insertCheckIn({
+      id: nanoid(),
+      companyId,
+      eventId,
+      occurrenceDate,
+      userId: subject.userId,
+      userDisplayName: subject.userDisplayName,
+      userEmail: subject.userEmail,
+    })
+    await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate, subject.userId)
+    const token = await sessionTokenRepo.findTokenByUser(
+      companyId,
+      eventId,
+      occurrenceDate,
+      subject.userId,
+    )
+    if (token) {
+      await maybeAdvanceTokenPastCheckIn(
+        companyId,
+        event.serviceId,
+        eventId,
+        occurrenceDate,
+        token,
+      )
+    }
+  }
+  return buildCheckInsDto(companyId, event, occurrenceDate, viewer.userId, { selfOnly: false })
+}
+
+export async function createMySessionCheckIn(
+  userId: string,
+  eventId: string,
+  occurrenceDate: string,
+): Promise<SessionCheckInsDto> {
+  await getMyBookedSessionDetail(userId, eventId, occurrenceDate)
+  const event = await getMyBookedEvent(userId, eventId)
+  const subject = await resolveBookedCheckInSubject(
+    event.companyId,
+    event,
+    occurrenceDate,
+    userId,
+  )
+  if (!subject) {
+    throw serviceError('Only booked customers can check in to this session', 403)
+  }
+  const existing = await sessionCheckInRepo.findCheckInByUser(
+    event.companyId,
+    eventId,
+    occurrenceDate,
+    userId,
+  )
+  if (!existing) {
+    await sessionCheckInRepo.insertCheckIn({
+      id: nanoid(),
+      companyId: event.companyId,
+      eventId,
+      occurrenceDate,
+      userId: subject.userId,
+      userDisplayName: subject.userDisplayName,
+      userEmail: subject.userEmail,
+    })
+    await maybePromoteCheckedInWaitingToken(
+      event.companyId,
+      event,
+      occurrenceDate,
+      subject.userId,
+    )
+    const token = await sessionTokenRepo.findTokenByUser(
+      event.companyId,
+      eventId,
+      occurrenceDate,
+      subject.userId,
+    )
+    if (token) {
+      await maybeAdvanceTokenPastCheckIn(
+        event.companyId,
+        event.serviceId,
+        eventId,
+        occurrenceDate,
+        token,
+      )
+    }
+  }
+  return buildCheckInsDto(event.companyId, event, occurrenceDate, userId, { selfOnly: true })
 }

@@ -10,6 +10,7 @@ export type DesignFormTemplateListItem = {
 
 export type DesignFormSubmissionListItem = {
   id: string
+  formTemplateId?: string
   formName: string
   subjectUserId: string
   sessionTokenId: string | null

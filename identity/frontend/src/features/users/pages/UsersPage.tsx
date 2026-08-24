@@ -32,8 +32,8 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { hasPlatformEmbedHandoff } from '@/features/auth/utils/platformReturn'
 import { AddCompanyUserDialog } from '@/features/users/components/AddCompanyUserDialog'
 import {
+  canAccessCompanyCustomers,
   getSessionCompanyId,
-  isSessionCompanyAdmin,
   isSessionSuperAdmin,
 } from '@/features/users/utils/currentRole'
 import { addCompanyCustomer } from '@/features/users/services/usersApi'
@@ -60,10 +60,9 @@ export function UsersPage() {
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
-  const isCompanyAdmin = isSessionCompanyAdmin(accessToken)
   const companyId = getSessionCompanyId(accessToken)
   const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
-  const companyMode = isCompanyAdmin && Boolean(companyId)
+  const companyCustomersMode = Boolean(companyId) && canAccessCompanyCustomers(accessToken)
 
   const { items, total, page, pageSize, listStatus, listError, lastFetchedAt } = useAppSelector(
     (s) => s.users,
@@ -76,7 +75,7 @@ export function UsersPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
 
-  const canQuery = Boolean(accessToken) && (isSuperAdmin || companyMode)
+  const canQuery = Boolean(accessToken) && (isSuperAdmin || companyCustomersMode)
   const loading =
     canQuery &&
     (lastFetchedAt === null
@@ -99,25 +98,25 @@ export function UsersPage() {
       usersActions.loadListRequested({
         page: 1,
         pageSize,
-        extra: companyMode
+        extra: companyCustomersMode
           ? { search: debouncedSearch || undefined, companyId: companyId! }
           : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
       }),
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canQuery, debouncedSearch, appliedRole, companyMode, companyId])
+  }, [canQuery, debouncedSearch, appliedRole, companyCustomersMode, companyId])
 
-  const hasActiveFilters = !companyMode && roleFilter !== ALL_ROLES_VALUE
+  const hasActiveFilters = !companyCustomersMode && roleFilter !== ALL_ROLES_VALUE
 
   const emptyLabel = useMemo(() => {
     if (loading) {
       return null
     }
     if (items.length === 0) {
-      return companyMode ? t('empty.companyNone') : t('empty.noneFound')
+      return companyCustomersMode ? t('empty.companyNone') : t('empty.noneFound')
     }
     return null
-  }, [loading, items.length, companyMode, t])
+  }, [loading, items.length, companyCustomersMode, t])
 
   async function handleSelectUser(user: UserOption) {
     if (!companyId) {
@@ -168,14 +167,16 @@ export function UsersPage() {
     return <Navigate to="/login" replace />
   }
 
-  if (!isSuperAdmin && !companyMode) {
+  if (!isSuperAdmin && !companyCustomersMode) {
     return <Navigate to="/profile" replace />
   }
 
   return (
     <FeaturePage
       title={t('pageTitle')}
-      description={companyMode ? t('pageDescription.company') : t('pageDescription.platform')}
+      description={
+        companyCustomersMode ? t('pageDescription.company') : t('pageDescription.platform')
+      }
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
@@ -185,16 +186,16 @@ export function UsersPage() {
             aria-label={t('searchAria')}
             className="w-64"
           />
-          {!companyMode ? (
+          {!companyCustomersMode ? (
             <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           ) : null}
-          {companyMode ? (
+          {companyCustomersMode ? (
             <ListAddButton onClick={() => setAddOpen(true)}>{t('addUser')}</ListAddButton>
           ) : null}
         </div>
       }
     >
-      {!companyMode ? (
+      {!companyCustomersMode ? (
         <ListFilterPanel
           open={filterOpen}
           onOpenChange={setFilterOpen}
@@ -305,7 +306,7 @@ export function UsersPage() {
               usersActions.loadListRequested({
                 page: p,
                 pageSize,
-                extra: companyMode
+                extra: companyCustomersMode
                   ? { search: debouncedSearch || undefined, companyId: companyId! }
                   : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
               }),
@@ -316,7 +317,7 @@ export function UsersPage() {
               usersActions.loadListRequested({
                 page: 1,
                 pageSize: size,
-                extra: companyMode
+                extra: companyCustomersMode
                   ? { search: debouncedSearch || undefined, companyId: companyId! }
                   : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
               }),
@@ -328,7 +329,7 @@ export function UsersPage() {
                 page: page + 1,
                 pageSize,
                 append: true,
-                extra: companyMode
+                extra: companyCustomersMode
                   ? { search: debouncedSearch || undefined, companyId: companyId! }
                   : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
               }),
@@ -340,7 +341,7 @@ export function UsersPage() {
                 page: 1,
                 pageSize,
                 force: true,
-                extra: companyMode
+                extra: companyCustomersMode
                   ? { search: debouncedSearch || undefined, companyId: companyId! }
                   : { search: debouncedSearch || undefined, role: appliedRole ?? undefined },
               }),
@@ -349,7 +350,7 @@ export function UsersPage() {
         />
       </ListPageBody>
 
-      {companyMode ? (
+      {companyCustomersMode ? (
         <AddCompanyUserDialog
           open={addOpen}
           onOpenChange={setAddOpen}

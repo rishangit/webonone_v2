@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Button,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -16,6 +13,7 @@ import {
   StatusTag,
   type StatusTagVariant,
 } from '@webonone/ui-kit'
+import { ExpandEventUntilDialog } from '@/features/calendar/components/ExpandEventUntilDialog'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 import { eventsApi } from '@/features/calendar/services/eventsApi'
 import type {
@@ -28,10 +26,16 @@ import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOcc
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
 import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
 
+export type SessionListTab = 'upcoming' | 'past'
+
 type EventSessionsListProps = {
   event: CompanyEvent
+  listTab: SessionListTab
   /** When true, only list window sessions where the user has a token. */
   personalOnly?: boolean
+  /** Company admins can extend Specific time series Until from Upcoming. */
+  canExpand?: boolean
+  onExpanded?: () => void
 }
 
 const RUN_STATUS_VARIANT: Record<SessionRunStatus, StatusTagVariant> = {
@@ -90,11 +94,24 @@ function SessionRow({
               originalStartTime={session.originalStartTime}
               originalEndTime={session.originalEndTime}
             />
+            {session.sessionIssue === 'staff_leave' ? (
+              <p className="text-xs text-destructive">Staff on leave</p>
+            ) : null}
+            {session.sessionIssue === 'cancelled' ? (
+              <p className="text-xs text-destructive">Session cancelled</p>
+            ) : null}
           </div>
         </button>
       </ItemListContent>
-      <StatusTag variant={RUN_STATUS_VARIANT[runStatus]} className="shrink-0 self-center">
-        {statusLabel}
+      <StatusTag
+        variant={session.sessionIssue ? 'rejected' : RUN_STATUS_VARIANT[runStatus]}
+        className="shrink-0 self-center"
+      >
+        {session.sessionIssue === 'staff_leave'
+          ? 'Staff leave'
+          : session.sessionIssue === 'cancelled'
+            ? 'Cancelled'
+            : statusLabel}
       </StatusTag>
       {showRemainingTime ? (
         <RemainingTime
@@ -110,9 +127,18 @@ function SessionRow({
   )
 }
 
-export function EventSessionsList({ event, personalOnly = false }: EventSessionsListProps) {
+export function EventSessionsList({
+  event,
+  listTab,
+  personalOnly = false,
+  canExpand = false,
+  onExpanded,
+}: EventSessionsListProps) {
   const { t, i18n } = useTranslation('calendar')
   const navigate = useNavigate()
+  const [expandOpen, setExpandOpen] = useState(false)
+  const showExpand =
+    canExpand && !personalOnly && event.timeMode === 'window' && Boolean(event.recurrenceUntil)
   const baseSessions = useMemo(() => {
     const allSessions = expandEventOccurrences(event)
     if (personalOnly && event.timeMode === 'window') {
@@ -136,6 +162,9 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
         | 'scheduleChangeKind'
         | 'originalStartTime'
         | 'originalEndTime'
+        | 'sessionCancelled'
+        | 'effectiveStaffDisplayName'
+        | 'sessionIssue'
       >
     >
   >(() => new Map())
@@ -172,6 +201,9 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
                     | null,
                   originalStartTime: item.originalStartTime ?? item.startTime,
                   originalEndTime: item.originalEndTime ?? item.endTime,
+                  sessionCancelled: item.sessionCancelled ?? false,
+                  effectiveStaffDisplayName: item.effectiveStaffDisplayName,
+                  sessionIssue: item.sessionIssue ?? null,
                 },
               ]),
           ),
@@ -229,65 +261,62 @@ export function EventSessionsList({ event, personalOnly = false }: EventSessions
     navigate(`/calendar/events/${event.id}/sessions/${occurrenceDate}`)
   }
 
-  return (
-    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-      <div className="flex flex-col gap-6 lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t('sessionsList.upcomingTitle')}</CardTitle>
-            <CardDescription>{t('sessionsList.upcomingDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {upcoming.length === 0 ? (
-              <ItemListEmpty>{emptyLabel}</ItemListEmpty>
-            ) : (
-              <ItemList>
-                {                upcoming.map((session) => (
-                  <SessionRow
-                    key={session.occurrenceDate}
-                    session={session}
-                    now={now}
-                    statusLabel={t(`sessionStatus.${session.runStatus ?? 'scheduled'}`)}
-                    language={i18n.language}
-                    onOpen={openSession}
-                    showRemainingTime
-                    dueLabel={dueLabel}
-                  />
-                ))}
-              </ItemList>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+  function renderRows(items: CompanyEventOccurrence[], showRemainingTime: boolean, empty: string) {
+    if (items.length === 0) {
+      return <ItemListEmpty>{empty}</ItemListEmpty>
+    }
+    return (
+      <ItemList>
+        {items.map((session) => (
+          <SessionRow
+            key={session.occurrenceDate}
+            session={session}
+            now={now}
+            statusLabel={t(`sessionStatus.${session.runStatus ?? 'scheduled'}`)}
+            language={i18n.language}
+            onOpen={openSession}
+            showRemainingTime={showRemainingTime}
+            dueLabel={dueLabel}
+          />
+        ))}
+      </ItemList>
+    )
+  }
 
-      <div className="flex flex-col gap-6 lg:col-span-1">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t('sessionsList.pastTitle')}</CardTitle>
-            <CardDescription>{t('sessionsList.pastDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {past.length === 0 ? (
-              <ItemListEmpty>{t('sessionsList.emptyPast')}</ItemListEmpty>
-            ) : (
-              <ItemList>
-                {                past.map((session) => (
-                  <SessionRow
-                    key={session.occurrenceDate}
-                    session={session}
-                    now={now}
-                    statusLabel={t(`sessionStatus.${session.runStatus ?? 'scheduled'}`)}
-                    language={i18n.language}
-                    onOpen={openSession}
-                    showRemainingTime={false}
-                    dueLabel={dueLabel}
-                  />
-                ))}
-              </ItemList>
-            )}
-          </CardContent>
-        </Card>
+  return (
+    <>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-row items-start justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-foreground">{t('sessionsList.sectionTitle')}</h2>
+            <p className="text-sm text-muted-foreground">
+              {listTab === 'upcoming'
+                ? t('sessionsList.upcomingDescription')
+                : t('sessionsList.pastDescription')}
+            </p>
+          </div>
+          {showExpand && listTab === 'upcoming' ? (
+            <Button type="button" size="sm" onClick={() => setExpandOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              {t('sessionsList.add')}
+            </Button>
+          ) : null}
+        </div>
+
+        {listTab === 'upcoming'
+          ? renderRows(upcoming, true, emptyLabel)
+          : renderRows(past, false, t('sessionsList.emptyPast'))}
       </div>
-    </div>
+      {showExpand && event.recurrenceUntil ? (
+        <ExpandEventUntilDialog
+          open={expandOpen}
+          eventId={event.id}
+          startsOn={event.startsOn}
+          currentUntil={event.recurrenceUntil}
+          onOpenChange={setExpandOpen}
+          onExpanded={() => onExpanded?.()}
+        />
+      ) : null}
+    </>
   )
 }

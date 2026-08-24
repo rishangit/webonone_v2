@@ -54,6 +54,11 @@ export type SessionTokenItem = {
   userEmail: string | null
   createdAt: string
   updatedAt: string
+  workflowProgress?: {
+    steps: { id: string; label: string; kind: 'check_in' | 'space' | 'done' }[]
+    currentIndex: number
+    done: boolean
+  }
 }
 
 export const CATALOG_KINDS: CatalogKind[] = ['products', 'services', 'spaces']

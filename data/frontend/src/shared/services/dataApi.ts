@@ -6,6 +6,7 @@ import type {
   PaginatedResult,
   ProductVariant,
   ProductVariantStock,
+  ServiceSpaceLink,
   Tag,
   Unit,
 } from '@/shared/types/data.types'
@@ -256,6 +257,15 @@ export const dataApi = {
   deleteServiceAttributeValue(id: string, valueId: string) {
     return apiClient<CatalogItem>(`/services/${id}/attribute-values/${valueId}`, {
       method: 'DELETE',
+    })
+  },
+  listServiceSpaces(serviceId: string) {
+    return apiClient<{ items: ServiceSpaceLink[] }>(`/services/${serviceId}/spaces`)
+  },
+  replaceServiceSpaces(serviceId: string, spaceIds: string[]) {
+    return apiClient<{ items: ServiceSpaceLink[] }>(`/services/${serviceId}/spaces`, {
+      method: 'PUT',
+      body: JSON.stringify({ space_ids: spaceIds }),
     })
   },
 

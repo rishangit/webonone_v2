@@ -96,6 +96,14 @@ export interface CatalogItem {
   endTime?: string | null
 }
 
+export interface ServiceSpaceLink {
+  id: string
+  name: string
+  description: string | null
+  status: EntityStatus
+  sortOrder: number
+}
+
 export interface ProductVariantAttributeValue {
   attributeId: string
   attributeName: string

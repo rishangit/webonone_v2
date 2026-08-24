@@ -7,6 +7,7 @@ import type {
   CatalogSessionItem,
   CatalogSessionTokenItem,
   CompanyCatalogItem,
+  ServiceWorkflowItem,
 } from '../types/companyCatalog.types'
 
 export const companyCatalogApi = {
@@ -100,6 +101,37 @@ export const companyCatalogApi = {
       method: 'PATCH',
       body: JSON.stringify({ formTemplateId }),
     })
+  },
+
+  listServiceWorkflow(serviceId: string) {
+    return apiClient<{ items: ServiceWorkflowItem[] }>(
+      `/company/me/catalog/services/${encodeURIComponent(serviceId)}/workflow`,
+    )
+  },
+
+  listServiceWorkflowForCompany(companyId: string, serviceId: string) {
+    return apiClient<{ items: ServiceWorkflowItem[] }>(
+      `/company/${encodeURIComponent(companyId)}/catalog/services/${encodeURIComponent(serviceId)}/workflow`,
+    )
+  },
+
+  replaceServiceWorkflow(
+    serviceId: string,
+    items: {
+      kind: 'check_in' | 'space'
+      space_id: string | null
+      staff_ids: string[]
+      form_ids: string[]
+      session_queue: boolean
+    }[],
+  ) {
+    return apiClient<{ items: ServiceWorkflowItem[] }>(
+      `/company/me/catalog/services/${encodeURIComponent(serviceId)}/workflow`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ items }),
+      },
+    )
   },
 
   listServicesWithForm() {

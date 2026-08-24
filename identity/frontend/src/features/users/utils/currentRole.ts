@@ -27,3 +27,13 @@ export function isSessionCompanyAdmin(accessToken: string | null): boolean {
     Boolean(getSessionCompanyId(accessToken))
   )
 }
+
+export function isSessionCompanyMember(accessToken: string | null): boolean {
+  return (
+    getSessionPlatformRole(accessToken) === 'member' && Boolean(getSessionCompanyId(accessToken))
+  )
+}
+
+export function canAccessCompanyCustomers(accessToken: string | null): boolean {
+  return isSessionCompanyAdmin(accessToken) || isSessionCompanyMember(accessToken)
+}

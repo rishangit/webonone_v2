@@ -5,6 +5,7 @@ import type {
   ChangeSessionScheduleBody,
   ChangeSessionScheduleResult,
   CreateSessionTokenBody,
+  SessionCheckInsResult,
   SessionDetail,
   SessionToken,
 } from '../types/event.types'
@@ -90,6 +91,51 @@ export const sessionTokensApi = {
         method: 'POST',
         body: JSON.stringify(body),
       },
+    )
+  },
+
+  cancel(
+    eventId: string,
+    occurrenceDate: string,
+  ): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/cancel`,
+      { method: 'POST' },
+    )
+  },
+
+  reassignStaff(
+    eventId: string,
+    occurrenceDate: string,
+    staffId: string,
+  ): Promise<SessionDetail> {
+    return apiClient<SessionDetail>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/reassign`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ staff_id: staffId }),
+      },
+    )
+  },
+
+  listCheckIns(eventId: string, occurrenceDate: string): Promise<SessionCheckInsResult> {
+    return apiClient<SessionCheckInsResult>(`${sessionPath(eventId, occurrenceDate)}/check-ins`)
+  },
+
+  checkIn(eventId: string, occurrenceDate: string): Promise<SessionCheckInsResult> {
+    return apiClient<SessionCheckInsResult>(`${sessionPath(eventId, occurrenceDate)}/check-ins`, {
+      method: 'POST',
+    })
+  },
+
+  completeWorkflow(
+    eventId: string,
+    occurrenceDate: string,
+    tokenId: string,
+  ): Promise<SessionToken> {
+    return apiClient<SessionToken>(
+      `/company/events/${encodeURIComponent(eventId)}/sessions/${encodeURIComponent(occurrenceDate)}/tokens/${encodeURIComponent(tokenId)}/workflow/complete`,
+      { method: 'POST' },
     )
   },
 }

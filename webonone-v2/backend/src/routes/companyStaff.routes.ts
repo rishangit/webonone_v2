@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import * as companyStaffController from '../controllers/companyStaff.controller.js'
+import * as companyStaffLeaveController from '../controllers/companyStaffLeave.controller.js'
 import { requireCompanyAdminSession } from '../middleware/requireCompanyAdminSession.js'
 import { requireCompanySession } from '../middleware/requireCompanySession.js'
 import { validateBody } from '../middleware/validateBody.js'
+import { createCompanyStaffLeaveBodySchema } from '../schemas/companyStaffLeaveSchemas.js'
 import {
   createCompanyStaffBodySchema,
   updateCompanyStaffBodySchema,
@@ -16,6 +18,32 @@ router.post(
   requireCompanyAdminSession,
   validateBody(createCompanyStaffBodySchema),
   companyStaffController.createStaff,
+)
+router.get(
+  '/company/staff/:id/leaves',
+  requireCompanySession,
+  companyStaffLeaveController.listStaffLeaves,
+)
+router.post(
+  '/company/staff/:id/leaves',
+  requireCompanySession,
+  validateBody(createCompanyStaffLeaveBodySchema),
+  companyStaffLeaveController.createStaffLeave,
+)
+router.post(
+  '/company/staff/:id/leaves/:leaveId/approve',
+  requireCompanyAdminSession,
+  companyStaffLeaveController.approveStaffLeave,
+)
+router.post(
+  '/company/staff/:id/leaves/:leaveId/reject',
+  requireCompanyAdminSession,
+  companyStaffLeaveController.rejectStaffLeave,
+)
+router.delete(
+  '/company/staff/:id/leaves/:leaveId',
+  requireCompanySession,
+  companyStaffLeaveController.deleteStaffLeave,
 )
 router.get('/company/staff/:id', requireCompanySession, companyStaffController.getStaff)
 router.patch(

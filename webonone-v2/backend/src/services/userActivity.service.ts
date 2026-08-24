@@ -5,6 +5,11 @@ import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as saleRepo from '../repositories/companySale.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
+import {
+  buildWorkflowProgress,
+  loadWorkflowStepDefs,
+  type TokenWorkflowProgressDto,
+} from './tokenWorkflowProgress.js'
 
 export type UserActivityType = 'session_token' | 'event_attendee' | 'event_staff' | 'sale'
 
@@ -39,6 +44,7 @@ export type SessionTokenHistoryDetail = {
   staffId: string
   staffDisplayName: string
   createdAt: string
+  workflowProgress: TokenWorkflowProgressDto
 }
 
 function formatDate(value: string | Date): string {
@@ -225,6 +231,7 @@ export async function getSessionTokenHistoryDetail(input: {
     formTemplateId = mapped.formTemplateId ?? null
   }
 
+  const defs = await loadWorkflowStepDefs(input.companyId, event.service_id)
   return {
     tokenId: token.id,
     tokenNumber: token.token_number,
@@ -246,5 +253,6 @@ export async function getSessionTokenHistoryDetail(input: {
     staffId: event.staff_id,
     staffDisplayName: event.staff_display_name,
     createdAt: toIso(token.created_at),
+    workflowProgress: buildWorkflowProgress(defs, token),
   }
 }

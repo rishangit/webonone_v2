@@ -48,6 +48,11 @@ export type SessionTokenHistoryDetail = {
   staffId: string
   staffDisplayName: string
   createdAt: string
+  workflowProgress?: {
+    steps: { id: string; label: string; kind: 'check_in' | 'space' | 'done' }[]
+    currentIndex: number
+    done: boolean
+  }
 }
 
 export type FormSubmissionDetail = {

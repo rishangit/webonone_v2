@@ -17,6 +17,7 @@ export type CatalogEditorActions = {
 export function useEpicCatalogList<T, S = unknown>(
   selectState: (state: S) => CatalogFeatureState<T>,
   actions: CatalogListActions,
+  options?: { initialExtra?: Record<string, string> },
 ) {
   const dispatch = useDispatch()
   const listState = useSelector(selectState)
@@ -24,7 +25,9 @@ export function useEpicCatalogList<T, S = unknown>(
   const [status, setStatus] = useState(listState.status || 'all')
   const [pageSize, setPageSize] = useState(listState.pageSize || 12)
   const [filterOpen, setFilterOpen] = useState(false)
-  const [extraFilters, setExtraFilters] = useState<Record<string, string>>({})
+  const [extraFilters, setExtraFilters] = useState<Record<string, string>>(
+    options?.initialExtra ?? {},
+  )
   const listStateRef = useRef(listState)
   listStateRef.current = listState
 

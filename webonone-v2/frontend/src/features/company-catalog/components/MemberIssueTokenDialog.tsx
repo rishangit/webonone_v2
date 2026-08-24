@@ -9,6 +9,7 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { companyCatalogApi } from '../services/companyCatalogApi'
+import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import type { CatalogSessionTokenItem } from '../types/companyCatalog.types'
 import type { UserProfile } from '@/features/auth/types/auth.types'
 
@@ -156,6 +157,7 @@ export function MemberIssueTokenDialog({
           <p className="text-2xl font-semibold tracking-wide text-foreground">
             {existing ? existing.tokenLabel : loading ? '…' : tokenLabel}
           </p>
+          {existing ? <TokenWorkflowProgress progress={existing.workflowProgress} /> : null}
         </div>
 
         <div className="rounded-md border border-border p-3">

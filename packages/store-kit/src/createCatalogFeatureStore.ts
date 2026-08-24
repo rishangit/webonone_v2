@@ -183,6 +183,7 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
     const toRequest = (action: ReturnType<typeof actions.loadListRequested>, state: unknown) => {
       const payload = action.payload
       const featureState = (state as RootStateWithFeature)[config.name]
+      const extra = payload.extra
       const query = {
         page: resolveListPage(payload, featureState),
         pageSize: payload.pageSize ?? featureState.pageSize,
@@ -191,9 +192,17 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
           (payload.status ?? featureState.status) === 'all'
             ? undefined
             : payload.status ?? featureState.status,
-        ...payload.extra,
+        extra,
+        force: payload.force,
+        append: payload.append,
       }
-      const queryKey = serializeQuery(query)
+      const queryKey = serializeQuery({
+        page: query.page,
+        pageSize: query.pageSize,
+        q: query.q,
+        status: query.status,
+        ...extra,
+      })
       const append = Boolean(payload.append && (query.page ?? 1) > 1)
       return from(config.list(query)).pipe(
         map((result) =>

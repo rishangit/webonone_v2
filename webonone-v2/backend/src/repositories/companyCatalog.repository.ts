@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import type {
@@ -401,6 +402,9 @@ export async function insertItem(input: {
   if (!row) {
     throw new Error('Failed to load catalog item after insert')
   }
+  if (input.entityKind === 'services') {
+    await insertDefaultCheckInWorkflowItem(input.companyId, input.id)
+  }
   return row
 }
 
@@ -510,4 +514,117 @@ export async function deleteItem(
   id: string,
 ): Promise<number> {
   return db(CATALOG_TABLE_BY_KIND[kind]).where({ id, company_id: companyId }).delete()
+}
+
+export type WorkflowItemKind = 'check_in' | 'space'
+
+export type WorkflowItemRow = {
+  id: string
+  company_id: string
+  service_id: string
+  space_id: string | null
+  kind: WorkflowItemKind
+  sort_order: number
+  session_queue: boolean | number
+}
+
+export async function insertDefaultCheckInWorkflowItem(
+  companyId: string,
+  serviceId: string,
+): Promise<void> {
+  const existing = await db('company_service_workflow_items')
+    .where({ company_id: companyId, service_id: serviceId, kind: 'check_in' })
+    .first()
+  if (existing) return
+  await db('company_service_workflow_items').insert({
+    id: nanoid(),
+    company_id: companyId,
+    service_id: serviceId,
+    space_id: null,
+    kind: 'check_in',
+    sort_order: 1,
+    session_queue: false,
+  })
+}
+
+export async function listWorkflowItems(
+  companyId: string,
+  serviceId: string,
+): Promise<WorkflowItemRow[]> {
+  return db('company_service_workflow_items')
+    .where({ company_id: companyId, service_id: serviceId })
+    .orderBy('sort_order', 'asc')
+}
+
+export async function listWorkflowStaffByItemIds(
+  itemIds: string[],
+): Promise<{ item_id: string; staff_id: string; display_name: string }[]> {
+  if (itemIds.length === 0) return []
+  return db('company_service_workflow_staff as link')
+    .join('company_staff as staff', 'staff.id', 'link.staff_id')
+    .whereIn('link.item_id', itemIds)
+    .select('link.item_id', 'link.staff_id', 'staff.display_name')
+}
+
+export async function listWorkflowFormsByItemIds(
+  itemIds: string[],
+): Promise<{ item_id: string; form_template_id: string }[]> {
+  if (itemIds.length === 0) return []
+  return db('company_service_workflow_forms')
+    .whereIn('item_id', itemIds)
+    .select('item_id', 'form_template_id')
+}
+
+export async function replaceWorkflowItems(
+  companyId: string,
+  serviceId: string,
+  items: {
+    id: string
+    kind: WorkflowItemKind
+    space_id: string | null
+    staff_ids: string[]
+    form_ids: string[]
+    session_queue: boolean
+  }[],
+): Promise<void> {
+  await db.transaction(async (trx) => {
+    await trx('company_service_workflow_items')
+      .where({ company_id: companyId, service_id: serviceId })
+      .delete()
+    if (items.length === 0) {
+      await trx('company_services')
+        .where({ id: serviceId, company_id: companyId })
+        .update({ updated_at: trx.fn.now(3) })
+      return
+    }
+    await trx('company_service_workflow_items').insert(
+      items.map((item, index) => ({
+        id: item.id,
+        company_id: companyId,
+        service_id: serviceId,
+        space_id: item.space_id,
+        kind: item.kind,
+        sort_order: index + 1,
+        session_queue: item.session_queue ? 1 : 0,
+      })),
+    )
+    const staffRows = items.flatMap((item) =>
+      [...new Set(item.staff_ids)].map((staff_id) => ({ item_id: item.id, staff_id })),
+    )
+    if (staffRows.length > 0) {
+      await trx('company_service_workflow_staff').insert(staffRows)
+    }
+    const formRows = items.flatMap((item) =>
+      [...new Set(item.form_ids)].map((form_template_id) => ({
+        item_id: item.id,
+        form_template_id,
+      })),
+    )
+    if (formRows.length > 0) {
+      await trx('company_service_workflow_forms').insert(formRows)
+    }
+    await trx('company_services')
+      .where({ id: serviceId, company_id: companyId })
+      .update({ updated_at: trx.fn.now(3) })
+  })
 }

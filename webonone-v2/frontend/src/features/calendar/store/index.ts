@@ -5,3 +5,8 @@ export {
   sessionTokensEpics,
   nextTokenLabel,
 } from './sessionTokensStore'
+export {
+  sessionCheckInsReducer,
+  sessionCheckInsActions,
+  sessionCheckInsEpics,
+} from './sessionCheckInsStore'

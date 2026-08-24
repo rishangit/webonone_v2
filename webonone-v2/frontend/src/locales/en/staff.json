@@ -22,7 +22,8 @@
     "ariaSections": "Staff sections",
     "tabs": {
       "overview": "Overview",
-      "history": "History"
+      "history": "History",
+      "leaves": "Leaves"
     },
     "recordTitle": "Record",
     "recordDescription": "Staff record metadata",
@@ -82,6 +83,56 @@
       "startTimeRequired": "Start time is required",
       "endTimeRequired": "End time is required",
       "endAfterStart": "End time must be after start time"
+    }
+  },
+  "leaves": {
+    "addLeave": "Add leave",
+    "addTitle": "Add leave",
+    "addDescription": "Request or record leave for this staff member.",
+    "addSubmit": "Add leave",
+    "saving": "Saving…",
+    "loading": "Loading leaves…",
+    "empty": "No leave records yet.",
+    "filtersTitle": "Filters",
+    "filterStatus": "Status",
+    "statusAll": "All statuses",
+    "approve": "Approve",
+    "reject": "Reject",
+    "cancel": "Cancel",
+    "rejectTitle": "Reject leave?",
+    "rejectDescription": "This leave request will be marked as rejected.",
+    "cancelTitle": "Cancel leave?",
+    "cancelDescription": "This pending leave request will be removed.",
+    "actionsFor": "Actions for {{type}} leave",
+    "toastAdded": "Leave added",
+    "toastAddFailed": "Failed to add leave",
+    "toastApproved": "Leave approved",
+    "toastApproveFailed": "Failed to approve leave",
+    "toastRejected": "Leave rejected",
+    "toastRejectFailed": "Failed to reject leave",
+    "toastCancelled": "Leave cancelled",
+    "toastCancelFailed": "Failed to cancel leave",
+    "types": {
+      "annual": "Annual",
+      "sick": "Sick",
+      "casual": "Casual",
+      "unpaid": "Unpaid",
+      "other": "Other"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "fields": {
+      "type": "Leave type",
+      "typePlaceholder": "Select leave type",
+      "from": "From date",
+      "fromPlaceholder": "Start date",
+      "to": "To date",
+      "toPlaceholder": "End date",
+      "reason": "Reason",
+      "reasonPlaceholder": "Optional reason for leave"
     }
   },
   "history": {

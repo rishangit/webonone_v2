@@ -91,4 +91,31 @@ export type CatalogSessionTokenItem = {
   userEmail: string | null
   createdAt: string
   updatedAt: string
+  workflowProgress?: {
+    steps: { id: string; label: string; kind: 'check_in' | 'space' | 'done' }[]
+    currentIndex: number
+    done: boolean
+  }
+}
+
+export type ServiceWorkflowStaff = {
+  id: string
+  displayName: string
+}
+
+export type ServiceWorkflowForm = {
+  id: string
+  name?: string
+}
+
+export type ServiceWorkflowKind = 'check_in' | 'space'
+
+export type ServiceWorkflowItem = {
+  id: string
+  kind: ServiceWorkflowKind
+  orderNumber: number
+  space: { id: string; name: string } | null
+  staff: ServiceWorkflowStaff[]
+  forms: ServiceWorkflowForm[]
+  sessionQueue: boolean
 }

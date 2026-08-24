@@ -15,6 +15,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
+import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import { MemberIssueTokenDialog } from './MemberIssueTokenDialog'
 import { companyCatalogApi } from '../services/companyCatalogApi'
 import type { CatalogSessionItem, CatalogSessionTokenItem } from '../types/companyCatalog.types'
@@ -200,13 +201,16 @@ export function MemberServiceSessionsCard({
                         />
                       </div>
                       {token ? (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-medium uppercase tracking-wide text-primary">
-                            {t('detail.sessions.alreadyBooked')}
-                          </span>
-                          <span className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-sm font-bold tracking-wide text-primary shadow-sm">
-                            {token.tokenLabel}
-                          </span>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-primary">
+                              {t('detail.sessions.alreadyBooked')}
+                            </span>
+                            <span className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-sm font-bold tracking-wide text-primary shadow-sm">
+                              {token.tokenLabel}
+                            </span>
+                          </div>
+                          <TokenWorkflowProgress progress={token.workflowProgress} />
                         </div>
                       ) : null}
                       <Button

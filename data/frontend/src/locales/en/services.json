@@ -33,6 +33,7 @@
   "overview": "Overview",
   "gallery": "Gallery",
   "attributes": "Attributes",
+  "spaces": "Spaces",
   "noDescription": "—",
   "unableToLoad": "Unable to load service.",
   "sectionsAria": "Service sections",
@@ -92,6 +93,18 @@
     "removeGalleryImage": "Remove gallery image",
     "removeGalleryTitle": "Remove gallery image?",
     "removeGalleryDescription": "This action cannot be undone. The image will be removed from this service gallery.",
-    "galleryUpdateFailed": "Failed to update gallery"
+    "galleryUpdateFailed": "Failed to update gallery",
+    "spacesTitle": "Spaces",
+    "spacesDescription": "Existing catalog spaces linked to this service. Order is top to bottom.",
+    "addSpace": "Add space",
+    "noSpaces": "No spaces linked yet.",
+    "spacesLoading": "Loading spaces…",
+    "spacesLoadFailed": "Failed to load spaces.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "removeSpace": "Remove space",
+    "removeSpaceConfirm": "Remove {{name}}?",
+    "removeSpaceFallback": "Remove space?",
+    "removeSpaceDescription": "Unlink this space from the service. The space itself is not deleted."
   }
 }

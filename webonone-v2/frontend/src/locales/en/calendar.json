@@ -2,7 +2,13 @@
   "schedule": {
     "title": "Schedule",
     "descriptionMember": "View your bookings and session tokens by day, week, or month.",
-    "descriptionAdmin": "View your company schedule by day, week, or month."
+    "descriptionAdmin": "View your company schedule by day, week, or month.",
+    "issue": {
+      "staffLeaveShort": "Staff on leave",
+      "staffLeaveDetail": "{{name}} is on approved leave for this session. Cancel the session or reassign another staff member.",
+      "cancelledShort": "Cancelled",
+      "cancelledDetail": "This session is cancelled and is hidden from customers."
+    }
   },
   "staffLabel": "{{name}}",
   "attendeeLabel": "{{name}}",
@@ -32,7 +38,8 @@
     "ariaSections": "Event sections",
     "tabs": {
       "overview": "Overview",
-      "sessions": "Sessions"
+      "upcoming": "Upcoming sessions",
+      "past": "Past sessions"
     },
     "loading": "Loading event…",
     "service": {
@@ -83,13 +90,31 @@
     }
   },
   "sessionsList": {
+    "sectionTitle": "Sessions",
+    "ariaListTabs": "Session lists",
     "upcomingTitle": "Upcoming sessions",
     "upcomingDescription": "Sessions that are current or still to come",
     "pastTitle": "Past sessions",
     "pastDescription": "Sessions that have already ended",
     "emptyMember": "No sessions with a token for your account.",
     "emptyAdmin": "No sessions in this event's date range.",
-    "emptyPast": "No past sessions yet."
+    "emptyPast": "No past sessions yet.",
+    "add": "Add",
+    "expand": {
+      "title": "Expand series",
+      "description": "Move the series Until date later so more session days are included.",
+      "currentUntil": "Current until",
+      "newUntil": "New until",
+      "placeholder": "Series end",
+      "plusOneWeek": "+1 week",
+      "plusTwoWeeks": "+2 weeks",
+      "saving": "Saving…",
+      "mustBeAfter": "Choose a date after the current until date.",
+      "mustBeOnOrAfterStart": "End date must be on or after the start date.",
+      "invalidDate": "Use YYYY-MM-DD format",
+      "toastSuccess": "Series until date updated",
+      "toastFailed": "Failed to expand series"
+    }
   },
   "timing": {
     "ended": "Ended",
@@ -245,7 +270,10 @@
     "tokenStatus": {
       "waiting": "Waiting",
       "serving": "Serving",
-      "completed": "Completed"
+      "completed": "Completed",
+      "checkedIn": "Checked in",
+      "notCheckedIn": "Not checked in",
+      "stepCompleted": "Step completed"
     },
     "attendee": "Attendee",
     "email": "Email",
@@ -355,5 +383,53 @@
     "toastIssued": "Token issued",
     "toastIssueFailed": "Failed to issue token",
     "toastAddCustomerFailed": "Failed to add company user"
+  },
+  "sessionDetail": {
+    "ariaSections": "Session sections",
+    "tabs": {
+      "overview": "Overview",
+      "checkIn": "Check-in",
+      "step": "Step {{number}}"
+    },
+    "workflow": {
+      "title": "Workflow",
+      "hint": "Manage this attendee through each service step.",
+      "ariaSteps": "Duration session workflow steps",
+      "noAttendee": "No attendee assigned to this session.",
+      "empty": "This service has no workflow steps yet."
+    },
+    "checkIn": {
+      "title": "Check-in",
+      "description": "Customers who have checked in to this session.",
+      "action": "Check in",
+      "already": "You are checked in.",
+      "empty": "No check-ins yet.",
+      "noEmail": "No email",
+      "at": "Checked in {{time}}",
+      "customers": "Checked-in customers",
+      "customersHint": "Customers must check in before later workflow steps."
+    },
+    "step": {
+      "description": "Space, staff, and forms for this workflow step.",
+      "space": "Space",
+      "staff": "Staff",
+      "forms": "Forms",
+      "none": "None",
+      "tokensTitle": "Tokens at this step",
+      "tokensHint": "Customers currently at this workflow step.",
+      "tokensEmpty": "No tokens at this step.",
+      "complete": "Complete step",
+      "checkInComplete": "Check in",
+      "completing": "Completing…",
+      "completeFailed": "Could not complete this step",
+      "queueTitle": "Session queue",
+      "queueHint": "Operate tokens currently at this workflow step.",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "workflowProgress": {
+    "checkIn": "Check-in",
+    "done": "Done"
   }
 }

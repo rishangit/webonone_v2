@@ -355,6 +355,61 @@ export async function listServicesWithForm(req: CompanySessionRequest, res: Resp
   }
 }
 
+export async function listServiceWorkflow(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const items = await catalogService.listServiceWorkflow(
+      session.userId,
+      session.companyId,
+      String(req.params.id),
+    )
+    res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function listServiceWorkflowForCompany(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  try {
+    const items = await catalogService.listServiceWorkflow(
+      req.user.id,
+      String(req.params.companyId),
+      String(req.params.id),
+    )
+    res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function replaceServiceWorkflow(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const items = await catalogService.replaceServiceWorkflow(
+      session.userId,
+      session.companyId,
+      String(req.params.id),
+      req.body as {
+        items: {
+          kind?: 'check_in' | 'space'
+          space_id: string | null
+          staff_ids: string[]
+          form_ids: string[]
+        }[]
+      },
+    )
+    res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function deleteCatalog(req: CompanyAdminSessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return

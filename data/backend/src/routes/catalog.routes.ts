@@ -6,6 +6,7 @@ import {
   spacesController,
 } from '../controllers/catalog.controller.js'
 import { productVariantsController } from '../controllers/productVariants.controller.js'
+import { serviceSpacesController } from '../controllers/serviceSpaces.controller.js'
 import { stocksController } from '../controllers/stocks.controller.js'
 import {
   requireAuth,
@@ -18,6 +19,7 @@ import {
   catalogAttributeValueBodySchema,
   createCatalogBodySchema,
   replaceCatalogAttributesBodySchema,
+  replaceServiceSpacesBodySchema,
   updateCatalogBodySchema,
   updateCatalogGalleryBodySchema,
 } from '../schemas/catalog.schema.js'
@@ -141,6 +143,15 @@ router.patch(
   requireAuth,
   requireCompanyAdmin,
   stocksController.setActive,
+)
+
+router.get('/services/:id/spaces', requireAuth, serviceSpacesController.list)
+router.put(
+  '/services/:id/spaces',
+  requireAuth,
+  requireCompanyAdminOrSuperAdmin,
+  validateBody(replaceServiceSpacesBodySchema),
+  serviceSpacesController.replace,
 )
 
 router.use(catalogRoutes('products', productsController))

@@ -71,6 +71,10 @@
   "confirmBookToken": "ඔබේ ගිණුම සඳහා ඊළඟ පෝලිම් ටෝකනය වෙන්කරවා ගැනීම තහවුරු කරන්න.",
   "yourToken": "ඔබේ ටෝකනය",
   "tokenNumber": "ටෝකන අංකය",
+  "workflowProgress": {
+    "checkIn": "චෙක්-ඉන්",
+    "done": "අවසන්"
+  },
   "sun": "ඉරි",
   "mon": "සඳු",
   "tue": "අඟ",

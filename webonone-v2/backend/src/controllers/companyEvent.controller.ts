@@ -1,5 +1,6 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
+import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as eventService from '../services/companyEvent.service.js'
 
@@ -220,6 +221,28 @@ export async function createSessionToken(req: CompanySessionRequest, res: Respon
   }
 }
 
+export async function completeSessionTokenWorkflow(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const occurrenceDate = String(req.params.occurrenceDate)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+      res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+      return
+    }
+    const item = await eventService.completeSessionTokenWorkflow(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+      String(req.params.tokenId),
+      viewerFromSession(session),
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 function parseOccurrenceDate(
   req: CompanySessionRequest,
   res: Response,
@@ -331,6 +354,137 @@ export async function changeSessionSchedule(req: CompanySessionRequest, res: Res
       occurrenceDate,
       { userId: session.userId, role: session.role },
       req.body,
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function cancelSession(req: CompanyAdminSessionRequest, res: Response) {
+  if (!req.user || !req.sessionCompanyId) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return
+  }
+  try {
+    const detail = await eventService.cancelSessionOccurrence(
+      req.sessionCompanyId,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(detail)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function reassignSessionStaff(req: CompanyAdminSessionRequest, res: Response) {
+  if (!req.user || !req.sessionCompanyId) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return
+  }
+  try {
+    const detail = await eventService.reassignSessionStaff(
+      req.sessionCompanyId,
+      String(req.params.eventId),
+      occurrenceDate,
+      String(req.body.staff_id ?? ''),
+    )
+    res.json(detail)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function listMySessionCheckIns(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return
+  }
+  try {
+    const result = await eventService.listMySessionCheckIns(
+      req.user.id,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function createMySessionCheckIn(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return
+  }
+  try {
+    const result = await eventService.createMySessionCheckIn(
+      req.user.id,
+      String(req.params.eventId),
+      occurrenceDate,
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function listSessionCheckIns(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return
+  }
+  try {
+    const result = await eventService.listSessionCheckIns(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+      viewerFromSession(session),
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function createSessionCheckIn(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  const occurrenceDate = String(req.params.occurrenceDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) {
+    res.status(400).json({ message: 'Invalid session date', code: 'REQUEST_FAILED' })
+    return
+  }
+  try {
+    const result = await eventService.createSessionCheckIn(
+      session.companyId,
+      String(req.params.eventId),
+      occurrenceDate,
+      viewerFromSession(session),
     )
     res.json(result)
   } catch (err) {

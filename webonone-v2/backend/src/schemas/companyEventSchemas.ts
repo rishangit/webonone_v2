@@ -132,4 +132,9 @@ export type CreateCompanyEventBody = z.infer<typeof createCompanyEventBodySchema
 export type UpdateCompanyEventBody = z.infer<typeof updateCompanyEventBodySchema>
 export type CreateSessionTokenBody = z.infer<typeof createSessionTokenBodySchema>
 export type BookPublicSessionTokenBody = z.infer<typeof bookPublicSessionTokenBodySchema>
+export const reassignSessionStaffBodySchema = z.object({
+  staff_id: z.string().trim().min(1).max(21),
+})
+
 export type ChangeSessionScheduleBody = z.infer<typeof changeSessionScheduleBodySchema>
+export type ReassignSessionStaffBody = z.infer<typeof reassignSessionStaffBodySchema>

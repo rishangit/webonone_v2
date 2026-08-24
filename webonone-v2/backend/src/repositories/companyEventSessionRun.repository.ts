@@ -15,6 +15,8 @@ export interface CompanyEventSessionRunRow {
   /** Occurrence override; null means use parent event times. */
   scheduled_start_time: string | null
   scheduled_end_time: string | null
+  cancelled_at: Date | null
+  staff_id: string | null
   created_at: Date
   updated_at: Date
 }
@@ -82,6 +84,8 @@ export async function updateRun(
     ended_at?: Date | null
     scheduled_start_time?: string | null
     scheduled_end_time?: string | null
+    cancelled_at?: Date | null
+    staff_id?: string | null
   },
 ): Promise<CompanyEventSessionRunRow> {
   await db('company_event_session_runs')

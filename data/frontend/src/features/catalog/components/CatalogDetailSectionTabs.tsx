@@ -2,21 +2,23 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
 
-export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants'
+export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants' | 'spaces'
 
-type CatalogDetailSectionTabsProps = {
+type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailTabId> = {
   ns: 'products' | 'services' | 'spaces'
   ariaLabel: string
-  tab: CatalogDetailTabId
-  onTabChange: (tab: CatalogDetailTabId) => void
+  tab: T
+  onTabChange: (tab: T) => void
   overview: ReactNode
   attributes: ReactNode
   gallery: ReactNode
   /** Products only — when omitted, Variants tab is hidden. */
   variants?: ReactNode
+  /** Services only — when omitted, Spaces tab is hidden. */
+  spaces?: ReactNode
 }
 
-export function CatalogDetailSectionTabs({
+export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
   ns,
   ariaLabel,
   tab,
@@ -25,7 +27,8 @@ export function CatalogDetailSectionTabs({
   attributes,
   gallery,
   variants,
-}: CatalogDetailSectionTabsProps) {
+  spaces,
+}: CatalogDetailSectionTabsProps<T>) {
   const { t } = useTranslation(ns)
   const tabs: { id: CatalogDetailTabId; label: string }[] = [
     { id: 'overview', label: t('overview') },
@@ -35,6 +38,9 @@ export function CatalogDetailSectionTabs({
   if (variants != null) {
     tabs.push({ id: 'variants', label: t('variants') })
   }
+  if (spaces != null) {
+    tabs.push({ id: 'spaces', label: t('spaces') })
+  }
 
   const panel =
     tab === 'overview'
@@ -43,12 +49,14 @@ export function CatalogDetailSectionTabs({
         ? attributes
         : tab === 'gallery'
           ? gallery
-          : variants
+          : tab === 'spaces'
+            ? spaces
+            : variants
 
   return (
     <Tabs
       value={tab}
-      onValueChange={(value) => onTabChange(value as CatalogDetailTabId)}
+      onValueChange={(value) => onTabChange(value as T)}
       className="flex flex-col gap-6"
     >
       <TabsList aria-label={ariaLabel}>

@@ -2,7 +2,13 @@
   "schedule": {
     "title": "කාලසටහන",
     "descriptionMember": "දිනය, සතිය හෝ මාසය අනුව ඔබේ වෙන්කිරීම් සහ සැසි ටෝකන බලන්න.",
-    "descriptionAdmin": "දිනය, සතිය හෝ මාසය අනුව ඔබේ සමාගම් කාලසටහන බලන්න."
+    "descriptionAdmin": "දිනය, සතිය හෝ මාසය අනුව ඔබේ සමාගම් කාලසටහන බලන්න.",
+    "issue": {
+      "staffLeaveShort": "කාර්ය මණ්ඩල නිවාඩුව",
+      "staffLeaveDetail": "{{name}} මෙම සැසිය සඳහා අනුමත නිවාඩුවේ සිටී. සැසිය අවලංගු කරන්න හෝ වෙනත් කාර්ය මණ්ඩල සාමාජිකයෙකු පැවරීම.",
+      "cancelledShort": "අවලංගුයි",
+      "cancelledDetail": "මෙම සැසිය අවලංගු කර ඇති අතර පාරිභෝගිකයන්ට නොපෙනේ."
+    }
   },
   "staffLabel": "{{name}}",
   "attendeeLabel": "{{name}}",
@@ -32,7 +38,8 @@
     "ariaSections": "සිදුවීම් අංශ",
     "tabs": {
       "overview": "දළ විශ්ලේෂණය",
-      "sessions": "සැසි"
+      "upcoming": "ඉදිරි සැසි",
+      "past": "අතීත සැසි"
     },
     "loading": "සිදුවීම පූරණය වෙමින්…",
     "service": {
@@ -83,13 +90,31 @@
     }
   },
   "sessionsList": {
+    "sectionTitle": "සැසි",
+    "ariaListTabs": "සැසි ලැයිස්තු",
     "upcomingTitle": "ඉදිරි සැසි",
     "upcomingDescription": "දැන් පවතින හෝ තවම එන සැසි",
     "pastTitle": "අතීත සැසි",
     "pastDescription": "දැනටමත් අවසන් වූ සැසි",
     "emptyMember": "ඔබේ ගිණුම සඳහා ටෝකනයක් සහිත සැසි නැත.",
     "emptyAdmin": "මෙම සිදුවීමේ දින පරාසයේ සැසි නැත.",
-    "emptyPast": "තවම අතීත සැසි නැත."
+    "emptyPast": "තවම අතීත සැසි නැත.",
+    "add": "එකතු කරන්න",
+    "expand": {
+      "title": "ශ්‍රේණිය දීර්ඝ කරන්න",
+      "description": "තවත් සැසි දින ඇතුළත් වන පරිදි ශ්‍රේණියේ Until දිනය පසුවට ගෙන යන්න.",
+      "currentUntil": "වත්මන් until",
+      "newUntil": "නව until",
+      "placeholder": "ශ්‍රේණි අවසානය",
+      "plusOneWeek": "+1 සතිය",
+      "plusTwoWeeks": "+2 සති",
+      "saving": "සුරකිමින්…",
+      "mustBeAfter": "වත්මන් until දිනයට පසු දිනයක් තෝරන්න.",
+      "mustBeOnOrAfterStart": "අවසන් දිනය ආරම්භක දිනයට හෝ ඊට පසු විය යුතුය.",
+      "invalidDate": "YYYY-MM-DD ආකෘතිය භාවිතා කරන්න",
+      "toastSuccess": "ශ්‍රේණියේ until දිනය යාවත්කාලීන විය",
+      "toastFailed": "ශ්‍රේණිය දීර්ඝ කිරීම අසාර්ථක විය"
+    }
   },
   "timing": {
     "ended": "අවසන් විය",
@@ -245,7 +270,10 @@
     "tokenStatus": {
       "waiting": "බලා සිටී",
       "serving": "සේවා සපයමින්",
-      "completed": "සම්පූර්ණයි"
+      "completed": "සම්පූර්ණයි",
+      "checkedIn": "පැමිණ ඇත",
+      "notCheckedIn": "පැමිණ නැත",
+      "stepCompleted": "පියවර සම්පූර්ණයි"
     },
     "attendee": "සහභාගිවන්නා",
     "email": "විද්‍යුත් තැපෑල",
@@ -355,5 +383,53 @@
     "toastIssued": "ටෝකනය නිකුත් කරන ලදී",
     "toastIssueFailed": "ටෝකනය නිකුත් කිරීම අසාර්ථක විය",
     "toastAddCustomerFailed": "සමාගම් පරිශීලක එකතු කිරීම අසාර්ථක විය"
+  },
+  "sessionDetail": {
+    "ariaSections": "සැසි අංශ",
+    "tabs": {
+      "overview": "දළ විශ්ලේෂණය",
+      "checkIn": "චෙක්-ඉන්",
+      "step": "පියවර {{number}}"
+    },
+    "workflow": {
+      "title": "වැඩප්‍රවාහය",
+      "hint": "මෙම පැමිණෙන්නා සේවා පියවර ඔස්සේ කළමනාකරණය කරන්න.",
+      "ariaSteps": "කාල සැසි වැඩප්‍රවාහ පියවර",
+      "noAttendee": "මෙම සැසියට පැමිණෙන්නෙකු පවරා නැත.",
+      "empty": "මෙම සේවාවට තවම වැඩප්‍රවාහ පියවර නැත."
+    },
+    "checkIn": {
+      "title": "චෙක්-ඉන්",
+      "description": "මෙම සැසියට චෙක්-ඉන් වූ පාරිභෝගිකයින්.",
+      "action": "චෙක්-ඉන්",
+      "already": "ඔබ චෙක්-ඉන් වී ඇත.",
+      "empty": "තවම චෙක්-ඉන් නැත.",
+      "noEmail": "ඊමේල් නැත",
+      "at": "{{time}} ට චෙක්-ඉන් විය",
+      "customers": "චෙක්-ඉන් වූ පාරිභෝගිකයින්",
+      "customersHint": "පසු පියවර සඳහා පාරිභෝගිකයින් මුලින් චෙක්-ඉන් විය යුතුය."
+    },
+    "step": {
+      "description": "මෙම වැඩප්‍රවාහ පියවර සඳහා අවකාශය, කාර්ය මණ්ඩලය සහ පෝරම.",
+      "space": "අවකාශය",
+      "staff": "කාර්ය මණ්ඩලය",
+      "forms": "පෝරම",
+      "none": "නැත",
+      "tokensTitle": "මෙම පියවරේ ටෝකන",
+      "tokensHint": "මෙම වැඩප්‍රවාහ පියවරේ දැන් සිටින පාරිභෝගිකයින්.",
+      "tokensEmpty": "මෙම පියවරේ ටෝකන නැත.",
+      "complete": "පියවර සම්පූර්ණ කරන්න",
+      "checkInComplete": "චෙක්-ඉන්",
+      "completing": "සම්පූර්ණ කරමින්…",
+      "completeFailed": "මෙම පියවර සම්පූර්ණ කළ නොහැකි විය",
+      "queueTitle": "සැසි පෝලිම",
+      "queueHint": "මෙම වැඩප්‍රවාහ පියවරේ ටෝකන ක්‍රියාත්මක කරන්න.",
+      "previous": "පෙර",
+      "next": "ඊළඟ"
+    }
+  },
+  "workflowProgress": {
+    "checkIn": "චෙක්-ඉන්",
+    "done": "අවසන්"
   }
 }

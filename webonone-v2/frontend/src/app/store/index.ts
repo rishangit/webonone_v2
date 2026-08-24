@@ -4,9 +4,9 @@ import { authActions, authReducer } from '@/features/auth/store/authSlice'
 import { sessionRoleReducer } from '@/features/session/store/sessionRoleSlice'
 import { companiesReducer } from '@/features/settings/basic/store/companiesStore'
 import { companyCatalogReducer } from '@/features/company-catalog/store/companyCatalogStore'
-import { staffReducer } from '@/features/staff/store'
+import { staffReducer, staffLeavesReducer } from '@/features/staff/store'
 import { salesReducer } from '@/features/sales/store'
-import { eventsReducer, sessionTokensReducer } from '@/features/calendar/store'
+import { eventsReducer, sessionTokensReducer, sessionCheckInsReducer } from '@/features/calendar/store'
 import { homeDashboardReducer } from '@/features/home/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
@@ -25,9 +25,11 @@ export const store = configureStore({
     companies: companiesReducer,
     companyCatalog: companyCatalogReducer,
     staff: staffReducer,
+    staffLeaves: staffLeavesReducer,
     sales: salesReducer,
     events: eventsReducer,
     sessionTokens: sessionTokensReducer,
+    sessionCheckIns: sessionCheckInsReducer,
     homeDashboard: homeDashboardReducer,
     systemTheme: systemThemeReducer,
     aiSettings: aiSettingsReducer,

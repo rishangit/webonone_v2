@@ -1,7 +1,8 @@
 import * as React from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { Button } from './Button'
+import { Popover, PopoverContent, PopoverTrigger } from './Popover'
 import { SegmentedSwitch, SegmentedSwitchItem } from './SegmentedSwitch'
 import {
   HOUR_HEIGHT_PX,
@@ -27,6 +28,10 @@ export type FullCalendarEvent = {
   start: Date
   end: Date
   color?: string
+  /** Short line under the title (week/day). */
+  subtitle?: string
+  /** When set, show an Info icon; click opens a popover with this copy. */
+  issueDetail?: string
 }
 
 export interface FullCalendarProps {
@@ -122,6 +127,36 @@ function ViewSwitcher({
   )
 }
 
+function eventChipToneClass(event: FullCalendarEvent): string | undefined {
+  if (event.color) return undefined
+  return event.issueDetail ? 'bg-destructive/15' : 'bg-primary/15'
+}
+
+function EventIssueInfo({ detail }: { detail: string }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="shrink-0 rounded-sm p-0.5 text-destructive hover:bg-destructive/10"
+          aria-label="Event issue details"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Info className="h-3 w-3" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="max-w-xs p-3 text-sm leading-snug"
+        align="start"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {detail}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function EventChip({
   event,
   style,
@@ -135,34 +170,47 @@ function EventChip({
 }) {
   const interactive = Boolean(onEventClick)
   return (
-    <button
-      type="button"
-      tabIndex={interactive ? 0 : -1}
-      disabled={!interactive}
-      onClick={(e) => {
-        e.stopPropagation()
-        onEventClick?.(event)
-      }}
-      onKeyDown={(e) => {
-        if (!interactive) return
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          e.stopPropagation()
-          onEventClick?.(event)
-        }
-      }}
+    <div
       className={cn(
-        'absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-md px-1 py-0.5 text-left text-xs text-foreground',
-        !event.color && 'bg-primary/15',
-        interactive && 'cursor-pointer hover:opacity-90',
-        !interactive && 'cursor-default',
+        'absolute left-0.5 right-0.5 z-10 flex overflow-hidden rounded-md text-xs text-foreground',
+        eventChipToneClass(event),
         className,
       )}
-      style={style}
-      title={event.title}
+      style={{
+        ...style,
+        ...(event.color ? { backgroundColor: event.color } : undefined),
+      }}
     >
-      <span className="block truncate font-medium">{event.title}</span>
-    </button>
+      <button
+        type="button"
+        tabIndex={interactive ? 0 : -1}
+        disabled={!interactive}
+        onClick={(e) => {
+          e.stopPropagation()
+          onEventClick?.(event)
+        }}
+        onKeyDown={(e) => {
+          if (!interactive) return
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            onEventClick?.(event)
+          }
+        }}
+        className={cn(
+          'min-w-0 flex-1 overflow-hidden px-1 py-0.5 text-left',
+          interactive && 'cursor-pointer hover:opacity-90',
+          !interactive && 'cursor-default',
+        )}
+        title={event.title}
+      >
+        <span className="block truncate font-medium">{event.title}</span>
+        {event.subtitle ? (
+          <span className="block truncate text-[10px] text-destructive">{event.subtitle}</span>
+        ) : null}
+      </button>
+      {event.issueDetail ? <EventIssueInfo detail={event.issueDetail} /> : null}
+    </div>
   )
 }
 
@@ -412,25 +460,32 @@ function MonthView({
               </div>
               <div className="flex flex-col gap-0.5">
                 {visible.map((event) => (
-                  <button
+                  <div
                     key={event.id}
-                    type="button"
-                    tabIndex={onEventClick ? 0 : -1}
-                    disabled={!onEventClick}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onEventClick?.(event)
-                    }}
                     className={cn(
-                      'truncate rounded-md px-1 py-0.5 text-left text-xs text-foreground',
-                      !event.color && 'bg-primary/15',
-                      onEventClick ? 'cursor-pointer hover:opacity-90' : 'cursor-default',
+                      'flex items-center rounded-md text-xs text-foreground',
+                      eventChipToneClass(event),
                     )}
                     style={event.color ? { backgroundColor: event.color } : undefined}
-                    title={event.title}
                   >
-                    {event.title}
-                  </button>
+                    <button
+                      type="button"
+                      tabIndex={onEventClick ? 0 : -1}
+                      disabled={!onEventClick}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEventClick?.(event)
+                      }}
+                      className={cn(
+                        'min-w-0 flex-1 truncate px-1 py-0.5 text-left',
+                        onEventClick ? 'cursor-pointer hover:opacity-90' : 'cursor-default',
+                      )}
+                      title={event.title}
+                    >
+                      {event.title}
+                    </button>
+                    {event.issueDetail ? <EventIssueInfo detail={event.issueDetail} /> : null}
+                  </div>
                 ))}
                 {overflow > 0 ? (
                   <span className="px-1 text-xs text-muted-foreground">+{overflow} more</span>

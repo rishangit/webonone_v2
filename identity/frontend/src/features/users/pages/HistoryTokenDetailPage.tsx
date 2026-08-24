@@ -13,6 +13,7 @@ import {
   FeaturePage,
   ItemListEmpty,
 } from '@webonone/ui-kit'
+import { TokenWorkflowProgress } from '@/features/users/components/TokenWorkflowProgress'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { useOpenDesignFormDialog } from '@/features/users/hooks/useOpenDesignFormDialog'
 import {
@@ -165,6 +166,12 @@ export function HistoryTokenDetailPage() {
               <DetailField label={t('history.date')} value={formatOccurrenceDate(detail.occurrenceDate)} />
               <DetailField label={t('history.time')} value={`${detail.startTime}–${detail.endTime}`} />
               <DetailField label={t('history.token')} value={detail.tokenLabel} />
+              {detail.workflowProgress ? (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">{t('history.progress')}</p>
+                  <TokenWorkflowProgress progress={detail.workflowProgress} />
+                </div>
+              ) : null}
               <DetailField label={t('history.status')} value={detail.status} />
               <DetailField label={t('history.customer')} value={detail.userDisplayName} />
               {detail.spaceName ? <DetailField label={t('history.space')} value={detail.spaceName} /> : null}

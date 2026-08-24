@@ -35,6 +35,15 @@ async function assertCanViewUser(req: AuthenticatedRequest, targetUserId: string
       return
     }
   }
+  if (viewer.platformRole === 'member' && viewer.companyId) {
+    const viewerMembership = await roleRepo.findCompanyRole(viewer.id, viewer.companyId)
+    if (viewerMembership) {
+      const targetMembership = await roleRepo.findCompanyRole(targetUserId, viewer.companyId)
+      if (targetMembership) {
+        return
+      }
+    }
+  }
   throw new AuthError('Forbidden', 403, 'FORBIDDEN')
 }
 

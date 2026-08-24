@@ -2,20 +2,22 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
 
-export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants'
+export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants' | 'workflow'
 
-type CatalogDetailSectionTabsProps = {
+type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailTabId> = {
   ariaLabel: string
-  tab: CatalogDetailTabId
-  onTabChange: (tab: CatalogDetailTabId) => void
+  tab: T
+  onTabChange: (tab: T) => void
   overview: ReactNode
   attributes: ReactNode
   gallery: ReactNode
   /** Products only — when omitted, Variants tab is hidden. */
   variants?: ReactNode
+  /** Services only — when omitted, Workflow tab is hidden. */
+  workflow?: ReactNode
 }
 
-export function CatalogDetailSectionTabs({
+export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
   ariaLabel,
   tab,
   onTabChange,
@@ -23,7 +25,8 @@ export function CatalogDetailSectionTabs({
   attributes,
   gallery,
   variants,
-}: CatalogDetailSectionTabsProps) {
+  workflow,
+}: CatalogDetailSectionTabsProps<T>) {
   const { t } = useTranslation('catalog')
   const tabs: { id: CatalogDetailTabId; label: string }[] = [
     { id: 'overview', label: t('detail.tabs.overview') },
@@ -33,6 +36,9 @@ export function CatalogDetailSectionTabs({
   if (variants != null) {
     tabs.push({ id: 'variants', label: t('detail.tabs.variants') })
   }
+  if (workflow != null) {
+    tabs.push({ id: 'workflow', label: t('detail.tabs.workflow') })
+  }
 
   const panel =
     tab === 'overview'
@@ -41,12 +47,14 @@ export function CatalogDetailSectionTabs({
         ? attributes
         : tab === 'gallery'
           ? gallery
-          : variants
+          : tab === 'workflow'
+            ? workflow
+            : variants
 
   return (
     <Tabs
       value={tab}
-      onValueChange={(value) => onTabChange(value as CatalogDetailTabId)}
+      onValueChange={(value) => onTabChange(value as T)}
       className="flex flex-col gap-6"
     >
       <TabsList aria-label={ariaLabel}>

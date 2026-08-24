@@ -57,6 +57,10 @@ export type CompanyEventOccurrence = CompanyEvent & {
   scheduleChangeKind?: SessionScheduleChangeKind | null
   originalStartTime?: string
   originalEndTime?: string
+  sessionCancelled?: boolean
+  effectiveStaffId?: string
+  effectiveStaffDisplayName?: string
+  sessionIssue?: 'staff_leave' | 'cancelled' | null
 }
 
 export type SessionToken = {
@@ -72,6 +76,11 @@ export type SessionToken = {
   userEmail: string | null
   createdAt: string
   updatedAt: string
+  workflowProgress?: {
+    steps: { id: string; label: string; kind: 'check_in' | 'space' | 'done' }[]
+    currentIndex: number
+    done: boolean
+  }
 }
 
 export type SessionRun = {
@@ -95,12 +104,30 @@ export type SessionDetail = {
   items: SessionToken[]
   sessionStartTime: string
   sessionEndTime: string
+  sessionCancelled?: boolean
+  effectiveStaffId?: string
+  effectiveStaffDisplayName?: string
+  sessionIssue?: 'staff_leave' | 'cancelled' | null
   /** Personal (/me) views — Prev/Current/Next from the full company queue. */
   queue?: {
     prevTokenLabel: string | null
     currentTokenLabel: string | null
     nextTokenLabel: string | null
   }
+}
+
+export type SessionCheckIn = {
+  id: string
+  userId: string
+  userDisplayName: string
+  userEmail: string | null
+  checkedInAt: string
+}
+
+export type SessionCheckInsResult = {
+  items: SessionCheckIn[]
+  canCheckIn: boolean
+  checkedIn: boolean
 }
 
 export type ChangeSessionScheduleBody = {

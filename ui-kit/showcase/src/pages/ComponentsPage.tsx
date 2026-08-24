@@ -349,6 +349,9 @@ function FullCalendarDemo() {
         title: 'Client workshop',
         start: new Date(y, m, d, 14, 0),
         end: new Date(y, m, d, 16, 0),
+        subtitle: 'Staff on leave',
+        issueDetail:
+          'Assigned staff is on approved leave for this session. Cancel or reassign staff.',
       },
       {
         id: '4',
@@ -367,6 +370,8 @@ function FullCalendarDemo() {
         title: 'One-on-one',
         start: new Date(y, m, d + 3, 15, 0),
         end: new Date(y, m, d + 3, 15, 45),
+        subtitle: 'Cancelled',
+        issueDetail: 'This session is cancelled and is hidden from customers.',
       },
     ]
   }, [])

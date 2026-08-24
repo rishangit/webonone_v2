@@ -12,6 +12,7 @@ import {
   updateCatalogGalleryBodySchema,
   updateCatalogPricingBodySchema,
   updateServiceFormBodySchema,
+  replaceServiceWorkflowBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
 
 const router = Router()
@@ -73,6 +74,17 @@ router.patch(
   validateBody(updateServiceFormBodySchema),
   companyCatalogController.updateServiceForm,
 )
+router.get(
+  '/company/me/catalog/services/:id/workflow',
+  requireCompanySession,
+  companyCatalogController.listServiceWorkflow,
+)
+router.put(
+  '/company/me/catalog/services/:id/workflow',
+  requireCompanyAdminSession,
+  validateBody(replaceServiceWorkflowBodySchema),
+  companyCatalogController.replaceServiceWorkflow,
+)
 router.patch(
   '/company/me/catalog/:kind/:id',
   requireCompanyAdminSession,
@@ -105,6 +117,11 @@ router.post(
   requireAuth,
   validateBody(bookPublicSessionTokenBodySchema),
   companyCatalogController.bookTokenForCompany,
+)
+router.get(
+  '/company/:companyId/catalog/services/:id/workflow',
+  requireAuth,
+  companyCatalogController.listServiceWorkflowForCompany,
 )
 router.get(
   '/company/:companyId/catalog/:kind',

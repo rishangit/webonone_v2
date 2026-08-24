@@ -12,6 +12,8 @@ export interface CompanyEventSessionTokenRow {
   user_id: string
   user_display_name: string
   user_email: string | null
+  current_workflow_item_id: string | null
+  workflow_completed_at: Date | string | null
   created_at: Date
   updated_at: Date
 }
@@ -79,14 +81,22 @@ export async function findFirstWaitingToken(
   eventId: string,
   occurrenceDate: string,
 ): Promise<CompanyEventSessionTokenRow | undefined> {
-  return db<CompanyEventSessionTokenRow>('company_event_session_tokens')
-    .where({
-      company_id: companyId,
-      event_id: eventId,
-      occurrence_date: occurrenceDate,
-      status: 'waiting',
+  return db<CompanyEventSessionTokenRow>('company_event_session_tokens as token')
+    .join('company_event_session_check_ins as checkin', (join) => {
+      join
+        .on('checkin.company_id', '=', 'token.company_id')
+        .andOn('checkin.event_id', '=', 'token.event_id')
+        .andOn('checkin.user_id', '=', 'token.user_id')
+        .andOn('checkin.occurrence_date', '=', 'token.occurrence_date')
     })
-    .orderBy('token_number', 'asc')
+    .where({
+      'token.company_id': companyId,
+      'token.event_id': eventId,
+      'token.occurrence_date': occurrenceDate,
+      'token.status': 'waiting',
+    })
+    .orderBy('token.token_number', 'asc')
+    .select('token.*')
     .first()
 }
 
@@ -132,10 +142,12 @@ export async function insertToken(row: {
   user_display_name: string
   user_email: string | null
   status?: SessionTokenStatus
+  current_workflow_item_id?: string | null
 }): Promise<CompanyEventSessionTokenRow> {
   await db('company_event_session_tokens').insert({
     ...row,
     status: row.status ?? 'waiting',
+    current_workflow_item_id: row.current_workflow_item_id ?? null,
     created_at: db.fn.now(3),
     updated_at: db.fn.now(3),
   })
@@ -146,12 +158,36 @@ export async function insertToken(row: {
   return created
 }
 
+export async function updateTokenWorkflow(
+  id: string,
+  fields: {
+    current_workflow_item_id: string | null
+    workflow_completed_at: Date | null
+  },
+): Promise<CompanyEventSessionTokenRow> {
+  await db('company_event_session_tokens').where({ id }).update({
+    current_workflow_item_id: fields.current_workflow_item_id,
+    workflow_completed_at: fields.workflow_completed_at,
+    updated_at: db.fn.now(3),
+  })
+  const updated = await db<CompanyEventSessionTokenRow>('company_event_session_tokens')
+    .where({ id })
+    .first()
+  if (!updated) throw new Error('Failed to update session token workflow')
+  return updated
+}
+
 export async function updateTokenStatus(
   id: string,
   status: SessionTokenStatus,
 ): Promise<CompanyEventSessionTokenRow> {
+  const extra =
+    status === 'completed'
+      ? { workflow_completed_at: db.fn.now(3), current_workflow_item_id: null }
+      : {}
   await db('company_event_session_tokens').where({ id }).update({
     status,
+    ...extra,
     updated_at: db.fn.now(3),
   })
   const updated = await db<CompanyEventSessionTokenRow>('company_event_session_tokens')

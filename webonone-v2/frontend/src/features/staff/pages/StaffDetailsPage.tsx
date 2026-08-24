@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
@@ -20,20 +20,22 @@ import { canAccessCompanySession } from '@/features/session/utils/canAccessCompa
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { StaffFormDialog } from '@/features/staff/components/StaffFormDialog'
 import { StaffHistoryPanel } from '@/features/staff/components/StaffHistoryPanel'
+import { StaffLeavesPanel } from '@/features/staff/components/StaffLeavesPanel'
 import { StaffScheduleCard } from '@/features/staff/components/StaffScheduleCard'
 import { StaffUserCard } from '@/features/staff/components/StaffUserCard'
 import type { StaffWizardStep } from '@/features/staff/schemas/staffSchemas'
 import { staffActions } from '@/features/staff/store'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
+import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
-type StaffDetailTab = 'overview' | 'history'
+const STAFF_DETAIL_TABS = ['overview', 'history', 'leaves'] as const
+type StaffDetailTab = (typeof STAFF_DETAIL_TABS)[number]
 
 export function StaffDetailsPage() {
   const { t, i18n } = useTranslation('staff')
   const { staffId } = useParams<{ staffId: string }>()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
   const dispatch = useAppDispatch()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
@@ -44,8 +46,7 @@ export function StaffDetailsPage() {
   const listItems = useAppSelector((s) => s.staff.items) as CompanyStaff[]
 
   const [dialog, setDialog] = useState<{ initialStep: StaffWizardStep } | null>(null)
-
-  const tab: StaffDetailTab = searchParams.get('tab') === 'history' ? 'history' : 'overview'
+  const [tab, setTab] = useDetailTabParam(STAFF_DETAIL_TABS, 'overview')
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? t('detail.loading') : null)
@@ -65,21 +66,6 @@ export function StaffDetailsPage() {
 
   function openWizard(initialStep: StaffWizardStep) {
     setDialog({ initialStep })
-  }
-
-  function setTab(next: StaffDetailTab) {
-    setSearchParams(
-      (prev) => {
-        const nextParams = new URLSearchParams(prev)
-        if (next === 'overview') {
-          nextParams.delete('tab')
-        } else {
-          nextParams.set('tab', next)
-        }
-        return nextParams
-      },
-      { replace: false },
-    )
   }
 
   if (selectionComplete && !canAccessCompanySession(activeRole, activeCompanyId)) {
@@ -118,6 +104,7 @@ export function StaffDetailsPage() {
   const tabs: { id: StaffDetailTab; label: string }[] = [
     { id: 'overview', label: t('detail.tabs.overview') },
     { id: 'history', label: t('detail.tabs.history') },
+    { id: 'leaves', label: t('detail.tabs.leaves') },
   ]
 
   const overview = (
@@ -160,6 +147,13 @@ export function StaffDetailsPage() {
     </div>
   )
 
+  const panel =
+    tab === 'overview' ? overview : tab === 'history' ? (
+      <StaffHistoryPanel userId={detail.userId} />
+    ) : (
+      <StaffLeavesPanel staff={detail} canManage={canEdit} />
+    )
+
   return (
     <FeaturePage
       title={detail.displayName}
@@ -170,7 +164,7 @@ export function StaffDetailsPage() {
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as StaffDetailTab)}
-        className="flex flex-col gap-6"
+        className="flex min-h-0 flex-1 flex-col gap-6"
       >
         <TabsList aria-label={t('detail.ariaSections')}>
           {tabs.map((item) => (
@@ -180,8 +174,8 @@ export function StaffDetailsPage() {
           ))}
         </TabsList>
 
-        <TabsContent value={tab} className="mt-0 outline-none">
-          {tab === 'overview' ? overview : <StaffHistoryPanel userId={detail.userId} />}
+        <TabsContent value={tab} className="mt-0 flex min-h-0 flex-1 flex-col outline-none">
+          {panel}
         </TabsContent>
       </Tabs>
 

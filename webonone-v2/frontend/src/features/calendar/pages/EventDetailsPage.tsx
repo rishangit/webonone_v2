@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -37,7 +38,7 @@ import {
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 
-const EVENT_DETAIL_TABS = ['overview', 'sessions'] as const satisfies readonly EventDetailTabId[]
+const EVENT_DETAIL_TAB_PARAM = ['overview', 'upcoming', 'past', 'sessions'] as const
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -73,12 +74,19 @@ export function EventDetailsPage() {
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
 
+  const { t } = useTranslation('calendar')
   const [dialog, setDialog] = useState<{ initialStep: EventWizardStep } | null>(null)
-  const [tab, setTab] = useDetailTabParam(EVENT_DETAIL_TABS, 'overview')
+  const [rawTab, setTab] = useDetailTabParam(EVENT_DETAIL_TAB_PARAM, 'overview')
+  const tab: EventDetailTabId = rawTab === 'sessions' ? 'upcoming' : rawTab
   const [linkedFormName, setLinkedFormName] = useState<string | null>(null)
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? 'Loading event…' : null)
+
+  useEffect(() => {
+    if (rawTab !== 'sessions') return
+    setTab('upcoming')
+  }, [rawTab, setTab])
 
   useEffect(() => {
     if (!eventId) return
@@ -306,14 +314,30 @@ export function EventDetailsPage() {
       backLabel="Back"
     >
       <EventDetailSectionTabs
-        ariaLabel="Event sections"
+        ariaLabel={t('eventDetail.ariaSections')}
         tab={tab}
-        onTabChange={setTab}
+        onTabChange={(next) => setTab(next)}
         overview={overviewPanel}
-        sessions={
+        upcoming={
           <EventSessionsList
             event={detail}
+            listTab="upcoming"
             personalOnly={isPersonalCalendarSession(activeRole, activeCompanyId)}
+            canExpand={canEdit}
+            onExpanded={() =>
+              dispatch(eventsActions.fetchDetailRequested({ id: eventId, force: true }))
+            }
+          />
+        }
+        past={
+          <EventSessionsList
+            event={detail}
+            listTab="past"
+            personalOnly={isPersonalCalendarSession(activeRole, activeCompanyId)}
+            canExpand={canEdit}
+            onExpanded={() =>
+              dispatch(eventsActions.fetchDetailRequested({ id: eventId, force: true }))
+            }
           />
         }
       />

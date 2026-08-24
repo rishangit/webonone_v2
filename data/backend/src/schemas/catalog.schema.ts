@@ -37,6 +37,12 @@ export const replaceCatalogAttributesBodySchema = z.object({
 
 export type ReplaceCatalogAttributesBody = z.infer<typeof replaceCatalogAttributesBodySchema>
 
+export const replaceServiceSpacesBodySchema = z.object({
+  space_ids: z.array(z.string().length(21)),
+})
+
+export type ReplaceServiceSpacesBody = z.infer<typeof replaceServiceSpacesBodySchema>
+
 export const catalogAttributeValueBodySchema = z
   .object({
     value_text: z.string().optional().nullable(),

@@ -2,6 +2,8 @@ import { nanoid } from 'nanoid'
 import { ZodError } from 'zod'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import * as repo from '../repositories/companyCatalog.repository.js'
+import { resolveSpaceNamesById } from './tokenWorkflowProgress.js'
+import * as staffRepo from '../repositories/companyStaff.repository.js'
 import {
   catalogEntityKindSchema,
   isCatalogGalleryKind,
@@ -311,4 +313,128 @@ export async function deleteCatalogItem(
   if (deleted === 0) {
     throw httpError('Catalog item not found', 404)
   }
+}
+
+export async function listServiceWorkflow(userId: string, companyId: string, serviceId: string) {
+  await assertCompanySessionAccess(userId, companyId)
+  const service =
+    (await repo.findById(companyId, 'services', serviceId)) ??
+    (await repo.findByLibraryId(companyId, 'services', serviceId))
+  if (!service) {
+    throw httpError('Catalog item not found', 404)
+  }
+  const catalogServiceId = String(service.id)
+  const items = await repo.listWorkflowItems(companyId, catalogServiceId)
+  if (items.length === 0) return []
+  const itemIds = items.map((item) => item.id)
+  const spaceIds = [...new Set(items.map((item) => item.space_id).filter((id): id is string => Boolean(id)))]
+  const [spaceNameById, staffLinks, formLinks] = await Promise.all([
+    resolveSpaceNamesById(companyId, spaceIds),
+    repo.listWorkflowStaffByItemIds(itemIds),
+    repo.listWorkflowFormsByItemIds(itemIds),
+  ])
+  const staffByItem = new Map<string, { id: string; displayName: string }[]>()
+  for (const link of staffLinks) {
+    const list = staffByItem.get(link.item_id) ?? []
+    list.push({ id: link.staff_id, displayName: link.display_name })
+    staffByItem.set(link.item_id, list)
+  }
+  const formsByItem = new Map<string, { id: string }[]>()
+  for (const link of formLinks) {
+    const list = formsByItem.get(link.item_id) ?? []
+    list.push({ id: link.form_template_id })
+    formsByItem.set(link.item_id, list)
+  }
+  return items.map((item) => {
+    const kind = item.kind === 'check_in' ? 'check_in' : 'space'
+    const spaceName = item.space_id ? spaceNameById.get(item.space_id) : undefined
+    return {
+      id: item.id,
+      kind,
+      orderNumber: Number(item.sort_order),
+      space: item.space_id
+        ? { id: item.space_id, name: spaceName ?? `Step ${Number(item.sort_order)}` }
+        : null,
+      staff: staffByItem.get(item.id) ?? [],
+      forms: formsByItem.get(item.id) ?? [],
+      sessionQueue: Number(item.session_queue) === 1 || item.session_queue === true,
+    }
+  })
+}
+
+export async function replaceServiceWorkflow(
+  userId: string,
+  companyId: string,
+  serviceId: string,
+  body: {
+    items: {
+      kind?: 'check_in' | 'space'
+      space_id: string | null
+      staff_ids: string[]
+      form_ids: string[]
+      session_queue?: boolean
+    }[]
+  },
+) {
+  await assertCompanyAdmin(userId, companyId)
+  const service = await repo.findById(companyId, 'services', serviceId)
+  if (!service) {
+    throw httpError('Catalog item not found', 404)
+  }
+  const allowQueue = service.time_mode !== 'duration'
+  const normalized = body.items.map((item, index) => ({
+    kind: item.kind ?? (index === 0 ? 'check_in' : 'space'),
+    space_id: item.space_id,
+    staff_ids: item.staff_ids,
+    form_ids: item.form_ids,
+    session_queue: allowQueue ? Boolean(item.session_queue) : false,
+  }))
+  const checkInItems = normalized.filter((item) => item.kind === 'check_in')
+  if (checkInItems.length !== 1 || normalized[0]?.kind !== 'check_in') {
+    throw httpError('Check-in must be the first workflow step and cannot be removed', 400)
+  }
+  for (const item of normalized) {
+    if (item.kind === 'space' && !item.space_id) {
+      throw httpError('Each space workflow item must use a space', 400)
+    }
+  }
+  const spaceStepIds = normalized
+    .filter((item) => item.kind === 'space')
+    .map((item) => item.space_id)
+    .filter((id): id is string => Boolean(id))
+  if (new Set(spaceStepIds).size !== spaceStepIds.length) {
+    throw httpError('Each workflow item must use a different space', 400)
+  }
+  const spaceIds = [
+    ...new Set(
+      normalized.map((item) => item.space_id).filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  if (spaceIds.length > 0) {
+    const found = await repo.findByIds(companyId, 'spaces', spaceIds)
+    if (found.length !== spaceIds.length) {
+      throw httpError('Catalog item not found', 404)
+    }
+  }
+  const staffIds = [...new Set(body.items.flatMap((item) => item.staff_ids))]
+  if (staffIds.length > 0) {
+    const staffRows = await staffRepo.listStaffByCompany(companyId)
+    const foundIds = new Set(staffRows.map((row) => row.id))
+    if (staffIds.some((id) => !foundIds.has(id))) {
+      throw httpError('Catalog item not found', 404)
+    }
+  }
+  await repo.replaceWorkflowItems(
+    companyId,
+    serviceId,
+    normalized.map((item) => ({
+      id: nanoid(),
+      kind: item.kind,
+      space_id: item.space_id,
+      staff_ids: item.staff_ids,
+      form_ids: item.form_ids,
+      session_queue: item.session_queue,
+    })),
+  )
+  return listServiceWorkflow(userId, companyId, serviceId)
 }

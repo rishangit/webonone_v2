@@ -72,11 +72,25 @@ export function CalendarPage() {
         setEvents(
           occurrences.map((item) => {
             const kindLabel = scheduleChangeKindLabel(item.scheduleChangeKind, t)
+            const staffName = item.effectiveStaffDisplayName ?? item.staffDisplayName
+            const issue =
+              item.sessionIssue === 'staff_leave'
+                ? {
+                    subtitle: t('schedule.issue.staffLeaveShort'),
+                    issueDetail: t('schedule.issue.staffLeaveDetail', { name: staffName }),
+                  }
+                : item.sessionIssue === 'cancelled'
+                  ? {
+                      subtitle: t('schedule.issue.cancelledShort'),
+                      issueDetail: t('schedule.issue.cancelledDetail'),
+                    }
+                  : {}
             return {
               id: `${item.id}:${item.occurrenceDate}`,
               title: kindLabel ? `${item.title} · ${kindLabel}` : item.title,
               start: new Date(item.start),
               end: new Date(item.end),
+              ...issue,
             }
           }),
         )

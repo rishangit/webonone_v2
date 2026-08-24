@@ -37,33 +37,39 @@ const createBodySchema = z.object({
   companyName: z.string().trim().max(200).optional().default(''),
 })
 
+async function assertCanAccessCompanyCustomers(
+  user: NonNullable<AuthenticatedRequest['user']>,
+  companyId: string,
+): Promise<void> {
+  if (user.platformRole === 'super_admin') {
+    return
+  }
+  if (user.companyId !== companyId) {
+    throw new AuthError('Forbidden', 403, 'FORBIDDEN')
+  }
+  if (user.platformRole === 'company_admin') {
+    const adminRole = await roleRepo.findCompanyAdminRole(user.id, companyId)
+    if (adminRole) return
+  }
+  if (user.platformRole === 'member') {
+    const membership = await roleRepo.findCompanyRole(user.id, companyId)
+    if (membership) return
+  }
+  throw new AuthError('Forbidden', 403, 'FORBIDDEN')
+}
+
 async function assertCanListCustomers(
   req: AuthenticatedRequest,
   companyId: string,
 ): Promise<void> {
-  const user = req.user!
-  if (user.platformRole === 'super_admin') {
-    return
-  }
-  if (user.platformRole === 'company_admin' && user.companyId === companyId) {
-    const adminRole = await roleRepo.findCompanyAdminRole(user.id, companyId)
-    if (adminRole) return
-  }
-  throw new AuthError('Forbidden', 403, 'FORBIDDEN')
+  await assertCanAccessCompanyCustomers(req.user!, companyId)
 }
 
 async function assertCanAddCustomers(
   req: AuthenticatedRequest,
   companyId: string,
 ): Promise<void> {
-  const user = req.user!
-  if (user.platformRole !== 'company_admin' || user.companyId !== companyId) {
-    throw new AuthError('Forbidden', 403, 'FORBIDDEN')
-  }
-  const adminRole = await roleRepo.findCompanyAdminRole(user.id, companyId)
-  if (!adminRole) {
-    throw new AuthError('Forbidden', 403, 'FORBIDDEN')
-  }
+  await assertCanAccessCompanyCustomers(req.user!, companyId)
 }
 
 export async function listCustomers(req: AuthenticatedRequest, res: Response) {

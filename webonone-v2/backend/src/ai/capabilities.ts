@@ -454,6 +454,102 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     invoke: { method: 'DELETE', path: '/api/v1/company/staff/:id' },
   }),
   webononeTool({
+    name: 'list_staff_leaves',
+    description:
+      'List leave records for a company staff member. Use list_staff first to resolve staff id. Optional status filter: all, pending, approved, rejected.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id'],
+      properties: {
+        id: { ...stringId, description: 'Company staff id from list_staff or get_staff.' },
+        page: { type: 'integer', minimum: 1, description: 'Page number (default 1).' },
+        pageSize: { type: 'integer', minimum: 1, maximum: 100, description: 'Page size (default 12).' },
+        status: {
+          type: 'string',
+          enum: ['all', 'pending', 'approved', 'rejected'],
+          description: 'Filter by leave status.',
+        },
+      },
+    },
+    riskLevel: 'read',
+    requiredRoles: ['member', 'company_admin'],
+    requiredPermissions: ['ai:staff:read'],
+    auth: 'user_jwt',
+    invoke: { method: 'GET', path: '/api/v1/company/staff/:id/leaves' },
+    viewPath: '/staff/{id}?tab=leaves',
+  }),
+  webononeTool({
+    name: 'create_staff_leave',
+    description:
+      'Add leave for a staff member. Suggest leave_type (annual, sick, casual, unpaid, other), start_date and end_date (YYYY-MM-DD), and optional reason. Staff-created leaves start pending; company owner-created leaves are approved immediately. Use list_staff to resolve staff id.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'leave_type', 'start_date', 'end_date'],
+      properties: {
+        id: { ...stringId, description: 'Company staff id from list_staff.' },
+        leave_type: {
+          type: 'string',
+          enum: ['annual', 'sick', 'casual', 'unpaid', 'other'],
+          description: 'Leave category.',
+        },
+        start_date: { type: 'string', description: 'Start date YYYY-MM-DD.' },
+        end_date: { type: 'string', description: 'End date YYYY-MM-DD (on or after start).' },
+        reason: { type: 'string', description: 'Optional reason for leave.' },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['member', 'company_admin'],
+    requiredPermissions: ['ai:staff:write'],
+    auth: 'user_jwt',
+    invoke: { method: 'POST', path: '/api/v1/company/staff/:id/leaves' },
+    viewPath: '/staff/{id}?tab=leaves',
+    argCompletion: {
+      allowedKeys: ['id', 'leave_type', 'start_date', 'end_date', 'reason'],
+    },
+  }),
+  webononeTool({
+    name: 'approve_staff_leave',
+    description:
+      'Approve a pending staff leave. Company owner only. Requires staff id and leave id from list_staff_leaves.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'leaveId'],
+      properties: {
+        id: { ...stringId, description: 'Company staff id.' },
+        leaveId: { ...stringId, description: 'Leave record id from list_staff_leaves.' },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['company_admin'],
+    requiredPermissions: ['ai:staff:write'],
+    auth: 'user_jwt',
+    invoke: { method: 'POST', path: '/api/v1/company/staff/:id/leaves/:leaveId/approve' },
+    viewPath: '/staff/{id}?tab=leaves',
+  }),
+  webononeTool({
+    name: 'reject_staff_leave',
+    description:
+      'Reject a pending staff leave. Company owner only. Requires staff id and leave id from list_staff_leaves.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'leaveId'],
+      properties: {
+        id: { ...stringId, description: 'Company staff id.' },
+        leaveId: { ...stringId, description: 'Leave record id from list_staff_leaves.' },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['company_admin'],
+    requiredPermissions: ['ai:staff:write'],
+    auth: 'user_jwt',
+    invoke: { method: 'POST', path: '/api/v1/company/staff/:id/leaves/:leaveId/reject' },
+    viewPath: '/staff/{id}?tab=leaves',
+  }),
+  webononeTool({
     name: 'get_my_company',
     description: 'Get the signed-in user company profile and membership.',
     jsonSchema: {

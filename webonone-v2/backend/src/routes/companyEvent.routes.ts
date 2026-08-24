@@ -7,8 +7,10 @@ import {
   createCompanyEventBodySchema,
   createSessionTokenBodySchema,
   changeSessionScheduleBodySchema,
+  reassignSessionStaffBodySchema,
   updateCompanyEventBodySchema,
 } from '../schemas/companyEventSchemas.js'
+import { requireCompanyAdminSession } from '../middleware/requireCompanyAdminSession.js'
 
 const router = Router()
 
@@ -18,6 +20,16 @@ router.get(
   '/me/events/:eventId/sessions/:occurrenceDate',
   requireAuth,
   companyEventController.getMySession,
+)
+router.get(
+  '/me/events/:eventId/sessions/:occurrenceDate/check-ins',
+  requireAuth,
+  companyEventController.listMySessionCheckIns,
+)
+router.post(
+  '/me/events/:eventId/sessions/:occurrenceDate/check-ins',
+  requireAuth,
+  companyEventController.createMySessionCheckIn,
 )
 
 router.get('/company/events', requireCompanySession, companyEventController.listEvents)
@@ -67,6 +79,17 @@ router.post(
   validateBody(changeSessionScheduleBodySchema),
   companyEventController.changeSessionSchedule,
 )
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/cancel',
+  requireCompanyAdminSession,
+  companyEventController.cancelSession,
+)
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/reassign',
+  requireCompanyAdminSession,
+  validateBody(reassignSessionStaffBodySchema),
+  companyEventController.reassignSessionStaff,
+)
 router.get(
   '/company/events/:eventId/sessions/:occurrenceDate/tokens',
   requireCompanySession,
@@ -77,6 +100,21 @@ router.post(
   requireCompanySession,
   validateBody(createSessionTokenBodySchema),
   companyEventController.createSessionToken,
+)
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/tokens/:tokenId/workflow/complete',
+  requireCompanySession,
+  companyEventController.completeSessionTokenWorkflow,
+)
+router.get(
+  '/company/events/:eventId/sessions/:occurrenceDate/check-ins',
+  requireCompanySession,
+  companyEventController.listSessionCheckIns,
+)
+router.post(
+  '/company/events/:eventId/sessions/:occurrenceDate/check-ins',
+  requireCompanySession,
+  companyEventController.createSessionCheckIn,
 )
 
 export default router

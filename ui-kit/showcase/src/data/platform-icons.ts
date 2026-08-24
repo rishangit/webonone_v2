@@ -12,6 +12,7 @@ import {
   EyeOff,
   Home,
   Image,
+  Info,
   Lock,
   LogOut,
   Mail,
@@ -133,6 +134,12 @@ export const PLATFORM_ICONS: PlatformIconDefinition[] = [
     icon: Image,
     category: 'media',
     usedIn: ['Showcase — AppShell nav'],
+  },
+  {
+    name: 'Info',
+    icon: Info,
+    category: 'action',
+    usedIn: ['FullCalendar'],
   },
   {
     name: 'Lock',

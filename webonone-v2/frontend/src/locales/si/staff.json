@@ -22,7 +22,8 @@
     "ariaSections": "කාර්ය මණ්ඩල අංශ",
     "tabs": {
       "overview": "දළ විශ්ලේෂණය",
-      "history": "ඉතිහාසය"
+      "history": "ඉතිහාසය",
+      "leaves": "නිවාඩු"
     },
     "recordTitle": "වාර්තාව",
     "recordDescription": "කාර්ය මණ්ඩල වාර්තා මෙටාදත්ත",
@@ -82,6 +83,56 @@
       "startTimeRequired": "ආරම්භක වේලාව අවශ්‍යයි",
       "endTimeRequired": "අවසන් වේලාව අවශ්‍යයි",
       "endAfterStart": "අවසන් වේලාව ආරම්භක වේලාවට පසුව විය යුතුය"
+    }
+  },
+  "leaves": {
+    "addLeave": "නිවාඩු එකතු කරන්න",
+    "addTitle": "නිවාඩු එකතු කරන්න",
+    "addDescription": "මෙම කාර්ය මණ්ඩල සාමාජිකයා සඳහා නිවාඩු ඉල්ලන්න හෝ වාර්තා කරන්න.",
+    "addSubmit": "නිවාඩු එකතු කරන්න",
+    "saving": "සුරකිමින්…",
+    "loading": "නිවාඩු පූරණය වෙමින්…",
+    "empty": "තවම නිවාඩු වාර්තා නැත.",
+    "filtersTitle": "පෙරහන්",
+    "filterStatus": "තත්ත්වය",
+    "statusAll": "සියලු තත්ත්ව",
+    "approve": "අනුමත කරන්න",
+    "reject": "ප්‍රතික්ෂේප කරන්න",
+    "cancel": "අවලංගු කරන්න",
+    "rejectTitle": "නිවාඩු ප්‍රතික්ෂේප කරන්නද?",
+    "rejectDescription": "මෙම නිවාඩු ඉල්ලීම ප්‍රතික්ෂේප ලෙස සලකුණු කරනු ඇත.",
+    "cancelTitle": "නිවාඩු අවලංගු කරන්නද?",
+    "cancelDescription": "මෙම අපේක්ෂිත නිවාඩු ඉල්ලීම ඉවත් කරනු ඇත.",
+    "actionsFor": "{{type}} නිවාඩු සඳහා ක්‍රියා",
+    "toastAdded": "නිවාඩු එකතු කරන ලදී",
+    "toastAddFailed": "නිවාඩු එකතු කිරීම අසාර්ථක විය",
+    "toastApproved": "නිවාඩු අනුමත කරන ලදී",
+    "toastApproveFailed": "නිවාඩු අනුමත කිරීම අසාර්ථක විය",
+    "toastRejected": "නිවාඩු ප්‍රතික්ෂේප කරන ලදී",
+    "toastRejectFailed": "නිවාඩු ප්‍රතික්ෂේප කිරීම අසාර්ථක විය",
+    "toastCancelled": "නිවාඩු අවලංගු කරන ලදී",
+    "toastCancelFailed": "නිවාඩු අවලංගු කිරීම අසාර්ථක විය",
+    "types": {
+      "annual": "වාර්ෂික",
+      "sick": "රෝගී",
+      "casual": "අනිමිත්ති",
+      "unpaid": "වැටුම් නොමැති",
+      "other": "වෙනත්"
+    },
+    "statuses": {
+      "pending": "අපේක්ෂිත",
+      "approved": "අනුමත",
+      "rejected": "ප්‍රතික්ෂේප"
+    },
+    "fields": {
+      "type": "නිවාඩු වර්ගය",
+      "typePlaceholder": "නිවාඩු වර්ගය තෝරන්න",
+      "from": "ආරම්භක දිනය",
+      "fromPlaceholder": "ආරම්භක දිනය",
+      "to": "අවසාන දිනය",
+      "toPlaceholder": "අවසාන දිනය",
+      "reason": "හේතුව",
+      "reasonPlaceholder": "නිවාඩු සඳහා විකල්ප හේතුව"
     }
   },
   "history": {

@@ -22,6 +22,9 @@ interface SessionTokensState {
   queue: SessionQueueSnapshot | null
   sessionStartTime: string | null
   sessionEndTime: string | null
+  sessionIssue: SessionDetail['sessionIssue']
+  sessionCancelled: boolean
+  effectiveStaffDisplayName: string | null
   listStatus: Status
   createStatus: Status
   actionStatus: Status
@@ -40,6 +43,9 @@ const initialState: SessionTokensState = {
   queue: null,
   sessionStartTime: null,
   sessionEndTime: null,
+  sessionIssue: null,
+  sessionCancelled: false,
+  effectiveStaffDisplayName: null,
   listStatus: 'idle',
   createStatus: 'idle',
   actionStatus: 'idle',
@@ -56,6 +62,9 @@ function applyDetail(state: SessionTokensState, detail: SessionDetail) {
   state.queue = detail.queue ?? null
   state.sessionStartTime = detail.sessionStartTime
   state.sessionEndTime = detail.sessionEndTime
+  state.sessionIssue = detail.sessionIssue ?? null
+  state.sessionCancelled = detail.sessionCancelled ?? false
+  state.effectiveStaffDisplayName = detail.effectiveStaffDisplayName ?? null
 }
 
 const sessionTokensSlice = createSlice({

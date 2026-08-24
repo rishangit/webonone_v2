@@ -71,6 +71,10 @@
   "confirmBookToken": "Confirm to book the next queue token for your account.",
   "yourToken": "Your token",
   "tokenNumber": "Token number",
+  "workflowProgress": {
+    "checkIn": "Check-in",
+    "done": "Done"
+  },
   "sun": "Sun",
   "mon": "Mon",
   "tue": "Tue",

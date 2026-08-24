@@ -24,13 +24,12 @@ import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { CatalogPricingDialog } from '../components/CatalogPricingDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
 import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
+import { CompanyServiceWorkflowOverviewCard } from '../components/CompanyServiceWorkflowOverviewCard'
+import { CompanyServiceWorkflowTab } from '../components/CompanyServiceWorkflowTab'
 import { EditableSectionCard } from '../components/EditableSectionCard'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
-import { ServiceFormLinkDialog } from '../components/ServiceFormLinkDialog'
-import { FillServiceFormDialog } from '../components/FillServiceFormDialog'
 import { MemberServiceSessionsCard } from '../components/MemberServiceSessionsCard'
 import type { ServiceWizardStep } from '../schemas/serviceSchemas'
-import { designFormsApi } from '@/features/design/services/designFormsApi'
 import { dataLibraryApi } from '../services/dataLibraryApi'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
@@ -50,6 +49,11 @@ const CATALOG_TABS_BASE = [
 const CATALOG_TABS_WITH_VARIANTS = [
   ...CATALOG_TABS_BASE,
   'variants',
+] as const satisfies readonly CatalogDetailTabId[]
+
+const CATALOG_TABS_WITH_WORKFLOW = [
+  ...CATALOG_TABS_BASE,
+  'workflow',
 ] as const satisfies readonly CatalogDetailTabId[]
 
 function isCatalogEntityKind(value: string): value is CatalogEntityKind {
@@ -96,22 +100,20 @@ export function CompanyCatalogDetailPage({
   const navigate = useNavigate()
   const { detail, detailStatus, mutateStatus, mutateError } = useAppSelector((s) => s.companyCatalog)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
-  const allowedTabs = useMemo(
-    () => (kind === 'products' ? CATALOG_TABS_WITH_VARIANTS : CATALOG_TABS_BASE),
-    [kind],
-  )
+  const allowedTabs = useMemo(() => {
+    if (kind === 'products') return CATALOG_TABS_WITH_VARIANTS
+    if (kind === 'services') return CATALOG_TABS_WITH_WORKFLOW
+    return CATALOG_TABS_BASE
+  }, [kind])
   const [tab, setTab] = useDetailTabParam(allowedTabs, 'overview')
   const [editOpen, setEditOpen] = useState(false)
   const [pendingEditClose, setPendingEditClose] = useState(false)
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
     null,
   )
-  const [formLinkOpen, setFormLinkOpen] = useState(false)
-  const [fillFormOpen, setFillFormOpen] = useState(false)
   const [pricingOpen, setPricingOpen] = useState(false)
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
   const [pendingRemove, setPendingRemove] = useState(false)
-  const [linkedFormName, setLinkedFormName] = useState<string | null>(null)
 
   const loading = detailStatus === 'loading'
   usePlatformLoading(
@@ -131,27 +133,6 @@ export function CompanyCatalogDetailPage({
       dispatch(companyCatalogActions.clearDetail())
     }
   }, [companyId, dispatch, kind, id])
-
-  useEffect(() => {
-    if (!detail || kind !== 'services' || !detail.formTemplateId) {
-      setLinkedFormName(null)
-      return
-    }
-    let cancelled = false
-    designFormsApi
-      .listPublished()
-      .then((result) => {
-        if (cancelled) return
-        const match = result.items.find((item) => item.id === detail.formTemplateId)
-        setLinkedFormName(match?.name ?? detail.formTemplateId ?? null)
-      })
-      .catch(() => {
-        if (!cancelled) setLinkedFormName(detail.formTemplateId ?? null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [detail, kind])
 
   useEffect(() => {
     if (!pendingEditClose) return
@@ -335,24 +316,7 @@ export function CompanyCatalogDetailPage({
           )}
         </EditableSectionCard>
 
-        <EditableSectionCard
-          title={t('detail.form.title')}
-          description={t('detail.form.description')}
-          canEdit={canManage && !busy}
-          onEdit={() => setFormLinkOpen(true)}
-        >
-          <ReadOnlyField label={t('detail.form.linkedForm')} value={linkedFormName ?? t('detail.form.none')} />
-          {detail.formTemplateId && canManage ? (
-            <Button
-              type="button"
-              size="sm"
-              className="mt-2"
-              onClick={() => setFillFormOpen(true)}
-            >
-              {t('detail.fillForCustomer')}
-            </Button>
-          ) : null}
-        </EditableSectionCard>
+        <CompanyServiceWorkflowOverviewCard serviceId={id} companyId={companyId} />
 
         <Card>
           <CardHeader>
@@ -547,6 +511,18 @@ export function CompanyCatalogDetailPage({
               />
             ) : undefined
           }
+          workflow={
+            kind === 'services' ? (
+              <CompanyServiceWorkflowTab
+                serviceId={id}
+                companyId={companyId}
+                timeMode={
+                  servicePayload?.timeMode === 'window' ? 'window' : 'duration'
+                }
+                canEdit={canManage && !busy}
+              />
+            ) : undefined
+          }
         />
       ) : null}
 
@@ -594,35 +570,6 @@ export function CompanyCatalogDetailPage({
             dispatch(companyCatalogActions.updateRequested({ kind, id, payload }))
           }}
         />
-      ) : null}
-
-      {!readOnly && kind === 'services' && detail ? (
-        <>
-          <ServiceFormLinkDialog
-            open={formLinkOpen}
-            serviceId={id}
-            currentFormTemplateId={detail.formTemplateId ?? null}
-            onOpenChange={setFormLinkOpen}
-            onSaved={() => {
-              dispatch(
-                companyCatalogActions.detailRequested({
-                  kind: 'services',
-                  id,
-                  ...(companyId ? { companyId } : {}),
-                }),
-              )
-            }}
-          />
-          {detail.formTemplateId ? (
-            <FillServiceFormDialog
-              open={fillFormOpen}
-              onOpenChange={setFillFormOpen}
-              formTemplateId={detail.formTemplateId}
-              serviceId={id}
-              serviceName={detail.displayName}
-            />
-          ) : null}
-        </>
       ) : null}
 
       {!readOnly && kind && isCatalogGalleryKind(kind) && detail ? (

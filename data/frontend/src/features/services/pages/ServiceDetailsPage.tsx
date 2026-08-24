@@ -24,6 +24,7 @@ import { CatalogLibraryGalleryCard } from '@/features/catalog/components/Catalog
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
+import { ServiceSpacesTab } from '@/features/services/components/ServiceSpacesTab'
 import { servicesActions } from '@/features/services/store'
 import type { ServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
 import { StatusBadge } from '@/shared/components/StatusBadge'
@@ -34,6 +35,7 @@ const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
   'overview',
   'gallery',
   'attributes',
+  'spaces',
 ]
 
 function formatTimestamp(value: string): string {
@@ -224,6 +226,7 @@ export function ServiceDetailsPage() {
               onSaved={refreshDetail}
             />
           }
+          spaces={<ServiceSpacesTab serviceId={id} canEdit={canEdit} />}
         />
       ) : null}
 

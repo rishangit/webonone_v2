@@ -8,6 +8,7 @@ import type { RootState } from '@/app/store'
 export function useEpicCatalogList<T>(
   selectState: (state: RootState) => CatalogFeatureState<T>,
   actions: CatalogListActions,
+  options?: { initialExtra?: Record<string, string> },
 ) {
-  return useEpicCatalogListBase<T, RootState>(selectState, actions)
+  return useEpicCatalogListBase<T, RootState>(selectState, actions, options)
 }

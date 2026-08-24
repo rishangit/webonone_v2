@@ -20,8 +20,8 @@ import { UserHistoryPanel } from '@/features/users/components/UserHistoryPanel'
 import { getUser } from '@/features/users/services/usersApi'
 import type { IdentityUserDetail } from '@/features/users/types'
 import {
+  canAccessCompanyCustomers,
   getSessionCompanyId,
-  isSessionCompanyAdmin,
   isSessionSuperAdmin,
 } from '@/features/users/utils/currentRole'
 import { useNavigateIdentity } from '@/features/shell/utils/navigateIdentity'
@@ -44,11 +44,10 @@ export function UserDetailsPage() {
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
-  const isCompanyAdmin = isSessionCompanyAdmin(accessToken)
   const companyId = getSessionCompanyId(accessToken)
   const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
-  const companyMode = isCompanyAdmin && Boolean(companyId)
-  const canView = Boolean(accessToken) && (isSuperAdmin || companyMode)
+  const companyCustomersMode = Boolean(companyId) && canAccessCompanyCustomers(accessToken)
+  const canView = Boolean(accessToken) && (isSuperAdmin || companyCustomersMode)
 
   const [tab, setTab] = useDetailTabParam<UserDetailTab>(USER_DETAIL_TABS, 'overview')
 
@@ -97,7 +96,7 @@ export function UserDetailsPage() {
     return <Navigate to="/login" replace />
   }
 
-  if (!isSuperAdmin && !companyMode) {
+  if (!isSuperAdmin && !companyCustomersMode) {
     return <Navigate to="/profile" replace />
   }
 

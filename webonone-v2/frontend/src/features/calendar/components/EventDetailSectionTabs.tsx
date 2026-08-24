@@ -1,29 +1,33 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
 
-export type EventDetailTabId = 'overview' | 'sessions'
+export type EventDetailTabId = 'overview' | 'upcoming' | 'past'
 
 type EventDetailSectionTabsProps = {
   ariaLabel: string
   tab: EventDetailTabId
   onTabChange: (tab: EventDetailTabId) => void
   overview: ReactNode
-  sessions: ReactNode
+  upcoming: ReactNode
+  past: ReactNode
 }
-
-const TABS: { id: EventDetailTabId; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'sessions', label: 'Sessions' },
-]
 
 export function EventDetailSectionTabs({
   ariaLabel,
   tab,
   onTabChange,
   overview,
-  sessions,
+  upcoming,
+  past,
 }: EventDetailSectionTabsProps) {
-  const panel = tab === 'overview' ? overview : sessions
+  const { t } = useTranslation('calendar')
+  const tabs: { id: EventDetailTabId; label: string }[] = [
+    { id: 'overview', label: t('eventDetail.tabs.overview') },
+    { id: 'upcoming', label: t('eventDetail.tabs.upcoming') },
+    { id: 'past', label: t('eventDetail.tabs.past') },
+  ]
+  const panel = tab === 'overview' ? overview : tab === 'past' ? past : upcoming
 
   return (
     <Tabs
@@ -32,7 +36,7 @@ export function EventDetailSectionTabs({
       className="flex flex-col gap-6"
     >
       <TabsList aria-label={ariaLabel}>
-        {TABS.map((item) => (
+        {tabs.map((item) => (
           <TabsTrigger key={item.id} value={item.id}>
             {item.label}
           </TabsTrigger>
