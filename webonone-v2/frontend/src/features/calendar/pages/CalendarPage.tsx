@@ -12,6 +12,7 @@ import { eventsApi } from '@/features/calendar/services/eventsApi'
 import {
   canAccessCompanySession,
   canBrowseCalendar,
+  canManageCompanyEvents,
   isPersonalCalendarSession,
 } from '@/features/session/utils/canAccessCompanySession'
 import { scheduleChangeKindLabel } from '@/features/calendar/components/SessionScheduleChangeMeta'
@@ -111,7 +112,11 @@ export function CalendarPage() {
     <FeaturePage
       title={t('schedule.title')}
       description={
-        canLoadPersonal ? t('schedule.descriptionMember') : t('schedule.descriptionAdmin')
+        canLoadPersonal
+          ? t('schedule.descriptionMember')
+          : canManageCompanyEvents(activeRole, activeCompanyId)
+            ? t('schedule.descriptionAdmin')
+            : t('schedule.descriptionStaff')
       }
       className="min-h-full"
     >

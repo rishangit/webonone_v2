@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -8,14 +8,16 @@ import {
 import { CORE_NAV_QUERY_PARAM, appendPromptLogin, buildLogoutClearChain, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { relayListPageModeQueryParams, relayThemeQueryParams, useListPageModeValue } from '@webonone/theme'
-import { AppShell, BrandLogo, ListPageModeProvider, LoadingState, PageShell } from '@webonone/ui-kit'
+import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, PageShell, useToast } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { authActions } from '@/features/auth/store'
 import { useEmbedLoginMode } from '@/features/auth/hooks/useEmbedLoginMode'
 import { useRedirectMode } from '@/features/auth/hooks/useRedirectMode'
 import { PlatformEmbedLayout } from '@/features/auth/components/PlatformEmbedLayout'
 import { clearStoredAuthSession } from '@/features/auth/utils/authStorage'
 import { authApi } from '@/features/auth/services/authApi'
+import { isImpersonatingSession } from '@/features/auth/utils/impersonation'
 import {
   PlatformLoadingProvider,
   usePlatformOverlayLabel,
@@ -110,15 +112,19 @@ function AppLayoutContent() {
 }
 
 function AppLayoutShellContent() {
+  const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const { t, i18n } = useTranslation('common')
   const { t: tShell } = useTranslation('shell')
+  const { t: tUsers } = useTranslation('users')
+  const { toast } = useToast()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { redirect, error: navError, clearError } = useServiceRedirect()
   const overlayLabel = usePlatformOverlayLabel()
   const currentLocale = normalizeLocale(i18n.language)
+  const [stoppingImpersonation, setStoppingImpersonation] = useState(false)
 
   const handoffSearchParams = useMemo(
     () => ({
@@ -259,6 +265,54 @@ function AppLayoutShellContent() {
     navigate('/profile')
   }
 
+  async function handleStopImpersonation() {
+    if (!accessToken) {
+      return
+    }
+    setStoppingImpersonation(true)
+    try {
+      const result = await authApi.stopImpersonation(accessToken)
+      dispatch(
+        authActions.loginSucceeded({
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          user: result.user,
+        }),
+      )
+      navigate('/users', { replace: true })
+      toast({ title: tUsers('toasts.stopImpersonateSuccess') })
+    } catch (err) {
+      toast({
+        title: tUsers('toasts.stopImpersonateFailed'),
+        description: err instanceof Error ? err.message : undefined,
+        variant: 'destructive',
+      })
+    } finally {
+      setStoppingImpersonation(false)
+    }
+  }
+
+  const headerNotice =
+    accessToken && user && isImpersonatingSession(accessToken)
+      ? (
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-between">
+            <span>{tUsers('impersonation.notice', { name: user.displayName })}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 shrink-0"
+              disabled={stoppingImpersonation}
+              onClick={() => {
+                void handleStopImpersonation()
+              }}
+            >
+              {tUsers('impersonation.stop')}
+            </Button>
+          </div>
+        )
+      : null
+
   const mainContent = (
     <div className="relative flex min-h-full w-full flex-col">
       <Outlet />
@@ -281,6 +335,7 @@ function AppLayoutShellContent() {
         locale={currentLocale}
         onLocaleChange={handleLocaleChange}
         headerLabels={headerLabels}
+        headerNotice={headerNotice}
         onNavItemNavigate={onNavItemNavigate}
       >
         {mainContent}

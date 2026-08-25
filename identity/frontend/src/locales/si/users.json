@@ -33,7 +33,19 @@
   },
   "toasts": {
     "userAdded": "පරිශීලක එකතු කරන ලදී",
-    "addFailed": "පරිශීලක එකතු කිරීම අසාර්ථක විය"
+    "addFailed": "පරිශීලක එකතු කිරීම අසාර්ථක විය",
+    "impersonateSuccess": "දැන් මෙම පරිශීලකයා ලෙස පිවිස ඇත",
+    "impersonateFailed": "පරිශීලකයා ප්‍රතිරූපණය කිරීම අසාර්ථක විය",
+    "stopImpersonateSuccess": "ඔබේ සුපිරි පරිපාලක සැසියට ආපසු ගියා",
+    "stopImpersonateFailed": "ප්‍රතිරූපණය නවතාලීම අසාර්ථක විය"
+  },
+  "actions": {
+    "impersonate": "ප්‍රතිරූපණය කරන්න"
+  },
+  "actionsFor": "{{name}} සඳහා ක්‍රියා",
+  "impersonation": {
+    "notice": "ප්‍රතිරූපණය කරමින්: {{name}}",
+    "stop": "ප්‍රතිරූපණය නවතන්න"
   },
   "roles": {
     "label": "භූමිකාව",

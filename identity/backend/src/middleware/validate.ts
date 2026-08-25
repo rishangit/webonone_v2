@@ -11,6 +11,7 @@ export interface AuthenticatedRequest extends Request {
     email: string
     platformRole?: PlatformRole
     companyId?: string | null
+    impersonatedBy?: string | null
   }
 }
 
@@ -45,6 +46,7 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
       email: payload.email,
       platformRole: payload.platform_role,
       companyId: payload.company_id ?? null,
+      impersonatedBy: payload.impersonated_by ?? null,
     }
     next()
   } catch {

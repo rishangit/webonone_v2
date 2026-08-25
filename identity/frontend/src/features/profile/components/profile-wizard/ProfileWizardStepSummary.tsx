@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { ProfileFormValues } from '../../schemas/profileSchemas'
+import { formatCountryName } from '../../utils/formatCountryName'
 
 interface ProfileWizardStepSummaryProps {
   values: ProfileFormValues
@@ -43,7 +44,9 @@ export function ProfileWizardStepSummary({
           <SummaryRow label={t('fields.locale')} value={localeLabel} />
           <SummaryRow
             label={t('fields.address')}
-            value={[values.addressLine1, values.city, values.country].filter(Boolean).join(', ')}
+            value={[values.addressLine1, values.city, formatCountryName(values.country)]
+              .filter(Boolean)
+              .join(', ')}
           />
           <SummaryRow
             label={t('fields.photo')}

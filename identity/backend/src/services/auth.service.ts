@@ -63,6 +63,7 @@ import {
   type PlatformRole,
 } from './token.service.js'
 import { resolveDefaultSessionClaims, assertCanAssumeSessionRole } from './userRole.service.js'
+import * as roleRepo from '../repositories/userRole.repository.js'
 import { matchesRedirectUri } from '@webonone/platform-nav'
 import { env } from '../config/env.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
@@ -115,11 +116,17 @@ function mapRegistrationStorageError(err: unknown, operation: string): never {
   throw err
 }
 
-async function issueAuthTokens(user: UserRow) {
+async function issueAuthTokens(user: UserRow, impersonatedByUserId?: string | null) {
   const defaultClaims = await resolveDefaultSessionClaims(user.id)
   const sessionClaims = defaultClaims
-    ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
-    : undefined
+    ? {
+        platformRole: defaultClaims.platformRole,
+        companyId: defaultClaims.companyId,
+        ...(impersonatedByUserId ? { impersonatedByUserId } : {}),
+      }
+    : impersonatedByUserId
+      ? { impersonatedByUserId }
+      : undefined
   const { accessToken, expiresIn } = signAccessToken(user, sessionClaims)
   const refreshToken = generateRefreshToken()
   const refreshTokenHash = hashToken(refreshToken)
@@ -131,9 +138,21 @@ async function issueAuthTokens(user: UserRow) {
     userId: user.id,
     tokenHash: refreshTokenHash,
     expiresAt,
+    impersonatedByUserId: impersonatedByUserId ?? null,
   })
 
-  return buildAuthResponse(user, accessToken, expiresIn, refreshToken, sessionClaims)
+  return buildAuthResponse(
+    user,
+    accessToken,
+    expiresIn,
+    refreshToken,
+    defaultClaims
+      ? {
+          platformRole: defaultClaims.platformRole,
+          companyId: defaultClaims.companyId ?? null,
+        }
+      : undefined,
+  )
 }
 
 async function issueEmailVerification(user: UserRow): Promise<void> {
@@ -345,18 +364,26 @@ export async function refreshAccessToken(refreshToken: string) {
   }
 
   const defaultClaims = await resolveDefaultSessionClaims(user.id)
+  const impersonatedByUserId =
+    (stored as { impersonated_by_user_id?: string | null }).impersonated_by_user_id ?? null
   const sessionClaims = defaultClaims
-    ? { platformRole: defaultClaims.platformRole, companyId: defaultClaims.companyId }
-    : undefined
+    ? {
+        platformRole: defaultClaims.platformRole,
+        companyId: defaultClaims.companyId,
+        ...(impersonatedByUserId ? { impersonatedByUserId } : {}),
+      }
+    : impersonatedByUserId
+      ? { impersonatedByUserId }
+      : undefined
   const { accessToken, expiresIn } = signAccessToken(user, sessionClaims)
   return {
     accessToken,
     expiresIn,
     user: toUserProfile(user),
-    ...(sessionClaims?.platformRole
+    ...(defaultClaims
       ? {
-          platformRole: sessionClaims.platformRole,
-          companyId: sessionClaims.companyId ?? null,
+          platformRole: defaultClaims.platformRole,
+          companyId: defaultClaims.companyId ?? null,
         }
       : {}),
   }
@@ -366,6 +393,7 @@ export async function reissueSessionRole(
   userId: string,
   platformRole: PlatformRole,
   companyId?: string | null,
+  impersonatedByUserId?: string | null,
 ) {
   await assertCanAssumeSessionRole(userId, platformRole, companyId)
   const user = await findUserById(userId)
@@ -374,7 +402,11 @@ export async function reissueSessionRole(
   }
 
   const effectiveCompanyId = platformRole === 'super_admin' ? null : (companyId ?? null)
-  const sessionClaims = { platformRole, companyId: effectiveCompanyId }
+  const sessionClaims = {
+    platformRole,
+    companyId: effectiveCompanyId,
+    ...(impersonatedByUserId ? { impersonatedByUserId } : {}),
+  }
   const { accessToken, expiresIn } = signAccessToken(user, sessionClaims)
   return {
     accessToken,
@@ -391,6 +423,41 @@ export async function logoutUser(refreshToken: string) {
   if (stored) {
     await revokeRefreshToken(stored.id)
   }
+}
+
+export async function impersonateUser(actorUserId: string, targetUserId: string) {
+  const actorSuperAdmin = await roleRepo.findSuperAdminByUserId(actorUserId)
+  if (!actorSuperAdmin) {
+    throw new AuthError('Only super admins can impersonate users', 403, 'IMPERSONATION_FORBIDDEN')
+  }
+  if (actorUserId === targetUserId) {
+    throw new AuthError('Cannot impersonate yourself', 400, 'IMPERSONATION_SELF')
+  }
+  const targetSuperAdmin = await roleRepo.findSuperAdminByUserId(targetUserId)
+  if (targetSuperAdmin) {
+    throw new AuthError('Cannot impersonate a super admin', 403, 'IMPERSONATION_SUPER_ADMIN_DENIED')
+  }
+  const target = await findUserById(targetUserId)
+  if (!target) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+  return issueAuthTokens(target, actorUserId)
+}
+
+export async function stopImpersonation(impersonatedByUserId: string) {
+  const superAdminRole = await roleRepo.findSuperAdminByUserId(impersonatedByUserId)
+  if (!superAdminRole) {
+    throw new AuthError(
+      'Original super admin access revoked',
+      403,
+      'IMPERSONATION_STOP_FORBIDDEN',
+    )
+  }
+  const user = await findUserById(impersonatedByUserId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+  return issueAuthTokens(user)
 }
 
 export async function logoutAllUserSessions(userId: string): Promise<void> {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ImagePreview } from '@webonone/ui-kit'
 import type { UserProfile } from '@/shared/types/auth.types'
 import type { ProfileWizardStep } from '../schemas/profileSchemas'
+import { formatCountryName } from '../utils/formatCountryName'
 import { ContactVerifiedRow } from './ContactVerification'
 import { EditableSectionCard } from './EditableSectionCard'
 
@@ -99,7 +100,11 @@ export function ProfileView({
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <ReadOnlyField label={t('fields.postalCode')} value={user.postalCode} icon={MapPin} />
-            <ReadOnlyField label={t('fields.country')} value={user.country} icon={Globe} />
+            <ReadOnlyField
+              label={t('fields.country')}
+              value={formatCountryName(user.country) || null}
+              icon={Globe}
+            />
           </div>
         </EditableSectionCard>
       </div>

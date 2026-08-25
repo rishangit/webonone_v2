@@ -284,12 +284,14 @@ export async function createRefreshToken(input: {
   userId: string
   tokenHash: string
   expiresAt: Date
+  impersonatedByUserId?: string | null
 }): Promise<void> {
   await db('refresh_tokens').insert({
     id: input.id,
     user_id: input.userId,
     token_hash: input.tokenHash,
     expires_at: input.expiresAt,
+    impersonated_by_user_id: input.impersonatedByUserId ?? null,
     created_at: new Date(),
   })
 }

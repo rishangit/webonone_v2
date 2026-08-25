@@ -79,6 +79,8 @@ interface AppHeaderProps {
   menuOpen?: boolean
   /** Optional header actions (e.g. chat toggle), rendered before the user avatar. */
   actions?: ReactNode
+  /** Full-width notice row below the main header bar (e.g. impersonation warning). */
+  notice?: ReactNode
   className?: string
 }
 
@@ -103,6 +105,7 @@ function AppHeader({
   showMenuButton = false,
   menuOpen = false,
   actions,
+  notice,
   className,
 }: AppHeaderProps) {
   const logoNode = logo ?? <BrandLogo href={logoHref} />
@@ -210,6 +213,17 @@ function AppHeader({
           </div>
         ) : null}
       </div>
+      {notice ? (
+        <div
+          className={cn(
+            'border-t border-warning/30 bg-warning/10 text-sm font-medium text-foreground',
+            shellContentPaddingX,
+            'py-2',
+          )}
+        >
+          {notice}
+        </div>
+      ) : null}
     </header>
   )
 }

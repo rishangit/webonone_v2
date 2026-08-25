@@ -31,11 +31,21 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const canManage = !personal && canManageCompanyEvents(activeRole, activeCompanyId)
   usePlatformLoading(list.loading ? t('events.loading') : null)
+  const description = personal
+    ? t('events.descriptionMember')
+    : canManage
+      ? t('events.descriptionAdmin')
+      : t('events.descriptionStaff')
+  const emptyMessage = personal
+    ? t('events.emptyMember')
+    : canManage
+      ? t('events.emptyAdmin')
+      : t('events.emptyStaff')
 
   return (
     <FeaturePage
       title={t('events.title')}
-      description={personal ? t('events.descriptionMember') : t('events.descriptionAdmin')}
+      description={description}
       actions={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           <SearchInput
@@ -64,6 +74,7 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
             <EventsList
               items={list.items}
               canManage={canManage}
+              emptyMessage={emptyMessage}
               onRemoved={() => list.load(list.page, list.pageSize, true)}
             />
           ) : null}

@@ -2,12 +2,13 @@ import { useCallback, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MessageCircle } from 'lucide-react'
-import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, cn } from '@webonone/ui-kit'
+import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, cn, useToast } from '@webonone/ui-kit'
 import { clearIdentityEmbedSession } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
   buildClearFirstLogoutUrl,
   createNavItemNavigate,
+  IDENTITY_NAV_SENTINELS,
   isDataNavSentinel,
   isEmailNavSentinel,
   isIdentityNavSentinel,
@@ -18,8 +19,10 @@ import {
 } from '@webonone/platform-nav'
 import { normalizeLocale, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { prefetchNavTarget } from '@/app/routePrefetch'
-import { useAppSelector } from '@/app/store/hooks'
-import { clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { authActions, clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
+import { useIdentitySessionHandoff } from '@/features/auth/hooks/useIdentitySessionHandoff'
+import { isImpersonatingSession, stopImpersonation } from '@/features/auth/utils/impersonation'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { getWebsiteOrigin } from '@/features/auth/utils/websiteConfig'
@@ -30,6 +33,7 @@ import { buildNavForSessionRole } from '@/features/shell/config/navItems'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { ThemeProviderBridge } from '@/shared/theme/ThemeProviderBridge'
 import { SessionRoleGate } from '@/features/session/components/SessionRoleGate'
+import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import {
   fallbackAccountLabel,
   findMatchingRole,
@@ -78,17 +82,21 @@ export function AppLayout() {
 }
 
 function AppLayoutContent() {
+  const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
   const { t, i18n } = useTranslation('common')
   const { t: tShell } = useTranslation('shell')
+  const { toast } = useToast()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { activeRole, activeCompanyId, assumableRoles, selectionComplete } = useAppSelector(
     (s) => s.sessionRole,
   )
   const currentLocale = normalizeLocale(i18n.language)
+  const [stoppingImpersonation, setStoppingImpersonation] = useState(false)
 
   useIdentityUserRefresh()
+  useIdentitySessionHandoff()
 
   const onNavItemNavigate = useMemo(
     () =>
@@ -191,6 +199,60 @@ function AppLayoutContent() {
     navigate('/profile')
   }
 
+  async function handleStopImpersonation() {
+    if (!accessToken) {
+      return
+    }
+    setStoppingImpersonation(true)
+    try {
+      const result = await stopImpersonation(accessToken)
+      dispatch(
+        authActions.loginSuccess({
+          accessToken: result.accessToken,
+          user: {
+            id: result.user.id,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            avatarUrl: result.user.avatarUrl ?? null,
+            locale: result.user.locale ?? null,
+          },
+        }),
+      )
+      dispatch(sessionRoleActions.roleSelected({ role: 'super_admin', companyId: null }))
+      navigate(IDENTITY_NAV_SENTINELS.users)
+      toast({ title: tShell('impersonation.stopSuccess') })
+    } catch (err) {
+      toast({
+        title: tShell('impersonation.stopFailed'),
+        description: err instanceof Error ? err.message : undefined,
+        variant: 'destructive',
+      })
+    } finally {
+      setStoppingImpersonation(false)
+    }
+  }
+
+  const impersonationActive = Boolean(accessToken && user && isImpersonatingSession(accessToken))
+  const headerNotice = impersonationActive
+    ? (
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-between">
+          <span>{tShell('impersonation.notice', { name: user!.displayName })}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0"
+            disabled={stoppingImpersonation}
+            onClick={() => {
+              void handleStopImpersonation()
+            }}
+          >
+            {tShell('impersonation.stop')}
+          </Button>
+        </div>
+      )
+    : null
+
   const overlayLabel = usePlatformOverlayLabel()
   const embedMain = isPlatformPeerEmbedPath(location.pathname, activeRole)
   const listPageMode = useAppSelector((s) => s.systemTheme.preferences?.listPageMode ?? 'pagination')
@@ -215,6 +277,7 @@ function AppLayoutContent() {
           onNavItemNavigate={onNavItemNavigate}
           onNavItemPrefetch={prefetchNavTarget}
           accordionNavGroups
+          headerNotice={headerNotice}
           headerActions={
             accessToken ? (
               <>

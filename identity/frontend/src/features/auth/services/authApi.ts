@@ -124,4 +124,16 @@ export const authApi = {
       body: JSON.stringify({ code, redirectUri }),
     })
   },
+  impersonate(accessToken: string, userId: string) {
+    return authRequest<AuthSuccessPayload>('/auth/impersonate', accessToken, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    })
+  },
+  stopImpersonation(accessToken: string) {
+    return authRequest<AuthSuccessPayload>('/auth/stop-impersonate', accessToken, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  },
 }

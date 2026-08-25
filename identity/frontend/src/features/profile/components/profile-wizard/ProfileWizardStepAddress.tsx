@@ -1,6 +1,6 @@
-import { Globe, MapPin } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { FormField, Input, InputGroup, InputGroupIcon } from '@webonone/ui-kit'
+import { CountrySelect, FormField, Input, InputGroup, InputGroupIcon } from '@webonone/ui-kit'
 import type { ProfileFormValues } from '../../schemas/profileSchemas'
 
 interface ProfileWizardStepAddressProps {
@@ -109,23 +109,18 @@ export function ProfileWizardStepAddress({
           </InputGroup>
         </FormField>
         <FormField
-          label={t('fields.countryCodeLabel')}
+          label={t('fields.country')}
           htmlFor="profile-wizard-country"
           error={fieldErrors.country ? t(fieldErrors.country) : undefined}
         >
-          <InputGroup>
-            <InputGroupIcon icon={Globe} />
-            <Input
-              id="profile-wizard-country"
-              inGroup
-              autoComplete="country"
-              placeholder={t('placeholders.country')}
-              maxLength={2}
-              value={values.country ?? ''}
-              onChange={(e) => onChange({ country: e.target.value.toUpperCase() })}
-              disabled={isSubmitting}
-            />
-          </InputGroup>
+          <CountrySelect
+            id="profile-wizard-country"
+            value={values.country ?? ''}
+            onValueChange={(country) => onChange({ country: country.iso2 })}
+            disabled={isSubmitting}
+            invalid={Boolean(fieldErrors.country)}
+            placeholder={t('placeholders.country')}
+          />
         </FormField>
       </div>
     </div>

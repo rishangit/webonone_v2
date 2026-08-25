@@ -23,10 +23,16 @@ import type { CompanyEvent } from '@/features/calendar/types/event.types'
 type EventsListProps = {
   items: CompanyEvent[]
   canManage?: boolean
+  emptyMessage?: string
   onRemoved: () => void
 }
 
-export function EventsList({ items, canManage = true, onRemoved }: EventsListProps) {
+export function EventsList({
+  items,
+  canManage = true,
+  emptyMessage,
+  onRemoved,
+}: EventsListProps) {
   const { t } = useTranslation('calendar')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -37,7 +43,7 @@ export function EventsList({ items, canManage = true, onRemoved }: EventsListPro
   if (items.length === 0) {
     return (
       <ItemListEmpty>
-        {canManage ? t('events.emptyAdmin') : t('events.emptyMember')}
+        {emptyMessage ?? (canManage ? t('events.emptyAdmin') : t('events.emptyMember'))}
       </ItemListEmpty>
     )
   }

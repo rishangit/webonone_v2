@@ -33,7 +33,19 @@
   },
   "toasts": {
     "userAdded": "User added",
-    "addFailed": "Failed to add user"
+    "addFailed": "Failed to add user",
+    "impersonateSuccess": "Now signed in as this user",
+    "impersonateFailed": "Failed to impersonate user",
+    "stopImpersonateSuccess": "Returned to your super admin session",
+    "stopImpersonateFailed": "Failed to stop impersonation"
+  },
+  "actions": {
+    "impersonate": "Impersonate"
+  },
+  "actionsFor": "Actions for {{name}}",
+  "impersonation": {
+    "notice": "Impersonating: {{name}}",
+    "stop": "Stop impersonating"
   },
   "roles": {
     "label": "Role",

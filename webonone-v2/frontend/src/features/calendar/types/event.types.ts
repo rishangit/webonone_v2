@@ -38,6 +38,8 @@ export type CompanyEvent = {
   updatedAt: string
   /** Personal window events — dates where this user holds a token. */
   tokenOccurrenceDates?: string[]
+  /** Company member viewer is assigned staff (series, run, or service workflow). */
+  viewerIsAssignedStaff?: boolean
 }
 
 export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
@@ -114,6 +116,8 @@ export type SessionDetail = {
     currentTokenLabel: string | null
     nextTokenLabel: string | null
   }
+  /** Company member viewer is assigned staff for this occurrence. */
+  viewerIsAssignedStaff?: boolean
 }
 
 export type SessionCheckIn = {

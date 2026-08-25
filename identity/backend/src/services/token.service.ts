@@ -13,11 +13,13 @@ export interface AccessTokenPayload {
   aud: string
   platform_role?: PlatformRole
   company_id?: string | null
+  impersonated_by?: string
 }
 
 export type SessionClaims = {
   platformRole?: PlatformRole
   companyId?: string | null
+  impersonatedByUserId?: string | null
 }
 
 export function signAccessToken(
@@ -33,6 +35,9 @@ export function signAccessToken(
   if (sessionClaims?.platformRole) {
     payload.platform_role = sessionClaims.platformRole
     payload.company_id = sessionClaims.companyId ?? null
+  }
+  if (sessionClaims?.impersonatedByUserId) {
+    payload.impersonated_by = sessionClaims.impersonatedByUserId
   }
   const accessToken = jwt.sign(payload, env.jwtSecret, {
     expiresIn: env.accessTokenExpirySeconds,

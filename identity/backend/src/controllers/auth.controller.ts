@@ -20,6 +20,8 @@ import {
   resetPassword,
   resetPasswordWithSession,
   reissueSessionRole,
+  stopImpersonation,
+  impersonateUser,
   verifyEmail,
   verifyProfileEmailOtp,
   verifyProfilePhoneOtp,
@@ -402,7 +404,49 @@ export async function sessionRoleHandler(req: AuthenticatedRequest, res: Respons
       return
     }
     const body = sessionRoleSchema.parse(req.body)
-    const result = await reissueSessionRole(req.user.id, body.platformRole, body.companyId)
+    const result = await reissueSessionRole(
+      req.user.id,
+      body.platformRole,
+      body.companyId,
+      req.user.impersonatedBy,
+    )
+    res.json(result)
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+const impersonateSchema = z.object({
+  userId: z.string().min(1),
+})
+
+export async function impersonateHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    const body = impersonateSchema.parse(req.body)
+    const result = await impersonateUser(req.user.id, body.userId)
+    res.json(result)
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
+export async function stopImpersonateHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+      return
+    }
+    if (!req.user.impersonatedBy) {
+      res.status(403).json({ message: 'Not impersonating', code: 'NOT_IMPERSONATING' })
+      return
+    }
+    const result = await stopImpersonation(req.user.impersonatedBy)
     res.json(result)
   } catch (err) {
     if (handleAuthError(err, res)) return

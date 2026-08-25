@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
+  DropdownMenuItem,
   FeaturePage,
   FormField,
   ImagePreview,
@@ -11,6 +12,7 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ItemListMenu,
   ListFilterPanel,
   ListFilterTrigger,
   ListAddButton,
@@ -28,8 +30,13 @@ import {
   type UserOption,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { authActions } from '@/features/auth/store'
+import { authApi } from '@/features/auth/services/authApi'
+import { completeImpersonationHandoff } from '@/features/auth/utils/impersonation'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { hasPlatformEmbedHandoff } from '@/features/auth/utils/platformReturn'
+import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
+import { resolvePlatformEmbedParentOrigin } from '@webonone/platform-embed'
 import { AddCompanyUserDialog } from '@/features/users/components/AddCompanyUserDialog'
 import {
   canAccessCompanyCustomers,
@@ -38,7 +45,7 @@ import {
 } from '@/features/users/utils/currentRole'
 import { addCompanyCustomer } from '@/features/users/services/usersApi'
 import { usersActions } from '@/features/users/store'
-import type { UserPickerRole } from '@/features/users/types'
+import type { UserPickerRole, UserPickerUser } from '@/features/users/types'
 import { useNavigateIdentity } from '@/features/shell/utils/navigateIdentity'
 
 const ALL_ROLES_VALUE = '__all__'
@@ -55,10 +62,13 @@ function formatRoleLabel(role: string): string {
 export function UsersPage() {
   const { t } = useTranslation('users')
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const { goToUserDetail } = useNavigateIdentity()
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const currentUserId = useAppSelector((s) => s.auth.user?.id)
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
   const companyId = getSessionCompanyId(accessToken)
   const isEmbedHandoff = hasPlatformEmbedHandoff(searchParams)
@@ -74,6 +84,7 @@ export function UsersPage() {
   const [appliedRole, setAppliedRole] = useState<UserPickerRole | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [impersonatingUserId, setImpersonatingUserId] = useState<string | null>(null)
 
   const canQuery = Boolean(accessToken) && (isSuperAdmin || companyCustomersMode)
   const loading =
@@ -158,6 +169,38 @@ export function UsersPage() {
         extra: { search: debouncedSearch || undefined, companyId },
       }),
     )
+  }
+
+  async function handleImpersonate(user: UserPickerUser) {
+    if (!accessToken || user.id === currentUserId) {
+      return
+    }
+    setImpersonatingUserId(user.id)
+    try {
+      const result = await authApi.impersonate(accessToken, user.id)
+      dispatch(
+        authActions.loginSucceeded({
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          user: result.user,
+        }),
+      )
+      completeImpersonationHandoff({
+        accessToken: result.accessToken,
+        user: result.user,
+        parentOrigin,
+        onStandaloneNavigate: () => navigate('/profile', { replace: true }),
+      })
+      toast({ title: t('toasts.impersonateSuccess') })
+    } catch (err) {
+      toast({
+        title: t('toasts.impersonateFailed'),
+        description: err instanceof Error ? err.message : undefined,
+        variant: 'destructive',
+      })
+    } finally {
+      setImpersonatingUserId(null)
+    }
   }
 
   if (!accessToken) {
@@ -286,6 +329,18 @@ export function UsersPage() {
                         ) : null}
                       </button>
                     </ItemListContent>
+                    {isSuperAdmin && !companyCustomersMode && user.id !== currentUserId ? (
+                      <ItemListMenu ariaLabel={t('actionsFor', { name: user.displayName })}>
+                        <DropdownMenuItem
+                          disabled={impersonatingUserId === user.id}
+                          onClick={() => {
+                            void handleImpersonate(user)
+                          }}
+                        >
+                          {t('actions.impersonate')}
+                        </DropdownMenuItem>
+                      </ItemListMenu>
+                    ) : null}
                   </ItemListItem>
                 ))}
               </ItemList>

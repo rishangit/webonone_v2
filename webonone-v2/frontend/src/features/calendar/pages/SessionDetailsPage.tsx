@@ -57,7 +57,6 @@ import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOcc
 import { tokensAtWorkflowStep } from '@/features/calendar/utils/workflowStepQueue'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
-import { staffApi } from '@/features/staff/services/staffApi'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 
 function DetailField({ label, value }: { label: string; value: string }) {
@@ -125,7 +124,6 @@ export function SessionDetailsPage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const authUser = useAppSelector((s) => s.auth.user)
   const detail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
@@ -148,7 +146,7 @@ export function SessionDetailsPage() {
   const [changeOpen, setChangeOpen] = useState(false)
   const [reassignOpen, setReassignOpen] = useState(false)
   const [cancelBusy, setCancelBusy] = useState(false)
-  const [isAssignedStaff, setIsAssignedStaff] = useState(false)
+  const sessionAssignedStaff = useAppSelector((s) => s.sessionTokens.viewerIsAssignedStaff)
   const [submissionByTokenForm, setSubmissionByTokenForm] = useState<Record<string, string>>({})
   const [attendeeSubmissionId, setAttendeeSubmissionId] = useState<string | null>(null)
   const lastActionStatus = useRef(actionStatus)
@@ -303,24 +301,10 @@ export function SessionDetailsPage() {
     }
   }, [detail?.attendeeUserId, eventId, occurrenceDate])
 
-  useEffect(() => {
-    if (!detail?.staffId || !authUser?.id || activeRole !== 'member' || !activeCompanyId) {
-      setIsAssignedStaff(false)
-      return
-    }
-    let cancelled = false
-    staffApi
-      .get(detail.staffId)
-      .then((staff) => {
-        if (!cancelled) setIsAssignedStaff(staff.userId === authUser.id)
-      })
-      .catch(() => {
-        if (!cancelled) setIsAssignedStaff(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [activeCompanyId, activeRole, authUser?.id, detail?.staffId])
+  const isAssignedStaff =
+    activeRole === 'member' &&
+    Boolean(activeCompanyId) &&
+    (sessionAssignedStaff || detail?.viewerIsAssignedStaff === true)
 
   useEffect(() => {
     if (lastActionStatus.current === 'saving' && actionStatus === 'idle' && !actionError) {

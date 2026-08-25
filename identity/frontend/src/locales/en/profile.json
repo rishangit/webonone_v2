@@ -68,13 +68,12 @@
     "stateRegion": "State / region",
     "postalCode": "Postal code",
     "country": "Country",
-    "countryCodeLabel": "Country (2-letter code)",
     "address": "Address",
     "photo": "Photo",
     "phone": "Phone"
   },
   "placeholders": {
-    "country": "US",
+    "country": "Select country",
     "locale": "en-US",
     "phone": "555-0100"
   },

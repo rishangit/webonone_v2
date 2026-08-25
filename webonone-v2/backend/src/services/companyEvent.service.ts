@@ -98,6 +98,8 @@ export type CompanyEventDto = {
    * When set, Sessions UI should list only these dates.
    */
   tokenOccurrenceDates?: string[]
+  /** Company member viewer is assigned staff (series, run, or service workflow). */
+  viewerIsAssignedStaff?: boolean
 }
 
 export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
@@ -176,6 +178,8 @@ export type SessionDetailDto = {
     currentTokenLabel: string | null
     nextTokenLabel: string | null
   }
+  /** Company member viewer is assigned staff for this occurrence. */
+  viewerIsAssignedStaff?: boolean
 }
 
 function computeSessionQueueLabels(
@@ -970,6 +974,17 @@ export async function buildWindowSessionItems(
   return items
 }
 
+function memberCanSeeOccurrence(
+  item: CompanyEventOccurrenceDto,
+  userId: string,
+  access: eventRepo.MemberStaffCalendarAccess,
+): boolean {
+  if (item.attendeeUserId === userId) return true
+  if (!access.staffId) return false
+  if (access.workflowServiceIds.has(item.serviceId)) return true
+  return item.effectiveStaffId === access.staffId
+}
+
 export async function listCompanyEvents(
   companyId: string,
   opts: {
@@ -1008,10 +1023,19 @@ export async function listCompanyEvents(
     const occurrences = series.flatMap((e) => expandOccurrences(e, opts.from!, opts.to!))
     occurrences.sort((a, b) => a.start.localeCompare(b.start))
     const withStatus = await attachOccurrenceRunStatuses(occurrences, opts.from, opts.to)
-    const visible =
+    let visible =
       opts.viewer.role === 'company_admin'
         ? withStatus
         : withStatus.filter((item) => !item.sessionIssue)
+    if (opts.viewer.role === 'member') {
+      const access = await eventRepo.loadMemberStaffCalendarAccess(
+        companyId,
+        opts.viewer.userId,
+      )
+      visible = visible.filter((item) =>
+        memberCanSeeOccurrence(item, opts.viewer.userId, access),
+      )
+    }
     return {
       items: visible,
       total: visible.length,
@@ -1184,7 +1208,15 @@ export async function getCompanyEvent(
     if (!allowed) throw serviceError('Event not found', 404)
   }
   const [enriched] = await enrichEventsWithServiceImages(companyId, [mapEvent(row)])
-  return enriched!
+  if (viewer?.role !== 'member') return enriched!
+  return {
+    ...enriched!,
+    viewerIsAssignedStaff: await eventRepo.memberIsAssignedStaff(
+      companyId,
+      viewer.userId,
+      row,
+    ),
+  }
 }
 
 function normalizeEventSchedule(
@@ -1760,6 +1792,21 @@ export async function getSessionDetail(
     )
     if (!token) throw serviceError('Event not found', 404)
   }
+  if (viewer?.role === 'member') {
+    return {
+      ...detail,
+      viewerIsAssignedStaff: await eventRepo.memberIsAssignedStaff(
+        companyId,
+        viewer.userId,
+        {
+          id: event.id,
+          staff_id: event.staffId,
+          service_id: event.serviceId,
+        },
+        { effectiveStaffId: detail.effectiveStaffId },
+      ),
+    }
+  }
   return detail
 }
 
@@ -2184,11 +2231,30 @@ async function assertCanChangeSession(
   userId: string,
   role: PlatformRole,
   event: CompanyEventDto,
+  occurrenceDate?: string,
 ): Promise<void> {
   if (role === 'company_admin') return
   if (role === 'member') {
-    const staff = await staffRepo.findStaffByUserId(companyId, userId)
-    if (staff && staff.id === event.staffId) return
+    let effectiveId: string | undefined
+    if (occurrenceDate) {
+      const run = await sessionRunRepo.findRunForSession(
+        companyId,
+        event.id,
+        occurrenceDate,
+      )
+      effectiveId = effectiveStaffId(event.staffId, run)
+    }
+    const assigned = await eventRepo.memberIsAssignedStaff(
+      companyId,
+      userId,
+      {
+        id: event.id,
+        staff_id: event.staffId,
+        service_id: event.serviceId,
+      },
+      { effectiveStaffId: effectiveId },
+    )
+    if (assigned) return
   }
   throw serviceError('Only company admins or assigned staff can change this session', 403)
 }
@@ -2215,7 +2281,13 @@ export async function changeSessionSchedule(
     userId: actor.userId,
     role: actor.role,
   })
-  await assertCanChangeSession(companyId, actor.userId, actor.role, event)
+  await assertCanChangeSession(
+    companyId,
+    actor.userId,
+    actor.role,
+    event,
+    occurrenceDate,
+  )
 
   const delayTotal = body.delayHours * 60 + body.delayMinutes
   if (delayTotal < 1) {

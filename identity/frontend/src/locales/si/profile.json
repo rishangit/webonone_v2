@@ -68,13 +68,12 @@
     "stateRegion": "ප්‍රාන්තය / කලාපය",
     "postalCode": "තැපැල් කේතය",
     "country": "රට",
-    "countryCodeLabel": "රට (අකුරු 2ක කේතය)",
     "address": "ලිපිනය",
     "photo": "ඡායාරූපය",
     "phone": "දුරකථනය"
   },
   "placeholders": {
-    "country": "US",
+    "country": "රට තෝරන්න",
     "locale": "en-US",
     "phone": "555-0100"
   },

@@ -41,6 +41,8 @@ interface AppShellProps {
   aside?: ReactNode
   /** Optional header actions, rendered before the user avatar. */
   headerActions?: ReactNode
+  /** Optional notice row below the main header bar. */
+  headerNotice?: ReactNode
   className?: string
 }
 
@@ -94,6 +96,7 @@ function AppShell({
   sidebarSession,
   aside,
   headerActions,
+  headerNotice,
   className,
 }: AppShellProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -143,6 +146,7 @@ function AppShell({
         menuOpen={mobileOpen}
         onMenuClick={() => setMobileOpen((open) => !open)}
         actions={headerActions}
+        notice={headerNotice}
       />
       <div className="flex min-h-0 flex-1">
         {mobileOpen && !isDesktop ? (

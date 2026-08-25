@@ -55,7 +55,71 @@ export async function listEventsByCompany(companyId: string): Promise<CompanyEve
     .orderBy('start_time', 'asc')
 }
 
-/** Events where the user is the attendee or the assigned staff for this company. */
+export type MemberStaffCalendarAccess = {
+  staffId: string | null
+  workflowServiceIds: Set<string>
+}
+
+export async function loadMemberStaffCalendarAccess(
+  companyId: string,
+  userId: string,
+): Promise<MemberStaffCalendarAccess> {
+  const staff = await staffRepo.findStaffByUserId(companyId, userId)
+  if (!staff) return { staffId: null, workflowServiceIds: new Set() }
+  const rows = await db('company_service_workflow_staff as link')
+    .join('company_service_workflow_items as item', 'item.id', 'link.item_id')
+    .where('link.staff_id', staff.id)
+    .andWhere('item.company_id', companyId)
+    .distinct('item.service_id')
+    .select('item.service_id')
+  return {
+    staffId: staff.id,
+    workflowServiceIds: new Set(rows.map((row) => String(row.service_id))),
+  }
+}
+
+async function isStaffOnServiceWorkflow(
+  companyId: string,
+  staffId: string,
+  serviceId: string,
+): Promise<boolean> {
+  const row = await db('company_service_workflow_staff as link')
+    .join('company_service_workflow_items as item', 'item.id', 'link.item_id')
+    .where({
+      'link.staff_id': staffId,
+      'item.company_id': companyId,
+      'item.service_id': serviceId,
+    })
+    .first()
+  return Boolean(row)
+}
+
+/** Series staff, session-run staff, or workflow staff on the event's service. */
+export async function memberIsAssignedStaff(
+  companyId: string,
+  userId: string,
+  event: Pick<CompanyEventRow, 'id' | 'staff_id' | 'service_id'>,
+  opts?: { effectiveStaffId?: string },
+): Promise<boolean> {
+  const staff = await staffRepo.findStaffByUserId(companyId, userId)
+  if (!staff) return false
+  if (event.staff_id === staff.id) return true
+  if (opts?.effectiveStaffId) {
+    if (opts.effectiveStaffId === staff.id) return true
+  } else {
+    const runMatch = await db('company_event_session_runs')
+      .where({
+        company_id: companyId,
+        event_id: event.id,
+        staff_id: staff.id,
+      })
+      .first()
+    if (runMatch) return true
+  }
+  return isStaffOnServiceWorkflow(companyId, staff.id, event.service_id)
+}
+
+/** Events where the user is the attendee or assigned staff for this company. */
 export async function listEventsForMember(
   companyId: string,
   userId: string,
@@ -67,6 +131,21 @@ export async function listEventsForMember(
       qb.where({ attendee_user_id: userId })
       if (staff) {
         qb.orWhere({ staff_id: staff.id })
+        qb.orWhereExists(function () {
+          this.select(db.raw('1'))
+            .from('company_event_session_runs as run')
+            .whereRaw('run.event_id = company_events.id')
+            .andWhere('run.company_id', companyId)
+            .andWhere('run.staff_id', staff.id)
+        })
+        qb.orWhereExists(function () {
+          this.select(db.raw('1'))
+            .from('company_service_workflow_staff as link')
+            .join('company_service_workflow_items as item', 'item.id', 'link.item_id')
+            .whereRaw('item.service_id = company_events.service_id')
+            .andWhere('item.company_id', companyId)
+            .andWhere('link.staff_id', staff.id)
+        })
       }
     })
     .orderBy('starts_on', 'desc')
@@ -77,11 +156,10 @@ export async function listEventsForMember(
 export async function memberCanAccessEvent(
   companyId: string,
   userId: string,
-  event: Pick<CompanyEventRow, 'attendee_user_id' | 'staff_id'>,
+  event: Pick<CompanyEventRow, 'id' | 'attendee_user_id' | 'staff_id' | 'service_id'>,
 ): Promise<boolean> {
   if (event.attendee_user_id === userId) return true
-  const staff = await staffRepo.findStaffByUserId(companyId, userId)
-  return Boolean(staff && event.staff_id === staff.id)
+  return memberIsAssignedStaff(companyId, userId, event)
 }
 
 /** Events the user booked as attendee or holds a session token for (any company). */

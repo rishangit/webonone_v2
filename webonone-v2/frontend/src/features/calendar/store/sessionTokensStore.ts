@@ -25,6 +25,7 @@ interface SessionTokensState {
   sessionIssue: SessionDetail['sessionIssue']
   sessionCancelled: boolean
   effectiveStaffDisplayName: string | null
+  viewerIsAssignedStaff: boolean
   listStatus: Status
   createStatus: Status
   actionStatus: Status
@@ -46,6 +47,7 @@ const initialState: SessionTokensState = {
   sessionIssue: null,
   sessionCancelled: false,
   effectiveStaffDisplayName: null,
+  viewerIsAssignedStaff: false,
   listStatus: 'idle',
   createStatus: 'idle',
   actionStatus: 'idle',
@@ -65,6 +67,9 @@ function applyDetail(state: SessionTokensState, detail: SessionDetail) {
   state.sessionIssue = detail.sessionIssue ?? null
   state.sessionCancelled = detail.sessionCancelled ?? false
   state.effectiveStaffDisplayName = detail.effectiveStaffDisplayName ?? null
+  if (detail.viewerIsAssignedStaff !== undefined) {
+    state.viewerIsAssignedStaff = detail.viewerIsAssignedStaff
+  }
 }
 
 const sessionTokensSlice = createSlice({

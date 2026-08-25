@@ -71,6 +71,12 @@
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation"
   },
+  "impersonation": {
+    "notice": "Impersonating: {{name}}",
+    "stop": "Stop impersonating",
+    "stopSuccess": "Returned to your super admin session",
+    "stopFailed": "Failed to stop impersonation"
+  },
   "assistant": {
     "open": "ai chat",
     "close": "Close",

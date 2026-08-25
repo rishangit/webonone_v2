@@ -5,6 +5,7 @@ export type AccessTokenClaims = {
   email: string
   platform_role?: PlatformRole
   company_id?: string | null
+  impersonated_by?: string
   exp?: number
   iss?: string
   aud?: string
