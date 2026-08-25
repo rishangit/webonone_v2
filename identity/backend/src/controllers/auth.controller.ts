@@ -17,6 +17,7 @@ import {
   requestProfilePhoneOtp,
   requestRegisterEmailOtp,
   resendEmailVerification,
+  previewPasswordReset,
   resetPassword,
   resetPasswordWithSession,
   reissueSessionRole,
@@ -36,7 +37,7 @@ const registerEmailOtpSchema = z.object({
 
 const verifyRegisterEmailOtpSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
-  otp: z.coerce.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
+  otp: z.coerce.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
 })
 
 const completeRegistrationSchema = z.object({
@@ -102,9 +103,18 @@ const resetPasswordSchema = z
     message: 'Reset token or session token is required',
   })
 
+const previewResetPasswordSchema = z
+  .object({
+    token: z.string().min(1).optional(),
+    resetSessionToken: z.string().min(1).optional(),
+  })
+  .refine((data) => Boolean(data.token || data.resetSessionToken), {
+    message: 'Reset token or session token is required',
+  })
+
 const verifyResetOtpSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
-  otp: z.coerce.string().regex(/^\d{4}$/, 'Enter the 4-digit code'),
+  otp: z.coerce.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
 })
 
 const resendVerificationSchema = z.object({
@@ -227,6 +237,17 @@ export async function resetPasswordHandler(req: AuthenticatedRequest, res: Respo
   }
 }
 
+export async function previewResetPasswordHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const body = previewResetPasswordSchema.parse(req.body)
+    const user = await previewPasswordReset(body)
+    res.json({ user })
+  } catch (err) {
+    if (handleAuthError(err, res)) return
+    throw err
+  }
+}
+
 export async function resendVerification(req: AuthenticatedRequest, res: Response) {
   try {
     const body = resendVerificationSchema.parse(req.body)
@@ -331,7 +352,7 @@ export async function patchMe(req: AuthenticatedRequest, res: Response) {
 }
 
 const profileOtpSchema = z.object({
-  otp: z.coerce.string().regex(/^\d{4,10}$/, 'Enter the verification code'),
+  otp: z.coerce.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
 })
 
 export async function requestProfileEmailOtpHandler(req: AuthenticatedRequest, res: Response) {

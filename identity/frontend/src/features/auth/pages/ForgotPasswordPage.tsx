@@ -1,7 +1,8 @@
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AuthLayout } from '@webonone/ui-kit'
 import { ForgotPasswordForm } from '../components/ForgotPasswordForm'
+import { EmbedAuthLink } from '../components/EmbedAuthLink'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 export function ForgotPasswordPage() {
@@ -15,9 +16,9 @@ export function ForgotPasswordPage() {
       description={t('forgotPasswordDescription')}
       variant="minimal"
       footer={
-        <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
+        <EmbedAuthLink to={loginLink} className="text-primary underline-offset-4 hover:underline">
           {t('backToSignIn')}
-        </Link>
+        </EmbedAuthLink>
       }
     >
       <ForgotPasswordForm />

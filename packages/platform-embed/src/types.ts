@@ -79,6 +79,7 @@ export const DATA_TAG_PICKER_MESSAGE_TYPES = {
 export const AUTH_MESSAGE_TYPES = {
   SUCCESS: 'webonone:auth:success',
   CANCEL: 'webonone:auth:cancel',
+  NAVIGATE: 'webonone:auth:navigate',
 } as const
 
 /** WebOnOne silent SSO iframe → public website parent. */
@@ -118,6 +119,13 @@ export type AuthSuccessMessage = {
 export type AuthCancelMessage = {
   type: typeof AUTH_MESSAGE_TYPES.CANCEL
   embedId?: string
+}
+
+/** Identity auth iframe → parent: navigate guest auth route (login, register, forgot, …). */
+export type AuthNavigateMessage = {
+  type: typeof AUTH_MESSAGE_TYPES.NAVIGATE
+  pathname: string
+  search?: string
 }
 
 export type WebsiteSsoSessionMessage = {
@@ -559,6 +567,21 @@ export function isAuthCancelMessage(data: unknown): data is AuthCancelMessage {
   return (
     message.type === AUTH_MESSAGE_TYPES.CANCEL &&
     (message.embedId === undefined || typeof message.embedId === 'string')
+  )
+}
+
+export function isAuthNavigateMessage(data: unknown): data is AuthNavigateMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+
+  const message = data as Record<string, unknown>
+  return (
+    message.type === AUTH_MESSAGE_TYPES.NAVIGATE &&
+    typeof message.pathname === 'string' &&
+    message.pathname.startsWith('/') &&
+    (message.search === undefined ||
+      (typeof message.search === 'string' && message.search.startsWith('?')))
   )
 }
 

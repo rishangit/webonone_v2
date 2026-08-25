@@ -74,7 +74,7 @@ export async function createCompanyCustomer(
         firstName: params.firstName,
         lastName: params.lastName,
         email: params.email ?? '',
-        phoneNumber: params.phoneNumber,
+        phoneNumber: params.phoneNumber ?? '',
         companyName: params.companyName ?? '',
       }),
     },

@@ -1,4 +1,4 @@
-import { FormField, Input } from '@webonone/ui-kit'
+import { CountrySelect, FormField, Input } from '@webonone/ui-kit'
 import type { CompanyWizardFormValues } from '@/features/settings/basic/schemas/companySchemas'
 
 interface CompanyWizardStepAddressProps {
@@ -89,11 +89,13 @@ export function CompanyWizardStepAddress({
           required={requireAll}
           error={fieldErrors.country}
         >
-          <Input
+          <CountrySelect
             id="company-wizard-country"
             value={values.country}
-            onChange={(e) => onChange({ country: e.target.value })}
+            onValueChange={(country) => onChange({ country: country.iso2 })}
             disabled={isSubmitting}
+            invalid={Boolean(fieldErrors.country)}
+            placeholder="Select country"
           />
         </FormField>
       </div>

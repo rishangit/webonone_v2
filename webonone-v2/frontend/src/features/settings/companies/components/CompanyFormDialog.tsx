@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import {
   Alert,
@@ -10,6 +10,9 @@ import {
   getBrowserDefaultCountryIso2,
   mapZodIssuesToFieldErrors,
   parsePhoneE164,
+  UserSelectionDialog,
+  type LoadUsersFn,
+  type UserOption,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import {
@@ -22,8 +25,10 @@ import {
   companyWizardCreateStep2Schema,
   companyWizardCreateStep3Schema,
   companyWizardCreateStep4Schema,
+  contactPersonFromAuthUser,
   EMPTY_COMPANY_WIZARD_VALUES,
   registerCompanyFormSchema,
+  type CompanyWizardContactPerson,
   type CompanyWizardFormValues,
   type CompanyWizardStep,
   type RegisterCompanyFormValues,
@@ -33,6 +38,7 @@ import type {
   UpdateCompanyBody,
 } from '@/features/settings/basic/services/companyApi'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
+import { loadIdentityUsersForStaff } from '@/features/staff/services/identityUsersApi'
 import { CompanyWizardProgress } from './company-wizard/CompanyWizardProgress'
 import { CompanyWizardStepAddress } from './company-wizard/CompanyWizardStepAddress'
 import { CompanyWizardStepContact } from './company-wizard/CompanyWizardStepContact'
@@ -61,7 +67,33 @@ const STEP_DESCRIPTIONS_EDIT = [
   'Review your changes before saving.',
 ] as const
 
-function valuesFromDetail(detail: CompanyDetail): CompanyWizardFormValues {
+const EMPTY_EXCLUDE = new Set<string>()
+
+function toWizardContactPerson(user: UserOption): CompanyWizardContactPerson {
+  return {
+    id: user.id,
+    displayName: user.displayName,
+    email: user.email,
+    avatarUrl: user.avatarUrl ?? null,
+  }
+}
+
+function contactPersonFromDetail(detail: CompanyDetail): CompanyWizardContactPerson | null {
+  if (detail.contactPerson) {
+    return {
+      id: detail.contactPerson.id,
+      displayName: detail.contactPerson.displayName,
+      email: detail.contactPerson.email,
+      avatarUrl: null,
+    }
+  }
+  return null
+}
+
+function valuesFromDetail(
+  detail: CompanyDetail,
+  fallbackContactPerson: CompanyWizardContactPerson | null,
+): CompanyWizardFormValues {
   const phone = parsePhoneE164(detail.contactPhone, {
     fallbackIso2: getBrowserDefaultCountryIso2(),
   })
@@ -69,6 +101,7 @@ function valuesFromDetail(detail: CompanyDetail): CompanyWizardFormValues {
     name: detail.name,
     description: detail.description ?? '',
     companySize: (detail.companySize as CompanyWizardFormValues['companySize']) || '',
+    contactPerson: contactPersonFromDetail(detail) ?? fallbackContactPerson,
     contactEmail: detail.contactEmail ?? '',
     phoneCountry: phone.iso2,
     phoneNational: phone.nationalNumber,
@@ -108,6 +141,7 @@ function toRegisterPayload(values: CompanyWizardFormValues): RegisterCompanyForm
     stateRegion: values.stateRegion,
     postalCode: values.postalCode,
     country: values.country,
+    contactPersonUserId: values.contactPerson!.id,
     contactEmail: values.contactEmail,
     contactPhone: contactPhoneFromValues(values),
   }
@@ -118,6 +152,7 @@ function toUpdateBody(values: CompanyWizardFormValues): UpdateCompanyBody {
     name: values.name.trim(),
     description: values.description.trim(),
     companySize: values.companySize || null,
+    contactPersonUserId: values.contactPerson?.id ?? null,
     contactEmail: values.contactEmail.trim(),
     contactPhone: contactPhoneFromValues(values),
     addressLine1: values.addressLine1.trim(),
@@ -161,13 +196,16 @@ export function CompanyFormDialog({
   const detailError = useAppSelector((s) => s.companies.detailError)
   const myCompanyStatus = useAppSelector((s) => s.companies.myCompanyStatus)
   const myCompanyError = useAppSelector((s) => s.companies.myCompanyError)
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const authUser = useAppSelector((s) => s.auth.user)
 
   const [step, setStep] = useState<CompanyWizardStep>(initialStep)
   const [values, setValues] = useState<CompanyWizardFormValues>(emptyValues)
   const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<keyof CompanyWizardFormValues | 'contactPhone', string>>
+    Partial<Record<keyof CompanyWizardFormValues | 'contactPhone' | 'contactPerson', string>>
   >({})
   const [nestedOpen, setNestedOpen] = useState(false)
+  const [contactPersonPickerOpen, setContactPersonPickerOpen] = useState(false)
   const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
   const [phase, setPhase] = useState<'idle' | 'register' | 'update-after-register'>('idle')
   const submittedRef = useRef(false)
@@ -205,11 +243,16 @@ export function CompanyFormDialog({
     setPhase('idle')
     submittedRef.current = false
     setNestedOpen(false)
+    setContactPersonPickerOpen(false)
     setBlockOuterDismiss(false)
+    const defaultContactPerson = contactPersonFromAuthUser(authUser)
     if (isNew) {
-      setValues(emptyValues())
+      setValues({
+        ...emptyValues(),
+        contactPerson: defaultContactPerson,
+      })
     }
-  }, [open, initialStep, isNew])
+  }, [open, initialStep, isNew, authUser])
 
   useEffect(() => {
     if (!open || isNew || !id) return
@@ -221,8 +264,8 @@ export function CompanyFormDialog({
     if (!open || isNew || !detailForForm) return
     if (seededDetailIdRef.current === detailForForm.id) return
     seededDetailIdRef.current = detailForForm.id
-    setValues(valuesFromDetail(detailForForm))
-  }, [detailForForm, isNew, open])
+    setValues(valuesFromDetail(detailForForm, contactPersonFromAuthUser(authUser)))
+  }, [detailForForm, isNew, open, authUser])
 
   useEffect(() => {
     if (!submittedRef.current) return
@@ -272,7 +315,25 @@ export function CompanyFormDialog({
 
   function patchValues(patch: Partial<CompanyWizardFormValues>) {
     setValues((prev) => ({ ...prev, ...patch }))
+    if (patch.contactPerson !== undefined) {
+      setFieldErrors((prev) => {
+        if (!prev.contactPerson) return prev
+        const next = { ...prev }
+        delete next.contactPerson
+        return next
+      })
+    }
   }
+
+  const loadContactPersonUsers: LoadUsersFn = useCallback(
+    async (params) => {
+      if (!accessToken) {
+        return { users: [], hasMore: false }
+      }
+      return loadIdentityUsersForStaff(accessToken, params, EMPTY_EXCLUDE)
+    },
+    [accessToken],
+  )
 
   function handleNestedOpenChange(openNested: boolean) {
     setNestedOpen(openNested)
@@ -309,6 +370,7 @@ export function CompanyFormDialog({
     if (current === 2) {
       const schema = isNew ? companyWizardCreateStep2Schema : companyContactCardSchema
       const result = schema.safeParse({
+        contactPerson: values.contactPerson,
         contactEmail: values.contactEmail,
         contactPhone: phone,
       })
@@ -403,7 +465,7 @@ export function CompanyFormDialog({
   }
 
   function handleOpenChange(next: boolean) {
-    if (!next && (nestedOpen || blockOuterDismiss)) {
+    if (!next && (nestedOpen || contactPersonPickerOpen || blockOuterDismiss)) {
       return
     }
     onOpenChange(next)
@@ -414,6 +476,7 @@ export function CompanyFormDialog({
   const isLocationStep = step === 4
 
   return (
+    <>
     <CustomDialog
       open={open}
       onOpenChange={handleOpenChange}
@@ -421,7 +484,7 @@ export function CompanyFormDialog({
       description={descriptions[stepIndex]}
       sizeWidth="large"
       sizeHeight="xlarge"
-      nestedDismissGuard={nestedOpen || blockOuterDismiss}
+      nestedDismissGuard={nestedOpen || contactPersonPickerOpen || blockOuterDismiss}
       disableContentScroll={isLocationStep}
       footer={
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -512,6 +575,7 @@ export function CompanyFormDialog({
             isSubmitting={saving}
             requireAll={!isNew}
             onChange={patchValues}
+            onOpenContactPersonPicker={() => setContactPersonPickerOpen(true)}
           />
         ) : null}
 
@@ -553,5 +617,18 @@ export function CompanyFormDialog({
         ) : null}
       </div>
     </CustomDialog>
+
+    <UserSelectionDialog
+      open={contactPersonPickerOpen}
+      onOpenChange={setContactPersonPickerOpen}
+      onSelect={(user) => {
+        patchValues({ contactPerson: toWizardContactPerson(user) })
+        setContactPersonPickerOpen(false)
+      }}
+      loadUsers={loadContactPersonUsers}
+      title="Select contact person"
+      description="Choose who represents this company for platform contact."
+    />
+    </>
   )
 }

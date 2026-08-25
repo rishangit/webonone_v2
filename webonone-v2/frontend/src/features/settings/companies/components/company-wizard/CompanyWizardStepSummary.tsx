@@ -1,4 +1,5 @@
 import type { CompanyWizardFormValues } from '@/features/settings/basic/schemas/companySchemas'
+import { formatCountryName } from '@/features/settings/companies/utils/formatCountryName'
 
 interface CompanyWizardStepSummaryProps {
   values: CompanyWizardFormValues
@@ -35,11 +36,17 @@ export function CompanyWizardStepSummary({
             label="Company size"
             value={values.companySize ? `${values.companySize} employees` : ''}
           />
+          <SummaryRow
+            label="Contact person"
+            value={values.contactPerson?.displayName ?? ''}
+          />
           <SummaryRow label="Contact email" value={values.contactEmail} />
           <SummaryRow label="Contact phone" value={contactPhoneDisplay} />
           <SummaryRow
             label="Address"
-            value={[values.addressLine1, values.city, values.country].filter(Boolean).join(', ')}
+            value={[values.addressLine1, values.city, formatCountryName(values.country)]
+              .filter(Boolean)
+              .join(', ')}
           />
           <SummaryRow
             label="Map location"

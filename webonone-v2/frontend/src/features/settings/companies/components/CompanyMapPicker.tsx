@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input } from '@webonone/ui-kit'
 import { getGoogleMapsApiKey } from '../utils/googleMapsConfig'
-
 type LatLng = { lat: number; lng: number }
 
 type PlaceResult = {
@@ -56,24 +54,6 @@ declare global {
           getPosition: () => { lat: () => number; lng: () => number } | null
           addListener: (event: string, handler: () => void) => void
         }
-        places: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            opts?: { fields?: string[] },
-          ) => {
-            addListener: (event: string, handler: () => void) => void
-            getPlace: () => {
-              place_id?: string
-              formatted_address?: string
-              geometry?: { location?: { lat: () => number; lng: () => number } }
-              address_components?: Array<{
-                long_name: string
-                short_name: string
-                types: string[]
-              }>
-            }
-          }
-        }
         event: {
           clearInstanceListeners: (instance: unknown) => void
           trigger: (instance: unknown, eventName: string) => void
@@ -85,7 +65,7 @@ declare global {
 }
 
 function mapsApiReady(): boolean {
-  return Boolean(window.google?.maps?.Map && window.google?.maps?.places)
+  return Boolean(window.google?.maps?.Map && window.google?.maps?.Marker)
 }
 
 function loadGoogleMaps(apiKey: string): Promise<void> {
@@ -98,7 +78,7 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
         resolve()
         return
       }
-      reject(new Error('Google Maps loaded without Places library'))
+      reject(new Error('Google Maps failed to initialize'))
     }
 
     const existing = document.querySelector<HTMLScriptElement>('script[data-webonone-maps]')
@@ -116,7 +96,7 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
     }
 
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}`
     script.async = true
     script.defer = true
     script.dataset.webononeMaps = '1'
@@ -131,16 +111,6 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
   return window.__webononeMapsPromise
 }
 
-function componentByType(
-  components: Array<{ long_name: string; short_name: string; types: string[] }> | undefined,
-  type: string,
-  useShort = false,
-): string | undefined {
-  const match = components?.find((c) => c.types.includes(type))
-  if (!match) return undefined
-  return useShort ? match.short_name : match.long_name
-}
-
 export function CompanyMapPicker({
   mode,
   latitude,
@@ -151,7 +121,6 @@ export function CompanyMapPicker({
   const { t } = useTranslation('settings')
   const apiKey = getGoogleMapsApiKey()
   const mapRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   const mapInstanceRef = useRef<{
     setCenter: (c: LatLng) => void
     setZoom: (z: number) => void
@@ -240,48 +209,6 @@ export function CompanyMapPicker({
         if (!pos) return
         emitFromLatLng(pos.lat(), pos.lng())
       })
-
-      if (inputRef.current) {
-        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-          fields: ['place_id', 'formatted_address', 'geometry', 'address_components'],
-        })
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace()
-          const loc = place.geometry?.location
-          if (!loc) return
-          const lat = loc.lat()
-          const lng = loc.lng()
-          map.setCenter({ lat, lng })
-          map.setZoom(14)
-          if (marker) {
-            marker.setPosition({ lat, lng })
-          } else {
-            marker = new window.google!.maps.Marker({
-              map,
-              position: { lat, lng },
-              draggable: true,
-            })
-          }
-          const components = place.address_components
-          emitFromLatLng(lat, lng, {
-            mapPlaceId: place.place_id ?? null,
-            mapFormattedAddress: place.formatted_address ?? null,
-            addressLine1: [
-              componentByType(components, 'street_number'),
-              componentByType(components, 'route'),
-            ]
-              .filter(Boolean)
-              .join(' '),
-            city:
-              componentByType(components, 'locality') ??
-              componentByType(components, 'postal_town') ??
-              componentByType(components, 'administrative_area_level_2'),
-            stateRegion: componentByType(components, 'administrative_area_level_1'),
-            postalCode: componentByType(components, 'postal_code'),
-            country: componentByType(components, 'country'),
-          })
-        })
-      }
     }
 
     // Maps paints blank when the flex container starts at 0 height — resize once laid out.
@@ -334,14 +261,6 @@ export function CompanyMapPicker({
 
   return (
     <div className={fillHeight ? 'flex min-h-0 flex-1 flex-col gap-3' : 'space-y-3'}>
-      {mode === 'edit' ? (
-        <Input
-          ref={inputRef}
-          type="text"
-          placeholder={t('companyCards.location.searchPlaceholder')}
-          aria-label={t('companyCards.location.searchAria')}
-        />
-      ) : null}
       <div
         ref={mapRef}
         className={

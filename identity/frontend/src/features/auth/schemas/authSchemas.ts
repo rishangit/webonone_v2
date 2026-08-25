@@ -10,7 +10,7 @@ export const registerEmailSchema = z.object({
 })
 
 export const verifyRegisterOtpSchema = z.object({
-  otp: z.string().regex(/^\d{4}$/, 'errors.otpInvalid'),
+  otp: z.string().regex(/^\d{6}$/, 'errors.otpInvalid'),
 })
 
 export const registerProfileSchema = z.object({
@@ -33,7 +33,7 @@ export const forgotPasswordSchema = z.object({
 })
 
 export const verifyResetOtpSchema = z.object({
-  otp: z.string().regex(/^\d{4}$/, 'errors.otpInvalid'),
+  otp: z.string().regex(/^\d{6}$/, 'errors.otpInvalid'),
 })
 
 export const resetPasswordSchema = z.object({

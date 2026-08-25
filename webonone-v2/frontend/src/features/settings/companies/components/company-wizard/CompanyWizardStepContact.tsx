@@ -1,12 +1,14 @@
-import { FormField, Input, PhoneInput, type PhoneCountry } from '@webonone/ui-kit'
+import { useTranslation } from 'react-i18next'
+import { FormField, Input, PhoneInput, SelectUser, type PhoneCountry, type SelectUserValue } from '@webonone/ui-kit'
 import type { CompanyWizardFormValues } from '@/features/settings/basic/schemas/companySchemas'
 
 interface CompanyWizardStepContactProps {
   values: CompanyWizardFormValues
-  fieldErrors: Partial<Record<keyof CompanyWizardFormValues | 'contactPhone', string>>
+  fieldErrors: Partial<Record<keyof CompanyWizardFormValues | 'contactPhone' | 'contactPerson', string>>
   isSubmitting: boolean
   requireAll?: boolean
   onChange: (patch: Partial<CompanyWizardFormValues>) => void
+  onOpenContactPersonPicker: () => void
 }
 
 export function CompanyWizardStepContact({
@@ -15,11 +17,38 @@ export function CompanyWizardStepContact({
   isSubmitting,
   requireAll = false,
   onChange,
+  onOpenContactPersonPicker,
 }: CompanyWizardStepContactProps) {
+  const { t } = useTranslation('settings')
+
+  const selectedContactPerson: SelectUserValue | null = values.contactPerson
+    ? {
+        id: values.contactPerson.id,
+        displayName: values.contactPerson.displayName,
+        email: values.contactPerson.email ?? '',
+        avatarUrl: values.contactPerson.avatarUrl,
+      }
+    : null
+
   return (
     <div className="space-y-4">
       <FormField
-        label="Contact email"
+        label={t('companyCards.contact.contactPerson')}
+        htmlFor="company-wizard-contact-person"
+        required
+        error={fieldErrors.contactPerson}
+      >
+        <SelectUser
+          id="company-wizard-contact-person"
+          selectedUser={selectedContactPerson}
+          placeholder={t('companyCards.contact.contactPersonPlaceholder')}
+          disabled={isSubmitting}
+          onClick={onOpenContactPersonPicker}
+        />
+      </FormField>
+
+      <FormField
+        label={t('companyCards.contact.contactEmail')}
         htmlFor="company-wizard-email"
         required={requireAll}
         error={fieldErrors.contactEmail}
@@ -29,14 +58,14 @@ export function CompanyWizardStepContact({
           type="email"
           value={values.contactEmail}
           onChange={(e) => onChange({ contactEmail: e.target.value })}
-          placeholder="contact@example.com"
+          placeholder={t('companyWizard.fields.contactEmailPlaceholder')}
           disabled={isSubmitting}
           className="w-full"
         />
       </FormField>
 
       <FormField
-        label="Contact phone"
+        label={t('companyCards.contact.contactPhone')}
         htmlFor="company-wizard-phone"
         required={requireAll}
         error={fieldErrors.contactPhone}

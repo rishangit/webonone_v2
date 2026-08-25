@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { isAuthCancelMessage, isAuthSuccessMessage } from '@webonone/platform-embed'
+import { isAuthCancelMessage, isAuthNavigateMessage, isAuthSuccessMessage } from '@webonone/platform-embed'
 import { normalizeLocale } from '@webonone/i18n'
 import { useAppDispatch } from '@/app/store/hooks'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
@@ -85,6 +85,17 @@ export function useIdentityAuthMessage({
 
       if (isAuthCancelMessage(event.data)) {
         onCancelRef.current?.()
+        return
+      }
+
+      if (isAuthNavigateMessage(event.data)) {
+        const search = event.data.search?.startsWith('?')
+          ? event.data.search.slice(1)
+          : event.data.search
+        navigate({
+          pathname: event.data.pathname,
+          search: search || undefined,
+        })
       }
     }
 

@@ -9,6 +9,7 @@ export type PlatformMediaDialogContextValue = {
     request: PlatformMediaDialogRequestMessage,
     responder: PlatformMediaDialogResponder,
   ) => void
+  closeMediaDialog: (reason?: string) => void
 }
 
 export const PlatformMediaDialogContext =

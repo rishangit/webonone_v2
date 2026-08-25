@@ -77,7 +77,9 @@ Flow:
 
 Use `webonone:platform:media-dialog-*` when the host already mounts Media frames (`MediaSelectorFrame` / `MediaCropDialogFrame`).
 
-Reference: `packages/platform-embed/src/PlatformServiceFrame.tsx`, `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`, `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
+`PlatformServiceFrame` handles requests from the **page** iframe. When the request comes from a **peer-dialog body** (`/embed/dialogs/…`, including nested create), `PlatformPeerDialogHost` forwards it to `PlatformMediaDialogHost` and stacks the picker above the wizard. Do not open a local Media `CustomDialog` inside the dialog iframe.
+
+Reference: `packages/platform-embed/src/PlatformServiceFrame.tsx`, `webonone-v2/frontend/src/features/media/PlatformMediaDialogHost.tsx`, `webonone-v2/frontend/src/features/shell/PlatformPeerDialogHost.tsx`, `identity/frontend/src/features/profile/components/ProfileMediaSelectorModal.tsx`.
 
 #### Peer form / selection dialogs (generic — default for new dialogs)
 

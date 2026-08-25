@@ -22,5 +22,6 @@ export async function getCompanyInternal(req: Request, res: Response) {
     status: company.status,
     logoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
     contactEmail: company.contact_email,
+    contactPersonUserId: company.contact_person_user_id,
   })
 }

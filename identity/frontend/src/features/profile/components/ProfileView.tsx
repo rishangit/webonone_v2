@@ -59,6 +59,7 @@ export function ProfileView({
         >
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
             <ImagePreview
+              key={avatarUrl ?? 'empty'}
               src={avatarUrl}
               alt={user.displayName}
               mode="view"

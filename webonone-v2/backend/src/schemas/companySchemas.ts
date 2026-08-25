@@ -30,6 +30,7 @@ export const registerCompanyBodySchema = z.object({
     ])
     .optional(),
   contactPhone: optionalTrimmed(64),
+  contactPersonUserId: z.string().trim().min(1).max(21),
 })
 
 export const updateCompanyStatusBodySchema = z.object({
@@ -72,6 +73,7 @@ export const updateCompanyBodySchema = z
     galleryImages: z.union([z.array(galleryImageSchema).max(24), z.null()]).optional(),
     contactEmail: nullableEmail,
     contactPhone: nullableString(64),
+    contactPersonUserId: z.string().trim().min(1).max(21).optional(),
     addressLine1: nullableString(255),
     addressLine2: nullableString(255),
     city: nullableString(128),

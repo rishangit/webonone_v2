@@ -379,14 +379,14 @@ export function ControlsPage() {
       <DemoSection id="otp-input" title="OTP input">
         <div className="max-w-md space-y-4">
           <div className="space-y-2">
-            <Label>4-digit code (default)</Label>
-            <OtpInput value={otp4} onChange={setOtp4} />
-            <p className="text-sm text-muted-foreground">Value: {otp4 || '—'}</p>
+            <Label>6-digit code (default)</Label>
+            <OtpInput value={otp6} onChange={setOtp6} />
+            <p className="text-sm text-muted-foreground">Value: {otp6 || '—'}</p>
           </div>
           <div className="space-y-2">
-            <Label>6-digit code</Label>
-            <OtpInput length={6} value={otp6} onChange={setOtp6} />
-            <p className="text-sm text-muted-foreground">Value: {otp6 || '—'}</p>
+            <Label>4-digit code</Label>
+            <OtpInput length={4} value={otp4} onChange={setOtp4} />
+            <p className="text-sm text-muted-foreground">Value: {otp4 || '—'}</p>
           </div>
           <OtpInput value="" onChange={() => undefined} disabled />
         </div>

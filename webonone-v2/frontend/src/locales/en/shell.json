@@ -23,6 +23,13 @@
     },
     "confirmDestructive": "This action cannot be undone."
   },
+  "waitingAuth": "Waiting for authentication…",
+  "media": {
+    "selectMedia": "Select media",
+    "cropImage": "Crop image",
+    "cropDescription": "Drag to reposition. Use zoom and aspect ratio controls to adjust the crop area.",
+    "cropAndUpload": "Crop & Upload"
+  },
   "nav": {
     "home": "Home",
     "calendar": "Calendar",

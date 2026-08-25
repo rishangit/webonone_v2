@@ -58,9 +58,9 @@ const resetPasswordEpic: AuthEpic = (action$) =>
     ofType(authActions.resetPasswordRequested.type),
     mergeMap((action: ReturnType<typeof authActions.resetPasswordRequested>) =>
       from(authApi.resetPassword(action.payload)).pipe(
-        map(() => {
+        mergeMap(() => {
           clearResetSessionToken()
-          return authActions.resetPasswordSucceeded()
+          return of(authActions.logout(), authActions.resetPasswordSucceeded())
         }),
         catchError((err: Error) => of(authActions.resetPasswordFailed(err.message))),
       ),
@@ -72,7 +72,7 @@ const legacyResetPasswordEpic: AuthEpic = (action$) =>
     ofType(authActions.legacyResetPasswordRequested.type),
     mergeMap((action: ReturnType<typeof authActions.legacyResetPasswordRequested>) =>
       from(authApi.resetPasswordWithToken(action.payload)).pipe(
-        map(() => authActions.resetPasswordSucceeded()),
+        mergeMap(() => of(authActions.logout(), authActions.resetPasswordSucceeded())),
         catchError((err: Error) => of(authActions.resetPasswordFailed(err.message))),
       ),
     ),

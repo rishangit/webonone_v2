@@ -58,6 +58,12 @@ export type CompanyCatalogCounts = {
   spaces: number
 }
 
+export type CompanyContactPerson = {
+  id: string
+  displayName: string
+  email: string | null
+}
+
 export type CompanyDetail = {
   id: string
   name: string
@@ -67,6 +73,8 @@ export type CompanyDetail = {
   galleryImages: CompanyGalleryImage[]
   contactEmail: string | null
   contactPhone: string | null
+  contactPersonUserId: string | null
+  contactPerson: CompanyContactPerson | null
   addressLine1: string | null
   addressLine2: string | null
   city: string | null
@@ -96,6 +104,7 @@ export type UpdateCompanyBody = {
   galleryImages?: CompanyGalleryImage[] | null
   contactEmail?: string | null
   contactPhone?: string | null
+  contactPersonUserId?: string | null
   addressLine1?: string | null
   addressLine2?: string | null
   city?: string | null
@@ -115,6 +124,7 @@ function toRegisterApiBody(values: RegisterCompanyFormValues) {
 
   return {
     name: rest.name,
+    contactPersonUserId: rest.contactPersonUserId,
     ...(description.trim() ? { description: description.trim() } : {}),
     ...(companySize ? { companySize } : {}),
     ...(rest.addressLine1.trim() ? { addressLine1: rest.addressLine1.trim() } : {}),

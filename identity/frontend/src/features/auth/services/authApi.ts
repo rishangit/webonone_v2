@@ -103,6 +103,14 @@ export const authApi = {
       body: JSON.stringify(body),
     })
   },
+  previewResetPassword(body: { token?: string; resetSessionToken?: string }) {
+    return request<{
+      user: { email: string | null; firstName: string; lastName: string }
+    }>('/auth/reset-password/preview', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
   resetPasswordWithToken(body: { token: string; newPassword: string }) {
     return request<{ message: string }>('/auth/reset-password', {
       method: 'POST',

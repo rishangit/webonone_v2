@@ -3,13 +3,11 @@ import { env } from '../config/env.js'
 import { AuthError } from './auth.service.js'
 import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import {
-  createPasswordResetToken,
   createUser,
   db,
   findUserByEmail,
   findUserById,
   findUserByPhoneNumber,
-  invalidateUnusedPasswordResetTokens,
 } from '../models/user.repository.js'
 import * as roleRepo from '../repositories/userRole.repository.js'
 import {
@@ -18,10 +16,10 @@ import {
 } from '../repositories/users.repository.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
 import { getGatewayStatus, sendTransactionalSms } from './smsClient.service.js'
-import { generatePasswordResetToken, hashToken } from './token.service.js'
+import { getCompanyName } from './webononeCompanyClient.service.js'
 import { notifyCompanyAdminsCustomerAdded } from './webononeNotify.service.js'
 
-const INVITE_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
+const COMPANY_NAME_FALLBACK = 'your company'
 const E164_PHONE = /^\+\d{7,15}$/
 
 export type CustomerDto = {
@@ -99,6 +97,20 @@ async function loadCustomerDto(userId: string, companyId: string): Promise<Custo
   }
 }
 
+async function resolveCompanyName(companyId: string, hint?: string): Promise<string> {
+  const trimmedHint = hint?.trim()
+  if (trimmedHint) {
+    return trimmedHint
+  }
+
+  const resolved = await getCompanyName(companyId)
+  if (resolved) {
+    return resolved
+  }
+
+  return COMPANY_NAME_FALLBACK
+}
+
 async function notifyCompanyAdminsInApp(input: {
   companyId: string
   companyName: string
@@ -169,31 +181,18 @@ async function notifyWelcome(input: {
   return warnings
 }
 
-async function issueInviteSetPasswordToken(userId: string): Promise<string> {
-  await invalidateUnusedPasswordResetTokens(userId)
-  const token = generatePasswordResetToken()
-  await createPasswordResetToken({
-    id: nanoid(),
-    userId,
-    tokenHash: hashToken(token),
-    expiresAt: new Date(Date.now() + INVITE_TOKEN_EXPIRY_MS),
-  })
-  return token
-}
-
 async function notifyInviteSetPassword(input: {
   companyId: string
   companyName: string
-  user: { email: string | null; displayName: string; phoneNumber: string }
+  user: { email: string | null; displayName: string; phoneNumber: string | null }
   actionUrl: string
 }): Promise<string[]> {
   const warnings: string[] = []
-  let emailSent = false
   let smsSent = false
 
   const email = input.user.email?.trim()
   if (email) {
-    emailSent = await sendTransactionalEmail({
+    const emailSent = await sendTransactionalEmail({
       templateSlug: 'invite_set_password',
       toEmail: email,
       payload: {
@@ -209,11 +208,12 @@ async function notifyInviteSetPassword(input: {
     }
   }
 
+  const phone = input.user.phoneNumber?.trim()
   const gateway = await getGatewayStatus(input.companyId)
-  if (gateway?.configured) {
+  if (phone && gateway?.configured) {
     smsSent = await sendTransactionalSms({
-      toNumber: input.user.phoneNumber,
-      body: `Hi ${input.user.displayName}, you were added to ${input.companyName}. Set your password: ${input.actionUrl}`,
+      toNumber: phone,
+      body: `Hi ${input.user.displayName}, you were added to ${input.companyName}. Set your password at ${input.actionUrl} — enter your email to receive a verification code.`,
       companyId: input.companyId,
       requestedByService: 'identity',
     })
@@ -232,8 +232,9 @@ async function notifyInviteSetPassword(input: {
 export async function addCompanyCustomer(input: {
   companyId: string
   userId: string
-  companyName: string
+  companyName?: string
 }): Promise<AddCustomerResult> {
+  const companyName = await resolveCompanyName(input.companyId, input.companyName)
   const user = await findUserById(input.userId)
   if (!user) {
     throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
@@ -264,7 +265,7 @@ export async function addCompanyCustomer(input: {
   const warnings = created
     ? await notifyWelcome({
         companyId: input.companyId,
-        companyName: input.companyName,
+        companyName,
         user: {
           email: user.email,
           displayName: user.display_name,
@@ -276,7 +277,7 @@ export async function addCompanyCustomer(input: {
   if (created) {
     void notifyCompanyAdminsInApp({
       companyId: input.companyId,
-      companyName: input.companyName,
+      companyName,
       customerUserId: user.id,
       customerDisplayName: user.display_name,
     })
@@ -287,15 +288,19 @@ export async function addCompanyCustomer(input: {
 
 export async function createCompanyCustomer(input: {
   companyId: string
-  companyName: string
+  companyName?: string
   firstName: string
   lastName: string
   email?: string | null
-  phoneNumber: string
+  phoneNumber?: string | null
 }): Promise<AddCustomerResult> {
+  const companyName = await resolveCompanyName(input.companyId, input.companyName)
   const firstName = input.firstName.trim()
   const lastName = input.lastName.trim()
-  const phoneNumber = input.phoneNumber.trim()
+  const phoneNumber =
+    typeof input.phoneNumber === 'string' && input.phoneNumber.trim()
+      ? input.phoneNumber.trim()
+      : null
   const email =
     typeof input.email === 'string' && input.email.trim()
       ? input.email.trim().toLowerCase()
@@ -304,7 +309,10 @@ export async function createCompanyCustomer(input: {
   if (!firstName || !lastName) {
     throw new AuthError('First name and last name are required', 400, 'VALIDATION_ERROR')
   }
-  if (!E164_PHONE.test(phoneNumber)) {
+  if (!email && !phoneNumber) {
+    throw new AuthError('Email or phone number is required', 400, 'VALIDATION_ERROR')
+  }
+  if (phoneNumber && !E164_PHONE.test(phoneNumber)) {
     throw new AuthError('Phone number must be E.164 format', 400, 'VALIDATION_ERROR')
   }
 
@@ -315,9 +323,11 @@ export async function createCompanyCustomer(input: {
     }
   }
 
-  const existingPhone = await findUserByPhoneNumber(phoneNumber)
-  if (existingPhone) {
-    throw new AuthError('Phone number is already registered', 409, 'PHONE_EXISTS')
+  if (phoneNumber) {
+    const existingPhone = await findUserByPhoneNumber(phoneNumber)
+    if (existingPhone) {
+      throw new AuthError('Phone number is already registered', 409, 'PHONE_EXISTS')
+    }
   }
 
   const userId = nanoid()
@@ -351,12 +361,11 @@ export async function createCompanyCustomer(input: {
     )
   })
 
-  const inviteToken = await issueInviteSetPasswordToken(userId)
-  const actionUrl = `${env.identityFrontendOrigin}/reset-password?token=${encodeURIComponent(inviteToken)}`
+  const actionUrl = `${env.webononeFrontendOrigin}/forgot-password`
 
   const warnings = await notifyInviteSetPassword({
     companyId: input.companyId,
-    companyName: input.companyName,
+    companyName,
     user: {
       email,
       displayName,
@@ -367,7 +376,7 @@ export async function createCompanyCustomer(input: {
 
   void notifyCompanyAdminsInApp({
     companyId: input.companyId,
-    companyName: input.companyName,
+    companyName,
     customerUserId: userId,
     customerDisplayName: displayName,
   })

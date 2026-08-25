@@ -24,7 +24,7 @@ function digitsOnly(raw: string, maxLength: number): string {
 }
 
 function OtpInput({
-  length = 4,
+  length = 6,
   value,
   onChange,
   disabled = false,

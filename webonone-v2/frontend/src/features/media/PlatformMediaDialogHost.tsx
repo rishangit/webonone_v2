@@ -27,6 +27,10 @@ import {
   getMediaSelectorUrl,
 } from '@/features/media/utils/mediaConfig'
 
+/** Above peer dialogs (0) and nested create (1–2) so picker/crop cover the wizard. */
+const MEDIA_DIALOG_STACK_LEVEL = 3
+const MEDIA_CROP_STACK_LEVEL = 4
+
 type ActiveMediaDialog = {
   request: PlatformMediaDialogRequestMessage
   openKey: number
@@ -141,6 +145,16 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
     [resetCrop],
   )
 
+  const closeMediaDialog = useCallback(
+    (reason = 'cancelled') => {
+      if (!activeResponderRef.current) {
+        return
+      }
+      cancelActive(reason)
+    },
+    [cancelActive],
+  )
+
   const handleCropRequest = useCallback((message: MediaCropRequestMessage) => {
     setCropContext({
       scope: message.scope,
@@ -208,15 +222,16 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
   }
 
   return (
-    <PlatformMediaDialogContext.Provider value={{ openMediaDialog }}>
+    <PlatformMediaDialogContext.Provider value={{ openMediaDialog, closeMediaDialog }}>
       {children}
       {active ? (
         <CustomDialog
           open
           onOpenChange={handleSelectorOpenChange}
-          title={active.request.title ?? t('selectMedia')}
+          title={active.request.title ?? t('media.selectMedia')}
           sizeWidth="medium"
           sizeHeight="large"
+          stackLevel={MEDIA_DIALOG_STACK_LEVEL}
           nestedDismissGuard={cropOpen || blockOuterDismiss}
           className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
           noContentPadding
@@ -266,11 +281,11 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
         <CustomDialog
           open={cropOpen}
           onOpenChange={handleCropOpenChange}
-          title={t('cropImage')}
-          description={t('cropDescription')}
+          title={t('media.cropImage')}
+          description={t('media.cropDescription')}
           sizeWidth="large"
           sizeHeight="xlarge"
-          stackLevel={1}
+          stackLevel={MEDIA_CROP_STACK_LEVEL}
           className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
           noContentPadding
           disableContentScroll
@@ -298,7 +313,7 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
                   }
                 }}
               >
-                {t('cropAndUpload')}
+                {t('media.cropAndUpload')}
               </Button>
             </>
           }

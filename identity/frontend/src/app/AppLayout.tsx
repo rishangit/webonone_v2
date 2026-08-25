@@ -138,8 +138,8 @@ function AppLayoutShellContent() {
   const returnUrl = parseProfileReturnUrl(searchParams)
   const { isRedirect } = useRedirectMode()
   const { isEmbed } = useEmbedLoginMode()
-  const isHandoffLogin =
-    location.pathname === '/login' && (isRedirect || isEmbed)
+  const isGuestAuthHandoff =
+    isGuestAuthPath(location.pathname) && (isRedirect || isEmbed)
 
   const onNavItemNavigate = useMemo(
     () =>
@@ -233,7 +233,7 @@ function AppLayoutShellContent() {
   const brand = returnUrl ? tShell('brand.webonone') : tShell('brand.identity')
   const isAuthenticated = Boolean(accessToken && user)
   const useShell =
-    isAuthenticated && isIdentityShellRoute(location.pathname) && !isHandoffLogin
+    isAuthenticated && isIdentityShellRoute(location.pathname) && !isGuestAuthHandoff
 
   const headerUser =
     accessToken && user
@@ -343,9 +343,10 @@ function AppLayoutShellContent() {
     )
   }
 
-  // Embed login iframe / logout hop / silent SSO: fill the frame with no AppHeader.
+  // Embed / OAuth guest auth: fill the frame with no AppHeader (WebOnOne owns outer chrome).
   if (
     isEmbed ||
+    isGuestAuthHandoff ||
     location.pathname === '/logout' ||
     location.pathname === '/auth/silent-sso' ||
     location.pathname === '/auth/clear-embed-session'

@@ -55,7 +55,7 @@ import {
 import {
   buildAuthResponse,
   generateAuthCode,
-  generatePasswordResetOtp,
+  generateNumericOtp,
   generatePasswordResetToken,
   generateRefreshToken,
   hashToken,
@@ -82,7 +82,7 @@ export class AuthError extends Error {
 }
 
 const OTP_MAX_ATTEMPTS = 3
-const OTP_EXPIRY_MS = 60 * 1000
+const OTP_EXPIRY_MS = 120 * 1000
 const RESET_SESSION_EXPIRY_MS = 10 * 60 * 1000
 const REGISTRATION_SESSION_EXPIRY_MS = 30 * 60 * 1000
 
@@ -196,7 +196,7 @@ export async function requestRegisterEmailOtp(email: string): Promise<void> {
     await invalidateUnusedRegistrationEmailOtps(normalizedEmail)
     await invalidateUnusedRegistrationSessions(normalizedEmail)
 
-    const otp = generatePasswordResetOtp()
+    const otp = generateNumericOtp()
     const otpHash = hashToken(otp)
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS)
 
@@ -473,7 +473,7 @@ export async function requestPasswordReset(_email: string): Promise<void> {
   await invalidateUnusedPasswordResetOtps(user.id)
   await invalidateUnusedPasswordResetTokens(user.id)
 
-  const otp = generatePasswordResetOtp()
+  const otp = generateNumericOtp()
   const otpHash = hashToken(otp)
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS)
 
@@ -604,6 +604,55 @@ export async function resetPasswordWithSession(resetSessionToken: string, newPas
   await updateUserPassword(stored.user_id, passwordHash)
   await markPasswordResetSessionUsed(stored.id)
   await invalidateUnusedPasswordResetOtps(stored.user_id)
+
+  const user = await findUserById(stored.user_id)
+  if (user?.email && !user.is_email_verified) {
+    await markUserEmailVerified(stored.user_id)
+  }
+}
+
+export interface PasswordResetPreview {
+  email: string | null
+  firstName: string
+  lastName: string
+}
+
+export async function previewPasswordReset(input: {
+  token?: string
+  resetSessionToken?: string
+}): Promise<PasswordResetPreview> {
+  let userId: string | undefined
+
+  if (input.resetSessionToken) {
+    const tokenHash = hashToken(input.resetSessionToken)
+    const stored = await findPasswordResetSessionByHash(tokenHash)
+    if (!stored || new Date(stored.expires_at) < new Date()) {
+      throw new AuthError('Invalid or expired reset session', 400, 'INVALID_RESET_SESSION')
+    }
+    userId = stored.user_id
+  } else if (input.token) {
+    const tokenHash = hashToken(input.token)
+    const stored = await findPasswordResetTokenByHash(tokenHash)
+    if (!stored || new Date(stored.expires_at) < new Date()) {
+      throw new AuthError('Invalid or expired reset token', 400, 'INVALID_RESET_TOKEN')
+    }
+    userId = stored.user_id
+  }
+
+  if (!userId) {
+    throw new AuthError('Reset token or session token is required', 400, 'INVALID_RESET_TOKEN')
+  }
+
+  const user = await findUserById(userId)
+  if (!user) {
+    throw new AuthError('User not found', 404, 'USER_NOT_FOUND')
+  }
+
+  return {
+    email: user.email,
+    firstName: user.first_name,
+    lastName: user.last_name,
+  }
 }
 
 export async function getCurrentUser(userId: string) {
@@ -635,7 +684,7 @@ export async function requestProfileEmailOtp(userId: string): Promise<void> {
 
   await invalidateUnusedProfileEmailOtps(userId)
 
-  const otp = generatePasswordResetOtp()
+  const otp = generateNumericOtp()
   const otpHash = hashToken(otp)
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS)
 

@@ -25,6 +25,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
 import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
+import type { UserProfile } from '@/shared/types/auth.types'
 import {
   PROFILE_WIZARD_TOTAL_STEPS,
   profileFormToUpdateInput,
@@ -51,11 +52,22 @@ const PROFILE_WIZARD_DIALOG_SIZE = {
 
 const PROFILE_EDIT_EMBED_PATH = '/embed/dialogs/profile/edit'
 
+function readSavedProfileUser(payload: unknown): UserProfile | null {
+  if (!payload || typeof payload !== 'object' || !('user' in payload)) {
+    return null
+  }
+  const user = (payload as { user: UserProfile }).user
+  if (!user || typeof user !== 'object' || typeof user.id !== 'string') {
+    return null
+  }
+  return user
+}
+
 export interface ProfileFormDialogProps {
   open: boolean
   initialStep?: ProfileWizardStep
   onOpenChange: (open: boolean) => void
-  onSaved: () => void
+  onSaved: (user?: UserProfile) => void
   chrome?: 'dialog' | 'embed-page'
 }
 
@@ -143,8 +155,14 @@ export function ProfileFormDialog({
     submitLabel: primaryLabelForStep(embedStep, false),
     secondaryLabel: embedStep > 1 ? tc('previous') : undefined,
     ...PROFILE_WIZARD_DIALOG_SIZE,
-    onResult: () => {
-      onSaved()
+    onResult: (payload) => {
+      const savedUser = readSavedProfileUser(payload)
+      if (savedUser) {
+        dispatch(authActions.profileUpdateSucceeded(savedUser))
+      } else {
+        dispatch(authActions.profileFetchRequested({ force: true }))
+      }
+      onSaved(savedUser ?? undefined)
       onOpenChange(false)
     },
     onCancel: () => onOpenChange(false),
@@ -194,12 +212,12 @@ export function ProfileFormDialog({
       if (nextLocale) {
         void changeAppLocale(normalizeLocale(nextLocale))
       }
-      onSaved()
+      onSaved(user ?? undefined)
       if (chrome === 'dialog') {
         onOpenChange(false)
       }
     }
-  }, [chrome, isProfileSaving, onOpenChange, onSaved, profileError, values?.locale])
+  }, [chrome, isProfileSaving, onOpenChange, onSaved, profileError, user, values?.locale])
 
   useEffect(() => {
     if (profileSaveSuccess) {

@@ -7,6 +7,7 @@ import { useEmbedThemeListener } from '@webonone/theme'
 import { useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { LoginForm } from '../components/LoginForm'
+import { EmbedAuthLink } from '../components/EmbedAuthLink'
 import { useEmbedLoginMode } from '../hooks/useEmbedLoginMode'
 import { usePromptLoginSessionClear } from '../hooks/usePromptLoginSessionClear'
 import { useRedirectMode } from '../hooks/useRedirectMode'
@@ -109,13 +110,13 @@ export function LoginPage() {
       variant="minimal"
       footer={
         <span>
-          <Link to={registerLink} className="text-primary underline-offset-4 hover:underline">
+          <EmbedAuthLink to={registerLink} className="text-primary underline-offset-4 hover:underline">
             {t('createAccount')}
-          </Link>
+          </EmbedAuthLink>
           {' · '}
-          <Link to={forgotLink} className="text-primary underline-offset-4 hover:underline">
+          <EmbedAuthLink to={forgotLink} className="text-primary underline-offset-4 hover:underline">
             {t('forgotPasswordLink')}
-          </Link>
+          </EmbedAuthLink>
         </span>
       }
     >

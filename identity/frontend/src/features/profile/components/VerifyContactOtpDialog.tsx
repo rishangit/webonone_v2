@@ -29,7 +29,8 @@ import type { UserProfile } from '@/shared/types/auth.types'
 
 export type VerifyContactChannel = 'email' | 'phone'
 
-const OTP_COUNTDOWN_SECONDS = 60
+const EMAIL_OTP_COUNTDOWN_SECONDS = 120
+const PHONE_OTP_COUNTDOWN_SECONDS = 60
 
 const DIALOG_SIZE = {
   sizeWidth: 'small' as const,
@@ -42,7 +43,8 @@ function buildChannelConfig(t: TFunction<'profile'>) {
       title: t('verify.email.title'),
       description: t('verify.email.description'),
       submitLabel: t('verify.email.submit'),
-      otpLength: 4,
+      otpLength: 6,
+      countdownSeconds: EMAIL_OTP_COUNTDOWN_SECONDS,
       embedPath: '/embed/dialogs/profile/verify-email',
       formId: 'verify-email-otp-form',
       request: () => authApi.requestProfileEmailOtp(),
@@ -53,6 +55,7 @@ function buildChannelConfig(t: TFunction<'profile'>) {
       description: t('verify.phone.description'),
       submitLabel: t('verify.phone.submit'),
       otpLength: 6,
+      countdownSeconds: PHONE_OTP_COUNTDOWN_SECONDS,
       embedPath: '/embed/dialogs/profile/verify-phone',
       formId: 'verify-phone-otp-form',
       request: () => authApi.requestProfilePhoneOtp(),
@@ -96,7 +99,7 @@ export function VerifyContactOtpDialog({
   const [locked, setLocked] = useState(false)
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const [secondsLeft, setSecondsLeft] = useState(OTP_COUNTDOWN_SECONDS)
+  const [secondsLeft, setSecondsLeft] = useState<number>(config.countdownSeconds)
   const sessionKeyRef = useRef<string | null>(null)
 
   const { isHosted } = useRequestPlatformPeerDialog({
@@ -126,7 +129,7 @@ export function VerifyContactOtpDialog({
     setError(null)
     try {
       await config.request()
-      setSecondsLeft(OTP_COUNTDOWN_SECONDS)
+      setSecondsLeft(config.countdownSeconds)
       setLocked(false)
       setAttemptsRemaining(null)
       setOtp('')
@@ -160,7 +163,7 @@ export function VerifyContactOtpDialog({
     setAttemptsRemaining(null)
     setLocked(false)
     setLoading(false)
-    setSecondsLeft(OTP_COUNTDOWN_SECONDS)
+    setSecondsLeft(config.countdownSeconds)
     void sendOtp()
   }, [open, isHosted, channel, chrome, sendOtp])
 

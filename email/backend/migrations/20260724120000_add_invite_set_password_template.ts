@@ -4,11 +4,11 @@ import { nanoid } from 'nanoid'
 const TEMPLATE = {
   slug: 'invite_set_password',
   name: 'Invite set password',
-  subject: 'Set your password for {{companyName}}',
+  subject: 'Set the password for your Account',
   requiredKeys: ['userName', 'companyName', 'actionUrl'],
   html_body: `<p>Hi {{userName}},</p>
 <p>You have been added to <strong>{{companyName}}</strong> on WebOnOne.</p>
-<p>Your account is ready. Click the link below to set your password. This link expires in 7 days.</p>
+<p>Your account is ready. Open the link below, enter your email address, and follow the steps to receive a verification code and set your password.</p>
 <p><a href="{{actionUrl}}">Set password</a></p>
 <p>If you did not expect this invitation, you can ignore this email.</p>
 {{footerHtml}}`,
@@ -16,7 +16,7 @@ const TEMPLATE = {
 
 You have been added to {{companyName}} on WebOnOne.
 
-Your account is ready. Visit the link below to set your password. This link expires in 7 days.
+Your account is ready. Open the link below, enter your email address, and follow the steps to receive a verification code and set your password.
 
 {{actionUrl}}
 

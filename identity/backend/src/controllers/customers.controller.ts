@@ -23,19 +23,27 @@ const addBodySchema = z.object({
   companyName: z.string().trim().max(200).optional().default(''),
 })
 
-const createBodySchema = z.object({
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
-  email: z.preprocess(
-    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-    z.string().trim().email().max(255).optional(),
-  ),
-  phoneNumber: z
-    .string()
-    .trim()
-    .regex(/^\+\d{7,15}$/, 'Phone number must include country code (E.164)'),
-  companyName: z.string().trim().max(200).optional().default(''),
-})
+const createBodySchema = z
+  .object({
+    firstName: z.string().trim().min(1).max(100),
+    lastName: z.string().trim().min(1).max(100),
+    email: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().email().max(255).optional(),
+    ),
+    phoneNumber: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z
+        .string()
+        .trim()
+        .regex(/^\+\d{7,15}$/, 'Phone number must include country code (E.164)')
+        .optional(),
+    ),
+    companyName: z.string().trim().max(200).optional().default(''),
+  })
+  .refine((data) => Boolean(data.email || data.phoneNumber), {
+    message: 'Email or phone number is required',
+  })
 
 async function assertCanAccessCompanyCustomers(
   user: NonNullable<AuthenticatedRequest['user']>,
@@ -95,7 +103,7 @@ export async function addCustomer(req: AuthenticatedRequest, res: Response) {
   const result = await customersService.addCompanyCustomer({
     companyId,
     userId: body.userId,
-    companyName: body.companyName || 'your company',
+    companyName: body.companyName,
   })
 
   const status = 201
@@ -112,7 +120,7 @@ export async function createCustomer(req: AuthenticatedRequest, res: Response) {
 
   const result = await customersService.createCompanyCustomer({
     companyId,
-    companyName: body.companyName || 'your company',
+    companyName: body.companyName,
     firstName: body.firstName,
     lastName: body.lastName,
     email: body.email,

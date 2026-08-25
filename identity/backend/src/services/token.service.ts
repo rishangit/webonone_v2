@@ -57,9 +57,9 @@ export function generatePasswordResetToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
-/** Four-digit OTP for password reset (1000–9999). */
-export function generatePasswordResetOtp(): string {
-  return String(crypto.randomInt(1000, 10000))
+/** Six-digit OTP for email verification and password reset (100000–999999). */
+export function generateNumericOtp(): string {
+  return String(crypto.randomInt(100000, 1000000))
 }
 
 export function generateAuthCode(): string {

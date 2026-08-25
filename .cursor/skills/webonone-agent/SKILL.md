@@ -49,7 +49,7 @@ WebOnOne owns host-level `CustomDialog` chrome for embedded peers. See [platform
 
 | Kind | Host | When |
 |------|------|------|
-| **Media** | `PlatformMediaDialogHost` | Media picker/crop (`media-dialog-*`) |
+| **Media** | `PlatformMediaDialogHost` | Media picker/crop (`media-dialog-*`). Peer-dialog bodies are forwarded by `PlatformPeerDialogHost`. |
 | **Peer forms** | `PlatformPeerDialogHost` | Email/Data/SMS (and future) CRUD forms (`peer-dialog-*`) |
 
 **Peer forms — chrome split:** host = sizes + header + footer (Cancel/`submitLabel`); iframe body = form fields only. Footer Submit → `sendPlatformPeerDialogSubmit`; peer completes via `sendPlatformPeerDialogComplete` / busy via `sendPlatformPeerDialogBusy`.

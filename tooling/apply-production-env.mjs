@@ -210,6 +210,8 @@ function main() {
         '',
         `IDENTITY_FRONTEND_ORIGIN=${originIdentity}`,
         '',
+        `WEBONONE_FRONTEND_ORIGIN=${originWebonone}`,
+        '',
         `EMAIL_VERIFICATION_EXPIRY_HOURS=${get(master, 'EMAIL_VERIFICATION_EXPIRY_HOURS') || '24'}`,
         '',
         `GOOGLE_CLIENT_ID=${googleClientId}`,

@@ -153,7 +153,9 @@
       "description": "How customers and the platform reach this company",
       "contactEmail": "Contact email",
       "contactPhone": "Contact phone",
-      "empty": "No contact details yet. Edit this section to add email and phone."
+      "contactPerson": "Contact person",
+      "contactPersonPlaceholder": "Select contact person",
+      "empty": "No contact details yet. Edit this section to add a contact person, email, and phone."
     },
     "address": {
       "title": "Address information",
@@ -178,7 +180,7 @@
       "mapAriaNoPin": "Map — no pin set",
       "failedLoadMaps": "Failed to load Google Maps",
       "mapAddress": "Map address",
-      "editHint": "Search for a place or click the map to set a pin.",
+      "editHint": "Click the map to set a pin.",
       "mapsKeyMissing": "Map location is unavailable until Google Maps is configured. You can still save postal address details."
     },
     "tags": {
@@ -252,6 +254,8 @@
       "contactEmail": "Contact email",
       "contactEmailPlaceholder": "contact@example.com",
       "contactPhone": "Contact phone",
+      "contactPerson": "Contact person",
+      "contactPersonPlaceholder": "Select contact person",
       "addressLine1": "Address line 1",
       "addressLine2": "Address line 2",
       "city": "City",

@@ -111,7 +111,6 @@ export function CreateCompanyUserForm({
       <FormField
         label={t('form.phoneNumber')}
         htmlFor="create-user-phone"
-        required
         error={fieldErrors.phoneNumber ? t(fieldErrors.phoneNumber) : undefined}
       >
         <PhoneInput

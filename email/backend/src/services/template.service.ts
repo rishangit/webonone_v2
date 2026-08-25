@@ -352,7 +352,7 @@ export async function previewTemplate(
     userName: 'Sample User',
     companyName: 'Sample Company',
     actionUrl: `${env.frontendBaseUrl}/example`,
-    otp: '1234',
+    otp: '123456',
     message: 'Sample reviewer message',
     ...payload,
   }

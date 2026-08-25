@@ -60,22 +60,23 @@
     "submit": "Done"
   },
   "createDialog": {
-    "title": "Create user",
+    "title": "Register user",
     "description": "Add someone who is not registered yet. They stay unverified until they set a password.",
-    "submit": "Create user",
-    "creating": "Creating…"
+    "submit": "Register user",
+    "creating": "Registering…"
   },
   "form": {
     "firstName": "First name",
     "lastName": "Last name",
     "email": "Email",
     "phoneNumber": "Phone number",
-    "emailPlaceholder": "Optional"
+    "emailPlaceholder": "Email or phone required"
   },
   "errors": {
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
     "emailInvalid": "Enter a valid email",
+    "emailOrPhoneRequired": "Enter an email or phone number",
     "phoneInvalid": "Enter a valid phone number with country code",
     "createFailed": "Failed to create user",
     "loadUsersFailed": "Failed to load users",

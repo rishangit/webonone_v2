@@ -19,7 +19,8 @@ type CompanyContactCardProps = {
 
 export function CompanyContactCard({ detail, canEdit, onEdit }: CompanyContactCardProps) {
   const { t } = useTranslation('settings')
-  const isEmpty = !detail.contactEmail && !detail.contactPhone
+  const isEmpty =
+    !detail.contactPerson && !detail.contactEmail && !detail.contactPhone
 
   return (
     <EditableSectionCard
@@ -31,6 +32,10 @@ export function CompanyContactCard({ detail, canEdit, onEdit }: CompanyContactCa
       {isEmpty ? (
         <p className="text-sm text-muted-foreground">{t('companyCards.contact.empty')}</p>
       ) : null}
+      <ReadOnlyField
+        label={t('companyCards.contact.contactPerson')}
+        value={detail.contactPerson?.displayName}
+      />
       <ReadOnlyField label={t('companyCards.contact.contactEmail')} value={detail.contactEmail} />
       <ReadOnlyField label={t('companyCards.contact.contactPhone')} value={detail.contactPhone} />
     </EditableSectionCard>

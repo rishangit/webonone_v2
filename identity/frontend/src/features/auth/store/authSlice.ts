@@ -205,6 +205,7 @@ export const authSlice = createSlice({
       state.error = null
       state.profileError = null
       state.profileSaveSuccess = false
+      state.resetPasswordComplete = false
       syncPersistedSession(state)
     },
   },

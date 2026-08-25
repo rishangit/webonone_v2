@@ -144,6 +144,7 @@ export function UsersPage() {
         usersActions.loadListRequested({
           page: 1,
           pageSize,
+          force: true,
           extra: { search: debouncedSearch || undefined, companyId },
         }),
       )
@@ -166,6 +167,7 @@ export function UsersPage() {
       usersActions.loadListRequested({
         page: 1,
         pageSize,
+        force: true,
         extra: { search: debouncedSearch || undefined, companyId },
       }),
     )

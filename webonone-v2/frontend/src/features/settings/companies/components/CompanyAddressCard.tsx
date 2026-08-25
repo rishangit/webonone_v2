@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
+import { formatCountryName } from '@/features/settings/companies/utils/formatCountryName'
 import { EditableSectionCard } from './EditableSectionCard'
 
 function ReadOnlyField({ label, value }: { label: string; value?: string | null }) {
@@ -40,7 +41,10 @@ export function CompanyAddressCard({ detail, canEdit, onEdit }: CompanyAddressCa
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <ReadOnlyField label={t('companyCards.address.postalCode')} value={detail.postalCode} />
-        <ReadOnlyField label={t('companyCards.address.country')} value={detail.country} />
+        <ReadOnlyField
+          label={t('companyCards.address.country')}
+          value={formatCountryName(detail.country) || detail.country}
+        />
       </div>
     </EditableSectionCard>
   )

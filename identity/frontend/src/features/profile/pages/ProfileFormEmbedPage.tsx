@@ -40,7 +40,13 @@ export function ProfileFormEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSaved={() => sendPlatformPeerDialogComplete(parentOrigin, requestId)}
+      onSaved={(savedUser) =>
+        sendPlatformPeerDialogComplete(
+          parentOrigin,
+          requestId,
+          savedUser ? { user: savedUser } : undefined,
+        )
+      }
     />
   )
 }

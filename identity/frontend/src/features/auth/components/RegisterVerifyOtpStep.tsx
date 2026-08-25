@@ -14,7 +14,7 @@ import { verifyRegisterOtpSchema, type VerifyRegisterOtpFormValues } from '../sc
 import { authApi, type AuthApiError } from '@/shared/services/authApi'
 import { saveRegistrationSessionToken } from '../utils/registrationSessionStorage'
 
-const OTP_COUNTDOWN_SECONDS = 60
+const OTP_COUNTDOWN_SECONDS = 120
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@')
@@ -119,7 +119,7 @@ export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVeri
         </Alert>
       ) : null}
       <FormField
-        label={t('fourDigitCode')}
+        label={t('sixDigitCode')}
         htmlFor="register-otp"
         required
         error={fieldErrors.otp ? t(fieldErrors.otp) : undefined}
@@ -127,7 +127,7 @@ export function RegisterVerifyOtpStep({ email, onSuccess, onBack }: RegisterVeri
       >
         <OtpInput
           id="register-otp"
-          length={4}
+          length={6}
           value={values.otp}
           disabled={disabled}
           aria-invalid={Boolean(fieldErrors.otp)}

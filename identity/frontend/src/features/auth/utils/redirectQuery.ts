@@ -39,3 +39,13 @@ export function withRedirectQuery(path: string, searchParams: URLSearchParams): 
   const separator = path.includes('?') ? '&' : '?'
   return `${path}${separator}${query}`
 }
+
+/** After password reset, force a fresh sign-in and clear any stale embed/parent session. */
+export function withPromptLoginRedirectQuery(path: string, searchParams: URLSearchParams): string {
+  const withRedirect = withRedirectQuery(path, searchParams)
+  if (withRedirect.includes('prompt=login')) {
+    return withRedirect
+  }
+  const separator = withRedirect.includes('?') ? '&' : '?'
+  return `${withRedirect}${separator}prompt=login`
+}

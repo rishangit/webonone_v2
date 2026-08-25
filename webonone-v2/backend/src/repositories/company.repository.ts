@@ -26,6 +26,7 @@ export type CompanyRow = {
   country: string | null
   contact_email: string | null
   contact_phone: string | null
+  contact_person_user_id: string | null
   latitude: string | number | null
   longitude: string | number | null
   map_place_id: string | null
@@ -58,6 +59,7 @@ export type CompanyProfilePatch = {
   country?: string | null
   contact_email?: string | null
   contact_phone?: string | null
+  contact_person_user_id?: string | null
   latitude?: number | null
   longitude?: number | null
   map_place_id?: string | null

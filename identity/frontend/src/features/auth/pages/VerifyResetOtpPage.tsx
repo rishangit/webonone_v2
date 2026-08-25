@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
@@ -13,12 +13,14 @@ import {
   Spinner,
 } from '@webonone/ui-kit'
 import { verifyResetOtpSchema, type VerifyResetOtpFormValues } from '../schemas/authSchemas'
+import { EmbedAuthLink } from '../components/EmbedAuthLink'
+import { useEmbedAuthNavigate } from '../hooks/useEmbedAuthNavigate'
 import { authApi, type AuthApiError } from '@/shared/services/authApi'
 import { saveResetSessionToken } from '../utils/resetSessionStorage'
 import { clearResetEmail, loadResetEmail } from '../utils/resetEmailStorage'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
-const OTP_COUNTDOWN_SECONDS = 60
+const OTP_COUNTDOWN_SECONDS = 120
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@')
@@ -29,7 +31,7 @@ function maskEmail(email: string): string {
 
 export function VerifyResetOtpPage() {
   const { t } = useTranslation('auth')
-  const navigate = useNavigate()
+  const { navigateAuth } = useEmbedAuthNavigate()
   const [searchParams] = useSearchParams()
   const emailFromQuery = searchParams.get('email') ?? ''
   const email = (loadResetEmail() ?? decodeURIComponent(emailFromQuery)).trim().toLowerCase()
@@ -46,9 +48,9 @@ export function VerifyResetOtpPage() {
 
   useEffect(() => {
     if (!email) {
-      navigate(forgotLink, { replace: true })
+      navigateAuth(forgotLink, { replace: true })
     }
-  }, [email, forgotLink, navigate])
+  }, [email, forgotLink, navigateAuth])
 
   useEffect(() => {
     if (secondsLeft <= 0) return
@@ -79,7 +81,7 @@ export function VerifyResetOtpPage() {
       const result = await authApi.verifyResetOtp({ email, otp: parsed.data.otp })
       saveResetSessionToken(result.resetSessionToken)
       clearResetEmail()
-      navigate(resetPath, {
+      navigateAuth(resetPath, {
         replace: true,
         state: { resetSessionToken: result.resetSessionToken },
       })
@@ -113,9 +115,9 @@ export function VerifyResetOtpPage() {
       description={t('codeSentTo', { email: maskEmail(email) })}
       variant="minimal"
       footer={
-        <Link to={forgotLink} className="text-primary underline-offset-4 hover:underline">
+        <EmbedAuthLink to={forgotLink} className="text-primary underline-offset-4 hover:underline">
           {t('requestNewCode')}
-        </Link>
+        </EmbedAuthLink>
       }
     >
       <Form onSubmit={handleSubmit}>
@@ -138,14 +140,14 @@ export function VerifyResetOtpPage() {
           <Alert>
             <AlertDescription>
               {t('codeExpired')}{' '}
-              <Link to={forgotLink} className="underline">
+              <EmbedAuthLink to={forgotLink} className="underline">
                 {t('requestNewCode')}
-              </Link>
+              </EmbedAuthLink>
             </AlertDescription>
           </Alert>
         ) : null}
         <FormField
-          label={t('fourDigitCode')}
+          label={t('sixDigitCode')}
           htmlFor="otp"
           required
           error={fieldErrors.otp ? t(fieldErrors.otp) : undefined}
@@ -153,7 +155,7 @@ export function VerifyResetOtpPage() {
         >
           <OtpInput
             id="otp"
-            length={4}
+            length={6}
             value={values.otp}
             disabled={disabled}
             aria-invalid={Boolean(fieldErrors.otp)}

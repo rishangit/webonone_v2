@@ -9,6 +9,7 @@ import {
 import {
   buildPlatformEmbedUrl,
   isAllowedPlatformPeerDialogPath,
+  isPlatformMediaDialogRequestMessage,
   isPlatformPeerDialogBusyMessage,
   isPlatformPeerDialogCancelMessage,
   isPlatformPeerDialogCompleteMessage,
@@ -16,10 +17,13 @@ import {
   isPlatformReadyMessage,
   PLATFORM_EMBED_QUERY,
   sendPlatformInit,
+  sendPlatformMediaDialogCancel,
+  sendPlatformMediaDialogResult,
   sendPlatformPeerDialogNestedCancel,
   sendPlatformPeerDialogNestedResult,
   sendPlatformPeerDialogSecondary,
   sendPlatformPeerDialogSubmit,
+  type PlatformMediaDialogRequestMessage,
   type PlatformPeerDialogNestedRequestMessage,
   type PlatformPeerDialogRequestMessage,
   type PlatformPeerDialogResponder,
@@ -39,7 +43,10 @@ import {
 } from '@webonone/ui-kit'
 import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { authActions } from '@/features/auth/store/authSlice'
+import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
+import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
 import { PlatformPeerDialogContext } from '@/features/shell/PlatformPeerDialogContext'
 
 type ActivePeerDialog = {
@@ -76,10 +83,13 @@ function iframeHeightClass(sizeHeight: string, sizeWidth: string): string {
 
 export function PlatformPeerDialogProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation('shell')
+  const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const { openMediaDialog, closeMediaDialog } = usePlatformMediaDialog()
   const [active, setActive] = useState<ActivePeerDialog | null>(null)
   const [nested, setNested] = useState<NestedPeerDialog | null>(null)
   const [deepNested, setDeepNested] = useState<NestedPeerDialog | null>(null)
+  const [mediaDialogOpen, setMediaDialogOpen] = useState(false)
   const [footerBusy, setFooterBusy] = useState(false)
   const [submitLabel, setSubmitLabel] = useState<string | null>('Save')
   const [secondaryLabel, setSecondaryLabel] = useState<string | null>(null)
@@ -101,6 +111,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   const openSequenceRef = useRef(0)
   const nestedOpenRef = useRef(false)
   const deepNestedOpenRef = useRef(false)
+  const mediaDialogOpenRef = useRef(false)
   const blockOuterDismissRef = useRef(false)
   const blockNestedDismissRef = useRef(false)
   const blockTimerRef = useRef<number | null>(null)
@@ -220,7 +231,49 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     }, 150)
   }, [])
 
+  const settlePeerMediaDialog = useCallback(() => {
+    mediaDialogOpenRef.current = false
+    setMediaDialogOpen(false)
+    armOuterDismissGuard()
+    armNestedDismissGuard()
+  }, [armNestedDismissGuard, armOuterDismissGuard])
+
+  const handlePeerMediaDialogRequest = useCallback(
+    (request: PlatformMediaDialogRequestMessage, targetWindow: WindowProxy | null) => {
+      if (!targetWindow || !peerOriginNormalized) {
+        return
+      }
+
+      mediaDialogOpenRef.current = true
+      setMediaDialogOpen(true)
+      openMediaDialog(request, {
+        resolve: (items) => {
+          sendPlatformMediaDialogResult(
+            targetWindow,
+            peerOriginNormalized,
+            request.requestId,
+            items,
+          )
+          settlePeerMediaDialog()
+        },
+        cancel: (reason) => {
+          sendPlatformMediaDialogCancel(
+            targetWindow,
+            peerOriginNormalized,
+            request.requestId,
+            reason,
+          )
+          settlePeerMediaDialog()
+        },
+      })
+    },
+    [openMediaDialog, peerOriginNormalized, settlePeerMediaDialog],
+  )
+
   const clearActive = useCallback(() => {
+    closeMediaDialog('peer-closed')
+    mediaDialogOpenRef.current = false
+    setMediaDialogOpen(false)
     activeResponderRef.current = null
     setFooterBusy(false)
     setDeepNested(null)
@@ -230,7 +283,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     setNestedFooterBusy(false)
     nestedOpenRef.current = false
     setActive(null)
-  }, [])
+  }, [closeMediaDialog])
 
   const cancelActive = useCallback(
     (reason = 'cancelled') => {
@@ -432,6 +485,19 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
         return
       }
 
+      if (isPlatformMediaDialogRequestMessage(event.data)) {
+        const sourceWindow = fromOuter
+          ? iframe?.contentWindow
+          : fromNested
+            ? nestedIframe?.contentWindow
+            : deepNestedIframe?.contentWindow
+        if (!sourceWindow) {
+          return
+        }
+        handlePeerMediaDialogRequest(event.data, sourceWindow)
+        return
+      }
+
       if (fromOuter && isPlatformPeerDialogNestedRequestMessage(event.data)) {
         if (event.data.parentRequestId !== requestId) {
           return
@@ -479,6 +545,9 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
         event.data.requestId === requestId
       ) {
         resolveActive(event.data.payload)
+        if (peerOriginNormalized === new URL(getIdentityOrigin()).origin) {
+          dispatch(authActions.profileFetchRequested({ force: true }))
+        }
         return
       }
 
@@ -613,6 +682,8 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     completeDeepNestedDialog,
     completeNestedDialog,
     deepNested,
+    dispatch,
+    handlePeerMediaDialogRequest,
     iframeSrc,
     nested,
     peerOriginNormalized,
@@ -666,6 +737,8 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   function handleOpenChange(next: boolean) {
     if (!next) {
       if (
+        mediaDialogOpenRef.current ||
+        mediaDialogOpen ||
         deepNestedOpenRef.current ||
         deepNested ||
         nestedOpenRef.current ||
@@ -686,7 +759,13 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   }
 
   function handleFooterSubmit() {
-    if (nestedOpenRef.current || nested || deepNestedOpenRef.current || deepNested) {
+    if (
+      mediaDialogOpenRef.current ||
+      nestedOpenRef.current ||
+      nested ||
+      deepNestedOpenRef.current ||
+      deepNested
+    ) {
       return
     }
     const iframe = iframeRef.current
@@ -701,7 +780,13 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   }
 
   function handleFooterSecondary() {
-    if (nestedOpenRef.current || nested || deepNestedOpenRef.current || deepNested) {
+    if (
+      mediaDialogOpenRef.current ||
+      nestedOpenRef.current ||
+      nested ||
+      deepNestedOpenRef.current ||
+      deepNested
+    ) {
       return
     }
     const iframe = iframeRef.current
@@ -716,7 +801,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   }
 
   function handleNestedFooterSubmit() {
-    if (deepNestedOpenRef.current || deepNested) {
+    if (mediaDialogOpenRef.current || deepNestedOpenRef.current || deepNested) {
       return
     }
     const iframe = nestedIframeRef.current
@@ -746,6 +831,9 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   }
 
   function handleDeepNestedFooterSubmit() {
+    if (mediaDialogOpenRef.current) {
+      return
+    }
     const iframe = deepNestedIframeRef.current
     if (!deepNested || !iframe?.contentWindow) {
       return
@@ -826,13 +914,13 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           maxWidth={active.request.sizeWidth === 'auto' ? 'max-w-md' : undefined}
           noContentPadding
           disableContentScroll={active.request.sizeHeight !== 'auto'}
-          nestedDismissGuard={nestedOpen || deepNestedOpen || blockOuterDismiss}
+          nestedDismissGuard={nestedOpen || deepNestedOpen || mediaDialogOpen || blockOuterDismiss}
           footer={
             <>
               <Button
                 type="button"
                 variant="outline"
-                disabled={footerBusy || nestedOpen || deepNestedOpen}
+                disabled={footerBusy || nestedOpen || deepNestedOpen || mediaDialogOpen}
                 onClick={() => cancelActive('cancelled')}
               >
                 {cancelLabel}
@@ -841,7 +929,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={footerBusy || nestedOpen || deepNestedOpen}
+                  disabled={footerBusy || nestedOpen || deepNestedOpen || mediaDialogOpen}
                   onClick={handleFooterSecondary}
                 >
                   {secondaryLabel}
@@ -850,7 +938,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
               {submitLabel ? (
                 <Button
                   type="button"
-                  disabled={!accessToken || footerBusy || nestedOpen || deepNestedOpen}
+                  disabled={!accessToken || footerBusy || nestedOpen || deepNestedOpen || mediaDialogOpen}
                   onClick={handleFooterSubmit}
                 >
                   {submitLabel}
@@ -883,7 +971,13 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           open
           onOpenChange={(next) => {
             if (!next) {
-              if (deepNestedOpenRef.current || deepNested || blockNestedDismissRef.current || blockNestedDismiss) {
+              if (
+                mediaDialogOpenRef.current ||
+                deepNestedOpenRef.current ||
+                deepNested ||
+                blockNestedDismissRef.current ||
+                blockNestedDismiss
+              ) {
                 if (deepNestedOpenRef.current || deepNested) {
                   closeDeepNestedDialog('cancelled')
                 }
@@ -899,14 +993,14 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           noContentPadding
           disableContentScroll={nested.request.sizeHeight !== 'auto'}
           stackLevel={1}
-          nestedDismissGuard={deepNestedOpen || blockNestedDismiss}
+          nestedDismissGuard={deepNestedOpen || mediaDialogOpen || blockNestedDismiss}
           footer={
             <>
               <Button
                 type="button"
                 variant="outline"
                 className="h-10 px-4"
-                disabled={nestedFooterBusy || deepNestedOpen}
+                disabled={nestedFooterBusy || deepNestedOpen || mediaDialogOpen}
                 onClick={(event) => {
                   event.stopPropagation()
                   closeNestedDialog('cancelled')
@@ -919,7 +1013,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                   type="button"
                   variant="outline"
                   className="h-10 px-4"
-                  disabled={nestedFooterBusy || deepNestedOpen}
+                  disabled={nestedFooterBusy || deepNestedOpen || mediaDialogOpen}
                   onClick={handleNestedFooterSecondary}
                 >
                   {nestedSecondaryLabel}
@@ -929,7 +1023,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                 <Button
                   type="button"
                   className="h-10 px-4"
-                  disabled={!accessToken || nestedFooterBusy || deepNestedOpen}
+                  disabled={!accessToken || nestedFooterBusy || deepNestedOpen || mediaDialogOpen}
                   onClick={handleNestedFooterSubmit}
                 >
                   {nestedSubmitLabel}
@@ -956,6 +1050,9 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           open
           onOpenChange={(next) => {
             if (!next) {
+              if (mediaDialogOpenRef.current || mediaDialogOpen) {
+                return
+              }
               closeDeepNestedDialog('cancelled')
             }
           }}
@@ -966,13 +1063,14 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           noContentPadding
           disableContentScroll={deepNested.request.sizeHeight !== 'auto'}
           stackLevel={2}
+          nestedDismissGuard={mediaDialogOpen}
           footer={
             <>
               <Button
                 type="button"
                 variant="outline"
                 className="h-10 px-4"
-                disabled={deepNestedFooterBusy}
+                disabled={deepNestedFooterBusy || mediaDialogOpen}
                 onClick={(event) => {
                   event.stopPropagation()
                   closeDeepNestedDialog('cancelled')
@@ -985,7 +1083,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                   type="button"
                   variant="outline"
                   className="h-10 px-4"
-                  disabled={deepNestedFooterBusy}
+                  disabled={deepNestedFooterBusy || mediaDialogOpen}
                   onClick={handleDeepNestedFooterSecondary}
                 >
                   {deepNestedSecondaryLabel}
@@ -995,7 +1093,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
                 <Button
                   type="button"
                   className="h-10 px-4"
-                  disabled={!accessToken || deepNestedFooterBusy}
+                  disabled={!accessToken || deepNestedFooterBusy || mediaDialogOpen}
                   onClick={handleDeepNestedFooterSubmit}
                 >
                   {deepNestedSubmitLabel}

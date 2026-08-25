@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Mail } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -17,13 +17,14 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../schemas/authSchemas'
 import { authActions } from '../store'
+import { useEmbedAuthNavigate } from '../hooks/useEmbedAuthNavigate'
 import { withRedirectQuery } from '../utils/redirectQuery'
 import { saveResetEmail } from '../utils/resetEmailStorage'
 
 export function ForgotPasswordForm() {
   const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const { navigateAuth } = useEmbedAuthNavigate()
   const [searchParams] = useSearchParams()
   const { isLoading, error } = useAppSelector((s) => s.auth)
   const [values, setValues] = useState<ForgotPasswordFormValues>({ email: '' })
@@ -40,8 +41,8 @@ export function ForgotPasswordForm() {
       `/verify-reset-otp?email=${encodeURIComponent(submittedEmailRef.current)}`,
       searchParams,
     )
-    navigate(verifyPath)
-  }, [error, isLoading, navigate, searchParams])
+    navigateAuth(verifyPath)
+  }, [error, isLoading, navigateAuth, searchParams])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

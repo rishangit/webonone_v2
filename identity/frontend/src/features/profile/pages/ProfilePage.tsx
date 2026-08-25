@@ -197,6 +197,7 @@ export function ProfilePage() {
           }}
           onSaved={() => {
             setDialog(null)
+            dispatch(authActions.profileFetchRequested({ force: true }))
           }}
         />
       ) : null}

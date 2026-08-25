@@ -7,6 +7,7 @@ import { ClearSessionPage } from '@/features/auth/pages/ClearSessionPage'
 import { AuthHandoffPage } from '@/features/auth/pages/AuthHandoffPage'
 import { AuthSsoBridgePage } from '@/features/auth/pages/AuthSsoBridgePage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { IdentityAuthPage } from '@/features/auth/pages/IdentityAuthPage'
 import { useAuthStorageSync } from '@/features/auth/hooks/useAuthStorageSync'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { useAppSelector } from '@/app/store/hooks'
@@ -160,6 +161,10 @@ export function App() {
       <AuthStorageSync />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<IdentityAuthPage />} />
+        <Route path="/forgot-password" element={<IdentityAuthPage />} />
+        <Route path="/verify-reset-otp" element={<IdentityAuthPage />} />
+        <Route path="/reset-password" element={<IdentityAuthPage />} />
         <Route path="/callback" element={<AuthCallbackPage />} />
         <Route path="/auth/clear-session" element={<ClearSessionPage />} />
         <Route path="/auth/sso-bridge" element={<AuthSsoBridgePage />} />

@@ -233,6 +233,7 @@ export function ProfileMediaSelectorModal({
         title={t('media.selectPhoto')}
         sizeWidth="medium"
         sizeHeight="large"
+        stackLevel={1}
         nestedDismissGuard={cropOpen || blockOuterDismiss}
         className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
         noContentPadding
@@ -272,7 +273,7 @@ export function ProfileMediaSelectorModal({
         description={t('media.cropDescription')}
         sizeWidth="large"
         sizeHeight="xlarge"
-        stackLevel={1}
+        stackLevel={2}
         className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
         noContentPadding
         disableContentScroll

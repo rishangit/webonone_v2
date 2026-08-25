@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, AuthLayout, Button } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
+import { EmbedAuthLink } from '../components/EmbedAuthLink'
 import { RegisterEmailStep } from '../components/RegisterEmailStep'
 import { RegisterPasswordStep } from '../components/RegisterPasswordStep'
 import { RegisterProfileStep } from '../components/RegisterProfileStep'
@@ -70,9 +71,9 @@ export function RegisterPage() {
       variant="minimal"
       footer={
         registrationComplete ? null : (
-          <Link to={loginLink} className="text-primary underline-offset-4 hover:underline">
+          <EmbedAuthLink to={loginLink} className="text-primary underline-offset-4 hover:underline">
             {t('alreadyHaveAccount')}
-          </Link>
+          </EmbedAuthLink>
         )
       }
     >
@@ -82,7 +83,7 @@ export function RegisterPage() {
             <AlertDescription>{t('registrationCompleteAlert')}</AlertDescription>
           </Alert>
           <Button asChild className="w-full">
-            <Link to={loginLink}>{t('signIn')}</Link>
+            <EmbedAuthLink to={loginLink}>{t('signIn')}</EmbedAuthLink>
           </Button>
         </div>
       ) : (

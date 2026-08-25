@@ -11,6 +11,7 @@ import {
 } from './types'
 import type {
   AuthCancelMessage,
+  AuthNavigateMessage,
   AuthSuccessMessage,
   AuthSuccessUser,
   IdentitySessionClearedMessage,
@@ -669,6 +670,25 @@ export function sendAuthCancel(parentOrigin: string, embedId?: string): void {
   const message: AuthCancelMessage = {
     type: AUTH_MESSAGE_TYPES.CANCEL,
     ...(embedId !== undefined ? { embedId } : {}),
+  }
+  window.parent.postMessage(message, parentOrigin)
+}
+
+export type SendAuthNavigatePayload = {
+  pathname: string
+  search?: string
+}
+
+/** Identity auth iframe → parent: navigate guest auth route in the host SPA. */
+export function sendAuthNavigate(parentOrigin: string, payload: SendAuthNavigatePayload): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+
+  const message: AuthNavigateMessage = {
+    type: AUTH_MESSAGE_TYPES.NAVIGATE,
+    pathname: payload.pathname,
+    ...(payload.search !== undefined ? { search: payload.search } : {}),
   }
   window.parent.postMessage(message, parentOrigin)
 }

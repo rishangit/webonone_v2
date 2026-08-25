@@ -21,6 +21,7 @@ import {
   notifyCompanyPendingReview,
   notifyCompanyStatusChange,
 } from './inAppNotify.service.js'
+import { fetchUserContact } from '../clients/identityUserContactClient.js'
 
 function httpError(message: string, statusCode: number): Error & { statusCode: number } {
   const err = new Error(message) as Error & { statusCode: number }
@@ -51,6 +52,12 @@ export type CompanyCatalogCounts = {
   spaces: number
 }
 
+export type CompanyContactPerson = {
+  id: string
+  displayName: string
+  email: string | null
+}
+
 export type CompanyDetail = {
   id: string
   name: string
@@ -60,6 +67,8 @@ export type CompanyDetail = {
   galleryImages: CompanyGalleryImage[]
   contactEmail: string | null
   contactPhone: string | null
+  contactPersonUserId: string | null
+  contactPerson: CompanyContactPerson | null
   addressLine1: string | null
   addressLine2: string | null
   city: string | null
@@ -146,6 +155,7 @@ function toCompanyDetail(
   tags: CompanyTag[] = [],
   catalogCounts: CompanyCatalogCounts = { products: 0, services: 0, spaces: 0 },
   role?: 'member' | 'company_admin',
+  contactPerson: CompanyContactPerson | null = null,
 ): CompanyDetail {
   return {
     id: row.id,
@@ -156,6 +166,8 @@ function toCompanyDetail(
     galleryImages: parseGalleryImages(row.gallery_images),
     contactEmail: row.contact_email,
     contactPhone: row.contact_phone,
+    contactPersonUserId: row.contact_person_user_id,
+    contactPerson,
     addressLine1: row.address_line1,
     addressLine2: row.address_line2,
     city: row.city,
@@ -187,15 +199,29 @@ async function loadCompanyTags(companyId: string): Promise<CompanyTag[]> {
   }))
 }
 
+async function resolveContactPerson(
+  userId: string | null,
+): Promise<CompanyContactPerson | null> {
+  if (!userId) return null
+  const contact = await fetchUserContact(userId)
+  if (!contact) return null
+  return {
+    id: contact.id,
+    displayName: contact.displayName,
+    email: contact.email,
+  }
+}
+
 async function toCompanyDetailWithTags(
   row: repo.CompanyRow,
   role?: 'member' | 'company_admin',
 ): Promise<CompanyDetail> {
-  const [tags, catalogCounts] = await Promise.all([
+  const [tags, catalogCounts, contactPerson] = await Promise.all([
     loadCompanyTags(row.id),
     catalogRepo.countByCompanyForEntityKinds(row.id),
+    resolveContactPerson(row.contact_person_user_id),
   ])
-  return toCompanyDetail(row, tags, catalogCounts, role)
+  return toCompanyDetail(row, tags, catalogCounts, role, contactPerson)
 }
 
 export type CompanyWithMembership = {
@@ -366,6 +392,7 @@ export async function registerCompany(
     country: input.country?.trim() || null,
     contact_email: input.contactEmail?.trim() || null,
     contact_phone: input.contactPhone?.trim() || null,
+    contact_person_user_id: input.contactPersonUserId,
     latitude: null,
     longitude: null,
     map_place_id: null,
@@ -460,6 +487,9 @@ export async function updateCompanyProfile(
   if (input.galleryImages !== undefined) patch.gallery_images = input.galleryImages
   if (input.contactEmail !== undefined) patch.contact_email = input.contactEmail
   if (input.contactPhone !== undefined) patch.contact_phone = input.contactPhone
+  if (input.contactPersonUserId !== undefined) {
+    patch.contact_person_user_id = input.contactPersonUserId
+  }
   if (input.addressLine1 !== undefined) patch.address_line1 = input.addressLine1
   if (input.addressLine2 !== undefined) patch.address_line2 = input.addressLine2
   if (input.city !== undefined) patch.city = input.city
