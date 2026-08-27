@@ -55,7 +55,27 @@ export const PLATFORM_MESSAGE_TYPES = {
   NAVIGATE: 'webonone:platform:navigate',
   /** Shell → peer iframe: a confirmed AI write succeeded; refresh matching lists. */
   AI_MUTATION: 'webonone:platform:ai-mutation',
+  /** Peer iframe → shell: attach a Data entity to the AI assistant composer. */
+  AI_ENTITY_CONTEXT: 'webonone:platform:ai-entity-context',
 } as const
+
+export const DATA_AI_ENTITY_KINDS = [
+  'product',
+  'service',
+  'space',
+  'tag',
+  'unit',
+  'attribute',
+] as const
+
+export type DataAiEntityKind = (typeof DATA_AI_ENTITY_KINDS)[number]
+
+export type PlatformAiEntityRef = {
+  service: 'data'
+  kind: DataAiEntityKind
+  id: string
+  label: string
+}
 
 export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
   SELECT: 'webonone:identity:user-picker-select',
@@ -180,6 +200,13 @@ export type PlatformNavigateMessage = {
 export type PlatformAiMutationMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.AI_MUTATION
   toolName: string
+}
+
+/** Peer iframe → shell: attach a Data library entity to the AI assistant. */
+export type PlatformAiEntityContextMessage = {
+  type: typeof PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT
+  entity: PlatformAiEntityRef
+  openAssistant?: boolean
 }
 
 export type IdentityUserPickerUser = {
@@ -435,6 +462,7 @@ export type PlatformEmbedMessage =
   | PlatformContentReadyMessage
   | PlatformNavigateMessage
   | PlatformAiMutationMessage
+  | PlatformAiEntityContextMessage
   | AuthSuccessMessage
   | AuthCancelMessage
   | IdentityUserPickerSelectMessage
@@ -505,6 +533,37 @@ export function isPlatformAiMutationMessage(data: unknown): data is PlatformAiMu
     message.type === PLATFORM_MESSAGE_TYPES.AI_MUTATION &&
     typeof message.toolName === 'string' &&
     message.toolName.length > 0
+  )
+}
+
+function isPlatformAiEntityRef(data: unknown): data is PlatformAiEntityRef {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+  const entity = data as Record<string, unknown>
+  return (
+    entity.service === 'data' &&
+    typeof entity.kind === 'string' &&
+    DATA_AI_ENTITY_KINDS.includes(entity.kind as DataAiEntityKind) &&
+    typeof entity.id === 'string' &&
+    entity.id.length >= 8 &&
+    entity.id.length <= 32 &&
+    typeof entity.label === 'string' &&
+    entity.label.trim().length > 0
+  )
+}
+
+export function isPlatformAiEntityContextMessage(
+  data: unknown,
+): data is PlatformAiEntityContextMessage {
+  if (!data || typeof data !== 'object' || !('type' in data)) {
+    return false
+  }
+  const message = data as PlatformAiEntityContextMessage
+  return (
+    message.type === PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT &&
+    isPlatformAiEntityRef(message.entity) &&
+    (message.openAssistant === undefined || typeof message.openAssistant === 'boolean')
   )
 }
 

@@ -18,6 +18,7 @@ import {
   startOfLocalDay,
   startOfWeek,
 } from './fullCalendarUtils'
+import { formatPickerDate, formatPickerDateTime } from '../lib/displayDateFormat'
 
 export type FullCalendarView = 'day' | 'week' | 'month'
 
@@ -276,7 +277,7 @@ function TimelineColumn({
               }}
               aria-label={
                 interactiveSlots
-                  ? `Slot ${range.start.toLocaleString()}`
+                  ? `Slot ${formatPickerDateTime(range.start)}`
                   : undefined
               }
             />
@@ -315,11 +316,7 @@ function DayView({
           isToday(day) && 'bg-accent',
         )}
       >
-        {day.toLocaleDateString(undefined, {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-        })}
+        {formatPickerDate(day)}
       </div>
       <TimelineColumn
         day={day}

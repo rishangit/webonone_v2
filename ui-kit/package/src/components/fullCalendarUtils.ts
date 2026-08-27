@@ -51,26 +51,20 @@ export function shiftAnchor(anchor: Date, view: FullCalendarView, delta: number)
   return addMonths(anchor, delta)
 }
 
-export function formatPeriodLabel(anchor: Date, view: FullCalendarView): string {
+import { formatPickerDate } from '../lib/displayDateFormat'
+
+export function formatPeriodLabel(anchor: Date, view: FullCalendarView, locale = 'en-US'): string {
   if (view === 'day') {
-    return anchor.toLocaleDateString(undefined, {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
+    return formatPickerDate(anchor, locale)
   }
   if (view === 'week') {
     const start = startOfWeek(anchor)
     const end = addDays(start, 6)
-    const startLabel = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    const endLabel = end.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
+    const startLabel = start.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+    const endLabel = formatPickerDate(end, locale)
     return `${startLabel} – ${endLabel}`
   }
-  return anchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  return anchor.toLocaleDateString(locale, { month: 'short', year: 'numeric' })
 }
 
 /** Exclusive-end overlap with [rangeStart, rangeEnd). */

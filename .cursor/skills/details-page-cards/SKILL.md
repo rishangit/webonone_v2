@@ -37,6 +37,7 @@ Collection lists that lead to this page must wire **row body click → detail ro
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` | Section surface (view + edit content only) |
 | `Form`, `FormField` | One page `Form` wrapping the card grid in edit mode |
 | `ImagePreview` | Logos / avatars — `src={null}` shows first-upload empty state ([image-preview.mdc](../../rules/image-preview.mdc)) |
+| Date values | [date-display skill](../date-display/SKILL.md) — **`Oct 10, 2026`** in read-only fields |
 | `Edit3` (lucide) | Edit icon in `actions` |
 
 `CardTitle` → `className="text-lg"`.

@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ComponentProps, type Dispatch, type ReactNode, type SetStateAction } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MessageCircle } from 'lucide-react'
 import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, cn, useToast } from '@webonone/ui-kit'
-import { clearIdentityEmbedSession } from '@webonone/platform-embed'
+import { clearIdentityEmbedSession, isPlatformAiEntityContextMessage } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
   buildClearFirstLogoutUrl,
@@ -41,6 +41,8 @@ import {
 import { PlatformMediaDialogProvider } from '@/features/media/PlatformMediaDialogHost'
 import { PlatformPeerDialogProvider } from '@/features/shell/PlatformPeerDialogHost'
 import { AppAssistant } from '@/features/ai/components/AppAssistant'
+import { AiEntityPasteProvider, useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
+import { getDataOrigin } from '@/features/data/utils/dataConfig'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 import {
   PlatformLoadingProvider,
@@ -257,6 +259,110 @@ function AppLayoutContent() {
   const embedMain = isPlatformPeerEmbedPath(location.pathname, activeRole)
   const listPageMode = useAppSelector((s) => s.systemTheme.preferences?.listPageMode ?? 'pagination')
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const openAssistant = useCallback(() => setAssistantOpen(true), [])
+
+  return (
+    <AiEntityPasteProvider onOpenAssistant={openAssistant}>
+      <AppLayoutShell
+        assistantOpen={assistantOpen}
+        setAssistantOpen={setAssistantOpen}
+        overlayLabel={overlayLabel}
+        embedMain={embedMain}
+        listPageMode={listPageMode}
+        nav={nav}
+        location={location}
+        headerUser={headerUser}
+        sidebarSession={sidebarSession}
+        handleProfileClick={handleProfileClick}
+        handleLogout={handleLogout}
+        currentLocale={currentLocale}
+        handleLocaleChange={handleLocaleChange}
+        headerLabels={headerLabels}
+        onNavItemNavigate={onNavItemNavigate}
+        headerNotice={headerNotice}
+        accessToken={accessToken}
+        tShell={tShell}
+      />
+    </AiEntityPasteProvider>
+  )
+}
+
+type AppLayoutShellProps = {
+  assistantOpen: boolean
+  setAssistantOpen: Dispatch<SetStateAction<boolean>>
+  overlayLabel: string | null
+  embedMain: boolean
+  listPageMode: 'pagination' | 'on-scroll'
+  nav: ComponentProps<typeof AppShell>['nav']
+  location: ReturnType<typeof useLocation>
+  headerUser: {
+    displayName: string
+    avatarUrl?: string | null
+    email: string
+    role?: string
+  } | null
+  sidebarSession: {
+    title: string
+    role: string
+    imageUrl: string | null
+  } | null
+  handleProfileClick: () => void
+  handleLogout: () => void
+  currentLocale: AppLocale
+  handleLocaleChange: (locale: AppLocale) => void
+  headerLabels: {
+    language: string
+    english: string
+    sinhala: string
+    profile: string
+    logout: string
+  }
+  onNavItemNavigate: ReturnType<typeof createNavItemNavigate>
+  headerNotice: ReactNode
+  accessToken: string | null
+  tShell: (key: string) => string
+}
+
+function AppLayoutShell({
+  assistantOpen,
+  setAssistantOpen,
+  overlayLabel,
+  embedMain,
+  listPageMode,
+  nav,
+  location,
+  headerUser,
+  sidebarSession,
+  handleProfileClick,
+  handleLogout,
+  currentLocale,
+  handleLocaleChange,
+  headerLabels,
+  onNavItemNavigate,
+  headerNotice,
+  accessToken,
+  tShell,
+}: AppLayoutShellProps) {
+  const { requestEntityPaste } = useAiEntityPaste()
+
+  useEffect(() => {
+    const dataOrigin = getDataOrigin().replace(/\/$/, '')
+    function onMessage(event: MessageEvent) {
+      if (event.origin.replace(/\/$/, '') !== dataOrigin) {
+        return
+      }
+      if (!isPlatformAiEntityContextMessage(event.data)) {
+        return
+      }
+      if (event.data.openAssistant === false) {
+        requestEntityPaste(event.data.entity)
+        return
+      }
+      requestEntityPaste(event.data.entity)
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [requestEntityPaste])
 
   return (
     <ThemeProviderBridge>
@@ -269,7 +375,7 @@ function AppLayoutContent() {
           logo={<BrandLogo>{tShell('brand')}</BrandLogo>}
           user={headerUser}
           sidebarSession={sidebarSession}
-          onProfileClick={user ? handleProfileClick : undefined}
+          onProfileClick={headerUser ? handleProfileClick : undefined}
           onLogout={handleLogout}
           locale={currentLocale}
           onLocaleChange={handleLocaleChange}

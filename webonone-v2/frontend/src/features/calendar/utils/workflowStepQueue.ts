@@ -12,13 +12,33 @@ export function isWorkflowStepCompleted(
   return progress.currentIndex > index
 }
 
-export function tokensAtWorkflowStep(tokens: SessionToken[], itemId: string): SessionToken[] {
+export function tokensAtWorkflowStep(
+  tokens: SessionToken[],
+  itemId: string,
+  options?: {
+    itemKind?: 'check_in' | 'space'
+    checkedInUserIds?: Set<string>
+  },
+): SessionToken[] {
   return tokens
-    .filter(
-      (token) =>
-        !token.workflowProgress?.done &&
-        token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === itemId,
-    )
+    .filter((token) => {
+      if (token.workflowProgress?.done) return false
+      const progress = token.workflowProgress
+      if (!progress) return false
+
+      if (options?.itemKind === 'check_in') {
+        const checkInStep = progress.steps.find(
+          (step) => step.id === itemId && step.kind === 'check_in',
+        )
+        if (!checkInStep) return false
+        if (options.checkedInUserIds?.has(token.userId)) return true
+        if (progress.currentIndex < 0) return true
+        return progress.steps[progress.currentIndex]?.id === itemId
+      }
+
+      if (progress.currentIndex < 0) return false
+      return progress.steps[progress.currentIndex]?.id === itemId
+    })
     .slice()
     .sort((a, b) => a.tokenNumber - b.tokenNumber)
 }
@@ -28,6 +48,7 @@ export function computeWorkflowStepQueue(
   item: ServiceWorkflowItem,
   items: ServiceWorkflowItem[],
   focusedTokenId?: string | null,
+  checkedInUserIds?: Set<string>,
 ): {
   prevTokenLabel: string | null
   currentTokenLabel: string | null
@@ -35,7 +56,10 @@ export function computeWorkflowStepQueue(
   currentTokenId: string | null
   previousTokenId: string | null
 } {
-  const atStep = tokensAtWorkflowStep(tokens, item.id)
+  const atStep = tokensAtWorkflowStep(tokens, item.id, {
+    itemKind: item.kind,
+    checkedInUserIds,
+  })
   const focusedIndex = focusedTokenId
     ? atStep.findIndex((token) => token.id === focusedTokenId)
     : 0
@@ -50,6 +74,7 @@ export function computeWorkflowStepQueue(
       if (nextItem) {
         return (
           !token.workflowProgress?.done &&
+          token.workflowProgress!.currentIndex >= 0 &&
           token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === nextItem.id
         )
       }

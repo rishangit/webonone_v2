@@ -26,6 +26,15 @@ export const companyCatalogApi = {
     )
   },
 
+  /** Discover preview list (Find Companies dialog, before connect). */
+  listForDiscover(companyId: string, kind: CatalogEntityKind, query?: { q?: string }) {
+    const q = query?.q?.trim()
+    const qs = q ? `?q=${encodeURIComponent(q)}` : ''
+    return apiClient<{ items: CompanyCatalogItem[] }>(
+      `/company/discover/${encodeURIComponent(companyId)}/catalog/${kind}${qs}`,
+    )
+  },
+
   get(kind: CatalogEntityKind, id: string) {
     return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}`)
   },

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -19,6 +20,7 @@ import {
   type FormSubmissionDetail,
   type SessionTokenHistoryDetail,
 } from '@/features/staff/services/staffHistoryApi'
+import { formatCalendarYmd, formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -27,23 +29,6 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-foreground">{value}</p>
     </div>
   )
-}
-
-function formatWhen(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString()
-  } catch {
-    return iso
-  }
-}
-
-function formatOccurrenceDate(ymd: string): string {
-  const date = new Date(`${ymd}T12:00:00`)
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
 }
 
 function formatAnswer(value: unknown): string {
@@ -55,14 +40,20 @@ function formatAnswer(value: unknown): string {
   return text || '—'
 }
 
-function FilledFormCard({ submission }: { submission: FormSubmissionDetail }) {
+function FilledFormCard({
+  submission,
+  language,
+}: {
+  submission: FormSubmissionDetail
+  language: string
+}) {
   const answerEntries = Object.entries(submission.answers ?? {})
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">{submission.formName}</CardTitle>
         <CardDescription>
-          For {submission.subjectDisplayName} · {formatWhen(submission.createdAt)}
+          For {submission.subjectDisplayName} · {formatLocaleDateTime(submission.createdAt, language)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -81,6 +72,7 @@ function FilledFormCard({ submission }: { submission: FormSubmissionDetail }) {
 export function StaffHistoryTokenDetailPage() {
   const { staffId, tokenId } = useParams<{ staffId: string; tokenId: string }>()
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
   const [detail, setDetail] = useState<SessionTokenHistoryDetail | null>(null)
   const [submissions, setSubmissions] = useState<FormSubmissionDetail[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -139,7 +131,7 @@ export function StaffHistoryTokenDetailPage() {
   return (
     <FeaturePage
       title={detail.serviceName}
-      description={`Token ${detail.tokenLabel} · ${formatOccurrenceDate(detail.occurrenceDate)}`}
+      description={`Token ${detail.tokenLabel} · ${formatCalendarYmd(detail.occurrenceDate, i18n.language)}`}
       onBack={backToStaff}
       backLabel="Back"
     >
@@ -152,7 +144,7 @@ export function StaffHistoryTokenDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <DetailField label="Service" value={detail.serviceName} />
-              <DetailField label="Date" value={formatOccurrenceDate(detail.occurrenceDate)} />
+              <DetailField label="Date" value={formatCalendarYmd(detail.occurrenceDate, i18n.language)} />
               <DetailField label="Time" value={`${detail.startTime}–${detail.endTime}`} />
               <DetailField label="Token" value={detail.tokenLabel} />
               {detail.workflowProgress ? (
@@ -178,7 +170,9 @@ export function StaffHistoryTokenDetailPage() {
               </CardContent>
             </Card>
           ) : (
-            submissions.map((sub) => <FilledFormCard key={sub.id} submission={sub} />)
+            submissions.map((sub) => (
+              <FilledFormCard key={sub.id} submission={sub} language={i18n.language} />
+            ))
           )}
         </div>
 

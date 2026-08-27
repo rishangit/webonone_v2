@@ -122,7 +122,10 @@ export function buildWorkflowProgress(
     return { steps, currentIndex: steps.length - 1, done: true }
   }
   const checkInIndex = defs.findIndex((def) => def.kind === 'check_in')
-  if (checkInIndex >= 0 && (!options?.checkedIn || !options?.sessionStarted)) {
+  if (checkInIndex >= 0 && !options?.checkedIn) {
+    return { steps, currentIndex: -1, done: false }
+  }
+  if (checkInIndex >= 0 && !options?.sessionStarted) {
     return { steps, currentIndex: checkInIndex, done: false }
   }
   const idx = defs.findIndex((def) => def.id === token.current_workflow_item_id)

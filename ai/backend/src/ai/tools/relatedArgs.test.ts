@@ -8,6 +8,8 @@ import {
   materializeRelatedTree,
   parseRelatedNameHint,
   publicConfirmRecord,
+  relatedHintName,
+  refreshRelatedTree,
   relatedCreateArgs,
   resolveRelatedForArgs,
   schemaPropertyArgs,
@@ -45,6 +47,15 @@ describe('related confirm display', () => {
     assert.equal(parseRelatedNameHint('6Ne4z-tQPBxZuMhHB-yCD'), null)
   })
 
+  it('extracts a tag name from a description prefix when name is omitted', () => {
+    assert.equal(
+      relatedHintName({
+        description: 'Dental Care - General healthcare services for maintaining oral hygiene and health.',
+      }),
+      'Dental Care',
+    )
+  })
+
   it('hides ids and nested ids on confirm records', () => {
     assert.deepEqual(
       publicConfirmRecord({
@@ -59,6 +70,18 @@ describe('related confirm display', () => {
 
   it('replaces unit_id with nested unit properties', () => {
     const display = displayCreateArguments(
+      {
+        jsonSchema: {
+          properties: {
+            name: { type: 'string', title: 'Name' },
+            status: { type: 'string', title: 'Status' },
+            unit_id: { type: 'string' },
+            value_type: { type: 'string', title: 'Value type' },
+            description: { type: 'string', title: 'Description' },
+          },
+          required: ['name', 'description'],
+        },
+      },
       {
         name: 'Dosage Amount',
         status: 'pending',
@@ -75,6 +98,7 @@ describe('related confirm display', () => {
     )
     assert.equal(display.unit_id, undefined)
     assert.deepEqual(display.unit, {
+      id: '6Ne4z-tQPBxZuMhHB-yCD',
       name: 'Milligram',
       symbol: 'mg',
       description: 'One thousandth of a gram.',
@@ -260,5 +284,88 @@ describe('related confirm display', () => {
     )
     assert.equal(created.length, 0)
     assert.equal(result.arguments.unit_id, undefined)
+  })
+
+  it('refreshes stale related nodes to existing records before materialize', async () => {
+    const staleTree = [
+      {
+        path: 'tags/0',
+        displayKey: 'tags',
+        exists: false,
+        selected: true,
+        record: { name: 'PreventiveCare' },
+        createTool: 'create_data_tag',
+        createArgs: {
+          name: 'PreventiveCare',
+          description: 'Preventive Care - Suggested related record.',
+          status: 'pending',
+          color: '#3366FF',
+        },
+      },
+    ]
+    const refreshed = await refreshRelatedTree(
+      {
+        relatedArgs: [
+          {
+            argKey: 'tag_ids',
+            displayKey: 'tags',
+            cardinality: 'many',
+            getPath: '/api/v1/tags/:id',
+            listPath: '/api/v1/tags',
+            createTool: 'create_data_tag',
+          },
+        ],
+      },
+      staleTree,
+      async (_spec, query) =>
+        query.name?.toLowerCase() === 'preventivecare'
+          ? {
+              id: 'tag000000000000000001',
+              name: 'PreventiveCare',
+              description: 'Preventive Care',
+              status: 'pending',
+            }
+          : null,
+    )
+    assert.equal(refreshed[0]?.exists, true)
+    assert.equal(refreshed[0]?.recordId, 'tag000000000000000001')
+    assert.equal(refreshed[0]?.createTool, undefined)
+
+    const created: string[] = []
+    const result = await materializeRelatedTree(
+      {
+        relatedArgs: [
+          {
+            argKey: 'tag_ids',
+            displayKey: 'tags',
+            cardinality: 'many',
+            getPath: '/api/v1/tags/:id',
+            listPath: '/api/v1/tags',
+            createTool: 'create_data_tag',
+          },
+        ],
+      },
+      { name: 'Fluoride Varnish', tags: [{ name: 'PreventiveCare' }] },
+      refreshed,
+      {
+        getTool: () => undefined,
+        createdIds: new Map(),
+        lookup: async (_spec, query) =>
+          query.name?.toLowerCase() === 'preventivecare'
+            ? { id: 'tag000000000000000001', name: 'PreventiveCare' }
+            : null,
+        execute: async (call) => {
+          created.push(call.name)
+          return {
+            toolCallId: 'x',
+            name: call.name,
+            ok: false,
+            output: { code: 'DUPLICATE_NAME', message: 'Name already exists', status: 409 },
+          } satisfies ToolResult
+        },
+      },
+    )
+    assert.equal(created.length, 0)
+    assert.deepEqual(result.arguments.tag_ids, ['tag000000000000000001'])
   })
 })

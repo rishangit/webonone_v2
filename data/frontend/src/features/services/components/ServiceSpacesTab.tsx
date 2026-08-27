@@ -11,6 +11,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ItemListStatus,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import {
@@ -141,13 +142,15 @@ export function ServiceSpacesTab({ serviceId, canEdit }: ServiceSpacesTabProps) 
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate font-medium">{space.name}</p>
-                    <StatusBadge status={space.status} />
                   </div>
                   {space.description ? (
                     <p className="truncate text-sm text-muted-foreground">{space.description}</p>
                   ) : null}
                 </button>
               </ItemListContent>
+              <ItemListStatus>
+                <StatusBadge status={space.status} />
+              </ItemListStatus>
               {canEdit ? (
                 <ItemListMenu ariaLabel={t('actionsFor', { name: space.name })}>
                   <DropdownMenuItem

@@ -1,3 +1,4 @@
+import type { ConfirmDisplayField } from './confirmDisplay.js'
 import type { RelatedNode, ToolCall, ToolDefinition } from './registry.js'
 
 export type PendingWrite = {
@@ -7,6 +8,7 @@ export type PendingWrite = {
     riskLevel: string
     arguments: Record<string, unknown>
     displayArguments?: Record<string, unknown>
+    displayFields?: ConfirmDisplayField[]
     relatedTree?: RelatedNode[]
     summary: string
   }

@@ -32,6 +32,8 @@ interface CompaniesState {
   myCompaniesFetchedAt: number | null
   adminListFetchedAt: number | null
   updatingId: string | null
+  connectCompanyStatus: 'idle' | 'connecting' | 'error'
+  connectCompanyError: string | null
 }
 
 const initialState: CompaniesState = {
@@ -51,6 +53,8 @@ const initialState: CompaniesState = {
   myCompaniesFetchedAt: null,
   adminListFetchedAt: null,
   updatingId: null,
+  connectCompanyStatus: 'idle',
+  connectCompanyError: null,
 }
 
 const companiesSlice = createSlice({
@@ -201,6 +205,26 @@ const companiesSlice = createSlice({
       state.detailStatus = 'idle'
       state.detailError = null
     },
+    connectCompanyRequested(state, _action: PayloadAction<{ companyId: string }>) {
+      state.connectCompanyStatus = 'connecting'
+      state.connectCompanyError = null
+    },
+    connectCompanySucceeded(state, action: PayloadAction<MyCompanySummary>) {
+      const summary = action.payload
+      const withoutDuplicate = state.myCompanies.filter((item) => item.id !== summary.id)
+      state.myCompanies = [summary, ...withoutDuplicate]
+      state.myCompaniesFetchedAt = Date.now()
+      state.connectCompanyStatus = 'idle'
+      state.connectCompanyError = null
+    },
+    connectCompanyFailed(state, action: PayloadAction<string>) {
+      state.connectCompanyStatus = 'error'
+      state.connectCompanyError = action.payload
+    },
+    resetConnectCompanyState(state) {
+      state.connectCompanyStatus = 'idle'
+      state.connectCompanyError = null
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(authActions.logout, () => initialState)
@@ -322,6 +346,17 @@ const updateCompanyDetailEpic: CompaniesEpic = (action$) =>
     ),
   )
 
+const connectCompanyEpic: CompaniesEpic = (action$) =>
+  action$.pipe(
+    ofType(companiesActions.connectCompanyRequested.type),
+    exhaustMap((action: ReturnType<typeof companiesActions.connectCompanyRequested>) =>
+      from(companyApi.connectCompany(action.payload.companyId)).pipe(
+        map((summary) => companiesActions.connectCompanySucceeded(summary)),
+        catchError((err: Error) => of(companiesActions.connectCompanyFailed(err.message))),
+      ),
+    ),
+  )
+
 export const companiesEpics = combineEpics(
   loadMyCompanyEpic,
   loadMyCompaniesEpic,
@@ -330,4 +365,5 @@ export const companiesEpics = combineEpics(
   updateCompanyStatusEpic,
   loadCompanyDetailEpic,
   updateCompanyDetailEpic,
+  connectCompanyEpic,
 )

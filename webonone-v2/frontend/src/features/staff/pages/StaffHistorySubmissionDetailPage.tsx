@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -15,6 +16,7 @@ import {
   getFormSubmissionDetail,
   type FormSubmissionDetail,
 } from '@/features/staff/services/staffHistoryApi'
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -37,6 +39,7 @@ function formatAnswer(value: unknown): string {
 export function StaffHistorySubmissionDetailPage() {
   const { staffId, submissionId } = useParams<{ staffId: string; submissionId: string }>()
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
   const [detail, setDetail] = useState<FormSubmissionDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -132,7 +135,7 @@ export function StaffHistorySubmissionDetailPage() {
               <DetailField label="Service" value={detail.serviceName ?? '—'} />
               <DetailField
                 label="Submitted"
-                value={new Date(detail.createdAt).toLocaleString()}
+                value={formatLocaleDateTime(detail.createdAt, i18n.language)}
               />
             </CardContent>
           </Card>

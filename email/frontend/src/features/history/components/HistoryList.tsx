@@ -8,14 +8,10 @@ import {
   ItemListMenu,
 } from '@webonone/ui-kit'
 import type { HistoryItem } from '@/shared/types/email.types'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface HistoryListProps {
   items: HistoryItem[]
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString()
 }
 
 export function HistoryList({ items }: HistoryListProps) {
@@ -41,7 +37,7 @@ export function HistoryList({ items }: HistoryListProps) {
             <p className="font-medium">{item.recipient}</p>
             <p className="text-xs text-muted-foreground">
               {item.templateSlug} · {statusLabel(item.status)} ·{' '}
-              {formatDate(item.sentAt)}
+              {item.sentAt ? formatDisplayDateTime(item.sentAt) : '—'}
             </p>
             {item.errorMessage ? (
               <p className="mt-1 text-xs text-destructive line-clamp-2">{item.errorMessage}</p>

@@ -7,10 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@webonone/ui-kit'
+import { StatusBadge } from '@/shared/components/StatusBadge'
 
 interface EditableSectionCardProps {
   title: string
   description?: string
+  /** Data API status — renders Verified/Unverified in the card header top-right */
+  status?: string
   canEdit?: boolean
   onEdit?: () => void
   children: React.ReactNode
@@ -19,6 +22,7 @@ interface EditableSectionCardProps {
 export function EditableSectionCard({
   title,
   description,
+  status,
   canEdit = false,
   onEdit,
   children,
@@ -31,18 +35,21 @@ export function EditableSectionCard({
             <CardTitle className="text-lg">{title}</CardTitle>
             {description ? <CardDescription>{description}</CardDescription> : null}
           </div>
-          {canEdit && onEdit ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-              onClick={onEdit}
-              aria-label={`Edit ${title}`}
-            >
-              <Edit3 className="h-4 w-4" aria-hidden />
-            </Button>
-          ) : null}
+          <div className="flex shrink-0 items-start gap-2">
+            {status ? <StatusBadge status={status} /> : null}
+            {canEdit && onEdit ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                onClick={onEdit}
+                aria-label={`Edit ${title}`}
+              >
+                <Edit3 className="h-4 w-4" aria-hidden />
+              </Button>
+            ) : null}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>

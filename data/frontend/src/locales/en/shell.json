@@ -9,5 +9,8 @@
   "signInTitle": "Sign in to Data",
   "signInDescription": "You will be redirected to Identity to sign in securely.",
   "continueToSignIn": "Continue to sign in",
-  "signingIn": "Signing in…"
+  "signingIn": "Signing in…",
+  "copyToAi": "Copy to AI",
+  "copyToAiSuccess": "Added to AI assistant",
+  "copyToAiUnavailable": "Open Data from WebOnOne to use AI"
 }

@@ -22,6 +22,7 @@ import {
   dataLibraryApi,
   type LibraryProductVariantStock,
 } from '@/features/company-catalog/services/dataLibraryApi'
+import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 type CompanyProductVariantStocksCardProps = {
   /** Data library product id */
@@ -37,18 +38,12 @@ function formatMoney(value: number): string {
   })
 }
 
-function formatDate(value: string): string {
-  const date = new Date(`${value}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString()
-}
-
 export function CompanyProductVariantStocksCard({
   libraryProductId,
   variantId,
   canEdit,
 }: CompanyProductVariantStocksCardProps) {
-  const { t } = useTranslation('catalog')
+  const { t, i18n } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
   const [items, setItems] = useState<LibraryProductVariantStock[]>([])
@@ -139,9 +134,9 @@ export function CompanyProductVariantStocksCard({
                       })}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
-                      {t('stocks.purchased', { date: formatDate(stock.purchaseDate) })}
+                      {t('stocks.purchased', { date: formatCalendarYmd(stock.purchaseDate, i18n.language) })}
                       {stock.expiredDate
-                        ? ` · ${t('stocks.expires', { date: formatDate(stock.expiredDate) })}`
+                        ? ` · ${t('stocks.expires', { date: formatCalendarYmd(stock.expiredDate, i18n.language) })}`
                         : ''}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">

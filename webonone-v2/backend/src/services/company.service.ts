@@ -369,6 +369,122 @@ export async function listMyCompanies(userId: string): Promise<MyCompanySummary[
   return [...byId.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
+export type DiscoverCompanySummary = {
+  id: string
+  name: string
+  logoUrl: string | null
+  description: string | null
+  city: string | null
+  country: string | null
+  contactEmail: string | null
+}
+
+export type DiscoverCompaniesResult = {
+  items: DiscoverCompanySummary[]
+  total: number
+  page: number
+  pageSize: number
+  hasMore: boolean
+}
+
+function toDiscoverCompanySummary(row: repo.CompanyRow): DiscoverCompanySummary {
+  return {
+    id: row.id,
+    name: row.name,
+    logoUrl: rewriteOptionalMediaFileUrl(row.logo_url),
+    description: row.description,
+    city: row.city,
+    country: row.country,
+    contactEmail: row.contact_email,
+  }
+}
+
+/** Approved company with no existing Identity role — discover search/detail/catalog preview. */
+export async function assertDiscoverableCompany(
+  userId: string,
+  companyId: string,
+): Promise<repo.CompanyRow> {
+  const company = await repo.findCompanyById(companyId)
+  if (!company || company.status !== 'approved') {
+    throw httpError('Company not found', 404)
+  }
+
+  const existing = await roleRepo.findCompanyRole(userId, companyId)
+  if (existing) {
+    throw httpError('Company not found', 404)
+  }
+
+  return company
+}
+
+export async function getDiscoverableCompanyDetail(
+  userId: string,
+  companyId: string,
+): Promise<CompanyDetail> {
+  const company = await assertDiscoverableCompany(userId, companyId)
+  return toCompanyDetailWithTags(company, 'member')
+}
+
+export async function searchDiscoverableCompanies(
+  userId: string,
+  input: { q?: string; page: number; pageSize: number },
+): Promise<DiscoverCompaniesResult> {
+  const roles = await roleRepo.findCompanyRolesByUserId(userId)
+  const excludeCompanyIds = [
+    ...new Set(
+      roles
+        .map((row) => row.company_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0),
+    ),
+  ]
+
+  const { items, total } = await repo.searchApprovedCompanies({
+    q: input.q,
+    page: input.page,
+    pageSize: input.pageSize,
+    excludeCompanyIds,
+  })
+
+  return {
+    items: items.map(toDiscoverCompanySummary),
+    total,
+    page: input.page,
+    pageSize: input.pageSize,
+    hasMore: input.page * input.pageSize < total,
+  }
+}
+
+export async function connectToCompany(
+  userId: string,
+  companyId: string,
+): Promise<MyCompanySummary> {
+  const company = await repo.findCompanyById(companyId)
+  if (!company || company.status !== 'approved') {
+    throw httpError('Company not found', 404)
+  }
+
+  const existing = await roleRepo.findCompanyRole(userId, companyId)
+  if (existing) {
+    if (existing.role === 'company_admin') {
+      throw httpError('You already own this company', 409)
+    }
+    throw httpError('Already connected to this company', 409)
+  }
+
+  await roleRepo.ensureCompanyMemberRole(userId, companyId, nanoid())
+
+  return {
+    id: company.id,
+    name: company.name,
+    logoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
+    status: company.status,
+    role: 'member',
+    dataEntities: parseDataEntities(company.data_entities),
+    createdAt: company.created_at.toISOString(),
+    approvedAt: company.approved_at ? company.approved_at.toISOString() : null,
+  }
+}
+
 export async function registerCompany(
   userId: string,
   input: RegisterCompanyBody,

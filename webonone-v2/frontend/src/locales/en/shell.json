@@ -109,7 +109,9 @@
     "cancelChange": "Cancel",
     "pendingChange": "Confirm each new item to apply it.",
     "itemAdded": "{{name}} added",
-    "itemCanceled": "{{name}} canceled"
+    "itemCanceled": "{{name}} canceled",
+    "mentionLoading": "Searching Data library…",
+    "mentionEmpty": "No matching items"
   },
   "notifications": {
     "open": "Notifications",

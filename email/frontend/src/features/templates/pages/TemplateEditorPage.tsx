@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import {
   Alert,
   AlertDescription,
@@ -112,7 +113,7 @@ export function TemplateEditorPage() {
                     <ItemListContent>
                       <p className="font-medium">v{version.versionNumber}</p>
                       <p className="text-xs text-muted-foreground">
-                        {version.subject} · {new Date(version.createdAt).toLocaleString()}
+                        {version.subject} · {formatDisplayDateTime(version.createdAt)}
                       </p>
                     </ItemListContent>
                     <ItemListMenu ariaLabel={t('versions.actionsFor', { number: version.versionNumber })}>

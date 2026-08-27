@@ -196,23 +196,27 @@ export {
   ItemListItem,
   ItemListContent,
   ItemListMenu,
+  ItemListStatus,
   ItemListEmpty,
   itemListClassName,
   itemListRowClassName,
   itemListRowActiveClassName,
   itemListMenuClassName,
+  itemListStatusClassName,
 } from './components/ItemList'
 export type { ItemListMenuProps } from './components/ItemList'
 export { ConfirmItemList } from './components/ConfirmItemList'
 export type {
+  ConfirmDisplayField,
+  ConfirmItemDecision,
   ConfirmItemListProps,
   ConfirmListItem,
   ConfirmItemStatus,
   ConfirmRelatedNode,
 } from './components/ConfirmItemList'
 export { BrandLogo } from './components/BrandLogo'
-export { AppHeader } from './components/AppHeader'
-export type { AppHeaderProps, AppHeaderUser, AppHeaderLocale } from './components/AppHeader'
+export { AppHeader, HeaderLocaleMenu } from './components/AppHeader'
+export type { AppHeaderProps, AppHeaderUser, AppHeaderLocale, HeaderLocaleMenuProps } from './components/AppHeader'
 export { NavItem } from './components/nav/NavItem'
 export type { NavItemProps } from './components/nav/NavItem'
 export { NavGroup } from './components/nav/NavGroup'

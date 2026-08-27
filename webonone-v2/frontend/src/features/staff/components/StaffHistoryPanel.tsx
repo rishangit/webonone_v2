@@ -111,7 +111,7 @@ export function StaffHistoryPanel({ userId }: StaffHistoryPanelProps) {
     <ItemList>
       {items.map((item) => {
         const when = item.kind === 'form_submission' ? item.createdAt : item.occurredAt
-        const whenLabel = formatLocaleDateTime(when, undefined, i18n.language)
+        const whenLabel = formatLocaleDateTime(when, i18n.language)
         const clickable =
           item.kind === 'form_submission' ||
           (item.kind === 'company_activity' && item.type === 'session_token')

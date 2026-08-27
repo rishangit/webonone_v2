@@ -10,20 +10,16 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { TagFormDialog } from '@/features/tags/components/TagFormDialog'
+import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { tagsActions } from '@/features/tags/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
-import { StatusBadge } from '@/shared/components/StatusBadge'
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -63,6 +59,7 @@ export function TagDetailsPage() {
       description={t('details')}
       onBack={() => goToList('tags')}
       backLabel={t('common:back')}
+      actions={tag ? <CopyToAiButton kind="tag" id={tag.id} label={tag.name} /> : undefined}
     >
       {detailError ? (
         <Alert variant="destructive">
@@ -76,18 +73,11 @@ export function TagDetailsPage() {
             <EditableSectionCard
               title="Tag"
               description="Name, color, status, and description"
+              status={tag.status}
               canEdit={canEdit}
               onEdit={() => setEditOpen(true)}
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className="inline-block h-4 w-4 rounded-full border"
-                  style={{ backgroundColor: tag.color }}
-                  aria-hidden
-                />
-                <h2 className="text-xl font-semibold">{tag.name}</h2>
-                <StatusBadge status={tag.status} />
-              </div>
+              <TagChip name={tag.name} color={tag.color} className="text-xl font-semibold" />
               <ReadOnlyField
                 label="Description"
                 value={tag.description?.trim() ? tag.description : '—'}
@@ -97,7 +87,7 @@ export function TagDetailsPage() {
                 value={
                   <span className="inline-flex items-center gap-2">
                     <span
-                      className="inline-block h-3 w-3 rounded-full border"
+                      className="inline-block h-3 w-3 shrink-0 rounded-full"
                       style={{ backgroundColor: tag.color }}
                       aria-hidden
                     />
@@ -115,8 +105,8 @@ export function TagDetailsPage() {
                 <CardDescription>Record timestamps and references</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label="Created" value={formatTimestamp(tag.createdAt)} />
-                <ReadOnlyField label="Updated" value={formatTimestamp(tag.updatedAt)} />
+                <ReadOnlyField label="Created" value={formatDisplayDateTime(tag.createdAt)} />
+                <ReadOnlyField label="Updated" value={formatDisplayDateTime(tag.updatedAt)} />
                 <ReadOnlyField
                   label="References"
                   value={String(tag.referenceCount ?? 0)}

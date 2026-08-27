@@ -39,6 +39,7 @@ See [microservice-architecture.mdc](microservice-architecture.mdc) for productio
 | Details / profile sections | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` in 3-col stacks | [details-page-cards.mdc](details-page-cards.mdc) |
 | Forms | `Form`, `FormField`, `Input`, `mapZodIssuesToFieldErrors` | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Date fields | `DatePicker` (prefer `withIcon`) inside `FormField` | [form-creation skill](../skills/form-creation/SKILL.md) |
+| Date display (read-only) | Shared `formatLocaleDate` + `DISPLAY_DATE_OPTIONS` → `Oct 10, 2026` | [date-display-format.mdc](date-display-format.mdc) · [date-display skill](../skills/date-display/SKILL.md) |
 | Text search / query filter | **`SearchInput`** (search icon + clear) — list headers, dialogs, pickers, embed bodies | [list-filter-panel.mdc](list-filter-panel.mdc) · this rule |
 | Lists | `ItemList`, `ItemListMenu`, `DropdownMenuItem` | [item-list skill](../skills/item-list/SKILL.md) |
 | Modals | `CustomDialog`, `AlertDialog` | [dialog-windows.mdc](dialog-windows.mdc) |

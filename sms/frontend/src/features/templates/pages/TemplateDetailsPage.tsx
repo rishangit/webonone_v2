@@ -21,12 +21,7 @@ import { TemplateFormDialog } from '@/features/templates/components/TemplateForm
 import type { TemplateEditorFormValues } from '@/features/templates/schemas/templateSchemas'
 import { templatesActions } from '@/features/templates/store'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function formatScope(
   scope: string,
@@ -182,7 +177,7 @@ export function TemplateDetailsPage() {
                   label={t('scope')}
                   value={formatScope(template.scope, t, template.isDefault)}
                 />
-                <ReadOnlyField label={t('updated')} value={formatTimestamp(template.updatedAt)} />
+                <ReadOnlyField label={t('updated')} value={formatDisplayDateTime(template.updatedAt)} />
               </CardContent>
             </Card>
 

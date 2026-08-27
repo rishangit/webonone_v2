@@ -34,13 +34,13 @@ export function ThemeMetaCard({ theme, isActive }: ThemeMetaCardProps) {
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t('created')}
           </p>
-          <p className="text-sm">{formatLocaleDateTime(theme.createdAt, undefined, i18n.language)}</p>
+          <p className="text-sm">{formatLocaleDateTime(theme.createdAt, i18n.language)}</p>
         </div>
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t('updated')}
           </p>
-          <p className="text-sm">{formatLocaleDateTime(theme.updatedAt, undefined, i18n.language)}</p>
+          <p className="text-sm">{formatLocaleDateTime(theme.updatedAt, i18n.language)}</p>
         </div>
       </CardContent>
     </Card>

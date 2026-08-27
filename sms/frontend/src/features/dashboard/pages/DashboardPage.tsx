@@ -17,6 +17,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { dashboardActions } from '@/features/dashboard/store'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function StatCard({ title, value }: { title: string; value: number | string }) {
   return (
@@ -87,7 +88,7 @@ export function DashboardPage() {
                       <p className="text-xs text-muted-foreground">
                         {item.templateSlug ?? tq('freeform')} ·{' '}
                         {item.status === 'sent' ? t('statusSent') : t('statusFailed')}
-                        {item.createdAt ? ` · ${new Date(item.createdAt).toLocaleString()}` : ''}
+                        {item.createdAt ? ` · ${formatDisplayDateTime(item.createdAt)}` : ''}
                       </p>
                     </ItemListContent>
                   </ItemListItem>

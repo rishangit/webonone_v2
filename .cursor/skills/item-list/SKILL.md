@@ -30,10 +30,12 @@ Import from `@webonone/ui-kit`:
 | `ItemList` | `<ul>` with `gap-2` between rows and **`py-4`** vertical padding |
 | `ItemListItem` | Single row — `glass-card item-list-row`, `px-3 py-2`, themed shadow on hover |
 | `ItemListContent` | Main label/metadata (`flex-1`, truncates) |
+| `ItemListStatus` | Trailing status/verification chip at **top-right**, before `ItemListMenu` |
 | `ItemListMenu` | Vertical 3-dot trigger (`MoreVertical`) at **top-right** of row |
 | `ItemListEmpty` | Empty list copy — centered `py-4 text-center text-muted-foreground`; pass message as children |
 | `itemListRowActiveClassName` | Active/selected row — `border-primary` (border only, no fill) |
 | `itemListMenuClassName` | Menu trigger — `shrink-0 self-start` (pins to top-right; row uses `items-start`) |
+| `itemListStatusClassName` | Status chip slot — `shrink-0 self-start` (same top-right pin as menu) |
 | `DropdownMenuItem`, `DropdownMenuSeparator`, … | Menu entries inside `ItemListMenu` |
 
 **Do not** hand-roll row padding, gap, glass, or hover classes. Use `ItemListItem` (or `itemListRowClassName` only when composing a custom layout inside a row).
@@ -114,9 +116,10 @@ When the entity has a details / profile route ([details-page-cards skill](../det
 
 1. **Guard** — `const rows = Array.isArray(items) ? items : []`; early return with `ItemListEmpty` when `rows.length === 0`.
 2. **Structure** — `ItemList` → map → `ItemListItem` per entity.
-3. **Content** — `ItemListContent` for title, subtitle, badges, thumbnails (left side). Entity logos/avatars use **`ImagePreview`** (`src={item.logoUrl}`; `src={null}` shows the kit first-upload icon — never a custom “No logo” tile). Size list thumbs with `className="h-10 w-10 rounded-md"`. See [image-preview.mdc](../../rules/image-preview.mdc).
+3. **Content** — `ItemListContent` for title, subtitle, badges, thumbnails (left side). Entity logos/avatars use **`ImagePreview`** (`src={item.logoUrl}`; `src={null}` shows the kit first-upload icon — never a custom “No logo” tile). Size list thumbs with `className="h-10 w-10 rounded-md"`. See [image-preview.mdc](../../rules/image-preview.mdc). **Dates in subtitles** → [date-display skill](../date-display/SKILL.md) (`Oct 10, 2026`).
 4. **Detail open** — if a details/profile route exists, wrap row content in a `<button>` that navigates (or calls `onOpen`). See **Detail page navigation**.
-5. **Menu** — `ItemListMenu` as the **last** child of `ItemListItem` (renders top-right via `items-start` on the row + `self-start` on the trigger). Menu items call parent handlers.
+5. **Status** — verification/status chips in `ItemListStatus` as the **last child before** `ItemListMenu` (top-right, left of the 3-dot trigger).
+6. **Menu** — `ItemListMenu` as the **last** child of `ItemListItem` (renders top-right via `items-start` on the row + `self-start` on the trigger). Menu items call parent handlers.
 6. **Destructive** — `DropdownMenuItem className="text-destructive focus:text-destructive"`.
 7. **Selection** — highlight active row with `itemListRowActiveClassName` (`border-primary`) on `ItemListItem`. **Never** add `bg-accent`, `bg-primary`, `bg-background`, or palette fills on top of the glass row. In **selection / picker dialogs**, also show Lucide `Check` on the right of every selected row — [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) (canonical: `TagPickerPanel`).
 
@@ -161,10 +164,12 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Selection / picker dialogs: selected rows also show Lucide `Check` on the right ([selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc))
 - [ ] Empty state via **`ItemListEmpty`** with explicit copy as children
 - [ ] Page/section fetch loading via **`usePlatformLoading('Loading …')`** — not inline text or per-page `LoadingState overlay`
+- [ ] Verification/status chips in `ItemListStatus` before `ItemListMenu` — top-right of row
 - [ ] `ItemListMenu` is last child of `ItemListItem` — 3-dot trigger at top-right
 - [ ] Destructive action last in menu with destructive styling
 - [ ] Per-row `ariaLabel` on `ItemListMenu`
 - [ ] `@/` imports in service frontends ([code-cleanliness.mdc](../../rules/code-cleanliness.mdc))
+- [ ] Date subtitles use [date-display skill](../date-display/SKILL.md) (`Oct 10, 2026`)
 - [ ] Paginated collections use `ListPageFooter` below the list — default `pageSize` **12**, options `[12, 24, 48]` ([item-list-pagination.mdc](../../rules/item-list-pagination.mdc))
 - [ ] Paginated pages wrap list + footer in `ListPageBody`; list in `flex-1`; `ListPageFooter` has `className="mt-auto"`
 - [ ] Filterable collections use `ListFilterTrigger` + `ListFilterPanel` ([list-filter-panel.mdc](../../rules/list-filter-panel.mdc))
@@ -184,6 +189,7 @@ Cross-link only — do not duplicate:
 - [loading-empty-states.mdc](../../rules/loading-empty-states.mdc) — unified platform overlay; `usePlatformLoading`; button `Spinner`
 - [details-page-cards skill](../details-page-cards/SKILL.md) — when row click opens a details/profile page
 - [form-creation skill](../form-creation/SKILL.md) — when the list is inside a form (orthogonal)
+- [date-display skill](../date-display/SKILL.md) — date subtitles and metadata
 - [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) — picker/selection dialogs: Check icon on selected rows
 
 ## Examples

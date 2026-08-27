@@ -1,4 +1,4 @@
-import { completeCreateArgs, missingRequiredArgs } from './createDefaults.js'
+import { completeCreateArgs, missingConditionalArgs, missingRequiredArgs } from './createDefaults.js'
 import { formatRecordLines } from './formatRecord.js'
 import type { AiRequestContext } from '../requestContext.js'
 import {
@@ -8,10 +8,15 @@ import {
   toQueryString,
 } from './invokePath.js'
 import {
+  applyRelatedArgumentOverrides,
   applyRelatedSelections,
+  argsHaveRelatedHints,
   buildRelatedTree,
+  ensureWritableCatalogUpdateArgs,
+  hasWritableUpdatePayload,
   looksLikeRecordId,
   materializeRelatedTree,
+  refreshRelatedTree,
   schemaPropertyArgs,
 } from './relatedArgs.js'
 import {
@@ -70,6 +75,73 @@ function canUseTool(tool: ToolDefinition, ctx: ExecutorContext): boolean {
   return tool.requiredPermissions.every((permission) => allowed.has(permission))
 }
 
+const CATALOG_UPDATE_GET_TOOL: Record<string, string> = {
+  update_data_product: 'get_data_product',
+  update_data_service: 'get_data_service',
+  update_data_space: 'get_data_space',
+}
+
+function isCatalogUpdateTool(name: string): boolean {
+  return name in CATALOG_UPDATE_GET_TOOL
+}
+
+function idFromRelationItem(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim()
+  }
+  if (!isRecord(value)) {
+    return null
+  }
+  if (typeof value.id === 'string' && value.id.trim()) {
+    return value.id.trim()
+  }
+  if (typeof value.attribute_id === 'string' && value.attribute_id.trim()) {
+    return value.attribute_id.trim()
+  }
+  if (typeof value.tag_id === 'string' && value.tag_id.trim()) {
+    return value.tag_id.trim()
+  }
+  return null
+}
+
+function mergeTagIds(existing: unknown[], incoming: unknown): string[] {
+  const ids = new Set<string>()
+  for (const item of existing) {
+    const id = idFromRelationItem(item)
+    if (id) {
+      ids.add(id)
+    }
+  }
+  if (Array.isArray(incoming)) {
+    for (const item of incoming) {
+      const id = idFromRelationItem(item)
+      if (id) {
+        ids.add(id)
+      }
+    }
+  }
+  return [...ids]
+}
+
+function mergeAttributeLinks(existing: unknown[], incoming: unknown): Array<{ attribute_id: string }> {
+  const ids = new Set<string>()
+  for (const item of existing) {
+    const id = idFromRelationItem(item)
+    if (id) {
+      ids.add(id)
+    }
+  }
+  if (Array.isArray(incoming)) {
+    for (const item of incoming) {
+      const id = idFromRelationItem(item)
+      if (id) {
+        ids.add(id)
+      }
+    }
+  }
+  return [...ids].map((attribute_id) => ({ attribute_id }))
+}
+
 export class HttpToolExecutor implements ToolExecutor {
   constructor(
     private readonly options: {
@@ -87,6 +159,9 @@ export class HttpToolExecutor implements ToolExecutor {
       confirmed?: boolean
       relatedTree?: RelatedNode[]
       relatedSelections?: Record<string, boolean>
+      argumentOverrides?: Record<string, unknown>
+      relatedArgumentOverrides?: Record<string, Record<string, unknown>>
+      skipRelated?: boolean
     },
   ): Promise<ToolResult> {
     const tool = this.options.registry.get(call.name)
@@ -100,30 +175,46 @@ export class HttpToolExecutor implements ToolExecutor {
       return { toolCallId: call.id, name: call.name, ok: false, output: { code: 'INVOKE_NOT_ALLOWED' } }
     }
 
-    const rawArgs = call.arguments && typeof call.arguments === 'object' ? call.arguments : {}
-    let args = completeCreateArgs(tool, rawArgs, ctx.role)
+    const mergedRaw = {
+      ...(call.arguments && typeof call.arguments === 'object' ? call.arguments : {}),
+      ...(options?.argumentOverrides ?? {}),
+    }
+    let args = completeCreateArgs(tool, mergedRaw, ctx.role)
     const shouldResolveRelated =
-      Boolean(options?.confirmed && tool.relatedArgs && tool.relatedArgs.length > 0) &&
-      (options?.relatedTree === undefined || options.relatedTree.length > 0)
+      Boolean(options?.confirmed && tool.relatedArgs && tool.relatedArgs.length > 0 && !options?.skipRelated)
     if (shouldResolveRelated && tool.relatedArgs) {
       const lookup = (spec: RelatedArg, query: { id?: string; name?: string }) =>
         this.lookupRelatedRecord(tool, spec, ctx, query)
-      const tree =
-        options?.relatedTree ??
-        (await buildRelatedTree(tool, args, {
+      let tree = options?.relatedTree
+      if (!tree || tree.length === 0) {
+        if (argsHaveRelatedHints(tool, args)) {
+          tree = await buildRelatedTree(tool, args, {
+            getTool: (name) => this.options.registry.get(name),
+            lookup,
+            role: ctx.role,
+          })
+        } else {
+          tree = []
+        }
+      } else {
+        tree = await refreshRelatedTree(tool, tree, lookup, {
           getTool: (name) => this.options.registry.get(name),
-          lookup,
           role: ctx.role,
-        }))
-      const selected = applyRelatedSelections(tree, options?.relatedSelections)
+        })
+      }
+      const selected = applyRelatedSelections(
+        applyRelatedArgumentOverrides(tree, options?.relatedArgumentOverrides),
+        options?.relatedSelections,
+      )
       const materialized = await materializeRelatedTree(tool, args, selected, {
         getTool: (name) => this.options.registry.get(name),
         createdIds: new Map(),
+        lookup,
         execute: (nested) =>
           this.execute(
             { id: `${call.id}:${nested.name}`, name: nested.name, arguments: nested.arguments },
             ctx,
-            { confirmed: true, relatedTree: [] },
+            { confirmed: true, skipRelated: true },
           ),
       })
       if (materialized.error) {
@@ -136,10 +227,17 @@ export class HttpToolExecutor implements ToolExecutor {
           delete args[spec.argKey]
         }
       }
+      args = await ensureWritableCatalogUpdateArgs(tool, args, selected, lookup)
     } else if (options?.confirmed && Object.keys(schemaPropertyArgs(tool.jsonSchema, args)).length > 0) {
       args = schemaPropertyArgs(tool.jsonSchema, args)
     }
-    const missing = missingRequiredArgs(tool.jsonSchema, args)
+    if (options?.confirmed && isCatalogUpdateTool(tool.name) && typeof args.id === 'string') {
+      args = await this.mergeCatalogUpdateRelations(tool, args, ctx)
+    }
+    const missing = [
+      ...missingRequiredArgs(tool.jsonSchema, args),
+      ...(options?.confirmed ? missingConditionalArgs(tool.jsonSchema, args) : []),
+    ]
     if (missing.length > 0) {
       return {
         toolCallId: call.id,
@@ -150,6 +248,23 @@ export class HttpToolExecutor implements ToolExecutor {
           missing,
           arguments: args,
           message: `Fill required properties in the tool arguments before calling ${tool.name}: ${missing.join(', ')}. Copy user-given names from the message; suggest remaining descriptive fields.`,
+        },
+      }
+    }
+    if (
+      (tool.invoke.method === 'PATCH' || tool.invoke.method === 'PUT') &&
+      typeof args.id === 'string' &&
+      !hasWritableUpdatePayload(args)
+    ) {
+      return {
+        toolCallId: call.id,
+        name: call.name,
+        ok: false,
+        output: {
+          code: 'MISSING_REQUIRED_ARGS',
+          missing: ['update fields'],
+          arguments: args,
+          message: `Include the fields to update on ${tool.name}, not only id. For related items put names in the related display fields (for example unit name and symbol).`,
         },
       }
     }
@@ -206,6 +321,34 @@ export class HttpToolExecutor implements ToolExecutor {
         })
         const body = await res.json().catch(() => ({}))
         if (!res.ok) {
+          const duplicateName =
+            res.status === 409 &&
+            (body.code === 'DUPLICATE_NAME' ||
+              (typeof body.message === 'string' &&
+                body.message.trim().toLowerCase() === 'name already exists'))
+          if (duplicateName && tool.argCompletion?.uniqueLookup) {
+            const uniqueBy = tool.argCompletion.uniqueBy ?? 'name'
+            const uniqueValue = args[uniqueBy]
+            if (typeof uniqueValue === 'string' && uniqueValue.trim()) {
+              const existingNames = await this.lookupExistingUniqueValues(tool, ctx, [uniqueValue])
+              if (
+                existingNames.some(
+                  (name) => name.trim().toLowerCase() === uniqueValue.trim().toLowerCase(),
+                )
+              ) {
+                return {
+                  toolCallId: call.id,
+                  name: call.name,
+                  ok: true,
+                  output: {
+                    status: 'skipped_exists',
+                    message: 'Name already exists',
+                    name: uniqueValue,
+                  },
+                }
+              }
+            }
+          }
           return {
             toolCallId: call.id,
             name: call.name,
@@ -316,6 +459,36 @@ export class HttpToolExecutor implements ToolExecutor {
         item.name.trim().toLowerCase() === name.toLowerCase(),
     )
     return match && typeof match === 'object' ? (match as Record<string, unknown>) : null
+  }
+
+  private async mergeCatalogUpdateRelations(
+    tool: ToolDefinition,
+    args: Record<string, unknown>,
+    ctx: ExecutorContext,
+  ): Promise<Record<string, unknown>> {
+    const getToolName = CATALOG_UPDATE_GET_TOOL[tool.name]
+    if (!getToolName || typeof args.id !== 'string') {
+      return args
+    }
+    const getTool = this.options.registry.get(getToolName)
+    if (!getTool) {
+      return args
+    }
+    const current = await this.peerJson(getTool, getTool.invoke.path, { id: args.id }, ctx)
+    if (!current) {
+      return args
+    }
+
+    const next = { ...args }
+    if (args.tag_ids !== undefined) {
+      const existingTags = Array.isArray(current.tags) ? current.tags : []
+      next.tag_ids = mergeTagIds(existingTags, args.tag_ids)
+    }
+    if (args.attributes !== undefined) {
+      const existingAttributes = Array.isArray(current.attributes) ? current.attributes : []
+      next.attributes = mergeAttributeLinks(existingAttributes, args.attributes)
+    }
+    return next
   }
 
   private async peerJson(

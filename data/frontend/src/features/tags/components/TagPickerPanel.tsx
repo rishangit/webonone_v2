@@ -13,6 +13,7 @@ import {
   ItemListItem,
   itemListRowActiveClassName,
   Spinner,
+  TagChip,
   cn,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -251,13 +252,8 @@ export function TagPickerPanel({
                     }
                   }}
                 >
-                  <span
-                    className="h-4 w-4 shrink-0 self-center rounded-full border border-border"
-                    style={{ backgroundColor: tag.color }}
-                    aria-hidden
-                  />
                   <ItemListContent>
-                    <p className="truncate font-medium">{tag.name}</p>
+                    <TagChip name={tag.name} color={tag.color} className="text-sm font-medium" />
                   </ItemListContent>
                   {isSelected ? (
                     <Check

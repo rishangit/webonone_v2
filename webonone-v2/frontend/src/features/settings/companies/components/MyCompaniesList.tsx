@@ -110,7 +110,7 @@ export function MyCompaniesList({
                       </div>
                       {item.createdAt ? (
                         <p className="text-xs text-muted-foreground">
-                          {formatLocaleDateTime(item.createdAt, undefined, i18n.language)}
+                          {formatLocaleDateTime(item.createdAt, i18n.language)}
                         </p>
                       ) : null}
                     </div>

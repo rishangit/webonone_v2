@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Details page cards
 
-Related: [feature-page-layout.mdc](feature-page-layout.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc), [image-preview.mdc](image-preview.mdc), [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc).
+Related: [feature-page-layout.mdc](feature-page-layout.mdc), [ui-kit-consumption.mdc](ui-kit-consumption.mdc), [image-preview.mdc](image-preview.mdc), [details-page-wizard-edit.mdc](details-page-wizard-edit.mdc), [date-display-format.mdc](date-display-format.mdc).
 
 Use this pattern for **simple multi-field** details pages with **inline** page-level Edit inside `FeaturePage` — not for paginated list pages ([item-list-pagination.mdc](item-list-pagination.mdc)).
 
@@ -35,6 +35,7 @@ FeaturePage
 | Gap | Same **`gap-6`** on outer grid and both stacks |
 | Top align | Outer `items-start`; independent column stacks |
 | Edit `Form` | Include **`space-y-0`** — `Form` defaults to `space-y-4` |
+| Read-only dates | Format as **`Oct 10, 2026`** — [date-display-format.mdc](date-display-format.mdc) · [skill](../skills/date-display/SKILL.md) |
 
 ## Page actions skeleton
 

@@ -9,6 +9,7 @@ import {
 } from '@webonone/ui-kit'
 import { useNavigateEmail } from '@/features/shell/utils/navigateEmail'
 import type { EmailTemplate } from '@/shared/types/email.types'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface TemplatesListProps {
   templates: EmailTemplate[]
@@ -20,10 +21,6 @@ interface TemplatesListProps {
 function formatScope(template: EmailTemplate, t: (k: string) => string): string {
   if (template.isDefault) return t('scopeDefault')
   return template.scope === 'platform' ? t('scopePlatform') : t('scopeCompany')
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString()
 }
 
 export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: TemplatesListProps) {
@@ -55,7 +52,7 @@ export function TemplatesList({ templates, onEdit, onToggleActive, busyId }: Tem
                     slug: template.slug,
                     scope: formatScope(template, t),
                     active: template.isActive ? t('active') : t('inactive'),
-                    date: formatDate(template.updatedAt),
+                    date: formatDisplayDateTime(template.updatedAt),
                   })}
                 </p>
               </button>

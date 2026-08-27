@@ -1,5 +1,5 @@
 import { apiClient } from '@/shared/services/apiClient'
-import type { ChatMessage, Conversation, PaginatedConversations } from '@/shared/types/ai.types'
+import type { ChatMessage, ConfirmItemDecision, Conversation, PaginatedConversations } from '@/shared/types/ai.types'
 import type { CatalogListQuery, PaginatedResult } from '@webonone/store-kit'
 
 export type AiSettingsResponse = {
@@ -42,10 +42,17 @@ export const aiApi = {
         body: JSON.stringify({ content }),
       },
     ),
-  confirmToolCall: (conversationId: string, toolCallId: string, relatedSelections?: Record<string, boolean>) =>
+  confirmToolCall: (conversationId: string, toolCallId: string, decision?: ConfirmItemDecision) =>
     apiClient<{ assistantMessage: ChatMessage }>(
       `/conversations/${conversationId}/tool-calls/${encodeURIComponent(toolCallId)}/confirm`,
-      { method: 'POST', body: JSON.stringify({ relatedSelections: relatedSelections ?? {} }) },
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          relatedSelections: decision?.relatedSelections ?? {},
+          argumentOverrides: decision?.argumentOverrides,
+          relatedArgumentOverrides: decision?.relatedArgumentOverrides,
+        }),
+      },
     ),
   rejectToolCall: (conversationId: string, toolCallId: string, remaining = false) =>
     apiClient<{ assistantMessage: ChatMessage }>(

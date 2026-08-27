@@ -116,6 +116,39 @@ export async function listAllCompanies(): Promise<CompanyRow[]> {
   return db<CompanyRow>('companies').orderBy('created_at', 'desc')
 }
 
+export async function searchApprovedCompanies(params: {
+  q?: string
+  page: number
+  pageSize: number
+  excludeCompanyIds: string[]
+}): Promise<{ items: CompanyRow[]; total: number }> {
+  const { q, page, pageSize, excludeCompanyIds } = params
+
+  function buildBaseQuery() {
+    let query = db<CompanyRow>('companies').where({ status: 'approved' })
+    if (excludeCompanyIds.length > 0) {
+      query = query.whereNotIn('id', excludeCompanyIds)
+    }
+    const trimmed = q?.trim()
+    if (trimmed) {
+      query = query.where('name', 'like', `%${trimmed}%`)
+    }
+    return query
+  }
+
+  const countRow = await buildBaseQuery()
+    .count({ count: '*' })
+    .first()
+  const total = Number((countRow as { count: number | string } | undefined)?.count ?? 0)
+
+  const items = await buildBaseQuery()
+    .orderBy('name', 'asc')
+    .offset((page - 1) * pageSize)
+    .limit(pageSize)
+
+  return { items, total }
+}
+
 export type CompanyTagRow = {
   id: number
   company_id: string

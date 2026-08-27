@@ -9,5 +9,8 @@
   "signInTitle": "දත්ත වෙත පිවිසෙන්න",
   "signInDescription": "ආරක්ෂිතව පිවිසීමට ඔබව Identity වෙත යොමු කෙරේ.",
   "continueToSignIn": "පිවිසීමට ඉදිරියට",
-  "signingIn": "පිවිසෙමින්…"
+  "signingIn": "පිවිසෙමින්…",
+  "copyToAi": "AI වෙත පිටපත් කරන්න",
+  "copyToAiSuccess": "AI සහායකයට එකතු කළා",
+  "copyToAiUnavailable": "AI භාවිතා කිරීමට WebOnOne වෙතින් Data විවෘත කරන්න"
 }

@@ -29,6 +29,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | [details-page-wizard-edit](.cursor/skills/details-page-wizard-edit/SKILL.md) | Wizard-backed details: Overview `ImageCarousel` when images exist; per-card Edit → shared wizard |
 | [feature-store](.cursor/skills/feature-store/SKILL.md) | List/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 | [toast-notifications](.cursor/skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
+| [date-display](.cursor/skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026` via shared `DISPLAY_DATE_OPTIONS` and locale-aware helpers |
 
 ## Service agents
 

@@ -60,7 +60,7 @@ export function SessionWorkflowStepPanel({
       ? t('sessionDetail.tabs.checkIn')
       : (item.space?.name ?? t('sessionDetail.tabs.step', { number: item.orderNumber }))
   const queue = showQueue
-    ? computeWorkflowStepQueue(tokens, item, items, focusedTokenId)
+    ? computeWorkflowStepQueue(tokens, item, items, focusedTokenId, checkedInUserIds)
     : null
 
   useEffect(() => {
@@ -89,17 +89,22 @@ export function SessionWorkflowStepPanel({
                   const isCheckedIn = Boolean(checkedInUserIds?.has(token.userId))
                   const atThisStep =
                     !token.workflowProgress?.done &&
-                    token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id ===
-                      item.id
+                    (item.kind === 'check_in' && !isCheckedIn
+                      ? token.workflowProgress!.currentIndex < 0 ||
+                        token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id ===
+                          item.id
+                      : token.workflowProgress!.currentIndex >= 0 &&
+                        token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id ===
+                          item.id)
                   const showCheckInAction =
-                    canComplete && item.kind === 'check_in' && atThisStep && !isCheckedIn
+                    canComplete && item.kind === 'check_in' && !isCheckedIn && atThisStep
                   const showCompleteAction =
                     canComplete && item.kind !== 'check_in' && !showQueue
                   return (
                   <ItemListItem key={token.id}>
                     <ItemListContent>
-                      <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="flex min-w-0 flex-col gap-2">
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <div className="flex min-w-0 flex-1 flex-col gap-2">
                           <div className="min-w-0">
                             <p className="truncate font-medium">{token.tokenLabel}</p>
                             <p className="truncate text-sm text-muted-foreground">
@@ -146,6 +151,25 @@ export function SessionWorkflowStepPanel({
                               })}
                             </div>
                           ) : null}
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          {checkedInUserIds ? (
+                            item.kind === 'check_in' ? (
+                              isCheckedIn ? (
+                                <StatusTag variant="verified">
+                                  {t('session.tokenStatus.checkedIn')}
+                                </StatusTag>
+                              ) : (
+                                <StatusTag variant="pending">
+                                  {t('session.tokenStatus.notCheckedIn')}
+                                </StatusTag>
+                              )
+                            ) : isWorkflowStepCompleted(token.workflowProgress, item.id) ? (
+                              <StatusTag variant="verified">
+                                {t('session.tokenStatus.stepCompleted')}
+                              </StatusTag>
+                            ) : null
+                          ) : null}
                           {showCheckInAction || showCompleteAction ? (
                             <Button
                               type="button"
@@ -161,25 +185,6 @@ export function SessionWorkflowStepPanel({
                             </Button>
                           ) : null}
                         </div>
-                        {checkedInUserIds ? (
-                          <div className="flex shrink-0 flex-col items-end gap-1">
-                        {item.kind === 'check_in' ? (
-                          isCheckedIn ? (
-                            <StatusTag variant="verified">
-                              {t('session.tokenStatus.checkedIn')}
-                            </StatusTag>
-                          ) : (
-                            <StatusTag variant="pending">
-                              {t('session.tokenStatus.notCheckedIn')}
-                            </StatusTag>
-                          )
-                        ) : isWorkflowStepCompleted(token.workflowProgress, item.id) ? (
-                          <StatusTag variant="verified">
-                            {t('session.tokenStatus.stepCompleted')}
-                          </StatusTag>
-                        ) : null}
-                          </div>
-                        ) : null}
                       </div>
                     </ItemListContent>
                   </ItemListItem>

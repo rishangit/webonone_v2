@@ -25,7 +25,7 @@ router.put(
 router.patch(
   '/attributes/:id',
   requireAuth,
-  requireSuperAdmin,
+  requireCompanyAdminOrSuperAdmin,
   validateBody(updateAttributeBodySchema),
   attributesController.updateAttribute,
 )

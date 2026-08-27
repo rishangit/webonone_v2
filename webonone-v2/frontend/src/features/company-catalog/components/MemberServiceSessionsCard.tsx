@@ -19,17 +19,9 @@ import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkf
 import { MemberIssueTokenDialog } from './MemberIssueTokenDialog'
 import { companyCatalogApi } from '../services/companyCatalogApi'
 import type { CatalogSessionItem, CatalogSessionTokenItem } from '../types/companyCatalog.types'
+import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
-
-function formatOccurrenceDate(ymd: string, locale: string): string {
-  const date = new Date(`${ymd}T12:00:00`)
-  return date.toLocaleDateString(locale === 'si' ? 'si-LK' : 'en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
 
 function weekdayLabel(ymd: string, t: (key: string) => string): string {
   const date = new Date(`${ymd}T12:00:00`)
@@ -186,7 +178,7 @@ export function MemberServiceSessionsCard({
                     <div className="flex w-full flex-col gap-2">
                       <div className="min-w-0 space-y-1">
                         <p className="truncate font-medium text-foreground">
-                          {formatOccurrenceDate(session.occurrenceDate, i18n.language)}
+                          {formatCalendarYmd(session.occurrenceDate, i18n.language)}
                         </p>
                         <p className="truncate text-xs text-muted-foreground">
                           {weekdayLabel(session.occurrenceDate, t)} · {session.startTime}–

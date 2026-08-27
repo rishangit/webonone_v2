@@ -1,3 +1,5 @@
+import type { ConfirmDisplayField } from './confirmDisplay.js'
+
 export type ToolRiskLevel = 'read' | 'write' | 'destructive'
 export type ToolAuth = 'user_jwt' | 'service_key'
 export type ToolServiceId = 'webonone' | 'data' | 'email' | 'sms' | 'payment' | 'design'
@@ -51,6 +53,7 @@ export type RelatedNode = {
   exists: boolean
   selected: boolean
   record: Record<string, unknown>
+  displayFields?: ConfirmDisplayField[]
   createTool?: string
   createArgs?: Record<string, unknown>
   recordId?: string
@@ -116,6 +119,10 @@ export interface ToolExecutor {
       confirmed?: boolean
       relatedTree?: RelatedNode[]
       relatedSelections?: Record<string, boolean>
+      argumentOverrides?: Record<string, unknown>
+      relatedArgumentOverrides?: Record<string, Record<string, unknown>>
+      /** Nested related creates only — skip resolving the parent's related tree. */
+      skipRelated?: boolean
     },
   ): Promise<ToolResult>
   lookupExistingUniqueValues?(

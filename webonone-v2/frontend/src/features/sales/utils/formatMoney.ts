@@ -1,13 +1,11 @@
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
+
 export function formatLkr(value: number, currency = 'LKR'): string {
   return `${currency} ${value.toFixed(2)}`
 }
 
-export function formatSaleWhen(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString()
-  } catch {
-    return iso
-  }
+export function formatSaleWhen(iso: string, language?: string): string {
+  return formatLocaleDateTime(iso, language)
 }
 
 export async function resolveProductUnitPrice(input: {

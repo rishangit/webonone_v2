@@ -22,6 +22,7 @@ import {
   type FormSubmissionDetail,
   type SessionTokenHistoryDetail,
 } from '@/features/users/services/userHistoryApi'
+import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -30,15 +31,6 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-foreground">{value}</p>
     </div>
   )
-}
-
-function formatOccurrenceDate(ymd: string): string {
-  const date = new Date(`${ymd}T12:00:00`)
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
 }
 
 export function HistoryTokenDetailPage() {
@@ -150,7 +142,7 @@ export function HistoryTokenDetailPage() {
   return (
     <FeaturePage
       title={detail.serviceName}
-      description={t('history.tokenDescription', { label: detail.tokenLabel, date: formatOccurrenceDate(detail.occurrenceDate) })}
+      description={t('history.tokenDescription', { label: detail.tokenLabel, date: formatCalendarYmd(detail.occurrenceDate) })}
       onBack={backToUser}
       backLabel={t('common:back')}
     >
@@ -163,7 +155,7 @@ export function HistoryTokenDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <DetailField label={t('history.service')} value={detail.serviceName} />
-              <DetailField label={t('history.date')} value={formatOccurrenceDate(detail.occurrenceDate)} />
+              <DetailField label={t('history.date')} value={formatCalendarYmd(detail.occurrenceDate)} />
               <DetailField label={t('history.time')} value={`${detail.startTime}–${detail.endTime}`} />
               <DetailField label={t('history.token')} value={detail.tokenLabel} />
               {detail.workflowProgress ? (

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { completeCreateArgs, missingRequiredArgs, pickHexColor } from './createDefaults.js'
+import { completeCreateArgs, missingConditionalArgs, missingRequiredArgs, pickHexColor } from './createDefaults.js'
 import type { ToolDefinition } from './registry.js'
 
 const palette = ['#4F46E5', '#059669'] as const
@@ -78,5 +78,52 @@ describe('completeCreateArgs', () => {
       'company_admin',
     )
     assert.equal(args.status, 'pending')
+  })
+})
+
+const createServiceSchema = {
+  type: 'object',
+  required: ['name', 'description', 'time_mode'],
+  properties: {
+    name: { type: 'string' },
+    description: { type: 'string' },
+    time_mode: { type: 'string', enum: ['duration', 'window'] },
+    duration_minutes: { type: 'integer' },
+    start_time: { type: 'string' },
+    end_time: { type: 'string' },
+  },
+  allOf: [
+    {
+      if: { properties: { time_mode: { const: 'duration' } } },
+      then: { required: ['duration_minutes'] },
+    },
+    {
+      if: { properties: { time_mode: { const: 'window' } } },
+      then: { required: ['start_time', 'end_time'] },
+    },
+  ],
+}
+
+describe('missingConditionalArgs', () => {
+  it('requires duration_minutes when time_mode is duration', () => {
+    assert.deepEqual(
+      missingConditionalArgs(createServiceSchema, {
+        name: 'Dental Checkup and Cleaning',
+        description: 'Routine dental examination and cleaning.',
+        time_mode: 'duration',
+      }),
+      ['duration_minutes'],
+    )
+  })
+
+  it('requires window times when time_mode is window', () => {
+    assert.deepEqual(
+      missingConditionalArgs(createServiceSchema, {
+        name: 'Morning Clinic',
+        description: 'Morning clinic window.',
+        time_mode: 'window',
+      }),
+      ['start_time', 'end_time'],
+    )
   })
 })

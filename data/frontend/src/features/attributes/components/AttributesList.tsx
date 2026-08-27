@@ -9,8 +9,10 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ItemListStatus,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { CopyToAiMenuItem } from '@/features/shell/components/CopyToAiMenuItem'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { Attribute } from '@/shared/types/data.types'
@@ -50,11 +52,13 @@ export function AttributesList({
             <>
               <div className="flex items-center gap-2">
                 <p className="font-medium">{item.name}</p>
-                <StatusBadge status={item.status} />
                 <span className="text-xs text-muted-foreground">
                   {t('refs', { count: item.referenceCount ?? 0 })}
                 </span>
               </div>
+              {item.description ? (
+                <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+              ) : null}
               <p className="text-xs text-muted-foreground">
                 {item.valueType === 'number' ? t('number') : t('text')}
                 {item.unit ? ` · ${item.unit.name} (${item.unit.symbol})` : ''}
@@ -72,10 +76,14 @@ export function AttributesList({
                   {rowBody}
                 </button>
               </ItemListContent>
+              <ItemListStatus>
+                <StatusBadge status={item.status} />
+              </ItemListStatus>
               <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
                 <DropdownMenuItem onClick={() => openDetails(item.id)}>
                   {t('viewDetails')}
                 </DropdownMenuItem>
+                <CopyToAiMenuItem kind="attribute" id={item.id} label={item.name} />
                 {canMutate && item.status === 'pending' && onVerify ? (
                   <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
                 ) : null}

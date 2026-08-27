@@ -12,6 +12,7 @@ import {
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import type { SmsDevice } from '@/shared/types/sms.types'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface DevicesListProps {
   devices: SmsDevice[]
@@ -24,11 +25,6 @@ function statusLabel(status: SmsDevice['status'], t: (k: string) => string): str
   if (status === 'approved') return t('approved')
   if (status === 'revoked') return t('revoked')
   return t('pending')
-}
-
-function formatSeen(iso: string | null, neverLabel: string): string {
-  if (!iso) return neverLabel
-  return new Date(iso).toLocaleString()
 }
 
 export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesListProps) {
@@ -61,7 +57,7 @@ export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesLis
                 <p className="text-xs text-muted-foreground">
                   {device.scope === 'platform' ? t('platform') : t('company')} · {statusLabel(device.status, t)}{' '}
                   · {device.online ? t('online') : t('offline')} · {t('lastSeen')}{' '}
-                  {formatSeen(device.lastSeenAt, t('never'))}
+                  {device.lastSeenAt ? formatDisplayDateTime(device.lastSeenAt) : t('never')}
                   {device.appVersion ? ` · v${device.appVersion}` : ''}
                 </p>
               </ItemListContent>

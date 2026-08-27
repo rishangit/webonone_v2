@@ -1,0 +1,82 @@
+---
+description: User-visible dates — abbreviated month, day, year (Oct 10, 2026); shared Intl options and helpers
+globs: "**/frontend/src/**/*.{ts,tsx},packages/i18n/**/*"
+alwaysApply: false
+---
+
+# Date display format
+
+All **user-visible date-only** strings must render as **`Oct 10, 2026`** — abbreviated month, day without leading zero, comma, four-digit year.
+
+Skill: [date-display skill](../skills/date-display/SKILL.md). Locale wiring: [frontend-i18n.mdc](frontend-i18n.mdc).
+
+## Required Intl options
+
+```typescript
+export const DISPLAY_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+}
+```
+
+Pass **`getIntlLocaleTag(language)`** from `@webonone/i18n` (or a service helper that wraps it) — never bare `toLocaleDateString()` with no options or `undefined` locale.
+
+```typescript
+formatLocaleDate(value, DISPLAY_DATE_OPTIONS, i18n.language)
+// → Oct 10, 2026 (en) · localized month name in si-LK with same shape
+```
+
+## Where this applies
+
+| Surface | Rule |
+|---|---|
+| List row subtitles | [item-list skill](../skills/item-list/SKILL.md) |
+| Details / profile fields | [details-page-cards skill](../skills/details-page-cards/SKILL.md) |
+| Invoices, history, media modified dates | Same helper + options |
+| Date ranges | `{start} – {end}` with each side formatted |
+| AI / chat copy that cites a calendar date | Same options when rendering for humans |
+
+**Not in scope:** API payloads and DB columns stay **ISO 8601** (`YYYY-MM-DD` or full timestamp). [form-creation skill](../skills/form-creation/SKILL.md) — `DatePicker` input state is `Date`; convert to API strings separately.
+
+## Date + time
+
+When a timestamp includes time, keep the **date portion** on `DISPLAY_DATE_OPTIONS` and add time fields:
+
+```typescript
+const DISPLAY_DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  ...DISPLAY_DATE_OPTIONS,
+  hour: 'numeric',
+  minute: '2-digit',
+}
+// → Oct 10, 2026, 3:45 PM
+```
+
+Do not use a different date shape for datetime rows.
+
+## Service helpers (reference)
+
+| Service | Helper |
+|---|---|
+| All frontends | `@webonone/i18n` — `formatDisplayDate`, `formatDisplayDateTime`, `formatCalendarYmd` |
+| Per-service wrapper | `<service>/frontend/src/shared/utils/formatDisplayDate.ts` — resolves `getAppI18n().language` |
+| WebOnOne v2 | `@/shared/utils/formatLocaleDate.ts` — same API with `formatLocaleDate` / `formatLocaleDateTime` names |
+| Payment invoices | `@/shared/utils/money.ts` → `formatDate` (delegates to `formatDisplayDate`) |
+| Media browser | `formatMediaDate` in `formatMedia.ts` (delegates to `formatDisplayDateTime`) |
+
+## Forbidden
+
+- Raw ISO / SQL dates in UI (`2026-10-10`, `2026-10-10T…`)
+- `toLocaleDateString()` with no `options` (browser-default shape drifts)
+- Hard-coded `en-US` / `en-LK` in feature components when `i18n.language` is available
+- `DD/MM/YYYY`, `MM/DD/YYYY`, or numeric-only month strings
+- `date-fns` / `moment` display formatters that bypass the shared options
+
+## Verification
+
+```bash
+npm run build:i18n
+npm run type-check -w @webonone/<service>-frontend
+```
+
+Manual: switch **English** → row/detail date reads `Oct 10, 2026`; switch **සිංහල** → month localizes, order stays day–month–year with comma before year.

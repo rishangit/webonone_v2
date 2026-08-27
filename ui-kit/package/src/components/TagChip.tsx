@@ -7,30 +7,17 @@ export interface TagChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   color: string
 }
 
-/** Colored catalog tag pill: tinted bg, matching border/text, and solid color dot. */
+/** Colored catalog tag: hashtag prefix and label in the tag color — no pill border or tint background. */
 function TagChip({ name, color, className, style, ...props }: TagChipProps) {
   const resolved = normalizeHexColor(color)
-  const tintedBg = `${resolved}26`
 
   return (
     <span
-      className={cn(
-        'inline-flex max-w-[10rem] items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs',
-        className,
-      )}
-      style={{
-        borderColor: resolved,
-        backgroundColor: tintedBg,
-        color: resolved,
-        ...style,
-      }}
+      className={cn('inline-flex max-w-[10rem] items-center gap-0.5 text-xs', className)}
+      style={{ color: resolved, ...style }}
       {...props}
     >
-      <span
-        className="h-2.5 w-2.5 shrink-0 rounded-full"
-        style={{ backgroundColor: resolved }}
-        aria-hidden
-      />
+      <span className="shrink-0 font-medium leading-none" aria-hidden>#</span>
       <span className="truncate">{name}</span>
     </span>
   )

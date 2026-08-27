@@ -20,12 +20,7 @@ import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { dataApi } from '@/shared/services/dataApi'
 import type { ProductVariant } from '@/shared/types/data.types'
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
@@ -134,8 +129,8 @@ export function ProductVariantDetailsPage() {
                 <CardDescription>{t('metadataTimestamps')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label={t('created')} value={formatTimestamp(variant.createdAt)} />
-                <ReadOnlyField label={t('updated')} value={formatTimestamp(variant.updatedAt)} />
+                <ReadOnlyField label={t('created')} value={formatDisplayDateTime(variant.createdAt)} />
+                <ReadOnlyField label={t('updated')} value={formatDisplayDateTime(variant.updatedAt)} />
               </CardContent>
             </Card>
           </div>

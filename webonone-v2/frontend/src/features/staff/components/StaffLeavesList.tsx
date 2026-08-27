@@ -13,7 +13,7 @@ import {
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import type { CompanyStaffLeave } from '@/features/staff/types/staffLeave.types'
-import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
+import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 type StaffLeavesListProps = {
   staffId: string
@@ -49,8 +49,8 @@ export function StaffLeavesList({
   }
 
   function formatDateRange(leave: CompanyStaffLeave): string {
-    const from = formatLocaleDate(leave.startDate, undefined, i18n.language)
-    const to = formatLocaleDate(leave.endDate, undefined, i18n.language)
+    const from = formatCalendarYmd(leave.startDate, i18n.language)
+    const to = formatCalendarYmd(leave.endDate, i18n.language)
     return from === to ? from : `${from} – ${to}`
   }
 

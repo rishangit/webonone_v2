@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -10,6 +11,7 @@ import {
   ItemListMenu,
   StatusTag,
 } from '@webonone/ui-kit'
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 import type { AdminCompany, CompanyStatus } from '../services/companyApi'
 
 type CompaniesListProps = {
@@ -20,6 +22,7 @@ type CompaniesListProps = {
 
 export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesListProps) {
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
   const rows = Array.isArray(items) ? items : []
 
   if (rows.length === 0) {
@@ -53,7 +56,7 @@ export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesLi
                     <StatusTag variant={item.status} />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Registrant: {item.createdByUserId} · {new Date(item.createdAt).toLocaleString()}
+                    Registrant: {item.createdByUserId} · {formatLocaleDateTime(item.createdAt, i18n.language)}
                   </p>
                 </div>
               </div>

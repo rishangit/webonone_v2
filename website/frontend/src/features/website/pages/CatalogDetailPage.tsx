@@ -30,6 +30,7 @@ import { CatalogSearchMapView } from '@/features/website/components/CatalogSearc
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
+import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 
 function kindLabel(kind: CatalogDetailItem['kind'], t: (key: string) => string): string {
   if (kind === 'products') return t('product')
@@ -60,15 +61,6 @@ function hasMapLocation(item: CatalogDetailItem): boolean {
 
 function hasServiceTime(item: CatalogDetailItem): boolean {
   return item.kind === 'services' && (item.timeMode === 'window' || item.timeMode === 'duration')
-}
-
-function formatOccurrenceDate(ymd: string, locale: string): string {
-  const date = new Date(`${ymd}T12:00:00`)
-  return date.toLocaleDateString(locale === 'si' ? 'si-LK' : 'en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
 }
 
 function weekdayLabel(ymd: string, t: (key: string) => string): string {
@@ -559,7 +551,7 @@ export function CatalogDetailPage() {
                                   <div className="flex w-full flex-col gap-2">
                                     <div className="min-w-0 space-y-1">
                                       <p className="truncate font-medium text-foreground">
-                                        {formatOccurrenceDate(session.occurrenceDate, i18n.language)}
+                                        {formatCalendarYmd(session.occurrenceDate, i18n.language)}
                                       </p>
                                       <p className="truncate text-xs text-muted-foreground">
                                         {weekdayLabel(session.occurrenceDate, t)} ·{' '}

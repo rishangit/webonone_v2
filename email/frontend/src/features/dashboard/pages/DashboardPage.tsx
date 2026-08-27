@@ -30,6 +30,7 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import type { EmailRole } from '@/features/auth/types/auth.types'
 import { dashboardActions } from '@/features/dashboard/store'
 import { historyActions } from '@/features/history/store'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
     <Card>
@@ -254,7 +255,7 @@ export function DashboardPage() {
                           <p className="text-xs text-muted-foreground">
                             {item.templateSlug} ·{' '}
                             {item.status === 'sent' ? t('statusSent') : t('statusFailed')}
-                            {item.sentAt ? ` · ${new Date(item.sentAt).toLocaleString()}` : ''}
+                            {item.sentAt ? ` · ${formatDisplayDateTime(item.sentAt)}` : ''}
                           </p>
                         </ItemListContent>
                       </ItemListItem>

@@ -90,7 +90,14 @@ export const updateCompanyBodySchema = z
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })
 
+export const discoverCompaniesQuerySchema = z.object({
+  q: z.string().trim().max(255).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).optional().default(12),
+})
+
 export type RegisterCompanyBody = z.infer<typeof registerCompanyBodySchema>
 export type UpdateCompanyStatusBody = z.infer<typeof updateCompanyStatusBodySchema>
 export type UpdateCompanyBody = z.infer<typeof updateCompanyBodySchema>
 export type CompanyDataEntity = z.infer<typeof companyDataEntitySchema>
+export type DiscoverCompaniesQuery = z.infer<typeof discoverCompaniesQuerySchema>

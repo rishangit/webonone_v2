@@ -63,6 +63,8 @@ export type CompanyEventOccurrence = CompanyEvent & {
   effectiveStaffId?: string
   effectiveStaffDisplayName?: string
   sessionIssue?: 'staff_leave' | 'cancelled' | null
+  /** Personal calendar — viewer is booked for this occurrence and has checked in. */
+  viewerCheckedIn?: boolean
 }
 
 export type SessionToken = {

@@ -36,6 +36,10 @@ Primitives stay locale-agnostic — pass `t(...)` as props. `AppHeader` accepts 
 
 Use `useTranslation('ns')` / `t('common:save')`. Missing `si` keys fall back to English.
 
+## Date display
+
+User-visible dates use **`Oct 10, 2026`** (short month, numeric day, comma, year) via shared `DISPLAY_DATE_OPTIONS` and `INTL_LOCALE_TAGS` — see [date-display-format.mdc](date-display-format.mdc) and [date-display skill](../skills/date-display/SKILL.md). Pass `i18n.language` into format helpers; do not hard-code `en-US` in feature code.
+
 ## Verification
 
 ```bash

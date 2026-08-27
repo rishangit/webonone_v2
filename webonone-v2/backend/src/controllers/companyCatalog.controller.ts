@@ -43,6 +43,27 @@ export async function listCatalog(req: CompanySessionRequest, res: Response) {
   }
 }
 
+/** Discover preview list before connecting (Find Companies dialog). */
+export async function listDiscoverableCatalogForCompany(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+  try {
+    const kind = catalogService.parseKindParam(String(req.params.kind))
+    const q = typeof req.query.q === 'string' ? req.query.q : undefined
+    const items = await catalogService.listDiscoverableCatalogItems(
+      req.user.id,
+      String(req.params.companyId),
+      kind,
+      { q },
+    )
+    res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 /** Membership-gated list for Settings → My Companies (no active company session required). */
 export async function listCatalogForCompany(req: AuthenticatedRequest, res: Response) {
   if (!req.user) {

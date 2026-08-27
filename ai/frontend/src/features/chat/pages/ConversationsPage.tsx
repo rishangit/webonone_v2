@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import {
   Alert,
   AlertDescription,
@@ -145,7 +146,7 @@ export function ConversationsPage() {
                   >
                     <p className="font-medium">{conversation.title || t('untitled')}</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(conversation.updatedAt).toLocaleString()}
+                      {formatDisplayDateTime(conversation.updatedAt)}
                     </p>
                   </button>
                 </ItemListContent>

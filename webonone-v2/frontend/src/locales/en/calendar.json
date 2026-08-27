@@ -429,6 +429,25 @@
       "queueHint": "Operate tokens currently at this workflow step.",
       "previous": "Previous",
       "next": "Next"
+    },
+    "tokens": {
+      "description": "Queue tokens issued for users at this session",
+      "endedDescription": "This session has ended. Tokens can no longer be issued.",
+      "issueNew": "Issue new token"
+    },
+    "controls": {
+      "title": "Session controls",
+      "descriptionDuration": "Start or end this appointment session",
+      "descriptionWindow": "Start the session. Operate the queue on workflow steps that enable it.",
+      "status": "Status",
+      "startedAt": "Started",
+      "endedAt": "Ended",
+      "startSession": "Start session",
+      "queueHint": "Use Previous and Next on workflow steps that have session queue enabled.",
+      "durationInProgress": "Session is in progress for the assigned attendee.",
+      "durationEnded": "This session has ended.",
+      "dueIn": "Due in {{duration}}",
+      "delayedBy": "Delayed · {{duration}}"
     }
   },
   "workflowProgress": {

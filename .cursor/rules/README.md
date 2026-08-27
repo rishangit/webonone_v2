@@ -48,6 +48,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [platform-shell-navigation.mdc](platform-shell-navigation.mdc) | `**/frontend/src/**/*.{ts,tsx}` | Canonical redirect pattern (Profile reference); same layout + file roles for every peer |
 | [frontend-vite-chunk-splitting.mdc](frontend-vite-chunk-splitting.mdc) | `**/frontend/**/*.{ts,tsx}` | Route lazy-load + `manualChunks`; no 500 kB build warnings |
 | [frontend-i18n.mdc](frontend-i18n.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `packages/i18n/**/*` | en/si i18n, `@webonone/i18n` common packs, per-service locales |
+| [date-display-format.mdc](date-display-format.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `packages/i18n/**/*` | User-visible dates as `Oct 10, 2026`; shared Intl options |
 | [toast-notifications.mdc](toast-notifications.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `useToast` for mutation API success/fail; ignore soft warnings |
 | [image-preview.mdc](image-preview.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/**/*.{ts,tsx}` | `ImagePreview` for logos/avatars; null `src` = first-upload empty state |
 
@@ -84,6 +85,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | [details-page-wizard-edit](../skills/details-page-wizard-edit/SKILL.md) | Wizard-backed details: Overview `ImageCarousel`; per-card Edit → shared wizard at mapped step; `?tab=` sync |
 | [feature-store](../skills/feature-store/SKILL.md) | Standard list/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 | [toast-notifications](../skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
+| [date-display](../skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026`; shared `DISPLAY_DATE_OPTIONS` |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
@@ -110,6 +112,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Vite chunk splitting (lazy routes, manualChunks) | `frontend-vite-chunk-splitting.mdc` |
 | Forms (Zod FE + BE validation, FormField) | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Date fields (`DatePicker`, not `Input type="date"`) | `ui-kit-consumption.mdc`, [form-creation skill](../skills/form-creation/SKILL.md) |
+| Date display (`Oct 10, 2026`) | [date-display-format.mdc](date-display-format.mdc), [date-display skill](../skills/date-display/SKILL.md) |
 | Item lists (gap, glass-card, shadow hover, 3-dot menus) | [item-list skill](../skills/item-list/SKILL.md) |
 | Selection / picker dialog selected rows (Check icon) | [selection-dialog-list.mdc](selection-dialog-list.mdc) |
 | Details / profile card pages (3-col Card stacks, page-level Edit) | [details-page-cards skill](../skills/details-page-cards/SKILL.md), `details-page-cards.mdc` |

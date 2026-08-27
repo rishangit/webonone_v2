@@ -12,6 +12,7 @@ import {
   type CatalogEntityKind,
   type CatalogPayload,
 } from '../schemas/companyCatalogSchemas.js'
+import { assertDiscoverableCompany } from './company.service.js'
 
 function httpError(message: string, statusCode: number): Error & { statusCode: number } {
   const err = new Error(message) as Error & { statusCode: number }
@@ -67,6 +68,17 @@ export async function listCatalogItems(
   options?: { q?: string },
 ) {
   await assertCompanySessionAccess(userId, companyId)
+  const rows = await repo.listByCompanyAndKind(companyId, kind, options)
+  return rows.map((row) => toDto(kind, row))
+}
+
+export async function listDiscoverableCatalogItems(
+  userId: string,
+  companyId: string,
+  kind: CatalogEntityKind,
+  options?: { q?: string },
+) {
+  await assertDiscoverableCompany(userId, companyId)
   const rows = await repo.listByCompanyAndKind(companyId, kind, options)
   return rows.map((row) => toDto(kind, row))
 }

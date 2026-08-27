@@ -4,6 +4,7 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ListAddButton,
   ListPageBody,
   ListPageFooter,
   SearchInput,
@@ -13,6 +14,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { isFresh } from '@/shared/store/cacheUtils'
+import { FindCompanyDialog } from '../components/FindCompanyDialog'
 import { MyCompaniesList } from '../components/MyCompaniesList'
 import { CONNECTED_COMPANIES_PATH } from '../utils/companySettingsPaths'
 
@@ -27,6 +29,7 @@ export function ConnectedCompaniesPage() {
   } = useAppSelector((s) => s.companies)
 
   const [searchQuery, setSearchQuery] = useState('')
+  const [findOpen, setFindOpen] = useState(false)
 
   const connectedCompanies = useMemo(
     () => myCompanies.filter((item) => item.role === 'member'),
@@ -62,15 +65,20 @@ export function ConnectedCompaniesPage() {
       title={t('connectedCompanies.title')}
       description={t('connectedCompanies.description')}
       actions={
-        <SearchInput
-          value={searchQuery}
-          onChange={(event) => {
-            setSearchQuery(event.target.value)
-          }}
-          placeholder={t('connectedCompanies.searchPlaceholder')}
-          aria-label={t('connectedCompanies.searchAria')}
-          className="w-64"
-        />
+        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+          <SearchInput
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value)
+            }}
+            placeholder={t('connectedCompanies.searchPlaceholder')}
+            aria-label={t('connectedCompanies.searchAria')}
+            className="w-64"
+          />
+          <ListAddButton onClick={() => setFindOpen(true)}>
+            {t('connectedCompanies.findCompanies')}
+          </ListAddButton>
+        </div>
       }
     >
       {myCompaniesError ? (
@@ -100,6 +108,8 @@ export function ConnectedCompaniesPage() {
           onLoadMore={listPage.loadMore}
         />
       </ListPageBody>
+
+      <FindCompanyDialog open={findOpen} onOpenChange={setFindOpen} />
     </FeaturePage>
   )
 }

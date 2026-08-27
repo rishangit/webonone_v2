@@ -21,12 +21,7 @@ import { TemplateFormDialog } from '@/features/templates/components/TemplateForm
 import { templatesActions } from '@/features/templates/store'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import type { UpdateTemplateBody } from '@/shared/services/emailApi'
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function formatScope(
   scope: string,
@@ -191,9 +186,9 @@ export function TemplateDetailsPage() {
                   label={t('scope')}
                   value={formatScope(template.scope, t, template.isDefault)}
                 />
-                <ReadOnlyField label={t('updated')} value={formatTimestamp(template.updatedAt)} />
+                <ReadOnlyField label={t('updated')} value={formatDisplayDateTime(template.updatedAt)} />
                 {template.createdAt ? (
-                  <ReadOnlyField label={t('created')} value={formatTimestamp(template.createdAt)} />
+                  <ReadOnlyField label={t('created')} value={formatDisplayDateTime(template.createdAt)} />
                 ) : null}
               </CardContent>
             </Card>

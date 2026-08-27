@@ -67,7 +67,11 @@ export function DurationSessionWorkflowCard({
   const atThisStep =
     Boolean(item && token) &&
     !token?.workflowProgress?.done &&
-    token?.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === item?.id
+    (item?.kind === 'check_in' && !checkedIn
+      ? (token?.workflowProgress?.currentIndex ?? 0) < 0 ||
+        token?.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === item?.id
+      : (token?.workflowProgress?.currentIndex ?? -1) >= 0 &&
+        token?.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === item?.id)
   const showCheckInAction =
     Boolean(item) && canComplete && item?.kind === 'check_in' && atThisStep && !checkedIn
   const showCompleteAction =

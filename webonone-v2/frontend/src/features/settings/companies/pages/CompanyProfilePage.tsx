@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -10,13 +10,12 @@ import {
   TabsList,
   TabsTrigger,
 } from '@webonone/ui-kit'
-import { filterCompanyDataEntities, type CompanyDataEntityKey } from '@webonone/platform-nav'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import type { CompanyWizardStep } from '@/features/settings/basic/schemas/companySchemas'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
-import { MemberCompanyCatalogPanel } from '../components/MemberCompanyCatalogPanel'
+import { CompanyMemberProfileView } from '../components/CompanyMemberProfileView'
 import { CompanyAddressCard } from '../components/CompanyAddressCard'
 import { CompanyContactCard } from '../components/CompanyContactCard'
 import { CompanyDataEntitiesCard } from '../components/CompanyDataEntitiesCard'
@@ -43,21 +42,12 @@ type CompanyProfilePageProps = {
 }
 
 type AdminProfileTab = 'overview' | 'gallery' | 'data'
-type MemberCatalogTab = CompanyDataEntityKey
-type MemberProfileTab = 'overview' | MemberCatalogTab
 
 const ADMIN_TABS = [
   'overview',
   'gallery',
   'data',
 ] as const satisfies readonly AdminProfileTab[]
-
-const ALL_MEMBER_TABS = [
-  'overview',
-  'services',
-  'products',
-  'spaces',
-] as const satisfies readonly MemberProfileTab[]
 
 function membershipBackTo(
   pathname: string,
@@ -85,7 +75,6 @@ export function CompanyProfilePage({
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
 
   const [adminTab, setAdminTab] = useDetailTabParam(ADMIN_TABS, 'overview')
-  const [memberTab, setMemberTab] = useDetailTabParam(ALL_MEMBER_TABS, 'overview')
   const [dialog, setDialog] = useState<{ initialStep: CompanyWizardStep } | null>(null)
 
   const loading = detailStatus === 'loading' && !detail
@@ -112,32 +101,6 @@ export function CompanyProfilePage({
   const canEdit =
     Boolean(detail) &&
     (detail?.role === 'company_admin' || activeRole === 'super_admin')
-
-  const memberCatalogTabs = useMemo(() => {
-    if (!detail) return [] as MemberCatalogTab[]
-    const enabled = filterCompanyDataEntities(detail.dataEntities ?? [])
-    const counts = detail.catalogCounts ?? { products: 0, services: 0, spaces: 0 }
-    return enabled.filter((key) => (counts[key] ?? 0) > 0)
-  }, [detail])
-
-  const memberTabItems = useMemo(() => {
-    const items: { id: MemberProfileTab; label: string }[] = [
-      { id: 'overview', label: t('companyProfile.tabs.overview') },
-    ]
-    for (const key of memberCatalogTabs) {
-      const labelKey =
-        key === 'services'
-          ? 'companyProfile.tabs.ourServices'
-          : key === 'products'
-            ? 'companyProfile.tabs.ourProducts'
-            : 'companyProfile.tabs.ourSpaces'
-      items.push({ id: key, label: t(labelKey) })
-    }
-    return items
-  }, [memberCatalogTabs, t])
-
-  const activeMemberTab: MemberProfileTab =
-    memberTab !== 'overview' && !memberCatalogTabs.includes(memberTab) ? 'overview' : memberTab
 
   function openWizard(initialStep: CompanyWizardStep) {
     setDialog({ initialStep })
@@ -172,8 +135,6 @@ export function CompanyProfilePage({
   }
 
   const isOwnerTabs = variant === 'admin' || detail.role === 'company_admin'
-  const isConnectedTabs = variant === 'member' && detail.role === 'member'
-  const showConnectedCatalogTabs = isConnectedTabs && memberTabItems.length > 1
 
   const overviewContent = (
     <div className="flex flex-col gap-6">
@@ -264,29 +225,7 @@ export function CompanyProfilePage({
   )
 
   const connectedTabsContent = (
-    <Tabs
-      value={activeMemberTab}
-      onValueChange={(value) => setMemberTab(value as MemberProfileTab)}
-      className="flex flex-col gap-6"
-    >
-      {showConnectedCatalogTabs ? (
-        <TabsList aria-label={t('companyProfile.ariaSections')}>
-          {memberTabItems.map((item) => (
-            <TabsTrigger key={item.id} value={item.id}>
-              {item.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      ) : null}
-
-      <TabsContent value={activeMemberTab} className="mt-0 outline-none">
-        {activeMemberTab === 'overview' || !isConnectedTabs ? (
-          overviewContent
-        ) : (
-          <MemberCompanyCatalogPanel companyId={companyId} kind={activeMemberTab} />
-        )}
-      </TabsContent>
-    </Tabs>
+    <CompanyMemberProfileView companyId={companyId} />
   )
 
   return (

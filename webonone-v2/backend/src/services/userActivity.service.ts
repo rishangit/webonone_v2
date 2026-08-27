@@ -47,9 +47,27 @@ export type SessionTokenHistoryDetail = {
   workflowProgress: TokenWorkflowProgressDto
 }
 
-function formatDate(value: string | Date): string {
-  if (typeof value === 'string') return value.slice(0, 10)
-  return value.toISOString().slice(0, 10)
+const DISPLAY_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+}
+
+function formatDisplayDate(value: string | Date): string {
+  let date: Date
+  if (typeof value === 'string') {
+    const ymd = value.slice(0, 10)
+    const parts = ymd.split('-').map(Number)
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return ymd
+    const [y, m, d] = parts
+    date = new Date(y, m - 1, d)
+  } else {
+    date = value
+  }
+  if (Number.isNaN(date.getTime())) {
+    return typeof value === 'string' ? value.slice(0, 10) : ''
+  }
+  return date.toLocaleDateString('en-US', DISPLAY_DATE_OPTIONS)
 }
 
 function toIso(value: Date | string): string {
@@ -97,7 +115,7 @@ export async function listUserActivity(input: {
 
   const tokenItems: UserActivityItem[] = tokens.map((token) => {
     const event = eventsById.get(token.event_id)
-    const occurrence = formatDate(token.occurrence_date)
+    const occurrence = formatDisplayDate(token.occurrence_date)
     const start = event ? normalizeTime(String(event.start_time)) : null
     const end = event ? normalizeTime(String(event.end_time)) : null
     const timeRange = start && end ? `${start}–${end}` : null
@@ -136,7 +154,7 @@ export async function listUserActivity(input: {
     id: `attendee:${event.id}`,
     type: 'event_attendee',
     title: event.service_name,
-    subtitle: `Booked · starts ${formatDate(event.starts_on)} ${String(event.start_time).slice(0, 5)}`,
+    subtitle: `Booked · starts ${formatDisplayDate(event.starts_on)} ${String(event.start_time).slice(0, 5)}`,
     status: event.recurrence === 'none' ? 'one-time' : event.recurrence,
     occurredAt: toIso(event.updated_at),
     meta: {
@@ -158,7 +176,7 @@ export async function listUserActivity(input: {
       id: `staff:${event.id}`,
       type: 'event_staff',
       title: event.service_name,
-      subtitle: `Assigned staff · starts ${formatDate(event.starts_on)} ${String(event.start_time).slice(0, 5)}`,
+      subtitle: `Assigned staff · starts ${formatDisplayDate(event.starts_on)} ${String(event.start_time).slice(0, 5)}`,
       status: event.recurrence === 'none' ? 'one-time' : event.recurrence,
       occurredAt: toIso(event.updated_at),
       meta: {
@@ -219,7 +237,7 @@ export async function getSessionTokenHistoryDetail(input: {
     throw serviceError('Event not found for session token', 404)
   }
 
-  const occurrenceDate = formatDate(token.occurrence_date)
+  const occurrenceDate = formatDisplayDate(token.occurrence_date)
 
   let formTemplateId: string | null = null
   const serviceRows = await catalogRepo.findByIds(input.companyId, 'services', [event.service_id])

@@ -14,16 +14,11 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { AttributeFormDialog } from '@/features/attributes/components/AttributeFormDialog'
+import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { attributesActions } from '@/features/attributes/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
-import { StatusBadge } from '@/shared/components/StatusBadge'
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -67,6 +62,9 @@ export function AttributeDetailsPage() {
       description={t('details')}
       onBack={() => goToList('attributes')}
       backLabel={t('common:back')}
+      actions={
+        attribute ? <CopyToAiButton kind="attribute" id={attribute.id} label={attribute.name} /> : undefined
+      }
     >
       {detailError ? (
         <Alert variant="destructive">
@@ -80,12 +78,12 @@ export function AttributeDetailsPage() {
             <EditableSectionCard
               title={t('singular')}
               description={t('sectionDescription')}
+              status={attribute.status}
               canEdit={canEdit}
               onEdit={() => setEditOpen(true)}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-semibold">{attribute.name}</h2>
-                <StatusBadge status={attribute.status} />
               </div>
               <ReadOnlyField
                 label={t('descriptionLabel')}
@@ -121,8 +119,8 @@ export function AttributeDetailsPage() {
                 <CardDescription>{t('metaDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label={t('created')} value={formatTimestamp(attribute.createdAt)} />
-                <ReadOnlyField label={t('updated')} value={formatTimestamp(attribute.updatedAt)} />
+                <ReadOnlyField label={t('created')} value={formatDisplayDateTime(attribute.createdAt)} />
+                <ReadOnlyField label={t('updated')} value={formatDisplayDateTime(attribute.updatedAt)} />
                 <ReadOnlyField
                   label={t('references')}
                   value={String(attribute.referenceCount ?? 0)}

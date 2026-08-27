@@ -22,14 +22,15 @@ import {
 } from '@/features/catalog/components/CatalogDetailSectionTabs'
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
+import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
 import { ServiceSpacesTab } from '@/features/services/components/ServiceSpacesTab'
 import { servicesActions } from '@/features/services/store'
 import type { ServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
-import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import type { CatalogItem } from '@/shared/types/data.types'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
   'overview',
@@ -37,12 +38,6 @@ const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
   'attributes',
   'spaces',
 ]
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
@@ -128,13 +123,11 @@ export function ServiceDetailsPage() {
         <EditableSectionCard
           title={t('singular')}
           description={t('sectionDescription')}
+          status={service.status}
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold">{service.name}</h2>
-            <StatusBadge status={service.status} />
-          </div>
+          <h2 className="text-xl font-semibold">{service.name}</h2>
           <ReadOnlyField
             label={t('common:description')}
             value={service.description?.trim() ? service.description : t('noDescription')}
@@ -175,8 +168,8 @@ export function ServiceDetailsPage() {
             <CardDescription>{t('metadataDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ReadOnlyField label={t('created')} value={formatTimestamp(service.createdAt)} />
-            <ReadOnlyField label={t('updated')} value={formatTimestamp(service.updatedAt)} />
+            <ReadOnlyField label={t('created')} value={formatDisplayDateTime(service.createdAt)} />
+            <ReadOnlyField label={t('updated')} value={formatDisplayDateTime(service.updatedAt)} />
             <ReadOnlyField
               label={t('references')}
               value={String(service.referenceCount ?? 0)}
@@ -193,6 +186,9 @@ export function ServiceDetailsPage() {
       description={t('details')}
       onBack={() => goToList('services')}
       backLabel={t('common:back')}
+      actions={
+        service ? <CopyToAiButton kind="service" id={service.id} label={service.name} /> : undefined
+      }
     >
       {detailError ? (
         <Alert variant="destructive">

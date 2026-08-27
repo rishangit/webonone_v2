@@ -53,11 +53,14 @@ function libraryCrud(options: {
   singular: string
   listDescription: string
   createDescription: string
+  updateDescription?: string
   createRequired: string[]
   createProperties: Record<string, unknown>
   updateProperties: Record<string, unknown>
   createArgCompletion?: ToolDefinition['argCompletion']
   relatedArgs?: ToolDefinition['relatedArgs']
+  updateRoles?: ToolDefinition['requiredRoles']
+  updatePermissions?: ToolDefinition['requiredPermissions']
   viewPath?: string
 }): ToolDefinition[] {
   const { resource, singular } = options
@@ -105,7 +108,9 @@ function libraryCrud(options: {
     }),
     dataTool({
       name: `update_data_${singular}`,
-      description: `Update a Data library ${singular}. Super-admin only.`,
+      description:
+        options.updateDescription ??
+        `Update a Data library ${singular}. When the user asks to suggest or add missing related items, call this update tool (not prose). Include only new related names; existing links are preserved automatically. List related library records first. New related records nest under the confirm row. Super-admin only.`,
       jsonSchema: {
         type: 'object',
         additionalProperties: false,
@@ -113,10 +118,11 @@ function libraryCrud(options: {
         properties: { id: stringId, ...options.updateProperties },
       },
       riskLevel: 'write',
-      requiredRoles: libraryAdminRoles,
-      requiredPermissions: ['ai:data_library:admin'],
+      requiredRoles: options.updateRoles ?? libraryAdminRoles,
+      requiredPermissions: options.updatePermissions ?? ['ai:data_library:admin'],
       auth: 'user_jwt',
       invoke: { method: 'PATCH', path: `/api/v1/${resource}/:id` },
+      ...(options.relatedArgs ? { relatedArgs: options.relatedArgs } : {}),
       ...(viewPath ? { viewPath } : {}),
     }),
     dataTool({
@@ -133,13 +139,19 @@ function libraryCrud(options: {
 }
 
 const catalogCreateProperties: Record<string, unknown> = {
-  name: { type: 'string', description: 'Display name of the catalog item.' },
+  name: { type: 'string', title: 'Name', description: 'Display name of the catalog item.' },
   description: {
     type: 'string',
+    title: 'Description',
     description:
       'Required 1–3 sentence explanation of what this item is, who it is for, and when to use it. Suggest a complete value even if the user only gave a name.',
   },
-  status: { type: 'string', enum: ['verified', 'pending'], description: 'Do not set unless the user asked. Company-admin creates stay pending.' },
+  status: {
+    type: 'string',
+    title: 'Status',
+    enum: ['verified', 'pending'],
+    description: 'Do not set unless the user asked. Company-admin creates stay pending.',
+  },
   tags: {
     type: 'array',
     items: {
@@ -207,6 +219,8 @@ function catalogCrud(options: {
   singular: string
   extraCreate?: Record<string, unknown>
   extraRequired?: string[]
+  extraSchemaAllOf?: unknown[]
+  createDescription?: string
 }): ToolDefinition[] {
   const { resource, singular } = options
   const createProperties = { ...catalogCreateProperties, ...options.extraCreate }
@@ -236,25 +250,31 @@ function catalogCrud(options: {
     }),
     dataTool({
       name: `create_data_${singular}`,
-      description: `Create a Data library ${singular} (a catalog ${singular}, not a tag). Fill every schema field before confirm: name, description, relevant tags, relevant attributes (each number attribute with a unit name and symbol), and status. List related tags, attributes, and units first. Use names, never opaque ids. Suggest only related records that fit this item — do not dump the whole library. New related tags, attributes, and units nest under the confirm row. Company-admin creates stay pending until a super admin verifies them.`,
+      description:
+        options.createDescription ??
+        `Create a Data library ${singular} (a catalog ${singular}, not a tag). Fill every schema field before confirm: name, description, relevant tags, relevant attributes (each number attribute with a unit name and symbol), and status. List related tags, attributes, and units first. Use names, never opaque ids. Suggest only related records that fit this item — do not dump the whole library. New related tags, attributes, and units nest under the confirm row. Company-admin creates stay pending until a super admin verifies them.`,
       jsonSchema: {
         type: 'object',
         additionalProperties: false,
         required: ['name', 'description', ...(options.extraRequired ?? [])],
         properties: createProperties,
+        ...(options.extraSchemaAllOf ? { allOf: options.extraSchemaAllOf } : {}),
       },
       riskLevel: 'write',
       requiredRoles: catalogWriteRoles,
       requiredPermissions: ['ai:data_catalog:write'],
       auth: 'user_jwt',
       invoke: { method: 'POST', path: `/api/v1/${resource}` },
-      argCompletion: uniqueNameArgCompletion(resource),
+      argCompletion: uniqueNameArgCompletion(resource, {
+        defaults: { status: 'pending' },
+        forceByRole: { company_admin: { status: 'pending' } },
+      }),
       relatedArgs: catalogRelatedArgs,
       viewPath,
     }),
     dataTool({
       name: `update_data_${singular}`,
-      description: `Update a Data library ${singular}.`,
+      description: `Update a Data library ${singular}. When the user asks to suggest or add missing related tags or attributes, call this update tool with the attached id (not prose). Include only new related names in tags or attributes; existing links are preserved automatically. List related tags, attributes, and units first. Use names, never opaque ids. Suggest only related records that fit this item. New related tags, attributes, and units nest under the confirm row.`,
       jsonSchema: {
         type: 'object',
         additionalProperties: false,
@@ -266,6 +286,7 @@ function catalogCrud(options: {
       requiredPermissions: ['ai:data_catalog:write'],
       auth: 'user_jwt',
       invoke: { method: 'PATCH', path: `/api/v1/${resource}/:id` },
+      relatedArgs: catalogRelatedArgs,
       viewPath,
     }),
     dataTool({
@@ -326,20 +347,23 @@ const TAG_COLOR_PALETTE = [
 ] as const
 
 const tagProperties = {
-  name: { type: 'string', description: 'Tag display name (form field Name). PascalCase with no spaces; first letter capital (PharmacyInventory, not pharmacyInventory).' },
+  name: { type: 'string', title: 'Name', description: 'Tag display name (form field Name). PascalCase with no spaces; first letter capital (PharmacyInventory, not pharmacyInventory).' },
   description: {
     type: 'string',
+    title: 'Description',
     description:
       'Required format: {Spaced Name} - {1-3 descriptive sentences about the topic}. Always put the tag name in front, split at every camelCase or PascalCase boundary so search can match each word (HealthServices becomes Health Services, GeneralConsultation becomes General Consultation). Never start with a concatenated word such as Healthcare; write Health care as two words in the sentences after the hyphen. Do not mention tags, labels, or catalog items. Do not start with Tags for or Tags related to. Good: name HealthServices → Health Services - Health care services and providers that deliver medical advice, treatment, and related support. Good: Hearing Care - Services that help maintain healthy hearing and address hearing-related concerns. Avoid: Healthcare services and providers (no spaced prefix, Healthcare is one word). Avoid: Tags related to health and wellness practices.',
   },
   color: {
     type: 'string',
+    title: 'Color',
     enum: TAG_COLOR_PALETTE,
     description:
       'Optional hex color #RRGGBB from the tag palette. Omit unless the user asked for a specific color; a random palette color is applied the same way as the create-tag form.',
   },
   status: {
     type: 'string',
+    title: 'Status',
     enum: ['verified', 'pending'],
     description:
       'Form field Status: pending is Unverified, verified is Verified. Always send pending unless the user is super-admin and asked for Verified.',
@@ -374,6 +398,8 @@ export const dataAiCapabilities: ToolDefinition[] = [
       'List Data library units of measure. Units have a name and symbol (for example Metre / m). There is no length or weight category. Call this before create_data_unit so derived units can copy a real base_unit_id and so existing related units are not duplicated. Use this instead of search_public_catalog when the user asks to add or find units.',
     createDescription:
       'Create a Data library unit of measure. Suggest every schema field before confirm: name, symbol, description, is_base, base unit (by name, not id), and status. List related units first (list_data_units). Set is_base true for a base unit; for derived units set is_base false and name the base unit. There is no length category field. Company-admin creates stay pending until a super admin verifies them.',
+    updateDescription:
+      'Update a Data library unit of measure. When the user asks to suggest or add a missing base unit, call this update tool (not prose). Include only the new base unit name; existing links are preserved automatically. List related units first (list_data_units). New related units nest under the confirm row. Super-admin only.',
     createRequired: ['name', 'symbol', 'description'],
     createProperties: unitProperties,
     updateProperties: unitProperties,
@@ -417,10 +443,14 @@ export const dataAiCapabilities: ToolDefinition[] = [
       'List Data library attributes (name, value_type, optional unit). Call this before create_data_attribute, and list_data_units when suggesting a related unit for number attributes.',
     createDescription:
       'Create a Data library attribute. Suggest every schema field before confirm: name, value_type (number or text), description, related unit (by name and symbol, never an opaque unit id), and status. For number attributes, list_data_units first and attach the matching unit by name. If the unit is not in the library yet, also create that unit. Company-admin creates stay pending until a super admin verifies them.',
+    updateDescription:
+      'Update a Data library attribute. When the user asks to suggest or add a missing unit, call this update tool (not prose). Include only the new unit name and symbol for number attributes; existing links are preserved automatically. List related units first (list_data_units). New related units nest under the confirm row. Company admins may attach units to attributes they manage.',
     createRequired: ['name', 'value_type', 'description'],
     createProperties: attributeProperties,
     updateProperties: attributeProperties,
     viewPath: '/attributes/{id}',
+    updateRoles: libraryCreateRoles,
+    updatePermissions: ['ai:data_library:write'],
     relatedArgs: [
       {
         argKey: 'unit_id',
@@ -444,17 +474,40 @@ export const dataAiCapabilities: ToolDefinition[] = [
     extraCreate: {
       time_mode: {
         type: 'string',
+        title: 'Time mode',
         enum: ['duration', 'window'],
         description: 'duration for a fixed length; window for a start and end time. Suggest duration unless the user specified a window.',
       },
       duration_minutes: {
         type: 'integer',
+        title: 'Duration (minutes)',
         minimum: 1,
-        description: 'Required when time_mode is duration. Suggest a typical length if the user did not specify.',
+        description:
+          'Required when time_mode is duration. Always suggest a positive integer (for example 30, 45, or 60) before confirm.',
       },
-      start_time: { type: 'string', description: 'HH:mm. Use only when time_mode is window. Do not invent a window if duration applies.' },
-      end_time: { type: 'string', description: 'HH:mm. Use only when time_mode is window.' },
+      start_time: {
+        type: 'string',
+        title: 'Start time',
+        description: 'HH:mm. Use only when time_mode is window. Do not invent a window if duration applies.',
+      },
+      end_time: {
+        type: 'string',
+        title: 'End time',
+        description: 'HH:mm. Use only when time_mode is window.',
+      },
     },
+    extraSchemaAllOf: [
+      {
+        if: { properties: { time_mode: { const: 'duration' } } },
+        then: { required: ['duration_minutes'] },
+      },
+      {
+        if: { properties: { time_mode: { const: 'window' } } },
+        then: { required: ['start_time', 'end_time'] },
+      },
+    ],
+    createDescription:
+      'Create a Data library service (a catalog service, not a tag). Fill every schema field before confirm: name, description, time_mode, duration_minutes when time_mode is duration (suggest 30, 45, or 60), start_time and end_time when time_mode is window, relevant tags, relevant attributes (each number attribute with a unit name and symbol), and status. List related tags, attributes, and units first. Use names, never opaque ids. Suggest only related records that fit this item — do not dump the whole library. New related tags, attributes, and units nest under the confirm row. Company-admin creates stay pending until a super admin verifies them.',
   }),
   ...catalogCrud({ resource: 'spaces', singular: 'space' }),
 ]

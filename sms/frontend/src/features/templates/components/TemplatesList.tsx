@@ -13,6 +13,7 @@ import {
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateSms } from '@/features/shell/utils/navigateSms'
 import type { SmsTemplate } from '@/shared/types/sms.types'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface TemplatesListProps {
   templates: SmsTemplate[]
@@ -26,10 +27,6 @@ interface TemplatesListProps {
 function formatScope(template: SmsTemplate, t: (k: string) => string): string {
   if (template.isDefault) return t('scopeDefault')
   return template.scope === 'platform' ? t('scopePlatform') : t('scopeCompany')
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString()
 }
 
 export function TemplatesList({
@@ -70,7 +67,7 @@ export function TemplatesList({
                       slug: template.slug,
                       scope: formatScope(template, t),
                       active: template.isActive ? t('active') : t('inactive'),
-                      date: formatDate(template.updatedAt),
+                      date: formatDisplayDateTime(template.updatedAt),
                     })}
                   </p>
                 </button>

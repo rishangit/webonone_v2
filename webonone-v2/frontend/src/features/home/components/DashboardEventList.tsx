@@ -16,7 +16,7 @@ import type {
   SessionRunStatus,
 } from '@/features/calendar/types/event.types'
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
-import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
+import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 type DashboardEventListProps = {
   items: CompanyEventOccurrence[]
@@ -72,11 +72,7 @@ export function DashboardEventList({
       {items.map((item) => {
         const time = `${item.startTime}–${item.endTime}`
         const when = showDate
-          ? `${formatLocaleDate(
-              `${item.occurrenceDate}T12:00:00`,
-              { year: 'numeric', month: 'short', day: 'numeric' },
-              i18n.language,
-            )} · ${time}`
+          ? `${formatCalendarYmd(item.occurrenceDate, i18n.language)} · ${time}`
           : time
         const runStatus = occurrenceRunStatus(item)
 
@@ -108,9 +104,20 @@ export function DashboardEventList({
               </button>
             </ItemListContent>
             {!showDate ? (
-              <StatusTag variant={RUN_STATUS_VARIANT[runStatus]} className="shrink-0 self-center">
-                {tCalendar(`sessionStatus.${runStatus}`)}
-              </StatusTag>
+              <div className="flex shrink-0 flex-col items-end gap-1 self-center">
+                <StatusTag variant={RUN_STATUS_VARIANT[runStatus]}>
+                  {tCalendar(`sessionStatus.${runStatus}`)}
+                </StatusTag>
+                {item.viewerCheckedIn === true ? (
+                  <StatusTag variant="verified">
+                    {tCalendar('session.tokenStatus.checkedIn')}
+                  </StatusTag>
+                ) : item.viewerCheckedIn === false ? (
+                  <StatusTag variant="pending">
+                    {tCalendar('session.tokenStatus.notCheckedIn')}
+                  </StatusTag>
+                ) : null}
+              </div>
             ) : null}
             <RemainingTime
               start={item.start}

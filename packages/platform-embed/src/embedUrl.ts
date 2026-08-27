@@ -39,6 +39,8 @@ import type {
   PlatformMediaDialogRequestMessage,
   PlatformMediaDialogResultMessage,
   PlatformNavigateMessage,
+  PlatformAiEntityContextMessage,
+  PlatformAiEntityRef,
   PlatformAiMutationMessage,
   PlatformPeerDialogCancelMessage,
   PlatformPeerDialogCompleteMessage,
@@ -144,6 +146,23 @@ export function sendPlatformAiMutation(
     toolName,
   }
   iframe.contentWindow?.postMessage(message, peerOrigin)
+}
+
+/** Embedded peer → shell: attach a Data entity to the AI assistant composer. */
+export function sendPlatformAiEntityContext(
+  parentOrigin: string,
+  entity: PlatformAiEntityRef,
+  options?: { openAssistant?: boolean },
+): void {
+  if (typeof window === 'undefined' || !parentOrigin) {
+    return
+  }
+  const message: PlatformAiEntityContextMessage = {
+    type: PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT,
+    entity,
+    ...(options?.openAssistant !== undefined ? { openAssistant: options.openAssistant } : {}),
+  }
+  window.parent.postMessage(message, parentOrigin)
 }
 
 /** Embedded app -> parent shell: first page content is fully loaded. */

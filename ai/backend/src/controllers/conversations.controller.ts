@@ -54,7 +54,12 @@ export function createConversationControllers(service: ConversationService) {
     sendMessage: async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
       try {
         const body = sendMessageSchema.parse(req.body)
-        const result = await service.sendMessage(contextOrThrow(req), String(req.params.id), body.content)
+        const result = await service.sendMessage(
+          contextOrThrow(req),
+          String(req.params.id),
+          body.content,
+          body.context,
+        )
         res.status(201).json(result)
       } catch (err) {
         next(err)
@@ -68,7 +73,11 @@ export function createConversationControllers(service: ConversationService) {
           contextOrThrow(req),
           String(req.params.id),
           String(req.params.toolCallId),
-          body.relatedSelections,
+          {
+            relatedSelections: body.relatedSelections,
+            argumentOverrides: body.argumentOverrides,
+            relatedArgumentOverrides: body.relatedArgumentOverrides,
+          },
         )
         res.json(result)
       } catch (err) {

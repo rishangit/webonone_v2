@@ -57,6 +57,7 @@ Reference: `ui-kit/package/src/components/SearchInput.tsx`, `ListFilterPanel.tsx
 | Forbidden body search on list pages | Do **not** place `SearchInput` as a `FeaturePage` child above the list |
 | Text search in header | Use **`SearchInput`** — not plain `Input` / `Label` |
 | Panel filters only | Status, dates, MIME type, etc. — not primary text search |
+| Filtered date labels | When showing applied date filters in UI, use [date-display-format.mdc](date-display-format.mdc) (`Oct 10, 2026`) |
 | No inline filter forms | Do not add full-width `<Form>` rows above lists |
 | `active` trigger | `true` when any **panel** filter ≠ default (search is separate) |
 | Apply | Reset pagination to page 1; refetch (server) or re-slice (client) |

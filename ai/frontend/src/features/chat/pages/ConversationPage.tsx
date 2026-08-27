@@ -24,7 +24,7 @@ import {
 import { aiApi } from '@/shared/services/aiApi'
 import { getWebOnOneOrigin } from '@/features/auth/utils/identityConfig'
 import { redirectToWebOnOnePath } from '@/features/auth/utils/redirectToWebOnOne'
-import type { ChatMessage, PendingTool, PendingToolCall } from '@/shared/types/ai.types'
+import type { ChatMessage, ConfirmItemDecision, PendingTool, PendingToolCall } from '@/shared/types/ai.types'
 
 function pendingRows(pending: PendingTool): PendingToolCall[] {
   if (pending.calls && pending.calls.length > 0) {
@@ -38,6 +38,8 @@ function pendingRows(pending: PendingTool): PendingToolCall[] {
       summary: pending.summary,
       arguments: pending.arguments,
       displayArguments: pending.displayArguments,
+      displayFields: pending.displayFields,
+      relatedTree: pending.relatedTree,
       status: pending.status,
     },
   ]
@@ -46,6 +48,35 @@ function pendingRows(pending: PendingTool): PendingToolCall[] {
 function callItemName(call: PendingToolCall): string {
   const name = call.arguments?.name
   return typeof name === 'string' && name.trim() ? name.trim() : 'Item'
+}
+
+function findScrollParent(element: HTMLElement | null): HTMLElement | null {
+  let node = element?.parentElement ?? null
+  while (node) {
+    const { overflowY } = getComputedStyle(node)
+    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+      return node
+    }
+    node = node.parentElement
+  }
+  return null
+}
+
+function restoreScrollAnchor(toolCallId: string, beforeTop: number | null) {
+  if (beforeTop === null) return
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const anchor = document.querySelector(`[data-confirm-item="${toolCallId}"]`)
+      if (!anchor || !(anchor instanceof HTMLElement)) return
+      const afterTop = anchor.getBoundingClientRect().top
+      const delta = afterTop - beforeTop
+      if (delta === 0) return
+      const scrollParent = findScrollParent(anchor)
+      if (scrollParent) {
+        scrollParent.scrollTop += delta
+      }
+    })
+  })
 }
 
 const OLLAMA_HOME_URL = 'https://ollama.com'
@@ -194,15 +225,17 @@ export function ConversationPage() {
   async function handleToolDecision(
     toolCallId: string,
     action: 'confirm' | 'reject',
-    relatedSelections?: Record<string, boolean>,
+    decision?: ConfirmItemDecision,
   ) {
     if (!id || toolDecisionLock.current) return
+    const anchor = document.querySelector(`[data-confirm-item="${toolCallId}"]`)
+    const beforeTop = anchor instanceof HTMLElement ? anchor.getBoundingClientRect().top : null
     toolDecisionLock.current = true
     setSending(true)
     try {
       const result =
         action === 'confirm'
-          ? await aiApi.confirmToolCall(id, toolCallId, relatedSelections)
+          ? await aiApi.confirmToolCall(id, toolCallId, decision)
           : await aiApi.rejectToolCall(id, toolCallId)
       setMessages((current) => {
         const returned = result.assistantMessage
@@ -212,6 +245,7 @@ export function ConversationPage() {
         }
         return [...current, returned]
       })
+      restoreScrollAnchor(toolCallId, beforeTop)
     } catch (err) {
       toast({
         title: err instanceof Error ? err.message : t('sendFailed'),
@@ -288,12 +322,13 @@ export function ConversationPage() {
                     items={rows.map((call) => ({
                       id: call.toolCallId,
                       status: call.status,
-                    record:
-                      call.displayArguments && Object.keys(call.displayArguments).length > 0
-                        ? call.displayArguments
-                        : call.arguments && Object.keys(call.arguments).length > 0
-                          ? call.arguments
-                          : { summary: call.summary },
+                      record:
+                        call.displayArguments && Object.keys(call.displayArguments).length > 0
+                          ? call.displayArguments
+                          : call.arguments && Object.keys(call.arguments).length > 0
+                            ? call.arguments
+                            : { summary: call.summary },
+                      displayFields: call.displayFields,
                       relatedTree: call.relatedTree,
                       confirmedLabel: t('itemAdded', { name: callItemName(call) }),
                       canceledLabel: t('itemCanceled', { name: callItemName(call) }),
@@ -302,8 +337,8 @@ export function ConversationPage() {
                     confirmLabel={t('confirm')}
                     skipLabel={t('skip')}
                     disabled={sending}
-                    onConfirm={(toolCallId, selections) =>
-                      void handleToolDecision(toolCallId, 'confirm', selections)
+                    onConfirm={(toolCallId, decision) =>
+                      void handleToolDecision(toolCallId, 'confirm', decision)
                     }
                     onSkip={(toolCallId) => void handleToolDecision(toolCallId, 'reject')}
                   />

@@ -1,4 +1,10 @@
 import { coercePropertyValue, completeCreateArgs, missingRequiredArgs } from './createDefaults.js'
+import {
+  buildConfirmDisplayFields,
+  displayRecordFromFields,
+  isHiddenConfirmKey,
+  type ConfirmDisplayField,
+} from './confirmDisplay.js'
 import { formatRecordLines } from './formatRecord.js'
 import type { RelatedArg, RelatedNode, ToolDefinition, ToolResult, ToolRole } from './registry.js'
 import type { PendingWrite } from './uniqueValues.js'
@@ -9,9 +15,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-export function isHiddenConfirmKey(key: string): boolean {
-  return key === 'id' || /_ids?$/i.test(key)
-}
+export { isHiddenConfirmKey } from './confirmDisplay.js'
 
 export function looksLikeRecordId(value: string): boolean {
   const trimmed = value.trim()
@@ -107,8 +111,9 @@ export function relatedCreateArgs(
   const parsed = parseRelatedNameHint(hint.name ?? hint)
   const props = isRecord(createTool.jsonSchema.properties) ? createTool.jsonSchema.properties : {}
   const seeded: Record<string, unknown> = { ...hint }
-  if (parsed?.name) {
-    seeded.name = parsed.name
+  const hintedName = parsed?.name ?? relatedHintName(hint)
+  if (hintedName) {
+    seeded.name = hintedName
   }
   if (parsed?.symbol && seeded.symbol == null) {
     seeded.symbol = parsed.symbol
@@ -129,6 +134,24 @@ function relatedCardinality(spec: RelatedArg): 'one' | 'many' {
   return spec.cardinality === 'many' ? 'many' : 'one'
 }
 
+export function relatedHintName(hint: unknown): string | undefined {
+  const nested = hintAsRecord(hint)
+  const parsed = parseRelatedNameHint(nested.name ?? hint)
+  if (parsed?.name) {
+    return parsed.name
+  }
+  const direct = typeof nested.name === 'string' ? nested.name.trim() : ''
+  if (direct && !looksLikeRecordId(direct)) {
+    return direct
+  }
+  const description = typeof nested.description === 'string' ? nested.description.trim() : ''
+  if (!description) {
+    return undefined
+  }
+  const match = description.match(/^(.+?)\s+-\s+/)
+  return match?.[1]?.trim() || undefined
+}
+
 function hintAsRecord(hint: unknown): Record<string, unknown> {
   if (isRecord(hint)) {
     return hint
@@ -138,6 +161,18 @@ function hintAsRecord(hint: unknown): Record<string, unknown> {
     return parsed ? { ...parsed } : { name: hint }
   }
   return {}
+}
+
+export function argsHaveRelatedHints(
+  tool: Pick<ToolDefinition, 'relatedArgs'>,
+  args: Record<string, unknown>,
+): boolean {
+  for (const spec of tool.relatedArgs ?? []) {
+    if (collectHints(args, spec).length > 0) {
+      return true
+    }
+  }
+  return false
 }
 
 function collectHints(args: Record<string, unknown>, spec: RelatedArg): unknown[] {
@@ -188,12 +223,45 @@ async function resolveHintRecord(
       return byId
     }
   }
-  const parsed = parseRelatedNameHint(hint)
-  const name = parsed?.name ?? (typeof nested?.name === 'string' ? nested.name.trim() : '')
-  if (name && !looksLikeRecordId(name)) {
-    return lookup(spec, { name })
+  const names = new Set<string>()
+  for (const name of [relatedHintName(hint), parseRelatedNameHint(hint)?.name, typeof nested?.name === 'string' ? nested.name.trim() : '']) {
+    const trimmed = typeof name === 'string' ? name.trim() : ''
+    if (!trimmed || looksLikeRecordId(trimmed)) {
+      continue
+    }
+    names.add(trimmed)
+    const compact = trimmed.replace(/\s+/g, '')
+    if (compact) {
+      names.add(compact)
+    }
+  }
+  for (const name of names) {
+    const record = await lookup(spec, { name })
+    if (record) {
+      return record
+    }
   }
   return null
+}
+
+async function resolveNodeRecordId(
+  spec: RelatedArg,
+  node: RelatedNode,
+  lookup?: RelatedLookup,
+): Promise<string | null> {
+  if (typeof node.recordId === 'string' && looksLikeRecordId(node.recordId)) {
+    return node.recordId
+  }
+  const recordId = typeof node.record.id === 'string' ? node.record.id.trim() : ''
+  if (recordId && looksLikeRecordId(recordId)) {
+    return recordId
+  }
+  if (!lookup) {
+    return null
+  }
+  const hint = node.createArgs ?? node.record
+  const existing = await resolveHintRecord(spec, hint, lookup)
+  return existing && typeof existing.id === 'string' ? existing.id : null
 }
 
 export async function buildRelatedTree(
@@ -221,7 +289,7 @@ export async function buildRelatedTree(
     for (const hint of hints) {
       const parsed = parseRelatedNameHint(hint)
       const hintRecord = hintAsRecord(hint)
-      const hintName = parsed?.name ?? (typeof hintRecord.name === 'string' ? hintRecord.name.trim() : '')
+      const hintName = relatedHintName(hint) ?? parsed?.name ?? (typeof hintRecord.name === 'string' ? hintRecord.name.trim() : '')
       if (relatedCardinality(spec) === 'one' && parentName && hintName.toLowerCase() === parentName) {
         continue
       }
@@ -234,12 +302,17 @@ export async function buildRelatedTree(
       index += 1
       const existing = await resolveHintRecord(spec, hint, options.lookup)
       if (existing && typeof existing.id === 'string') {
+        const createTool = options.getTool(spec.createTool)
+        const displayFields = createTool
+          ? buildConfirmDisplayFields(createTool, existing, { editable: false, role: options.role })
+          : undefined
         nodes.push({
           path,
           displayKey: spec.displayKey,
           exists: true,
           selected: true,
-          record: publicConfirmRecord(existing),
+          record: displayFields ? displayRecordFromFields(displayFields) : publicConfirmRecord(existing),
+          displayFields,
           recordId: existing.id,
         })
         continue
@@ -249,9 +322,8 @@ export async function buildRelatedTree(
         continue
       }
       const createArgs = relatedCreateArgs(createTool, hintRecord, options.role)
-      const missing = missingRequiredArgs(createTool.jsonSchema, createArgs)
       const createdName = typeof createArgs.name === 'string' ? createArgs.name.trim() : ''
-      if (missing.length > 0 || !createdName) {
+      if (!createdName && !hintName) {
         continue
       }
       const visitKey = `${createTool.name}:${createdName.toLowerCase()}`
@@ -266,12 +338,17 @@ export async function buildRelatedTree(
           visited: childVisited,
         })
       }
+      const displayFields = buildConfirmDisplayFields(createTool, createArgs, {
+        editable: true,
+        role: options.role,
+      })
       nodes.push({
         path,
         displayKey: spec.displayKey,
         exists: false,
         selected: true,
-        record: publicConfirmRecord(createArgs),
+        record: displayRecordFromFields(displayFields),
+        displayFields,
         createTool: createTool.name,
         createArgs,
         children: children.length > 0 ? children : undefined,
@@ -281,11 +358,27 @@ export async function buildRelatedTree(
   return nodes
 }
 
+export function displayFieldsFromTool(
+  tool: Pick<ToolDefinition, 'jsonSchema' | 'relatedArgs' | 'argCompletion'> & { name?: string },
+  args: Record<string, unknown>,
+  role?: ToolRole,
+): ConfirmDisplayField[] {
+  return buildConfirmDisplayFields(tool, args, { role })
+}
+
 export function displayArgumentsFromTree(
   args: Record<string, unknown>,
-  tool: Pick<ToolDefinition, 'relatedArgs'>,
+  tool: Pick<ToolDefinition, 'relatedArgs' | 'jsonSchema' | 'argCompletion'> & { name?: string },
   _tree: RelatedNode[],
+  role?: ToolRole,
 ): Record<string, unknown> {
+  const fields = buildConfirmDisplayFields(tool, args, {
+    role,
+    omitMissing: isUpdatePayload(args),
+  })
+  if (fields.length > 0) {
+    return displayRecordFromFields(fields)
+  }
   const relatedKeys = new Set((tool.relatedArgs ?? []).flatMap((spec) => [spec.argKey, spec.displayKey]))
   const next: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(args)) {
@@ -298,20 +391,31 @@ export function displayArgumentsFromTree(
 }
 
 export function displayCreateArguments(
+  tool: Pick<ToolDefinition, 'jsonSchema' | 'relatedArgs' | 'argCompletion'> & { name?: string },
   args: Record<string, unknown>,
   related: Array<{ displayKey: string; record: Record<string, unknown> | null }>,
+  role?: ToolRole,
 ): Record<string, unknown> {
   const hidden = new Set(related.map((item) => item.displayKey))
-  const next: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(args)) {
-    if (isHiddenConfirmKey(key) || hidden.has(key)) {
-      continue
-    }
-    next[key] = value
-  }
+  const displayFields = buildConfirmDisplayFields(tool, args, { role }).filter(
+    (field) => !hidden.has(field.key) && !hidden.has(field.label),
+  )
+  const next =
+    displayFields.length > 0
+      ? displayRecordFromFields(displayFields)
+      : (() => {
+          const legacy: Record<string, unknown> = {}
+          for (const [key, value] of Object.entries(args)) {
+            if (isHiddenConfirmKey(key) || hidden.has(key)) {
+              continue
+            }
+            legacy[key] = value
+          }
+          return legacy
+        })()
   for (const item of related) {
     if (item.record && Object.keys(item.record).length > 0) {
-      next[item.displayKey] = publicConfirmRecord(item.record)
+      next[item.displayKey] = item.record
     }
   }
   return next
@@ -330,6 +434,18 @@ export function parseRelatedNode(raw: unknown): RelatedNode | null {
     exists: raw.exists === true,
     selected: raw.selected !== false,
     record: isRecord(raw.record) ? raw.record : {},
+    displayFields: Array.isArray(raw.displayFields)
+      ? raw.displayFields.filter(
+          (field): field is ConfirmDisplayField =>
+            isRecord(field) &&
+            typeof field.key === 'string' &&
+            typeof field.label === 'string' &&
+            typeof field.value === 'string' &&
+            typeof field.missing === 'boolean' &&
+            typeof field.editable === 'boolean' &&
+            (field.inputType === 'text' || field.inputType === 'number'),
+        )
+      : undefined,
     createTool: typeof raw.createTool === 'string' ? raw.createTool : undefined,
     createArgs: isRecord(raw.createArgs) ? raw.createArgs : undefined,
     recordId: typeof raw.recordId === 'string' ? raw.recordId : undefined,
@@ -376,6 +492,98 @@ function nodeIsIncluded(node: RelatedNode): boolean {
   return node.exists || node.selected
 }
 
+function isDuplicateNameResult(result: ToolResult): boolean {
+  if (!isRecord(result.output)) {
+    return false
+  }
+  const code = result.output.code
+  const message = result.output.message
+  const status = result.output.status
+  return (
+    code === 'DUPLICATE_NAME' ||
+    status === 409 ||
+    (typeof message === 'string' && message.trim().toLowerCase() === 'name already exists')
+  )
+}
+
+function specForDisplayKey(
+  tool: Pick<ToolDefinition, 'relatedArgs'>,
+  displayKey: string,
+): RelatedArg | undefined {
+  return (tool.relatedArgs ?? []).find((spec) => spec.displayKey === displayKey)
+}
+
+export async function refreshRelatedTree(
+  tool: Pick<ToolDefinition, 'relatedArgs'>,
+  tree: RelatedNode[],
+  lookup: RelatedLookup,
+  options?: {
+    getTool?: (name: string) => ToolDefinition | undefined
+    role?: ToolRole
+  },
+): Promise<RelatedNode[]> {
+  async function refreshNode(node: RelatedNode): Promise<RelatedNode> {
+    const children =
+      node.children && node.children.length > 0
+        ? await Promise.all(node.children.map((child) => refreshNode(child)))
+        : undefined
+
+    if (node.exists && node.recordId) {
+      return { ...node, children }
+    }
+
+    const spec = specForDisplayKey(tool, node.displayKey)
+    if (!spec) {
+      return { ...node, children }
+    }
+
+    const hint = node.createArgs ?? node.record
+    const existing = await resolveHintRecord(spec, hint, lookup)
+    if (existing && typeof existing.id === 'string') {
+      const createTool = options?.getTool?.(spec.createTool)
+      const displayFields = createTool
+        ? buildConfirmDisplayFields(createTool, existing, {
+            editable: false,
+            role: options?.role,
+          })
+        : undefined
+      return {
+        path: node.path,
+        displayKey: node.displayKey,
+        exists: true,
+        selected: true,
+        record: displayFields ? displayRecordFromFields(displayFields) : publicConfirmRecord(existing),
+        displayFields,
+        recordId: existing.id,
+        children,
+      }
+    }
+
+    return { ...node, children }
+  }
+
+  return Promise.all(tree.map((node) => refreshNode(node)))
+}
+
+export function applyRelatedArgumentOverrides(
+  tree: RelatedNode[],
+  overrides?: Record<string, Record<string, unknown>>,
+): RelatedNode[] {
+  if (!overrides) {
+    return tree
+  }
+  return tree.map((node) => {
+    const nodeOverrides = overrides[node.path]
+    const createArgs =
+      node.createArgs && nodeOverrides ? { ...node.createArgs, ...nodeOverrides } : node.createArgs
+    return {
+      ...node,
+      createArgs,
+      children: node.children ? applyRelatedArgumentOverrides(node.children, overrides) : undefined,
+    }
+  })
+}
+
 export async function materializeRelatedTree(
   tool: Pick<ToolDefinition, 'relatedArgs'>,
   args: Record<string, unknown>,
@@ -384,6 +592,7 @@ export async function materializeRelatedTree(
     getTool: (name: string) => ToolDefinition | undefined
     execute: (call: { name: string; arguments: Record<string, unknown> }) => Promise<ToolResult>
     createdIds: Map<string, string>
+    lookup?: RelatedLookup
   },
 ): Promise<{ arguments: Record<string, unknown>; error?: ToolResult }> {
   const next = { ...args }
@@ -391,8 +600,9 @@ export async function materializeRelatedTree(
     const specNodes = tree.filter((node) => node.displayKey === spec.displayKey && nodeIsIncluded(node))
     const ids: string[] = []
     for (const node of specNodes) {
-      if (node.exists && node.recordId) {
-        ids.push(node.recordId)
+      const resolvedId = await resolveNodeRecordId(spec, node, options.lookup)
+      if (resolvedId) {
+        ids.push(resolvedId)
         continue
       }
       if (!node.selected || !node.createTool || !node.createArgs) {
@@ -416,6 +626,19 @@ export async function materializeRelatedTree(
       }
       const created = await options.execute({ name: node.createTool, arguments: createArgs })
       if (!created.ok) {
+        if (isDuplicateNameResult(created) && options.lookup) {
+          const spec = specForDisplayKey(tool, node.displayKey)
+          const hint = node.createArgs ?? node.record
+          if (spec) {
+            const existing = await resolveHintRecord(spec, hint, options.lookup)
+            const existingId = existing && typeof existing.id === 'string' ? existing.id : null
+            if (existingId) {
+              options.createdIds.set(cacheKey, existingId)
+              ids.push(existingId)
+              continue
+            }
+          }
+        }
         return { arguments: next, error: created }
       }
       const id = executedId(created)
@@ -446,6 +669,41 @@ export async function materializeRelatedTree(
     }
   }
   return { arguments: next }
+}
+
+export async function ensureWritableCatalogUpdateArgs(
+  tool: Pick<ToolDefinition, 'relatedArgs'>,
+  args: Record<string, unknown>,
+  tree: RelatedNode[],
+  lookup?: RelatedLookup,
+): Promise<Record<string, unknown>> {
+  if (hasWritableUpdatePayload(args) || !tool.relatedArgs?.length) {
+    return args
+  }
+  const next = { ...args }
+  for (const spec of tool.relatedArgs ?? []) {
+    if (next[spec.argKey] !== undefined) {
+      continue
+    }
+    const ids: string[] = []
+    for (const node of tree.filter((entry) => entry.displayKey === spec.displayKey && nodeIsIncluded(entry))) {
+      const resolvedId = await resolveNodeRecordId(spec, node, lookup)
+      if (resolvedId) {
+        ids.push(resolvedId)
+      }
+    }
+    if (ids.length === 0) {
+      continue
+    }
+    if (relatedCardinality(spec) === 'many') {
+      next[spec.argKey] = spec.itemIdKey
+        ? ids.map((id) => ({ [spec.itemIdKey as string]: id }))
+        : ids
+    } else {
+      next[spec.argKey] = ids[0]
+    }
+  }
+  return next
 }
 
 export async function resolveRelatedForArgs(
@@ -540,6 +798,70 @@ export function summaryForDisplay(args: Record<string, unknown>): string {
   return formatRecordLines(args)
 }
 
+export function summaryFromRelatedTree(tree: RelatedNode[]): string {
+  const lines: string[] = []
+  for (const node of tree) {
+    const name = typeof node.record.name === 'string' ? node.record.name.trim() : ''
+    const symbol = typeof node.record.symbol === 'string' ? node.record.symbol.trim() : ''
+    const label = name ? (symbol ? `${name} (${symbol})` : name) : node.displayKey
+    lines.push(`${node.displayKey}: ${label}`)
+  }
+  return lines.join('\n')
+}
+
+export function hasWritableUpdatePayload(args: Record<string, unknown>): boolean {
+  return Object.entries(args).some(([key, value]) => {
+    if (key === 'id') {
+      return false
+    }
+    if (value === undefined || value === null || value === '') {
+      return false
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return false
+    }
+    return true
+  })
+}
+
+function parentLabelFromArgs(args: Record<string, unknown>): string | undefined {
+  const name = typeof args.name === 'string' ? args.name.trim() : ''
+  return name || undefined
+}
+
+function isUpdatePayload(args: Record<string, unknown>): boolean {
+  return typeof args.id === 'string' && args.id.trim().length > 0
+}
+
+export async function buildParentDisplayFields(
+  tool: Pick<ToolDefinition, 'name' | 'jsonSchema' | 'relatedArgs' | 'argCompletion'>,
+  args: Record<string, unknown>,
+  role: ToolRole,
+  lookupRecordById?: (tool: ToolDefinition, id: string) => Promise<Record<string, unknown> | null>,
+): Promise<ConfirmDisplayField[]> {
+  if (!isUpdatePayload(args)) {
+    return buildConfirmDisplayFields(tool, args, { role })
+  }
+  let fields = buildConfirmDisplayFields(tool, args, { role, omitMissing: true })
+  if (fields.length === 0 && lookupRecordById && typeof args.id === 'string') {
+    const record = await lookupRecordById(tool as ToolDefinition, args.id)
+    const name = typeof record?.name === 'string' ? record.name.trim() : ''
+    if (name) {
+      fields = [
+        {
+          key: 'name',
+          label: 'Name',
+          value: name,
+          missing: false,
+          editable: false,
+          inputType: 'text',
+        },
+      ]
+    }
+  }
+  return fields
+}
+
 export async function attachRelatedDisplay(
   writes: PendingWrite[],
   options: {
@@ -549,19 +871,37 @@ export async function attachRelatedDisplay(
       spec: RelatedArg,
       query: { id?: string; name?: string },
     ) => Promise<Record<string, unknown> | null>
+    lookupRecordById?: (
+      tool: ToolDefinition,
+      id: string,
+    ) => Promise<Record<string, unknown> | null>
     role: ToolRole
   },
 ): Promise<{ writes: PendingWrite[] }> {
   const nextWrites: PendingWrite[] = []
   for (const write of writes) {
     const tool = options.getTool(write.call.name)
-    if (!tool?.relatedArgs?.length) {
-      const displayArguments = displayCreateArguments(write.output.arguments, [])
+    if (!tool) {
+      nextWrites.push(write)
+      continue
+    }
+    if (!tool.relatedArgs?.length) {
+      const displayFields = await buildParentDisplayFields(
+        tool,
+        write.output.arguments,
+        options.role,
+        options.lookupRecordById,
+      )
+      const displayArguments =
+        displayFields.length > 0
+          ? displayRecordFromFields(displayFields)
+          : displayCreateArguments(tool, write.output.arguments, [])
       nextWrites.push({
         ...write,
         output: {
           ...write.output,
           displayArguments,
+          displayFields: displayFields.length > 0 ? displayFields : undefined,
           relatedTree: [],
           summary: summaryForDisplay(displayArguments),
         },
@@ -573,14 +913,37 @@ export async function attachRelatedDisplay(
       lookup: (spec, query) => options.lookup(tool, spec, query),
       role: options.role,
     })
-    const displayArguments = displayArgumentsFromTree(write.output.arguments, tool, relatedTree)
+    let displayArguments = displayArgumentsFromTree(write.output.arguments, tool, relatedTree, options.role)
+    const displayFields = await buildParentDisplayFields(
+      tool,
+      write.output.arguments,
+      options.role,
+      options.lookupRecordById,
+    )
+    if (Object.keys(displayArguments).length === 0) {
+      const parentName = parentLabelFromArgs(write.output.arguments)
+      if (parentName) {
+        displayArguments = { name: parentName }
+      } else if (typeof write.output.arguments.id === 'string' && options.lookupRecordById) {
+        const record = await options.lookupRecordById(tool, write.output.arguments.id)
+        const recordName = typeof record?.name === 'string' ? record.name.trim() : ''
+        if (recordName) {
+          displayArguments = { name: recordName }
+        }
+      }
+    }
+    let summary = summaryForDisplay(displayArguments)
+    if (!summary.trim() && relatedTree.length > 0) {
+      summary = summaryFromRelatedTree(relatedTree)
+    }
     nextWrites.push({
       call: write.call,
       output: {
         ...write.output,
         displayArguments,
+        displayFields: displayFields.length > 0 ? displayFields : undefined,
         relatedTree,
-        summary: summaryForDisplay(displayArguments),
+        summary: summary || summaryForDisplay(write.output.arguments),
       },
     })
   }

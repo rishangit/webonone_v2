@@ -10,11 +10,19 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ItemListStatus,
   TagChip,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { StatusBadge } from '@/shared/components/StatusBadge'
+import { CopyToAiMenuItem } from '@/features/shell/components/CopyToAiMenuItem'
 import type { CatalogGalleryImage, CatalogItem } from '@/shared/types/data.types'
+
+const ENTITY_KIND_BY_ITEM_TYPE = {
+  products: 'product',
+  services: 'service',
+  spaces: 'space',
+} as const
 
 function firstGalleryImageUrl(images: CatalogGalleryImage[] | null | undefined): string | null {
   const url = images?.[0]?.url
@@ -64,11 +72,13 @@ export function CatalogList({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{item.name}</p>
-                  <StatusBadge status={item.status} />
                   <span className="text-xs text-muted-foreground">
                     {t('refs', { count: item.referenceCount ?? 0 })}
                   </span>
                 </div>
+                {item.description ? (
+                  <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+                ) : null}
                 <div className="flex flex-wrap gap-1">
                   {item.tags.slice(0, 3).map((tag) => (
                     <TagChip key={tag.id} name={tag.name} color={tag.color} />
@@ -95,11 +105,19 @@ export function CatalogList({
                   <div className="flex w-full items-start gap-3">{rowBody}</div>
                 )}
               </ItemListContent>
+              <ItemListStatus>
+                <StatusBadge status={item.status} />
+              </ItemListStatus>
               {showMenu ? (
                 <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
                   {onView ? (
                     <DropdownMenuItem onClick={() => onView(item.id)}>{t('viewDetails')}</DropdownMenuItem>
                   ) : null}
+                  <CopyToAiMenuItem
+                    kind={ENTITY_KIND_BY_ITEM_TYPE[itemType]}
+                    id={item.id}
+                    label={item.name}
+                  />
                   {canDelete && item.status === 'pending' && onVerify ? (
                     <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
                   ) : null}

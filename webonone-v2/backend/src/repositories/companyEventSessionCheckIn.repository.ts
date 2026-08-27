@@ -41,6 +41,19 @@ export async function findCheckInByUser(
     .first()
 }
 
+export async function listCheckInsForUserEventsInRange(
+  userId: string,
+  eventIds: string[],
+  from: string,
+  to: string,
+): Promise<SessionCheckInRow[]> {
+  if (eventIds.length === 0) return []
+  return db<SessionCheckInRow>('company_event_session_check_ins')
+    .where({ user_id: userId })
+    .whereIn('event_id', eventIds)
+    .whereBetween('occurrence_date', [from, to])
+}
+
 export async function insertCheckIn(input: {
   id: string
   companyId: string

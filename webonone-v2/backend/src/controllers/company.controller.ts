@@ -1,6 +1,7 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { SuperAdminRequest } from '../middleware/requireSuperAdmin.js'
+import { discoverCompaniesQuerySchema } from '../schemas/companySchemas.js'
 import * as companyService from '../services/company.service.js'
 
 function handleServiceError(err: unknown, res: Response) {
@@ -34,6 +35,61 @@ export async function listMyCompanies(req: AuthenticatedRequest, res: Response) 
   try {
     const items = await companyService.listMyCompanies(req.user.id)
     res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function discoverCompanies(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  const parsed = discoverCompaniesQuerySchema.safeParse(req.query)
+  if (!parsed.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      details: parsed.error.flatten(),
+    })
+    return
+  }
+
+  try {
+    const result = await companyService.searchDiscoverableCompanies(req.user.id, parsed.data)
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getDiscoverableCompany(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  try {
+    const result = await companyService.getDiscoverableCompanyDetail(
+      req.user.id,
+      String(req.params.companyId),
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function connectCompany(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  try {
+    const result = await companyService.connectToCompany(req.user.id, String(req.params.id))
+    res.status(201).json(result)
   } catch (err) {
     handleServiceError(err, res)
   }

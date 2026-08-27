@@ -9,6 +9,7 @@ import {
   ItemListMenu,
 } from '@webonone/ui-kit'
 import type { QueueItem } from '@/shared/types/sms.types'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface QueueListProps {
   items: QueueItem[]
@@ -21,10 +22,6 @@ function statusLabel(status: QueueItem['status'], t: (k: string) => string): str
   if (status === 'pending') return t('pending')
   if (status === 'processing') return t('processing')
   return t('failed')
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString()
 }
 
 export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListProps) {
@@ -46,7 +43,7 @@ export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListPro
               <p className="font-medium">{item.toNumber}</p>
               <p className="text-xs text-muted-foreground">
                 {item.templateSlug ?? t('freeform')} · {statusLabel(item.status, t)} ·{' '}
-                {t('attemptsCount', { count: item.retryCount })} · {formatDate(item.createdAt)}
+                {t('attemptsCount', { count: item.retryCount })} · {formatDisplayDateTime(item.createdAt)}
               </p>
               {item.lastError ? (
                 <p className="mt-1 text-xs text-destructive line-clamp-2">{item.lastError}</p>

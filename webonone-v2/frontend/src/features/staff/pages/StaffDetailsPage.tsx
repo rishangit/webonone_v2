@@ -132,13 +132,13 @@ export function StaffDetailsPage() {
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">{t('detail.added')}</p>
               <p className="text-sm text-foreground">
-                {formatLocaleDateTime(detail.createdAt, undefined, i18n.language)}
+                {formatLocaleDateTime(detail.createdAt, i18n.language)}
               </p>
             </div>
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">{t('detail.updated')}</p>
               <p className="text-sm text-foreground">
-                {formatLocaleDateTime(detail.updatedAt, undefined, i18n.language)}
+                {formatLocaleDateTime(detail.updatedAt, i18n.language)}
               </p>
             </div>
           </CardContent>

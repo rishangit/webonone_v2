@@ -9,8 +9,10 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ItemListStatus,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { CopyToAiMenuItem } from '@/features/shell/components/CopyToAiMenuItem'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import type { Unit } from '@/shared/types/data.types'
@@ -46,11 +48,13 @@ export function UnitsList({ items, onEdit, onDeleted, onVerify, canMutate }: Uni
                 <p className="font-medium">
                   {t('nameWithSymbol', { name: item.name, symbol: item.symbol })}
                 </p>
-                <StatusBadge status={item.status} />
                 <span className="text-xs text-muted-foreground">
                   {t('refs', { count: item.referenceCount ?? 0 })}
                 </span>
               </div>
+              {item.description ? (
+                <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+              ) : null}
               <p className="text-xs text-muted-foreground">
                 {item.isBase ? t('baseUnitKind') : t('derivedKind')}
               </p>
@@ -67,10 +71,14 @@ export function UnitsList({ items, onEdit, onDeleted, onVerify, canMutate }: Uni
                   {rowBody}
                 </button>
               </ItemListContent>
+              <ItemListStatus>
+                <StatusBadge status={item.status} />
+              </ItemListStatus>
               <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
                 <DropdownMenuItem onClick={() => openDetails(item.id)}>
                   {t('viewDetails')}
                 </DropdownMenuItem>
+                <CopyToAiMenuItem kind="unit" id={item.id} label={item.name} />
                 {canMutate && item.status === 'pending' && onVerify ? (
                   <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
                 ) : null}

@@ -17,15 +17,8 @@ import {
   resolveSessionTokenId,
   type UserHistoryItem,
 } from '@/features/users/services/userHistoryApi'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import type { IdentityUserDetail } from '@/features/users/types'
-
-function formatWhen(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString()
-  } catch {
-    return iso
-  }
-}
 
 function historyTitle(item: UserHistoryItem): string {
   if (item.kind === 'form_submission') return item.formName
@@ -138,7 +131,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-sm font-medium">{historyTitle(item)}</p>
                         <p className="text-xs text-muted-foreground">{historySubtitle(item, t)}</p>
-                        <p className="text-xs text-muted-foreground">{formatWhen(when)}</p>
+                        <p className="text-xs text-muted-foreground">{formatDisplayDateTime(when)}</p>
                       </div>
                       <span
                         className={cn(
@@ -153,7 +146,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-sm font-medium">{historyTitle(item)}</p>
                         <p className="text-xs text-muted-foreground">{historySubtitle(item, t)}</p>
-                        <p className="text-xs text-muted-foreground">{formatWhen(when)}</p>
+                        <p className="text-xs text-muted-foreground">{formatDisplayDateTime(when)}</p>
                       </div>
                       <span
                         className={cn(

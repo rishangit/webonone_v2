@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import { Home, Image, MessageCircle, MoreVertical, Palette, Settings, ClipboardPaste } from 'lucide-react'
+import { formatPickerDateTime } from '../../../package/src/lib/displayDateFormat'
 import {
   Alert,
   AlertDescription,
@@ -288,9 +289,20 @@ function ConfirmItemListDemo() {
     {
       id: '1',
       status: 'pending_confirmation',
-      record: { name: 'GeneralPractice', description: 'Primary-care services.' },
-      confirmedLabel: 'GeneralPractice added',
-      canceledLabel: 'GeneralPractice canceled',
+      record: {
+        Name: 'Dental Checkup and Cleaning',
+        'Time mode': 'duration',
+        'Duration (minutes)': '—',
+        Status: 'pending',
+      },
+      displayFields: [
+        { key: 'name', label: 'Name', value: 'Dental Checkup and Cleaning', missing: false, editable: false, inputType: 'text' },
+        { key: 'time_mode', label: 'Time mode', value: 'duration', missing: false, editable: false, inputType: 'text' },
+        { key: 'duration_minutes', label: 'Duration (minutes)', value: '—', missing: true, editable: true, inputType: 'number' },
+        { key: 'status', label: 'Status', value: 'pending', missing: false, editable: false, inputType: 'text' },
+      ],
+      confirmedLabel: 'Dental Checkup and Cleaning added',
+      canceledLabel: 'Dental Checkup and Cleaning canceled',
     },
     {
       id: '2',
@@ -385,7 +397,7 @@ function FullCalendarDemo() {
         onAnchorDateChange={setAnchorDate}
         events={sampleEvents}
         onSlotClick={(range) =>
-          setSelection(`Slot ${range.start.toLocaleString()} – ${range.end.toLocaleString()}`)
+          setSelection(`Slot ${formatPickerDateTime(range.start)} – ${formatPickerDateTime(range.end)}`)
         }
         onEventClick={(event) => setSelection(`Event: ${event.title}`)}
       />
@@ -760,12 +772,19 @@ export function ComponentsPage() {
         <div className="space-y-4 overflow-hidden rounded-lg border">
           <AppHeader />
           <AppHeader
+            locale="en"
+            onLocaleChange={(next) => toast({ title: `Language: ${next}` })}
+            labels={{ language: 'Language', english: 'English', sinhala: 'සිංහල' }}
+          />
+          <AppHeader
             user={{
               displayName: 'Jane Doe',
               email: 'jane@example.com',
               avatarUrl: demoAvatarUsers[1].src,
               role: 'company_admin',
             }}
+            locale="en"
+            onLocaleChange={(next) => toast({ title: `Language: ${next}` })}
             onProfileClick={() => toast({ title: 'Open profile' })}
             onLogout={() => toast({ title: 'Logged out' })}
           />

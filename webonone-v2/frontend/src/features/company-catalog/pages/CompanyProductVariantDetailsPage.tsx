@@ -22,12 +22,7 @@ import {
   formatLibraryAttributeValueLabel,
   type LibraryProductVariant,
 } from '../services/dataLibraryApi'
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
@@ -39,7 +34,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 export function CompanyProductVariantDetailsPage() {
-  const { t } = useTranslation('catalog')
+  const { t, i18n } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const { productId = '', variantId = '' } = useParams()
   const navigate = useNavigate()
@@ -148,8 +143,14 @@ export function CompanyProductVariantDetailsPage() {
                 <CardDescription>{t('variantDetail.meta.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label={t('variantDetail.created')} value={formatTimestamp(variant.createdAt)} />
-                <ReadOnlyField label={t('variantDetail.updated')} value={formatTimestamp(variant.updatedAt)} />
+                <ReadOnlyField
+                  label={t('variantDetail.created')}
+                  value={formatLocaleDateTime(variant.createdAt, i18n.language)}
+                />
+                <ReadOnlyField
+                  label={t('variantDetail.updated')}
+                  value={formatLocaleDateTime(variant.updatedAt, i18n.language)}
+                />
               </CardContent>
             </Card>
           </div>

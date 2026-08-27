@@ -15,7 +15,7 @@ export function TagsPage() {
       <DemoSection
         id="catalog-color-tags"
         title="Catalog color tags"
-        description="Colored pills for catalog tags (products, services, spaces, companies). Border, light tint background, solid dot, and label all use the tag color. Same chip as SelectTag selected values and detail pages."
+        description="Catalog tags (products, services, spaces, companies): # prefix and label in the tag color — no pill border or tint background. Same chip as SelectTag selected values and detail pages."
       >
         <div className="flex flex-wrap items-center gap-1.5">
           {DEMO_COLOR_TAGS.map((tag) => (

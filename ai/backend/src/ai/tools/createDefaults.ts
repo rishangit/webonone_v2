@@ -1,3 +1,8 @@
+import {
+  isPresent,
+  requiredFromSubschema,
+  schemaMatchesSubschema,
+} from './schemaMatch.js'
 import type { ToolDefinition, ToolRole } from './registry.js'
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
@@ -17,16 +22,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
-}
-
-function isPresent(value: unknown): boolean {
-  if (value === undefined || value === null) {
-    return false
-  }
-  if (typeof value === 'string') {
-    return value.trim().length > 0
-  }
-  return true
 }
 
 export function pickHexColor(
@@ -61,6 +56,33 @@ function schemaProperties(schema: Record<string, unknown>): Record<string, unkno
   return isRecord(schema.properties) ? schema.properties : {}
 }
 
+export function missingConditionalArgs(
+  schema: Record<string, unknown>,
+  args: Record<string, unknown>,
+): string[] {
+  const missing = new Set<string>()
+  const allOf = Array.isArray(schema.allOf) ? schema.allOf : []
+  for (const entry of allOf) {
+    if (!isRecord(entry)) {
+      continue
+    }
+    const ifSchema = isRecord(entry.if) ? entry.if : null
+    const thenSchema = isRecord(entry.then) ? entry.then : null
+    if (!ifSchema || !thenSchema) {
+      continue
+    }
+    if (!schemaMatchesSubschema(ifSchema, args)) {
+      continue
+    }
+    for (const key of requiredFromSubschema(thenSchema)) {
+      if (!isPresent(args[key])) {
+        missing.add(key)
+      }
+    }
+  }
+  return [...missing]
+}
+
 export function missingRequiredArgs(
   schema: Record<string, unknown>,
   args: Record<string, unknown>,
@@ -88,6 +110,18 @@ export function coercePropertyValue(prop: unknown, value: unknown): unknown {
     return undefined
   }
   if (typeof value === 'string' && !value.trim()) {
+    return undefined
+  }
+  if (isRecord(prop) && (prop.type === 'integer' || prop.type === 'number')) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return prop.type === 'integer' ? Math.trunc(value) : value
+    }
+    if (typeof value === 'string' && value.trim()) {
+      const num = Number(value.trim())
+      if (Number.isFinite(num)) {
+        return prop.type === 'integer' ? Math.trunc(num) : num
+      }
+    }
     return undefined
   }
   if (isRecord(prop) && prop.type === 'boolean') {

@@ -9,10 +9,13 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ItemListStatus,
+  normalizeHexColor,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { StatusBadge } from '@/shared/components/StatusBadge'
+import { CopyToAiMenuItem } from '@/features/shell/components/CopyToAiMenuItem'
 import type { Tag } from '@/shared/types/data.types'
 
 interface TagsListProps {
@@ -49,12 +52,16 @@ export function TagsList({
           const rowBody = (
             <>
               <div className="flex items-center gap-2">
-                <span
-                  className="inline-block h-3 w-3 rounded-full border"
-                  style={{ backgroundColor: item.color }}
-                />
-                <p className="font-medium">{item.name}</p>
-                <StatusBadge status={item.status} />
+                <p className="inline-flex items-center gap-0.5 font-medium text-foreground">
+                  <span
+                    className="font-medium"
+                    style={{ color: normalizeHexColor(item.color) }}
+                    aria-hidden
+                  >
+                    #
+                  </span>
+                  <span>{item.name}</span>
+                </p>
                 <span className="text-xs text-muted-foreground">
                   {t('refs', { count: item.referenceCount ?? 0 })}
                 </span>
@@ -75,10 +82,14 @@ export function TagsList({
                   {rowBody}
                 </button>
               </ItemListContent>
+              <ItemListStatus>
+                <StatusBadge status={item.status} />
+              </ItemListStatus>
               <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
                 <DropdownMenuItem onClick={() => openDetails(item.id)}>
                   {t('viewDetails')}
                 </DropdownMenuItem>
+                <CopyToAiMenuItem kind="tag" id={item.id} label={item.name} />
                 {canMutate && item.status === 'pending' && onVerify ? (
                   <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
                 ) : null}

@@ -23,12 +23,13 @@ import {
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { ProductVariantsTab } from '@/features/products/components/ProductVariantsTab'
+import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { productsActions } from '@/features/products/store'
 import type { ProductWizardStep } from '@/features/products/schemas/productSchemas'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
-import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const PRODUCT_DETAIL_TABS = [
   'overview',
@@ -36,12 +37,6 @@ const PRODUCT_DETAIL_TABS = [
   'attributes',
   'variants',
 ] as const satisfies readonly CatalogDetailTabId[]
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
@@ -100,13 +95,11 @@ export function ProductDetailsPage() {
         <EditableSectionCard
           title={t('singular')}
           description={t('sectionDescription')}
+          status={product.status}
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold">{product.name}</h2>
-            <StatusBadge status={product.status} />
-          </div>
+          <h2 className="text-xl font-semibold">{product.name}</h2>
           <ReadOnlyField
             label={t('common:description')}
             value={product.description?.trim() ? product.description : t('noDescription')}
@@ -138,8 +131,8 @@ export function ProductDetailsPage() {
             <CardDescription>{t('metadataDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ReadOnlyField label={t('created')} value={formatTimestamp(product.createdAt)} />
-            <ReadOnlyField label={t('updated')} value={formatTimestamp(product.updatedAt)} />
+            <ReadOnlyField label={t('created')} value={formatDisplayDateTime(product.createdAt)} />
+            <ReadOnlyField label={t('updated')} value={formatDisplayDateTime(product.updatedAt)} />
             <ReadOnlyField
               label={t('references')}
               value={String(product.referenceCount ?? 0)}
@@ -156,6 +149,9 @@ export function ProductDetailsPage() {
       description={t('details')}
       onBack={() => goToList('products')}
       backLabel={t('common:back')}
+      actions={
+        product ? <CopyToAiButton kind="product" id={product.id} label={product.name} /> : undefined
+      }
     >
       {detailError ? (
         <Alert variant="destructive">

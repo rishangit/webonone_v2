@@ -14,7 +14,23 @@ export type RelatedConfirmNode = {
   exists: boolean
   selected: boolean
   record: Record<string, unknown>
+  displayFields?: ConfirmDisplayField[]
   children?: RelatedConfirmNode[]
+}
+
+export type ConfirmDisplayField = {
+  key: string
+  label: string
+  value: string
+  missing: boolean
+  editable: boolean
+  inputType: 'text' | 'number'
+}
+
+export type ConfirmItemDecision = {
+  relatedSelections: Record<string, boolean>
+  argumentOverrides?: Record<string, unknown>
+  relatedArgumentOverrides?: Record<string, Record<string, unknown>>
 }
 
 export type PendingToolCall = {
@@ -24,6 +40,7 @@ export type PendingToolCall = {
   summary: string
   arguments: Record<string, unknown>
   displayArguments?: Record<string, unknown>
+  displayFields?: ConfirmDisplayField[]
   relatedTree?: RelatedConfirmNode[]
   status: 'pending_confirmation' | 'confirmed' | 'rejected'
 }
@@ -35,6 +52,8 @@ export type PendingTool = {
   summary: string
   arguments: Record<string, unknown>
   displayArguments?: Record<string, unknown>
+  displayFields?: ConfirmDisplayField[]
+  relatedTree?: RelatedConfirmNode[]
   status: 'pending_confirmation' | 'confirmed' | 'rejected'
   calls?: PendingToolCall[]
 }

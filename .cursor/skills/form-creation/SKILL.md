@@ -88,6 +88,8 @@ If the task needs new `FormField` behavior or kit exports, change **`ui-kit/` fi
 
 Use **`DatePicker`** — not `Input type="date"`. State as `Date | undefined`; convert to API strings with local start/end-of-day helpers.
 
+**Display** (read-only labels, list subtitles, detail fields): format with [date-display skill](../date-display/SKILL.md) → **`Oct 10, 2026`** — do not show raw ISO or unconfigured `toLocaleDateString()` in the UI.
+
 ```tsx
 <FormField label="From date" htmlFor="history-from">
   <DatePicker id="history-from" withIcon value={from} onChange={setFrom} placeholder="Start date" />

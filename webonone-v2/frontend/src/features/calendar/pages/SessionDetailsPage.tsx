@@ -53,8 +53,15 @@ import {
 } from '@/features/session/utils/canAccessCompanySession'
 import { ReassignSessionStaffDialog } from '@/features/calendar/components/ReassignSessionStaffDialog'
 import { sessionTokensApi } from '@/features/calendar/services/sessionTokensApi'
+import { SessionControlTimingField } from '@/features/calendar/components/SessionControlTimingField'
 import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOccurrences'
+import {
+  buildScheduledSessionInstant,
+  resolveSessionControlEnded,
+  resolveSessionControlStarted,
+} from '@/features/calendar/utils/sessionControlTiming'
 import { tokensAtWorkflowStep } from '@/features/calendar/utils/workflowStepQueue'
+import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
@@ -66,15 +73,6 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-foreground">{value}</p>
     </div>
   )
-}
-
-function formatOccurrenceDate(ymd: string): string {
-  const date = new Date(`${ymd}T12:00:00`)
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
 }
 
 function weekdayLabel(ymd: string): string {
@@ -151,10 +149,11 @@ export function SessionDetailsPage() {
   const [attendeeSubmissionId, setAttendeeSubmissionId] = useState<string | null>(null)
   const lastActionStatus = useRef(actionStatus)
   const isPersonal = isPersonalCalendarSession(activeRole, activeCompanyId)
-  const { t } = useTranslation('calendar')
+  const { t, i18n } = useTranslation('calendar')
   const [sessionTab, setSessionTab] = useState('overview')
   const [workflowItems, setWorkflowItems] = useState<ServiceWorkflowItem[]>([])
   const [completingTokenId, setCompletingTokenId] = useState<string | null>(null)
+  const [now, setNow] = useState(() => new Date())
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? 'Loading session…' : null)
@@ -200,6 +199,11 @@ export function SessionDetailsPage() {
   useEffect(() => {
     if (detail?.timeMode === 'duration') setSessionTab('overview')
   }, [detail?.timeMode])
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
 
   useEffect(() => {
     if (!detail?.serviceId) {
@@ -311,7 +315,10 @@ export function SessionDetailsPage() {
       if (lastAction === 'start') toast({ title: 'Session started' })
       if (lastAction === 'call-next') toast({ title: 'Next token called' })
       if (lastAction === 'call-previous') toast({ title: 'Moved to previous token' })
-      if (lastAction === 'end') toast({ title: 'Session ended' })
+      if (lastAction === 'end') {
+        toast({ title: 'Session ended' })
+        setIssueOpen(false)
+      }
       dispatch(sessionTokensActions.resetActionStatus())
     }
     if (actionError) {
@@ -439,6 +446,7 @@ export function SessionDetailsPage() {
   const showAttendee =
     isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
   const canOperateSession = canAccessCompanySession(activeRole, activeCompanyId) && !sessionIssue
+  const canIssueTokens = canOperateSession && runStatus !== 'ended'
   const canManageSession = canManageCompanyEvents(activeRole, activeCompanyId)
   const canEditSessionSchedule =
     canChangeSession(activeRole, activeCompanyId, isAssignedStaff) && runStatus === 'scheduled'
@@ -463,7 +471,26 @@ export function SessionDetailsPage() {
       : detail.attendeeUserId
         ? 1
         : 0
-  const titleDate = formatOccurrenceDate(session.occurrenceDate)
+  const titleDate = formatCalendarYmd(session.occurrenceDate, i18n.language)
+  const scheduledStartIso = buildScheduledSessionInstant(
+    session.occurrenceDate,
+    effectiveStartTime,
+  )
+  const scheduledEndIso = buildScheduledSessionInstant(
+    session.occurrenceDate,
+    effectiveEndTime,
+  )
+  const sessionControlTimingInput = {
+    runStatus,
+    now,
+    language: i18n.language,
+    scheduledStartIso,
+    scheduledEndIso,
+    startedAt: run?.startedAt,
+    endedAt: run?.endedAt,
+  }
+  const startedControlDisplay = resolveSessionControlStarted(sessionControlTimingInput)
+  const endedControlDisplay = resolveSessionControlEnded(sessionControlTimingInput)
   const formTemplateId = detail.formTemplateId
   const serviceId = detail.serviceId
   const serviceName = detail.serviceName
@@ -760,13 +787,15 @@ export function SessionDetailsPage() {
                 <div className="space-y-1.5">
                   <CardTitle className="text-lg">Tokens</CardTitle>
                   <CardDescription>
-                    Queue tokens issued for users at this session
+                    {runStatus === 'ended'
+                      ? t('sessionDetail.tokens.endedDescription')
+                      : t('sessionDetail.tokens.description')}
                   </CardDescription>
                 </div>
-                {canOperateSession ? (
+                {canIssueTokens ? (
                   <Button type="button" size="sm" onClick={() => setIssueOpen(true)}>
                     <Plus className="h-4 w-4" aria-hidden />
-                    Issue new token
+                    {t('sessionDetail.tokens.issueNew')}
                   </Button>
                 ) : null}
               </CardHeader>
@@ -783,7 +812,22 @@ export function SessionDetailsPage() {
                   <ItemList>
                     {overviewTokens.map((token) => {
                       const isCheckedIn = checkedInUserIds.has(token.userId)
-                      const notCheckedIn = token.status === 'waiting' && !isCheckedIn
+                      const tokenStatusTag =
+                        token.status === 'waiting' ? (
+                          isCheckedIn ? (
+                            <StatusTag variant="verified">
+                              {t('session.tokenStatus.checkedIn')}
+                            </StatusTag>
+                          ) : (
+                            <StatusTag variant="pending">
+                              {t('session.tokenStatus.notCheckedIn')}
+                            </StatusTag>
+                          )
+                        ) : (
+                          <StatusTag variant={TOKEN_STATUS_VARIANT[token.status]}>
+                            {TOKEN_STATUS_LABEL[token.status]}
+                          </StatusTag>
+                        )
                       return (
                       <ItemListItem
                         key={token.id}
@@ -808,19 +852,7 @@ export function SessionDetailsPage() {
                               </p>
                             </div>
                             <div className="flex shrink-0 flex-col items-end gap-1">
-                              <StatusTag variant={TOKEN_STATUS_VARIANT[token.status]}>
-                                {TOKEN_STATUS_LABEL[token.status]}
-                              </StatusTag>
-                              {isCheckedIn ? (
-                                <StatusTag variant="verified">
-                                  {t('session.tokenStatus.checkedIn')}
-                                </StatusTag>
-                              ) : null}
-                              {notCheckedIn ? (
-                                <StatusTag variant="pending">
-                                  {t('session.tokenStatus.notCheckedIn')}
-                                </StatusTag>
-                              ) : null}
+                              {tokenStatusTag}
                             </div>
                           </div>
                         </ItemListContent>
@@ -837,14 +869,35 @@ export function SessionDetailsPage() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Session controls</CardTitle>
+              <CardTitle className="text-lg">{t('sessionDetail.controls.title')}</CardTitle>
               <CardDescription>
                 {isDuration
-                  ? 'Start or end this appointment session'
-                  : 'Start the session. Operate the queue on workflow steps that enable it.'}
+                  ? t('sessionDetail.controls.descriptionDuration')
+                  : t('sessionDetail.controls.descriptionWindow')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {t('sessionDetail.controls.status')}
+                  </p>
+                  <StatusTag variant={RUN_STATUS_VARIANT[runStatus]}>
+                    {RUN_STATUS_LABEL[runStatus]}
+                  </StatusTag>
+                </div>
+                <SessionControlTimingField
+                  label={t('sessionDetail.controls.startedAt')}
+                  display={startedControlDisplay}
+                  t={t}
+                />
+                <SessionControlTimingField
+                  label={t('sessionDetail.controls.endedAt')}
+                  display={endedControlDisplay}
+                  t={t}
+                />
+              </div>
+
               {canOperateSession && runStatus === 'scheduled' && sessionKey ? (
                 <Button
                   type="button"
@@ -853,24 +906,26 @@ export function SessionDetailsPage() {
                   disabled={actionBusy}
                   onClick={() => dispatch(sessionTokensActions.startRequested(sessionKey))}
                 >
-                  Start session
+                  {t('sessionDetail.controls.startSession')}
                 </Button>
               ) : null}
 
               {!isDuration && runStatus === 'started' ? (
                 <p className="text-sm text-muted-foreground">
-                  Use Previous and Next on workflow steps that have session queue enabled.
+                  {t('sessionDetail.controls.queueHint')}
                 </p>
               ) : null}
 
               {isDuration && runStatus === 'started' ? (
                 <p className="text-sm text-muted-foreground">
-                  Session is in progress for the assigned attendee.
+                  {t('sessionDetail.controls.durationInProgress')}
                 </p>
               ) : null}
 
               {isDuration && runStatus === 'ended' ? (
-                <p className="text-sm text-muted-foreground">This session has ended.</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('sessionDetail.controls.durationEnded')}
+                </p>
               ) : null}
             </CardContent>
           </Card>
@@ -893,12 +948,6 @@ export function SessionDetailsPage() {
                 originalStartTime={detail.startTime}
                 originalEndTime={detail.endTime}
               />
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Status</p>
-                <StatusTag variant={RUN_STATUS_VARIANT[runStatus]}>
-                  {RUN_STATUS_LABEL[runStatus]}
-                </StatusTag>
-              </div>
             </CardContent>
           </Card>
 
@@ -1008,7 +1057,10 @@ export function SessionDetailsPage() {
             const item =
               workflowItems.find((entry) => entry.id === sessionTab) ?? workflowItems[0]
             if (!item) return null
-            const atStep = tokensAtWorkflowStep(tokens, item.id)
+            const atStep = tokensAtWorkflowStep(tokens, item.id, {
+              itemKind: item.kind,
+              checkedInUserIds,
+            })
             const stepTokens =
               item.kind === 'check_in'
                 ? overviewTokens.filter(
@@ -1058,7 +1110,7 @@ export function SessionDetailsPage() {
         )}
       </SessionDetailSectionTabs>
 
-      {!isDuration && canOperateSession ? (
+      {!isDuration && canIssueTokens ? (
         <IssueTokenDialog
           open={issueOpen}
           eventId={eventId}

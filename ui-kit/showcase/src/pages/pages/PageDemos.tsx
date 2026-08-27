@@ -21,6 +21,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ItemListStatus,
   itemListRowActiveClassName,
   Label,
   ListAddButton,
@@ -35,6 +36,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  StatusTag,
   Switch,
   Textarea,
   mapZodIssuesToFieldErrors,
@@ -194,6 +196,9 @@ function ListPageDemoBody({
                     <p className="font-medium">{item.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">{item.status}</p>
                   </ItemListContent>
+                  <ItemListStatus>
+                    <StatusTag variant={item.status === 'active' ? 'verified' : 'unverified'} />
+                  </ItemListStatus>
                   <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
                     <DropdownMenuItem
                       onClick={(e) => {

@@ -5,6 +5,7 @@ import { Input, inputFocusRingClassName, inputGroupFocusRingClassName } from './
 import { InputGroup, InputGroupIcon } from './InputGroup'
 import { Popover, PopoverContent, PopoverTrigger } from './Popover'
 import { Calendar } from './Calendar'
+import { formatPickerDate } from '../lib/displayDateFormat'
 
 export interface DatePickerProps {
   value?: Date
@@ -16,10 +17,8 @@ export interface DatePickerProps {
   withIcon?: boolean
   className?: string
   id?: string
-}
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString()
+  /** BCP-47 tag for the visible date label (default `en-US`). */
+  locale?: string
 }
 
 function DatePicker({
@@ -31,6 +30,7 @@ function DatePicker({
   withIcon = false,
   className,
   id,
+  locale = 'en-US',
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -42,7 +42,7 @@ function DatePicker({
         inGroup
         readOnly
         disabled={disabled}
-        value={value ? formatDate(value) : ''}
+        value={value ? formatPickerDate(value, locale) : ''}
         placeholder={placeholder}
         className="cursor-pointer"
         tabIndex={-1}
@@ -53,7 +53,7 @@ function DatePicker({
       id={id}
       readOnly
       disabled={disabled}
-      value={value ? formatDate(value) : ''}
+      value={value ? formatPickerDate(value, locale) : ''}
       placeholder={placeholder}
       className="cursor-pointer"
       tabIndex={-1}

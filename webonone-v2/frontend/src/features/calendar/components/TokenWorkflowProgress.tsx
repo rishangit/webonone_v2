@@ -29,8 +29,8 @@ export function TokenWorkflowProgress({
             : step.kind === 'done'
               ? t('workflowProgress.done', { defaultValue: step.label })
               : step.label
-        const isCurrent = index === progress.currentIndex
-        const isPast = index < progress.currentIndex
+        const isCurrent = progress.currentIndex >= 0 && index === progress.currentIndex
+        const isPast = progress.currentIndex >= 0 && index < progress.currentIndex
         return (
           <span key={step.id} className="inline-flex items-center gap-x-1">
             {index > 0 ? (

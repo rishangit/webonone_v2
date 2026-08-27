@@ -16,6 +16,7 @@ import {
   getSaleHistoryDetail,
   type SaleHistoryDetail,
 } from '@/features/users/services/userHistoryApi'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -145,7 +146,7 @@ export function HistorySaleDetailPage() {
               <DetailField label={t('history.payment')} value={detail.paymentMethod} />
               <DetailField
                 label={t('history.submitted')}
-                value={new Date(detail.createdAt).toLocaleString()}
+                value={formatDisplayDateTime(detail.createdAt)}
               />
             </CardContent>
           </Card>

@@ -41,6 +41,24 @@ export type MyCompanySummary = {
   approvedAt: string | null
 }
 
+export type DiscoverCompanySummary = {
+  id: string
+  name: string
+  logoUrl: string | null
+  description: string | null
+  city: string | null
+  country: string | null
+  contactEmail: string | null
+}
+
+export type DiscoverCompaniesResult = {
+  items: DiscoverCompanySummary[]
+  total: number
+  page: number
+  pageSize: number
+  hasMore: boolean
+}
+
 export type CompanyGalleryImage = {
   mediaId: string
   url: string
@@ -149,6 +167,39 @@ export const companyApi = {
   async listMyCompanies() {
     const data = await apiClient<{ items: MyCompanySummary[] }>('/company/me/companies')
     return data.items
+  },
+
+  async searchDiscoverableCompanies(params: {
+    q?: string
+    page?: number
+    pageSize?: number
+  }) {
+    const search = new URLSearchParams()
+    if (params.q?.trim()) {
+      search.set('q', params.q.trim())
+    }
+    if (params.page !== undefined) {
+      search.set('page', String(params.page))
+    }
+    if (params.pageSize !== undefined) {
+      search.set('pageSize', String(params.pageSize))
+    }
+    const query = search.toString()
+    return apiClient<DiscoverCompaniesResult>(
+      `/company/discover${query ? `?${query}` : ''}`,
+    )
+  },
+
+  async connectCompany(companyId: string) {
+    return apiClient<MyCompanySummary>(`/company/${companyId}/connect`, {
+      method: 'POST',
+    })
+  },
+
+  async getDiscoverableCompany(companyId: string) {
+    return apiClient<CompanyDetail>(
+      `/company/discover/${encodeURIComponent(companyId)}`,
+    )
   },
 
   async registerCompany(body: RegisterCompanyFormValues) {

@@ -109,7 +109,9 @@
     "cancelChange": "අවලංගු කරන්න",
     "pendingChange": "නව අයිතමයක් යෙදීමට එකින් එක තහවුරු කරන්න.",
     "itemAdded": "{{name}} එකතු කරන ලදී",
-    "itemCanceled": "{{name}} අවලංගු කරන ලදී"
+    "itemCanceled": "{{name}} අවලංගු කරන ලදී",
+    "mentionLoading": "දත්ත පුස්තකාලය සොයමින්…",
+    "mentionEmpty": "ගැලපෙන අයිතම නැත"
   },
   "notifications": {
     "open": "දැනුම්දීම්",

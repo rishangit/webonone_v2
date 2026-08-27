@@ -20,6 +20,7 @@ import {
 import { StockFormDialog } from '@/features/products/components/StockFormDialog'
 import { dataApi } from '@/shared/services/dataApi'
 import type { ProductVariantStock } from '@/shared/types/data.types'
+import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 
 type ProductVariantStocksCardProps = {
   productId: string
@@ -32,12 +33,6 @@ function formatMoney(value: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 6,
   })
-}
-
-function formatDate(value: string): string {
-  const date = new Date(`${value}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString()
 }
 
 export function ProductVariantStocksCard({
@@ -130,8 +125,8 @@ export function ProductVariantStocksCard({
                       {t('stock.costSell', { cost: formatMoney(stock.costPrice), sell: formatMoney(stock.sellPrice) })}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
-                      {t('stock.purchased', { date: formatDate(stock.purchaseDate) })}
-                      {stock.expiredDate ? t('stock.expires', { date: formatDate(stock.expiredDate) }) : ''}
+                      {t('stock.purchased', { date: formatCalendarYmd(stock.purchaseDate) })}
+                      {stock.expiredDate ? t('stock.expires', { date: formatCalendarYmd(stock.expiredDate) }) : ''}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
                       {t('stock.supplierLine', { name: stock.supplierDisplayName })}

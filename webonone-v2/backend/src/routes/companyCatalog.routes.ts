@@ -18,6 +18,12 @@ import {
 const router = Router()
 
 router.get(
+  '/company/discover/:companyId/catalog/:kind',
+  requireAuth,
+  companyCatalogController.listDiscoverableCatalogForCompany,
+)
+
+router.get(
   '/company/me/catalog/services/with-form',
   requireCompanySession,
   companyCatalogController.listServicesWithForm,

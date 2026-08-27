@@ -24,7 +24,7 @@ import type {
 } from '@/features/calendar/types/event.types'
 import { expandEventOccurrences } from '@/features/calendar/utils/expandEventOccurrences'
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
-import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
+import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 export type SessionListTab = 'upcoming' | 'past'
 
@@ -79,11 +79,7 @@ function SessionRow({
         >
           <div className="min-w-0 space-y-1">
             <p className="truncate font-medium text-foreground">
-              {formatLocaleDate(
-                `${session.occurrenceDate}T12:00:00`,
-                { year: 'numeric', month: 'short', day: 'numeric' },
-                language,
-              )}
+              {formatCalendarYmd(session.occurrenceDate, language)}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {weekdayLabel(session.occurrenceDate)} · {session.startTime}–{session.endTime}

@@ -14,18 +14,13 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { UnitFormDialog } from '@/features/units/components/UnitFormDialog'
+import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { unitsActions } from '@/features/units/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
-import { StatusBadge } from '@/shared/components/StatusBadge'
 import { dataApi } from '@/shared/services/dataApi'
 import type { Unit } from '@/shared/types/data.types'
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -87,6 +82,7 @@ export function UnitDetailsPage() {
       description={t('details')}
       onBack={() => goToList('units')}
       backLabel={t('common:back')}
+      actions={unit ? <CopyToAiButton kind="unit" id={unit.id} label={unit.name} /> : undefined}
     >
       {detailError ? (
         <Alert variant="destructive">
@@ -100,6 +96,7 @@ export function UnitDetailsPage() {
             <EditableSectionCard
               title={t('singular')}
               description={t('sectionDescription')}
+              status={unit.status}
               canEdit={canEdit}
               onEdit={() => setEditOpen(true)}
             >
@@ -107,7 +104,6 @@ export function UnitDetailsPage() {
                 <h2 className="text-xl font-semibold">
                   {t('nameWithSymbol', { name: unit.name, symbol: unit.symbol })}
                 </h2>
-                <StatusBadge status={unit.status} />
               </div>
               <ReadOnlyField
                 label={t('descriptionLabel')}
@@ -146,8 +142,8 @@ export function UnitDetailsPage() {
                 <CardDescription>{t('metaDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ReadOnlyField label={t('created')} value={formatTimestamp(unit.createdAt)} />
-                <ReadOnlyField label={t('updated')} value={formatTimestamp(unit.updatedAt)} />
+                <ReadOnlyField label={t('created')} value={formatDisplayDateTime(unit.createdAt)} />
+                <ReadOnlyField label={t('updated')} value={formatDisplayDateTime(unit.updatedAt)} />
                 <ReadOnlyField
                   label={t('references')}
                   value={String(unit.referenceCount ?? 0)}

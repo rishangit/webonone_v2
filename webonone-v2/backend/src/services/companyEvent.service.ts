@@ -126,6 +126,8 @@ export type CompanyEventOccurrenceDto = CompanyEventDto & {
   effectiveStaffId: string
   effectiveStaffDisplayName: string
   sessionIssue: SessionIssueKind
+  /** Personal calendar — viewer is booked for this occurrence and has checked in. */
+  viewerCheckedIn?: boolean
 }
 
 export type SessionTokenDto = {
@@ -901,6 +903,58 @@ async function attachOccurrenceRunStatuses(
   })
 }
 
+function occurrenceCheckInKey(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+): string {
+  return `${companyId}:${eventId}:${occurrenceDate}`
+}
+
+async function attachViewerBookedCheckInStatus(
+  occurrences: CompanyEventOccurrenceDto[],
+  userId: string,
+  tokenDatesByEventId: Map<string, Set<string>>,
+  from: string,
+  to: string,
+): Promise<CompanyEventOccurrenceDto[]> {
+  if (occurrences.length === 0) return occurrences
+
+  const subjectKeys = new Set<string>()
+  for (const item of occurrences) {
+    const isAttendee = item.attendeeUserId === userId
+    const hasToken = tokenDatesByEventId.get(item.id)?.has(item.occurrenceDate) ?? false
+    if (isAttendee || hasToken) {
+      subjectKeys.add(occurrenceCheckInKey(item.companyId, item.id, item.occurrenceDate))
+    }
+  }
+  if (subjectKeys.size === 0) return occurrences
+
+  const eventIds = [...new Set(occurrences.map((item) => item.id))]
+  const checkInRows = await sessionCheckInRepo.listCheckInsForUserEventsInRange(
+    userId,
+    eventIds,
+    from,
+    to,
+  )
+  const checkedInKeys = new Set(
+    checkInRows.map((row) =>
+      occurrenceCheckInKey(row.company_id, row.event_id, toDateOnly(row.occurrence_date)),
+    ),
+  )
+
+  return occurrences.map((item) => {
+    const isAttendee = item.attendeeUserId === userId
+    const hasToken = tokenDatesByEventId.get(item.id)?.has(item.occurrenceDate) ?? false
+    if (!isAttendee && !hasToken) return item
+    const key = occurrenceCheckInKey(item.companyId, item.id, item.occurrenceDate)
+    return {
+      ...item,
+      viewerCheckedIn: checkedInKeys.has(key),
+    }
+  })
+}
+
 export type CatalogSessionItemDto = {
   eventId: string
   occurrenceDate: string
@@ -1104,6 +1158,7 @@ export async function listMyBookedEvents(
 
   if (opts.from && opts.to) {
     const occurrences: CompanyEventOccurrenceDto[] = []
+    const tokenDatesByEventId = new Map<string, Set<string>>()
     for (const event of series) {
       const expanded = expandOccurrences(event, opts.from, opts.to)
       if (event.attendeeUserId === userId) {
@@ -1113,15 +1168,23 @@ export async function listMyBookedEvents(
       const tokenDates = new Set(
         await sessionTokenRepo.listOccurrenceDatesForUserEvent(userId, event.id),
       )
+      tokenDatesByEventId.set(event.id, tokenDates)
       occurrences.push(...expanded.filter((o) => tokenDates.has(o.occurrenceDate)))
     }
     occurrences.sort((a, b) => a.start.localeCompare(b.start))
     const withStatus = await attachOccurrenceRunStatuses(occurrences, opts.from, opts.to)
+    const withCheckIn = await attachViewerBookedCheckInStatus(
+      withStatus,
+      userId,
+      tokenDatesByEventId,
+      opts.from,
+      opts.to,
+    )
     return {
-      items: withStatus,
-      total: withStatus.length,
+      items: withCheckIn,
+      total: withCheckIn.length,
       page: 1,
-      pageSize: withStatus.length || 20,
+      pageSize: withCheckIn.length || 20,
       mode: 'occurrences',
     }
   }
@@ -1829,6 +1892,10 @@ export async function createSessionToken(
   const event = await assertValidSessionOccurrence(companyId, eventId, occurrenceDate)
   assertWindowTokensAllowed(event)
   await assertSessionIsBookable(companyId, event, occurrenceDate)
+  const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
+  if (run.status === 'ended') {
+    throw serviceError('This session has already ended', 409)
+  }
 
   const userId = body.user_id.trim()
   const existing = await sessionTokenRepo.findTokenByUser(
@@ -1860,7 +1927,6 @@ export async function createSessionToken(
 
     await roleRepo.ensureCompanyCustomerMemberRole(userId, companyId, nanoid())
 
-    const run = await getOrCreateSessionRun(companyId, eventId, occurrenceDate)
     if (run.status === 'started' && !run.current_token_id) {
       const serving = await sessionTokenRepo.findServingToken(
         companyId,

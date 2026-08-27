@@ -28,6 +28,7 @@ import {
   type EventWizardStep,
 } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions } from '@/features/calendar/store'
+import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 import type { CompanyEvent, EventGalleryImage } from '@/features/calendar/types/event.types'
 import { designFormsApi } from '@/features/design/services/designFormsApi'
 import {
@@ -74,7 +75,7 @@ export function EventDetailsPage() {
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
 
-  const { t } = useTranslation('calendar')
+  const { t, i18n } = useTranslation('calendar')
   const [dialog, setDialog] = useState<{ initialStep: EventWizardStep } | null>(null)
   const [rawTab, setTab] = useDetailTabParam(EVENT_DETAIL_TAB_PARAM, 'overview')
   const tab: EventDetailTabId = rawTab === 'sessions' ? 'upcoming' : rawTab
@@ -294,11 +295,11 @@ export function EventDetailsPage() {
           <CardContent className="space-y-3">
             <DetailField
               label="Created"
-              value={new Date(detail.createdAt).toLocaleString()}
+              value={formatLocaleDateTime(detail.createdAt, i18n.language)}
             />
             <DetailField
               label="Updated"
-              value={new Date(detail.updatedAt).toLocaleString()}
+              value={formatLocaleDateTime(detail.updatedAt, i18n.language)}
             />
           </CardContent>
         </Card>

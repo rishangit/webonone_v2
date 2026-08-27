@@ -14,6 +14,9 @@ export const itemListRowClassName =
 /** 3-dot menu trigger — top-right of the row */
 export const itemListMenuClassName = 'shrink-0 self-start'
 
+/** Status / verification chip — top-right of the row, before ItemListMenu */
+export const itemListStatusClassName = 'shrink-0 self-start'
+
 /** Selected / active row — stronger border, no theme fill */
 export const itemListRowActiveClassName = 'border-primary'
 
@@ -69,4 +72,8 @@ function ItemListEmpty({ className, ...props }: React.HTMLAttributes<HTMLParagra
   )
 }
 
-export { ItemList, ItemListItem, ItemListContent, ItemListMenu, ItemListEmpty }
+function ItemListStatus({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn(itemListStatusClassName, className)} {...props} />
+}
+
+export { ItemList, ItemListItem, ItemListContent, ItemListMenu, ItemListStatus, ItemListEmpty }

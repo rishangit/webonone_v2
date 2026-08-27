@@ -13,13 +13,37 @@ import {
   uniqueCreateNameCount,
 } from '../ai/tools/extractCreateItems.js'
 import { filterToolsForContext } from '../ai/tools/filterTools.js'
-import { attachRelatedDisplay, displayCreateArguments, parseRelatedTree } from '../ai/tools/relatedArgs.js'
+import {
+  attachRelatedDisplay,
+  argsHaveRelatedHints,
+  buildParentDisplayFields,
+  buildRelatedTree,
+  displayArgumentsFromTree,
+  displayCreateArguments,
+  parseRelatedTree,
+  refreshRelatedTree,
+  summaryForDisplay,
+} from '../ai/tools/relatedArgs.js'
+import { buildConfirmDisplayFields, type ConfirmDisplayField } from '../ai/tools/confirmDisplay.js'
 import type { RelatedNode, ToolCall, ToolDefinition, ToolExecutor, ToolRegistry } from '../ai/tools/registry.js'
 import { recordsFromUnknown, withRecordOpen } from '../ai/tools/formatRecord.js'
 import { partitionUniquePendingWrites, type PendingWrite } from '../ai/tools/uniqueValues.js'
 import type { AiConversationRow, AiMessageRow, MessageRole } from '../models/db.js'
 import { HttpError } from './httpError.js'
 import type { ConversationRepository } from './conversation.repository.js'
+import {
+  formatEntityContextSupplement,
+  getUpdateToolNameForDataEntityKind,
+  resolveEntityContext,
+} from '../ai/entityContext/resolveEntityContext.js'
+import type { DataEntityContextRef, ResolvedEntityContext } from '../ai/entityContext/types.js'
+import {
+  entityRelatedRetryPrompt,
+  expandEntityRelatedCalls,
+  hasWriteToolCalls,
+  isAttributeUnitIntent,
+  isRelatedSuggestionIntent,
+} from '../ai/tools/expandEntityRelatedCalls.js'
 
 const MAX_TOOL_ROUNDS = 6
 
@@ -32,6 +56,7 @@ export type PendingToolCall = {
   summary: string
   arguments: Record<string, unknown>
   displayArguments?: Record<string, unknown>
+  displayFields?: ConfirmDisplayField[]
   relatedTree?: RelatedNode[]
   status: PendingCallStatus
 }
@@ -43,6 +68,7 @@ export type PendingTool = {
   summary: string
   arguments: Record<string, unknown>
   displayArguments?: Record<string, unknown>
+  displayFields?: ConfirmDisplayField[]
   relatedTree?: RelatedNode[]
   status: PendingCallStatus
   calls?: PendingToolCall[]
@@ -66,6 +92,7 @@ export type MessageDto = {
   createdAt: string
   pendingTool?: PendingTool | null
   resultRecords?: Record<string, unknown>[]
+  context?: DataEntityContextRef[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -97,6 +124,23 @@ function callStatus(value: unknown): PendingCallStatus {
   return 'pending_confirmation'
 }
 
+function parseDisplayFields(raw: unknown): ConfirmDisplayField[] | undefined {
+  if (!Array.isArray(raw)) {
+    return undefined
+  }
+  const fields = raw.filter(
+    (field): field is ConfirmDisplayField =>
+      isRecord(field) &&
+      typeof field.key === 'string' &&
+      typeof field.label === 'string' &&
+      typeof field.value === 'string' &&
+      typeof field.missing === 'boolean' &&
+      typeof field.editable === 'boolean' &&
+      (field.inputType === 'text' || field.inputType === 'number'),
+  )
+  return fields.length > 0 ? fields : undefined
+}
+
 function storedCallsFromPayload(payload: Record<string, unknown> | null, pending: PendingTool): PendingToolCall[] {
   const raw = payload?.calls
   if (Array.isArray(raw)) {
@@ -112,6 +156,7 @@ function storedCallsFromPayload(payload: Record<string, unknown> | null, pending
         summary: typeof entry.summary === 'string' ? entry.summary : entry.name,
         arguments: isRecord(entry.arguments) ? entry.arguments : {},
         displayArguments: isRecord(entry.displayArguments) ? entry.displayArguments : undefined,
+        displayFields: parseDisplayFields(entry.displayFields),
         relatedTree: parseRelatedTree(entry.relatedTree),
         status: callStatus(entry.status),
       })
@@ -128,6 +173,7 @@ function storedCallsFromPayload(payload: Record<string, unknown> | null, pending
       summary: pending.summary,
       arguments: pending.arguments,
       displayArguments: pending.displayArguments,
+      displayFields: pending.displayFields,
       relatedTree: pending.relatedTree,
       status: pending.status,
     },
@@ -136,6 +182,69 @@ function storedCallsFromPayload(payload: Record<string, unknown> | null, pending
 
 function remainingPendingCalls(calls: PendingToolCall[]): PendingToolCall[] {
   return calls.filter((call) => call.status === 'pending_confirmation')
+}
+
+async function refreshPendingCallRelatedTree(
+  call: PendingToolCall,
+  ctx: AiRequestContext,
+  registry: ToolRegistry | undefined,
+  executor: ToolExecutor | undefined,
+): Promise<PendingToolCall> {
+  const tool = registry?.get(call.name)
+  if (!tool?.relatedArgs?.length || !executor?.lookupRelatedRecord) {
+    return call
+  }
+  const lookup = (spec: Parameters<NonNullable<ToolExecutor['lookupRelatedRecord']>>[1], query: {
+    id?: string
+    name?: string
+  }) => executor.lookupRelatedRecord!(tool, spec, ctx, query)
+
+  let tree = call.relatedTree ?? []
+  if (tree.length === 0 && argsHaveRelatedHints(tool, call.arguments)) {
+    tree = await buildRelatedTree(tool, call.arguments, {
+      getTool: (name) => registry?.get(name),
+      lookup,
+      role: ctx.role,
+    })
+  } else if (tree.length > 0) {
+    tree = await refreshRelatedTree(tool, tree, lookup, {
+      getTool: (name) => registry?.get(name),
+      role: ctx.role,
+    })
+  }
+
+  const lookupRecordById = async (item: typeof tool, id: string) => {
+    const getToolName = item.name.replace(/^update_/, 'get_')
+    const getTool = registry?.get(getToolName)
+    if (!getTool || !executor) {
+      return null
+    }
+    const result = await executor.execute(
+      { id: `lookup:${getToolName}:${id}`, name: getToolName, arguments: { id } },
+      ctx,
+      { confirmed: true },
+    )
+    if (!result.ok || !isRecord(result.output)) {
+      return null
+    }
+    const data = result.output.data
+    if (isRecord(data)) {
+      return data
+    }
+    if (typeof result.output.id === 'string') {
+      return result.output
+    }
+    return null
+  }
+  const displayFields = await buildParentDisplayFields(tool, call.arguments, ctx.role, lookupRecordById)
+  const displayArguments = displayArgumentsFromTree(call.arguments, tool, tree, ctx.role)
+  return {
+    ...call,
+    relatedTree: tree,
+    displayArguments,
+    displayFields,
+    summary: summaryForDisplay(displayArguments),
+  }
 }
 
 function pendingFromPayload(row: AiMessageRow): PendingTool | null {
@@ -158,6 +267,7 @@ function pendingFromPayload(row: AiMessageRow): PendingTool | null {
     summary: typeof payload.summary === 'string' ? payload.summary : payload.name,
     arguments: isRecord(payload.arguments) ? payload.arguments : {},
     displayArguments: isRecord(payload.displayArguments) ? payload.displayArguments : undefined,
+    displayFields: parseDisplayFields(payload.displayFields),
     relatedTree: parseRelatedTree(payload.relatedTree),
     status: payload.status,
   }
@@ -185,6 +295,51 @@ function toConversationDto(row: AiConversationRow): ConversationDto {
   }
 }
 
+function entityContextFromPayload(row: AiMessageRow): DataEntityContextRef[] | undefined {
+  if (row.role !== 'user') {
+    return undefined
+  }
+  const payload = parsePayload(row.tool_payload)
+  const raw = payload?.entityContext
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return undefined
+  }
+  const items: DataEntityContextRef[] = []
+  for (const entry of raw) {
+    if (!isRecord(entry)) {
+      continue
+    }
+    if (
+      entry.service === 'data' &&
+      typeof entry.kind === 'string' &&
+      typeof entry.id === 'string' &&
+      entry.id.length === 21
+    ) {
+      items.push({
+        service: 'data',
+        kind: entry.kind as DataEntityContextRef['kind'],
+        id: entry.id,
+        label: typeof entry.label === 'string' ? entry.label : undefined,
+      })
+    }
+  }
+  return items.length > 0 ? items : undefined
+}
+
+function dedupeEntityContext(refs: DataEntityContextRef[]): DataEntityContextRef[] {
+  const seen = new Set<string>()
+  const items: DataEntityContextRef[] = []
+  for (const ref of refs) {
+    const key = `${ref.service}:${ref.kind}:${ref.id}`
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+    items.push(ref)
+  }
+  return items
+}
+
 function toMessageDto(row: AiMessageRow, resultRecords?: Record<string, unknown>[]): MessageDto {
   const pendingTool = row.role === 'assistant' ? pendingFromPayload(row) : null
   return {
@@ -198,6 +353,7 @@ function toMessageDto(row: AiMessageRow, resultRecords?: Record<string, unknown>
       row.role === 'assistant' && !pendingTool && resultRecords && resultRecords.length > 0
         ? resultRecords
         : undefined,
+    context: entityContextFromPayload(row),
   }
 }
 
@@ -394,10 +550,15 @@ export function createConversationService(deps: {
     conversation: AiConversationRow,
     provider: AiProvider,
     baseSystemPrompt: string,
+    entityContextSupplement = '',
+    resolvedEntityContext: ResolvedEntityContext[] = [],
   ): Promise<AiMessageRow> => {
     const tools = filterToolsForContext(deps.registry?.list() ?? [], ctx)
     const providerTools = toProviderTools(tools)
-    const systemPrompt = withAvailableToolsPrompt(baseSystemPrompt, tools)
+    const promptBase = entityContextSupplement
+      ? `${baseSystemPrompt}\n\n${entityContextSupplement}`
+      : baseSystemPrompt
+    const systemPrompt = withAvailableToolsPrompt(promptBase, tools)
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
       const history = await deps.repository.listMessages(conversation.id)
@@ -485,6 +646,79 @@ export function createConversationService(deps: {
         if (requested && uniqueCreateNameCount(toolCalls) > 0) {
           leadContent = ''
         }
+
+        const primaryEntityContext = resolvedEntityContext.find((item) => item.record && !item.error)
+        const shouldExpandEntityRelated =
+          resolvedEntityContext.length > 0 &&
+          !hasWriteToolCalls(toolCalls, tools) &&
+          (isRelatedSuggestionIntent(userMessage) ||
+            Boolean(
+              primaryEntityContext && isAttributeUnitIntent(userMessage, primaryEntityContext.ref.kind),
+            ))
+
+        if (shouldExpandEntityRelated) {
+          const hadWrites = hasWriteToolCalls(toolCalls, tools)
+          toolCalls = expandEntityRelatedCalls({
+            content: completion.content,
+            tools,
+            userMessage,
+            resolved: resolvedEntityContext,
+            existingCalls: toolCalls,
+          })
+          if (hasWriteToolCalls(toolCalls, tools) && !hadWrites) {
+            leadContent = ''
+          }
+
+          if (!hasWriteToolCalls(toolCalls, tools)) {
+            const primary = resolvedEntityContext.find((item) => item.record)
+            if (primary) {
+              const updateToolName = getUpdateToolNameForDataEntityKind(primary.ref.kind)
+              const updateTool = tools.find((tool) => tool.name === updateToolName)
+              if (updateTool?.relatedArgs?.length) {
+                const retryPrompt = entityRelatedRetryPrompt(
+                  resolvedEntityContext,
+                  updateTool,
+                  userMessage,
+                )
+                const retry = await provider.complete({
+                  systemPrompt: `${systemPrompt} ${retryPrompt}`,
+                  messages: [
+                    ...historyToProviderMessages(history),
+                    {
+                      role: 'assistant',
+                      content: completion.content || 'Prepared suggestions.',
+                    },
+                    {
+                      role: 'user',
+                      content: retryPrompt,
+                    },
+                  ],
+                  tools: providerTools.length ? providerTools : undefined,
+                })
+                if (retry.toolCalls?.length) {
+                  const writeCalls = retry.toolCalls.filter((call) => {
+                    const tool = tools.find((entry) => entry.name === call.name)
+                    return tool && (tool.riskLevel === 'write' || tool.riskLevel === 'destructive')
+                  })
+                  if (writeCalls.length > 0) {
+                    toolCalls = [...toolCalls, ...writeCalls]
+                    leadContent = ''
+                  }
+                }
+                toolCalls = expandEntityRelatedCalls({
+                  content: retry.content ?? completion.content,
+                  tools,
+                  userMessage,
+                  resolved: resolvedEntityContext,
+                  existingCalls: toolCalls,
+                })
+                if (hasWriteToolCalls(toolCalls, tools)) {
+                  leadContent = ''
+                }
+              }
+            }
+          }
+        }
       }
       if (toolCalls.length === 0) {
         return insertRow({
@@ -534,6 +768,29 @@ export function createConversationService(deps: {
           getTool: (name) => deps.registry?.get(name),
           lookup: (tool, spec, query) =>
             deps.executor!.lookupRelatedRecord!(tool, spec, ctx, query),
+          lookupRecordById: async (tool, id) => {
+            const getToolName = tool.name.replace(/^update_/, 'get_')
+            const getTool = deps.registry?.get(getToolName)
+            if (!getTool || !deps.executor) {
+              return null
+            }
+            const result = await deps.executor.execute(
+              { id: `lookup:${getToolName}:${id}`, name: getToolName, arguments: { id } },
+              ctx,
+              { confirmed: true },
+            )
+            if (!result.ok || !isRecord(result.output)) {
+              return null
+            }
+            const data = result.output.data
+            if (isRecord(data)) {
+              return data
+            }
+            if (typeof result.output.id === 'string') {
+              return result.output
+            }
+            return null
+          },
           role: ctx.role,
         })
         pendingWrites.length = 0
@@ -595,16 +852,24 @@ export function createConversationService(deps: {
       const skippedExisting = [...new Set(partitioned.skippedExisting)]
       const firstWrite = partitioned.keep[0]
       if (firstWrite) {
-        const calls = partitioned.keep.map(({ call, output }) => ({
-          toolCallId: call.id,
-          name: output.name,
-          riskLevel: output.riskLevel,
-          arguments: output.arguments,
-          displayArguments: output.displayArguments ?? displayCreateArguments(output.arguments, []),
-          relatedTree: output.relatedTree ?? [],
-          summary: output.summary,
-          status: 'pending_confirmation' as const,
-        }))
+        const calls = partitioned.keep.map(({ call, output }) => {
+          const tool = deps.registry?.get(output.name)
+          return {
+            toolCallId: call.id,
+            name: output.name,
+            riskLevel: output.riskLevel,
+            arguments: output.arguments,
+            displayArguments:
+              output.displayArguments ??
+              (tool ? displayCreateArguments(tool, output.arguments, []) : {}),
+            displayFields:
+              output.displayFields ??
+              (tool ? buildConfirmDisplayFields(tool, output.arguments, { role: ctx.role }) : undefined),
+            relatedTree: output.relatedTree ?? [],
+            summary: output.summary,
+            status: 'pending_confirmation' as const,
+          }
+        })
         const summary = calls.map((item) => item.summary).join('\n')
         const destructive = partitioned.keep.some((item) => item.output.riskLevel === 'destructive')
         const skippedLine =
@@ -626,6 +891,7 @@ export function createConversationService(deps: {
             riskLevel: firstWrite.output.riskLevel,
             arguments: firstWrite.output.arguments,
             displayArguments: firstWrite.output.displayArguments,
+            displayFields: firstWrite.output.displayFields,
             relatedTree: firstWrite.output.relatedTree ?? [],
             summary,
             calls,
@@ -697,8 +963,14 @@ export function createConversationService(deps: {
       return { items: messagesToDtos(rows, listedTools()) }
     },
 
-    async sendMessage(ctx: AiRequestContext, conversationId: string, content: string) {
+    async sendMessage(
+      ctx: AiRequestContext,
+      conversationId: string,
+      content: string,
+      context?: DataEntityContextRef[],
+    ) {
       const conversation = await getOwnedOrThrow(conversationId, ctx)
+      const entityContext = dedupeEntityContext(context ?? [])
       const userMessage = await insertRow({
         conversation_id: conversation.id,
         company_id: conversation.company_id,
@@ -706,7 +978,7 @@ export function createConversationService(deps: {
         content,
         tool_name: null,
         tool_call_id: null,
-        tool_payload: null,
+        tool_payload: entityContext.length > 0 ? { entityContext } : null,
       })
 
       if (!conversation.title) {
@@ -715,11 +987,19 @@ export function createConversationService(deps: {
 
       try {
         const { provider, systemPrompt } = await deps.resolveProvider(ctx)
+        const resolved = await resolveEntityContext(entityContext, {
+          registry: deps.registry,
+          executor: deps.executor,
+          ctx,
+        })
+        const entityContextSupplement = formatEntityContextSupplement(resolved)
         const assistantMessage = await runProviderLoop(
           { ...ctx, conversationId: conversation.id },
           conversation,
           provider,
           systemPrompt,
+          entityContextSupplement,
+          resolved,
         )
         return {
           userMessage: toMessageDto(userMessage),
@@ -737,7 +1017,11 @@ export function createConversationService(deps: {
       ctx: AiRequestContext,
       conversationId: string,
       toolCallId: string,
-      relatedSelections?: Record<string, boolean>,
+      options?: {
+        relatedSelections?: Record<string, boolean>
+        argumentOverrides?: Record<string, unknown>
+        relatedArgumentOverrides?: Record<string, Record<string, unknown>>
+      },
     ) {
       const conversation = await getOwnedOrThrow(conversationId, ctx)
       const related = await deps.repository.listMessagesByToolCallId(conversation.id, toolCallId)
@@ -786,7 +1070,9 @@ export function createConversationService(deps: {
       const result = await deps.executor.execute(call, ctx, {
         confirmed: true,
         relatedTree: target.relatedTree,
-        relatedSelections,
+        relatedSelections: options?.relatedSelections,
+        argumentOverrides: options?.argumentOverrides,
+        relatedArgumentOverrides: options?.relatedArgumentOverrides,
       })
       const output = result.output && isRecord(result.output) ? result.output : { output: result.output }
       if (!result.ok) {
@@ -814,6 +1100,12 @@ export function createConversationService(deps: {
         })
       }
       target.status = 'confirmed'
+      for (const item of stored) {
+        if (item.status === 'pending_confirmation') {
+          const refreshed = await refreshPendingCallRelatedTree(item, ctx, deps.registry, deps.executor)
+          Object.assign(item, refreshed)
+        }
+      }
       const remaining = remainingPendingCalls(stored)
       const anyOk = stored.some((item) => item.status === 'confirmed')
       const nextPayload = {

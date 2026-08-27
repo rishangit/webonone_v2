@@ -1,3 +1,5 @@
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+
 export function formatLkr(amountMinor: number): string {
   const major = amountMinor / 100
   return `Rs ${major.toLocaleString('en-LK', {
@@ -6,12 +8,9 @@ export function formatLkr(amountMinor: number): string {
   })}`
 }
 
-export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-LK', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+export function formatDate(iso: string, language?: string): string {
+  const formatted = formatDisplayDate(iso, language)
+  return formatted || '—'
 }
 
 export function formatPeriod(startIso: string, endIso: string): string {

@@ -22,14 +22,15 @@ import {
   type CatalogDetailTabId,
 } from '@/features/catalog/components/CatalogDetailSectionTabs'
 import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
+import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { spacesActions } from '@/features/spaces/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
-import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 type CatalogDetailKind = 'spaces'
 
@@ -56,12 +57,6 @@ const CONFIG: Record<
     select: (s) => s.spaces,
     actions: spacesActions,
   },
-}
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
@@ -119,13 +114,11 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
         <EditableSectionCard
           title={config.singular}
           description="Name, status, and description"
+          status={item.status}
           canEdit={canEdit}
           onEdit={() => setEditOpen(true)}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold">{item.name}</h2>
-            <StatusBadge status={item.status} />
-          </div>
+          <h2 className="text-xl font-semibold">{item.name}</h2>
           <ReadOnlyField
             label="Description"
             value={item.description?.trim() ? item.description : '—'}
@@ -157,8 +150,8 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
             <CardDescription>Record timestamps and references</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ReadOnlyField label="Created" value={formatTimestamp(item.createdAt)} />
-            <ReadOnlyField label="Updated" value={formatTimestamp(item.updatedAt)} />
+            <ReadOnlyField label="Created" value={formatDisplayDateTime(item.createdAt)} />
+            <ReadOnlyField label="Updated" value={formatDisplayDateTime(item.updatedAt)} />
             <ReadOnlyField
               label="References"
               value={String(item.referenceCount ?? 0)}
@@ -175,6 +168,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
       description={`${config.singular} details`}
       onBack={() => goToList(kind)}
       backLabel={t('common:back')}
+      actions={item ? <CopyToAiButton kind="space" id={item.id} label={item.name} /> : undefined}
     >
       {detailError ? (
         <Alert variant="destructive">

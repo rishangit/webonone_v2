@@ -25,7 +25,7 @@ import {
   dashboardSessionKey,
   type DashboardEventAudience,
 } from '@/features/home/utils/dashboardRange'
-import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
+import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 function emptyTodayKey(
   audience: DashboardEventAudience,
@@ -93,13 +93,7 @@ export function HomePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">{t('todayTitle')}</CardTitle>
-                <CardDescription>
-                  {formatLocaleDate(
-                    `${range.today}T12:00:00`,
-                    { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
-                    i18n.language,
-                  )}
-                </CardDescription>
+                <CardDescription>{formatCalendarYmd(range.today, i18n.language)}</CardDescription>
               </CardHeader>
               <CardContent>
                 {!awaitingFirstLoad ? (

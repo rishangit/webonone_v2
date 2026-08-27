@@ -38,6 +38,8 @@ Keep the type in sync on peer `capabilityTypes.ts` and `ai/backend/src/ai/tools/
 
 ## `relatedArgs` (optional, on write tools)
 
+Applies to **create and update** write tools. When the user attaches entity context and asks to suggest or add missing related items, peers must publish `relatedArgs` on the matching `update_*` tool so the confirm row and nested checkbox tree appear instead of prose-only suggestions.
+
 ```ts
 relatedArgs?: {
   argKey: string
@@ -72,7 +74,7 @@ Owning service publishes a frontend path template (`/services/{id}`, `/data/{kin
 
 `DEFAULT_SYSTEM_PROMPT` and `withAvailableToolsPrompt` stay generic. On every create suggestion, fill **all** `jsonSchema.properties` (required and optional), not only `required`. Remainder tables use `suggestCreateKeys` (required first, then the rest). List related records with matching `list_*` tools first; copy `*_id` / `*_ids` from those results — never invent IDs. When the model lists create-ready records, call `create_*` once per item. If the user asks for N items, park N confirm rows. Models often emit one `create_*` call; AI then asks for a markdown table of the remaining items (all schema columns, no tools) and lifts those rows. Existing unique names are skipped. Never ask which items to create in text — the shared Confirm ItemList is the picker (Confirm / Skip per row). Field rules belong on the tool `description`. Do not switch on tool names such as `create_data_tag`.
 
-Peer `create_*` `description` must tell the model to suggest every published property. Related records use names (via `relatedArgs`), not opaque ids, with matching `list_*` tools. Suggest only related records that fit the parent — do not dump the whole library.
+Peer `create_*` and `update_*` `description` must tell the model to suggest every published property. Related records use names (via `relatedArgs`), not opaque ids, with matching `list_*` tools. Suggest only related records that fit the parent — do not dump the whole library. When entity context is attached and the user asks to fill missing related items, call the matching `update_*` write tool (not prose) so Confirm/Skip UI can park the change.
 
 Reference: `data/backend/src/ai/capabilities.ts` (`create_data_tag`), `ai/backend/src/ai/tools/createDefaults.ts`.
 
