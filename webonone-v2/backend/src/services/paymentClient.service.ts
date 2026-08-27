@@ -25,6 +25,7 @@ function resolveInternalPaymentUrl(path: string): string | null {
 export type UpsertPaymentCompanyInput = {
   companyId: string
   name: string
+  logoUrl?: string | null
   activatedAt?: string | null
   status: 'active' | 'inactive'
 }
@@ -49,6 +50,7 @@ export async function upsertPaymentCompany(input: UpsertPaymentCompanyInput): Pr
     const response = await postInternalPayment('/api/v1/internal/companies/upsert', {
       companyId: input.companyId,
       name: input.name,
+      logoUrl: input.logoUrl ?? undefined,
       activatedAt: input.activatedAt ?? undefined,
       status: input.status,
     })
@@ -68,6 +70,7 @@ export async function upsertPaymentCompanyStrict(input: UpsertPaymentCompanyInpu
   const response = await postInternalPayment('/api/v1/internal/companies/upsert', {
     companyId: input.companyId,
     name: input.name,
+    logoUrl: input.logoUrl ?? undefined,
     activatedAt: input.activatedAt ?? undefined,
     status: input.status,
   })

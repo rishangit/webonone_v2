@@ -45,7 +45,7 @@
   "actionsFor": "Actions for {{name}}",
   "impersonation": {
     "notice": "Impersonating: {{name}}",
-    "stop": "Stop impersonating"
+    "stop": "Stop"
   },
   "roles": {
     "label": "Role",

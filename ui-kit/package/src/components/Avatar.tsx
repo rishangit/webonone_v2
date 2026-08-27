@@ -24,7 +24,7 @@ function Avatar({ className, size, src, alt, fallback, ...props }: AvatarProps) 
           className="aspect-square h-full w-full object-cover"
         />
       ) : null}
-      <AvatarPrimitive.Fallback className="flex h-full w-full items-center justify-center rounded-full bg-muted font-medium text-muted-foreground">
+      <AvatarPrimitive.Fallback className="flex h-full w-full items-center justify-center rounded-[inherit] bg-muted font-medium text-muted-foreground">
         {initials}
       </AvatarPrimitive.Fallback>
     </AvatarPrimitive.Root>

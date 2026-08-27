@@ -5,7 +5,7 @@ import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
 import { Button } from './Button'
 import { isStatusTagVariant, StatusTag } from './StatusTag'
-import { shellContentPaddingX } from '../layouts/shellContentPadding'
+import { shellContentPaddingX, APP_HEADER_NOTICE_OFFSET_CLASS } from '../layouts/shellContentPadding'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -127,7 +127,7 @@ interface AppHeaderProps {
   actions?: ReactNode
   /** Optional header actions after locale (e.g. sign-in), rendered before the user avatar. */
   trailingActions?: ReactNode
-  /** Full-width notice row below the main header bar (e.g. impersonation warning). */
+  /** Full-width notice overlay at the top of the header (e.g. impersonation warning). */
   notice?: ReactNode
   className?: string
 }
@@ -166,8 +166,25 @@ function AppHeader({
   const logoutLabel = labels?.logout ?? 'Log out'
 
   return (
-    <header className={cn('glass-card border-b', className)}>
-      <div className={cn('flex h-14 w-full items-center justify-between', shellContentPaddingX)}>
+    <header
+      className={cn(
+        'relative shrink-0 glass-card border-b',
+        notice ? APP_HEADER_NOTICE_OFFSET_CLASS : undefined,
+        className,
+      )}
+    >
+      {notice ? (
+        <div
+          className={cn(
+            'glass-card absolute inset-x-0 top-0 z-20 border-b border-warning/30 py-1 text-xs text-foreground shadow-sm',
+            shellContentPaddingX,
+          )}
+        >
+          <div className="pointer-events-none absolute inset-0 bg-warning/10" aria-hidden />
+          <div className="relative">{notice}</div>
+        </div>
+      ) : null}
+      <div className={cn('relative z-10 flex h-14 w-full items-center justify-between', shellContentPaddingX)}>
         <div className="flex min-w-0 items-center gap-2">
           {showMenuButton ? (
             <button
@@ -199,18 +216,21 @@ function AppHeader({
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
+                  <Button
                     type="button"
-                    className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 overflow-hidden p-0"
                     aria-label="User menu"
                   >
                     <Avatar
                       size="sm"
+                      className="h-full w-full rounded-md border-0"
                       src={user.avatarUrl}
                       alt={user.displayName}
                       fallback={getInitials(user.displayName)}
                     />
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 overflow-x-hidden shadow-lg">
                   {onProfileClick ? (
@@ -254,17 +274,6 @@ function AppHeader({
           </div>
         ) : null}
       </div>
-      {notice ? (
-        <div
-          className={cn(
-            'border-t border-warning/30 bg-warning/10 text-sm font-medium text-foreground',
-            shellContentPaddingX,
-            'py-2',
-          )}
-        >
-          {notice}
-        </div>
-      ) : null}
     </header>
   )
 }

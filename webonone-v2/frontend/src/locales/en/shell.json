@@ -80,7 +80,7 @@
   },
   "impersonation": {
     "notice": "Impersonating: {{name}}",
-    "stop": "Stop impersonating",
+    "stop": "Stop",
     "stopSuccess": "Returned to your super admin session",
     "stopFailed": "Failed to stop impersonation"
   },

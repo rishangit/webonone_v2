@@ -85,6 +85,7 @@ const SESSION_COMPANY_PLATFORM_SLUGS = [
   'session_schedule_changed',
   'appointment_booked',
   'appointment_reminder_24h',
+  'sale_bill_completed',
 ] as const
 
 /** Platform slugs company owners may see/customize as defaults (1.13.6). */

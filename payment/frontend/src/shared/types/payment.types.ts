@@ -6,6 +6,7 @@ export type InvoiceListItem = {
   paymentReference: string
   companyId: string
   companyName: string
+  companyLogoUrl: string | null
   kind: 'system_subscription'
   status: InvoiceStatus
   currency: string

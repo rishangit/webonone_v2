@@ -4,6 +4,7 @@ import type { NavConfigItem } from '../types/nav'
 import { AppHeader, type AppHeaderLocale, type AppHeaderProps, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
 import { AppSidebar, type SidebarSession } from './AppSidebar'
+import { appShellHeaderTopClass } from './shellContentPadding'
 
 const SIDEBAR_COLLAPSED_KEY = 'webonone:sidebar-collapsed'
 
@@ -41,7 +42,7 @@ interface AppShellProps {
   aside?: ReactNode
   /** Optional header actions, rendered before the user avatar. */
   headerActions?: ReactNode
-  /** Optional notice row below the main header bar. */
+  /** Optional notice overlay at the top of the header. */
   headerNotice?: ReactNode
   className?: string
 }
@@ -124,6 +125,8 @@ function AppShell({
   }, [lockDocumentScroll])
 
   const logoNode = logo ?? <BrandLogo href={logoHref} />
+  const hasHeaderNotice = Boolean(headerNotice)
+  const headerTopClass = appShellHeaderTopClass(hasHeaderNotice)
 
   return (
     <div className={cn('flex h-dvh flex-col overflow-hidden', className)}>
@@ -152,7 +155,7 @@ function AppShell({
         {mobileOpen && !isDesktop ? (
           <button
             type="button"
-            className="fixed inset-0 top-14 z-30 bg-black/50 md:hidden"
+            className={cn('fixed inset-x-0 bottom-0 z-30 bg-black/50 md:hidden', headerTopClass)}
             aria-label="Close navigation"
             onClick={() => setMobileOpen(false)}
           />
@@ -168,6 +171,7 @@ function AppShell({
           onNavItemPrefetch={onNavItemPrefetch}
           accordionNavGroups={accordionNavGroups}
           sidebarSession={sidebarSession}
+          hasHeaderNotice={hasHeaderNotice}
         />
         <main
           id="main-content"

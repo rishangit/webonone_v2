@@ -186,6 +186,7 @@ export type InvoiceListItem = {
   paymentReference: string
   companyId: string
   companyName: string
+  companyLogoUrl: string | null
   kind: 'system_subscription'
   status: InvoiceStatus
   currency: string
@@ -202,7 +203,7 @@ export type InvoiceListItem = {
 }
 
 function mapInvoiceRow(
-  row: PaymentInvoiceRow & { company_name?: string },
+  row: PaymentInvoiceRow & { company_name?: string; company_logo_url?: string | null },
 ): InvoiceListItem {
   return {
     id: row.id,
@@ -210,6 +211,7 @@ function mapInvoiceRow(
     paymentReference: row.payment_reference,
     companyId: row.company_id,
     companyName: row.company_name ?? '',
+    companyLogoUrl: row.company_logo_url ?? null,
     kind: 'system_subscription',
     status: row.status,
     currency: row.currency,
@@ -267,6 +269,7 @@ export async function listInvoices(query: InvoiceListQuery) {
     .select(
       'i.*',
       db.raw('c.name as company_name'),
+      db.raw('c.logo_url as company_logo_url'),
     )
     .orderBy('i.period_start', 'desc')
     .orderBy('i.created_at', 'desc')
@@ -285,7 +288,11 @@ export async function getInvoiceById(id: string) {
   const row = await db('payment_invoices as i')
     .leftJoin('payment_companies as c', 'c.id', 'i.company_id')
     .where('i.id', id)
-    .select('i.*', db.raw('c.name as company_name'))
+    .select(
+      'i.*',
+      db.raw('c.name as company_name'),
+      db.raw('c.logo_url as company_logo_url'),
+    )
     .first()
 
   if (!row) {

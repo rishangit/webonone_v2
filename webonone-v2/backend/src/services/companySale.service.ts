@@ -7,6 +7,7 @@ import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as companyRepo from '../repositories/company.repository.js'
 import * as saleRepo from '../repositories/companySale.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
+import { notifySaleBillCompleted } from './saleBillNotify.service.js'
 import type {
   CompleteSaleBody,
   CreateSaleBody,
@@ -266,7 +267,9 @@ export async function createSale(
     )
   })
 
-  return getSale(companyId, saleId)
+  const completed = await getSale(companyId, saleId)
+  notifySaleBillCompleted(completed)
+  return completed
 }
 
 export async function getDraftSaleForSessionToken(
@@ -394,7 +397,9 @@ export async function completeSale(
     })
   })
 
-  return getSale(companyId, saleId)
+  const completed = await getSale(companyId, saleId)
+  notifySaleBillCompleted(completed)
+  return completed
 }
 
 export async function listSales(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { cn } from '../lib/utils'
+import { appShellHeaderTopClass, appShellSidebarHeightClass } from './shellContentPadding'
 import type { NavConfigItem } from '../types/nav'
 import { Card } from '../components/Card'
 import { isStatusTagVariant, StatusTag } from '../components/StatusTag'
@@ -62,6 +63,8 @@ interface AppSidebarProps {
    * Shown in the mobile drawer when open (and not collapsed).
    */
   sidebarSession?: SidebarSession | null
+  /** When true, offsets fixed/sticky sidebar below the header notice overlay. */
+  hasHeaderNotice?: boolean
   className?: string
 }
 
@@ -127,6 +130,7 @@ function AppSidebar({
   onNavItemPrefetch,
   accordionNavGroups = false,
   sidebarSession,
+  hasHeaderNotice = false,
   className,
 }: AppSidebarProps) {
   const [expandedGroupLabel, setExpandedGroupLabel] = useState<string | null>(() =>
@@ -160,12 +164,17 @@ function AppSidebar({
 
   const showSessionCard = Boolean(sidebarSession && !collapsed)
   const showCollapsedLogo = Boolean(sidebarSession && collapsed)
+  const headerTopClass = appShellHeaderTopClass(hasHeaderNotice)
+  const sidebarHeightClass = appShellSidebarHeightClass(hasHeaderNotice)
 
   return (
     <aside
       className={cn(
-        'glass-card fixed bottom-0 left-0 top-14 z-40 flex flex-col border-r transition-[width,transform] duration-200',
-        'w-64 md:sticky md:top-14 md:z-auto md:h-[calc(100vh-3.5rem)] md:translate-x-0',
+        'glass-card fixed bottom-0 left-0 z-40 flex flex-col border-r transition-[width,transform] duration-200',
+        headerTopClass,
+        'w-64 md:sticky md:z-auto md:translate-x-0',
+        sidebarHeightClass,
+        hasHeaderNotice ? 'md:top-20' : 'md:top-14',
         mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         collapsed ? 'md:w-16' : 'md:w-64',
         className,

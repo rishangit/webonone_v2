@@ -25,6 +25,7 @@ async function main() {
     await upsertPaymentCompanyStrict({
       companyId: company.id,
       name: company.name,
+      logoUrl: company.logoUrl,
       activatedAt: active ? (company.approvedAt ?? new Date().toISOString()) : null,
       status: active ? 'active' : 'inactive',
     })

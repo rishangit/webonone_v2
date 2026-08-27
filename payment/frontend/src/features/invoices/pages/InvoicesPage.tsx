@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   FeaturePage,
   FormField,
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -27,7 +28,6 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { ConfirmPaymentByReferencePanel } from '@/features/invoices/components/ConfirmPaymentByReferencePanel'
 import { invoicesActions } from '@/features/invoices/store'
 import { paymentApi } from '@/shared/services/paymentApi'
 import type { InvoiceListItem, InvoiceStatus } from '@/shared/types/payment.types'
@@ -205,10 +205,6 @@ export function InvoicesPage() {
         </Alert>
       )}
 
-      {role === 'super_admin' ? (
-        <ConfirmPaymentByReferencePanel onConfirmed={() => reload()} />
-      ) : null}
-
       {!loading ? (
         <ListPageBody>
           <div className="flex-1">
@@ -224,23 +220,37 @@ export function InvoicesPage() {
                         className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         onClick={() => navigate(`/invoices/${invoice.id}`)}
                       >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium">
-                            {invoice.companyName?.trim() || t('unknownCompany')}
-                          </p>
-                          <StatusTag variant={statusVariant(invoice.status)}>
-                            {t(statusLabelKey(invoice.status))}
-                          </StatusTag>
+                        <div className="flex items-start gap-3">
+                          <ImagePreview
+                            src={invoice.companyLogoUrl}
+                            alt={
+                              invoice.companyName?.trim() || t('unknownCompany')
+                            }
+                            mode="view"
+                            className="h-10 w-10 rounded-md"
+                          />
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="truncate font-medium">
+                                {invoice.companyName?.trim() || t('unknownCompany')}
+                              </p>
+                              <StatusTag variant={statusVariant(invoice.status)}>
+                                {t(statusLabelKey(invoice.status))}
+                              </StatusTag>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {invoice.invoiceNumber} ·{' '}
+                              {t('refLabel', { ref: invoice.paymentReference })}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatPeriod(invoice.periodStart, invoice.periodEnd)}
+                            </p>
+                            <p className="text-sm">
+                              {formatLkr(invoice.amountMinor)} ·{' '}
+                              {t('dueLabel', { date: formatDate(invoice.dueAt) })}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {invoice.invoiceNumber} · {t('refLabel', { ref: invoice.paymentReference })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatPeriod(invoice.periodStart, invoice.periodEnd)}
-                        </p>
-                        <p className="mt-1 text-sm">
-                          {formatLkr(invoice.amountMinor)} · {t('dueLabel', { date: formatDate(invoice.dueAt) })}
-                        </p>
                       </button>
                     </ItemListContent>
                     <ItemListMenu

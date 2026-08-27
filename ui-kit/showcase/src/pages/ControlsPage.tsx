@@ -349,7 +349,7 @@ export function ControlsPage() {
       <DemoSection
         id="tabs"
         title="Tabs"
-        description="Classic tab strip: no bottom border on the list; selected tab shows a top primary border."
+        description="Single-line tab strip with a bottom rule; selected tab shows a secondary border. On narrow screens, swipe the tab row horizontally to reach more tabs."
       >
         <Tabs defaultValue="account">
           <TabsList>
@@ -367,6 +367,44 @@ export function ControlsPage() {
             <p className="text-sm text-muted-foreground">Billing settings panel content.</p>
           </TabsContent>
         </Tabs>
+
+        <div className="max-w-xs space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Many tabs in a narrow container — swipe left or right to scroll the strip.
+          </p>
+          <Tabs defaultValue="overview">
+            <TabsList aria-label="Catalog sections">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="gallery">Gallery</TabsTrigger>
+              <TabsTrigger value="attributes">Attributes</TabsTrigger>
+              <TabsTrigger value="variants">Variants</TabsTrigger>
+              <TabsTrigger value="workflow">Workflow</TabsTrigger>
+              <TabsTrigger value="pricing">Pricing</TabsTrigger>
+              <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview">
+              <p className="text-sm text-muted-foreground">Overview panel content.</p>
+            </TabsContent>
+            <TabsContent value="gallery">
+              <p className="text-sm text-muted-foreground">Gallery panel content.</p>
+            </TabsContent>
+            <TabsContent value="attributes">
+              <p className="text-sm text-muted-foreground">Attributes panel content.</p>
+            </TabsContent>
+            <TabsContent value="variants">
+              <p className="text-sm text-muted-foreground">Variants panel content.</p>
+            </TabsContent>
+            <TabsContent value="workflow">
+              <p className="text-sm text-muted-foreground">Workflow panel content.</p>
+            </TabsContent>
+            <TabsContent value="pricing">
+              <p className="text-sm text-muted-foreground">Pricing panel content.</p>
+            </TabsContent>
+            <TabsContent value="inventory">
+              <p className="text-sm text-muted-foreground">Inventory panel content.</p>
+            </TabsContent>
+          </Tabs>
+        </div>
       </DemoSection>
 
       <DemoSection id="text-area" title="Text area">

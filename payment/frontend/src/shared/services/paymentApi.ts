@@ -41,21 +41,10 @@ export const paymentApi = {
   getInvoice: (id: string) =>
     apiClient<{ invoice: InvoiceDetail }>(`/invoices/${id}`).then((r) => r.invoice),
 
-  getInvoiceByReference: (reference: string) =>
-    apiClient<{ invoice: InvoiceDetail }>(
-      `/invoices/by-reference/${encodeURIComponent(reference.trim())}`,
-    ).then((r) => r.invoice),
-
   markPaid: (id: string, paidAt?: string | null) =>
     apiClient<{ invoice: InvoiceDetail }>(`/invoices/${id}/mark-paid`, {
       method: 'POST',
       body: JSON.stringify({ paidAt: paidAt ?? null }),
-    }).then((r) => r.invoice),
-
-  markPaidByReference: (paymentReference: string, paidAt?: string | null) =>
-    apiClient<{ invoice: InvoiceDetail }>('/invoices/mark-paid-by-reference', {
-      method: 'POST',
-      body: JSON.stringify({ paymentReference, paidAt: paidAt ?? null }),
     }).then((r) => r.invoice),
 
   voidInvoice: (id: string, reason?: string) =>

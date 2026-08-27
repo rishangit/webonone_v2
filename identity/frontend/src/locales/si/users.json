@@ -45,7 +45,7 @@
   "actionsFor": "{{name}} සඳහා ක්‍රියා",
   "impersonation": {
     "notice": "ප්‍රතිරූපණය කරමින්: {{name}}",
-    "stop": "ප්‍රතිරූපණය නවතන්න"
+    "stop": "නවතන්න"
   },
   "roles": {
     "label": "භූමිකාව",

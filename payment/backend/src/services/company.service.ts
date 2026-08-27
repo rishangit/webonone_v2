@@ -13,6 +13,7 @@ import { generateInvoicesForSubscription } from './invoice.service.js'
 export const upsertCompanySchema = z.object({
   companyId: z.string().min(1).max(21),
   name: z.string().min(1).max(255).optional(),
+  logoUrl: z.union([z.string().url().max(2048), z.null()]).optional(),
   activatedAt: z.string().datetime().optional().nullable(),
   status: z.enum(['active', 'inactive']),
 })
@@ -45,10 +46,13 @@ export async function upsertCompany(body: UpsertCompanyBody) {
         : null
 
   const name = body.name?.trim() || existing?.name || 'Company'
+  const logoUrl =
+    body.logoUrl !== undefined ? body.logoUrl : existing?.logo_url ?? null
 
   if (existing) {
     await db('payment_companies').where({ id: body.companyId }).update({
       name,
+      logo_url: logoUrl,
       status: body.status,
       activated_at: activatedAt,
       updated_at: db.fn.now(3),
@@ -57,6 +61,7 @@ export async function upsertCompany(body: UpsertCompanyBody) {
     await db('payment_companies').insert({
       id: body.companyId,
       name,
+      logo_url: logoUrl,
       status: body.status,
       activated_at: activatedAt,
       created_at: db.fn.now(3),

@@ -22,6 +22,7 @@ export type PlanInterval = 'month'
 export interface PaymentCompanyRow {
   id: string
   name: string
+  logo_url: string | null
   activated_at: Date | null
   status: CompanyStatus
   created_at: Date

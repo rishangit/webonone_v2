@@ -29,6 +29,20 @@ function httpError(message: string, statusCode: number): Error & { statusCode: n
   return err
 }
 
+function syncPaymentCompanyMirror(
+  company: repo.CompanyRow,
+  status: 'active' | 'inactive',
+  activatedAt?: string | null,
+): void {
+  void upsertPaymentCompany({
+    companyId: company.id,
+    name: company.name,
+    logoUrl: rewriteOptionalMediaFileUrl(company.logo_url),
+    activatedAt: activatedAt ?? undefined,
+    status,
+  })
+}
+
 function toNumberOrNull(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined || value === '') return null
   const n = typeof value === 'number' ? value : Number(value)
@@ -640,6 +654,14 @@ export async function updateCompanyProfile(
     throw httpError('Company not found', 404)
   }
 
+  if (updated.status === 'approved') {
+    syncPaymentCompanyMirror(
+      updated,
+      'active',
+      updated.approved_at ? updated.approved_at.toISOString() : null,
+    )
+  }
+
   if (superAdmin && !membership) {
     return toCompanyDetailWithTags(updated)
   }
@@ -739,12 +761,11 @@ export async function updateCompanyStatus(
     }).catch((err) => {
       console.error('[company] in-app approved notify failed:', err)
     })
-    void upsertPaymentCompany({
-      companyId: company.id,
-      name: company.name,
-      activatedAt: company.approved_at ? company.approved_at.toISOString() : new Date().toISOString(),
-      status: 'active',
-    })
+    void syncPaymentCompanyMirror(
+      company,
+      'active',
+      company.approved_at ? company.approved_at.toISOString() : new Date().toISOString(),
+    )
   } else if (input.status === 'rejected') {
     sendCompanyEmail('company_rejected', company)
     void notifyCompanyStatusChange({
@@ -755,17 +776,9 @@ export async function updateCompanyStatus(
     }).catch((err) => {
       console.error('[company] in-app rejected notify failed:', err)
     })
-    void upsertPaymentCompany({
-      companyId: company.id,
-      name: company.name,
-      status: 'inactive',
-    })
+    void syncPaymentCompanyMirror(company, 'inactive')
   } else {
-    void upsertPaymentCompany({
-      companyId: company.id,
-      name: company.name,
-      status: 'inactive',
-    })
+    void syncPaymentCompanyMirror(company, 'inactive')
   }
 
   return toCompanyWithMembership(company, role)

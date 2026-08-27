@@ -57,12 +57,6 @@
   "failedSubmitProof": "Failed to submit payment proof",
   "failedLoad": "Failed to load invoice",
   "couldNotCopy": "Could not copy reference",
-  "confirmByReference": "Confirm payment by reference",
-  "lookUp": "Look up",
-  "enterReference": "Enter a payment reference",
-  "notFoundByReference": "Invoice not found for that reference",
-  "alreadyPaid": "This invoice is already paid.",
-  "cannotMarkPaid": "This invoice cannot be marked paid.",
   "uploadReceipt": "Upload invoice receipt",
   "waitingAuth": "Waiting for authentication…"
 }
