@@ -13,8 +13,8 @@ export const createStockBodySchema = z
     sell_price: z.coerce.number().min(0),
     purchase_date: dateString,
     expired_date: dateString.nullable().optional(),
-    supplier_user_id: z.string().trim().length(21),
-    supplier_display_name: z.string().trim().min(1).max(255),
+    supplier_user_id: z.string().trim().length(21).nullable().optional(),
+    supplier_display_name: z.string().trim().min(1).max(255).nullable().optional(),
     supplier_email: z.string().trim().email().max(255).nullable().optional(),
   })
   .superRefine((value, ctx) => {
@@ -23,6 +23,16 @@ export const createStockBodySchema = z
         code: z.ZodIssueCode.custom,
         path: ['expired_date'],
         message: 'Expired date must be on or after purchase date',
+      })
+    }
+
+    const hasSupplierId = value.supplier_user_id != null && value.supplier_user_id !== ''
+    const hasSupplierName = value.supplier_display_name != null && value.supplier_display_name !== ''
+    if (hasSupplierId !== hasSupplierName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['supplier_user_id'],
+        message: 'Supplier user and display name must both be provided',
       })
     }
   })

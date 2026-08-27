@@ -78,6 +78,17 @@ export type SessionTokenHistoryDetail = {
     currentIndex: number
     done: boolean
   }
+  sales: SessionTokenHistorySale[]
+}
+
+export type SessionTokenHistorySale = {
+  id: string
+  billNumber: string
+  total: number
+  currency: string
+  status: string
+  paymentMethod: string
+  createdAt: string
 }
 
 export type FormSubmissionDetail = {

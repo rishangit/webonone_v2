@@ -10,6 +10,7 @@ import {
   loadWorkflowStepDefs,
   type TokenWorkflowProgressDto,
 } from './tokenWorkflowProgress.js'
+import { listSalesForSessionToken, type SaleListItemDto } from './companySale.service.js'
 
 export type UserActivityType = 'session_token' | 'event_attendee' | 'event_staff' | 'sale'
 
@@ -45,6 +46,7 @@ export type SessionTokenHistoryDetail = {
   staffDisplayName: string
   createdAt: string
   workflowProgress: TokenWorkflowProgressDto
+  sales: SaleListItemDto[]
 }
 
 const DISPLAY_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -195,8 +197,8 @@ export async function listUserActivity(input: {
     return {
       id: `sale:${sale.id}`,
       type: 'sale' as const,
-      title: sale.bill_number,
-      subtitle: `${sale.currency} ${total.toFixed(2)} · ${sale.payment_method}`,
+      title: sale.bill_number ?? 'Bill',
+      subtitle: `${sale.currency} ${total.toFixed(2)} · ${sale.payment_method ?? '—'}`,
       status: sale.status,
       occurredAt: toIso(sale.created_at),
       meta: {
@@ -250,6 +252,7 @@ export async function getSessionTokenHistoryDetail(input: {
   }
 
   const defs = await loadWorkflowStepDefs(input.companyId, event.service_id)
+  const sales = await listSalesForSessionToken(input.companyId, token.id)
   return {
     tokenId: token.id,
     tokenNumber: token.token_number,
@@ -272,5 +275,6 @@ export async function getSessionTokenHistoryDetail(input: {
     staffDisplayName: event.staff_display_name,
     createdAt: toIso(token.created_at),
     workflowProgress: buildWorkflowProgress(defs, token),
+    sales,
   }
 }

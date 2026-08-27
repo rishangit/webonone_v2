@@ -92,6 +92,7 @@ export function MemberIssueTokenDialog({
         {
           user_display_name: user.displayName,
           user_email: user.email ?? null,
+          user_avatar_url: user.avatarUrl ?? null,
         },
       )
       toast({

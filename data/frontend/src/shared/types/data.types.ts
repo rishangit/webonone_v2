@@ -134,8 +134,8 @@ export interface ProductVariantStock {
   sellPrice: number
   purchaseDate: string
   expiredDate: string | null
-  supplierUserId: string
-  supplierDisplayName: string
+  supplierUserId: string | null
+  supplierDisplayName: string | null
   supplierEmail: string | null
   isActive: boolean
   createdAt: string

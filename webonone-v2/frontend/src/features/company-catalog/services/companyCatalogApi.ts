@@ -192,7 +192,11 @@ export const companyCatalogApi = {
     serviceId: string,
     eventId: string,
     occurrenceDate: string,
-    body: { user_display_name: string; user_email?: string | null },
+    body: {
+      user_display_name: string
+      user_email?: string | null
+      user_avatar_url?: string | null
+    },
   ) {
     return apiClient<CatalogSessionTokenItem>(
       memberSessionTokenPath(companyId, serviceId, eventId, occurrenceDate),

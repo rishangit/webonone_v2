@@ -172,6 +172,9 @@ export const dataApi = {
       `/products/${productId}/variants/${variantId}/stocks`,
     )
   },
+  suggestStockBatchNumber() {
+    return apiClient<{ batchNumber: string }>('/stocks/suggested-batch-number')
+  },
   createProductVariantStock(
     productId: string,
     variantId: string,
@@ -182,8 +185,8 @@ export const dataApi = {
       sell_price: number
       purchase_date: string
       expired_date?: string | null
-      supplier_user_id: string
-      supplier_display_name: string
+      supplier_user_id?: string | null
+      supplier_display_name?: string | null
       supplier_email?: string | null
     },
   ) {

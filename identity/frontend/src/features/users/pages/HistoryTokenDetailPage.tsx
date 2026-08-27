@@ -11,7 +11,10 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ItemList,
+  ItemListContent,
   ItemListEmpty,
+  ItemListItem,
 } from '@webonone/ui-kit'
 import { TokenWorkflowProgress } from '@/features/users/components/TokenWorkflowProgress'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -186,6 +189,43 @@ export function HistoryTokenDetailPage() {
                 <Button type="button" size="sm" onClick={openFill}>
                   {t('history.fillForm')}
                 </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{t('history.salesCardTitle')}</CardTitle>
+              <CardDescription>{t('history.salesCardDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {detail.sales.length === 0 ? (
+                <ItemListEmpty>{t('history.salesEmpty')}</ItemListEmpty>
+              ) : (
+                <ItemList>
+                  {detail.sales.map((sale) => (
+                    <ItemListItem
+                      key={sale.id}
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer"
+                      onClick={() => userId && navigate(`/users/${userId}/history/sales/${sale.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          if (userId) navigate(`/users/${userId}/history/sales/${sale.id}`)
+                        }
+                      }}
+                    >
+                      <ItemListContent>
+                        <p className="font-medium">{sale.billNumber}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {sale.currency} {sale.total.toFixed(2)} · {sale.paymentMethod}
+                        </p>
+                      </ItemListContent>
+                    </ItemListItem>
+                  ))}
+                </ItemList>
               )}
             </CardContent>
           </Card>

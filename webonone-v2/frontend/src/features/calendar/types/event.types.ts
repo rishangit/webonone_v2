@@ -78,6 +78,7 @@ export type SessionToken = {
   userId: string
   userDisplayName: string
   userEmail: string | null
+  userAvatarUrl: string | null
   createdAt: string
   updatedAt: string
   workflowProgress?: {
@@ -112,12 +113,22 @@ export type SessionDetail = {
   effectiveStaffId?: string
   effectiveStaffDisplayName?: string
   sessionIssue?: 'staff_leave' | 'cancelled' | null
-  /** Personal (/me) views — Prev/Current/Next from the full company queue. */
+  /** Personal (/me) views — session-wide Prev/Current/Next from the full company queue. */
   queue?: {
     prevTokenLabel: string | null
     currentTokenLabel: string | null
     nextTokenLabel: string | null
   }
+  /** Per workflow step with session queue — labels from the full company token list. */
+  stepQueues?: Record<
+    string,
+    {
+      prevTokenLabel: string | null
+      currentTokenLabel: string | null
+      nextTokenLabel: string | null
+      currentTokenId: string | null
+    }
+  >
   /** Company member viewer is assigned staff for this occurrence. */
   viewerIsAssignedStaff?: boolean
 }
@@ -127,6 +138,7 @@ export type SessionCheckIn = {
   userId: string
   userDisplayName: string
   userEmail: string | null
+  userAvatarUrl: string | null
   checkedInAt: string
 }
 
@@ -153,6 +165,7 @@ export type CreateSessionTokenBody = {
   user_id: string
   user_display_name: string
   user_email?: string | null
+  user_avatar_url?: string | null
 }
 
 export type CreateCompanyEventBody = {

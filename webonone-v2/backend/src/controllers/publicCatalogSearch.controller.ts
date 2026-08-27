@@ -111,6 +111,7 @@ export async function bookPublicToken(req: AuthenticatedRequest, res: Response) 
     const body = req.body as {
       user_display_name: string
       user_email?: string | null
+      user_avatar_url?: string | null
     }
     const item = await publicCatalogBookingService.bookPublicSessionToken({
       serviceId: String(req.params.serviceId),
@@ -119,6 +120,7 @@ export async function bookPublicToken(req: AuthenticatedRequest, res: Response) 
       userId: req.user.id,
       userDisplayName: body.user_display_name,
       userEmail: body.user_email ?? req.user.email ?? null,
+      userAvatarUrl: body.user_avatar_url ?? null,
     })
     res.status(201).json(item)
   } catch (err) {

@@ -85,3 +85,71 @@ export async function voidSale(req: CompanyAdminSessionRequest, res: Response) {
     handleServiceError(err, res)
   }
 }
+
+export async function getSessionTokenSaleDraft(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const sale = await saleService.getDraftSaleForSessionToken(
+      session.companyId,
+      String(req.params.tokenId),
+    )
+    if (!sale) {
+      res.status(404).json({ message: 'No draft bill for this session token', code: 'NOT_FOUND' })
+      return
+    }
+    res.json(sale)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getSessionTokenBill(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const sale = await saleService.getSessionTokenBill(
+      session.companyId,
+      String(req.params.tokenId),
+    )
+    if (!sale) {
+      res.status(404).json({ message: 'No bill for this session token', code: 'NOT_FOUND' })
+      return
+    }
+    res.json(sale)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function upsertSessionTokenSaleDraft(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const sale = await saleService.upsertDraftSale(
+      session.userId,
+      session.companyId,
+      String(req.params.tokenId),
+      req.body,
+    )
+    res.json(sale)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function completeSale(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const sale = await saleService.completeSale(
+      session.userId,
+      session.companyId,
+      String(req.params.id),
+      req.body,
+    )
+    res.json(sale)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}

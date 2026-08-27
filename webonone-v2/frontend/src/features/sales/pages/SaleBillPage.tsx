@@ -16,7 +16,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { canManageCompanyEvents } from '@/features/session/utils/canAccessCompanySession'
+import { canAccessCompanySession, canManageCompanyEvents } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { salesActions } from '@/features/sales/store'
 import { formatLkr, formatSaleWhen } from '@/features/sales/utils/formatMoney'
@@ -46,7 +46,8 @@ export function SaleBillPage() {
   const [voidOpen, setVoidOpen] = useState(false)
   const voidingRef = useRef(false)
 
-  const canManage = selectionComplete && canManageCompanyEvents(activeRole, activeCompanyId)
+  const canAccess = selectionComplete && canAccessCompanySession(activeRole, activeCompanyId)
+  const canVoid = selectionComplete && canManageCompanyEvents(activeRole, activeCompanyId)
   const loading = detailStatus === 'loading' || (detailStatus === 'saving' && !sale)
   usePlatformLoading(loading ? t('bill.loading') : null)
 
@@ -73,7 +74,7 @@ export function SaleBillPage() {
     toast({ title: t('bill.voided') })
   }, [detailStatus, detailError, t, toast])
 
-  if (selectionComplete && !canManage) {
+  if (selectionComplete && !canAccess) {
     return <Navigate to="/" replace />
   }
 
@@ -97,7 +98,7 @@ export function SaleBillPage() {
 
   return (
     <FeaturePage
-      title={sale.billNumber}
+      title={sale.billNumber ?? t('status.draft')}
       description={t('bill.description')}
       onBack={() => navigate('/sales')}
       backLabel={tc('back')}
@@ -106,7 +107,7 @@ export function SaleBillPage() {
           <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
             {t('bill.print')}
           </Button>
-          {sale.status === 'completed' ? (
+          {sale.status === 'completed' && canVoid ? (
             <Button type="button" variant="destructive" size="sm" onClick={() => setVoidOpen(true)}>
               {t('bill.void')}
             </Button>
@@ -163,8 +164,14 @@ export function SaleBillPage() {
               </StatusTag>
               <DetailField label={t('bill.customer')} value={sale.customerDisplayName} />
               <DetailField label={t('bill.email')} value={sale.customerEmail ?? '—'} />
-              <DetailField label={t('bill.payment')} value={t(`payment.${sale.paymentMethod}`)} />
+              <DetailField
+                label={t('bill.payment')}
+                value={sale.paymentMethod ? t(`payment.${sale.paymentMethod}`) : '—'}
+              />
               <DetailField label={t('bill.when')} value={formatSaleWhen(sale.createdAt)} />
+              {sale.sessionTokenId ? (
+                <DetailField label={t('bill.sessionToken')} value={sale.sessionTokenId} />
+              ) : null}
               {sale.notes ? <DetailField label={t('pos.notes')} value={sale.notes} /> : null}
             </CardContent>
           </Card>

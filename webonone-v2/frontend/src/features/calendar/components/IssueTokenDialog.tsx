@@ -16,8 +16,8 @@ import {
 } from '@/features/calendar/store'
 import {
   ensureCompanyCustomer,
-  loadIdentityUsersForStaff,
 } from '@/features/staff/services/identityUsersApi'
+import { identityCustomersApi } from '@/features/company-catalog/services/identityCustomersApi'
 
 const OUTLINE_FOOTER =
   'h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent'
@@ -96,11 +96,14 @@ export function IssueTokenDialog({
   ])
 
   const loadUsers = useCallback(
-    async (params: Parameters<typeof loadIdentityUsersForStaff>[1]) => {
-      if (!accessToken) throw new Error('Not signed in')
-      return loadIdentityUsersForStaff(accessToken, params, excludeUserIds)
+    async (params: Parameters<typeof identityCustomersApi.loadForSelection>[0]) => {
+      const result = await identityCustomersApi.loadForSelection(params)
+      return {
+        ...result,
+        users: result.users.filter((user) => !excludeUserIds.has(user.id)),
+      }
     },
-    [accessToken, excludeUserIds],
+    [excludeUserIds],
   )
 
   async function handleIssue() {
@@ -131,6 +134,7 @@ export function IssueTokenDialog({
             user_id: user.id,
             user_display_name: user.displayName,
             user_email: user.email ?? null,
+            user_avatar_url: user.avatarUrl ?? null,
           },
         }),
       )

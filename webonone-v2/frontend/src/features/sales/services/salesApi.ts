@@ -1,10 +1,12 @@
 import { apiClient } from '@/shared/services/apiClient'
 import type {
+  CompleteSaleBody,
   CreateSaleBody,
   Sale,
   SaleItemKind,
   SaleListItem,
   SaleStatus,
+  UpsertDraftSaleBody,
 } from '../types/sales.types'
 
 export type ListSalesQuery = {
@@ -41,6 +43,40 @@ export const salesApi = {
 
   create(body: CreateSaleBody) {
     return apiClient<Sale>('/company/me/sales', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  async getSessionTokenDraft(tokenId: string): Promise<Sale | null> {
+    try {
+      return await apiClient<Sale>(
+        `/company/me/session-tokens/${encodeURIComponent(tokenId)}/sale-draft`,
+      )
+    } catch {
+      return null
+    }
+  },
+
+  async getSessionTokenBill(tokenId: string): Promise<Sale | null> {
+    try {
+      return await apiClient<Sale>(
+        `/company/me/session-tokens/${encodeURIComponent(tokenId)}/sale-bill`,
+      )
+    } catch {
+      return null
+    }
+  },
+
+  upsertSessionTokenDraft(tokenId: string, body: UpsertDraftSaleBody) {
+    return apiClient<Sale>(`/company/me/session-tokens/${encodeURIComponent(tokenId)}/sale-draft`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    })
+  },
+
+  completeSale(id: string, body: CompleteSaleBody) {
+    return apiClient<Sale>(`/company/me/sales/${encodeURIComponent(id)}/complete`, {
       method: 'POST',
       body: JSON.stringify(body),
     })

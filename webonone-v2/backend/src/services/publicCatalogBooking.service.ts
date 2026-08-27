@@ -70,11 +70,13 @@ export async function bookPublicSessionToken(options: {
   userId: string
   userDisplayName: string
   userEmail?: string | null
+  userAvatarUrl?: string | null
 }): Promise<SessionTokenDto> {
   const { companyId } = await resolvePublicWindowSession(options.serviceId, options.eventId)
   return createSessionToken(companyId, options.eventId, options.occurrenceDate, {
     user_id: options.userId,
     user_display_name: options.userDisplayName,
     user_email: options.userEmail ?? null,
+    user_avatar_url: options.userAvatarUrl ?? null,
   })
 }

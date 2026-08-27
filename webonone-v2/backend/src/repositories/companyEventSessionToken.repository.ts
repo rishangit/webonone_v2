@@ -12,6 +12,7 @@ export interface CompanyEventSessionTokenRow {
   user_id: string
   user_display_name: string
   user_email: string | null
+  user_avatar_url: string | null
   current_workflow_item_id: string | null
   workflow_completed_at: Date | string | null
   created_at: Date
@@ -141,6 +142,7 @@ export async function insertToken(row: {
   user_id: string
   user_display_name: string
   user_email: string | null
+  user_avatar_url: string | null
   status?: SessionTokenStatus
   current_workflow_item_id?: string | null
 }): Promise<CompanyEventSessionTokenRow> {

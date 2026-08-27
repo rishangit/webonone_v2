@@ -139,10 +139,12 @@ export function CompanyProductVariantStocksCard({
                         ? ` · ${t('stocks.expires', { date: formatCalendarYmd(stock.expiredDate, i18n.language) })}`
                         : ''}
                     </p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      {t('stocks.supplier', { name: stock.supplierDisplayName })}
-                      {stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}
-                    </p>
+                    {stock.supplierDisplayName ? (
+                      <p className="truncate text-sm text-muted-foreground">
+                        {t('stocks.supplier', { name: stock.supplierDisplayName })}
+                        {stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}
+                      </p>
+                    ) : null}
                   </div>
                 </ItemListContent>
                 {canEdit && !stock.isActive ? (

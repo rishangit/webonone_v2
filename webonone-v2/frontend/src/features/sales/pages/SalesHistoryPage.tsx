@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { canManageCompanyEvents } from '@/features/session/utils/canAccessCompanySession'
+import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { SalesList } from '@/features/sales/components/SalesList'
 import { salesActions } from '@/features/sales/store'
@@ -40,7 +40,7 @@ export function SalesHistoryPage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const canManage = selectionComplete && canManageCompanyEvents(activeRole, activeCompanyId)
+  const canAccess = selectionComplete && canAccessCompanySession(activeRole, activeCompanyId)
 
   const list = useEpicCatalogList((s) => s.sales, salesActions)
   const [from, setFrom] = useState<Date | undefined>()
@@ -48,7 +48,7 @@ export function SalesHistoryPage() {
 
   usePlatformLoading(list.loading ? t('history.loading') : null)
 
-  if (selectionComplete && !canManage) {
+  if (selectionComplete && !canAccess) {
     return <Navigate to="/" replace />
   }
 

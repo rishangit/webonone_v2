@@ -13,6 +13,7 @@ import type {
 type Status = 'idle' | 'loading' | 'saving' | 'error'
 
 type SessionQueueSnapshot = NonNullable<SessionDetail['queue']>
+type SessionStepQueuesSnapshot = NonNullable<SessionDetail['stepQueues']>
 
 interface SessionTokensState {
   eventId: string | null
@@ -20,6 +21,7 @@ interface SessionTokensState {
   run: SessionRun | null
   items: SessionToken[]
   queue: SessionQueueSnapshot | null
+  stepQueues: SessionStepQueuesSnapshot | null
   sessionStartTime: string | null
   sessionEndTime: string | null
   sessionIssue: SessionDetail['sessionIssue']
@@ -42,6 +44,7 @@ const initialState: SessionTokensState = {
   run: null,
   items: [],
   queue: null,
+  stepQueues: null,
   sessionStartTime: null,
   sessionEndTime: null,
   sessionIssue: null,
@@ -62,6 +65,7 @@ function applyDetail(state: SessionTokensState, detail: SessionDetail) {
   state.run = detail.run
   state.items = detail.items
   state.queue = detail.queue ?? null
+  state.stepQueues = detail.stepQueues ?? null
   state.sessionStartTime = detail.sessionStartTime
   state.sessionEndTime = detail.sessionEndTime
   state.sessionIssue = detail.sessionIssue ?? null

@@ -126,6 +126,8 @@
     "setActive": "Set as active",
     "quantity": "Quantity",
     "batchNumber": "Batch number",
+    "generateBatchNumber": "Generate",
+    "generatingBatchNumber": "Generating…",
     "costPrice": "Cost price",
     "sellPrice": "Sell price",
     "purchaseDate": "Purchase date",

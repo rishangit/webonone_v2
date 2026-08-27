@@ -8,6 +8,7 @@ export type SessionCheckInRow = {
   user_id: string
   user_display_name: string
   user_email: string | null
+  user_avatar_url: string | null
   checked_in_at: Date | string
 }
 
@@ -62,6 +63,7 @@ export async function insertCheckIn(input: {
   userId: string
   userDisplayName: string
   userEmail: string | null
+  userAvatarUrl?: string | null
 }): Promise<SessionCheckInRow> {
   await db('company_event_session_check_ins').insert({
     id: input.id,
@@ -71,6 +73,7 @@ export async function insertCheckIn(input: {
     user_id: input.userId,
     user_display_name: input.userDisplayName,
     user_email: input.userEmail,
+    user_avatar_url: input.userAvatarUrl ?? null,
   })
   const row = await findCheckInByUser(
     input.companyId,

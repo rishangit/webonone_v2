@@ -89,6 +89,7 @@ export type CatalogSessionTokenItem = {
   userId: string
   userDisplayName: string
   userEmail: string | null
+  userAvatarUrl: string | null
   createdAt: string
   updatedAt: string
   workflowProgress?: {

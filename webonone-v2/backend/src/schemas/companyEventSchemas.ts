@@ -95,12 +95,14 @@ export const createSessionTokenBodySchema = z.object({
   user_id: z.string().trim().min(1).max(21),
   user_display_name: z.string().trim().min(1).max(255),
   user_email: z.string().trim().email().max(255).nullable().optional(),
+  user_avatar_url: z.string().trim().max(2048).nullable().optional(),
 })
 
 /** Self-serve public booking — user id comes from JWT. */
 export const bookPublicSessionTokenBodySchema = z.object({
   user_display_name: z.string().trim().min(1).max(255),
   user_email: z.string().trim().email().max(255).nullable().optional(),
+  user_avatar_url: z.string().trim().max(2048).nullable().optional(),
 })
 
 export const changeSessionScheduleBodySchema = z

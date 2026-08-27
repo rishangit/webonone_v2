@@ -90,11 +90,13 @@ export async function bookMemberSessionToken(options: {
   occurrenceDate: string
   userDisplayName: string
   userEmail?: string | null
+  userAvatarUrl?: string | null
 }): Promise<SessionTokenDto> {
   const { companyId } = await resolveMemberWindowSession(options)
   return createSessionToken(companyId, options.eventId, options.occurrenceDate, {
     user_id: options.userId,
     user_display_name: options.userDisplayName,
     user_email: options.userEmail ?? null,
+    user_avatar_url: options.userAvatarUrl ?? null,
   })
 }

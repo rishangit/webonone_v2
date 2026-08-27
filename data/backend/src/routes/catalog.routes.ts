@@ -127,6 +127,12 @@ router.post(
 )
 
 router.get(
+  '/stocks/suggested-batch-number',
+  requireAuth,
+  requireCompanyAdmin,
+  stocksController.suggestBatchNumber,
+)
+router.get(
   '/products/:id/variants/:variantId/stocks',
   requireAuth,
   stocksController.list,

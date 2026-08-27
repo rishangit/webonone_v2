@@ -283,6 +283,8 @@
     "statusLabel": "Status",
     "formSubmitted": "Form submitted",
     "fillForm": "Fill form",
+    "addSale": "Add items",
+    "viewBill": "View bill",
     "viewForm": "View form",
     "customerFallback": "Customer",
     "tokens": {
@@ -427,6 +429,9 @@
       "completeFailed": "Could not complete this step",
       "queueTitle": "Session queue",
       "queueHint": "Operate tokens currently at this workflow step.",
+      "currentlyServingTitle": "Currently serving",
+      "currentlyServingHint": "Customer at the front of the queue for this step.",
+      "currentlyServingEmpty": "No token is being served at this step yet.",
       "previous": "Previous",
       "next": "Next"
     },

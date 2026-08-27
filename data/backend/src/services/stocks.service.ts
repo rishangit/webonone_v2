@@ -2,6 +2,8 @@ import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import type { CreateStockBody } from '../schemas/stocks.schema.js'
 
+export const COMPANY_STOCK_BATCH_PATTERN = /^BATCH-(\d{6})$/
+
 export interface StockDto {
   id: string
   variantId: string
@@ -11,8 +13,8 @@ export interface StockDto {
   sellPrice: number
   purchaseDate: string
   expiredDate: string | null
-  supplierUserId: string
-  supplierDisplayName: string
+  supplierUserId: string | null
+  supplierDisplayName: string | null
   supplierEmail: string | null
   isActive: boolean
   createdAt: string
@@ -28,8 +30,8 @@ type StockRow = {
   sell_price: string | number
   purchase_date: Date | string
   expired_date: Date | string | null
-  supplier_user_id: string
-  supplier_display_name: string
+  supplier_user_id: string | null
+  supplier_display_name: string | null
   supplier_email: string | null
   is_active: boolean | number
   created_at: Date
@@ -78,6 +80,43 @@ async function assertVariantBelongsToProduct(
   if (!variant) throw new Error('NOT_FOUND')
 }
 
+export async function suggestBatchNumber(companyId: string): Promise<string> {
+  const row = (await db('data_company_stock_counters')
+    .where({ company_id: companyId })
+    .first()) as { next_seq: number } | undefined
+  const seq = row?.next_seq ?? 1
+  return `BATCH-${String(seq).padStart(6, '0')}`
+}
+
+async function advanceBatchCounter(companyId: string, batchNumber: string): Promise<void> {
+  const match = COMPANY_STOCK_BATCH_PATTERN.exec(batchNumber.trim())
+  if (!match) return
+
+  const usedSeq = Number.parseInt(match[1]!, 10)
+  if (!Number.isFinite(usedSeq) || usedSeq < 1) return
+
+  await db.transaction(async (trx) => {
+    const row = (await trx('data_company_stock_counters')
+      .where({ company_id: companyId })
+      .forUpdate()
+      .first()) as { next_seq: number } | undefined
+
+    const nextSeq = row?.next_seq ?? 1
+    const newNext = Math.max(nextSeq, usedSeq + 1)
+
+    if (row) {
+      await trx('data_company_stock_counters')
+        .where({ company_id: companyId })
+        .update({ next_seq: newNext })
+    } else {
+      await trx('data_company_stock_counters').insert({
+        company_id: companyId,
+        next_seq: newNext,
+      })
+    }
+  })
+}
+
 export async function listStocks(
   productId: string,
   variantId: string,
@@ -97,6 +136,7 @@ export async function createStock(
   productId: string,
   variantId: string,
   body: CreateStockBody,
+  companyId: string | null = null,
 ): Promise<StockDto> {
   await assertVariantBelongsToProduct(productId, variantId)
 
@@ -121,8 +161,8 @@ export async function createStock(
     sell_price: body.sell_price,
     purchase_date: body.purchase_date,
     expired_date: body.expired_date ?? null,
-    supplier_user_id: body.supplier_user_id,
-    supplier_display_name: body.supplier_display_name,
+    supplier_user_id: body.supplier_user_id ?? null,
+    supplier_display_name: body.supplier_display_name ?? null,
     supplier_email: body.supplier_email ?? null,
     is_active: isFirst,
     created_at: now,
@@ -131,6 +171,11 @@ export async function createStock(
 
   const row = (await db('data_stocks').where({ id }).first()) as StockRow | undefined
   if (!row) throw new Error('Failed to create stock')
+
+  if (companyId) {
+    await advanceBatchCounter(companyId, body.batch_number)
+  }
+
   return rowToDto(row)
 }
 

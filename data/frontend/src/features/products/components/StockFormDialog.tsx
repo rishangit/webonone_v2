@@ -100,6 +100,7 @@ export function StockFormDialog({
   const [values, setValues] = useState<StockFormDraft>(createEmptyStockFormDraft)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [generatingBatch, setGeneratingBatch] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [supplierPickerOpen, setSupplierPickerOpen] = useState(false)
   const nestedSupplierRequestIdRef = useRef<string | null>(null)
@@ -211,6 +212,7 @@ export function StockFormDialog({
     setFieldErrors({})
     setError(null)
     setSaving(false)
+    setGeneratingBatch(false)
     setSupplierPickerOpen(false)
     nestedSupplierRequestIdRef.current = null
   }, [chrome, open])
@@ -233,6 +235,19 @@ export function StockFormDialog({
       delete next[key]
       return next
     })
+  }
+
+  async function handleGenerateBatchNumber() {
+    setGeneratingBatch(true)
+    setError(null)
+    try {
+      const { batchNumber } = await dataApi.suggestStockBatchNumber()
+      updateField('batchNumber', batchNumber)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate batch number')
+    } finally {
+      setGeneratingBatch(false)
+    }
   }
 
   async function handleSubmit(event?: React.FormEvent) {
@@ -313,11 +328,23 @@ export function StockFormDialog({
           required
           error={fieldErrors.batchNumber}
         >
-          <Input
-            id="stock-batch-number"
-            value={values.batchNumber}
-            onChange={(e) => updateField('batchNumber', e.target.value)}
-          />
+          <div className="flex flex-wrap gap-2">
+            <Input
+              id="stock-batch-number"
+              value={values.batchNumber}
+              onChange={(e) => updateField('batchNumber', e.target.value)}
+              disabled={saving || generatingBatch}
+              className="min-w-0 flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving || generatingBatch}
+              onClick={() => void handleGenerateBatchNumber()}
+            >
+              {generatingBatch ? t('stock.generatingBatchNumber') : t('stock.generateBatchNumber')}
+            </Button>
+          </div>
         </FormField>
       </div>
 
@@ -379,7 +406,6 @@ export function StockFormDialog({
       <FormField
         label={t('stock.supplier')}
         htmlFor="stock-supplier"
-        required
         error={fieldErrors.supplierUserId ?? fieldErrors.supplierDisplayName}
       >
         <SelectUser

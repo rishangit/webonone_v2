@@ -17,6 +17,7 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ImagePreview,
   StatusTag,
   useToast,
   type StatusTagVariant,
@@ -27,6 +28,7 @@ import { ChangeSessionDialog } from '@/features/calendar/components/ChangeSessio
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
 import { formatTimeModeLabel } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions, sessionCheckInsActions, sessionTokensActions } from '@/features/calendar/store'
+import { useSessionTokenAvatars } from '@/features/calendar/hooks/useSessionTokenAvatars'
 import { DurationSessionWorkflowCard } from '@/features/calendar/components/DurationSessionWorkflowCard'
 import { SessionDetailSectionTabs } from '@/features/calendar/components/SessionDetailSectionTabs'
 import { SessionWorkflowStepPanel } from '@/features/calendar/components/SessionWorkflowStepPanel'
@@ -51,6 +53,7 @@ import {
   canManageCompanyEvents,
   isPersonalCalendarSession,
 } from '@/features/session/utils/canAccessCompanySession'
+import { resolvePosEnabledKinds } from '@/features/sales/utils/posEnabledKinds'
 import { ReassignSessionStaffDialog } from '@/features/calendar/components/ReassignSessionStaffDialog'
 import { sessionTokensApi } from '@/features/calendar/services/sessionTokensApi'
 import { SessionControlTimingField } from '@/features/calendar/components/SessionControlTimingField'
@@ -121,12 +124,15 @@ export function SessionDetailsPage() {
   const { openPeerDialog } = usePlatformPeerDialog()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
+  const assumableRoles = useAppSelector((s) => s.sessionRole.assumableRoles)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
   const detail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
   const tokens = useAppSelector((s) => s.sessionTokens.items)
+  const displayTokens = useSessionTokenAvatars(tokens)
   const run = useAppSelector((s) => s.sessionTokens.run)
+  const sessionStepQueues = useAppSelector((s) => s.sessionTokens.stepQueues)
   const sessionStartTime = useAppSelector((s) => s.sessionTokens.sessionStartTime)
   const sessionEndTime = useAppSelector((s) => s.sessionTokens.sessionEndTime)
   const sessionIssue = useAppSelector((s) => s.sessionTokens.sessionIssue)
@@ -350,12 +356,14 @@ export function SessionDetailsPage() {
 
   const actionBusy = actionStatus === 'saving'
   const runStatus = run?.status ?? 'scheduled'
+  const canOperateSession = canAccessCompanySession(activeRole, activeCompanyId) && !sessionIssue
+  const canSellDuringSession = canOperateSession && runStatus === 'started'
   const checkedInUserIds = useMemo(
     () => new Set(checkIns.map((item) => item.userId)),
     [checkIns],
   )
   const overviewTokens = useMemo(() => {
-    return [...tokens].sort((a, b) => {
+    return [...displayTokens].sort((a, b) => {
       const aInQueue =
         checkedInUserIds.has(a.userId) || a.status === 'serving' || a.status === 'completed'
       const bInQueue =
@@ -363,7 +371,14 @@ export function SessionDetailsPage() {
       if (aInQueue !== bInQueue) return aInQueue ? -1 : 1
       return a.tokenNumber - b.tokenNumber
     })
-  }, [checkedInUserIds, tokens])
+  }, [checkedInUserIds, displayTokens])
+  const posEnabledKinds = useMemo(
+    () =>
+      resolvePosEnabledKinds(
+        assumableRoles.find((role) => role.companyId === activeCompanyId)?.dataEntities,
+      ),
+    [assumableRoles, activeCompanyId],
+  )
   if (
     selectionComplete &&
     !canAccessCompanySession(activeRole, activeCompanyId) &&
@@ -442,10 +457,11 @@ export function SessionDetailsPage() {
 
   const isDuration = detail.timeMode === 'duration'
   const durationAttendeeToken =
-    tokens.find((token) => token.userId === detail.attendeeUserId) ?? tokens[0] ?? null
+    displayTokens.find((token) => token.userId === detail.attendeeUserId) ??
+    displayTokens[0] ??
+    null
   const showAttendee =
     isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
-  const canOperateSession = canAccessCompanySession(activeRole, activeCompanyId) && !sessionIssue
   const canIssueTokens = canOperateSession && runStatus !== 'ended'
   const canManageSession = canManageCompanyEvents(activeRole, activeCompanyId)
   const canEditSessionSchedule =
@@ -779,6 +795,10 @@ export function SessionDetailsPage() {
                 if (!durationAttendeeToken || !eventId || !occurrenceDate) return
                 void handleCompleteWorkflowStep(durationAttendeeToken.id)
               }}
+              serviceId={detail.serviceId}
+              serviceName={detail.serviceName}
+              enabledKinds={posEnabledKinds}
+              canSell={canSellDuringSession}
             />
           ) : null}
           {!isDuration ? (
@@ -837,6 +857,12 @@ export function SessionDetailsPage() {
                             : undefined
                         }
                       >
+                        <ImagePreview
+                          src={token.userAvatarUrl}
+                          alt={token.userDisplayName}
+                          mode="view"
+                          className="h-10 w-10 rounded-md"
+                        />
                         <ItemListContent>
                           <div className="flex min-w-0 items-start justify-between gap-3">
                             <div className="min-w-0 space-y-1">
@@ -1057,7 +1083,7 @@ export function SessionDetailsPage() {
             const item =
               workflowItems.find((entry) => entry.id === sessionTab) ?? workflowItems[0]
             if (!item) return null
-            const atStep = tokensAtWorkflowStep(tokens, item.id, {
+            const atStep = tokensAtWorkflowStep(displayTokens, item.id, {
               itemKind: item.kind,
               checkedInUserIds,
             })
@@ -1073,10 +1099,12 @@ export function SessionDetailsPage() {
               <SessionWorkflowStepPanel
                 item={item}
                 items={workflowItems}
-                tokens={tokens}
+                tokens={displayTokens}
                 stepTokens={stepTokens}
                 showQueue={!isDuration && Boolean(item.sessionQueue)}
-                canComplete={canOperateSession}
+                canComplete={
+                  canOperateSession && (canManageSession || isAssignedStaff)
+                }
                 completingId={completingTokenId}
                 checkedInUserIds={checkedInUserIds}
                 canFillForms={canOperateSession}
@@ -1104,6 +1132,13 @@ export function SessionDetailsPage() {
                   if (!eventId || !occurrenceDate) return
                   void handleCompleteWorkflowStep(tokenId)
                 }}
+                serviceId={detail.serviceId}
+                serviceName={detail.serviceName}
+                enabledKinds={posEnabledKinds}
+                canSell={canSellDuringSession}
+                stepQueueLabels={
+                  isPersonal ? sessionStepQueues?.[item.id] ?? null : null
+                }
               />
             )
           })()

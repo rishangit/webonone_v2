@@ -126,6 +126,8 @@
     "setActive": "සක්‍රිය ලෙස සකසන්න",
     "quantity": "ප්‍රමාණය",
     "batchNumber": "කණ්ඩායම් අංකය",
+    "generateBatchNumber": "ජනනය කරන්න",
+    "generatingBatchNumber": "ජනනය වෙමින්…",
     "costPrice": "පිරිවැය මිල",
     "sellPrice": "විකුණුම් මිල",
     "purchaseDate": "මිලදී ගත් දිනය",

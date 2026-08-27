@@ -27,6 +27,26 @@
     "unitPriceAria": "{{name}} සඳහා ඒකක මිල",
     "lineActionsAria": "{{name}} සඳහා ක්‍රියා"
   },
+  "tokenPos": {
+    "title": "විකිණීම",
+    "dialogTitle": "අයිතම එකතු කරන්න",
+    "customer": "පාරිභෝගිකයා: {{name}}",
+    "customerWithToken": "{{token}} · {{name}}",
+    "saveBill": "බිල්පත සුරකින්න",
+    "savingBill": "බිල්පත සුරකිමින්…",
+    "saved": "බිල්පත සුරකින ලදී",
+    "saveFailed": "බිල්පත සුරැකීම අසාර්ථකයි"
+  },
+  "tokenBill": {
+    "dialogTitle": "බිල්පත බලන්න",
+    "empty": "මෙම බිල්පතේ අයිතම නැත.",
+    "closeSale": "විකිණීම වසන්න",
+    "closing": "විකිණීම වසමින්…",
+    "closed": "විකිණීම වසා ඇත",
+    "closeFailed": "විකිණීම වැසීම අසාර්ථකයි",
+    "paid": "ගෙවා ඇත",
+    "billNumber": "බිල්පත් අංකය"
+  },
   "history": {
     "title": "විකුණුම් ඉතිහාසය",
     "description": "මෙම සමාගමේ සම්පූර්ණ සහ අවලංගු බිල්පත්.",
@@ -63,9 +83,11 @@
     "customer": "පාරිභෝගිකයා",
     "email": "විද්‍යුත් තැපෑල",
     "payment": "ගෙවීම",
-    "when": "විකුණු දිනය"
+    "when": "විකුණු දිනය",
+    "sessionToken": "සැසි ටෝකනය"
   },
   "status": {
+    "draft": "කටු සටහන",
     "completed": "සම්පූර්ණයි",
     "void": "අවලංගුයි"
   },

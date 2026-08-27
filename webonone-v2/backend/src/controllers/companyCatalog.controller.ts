@@ -206,6 +206,7 @@ export async function bookTokenForCompany(req: AuthenticatedRequest, res: Respon
     const body = req.body as {
       user_display_name: string
       user_email?: string | null
+      user_avatar_url?: string | null
     }
     const item = await memberCatalogBookingService.bookMemberSessionToken({
       userId: user.userId,
@@ -215,6 +216,7 @@ export async function bookTokenForCompany(req: AuthenticatedRequest, res: Respon
       occurrenceDate,
       userDisplayName: body.user_display_name,
       userEmail: body.user_email ?? req.user?.email ?? null,
+      userAvatarUrl: body.user_avatar_url ?? null,
     })
     res.status(201).json(item)
   } catch (err) {

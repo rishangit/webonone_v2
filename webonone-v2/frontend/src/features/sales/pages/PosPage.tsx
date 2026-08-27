@@ -21,12 +21,11 @@ import {
   UserSelectionDialog,
   useToast,
 } from '@webonone/ui-kit'
-import { filterCompanyDataEntities } from '@webonone/platform-nav'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { identityCustomersApi, type IdentityCustomerOption } from '@/features/company-catalog/services/identityCustomersApi'
 import { dataLibraryApi } from '@/features/company-catalog/services/dataLibraryApi'
 import type { HydratedCatalogItem } from '@/features/company-catalog/types/companyCatalog.types'
-import { canManageCompanyEvents } from '@/features/session/utils/canAccessCompanySession'
+import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { PosCartList } from '@/features/sales/components/PosCartList'
 import { PosItemPickerDialog } from '@/features/sales/components/PosItemPickerDialog'
@@ -35,12 +34,7 @@ import { createSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesActions } from '@/features/sales/store'
 import type { PosCartLine, SaleItemKind, SalePaymentMethod } from '@/features/sales/types/sales.types'
 import { formatLkr, resolveProductUnitPrice } from '@/features/sales/utils/formatMoney'
-
-const CATALOG_TO_SALE: Record<'products' | 'services' | 'spaces', SaleItemKind> = {
-  products: 'product',
-  services: 'service',
-  spaces: 'space',
-}
+import { resolvePosEnabledKinds } from '@/features/sales/utils/posEnabledKinds'
 
 export function PosPage() {
   const { t } = useTranslation('sales')
@@ -65,18 +59,17 @@ export function PosPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const submittingRef = useRef(false)
 
-  const canManage = selectionComplete && canManageCompanyEvents(activeRole, activeCompanyId)
+  const canManage = selectionComplete && canAccessCompanySession(activeRole, activeCompanyId)
   const saving = detailStatus === 'saving'
   usePlatformLoading(saving ? t('pos.completing') : null)
 
-  const enabledKinds = useMemo(() => {
-    const entities = assumableRoles.find((role) => role.companyId === activeCompanyId)?.dataEntities
-    const enabled = filterCompanyDataEntities(entities ?? [])
-    const kinds = enabled
-      .map((key) => CATALOG_TO_SALE[key as keyof typeof CATALOG_TO_SALE])
-      .filter((kind): kind is SaleItemKind => Boolean(kind))
-    return kinds.length > 0 ? kinds : (['product', 'service', 'space'] as SaleItemKind[])
-  }, [assumableRoles, activeCompanyId])
+  const enabledKinds = useMemo(
+    () =>
+      resolvePosEnabledKinds(
+        assumableRoles.find((role) => role.companyId === activeCompanyId)?.dataEntities,
+      ),
+    [assumableRoles, activeCompanyId],
+  )
 
   const loadCustomers = useCallback(
     (params: Parameters<typeof identityCustomersApi.loadForSelection>[0]) =>

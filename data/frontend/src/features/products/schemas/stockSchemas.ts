@@ -20,8 +20,8 @@ export const stockFormSchema = z
       .min(0, 'Sell price must be 0 or greater'),
     purchaseDate: dateString,
     expiredDate: z.union([dateString, z.literal('')]).optional(),
-    supplierUserId: z.string().trim().min(1, 'Supplier is required').length(21, 'Supplier is required'),
-    supplierDisplayName: z.string().trim().min(1, 'Supplier is required').max(255),
+    supplierUserId: z.union([z.literal(''), z.string().trim().length(21)]).optional(),
+    supplierDisplayName: z.union([z.literal(''), z.string().trim().max(255)]).optional(),
     supplierEmail: z.union([z.string().trim().email().max(255), z.literal('')]).optional(),
   })
   .superRefine((value, ctx) => {
@@ -30,6 +30,16 @@ export const stockFormSchema = z
         code: z.ZodIssueCode.custom,
         path: ['expiredDate'],
         message: 'Expired date must be on or after purchase date',
+      })
+    }
+
+    const hasSupplierId = Boolean(value.supplierUserId && value.supplierUserId !== '')
+    const hasSupplierName = Boolean(value.supplierDisplayName && value.supplierDisplayName !== '')
+    if (hasSupplierId !== hasSupplierName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['supplierUserId'],
+        message: 'Supplier user and display name must both be provided',
       })
     }
   })
@@ -63,6 +73,8 @@ export function createEmptyStockFormDraft(): StockFormDraft {
 }
 
 export function toCreateStockPayload(values: StockFormValues) {
+  const hasSupplier = Boolean(values.supplierUserId && values.supplierUserId !== '')
+
   return {
     quantity: values.quantity,
     batch_number: values.batchNumber,
@@ -70,8 +82,9 @@ export function toCreateStockPayload(values: StockFormValues) {
     sell_price: values.sellPrice,
     purchase_date: values.purchaseDate,
     expired_date: values.expiredDate && values.expiredDate !== '' ? values.expiredDate : null,
-    supplier_user_id: values.supplierUserId,
-    supplier_display_name: values.supplierDisplayName,
-    supplier_email: values.supplierEmail && values.supplierEmail !== '' ? values.supplierEmail : null,
+    supplier_user_id: hasSupplier ? values.supplierUserId! : null,
+    supplier_display_name: hasSupplier ? values.supplierDisplayName! : null,
+    supplier_email:
+      hasSupplier && values.supplierEmail && values.supplierEmail !== '' ? values.supplierEmail : null,
   }
 }

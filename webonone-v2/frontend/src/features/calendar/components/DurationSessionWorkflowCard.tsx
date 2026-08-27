@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ImagePreview,
   StatusTag,
 } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +15,8 @@ import type { SessionToken } from '@/features/calendar/types/event.types'
 import { SessionDetailSectionTabs } from '@/features/calendar/components/SessionDetailSectionTabs'
 import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import { isWorkflowStepCompleted } from '@/features/calendar/utils/workflowStepQueue'
+import { SessionTokenSaleActions } from '@/features/sales/components/SessionTokenSaleActions'
+import type { SaleItemKind } from '@/features/sales/types/sales.types'
 
 type DurationSessionWorkflowCardProps = {
   items: ServiceWorkflowItem[]
@@ -26,6 +29,10 @@ type DurationSessionWorkflowCardProps = {
   onFillForm: (formId: string) => void
   onViewForm: (formId: string, submissionId: string) => void
   onComplete: () => void
+  serviceId: string
+  serviceName: string
+  enabledKinds: SaleItemKind[]
+  canSell: boolean
 }
 
 function workflowTabLabel(
@@ -54,6 +61,10 @@ export function DurationSessionWorkflowCard({
   onFillForm,
   onViewForm,
   onComplete,
+  serviceId,
+  serviceName,
+  enabledKinds,
+  canSell,
 }: DurationSessionWorkflowCardProps) {
   const { t } = useTranslation('calendar')
   const [stepTab, setStepTab] = useState(items[0]?.id ?? '')
@@ -101,11 +112,34 @@ export function DurationSessionWorkflowCard({
               <div className="flex flex-col gap-3 lg:col-span-2">
                 {token ? (
                   <>
-                    <p className="truncate font-medium">{token.userDisplayName}</p>
-                    <TokenWorkflowProgress progress={token.workflowProgress} />
-                    {forms.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        {forms.map((form) => {
+                    <div className="flex min-w-0 items-start gap-3">
+                      <ImagePreview
+                        src={token.userAvatarUrl}
+                        alt={token.userDisplayName}
+                        mode="view"
+                        className="h-10 w-10 rounded-md"
+                      />
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="truncate font-medium">{token.userDisplayName}</p>
+                        <TokenWorkflowProgress progress={token.workflowProgress} />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {canSell ? (
+                        <SessionTokenSaleActions
+                          token={{
+                            id: token.id,
+                            userId: token.userId,
+                            userDisplayName: token.userDisplayName,
+                            tokenLabel: token.tokenLabel,
+                          }}
+                          serviceId={serviceId}
+                          serviceName={serviceName}
+                          enabledKinds={enabledKinds}
+                          canSell={canSell}
+                        />
+                      ) : null}
+                      {forms.map((form) => {
                           const submissionId = submissionByTokenForm[`${token.id}:${form.id}`]
                           if (submissionId) {
                             return (
@@ -135,8 +169,7 @@ export function DurationSessionWorkflowCard({
                             </Button>
                           )
                         })}
-                      </div>
-                    ) : null}
+                    </div>
                     {showCheckInAction || showCompleteAction ? (
                       <div>
                         <Button

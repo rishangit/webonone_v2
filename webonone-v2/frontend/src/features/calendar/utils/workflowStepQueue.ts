@@ -1,5 +1,16 @@
 import type { ServiceWorkflowItem } from '@/features/company-catalog/types/companyCatalog.types'
-import type { SessionToken } from '@/features/calendar/types/event.types'
+import type { SessionRun, SessionToken } from '@/features/calendar/types/event.types'
+
+export type SessionQueueLabels = {
+  prevTokenLabel: string | null
+  currentTokenLabel: string | null
+  nextTokenLabel: string | null
+}
+
+export type WorkflowStepQueueSnapshot = SessionQueueLabels & {
+  currentTokenId: string | null
+  previousTokenId?: string | null
+}
 
 export function isWorkflowStepCompleted(
   progress: SessionToken['workflowProgress'] | undefined,
@@ -41,6 +52,89 @@ export function tokensAtWorkflowStep(
     })
     .slice()
     .sort((a, b) => a.tokenNumber - b.tokenNumber)
+}
+
+/** Session-wide Prev/Current/Next — mirrors backend computeSessionQueueLabels. */
+export function computeSessionRunQueue(
+  tokens: SessionToken[],
+  run: SessionRun,
+  checkedInUserIds?: Set<string>,
+): SessionQueueLabels & { currentTokenId: string | null } {
+  const current =
+    tokens.find((token) => token.id === run.currentTokenId) ??
+    tokens.find((token) => token.status === 'serving') ??
+    null
+  const prev = tokens
+    .filter((token) => token.status === 'completed')
+    .reduce<SessionToken | null>(
+      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      null,
+    )
+  const next = tokens
+    .filter(
+      (token) =>
+        token.status === 'waiting' && (checkedInUserIds?.has(token.userId) ?? true),
+    )
+    .reduce<SessionToken | null>(
+      (best, token) => (!best || token.tokenNumber < best.tokenNumber ? token : best),
+      null,
+    )
+  return {
+    prevTokenLabel: prev?.tokenLabel ?? null,
+    currentTokenLabel: current?.tokenLabel ?? null,
+    nextTokenLabel: next?.tokenLabel ?? null,
+    currentTokenId: current?.id ?? null,
+  }
+}
+
+export function computeWorkflowStepViewerQueue(
+  tokens: SessionToken[],
+  item: ServiceWorkflowItem,
+  items: ServiceWorkflowItem[],
+  checkedInUserIds?: Set<string>,
+): WorkflowStepQueueSnapshot {
+  const atStep = tokensAtWorkflowStep(tokens, item.id, {
+    itemKind: item.kind,
+    checkedInUserIds,
+  })
+  if (atStep.length === 0) {
+    return {
+      prevTokenLabel: null,
+      currentTokenLabel: null,
+      nextTokenLabel: null,
+      currentTokenId: null,
+      previousTokenId: null,
+    }
+  }
+  const servingIdx = atStep.findIndex((token) => token.status === 'serving')
+  const idx = servingIdx >= 0 ? servingIdx : 0
+  const current = atStep[idx] ?? null
+  const next = atStep[idx + 1] ?? null
+  const previous = atStep[idx - 1] ?? null
+  const itemIndex = items.findIndex((entry) => entry.id === item.id)
+  const nextItem = itemIndex >= 0 ? items[itemIndex + 1] : undefined
+  const lastAdvanced = tokens
+    .filter((token) => {
+      if (nextItem) {
+        return (
+          !token.workflowProgress?.done &&
+          token.workflowProgress!.currentIndex >= 0 &&
+          token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === nextItem.id
+        )
+      }
+      return Boolean(token.workflowProgress?.done)
+    })
+    .reduce<SessionToken | null>(
+      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      null,
+    )
+  return {
+    prevTokenLabel: previous?.tokenLabel ?? lastAdvanced?.tokenLabel ?? null,
+    currentTokenLabel: current?.tokenLabel ?? null,
+    nextTokenLabel: next?.tokenLabel ?? null,
+    currentTokenId: current?.id ?? null,
+    previousTokenId: previous?.id ?? null,
+  }
 }
 
 export function computeWorkflowStepQueue(

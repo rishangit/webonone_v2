@@ -16,7 +16,18 @@ export const createSaleBodySchema = z.object({
   customerUserId: z.string().length(21, 'Customer is required'),
   paymentMethod: salePaymentMethodSchema,
   notes: z.string().trim().max(2000).optional().nullable(),
+  sessionTokenId: z.string().length(21).optional().nullable(),
   lines: z.array(createSaleLineSchema).min(1, 'Add at least one item'),
+})
+
+export const upsertDraftSaleBodySchema = z.object({
+  customerUserId: z.string().length(21, 'Customer is required'),
+  lines: z.array(createSaleLineSchema).min(1, 'Add at least one item'),
+})
+
+export const completeSaleBodySchema = z.object({
+  paymentMethod: salePaymentMethodSchema,
+  notes: z.string().trim().max(2000).optional().nullable(),
 })
 
 export const posNewCustomerSchema = z.object({

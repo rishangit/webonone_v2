@@ -6,11 +6,14 @@ import * as dataCatalog from '../clients/dataCatalogClient.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as companyRepo from '../repositories/company.repository.js'
 import * as saleRepo from '../repositories/companySale.repository.js'
+import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
 import type {
+  CompleteSaleBody,
   CreateSaleBody,
   SaleItemKind,
   SalePaymentMethod,
   SaleStatus,
+  UpsertDraftSaleBody,
 } from '../schemas/companySaleSchemas.js'
 
 const KIND_TO_CATALOG: Record<SaleItemKind, catalogRepo.CatalogPricedKind> = {
@@ -60,16 +63,17 @@ export type SaleLineDto = {
 export type SaleDto = {
   id: string
   companyId: string
-  billNumber: string
+  billNumber: string | null
   customerUserId: string
   customerDisplayName: string
   customerEmail: string | null
   status: SaleStatus
-  paymentMethod: SalePaymentMethod
+  paymentMethod: SalePaymentMethod | null
   currency: string
   subtotal: number
   total: number
   notes: string | null
+  sessionTokenId: string | null
   createdByUserId: string
   createdAt: string
   updatedAt: string
@@ -100,6 +104,7 @@ function mapSale(row: saleRepo.CompanySaleRow, lines: saleRepo.CompanySaleLineRo
     subtotal: catalogRepo.parseMoney(row.subtotal) ?? 0,
     total: catalogRepo.parseMoney(row.total) ?? 0,
     notes: row.notes,
+    sessionTokenId: row.session_token_id,
     createdByUserId: row.created_by_user_id,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
@@ -141,41 +146,28 @@ async function resolveCatalogDisplayName(
   return 'Catalog item'
 }
 
-export async function createSale(
-  userId: string,
+type PreparedSaleLine = {
+  id: string
+  company_id: string
+  line_no: number
+  item_kind: SaleItemKind
+  catalog_item_id: string
+  library_entity_id: string | null
+  name_snapshot: string
+  variant_name_snapshot: string | null
+  quantity: number
+  unit_price: number
+  line_total: number
+}
+
+async function prepareSaleLines(
   companyId: string,
-  body: CreateSaleBody,
-): Promise<SaleDto> {
-  const member = await roleRepo.findCompanyMemberRole(body.customerUserId, companyId)
-  if (!member) {
-    throw httpError('Customer is not assigned to this company', 400)
-  }
-
-  const company = await companyRepo.findCompanyById(companyId)
-  if (!company) {
-    throw httpError('Company not found', 404)
-  }
-  const enabled = parseDataEntities(company.data_entities)
-
-  const contact = await fetchUserContact(body.customerUserId)
-  const customerDisplayName = contact?.displayName?.trim() || 'Customer'
-  const customerEmail = contact?.email ?? null
-
-  const prepared: Array<{
-    id: string
-    company_id: string
-    line_no: number
-    item_kind: SaleItemKind
-    catalog_item_id: string
-    library_entity_id: string | null
-    name_snapshot: string
-    variant_name_snapshot: string | null
-    quantity: number
-    unit_price: number
-    line_total: number
-  }> = []
-  for (let i = 0; i < body.lines.length; i += 1) {
-    const line = body.lines[i]
+  enabled: string[],
+  lines: CreateSaleBody['lines'],
+): Promise<PreparedSaleLine[]> {
+  const prepared: PreparedSaleLine[] = []
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i]
     const catalogKind = KIND_TO_CATALOG[line.itemKind]
     if (enabled.length > 0 && !enabled.includes(catalogKind)) {
       throw httpError(`${line.itemKind} is not enabled for this company`, 400)
@@ -200,7 +192,50 @@ export async function createSale(
       line_total: money(qty * unitPrice),
     })
   }
+  return prepared
+}
 
+async function resolveSessionToken(
+  companyId: string,
+  sessionTokenId: string,
+  customerUserId: string,
+): Promise<string> {
+  const token = await sessionTokenRepo.findTokenById(companyId, sessionTokenId)
+  if (!token) {
+    throw httpError('Session token not found', 404)
+  }
+  if (token.user_id !== customerUserId) {
+    throw httpError('Customer does not match session token', 400)
+  }
+  return token.id
+}
+
+export async function createSale(
+  userId: string,
+  companyId: string,
+  body: CreateSaleBody,
+): Promise<SaleDto> {
+  const member = await roleRepo.findCompanyMemberRole(body.customerUserId, companyId)
+  if (!member) {
+    throw httpError('Customer is not assigned to this company', 400)
+  }
+
+  const company = await companyRepo.findCompanyById(companyId)
+  if (!company) {
+    throw httpError('Company not found', 404)
+  }
+  const enabled = parseDataEntities(company.data_entities)
+
+  const contact = await fetchUserContact(body.customerUserId)
+  const customerDisplayName = contact?.displayName?.trim() || 'Customer'
+  const customerEmail = contact?.email ?? null
+
+  let sessionTokenId: string | null = null
+  if (body.sessionTokenId) {
+    sessionTokenId = await resolveSessionToken(companyId, body.sessionTokenId, body.customerUserId)
+  }
+
+  const prepared = await prepareSaleLines(companyId, enabled, body.lines)
   const subtotal = money(prepared.reduce((sum, line) => sum + line.line_total, 0))
   const saleId = nanoid()
   const now = new Date()
@@ -220,6 +255,7 @@ export async function createSale(
       subtotal,
       total: subtotal,
       notes: body.notes?.trim() || null,
+      session_token_id: sessionTokenId,
       created_by_user_id: userId,
       created_at: now,
       updated_at: now,
@@ -228,6 +264,134 @@ export async function createSale(
       trx,
       prepared.map((line) => ({ ...line, sale_id: saleId })),
     )
+  })
+
+  return getSale(companyId, saleId)
+}
+
+export async function getDraftSaleForSessionToken(
+  companyId: string,
+  sessionTokenId: string,
+): Promise<SaleDto | null> {
+  const row = await saleRepo.findDraftBySessionToken(companyId, sessionTokenId)
+  if (!row) return null
+  const lines = await saleRepo.listSaleLines(row.id)
+  return mapSale(row, lines)
+}
+
+export async function getSessionTokenBill(
+  companyId: string,
+  sessionTokenId: string,
+): Promise<SaleDto | null> {
+  const draft = await getDraftSaleForSessionToken(companyId, sessionTokenId)
+  if (draft) return draft
+
+  const rows = await saleRepo.listSalesForSessionToken(companyId, sessionTokenId, 1)
+  const latest = rows[0]
+  if (!latest) return null
+
+  const lines = await saleRepo.listSaleLines(latest.id)
+  return mapSale(latest, lines)
+}
+
+export async function upsertDraftSale(
+  userId: string,
+  companyId: string,
+  sessionTokenId: string,
+  body: UpsertDraftSaleBody,
+): Promise<SaleDto> {
+  const member = await roleRepo.findCompanyMemberRole(body.customerUserId, companyId)
+  if (!member) {
+    throw httpError('Customer is not assigned to this company', 400)
+  }
+
+  const company = await companyRepo.findCompanyById(companyId)
+  if (!company) {
+    throw httpError('Company not found', 404)
+  }
+  const enabled = parseDataEntities(company.data_entities)
+
+  const resolvedTokenId = await resolveSessionToken(companyId, sessionTokenId, body.customerUserId)
+
+  const contact = await fetchUserContact(body.customerUserId)
+  const customerDisplayName = contact?.displayName?.trim() || 'Customer'
+  const customerEmail = contact?.email ?? null
+
+  const prepared = await prepareSaleLines(companyId, enabled, body.lines)
+  const subtotal = money(prepared.reduce((sum, line) => sum + line.line_total, 0))
+  const now = new Date()
+
+  const existing = await saleRepo.findDraftBySessionToken(companyId, resolvedTokenId)
+  const saleId = existing?.id ?? nanoid()
+
+  await db.transaction(async (trx) => {
+    if (existing) {
+      await saleRepo.updateSaleDraft(trx, companyId, saleId, {
+        subtotal,
+        total: subtotal,
+        customer_display_name: customerDisplayName,
+        customer_email: customerEmail,
+        updated_at: now,
+      })
+      await saleRepo.deleteSaleLines(trx, saleId)
+    } else {
+      await saleRepo.insertSale(trx, {
+        id: saleId,
+        company_id: companyId,
+        bill_number: null,
+        customer_user_id: body.customerUserId,
+        customer_display_name: customerDisplayName,
+        customer_email: customerEmail,
+        status: 'draft',
+        payment_method: null,
+        currency: 'LKR',
+        subtotal,
+        total: subtotal,
+        notes: null,
+        session_token_id: resolvedTokenId,
+        created_by_user_id: userId,
+        created_at: now,
+        updated_at: now,
+      })
+    }
+    await saleRepo.insertSaleLines(
+      trx,
+      prepared.map((line) => ({ ...line, sale_id: saleId })),
+    )
+  })
+
+  return getSale(companyId, saleId)
+}
+
+export async function completeSale(
+  userId: string,
+  companyId: string,
+  saleId: string,
+  body: CompleteSaleBody,
+): Promise<SaleDto> {
+  void userId
+  const existing = await saleRepo.findSaleById(companyId, saleId)
+  if (!existing) {
+    throw httpError('Sale not found', 404)
+  }
+  if (existing.status !== 'draft') {
+    throw httpError('Only draft sales can be completed', 409)
+  }
+
+  const lines = await saleRepo.listSaleLines(saleId)
+  if (lines.length === 0) {
+    throw httpError('Add at least one item before closing the sale', 400)
+  }
+
+  const now = new Date()
+  await db.transaction(async (trx) => {
+    const billNumber = await saleRepo.allocateBillNumber(trx, companyId)
+    await saleRepo.completeSaleRow(trx, companyId, saleId, {
+      bill_number: billNumber,
+      payment_method: body.paymentMethod,
+      notes: body.notes?.trim() || null,
+      updated_at: now,
+    })
   })
 
   return getSale(companyId, saleId)
@@ -275,6 +439,14 @@ export async function getSale(companyId: string, id: string): Promise<SaleDto> {
   return mapSale(row, lines)
 }
 
+export async function listSalesForSessionToken(
+  companyId: string,
+  sessionTokenId: string,
+): Promise<SaleListItemDto[]> {
+  const rows = await saleRepo.listSalesForSessionToken(companyId, sessionTokenId)
+  return rows.map(mapListItem)
+}
+
 export async function voidSale(companyId: string, id: string): Promise<SaleDto> {
   const existing = await saleRepo.findSaleById(companyId, id)
   if (!existing) {
@@ -282,6 +454,9 @@ export async function voidSale(companyId: string, id: string): Promise<SaleDto> 
   }
   if (existing.status === 'void') {
     throw httpError('Sale is already voided', 409)
+  }
+  if (existing.status === 'draft') {
+    throw httpError('Draft sales cannot be voided', 409)
   }
   const updated = await saleRepo.voidSale(companyId, id)
   if (!updated) {

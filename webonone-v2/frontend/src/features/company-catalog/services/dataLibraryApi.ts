@@ -113,8 +113,8 @@ export type LibraryProductVariantStock = {
   sellPrice: number
   purchaseDate: string
   expiredDate: string | null
-  supplierUserId: string
-  supplierDisplayName: string
+  supplierUserId: string | null
+  supplierDisplayName: string | null
   supplierEmail: string | null
   isActive: boolean
   createdAt: string
@@ -236,6 +236,10 @@ export const dataLibraryApi = {
     )
   },
 
+  suggestStockBatchNumber() {
+    return dataFetch<{ batchNumber: string }>('/stocks/suggested-batch-number')
+  },
+
   createProductVariantStock(
     productId: string,
     variantId: string,
@@ -246,8 +250,8 @@ export const dataLibraryApi = {
       sell_price: number
       purchase_date: string
       expired_date?: string | null
-      supplier_user_id: string
-      supplier_display_name: string
+      supplier_user_id?: string | null
+      supplier_display_name?: string | null
       supplier_email?: string | null
     },
   ) {

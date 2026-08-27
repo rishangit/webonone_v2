@@ -128,10 +128,12 @@ export function ProductVariantStocksCard({
                       {t('stock.purchased', { date: formatCalendarYmd(stock.purchaseDate) })}
                       {stock.expiredDate ? t('stock.expires', { date: formatCalendarYmd(stock.expiredDate) }) : ''}
                     </p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      {t('stock.supplierLine', { name: stock.supplierDisplayName })}
-                      {stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}
-                    </p>
+                    {stock.supplierDisplayName ? (
+                      <p className="truncate text-sm text-muted-foreground">
+                        {t('stock.supplierLine', { name: stock.supplierDisplayName })}
+                        {stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}
+                      </p>
+                    ) : null}
                   </div>
                 </ItemListContent>
                 {canEdit && !stock.isActive ? (

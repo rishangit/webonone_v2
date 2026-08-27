@@ -283,6 +283,8 @@
     "statusLabel": "තත්ත්වය",
     "formSubmitted": "පෝරමය ඉදිරිපත් කරන ලදී",
     "fillForm": "පෝරමය පුරවන්න",
+    "addSale": "අයිතම එකතු කරන්න",
+    "viewBill": "බිල්පත බලන්න",
     "viewForm": "පෝරමය බලන්න",
     "customerFallback": "පාරිභෝගිකයා",
     "tokens": {
@@ -427,6 +429,9 @@
       "completeFailed": "මෙම පියවර සම්පූර්ණ කළ නොහැකි විය",
       "queueTitle": "සැසි පෝලිම",
       "queueHint": "මෙම වැඩප්‍රවාහ පියවරේ ටෝකන ක්‍රියාත්මක කරන්න.",
+      "currentlyServingTitle": "දැන් සේවය කරන ටෝකනය",
+      "currentlyServingHint": "මෙම පියවරේ පෝලිමේ මුලින් සිටින පාරිභෝගිකයා.",
+      "currentlyServingEmpty": "මෙම පියවරේ තවම සේවය කරන ටෝකනයක් නැත.",
       "previous": "පෙර",
       "next": "ඊළඟ"
     },

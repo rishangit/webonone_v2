@@ -10,7 +10,10 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ItemList,
+  ItemListContent,
   ItemListEmpty,
+  ItemListItem,
 } from '@webonone/ui-kit'
 import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -174,6 +177,43 @@ export function StaffHistoryTokenDetailPage() {
               <FilledFormCard key={sub.id} submission={sub} language={i18n.language} />
             ))
           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Sales</CardTitle>
+              <CardDescription>Bills recorded during this session token</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {detail.sales.length === 0 ? (
+                <ItemListEmpty>No sales for this session yet.</ItemListEmpty>
+              ) : (
+                <ItemList>
+                  {detail.sales.map((sale) => (
+                    <ItemListItem
+                      key={sale.id}
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/sales/${sale.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          navigate(`/sales/${sale.id}`)
+                        }
+                      }}
+                    >
+                      <ItemListContent>
+                        <p className="font-medium">{sale.billNumber}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {sale.currency} {sale.total.toFixed(2)} · {sale.paymentMethod}
+                        </p>
+                      </ItemListContent>
+                    </ItemListItem>
+                  ))}
+                </ItemList>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="flex flex-col gap-6 lg:col-span-1">

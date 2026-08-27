@@ -36,10 +36,10 @@ export function SalesList({ items }: SalesListProps) {
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-medium">{sale.billNumber}</p>
+                  <p className="text-sm font-medium">{sale.billNumber ?? t('status.draft')}</p>
                   <p className="text-xs text-muted-foreground">
-                    {sale.customerDisplayName} · {formatLkr(sale.total, sale.currency)} ·{' '}
-                    {t(`payment.${sale.paymentMethod}`)}
+                    {sale.customerDisplayName} · {formatLkr(sale.total, sale.currency)}
+                    {sale.paymentMethod ? ` · ${t(`payment.${sale.paymentMethod}`)}` : ''}
                   </p>
                   <p className="text-xs text-muted-foreground">{formatSaleWhen(sale.createdAt)}</p>
                 </div>
@@ -49,7 +49,7 @@ export function SalesList({ items }: SalesListProps) {
               </div>
             </button>
           </ItemListContent>
-          <ItemListMenu ariaLabel={t('pos.lineActionsAria', { name: sale.billNumber })}>
+          <ItemListMenu ariaLabel={t('pos.lineActionsAria', { name: sale.billNumber ?? sale.id })}>
             <DropdownMenuItem onClick={() => navigate(`/sales/${sale.id}`)}>
               {t('history.viewBill')}
             </DropdownMenuItem>

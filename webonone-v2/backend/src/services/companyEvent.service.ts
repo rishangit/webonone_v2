@@ -40,6 +40,7 @@ import {
   nextWorkflowState,
   type TokenWorkflowProgressDto,
 } from './tokenWorkflowProgress.js'
+import { computeWorkflowStepQueuesForService } from './sessionWorkflowQueue.js'
 import {
   notifyAppointmentBookedInApp,
   notifySessionEndedInApp,
@@ -141,6 +142,7 @@ export type SessionTokenDto = {
   userId: string
   userDisplayName: string
   userEmail: string | null
+  userAvatarUrl: string | null
   createdAt: string
   updatedAt: string
   workflowProgress: TokenWorkflowProgressDto
@@ -180,6 +182,16 @@ export type SessionDetailDto = {
     currentTokenLabel: string | null
     nextTokenLabel: string | null
   }
+  /** Per workflow step with session queue — labels from the full company token list. */
+  stepQueues?: Record<
+    string,
+    {
+      prevTokenLabel: string | null
+      currentTokenLabel: string | null
+      nextTokenLabel: string | null
+      currentTokenId: string | null
+    }
+  >
   /** Company member viewer is assigned staff for this occurrence. */
   viewerIsAssignedStaff?: boolean
 }
@@ -1246,6 +1258,18 @@ export async function getMyBookedSessionDetail(
     occurrenceDate,
   )
   const checkedInUserIds = new Set(checkIns.map((row) => row.user_id))
+  const catalogService =
+    (await catalogRepo.findById(event.companyId, 'services', event.serviceId)) ??
+    (await catalogRepo.findByLibraryId(event.companyId, 'services', event.serviceId))
+  const catalogServiceId = catalogService ? String(catalogService.id) : event.serviceId
+  const workflowItems = await catalogRepo.listWorkflowItems(event.companyId, catalogServiceId)
+  const workflowDefs = await loadWorkflowStepDefs(event.companyId, event.serviceId)
+  const stepQueues = computeWorkflowStepQueuesForService(
+    detail.items,
+    workflowItems,
+    workflowDefs,
+    checkedInUserIds,
+  )
   return {
     run: detail.run,
     items: detail.items.filter((token) => token.userId === userId),
@@ -1256,6 +1280,7 @@ export async function getMyBookedSessionDetail(
     effectiveStaffDisplayName: detail.effectiveStaffDisplayName,
     sessionIssue: detail.sessionIssue,
     queue: computeSessionQueueLabels(detail.items, detail.run, checkedInUserIds),
+    stepQueues,
   }
 }
 
@@ -1509,6 +1534,7 @@ function mapSessionToken(
     userId: row.user_id,
     userDisplayName: row.user_display_name,
     userEmail: row.user_email,
+    userAvatarUrl: row.user_avatar_url,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     workflowProgress,
@@ -1703,6 +1729,7 @@ async function ensureDurationAttendeeToken(
       user_id: event.attendeeUserId,
       user_display_name: event.attendeeDisplayName ?? 'Customer',
       user_email: event.attendeeEmail,
+      user_avatar_url: null,
       current_workflow_item_id: firstWorkflowItemId(workflowDefs),
     })
     await roleRepo.ensureCompanyCustomerMemberRole(event.attendeeUserId, companyId, nanoid())
@@ -1922,6 +1949,7 @@ export async function createSessionToken(
       user_id: userId,
       user_display_name: body.user_display_name.trim(),
       user_email: body.user_email?.trim() || null,
+      user_avatar_url: body.user_avatar_url?.trim() || null,
       current_workflow_item_id: firstWorkflowItemId(workflowDefs),
     })
 
@@ -2050,6 +2078,7 @@ export async function completeSessionTokenWorkflow(
         userId: token.user_id,
         userDisplayName: token.user_display_name,
         userEmail: token.user_email,
+        userAvatarUrl: token.user_avatar_url,
       })
       await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate, token.user_id)
     }
@@ -2493,6 +2522,7 @@ export type SessionCheckInDto = {
   userId: string
   userDisplayName: string
   userEmail: string | null
+  userAvatarUrl: string | null
   checkedInAt: string
 }
 
@@ -2512,6 +2542,7 @@ function toCheckInDto(row: sessionCheckInRepo.SessionCheckInRow): SessionCheckIn
     userId: row.user_id,
     userDisplayName: row.user_display_name,
     userEmail: row.user_email,
+    userAvatarUrl: row.user_avatar_url,
     checkedInAt,
   }
 }
@@ -2521,7 +2552,12 @@ async function resolveBookedCheckInSubject(
   event: CompanyEventDto,
   occurrenceDate: string,
   userId: string,
-): Promise<{ userId: string; userDisplayName: string; userEmail: string | null } | null> {
+): Promise<{
+  userId: string
+  userDisplayName: string
+  userEmail: string | null
+  userAvatarUrl: string | null
+} | null> {
   const token = await sessionTokenRepo.findTokenByUser(
     companyId,
     event.id,
@@ -2533,6 +2569,7 @@ async function resolveBookedCheckInSubject(
       userId: token.user_id,
       userDisplayName: token.user_display_name,
       userEmail: token.user_email,
+      userAvatarUrl: token.user_avatar_url,
     }
   }
   if (event.attendeeUserId === userId) {
@@ -2540,6 +2577,7 @@ async function resolveBookedCheckInSubject(
       userId,
       userDisplayName: event.attendeeDisplayName?.trim() || 'Member',
       userEmail: event.attendeeEmail,
+      userAvatarUrl: null,
     }
   }
   return null
@@ -2655,6 +2693,7 @@ export async function createSessionCheckIn(
       userId: subject.userId,
       userDisplayName: subject.userDisplayName,
       userEmail: subject.userEmail,
+      userAvatarUrl: subject.userAvatarUrl,
     })
     await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate, subject.userId)
     const token = await sessionTokenRepo.findTokenByUser(
@@ -2707,6 +2746,7 @@ export async function createMySessionCheckIn(
       userId: subject.userId,
       userDisplayName: subject.userDisplayName,
       userEmail: subject.userEmail,
+      userAvatarUrl: subject.userAvatarUrl,
     })
     await maybePromoteCheckedInWaitingToken(
       event.companyId,

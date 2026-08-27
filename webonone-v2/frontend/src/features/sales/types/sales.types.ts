@@ -1,6 +1,6 @@
 export type SaleItemKind = 'product' | 'service' | 'space'
 export type SalePaymentMethod = 'cash' | 'card' | 'other'
-export type SaleStatus = 'completed' | 'void'
+export type SaleStatus = 'draft' | 'completed' | 'void'
 
 export type SaleLine = {
   id: string
@@ -18,16 +18,17 @@ export type SaleLine = {
 export type Sale = {
   id: string
   companyId: string
-  billNumber: string
+  billNumber: string | null
   customerUserId: string
   customerDisplayName: string
   customerEmail: string | null
   status: SaleStatus
-  paymentMethod: SalePaymentMethod
+  paymentMethod: SalePaymentMethod | null
   currency: string
   subtotal: number
   total: number
   notes: string | null
+  sessionTokenId: string | null
   createdByUserId: string
   createdAt: string
   updatedAt: string
@@ -47,7 +48,25 @@ export type CreateSaleBody = {
   customerUserId: string
   paymentMethod: SalePaymentMethod
   notes?: string | null
+  sessionTokenId?: string | null
   lines: CreateSaleLineBody[]
+}
+
+export type UpsertDraftSaleBody = {
+  customerUserId: string
+  lines: CreateSaleLineBody[]
+}
+
+export type CompleteSaleBody = {
+  paymentMethod: SalePaymentMethod
+  notes?: string | null
+}
+
+export type TokenPosSubject = {
+  id: string
+  userId: string
+  userDisplayName: string
+  tokenLabel?: string
 }
 
 export type PosCartLine = {

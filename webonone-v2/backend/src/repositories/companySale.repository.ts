@@ -5,16 +5,17 @@ import type { SaleItemKind, SalePaymentMethod, SaleStatus } from '../schemas/com
 export type CompanySaleRow = {
   id: string
   company_id: string
-  bill_number: string
+  bill_number: string | null
   customer_user_id: string
   customer_display_name: string
   customer_email: string | null
   status: SaleStatus
-  payment_method: SalePaymentMethod
+  payment_method: SalePaymentMethod | null
   currency: string
   subtotal: string | number
   total: string | number
   notes: string | null
+  session_token_id: string | null
   created_by_user_id: string
   created_at: Date
   updated_at: Date
@@ -75,6 +76,57 @@ export async function insertSale(
   await trx('company_sales').insert(row)
 }
 
+export async function findDraftBySessionToken(
+  companyId: string,
+  sessionTokenId: string,
+): Promise<CompanySaleRow | undefined> {
+  return db<CompanySaleRow>('company_sales')
+    .where({
+      company_id: companyId,
+      session_token_id: sessionTokenId,
+      status: 'draft',
+    })
+    .first()
+}
+
+export async function deleteSaleLines(trx: Knex.Transaction, saleId: string): Promise<void> {
+  await trx('company_sale_lines').where({ sale_id: saleId }).del()
+}
+
+export async function updateSaleDraft(
+  trx: Knex.Transaction,
+  companyId: string,
+  saleId: string,
+  patch: {
+    subtotal: number
+    total: number
+    customer_display_name: string
+    customer_email: string | null
+    updated_at: Date
+  },
+): Promise<void> {
+  await trx('company_sales').where({ id: saleId, company_id: companyId }).update(patch)
+}
+
+export async function completeSaleRow(
+  trx: Knex.Transaction,
+  companyId: string,
+  saleId: string,
+  patch: {
+    bill_number: string
+    payment_method: SalePaymentMethod
+    notes: string | null
+    updated_at: Date
+  },
+): Promise<void> {
+  await trx('company_sales')
+    .where({ id: saleId, company_id: companyId, status: 'draft' })
+    .update({
+      ...patch,
+      status: 'completed',
+    })
+}
+
 export async function insertSaleLines(
   trx: Knex.Transaction,
   rows: Array<
@@ -120,6 +172,8 @@ export async function listSalesForCompany(
   }
   if (options.status) {
     query.andWhere('status', options.status)
+  } else {
+    query.whereNot('status', 'draft')
   }
   if (options.from) {
     query.andWhere('created_at', '>=', `${options.from} 00:00:00.000`)
@@ -163,6 +217,19 @@ export async function listSalesForCustomer(
 ): Promise<CompanySaleRow[]> {
   return db<CompanySaleRow>('company_sales')
     .where({ company_id: companyId, customer_user_id: customerUserId })
+    .whereNot('status', 'draft')
+    .orderBy('created_at', 'desc')
+    .limit(limit)
+}
+
+export async function listSalesForSessionToken(
+  companyId: string,
+  sessionTokenId: string,
+  limit = 50,
+): Promise<CompanySaleRow[]> {
+  return db<CompanySaleRow>('company_sales')
+    .where({ company_id: companyId, session_token_id: sessionTokenId })
+    .whereNot('status', 'draft')
     .orderBy('created_at', 'desc')
     .limit(limit)
 }
@@ -171,9 +238,12 @@ export async function voidSale(
   companyId: string,
   id: string,
 ): Promise<CompanySaleRow | undefined> {
-  await db('company_sales').where({ id, company_id: companyId }).update({
-    status: 'void',
-    updated_at: new Date(),
-  })
+  await db('company_sales')
+    .where({ id, company_id: companyId })
+    .whereNot('status', 'draft')
+    .update({
+      status: 'void',
+      updated_at: new Date(),
+    })
   return findSaleById(companyId, id)
 }
