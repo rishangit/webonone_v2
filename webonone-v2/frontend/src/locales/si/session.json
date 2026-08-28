@@ -3,7 +3,8 @@
   "chooseAccount": {
     "title": "ගිණුම තෝරන්න",
     "descriptionInitial": "මෙම WebOnOne සැසිය සඳහා භාවිතා කළ යුතු ගිණුම තෝරන්න. ඔබ ඉවත් වන තුරු ඔබේ තේරීම සක්‍රියව පවතී.",
-    "descriptionSwitch": "මෙම WebOnOne සැසිය සඳහා භාවිතා කළ යුතු ගිණුම මාරු කරන්න."
+    "descriptionSwitch": "මෙම WebOnOne සැසිය සඳහා භාවිතා කළ යුතු ගිණුම මාරු කරන්න.",
+    "changeFromNav": "ගිණුම වෙනස් කරන්න"
   },
   "roles": {
     "superAdmin": "සුපිරි පරිපාලක",

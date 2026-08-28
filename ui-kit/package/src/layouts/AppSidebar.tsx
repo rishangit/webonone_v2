@@ -63,6 +63,10 @@ interface AppSidebarProps {
    * Shown in the mobile drawer when open (and not collapsed).
    */
   sidebarSession?: SidebarSession | null
+  /** When set, the session card (and collapsed logo) opens account switching. */
+  onSidebarSessionClick?: () => void
+  /** Accessible name for the session card button (e.g. translated "Change account"). */
+  sidebarSessionClickLabel?: string
   /** When true, offsets fixed/sticky sidebar below the header notice overlay. */
   hasHeaderNotice?: boolean
   className?: string
@@ -130,6 +134,8 @@ function AppSidebar({
   onNavItemPrefetch,
   accordionNavGroups = false,
   sidebarSession,
+  onSidebarSessionClick,
+  sidebarSessionClickLabel = 'Change account',
   hasHeaderNotice = false,
   className,
 }: AppSidebarProps) {
@@ -164,6 +170,13 @@ function AppSidebar({
 
   const showSessionCard = Boolean(sidebarSession && !collapsed)
   const showCollapsedLogo = Boolean(sidebarSession && collapsed)
+  const sessionInteractive = Boolean(onSidebarSessionClick)
+  const sessionCardClassName =
+    'flex w-full items-center gap-2.5 px-3 py-2 shadow-none transition-colors'
+  const sessionCardInteractiveClassName = cn(
+    sessionCardClassName,
+    'cursor-pointer hover:border-primary/50 hover:bg-accent/50',
+  )
   const headerTopClass = appShellHeaderTopClass(hasHeaderNotice)
   const sidebarHeightClass = appShellSidebarHeightClass(hasHeaderNotice)
 
@@ -224,19 +237,47 @@ function AppSidebar({
 
       {showSessionCard && sidebarSession ? (
         <div className="shrink-0 border-t p-2">
-          <Card className="flex items-center gap-2.5 px-3 py-2 shadow-none">
-            <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium leading-snug">{sidebarSession.title}</p>
-              <SessionRoleTag role={sidebarSession.role} subtitle={sidebarSession.subtitle} />
-            </div>
-          </Card>
+          {sessionInteractive ? (
+            <button
+              type="button"
+              className="w-full rounded-lg text-left outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={sidebarSessionClickLabel}
+              onClick={onSidebarSessionClick}
+            >
+              <Card className={sessionCardInteractiveClassName}>
+                <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium leading-snug">{sidebarSession.title}</p>
+                  <SessionRoleTag role={sidebarSession.role} subtitle={sidebarSession.subtitle} />
+                </div>
+              </Card>
+            </button>
+          ) : (
+            <Card className={sessionCardClassName}>
+              <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium leading-snug">{sidebarSession.title}</p>
+                <SessionRoleTag role={sidebarSession.role} subtitle={sidebarSession.subtitle} />
+              </div>
+            </Card>
+          )}
         </div>
       ) : null}
 
       {showCollapsedLogo && sidebarSession ? (
         <div className="hidden shrink-0 border-t p-2 md:flex md:justify-center">
-          <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
+          {sessionInteractive ? (
+            <button
+              type="button"
+              className="rounded-md outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={sidebarSessionClickLabel}
+              onClick={onSidebarSessionClick}
+            >
+              <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
+            </button>
+          ) : (
+            <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
+          )}
         </div>
       ) : null}
 

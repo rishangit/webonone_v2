@@ -3,7 +3,8 @@
   "chooseAccount": {
     "title": "Choose account",
     "descriptionInitial": "Select which account to use for this WebOnOne session. Your choice stays active until you log out.",
-    "descriptionSwitch": "Switch which account to use for this WebOnOne session."
+    "descriptionSwitch": "Switch which account to use for this WebOnOne session.",
+    "changeFromNav": "Change account"
   },
   "roles": {
     "superAdmin": "Super Admin",

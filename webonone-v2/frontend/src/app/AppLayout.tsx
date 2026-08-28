@@ -89,6 +89,7 @@ function AppLayoutContent() {
   const location = useLocation()
   const { t, i18n } = useTranslation('common')
   const { t: tShell } = useTranslation('shell')
+  const { t: tSession } = useTranslation('session')
   const { toast } = useToast()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { activeRole, activeCompanyId, assumableRoles, selectionComplete } = useAppSelector(
@@ -169,6 +170,15 @@ function AppLayoutContent() {
       role: displayRole,
     }
   }, [user, activeRole, activeCompanyId, assumableRoles])
+
+  const canChangeAccount = assumableRoles.length > 1 && selectionComplete
+
+  const handleSidebarSessionClick = useCallback(() => {
+    if (!canChangeAccount) {
+      return
+    }
+    dispatch(sessionRoleActions.openChangeDialog())
+  }, [canChangeAccount, dispatch])
 
   function handleLogout() {
     const websiteOrigin = getWebsiteOrigin()
@@ -284,6 +294,9 @@ function AppLayoutContent() {
         headerNotice={headerNotice}
         accessToken={accessToken}
         tShell={tShell}
+        canChangeAccount={canChangeAccount}
+        onSidebarSessionClick={handleSidebarSessionClick}
+        sidebarSessionClickLabel={tSession('chooseAccount.changeFromNav')}
       />
     </AiEntityPasteProvider>
   )
@@ -323,6 +336,9 @@ type AppLayoutShellProps = {
   headerNotice: ReactNode
   accessToken: string | null
   tShell: (key: string) => string
+  canChangeAccount: boolean
+  onSidebarSessionClick: () => void
+  sidebarSessionClickLabel: string
 }
 
 function AppLayoutShell({
@@ -344,6 +360,9 @@ function AppLayoutShell({
   headerNotice,
   accessToken,
   tShell,
+  canChangeAccount,
+  onSidebarSessionClick,
+  sidebarSessionClickLabel,
 }: AppLayoutShellProps) {
   const { requestEntityPaste } = useAiEntityPaste()
 
@@ -377,6 +396,8 @@ function AppLayoutShell({
           logo={<BrandLogo>{tShell('brand')}</BrandLogo>}
           user={headerUser}
           sidebarSession={sidebarSession}
+          onSidebarSessionClick={canChangeAccount ? onSidebarSessionClick : undefined}
+          sidebarSessionClickLabel={sidebarSessionClickLabel}
           onProfileClick={headerUser ? handleProfileClick : undefined}
           onLogout={handleLogout}
           locale={currentLocale}

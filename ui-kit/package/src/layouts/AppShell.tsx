@@ -38,6 +38,10 @@ interface AppShellProps {
    * Hidden when the sidebar is collapsed; shown in the mobile drawer when open.
    */
   sidebarSession?: SidebarSession | null
+  /** When set, the sidebar session card opens account switching. */
+  onSidebarSessionClick?: () => void
+  /** Accessible name for the session card button (e.g. translated "Change account"). */
+  sidebarSessionClickLabel?: string
   /** Optional right rail: overlays the page on small screens; in-flow beside main from md up. */
   aside?: ReactNode
   /** Optional header actions, rendered before the user avatar. */
@@ -95,6 +99,8 @@ function AppShell({
   lockDocumentScroll = true,
   accordionNavGroups = false,
   sidebarSession,
+  onSidebarSessionClick,
+  sidebarSessionClickLabel,
   aside,
   headerActions,
   headerNotice,
@@ -171,6 +177,8 @@ function AppShell({
           onNavItemPrefetch={onNavItemPrefetch}
           accordionNavGroups={accordionNavGroups}
           sidebarSession={sidebarSession}
+          onSidebarSessionClick={onSidebarSessionClick}
+          sidebarSessionClickLabel={sidebarSessionClickLabel}
           hasHeaderNotice={hasHeaderNotice}
         />
         <main
