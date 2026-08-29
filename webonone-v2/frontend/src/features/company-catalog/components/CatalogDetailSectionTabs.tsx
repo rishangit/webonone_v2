@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
+import { Tabs, TabsContent, TabsList, TabsTrigger, tabsPageClassName, tabsPageContentClassName } from '@webonone/ui-kit'
 
 export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants' | 'workflow'
 
@@ -55,7 +55,7 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
     <Tabs
       value={tab}
       onValueChange={(value) => onTabChange(value as T)}
-      className="flex flex-col gap-6"
+      className={tabsPageClassName}
     >
       <TabsList aria-label={ariaLabel}>
         {tabs.map((item) => (
@@ -65,7 +65,7 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
         ))}
       </TabsList>
 
-      <TabsContent value={tab} className="mt-0 outline-none">
+      <TabsContent value={tab} className={tabsPageContentClassName}>
         {panel}
       </TabsContent>
     </Tabs>

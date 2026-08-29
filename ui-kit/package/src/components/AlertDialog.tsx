@@ -33,7 +33,7 @@ function AlertDialogContent({
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4">
         <AlertDialogPrimitive.Content
           className={cn(
-            'glass-card-solid grid w-full sm:max-w-lg gap-4 rounded-lg p-6 text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+            'glass-card-solid ui-shape-panel-lg grid w-full sm:max-w-lg gap-4 p-6 text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
             className,
           )}
           {...props}
@@ -62,7 +62,7 @@ function AlertDialogTitle({
 }: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>) {
   return (
     <AlertDialogPrimitive.Title
-      className={cn('text-lg font-semibold text-foreground', className)}
+      className={cn('text-lg font-semibold text-foreground ui-title', className)}
       {...props}
     />
   )

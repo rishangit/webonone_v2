@@ -2,9 +2,9 @@ import { useCallback, useMemo } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { normalizeLocale, translateNavItems, type AppLocale } from '@webonone/i18n'
-import { AppShell, BrandLogo, ListPageModeProvider, LoadingState } from '@webonone/ui-kit'
+import { AppShell, BrandLogo, ListPageModeProvider, LoadingState, UiThemeProvider } from '@webonone/ui-kit'
 import { performPlatformLogout } from '@webonone/platform-nav'
-import { useListPageModeValue } from '@webonone/theme'
+import { useListPageModeValue, useUiThemeValue } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
@@ -32,6 +32,7 @@ function AppLayoutContent() {
   const overlayLabel = usePlatformOverlayLabel()
   const currentLocale = normalizeLocale(i18n.language)
   const listPageMode = useListPageModeValue()
+  const uiTheme = useUiThemeValue()
 
   const handleLocaleChange = useCallback((locale: AppLocale) => {
     void changeAppLocale(locale)
@@ -56,7 +57,8 @@ function AppLayoutContent() {
   }
 
   return (
-    <ListPageModeProvider mode={listPageMode}>
+    <UiThemeProvider theme={uiTheme}>
+      <ListPageModeProvider mode={listPageMode}>
     <AppShell
       nav={nav}
       activePath={location.pathname}
@@ -83,5 +85,6 @@ function AppLayoutContent() {
       </div>
     </AppShell>
     </ListPageModeProvider>
+    </UiThemeProvider>
   )
 }

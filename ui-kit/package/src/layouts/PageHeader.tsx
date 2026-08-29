@@ -149,7 +149,7 @@ function PageHeader({
           <div className="min-w-0 flex-1 space-y-1">
             {description ? (
               <>
-                <h1 className="truncate text-2xl font-semibold text-foreground">{title}</h1>
+                  <h1 className="ui-title truncate text-2xl font-semibold text-foreground">{title}</h1>
                 <p className="text-sm text-muted-foreground">{description}</p>
                 {actions ? (
                   <div className="flex items-center justify-between gap-2">
@@ -166,7 +166,7 @@ function PageHeader({
                   <h1
                     aria-hidden={mobileSearchExpanded || undefined}
                     className={cn(
-                      'min-w-0 flex-1 overflow-hidden truncate text-2xl font-semibold text-foreground transition-transform duration-300 ease-out',
+                      'min-w-0 flex-1 overflow-hidden truncate text-2xl font-semibold text-foreground transition-transform duration-300 ease-out ui-title',
                       mobileSearchExpanded && 'max-sm:-translate-x-full',
                     )}
                   >

@@ -11,6 +11,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
+  itemListThumbClassName,
   ImagePreview,
   Spinner,
   cn,
@@ -287,7 +288,7 @@ export function OptionSelectionDialog({
                         src={option.imageUrl ?? null}
                         alt={option.name}
                         mode="view"
-                        className="h-12 w-12"
+                        className={itemListThumbClassName}
                       />
                     ) : null}
                     <ItemListContent>

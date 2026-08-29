@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { applyColorMode, applyThemeVariables } from '@webonone/theme'
-import type { ColorMode } from '@webonone/theme'
+import {
+  applyColorMode,
+  applyThemeVariables,
+  applyUiTheme,
+  UI_THEMES,
+  type ColorMode,
+  type UiThemeId,
+} from '@webonone/theme'
 import { Button } from '@webonone/ui-kit'
 
 const PLATFORM_DEFAULT = {
@@ -25,7 +31,17 @@ const ALT_PALETTE = {
 
 const PALETTES = [PLATFORM_DEFAULT, ALT_PALETTE]
 
-export function ThemeToolbar() {
+const UI_THEME_LABELS: Record<UiThemeId, string> = {
+  classic: 'Classic',
+  'high-tech': 'High-tech',
+}
+
+type ThemeToolbarProps = {
+  uiTheme: UiThemeId
+  onUiThemeChange: (theme: UiThemeId) => void
+}
+
+export function ThemeToolbar({ uiTheme, onUiThemeChange }: ThemeToolbarProps) {
   const [colorMode, setColorMode] = useState<ColorMode>('light')
   const [activePaletteId, setActivePaletteId] = useState(PLATFORM_DEFAULT.id)
 
@@ -38,6 +54,10 @@ export function ThemeToolbar() {
   useEffect(() => {
     applyPalette(activePaletteId, colorMode)
   }, [activePaletteId, colorMode, applyPalette])
+
+  useEffect(() => {
+    applyUiTheme(uiTheme)
+  }, [uiTheme])
 
   function toggleMode() {
     setColorMode((m) => (m === 'light' ? 'dark' : 'light'))
@@ -58,6 +78,18 @@ export function ThemeToolbar() {
               onClick={() => setActivePaletteId(palette.id)}
             >
               {palette.name}
+            </Button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {UI_THEMES.map(({ id }) => (
+            <Button
+              key={id}
+              variant={uiTheme === id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onUiThemeChange(id)}
+            >
+              {UI_THEME_LABELS[id]}
             </Button>
           ))}
         </div>

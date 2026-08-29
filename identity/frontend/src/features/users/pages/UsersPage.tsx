@@ -13,6 +13,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  itemListThumbClassName,
   ListFilterPanel,
   ListFilterTrigger,
   ListAddButton,
@@ -293,7 +294,7 @@ export function UsersPage() {
                           src={user.avatarUrl}
                           alt={user.displayName}
                           mode="view"
-                          className="h-12 w-12"
+                          className={itemListThumbClassName}
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium">{user.displayName}</p>

@@ -27,6 +27,9 @@ export type { PaginationProps } from './components/Pagination'
 export { ListPageFooter } from './list-page/ListPageFooter'
 export type { ListPageFooterProps } from './list-page/ListPageFooter'
 export { ListPageModeProvider, useListPageMode } from './list-page/ListPageModeContext'
+export { UiThemeProvider, useUiTheme } from './ui-theme/UiThemeContext'
+export { DEFAULT_UI_THEME, themeNeedsShapeDom } from './ui-theme/uiTheme'
+export type { UiThemeId } from './ui-theme/uiTheme'
 export { useClientListPage } from './list-page/useClientListPage'
 export { useListPageModeReload } from './list-page/useListPageScroll'
 export { getListPageScrollRoot, nextVisibleCount } from './list-page/listPageScroll'
@@ -92,8 +95,13 @@ export {
   TabsList,
   TabsTrigger,
   TabsContent,
+  tabsListScrollClassName,
   tabsListClassName,
+  tabsListShellClassName,
+  tabsTriggerShellClassName,
   tabsTriggerClassName,
+  tabsPageClassName,
+  tabsPageContentClassName,
   tabsContentClassName,
 } from './components/Tabs'
 
@@ -127,6 +135,7 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
+  type CardProps,
 } from './components/Card'
 export {
   Dialog,
@@ -203,6 +212,7 @@ export {
   itemListRowActiveClassName,
   itemListMenuClassName,
   itemListStatusClassName,
+  itemListThumbClassName,
 } from './components/ItemList'
 export type { ItemListMenuProps } from './components/ItemList'
 export { ConfirmItemList } from './components/ConfirmItemList'
@@ -251,5 +261,23 @@ export type {
 } from './components/RemainingTime'
 export { formatRemainingDuration } from './lib/formatRemainingDuration'
 export { cn } from './lib/utils'
+export {
+  shapeCardShellClassName,
+  shapeCardClassName,
+  shapeCardSurfaceClassName,
+  shapeCardAreaClassName,
+  shapeCardToneClassName,
+  shapeCompactCardClassName,
+  shapeCompactCardSurfaceClassName,
+  shapeCompactCardAreaClassName,
+  shapeImageClassName,
+  CARD_TONES,
+  type CardTone,
+  shapePanelClassName,
+  shapePanelSmClassName,
+  shapePanelLgClassName,
+  shapeControlClassName,
+  titleMarkClassName,
+} from './lib/shape'
 export { mapZodIssuesToFieldErrors } from './lib/mapZodIssuesToFieldErrors'
 export type { FieldValidationIssue } from './lib/mapZodIssuesToFieldErrors'

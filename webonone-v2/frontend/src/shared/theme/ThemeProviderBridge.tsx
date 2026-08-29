@@ -1,11 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, type ReactNode } from 'react'
 import {
   applyThemeVariables,
+  applyUiTheme,
   broadcastListPageModeToIframes,
   broadcastThemeToIframes,
+  broadcastUiThemeToIframes,
   buildThemePayload,
   createPlatformDefaultThemeDto,
   persistListPageMode,
+  persistUiTheme,
   THEME_MESSAGE_TYPES,
 } from '@webonone/theme'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -48,6 +51,9 @@ export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
     const payload = buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode)
     applyThemeVariables(payload)
     persistListPageMode(preferences.listPageMode ?? 'pagination')
+    const uiTheme = preferences.uiTheme ?? 'classic'
+    persistUiTheme(uiTheme)
+    applyUiTheme(uiTheme)
   }, [preferences])
 
   const broadcastToIframes = useCallback(() => {
@@ -57,6 +63,9 @@ export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
     broadcastThemeToIframes(payload, iframes)
     persistListPageMode(preferences.listPageMode ?? 'pagination')
     broadcastListPageModeToIframes(preferences.listPageMode ?? 'pagination', iframes)
+    const uiTheme = preferences.uiTheme ?? 'classic'
+    persistUiTheme(uiTheme)
+    broadcastUiThemeToIframes(uiTheme, iframes)
   }, [preferences])
 
   useEffect(() => {

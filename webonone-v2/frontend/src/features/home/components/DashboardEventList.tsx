@@ -7,6 +7,7 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  itemListThumbClassName,
   RemainingTime,
   StatusTag,
   type StatusTagVariant,
@@ -88,7 +89,7 @@ export function DashboardEventList({
                   src={item.serviceImageUrl}
                   alt={item.serviceName}
                   mode="view"
-                  className="h-12 w-12"
+                  className={itemListThumbClassName}
                 />
                 <div className="min-w-0 space-y-1">
                   <p className="truncate font-medium text-foreground">{item.serviceName}</p>

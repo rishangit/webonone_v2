@@ -13,6 +13,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  tabsPageClassName,
+  tabsPageContentClassName,
   mapZodIssuesToFieldErrors,
   Textarea,
 } from '@webonone/ui-kit'
@@ -145,7 +147,7 @@ export function SettingsPage() {
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as SettingsTab)}
-        className="flex flex-col gap-6"
+        className={tabsPageClassName}
       >
         {settingsTabs.length > 0 ? (
           <TabsList aria-label={t('settings.ariaSections')}>
@@ -168,7 +170,7 @@ export function SettingsPage() {
           </Alert>
         ) : null}
 
-        <TabsContent value="global" className="mt-0 outline-none">
+        <TabsContent value="global" className={tabsPageContentClassName}>
           {isSuperAdmin ? (
             <section className="space-y-3 rounded-lg border border-border p-6">
               <h2 className="text-lg font-medium">{t('settings.global')}</h2>
@@ -178,7 +180,7 @@ export function SettingsPage() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="branding" className="mt-0 outline-none">
+        <TabsContent value="branding" className={tabsPageContentClassName}>
           {!companyId ? (
             <p className="text-sm text-muted-foreground">{t('settings.noCompany')}</p>
           ) : loading ? null : (

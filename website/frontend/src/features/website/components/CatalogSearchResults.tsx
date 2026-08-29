@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ImagePreview, ItemList, ItemListContent, ItemListEmpty, ItemListItem } from '@webonone/ui-kit'
+import { ImagePreview, ItemList, ItemListContent, ItemListEmpty, ItemListItem, itemListThumbClassName } from '@webonone/ui-kit'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
 import type { UserLocationStatus } from '@/features/website/hooks/useUserLocation'
 
@@ -80,7 +80,7 @@ export function CatalogSearchResults({
                     to={detailTo}
                     className="shrink-0 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <ImagePreview src={item.imageUrl} alt="" className="h-12 w-12" />
+                    <ImagePreview src={item.imageUrl} alt="" className={itemListThumbClassName} />
                   </Link>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">

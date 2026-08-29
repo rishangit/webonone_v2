@@ -1,5 +1,6 @@
 export type { ColorMode, ThemeApplyMessage, ThemeDto, ThemePayload } from './types'
 export type { ListPageMode } from './listPageModeConstants'
+export type { UiThemeId } from './uiThemeConstants'
 export {
   PLATFORM_DEFAULT_THEME,
   PLATFORM_DEFAULT_THEME_ID,
@@ -68,3 +69,30 @@ export {
   persistAppliedTheme,
   readPersistedTheme,
 } from './themeSession'
+export {
+  DEFAULT_UI_THEME,
+  UI_THEME_CHANGE_EVENT,
+  UI_THEME_IDS,
+  UI_THEME_MESSAGE_TYPES,
+  UI_THEME_QUERY,
+  UI_THEMES,
+  isUiThemeId,
+  themeNeedsShapeDom,
+} from './uiThemeConstants'
+export { applyUiTheme, applyUiThemeFromValue } from './applyUiTheme'
+export {
+  applyUiThemeFromQueryParams,
+  parseUiTheme,
+  parseUiThemeFromQuery,
+  relayUiThemeQueryParams,
+  resolveUiTheme,
+  serializeUiThemeQueryParams,
+  stripUiThemeQueryParams,
+  uiThemeSchema,
+} from './uiThemeUrl'
+export { persistUiTheme, readPersistedUiTheme, subscribeUiTheme } from './uiThemeSession'
+export {
+  broadcastUiThemeToIframes,
+  useEmbedUiThemeListener,
+  useUiThemeValue,
+} from './uiThemeEmbed'

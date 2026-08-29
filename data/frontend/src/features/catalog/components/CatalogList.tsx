@@ -11,6 +11,7 @@ import {
   ItemListItem,
   ItemListMenu,
   ItemListStatus,
+  itemListThumbClassName,
   TagChip,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -67,7 +68,7 @@ export function CatalogList({
               <ImagePreview
                 src={firstGalleryImageUrl(item.galleryImages)}
                 alt=""
-                className="h-12 w-12"
+                className={itemListThumbClassName}
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

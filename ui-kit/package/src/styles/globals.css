@@ -19,6 +19,9 @@
     --glass-bg: 0 0% 100% / 0.85;
     --glass-border: 0 0% 10% / 0.1;
     --glass-shadow: 0 0% 0% / 0.1;
+    /** App shell header + sidebar — fixed neutrals; @webonone/theme pins at runtime. */
+    --shell-chrome-bg: 240 5% 96%;
+    --shell-chrome-border: 240 6% 88%;
     --accent-primary: 232 75% 55%;
     --accent-secondary: 218 80% 56%;
     --accent-primary-hover: 232 75% 45%;
@@ -28,9 +31,9 @@
     --ring: 218 80% 56%;
     --scrollbar-thumb: 218 80% 56% / 0.6;
 
-    /* Glass site canvas (tint from color4 applied at runtime) */
-    --background-base: 0 0% 100%;
-    --background-tint: 218 45% 96%;
+    /* Glass site canvas — fixed neutral wash (not theme tint on shell/body). */
+    --background-base: 240 5% 98%;
+    --background-tint: 240 5% 96%;
     --background-tint-opacity: 0.16;
 
     /* Light neutrals / glass surfaces */
@@ -46,17 +49,34 @@
     --accent-foreground: 0 0% 10%;
     --border: 240 6% 90%;
     --input-background: 221 60% 97%;
+    --input-background-focus: 221 58% 92%;
     --input: 232 75% 55% / 0.22;
-    --radius: 0.5rem;
+    /* Leftover rounding; signature shape is clip-path (.ui-shape-*) */
+    --radius: 0.125rem;
+    --shape-cut: 0.875rem;
+    --shape-cut-sm: 0.5rem;
+    --shape-cut-lg: 1.25rem;
+    --shape-cut-card: var(--shape-card-cut);
+    --shape-card-cut: 2rem;
+    --shape-card-tab-before-width: 40%;
+    --shape-card-tab-after-width: 50%;
+    --shape-card-tab-after-left: 40%;
+    --shape-card-tab-height: var(--shape-card-cut);
+    --shape-list-tab-height: var(--shape-cut-sm);
+    --shape-list-tab-before-width: 2.75rem;
+    --shape-list-tab-after-width: 3.25rem;
+    --shape-list-tab-after-left: 2.75rem;
+    --shape-list-cut: var(--shape-cut-sm);
+    --shape-step: 0.75rem;
     --popover: 210 36% 90% / 0.50;
     --menu-bg: 210 36% 90% / 0.50;
     --popover-foreground: 0 0% 10%;
   }
 
   .dark {
-    --background-base: 240 10% 4%;
-    --background-tint: 215 28% 17%;
-    --background-tint-opacity: 0.24;
+    --background-base: 240 4% 20%;
+    --background-tint: 240 4% 22%;
+    --background-tint-opacity: 0.16;
     --background: 215 28% 17% / 0.78;
     --foreground: 0 0% 98%;
     --card: 215 28% 17% / 0.78;
@@ -69,6 +89,7 @@
     --accent-foreground: 0 0% 98%;
     --border: 240 4% 16%;
     --input-background: 221 35% 17%;
+    --input-background-focus: 221 35% 13%;
     --input: 232 75% 55% / 0.38;
     --popover: 215 28% 24% / 0.94;
     --menu-bg: 215 28% 24% / 0.94;
@@ -76,6 +97,8 @@
     --glass-bg: 215 28% 17% / 0.8;
     --glass-border: 0 0% 98% / 0.22;
     --glass-shadow: 0 0% 0% / 0.25;
+    --shell-chrome-bg: 240 4% 16%;
+    --shell-chrome-border: 240 4% 22%;
     --accent-primary-hover: 232 75% 45%;
     --accent-button-text: 0 0% 100%;
   }
@@ -159,6 +182,488 @@
 }
 
 @layer utilities {
+  /**
+   * Classic UI theme — rounded glass surfaces without industrial clip-path geometry.
+   */
+  [data-ui-theme='classic'],
+  html:not([data-ui-theme]) {
+    --radius: 0.5rem;
+  }
+
+  [data-ui-theme='classic'] .glass-card,
+  [data-ui-theme='classic'] .shell-glass,
+  html:not([data-ui-theme]) .glass-card,
+  html:not([data-ui-theme]) .shell-glass {
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  [data-ui-theme='classic'] .ui-shape-panel,
+  [data-ui-theme='classic'] .ui-shape-panel-sm,
+  [data-ui-theme='classic'] .ui-shape-panel-lg,
+  [data-ui-theme='classic'] .ui-shape-image,
+  [data-ui-theme='classic'] .ui-shape-control {
+    clip-path: none;
+  }
+
+  [data-ui-theme='classic'] .ui-shape-panel,
+  [data-ui-theme='classic'] .ui-shape-panel-sm,
+  [data-ui-theme='classic'] .ui-shape-panel-lg,
+  [data-ui-theme='classic'] .ui-shape-image {
+    border-radius: var(--radius);
+  }
+
+  [data-ui-theme='classic'] .ui-shape-control {
+    border-radius: var(--radius);
+  }
+
+  [data-ui-theme='classic'] .ui-title {
+    padding-left: 0;
+  }
+
+  [data-ui-theme='classic'] .ui-title::before {
+    content: none;
+  }
+
+  /**
+   * High-tech UI theme — flat page canvas; keep radial tint only (no line/grid pattern).
+   */
+  html[data-ui-theme='high-tech'] {
+    background-image:
+      radial-gradient(
+        ellipse 120% 70% at 50% -15%,
+        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 1.4)),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 70% 55% at 100% 40%,
+        hsl(var(--background-tint) / var(--background-tint-opacity)),
+        transparent 52%
+      ),
+      radial-gradient(
+        ellipse 65% 50% at 0% 85%,
+        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
+        transparent 50%
+      );
+  }
+
+  /**
+   * Industrial panel shapes — 45° chamfer + optional 90° step.
+   * Colors stay on theme tokens; only geometry changes.
+   */
+  [data-ui-theme='high-tech'] .ui-shape-panel,
+  [data-ui-theme='high-tech'] .ui-shape-panel-sm,
+  [data-ui-theme='high-tech'] .ui-shape-panel-lg {
+    --_cut: var(--shape-cut);
+    --_step: var(--shape-step);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--_cut)) 0,
+      100% var(--_cut),
+      100% calc(100% - var(--_step)),
+      calc(100% - var(--_step)) calc(100% - var(--_step)),
+      calc(100% - var(--_step)) 100%,
+      0 100%
+    );
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-panel-sm {
+    --_cut: var(--shape-cut-sm);
+    --_step: var(--shape-cut-sm);
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-panel-lg {
+    --_cut: var(--shape-cut-lg);
+    --_step: var(--shape-step);
+  }
+
+  /**
+   * Images — top-right chamfer only; square bottom-right (no inner step).
+   */
+  [data-ui-theme='high-tech'] .ui-shape-image {
+    --_cut: var(--shape-cut);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--_cut)) 0,
+      100% var(--_cut),
+      100% 100%,
+      0 100%
+    );
+  }
+
+  /**
+   * Card wrapper — corner tabs sit outside the clipped surface with no vertical padding gap.
+   * Sibling cards auto-alternate theme primary / secondary; override with .ui-shape-card-tone-*.
+   */
+  [data-ui-theme='high-tech'] .ui-shape-card {
+    position: relative;
+    isolation: isolate;
+    --card-tone: var(--accent-primary);
+    --card-tone-surface: 0.24;
+    --card-tone-fill: hsl(var(--card-tone) / var(--card-tone-surface));
+    --card-hex-opacity: 0.1;
+    --_tab-h: var(--shape-card-tab-height);
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card:nth-child(even) {
+    --card-tone: var(--accent-secondary);
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-shape-card {
+    --card-tone-surface: 0.3;
+    --card-hex-opacity: 0.07;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card::before,
+  [data-ui-theme='high-tech'] .ui-shape-card::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    height: var(--_tab-h);
+    --_tab-cut: var(--shape-card-cut);
+    background: var(--card-tone-fill);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card::before {
+    top: 0;
+    left: 0;
+    width: var(--shape-card-tab-before-width);
+    transform: translateY(-100%);
+  }
+
+  /**
+   * Card accent tab — chamfers span full accent height.
+   */
+  [data-ui-theme='high-tech'] .ui-shape-card::before {
+    --_tab-h: var(--shape-card-tab-height);
+    --_tab-cut: var(--_tab-h);
+    height: var(--_tab-h);
+    clip-path: polygon(
+      0 var(--_tab-cut),
+      var(--_tab-cut) 0,
+      calc(100% - var(--_tab-cut)) 0,
+      100% var(--_tab-cut),
+      100% 100%,
+      0 100%
+    );
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card::after {
+    bottom: 0;
+    left: var(--shape-card-tab-after-left);
+    width: var(--shape-card-tab-after-width);
+    transform: translateY(100%);
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - var(--_tab-cut)),
+      calc(100% - var(--_tab-cut)) 100%,
+      var(--_tab-cut) 100%,
+      0 calc(100% - var(--_tab-cut))
+    );
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-primary {
+    --card-tone: var(--accent-primary);
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-secondary {
+    --card-tone: var(--accent-secondary);
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-amber {
+    --card-tone: 38 92% 50%;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-teal {
+    --card-tone: 174 58% 40%;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-rose {
+    --card-tone: 350 72% 55%;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-violet {
+    --card-tone: 262 58% 58%;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-lime {
+    --card-tone: 84 58% 42%;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card-tone-sky {
+    --card-tone: 199 75% 48%;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card .ui-shape-card-surface.glass-card {
+    background: var(--card-tone-fill);
+    border: none;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-card .ui-shape-card-surface.glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: url('./assets/card-hex-background.jpg') left center / cover no-repeat;
+    opacity: var(--card-hex-opacity);
+    pointer-events: none;
+  }
+
+  /**
+   * Pages / areas with cards — top padding clears ::before accent tabs (no vertical gap on .ui-shape-card).
+   * Skip tabbed pages: card clearance belongs on tab panels, not above the tab strip.
+   */
+  [data-ui-theme='high-tech'] .ui-shape-card-area,
+  [data-ui-theme='high-tech'] .feature-page-body:has(.ui-shape-card):not(:has([role='tablist'])) {
+    padding-top: var(--shape-card-tab-height);
+  }
+
+  [data-ui-theme='high-tech'] .feature-page-body:has(.ui-shape-card) .ui-shape-card-area {
+    padding-top: 0;
+  }
+
+  /**
+   * List row — mini card wrapper with ::before / ::after accent tabs.
+   * Sibling rows auto-alternate theme primary / secondary.
+   */
+  [data-ui-theme='high-tech'] .ui-shape-list-row {
+    position: relative;
+    isolation: isolate;
+    list-style: none;
+    --card-tone: var(--accent-primary);
+    --card-tone-surface: 0.24;
+    --card-tone-fill: hsl(var(--card-tone) / var(--card-tone-surface));
+    --card-hex-opacity: 0.1;
+    --_tab-h: var(--shape-list-tab-height);
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-list-row:nth-child(even) {
+    --card-tone: var(--accent-secondary);
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-list-row.border-primary {
+    --card-tone: var(--accent-primary);
+    --card-tone-fill: hsl(var(--card-tone) / 0.34);
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-shape-list-row {
+    --card-tone-surface: 0.3;
+    --card-hex-opacity: 0.07;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-list-row::before,
+  [data-ui-theme='high-tech'] .ui-shape-list-row::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    height: var(--_tab-h);
+    --_tab-cut: var(--_tab-h);
+    background: var(--card-tone-fill);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-list-row::before {
+    top: 0;
+    left: 0;
+    width: var(--shape-list-tab-before-width);
+    transform: translateY(-100%);
+    clip-path: polygon(
+      0 var(--_tab-cut),
+      var(--_tab-cut) 0,
+      calc(100% - var(--_tab-cut)) 0,
+      100% var(--_tab-cut),
+      100% 100%,
+      0 100%
+    );
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-list-row::after {
+    bottom: 0;
+    left: var(--shape-list-tab-after-left);
+    width: var(--shape-list-tab-after-width);
+    transform: translateY(100%);
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - var(--_tab-cut)),
+      calc(100% - var(--_tab-cut)) 100%,
+      var(--_tab-cut) 100%,
+      0 calc(100% - var(--_tab-cut))
+    );
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-list-row .ui-shape-list-row-surface.glass-card {
+    position: relative;
+    z-index: 1;
+    background: var(--card-tone-fill);
+    border: none;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    --_cut: var(--shape-list-cut);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--_cut)) 0,
+      100% var(--_cut),
+      100% calc(100% - var(--_cut)),
+      calc(100% - var(--_cut)) 100%,
+      0 100%
+    );
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-list-row .ui-shape-list-row-surface.glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: url('./assets/card-hex-background.jpg') left center / cover no-repeat;
+    opacity: var(--card-hex-opacity);
+    pointer-events: none;
+  }
+
+  [data-ui-theme='high-tech'] ul[role='list']:has(.ui-shape-list-row) {
+    overflow: visible;
+    padding-top: calc(1rem + var(--shape-list-tab-height));
+    padding-bottom: calc(1rem + var(--shape-list-tab-height));
+  }
+
+  /**
+   * Tab panels already use py-6 — skip list top clearance so list tabs align with card overview tabs.
+   */
+  [role='tabpanel'] ul[role='list']:has(.ui-shape-list-row) {
+    padding-top: 0 !important;
+  }
+
+  /** Standalone compact cards (sidebar session, etc.) — clearance for mini accent tabs. */
+  .ui-shape-compact-card-area {
+    padding: 0.5rem;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-compact-card-area {
+    overflow: visible;
+    padding-top: calc(0.5rem + var(--shape-list-tab-height));
+    padding-bottom: calc(0.5rem + var(--shape-list-tab-height));
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-compact-card-area .ui-shape-list-row-surface.item-list-row:hover {
+    box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22);
+  }
+
+  /**
+   * Card surface — square left edge; large 45° chamfers on the right.
+   */
+  [data-ui-theme='high-tech'] .ui-shape-card-surface {
+    position: relative;
+    z-index: 1;
+    --_cut: var(--shape-card-cut);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--_cut)) 0,
+      100% var(--_cut),
+      100% calc(100% - var(--_cut)),
+      calc(100% - var(--_cut)) 100%,
+      0 100%
+    );
+  }
+
+  /** Opposing 45° chamfers for buttons, inputs, and compact triggers. */
+  [data-ui-theme='high-tech'] .ui-shape-control {
+    --_cut: var(--shape-cut-sm);
+    clip-path: polygon(
+      var(--_cut) 0,
+      100% 0,
+      100% calc(100% - var(--_cut)),
+      calc(100% - var(--_cut)) 100%,
+      0 100%,
+      0 var(--_cut)
+    );
+  }
+
+  /** Form controls — slightly darker fill on focus (replaces ring in borderless high-tech). */
+  [data-ui-theme='high-tech'] .ui-shape-control.bg-input-background {
+    transition: background-color 0.15s ease;
+  }
+
+  [data-ui-theme='high-tech']
+    .ui-shape-control.bg-input-background:is(:focus-visible, :focus-within):not(:disabled):not(
+      [disabled]
+    ) {
+    background-color: hsl(var(--input-background-focus)) !important;
+  }
+
+  /**
+   * High-tech — borderless surfaces; theme background fills are unchanged.
+   */
+  [data-ui-theme='high-tech'] :where(
+    .glass-card,
+    .shell-glass,
+    .glass-card-solid,
+    .glass-menu,
+    .ui-shape-control,
+    .ui-shape-image,
+    .ui-shape-panel,
+    .ui-shape-panel-sm,
+    .ui-shape-panel-lg,
+    .ui-tag,
+    [role='checkbox'],
+    button[role='checkbox']
+  ) {
+    border-width: 0 !important;
+    border-color: transparent !important;
+  }
+
+  [data-ui-theme='high-tech'] :where(
+    .ui-shape-control,
+    .ui-shape-image,
+    .ui-shape-panel,
+    .ui-shape-panel-sm,
+    .ui-shape-panel-lg
+  ) {
+    box-shadow: none !important;
+  }
+
+  [data-ui-theme='high-tech']
+    :is([class*='border-input'], [class*='border-border'], [class*='border-destructive'], [class*='border-primary']):not(
+      [class*='border-0']
+    ):not([class*='border-transparent']):not([class*='border-t-transparent']):not(.animate-spin) {
+    border-width: 0 !important;
+    border-color: transparent !important;
+  }
+
+  [data-ui-theme='high-tech']
+    :is([class*='border-t'], [class*='border-r'], [class*='border-b'], [class*='border-l']):not(
+      [class*='border-transparent']
+    ):not(.animate-spin) {
+    border-width: 0 !important;
+    border-color: transparent !important;
+  }
+
+  /** Page / card / dialog titles — accent notch uses --accent-primary. */
+  [data-ui-theme='high-tech'] .ui-title {
+    position: relative;
+    padding-left: 0.85rem;
+  }
+
+  [data-ui-theme='high-tech'] .ui-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.12em;
+    width: 0.38rem;
+    height: 0.82em;
+    background: hsl(var(--accent-primary));
+    clip-path: polygon(0 0, 100% 0, 100% 68%, 35% 100%, 0 100%);
+  }
+
   /** Same themed wash as the page body (base + radial tint from @webonone/theme). */
   .theme-canvas {
     background-color: hsl(var(--background-base));
@@ -177,6 +682,24 @@
         ellipse 65% 50% at 0% 85%,
         hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
         transparent 50%
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 88px,
+        hsl(var(--foreground) / 0.045) 88px 89px,
+        transparent 89px 160px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent 0 56px,
+        hsl(var(--foreground) / 0.04) 56px 57px,
+        transparent 57px 140px
+      ),
+      repeating-linear-gradient(
+        45deg,
+        transparent 0 110px,
+        hsl(var(--accent-primary) / 0.06) 110px 111px,
+        transparent 111px 220px
       );
   }
 
@@ -200,6 +723,22 @@
     backdrop-filter: blur(8px);
   }
 
+  /**
+   * App shell header + left nav — fixed neutral chrome (not --glass-bg / theme tint).
+   * Opaque fill with no backdrop blur so the page canvas cannot bleed through.
+   */
+  .shell-glass {
+    background-color: hsl(var(--shell-chrome-bg));
+    border-color: hsl(var(--shell-chrome-border));
+  }
+
+  [data-ui-theme='high-tech'] .glass-card,
+  [data-ui-theme='high-tech'] .shell-glass,
+  [data-ui-theme='high-tech'] .glass-card-solid,
+  [data-ui-theme='high-tech'] .glass-menu {
+    border: none;
+  }
+
   /** Dialog surface — opaque page-body colors + glass border/blur. */
   .glass-card-solid {
     background-color: hsl(var(--background-base));
@@ -218,6 +757,24 @@
         ellipse 65% 50% at 0% 85%,
         hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
         transparent 50%
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 88px,
+        hsl(var(--foreground) / 0.045) 88px 89px,
+        transparent 89px 160px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent 0 56px,
+        hsl(var(--foreground) / 0.04) 56px 57px,
+        transparent 57px 140px
+      ),
+      repeating-linear-gradient(
+        45deg,
+        transparent 0 110px,
+        hsl(var(--accent-primary) / 0.06) 110px 111px,
+        transparent 111px 220px
       );
     border: 1px solid hsl(var(--glass-border));
     -webkit-backdrop-filter: blur(8px);
@@ -241,39 +798,196 @@
     box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22);
   }
 
-  /**
-   * Tabs — selected tab outer bottom curves (continuous strip → side → top).
-   * Pseudo borders draw the quarter-circle; page-colored box-shadow covers the
-   * straight strip under the notch so the stroke reads as one path.
-   */
-  .ui-tabs-trigger {
-    position: relative;
+  /** Status / time chips — borderless; opaque semantic colors (not card tone). */
+  [data-ui-theme='high-tech'] .ui-tag {
+    border: none;
+    --_cut: var(--shape-cut-sm);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--_cut)) 0,
+      100% var(--_cut),
+      100% 100%,
+      0 100%
+    );
+    isolation: isolate;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
-  .ui-tabs-trigger[data-state='active']::before,
-  .ui-tabs-trigger[data-state='active']::after {
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='pending'],
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='upcoming'] {
+    background-color: rgb(254 243 199) !important;
+    color: rgb(120 53 15) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='pending'],
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='upcoming'] {
+    background-color: rgb(69 26 3 / 0.92) !important;
+    color: rgb(253 230 138) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='rejected'] {
+    background-color: rgb(254 226 226) !important;
+    color: rgb(127 29 29) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='rejected'] {
+    background-color: rgb(69 10 10 / 0.92) !important;
+    color: rgb(254 202 202) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='approved'],
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='current'] {
+    background-color: rgb(209 250 229) !important;
+    color: rgb(6 78 59) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='approved'],
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='current'] {
+    background-color: rgb(6 44 34 / 0.92) !important;
+    color: rgb(167 243 208) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='unverified'] {
+    background-color: rgb(255 237 213) !important;
+    color: rgb(124 45 18) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='unverified'] {
+    background-color: rgb(67 20 7 / 0.92) !important;
+    color: rgb(254 215 170) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='verified'] {
+    background-color: rgb(204 251 241) !important;
+    color: rgb(19 78 74) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='verified'] {
+    background-color: rgb(19 58 55 / 0.92) !important;
+    color: rgb(153 246 228) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='super_admin'] {
+    background-color: rgb(237 233 254) !important;
+    color: rgb(76 29 149) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='super_admin'] {
+    background-color: rgb(46 16 101 / 0.92) !important;
+    color: rgb(221 214 254) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='company_admin'] {
+    background-color: rgb(224 242 254) !important;
+    color: rgb(12 74 110) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='company_admin'] {
+    background-color: rgb(12 44 66 / 0.92) !important;
+    color: rgb(186 230 253) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='member'] {
+    background-color: rgb(241 245 249) !important;
+    color: rgb(15 23 42) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='member'] {
+    background-color: rgb(30 41 59 / 0.92) !important;
+    color: rgb(226 232 240) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='staff'] {
+    background-color: rgb(224 231 255) !important;
+    color: rgb(49 46 129) !important;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='staff'] {
+    background-color: rgb(30 27 75 / 0.92) !important;
+    color: rgb(199 210 254) !important;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='ended'] {
+    background-color: hsl(var(--muted) / 0.92) !important;
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  /** Catalog color tags — keep API hex on top of tinted card surfaces. */
+  [data-ui-theme='high-tech'] .ui-tag-chip {
+    isolation: isolate;
+    position: relative;
+    z-index: 1;
+  }
+
+  /**
+   * Tabs — mini accent tabs; layout matches classic (no shell padding/margin).
+   */
+  [data-ui-theme='high-tech'] .ui-tabs-list-shell {
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  [data-ui-theme='high-tech'] .ui-tabs-trigger-shell {
+    overflow: visible;
+    position: relative;
+    display: inline-flex;
+    vertical-align: top;
+    --tab-tone: var(--accent-primary);
+    --_tab-cut: var(--shape-card-cut);
+    --card-tone: var(--tab-tone);
+    --card-tone-surface: 0.24;
+    --card-tone-fill: hsl(var(--tab-tone) / var(--card-tone-surface));
+  }
+
+  [data-ui-theme='high-tech'] .ui-tabs-trigger-shell:nth-child(even) {
+    --tab-tone: var(--accent-secondary);
+  }
+
+  [data-ui-theme='high-tech'] .ui-tabs-trigger-shell::before {
     content: '';
     position: absolute;
-    bottom: -0.75px;
-    width: 0.5rem;
-    height: 0.5rem;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    width: var(--shape-list-tab-before-width);
+    height: var(--shape-list-tab-height);
+    transform: translateY(-100%);
+    background: var(--card-tone-fill);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     pointer-events: none;
-    background: transparent;
-    border: 1px solid hsl(var(--secondary));
+    --_tab-h: var(--shape-list-tab-height);
+    --_tab-cut: calc(var(--_tab-h) / 2);
+    clip-path: polygon(
+      0 var(--_tab-cut),
+      var(--_tab-cut) 0,
+      calc(100% - var(--_tab-cut)) 0,
+      100% var(--_tab-cut),
+      100% 100%,
+      0 100%
+    );
   }
 
-  .ui-tabs-trigger[data-state='active']::before {
-    left: -0.5rem;
-    border-width: 0 1px 1px 0;
-    border-bottom-right-radius: 0.5rem;
-    box-shadow: 2px 2px 0 0 hsl(var(--background-base));
+  [data-ui-theme='high-tech'] .dark .ui-tabs-trigger-shell::before {
+    --card-tone-surface: 0.3;
+    --card-tone-fill: hsl(var(--tab-tone) / var(--card-tone-surface));
   }
 
-  .ui-tabs-trigger[data-state='active']::after {
-    right: -0.5rem;
-    border-width: 0 0 1px 1px;
-    border-bottom-left-radius: 0.5rem;
-    box-shadow: -2px 2px 0 0 hsl(var(--background-base));
+  /** Tab body — borderless; compact chamfers (control scale). */
+  [data-ui-theme='high-tech'] .ui-tabs-trigger {
+    position: relative;
+    border: none;
+    --_tab-cut-y: 50%;
+    --_tab-cut-x: var(--shape-cut-sm);
+    clip-path: polygon(
+      0 var(--_tab-cut-y),
+      var(--_tab-cut-x) 0,
+      calc(100% - var(--_tab-cut-x)) 0,
+      100% var(--_tab-cut-y),
+      100% 100%,
+      0 100%
+    );
   }
 
   /** Primary button — palette accent (color3 → color1) with hover + tinted shadow. */
@@ -320,6 +1034,7 @@
     inset: 0;
     z-index: -1;
     border-radius: inherit;
+    clip-path: inherit;
     background: linear-gradient(
       to right,
       hsl(var(--accent-secondary)),
@@ -335,8 +1050,7 @@
     );
   }
 
-  .surface-glass,
-  .shell-glass {
+  .surface-glass {
     @apply glass-card;
   }
 }

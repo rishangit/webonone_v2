@@ -8,7 +8,7 @@ import { cn } from '../lib/utils'
  * (`super_admin` | `company_admin` | `member` | `staff`).
  */
 const statusTagVariants = cva(
-  'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm',
+  'ui-tag inline-flex items-center ui-shape-panel-sm border px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm',
   {
     variants: {
       variant: {
@@ -68,7 +68,11 @@ function StatusTag({ className, variant = 'pending', children, ...props }: Statu
   const label = children ?? DEFAULT_LABELS[resolvedVariant]
 
   return (
-    <span className={cn(statusTagVariants({ variant: resolvedVariant }), className)} {...props}>
+    <span
+      data-tag-variant={resolvedVariant}
+      className={cn(statusTagVariants({ variant: resolvedVariant }), className)}
+      {...props}
+    >
       {label}
     </span>
   )

@@ -13,6 +13,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  itemListThumbClassName,
   ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
@@ -227,7 +228,7 @@ export function InvoicesPage() {
                               invoice.companyName?.trim() || t('unknownCompany')
                             }
                             mode="view"
-                            className="h-10 w-10 rounded-md"
+                            className={itemListThumbClassName}
                           />
                           <div className="min-w-0 space-y-1">
                             <div className="flex flex-wrap items-center gap-2">

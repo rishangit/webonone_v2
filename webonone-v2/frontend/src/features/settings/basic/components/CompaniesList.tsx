@@ -9,6 +9,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  itemListThumbClassName,
   StatusTag,
 } from '@webonone/ui-kit'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
@@ -48,7 +49,7 @@ export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesLi
                   src={item.logoUrl}
                   alt={item.name}
                   mode="view"
-                  className="h-10 w-10 rounded-md"
+                  className={itemListThumbClassName}
                 />
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">

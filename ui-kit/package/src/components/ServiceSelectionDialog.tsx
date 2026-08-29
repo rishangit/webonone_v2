@@ -10,6 +10,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
+  itemListThumbClassName,
 } from './ItemList'
 import { ImagePreview } from './ImagePreview'
 import { Spinner } from './Spinner'
@@ -296,7 +297,7 @@ export function ServiceSelectionDialog({
                     src={service.imageUrl ?? null}
                     alt={service.name}
                     mode="view"
-                    className="h-12 w-12"
+                    className={itemListThumbClassName}
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{service.name}</p>

@@ -23,7 +23,7 @@ const SelectTrigger = React.forwardRef<React.ComponentRef<typeof SelectPrimitive
         <SelectPrimitive.Trigger
           ref={ref}
           className={cn(
-            'flex h-10 w-full items-center gap-2 overflow-hidden rounded-md border border-input bg-input-background px-3 text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+            'ui-shape-control flex h-10 w-full items-center gap-2 overflow-hidden border border-input bg-input-background px-3 text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
             inputGroupFocusRingClassName,
             className,
           )}
@@ -45,7 +45,7 @@ const SelectTrigger = React.forwardRef<React.ComponentRef<typeof SelectPrimitive
           'flex items-center justify-between text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
           inGroup
             ? cn(inputInGroupFieldClassName, 'items-center justify-between gap-2 focus:outline-none focus:ring-0 focus:ring-offset-0')
-            : cn('h-10 w-full rounded-md border border-input bg-input-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0', inputFocusRingClassName),
+            : cn('ui-shape-control h-10 w-full border border-input bg-input-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0', inputFocusRingClassName),
           className,
         )}
         {...props}
@@ -96,7 +96,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        'relative z-[110] max-h-96 min-w-[8rem] overflow-hidden rounded-md',
+        'relative z-[110] max-h-96 min-w-[8rem] overflow-hidden ui-shape-panel-sm',
         menuPanelClassName,
         position === 'popper' &&
           'w-[var(--radix-select-trigger-width)] data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',

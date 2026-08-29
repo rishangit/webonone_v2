@@ -11,6 +11,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
+  itemListThumbClassName,
 } from './ItemList'
 import {
   Select,
@@ -342,7 +343,7 @@ export function UserSelectionDialog({
                     src={user.avatarUrl ?? null}
                     alt={user.displayName}
                     mode="view"
-                    className="h-12 w-12"
+                    className={itemListThumbClassName}
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>

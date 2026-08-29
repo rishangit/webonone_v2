@@ -3,7 +3,7 @@ import type { ColorMode } from '@webonone/theme'
 import { authActions } from '@/features/auth/store/authSlice'
 import { isFresh } from '@/shared/store/cacheUtils'
 import type { ThemeFormValues } from '../schemas/themeFormSchema'
-import type { ApiTheme, ListPageMode, PreferencesResponse } from '../services/themeApi'
+import type { ApiTheme, ListPageMode, PreferencesResponse, UiThemeId } from '../services/themeApi'
 
 interface SystemThemeState {
   themes: ApiTheme[]
@@ -103,6 +103,7 @@ export const systemThemeSlice = createSlice({
         activeThemeId?: string
         colorMode?: ColorMode
         listPageMode?: ListPageMode
+        uiTheme?: UiThemeId
       }>,
     ) {
       state.status = 'saving'

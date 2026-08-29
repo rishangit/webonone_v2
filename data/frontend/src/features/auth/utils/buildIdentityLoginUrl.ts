@@ -1,6 +1,6 @@
 import { buildLoginRedirectUrl, consumeOAuthState } from '@webonone/platform-nav'
 import { relayLocaleQueryParams } from '@webonone/i18n'
-import { relayListPageModeQueryParams, relayThemeQueryParams } from '@webonone/theme'
+import { relayListPageModeQueryParams, relayThemeQueryParams, relayUiThemeQueryParams } from '@webonone/theme'
 import { getAuthCallbackUrl, getIdentityLoginUrl } from './identityConfig'
 
 const STATE_STORAGE_PREFIX = 'Data_oauth_state:'
@@ -15,6 +15,7 @@ export function buildIdentityLoginUrl(returnPath = '/'): string {
     extraSearchParams: {
       ...relayThemeQueryParams(searchParams),
       ...relayListPageModeQueryParams(searchParams),
+      ...relayUiThemeQueryParams(searchParams),
       ...relayLocaleQueryParams(searchParams),
     },
   })

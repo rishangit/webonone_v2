@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { FeaturePage, Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
+import { FeaturePage, Tabs, TabsContent, TabsList, TabsTrigger, tabsPageClassName, tabsPageContentClassName } from '@webonone/ui-kit'
 import { AccountSettingsPanel } from '@/features/settings/basic/components/AccountSettingsPanel'
 import { AiSettingsPanel } from '@/features/settings/basic/components/AiSettingsPanel'
 import { AppearanceSettingsPanel } from '@/features/settings/basic/components/AppearanceSettingsPanel'
@@ -24,7 +24,7 @@ export function BasicSettingsPage() {
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as BasicSettingsTab)}
-        className="flex flex-col gap-6"
+        className={tabsPageClassName}
       >
         <TabsList aria-label={t('basic.ariaSections')}>
           {tabs.map((item) => (
@@ -34,7 +34,7 @@ export function BasicSettingsPage() {
           ))}
         </TabsList>
 
-        <TabsContent value={tab} className="mt-0 outline-none">
+        <TabsContent value={tab} className={tabsPageContentClassName}>
           {tab === 'account' ? (
             <AccountSettingsPanel />
           ) : tab === 'theme' ? (

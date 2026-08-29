@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
+import { Tabs, TabsContent, TabsList, TabsTrigger, tabsPageClassName, tabsPageContentClassName } from '@webonone/ui-kit'
 
 export type SessionDetailTab = {
   id: string
@@ -29,7 +29,7 @@ export function SessionDetailSectionTabs({
     <Tabs
       value={tab}
       onValueChange={onTabChange}
-      className="flex flex-col gap-6"
+      className={tabsPageClassName}
     >
       <TabsList aria-label={ariaLabel}>
         {tabs.map((item) => (
@@ -38,7 +38,7 @@ export function SessionDetailSectionTabs({
           </TabsTrigger>
         ))}
       </TabsList>
-      <TabsContent value={tab} className="mt-0 outline-none">
+      <TabsContent value={tab} className={tabsPageContentClassName}>
         {children}
       </TabsContent>
     </Tabs>

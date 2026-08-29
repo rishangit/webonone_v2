@@ -1,21 +1,34 @@
 import * as React from 'react'
 import { MoreVertical } from 'lucide-react'
 import { cn } from '../lib/utils'
+import {
+  shapeListRowClassName,
+  shapeListRowSurfaceClassName,
+  shapePanelSmClassName,
+} from '../lib/shape'
+import { useUiTheme } from '../ui-theme/UiThemeContext'
+import { themeNeedsShapeDom } from '../ui-theme/uiTheme'
 import { Button } from './Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from './DropdownMenu'
 
 /** List container — vertical padding and small gap between separate row cards */
 export const itemListClassName = 'flex flex-col gap-2 py-4'
 
-/** Shared row padding, glass surface, small themed shadow on hover */
-export const itemListRowClassName =
-  'group flex items-start gap-3 rounded-lg glass-card item-list-row px-3 py-2 text-sm text-foreground'
+/** Shared row surface — glass fill, hover shadow, row padding */
+export const itemListRowSurfaceClassName =
+  'group flex items-start gap-3 glass-card item-list-row px-3 py-2 text-sm text-foreground'
+
+/** Classic row — single element with small panel chamfer */
+export const itemListRowClassName = cn(itemListRowSurfaceClassName, shapePanelSmClassName)
 
 /** 3-dot menu trigger — top-right of the row */
 export const itemListMenuClassName = 'shrink-0 self-start'
 
 /** Status / verification chip — top-right of the row, before ItemListMenu */
 export const itemListStatusClassName = 'shrink-0 self-start'
+
+/** Leading entity image in a list row (logo, avatar, catalog thumb). */
+export const itemListThumbClassName = 'h-14 w-14 shrink-0 rounded-md'
 
 /** Selected / active row — stronger border, no theme fill */
 export const itemListRowActiveClassName = 'border-primary'
@@ -24,8 +37,23 @@ function ItemList({ className, ...props }: React.HTMLAttributes<HTMLUListElement
   return <ul role="list" className={cn(itemListClassName, className)} {...props} />
 }
 
-function ItemListItem({ className, ...props }: React.LiHTMLAttributes<HTMLLIElement>) {
-  return <li className={cn(itemListRowClassName, className)} {...props} />
+function ItemListItem({ className, children, ...props }: React.LiHTMLAttributes<HTMLLIElement>) {
+  const uiTheme = useUiTheme()
+  const shapeDom = themeNeedsShapeDom(uiTheme)
+
+  if (!shapeDom) {
+    return (
+      <li className={cn(itemListRowClassName, className)} {...props}>
+        {children}
+      </li>
+    )
+  }
+
+  return (
+    <li className={cn(shapeListRowClassName, className)} {...props}>
+      <div className={cn(itemListRowSurfaceClassName, shapeListRowSurfaceClassName)}>{children}</div>
+    </li>
+  )
 }
 
 function ItemListContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

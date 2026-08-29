@@ -1,11 +1,21 @@
-import { db, type UserPreferenceRow } from '../models/db.js'
+import { db, type UiThemeId, type UserPreferenceRow } from '../models/db.js'
 import type { PatchPreferencesBody } from '../schemas/themeSchemas.js'
 import * as themeService from './themeService.js'
+
+const KNOWN_UI_THEMES = new Set<UiThemeId>(['classic', 'high-tech'])
+
+function normalizeUiTheme(value: string | null | undefined): UiThemeId {
+  if (value && KNOWN_UI_THEMES.has(value as UiThemeId)) {
+    return value as UiThemeId
+  }
+  return 'classic'
+}
 
 export interface PreferencesDto {
   activeThemeId: string
   colorMode: 'light' | 'dark'
   listPageMode: 'pagination' | 'on-scroll'
+  uiTheme: UiThemeId
   theme: themeService.ThemeDto
 }
 
@@ -20,6 +30,7 @@ async function ensurePreferencesRow(userId: string): Promise<UserPreferenceRow> 
     active_theme_id: themeService.PLATFORM_DEFAULT_THEME_ID,
     color_mode: 'light',
     list_page_mode: 'pagination',
+    ui_theme: 'classic',
     updated_at: db.fn.now(3),
   })
 
@@ -57,6 +68,7 @@ export async function getPreferences(userId: string): Promise<PreferencesDto> {
     activeThemeId: theme.id,
     colorMode: pref.color_mode,
     listPageMode: pref.list_page_mode ?? 'pagination',
+    uiTheme: normalizeUiTheme(pref.ui_theme),
     theme,
   }
 }
@@ -87,6 +99,9 @@ export async function patchPreferences(
   }
   if (body.listPageMode !== undefined) {
     patch.list_page_mode = body.listPageMode
+  }
+  if (body.uiTheme !== undefined) {
+    patch.ui_theme = body.uiTheme
   }
 
   await db('user_preferences').where({ user_id: userId }).update(patch)

@@ -59,6 +59,7 @@ import {
   PageShell,
   PasswordInput,
   SearchInput,
+  shapeCardAreaClassName,
   Select,
   SelectContent,
   SelectItem,
@@ -877,24 +878,43 @@ export function ComponentsPage() {
         <FullCalendarDemo />
       </DemoSection>
 
-      <DemoSection id="cards" title="Cards">
-        <div className="grid gap-4 md:grid-cols-2">
+      <DemoSection
+        id="cards"
+        title="Cards"
+        description="Sibling cards auto-alternate theme primary and secondary colors."
+      >
+        <div className={`${shapeCardAreaClassName} grid gap-4 md:grid-cols-2`}>
           <Card>
             <CardHeader>
-              <CardTitle>Basic card</CardTitle>
-              <CardDescription>Header and content</CardDescription>
+              <CardTitle>First card</CardTitle>
+              <CardDescription>Theme primary</CardDescription>
             </CardHeader>
             <CardContent>Card body content.</CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-primary">With footer</CardTitle>
+              <CardTitle>Second card</CardTitle>
+              <CardDescription>Theme secondary</CardDescription>
             </CardHeader>
             <CardContent>Stat or detail content.</CardContent>
             <CardFooter className="justify-end gap-2">
               <Button variant="outline">Cancel</Button>
               <Button>Save</Button>
             </CardFooter>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Third card</CardTitle>
+              <CardDescription>Theme primary again</CardDescription>
+            </CardHeader>
+            <CardContent>Alternates by sibling order.</CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Fourth card</CardTitle>
+              <CardDescription>Theme secondary again</CardDescription>
+            </CardHeader>
+            <CardContent>No tone prop required.</CardContent>
           </Card>
         </div>
       </DemoSection>

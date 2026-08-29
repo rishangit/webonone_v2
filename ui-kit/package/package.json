@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build": "tsup && npm run build:css",
-    "build:css": "tailwindcss -i ./src/styles/globals.css -o ./dist/styles.css --minify",
+    "build:css": "tailwindcss -i ./src/styles/globals.css -o ./dist/styles.css --minify && node ./scripts/copy-css-assets.mjs",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint src"

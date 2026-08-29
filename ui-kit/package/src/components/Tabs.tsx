@@ -1,35 +1,53 @@
 import * as React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { cn } from '../lib/utils'
+import { useUiTheme } from '../ui-theme/UiThemeContext'
+import { themeNeedsShapeDom } from '../ui-theme/uiTheme'
 import { inputFocusRingClassName } from './Input'
 
 /** Horizontal scroll viewport for the tab strip. */
 export const tabsListScrollClassName = cn(
-  'w-full min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth leading-none',
+  'w-full min-w-0 overflow-x-auto overflow-y-visible scroll-smooth leading-none',
   'overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]',
   '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
 )
 
 /** Inner tab row — grows with tab count; parent scroll viewport clips overflow. */
-export const tabsListClassName = 'flex w-max flex-nowrap items-start px-3'
+export const tabsListClassName = 'flex w-max flex-nowrap items-end px-3'
 
-/** Full-width shell — inset rule so the selected tab can cover it without a visible bottom border. */
-export const tabsListShellClassName =
-  'w-full min-w-0 shadow-[inset_0_-1px_0_0_hsl(var(--secondary))]'
+/** Full-width shell for high-tech tab strip (no bottom rule — shape-only tabs). */
+export const tabsListShellClassName = 'ui-tabs-list-shell w-full min-w-0'
+
+export const tabsListShellClassicClassName = 'w-full min-w-0 border-b border-border'
+
+/** Wraps each trigger — card-style ::before accent + top-right chamfer on the trigger. */
+export const tabsTriggerShellClassName = 'ui-tabs-trigger-shell'
 
 /**
- * Tab trigger base styles.
- * Active: secondary border on top/left/right; page-colored bottom covers the strip
- * rule (no visible bottom border). Outer curves via `.ui-tabs-trigger`.
+ * High-tech tab trigger — borderless; active state matches sidebar nav (`bg-accent/60`).
+ * Chamfered silhouette from `.ui-tabs-trigger` clip-path in globals.css.
  */
 export const tabsTriggerClassName = cn(
-  'ui-tabs-trigger inline-flex shrink-0 touch-pan-x select-none items-center justify-center whitespace-nowrap rounded-t-md border-0 border-t border-r border-[hsl(var(--glass-border))] bg-muted px-6 py-1.5 text-sm font-medium text-muted-foreground/60 transition-colors',
+  'ui-tabs-trigger inline-flex shrink-0 touch-pan-x select-none items-center justify-center whitespace-nowrap border-0 bg-muted px-6 py-1.5 text-sm font-medium text-muted-foreground/60 transition-colors',
   'hover:text-muted-foreground',
   'disabled:pointer-events-none disabled:opacity-50',
-  'data-[state=active]:z-10 data-[state=active]:border-l data-[state=active]:border-b data-[state=active]:border-t-secondary data-[state=active]:border-l-secondary data-[state=active]:border-r-secondary data-[state=active]:border-b-[hsl(var(--background-base))] data-[state=active]:bg-[hsl(var(--background-base))] data-[state=active]:text-secondary',
+  'data-[state=active]:z-10 data-[state=active]:bg-accent/60 data-[state=active]:text-foreground',
 )
 
-export const tabsContentClassName = 'mt-4 outline-none'
+export const tabsTriggerClassicClassName = cn(
+  'inline-flex shrink-0 touch-pan-x select-none items-center justify-center whitespace-nowrap rounded-t-lg border border-transparent bg-muted px-6 py-1.5 text-sm font-medium text-muted-foreground/60 transition-colors',
+  'hover:text-muted-foreground',
+  'disabled:pointer-events-none disabled:opacity-50',
+  'data-[state=active]:border-border data-[state=active]:border-b-background data-[state=active]:bg-background data-[state=active]:text-foreground',
+)
+
+/** Standard tab page layout — consistent title → strip → panel spacing (classic + high-tech). */
+export const tabsPageClassName = 'flex flex-col gap-6'
+
+/** Tab panel on feature/detail pages — defers strip gap to parent `tabsPageClassName`. */
+export const tabsPageContentClassName = 'mt-0 outline-none'
+
+export const tabsContentClassName = 'ui-tabs-content py-6 outline-none'
 
 const Tabs = TabsPrimitive.Root
 
@@ -95,6 +113,8 @@ const TabsList = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => {
+  const uiTheme = useUiTheme()
+  const shapeDom = themeNeedsShapeDom(uiTheme)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const listRef = React.useRef<React.ComponentRef<typeof TabsPrimitive.List>>(null)
 
@@ -120,30 +140,49 @@ const TabsList = React.forwardRef<
     return () => observer.disconnect()
   }, [])
 
-  return (
-    <div className={tabsListShellClassName}>
-      <div ref={scrollRef} className={tabsListScrollClassName}>
-        <TabsPrimitive.List
-          ref={mergeRefs(listRef, ref)}
-          className={cn(tabsListClassName, className)}
-          {...props}
-        />
-      </div>
+  const list = (
+    <div ref={scrollRef} className={tabsListScrollClassName}>
+      <TabsPrimitive.List
+        ref={mergeRefs(listRef, ref)}
+        className={cn(tabsListClassName, className)}
+        {...props}
+      />
     </div>
   )
+
+  if (!shapeDom) {
+    return <div className={tabsListShellClassicClassName}>{list}</div>
+  }
+
+  return <div className={tabsListShellClassName}>{list}</div>
 })
 TabsList.displayName = TabsPrimitive.List.displayName
 
 const TabsTrigger = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(tabsTriggerClassName, inputFocusRingClassName, className)}
-    {...props}
-  />
-))
+>(({ className, ...props }, ref) => {
+  const uiTheme = useUiTheme()
+  const shapeDom = themeNeedsShapeDom(uiTheme)
+
+  const trigger = (
+    <TabsPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        shapeDom ? tabsTriggerClassName : tabsTriggerClassicClassName,
+        inputFocusRingClassName,
+        className,
+      )}
+      {...props}
+    />
+  )
+
+  if (!shapeDom) {
+    return trigger
+  }
+
+  return <span className={tabsTriggerShellClassName}>{trigger}</span>
+})
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
 const TabsContent = React.forwardRef<

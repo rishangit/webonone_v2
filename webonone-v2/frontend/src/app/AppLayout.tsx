@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ComponentProps, type Di
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MessageCircle } from 'lucide-react'
-import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, cn, useToast } from '@webonone/ui-kit'
+import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, UiThemeProvider, cn, useToast } from '@webonone/ui-kit'
 import { clearIdentityEmbedSession, isPlatformAiEntityContextMessage } from '@webonone/platform-embed'
 import {
   appendPromptLogin,
@@ -276,6 +276,7 @@ function AppLayoutContent() {
   const overlayLabel = usePlatformOverlayLabel()
   const embedMain = isPlatformPeerEmbedPath(location.pathname, activeRole)
   const listPageMode = useAppSelector((s) => s.systemTheme.preferences?.listPageMode ?? 'pagination')
+  const uiTheme = useAppSelector((s) => s.systemTheme.preferences?.uiTheme ?? 'classic')
   const [assistantOpen, setAssistantOpen] = useState(false)
   const openAssistant = useCallback(() => setAssistantOpen(true), [])
 
@@ -287,6 +288,7 @@ function AppLayoutContent() {
         overlayLabel={overlayLabel}
         embedMain={embedMain}
         listPageMode={listPageMode}
+        uiTheme={uiTheme}
         nav={nav}
         location={location}
         headerUser={headerUser}
@@ -314,6 +316,7 @@ type AppLayoutShellProps = {
   overlayLabel: string | null
   embedMain: boolean
   listPageMode: 'pagination' | 'on-scroll'
+  uiTheme: 'classic' | 'high-tech'
   nav: ComponentProps<typeof AppShell>['nav']
   location: ReturnType<typeof useLocation>
   headerUser: {
@@ -353,6 +356,7 @@ function AppLayoutShell({
   overlayLabel,
   embedMain,
   listPageMode,
+  uiTheme,
   nav,
   location,
   headerUser,
@@ -393,6 +397,7 @@ function AppLayoutShell({
 
   return (
     <ThemeProviderBridge>
+      <UiThemeProvider theme={uiTheme}>
       <ListPageModeProvider mode={listPageMode}>
       <SessionRoleGate>
         <AppShell
@@ -446,6 +451,7 @@ function AppLayoutShell({
         </AppShell>
       </SessionRoleGate>
       </ListPageModeProvider>
+      </UiThemeProvider>
     </ThemeProviderBridge>
   )
 }

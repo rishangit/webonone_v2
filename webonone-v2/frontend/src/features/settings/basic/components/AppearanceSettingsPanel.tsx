@@ -1,4 +1,4 @@
-import { ArrowDownToLine, List, Moon, Sun } from 'lucide-react'
+import { ArrowDownToLine, Cpu, List, Moon, Square, Sun } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   Card,
@@ -9,11 +9,17 @@ import {
   cn,
 } from '@webonone/ui-kit'
 import type { ColorMode } from '@webonone/theme'
+import { UI_THEMES, type UiThemeId } from '@webonone/theme'
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { systemThemeActions } from '@/features/settings/system-theme/store/systemThemeSlice'
 import type { ListPageMode } from '@/features/settings/system-theme/services/themeApi'
+
+const UI_THEME_ICONS: Record<UiThemeId, typeof Square> = {
+  classic: Square,
+  'high-tech': Cpu,
+}
 
 export function AppearanceSettingsPanel() {
   const { t } = useTranslation('settings')
@@ -21,6 +27,7 @@ export function AppearanceSettingsPanel() {
   const { preferences, preferencesFetchedAt } = useAppSelector((s) => s.systemTheme)
   const colorMode = preferences?.colorMode ?? 'light'
   const listPageMode = preferences?.listPageMode ?? 'pagination'
+  const uiTheme = preferences?.uiTheme ?? 'classic'
 
   const appearanceOptions: {
     mode: ColorMode
@@ -82,6 +89,13 @@ export function AppearanceSettingsPanel() {
     dispatch(systemThemeActions.patchPreferencesRequested({ listPageMode: mode }))
   }
 
+  function handleUiThemeSelect(theme: UiThemeId) {
+    if (theme === uiTheme) {
+      return
+    }
+    dispatch(systemThemeActions.patchPreferencesRequested({ uiTheme: theme }))
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
@@ -110,6 +124,46 @@ export function AppearanceSettingsPanel() {
                     <span>
                       <span className="block font-medium text-foreground">{title}</span>
                       <span className="mt-1 block text-sm text-muted-foreground">{description}</span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('appearance.uiTheme.title')}</CardTitle>
+          <CardDescription>{t('appearance.uiTheme.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {UI_THEMES.map(({ id, labelKey }) => {
+              const selected = uiTheme === id
+              const Icon = UI_THEME_ICONS[id]
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex w-full flex-col items-start gap-3 rounded-lg border px-4 py-4 text-left transition-colors',
+                      selected
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-glass-bg hover:border-primary/50',
+                    )}
+                    onClick={() => handleUiThemeSelect(id)}
+                    aria-pressed={selected}
+                  >
+                    <Icon className="h-5 w-5 text-foreground" aria-hidden />
+                    <span>
+                      <span className="block font-medium text-foreground">
+                        {t(`${labelKey}.title`)}
+                      </span>
+                      <span className="mt-1 block text-sm text-muted-foreground">
+                        {t(`${labelKey}.description`)}
+                      </span>
                     </span>
                   </button>
                 </li>

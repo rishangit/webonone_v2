@@ -142,7 +142,7 @@ function CustomDialog({
           <DialogPrimitive.Content
             id={id}
             className={cn(
-              'glass-card-solid flex flex-col overflow-hidden rounded-lg text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+              'glass-card-solid ui-shape-panel-lg flex flex-col overflow-hidden text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
               sizeClasses,
               className,
             )}
@@ -174,7 +174,7 @@ function CustomDialog({
                     {icon ? <div className="mt-0.5 shrink-0 text-muted-foreground">{icon}</div> : null}
                     <div className="space-y-1">
                       {title ? (
-                        <DialogPrimitive.Title className="text-lg font-semibold leading-none tracking-tight">
+                        <DialogPrimitive.Title className="ui-title text-lg font-semibold leading-none tracking-tight">
                           {title}
                         </DialogPrimitive.Title>
                       ) : null}

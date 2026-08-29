@@ -7,8 +7,14 @@ import {
 } from '@webonone/platform-embed'
 import { CORE_NAV_QUERY_PARAM, appendPromptLogin, buildLogoutClearChain, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
-import { relayListPageModeQueryParams, relayThemeQueryParams, useListPageModeValue } from '@webonone/theme'
-import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, PageShell, useToast } from '@webonone/ui-kit'
+import {
+  relayListPageModeQueryParams,
+  relayThemeQueryParams,
+  relayUiThemeQueryParams,
+  useListPageModeValue,
+  useUiThemeValue,
+} from '@webonone/theme'
+import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, PageShell, UiThemeProvider, useToast } from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
@@ -99,6 +105,7 @@ function AppLayoutContent() {
     ? null
     : resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const listPageMode = useListPageModeValue(embedParentOrigin)
+  const uiTheme = useUiThemeValue(embedParentOrigin)
 
   const body = embedParentOrigin ? (
     <div className={PLATFORM_EMBED_APP_HOST_CLASS}>
@@ -108,7 +115,11 @@ function AppLayoutContent() {
     <AppLayoutShellContent />
   )
 
-  return <ListPageModeProvider mode={listPageMode}>{body}</ListPageModeProvider>
+  return (
+    <UiThemeProvider theme={uiTheme}>
+      <ListPageModeProvider mode={listPageMode}>{body}</ListPageModeProvider>
+    </UiThemeProvider>
+  )
 }
 
 function AppLayoutShellContent() {
@@ -130,6 +141,7 @@ function AppLayoutShellContent() {
     () => ({
       ...relayThemeQueryParams(searchParams),
       ...relayListPageModeQueryParams(searchParams),
+      ...relayUiThemeQueryParams(searchParams),
       ...relayLocaleQueryParams(searchParams),
     }),
     [searchParams],

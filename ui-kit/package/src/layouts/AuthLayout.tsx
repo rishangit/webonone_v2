@@ -37,7 +37,7 @@ function AuthLayout({
   return (
     <div className={cn('flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4', className)}>
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">WebOnOne Identity</h1>
+        <h1 className="ui-title text-2xl font-bold tracking-tight">WebOnOne Identity</h1>
         <p className="text-sm text-muted-foreground">Secure authentication</p>
       </div>
       <Card className="w-full max-w-2xl">

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../lib/utils'
 
-const calloutVariants = cva('rounded-lg border p-4 shadow-sm', {
+const calloutVariants = cva('ui-shape-panel border p-4 shadow-sm', {
   variants: {
     variant: {
       highlight: 'border-primary/35 bg-primary/10 ring-1 ring-primary/15',

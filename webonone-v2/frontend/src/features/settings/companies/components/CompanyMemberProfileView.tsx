@@ -10,6 +10,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  tabsPageClassName,
+  tabsPageContentClassName,
 } from '@webonone/ui-kit'
 import { filterCompanyDataEntities, type CompanyDataEntityKey } from '@webonone/platform-nav'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -235,7 +237,7 @@ export function CompanyMemberProfileView({
       <Tabs
         value={activeMemberTab}
         onValueChange={(value) => setMemberTab(value as MemberProfileTab)}
-        className="flex flex-col gap-6"
+        className={tabsPageClassName}
       >
         {showConnectedCatalogTabs ? (
           <TabsList aria-label={t('companyProfile.ariaSections')}>
@@ -247,7 +249,7 @@ export function CompanyMemberProfileView({
           </TabsList>
         ) : null}
 
-        <TabsContent value={activeMemberTab} className="mt-0 outline-none">
+        <TabsContent value={activeMemberTab} className={tabsPageContentClassName}>
           {activeMemberTab === 'overview' ? (
             overviewContent
           ) : (

@@ -18,6 +18,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
+  itemListThumbClassName,
   SearchInput,
   cn,
 } from '@webonone/ui-kit'
@@ -220,7 +221,7 @@ export function CatalogLibrarySelectEmbedPage() {
                       src={item.imageUrl}
                       alt={item.name}
                       mode="view"
-                      className="h-12 w-12"
+                      className={itemListThumbClassName}
                     />
                   ) : null}
                   <ItemListContent>

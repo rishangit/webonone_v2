@@ -13,7 +13,7 @@ function SidebarCollapseButton({ collapsed, onClick, className }: SidebarCollaps
       type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+        'flex w-full items-center justify-center ui-shape-control p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
         className,
       )}
       aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}

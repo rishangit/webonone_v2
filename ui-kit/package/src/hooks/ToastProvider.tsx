@@ -31,7 +31,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              'pointer-events-auto min-w-[12rem] max-w-sm rounded-lg px-4 py-3 text-foreground shadow-lg',
+              'pointer-events-auto min-w-[12rem] max-w-sm ui-shape-panel-sm px-4 py-3 text-foreground shadow-lg',
               t.variant === 'destructive'
                 ? 'border border-destructive/50 bg-destructive text-destructive-foreground'
                 : 'glass-card',

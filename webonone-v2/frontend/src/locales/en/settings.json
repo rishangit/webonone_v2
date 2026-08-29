@@ -37,6 +37,18 @@
         "title": "On scroll",
         "description": "Load the next page when you reach the bottom."
       }
+    },
+    "uiTheme": {
+      "title": "UI theme",
+      "description": "Choose the visual style for cards, buttons, inputs, and other platform surfaces.",
+      "classic": {
+        "title": "Classic",
+        "description": "Rounded glass surfaces with standard borders."
+      },
+      "highTech": {
+        "title": "High-tech",
+        "description": "Industrial chamfered shapes with accent tabs and toned fills."
+      }
     }
   },
   "ai": {

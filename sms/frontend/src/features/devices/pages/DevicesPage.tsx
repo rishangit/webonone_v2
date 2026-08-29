@@ -5,12 +5,15 @@ import {
   Alert,
   AlertDescription,
   Button,
+  cn,
   FeaturePage,
   ListPageBody,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  tabsPageClassName,
+  tabsPageContentClassName,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -80,12 +83,12 @@ export function DevicesPage() {
         ) : null
       }
     >
-      <Tabs value={tab} onValueChange={(value) => setTab(value as DeviceTab)}>
+      <Tabs value={tab} onValueChange={(value) => setTab(value as DeviceTab)} className={tabsPageClassName}>
         <TabsList>
           <TabsTrigger value="devices">{t('tabDevices')}</TabsTrigger>
           <TabsTrigger value="settings">{t('tabSettings')}</TabsTrigger>
         </TabsList>
-        <TabsContent value="devices" className="space-y-4">
+        <TabsContent value="devices" className={cn(tabsPageContentClassName, 'space-y-4')}>
           {error ? (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -109,7 +112,7 @@ export function DevicesPage() {
             </ListPageBody>
           ) : null}
         </TabsContent>
-        <TabsContent value="settings">
+        <TabsContent value="settings" className={tabsPageContentClassName}>
           <GatewaySettingsCard />
         </TabsContent>
       </Tabs>

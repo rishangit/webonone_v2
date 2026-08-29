@@ -1,4 +1,5 @@
 import { Image as ImageIcon, Pencil } from 'lucide-react'
+import { shapeImageClassName } from '../lib/shape'
 import { cn } from '../lib/utils'
 import { Button } from './Button'
 
@@ -25,7 +26,8 @@ export function ImagePreview({
   return (
     <div
       className={cn(
-        'relative h-40 w-40 shrink-0 overflow-hidden rounded-lg border border-border bg-muted',
+        'relative h-40 w-40 shrink-0 overflow-hidden border border-border bg-muted',
+        shapeImageClassName,
         className,
       )}
     >

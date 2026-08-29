@@ -5,7 +5,7 @@ import { Input, type InputProps } from './Input'
 import { InputGroup } from './InputGroup'
 
 const colorPickerClassName =
-  'h-8 w-10 shrink-0 cursor-pointer rounded border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded [&::-webkit-color-swatch]:border [&::-webkit-color-swatch]:border-input'
+  'h-8 w-10 shrink-0 cursor-pointer ui-shape-control border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-none [&::-webkit-color-swatch]:border [&::-webkit-color-swatch]:border-input'
 
 export interface ColorInputProps extends Omit<InputProps, 'type' | 'value' | 'defaultValue' | 'onChange'> {
   value: string

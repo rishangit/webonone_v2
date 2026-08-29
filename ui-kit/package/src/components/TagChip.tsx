@@ -13,7 +13,7 @@ function TagChip({ name, color, className, style, ...props }: TagChipProps) {
 
   return (
     <span
-      className={cn('inline-flex max-w-[10rem] items-center gap-0.5 text-xs', className)}
+      className={cn('ui-tag-chip inline-flex max-w-[10rem] items-center gap-0.5 text-xs', className)}
       style={{ color: resolved, ...style }}
       {...props}
     >

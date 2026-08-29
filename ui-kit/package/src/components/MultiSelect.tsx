@@ -63,7 +63,7 @@ function MultiSelect({
           selectedLabels.map((opt) => (
             <span
               key={opt.value}
-              className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs"
+              className="inline-flex items-center gap-1 ui-shape-panel-sm bg-secondary px-2 py-0.5 text-xs"
             >
               {opt.label}
               {/* span, not button — trigger is already a <button>; nested buttons are invalid HTML */}
@@ -103,7 +103,7 @@ function MultiSelect({
         <button
           {...triggerProps}
           className={cn(
-            'flex min-h-10 w-full items-center gap-2 rounded-md border border-input bg-input-background px-3 py-2 text-sm font-normal text-foreground hover:bg-input-background focus-visible:bg-input-background data-[state=open]:bg-input-background disabled:cursor-not-allowed disabled:opacity-50',
+            'ui-shape-control flex min-h-10 w-full items-center gap-2 border border-input bg-input-background px-3 py-2 text-sm font-normal text-foreground hover:bg-input-background focus-visible:bg-input-background data-[state=open]:bg-input-background disabled:cursor-not-allowed disabled:opacity-50',
             inputGroupFocusRingClassName,
             className,
           )}

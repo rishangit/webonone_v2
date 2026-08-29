@@ -11,6 +11,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  itemListThumbClassName,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
@@ -72,7 +73,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
                   src={item.avatarUrl}
                   alt={item.displayName}
                   mode="view"
-                  className="h-12 w-12"
+                  className={itemListThumbClassName}
                 />
                 <div className="min-w-0 space-y-1">
                   <p className="truncate font-medium text-foreground">{item.displayName}</p>

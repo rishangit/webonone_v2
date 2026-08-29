@@ -10,6 +10,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  tabsPageClassName,
+  tabsPageContentClassName,
   isStatusTagVariant,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -147,7 +149,7 @@ export function UserDetailsPage() {
         <Tabs
           value={tab}
           onValueChange={(value) => handleTabChange(value as UserDetailTab)}
-          className="flex flex-col gap-6"
+          className={tabsPageClassName}
         >
           <TabsList aria-label={t('sectionsAria')}>
             {tabs.map((item) => (
@@ -157,7 +159,7 @@ export function UserDetailsPage() {
             ))}
           </TabsList>
 
-          <TabsContent value={tab} className="mt-0 outline-none">
+          <TabsContent value={tab} className={tabsPageContentClassName}>
             {tab === 'overview' ? (
               <ProfileView user={user} avatarUrl={user.avatarUrl} canEdit={false} />
             ) : (

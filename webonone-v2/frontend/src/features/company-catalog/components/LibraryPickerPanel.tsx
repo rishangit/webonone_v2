@@ -14,6 +14,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
+  itemListThumbClassName,
   SearchInput,
   cn,
 } from '@webonone/ui-kit'
@@ -289,7 +290,7 @@ export function LibraryPickerPanel({
                       src={firstGalleryImageUrl(item.galleryImages)}
                       alt={item.name}
                       mode="view"
-                      className="h-12 w-12"
+                      className={itemListThumbClassName}
                     />
                   ) : null}
                   <ItemListContent>

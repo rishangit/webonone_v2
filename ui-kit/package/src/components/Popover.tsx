@@ -20,7 +20,7 @@ const PopoverContent = React.forwardRef<
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        'z-[110] w-auto rounded-md p-4 outline-none',
+        'z-[110] w-auto ui-shape-panel-sm p-4 outline-none',
         surface === 'body' ? menuPanelBodyClassName : menuPanelClassName,
         className,
       )}

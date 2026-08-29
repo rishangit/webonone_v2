@@ -7,6 +7,7 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  itemListThumbClassName,
   ListPageBody,
   SearchInput,
   Spinner,
@@ -122,7 +123,7 @@ export function MemberCompanyCatalogPanel({
           <ImagePreview
             src={firstGalleryImageUrl(item.displayGalleryImages)}
             alt=""
-            className="h-12 w-12"
+            className={itemListThumbClassName}
           />
         ) : null}
         <div className="min-w-0 flex-1">

@@ -10,6 +10,7 @@ import {
   parseThemeQueryParams,
   readPersistedTheme,
   relayListPageModeQueryParams,
+  relayUiThemeQueryParams,
   type ThemePayload,
 } from '@webonone/theme'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -26,7 +27,11 @@ export function websiteDesignerUrl(kind: 'pages' | 'headers' | 'footers', id: st
     url = appendThemeToUrl(url, theme)
   }
   const listMode = relayListPageModeQueryParams(new URLSearchParams(window.location.search))
+  const uiTheme = relayUiThemeQueryParams(new URLSearchParams(window.location.search))
   for (const [key, value] of Object.entries(listMode)) {
+    url.searchParams.set(key, value)
+  }
+  for (const [key, value] of Object.entries(uiTheme)) {
     url.searchParams.set(key, value)
   }
   return url.toString()

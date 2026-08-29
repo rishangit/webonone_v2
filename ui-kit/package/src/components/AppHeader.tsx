@@ -168,7 +168,7 @@ function AppHeader({
   return (
     <header
       className={cn(
-        'relative shrink-0 glass-card border-b',
+        'relative shrink-0 shell-glass border-b',
         notice ? APP_HEADER_NOTICE_OFFSET_CLASS : undefined,
         className,
       )}
@@ -176,7 +176,7 @@ function AppHeader({
       {notice ? (
         <div
           className={cn(
-            'glass-card absolute inset-x-0 top-0 z-20 border-b border-warning/30 py-1 text-xs text-foreground shadow-sm',
+            'shell-glass absolute inset-x-0 top-0 z-20 border-b border-warning/30 py-1 text-xs text-foreground shadow-sm',
             shellContentPaddingX,
           )}
         >

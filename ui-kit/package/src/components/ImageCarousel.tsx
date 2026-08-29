@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react'
+import { shapeImageClassName } from '../lib/shape'
+import { cn } from '../lib/utils'
 import { Button } from './Button'
 
 export type ImageCarouselImage = {
@@ -30,7 +32,10 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
   if (images.length === 0) {
     return (
       <div
-        className="flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-muted"
+        className={cn(
+          'flex aspect-[16/10] w-full items-center justify-center overflow-hidden border border-border bg-muted',
+          shapeImageClassName,
+        )}
         aria-label={alt}
       >
         <ImageIcon className="size-12 text-muted-foreground" aria-hidden />
@@ -55,7 +60,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
 
   return (
     <div className="space-y-3">
-      <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
+      <div className={cn('relative overflow-hidden border border-border bg-muted', shapeImageClassName)}>
         <img
           src={active.url}
           alt={alt}

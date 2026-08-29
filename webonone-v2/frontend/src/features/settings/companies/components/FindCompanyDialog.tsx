@@ -11,6 +11,7 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  itemListThumbClassName,
   SearchInput,
   Spinner,
   useToast,
@@ -348,7 +349,7 @@ export function FindCompanyDialog({ open, onOpenChange, onConnected }: FindCompa
                         src={item.logoUrl}
                         alt={item.name}
                         mode="view"
-                        className="h-10 w-10 rounded-md"
+                        className={itemListThumbClassName}
                       />
                       <ItemListContent>
                         <p className="truncate font-medium">{item.name}</p>

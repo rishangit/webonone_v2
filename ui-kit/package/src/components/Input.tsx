@@ -26,7 +26,7 @@ const inputSharedClassName =
 
 const inputStandaloneClassName = cn(
   inputSharedClassName,
-  'h-10 rounded-md border border-input bg-input-background px-3 py-2',
+  'ui-shape-control h-10 border border-input bg-input-background px-3 py-2',
   inputFocusRingClassName,
   inputInvalidClassName,
 )

@@ -1,5 +1,15 @@
 import type { ColorMode, ThemeDto, ThemePayload } from './types'
-import { PLATFORM_DESTRUCTIVE_HEX } from './constants'
+import {
+  DARK_CANVAS_BASE,
+  DARK_CANVAS_TINT,
+  DARK_CANVAS_TINT_OPACITY,
+  LIGHT_CANVAS_BASE,
+  LIGHT_CANVAS_TINT,
+  LIGHT_CANVAS_TINT_OPACITY,
+  PLATFORM_DESTRUCTIVE_HEX,
+  SHELL_CHROME_BG,
+  SHELL_CHROME_BORDER,
+} from './constants'
 import { persistAppliedTheme } from './themeSession'
 import {
   deriveDarkenedHex,
@@ -10,12 +20,6 @@ import {
   resolveSurfaceColors,
 } from './colorUtils'
 
-/** Theme tint strength on the site canvas (color4 / color5 slot). */
-const SITE_TINT_OPACITY: Record<ColorMode, number> = {
-  light: 0.16,
-  dark: 0.24,
-}
-
 /** Frosted surface fill over the tinted canvas. */
 const GLASS_SURFACE_OPACITY = 0.78
 
@@ -23,8 +27,8 @@ const GLASS_SURFACE_OPACITY = 0.78
 const MENU_SURFACE_OPACITY = 0.94
 
 const BACKGROUND_BASE: Record<ColorMode, string> = {
-  light: '0 0% 100%',
-  dark: '240 10% 4%',
+  light: LIGHT_CANVAS_BASE,
+  dark: DARK_CANVAS_BASE,
 }
 
 export function applyColorMode(mode: ColorMode, root: HTMLElement = document.documentElement): void {
@@ -50,14 +54,17 @@ export function applyThemeVariables(
   )
   const backgroundHsl = hexToHslComponents(background)
   const foregroundHsl = hexToHslComponents(foreground)
-  const tintOpacity = SITE_TINT_OPACITY[colorMode]
+  const canvasBase = BACKGROUND_BASE[colorMode]
+  const canvasTint = colorMode === 'dark' ? DARK_CANVAS_TINT : LIGHT_CANVAS_TINT
+  const canvasTintOpacity =
+    colorMode === 'dark' ? DARK_CANVAS_TINT_OPACITY : LIGHT_CANVAS_TINT_OPACITY
   const glassSurface = `${backgroundHsl} / ${GLASS_SURFACE_OPACITY}`
   const menuBackgroundHsl = hexToHslComponents(deriveMenuBackgroundHex(background, colorMode))
   const menuSurface = `${menuBackgroundHsl} / ${MENU_SURFACE_OPACITY}`
 
-  root.style.setProperty('--background-base', BACKGROUND_BASE[colorMode])
-  root.style.setProperty('--background-tint', backgroundHsl)
-  root.style.setProperty('--background-tint-opacity', String(tintOpacity))
+  root.style.setProperty('--background-base', canvasBase)
+  root.style.setProperty('--background-tint', canvasTint)
+  root.style.setProperty('--background-tint-opacity', String(canvasTintOpacity))
   root.style.setProperty('--background', glassSurface)
   root.style.setProperty('--card', glassSurface)
   root.style.setProperty('--menu-bg', menuSurface)
@@ -85,6 +92,8 @@ export function applyThemeVariables(
     colorMode === 'light' ? `${foregroundHsl} / 0.1` : `${foregroundHsl} / 0.22`,
   )
   root.style.setProperty('--glass-shadow', colorMode === 'light' ? '0 0% 0% / 0.1' : '0 0% 0% / 0.25')
+  root.style.setProperty('--shell-chrome-bg', SHELL_CHROME_BG[colorMode])
+  root.style.setProperty('--shell-chrome-border', SHELL_CHROME_BORDER[colorMode])
 
   root.style.setProperty('--accent-primary', accentPrimaryHsl)
   root.style.setProperty('--accent-secondary', accentSecondaryHsl)

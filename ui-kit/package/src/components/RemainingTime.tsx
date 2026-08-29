@@ -7,7 +7,7 @@ const remainingTimeVariants = cva(
   {
     variants: {
       appearance: {
-        chip: 'rounded-md border px-2 py-0.5 backdrop-blur-sm',
+        chip: 'ui-tag ui-shape-panel-sm border px-2 py-0.5 backdrop-blur-sm',
         plain: 'border-0 bg-transparent px-0 py-0 font-medium',
       },
       kind: {
@@ -147,6 +147,7 @@ function RemainingTime({
 
   return (
     <span
+      data-tag-variant={appearance === 'chip' ? timing.kind : undefined}
       className={cn(
         remainingTimeVariants({ appearance, kind: timing.kind }),
         className,

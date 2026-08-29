@@ -514,7 +514,7 @@ function FullCalendar({
     <div
       id={id}
       className={cn(
-        'flex min-h-[28rem] flex-1 flex-col rounded-md border border-border bg-[hsl(var(--background-base))]',
+        'flex min-h-[28rem] flex-1 flex-col ui-shape-panel border border-border bg-[hsl(var(--background-base))]',
         className,
       )}
     >

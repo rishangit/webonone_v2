@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
-import { PageShell, Tabs, TabsContent, TabsList, TabsTrigger } from '@webonone/ui-kit'
+import { useEffect, useState } from 'react'
+import { applyUiTheme, type UiThemeId } from '@webonone/theme'
+import { PageShell, Tabs, TabsContent, TabsList, TabsTrigger, UiThemeProvider } from '@webonone/ui-kit'
 import { ThemeToolbar } from '@/components/ThemeToolbar'
 import {
   DEFAULT_SHOWCASE_TAB,
@@ -21,8 +22,13 @@ import { TagsPage } from '@/pages/TagsPage'
 
 export function ShowcaseApp() {
   const [hash, setHash] = useLocationHash()
+  const [uiTheme, setUiTheme] = useState<UiThemeId>('classic')
   const tab = parseShowcaseTab(hash)
   const pagesNested = parsePagesNestedTab(hash)
+
+  useEffect(() => {
+    applyUiTheme(uiTheme)
+  }, [uiTheme])
 
   useEffect(() => {
     if (!window.location.hash) {
@@ -52,10 +58,12 @@ export function ShowcaseApp() {
   }
 
   return (
+    <UiThemeProvider theme={uiTheme}>
     <PageShell title="UI Kit Showcase">
-      <ThemeToolbar />
+      <ThemeToolbar uiTheme={uiTheme} onUiThemeChange={setUiTheme} />
       <p className="mb-6 text-muted-foreground">
-        Live preview of every exported component from @webonone/ui-kit
+        Live preview of every exported component from @webonone/ui-kit. Switch UI theme
+        in the toolbar to compare Classic glass surfaces and High-tech industrial shapes.
       </p>
       <Tabs value={tab} onValueChange={handleTabChange}>
         <TabsList>
@@ -88,5 +96,6 @@ export function ShowcaseApp() {
         </TabsContent>
       </Tabs>
     </PageShell>
+    </UiThemeProvider>
   )
 }

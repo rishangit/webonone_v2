@@ -40,10 +40,13 @@ export interface SystemThemeRow {
 
 export type ListPageMode = 'pagination' | 'on-scroll'
 
+export type UiThemeId = 'classic' | 'high-tech'
+
 export interface UserPreferenceRow {
   user_id: string
   active_theme_id: string
   color_mode: 'light' | 'dark'
   list_page_mode: ListPageMode
+  ui_theme: string
   updated_at: Date
 }

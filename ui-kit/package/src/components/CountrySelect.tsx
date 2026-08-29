@@ -109,7 +109,7 @@ function CountrySelect({
           aria-haspopup="listbox"
           aria-invalid={invalid}
           className={cn(
-            'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm',
+            'ui-shape-control flex h-10 w-full items-center justify-between border border-input bg-background px-3 py-2 text-sm',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
             invalid && 'border-destructive',
           )}

@@ -9,6 +9,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  tabsPageClassName,
+  tabsPageContentClassName,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -182,7 +184,7 @@ export function CompanyProfilePage({
     <Tabs
       value={adminTab}
       onValueChange={(value) => setAdminTab(value as AdminProfileTab)}
-      className="flex flex-col gap-6"
+      className={tabsPageClassName}
     >
       <TabsList aria-label={t('companyProfile.ariaSections')}>
         {ADMIN_TABS.map((id) => (
@@ -192,7 +194,7 @@ export function CompanyProfilePage({
         ))}
       </TabsList>
 
-      <TabsContent value={adminTab} className="mt-0 outline-none">
+      <TabsContent value={adminTab} className={tabsPageContentClassName}>
         {adminTab === 'overview' ? (
           overviewContent
         ) : adminTab === 'gallery' ? (

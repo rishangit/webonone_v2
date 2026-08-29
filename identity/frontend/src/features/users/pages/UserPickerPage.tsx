@@ -21,6 +21,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   itemListRowActiveClassName,
+  itemListThumbClassName,
   Select,
   SelectContent,
   SelectItem,
@@ -354,7 +355,7 @@ export function UserPickerPage() {
                     src={user.avatarUrl}
                     alt={user.displayName}
                     mode="view"
-                    className="h-12 w-12"
+                    className={itemListThumbClassName}
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>

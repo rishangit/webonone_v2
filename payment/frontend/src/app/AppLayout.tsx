@@ -10,8 +10,8 @@ import {
   useServiceRedirect,
 } from '@webonone/platform-nav'
 import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
-import { Alert, AlertDescription, AppShell, BrandLogo, ListPageModeProvider, LoadingState, PageShell } from '@webonone/ui-kit'
-import { relayListPageModeQueryParams, relayThemeQueryParams, useListPageModeValue } from '@webonone/theme'
+import { Alert, AlertDescription, AppShell, BrandLogo, ListPageModeProvider, LoadingState, PageShell, UiThemeProvider } from '@webonone/ui-kit'
+import { relayListPageModeQueryParams, relayThemeQueryParams, relayUiThemeQueryParams, useListPageModeValue, useUiThemeValue } from '@webonone/theme'
 import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions, clearPaymentAuthStorage } from '@/features/auth/store/authSlice'
@@ -42,6 +42,7 @@ function AppLayoutContent() {
   const [searchParams] = useSearchParams()
   const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const listPageMode = useListPageModeValue(embedParentOrigin)
+  const uiTheme = useUiThemeValue(embedParentOrigin)
 
   const body = embedParentOrigin ? (
     <div className={PLATFORM_EMBED_APP_HOST_CLASS}>
@@ -51,7 +52,11 @@ function AppLayoutContent() {
     <AppLayoutShellContent />
   )
 
-  return <ListPageModeProvider mode={listPageMode}>{body}</ListPageModeProvider>
+  return (
+    <UiThemeProvider theme={uiTheme}>
+      <ListPageModeProvider mode={listPageMode}>{body}</ListPageModeProvider>
+    </UiThemeProvider>
+  )
 }
 
 function AppLayoutShellContent() {
@@ -80,6 +85,7 @@ function AppLayoutShellContent() {
     () => ({
       ...relayThemeQueryParams(searchParams),
       ...relayListPageModeQueryParams(searchParams),
+      ...relayUiThemeQueryParams(searchParams),
       ...relayLocaleQueryParams(searchParams),
     }),
     [searchParams],

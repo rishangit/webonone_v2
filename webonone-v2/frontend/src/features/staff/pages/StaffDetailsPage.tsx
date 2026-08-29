@@ -9,11 +9,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  cn,
   FeaturePage,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  tabsPageClassName,
+  tabsPageContentClassName,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
@@ -164,7 +167,7 @@ export function StaffDetailsPage() {
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as StaffDetailTab)}
-        className="flex min-h-0 flex-1 flex-col gap-6"
+        className={cn(tabsPageClassName, 'min-h-0 flex-1')}
       >
         <TabsList aria-label={t('detail.ariaSections')}>
           {tabs.map((item) => (
@@ -174,7 +177,7 @@ export function StaffDetailsPage() {
           ))}
         </TabsList>
 
-        <TabsContent value={tab} className="mt-0 flex min-h-0 flex-1 flex-col outline-none">
+        <TabsContent value={tab} className={cn(tabsPageContentClassName, 'flex min-h-0 flex-1 flex-col')}>
           {panel}
         </TabsContent>
       </Tabs>

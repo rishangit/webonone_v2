@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { cn } from '../lib/utils'
+import { shapeCompactCardAreaClassName } from '../lib/shape'
 import { appShellHeaderTopClass, appShellSidebarHeightClass } from './shellContentPadding'
 import type { NavConfigItem } from '../types/nav'
 import { Card } from '../components/Card'
@@ -183,7 +184,7 @@ function AppSidebar({
   return (
     <aside
       className={cn(
-        'glass-card fixed bottom-0 left-0 z-40 flex flex-col border-r transition-[width,transform] duration-200',
+        'shell-glass fixed bottom-0 left-0 z-40 flex flex-col border-r transition-[width,transform] duration-200',
         headerTopClass,
         'w-64 md:sticky md:z-auto md:translate-x-0',
         sidebarHeightClass,
@@ -236,7 +237,7 @@ function AppSidebar({
       </nav>
 
       {showSessionCard && sidebarSession ? (
-        <div className="shrink-0 border-t p-2">
+        <div className={cn('shrink-0 border-t', shapeCompactCardAreaClassName)}>
           {sessionInteractive ? (
             <button
               type="button"
@@ -244,7 +245,7 @@ function AppSidebar({
               aria-label={sidebarSessionClickLabel}
               onClick={onSidebarSessionClick}
             >
-              <Card className={sessionCardInteractiveClassName}>
+              <Card compact className={sessionCardInteractiveClassName}>
                 <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium leading-snug">{sidebarSession.title}</p>
@@ -253,7 +254,7 @@ function AppSidebar({
               </Card>
             </button>
           ) : (
-            <Card className={sessionCardClassName}>
+            <Card compact className={sessionCardClassName}>
               <SessionLogo title={sidebarSession.title} imageUrl={sidebarSession.imageUrl} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium leading-snug">{sidebarSession.title}</p>
