@@ -349,7 +349,7 @@ export function ControlsPage() {
       <DemoSection
         id="tabs"
         title="Tabs"
-        description="Single-line tab strip with a bottom rule; selected tab shows a secondary border. On narrow screens, swipe the tab row horizontally to reach more tabs."
+        description="Single-line tab strip with a bottom rule; selected tab shows a secondary border on the top and sides (no bottom border). On narrow screens, swipe the tab row horizontally to reach more tabs."
       >
         <Tabs defaultValue="account">
           <TabsList>

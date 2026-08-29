@@ -11,7 +11,7 @@ type SessionTokenSaleActionsProps = {
   serviceName: string
   enabledKinds: SaleItemKind[]
   canSell: boolean
-  onSaleCompleted?: () => void
+  onSaleCompleted?: (customerEmail?: string | null) => void
 }
 
 export function SessionTokenSaleActions({
@@ -29,7 +29,7 @@ export function SessionTokenSaleActions({
   if (!canSell || !serviceId || !serviceName) return null
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-2">
+    <>
       <Button
         type="button"
         variant="link"
@@ -61,6 +61,6 @@ export function SessionTokenSaleActions({
         token={token}
         onSaleCompleted={onSaleCompleted}
       />
-    </div>
+    </>
   )
 }

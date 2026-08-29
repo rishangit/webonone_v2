@@ -43,6 +43,7 @@
     "closeSale": "Close sale",
     "closing": "Closing sale…",
     "closed": "Sale closed",
+    "emailSent": "Bill emailed to the customer.",
     "closeFailed": "Failed to close sale",
     "paid": "Paid",
     "billNumber": "Bill number"

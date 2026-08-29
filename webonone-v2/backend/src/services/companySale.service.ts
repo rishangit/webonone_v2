@@ -211,6 +211,46 @@ async function resolveSessionToken(
   return token.id
 }
 
+async function resolveCustomerContact(
+  companyId: string,
+  customerUserId: string,
+  sessionTokenId: string | null,
+): Promise<{ displayName: string; email: string | null }> {
+  const contact = await fetchUserContact(customerUserId)
+  let displayName = contact?.displayName?.trim() || 'Customer'
+  let email = contact?.email?.trim() || null
+
+  if ((!email || displayName === 'Customer') && sessionTokenId) {
+    const token = await sessionTokenRepo.findTokenById(companyId, sessionTokenId)
+    if (token) {
+      if (!email && token.user_email?.trim()) {
+        email = token.user_email.trim()
+      }
+      if (displayName === 'Customer' && token.user_display_name?.trim()) {
+        displayName = token.user_display_name.trim()
+      }
+    }
+  }
+
+  return { displayName, email }
+}
+
+async function ensureSaleCustomerEmailFromToken(
+  companyId: string,
+  saleId: string,
+): Promise<void> {
+  const row = await saleRepo.findSaleById(companyId, saleId)
+  if (!row?.session_token_id || row.customer_email?.trim()) return
+
+  const token = await sessionTokenRepo.findTokenById(companyId, row.session_token_id)
+  const email = token?.user_email?.trim()
+  if (!email) return
+
+  await db('company_sales')
+    .where({ id: saleId, company_id: companyId })
+    .update({ customer_email: email, updated_at: new Date() })
+}
+
 export async function createSale(
   userId: string,
   companyId: string,
@@ -316,9 +356,11 @@ export async function upsertDraftSale(
 
   const resolvedTokenId = await resolveSessionToken(companyId, sessionTokenId, body.customerUserId)
 
-  const contact = await fetchUserContact(body.customerUserId)
-  const customerDisplayName = contact?.displayName?.trim() || 'Customer'
-  const customerEmail = contact?.email ?? null
+  const { displayName: customerDisplayName, email: customerEmail } = await resolveCustomerContact(
+    companyId,
+    body.customerUserId,
+    resolvedTokenId,
+  )
 
   const prepared = await prepareSaleLines(companyId, enabled, body.lines)
   const subtotal = money(prepared.reduce((sum, line) => sum + line.line_total, 0))
@@ -397,6 +439,7 @@ export async function completeSale(
     })
   })
 
+  await ensureSaleCustomerEmailFromToken(companyId, saleId)
   const completed = await getSale(companyId, saleId)
   notifySaleBillCompleted(completed)
   return completed

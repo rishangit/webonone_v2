@@ -18,6 +18,7 @@ import type { ServiceWorkflowItem } from '@/features/company-catalog/types/compa
 import type { SessionToken } from '@/features/calendar/types/event.types'
 import { SessionCurrentlyServingCard } from '@/features/calendar/components/SessionCurrentlyServingCard'
 import { SessionQueueBoard } from '@/features/calendar/components/SessionQueueBoard'
+import { SessionTokenUserIdentity } from '@/features/calendar/components/SessionTokenUserIdentity'
 import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import {
   computeWorkflowStepViewerQueue,
@@ -49,6 +50,245 @@ type SessionWorkflowStepPanelProps = {
   canSell: boolean
   /** Per-step queue from API (personal /me with filtered tokens). */
   stepQueueLabels?: WorkflowStepQueueSnapshot | null
+  /** When set, renders a single-attendee card instead of the tokens list (duration sessions). */
+  singleAttendeeToken?: SessionToken | null
+  onSaleCompleted?: (customerEmail?: string | null) => void
+}
+
+type SessionWorkflowTokenRowProps = {
+  token: SessionToken
+  item: ServiceWorkflowItem
+  isCheckedIn: boolean
+  showCheckInAction: boolean
+  showCompleteAction: boolean
+  completingId: string | null
+  canFillForms: boolean
+  submissionByTokenForm?: Record<string, string>
+  onFillForm?: (token: SessionToken, formId: string) => void
+  onViewForm?: (token: SessionToken, formId: string, submissionId: string) => void
+  onComplete: (tokenId: string) => void
+  serviceId: string
+  serviceName: string
+  enabledKinds: SaleItemKind[]
+  canSell: boolean
+  showCheckedInStatus: boolean
+  /** When true, avatar is rendered by the parent (ItemList row). */
+  omitAvatar?: boolean
+  /** Hero layout with sale actions on the right (duration attendee card). */
+  variant?: 'compact' | 'serving'
+  onSaleCompleted?: (customerEmail?: string | null) => void
+}
+
+function SessionWorkflowTokenRow({
+  token,
+  item,
+  isCheckedIn,
+  showCheckInAction,
+  showCompleteAction,
+  completingId,
+  canFillForms,
+  submissionByTokenForm,
+  onFillForm,
+  onViewForm,
+  onComplete,
+  serviceId,
+  serviceName,
+  enabledKinds,
+  canSell,
+  showCheckedInStatus,
+  omitAvatar = false,
+  variant = 'compact',
+  onSaleCompleted,
+}: SessionWorkflowTokenRowProps) {
+  const { t } = useTranslation('calendar')
+
+  const statusTags = showCheckedInStatus ? (
+    item.kind === 'check_in' ? (
+      isCheckedIn ? (
+        <StatusTag variant="verified">{t('session.tokenStatus.checkedIn')}</StatusTag>
+      ) : (
+        <StatusTag variant="pending">{t('session.tokenStatus.notCheckedIn')}</StatusTag>
+      )
+    ) : isWorkflowStepCompleted(token.workflowProgress, item.id) ? (
+      <StatusTag variant="verified">{t('session.tokenStatus.stepCompleted')}</StatusTag>
+    ) : null
+  ) : null
+
+  const renderCompleteButton = (className?: string) => {
+    if (!showCheckInAction && !showCompleteAction) return null
+    return (
+      <Button
+        type="button"
+        size="sm"
+        className={className}
+        disabled={completingId === token.id}
+        onClick={() => onComplete(token.id)}
+      >
+        {completingId === token.id
+          ? t('sessionDetail.step.completing')
+          : item.kind === 'check_in'
+            ? t('sessionDetail.step.checkInComplete')
+            : t('sessionDetail.step.complete')}
+      </Button>
+    )
+  }
+
+  const completeButton = renderCompleteButton()
+  const desktopCompleteButton = renderCompleteButton('hidden h-10 sm:inline-flex')
+  const mobileCompleteButton = renderCompleteButton('h-10 w-full sm:hidden')
+
+  const saleActions =
+    canSell && serviceId && serviceName && isCheckedIn ? (
+      <SessionTokenSaleActions
+        token={{
+          id: token.id,
+          userId: token.userId,
+          userDisplayName: token.userDisplayName,
+          userEmail: token.userEmail,
+          tokenLabel: token.tokenLabel,
+        }}
+        serviceId={serviceId}
+        serviceName={serviceName}
+        enabledKinds={enabledKinds}
+        canSell={canSell}
+        onSaleCompleted={onSaleCompleted}
+      />
+    ) : null
+
+  const formLinks = item.forms?.length ? (
+    <>
+      {item.forms.map((form) => {
+        const submissionId = submissionByTokenForm?.[`${token.id}:${form.id}`]
+        if (submissionId) {
+          return (
+            <Button
+              key={form.id}
+              type="button"
+              variant="link"
+              className="h-auto px-0 text-sm"
+              onClick={() => onViewForm?.(token, form.id, submissionId)}
+            >
+              {t('session.viewForm')}
+              {item.forms.length > 1 ? ` · ${form.name ?? form.id}` : ''}
+            </Button>
+          )
+        }
+        if (!canFillForms) return null
+        return (
+          <Button
+            key={form.id}
+            type="button"
+            variant="link"
+            className="h-auto px-0 text-sm"
+            onClick={() => onFillForm?.(token, form.id)}
+          >
+            {t('session.fillForm')}
+            {item.forms.length > 1 ? ` · ${form.name ?? form.id}` : ''}
+          </Button>
+        )
+      })}
+    </>
+  ) : null
+
+  const actionLinks =
+    formLinks || saleActions ? (
+      <div className="flex w-full flex-wrap items-center justify-start gap-x-2 gap-y-1">
+        {formLinks}
+        {saleActions}
+      </div>
+    ) : null
+
+  const rightActions =
+    statusTags || completeButton ? (
+      <div className="flex shrink-0 flex-col items-end gap-2">
+        {statusTags}
+        {completeButton}
+      </div>
+    ) : null
+
+  if (variant === 'serving') {
+    return (
+      <div className="flex w-full min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <SessionTokenUserIdentity
+            displayName={token.userDisplayName}
+            email={token.userEmail}
+            avatarUrl={token.userAvatarUrl}
+            size="hero"
+            nameSize="lg"
+            noEmailLabel={t('sessionDetail.checkIn.noEmail')}
+          />
+          {statusTags || desktopCompleteButton ? (
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              {statusTags}
+              {desktopCompleteButton}
+            </div>
+          ) : null}
+        </div>
+        {actionLinks || mobileCompleteButton ? (
+          <div className="flex flex-col gap-2">
+            {actionLinks}
+            {mobileCompleteButton}
+          </div>
+        ) : null}
+        <TokenWorkflowProgress progress={token.workflowProgress} layout="footer" />
+      </div>
+    )
+  }
+
+  const memberDetails = (
+    <div className="min-w-0 flex-1">
+      <p className="truncate font-medium">{token.tokenLabel}</p>
+      <p className="truncate text-sm text-muted-foreground">{token.userDisplayName}</p>
+    </div>
+  )
+
+  const topRow = (
+    <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+      {memberDetails}
+      {rightActions}
+    </div>
+  )
+
+  const rowBody = (
+    <div className="flex w-full min-w-0 flex-col gap-3">
+      {omitAvatar ? (
+        topRow
+      ) : (
+        <div className="flex min-w-0 items-start gap-3">
+          <ImagePreview
+            src={token.userAvatarUrl}
+            alt={token.userDisplayName}
+            mode="view"
+            className="h-10 w-10 shrink-0 rounded-md"
+          />
+          {topRow}
+        </div>
+      )}
+      {actionLinks}
+      <TokenWorkflowProgress progress={token.workflowProgress} layout="footer" />
+    </div>
+  )
+
+  return rowBody
+}
+
+function computeTokenAtThisStep(
+  token: SessionToken,
+  item: ServiceWorkflowItem,
+  isCheckedIn: boolean,
+): boolean {
+  if (token.workflowProgress?.done) return false
+  if (item.kind === 'check_in' && !isCheckedIn) {
+    return (
+      (token.workflowProgress?.currentIndex ?? 0) < 0 ||
+      token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === item.id
+    )
+  }
+  return (
+    (token.workflowProgress?.currentIndex ?? -1) >= 0 &&
+    token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id === item.id
+  )
 }
 
 export function SessionWorkflowStepPanel({
@@ -70,9 +310,12 @@ export function SessionWorkflowStepPanel({
   enabledKinds,
   canSell,
   stepQueueLabels,
+  singleAttendeeToken,
+  onSaleCompleted,
 }: SessionWorkflowStepPanelProps) {
   const { t } = useTranslation('calendar')
   const [focusedTokenId, setFocusedTokenId] = useState<string | null>(null)
+  const isDurationMode = singleAttendeeToken !== undefined
   const title =
     item.kind === 'check_in'
       ? t('sessionDetail.tabs.checkIn')
@@ -108,6 +351,62 @@ export function SessionWorkflowStepPanel({
     setFocusedTokenId(defaultId)
   }, [canComplete, checkedInUserIds, focusedTokenId, item, showQueue, stepTokens, tokens])
 
+  function renderTokenRow(
+    token: SessionToken,
+    options?: { highlightServing?: boolean; variant?: 'compact' | 'serving' },
+  ) {
+    const isCheckedIn = Boolean(checkedInUserIds?.has(token.userId))
+    const atThisStep = computeTokenAtThisStep(token, item, isCheckedIn)
+    const showCheckInAction =
+      canComplete && item.kind === 'check_in' && !isCheckedIn && atThisStep
+    const showCompleteAction = isDurationMode
+      ? canComplete && item.kind !== 'check_in' && atThisStep
+      : canComplete && item.kind !== 'check_in' && !showQueue
+
+    const row = (
+      <SessionWorkflowTokenRow
+        token={token}
+        item={item}
+        isCheckedIn={isCheckedIn}
+        showCheckInAction={showCheckInAction}
+        showCompleteAction={showCompleteAction}
+        completingId={completingId}
+        canFillForms={canFillForms}
+        submissionByTokenForm={submissionByTokenForm}
+        onFillForm={onFillForm}
+        onViewForm={onViewForm}
+        onComplete={onComplete}
+        serviceId={serviceId}
+        serviceName={serviceName}
+        enabledKinds={enabledKinds}
+        canSell={canSell}
+        showCheckedInStatus={Boolean(checkedInUserIds)}
+        omitAvatar={options?.highlightServing}
+        variant={options?.variant ?? 'compact'}
+        onSaleCompleted={onSaleCompleted}
+      />
+    )
+
+    if (options?.highlightServing) {
+      return (
+        <ItemListItem
+          key={token.id}
+          className={servingTokenId === token.id ? 'ring-1 ring-primary/40' : undefined}
+        >
+          <ImagePreview
+            src={token.userAvatarUrl}
+            alt={token.userDisplayName}
+            mode="view"
+            className="h-10 w-10 rounded-md"
+          />
+          <ItemListContent>{row}</ItemListContent>
+        </ItemListItem>
+      )
+    }
+
+    return row
+  }
+
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
@@ -124,152 +423,44 @@ export function SessionWorkflowStepPanel({
             serviceName={serviceName}
             enabledKinds={enabledKinds}
             canSell={canSell}
+            isCheckedIn={Boolean(
+              currentToken && checkedInUserIds?.has(currentToken.userId),
+            )}
           />
         ) : null}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t('sessionDetail.step.tokensTitle')}</CardTitle>
-            <CardDescription>{t('sessionDetail.step.tokensHint')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {stepTokens.length === 0 ? (
-              <ItemListEmpty>{t('sessionDetail.step.tokensEmpty')}</ItemListEmpty>
-            ) : (
-              <ItemList>
-                {stepTokens.map((token) => {
-                  const isCheckedIn = Boolean(checkedInUserIds?.has(token.userId))
-                  const atThisStep =
-                    !token.workflowProgress?.done &&
-                    (item.kind === 'check_in' && !isCheckedIn
-                      ? token.workflowProgress!.currentIndex < 0 ||
-                        token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id ===
-                          item.id
-                      : token.workflowProgress!.currentIndex >= 0 &&
-                        token.workflowProgress?.steps[token.workflowProgress.currentIndex]?.id ===
-                          item.id)
-                  const showCheckInAction =
-                    canComplete && item.kind === 'check_in' && !isCheckedIn && atThisStep
-                  const showCompleteAction =
-                    canComplete && item.kind !== 'check_in' && !showQueue
-                  return (
-                  <ItemListItem
-                    key={token.id}
-                    className={
-                      servingTokenId === token.id ? 'ring-1 ring-primary/40' : undefined
-                    }
-                  >
-                    <ImagePreview
-                      src={token.userAvatarUrl}
-                      alt={token.userDisplayName}
-                      mode="view"
-                      className="h-10 w-10 rounded-md"
-                    />
-                    <ItemListContent>
-                      <div className="flex min-w-0 items-center justify-between gap-3">
-                        <div className="flex min-w-0 flex-1 flex-col gap-2">
-                          <div className="min-w-0">
-                            <p className="truncate font-medium">{token.tokenLabel}</p>
-                            <p className="truncate text-sm text-muted-foreground">
-                              {token.userDisplayName}
-                            </p>
-                            <TokenWorkflowProgress progress={token.workflowProgress} />
-                          </div>
-                          {item.forms?.length ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              {item.forms.map((form) => {
-                                const submissionId =
-                                  submissionByTokenForm?.[`${token.id}:${form.id}`]
-                                if (submissionId) {
-                                  return (
-                                    <Button
-                                      key={form.id}
-                                      type="button"
-                                      variant="link"
-                                      className="h-auto px-0 text-sm"
-                                      onClick={() => onViewForm?.(token, form.id, submissionId)}
-                                    >
-                                      {t('session.viewForm')}
-                                      {item.forms.length > 1
-                                        ? ` · ${form.name ?? form.id}`
-                                        : ''}
-                                    </Button>
-                                  )
-                                }
-                                if (!canFillForms) return null
-                                return (
-                                  <Button
-                                    key={form.id}
-                                    type="button"
-                                    variant="link"
-                                    className="h-auto px-0 text-sm"
-                                    onClick={() => onFillForm?.(token, form.id)}
-                                  >
-                                    {t('session.fillForm')}
-                                    {item.forms.length > 1
-                                      ? ` · ${form.name ?? form.id}`
-                                      : ''}
-                                  </Button>
-                                )
-                              })}
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-2">
-                          {checkedInUserIds ? (
-                            item.kind === 'check_in' ? (
-                              isCheckedIn ? (
-                                <StatusTag variant="verified">
-                                  {t('session.tokenStatus.checkedIn')}
-                                </StatusTag>
-                              ) : (
-                                <StatusTag variant="pending">
-                                  {t('session.tokenStatus.notCheckedIn')}
-                                </StatusTag>
-                              )
-                            ) : isWorkflowStepCompleted(token.workflowProgress, item.id) ? (
-                              <StatusTag variant="verified">
-                                {t('session.tokenStatus.stepCompleted')}
-                              </StatusTag>
-                            ) : null
-                          ) : null}
-                          {showCheckInAction || showCompleteAction ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={completingId === token.id}
-                              onClick={() => onComplete(token.id)}
-                            >
-                              {completingId === token.id
-                                ? t('sessionDetail.step.completing')
-                                : item.kind === 'check_in'
-                                  ? t('sessionDetail.step.checkInComplete')
-                                  : t('sessionDetail.step.complete')}
-                            </Button>
-                          ) : null}
-                          {canSell ? (
-                            <SessionTokenSaleActions
-                              token={{
-                                id: token.id,
-                                userId: token.userId,
-                                userDisplayName: token.userDisplayName,
-                                tokenLabel: token.tokenLabel,
-                              }}
-                              serviceId={serviceId}
-                              serviceName={serviceName}
-                              enabledKinds={enabledKinds}
-                              canSell={canSell}
-                            />
-                          ) : null}
-                        </div>
-                      </div>
-                    </ItemListContent>
-                  </ItemListItem>
-                  )
-                })}
-              </ItemList>
-            )}
-          </CardContent>
-        </Card>
+        {isDurationMode ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{t('sessionDetail.step.attendeeTitle')}</CardTitle>
+              <CardDescription>{t('sessionDetail.step.attendeeHint')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {singleAttendeeToken ? (
+                renderTokenRow(singleAttendeeToken, { variant: 'serving' })
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t('sessionDetail.workflow.noAttendee')}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{t('sessionDetail.step.tokensTitle')}</CardTitle>
+              <CardDescription>{t('sessionDetail.step.tokensHint')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stepTokens.length === 0 ? (
+                <ItemListEmpty>{t('sessionDetail.step.tokensEmpty')}</ItemListEmpty>
+              ) : (
+                <ItemList>
+                  {stepTokens.map((token) => renderTokenRow(token, { highlightServing: true }))}
+                </ItemList>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
       <div className="flex flex-col gap-6">
         {queue ? (

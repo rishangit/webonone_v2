@@ -66,6 +66,7 @@ export type TokenPosSubject = {
   id: string
   userId: string
   userDisplayName: string
+  userEmail?: string | null
   tokenLabel?: string
 }
 

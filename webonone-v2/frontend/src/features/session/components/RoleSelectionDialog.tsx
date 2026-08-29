@@ -17,6 +17,7 @@ export function RoleSelectionDialog() {
   const { t } = useTranslation('session')
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const user = useAppSelector((s) => s.auth.user)
   const { dialogOpen, dialogMode, assumableRoles, activeRole, activeCompanyId } = useAppSelector(
     (s) => s.sessionRole,
   )
@@ -55,13 +56,14 @@ export function RoleSelectionDialog() {
         pendingRole.role,
         pendingRole.companyId,
       )
-      dispatch(authActions.tokenRefreshed({ accessToken: result.accessToken, user: result.user }))
       dispatch(
         sessionRoleActions.roleSelected({
           role: pendingRole.role,
           companyId: pendingRole.companyId,
+          userId: user?.id,
         }),
       )
+      dispatch(authActions.tokenRefreshed({ accessToken: result.accessToken, user: result.user }))
     } catch {
       setSubmitting(false)
     }

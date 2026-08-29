@@ -11,7 +11,7 @@ function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 }
 
 function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex flex-col space-y-1.5 p-6', className)} {...props} />
+  return <div className={cn('flex flex-col space-y-1.5 p-4 sm:p-6', className)} {...props} />
 }
 
 function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
@@ -23,11 +23,11 @@ function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParag
 }
 
 function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('p-6 pt-0', className)} {...props} />
+  return <div className={cn('p-4 pt-0 sm:p-6 sm:pt-0', className)} {...props} />
 }
 
 function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex items-center p-6 pt-0', className)} {...props} />
+  return <div className={cn('flex items-center p-4 pt-0 sm:p-6 sm:pt-0', className)} {...props} />
 }
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }

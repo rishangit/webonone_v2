@@ -5,27 +5,28 @@ import { inputFocusRingClassName } from './Input'
 
 /** Horizontal scroll viewport for the tab strip. */
 export const tabsListScrollClassName = cn(
-  'w-full min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth',
+  'w-full min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth leading-none',
   'overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]',
   '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
 )
 
 /** Inner tab row — grows with tab count; parent scroll viewport clips overflow. */
-export const tabsListClassName = 'inline-flex w-max flex-nowrap items-end px-3'
+export const tabsListClassName = 'flex w-max flex-nowrap items-start px-3'
 
-/** Full-width shell below the tab strip. */
-export const tabsListShellClassName = 'w-full min-w-0 border-b border-secondary'
+/** Full-width shell — inset rule so the selected tab can cover it without a visible bottom border. */
+export const tabsListShellClassName =
+  'w-full min-w-0 shadow-[inset_0_-1px_0_0_hsl(var(--secondary))]'
 
 /**
  * Tab trigger base styles.
- * Active: theme secondary border on top/left/right; page-colored bottom; secondary text;
- * outer bottom curves via `.ui-tabs-trigger` ::before/::after.
+ * Active: secondary border on top/left/right; page-colored bottom covers the strip
+ * rule (no visible bottom border). Outer curves via `.ui-tabs-trigger`.
  */
 export const tabsTriggerClassName = cn(
   'ui-tabs-trigger inline-flex shrink-0 touch-pan-x select-none items-center justify-center whitespace-nowrap rounded-t-md border-0 border-t border-r border-[hsl(var(--glass-border))] bg-muted px-6 py-1.5 text-sm font-medium text-muted-foreground/60 transition-colors',
   'hover:text-muted-foreground',
   'disabled:pointer-events-none disabled:opacity-50',
-  'data-[state=active]:z-10 data-[state=active]:-mb-px data-[state=active]:border data-[state=active]:border-secondary data-[state=active]:border-b-[hsl(var(--background-base))] data-[state=active]:bg-[hsl(var(--background-base))] data-[state=active]:text-secondary',
+  'data-[state=active]:z-10 data-[state=active]:border-l data-[state=active]:border-b data-[state=active]:border-t-secondary data-[state=active]:border-l-secondary data-[state=active]:border-r-secondary data-[state=active]:border-b-[hsl(var(--background-base))] data-[state=active]:bg-[hsl(var(--background-base))] data-[state=active]:text-secondary',
 )
 
 export const tabsContentClassName = 'mt-4 outline-none'

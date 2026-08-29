@@ -230,7 +230,13 @@ function AppLayoutContent() {
           },
         }),
       )
-      dispatch(sessionRoleActions.roleSelected({ role: 'super_admin', companyId: null }))
+      dispatch(
+        sessionRoleActions.roleSelected({
+          role: 'super_admin',
+          companyId: null,
+          userId: result.user.id,
+        }),
+      )
       navigate(IDENTITY_NAV_SENTINELS.users)
       toast({ title: tShell('impersonation.stopSuccess') })
     } catch (err) {

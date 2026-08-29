@@ -58,7 +58,7 @@ export function ShowcaseApp() {
         Live preview of every exported component from @webonone/ui-kit
       </p>
       <Tabs value={tab} onValueChange={handleTabChange}>
-        <TabsList className="mb-4">
+        <TabsList>
           {SHOWCASE_TABS.map((t) => (
             <TabsTrigger key={t.id} value={t.id}>
               {t.label}

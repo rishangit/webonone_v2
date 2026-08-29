@@ -50,11 +50,17 @@ function loadInitialState(): SessionRoleState {
   }
 }
 
-function persistSelection(role: SessionRole, companyId: string | null): void {
+function persistSelection(
+  role: SessionRole,
+  companyId: string | null,
+  userId?: string,
+): void {
+  const existing = readSessionRoleStorage()
   writeSessionRoleStorage({
     selectionComplete: true,
     activeRole: role,
     activeCompanyId: companyId,
+    userId: userId ?? existing?.userId,
   })
 }
 
@@ -62,6 +68,7 @@ function applyRole(
   state: SessionRoleState,
   role: SessionRole,
   companyId: string | null,
+  userId?: string,
 ): void {
   state.activeRole = role
   state.activeCompanyId = companyId
@@ -69,7 +76,24 @@ function applyRole(
   state.dialogOpen = false
   state.dialogMode = 'gate'
   state.loading = false
-  persistSelection(role, companyId)
+  persistSelection(role, companyId, userId)
+}
+
+function restoreSelectionFromStorage(userId: string): SessionRoleState | null {
+  const stored = readSessionRoleStorage()
+  if (!stored?.selectionComplete) {
+    return null
+  }
+  if (stored.userId && stored.userId !== userId) {
+    return null
+  }
+
+  return {
+    ...emptyState,
+    activeRole: stored.activeRole,
+    activeCompanyId: stored.activeCompanyId,
+    selectionComplete: true,
+  }
 }
 
 function clearSelectionState(): SessionRoleState {
@@ -107,9 +131,20 @@ export const sessionRoleSlice = createSlice({
     },
     roleSelected(
       state,
+      action: PayloadAction<{ role: SessionRole; companyId: string | null; userId?: string }>,
+    ) {
+      applyRole(state, action.payload.role, action.payload.companyId, action.payload.userId)
+    },
+    restoredFromStorage(
+      state,
       action: PayloadAction<{ role: SessionRole; companyId: string | null }>,
     ) {
-      applyRole(state, action.payload.role, action.payload.companyId)
+      state.activeRole = action.payload.role
+      state.activeCompanyId = action.payload.companyId
+      state.selectionComplete = true
+      state.dialogOpen = false
+      state.dialogMode = 'gate'
+      state.loading = false
     },
     companyDataEntitiesUpdated(
       state,
@@ -137,7 +172,13 @@ export const sessionRoleSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(authActions.loginSuccess, () => clearSelectionState())
+    builder.addCase(authActions.loginSuccess, (_state, action) => {
+      const restored = restoreSelectionFromStorage(action.payload.user.id)
+      if (restored) {
+        return restored
+      }
+      return clearSelectionState()
+    })
     builder.addCase(authActions.logout, () => clearSelectionState())
   },
 })

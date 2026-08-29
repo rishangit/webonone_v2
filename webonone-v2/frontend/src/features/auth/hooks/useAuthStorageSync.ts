@@ -21,8 +21,11 @@ export function useAuthStorageSync(): void {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const userId = useAppSelector((s) => s.auth.user?.id)
   const tokenRef = useRef(accessToken)
+  const userIdRef = useRef(userId)
   tokenRef.current = accessToken
+  userIdRef.current = userId
 
   useEffect(() => {
     console.log(LOG, 'storage sync mounted', {
@@ -51,12 +54,30 @@ export function useAuthStorageSync(): void {
           userId: session.user.id,
           hadToken: Boolean(tokenRef.current),
         })
-        dispatch(
-          authActions.loginSuccess({
-            accessToken: session.accessToken,
-            user: session.user,
-          }),
-        )
+        if (tokenRef.current) {
+          if (userIdRef.current && userIdRef.current === session.user.id) {
+            dispatch(
+              authActions.tokenRefreshed({
+                accessToken: session.accessToken,
+                user: session.user,
+              }),
+            )
+          } else {
+            dispatch(
+              authActions.loginSuccess({
+                accessToken: session.accessToken,
+                user: session.user,
+              }),
+            )
+          }
+        } else {
+          dispatch(
+            authActions.loginSuccess({
+              accessToken: session.accessToken,
+              user: session.user,
+            }),
+          )
+        }
         return
       }
 

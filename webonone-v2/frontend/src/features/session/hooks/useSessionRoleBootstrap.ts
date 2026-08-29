@@ -4,17 +4,32 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
+import { readSessionRoleStorage } from '@/features/session/utils/sessionRoleStorage'
 
 export function useSessionRoleBootstrap() {
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const userId = useAppSelector((s) => s.auth.user?.id)
   const { selectionComplete, loading, assumableRoles, activeRole, activeCompanyId } =
     useAppSelector((s) => s.sessionRole)
   const syncingRef = useRef(false)
 
   useEffect(() => {
-    if (!accessToken) {
+    if (!accessToken || !userId) {
+      if (!accessToken) {
+        dispatch(sessionRoleActions.reset())
+      }
+      return
+    }
+
+    const stored = readSessionRoleStorage()
+    if (stored?.userId && stored.userId !== userId) {
       dispatch(sessionRoleActions.reset())
+    }
+  }, [accessToken, dispatch, userId])
+
+  useEffect(() => {
+    if (!accessToken) {
       return
     }
 

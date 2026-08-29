@@ -26,7 +26,7 @@ type TokenBillDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   token: TokenPosSubject
-  onSaleCompleted?: () => void
+  onSaleCompleted?: (customerEmail?: string | null) => void
 }
 
 function saleToCartLines(sale: Sale): PosCartLine[] {
@@ -103,16 +103,22 @@ export function TokenBillDialog({
     try {
       const completed = await salesApi.completeSale(bill.id, parsed.data)
       setBill(completed)
-      toast({ title: t('tokenBill.closed') })
-      onSaleCompleted?.()
+      if (onSaleCompleted) {
+        onSaleCompleted(token.userEmail)
+      } else {
+        toast({ title: t('tokenBill.closed') })
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : undefined
       if (message?.includes('Only draft sales can be completed')) {
         const refreshed = await salesApi.getSessionTokenBill(token.id)
         if (refreshed?.status === 'completed') {
           setBill(refreshed)
-          toast({ title: t('tokenBill.closed') })
-          onSaleCompleted?.()
+          if (onSaleCompleted) {
+            onSaleCompleted(token.userEmail)
+          } else {
+            toast({ title: t('tokenBill.closed') })
+          }
           return
         }
       }

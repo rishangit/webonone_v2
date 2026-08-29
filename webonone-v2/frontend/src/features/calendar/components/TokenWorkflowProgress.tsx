@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { cn } from '@webonone/ui-kit'
 
 export type TokenWorkflowStepKind = 'check_in' | 'space' | 'done'
 
@@ -11,17 +12,24 @@ export type TokenWorkflowProgressValue = {
 type TokenWorkflowProgressProps = {
   progress?: TokenWorkflowProgressValue | null
   ns?: string
+  layout?: 'inline' | 'footer'
 }
 
 export function TokenWorkflowProgress({
   progress,
   ns = 'calendar',
+  layout = 'inline',
 }: TokenWorkflowProgressProps) {
   const { t } = useTranslation(ns)
   if (!progress || progress.steps.length === 0) return null
 
-  return (
-    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs leading-snug">
+  const stepper = (
+    <p
+      className={cn(
+        'flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs leading-snug',
+        layout === 'footer' && 'w-full justify-center sm:justify-start',
+      )}
+    >
       {progress.steps.map((step, index) => {
         const label =
           step.kind === 'check_in'
@@ -54,4 +62,10 @@ export function TokenWorkflowProgress({
       })}
     </p>
   )
+
+  if (layout === 'footer') {
+    return <div className="w-full pt-3">{stepper}</div>
+  }
+
+  return stepper
 }

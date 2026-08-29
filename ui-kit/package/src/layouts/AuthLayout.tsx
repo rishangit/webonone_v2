@@ -28,7 +28,7 @@ function AuthLayout({
             {description ? <CardDescription>{description}</CardDescription> : null}
           </CardHeader>
           <CardContent>{children}</CardContent>
-          {footer ? <div className="px-6 pb-6 text-center text-sm text-muted-foreground">{footer}</div> : null}
+          {footer ? <div className="px-4 pb-4 text-center text-sm text-muted-foreground sm:px-6 sm:pb-6">{footer}</div> : null}
         </Card>
       </div>
     )
@@ -46,7 +46,7 @@ function AuthLayout({
           {description ? <CardDescription>{description}</CardDescription> : null}
         </CardHeader>
         <CardContent>{children}</CardContent>
-        {footer ? <div className="px-6 pb-6 text-center text-sm text-muted-foreground">{footer}</div> : null}
+        {footer ? <div className="px-4 pb-4 text-center text-sm text-muted-foreground sm:px-6 sm:pb-6">{footer}</div> : null}
       </Card>
     </div>
   )

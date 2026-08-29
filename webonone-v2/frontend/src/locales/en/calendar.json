@@ -393,13 +393,14 @@
     "ariaSections": "Session sections",
     "tabs": {
       "overview": "Overview",
+      "workflow": "Workflow",
       "checkIn": "Check-in",
       "step": "Step {{number}}"
     },
     "workflow": {
       "title": "Workflow",
       "hint": "Manage this attendee through each service step.",
-      "ariaSteps": "Duration session workflow steps",
+      "ariaSteps": "Session workflow steps",
       "noAttendee": "No attendee assigned to this session.",
       "empty": "This service has no workflow steps yet."
     },
@@ -422,6 +423,8 @@
       "none": "None",
       "tokensTitle": "Tokens at this step",
       "tokensHint": "Customers currently at this workflow step.",
+      "attendeeTitle": "Attendee at this step",
+      "attendeeHint": "Assigned attendee for this duration session.",
       "tokensEmpty": "No tokens at this step.",
       "complete": "Complete step",
       "checkInComplete": "Check in",

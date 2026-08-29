@@ -19,6 +19,7 @@ type SessionCurrentlyServingCardProps = {
   serviceName?: string
   enabledKinds?: SaleItemKind[]
   canSell?: boolean
+  isCheckedIn?: boolean
 }
 
 export function SessionCurrentlyServingCard({
@@ -33,6 +34,7 @@ export function SessionCurrentlyServingCard({
   serviceName,
   enabledKinds = [],
   canSell = false,
+  isCheckedIn = false,
 }: SessionCurrentlyServingCardProps) {
   const { t } = useTranslation('calendar')
 
@@ -50,64 +52,69 @@ export function SessionCurrentlyServingCard({
         ) : !token ? (
           <p className="text-2xl font-semibold text-foreground">{fallbackTokenLabel}</p>
         ) : (
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <p className="text-2xl font-semibold text-foreground">{token.tokenLabel}</p>
-              <SessionTokenUserIdentity
-                displayName={token.userDisplayName}
-                email={token.userEmail}
-                avatarUrl={token.userAvatarUrl}
-                size="hero"
-                noEmailLabel={t('sessionDetail.checkIn.noEmail')}
-              />
-              {item.forms?.length ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  {item.forms.map((form) => {
-                    const submissionId = submissionByTokenForm?.[`${token.id}:${form.id}`]
-                    if (submissionId) {
+          <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <p className="text-2xl font-semibold text-foreground">{token.tokenLabel}</p>
+                <SessionTokenUserIdentity
+                  displayName={token.userDisplayName}
+                  email={token.userEmail}
+                  avatarUrl={token.userAvatarUrl}
+                  size="hero"
+                  noEmailLabel={t('sessionDetail.checkIn.noEmail')}
+                />
+              </div>
+            </div>
+            {item.forms?.length || (canSell && isCheckedIn && serviceId && serviceName) ? (
+              <div className="flex w-full flex-wrap items-center justify-start gap-x-2 gap-y-1">
+                {item.forms?.length
+                  ? item.forms.map((form) => {
+                      const submissionId = submissionByTokenForm?.[`${token.id}:${form.id}`]
+                      if (submissionId) {
+                        return (
+                          <Button
+                            key={form.id}
+                            type="button"
+                            variant="link"
+                            className="h-auto px-0 text-sm"
+                            onClick={() => onViewForm?.(token, form.id, submissionId)}
+                          >
+                            {t('session.viewForm')}
+                            {item.forms.length > 1 ? ` · ${form.name ?? form.id}` : ''}
+                          </Button>
+                        )
+                      }
+                      if (!canFillForms) return null
                       return (
                         <Button
                           key={form.id}
                           type="button"
                           variant="link"
                           className="h-auto px-0 text-sm"
-                          onClick={() => onViewForm?.(token, form.id, submissionId)}
+                          onClick={() => onFillForm?.(token, form.id)}
                         >
-                          {t('session.viewForm')}
+                          {t('session.fillForm')}
                           {item.forms.length > 1 ? ` · ${form.name ?? form.id}` : ''}
                         </Button>
                       )
-                    }
-                    if (!canFillForms) return null
-                    return (
-                      <Button
-                        key={form.id}
-                        type="button"
-                        variant="link"
-                        className="h-auto px-0 text-sm"
-                        onClick={() => onFillForm?.(token, form.id)}
-                      >
-                        {t('session.fillForm')}
-                        {item.forms.length > 1 ? ` · ${form.name ?? form.id}` : ''}
-                      </Button>
-                    )
-                  })}
-                </div>
-              ) : null}
-            </div>
-            {canSell && serviceId && serviceName ? (
-              <SessionTokenSaleActions
-                  token={{
-                    id: token.id,
-                    userId: token.userId,
-                    userDisplayName: token.userDisplayName,
-                    tokenLabel: token.tokenLabel,
-                  }}
-                  serviceId={serviceId}
-                  serviceName={serviceName}
-                  enabledKinds={enabledKinds}
-                  canSell={canSell}
-              />
+                    })
+                  : null}
+                {canSell && isCheckedIn && serviceId && serviceName ? (
+                  <SessionTokenSaleActions
+                    token={{
+                      id: token.id,
+                      userId: token.userId,
+                      userDisplayName: token.userDisplayName,
+                      userEmail: token.userEmail,
+                      tokenLabel: token.tokenLabel,
+                    }}
+                    serviceId={serviceId}
+                    serviceName={serviceName}
+                    enabledKinds={enabledKinds}
+                    canSell={canSell}
+                  />
+                ) : null}
+              </div>
             ) : null}
           </div>
         )}

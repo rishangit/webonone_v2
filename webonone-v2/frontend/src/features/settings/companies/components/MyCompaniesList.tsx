@@ -40,6 +40,7 @@ export function MyCompaniesList({
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const userId = useAppSelector((s) => s.auth.user?.id)
   const [loggingInId, setLoggingInId] = useState<string | null>(null)
   const [loginError, setLoginError] = useState<string | null>(null)
   const rows = Array.isArray(items) ? items : []
@@ -63,13 +64,14 @@ export function MyCompaniesList({
         'company_admin',
         item.id,
       )
-      dispatch(authActions.tokenRefreshed({ accessToken: result.accessToken, user: result.user }))
       dispatch(
         sessionRoleActions.roleSelected({
           role: 'company_admin',
           companyId: item.id,
+          userId,
         }),
       )
+      dispatch(authActions.tokenRefreshed({ accessToken: result.accessToken, user: result.user }))
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : t('myCompanies.failedLogin'))
     } finally {

@@ -29,9 +29,8 @@ import { SessionScheduleChangeMeta } from '@/features/calendar/components/Sessio
 import { formatTimeModeLabel } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions, sessionCheckInsActions, sessionTokensActions } from '@/features/calendar/store'
 import { useSessionTokenAvatars } from '@/features/calendar/hooks/useSessionTokenAvatars'
-import { DurationSessionWorkflowCard } from '@/features/calendar/components/DurationSessionWorkflowCard'
 import { SessionDetailSectionTabs } from '@/features/calendar/components/SessionDetailSectionTabs'
-import { SessionWorkflowStepPanel } from '@/features/calendar/components/SessionWorkflowStepPanel'
+import { SessionWorkflowTab } from '@/features/calendar/components/SessionWorkflowTab'
 import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
 import type { ServiceWorkflowItem } from '@/features/company-catalog/types/companyCatalog.types'
@@ -63,7 +62,6 @@ import {
   resolveSessionControlEnded,
   resolveSessionControlStarted,
 } from '@/features/calendar/utils/sessionControlTiming'
-import { tokensAtWorkflowStep } from '@/features/calendar/utils/workflowStepQueue'
 import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
@@ -156,7 +154,9 @@ export function SessionDetailsPage() {
   const lastActionStatus = useRef(actionStatus)
   const isPersonal = isPersonalCalendarSession(activeRole, activeCompanyId)
   const { t, i18n } = useTranslation('calendar')
+  const { t: tSales } = useTranslation('sales')
   const [sessionTab, setSessionTab] = useState('overview')
+  const [selectedWorkflowStepId, setSelectedWorkflowStepId] = useState('')
   const [workflowItems, setWorkflowItems] = useState<ServiceWorkflowItem[]>([])
   const [completingTokenId, setCompletingTokenId] = useState<string | null>(null)
   const [now, setNow] = useState(() => new Date())
@@ -203,8 +203,15 @@ export function SessionDetailsPage() {
   }, [checkInActionStatus, dispatch, eventId, occurrenceDate])
 
   useEffect(() => {
-    if (detail?.timeMode === 'duration') setSessionTab('overview')
-  }, [detail?.timeMode])
+    if (workflowItems.some((item) => item.id === selectedWorkflowStepId)) return
+    setSelectedWorkflowStepId(workflowItems[0]?.id ?? '')
+  }, [workflowItems, selectedWorkflowStepId])
+
+  useEffect(() => {
+    if (workflowItems.length === 0 && sessionTab === 'workflow') {
+      setSessionTab('overview')
+    }
+  }, [sessionTab, workflowItems.length])
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000)
@@ -311,6 +318,18 @@ export function SessionDetailsPage() {
     }
   }, [detail?.attendeeUserId, eventId, occurrenceDate])
 
+  useEffect(() => {
+    if (sessionTab !== 'workflow' || detail?.timeMode !== 'duration') return
+    if (!eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
+    dispatch(
+      sessionTokensActions.fetchListRequested({
+        eventId,
+        occurrenceDate,
+        silent: true,
+      }),
+    )
+  }, [sessionTab, detail?.timeMode, dispatch, eventId, occurrenceDate])
+
   const isAssignedStaff =
     activeRole === 'member' &&
     Boolean(activeCompanyId) &&
@@ -318,7 +337,18 @@ export function SessionDetailsPage() {
 
   useEffect(() => {
     if (lastActionStatus.current === 'saving' && actionStatus === 'idle' && !actionError) {
-      if (lastAction === 'start') toast({ title: 'Session started' })
+      if (lastAction === 'start') {
+        toast({ title: 'Session started' })
+        if (eventId && occurrenceDate && DATE_YMD.test(occurrenceDate)) {
+          dispatch(
+            sessionTokensActions.fetchListRequested({
+              eventId,
+              occurrenceDate,
+              silent: true,
+            }),
+          )
+        }
+      }
       if (lastAction === 'call-next') toast({ title: 'Next token called' })
       if (lastAction === 'call-previous') toast({ title: 'Moved to previous token' })
       if (lastAction === 'end') {
@@ -342,7 +372,24 @@ export function SessionDetailsPage() {
       dispatch(sessionTokensActions.resetActionStatus())
     }
     lastActionStatus.current = actionStatus
-  }, [actionStatus, actionError, lastAction, toast, dispatch])
+  }, [actionStatus, actionError, dispatch, eventId, lastAction, occurrenceDate, toast])
+
+  function handleSaleCompleted(customerEmail?: string | null) {
+    if (eventId && occurrenceDate && DATE_YMD.test(occurrenceDate)) {
+      dispatch(
+        sessionTokensActions.fetchListRequested({
+          eventId,
+          occurrenceDate,
+          silent: true,
+        }),
+      )
+    }
+    const email = customerEmail?.trim() || detail?.attendeeEmail?.trim() || null
+    toast({
+      title: tSales('tokenBill.closed'),
+      description: email ? tSales('tokenBill.emailSent') : undefined,
+    })
+  }
 
   const backToEvent = () => {
     if (eventId) navigate(`/calendar/events/${eventId}`)
@@ -660,32 +707,15 @@ export function SessionDetailsPage() {
         tab={sessionTab}
         onTabChange={setSessionTab}
         tabs={
-          isDuration
-            ? [{ id: 'overview', label: t('sessionDetail.tabs.overview') }]
-            : [
+          workflowItems.length > 0
+            ? [
                 { id: 'overview', label: t('sessionDetail.tabs.overview') },
-                ...workflowItems.map((item, index) => {
-                  const spaceName =
-                    item.space?.name && item.space.name !== item.space.id
-                      ? item.space.name
-                      : null
-                  if (item.kind === 'check_in') {
-                    return {
-                      id: item.id,
-                      label: spaceName
-                        ? `${t('sessionDetail.tabs.checkIn')} · ${spaceName}`
-                        : t('sessionDetail.tabs.checkIn'),
-                    }
-                  }
-                  return {
-                    id: item.id,
-                    label: spaceName ?? t('sessionDetail.tabs.step', { number: index + 1 }),
-                  }
-                }),
+                { id: 'workflow', label: t('sessionDetail.tabs.workflow') },
               ]
+            : [{ id: 'overview', label: t('sessionDetail.tabs.overview') }]
         }
       >
-        {sessionTab === 'overview' || isDuration ? (
+        {sessionTab === 'overview' ? (
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
           {sessionIssue ? (
@@ -759,48 +789,6 @@ export function SessionDetailsPage() {
               </CardContent>
             </Card>
           ) : null}
-          {isDuration ? (
-            <DurationSessionWorkflowCard
-              items={workflowItems}
-              token={durationAttendeeToken}
-              canComplete={canOperateSession}
-              completingId={completingTokenId}
-              checkedIn={Boolean(
-                detail.attendeeUserId && checkedInUserIds.has(detail.attendeeUserId),
-              )}
-              canFillForms={canOperateSession}
-              submissionByTokenForm={submissionByTokenForm}
-              onFillForm={(formId) => {
-                if (!durationAttendeeToken) return
-                openFillForm({
-                  userId: durationAttendeeToken.userId,
-                  displayName: durationAttendeeToken.userDisplayName,
-                  email: durationAttendeeToken.userEmail,
-                  sessionTokenId: durationAttendeeToken.id,
-                  formId,
-                })
-              }}
-              onViewForm={(formId, submissionId) => {
-                if (!durationAttendeeToken) return
-                openViewForm({
-                  userId: durationAttendeeToken.userId,
-                  displayName: durationAttendeeToken.userDisplayName,
-                  email: durationAttendeeToken.userEmail,
-                  sessionTokenId: durationAttendeeToken.id,
-                  formId,
-                  submissionId,
-                })
-              }}
-              onComplete={() => {
-                if (!durationAttendeeToken || !eventId || !occurrenceDate) return
-                void handleCompleteWorkflowStep(durationAttendeeToken.id)
-              }}
-              serviceId={detail.serviceId}
-              serviceName={detail.serviceName}
-              enabledKinds={posEnabledKinds}
-              canSell={canSellDuringSession}
-            />
-          ) : null}
           {!isDuration ? (
             <Card>
               <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
@@ -864,22 +852,27 @@ export function SessionDetailsPage() {
                           className="h-10 w-10 rounded-md"
                         />
                         <ItemListContent>
-                          <div className="flex min-w-0 items-start justify-between gap-3">
-                            <div className="min-w-0 space-y-1">
-                              <p className="truncate font-medium text-foreground">
-                                {token.tokenLabel}
-                              </p>
-                              <TokenWorkflowProgress progress={token.workflowProgress} />
-                              <p className="truncate text-sm text-foreground">
-                                {token.userDisplayName}
-                              </p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {token.userEmail ?? 'No email'}
-                              </p>
+                          <div className="flex w-full min-w-0 flex-col gap-3">
+                            <div className="flex min-w-0 items-start justify-between gap-3">
+                              <div className="min-w-0 space-y-1">
+                                <p className="truncate font-medium text-foreground">
+                                  {token.tokenLabel}
+                                </p>
+                                <p className="truncate text-sm text-foreground">
+                                  {token.userDisplayName}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {token.userEmail ?? 'No email'}
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 flex-col items-end gap-1">
+                                {tokenStatusTag}
+                              </div>
                             </div>
-                            <div className="flex shrink-0 flex-col items-end gap-1">
-                              {tokenStatusTag}
-                            </div>
+                            <TokenWorkflowProgress
+                              progress={token.workflowProgress}
+                              layout="footer"
+                            />
                           </div>
                         </ItemListContent>
                       </ItemListItem>
@@ -1079,69 +1072,34 @@ export function SessionDetailsPage() {
         </div>
       </div>
         ) : (
-          (() => {
-            const item =
-              workflowItems.find((entry) => entry.id === sessionTab) ?? workflowItems[0]
-            if (!item) return null
-            const atStep = tokensAtWorkflowStep(displayTokens, item.id, {
-              itemKind: item.kind,
-              checkedInUserIds,
-            })
-            const stepTokens =
-              item.kind === 'check_in'
-                ? overviewTokens.filter(
-                    (token) =>
-                      atStep.some((entry) => entry.id === token.id) ||
-                      checkedInUserIds.has(token.userId),
-                  )
-                : overviewTokens.filter((token) => checkedInUserIds.has(token.userId))
-            return (
-              <SessionWorkflowStepPanel
-                item={item}
-                items={workflowItems}
-                tokens={displayTokens}
-                stepTokens={stepTokens}
-                showQueue={!isDuration && Boolean(item.sessionQueue)}
-                canComplete={
-                  canOperateSession && (canManageSession || isAssignedStaff)
-                }
-                completingId={completingTokenId}
-                checkedInUserIds={checkedInUserIds}
-                canFillForms={canOperateSession}
-                submissionByTokenForm={submissionByTokenForm}
-                onFillForm={(token, formId) => {
-                  openFillForm({
-                    userId: token.userId,
-                    displayName: token.userDisplayName,
-                    email: token.userEmail,
-                    sessionTokenId: token.id,
-                    formId,
-                  })
-                }}
-                onViewForm={(token, formId, submissionId) => {
-                  openViewForm({
-                    userId: token.userId,
-                    displayName: token.userDisplayName,
-                    email: token.userEmail,
-                    sessionTokenId: token.id,
-                    formId,
-                    submissionId,
-                  })
-                }}
-                onComplete={(tokenId) => {
-                  if (!eventId || !occurrenceDate) return
-                  void handleCompleteWorkflowStep(tokenId)
-                }}
-                serviceId={detail.serviceId}
-                serviceName={detail.serviceName}
-                enabledKinds={posEnabledKinds}
-                canSell={canSellDuringSession}
-                stepQueueLabels={
-                  isPersonal ? sessionStepQueues?.[item.id] ?? null : null
-                }
-              />
-            )
-          })()
+          <SessionWorkflowTab
+            isDuration={isDuration}
+            workflowItems={workflowItems}
+            selectedWorkflowStepId={selectedWorkflowStepId}
+            onSelectWorkflowStep={setSelectedWorkflowStepId}
+            displayTokens={displayTokens}
+            overviewTokens={overviewTokens}
+            checkedInUserIds={checkedInUserIds}
+            durationAttendeeToken={durationAttendeeToken}
+            canOperateSession={canOperateSession}
+            canManageSession={canManageSession}
+            isAssignedStaff={isAssignedStaff}
+            completingTokenId={completingTokenId}
+            submissionByTokenForm={submissionByTokenForm}
+            onFillForm={openFillForm}
+            onViewForm={openViewForm}
+            onCompleteWorkflowStep={(tokenId) => {
+              if (!eventId || !occurrenceDate) return
+              void handleCompleteWorkflowStep(tokenId)
+            }}
+            serviceId={detail.serviceId}
+            serviceName={detail.serviceName}
+            enabledKinds={posEnabledKinds}
+            canSellDuringSession={canSellDuringSession}
+            sessionStepQueues={sessionStepQueues}
+            isPersonal={isPersonal}
+            onSaleCompleted={handleSaleCompleted}
+          />
         )}
       </SessionDetailSectionTabs>
 
