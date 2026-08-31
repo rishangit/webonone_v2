@@ -3,7 +3,7 @@ import * as internalCompanyController from '../controllers/internalCompany.contr
 import * as internalStaffController from '../controllers/internalStaff.controller.js'
 import * as userActivityController from '../controllers/userActivity.controller.js'
 import { requireInternalAuth } from '../middleware/internalAuth.js'
-import { requireCompanySession } from '../middleware/requireCompanySession.js'
+import { requireCompanySessionOrSuperAdmin } from '../middleware/requireCompanySession.js'
 
 const router = Router()
 
@@ -21,13 +21,13 @@ router.get(
 
 router.get(
   '/company/me/users/:userId/activity',
-  requireCompanySession,
+  requireCompanySessionOrSuperAdmin,
   userActivityController.listUserActivity,
 )
 
 router.get(
   '/company/me/session-tokens/:tokenId',
-  requireCompanySession,
+  requireCompanySessionOrSuperAdmin,
   userActivityController.getSessionTokenDetail,
 )
 

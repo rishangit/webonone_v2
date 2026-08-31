@@ -97,6 +97,22 @@ export class ToolRegistry {
     this.tools = [...tools]
   }
 
+  /** Replace tools per service; keep existing tools when a peer returns an empty batch. */
+  mergeByService(updates: { service: ToolServiceId; tools: ToolDefinition[] }[]): void {
+    const byService = new Map<ToolServiceId, ToolDefinition[]>()
+    for (const tool of this.tools) {
+      const list = byService.get(tool.service) ?? []
+      list.push(tool)
+      byService.set(tool.service, list)
+    }
+    for (const { service, tools } of updates) {
+      if (tools.length > 0) {
+        byService.set(service, tools)
+      }
+    }
+    this.tools = TOOL_SERVICE_IDS.flatMap((service) => byService.get(service) ?? [])
+  }
+
   list(): ToolDefinition[] {
     return [...this.tools]
   }

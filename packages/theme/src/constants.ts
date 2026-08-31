@@ -1,4 +1,4 @@
-import type { ThemeDto } from './types'
+import type { ThemeDto, ColorMode } from './types'
 
 export const THEME_MESSAGE_TYPES = {
   APPLY: 'webonone:theme:apply',
@@ -12,7 +12,8 @@ export const THEME_QUERY = {
   NAME: 'theme_name',
 } as const
 
-export const THEME_CONTRACT_VERSION = '1'
+export const THEME_CONTRACT_VERSION = '2'
+export const THEME_CONTRACT_VERSION_V1 = '1'
 
 /** Platform-fixed destructive — not a palette slot (palette generators do not assign roles). */
 export const PLATFORM_DESTRUCTIVE_HEX = '#DC2626'
@@ -38,13 +39,46 @@ export const DARK_CANVAS_BASE = '240 4% 20%'
 export const DARK_CANVAS_TINT = '240 4% 22%'
 export const DARK_CANVAS_TINT_OPACITY = 0.16
 
+/**
+ * Fixed typography neutrals — not derived from the user text palette slot.
+ * Titles use dark/light body copy; descriptions and labels use ash tones.
+ */
+export const FIXED_TYPOGRAPHY: Record<
+  ColorMode,
+  {
+    title: string
+    body: string
+    description: string
+    label: string
+    muted: string
+    disabled: string
+  }
+> = {
+  light: {
+    title: '#17211D',
+    body: '#17211D',
+    description: '#6B7280',
+    label: '#4B5563',
+    muted: '#9CA3AF',
+    disabled: '#C4C9CF',
+  },
+  dark: {
+    title: '#F1F5F3',
+    body: '#E8EDEA',
+    description: '#9CA3AF',
+    label: '#B0B8B3',
+    muted: '#7A8680',
+    disabled: '#5C6560',
+  },
+}
+
 export const PLATFORM_DEFAULT_THEME: Omit<ThemeDto, 'id'> = {
   name: 'Platform Default',
-  color1: '#344CE2',
-  color2: '#3578E8',
-  color3: '#3578E8',
-  color4: '#EFF3FA',
-  color5: '#0E2F59',
+  color1: '#344CE2', // primary
+  color2: '#3578E8', // secondary
+  color3: '#17211D', // text
+  color4: '#EFF3FA', // background
+  color5: '#FFFFFF', // surface
 }
 
 export const PLATFORM_DEFAULT_THEME_ID = 'platform-default-theme'

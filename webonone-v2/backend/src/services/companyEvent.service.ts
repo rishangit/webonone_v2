@@ -11,6 +11,7 @@ import {
   listLibraryItemsByIds,
 } from '../clients/dataCatalogClient.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
+import { fetchUserAvatarsByIds } from '../clients/identityUserContactClient.js'
 import * as eventRepo from '../repositories/companyEvent.repository.js'
 import * as sessionRunRepo from '../repositories/companyEventSessionRun.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
@@ -67,6 +68,10 @@ export type CompanyEventDto = {
   serviceName: string
   /** First gallery image URL for the linked company service, or null. */
   serviceImageUrl: string | null
+  /** Staff avatar URL for the assigned staff member, or null. */
+  staffImageUrl: string | null
+  /** Attendee avatar URL when the attendee maps to a company member, or null. */
+  attendeeImageUrl: string | null
   /** Effective service gallery (company override or linked library inherit). */
   serviceGalleryImages: EventGalleryImage[]
   /** Effective space gallery when the event has a space; empty otherwise. */
@@ -74,8 +79,8 @@ export type CompanyEventDto = {
   /** Design form template id linked on the catalog service (ID copy). */
   formTemplateId: string | null
   timeMode: 'duration' | 'window'
-  staffId: string
-  staffDisplayName: string
+  staffId: string | null
+  staffDisplayName: string | null
   attendeeUserId: string | null
   attendeeDisplayName: string | null
   attendeeEmail: string | null
@@ -346,6 +351,8 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
     serviceId: row.service_id,
     serviceName: row.service_name,
     serviceImageUrl: null,
+    staffImageUrl: null,
+    attendeeImageUrl: null,
     serviceGalleryImages: [],
     spaceGalleryImages: [],
     formTemplateId: null,
@@ -371,6 +378,88 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
 function firstGalleryUrl(images: EventGalleryImage[] | null | undefined): string | null {
   const url = images?.[0]?.url
   return typeof url === 'string' && url.trim() ? url : null
+}
+
+function normalizeAvatarUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null
+  return rewriteMediaFileUrl(url.trim())
+}
+
+async function buildPeopleAvatarMaps(
+  staffRows: Awaited<ReturnType<typeof staffRepo.findStaffByIds>>,
+  attendeeStaffRows: Awaited<ReturnType<typeof staffRepo.findStaffByUserIds>>,
+  attendeeUserIds: string[],
+): Promise<{
+  avatarByStaffId: Map<string, string | null>
+  avatarByUserId: Map<string, string | null>
+}> {
+  const localAvatarByUserId = new Map<string, string | null>()
+  for (const row of [...staffRows, ...attendeeStaffRows]) {
+    if (!localAvatarByUserId.has(row.user_id)) {
+      localAvatarByUserId.set(row.user_id, normalizeAvatarUrl(row.avatar_url))
+    }
+  }
+
+  const userIdsNeedingIdentity = [
+    ...staffRows
+      .filter((row) => !normalizeAvatarUrl(row.avatar_url))
+      .map((row) => row.user_id),
+    ...attendeeUserIds.filter((userId) => !localAvatarByUserId.get(userId)),
+  ]
+  const identityAvatars = await fetchUserAvatarsByIds(userIdsNeedingIdentity)
+
+  const allUserIds = [...new Set([...staffRows.map((row) => row.user_id), ...attendeeUserIds])]
+  const resolvedByUserId = new Map<string, string | null>()
+  for (const userId of allUserIds) {
+    const local = localAvatarByUserId.get(userId) ?? null
+    const identity = identityAvatars.get(userId) ?? null
+    resolvedByUserId.set(userId, local ?? normalizeAvatarUrl(identity))
+  }
+
+  const avatarByStaffId = new Map(
+    staffRows.map((row) => [
+      row.id,
+      normalizeAvatarUrl(row.avatar_url) ?? resolvedByUserId.get(row.user_id) ?? null,
+    ]),
+  )
+  const avatarByUserId = new Map(
+    attendeeUserIds.map((userId) => [userId, resolvedByUserId.get(userId) ?? null]),
+  )
+
+  return { avatarByStaffId, avatarByUserId }
+}
+
+async function enrichEventsWithPeopleImages(
+  companyId: string,
+  events: CompanyEventDto[],
+): Promise<CompanyEventDto[]> {
+  if (events.length === 0) return events
+
+  const staffIds = events
+    .map((event) => event.staffId)
+    .filter((staffId): staffId is string => Boolean(staffId))
+  const attendeeUserIds = events
+    .map((event) => event.attendeeUserId)
+    .filter((userId): userId is string => Boolean(userId))
+
+  const [staffRows, attendeeStaffRows] = await Promise.all([
+    staffRepo.findStaffByIds(companyId, staffIds),
+    staffRepo.findStaffByUserIds(companyId, attendeeUserIds),
+  ])
+
+  const { avatarByStaffId, avatarByUserId } = await buildPeopleAvatarMaps(
+    staffRows,
+    attendeeStaffRows,
+    attendeeUserIds,
+  )
+
+  return events.map((event) => ({
+    ...event,
+    staffImageUrl: event.staffId ? (avatarByStaffId.get(event.staffId) ?? null) : null,
+    attendeeImageUrl: event.attendeeUserId
+      ? (avatarByUserId.get(event.attendeeUserId) ?? null)
+      : null,
+  }))
 }
 
 function normalizeGalleryImages(
@@ -471,7 +560,7 @@ async function enrichEventsWithServiceImages(
     resolveServiceFormTemplateIds(companyId, serviceIds),
   ])
 
-  return events.map((event) => {
+  const withServiceImages = events.map((event) => {
     const serviceGalleryImages = serviceGalleries.get(event.serviceId) ?? []
     const spaceGalleryImages = event.spaceId
       ? (spaceGalleries.get(event.spaceId) ?? [])
@@ -484,6 +573,8 @@ async function enrichEventsWithServiceImages(
       formTemplateId: formByServiceId.get(event.serviceId) ?? null,
     }
   })
+
+  return enrichEventsWithPeopleImages(companyId, withServiceImages)
 }
 
 /** Map a raw event row to DTO (shared by company + public catalog booking). */
@@ -624,6 +715,22 @@ async function loadStaffWithSchedule(companyId: string, staffId: string) {
   return { staff, schedules }
 }
 
+async function resolveEventStaff(
+  companyId: string,
+  staffId: string | null | undefined,
+): Promise<{
+  staffId: string | null
+  staffDisplayName: string | null
+  schedules: staffRepo.CompanyStaffScheduleRow[]
+}> {
+  const id = staffId?.trim()
+  if (!id) {
+    return { staffId: null, staffDisplayName: null, schedules: [] }
+  }
+  const { staff, schedules } = await loadStaffWithSchedule(companyId, id)
+  return { staffId: staff.id, staffDisplayName: staff.display_name, schedules }
+}
+
 function assertStaffWorksOnWeekdays(
   schedules: staffRepo.CompanyStaffScheduleRow[],
   weekdays: number[],
@@ -715,7 +822,7 @@ async function resolveSpace(
   }
   const id = spaceId?.trim()
   if (!id) {
-    throw serviceError('Space is required for Specific time services', 400)
+    return { space_id: null, space_name: null }
   }
   const space = await loadSpace(companyId, id, accessToken)
   return { space_id: space.id, space_name: space.name }
@@ -802,8 +909,8 @@ function toOccurrence(event: CompanyEventDto, occurrenceDate: string): CompanyEv
     originalStartTime: event.startTime,
     originalEndTime: event.endTime,
     sessionCancelled: false,
-    effectiveStaffId: event.staffId,
-    effectiveStaffDisplayName: event.staffDisplayName,
+    effectiveStaffId: event.staffId ?? '',
+    effectiveStaffDisplayName: event.staffDisplayName ?? '',
     sessionIssue: null,
   }
 }
@@ -834,8 +941,8 @@ function applyOccurrenceScheduleOverride(
       originalStartTime,
       originalEndTime,
       sessionCancelled: false,
-      effectiveStaffId: item.staffId,
-      effectiveStaffDisplayName: item.staffDisplayName,
+      effectiveStaffId: item.staffId ?? '',
+      effectiveStaffDisplayName: item.staffDisplayName ?? '',
       sessionIssue: null,
     }
   }
@@ -862,7 +969,7 @@ function applyOccurrenceScheduleOverride(
     originalEndTime,
     sessionCancelled: isRunCancelled(run),
     effectiveStaffId: effectiveStaffId(item.staffId, run),
-    effectiveStaffDisplayName: item.staffDisplayName,
+    effectiveStaffDisplayName: item.staffDisplayName ?? '',
     sessionIssue: isRunCancelled(run) ? 'cancelled' : null,
   }
 }
@@ -884,15 +991,23 @@ async function attachOccurrenceRunStatuses(
   const companyId = withSchedule[0]?.companyId
   if (!companyId) return withSchedule
 
-  const staffIds = [...new Set(withSchedule.map((item) => item.effectiveStaffId))]
+  const staffIds = [
+    ...new Set(withSchedule.map((item) => item.effectiveStaffId).filter(Boolean)),
+  ]
   const leaveByStaff = await loadApprovedLeaveDatesByStaff(companyId, staffIds, from, to)
-  const staffNameById = new Map<string, string>()
-  const extraStaffIds = staffIds.filter((id) => !withSchedule.some((item) => item.staffId === id))
-  await Promise.all(
-    extraStaffIds.map(async (staffId) => {
-      const staff = await staffRepo.findStaffById(companyId, staffId)
-      if (staff) staffNameById.set(staff.id, staff.display_name)
-    }),
+  const staffRows = await staffRepo.findStaffByIds(companyId, staffIds)
+  const staffNameById = new Map(staffRows.map((row) => [row.id, row.display_name]))
+  const identityAvatars = await fetchUserAvatarsByIds(
+    staffRows
+      .filter((row) => !normalizeAvatarUrl(row.avatar_url))
+      .map((row) => row.user_id),
+  )
+  const staffAvatarById = new Map(
+    staffRows.map((row) => [
+      row.id,
+      normalizeAvatarUrl(row.avatar_url) ??
+        normalizeAvatarUrl(identityAvatars.get(row.user_id) ?? null),
+    ]),
   )
 
   return withSchedule.map((item) => {
@@ -906,7 +1021,8 @@ async function attachOccurrenceRunStatuses(
     )
     return {
       ...item,
-      effectiveStaffDisplayName: displayName,
+      effectiveStaffDisplayName: displayName ?? '',
+      staffImageUrl: staffAvatarById.get(item.effectiveStaffId) ?? item.staffImageUrl ?? null,
       sessionIssue: resolveSessionIssue({
         cancelled: item.sessionCancelled,
         staffOnLeave,
@@ -1079,7 +1195,7 @@ export async function listCompanyEvents(
     series = series.filter(
       (e) =>
         e.serviceName.toLowerCase().includes(q) ||
-        e.staffDisplayName.toLowerCase().includes(q) ||
+        (e.staffDisplayName?.toLowerCase().includes(q) ?? false) ||
         (e.attendeeDisplayName?.toLowerCase().includes(q) ?? false) ||
         (e.spaceName?.toLowerCase().includes(q) ?? false),
     )
@@ -1162,7 +1278,7 @@ export async function listMyBookedEvents(
     series = series.filter(
       (e) =>
         e.serviceName.toLowerCase().includes(q) ||
-        e.staffDisplayName.toLowerCase().includes(q) ||
+        (e.staffDisplayName?.toLowerCase().includes(q) ?? false) ||
         (e.attendeeDisplayName?.toLowerCase().includes(q) ?? false) ||
         (e.spaceName?.toLowerCase().includes(q) ?? false),
     )
@@ -1373,7 +1489,7 @@ export async function createCompanyEvent(
   options?: { accessToken?: string },
 ): Promise<CompanyEventDto> {
   const service = await loadService(companyId, body.service_id, options?.accessToken)
-  const { staff, schedules } = await loadStaffWithSchedule(companyId, body.staff_id)
+  const resolvedStaff = await resolveEventStaff(companyId, body.staff_id)
   const times = resolveTimes(service, body.start_time)
   const schedule = normalizeEventSchedule(
     service.timeMode,
@@ -1382,9 +1498,18 @@ export async function createCompanyEvent(
     body.recurrence,
     body.recurrence_until,
   )
-  assertStaffWorksOnWeekdays(schedules, schedule.weekdays, times.startTime, times.endTime)
+  if (resolvedStaff.staffId) {
+    assertStaffWorksOnWeekdays(
+      resolvedStaff.schedules,
+      schedule.weekdays,
+      times.startTime,
+      times.endTime,
+    )
+    if (service.timeMode === 'duration') {
+      await assertStaffNotOnLeaveForDates(companyId, resolvedStaff.staffId, [body.starts_on])
+    }
+  }
   if (service.timeMode === 'duration') {
-    await assertStaffNotOnLeaveForDates(companyId, staff.id, [body.starts_on])
     await assertServiceDayHasNoStaffLeaveIssue(companyId, service.id, body.starts_on)
   }
   const attendee = resolveAttendee(service.timeMode, body)
@@ -1402,8 +1527,8 @@ export async function createCompanyEvent(
     service_id: service.id,
     service_name: service.name,
     time_mode: service.timeMode,
-    staff_id: staff.id,
-    staff_display_name: staff.display_name,
+    staff_id: resolvedStaff.staffId,
+    staff_display_name: resolvedStaff.staffDisplayName,
     attendee_user_id: attendee.attendee_user_id,
     attendee_display_name: attendee.attendee_display_name,
     attendee_email: attendee.attendee_email,
@@ -1446,12 +1571,13 @@ export async function updateCompanyEvent(
   if (!existing) throw serviceError('Event not found', 404)
 
   const serviceId = body.service_id ?? existing.service_id
-  const staffId = body.staff_id ?? existing.staff_id
+  const staffId =
+    body.staff_id !== undefined ? body.staff_id?.trim() || null : existing.staff_id
   const startsOn = body.starts_on ?? toDateOnly(existing.starts_on)
   const mappedExisting = mapEvent(existing)
 
   const service = await loadService(companyId, serviceId, options?.accessToken)
-  const { staff, schedules } = await loadStaffWithSchedule(companyId, staffId)
+  const resolvedStaff = await resolveEventStaff(companyId, staffId)
   const times = resolveTimes(
     service,
     body.start_time ?? normalizeTime(existing.start_time) ?? undefined,
@@ -1466,7 +1592,14 @@ export async function updateCompanyEvent(
       ? body.recurrence_until
       : mappedExisting.recurrenceUntil,
   )
-  assertStaffWorksOnWeekdays(schedules, schedule.weekdays, times.startTime, times.endTime)
+  if (resolvedStaff.staffId) {
+    assertStaffWorksOnWeekdays(
+      resolvedStaff.schedules,
+      schedule.weekdays,
+      times.startTime,
+      times.endTime,
+    )
+  }
 
   const attendee = resolveAttendee(service.timeMode, {
     attendee_user_id:
@@ -1492,8 +1625,8 @@ export async function updateCompanyEvent(
     service_id: service.id,
     service_name: service.name,
     time_mode: service.timeMode,
-    staff_id: staff.id,
-    staff_display_name: staff.display_name,
+    staff_id: resolvedStaff.staffId,
+    staff_display_name: resolvedStaff.staffDisplayName,
     attendee_user_id: attendee.attendee_user_id,
     attendee_display_name: attendee.attendee_display_name,
     attendee_email: attendee.attendee_email,
@@ -1766,8 +1899,8 @@ async function buildSessionDetail(
     sessionStartTime: times.sessionStartTime,
     sessionEndTime: times.sessionEndTime,
     sessionCancelled: false,
-    effectiveStaffId: resolvedEvent.staffId,
-    effectiveStaffDisplayName: resolvedEvent.staffDisplayName,
+    effectiveStaffId: resolvedEvent.staffId ?? '',
+    effectiveStaffDisplayName: resolvedEvent.staffDisplayName ?? '',
     sessionIssue: null,
   }
 }

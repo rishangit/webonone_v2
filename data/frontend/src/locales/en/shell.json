@@ -12,5 +12,12 @@
   "signingIn": "Signing in…",
   "copyToAi": "Copy to AI",
   "copyToAiSuccess": "Added to AI assistant",
-  "copyToAiUnavailable": "Open Data from WebOnOne to use AI"
+  "copyToAiUnavailable": "Open Data from WebOnOne to use AI",
+  "customize": "Customize",
+  "aiSuggestAttributeValues": "Suggest values with AI",
+  "aiSuggestAttributeValuesSuccess": "Opened AI assistant",
+  "aiSuggestAttributeValuesPrompt": "Suggest attribute values for {{attributeName}} on {{entityName}} and add them using the attribute value tool.",
+  "aiSuggestVariants": "Suggest variants with AI",
+  "aiSuggestVariantsSuccess": "Opened AI assistant",
+  "aiSuggestVariantsPrompt": "Suggest common market variants for {{productName}} (realistic retail SKUs with strength, form, and pack size where applicable). Ensure attributes and labeled values exist, then add each variant with the product variant tool."
 }

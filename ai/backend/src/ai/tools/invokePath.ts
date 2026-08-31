@@ -30,9 +30,16 @@ const SERVICE_PATH_ALLOWED: Record<ToolServiceId, (path: string) => boolean> = {
     /^\/api\/v1\/company\/events(\/|$)/.test(path) ||
     /^\/api\/v1\/company\/staff(\/|$)/.test(path) ||
     /^\/api\/v1\/company\/admin(\/|$)/.test(path) ||
-    path === '/api/v1/company/:companyId',
+    path === '/api/v1/company/register' ||
+    path === '/api/v1/company/discover' ||
+    path === '/api/v1/company/discover/:companyId' ||
+    path === '/api/v1/company/:id' ||
+    path === '/api/v1/company/:id/connect',
   data: (path) =>
-    /^\/api\/v1\/(tags|units|attributes|products|services|spaces)(\/:id)?$/.test(path),
+    /^\/api\/v1\/(tags|units|attributes|products|services|spaces)(\/:id)?$/.test(path) ||
+    /^\/api\/v1\/(products|services|spaces)\/:id\/attributes\/:attributeId\/values$/.test(path) ||
+    /^\/api\/v1\/(products|services|spaces)\/:id\/attribute-values\/:valueId(\/default)?$/.test(path) ||
+    /^\/api\/v1\/products\/:id\/variants(\/:variantId)?$/.test(path),
   email: () => false,
   sms: () => false,
   payment: () => false,
@@ -81,7 +88,7 @@ export function buildInvokeRequest(
       }
       return value
     }
-    if (name === 'id') {
+    if (name === 'id' || name === 'attributeId' || name === 'valueId') {
       if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{8,32}$/.test(value)) {
         throw new Error('invalid_id')
       }

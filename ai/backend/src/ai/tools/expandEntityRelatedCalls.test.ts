@@ -94,6 +94,13 @@ describe('isRelatedSuggestionIntent', () => {
   it('detects can we have units intent', () => {
     assert.equal(isRelatedSuggestionIntent('can we have units for this'), true)
   })
+
+  it('detects suggest variants intent', () => {
+    assert.equal(
+      isRelatedSuggestionIntent('suggest market variants for this product'),
+      true,
+    )
+  })
 })
 
 describe('attribute unit intent', () => {

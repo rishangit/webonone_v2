@@ -49,6 +49,9 @@ export const shapeImageClassName = 'ui-shape-image'
 /** Chamfered industrial panel (dialogs, alerts, compact panels). */
 export const shapePanelClassName = 'ui-shape-panel'
 
+/** Visible outer stroke that follows panel clip-path in high-tech. */
+export const shapePanelBorderedClassName = 'ui-shape-panel-bordered'
+
 /** Smaller chamfer for compact rows, chips, and menus. */
 export const shapePanelSmClassName = 'ui-shape-panel-sm'
 

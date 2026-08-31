@@ -302,6 +302,127 @@ function catalogCrud(options: {
   ]
 }
 
+const catalogAttributeValueProperties = {
+  id: {
+    ...stringId,
+    description: 'Catalog item id (the attached product, service, or space id).',
+  },
+  attributeId: {
+    ...stringId,
+    description:
+      'Attribute definition id from the catalog item attributes array (attribute_id field). List or get the catalog item first — never invent ids.',
+  },
+  value_text: {
+    type: 'string',
+    description: 'Use when the attribute value_type is text. Provide exactly one of value_text or value_number.',
+  },
+  value_number: {
+    type: 'number',
+    description:
+      'Use when the attribute value_type is number. Provide exactly one of value_text or value_number.',
+  },
+}
+
+function catalogAttributeValueTools(
+  resource: 'products' | 'services' | 'spaces',
+  singular: string,
+): ToolDefinition[] {
+  const variantPrecursor =
+    singular === 'product'
+      ? ' When preparing market variants, use labeled values (for example value_text "200 mg", "Tablets", "24 pack") — never bare numbers without unit or context.'
+      : ''
+  return [
+    dataTool({
+      name: `create_data_${singular}_attribute_value`,
+      description: `Add one attribute value on a Data library ${singular}. Requires the ${singular} id, attributeId from get_data_${singular}, and exactly one of value_text or value_number matching the attribute value_type. Call get_data_${singular} first to read existing values and attribute definitions. Call once per new value. Suggest realistic domain-specific values for the attached item.${variantPrecursor}`,
+      jsonSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'attributeId'],
+        properties: catalogAttributeValueProperties,
+      },
+      riskLevel: 'write',
+      requiredRoles: catalogWriteRoles,
+      requiredPermissions: ['ai:data_catalog:write'],
+      auth: 'user_jwt',
+      invoke: {
+        method: 'POST',
+        path: `/api/v1/${resource}/:id/attributes/:attributeId/values`,
+      },
+      viewPath: `/${resource}/{id}`,
+    }),
+  ]
+}
+
+function productVariantTools(): ToolDefinition[] {
+  const viewPath = '/products/{id}'
+  return [
+    dataTool({
+      name: 'list_data_product_variants',
+      description:
+        'List product variants for a Data library product. Call get_data_product and this tool before suggesting market variants so you can skip combinations that already exist.',
+      jsonSchema: idOnlySchema,
+      riskLevel: 'read',
+      requiredRoles: libraryReadRoles,
+      requiredPermissions: ['ai:data_library:read'],
+      auth: 'user_jwt',
+      invoke: { method: 'GET', path: '/api/v1/products/:id/variants' },
+      viewPath,
+    }),
+    dataTool({
+      name: 'create_data_product_variant',
+      description:
+        'Create one market-style product variant (name, SKU, attribute combination). Call get_data_product and list_data_product_variants first. Infer domain attributes (pharma: strength, form, pack size; other products: size, color, volume, etc.). If attributes or values are missing, call update_data_product and/or create_data_product_attribute_value first with labeled values (for example "200 mg", "Tablets", "24 pack") — not bare numbers. Park one call per retail SKU with a descriptive name (for example "Ibuprofen 200mg Tablets · 24 pack") and a unique sku derived from product + strength/form/pack. Use kind custom for market SKUs; use default only when the product has no multi-value attributes. attribute_value_ids must come from get_data_product — never invent ids. Skip combinations that already exist. Suggest 4–8 common market variants per turn; continue with remaining variants after the user confirms or skips.',
+      jsonSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'name', 'sku', 'kind'],
+        properties: {
+          id: {
+            ...stringId,
+            description: 'Data library product id (the attached product id).',
+          },
+          name: {
+            type: 'string',
+            title: 'Variant name',
+            minLength: 1,
+            maxLength: 255,
+            description:
+              'Human-readable market label, for example "Ibuprofen 200mg Tablets · 24 pack".',
+          },
+          sku: {
+            type: 'string',
+            title: 'SKU',
+            minLength: 1,
+            maxLength: 255,
+            description:
+              'Unique stock-keeping unit derived from product name plus strength, form, and pack (for example IBUPROFEN-200-TAB-24).',
+          },
+          kind: {
+            type: 'string',
+            title: 'Kind',
+            enum: ['default', 'custom'],
+            description:
+              'Use custom for market SKUs with explicit attribute_value_ids. Use default only when the product has no multi-value attributes.',
+          },
+          attribute_value_ids: {
+            type: 'array',
+            items: stringId,
+            description:
+              'Product attribute value ids from get_data_product for this combination. Required when kind is custom and the product has multi-value attributes.',
+          },
+        },
+      },
+      riskLevel: 'write',
+      requiredRoles: catalogWriteRoles,
+      requiredPermissions: ['ai:data_catalog:write'],
+      auth: 'user_jwt',
+      invoke: { method: 'POST', path: '/api/v1/products/:id/variants' },
+      viewPath,
+    }),
+  ]
+}
+
 const unitProperties = {
   name: { type: 'string', description: 'Unit display name, for example Metre or Kilogram.' },
   description: {
@@ -467,6 +588,8 @@ export const dataAiCapabilities: ToolDefinition[] = [
     },
   }),
   ...catalogCrud({ resource: 'products', singular: 'product' }),
+  ...catalogAttributeValueTools('products', 'product'),
+  ...productVariantTools(),
   ...catalogCrud({
     resource: 'services',
     singular: 'service',
@@ -509,5 +632,7 @@ export const dataAiCapabilities: ToolDefinition[] = [
     createDescription:
       'Create a Data library service (a catalog service, not a tag). Fill every schema field before confirm: name, description, time_mode, duration_minutes when time_mode is duration (suggest 30, 45, or 60), start_time and end_time when time_mode is window, relevant tags, relevant attributes (each number attribute with a unit name and symbol), and status. List related tags, attributes, and units first. Use names, never opaque ids. Suggest only related records that fit this item — do not dump the whole library. New related tags, attributes, and units nest under the confirm row. Company-admin creates stay pending until a super admin verifies them.',
   }),
+  ...catalogAttributeValueTools('services', 'service'),
   ...catalogCrud({ resource: 'spaces', singular: 'space' }),
+  ...catalogAttributeValueTools('spaces', 'space'),
 ]

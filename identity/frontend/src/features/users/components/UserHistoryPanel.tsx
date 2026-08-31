@@ -12,29 +12,47 @@ import {
   cn,
 } from '@webonone/ui-kit'
 import {
-  loadCustomerHistory,
+  loadUserHistory,
   resolveSaleId,
   resolveSessionTokenId,
   type UserHistoryItem,
 } from '@/features/users/services/userHistoryApi'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import type { IdentityUserDetail } from '@/features/users/types'
+import { useAppSelector } from '@/app/store/hooks'
+import {
+  getSessionCompanyId,
+  isSessionSuperAdmin,
+} from '@/features/users/utils/currentRole'
 
 function historyTitle(item: UserHistoryItem): string {
   if (item.kind === 'form_submission') return item.formName
   return item.title
 }
 
-function historySubtitle(item: UserHistoryItem, t: (k: string, o?: Record<string, string>) => string): string {
+function historySubtitle(
+  item: UserHistoryItem,
+  t: (k: string, o?: Record<string, string>) => string,
+  showCompany: boolean,
+): string {
+  const companyName =
+    showCompany && item.kind === 'company_activity' && typeof item.meta?.companyName === 'string'
+      ? item.meta.companyName
+      : null
+  const companyPart = companyName ? t('history.companyPrefix', { name: companyName }) : null
+
   if (item.kind === 'form_submission') {
     return [
+      companyPart,
       item.serviceName ? t('history.servicePrefix', { name: item.serviceName }) : null,
       t('history.filledBy', { name: item.filledByDisplayName }),
     ]
       .filter(Boolean)
       .join(' · ')
   }
-  return [item.subtitle, item.status ? t('history.statusPrefix', { status: item.status }) : null].filter(Boolean).join(' · ')
+  return [companyPart, item.subtitle, item.status ? t('history.statusPrefix', { status: item.status }) : null]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 function historyBadge(item: UserHistoryItem, t: (k: string) => string): string {
@@ -50,6 +68,8 @@ type UserHistoryPanelProps = {
 export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
   const { t } = useTranslation('users')
   const navigate = useNavigate()
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const showCompany = isSessionSuperAdmin(accessToken) && !getSessionCompanyId(accessToken)
   const [items, setItems] = useState<UserHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,7 +78,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
     let cancelled = false
     setLoading(true)
     setError(null)
-    loadCustomerHistory(user.id)
+    loadUserHistory(user.id)
       .then((next) => {
         if (!cancelled) setItems(next)
       })
@@ -130,7 +150,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-sm font-medium">{historyTitle(item)}</p>
-                        <p className="text-xs text-muted-foreground">{historySubtitle(item, t)}</p>
+                        <p className="text-xs text-muted-foreground">{historySubtitle(item, t, showCompany)}</p>
                         <p className="text-xs text-muted-foreground">{formatDisplayDateTime(when)}</p>
                       </div>
                       <span
@@ -145,7 +165,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-sm font-medium">{historyTitle(item)}</p>
-                        <p className="text-xs text-muted-foreground">{historySubtitle(item, t)}</p>
+                        <p className="text-xs text-muted-foreground">{historySubtitle(item, t, showCompany)}</p>
                         <p className="text-xs text-muted-foreground">{formatDisplayDateTime(when)}</p>
                       </div>
                       <span

@@ -11,7 +11,7 @@ import {
 } from '@webonone/platform-embed'
 import { Button, CustomDialog, Form, FormField, Input, mapZodIssuesToFieldErrors } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { resolveButtonStyle } from '../../document/theme'
+import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
 import { websiteButtonStyleSchema } from '../../schemas/websiteThemeSchemas'
 import type { WebsiteButtonStyle, WebsiteTheme } from '../../types'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
@@ -167,6 +167,7 @@ export function ThemeButtonStyleDialog({
         <span
           className="inline-flex items-center justify-center px-4 py-2"
           style={{
+            ...buttonLabelTypography(),
             background: snap.background,
             color: snap.textColor,
             border: `${snap.borderWidth}px solid ${snap.borderColor}`,

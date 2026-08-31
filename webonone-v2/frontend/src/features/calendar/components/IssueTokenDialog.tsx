@@ -4,6 +4,7 @@ import {
   Alert,
   AlertDescription,
   Button,
+  ContactValueLine,
   CustomDialog,
   useToast,
   UserSelectionDialog,
@@ -202,9 +203,7 @@ export function IssueTokenDialog({
               <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{user.displayName}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {user.email ?? 'No email'}
-                  </p>
+                  <ContactValueLine kind="email" value={user.email} emptyLabel="No email" />
                 </div>
                 <Button
                   type="button"

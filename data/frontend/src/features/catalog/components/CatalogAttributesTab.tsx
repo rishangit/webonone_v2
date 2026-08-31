@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
-import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
+import { PlatformAlertConfirmDialog, resolvePlatformEmbedParentOrigin } from '@webonone/platform-embed'
 import {
   Button,
   DropdownMenuItem,
@@ -16,17 +17,19 @@ import {
   AttributeSelectStackedDialogs,
   type AttributeSelectValue,
 } from '@/features/attributes/components/AttributeSelectField'
-import { CatalogAttributeValueDialog } from '@/features/catalog/components/CatalogAttributeValueDialog'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import {
   type CatalogEntityKind,
   replaceCatalogEntityAttributes,
 } from '@/features/catalog/utils/catalogAttributeApi'
-import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { CatalogAttributeAiMenuItem } from '@/features/shell/components/CatalogAttributeAiMenuItem'
+import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import type { CatalogAttributeValue } from '@/shared/types/data.types'
 
 type CatalogAttributesTabProps = {
   kind: CatalogEntityKind
   entityId: string
+  entityName: string
   attributes: CatalogAttributeValue[]
   canEdit: boolean
   onChanged: () => void
@@ -35,13 +38,18 @@ type CatalogAttributesTabProps = {
 export function CatalogAttributesTab({
   kind,
   entityId,
+  entityName,
   attributes,
   canEdit,
   onChanged,
 }: CatalogAttributesTabProps) {
   const { t } = useTranslation(kind)
+  const { goToCatalogAttributeDetail } = useNavigateDataEntity()
+  const [searchParams] = useSearchParams()
+  const aiAvailable = Boolean(
+    resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin),
+  )
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [valueDialogAttributeId, setValueDialogAttributeId] = useState<string | null>(null)
   const [pendingRemoveAttribute, setPendingRemoveAttribute] = useState<CatalogAttributeValue | null>(
     null,
   )
@@ -53,11 +61,6 @@ export function CatalogAttributesTab({
     valueType: attr.valueType,
     unit: attr.unit,
   }))
-
-  const valueDialogAttribute =
-    valueDialogAttributeId == null
-      ? null
-      : (attributes.find((attr) => attr.attributeId === valueDialogAttributeId) ?? null)
 
   const closePicker = useCallback(() => {
     setPickerOpen(false)
@@ -123,36 +126,67 @@ export function CatalogAttributesTab({
         <ItemListEmpty>{t('catalog.noAttributes')}</ItemListEmpty>
       ) : (
         <ItemList>
-          {attributes.map((attr) => (
-            <ItemListItem key={attr.attributeId}>
-              <ItemListContent>
+          {attributes.map((attr) => {
+            const rowBody = (
+              <>
                 <p className="truncate font-medium">{attr.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
                   <span className="capitalize">{attr.valueType}</span>
                   {attr.unit ? ` · ${attr.unit.name} (${attr.unit.symbol})` : ''}
                   {` · ${t('catalog.valueCount', { count: attr.values.length })}`}
                 </p>
-              </ItemListContent>
-              {canEdit ? (
-                <ItemListMenu ariaLabel={t('actionsFor', { name: attr.name })}>
-                  <DropdownMenuItem
-                    disabled={busy}
-                    onClick={() => setValueDialogAttributeId(attr.attributeId)}
+              </>
+            )
+            return (
+              <ItemListItem key={attr.attributeId}>
+                <ItemListContent>
+                  <button
+                    type="button"
+                    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => goToCatalogAttributeDetail(kind, entityId, attr.attributeId)}
                   >
-                    {t('catalog.addValue')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    disabled={busy}
-                    onClick={() => setPendingRemoveAttribute(attr)}
-                  >
-                    {t('catalog.removeAttribute')}
-                  </DropdownMenuItem>
-                </ItemListMenu>
-              ) : null}
-            </ItemListItem>
-          ))}
+                    {rowBody}
+                  </button>
+                </ItemListContent>
+                {canEdit || aiAvailable ? (
+                  <ItemListMenu ariaLabel={t('actionsFor', { name: attr.name })}>
+                    {aiAvailable ? (
+                      <>
+                        <CatalogAttributeAiMenuItem
+                          kind={kind}
+                          entityId={entityId}
+                          entityName={entityName}
+                          attributeId={attr.attributeId}
+                          attributeName={attr.name}
+                          mode="copy"
+                        />
+                        <CatalogAttributeAiMenuItem
+                          kind={kind}
+                          entityId={entityId}
+                          entityName={entityName}
+                          attributeId={attr.attributeId}
+                          attributeName={attr.name}
+                          mode="suggest_values"
+                        />
+                      </>
+                    ) : null}
+                    {canEdit ? (
+                      <>
+                        {aiAvailable ? <DropdownMenuSeparator /> : null}
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          disabled={busy}
+                          onClick={() => setPendingRemoveAttribute(attr)}
+                        >
+                          {t('catalog.removeAttribute')}
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
+                  </ItemListMenu>
+                ) : null}
+              </ItemListItem>
+            )
+          })}
         </ItemList>
       )}
 
@@ -165,22 +199,6 @@ export function CatalogAttributesTab({
         onClosePicker={closePicker}
         pickerStackLevel={0}
       />
-
-      {valueDialogAttribute ? (
-        <CatalogAttributeValueDialog
-          open
-          kind={kind}
-          entityId={entityId}
-          attribute={valueDialogAttribute}
-          onOpenChange={(open) => {
-            if (!open) {
-              onChanged()
-              setValueDialogAttributeId(null)
-            }
-          }}
-          onSaved={onChanged}
-        />
-      ) : null}
 
       <PlatformAlertConfirmDialog
         open={pendingRemoveAttribute !== null}

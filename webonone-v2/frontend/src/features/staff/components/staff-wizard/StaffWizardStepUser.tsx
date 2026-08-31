@@ -1,5 +1,5 @@
 import { UserRound } from 'lucide-react'
-import { Button, FormField } from '@webonone/ui-kit'
+import { Button, ContactValueLine, FormField } from '@webonone/ui-kit'
 import type { StaffWizardFormValues } from '@/features/staff/schemas/staffSchemas'
 
 type StaffWizardStepUserProps = {
@@ -26,7 +26,7 @@ export function StaffWizardStepUser({
           <div className="flex items-start justify-between gap-3 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg))] p-4">
             <div className="min-w-0 space-y-1">
               <p className="truncate text-sm font-medium text-foreground">{user.displayName}</p>
-              <p className="truncate text-xs text-muted-foreground">{user.email ?? 'No email'}</p>
+              <ContactValueLine kind="email" value={user.email} emptyLabel="No email" />
             </div>
             <div className="flex shrink-0 gap-2">
               <Button

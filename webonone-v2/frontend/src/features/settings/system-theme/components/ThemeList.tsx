@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { themeDtoToColors } from '@webonone/theme'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -10,6 +11,7 @@ import {
   itemListRowActiveClassName,
 } from '@webonone/ui-kit'
 import type { ApiTheme } from '../services/themeApi'
+import { THEME_COLOR_KEYS } from '../constants/defaultThemeFormValues'
 
 interface ThemeListProps {
   themes: ApiTheme[]
@@ -56,16 +58,17 @@ export function ThemeList({
                   <p className="text-xs text-muted-foreground">{t('systemThemeType')}</p>
                 ) : null}
                 <div className="mt-2 flex gap-1">
-                  {[theme.color1, theme.color2, theme.color3, theme.color4, theme.color5].map(
-                    (c) => (
+                  {THEME_COLOR_KEYS.map((key) => {
+                    const c = themeDtoToColors(theme)[key]
+                    return (
                       <span
-                        key={`${theme.id}-${c}`}
+                        key={`${theme.id}-${key}`}
                         className="h-6 w-6 rounded border border-border"
                         style={{ backgroundColor: c }}
                         title={c}
                       />
-                    ),
-                  )}
+                    )
+                  })}
                 </div>
               </button>
             </ItemListContent>

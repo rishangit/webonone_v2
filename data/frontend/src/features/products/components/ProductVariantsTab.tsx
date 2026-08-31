@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
+  DropdownMenuItem,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ItemListMenu,
   StatusTag,
 } from '@webonone/ui-kit'
 import { ProductVariantFormDialog } from '@/features/products/components/ProductVariantFormDialog'
+import { ProductVariantsAiMenu } from '@/features/shell/components/ProductVariantsAiMenu'
+import { AI_PRODUCT_VARIANTS_CHANGED_EVENT } from '@/features/shell/utils/aiProductVariantsRefresh'
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { dataApi } from '@/shared/services/dataApi'
 import type { CatalogAttributeValue, ProductVariant } from '@/shared/types/data.types'
@@ -34,6 +40,8 @@ export function ProductVariantsTab({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<ProductVariant | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -52,7 +60,29 @@ export function ProductVariantsTab({
     void load()
   }, [load])
 
+  useEffect(() => {
+    function onVariantsChanged() {
+      void load()
+    }
+    window.addEventListener(AI_PRODUCT_VARIANTS_CHANGED_EVENT, onVariantsChanged)
+    return () => window.removeEventListener(AI_PRODUCT_VARIANTS_CHANGED_EVENT, onVariantsChanged)
+  }, [load])
+
   const hasDefaultVariant = items.some((item) => item.isDefault)
+
+  async function handleDeleteVariant(variant: ProductVariant) {
+    setBusy(true)
+    setError(null)
+    try {
+      await dataApi.deleteProductVariant(productId, variant.id)
+      setPendingDelete(null)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('variant.deleteFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -64,10 +94,13 @@ export function ProductVariantsTab({
           </p>
         </div>
         {canEdit ? (
-          <Button type="button" size="sm" onClick={() => setDialogOpen(true)} disabled={loading}>
-            <Plus className="h-4 w-4" aria-hidden />
-            {t('variant.addNew')}
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <ProductVariantsAiMenu productId={productId} productName={productName} />
+            <Button type="button" size="sm" onClick={() => setDialogOpen(true)} disabled={loading}>
+              <Plus className="h-4 w-4" aria-hidden />
+              {t('variant.addNew')}
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -114,6 +147,17 @@ export function ProductVariantsTab({
                     {rowBody}
                   </button>
                 </ItemListContent>
+                {canEdit && !variant.isDefault ? (
+                  <ItemListMenu ariaLabel={t('variant.actionsFor', { name: variant.name })}>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      disabled={busy}
+                      onClick={() => setPendingDelete(variant)}
+                    >
+                      {t('common:delete')}
+                    </DropdownMenuItem>
+                  </ItemListMenu>
+                ) : null}
               </ItemListItem>
             )
           })}
@@ -134,6 +178,26 @@ export function ProductVariantsTab({
           }}
         />
       ) : null}
+
+      <PlatformAlertConfirmDialog
+        open={pendingDelete !== null}
+        title={
+          pendingDelete
+            ? t('variant.deleteConfirm', { name: pendingDelete.name })
+            : t('variant.deleteConfirmFallback')
+        }
+        description={t('variant.deleteDescription')}
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel={t('common:delete')}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        onConfirm={() => {
+          if (pendingDelete) {
+            void handleDeleteVariant(pendingDelete)
+          }
+        }}
+      />
     </div>
   )
 }

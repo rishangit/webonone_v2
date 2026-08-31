@@ -6,6 +6,24 @@ const CATALOG_KIND_ENUM = ['tags', 'units', 'attributes', 'products', 'services'
 const stringId = { type: 'string', minLength: 8, maxLength: 32 }
 const kindSchema = { type: 'string', enum: [...KIND_ENUM] }
 const catalogKindSchema = { type: 'string', enum: [...CATALOG_KIND_ENUM] }
+const companySizeSchema = {
+  type: 'string',
+  enum: ['1-10', '11-50', '51-200', '201-500', '500+'],
+}
+const companyDataEntitySchema = {
+  type: 'string',
+  enum: ['tags', 'units', 'attributes', 'products', 'services', 'spaces'],
+}
+const companyTagItemSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['id', 'name', 'color'],
+  properties: {
+    id: { ...stringId, description: 'Existing tag id from list_data_tags. Never invent ids.' },
+    name: { type: 'string' },
+    color: { type: 'string', description: '#RRGGBB hex color from list_data_tags.' },
+  },
+}
 
 function webononeTool(
   def: Omit<ToolDefinition, 'service' | 'capabilityVersion'>,
@@ -259,14 +277,18 @@ export const webononeAiCapabilities: ToolDefinition[] = [
   webononeTool({
     name: 'create_event',
     description:
-      'Create a company calendar event for a service and staff member. Recurrence defaults to weekly.',
+      'Create a company calendar event for a service. Staff and space are assigned on the service workflow, not on the event. Recurrence defaults to weekly.',
     jsonSchema: {
       type: 'object',
       additionalProperties: false,
-      required: ['service_id', 'staff_id', 'starts_on', 'recurrence_until'],
+      required: ['service_id', 'starts_on', 'recurrence_until'],
       properties: {
         service_id: { ...stringId, description: 'Existing company service id. Never invent ids.' },
-        staff_id: { ...stringId, description: 'Existing company staff id. Never invent ids.' },
+        staff_id: {
+          ...stringId,
+          description:
+            'Optional legacy event-level staff id. Prefer workflow staff on the service instead.',
+        },
         attendee_display_name: {
           type: 'string',
           description: 'Optional attendee name. Only set when the user provided a name. Do not invent people.',
@@ -275,7 +297,11 @@ export const webononeAiCapabilities: ToolDefinition[] = [
           type: 'string',
           description: 'Optional attendee email. Only set when the user provided an email. Never invent emails.',
         },
-        space_id: { ...stringId, description: 'Existing company space id. Never invent ids.' },
+        space_id: {
+          ...stringId,
+          description:
+            'Optional legacy event-level space id. Prefer workflow space on the service instead.',
+        },
         starts_on: { type: 'string', description: 'YYYY-MM-DD' },
         start_time: { type: 'string', description: 'HH:mm for duration services' },
         weekdays: { type: 'array', items: { type: 'integer', minimum: 0, maximum: 6 } },
@@ -550,8 +576,97 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     viewPath: '/staff/{id}?tab=leaves',
   }),
   webononeTool({
+    name: 'register_company',
+    description:
+      'Register a new company for the signed-in user. Required: name. Suggest complete values for every optional field (description, companySize, address, contactEmail, contactPhone) before asking the user to confirm. New companies start pending until a platform super admin approves; the registrant becomes company_admin after approval. Map pin, tags, gallery images, and data catalog entities can be completed later on the company profile page. Logo upload requires the Media picker in Settings → My Companies → profile → Gallery — only set logoUrl when the user already has a media URL.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['name'],
+      properties: {
+        name: { type: 'string', description: 'Legal or trading name of the company.' },
+        description: {
+          type: 'string',
+          description: 'Short summary of what the company does. Suggest a complete value.',
+        },
+        companySize: {
+          ...companySizeSchema,
+          description: 'Employee count band. Suggest a typical band if unknown.',
+        },
+        logoUrl: { type: 'string', description: 'Optional. Only when the user already has a media URL.' },
+        addressLine1: { type: 'string' },
+        addressLine2: { type: 'string' },
+        city: { type: 'string' },
+        stateRegion: { type: 'string' },
+        postalCode: { type: 'string' },
+        country: { type: 'string' },
+        contactEmail: { type: 'string', description: 'Company contact email. Do not invent emails.' },
+        contactPhone: { type: 'string' },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['member', 'company_admin', 'super_admin'],
+    requiredPermissions: ['ai:company:register'],
+    auth: 'user_jwt',
+    invoke: { method: 'POST', path: '/api/v1/company/register' },
+    viewPath: '/settings/companies/{id}',
+    argCompletion: {
+      allowedKeys: [
+        'name',
+        'description',
+        'companySize',
+        'logoUrl',
+        'addressLine1',
+        'addressLine2',
+        'city',
+        'stateRegion',
+        'postalCode',
+        'country',
+        'contactEmail',
+        'contactPhone',
+      ],
+      pascalCaseKeys: ['name'],
+    },
+  }),
+  webononeTool({
+    name: 'list_my_companies',
+    description:
+      'List companies the signed-in user owns or is connected to. Use before get_company or update_company when the active session company is unknown or the user has multiple companies.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {},
+    },
+    riskLevel: 'read',
+    requiredRoles: ['member', 'company_admin', 'super_admin'],
+    requiredPermissions: ['ai:company:read'],
+    auth: 'user_jwt',
+    invoke: { method: 'GET', path: '/api/v1/company/me/companies' },
+    viewPath: '/settings/companies/{id}',
+  }),
+  webononeTool({
+    name: 'get_company',
+    description:
+      'Get one company profile by id. Use list_my_companies first to resolve the company id when unknown.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id'],
+      properties: {
+        id: { ...stringId, description: 'Company id from list_my_companies.' },
+      },
+    },
+    riskLevel: 'read',
+    requiredRoles: ['member', 'company_admin', 'super_admin'],
+    requiredPermissions: ['ai:company:read'],
+    auth: 'user_jwt',
+    invoke: { method: 'GET', path: '/api/v1/company/:id' },
+    viewPath: '/settings/companies/{id}',
+  }),
+  webononeTool({
     name: 'get_my_company',
-    description: 'Get the signed-in user company profile and membership.',
+    description:
+      'Get the active company session profile and membership. Requires an active company in the JWT session; use list_my_companies when no company session is set.',
     jsonSchema: {
       type: 'object',
       additionalProperties: false,
@@ -562,30 +677,119 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:company:read'],
     auth: 'user_jwt',
     invoke: { method: 'GET', path: '/api/v1/company/me' },
-    viewPath: '/settings/basic',
+    viewPath: '/settings/companies/{id}',
   }),
   webononeTool({
     name: 'update_company',
     description:
-      'Update the active company profile (name, description, contact, address). Company id comes from the session, not from arguments.',
+      'Update a company profile by id (from list_my_companies or get_company). Include at least one field per call. Pending companies can still be updated. For logo or gallery images, direct the user to Settings → My Companies → company profile → Gallery tab (Media picker); only set logoUrl when the user already has a media URL. For tags, call list_data_tags first and copy real tag ids, names, and colors — never invent tag ids.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id'],
+      properties: {
+        id: { ...stringId, description: 'Company id from list_my_companies or get_company.' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        companySize: companySizeSchema,
+        logoUrl: { type: 'string', description: 'Only when the user already has a media URL.' },
+        contactEmail: { type: 'string' },
+        contactPhone: { type: 'string' },
+        contactPersonUserId: {
+          ...stringId,
+          description: 'Identity user id for the contact person. Never invent ids.',
+        },
+        addressLine1: { type: 'string' },
+        addressLine2: { type: 'string' },
+        city: { type: 'string' },
+        stateRegion: { type: 'string' },
+        postalCode: { type: 'string' },
+        country: { type: 'string' },
+        latitude: { type: 'number', minimum: -90, maximum: 90 },
+        longitude: { type: 'number', minimum: -180, maximum: 180 },
+        mapPlaceId: { type: 'string' },
+        mapFormattedAddress: { type: 'string' },
+        tags: {
+          type: 'array',
+          items: companyTagItemSchema,
+          description: 'Replace company tags. Use list_data_tags for ids.',
+        },
+        dataEntities: {
+          type: 'array',
+          items: companyDataEntitySchema,
+          description: 'Catalog entity types enabled for this company (tags, units, products, etc.).',
+        },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['company_admin', 'super_admin'],
+    requiredPermissions: ['ai:company:write'],
+    auth: 'user_jwt',
+    invoke: { method: 'PATCH', path: '/api/v1/company/:id' },
+    viewPath: '/settings/companies/{id}',
+    argCompletion: {
+      allowedKeys: [
+        'id',
+        'name',
+        'description',
+        'companySize',
+        'logoUrl',
+        'contactEmail',
+        'contactPhone',
+        'contactPersonUserId',
+        'addressLine1',
+        'addressLine2',
+        'city',
+        'stateRegion',
+        'postalCode',
+        'country',
+        'latitude',
+        'longitude',
+        'mapPlaceId',
+        'mapFormattedAddress',
+        'tags',
+        'dataEntities',
+      ],
+    },
+  }),
+  webononeTool({
+    name: 'discover_companies',
+    description:
+      'Search approved companies the user can connect to as a member. Use when the user wants to join an existing company instead of registering a new one.',
     jsonSchema: {
       type: 'object',
       additionalProperties: false,
       properties: {
-        name: { type: 'string' },
-        description: { type: 'string' },
-        contactEmail: { type: 'string' },
-        contactPhone: { type: 'string' },
-        addressLine1: { type: 'string' },
-        city: { type: 'string' },
-        country: { type: 'string' },
+        q: { type: 'string', description: 'Optional company name search.' },
+        page: { type: 'integer', minimum: 1 },
+        pageSize: { type: 'integer', minimum: 1, maximum: 100 },
+      },
+    },
+    riskLevel: 'read',
+    requiredRoles: ['member', 'company_admin', 'super_admin'],
+    requiredPermissions: ['ai:company:read'],
+    auth: 'user_jwt',
+    invoke: { method: 'GET', path: '/api/v1/company/discover' },
+    viewPath: '/settings/companies/{id}',
+  }),
+  webononeTool({
+    name: 'connect_company',
+    description:
+      'Connect the signed-in user to an approved company as a member (not owner). Use discover_companies to find the company id first.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id'],
+      properties: {
+        id: { ...stringId, description: 'Approved company id from discover_companies.' },
       },
     },
     riskLevel: 'write',
-    requiredRoles: ['company_admin'],
-    requiredPermissions: ['ai:company:write'],
+    requiredRoles: ['member', 'company_admin', 'super_admin'],
+    requiredPermissions: ['ai:company:register'],
     auth: 'user_jwt',
-    invoke: { method: 'PATCH', path: '/api/v1/company/:companyId' },
+    invoke: { method: 'POST', path: '/api/v1/company/:id/connect' },
+    viewPath: '/settings/connected-companies/{id}',
   }),
   webononeTool({
     name: 'list_pending_companies',

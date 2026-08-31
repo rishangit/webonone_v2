@@ -9,14 +9,34 @@ import {
 } from 'react'
 import type { PlatformAiEntityRef } from '@webonone/platform-embed'
 
+export type AiEntityPasteRequest = {
+  entities: PlatformAiEntityRef[]
+  composerText?: string
+}
+
 type AiEntityPasteContextValue = {
-  requestEntityPaste: (entity: PlatformAiEntityRef) => void
-  consumePendingEntity: () => PlatformAiEntityRef | null
+  requestEntityPaste: (request: PlatformAiEntityRef | AiEntityPasteRequest) => void
+  consumePendingEntity: () => AiEntityPasteRequest | null
   /** Bumps on each paste request so consumers can react while the assistant stays open. */
   pasteVersion: number
 }
 
 const AiEntityPasteContext = createContext<AiEntityPasteContextValue | null>(null)
+
+function isPasteRequest(
+  request: PlatformAiEntityRef | AiEntityPasteRequest,
+): request is AiEntityPasteRequest {
+  return 'entities' in request && Array.isArray(request.entities)
+}
+
+function normalizePasteRequest(
+  request: PlatformAiEntityRef | AiEntityPasteRequest,
+): AiEntityPasteRequest {
+  if (isPasteRequest(request)) {
+    return request
+  }
+  return { entities: [request] }
+}
 
 type AiEntityPasteProviderProps = {
   children: ReactNode
@@ -24,12 +44,12 @@ type AiEntityPasteProviderProps = {
 }
 
 export function AiEntityPasteProvider({ children, onOpenAssistant }: AiEntityPasteProviderProps) {
-  const pendingRef = useRef<PlatformAiEntityRef | null>(null)
+  const pendingRef = useRef<AiEntityPasteRequest | null>(null)
   const [pasteVersion, setPasteVersion] = useState(0)
 
   const requestEntityPaste = useCallback(
-    (entity: PlatformAiEntityRef) => {
-      pendingRef.current = entity
+    (request: PlatformAiEntityRef | AiEntityPasteRequest) => {
+      pendingRef.current = normalizePasteRequest(request)
       setPasteVersion((value) => value + 1)
       onOpenAssistant()
     },

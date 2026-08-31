@@ -125,6 +125,12 @@ router.post(
   validateBody(createProductVariantBodySchema),
   productVariantsController.create,
 )
+router.delete(
+  '/products/:id/variants/:variantId',
+  requireAuth,
+  requireCompanyAdminOrSuperAdmin,
+  productVariantsController.remove,
+)
 
 router.get(
   '/stocks/suggested-batch-number',

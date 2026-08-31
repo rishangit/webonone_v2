@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, type LucideIcon } from 'lucide-react'
+import { interactiveHoverClassName, navItemActiveClassName } from '../../lib/selectionStyles'
 import { cn } from '../../lib/utils'
 import type { NavItemConfig } from '../../types/nav'
 import {
@@ -70,8 +71,9 @@ function NavGroup({
             title={label}
             aria-label={label}
             className={cn(
-              'flex w-full items-center justify-center ui-shape-control px-2 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:py-2',
-              groupActive && 'border-l-2 border-primary bg-accent/60',
+              'flex w-full items-center justify-center ui-shape-control px-2 py-3 text-sm font-medium text-label transition-colors md:py-2',
+              interactiveHoverClassName,
+              groupActive && navItemActiveClassName,
               className,
             )}
           >
@@ -123,8 +125,9 @@ function NavGroup({
         onClick={handleToggle}
         aria-expanded={open}
         className={cn(
-          'flex w-full items-center gap-3 ui-shape-control px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:py-2',
-          groupActive && 'border-l-2 border-primary bg-accent/60',
+          'flex w-full items-center gap-3 ui-shape-control px-3 py-3 text-sm font-medium text-label transition-colors md:py-2',
+          interactiveHoverClassName,
+          groupActive && navItemActiveClassName,
         )}
       >
         <Icon className="h-5 w-5 shrink-0" aria-hidden />

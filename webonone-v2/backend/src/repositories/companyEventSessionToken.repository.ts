@@ -77,6 +77,12 @@ export async function findTokenById(
     .first()
 }
 
+export async function findTokenByIdAny(
+  tokenId: string,
+): Promise<CompanyEventSessionTokenRow | undefined> {
+  return db<CompanyEventSessionTokenRow>('company_event_session_tokens').where({ id: tokenId }).first()
+}
+
 export async function findFirstWaitingToken(
   companyId: string,
   eventId: string,

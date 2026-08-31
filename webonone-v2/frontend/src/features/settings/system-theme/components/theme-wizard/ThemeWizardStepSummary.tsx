@@ -1,11 +1,7 @@
 import type { ColorMode } from '@webonone/theme'
-import { THEME_COLOR_LABELS } from '../../constants/defaultThemeFormValues'
+import { THEME_COLOR_KEYS, THEME_COLOR_LABELS } from '../../constants/defaultThemeFormValues'
 import type { ThemeFormValues } from '../../schemas/themeFormSchema'
 import { ThemePreview } from '../ThemePreview'
-
-const COLOR_KEYS: Array<
-  keyof Pick<ThemeFormValues, 'color1' | 'color2' | 'color3' | 'color4' | 'color5'>
-> = ['color1', 'color2', 'color3', 'color4', 'color5']
 
 interface ThemeWizardStepSummaryProps {
   values: ThemeFormValues
@@ -29,7 +25,7 @@ export function ThemeWizardStepSummary({ values, colorMode, isNew }: ThemeWizard
           <p className="text-sm font-medium">{values.name.trim() || '—'}</p>
         </div>
         <div className="space-y-3">
-          {COLOR_KEYS.map((key) => (
+          {THEME_COLOR_KEYS.map((key) => (
             <div key={key} className="flex items-center gap-3">
               <span
                 className="h-8 w-8 shrink-0 rounded border border-border"

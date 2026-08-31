@@ -1,10 +1,6 @@
-export type ParsedThemeColors = {
-  color1: string
-  color2: string
-  color3: string
-  color4: string
-  color5: string
-}
+import type { ThemeColors } from '@webonone/theme'
+
+export type ParsedThemeColors = ThemeColors
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/
 
@@ -22,20 +18,27 @@ function normalizeHex(value: string): string | null {
   return trimmed.toUpperCase()
 }
 
-/** Returns null if any of --color-1..--color-5 is missing or not valid hex. */
+function parseHexFromCss(input: string, varName: string): string | null {
+  const pattern = new RegExp(`${varName}\\s*:\\s*(#[0-9A-Fa-f]{3,6})`, 'i')
+  const match = input.match(pattern)
+  if (!match?.[1]) return null
+  return normalizeHex(match[1])
+}
+
+/** Returns null if required semantic or legacy palette vars are missing. */
 export function parseCssThemeVariables(input: string): ParsedThemeColors | null {
-  const colors: Partial<ParsedThemeColors> = {}
+  const primary =
+    parseHexFromCss(input, '--color-primary') ?? parseHexFromCss(input, '--color-1')
+  const secondary =
+    parseHexFromCss(input, '--color-secondary') ?? parseHexFromCss(input, '--color-2')
+  const background =
+    parseHexFromCss(input, '--color-background') ?? parseHexFromCss(input, '--color-4')
+  const surface =
+    parseHexFromCss(input, '--color-surface') ?? parseHexFromCss(input, '--color-5')
+  const text =
+    parseHexFromCss(input, '--color-text') ?? parseHexFromCss(input, '--color-3')
 
-  for (let i = 1; i <= 5; i += 1) {
-    const pattern = new RegExp(`--color-${i}\\s*:\\s*(#[0-9A-Fa-f]{3,6})`, 'i')
-    const match = input.match(pattern)
-    if (!match?.[1]) return null
+  if (!primary || !secondary || !background || !surface || !text) return null
 
-    const normalized = normalizeHex(match[1])
-    if (!normalized) return null
-
-    colors[`color${i}` as keyof ParsedThemeColors] = normalized
-  }
-
-  return colors as ParsedThemeColors
+  return { primary, secondary, background, surface, text }
 }

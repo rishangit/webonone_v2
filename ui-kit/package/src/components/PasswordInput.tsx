@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Eye, EyeOff, Lock } from 'lucide-react'
+import { interactiveHoverTextClassName } from '../lib/selectionStyles'
 import { Input, type InputProps } from './Input'
 import { InputGroup, InputGroupIcon } from './InputGroup'
 
@@ -33,7 +34,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
         {showToggle ? (
           <button
             type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted-foreground transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${interactiveHoverTextClassName}`}
             onClick={() => setVisible((v) => !v)}
             aria-label={visible ? 'Hide password' : 'Show password'}
             disabled={props.disabled}

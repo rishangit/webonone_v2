@@ -246,12 +246,14 @@ export async function createSubmission(input: {
 }
 
 export async function getSubmission(input: {
-  companyId: string
+  companyId?: string
   id: string
 }): Promise<FormSubmissionDto> {
-  const row = (await submissionsBaseQuery()
-    .where({ 's.id': input.id, 's.company_id': input.companyId })
-    .first()) as SubmissionRow | undefined
+  let query = submissionsBaseQuery().where({ 's.id': input.id })
+  if (input.companyId) {
+    query = query.andWhere({ 's.company_id': input.companyId })
+  }
+  const row = (await query.first()) as SubmissionRow | undefined
   if (!row) {
     throw new HttpError(404, 'Submission not found', 'SUBMISSION_NOT_FOUND')
   }
@@ -260,7 +262,7 @@ export async function getSubmission(input: {
 }
 
 export async function listSubmissions(input: {
-  companyId: string
+  companyId?: string
   subjectUserId?: string
   filledByUserId?: string
   sessionTokenId?: string
@@ -273,7 +275,20 @@ export async function listSubmissions(input: {
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
   const offset = (page - 1) * pageSize
 
-  let query = submissionsBaseQuery().where({ 's.company_id': input.companyId })
+  if (
+    !input.companyId &&
+    !input.subjectUserId &&
+    !input.filledByUserId &&
+    !input.sessionTokenId &&
+    !input.eventId
+  ) {
+    throw new HttpError(400, 'A user or session filter is required', 'FILTER_REQUIRED')
+  }
+
+  let query = submissionsBaseQuery()
+  if (input.companyId) {
+    query = query.where({ 's.company_id': input.companyId })
+  }
   if (input.subjectUserId) {
     query = query.andWhere({ 's.subject_user_id': input.subjectUserId })
   }

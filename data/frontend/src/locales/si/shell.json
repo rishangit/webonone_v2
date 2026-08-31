@@ -12,5 +12,12 @@
   "signingIn": "පිවිසෙමින්…",
   "copyToAi": "AI වෙත පිටපත් කරන්න",
   "copyToAiSuccess": "AI සහායකයට එකතු කළා",
-  "copyToAiUnavailable": "AI භාවිතා කිරීමට WebOnOne වෙතින් Data විවෘත කරන්න"
+  "copyToAiUnavailable": "AI භාවිතා කිරීමට WebOnOne වෙතින් Data විවෘත කරන්න",
+  "customize": "අභිරුචිකරණය",
+  "aiSuggestAttributeValues": "AI සමඟ අගයන් යෝජනා කරන්න",
+  "aiSuggestAttributeValuesSuccess": "AI සහායකය විවෘත කළා",
+  "aiSuggestAttributeValuesPrompt": "{{entityName}} මත {{attributeName}} සඳහා ගුණාංග අගයන් යෝජනා කර ගුණාංග අගය මෙවලම භාවිතයෙන් එකතු කරන්න.",
+  "aiSuggestVariants": "AI සමඟ විවිධතා යෝජනා කරන්න",
+  "aiSuggestVariantsSuccess": "AI සහායකය විවෘත කළා",
+  "aiSuggestVariantsPrompt": "{{productName}} සඳහා සාමාන්‍ය වෙළඳපොළ විවිධතා යෝජනා කරන්න (අවශ්‍ය නම් ශක්තිමත් බව, ආකාරය සහ පැකේජ ප්‍රමාණය සහිත යථාර්ථවාදී SKU). ගුණාංග සහ ලේබල් කළ අගයන් තිබේ යැයි සහතික කර, එක් එක් විවිධතාව නිෂ්පාදන විවිධතා මෙවලමෙන් එකතු කරන්න."
 }

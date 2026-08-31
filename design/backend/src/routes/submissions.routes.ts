@@ -9,14 +9,12 @@ const companyRoles = ['super_admin', 'company_admin', 'member'] as const
 router.get(
   '/submissions',
   requireAuth,
-  requireCompanyContext,
   requireRole(...companyRoles),
   submissionsController.listSubmissionsHandler,
 )
 router.get(
   '/submissions/:id',
   requireAuth,
-  requireCompanyContext,
   requireRole(...companyRoles),
   submissionsController.getSubmissionHandler,
 )

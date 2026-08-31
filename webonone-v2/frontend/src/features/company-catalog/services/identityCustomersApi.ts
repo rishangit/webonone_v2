@@ -7,6 +7,7 @@ export type IdentityCustomerOption = {
   id: string
   displayName: string
   email: string | null
+  avatarUrl?: string | null
 }
 
 type CustomerRow = {
@@ -51,6 +52,7 @@ export const identityCustomersApi = {
       id: item.id,
       displayName: item.displayName,
       email: item.email,
+      avatarUrl: item.avatarUrl ?? null,
     }))
   },
 
@@ -134,6 +136,7 @@ export const identityCustomersApi = {
       id: data.id,
       displayName: data.displayName,
       email: data.email,
+      avatarUrl: data.avatarUrl ?? null,
     }
   },
 }

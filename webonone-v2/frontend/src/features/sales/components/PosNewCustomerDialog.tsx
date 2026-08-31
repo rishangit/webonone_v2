@@ -9,13 +9,13 @@ import {
   Input,
   mapZodIssuesToFieldErrors,
 } from '@webonone/ui-kit'
-import { identityCustomersApi } from '@/features/company-catalog/services/identityCustomersApi'
+import { identityCustomersApi, type IdentityCustomerOption } from '@/features/company-catalog/services/identityCustomersApi'
 import { posNewCustomerSchema, type PosNewCustomerValues } from '@/features/sales/schemas/salesSchemas'
 
 type PosNewCustomerDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreated: (customer: { id: string; displayName: string; email: string | null }) => void
+  onCreated: (customer: IdentityCustomerOption) => void
 }
 
 const EMPTY: PosNewCustomerValues = {

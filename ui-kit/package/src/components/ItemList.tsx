@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { MoreVertical } from 'lucide-react'
+import { interactiveHoverTextClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import {
   shapeListRowClassName,
@@ -16,7 +17,7 @@ export const itemListClassName = 'flex flex-col gap-2 py-4'
 
 /** Shared row surface — glass fill, hover shadow, row padding */
 export const itemListRowSurfaceClassName =
-  'group flex items-start gap-3 glass-card item-list-row px-3 py-2 text-sm text-foreground'
+  'group flex items-start gap-3 glass-card item-list-row p-2 text-sm text-foreground'
 
 /** Classic row — single element with small panel chamfer */
 export const itemListRowClassName = cn(itemListRowSurfaceClassName, shapePanelSmClassName)
@@ -27,11 +28,14 @@ export const itemListMenuClassName = 'shrink-0 self-start'
 /** Status / verification chip — top-right of the row, before ItemListMenu */
 export const itemListStatusClassName = 'shrink-0 self-start'
 
-/** Leading entity image in a list row (logo, avatar, catalog thumb). */
-export const itemListThumbClassName = 'h-14 w-14 shrink-0 rounded-md'
+/** Leading entity image in a list row (logo, avatar, catalog thumb) — pinned to top. */
+export const itemListThumbClassName = 'h-14 w-14 shrink-0 self-start rounded-md'
 
-/** Selected / active row — stronger border, no theme fill */
-export const itemListRowActiveClassName = 'border-primary'
+/** Inner row body when image + text share one clickable area inside ItemListContent. */
+export const itemListRowBodyClassName = 'flex w-full items-start gap-3'
+
+/** Selected / active row — stronger border + selected surface */
+export const itemListRowActiveClassName = 'border-primary bg-[var(--color-selection)]'
 
 function ItemList({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) {
   return <ul role="list" className={cn(itemListClassName, className)} {...props} />
@@ -81,7 +85,7 @@ function ItemListMenu({
           type="button"
           variant="ghost"
           size="icon"
-          className={cn('h-8 w-8 text-muted-foreground hover:text-foreground', itemListMenuClassName, className)}
+          className={cn('h-8 w-8 text-muted-foreground', interactiveHoverTextClassName, itemListMenuClassName, className)}
           aria-label={ariaLabel}
         >
           <MoreVertical className="h-4 w-4" aria-hidden />

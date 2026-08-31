@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { Check, ChevronDown, ChevronUp, type LucideIcon } from 'lucide-react'
+import { interactiveHighlightClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import { menuPanelClassName } from '../lib/menuPanel'
 import { inputFocusRingClassName, inputGroupFocusRingClassName, inputInGroupFieldClassName } from './Input'
@@ -23,7 +24,7 @@ const SelectTrigger = React.forwardRef<React.ComponentRef<typeof SelectPrimitive
         <SelectPrimitive.Trigger
           ref={ref}
           className={cn(
-            'ui-shape-control flex h-10 w-full items-center gap-2 overflow-hidden border border-input bg-input-background px-3 text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+            'ui-shape-control flex h-10 w-full items-center gap-2 overflow-hidden border border-input bg-transparent px-3 text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
             inputGroupFocusRingClassName,
             className,
           )}
@@ -45,7 +46,7 @@ const SelectTrigger = React.forwardRef<React.ComponentRef<typeof SelectPrimitive
           'flex items-center justify-between text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
           inGroup
             ? cn(inputInGroupFieldClassName, 'items-center justify-between gap-2 focus:outline-none focus:ring-0 focus:ring-offset-0')
-            : cn('ui-shape-control h-10 w-full border border-input bg-input-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0', inputFocusRingClassName),
+            : cn('ui-shape-control h-10 w-full border border-input bg-transparent px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0', inputFocusRingClassName),
           className,
         )}
         {...props}
@@ -136,7 +137,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      `relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none ${interactiveHighlightClassName} data-[disabled]:pointer-events-none data-[disabled]:opacity-50`,
       className,
     )}
     {...props}

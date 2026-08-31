@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
+import { interactiveHoverClassName, navItemActiveClassName } from '../../lib/selectionStyles'
 import { cn } from '../../lib/utils'
 import { handleNavItemClick } from './handleNavItemClick'
 import { isLocalNavPath } from './isLocalNavPath'
@@ -49,8 +50,9 @@ function NavItem({
       aria-label={collapsed ? label : undefined}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-3 ui-shape-control px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:py-2',
-        active && 'border-l-2 border-primary bg-accent/60',
+        'flex items-center gap-3 ui-shape-control px-3 py-3 text-sm font-medium text-label transition-colors md:py-2',
+        interactiveHoverClassName,
+        active && navItemActiveClassName,
         collapsed && 'justify-center px-2',
         nested && !collapsed && 'ml-6',
         className,

@@ -3,14 +3,35 @@ import { z } from 'zod'
 export const saleItemKindSchema = z.enum(['product', 'service', 'space'])
 export const salePaymentMethodSchema = z.enum(['cash', 'card', 'other'])
 
-export const createSaleLineSchema = z.object({
-  itemKind: saleItemKindSchema,
-  catalogItemId: z.string().length(21, 'Catalog item is required'),
-  quantity: z.number({ invalid_type_error: 'Quantity is required' }).positive('Quantity must be greater than 0'),
-  unitPrice: z
-    .number({ invalid_type_error: 'Unit price is required' })
-    .min(0, 'Unit price must be 0 or greater'),
-})
+export const createSaleLineSchema = z
+  .object({
+    itemKind: saleItemKindSchema,
+    catalogItemId: z.string().length(21, 'Catalog item is required'),
+    quantity: z.number({ invalid_type_error: 'Quantity is required' }).positive('Quantity must be greater than 0'),
+    unitPrice: z
+      .number({ invalid_type_error: 'Unit price is required' })
+      .min(0, 'Unit price must be 0 or greater'),
+    libraryVariantId: z.string().length(21).optional(),
+    libraryStockId: z.string().length(21).optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasVariant = value.libraryVariantId != null
+    const hasStock = value.libraryStockId != null
+    if (hasVariant !== hasStock) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['libraryVariantId'],
+        message: 'Variant and stock must both be provided for stocked product lines',
+      })
+    }
+    if ((hasVariant || hasStock) && value.itemKind !== 'product') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['libraryVariantId'],
+        message: 'Stock linkage is only supported for product lines',
+      })
+    }
+  })
 
 export const createSaleBodySchema = z.object({
   customerUserId: z.string().length(21, 'Customer is required'),

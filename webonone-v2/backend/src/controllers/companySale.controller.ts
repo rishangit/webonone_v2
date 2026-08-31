@@ -1,6 +1,9 @@
 import type { Response } from 'express'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
-import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
+import {
+  historyReadScope,
+  type CompanySessionRequest,
+} from '../middleware/requireCompanySession.js'
 import { saleItemKindSchema, saleStatusSchema } from '../schemas/companySaleSchemas.js'
 import * as saleService from '../services/companySale.service.js'
 
@@ -54,10 +57,13 @@ export async function listSales(req: CompanySessionRequest, res: Response) {
 }
 
 export async function getSale(req: CompanySessionRequest, res: Response) {
-  const session = requireSession(req, res)
-  if (!session) return
+  const scope = historyReadScope(req)
+  if (!scope) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
   try {
-    const sale = await saleService.getSale(session.companyId, String(req.params.id))
+    const sale = await saleService.getSale(scope.companyId, String(req.params.id))
     res.json(sale)
   } catch (err) {
     handleServiceError(err, res)

@@ -28,6 +28,7 @@ async function peerFetch<T>(baseUrl: string, path: string): Promise<T> {
 
 export type FormSubmissionItem = {
   id: string
+  companyId?: string
   formName: string
   serviceName: string | null
   filledByDisplayName: string
@@ -121,6 +122,7 @@ type ActivityRaw = {
 
 type SubmissionRaw = {
   id: string
+  companyId?: string
   formName: string
   serviceName: string | null
   filledByDisplayName: string
@@ -191,6 +193,17 @@ export function mergeSessionHistory(
   )
 }
 
+function settledValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
+  return result.status === 'fulfilled' ? result.value : fallback
+}
+
+function firstRejectedReason(
+  results: PromiseSettledResult<unknown>[],
+): unknown {
+  const rejected = results.find((result): result is PromiseRejectedResult => result.status === 'rejected')
+  return rejected?.reason
+}
+
 async function fetchSubmissions(query: string): Promise<SubmissionRaw[]> {
   const data = await peerFetch<{ items: SubmissionRaw[] }>(
     getDesignApiBase(),
@@ -207,40 +220,73 @@ async function fetchActivity(userId: string): Promise<ActivityRaw[]> {
   return data.items ?? []
 }
 
+function toFormItems(rows: SubmissionRaw[]): FormSubmissionItem[] {
+  const byId = new Map<string, FormSubmissionItem>()
+  for (const item of rows) {
+    byId.set(item.id, { ...item, kind: 'form_submission' })
+  }
+  return [...byId.values()]
+}
+
+function toActivityItems(rows: ActivityRaw[]): CompanyActivityItem[] {
+  return rows.map((item) => ({
+    ...item,
+    kind: 'company_activity' as const,
+  }))
+}
+
 export async function loadCustomerHistory(userId: string): Promise<UserHistoryItem[]> {
-  const [subs, activity] = await Promise.all([
+  const [subsResult, activityResult] = await Promise.allSettled([
     fetchSubmissions(`subjectUserId=${encodeURIComponent(userId)}`),
     fetchActivity(userId),
   ])
+  if (subsResult.status === 'rejected' && activityResult.status === 'rejected') {
+    const reason = firstRejectedReason([subsResult, activityResult])
+    throw reason instanceof Error ? reason : new Error('Request failed')
+  }
 
-  const formItems: FormSubmissionItem[] = subs.map((item) => ({
-    ...item,
-    kind: 'form_submission' as const,
-  }))
-  const activityItems: CompanyActivityItem[] = activity.map((item) => ({
-    ...item,
-    kind: 'company_activity' as const,
-  }))
-
-  return mergeSessionHistory(formItems, activityItems)
+  return mergeSessionHistory(
+    toFormItems(settledValue(subsResult, [])),
+    toActivityItems(settledValue(activityResult, [])),
+  )
 }
 
 export async function loadStaffHistory(userId: string): Promise<UserHistoryItem[]> {
-  const [subs, activity] = await Promise.all([
+  const [subsResult, activityResult] = await Promise.allSettled([
     fetchSubmissions(`filledByUserId=${encodeURIComponent(userId)}`),
     fetchActivity(userId),
   ])
+  if (subsResult.status === 'rejected' && activityResult.status === 'rejected') {
+    const reason = firstRejectedReason([subsResult, activityResult])
+    throw reason instanceof Error ? reason : new Error('Request failed')
+  }
 
-  const formItems: FormSubmissionItem[] = subs.map((item) => ({
-    ...item,
-    kind: 'form_submission' as const,
-  }))
-  const activityItems: CompanyActivityItem[] = activity.map((item) => ({
-    ...item,
-    kind: 'company_activity' as const,
-  }))
+  return mergeSessionHistory(
+    toFormItems(settledValue(subsResult, [])),
+    toActivityItems(settledValue(activityResult, [])),
+  )
+}
 
-  return mergeSessionHistory(formItems, activityItems)
+/** Forms filled for or by the user, plus activity across companies (super admin). */
+export async function loadUserHistory(userId: string): Promise<UserHistoryItem[]> {
+  const [asSubject, asFiller, activityResult] = await Promise.allSettled([
+    fetchSubmissions(`subjectUserId=${encodeURIComponent(userId)}`),
+    fetchSubmissions(`filledByUserId=${encodeURIComponent(userId)}`),
+    fetchActivity(userId),
+  ])
+  if (
+    asSubject.status === 'rejected' &&
+    asFiller.status === 'rejected' &&
+    activityResult.status === 'rejected'
+  ) {
+    const reason = firstRejectedReason([asSubject, asFiller, activityResult])
+    throw reason instanceof Error ? reason : new Error('Request failed')
+  }
+
+  return mergeSessionHistory(
+    toFormItems([...settledValue(asSubject, []), ...settledValue(asFiller, [])]),
+    toActivityItems(settledValue(activityResult, [])),
+  )
 }
 
 export async function getSessionTokenHistoryDetail(

@@ -92,7 +92,7 @@ describe('formatEntityContextSupplement', () => {
         },
       },
     ])
-    assert.match(text, /Attached Data library records/)
+    assert.match(text, /Attached records/)
     assert.match(text, /Alveogyl/)
     assert.match(text, /"name": "Alveogyl"/)
     assert.match(text, /Current related: tags \(1\): Dental; attributes \(1\): Net Weight/)

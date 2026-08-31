@@ -20,7 +20,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "zod": "^3.25.56"
@@ -37,6 +38,7 @@
     "@types/react": "^19.1.6",
     "react": "^19.1.0",
     "tsup": "^8.5.0",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }

@@ -11,6 +11,7 @@ export const AI_PERMISSIONS = [
   'ai:staff:write',
   'ai:company:read',
   'ai:company:write',
+  'ai:company:register',
   'ai:company:admin',
   'ai:data_library:read',
   'ai:data_library:write',
@@ -42,33 +43,40 @@ export function permissionsForRole(role: AiRole, companyId: string | null): AiPe
     return guest
   }
 
+  const signedIn: AiPermission[] = [
+    ...guest,
+    'ai:data_library:read',
+    'ai:company:read',
+    'ai:company:register',
+  ]
+
   if (role === 'super_admin') {
     return [
-      ...guest,
-      'ai:data_library:read',
+      ...signedIn,
       'ai:data_library:write',
       'ai:data_library:admin',
       'ai:data_catalog:write',
       'ai:company:admin',
+      'ai:company:write',
     ]
   }
 
-  const withLibraryRead: AiPermission[] = [...guest, 'ai:data_library:read']
-  const companyReads: AiPermission[] = companyId
-    ? [...withLibraryRead, 'ai:catalog:read', 'ai:events:read', 'ai:staff:read', 'ai:company:read']
-    : withLibraryRead
+  const withSessionCompany: AiPermission[] = companyId
+    ? [...signedIn, 'ai:catalog:read', 'ai:events:read', 'ai:staff:read']
+    : signedIn
 
   if (role === 'member') {
-    return companyReads
+    return withSessionCompany
   }
 
   const companyAdmin: AiPermission[] = [
-    ...companyReads,
+    ...withSessionCompany,
     'ai:data_library:write',
     'ai:data_catalog:write',
+    'ai:company:write',
   ]
   if (companyId) {
-    companyAdmin.push('ai:catalog:write', 'ai:events:write', 'ai:staff:write', 'ai:company:write')
+    companyAdmin.push('ai:catalog:write', 'ai:events:write', 'ai:staff:write')
   }
   return companyAdmin
 }

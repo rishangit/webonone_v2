@@ -1,5 +1,8 @@
 import type { Response } from 'express'
-import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
+import {
+  historyReadScope,
+  type CompanySessionRequest,
+} from '../middleware/requireCompanySession.js'
 import * as userActivityService from '../services/userActivity.service.js'
 
 function handleServiceError(err: unknown, res: Response) {
@@ -12,7 +15,8 @@ function handleServiceError(err: unknown, res: Response) {
 }
 
 export async function listUserActivity(req: CompanySessionRequest, res: Response) {
-  if (!req.user || !req.sessionCompanyId) {
+  const scope = historyReadScope(req)
+  if (!scope) {
     res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
     return
   }
@@ -26,7 +30,7 @@ export async function listUserActivity(req: CompanySessionRequest, res: Response
     const page = req.query.page ? Number(req.query.page) : undefined
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const result = await userActivityService.listUserActivity({
-      companyId: req.sessionCompanyId,
+      companyId: scope.companyId,
       userId,
       page,
       pageSize,
@@ -38,7 +42,8 @@ export async function listUserActivity(req: CompanySessionRequest, res: Response
 }
 
 export async function getSessionTokenDetail(req: CompanySessionRequest, res: Response) {
-  if (!req.user || !req.sessionCompanyId) {
+  const scope = historyReadScope(req)
+  if (!scope) {
     res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
     return
   }
@@ -50,7 +55,7 @@ export async function getSessionTokenDetail(req: CompanySessionRequest, res: Res
       return
     }
     const detail = await userActivityService.getSessionTokenHistoryDetail({
-      companyId: req.sessionCompanyId,
+      companyId: scope.companyId,
       tokenId,
     })
     res.json({ detail })

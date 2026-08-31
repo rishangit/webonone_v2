@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { platformDefaultFormValues } from '../constants/defaultThemeFormValues'
 
 const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Use #RRGGBB format')
 
@@ -17,11 +18,11 @@ export const themeBasicsSchema = z.object({
 })
 
 export const themePaletteSchema = z.object({
-  color1: hexColor,
-  color2: hexColor,
-  color3: hexColor,
-  color4: hexColor,
-  color5: hexColor,
+  primary: hexColor,
+  secondary: hexColor,
+  background: hexColor,
+  surface: hexColor,
+  text: hexColor,
 })
 
 export const themeFormSchema = themeBasicsSchema.merge(themePaletteSchema)
@@ -30,9 +31,9 @@ export type ThemeFormValues = z.infer<typeof themeFormSchema>
 
 export const EMPTY_THEME_WIZARD_VALUES: ThemeFormValues = {
   name: '',
-  color1: '#344CE2',
-  color2: '#3578E8',
-  color3: '#3578E8',
-  color4: '#EFF3FA',
-  color5: '#0E2F59',
+  primary: platformDefaultFormValues.primary,
+  secondary: platformDefaultFormValues.secondary,
+  background: platformDefaultFormValues.background,
+  surface: platformDefaultFormValues.surface,
+  text: platformDefaultFormValues.text,
 }

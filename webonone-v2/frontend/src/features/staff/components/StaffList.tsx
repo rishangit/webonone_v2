@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   ImagePreview,
+  ContactValueLine,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -77,9 +78,11 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
                 />
                 <div className="min-w-0 space-y-1">
                   <p className="truncate font-medium text-foreground">{item.displayName}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {item.email ?? t('common:email')}
-                  </p>
+                  <ContactValueLine
+                    kind="email"
+                    value={item.email}
+                    emptyLabel={t('common:email')}
+                  />
                   <p className="truncate text-xs text-muted-foreground">
                     {formatWorkingDaysSummary(item.schedule)}
                   </p>

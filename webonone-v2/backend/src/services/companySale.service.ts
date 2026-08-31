@@ -3,6 +3,7 @@ import { db } from '../models/db.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import { fetchUserContact } from '../clients/identityUserContactClient.js'
 import * as dataCatalog from '../clients/dataCatalogClient.js'
+import * as dataStockClient from '../clients/dataStockClient.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as companyRepo from '../repositories/company.repository.js'
 import * as saleRepo from '../repositories/companySale.repository.js'
@@ -56,6 +57,8 @@ export type SaleLineDto = {
   libraryEntityId: string | null
   name: string
   variantName: string | null
+  libraryVariantId: string | null
+  libraryStockId: string | null
   quantity: number
   unitPrice: number
   lineTotal: number
@@ -117,6 +120,8 @@ function mapSale(row: saleRepo.CompanySaleRow, lines: saleRepo.CompanySaleLineRo
       libraryEntityId: line.library_entity_id,
       name: line.name_snapshot,
       variantName: line.variant_name_snapshot,
+      libraryVariantId: line.library_variant_id,
+      libraryStockId: line.library_stock_id,
       quantity: catalogRepo.parseMoney(line.quantity) ?? 0,
       unitPrice: catalogRepo.parseMoney(line.unit_price) ?? 0,
       lineTotal: catalogRepo.parseMoney(line.line_total) ?? 0,
@@ -156,9 +161,71 @@ type PreparedSaleLine = {
   library_entity_id: string | null
   name_snapshot: string
   variant_name_snapshot: string | null
+  library_variant_id: string | null
+  library_stock_id: string | null
   quantity: number
   unit_price: number
   line_total: number
+}
+
+async function resolveVariantNameSnapshot(
+  libraryEntityId: string | null,
+  libraryVariantId: string | null,
+): Promise<string | null> {
+  if (!libraryEntityId || !libraryVariantId) return null
+  if (!dataStockClient.hasDataStockConfig()) {
+    throw httpError('Stock service is not configured', 503)
+  }
+  const variant = await dataStockClient.getLibraryProductVariant(libraryEntityId, libraryVariantId)
+  if (!variant) {
+    throw httpError('Product variant not found', 400)
+  }
+  return variant.name
+}
+
+async function consumeStockForPreparedLines(lines: PreparedSaleLine[]): Promise<void> {
+  for (const line of lines) {
+    if (line.item_kind !== 'product') continue
+    if (!line.library_entity_id || !line.library_variant_id || !line.library_stock_id) continue
+    if (!dataStockClient.hasDataStockConfig()) {
+      throw httpError('Stock service is not configured', 503)
+    }
+    try {
+      await dataStockClient.consumeLibraryStock({
+        productId: line.library_entity_id,
+        variantId: line.library_variant_id,
+        stockId: line.library_stock_id,
+        quantity: line.quantity,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Stock consumption failed'
+      const statusCode = (err as { statusCode?: number }).statusCode
+      throw httpError(message, statusCode === 400 ? 400 : 502)
+    }
+  }
+}
+
+async function consumeStockForSaleLines(lines: saleRepo.CompanySaleLineRow[]): Promise<void> {
+  for (const line of lines) {
+    if (line.item_kind !== 'product') continue
+    if (!line.library_entity_id || !line.library_variant_id || !line.library_stock_id) continue
+    const qty = catalogRepo.parseMoney(line.quantity) ?? 0
+    if (!dataStockClient.hasDataStockConfig()) {
+      throw httpError('Stock service is not configured', 503)
+    }
+    try {
+      await dataStockClient.consumeLibraryStock({
+        productId: line.library_entity_id,
+        variantId: line.library_variant_id,
+        stockId: line.library_stock_id,
+        quantity: qty,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Stock consumption failed'
+      const statusCode = (err as { statusCode?: number }).statusCode
+      throw httpError(message, statusCode === 400 ? 400 : 502)
+    }
+  }
 }
 
 async function prepareSaleLines(
@@ -179,15 +246,35 @@ async function prepareSaleLines(
     }
     const qty = quantity(line.quantity)
     const unitPrice = money(line.unitPrice)
+    const libraryEntityId = (row.library_entity_id as string | null) ?? null
+    const libraryVariantId = line.libraryVariantId ?? null
+    const libraryStockId = line.libraryStockId ?? null
+
+    if (line.itemKind === 'product' && (libraryVariantId || libraryStockId)) {
+      if (!libraryEntityId) {
+        throw httpError('Stock linkage requires a linked library product', 400)
+      }
+      if (!libraryVariantId || !libraryStockId) {
+        throw httpError('Variant and stock are required for stocked product lines', 400)
+      }
+      if (!dataStockClient.hasDataStockConfig()) {
+        throw httpError('Stock service is not configured', 503)
+      }
+    }
+
+    const variantNameSnapshot = await resolveVariantNameSnapshot(libraryEntityId, libraryVariantId)
+
     prepared.push({
       id: nanoid(),
       company_id: companyId,
       line_no: i + 1,
       item_kind: line.itemKind,
       catalog_item_id: line.catalogItemId,
-      library_entity_id: (row.library_entity_id as string | null) ?? null,
+      library_entity_id: libraryEntityId,
       name_snapshot: await resolveCatalogDisplayName(catalogKind, row),
-      variant_name_snapshot: null as string | null,
+      variant_name_snapshot: variantNameSnapshot,
+      library_variant_id: libraryVariantId,
+      library_stock_id: libraryStockId,
       quantity: qty,
       unit_price: unitPrice,
       line_total: money(qty * unitPrice),
@@ -277,6 +364,7 @@ export async function createSale(
   }
 
   const prepared = await prepareSaleLines(companyId, enabled, body.lines)
+  await consumeStockForPreparedLines(prepared)
   const subtotal = money(prepared.reduce((sum, line) => sum + line.line_total, 0))
   const saleId = nanoid()
   const now = new Date()
@@ -428,6 +516,8 @@ export async function completeSale(
     throw httpError('Add at least one item before closing the sale', 400)
   }
 
+  await consumeStockForSaleLines(lines)
+
   const now = new Date()
   await db.transaction(async (trx) => {
     const billNumber = await saleRepo.allocateBillNumber(trx, companyId)
@@ -478,8 +568,10 @@ export async function listSales(
   }
 }
 
-export async function getSale(companyId: string, id: string): Promise<SaleDto> {
-  const row = await saleRepo.findSaleById(companyId, id)
+export async function getSale(companyId: string | null, id: string): Promise<SaleDto> {
+  const row = companyId
+    ? await saleRepo.findSaleById(companyId, id)
+    : await saleRepo.findSaleByIdAny(id)
   if (!row) {
     throw httpError('Sale not found', 404)
   }

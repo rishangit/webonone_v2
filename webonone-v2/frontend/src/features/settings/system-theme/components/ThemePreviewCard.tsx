@@ -1,6 +1,7 @@
 import type { ColorMode } from '@webonone/theme'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@webonone/ui-kit'
 import type { ApiTheme } from '../services/themeApi'
+import { themeFormFromDto } from '../utils/themeFormMapping'
 import { ThemePreview } from './ThemePreview'
 
 type ThemePreviewCardProps = {
@@ -17,16 +18,9 @@ export function ThemePreviewCard({ theme, colorMode }: ThemePreviewCardProps) {
       </CardHeader>
       <CardContent>
         <ThemePreview
-          values={{
-            name: theme.name,
-            color1: theme.color1,
-            color2: theme.color2,
-            color3: theme.color3,
-            color4: theme.color4,
-            color5: theme.color5,
-          }}
+          values={themeFormFromDto(theme)}
           colorMode={colorMode}
-          className="min-h-[min(18rem,40vh)]"
+          className="min-h-[min(28rem,60vh)]"
         />
       </CardContent>
     </Card>

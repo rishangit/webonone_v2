@@ -36,7 +36,7 @@ import {
   getUpdateToolNameForDataEntityKind,
   resolveEntityContext,
 } from '../ai/entityContext/resolveEntityContext.js'
-import type { DataEntityContextRef, ResolvedEntityContext } from '../ai/entityContext/types.js'
+import type { EntityContextRef, ResolvedEntityContext } from '../ai/entityContext/types.js'
 import {
   entityRelatedRetryPrompt,
   expandEntityRelatedCalls,
@@ -92,7 +92,7 @@ export type MessageDto = {
   createdAt: string
   pendingTool?: PendingTool | null
   resultRecords?: Record<string, unknown>[]
-  context?: DataEntityContextRef[]
+  context?: EntityContextRef[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -295,7 +295,7 @@ function toConversationDto(row: AiConversationRow): ConversationDto {
   }
 }
 
-function entityContextFromPayload(row: AiMessageRow): DataEntityContextRef[] | undefined {
+function entityContextFromPayload(row: AiMessageRow): EntityContextRef[] | undefined {
   if (row.role !== 'user') {
     return undefined
   }
@@ -304,20 +304,27 @@ function entityContextFromPayload(row: AiMessageRow): DataEntityContextRef[] | u
   if (!Array.isArray(raw) || raw.length === 0) {
     return undefined
   }
-  const items: DataEntityContextRef[] = []
+  const items: EntityContextRef[] = []
   for (const entry of raw) {
     if (!isRecord(entry)) {
       continue
     }
-    if (
-      entry.service === 'data' &&
-      typeof entry.kind === 'string' &&
-      typeof entry.id === 'string' &&
-      entry.id.length === 21
-    ) {
+    if (typeof entry.id !== 'string' || entry.id.length !== 21 || typeof entry.kind !== 'string') {
+      continue
+    }
+    if (entry.service === 'data') {
       items.push({
         service: 'data',
-        kind: entry.kind as DataEntityContextRef['kind'],
+        kind: entry.kind as Extract<EntityContextRef, { service: 'data' }>['kind'],
+        id: entry.id,
+        label: typeof entry.label === 'string' ? entry.label : undefined,
+      })
+      continue
+    }
+    if (entry.service === 'webonone') {
+      items.push({
+        service: 'webonone',
+        kind: entry.kind as Extract<EntityContextRef, { service: 'webonone' }>['kind'],
         id: entry.id,
         label: typeof entry.label === 'string' ? entry.label : undefined,
       })
@@ -326,9 +333,9 @@ function entityContextFromPayload(row: AiMessageRow): DataEntityContextRef[] | u
   return items.length > 0 ? items : undefined
 }
 
-function dedupeEntityContext(refs: DataEntityContextRef[]): DataEntityContextRef[] {
+function dedupeEntityContext(refs: EntityContextRef[]): EntityContextRef[] {
   const seen = new Set<string>()
-  const items: DataEntityContextRef[] = []
+  const items: EntityContextRef[] = []
   for (const ref of refs) {
     const key = `${ref.service}:${ref.kind}:${ref.id}`
     if (seen.has(key)) {
@@ -510,6 +517,7 @@ export function createConversationService(deps: {
   defaultSystemPrompt: string
   registry?: ToolRegistry
   executor?: ToolExecutor
+  ensureCapabilitiesReady?: () => Promise<void>
   now?: () => Date
 }) {
   const now = deps.now ?? (() => new Date())
@@ -553,6 +561,7 @@ export function createConversationService(deps: {
     entityContextSupplement = '',
     resolvedEntityContext: ResolvedEntityContext[] = [],
   ): Promise<AiMessageRow> => {
+    await deps.ensureCapabilitiesReady?.()
     const tools = filterToolsForContext(deps.registry?.list() ?? [], ctx)
     const providerTools = toProviderTools(tools)
     const promptBase = entityContextSupplement
@@ -967,7 +976,7 @@ export function createConversationService(deps: {
       ctx: AiRequestContext,
       conversationId: string,
       content: string,
-      context?: DataEntityContextRef[],
+      context?: EntityContextRef[],
     ) {
       const conversation = await getOwnedOrThrow(conversationId, ctx)
       const entityContext = dedupeEntityContext(context ?? [])

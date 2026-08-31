@@ -1,3 +1,4 @@
+import { ContactValueLine, type ContactKind } from '@webonone/ui-kit'
 import type { CompanyWizardFormValues } from '@/features/settings/basic/schemas/companySchemas'
 import { formatCountryName } from '@/features/settings/companies/utils/formatCountryName'
 
@@ -5,6 +6,25 @@ interface CompanyWizardStepSummaryProps {
   values: CompanyWizardFormValues
   isNew: boolean
   contactPhoneDisplay: string
+}
+
+function SummaryContactRow({
+  label,
+  kind,
+  value,
+}: {
+  label: string
+  kind: ContactKind
+  value: string
+}) {
+  return (
+    <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-4">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="sm:text-right">
+        <ContactValueLine kind={kind} value={value} variant="detail" className="sm:justify-end" />
+      </dd>
+    </div>
+  )
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
@@ -40,8 +60,8 @@ export function CompanyWizardStepSummary({
             label="Contact person"
             value={values.contactPerson?.displayName ?? ''}
           />
-          <SummaryRow label="Contact email" value={values.contactEmail} />
-          <SummaryRow label="Contact phone" value={contactPhoneDisplay} />
+          <SummaryContactRow label="Contact email" kind="email" value={values.contactEmail} />
+          <SummaryContactRow label="Contact phone" kind="phone" value={contactPhoneDisplay} />
           <SummaryRow
             label="Address"
             value={[values.addressLine1, values.city, formatCountryName(values.country)]

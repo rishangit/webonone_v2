@@ -4,17 +4,23 @@ import { Plus } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemList,
-  ItemListContent,
   ItemListEmpty,
-  ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { designFormsApi, type DesignFormTemplateListItem } from '@/features/design/services/designFormsApi'
 import { WorkflowItemFormDialog } from '@/features/company-catalog/components/WorkflowItemFormDialog'
+import {
+  WorkflowItemList,
+  workflowItemTitle,
+} from '@/features/company-catalog/components/WorkflowItemList'
 import { companyCatalogApi } from '../services/companyCatalogApi'
 import type { ServiceWorkflowItem } from '../types/companyCatalog.types'
 import { hydrateLinkedCatalogItems } from '../utils/hydrateLinkedCatalog'
@@ -34,14 +40,6 @@ function toPutBody(items: ServiceWorkflowItem[]) {
     form_ids: item.forms.map((entry) => entry.id),
     session_queue: Boolean(item.sessionQueue),
   }))
-}
-
-function workflowItemLabel(
-  item: ServiceWorkflowItem,
-  t: (key: string) => string,
-): string {
-  if (item.kind === 'check_in') return t('workflowTab.checkIn')
-  return item.space?.name ?? t('workflowTab.checkIn')
 }
 
 export function CompanyServiceWorkflowTab({
@@ -167,16 +165,17 @@ export function CompanyServiceWorkflowTab({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <h2 className="text-lg font-medium text-foreground">{t('workflowTab.title')}</h2>
-          <p className="text-sm text-muted-foreground">{t('workflowTab.description')}</p>
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+        <div className="space-y-1">
+          <CardTitle className="text-lg">{t('workflowTab.title')}</CardTitle>
+          <CardDescription>{t('workflowTab.description')}</CardDescription>
         </div>
         {canEdit ? (
           <Button
             type="button"
             size="sm"
+            className="shrink-0"
             onClick={() => setDialog({ index: null })}
             disabled={busy || loading}
           >
@@ -184,94 +183,63 @@ export function CompanyServiceWorkflowTab({
             {t('workflowTab.add')}
           </Button>
         ) : null}
-      </div>
+      </CardHeader>
+      <CardContent>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-      {loading && items.length === 0 ? (
-        <ItemListEmpty>{t('workflowTab.loading')}</ItemListEmpty>
-      ) : items.length === 0 ? (
-        <ItemListEmpty>{t('workflowTab.empty')}</ItemListEmpty>
-      ) : (
-        <ItemList>
-          {items.map((item, index) => (
-            <ItemListItem key={item.id}>
-              <ItemListContent>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="shrink-0 text-sm font-semibold text-muted-foreground">
-                    #{item.orderNumber}
-                  </span>
-                  <p className="truncate font-medium">{workflowItemLabel(item, t)}</p>
-                </div>
-                {item.space && item.kind === 'check_in' ? (
-                  <p className="truncate text-sm text-muted-foreground">{item.space.name}</p>
-                ) : null}
-                <p className="truncate text-sm text-muted-foreground">
-                  {t('workflowTab.staffLine', {
-                    value:
-                      item.staff.length > 0
-                        ? item.staff.map((entry) => entry.displayName).join(', ')
-                        : t('workflowTab.none'),
-                  })}
-                </p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {t('workflowTab.formsLine', {
-                    value:
-                      item.forms.length > 0
-                        ? item.forms.map((entry) => entry.name ?? entry.id).join(', ')
-                        : t('workflowTab.none'),
-                  })}
-                </p>
-                {timeMode === 'window' ? (
-                  <p className="truncate text-sm text-muted-foreground">
-                    {t('workflowTab.queueLine', {
-                      value: item.sessionQueue ? t('workflowTab.yes') : t('workflowTab.no'),
-                    })}
-                  </p>
-                ) : null}
-              </ItemListContent>
-              {canEdit ? (
-                <ItemListMenu ariaLabel={t('workflowTab.actionsFor', { name: workflowItemLabel(item, t) })}>
-                  <DropdownMenuItem
-                    disabled={busy}
-                    onClick={() => setDialog({ index })}
-                  >
-                    {t('workflowTab.edit')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={busy || index === 0 || index === 1}
-                    onClick={() => {
-                      void handleMove(index, -1)
-                    }}
-                  >
-                    {t('workflowTab.moveUp')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={busy || index === 0 || index === items.length - 1}
-                    onClick={() => {
-                      void handleMove(index, 1)
-                    }}
-                  >
-                    {t('workflowTab.moveDown')}
-                  </DropdownMenuItem>
-                  {item.kind !== 'check_in' ? (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        disabled={busy}
-                        onClick={() => setPendingRemove(item)}
-                      >
-                        {t('workflowTab.remove')}
+        {loading && items.length === 0 ? (
+          <ItemListEmpty>{t('workflowTab.loading')}</ItemListEmpty>
+        ) : items.length === 0 ? (
+          <ItemListEmpty>{t('workflowTab.empty')}</ItemListEmpty>
+        ) : (
+          <WorkflowItemList
+            items={items}
+            t={t}
+            showQueue={timeMode === 'window'}
+            renderMenu={
+              canEdit
+                ? (item, index) => (
+                    <ItemListMenu
+                      ariaLabel={t('workflowTab.actionsFor', { name: workflowItemTitle(item, t) })}
+                    >
+                      <DropdownMenuItem disabled={busy} onClick={() => setDialog({ index })}>
+                        {t('workflowTab.edit')}
                       </DropdownMenuItem>
-                    </>
-                  ) : null}
-                </ItemListMenu>
-              ) : null}
-            </ItemListItem>
-          ))}
-        </ItemList>
-      )}
+                      <DropdownMenuItem
+                        disabled={busy || index === 0 || index === 1}
+                        onClick={() => {
+                          void handleMove(index, -1)
+                        }}
+                      >
+                        {t('workflowTab.moveUp')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={busy || index === 0 || index === items.length - 1}
+                        onClick={() => {
+                          void handleMove(index, 1)
+                        }}
+                      >
+                        {t('workflowTab.moveDown')}
+                      </DropdownMenuItem>
+                      {item.kind !== 'check_in' ? (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            disabled={busy}
+                            onClick={() => setPendingRemove(item)}
+                          >
+                            {t('workflowTab.remove')}
+                          </DropdownMenuItem>
+                        </>
+                      ) : null}
+                    </ItemListMenu>
+                  )
+                : undefined
+            }
+          />
+        )}
+      </CardContent>
 
       {dialog ? (
         <WorkflowItemFormDialog
@@ -300,7 +268,7 @@ export function CompanyServiceWorkflowTab({
         open={pendingRemove !== null}
         title={
           pendingRemove
-            ? t('workflowTab.removeConfirm', { name: workflowItemLabel(pendingRemove, t) })
+            ? t('workflowTab.removeConfirm', { name: workflowItemTitle(pendingRemove, t) })
             : t('workflowTab.removeFallback')
         }
         description={t('workflowTab.removeDescription')}
@@ -315,6 +283,6 @@ export function CompanyServiceWorkflowTab({
           }
         }}
       />
-    </div>
+    </Card>
   )
 }

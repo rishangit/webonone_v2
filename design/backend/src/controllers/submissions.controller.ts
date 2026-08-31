@@ -16,13 +16,21 @@ function companyIdOrThrow(req: AuthenticatedRequest): string {
   return companyId
 }
 
+/** Super admins without an active company may read submissions across all companies. */
+function companyScopeForRead(req: AuthenticatedRequest): string | undefined {
+  const companyId = req.user?.companyId
+  if (companyId) return companyId
+  if (req.user?.role === 'super_admin') return undefined
+  throw new HttpError(403, 'Company context required', 'COMPANY_REQUIRED')
+}
+
 export async function listSubmissionsHandler(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
 ) {
   try {
-    const companyId = companyIdOrThrow(req)
+    const companyId = companyScopeForRead(req)
     const page = req.query.page ? Number(req.query.page) : undefined
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const subjectUserId =
@@ -57,7 +65,7 @@ export async function getSubmissionHandler(
   next: NextFunction,
 ) {
   try {
-    const companyId = companyIdOrThrow(req)
+    const companyId = companyScopeForRead(req)
     const submission = await getSubmission({ companyId, id: String(req.params.id) })
     res.json({ submission })
   } catch (err) {

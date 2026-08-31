@@ -401,11 +401,27 @@ function FullCalendarDemo() {
           setSelection(`Slot ${formatPickerDateTime(range.start)} – ${formatPickerDateTime(range.end)}`)
         }
         onEventClick={(event) => setSelection(`Event: ${event.title}`)}
+        renderEventPopover={(event, { close }) => (
+          <div className="space-y-2 p-3">
+            <p className="text-sm font-medium text-foreground">{event.title}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatPickerDateTime(event.start)} – {formatPickerDateTime(event.end)}
+            </p>
+            {event.issueDetail ? (
+              <p className="text-xs text-destructive">{event.issueDetail}</p>
+            ) : null}
+            <Button type="button" variant="outline" size="sm" className="h-8" onClick={close}>
+              Close
+            </Button>
+          </div>
+        )}
       />
       {selection ? (
         <p className="text-sm text-muted-foreground">Selected: {selection}</p>
       ) : (
-        <p className="text-sm text-muted-foreground">Click a slot or event to preview selection.</p>
+        <p className="text-sm text-muted-foreground">
+          Click a slot or event. Events open a popover anchored to the chip.
+        </p>
       )}
     </div>
   )

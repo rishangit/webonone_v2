@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -16,13 +17,14 @@ import {
 import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { CatalogAttributesTab } from '@/features/catalog/components/CatalogAttributesTab'
 import {
   CatalogDetailSectionTabs,
   type CatalogDetailTabId,
 } from '@/features/catalog/components/CatalogDetailSectionTabs'
 import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
-import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
+import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/CatalogLibraryDetailPageMenu'
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { spacesActions } from '@/features/spaces/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
@@ -79,7 +81,9 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const { detail, detailStatus, detailError } = useAppSelector(config.select)
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
+  const canDelete = user?.role === 'super_admin'
   const [editOpen, setEditOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState(false)
   const [tab, setTab] = useDetailTabParam(CATALOG_DETAIL_TABS, 'overview')
 
   useEffect(() => {
@@ -106,7 +110,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
       <div className="flex flex-col gap-6 lg:col-span-2">
         {(item.galleryImages ?? []).length > 0 ? (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4 sm:p-6">
               <ImageCarousel images={item.galleryImages ?? []} alt={item.name} />
             </CardContent>
           </Card>
@@ -168,7 +172,20 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
       description={`${config.singular} details`}
       onBack={() => goToList(kind)}
       backLabel={t('common:back')}
-      actions={item ? <CopyToAiButton kind="space" id={item.id} label={item.name} /> : undefined}
+      actions={
+        item ? (
+          <CatalogLibraryDetailPageMenu
+            kind="space"
+            entityId={item.id}
+            entityLabel={item.name}
+            ariaLabel={t('actionsFor', { name: item.name })}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            onEdit={() => setEditOpen(true)}
+            onDelete={() => setPendingDelete(true)}
+          />
+        ) : undefined
+      }
     >
       {detailError ? (
         <Alert variant="destructive">
@@ -187,6 +204,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
             <CatalogAttributesTab
               kind={kind}
               entityId={id}
+              entityName={item.name}
               attributes={item.attributes}
               canEdit={canEdit}
               onChanged={refreshDetail}
@@ -219,6 +237,23 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
           }}
         />
       ) : null}
+
+      <PlatformAlertConfirmDialog
+        open={pendingDelete}
+        title={
+          item ? t('deleteConfirm', { name: item.name }) : t('deleteConfirmFallback')
+        }
+        description={t('deleteDescription')}
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel={t('common:remove')}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(false)
+        }}
+        onConfirm={() => {
+          dispatch(config.actions.deleteRequested({ id }))
+          goToList(kind)
+        }}
+      />
     </FeaturePage>
   )
 }

@@ -558,12 +558,26 @@ export async function listWorkflowItems(
 
 export async function listWorkflowStaffByItemIds(
   itemIds: string[],
-): Promise<{ item_id: string; staff_id: string; display_name: string }[]> {
+): Promise<
+  {
+    item_id: string
+    staff_id: string
+    display_name: string
+    avatar_url: string | null
+    user_id: string
+  }[]
+> {
   if (itemIds.length === 0) return []
   return db('company_service_workflow_staff as link')
     .join('company_staff as staff', 'staff.id', 'link.staff_id')
     .whereIn('link.item_id', itemIds)
-    .select('link.item_id', 'link.staff_id', 'staff.display_name')
+    .select(
+      'link.item_id',
+      'link.staff_id',
+      'staff.display_name',
+      'staff.avatar_url',
+      'staff.user_id',
+    )
 }
 
 export async function listWorkflowFormsByItemIds(

@@ -1,7 +1,9 @@
 import { nanoid } from 'nanoid'
 import { ZodError } from 'zod'
+import { fetchUserAvatarsByIds } from '../clients/identityUserContactClient.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import * as repo from '../repositories/companyCatalog.repository.js'
+import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import { resolveSpaceNamesById } from './tokenWorkflowProgress.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import {
@@ -327,6 +329,37 @@ export async function deleteCatalogItem(
   }
 }
 
+function normalizeWorkflowStaffAvatarUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null
+  return rewriteMediaFileUrl(url.trim())
+}
+
+async function buildWorkflowStaffByItemId(
+  staffLinks: Awaited<ReturnType<typeof repo.listWorkflowStaffByItemIds>>,
+): Promise<Map<string, { id: string; displayName: string; avatarUrl: string | null }[]>> {
+  const identityNeeded = [
+    ...new Set(
+      staffLinks
+        .filter((link) => !normalizeWorkflowStaffAvatarUrl(link.avatar_url))
+        .map((link) => link.user_id),
+    ),
+  ]
+  const identityAvatars = await fetchUserAvatarsByIds(identityNeeded)
+  const staffByItem = new Map<string, { id: string; displayName: string; avatarUrl: string | null }[]>()
+  for (const link of staffLinks) {
+    const list = staffByItem.get(link.item_id) ?? []
+    const local = normalizeWorkflowStaffAvatarUrl(link.avatar_url)
+    const identity = normalizeWorkflowStaffAvatarUrl(identityAvatars.get(link.user_id))
+    list.push({
+      id: link.staff_id,
+      displayName: link.display_name,
+      avatarUrl: local ?? identity ?? null,
+    })
+    staffByItem.set(link.item_id, list)
+  }
+  return staffByItem
+}
+
 export async function listServiceWorkflow(userId: string, companyId: string, serviceId: string) {
   await assertCompanySessionAccess(userId, companyId)
   const service =
@@ -345,12 +378,7 @@ export async function listServiceWorkflow(userId: string, companyId: string, ser
     repo.listWorkflowStaffByItemIds(itemIds),
     repo.listWorkflowFormsByItemIds(itemIds),
   ])
-  const staffByItem = new Map<string, { id: string; displayName: string }[]>()
-  for (const link of staffLinks) {
-    const list = staffByItem.get(link.item_id) ?? []
-    list.push({ id: link.staff_id, displayName: link.display_name })
-    staffByItem.set(link.item_id, list)
-  }
+  const staffByItem = await buildWorkflowStaffByItemId(staffLinks)
   const formsByItem = new Map<string, { id: string }[]>()
   for (const link of formLinks) {
     const list = formsByItem.get(link.item_id) ?? []

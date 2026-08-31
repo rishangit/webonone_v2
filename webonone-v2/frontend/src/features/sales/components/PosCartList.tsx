@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import {
   DropdownMenuItem,
+  ImagePreview,
   Input,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  itemListThumbClassName,
 } from '@webonone/ui-kit'
 import type { PosCartLine } from '@/features/sales/types/sales.types'
 import { formatLkr } from '@/features/sales/utils/formatMoney'
@@ -37,9 +39,20 @@ export function PosCartList({
         <ItemListItem key={line.key}>
           <ItemListContent>
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{line.name}</p>
-                <p className="text-xs text-muted-foreground">{t(`kinds.${line.itemKind}`)}</p>
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <ImagePreview
+                  src={line.imageUrl ?? null}
+                  alt={line.name}
+                  mode="view"
+                  className={itemListThumbClassName}
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{line.name}</p>
+                  {line.variantName ? (
+                    <p className="text-xs text-muted-foreground">{line.variantName}</p>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">{t(`kinds.${line.itemKind}`)}</p>
+                </div>
               </div>
               <div className="flex flex-wrap items-end gap-2">
                 {readOnly ? (

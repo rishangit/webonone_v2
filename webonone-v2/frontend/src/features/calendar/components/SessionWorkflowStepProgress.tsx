@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@webonone/ui-kit'
 import type { ServiceWorkflowItem } from '@/features/company-catalog/types/companyCatalog.types'
@@ -10,6 +10,21 @@ type SessionWorkflowStepProgressProps = {
   onSelect: (stepId: string) => void
 }
 
+function scrollWorkflowStepIntoView(
+  stepRefs: Map<string, HTMLButtonElement>,
+  stepId: string,
+) {
+  const node = stepRefs.get(stepId)
+  const nav = node?.closest('nav')
+  if (!node || !nav) return
+  const target = node.offsetLeft - (nav.clientWidth - node.offsetWidth) / 2
+  const maxScroll = nav.scrollWidth - nav.clientWidth
+  nav.scrollTo({
+    left: Math.max(0, Math.min(target, maxScroll)),
+    behavior: 'smooth',
+  })
+}
+
 export function SessionWorkflowStepProgress({
   items,
   selectedId,
@@ -17,12 +32,6 @@ export function SessionWorkflowStepProgress({
 }: SessionWorkflowStepProgressProps) {
   const { t } = useTranslation('calendar')
   const stepRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
-
-  useEffect(() => {
-    const node = stepRefs.current.get(selectedId)
-    if (!node) return
-    node.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-  }, [selectedId])
 
   if (items.length === 0) return null
 
@@ -46,7 +55,10 @@ export function SessionWorkflowStepProgress({
                 }}
                 type="button"
                 aria-current={isSelected ? 'step' : undefined}
-                onClick={() => onSelect(item.id)}
+                onClick={() => {
+                  onSelect(item.id)
+                  scrollWorkflowStepIntoView(stepRefs.current, item.id)
+                }}
                 className="group flex min-w-[5.5rem] max-w-[9rem] flex-col items-center gap-2 px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <span

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -15,6 +16,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { CatalogAttributesTab } from '@/features/catalog/components/CatalogAttributesTab'
 import {
   CatalogDetailSectionTabs,
@@ -23,7 +25,7 @@ import {
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { ProductVariantsTab } from '@/features/products/components/ProductVariantsTab'
-import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
+import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/CatalogLibraryDetailPageMenu'
 import { productsActions } from '@/features/products/store'
 import type { ProductWizardStep } from '@/features/products/schemas/productSchemas'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
@@ -56,7 +58,9 @@ export function ProductDetailsPage() {
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.products)
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
+  const canDelete = user?.role === 'super_admin'
   const [dialog, setDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState(false)
   const [tab, setTab] = useDetailTabParam(PRODUCT_DETAIL_TABS, 'overview')
 
   useEffect(() => {
@@ -87,7 +91,7 @@ export function ProductDetailsPage() {
       <div className="flex flex-col gap-6 lg:col-span-2">
         {(product.galleryImages ?? []).length > 0 ? (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4 sm:p-6">
               <ImageCarousel images={product.galleryImages ?? []} alt={product.name} />
             </CardContent>
           </Card>
@@ -150,7 +154,18 @@ export function ProductDetailsPage() {
       onBack={() => goToList('products')}
       backLabel={t('common:back')}
       actions={
-        product ? <CopyToAiButton kind="product" id={product.id} label={product.name} /> : undefined
+        product ? (
+          <CatalogLibraryDetailPageMenu
+            kind="product"
+            entityId={product.id}
+            entityLabel={product.name}
+            ariaLabel={t('actionsFor', { name: product.name })}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            onEdit={() => openWizard(1)}
+            onDelete={() => setPendingDelete(true)}
+          />
+        ) : undefined
       }
     >
       {detailError ? (
@@ -170,6 +185,7 @@ export function ProductDetailsPage() {
             <CatalogAttributesTab
               kind="products"
               entityId={id}
+              entityName={product.name}
               attributes={product.attributes}
               canEdit={canEdit}
               onChanged={refreshDetail}
@@ -210,6 +226,25 @@ export function ProductDetailsPage() {
           }}
         />
       ) : null}
+
+      <PlatformAlertConfirmDialog
+        open={pendingDelete}
+        title={
+          product
+            ? t('deleteConfirm', { name: product.name })
+            : t('deleteConfirmFallback')
+        }
+        description={t('deleteDescription')}
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel={t('common:remove')}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(false)
+        }}
+        onConfirm={() => {
+          dispatch(productsActions.deleteRequested({ id }))
+          goToList('products')
+        }}
+      />
     </FeaturePage>
   )
 }

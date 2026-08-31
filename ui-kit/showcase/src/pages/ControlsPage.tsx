@@ -76,6 +76,16 @@ export function ControlsPage() {
           <Button variant="link">Link</Button>
           <Button disabled>Disabled</Button>
         </div>
+        <p className="mt-4 text-sm text-muted-foreground">Mixed-case labels (optical vertical centering)</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Button>Save Changes</Button>
+          <Button size="sm">Add Product</Button>
+          <Button size="lg">Create Account</Button>
+          <Button>
+            <Plus className="h-4 w-4" />
+            Create Account
+          </Button>
+        </div>
       </DemoSection>
 
       <DemoSection id="buttons-with-icons" title="Buttons with icons">
@@ -349,7 +359,7 @@ export function ControlsPage() {
       <DemoSection
         id="tabs"
         title="Tabs"
-        description="Single-line tab strip with a bottom rule; selected tab shows a secondary border on the top and sides (no bottom border). On narrow screens, swipe the tab row horizontally to reach more tabs."
+        description="Classic folder-tab strip: overlapping slanted tabs; inactive tabs in gray, active tab matches the panel surface below. On narrow screens, swipe the tab row horizontally to reach more tabs."
       >
         <Tabs defaultValue="account">
           <TabsList>

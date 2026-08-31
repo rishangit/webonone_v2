@@ -1,7 +1,8 @@
 import { env } from './config/env.js'
 import { createApp } from './app.js'
 import { db } from './models/db.js'
-import { discoverAllCapabilities, type CapabilityPeer } from './ai/tools/discoverCapabilities.js'
+import { type CapabilityPeer } from './ai/tools/discoverCapabilities.js'
+import { createCapabilityRefresher } from './ai/tools/capabilityRefresh.js'
 import { HttpToolExecutor } from './ai/tools/executor.js'
 import { ToolRegistry } from './ai/tools/registry.js'
 import { createAiSettingsService } from './services/aiSettings.service.js'
@@ -45,9 +46,10 @@ function configuredPeers(): CapabilityPeer[] {
 }
 
 async function refreshCapabilities() {
-  const tools = await discoverAllCapabilities(configuredPeers())
-  registry.replace(tools)
+  await capabilityRefresher.refreshCapabilities({ merge: true })
 }
+
+const capabilityRefresher = createCapabilityRefresher(registry, configuredPeers)
 
 const aiSettingsService = createAiSettingsService()
 
@@ -57,6 +59,7 @@ const conversationService = createConversationService({
   defaultSystemPrompt: env.aiSystemPrompt,
   registry,
   executor,
+  ensureCapabilitiesReady: () => capabilityRefresher.ensureReady(),
 })
 
 const app = createApp({
@@ -76,17 +79,17 @@ const onListen = () => {
   console.log(`AI API listening on http://${env.host}:${env.port}`)
 }
 
-void refreshCapabilities().then(() => {
+void capabilityRefresher.refreshWithRetry().then(() => {
   if (env.aiCapabilityRefreshMs > 0) {
     const timer = setInterval(() => {
       void refreshCapabilities()
     }, env.aiCapabilityRefreshMs)
     timer.unref()
   }
-})
 
-if (env.iisHosted) {
-  app.listen(env.port, onListen)
-} else {
-  app.listen(env.port, env.host, onListen)
-}
+  if (env.iisHosted) {
+    app.listen(env.port, onListen)
+  } else {
+    app.listen(env.port, env.host, onListen)
+  }
+})

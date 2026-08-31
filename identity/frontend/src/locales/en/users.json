@@ -28,7 +28,7 @@
     "noneFound": "No users found.",
     "companyNone": "No users yet. Use Add user to select someone for this company.",
     "addDialog": "No users available to add.",
-    "history": "No company history yet.",
+    "history": "No history yet.",
     "noFormLinked": "No form linked to this service."
   },
   "toasts": {
@@ -95,6 +95,7 @@
     "badgeForm": "Form",
     "badgeSession": "Session",
     "badgeSale": "Sale",
+    "companyPrefix": "Company: {{name}}",
     "servicePrefix": "Service: {{name}}",
     "filledBy": "Filled by {{name}}",
     "statusPrefix": "Status: {{status}}",

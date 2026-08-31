@@ -13,19 +13,16 @@ import {
 import {
   dayOfMonthOfYmd,
   formatWeekdaysLabel,
-  staffHoursForDate,
-  staffHoursForWeekday,
-  staffWorkingWeekdays,
   type DurationRepeatFrequency,
   type EventServiceOption,
 } from '@/features/calendar/schemas/eventSchemas'
 import type { EventRecurrence } from '@/features/calendar/types/event.types'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
-import type { CompanyStaff } from '@/features/staff/types/staff.types'
+
+const ALL_WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const
 
 type EventWizardStepWhenProps = {
   service: EventServiceOption
-  staff: CompanyStaff
   startsOn: string
   startTime: string
   weekdays: number[]
@@ -70,7 +67,6 @@ function ordinal(n: number): string {
 
 function DurationWhenStep({
   service,
-  staff,
   startsOn,
   startTime,
   recurrence,
@@ -80,7 +76,6 @@ function DurationWhenStep({
 }: EventWizardStepWhenProps) {
   const repeating = recurrence !== 'none'
   const dayOfMonth = startsOn ? dayOfMonthOfYmd(startsOn) : null
-  const hoursHint = startsOn ? staffHoursForDate(staff.schedule, startsOn) : null
 
   function setRepeat(enabled: boolean) {
     if (!enabled) {
@@ -125,15 +120,10 @@ function DurationWhenStep({
           value={startTime}
           onChange={(e) => onChange({ startTime: e.target.value })}
         />
-        {hoursHint ? (
+        {service.durationMinutes != null ? (
           <p className="mt-1 text-xs text-muted-foreground">
-            Must fit staff hours on this day: {hoursHint.start}–{hoursHint.end}
-            {service.durationMinutes != null
-              ? ` · ends after ${service.durationMinutes} min`
-              : null}
+            Service duration: {service.durationMinutes} min
           </p>
-        ) : startsOn ? (
-          <p className="mt-1 text-xs text-destructive">Staff is not working on this date.</p>
         ) : null}
       </FormField>
 
@@ -194,14 +184,12 @@ function DurationWhenStep({
 
 function WindowWhenStep({
   service,
-  staff,
   startsOn,
   weekdays,
   recurrenceUntil,
   onChange,
   errors,
 }: EventWizardStepWhenProps) {
-  const workingDays = staffWorkingWeekdays(staff.schedule)
   const selectedSet = new Set(weekdays)
 
   function toggleWeekday(day: number, checked: boolean) {
@@ -215,38 +203,26 @@ function WindowWhenStep({
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>
-          Working days <span className="text-destructive">*</span>
+          Weekdays <span className="text-destructive">*</span>
         </Label>
         <p className="text-xs text-muted-foreground">
-          Choose which of this staff member&apos;s working weekdays the event repeats on.
+          Choose which days of the week this event repeats on.
         </p>
-        {workingDays.length === 0 ? (
-          <p className="text-sm text-destructive">This staff member has no working days set.</p>
-        ) : (
-          <div className="space-y-2 rounded-md border border-border p-3">
-            {workingDays.map((day) => {
-              const hours = staffHoursForWeekday(staff.schedule, day)
-              const id = `event-weekday-${day}`
-              return (
-                <label key={day} htmlFor={id} className="flex cursor-pointer items-center gap-3">
-                  <Checkbox
-                    id={id}
-                    checked={selectedSet.has(day)}
-                    onCheckedChange={(value) => toggleWeekday(day, value === true)}
-                  />
-                  <span className="min-w-0 flex-1 text-sm">
-                    <span className="font-medium">{DAY_LABELS[day]}</span>
-                    {hours ? (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {hours.start}–{hours.end}
-                      </span>
-                    ) : null}
-                  </span>
-                </label>
-              )
-            })}
-          </div>
-        )}
+        <div className="space-y-2 rounded-md border border-border p-3">
+          {ALL_WEEKDAYS.map((day) => {
+            const id = `event-weekday-${day}`
+            return (
+              <label key={day} htmlFor={id} className="flex cursor-pointer items-center gap-3">
+                <Checkbox
+                  id={id}
+                  checked={selectedSet.has(day)}
+                  onCheckedChange={(value) => toggleWeekday(day, value === true)}
+                />
+                <span className="min-w-0 flex-1 text-sm font-medium">{DAY_LABELS[day]}</span>
+              </label>
+            )
+          })}
+        </div>
         {errors.weekdays ? <p className="text-sm text-destructive">{errors.weekdays}</p> : null}
       </div>
 

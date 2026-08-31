@@ -191,8 +191,10 @@ function isAllowedSmsShellNavigatePath(path: string): boolean {
 }
 
 /**
- * Allow `/data/{entity}`, `/data/{entity}/:id`, and nested product variant
- * `/data/products/:productId/variants/:variantId`. Path may include a query string.
+ * Allow `/data/{entity}`, `/data/{entity}/:id`, nested product variant
+ * `/data/products/:productId/variants/:variantId`, and nested catalog attribute
+ * `/data/{products|services|spaces}/:entityId/attributes/:attributeId`.
+ * Path may include a query string.
  */
 function isAllowedDataShellNavigatePath(path: string): boolean {
   const pathname = path.split('?')[0] ?? path
@@ -204,6 +206,18 @@ function isAllowedDataShellNavigatePath(path: string): boolean {
     parts.length === 5 &&
     parts[1] === 'products' &&
     parts[3] === 'variants' &&
+    parts[2] &&
+    parts[4] &&
+    !parts[2].includes('..') &&
+    !parts[4].includes('..')
+  ) {
+    return true
+  }
+
+  if (
+    parts.length === 5 &&
+    (parts[1] === 'products' || parts[1] === 'services' || parts[1] === 'spaces') &&
+    parts[3] === 'attributes' &&
     parts[2] &&
     parts[4] &&
     !parts[2].includes('..') &&

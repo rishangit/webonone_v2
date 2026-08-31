@@ -14,7 +14,7 @@ export interface OtpInputProps {
 }
 
 const cellClassName = cn(
-  'ui-shape-control h-10 w-10 border border-input bg-input-background text-center text-lg text-foreground',
+  'ui-shape-control h-10 w-10 border border-input bg-transparent text-center text-lg text-foreground',
   inputFocusRingClassName,
   inputInvalidClassName,
 )

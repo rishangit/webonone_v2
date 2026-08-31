@@ -102,6 +102,7 @@ export type CatalogSessionTokenItem = {
 export type ServiceWorkflowStaff = {
   id: string
   displayName: string
+  avatarUrl?: string | null
 }
 
 export type ServiceWorkflowForm = {

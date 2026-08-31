@@ -31,6 +31,8 @@ export type CompanySaleLineRow = {
   library_entity_id: string | null
   name_snapshot: string
   variant_name_snapshot: string | null
+  library_variant_id: string | null
+  library_stock_id: string | null
   quantity: string | number
   unit_price: string | number
   line_total: string | number
@@ -148,6 +150,10 @@ export async function findSaleById(
   return db<CompanySaleRow>('company_sales').where({ id, company_id: companyId }).first()
 }
 
+export async function findSaleByIdAny(id: string): Promise<CompanySaleRow | undefined> {
+  return db<CompanySaleRow>('company_sales').where({ id }).first()
+}
+
 export async function listSaleLines(saleId: string): Promise<CompanySaleLineRow[]> {
   return db<CompanySaleLineRow>('company_sale_lines').where({ sale_id: saleId }).orderBy('line_no', 'asc')
 }
@@ -217,6 +223,17 @@ export async function listSalesForCustomer(
 ): Promise<CompanySaleRow[]> {
   return db<CompanySaleRow>('company_sales')
     .where({ company_id: companyId, customer_user_id: customerUserId })
+    .whereNot('status', 'draft')
+    .orderBy('created_at', 'desc')
+    .limit(limit)
+}
+
+export async function listSalesForCustomerAny(
+  customerUserId: string,
+  limit = 200,
+): Promise<CompanySaleRow[]> {
+  return db<CompanySaleRow>('company_sales')
+    .where({ customer_user_id: customerUserId })
     .whereNot('status', 'draft')
     .orderBy('created_at', 'desc')
     .limit(limit)

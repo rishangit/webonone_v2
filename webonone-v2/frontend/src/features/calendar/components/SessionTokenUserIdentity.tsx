@@ -1,4 +1,4 @@
-import { ImagePreview } from '@webonone/ui-kit'
+import { ContactValueLine, ImagePreview, itemListThumbClassName } from '@webonone/ui-kit'
 
 type SessionTokenUserIdentityProps = {
   displayName: string
@@ -18,7 +18,7 @@ export function SessionTokenUserIdentity({
   nameSize = 'sm',
   noEmailLabel,
 }: SessionTokenUserIdentityProps) {
-  const avatarClassName = size === 'hero' ? 'h-12 w-12 rounded-md' : 'h-10 w-10 rounded-md'
+  const avatarClassName = size === 'hero' ? 'h-12 w-12 rounded-md' : itemListThumbClassName
   const nameClassName =
     nameSize === 'lg'
       ? 'truncate text-2xl font-semibold text-foreground'
@@ -39,9 +39,13 @@ export function SessionTokenUserIdentity({
           {displayName}
         </p>
         {email !== undefined ? (
-          <p className="truncate text-sm text-muted-foreground">
-            {email ?? noEmailLabel ?? '—'}
-          </p>
+          <ContactValueLine
+            kind="email"
+            value={email}
+            emptyLabel={noEmailLabel}
+            variant="detail"
+            className="text-muted-foreground"
+          />
         ) : null}
       </div>
     </div>

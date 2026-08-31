@@ -9,7 +9,7 @@ import {
   ItemListMenu,
 } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
-import { resolveButtonStyle } from '../../document/theme'
+import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
 import type { WebsiteButtonStyle } from '../../types'
 import { writeThemeDraft } from '../../utils/themeDraftStorage'
 import { upsertById } from '../../utils/upsertById'
@@ -54,6 +54,7 @@ export function ThemeButtonsTab({ theme, onChange }: ThemeEditorTabProps) {
                     <span
                       className="inline-flex shrink-0 items-center justify-center px-3 py-1 text-sm"
                       style={{
+                        ...buttonLabelTypography(),
                         background: snap.background,
                         color: snap.textColor,
                         border: `${snap.borderWidth}px solid ${snap.borderColor}`,

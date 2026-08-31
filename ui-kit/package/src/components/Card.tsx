@@ -31,7 +31,7 @@ function Card({ className, tone, style, compact, ...props }: CardProps) {
     return (
       <div
         className={cn(
-          'glass-card glass-card-elevate text-card-foreground shadow-sm rounded-lg border',
+          'glass-card glass-card-elevate text-card-foreground shadow-sm rounded-lg border border-[var(--color-border-light)]',
           className,
         )}
         style={style}
@@ -85,7 +85,7 @@ function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElem
   return (
     <h3
       className={cn(
-        'text-2xl font-semibold leading-none tracking-tight',
+        'text-2xl font-semibold leading-none tracking-tight text-title',
         themeNeedsShapeDom(uiTheme) ? titleMarkClassName : undefined,
         className,
       )}
@@ -95,7 +95,7 @@ function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElem
 }
 
 function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('text-sm text-muted-foreground', className)} {...props} />
+  return <p className={cn('text-sm text-description', className)} {...props} />
 }
 
 function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

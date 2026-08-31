@@ -167,6 +167,11 @@ export const dataApi = {
       body: JSON.stringify(body),
     })
   },
+  deleteProductVariant(productId: string, variantId: string) {
+    return apiClient<void>(`/products/${productId}/variants/${variantId}`, {
+      method: 'DELETE',
+    })
+  },
   listProductVariantStocks(productId: string, variantId: string) {
     return apiClient<{ items: ProductVariantStock[] }>(
       `/products/${productId}/variants/${variantId}/stocks`,

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@webonone/ui-kit'
+import { Mail } from 'lucide-react'
+import { Button, ReadOnlyField } from '@webonone/ui-kit'
 import { EditableSectionCard } from '@/features/settings/companies/components/EditableSectionCard'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
 
@@ -30,10 +31,7 @@ export function StaffUserCard({
           <p className="text-xs font-medium text-muted-foreground">Name</p>
           <p className="text-sm text-foreground">{staff.displayName}</p>
         </div>
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground">Email</p>
-          <p className="text-sm text-foreground">{staff.email ?? '—'}</p>
-        </div>
+        <ReadOnlyField label="Email" value={staff.email} icon={Mail} />
         {canViewProfile ? (
           <Button
             type="button"

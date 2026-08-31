@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { type VariantProps } from 'class-variance-authority'
+import { interactiveHoverClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { avatarVariants } from './avatar-variants'
@@ -120,7 +121,7 @@ function AvatarGroup({ users, max = 4, size = 'md', className }: AvatarGroupProp
           {users.map((user) => (
             <li
               key={user.alt}
-              className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+              className={cn('flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm', interactiveHoverClassName)}
             >
               <Avatar size="sm" src={user.src} alt={user.alt} fallback={user.fallback} />
               <span className="truncate">{user.name ?? user.alt}</span>

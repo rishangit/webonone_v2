@@ -25,11 +25,11 @@ const weekdaysSchema = z
 export const createCompanyEventBodySchema = z
   .object({
     service_id: z.string().trim().min(1).max(21),
-    staff_id: z.string().trim().min(1).max(21),
+    staff_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_user_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_display_name: z.string().trim().min(1).max(255).nullable().optional(),
     attendee_email: z.string().trim().email().max(255).nullable().optional(),
-    /** Required for Specific time (window) services; ignored for duration. */
+    /** Optional legacy event-level space; staff and space are normally set on the service workflow. */
     space_id: z.string().trim().min(1).max(21).nullable().optional(),
     starts_on: dateYmd,
     /** Required for duration services; ignored for window (taken from service). */
@@ -58,7 +58,7 @@ export const createCompanyEventBodySchema = z
 export const updateCompanyEventBodySchema = z
   .object({
     service_id: z.string().trim().min(1).max(21).optional(),
-    staff_id: z.string().trim().min(1).max(21).optional(),
+    staff_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_user_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_display_name: z.string().trim().min(1).max(255).nullable().optional(),
     attendee_email: z.string().trim().email().max(255).nullable().optional(),

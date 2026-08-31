@@ -41,10 +41,10 @@ const SegmentedSwitchItem = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        'ui-segmented-switch-item inline-flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors',
-        'data-[state=unchecked]:text-muted-foreground data-[state=unchecked]:hover:text-foreground',
+        'ui-segmented-switch-item ui-control-label inline-flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 whitespace-nowrap font-medium leading-none transition-colors',
+        'data-[state=unchecked]:text-label data-[state=unchecked]:hover:text-primary',
         'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-        size === 'sm' ? 'px-2.5 text-sm' : 'px-3 text-sm',
+        size === 'sm' ? 'px-4 text-sm has-[svg]:px-5' : 'px-5 text-sm has-[svg]:px-6',
         inputFocusRingClassName,
         className,
       )}

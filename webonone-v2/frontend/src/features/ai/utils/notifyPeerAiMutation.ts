@@ -11,6 +11,9 @@ function originOf(url: string): string | null {
 
 /** Tell the Data iframe (if it is open) to refetch the list for a confirmed AI write. */
 export function notifyPeerAiMutation(toolName: string): void {
+  if (toolName === 'create_data_product_variant' && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('webonone:platform:ai-product-variants-changed'))
+  }
   const dataOrigin = originOf(getDataOrigin())
   if (!dataOrigin || typeof document === 'undefined') {
     return

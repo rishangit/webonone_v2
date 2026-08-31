@@ -9,17 +9,7 @@ type EventWizardStepSummaryProps = {
 }
 
 export function EventWizardStepSummary({ values }: EventWizardStepSummaryProps) {
-  const {
-    service,
-    staff,
-    attendee,
-    space,
-    startsOn,
-    startTime,
-    weekdays,
-    recurrence,
-    recurrenceUntil,
-  } = values
+  const { service, attendee, startsOn, startTime, weekdays, recurrence, recurrenceUntil } = values
   const endHint =
     service?.timeMode === 'window'
       ? `${service.startTime ?? '—'}–${service.endTime ?? '—'}`
@@ -45,7 +35,6 @@ export function EventWizardStepSummary({ values }: EventWizardStepSummaryProps) 
         label="Time mode"
         value={service?.timeMode === 'window' ? 'Specific time' : 'Duration'}
       />
-      <SummaryRow label="Staff" value={staff?.displayName ?? '—'} />
       {isDuration ? (
         <SummaryRow
           label="Attendee"
@@ -55,9 +44,6 @@ export function EventWizardStepSummary({ values }: EventWizardStepSummaryProps) 
               : '—'
           }
         />
-      ) : null}
-      {service?.timeMode === 'window' ? (
-        <SummaryRow label="Where" value={space?.name ?? '—'} />
       ) : null}
       <SummaryRow label={isDuration ? 'Schedule' : 'Weekdays'} value={scheduleLabel} />
       <SummaryRow label={isDuration && recurrence === 'none' ? 'Date' : 'Range'} value={rangeLabel} />

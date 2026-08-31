@@ -68,6 +68,7 @@ export function ProfileView({
             <div className="min-w-0 flex-1 space-y-3">
               <h2 className="text-xl font-semibold">{user.displayName}</h2>
               <ContactVerifiedRow
+                kind="email"
                 label={t('fields.email')}
                 value={user.email}
                 verified={user.isEmailVerified}
@@ -118,6 +119,7 @@ export function ProfileView({
           onEdit={onEditSection ? () => onEditSection(3) : undefined}
         >
           <ContactVerifiedRow
+            kind="phone"
             label={t('fields.phoneNumber')}
             value={user.phoneNumber}
             verified={user.isPhoneVerified}

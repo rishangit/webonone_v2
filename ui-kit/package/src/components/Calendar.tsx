@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { interactiveHoverClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import { Button } from './Button'
 
@@ -91,7 +92,7 @@ function Calendar({ selected, onSelect, isDateDisabled, className }: CalendarPro
               disabled={isDisabled(day)}
               onClick={() => selectDay(day)}
               className={cn(
-                'h-8 w-8 rounded-md text-sm transition-colors hover:bg-accent',
+                cn('h-8 w-8 rounded-md text-sm transition-colors', interactiveHoverClassName),
                 isSelected(day) && 'bg-primary text-primary-foreground hover:bg-primary/90',
                 isToday(day) && !isSelected(day) && 'ring-1 ring-ring',
                 isDisabled(day) &&

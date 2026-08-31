@@ -3,31 +3,26 @@ import {
   applyColorMode,
   applyThemeVariables,
   applyUiTheme,
+  colorsToThemeDto,
+  createPlatformDefaultThemeDto,
   UI_THEMES,
   type ColorMode,
   type UiThemeId,
 } from '@webonone/theme'
 import { Button } from '@webonone/ui-kit'
 
-const PLATFORM_DEFAULT = {
-  id: 'platform-default',
-  name: 'Platform Default',
-  color1: '#344CE2',
-  color2: '#3578E8',
-  color3: '#3578E8',
-  color4: '#EFF3FA',
-  color5: '#0E2F59',
-}
+const PLATFORM_DEFAULT = createPlatformDefaultThemeDto()
 
-const ALT_PALETTE = {
-  id: 'alt',
-  name: 'Forest',
-  color1: '#059669',
-  color2: '#10b981',
-  color3: '#84cc16',
-  color4: '#f0fdf4',
-  color5: '#14532d',
-}
+const ALT_PALETTE = colorsToThemeDto(
+  {
+    primary: '#059669',
+    secondary: '#10b981',
+    background: '#f0fdf4',
+    surface: '#ffffff',
+    text: '#14532d',
+  },
+  { id: 'alt', name: 'Forest' },
+)
 
 const PALETTES = [PLATFORM_DEFAULT, ALT_PALETTE]
 

@@ -5,6 +5,7 @@ export type IdentityUserContact = {
   email: string | null
   phoneNumber: string | null
   displayName: string
+  avatarUrl: string | null
 }
 
 function apiBase(): string | null {
@@ -52,9 +53,26 @@ export async function fetchUserContact(userId: string): Promise<IdentityUserCont
       email: data.email ?? null,
       phoneNumber: data.phoneNumber ?? null,
       displayName: data.displayName,
+      avatarUrl: data.avatarUrl ?? null,
     }
   } catch (err) {
     console.error('[identityUserContact] fetch error:', err)
     return null
   }
+}
+
+/** Best-effort Identity profile avatars (e.g. Google OAuth picture) keyed by user id. */
+export async function fetchUserAvatarsByIds(userIds: string[]): Promise<Map<string, string>> {
+  const uniqueIds = [...new Set(userIds.filter(Boolean))]
+  if (uniqueIds.length === 0) return new Map()
+
+  const pairs = await Promise.all(
+    uniqueIds.map(async (userId) => {
+      const contact = await fetchUserContact(userId)
+      const avatarUrl = contact?.avatarUrl?.trim()
+      return avatarUrl ? ([userId, avatarUrl] as const) : null
+    }),
+  )
+
+  return new Map(pairs.filter((entry): entry is [string, string] => entry !== null))
 }

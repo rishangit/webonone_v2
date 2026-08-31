@@ -148,11 +148,17 @@ export function sendPlatformAiMutation(
   iframe.contentWindow?.postMessage(message, peerOrigin)
 }
 
-/** Embedded peer → shell: attach a Data entity to the AI assistant composer. */
+export type SendPlatformAiEntityContextOptions = {
+  openAssistant?: boolean
+  entities?: PlatformAiEntityRef[]
+  composerText?: string
+}
+
+/** Embedded peer → shell: attach Data entities to the AI assistant composer. */
 export function sendPlatformAiEntityContext(
   parentOrigin: string,
   entity: PlatformAiEntityRef,
-  options?: { openAssistant?: boolean },
+  options?: SendPlatformAiEntityContextOptions,
 ): void {
   if (typeof window === 'undefined' || !parentOrigin) {
     return
@@ -160,6 +166,8 @@ export function sendPlatformAiEntityContext(
   const message: PlatformAiEntityContextMessage = {
     type: PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT,
     entity,
+    ...(options?.entities ? { entities: options.entities } : {}),
+    ...(options?.composerText ? { composerText: options.composerText } : {}),
     ...(options?.openAssistant !== undefined ? { openAssistant: options.openAssistant } : {}),
   }
   window.parent.postMessage(message, parentOrigin)

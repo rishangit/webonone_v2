@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { interactiveHoverClassName } from '../lib/selectionStyles'
+import { shapeCompactCardAreaClassName, shapePanelClassName } from '../lib/shape'
 import { cn } from '../lib/utils'
-import { shapeCompactCardAreaClassName } from '../lib/shape'
-import { appShellHeaderTopClass, appShellSidebarHeightClass } from './shellContentPadding'
 import type { NavConfigItem } from '../types/nav'
+import { useUiTheme } from '../ui-theme/UiThemeContext'
+import { themeNeedsShapeDom } from '../ui-theme/uiTheme'
 import { Card } from '../components/Card'
 import { isStatusTagVariant, StatusTag } from '../components/StatusTag'
 import { NavGroup } from '../components/nav/NavGroup'
@@ -137,7 +139,7 @@ function AppSidebar({
   sidebarSession,
   onSidebarSessionClick,
   sidebarSessionClickLabel = 'Change account',
-  hasHeaderNotice = false,
+  hasHeaderNotice: _hasHeaderNotice = false,
   className,
 }: AppSidebarProps) {
   const [expandedGroupLabel, setExpandedGroupLabel] = useState<string | null>(() =>
@@ -176,20 +178,20 @@ function AppSidebar({
     'flex w-full items-center gap-2.5 px-3 py-2 shadow-none transition-colors'
   const sessionCardInteractiveClassName = cn(
     sessionCardClassName,
-    'cursor-pointer hover:border-primary/50 hover:bg-accent/50',
+    'cursor-pointer hover:border-primary/50',
+    interactiveHoverClassName,
   )
-  const headerTopClass = appShellHeaderTopClass(hasHeaderNotice)
-  const sidebarHeightClass = appShellSidebarHeightClass(hasHeaderNotice)
+  const shapedShell = themeNeedsShapeDom(useUiTheme())
 
   return (
     <aside
       className={cn(
-        'shell-glass fixed bottom-0 left-0 z-40 flex flex-col border-r transition-[width,transform] duration-200',
-        headerTopClass,
-        'w-64 md:sticky md:z-auto md:translate-x-0',
-        sidebarHeightClass,
-        hasHeaderNotice ? 'md:top-20' : 'md:top-14',
-        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+        'app-shell-sidebar shell-glass z-40 flex flex-col border-r transition-[width,transform] duration-200',
+        shapedShell && cn(shapePanelClassName, 'border-r-0'),
+        'max-md:app-shell-mobile-sidebar',
+        mobileOpen && 'max-md:app-shell-mobile-sidebar--open',
+        'w-64 md:relative md:sticky md:top-0 md:z-auto md:h-full md:max-h-full md:translate-x-0 md:self-stretch',
+        mobileOpen ? 'max-md:pointer-events-auto' : 'max-md:pointer-events-none md:translate-x-0',
         collapsed ? 'md:w-16' : 'md:w-64',
         className,
       )}
@@ -237,7 +239,7 @@ function AppSidebar({
       </nav>
 
       {showSessionCard && sidebarSession ? (
-        <div className={cn('shrink-0 border-t', shapeCompactCardAreaClassName)}>
+        <div className={cn('shrink-0', shapeCompactCardAreaClassName)}>
           {sessionInteractive ? (
             <button
               type="button"
@@ -282,7 +284,7 @@ function AppSidebar({
         </div>
       ) : null}
 
-      <div className="hidden shrink-0 border-t p-2 md:block">
+      <div className="hidden shrink-0 p-2 md:block">
         <SidebarCollapseButton
           collapsed={collapsed}
           onClick={() => onCollapsedChange(!collapsed)}

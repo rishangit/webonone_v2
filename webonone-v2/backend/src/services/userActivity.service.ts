@@ -2,6 +2,7 @@ import { db } from '../models/db.js'
 import type { CompanyEventRow } from '../repositories/companyEvent.repository.js'
 import type { CompanyEventSessionTokenRow } from '../repositories/companyEventSessionToken.repository.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
+import * as companyRepo from '../repositories/company.repository.js'
 import * as saleRepo from '../repositories/companySale.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
@@ -42,8 +43,8 @@ export type SessionTokenHistoryDetail = {
   endTime: string
   spaceId: string | null
   spaceName: string | null
-  staffId: string
-  staffDisplayName: string
+  staffId: string | null
+  staffDisplayName: string | null
   createdAt: string
   workflowProgress: TokenWorkflowProgressDto
   sales: SaleListItemDto[]
@@ -90,26 +91,51 @@ function serviceError(message: string, statusCode: number): Error & { statusCode
   return err
 }
 
+function companyWhere(companyId: string | null): { company_id?: string } {
+  return companyId ? { company_id: companyId } : {}
+}
+
+async function attachCompanyNames(items: UserActivityItem[]): Promise<void> {
+  const companyIds = [
+    ...new Set(
+      items
+        .map((item) => item.meta?.companyId)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0),
+    ),
+  ]
+  if (companyIds.length === 0) return
+  const companies = await companyRepo.findCompaniesByIds(companyIds)
+  const nameById = new Map(companies.map((row) => [row.id, row.name]))
+  for (const item of items) {
+    const companyId = item.meta?.companyId
+    if (typeof companyId !== 'string') continue
+    item.meta = { ...item.meta, companyName: nameById.get(companyId) ?? null }
+  }
+}
+
 export async function listUserActivity(input: {
-  companyId: string
+  companyId: string | null
   userId: string
   page?: number
   pageSize?: number
 }): Promise<{ items: UserActivityItem[]; total: number; page: number; pageSize: number }> {
   const page = Math.max(1, input.page ?? 1)
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
+  const scoped = companyWhere(input.companyId)
 
   const tokens = await db<CompanyEventSessionTokenRow>('company_event_session_tokens')
-    .where({ company_id: input.companyId, user_id: input.userId })
+    .where({ ...scoped, user_id: input.userId })
     .orderBy('created_at', 'desc')
     .limit(200)
 
   const eventIds = [...new Set(tokens.map((t) => t.event_id))]
   const eventsById = new Map<string, CompanyEventRow>()
   if (eventIds.length > 0) {
-    const events = await db<CompanyEventRow>('company_events')
-      .where({ company_id: input.companyId })
-      .whereIn('id', eventIds)
+    let eventsQuery = db<CompanyEventRow>('company_events').whereIn('id', eventIds)
+    if (input.companyId) {
+      eventsQuery = eventsQuery.andWhere({ company_id: input.companyId })
+    }
+    const events = await eventsQuery
     for (const event of events) {
       eventsById.set(event.id, event)
     }
@@ -143,12 +169,13 @@ export async function listUserActivity(input: {
         spaceName: event?.space_name ?? null,
         startTime: start,
         endTime: end,
+        companyId: token.company_id,
       },
     }
   })
 
   const attendeeEvents = await db<CompanyEventRow>('company_events')
-    .where({ company_id: input.companyId, attendee_user_id: input.userId })
+    .where({ ...scoped, attendee_user_id: input.userId })
     .orderBy('updated_at', 'desc')
     .limit(200)
 
@@ -164,16 +191,27 @@ export async function listUserActivity(input: {
       serviceId: event.service_id,
       staffId: event.staff_id,
       staffDisplayName: event.staff_display_name,
+      companyId: event.company_id,
     },
   }))
 
-  const staffRow = await staffRepo.findStaffByUserId(input.companyId, input.userId)
+  const staffRows = input.companyId
+    ? [await staffRepo.findStaffByUserId(input.companyId, input.userId)].filter(
+        (row): row is NonNullable<typeof row> => Boolean(row),
+      )
+    : await staffRepo.listStaffByUserId(input.userId)
+
   let staffItems: UserActivityItem[] = []
-  if (staffRow) {
-    const staffEvents = await db<CompanyEventRow>('company_events')
-      .where({ company_id: input.companyId, staff_id: staffRow.id })
+  if (staffRows.length > 0) {
+    const staffIds = staffRows.map((row) => row.id)
+    let staffEventsQuery = db<CompanyEventRow>('company_events')
+      .whereIn('staff_id', staffIds)
       .orderBy('updated_at', 'desc')
       .limit(200)
+    if (input.companyId) {
+      staffEventsQuery = staffEventsQuery.andWhere({ company_id: input.companyId })
+    }
+    const staffEvents = await staffEventsQuery
     staffItems = staffEvents.map((event) => ({
       id: `staff:${event.id}`,
       type: 'event_staff',
@@ -187,11 +225,14 @@ export async function listUserActivity(input: {
         attendeeDisplayName: event.attendee_display_name,
         staffId: event.staff_id,
         staffDisplayName: event.staff_display_name,
+        companyId: event.company_id,
       },
     }))
   }
 
-  const sales = await saleRepo.listSalesForCustomer(input.companyId, input.userId, 200)
+  const sales = input.companyId
+    ? await saleRepo.listSalesForCustomer(input.companyId, input.userId, 200)
+    : await saleRepo.listSalesForCustomerAny(input.userId, 200)
   const saleItems: UserActivityItem[] = sales.map((sale) => {
     const total = catalogRepo.parseMoney(sale.total) ?? 0
     return {
@@ -208,6 +249,7 @@ export async function listUserActivity(input: {
         currency: sale.currency,
         paymentMethod: sale.payment_method,
         status: sale.status,
+        companyId: sale.company_id,
       },
     }
   })
@@ -215,6 +257,7 @@ export async function listUserActivity(input: {
   const merged = [...tokenItems, ...attendeeItems, ...staffItems, ...saleItems].sort(
     (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
   )
+  await attachCompanyNames(merged)
 
   const total = merged.length
   const offset = (page - 1) * pageSize
@@ -224,16 +267,19 @@ export async function listUserActivity(input: {
 }
 
 export async function getSessionTokenHistoryDetail(input: {
-  companyId: string
+  companyId: string | null
   tokenId: string
 }): Promise<SessionTokenHistoryDetail> {
-  const token = await sessionTokenRepo.findTokenById(input.companyId, input.tokenId)
+  const token = input.companyId
+    ? await sessionTokenRepo.findTokenById(input.companyId, input.tokenId)
+    : await sessionTokenRepo.findTokenByIdAny(input.tokenId)
   if (!token) {
     throw serviceError('Session token not found', 404)
   }
 
+  const companyId = token.company_id
   const event = await db<CompanyEventRow>('company_events')
-    .where({ id: token.event_id, company_id: input.companyId })
+    .where({ id: token.event_id, company_id: companyId })
     .first()
   if (!event) {
     throw serviceError('Event not found for session token', 404)
@@ -242,7 +288,7 @@ export async function getSessionTokenHistoryDetail(input: {
   const occurrenceDate = formatDisplayDate(token.occurrence_date)
 
   let formTemplateId: string | null = null
-  const serviceRows = await catalogRepo.findByIds(input.companyId, 'services', [event.service_id])
+  const serviceRows = await catalogRepo.findByIds(companyId, 'services', [event.service_id])
   const serviceRow = serviceRows[0]
   if (serviceRow) {
     const mapped = catalogRepo.mapCatalogRow('services', serviceRow) as {
@@ -251,8 +297,8 @@ export async function getSessionTokenHistoryDetail(input: {
     formTemplateId = mapped.formTemplateId ?? null
   }
 
-  const defs = await loadWorkflowStepDefs(input.companyId, event.service_id)
-  const sales = await listSalesForSessionToken(input.companyId, token.id)
+  const defs = await loadWorkflowStepDefs(companyId, event.service_id)
+  const sales = await listSalesForSessionToken(companyId, token.id)
   return {
     tokenId: token.id,
     tokenNumber: token.token_number,

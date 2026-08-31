@@ -65,6 +65,21 @@ const CatalogAttributeValueEmbedPage = lazy(() =>
     default: m.CatalogAttributeValueEmbedPage,
   })),
 )
+const ProductAttributeDetailsPage = lazy(() =>
+  import('@/features/catalog/pages/CatalogAttributeDetailsPage').then((m) => ({
+    default: m.ProductAttributeDetailsPage,
+  })),
+)
+const ServiceAttributeDetailsPage = lazy(() =>
+  import('@/features/catalog/pages/CatalogAttributeDetailsPage').then((m) => ({
+    default: m.ServiceAttributeDetailsPage,
+  })),
+)
+const SpaceAttributeDetailsPage = lazy(() =>
+  import('@/features/catalog/pages/CatalogAttributeDetailsPage').then((m) => ({
+    default: m.SpaceAttributeDetailsPage,
+  })),
+)
 const ProductsPage = lazy(() =>
   import('@/features/products/pages/ProductsPage').then((m) => ({ default: m.ProductsPage })),
 )
@@ -277,6 +292,14 @@ export function App() {
             }
           />
           <Route
+            path="/products/:productId/attributes/:attributeId"
+            element={
+              <LazyRoute>
+                <ProductAttributeDetailsPage />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="/products/:productId"
             element={
               <LazyRoute>
@@ -286,6 +309,14 @@ export function App() {
           />
           {entityRoutes('/services', ServicesPage)}
           <Route
+            path="/services/:serviceId/attributes/:attributeId"
+            element={
+              <LazyRoute>
+                <ServiceAttributeDetailsPage />
+              </LazyRoute>
+            }
+          />
+          <Route
             path="/services/:serviceId"
             element={
               <LazyRoute>
@@ -294,6 +325,14 @@ export function App() {
             }
           />
           {entityRoutes('/spaces', SpacesPage)}
+          <Route
+            path="/spaces/:spaceId/attributes/:attributeId"
+            element={
+              <LazyRoute>
+                <SpaceAttributeDetailsPage />
+              </LazyRoute>
+            }
+          />
           <Route
             path="/spaces/:spaceId"
             element={

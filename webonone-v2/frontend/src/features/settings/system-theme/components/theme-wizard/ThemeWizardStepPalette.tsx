@@ -8,12 +8,8 @@ import {
   ColorInput,
   FormField,
 } from '@webonone/ui-kit'
-import { THEME_COLOR_LABELS } from '../../constants/defaultThemeFormValues'
+import { THEME_COLOR_KEYS, THEME_COLOR_LABELS } from '../../constants/defaultThemeFormValues'
 import type { ThemeFormValues } from '../../schemas/themeFormSchema'
-
-const COLOR_KEYS: Array<
-  keyof Pick<ThemeFormValues, 'color1' | 'color2' | 'color3' | 'color4' | 'color5'>
-> = ['color1', 'color2', 'color3', 'color4', 'color5']
 
 interface ThemeWizardStepPaletteProps {
   values: ThemeFormValues
@@ -33,7 +29,7 @@ export function ThemeWizardStepPalette({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        {COLOR_KEYS.map((key) => (
+        {THEME_COLOR_KEYS.map((key) => (
           <FormField
             key={key}
             label={THEME_COLOR_LABELS[key]}

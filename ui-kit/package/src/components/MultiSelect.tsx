@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Check, ChevronsUpDown, X, type LucideIcon } from 'lucide-react'
+import { interactiveHoverClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import { Checkbox } from './Checkbox'
 import { inputGroupFocusRingClassName } from './Input'
@@ -70,7 +71,7 @@ function MultiSelect({
               <span
                 role="button"
                 tabIndex={disabled ? -1 : 0}
-                className="rounded-sm hover:bg-accent"
+                className={cn('rounded-sm', interactiveHoverClassName)}
                 onClick={(e) => removeChip(opt.value, e)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -103,7 +104,7 @@ function MultiSelect({
         <button
           {...triggerProps}
           className={cn(
-            'ui-shape-control flex min-h-10 w-full items-center gap-2 border border-input bg-input-background px-3 py-2 text-sm font-normal text-foreground hover:bg-input-background focus-visible:bg-input-background data-[state=open]:bg-input-background disabled:cursor-not-allowed disabled:opacity-50',
+            'ui-shape-control flex min-h-10 w-full items-center gap-2 border border-input bg-transparent px-3 py-2 text-sm font-normal text-foreground disabled:cursor-not-allowed disabled:opacity-50',
             inputGroupFocusRingClassName,
             className,
           )}
@@ -119,7 +120,7 @@ function MultiSelect({
             return (
               <div
                 key={option.value}
-                className="flex items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
+                className={cn('flex items-center gap-2 rounded-sm px-2 py-1.5', interactiveHoverClassName)}
               >
                 <Checkbox
                   id={inputId}

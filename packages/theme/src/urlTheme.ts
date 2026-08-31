@@ -1,9 +1,15 @@
 import { z } from 'zod'
-import { THEME_CONTRACT_VERSION, THEME_QUERY } from './constants'
+import { THEME_CONTRACT_VERSION, THEME_CONTRACT_VERSION_V1, THEME_QUERY } from './constants'
 import { applyThemeVariables } from './applyTheme'
 import { persistAppliedTheme, readPersistedTheme } from './themeSession'
 import type { ColorMode, ThemeDto, ThemePayload } from './types'
 import { isHexColor } from './colorUtils'
+import {
+  themeColorsToUrlSlots,
+  themeDtoToColors,
+  urlSlotsToThemeDto,
+  v1UrlSlotsToThemeDto,
+} from './themeMapper'
 
 const colorModeSchema = z.enum(['light', 'dark'])
 
@@ -18,27 +24,21 @@ const themeDtoSchema = z.object({
 })
 
 const themePayloadSchema = z.object({
-  version: z.literal(1),
+  version: z.union([z.literal(1), z.literal(2)]),
   theme: themeDtoSchema,
   colorMode: colorModeSchema,
 })
 
-function parseColorsParam(raw: string): string[] | null {
+function parseColorsParam(raw: string): [string, string, string, string, string] | null {
   const parts = raw.split(',').map((p) => p.trim())
   if (parts.length !== 5) return null
-  const withHash = parts.map((p) => (p.startsWith('#') ? p : `#${p}`))
+  const withHash = parts.map((p) => (p.startsWith('#') ? p : `#${p}`).toUpperCase())
   if (!withHash.every(isHexColor)) return null
-  return withHash
+  return withHash as [string, string, string, string, string]
 }
 
 export function serializeThemeQueryParams(payload: ThemePayload): Record<string, string> {
-  const colors = [
-    payload.theme.color1,
-    payload.theme.color2,
-    payload.theme.color3,
-    payload.theme.color4,
-    payload.theme.color5,
-  ]
+  const colors = themeColorsToUrlSlots(themeDtoToColors(payload.theme))
     .map((c) => c.replace('#', '').toUpperCase())
     .join(',')
 
@@ -57,8 +57,6 @@ export function serializeThemeQueryParams(payload: ThemePayload): Record<string,
 
 export function parseThemeQueryParams(searchParams: URLSearchParams): ThemePayload | null {
   const version = searchParams.get(THEME_QUERY.V)
-  if (version !== THEME_CONTRACT_VERSION) return null
-
   const modeResult = colorModeSchema.safeParse(searchParams.get(THEME_QUERY.MODE))
   const colorsRaw = searchParams.get(THEME_QUERY.COLORS)
   if (!modeResult.success || !colorsRaw) return null
@@ -67,18 +65,25 @@ export function parseThemeQueryParams(searchParams: URLSearchParams): ThemePaylo
   if (!colors) return null
 
   const name = searchParams.get(THEME_QUERY.NAME) ?? 'Redirect Theme'
+  const meta = { id: 'redirect-theme', name }
 
-  const theme: ThemeDto = {
-    id: 'redirect-theme',
-    name,
-    color1: colors[0]!,
-    color2: colors[1]!,
-    color3: colors[2]!,
-    color4: colors[3]!,
-    color5: colors[4]!,
+  if (version === THEME_CONTRACT_VERSION) {
+    return {
+      version: 2,
+      theme: urlSlotsToThemeDto(colors, meta),
+      colorMode: modeResult.data,
+    }
   }
 
-  return { version: 1, theme, colorMode: modeResult.data }
+  if (version === THEME_CONTRACT_VERSION_V1) {
+    return {
+      version: 1,
+      theme: v1UrlSlotsToThemeDto(colors, meta),
+      colorMode: modeResult.data,
+    }
+  }
+
+  return null
 }
 
 export function stripThemeQueryParams(searchParams: URLSearchParams): URLSearchParams {

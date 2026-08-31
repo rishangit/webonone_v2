@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
+  ContactValueLine,
   DropdownMenuItem,
   FeaturePage,
   FormField,
@@ -14,6 +15,7 @@ import {
   ItemListItem,
   ItemListMenu,
   itemListThumbClassName,
+  itemListRowBodyClassName,
   ListFilterPanel,
   ListFilterTrigger,
   ListAddButton,
@@ -287,7 +289,7 @@ export function UsersPage() {
                     <ItemListContent>
                       <button
                         type="button"
-                        className="flex w-full items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className={`${itemListRowBodyClassName} rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring`}
                         onClick={() => goToUserDetail(user.id)}
                       >
                         <ImagePreview
@@ -299,9 +301,11 @@ export function UsersPage() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium">{user.displayName}</p>
                           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                            <p className="truncate text-xs text-muted-foreground">
-                              {user.email?.trim() ? user.email : t('noEmail')}
-                            </p>
+                            <ContactValueLine
+                              kind="email"
+                              value={user.email}
+                              emptyLabel={t('noEmail')}
+                            />
                             {user.email?.trim() ? (
                               <StatusTag
                                 className="shrink-0"
@@ -311,9 +315,7 @@ export function UsersPage() {
                           </div>
                           {user.phoneNumber?.trim() ? (
                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                              <p className="truncate text-xs text-muted-foreground">
-                                {user.phoneNumber}
-                              </p>
+                              <ContactValueLine kind="phone" value={user.phoneNumber} />
                               <StatusTag
                                 className="shrink-0"
                                 variant={user.isPhoneVerified ? 'verified' : 'unverified'}

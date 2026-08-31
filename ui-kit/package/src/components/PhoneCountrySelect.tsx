@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Check, ChevronDown } from 'lucide-react'
+import { interactiveHighlightSurfaceClassName, interactiveHoverClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import {
   PHONE_COUNTRIES,
@@ -143,7 +144,7 @@ function PhoneCountrySelect({ value, onValueChange, disabled, id }: PhoneCountry
                   aria-selected={isSelected}
                   className={cn(
                     'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
-                    isHighlighted ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground',
+                    isHighlighted ? interactiveHighlightSurfaceClassName : interactiveHoverClassName,
                   )}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   onClick={() => selectCountry(country)}

@@ -7,9 +7,62 @@
     /* Platform Default semantic palette — @webonone/theme overwrites at runtime */
     --color-1: #344ce2;
     --color-2: #3578e8;
-    --color-3: #3578e8;
+    --color-3: #17211d;
     --color-4: #eff3fa;
-    --color-5: #0e2f59;
+    --color-5: #ffffff;
+
+    /* Semantic theme tokens — @webonone/theme overwrites at runtime */
+    --color-primary: #344ce2;
+    --color-primary-hover: #2a3eb4;
+    --color-primary-active: #22339a;
+    --color-primary-light: #e8ebfc;
+    --color-primary-text: #ffffff;
+
+    --color-secondary: #3578e8;
+    --color-secondary-hover: #2a60ba;
+    --color-secondary-active: #224f98;
+    --color-secondary-light: #e9f1fd;
+    --color-secondary-text: #ffffff;
+
+    --color-background: #eff3fa;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f5f8fe;
+    --color-surface-active: #eef3fc;
+    --color-surface-selected: #e8eefb;
+
+    --color-text: #17211d;
+    --color-text-title: #17211d;
+    --color-text-description: #6b7280;
+    --color-text-label: #4b5563;
+    --color-text-secondary: #4b5563;
+    --color-text-muted: #9ca3af;
+    --color-text-disabled: #c4c9cf;
+
+    --color-border: #d8e0ea;
+    --color-border-light: #e8edf4;
+    --color-border-strong: #c5d0de;
+    --color-border-hover: #9eb4e8;
+    --color-border-focus: #344ce2;
+    --color-divider: #e8edf4;
+
+    --color-focus: rgba(52, 76, 226, 0.35);
+    --color-selection: rgba(52, 76, 226, 0.2);
+
+    --color-success: #2e9b63;
+    --color-success-background: rgba(46, 155, 99, 0.12);
+    --color-success-border: #b8e0cb;
+
+    --color-warning: #d99a22;
+    --color-warning-background: rgba(217, 154, 34, 0.12);
+    --color-warning-border: #edd5a8;
+
+    --color-error: #d9534f;
+    --color-error-background: rgba(217, 83, 79, 0.12);
+    --color-error-border: #e8b4b2;
+
+    --color-info: #3787c8;
+    --color-info-background: rgba(55, 135, 200, 0.12);
+    --color-info-border: #b3d4ee;
 
     /* Semantic fallbacks before ThemeProvider */
     --primary: 232 75% 55%;
@@ -22,6 +75,22 @@
     /** App shell header + sidebar — fixed neutrals; @webonone/theme pins at runtime. */
     --shell-chrome-bg: 240 5% 96%;
     --shell-chrome-border: 240 6% 88%;
+    /**
+     * Shell chrome spacing — keep in sync with shellChromeRootClassName (`p-2 gap-2`).
+     * High-tech overrides below for larger page-style insets.
+     */
+    --shell-chrome-inset-x: 0.5rem;
+    --shell-chrome-inset-y: 0.5rem;
+    --shell-chrome-gap: 0.5rem;
+    --app-shell-header-inner-height: 3.5rem;
+    --app-shell-notice-band-height: 0px;
+    --app-shell-header-outer-height: calc(
+      var(--app-shell-header-inner-height) + var(--app-shell-notice-band-height)
+    );
+    --app-shell-mobile-overlay-top: calc(
+      var(--shell-chrome-inset-y) + var(--app-shell-header-inner-height) +
+        var(--app-shell-notice-band-height) + var(--shell-chrome-gap)
+    );
     --accent-primary: 232 75% 55%;
     --accent-secondary: 218 80% 56%;
     --accent-primary-hover: 232 75% 45%;
@@ -74,6 +143,58 @@
   }
 
   .dark {
+    --color-primary: #5a6fe8;
+    --color-primary-hover: #6b7eec;
+    --color-primary-active: #7c8ef0;
+    --color-primary-light: #1a2240;
+    --color-primary-text: #ffffff;
+
+    --color-secondary: #5a8ef0;
+    --color-secondary-hover: #6b9af2;
+    --color-secondary-active: #7ca6f4;
+    --color-secondary-light: #1a2840;
+    --color-secondary-text: #ffffff;
+
+    --color-background: #111816;
+    --color-surface: #19221f;
+    --color-surface-hover: #1f2a27;
+    --color-surface-active: #25322e;
+    --color-surface-selected: #1e2d35;
+
+    --color-text: #e8edea;
+    --color-text-title: #f1f5f3;
+    --color-text-description: #9ca3af;
+    --color-text-label: #b0b8b3;
+    --color-text-secondary: #b0b8b3;
+    --color-text-muted: #7a8680;
+    --color-text-disabled: #5c6560;
+
+    --color-border: #2a3531;
+    --color-border-light: #222b28;
+    --color-border-strong: #35403c;
+    --color-border-hover: #3d5a8a;
+    --color-border-focus: #5a6fe8;
+    --color-divider: #222b28;
+
+    --color-focus: rgba(90, 111, 232, 0.45);
+    --color-selection: rgba(90, 111, 232, 0.28);
+
+    --color-success: #3aad72;
+    --color-success-background: rgba(58, 173, 114, 0.16);
+    --color-success-border: #2a5a40;
+
+    --color-warning: #e5ab3a;
+    --color-warning-background: rgba(229, 171, 58, 0.16);
+    --color-warning-border: #5a4520;
+
+    --color-error: #e06562;
+    --color-error-background: rgba(224, 101, 98, 0.16);
+    --color-error-border: #5a2a28;
+
+    --color-info: #4a9ad8;
+    --color-info-background: rgba(74, 154, 216, 0.16);
+    --color-info-border: #2a4a66;
+
     --background-base: 240 4% 20%;
     --background-tint: 240 4% 22%;
     --background-tint-opacity: 0.16;
@@ -94,7 +215,7 @@
     --popover: 215 28% 24% / 0.94;
     --menu-bg: 215 28% 24% / 0.94;
     --popover-foreground: 0 0% 98%;
-    --glass-bg: 215 28% 17% / 0.8;
+    --glass-bg: 240 4% 16%;
     --glass-border: 0 0% 98% / 0.22;
     --glass-shadow: 0 0% 0% / 0.25;
     --shell-chrome-bg: 240 4% 16%;
@@ -175,8 +296,8 @@
   select:-webkit-autofill:focus {
     -webkit-text-fill-color: hsl(var(--foreground));
     caret-color: hsl(var(--foreground));
-    -webkit-box-shadow: 0 0 0 1000px hsl(var(--input-background)) inset;
-    box-shadow: 0 0 0 1000px hsl(var(--input-background)) inset;
+    -webkit-box-shadow: 0 0 0 1000px transparent inset;
+    box-shadow: 0 0 0 1000px transparent inset;
     transition: background-color 9999s ease-in-out 0s;
   }
 }
@@ -184,10 +305,15 @@
 @layer utilities {
   /**
    * Classic UI theme — rounded glass surfaces without industrial clip-path geometry.
+   * Radius scale inspired by iOS: generous cards, soft controls, pill action buttons.
    */
   [data-ui-theme='classic'],
   html:not([data-ui-theme]) {
-    --radius: 0.5rem;
+    --radius: 1.25rem;
+    --radius-surface: 0.875rem;
+    --radius-pill: 9999px;
+    --radius-button: var(--radius-pill);
+    --radius-control: var(--radius-pill);
   }
 
   [data-ui-theme='classic'] .glass-card,
@@ -207,14 +333,34 @@
   }
 
   [data-ui-theme='classic'] .ui-shape-panel,
-  [data-ui-theme='classic'] .ui-shape-panel-sm,
   [data-ui-theme='classic'] .ui-shape-panel-lg,
-  [data-ui-theme='classic'] .ui-shape-image {
+  [data-ui-theme='classic'] .ui-shape-image,
+  html:not([data-ui-theme]) .ui-shape-panel,
+  html:not([data-ui-theme]) .ui-shape-panel-lg,
+  html:not([data-ui-theme]) .ui-shape-image {
     border-radius: var(--radius);
+    overflow: hidden;
   }
 
-  [data-ui-theme='classic'] .ui-shape-control {
-    border-radius: var(--radius);
+  [data-ui-theme='classic'] .ui-shape-panel-sm,
+  html:not([data-ui-theme]) .ui-shape-panel-sm {
+    border-radius: var(--radius-surface);
+    overflow: hidden;
+  }
+
+  [data-ui-theme='classic'] .ui-shape-control,
+  html:not([data-ui-theme]) .ui-shape-control {
+    border-radius: var(--radius-control);
+  }
+
+  [data-ui-theme='classic'] textarea.ui-shape-control,
+  html:not([data-ui-theme]) textarea.ui-shape-control {
+    border-radius: var(--radius-surface);
+  }
+
+  [data-ui-theme='classic'] .ui-shape-button,
+  html:not([data-ui-theme]) .ui-shape-button {
+    border-radius: var(--radius-button);
   }
 
   [data-ui-theme='classic'] .ui-title {
@@ -225,26 +371,88 @@
     content: none;
   }
 
+  [data-ui-theme='high-tech'] {
+    /* Match shellPagePadding: px-2 py-4 sm:px-6 sm:py-6 */
+    --shell-chrome-inset-x: 0.5rem;
+    --shell-chrome-inset-y: 1rem;
+    --shell-chrome-gap: 0.5rem;
+  }
+
+  /* md+ only — mobile drawer (max 767px) must match constant shell root `p-2`. */
+  @media (min-width: 768px) {
+    [data-ui-theme='high-tech'] {
+      --shell-chrome-inset-x: 1.5rem;
+      --shell-chrome-inset-y: 1.5rem;
+    }
+  }
+
+  .app-shell-root--notice {
+    --app-shell-notice-band-height: 1.5rem;
+  }
+
+  /** Mobile left-nav scrim — fixed to the viewport so shell chrome padding is covered. */
+  .app-shell-mobile-nav-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+  }
+
+  /** Mobile drawer — aligned to shell chrome (header left + vertical insets). */
+  @media (max-width: 767px) {
+    .app-shell-mobile-sidebar {
+      position: fixed;
+      top: var(--app-shell-mobile-overlay-top);
+      bottom: var(--shell-chrome-inset-y);
+      left: var(--shell-chrome-inset-x);
+      z-index: 40;
+      height: auto;
+      transform: translateX(calc(-100% - var(--shell-chrome-inset-x) - 2px));
+    }
+
+    .app-shell-mobile-sidebar--open {
+      transform: translateX(0);
+    }
+  }
+
   /**
-   * High-tech UI theme — flat page canvas; keep radial tint only (no line/grid pattern).
+   * Segmented tabs — rounded track + pill segments (matches SegmentedSwitch).
    */
-  html[data-ui-theme='high-tech'] {
-    background-image:
-      radial-gradient(
-        ellipse 120% 70% at 50% -15%,
-        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 1.4)),
-        transparent 58%
-      ),
-      radial-gradient(
-        ellipse 70% 55% at 100% 40%,
-        hsl(var(--background-tint) / var(--background-tint-opacity)),
-        transparent 52%
-      ),
-      radial-gradient(
-        ellipse 65% 50% at 0% 85%,
-        hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
-        transparent 50%
-      );
+  .ui-tabs-list-shell-classic {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ui-tabs-list-classic {
+    background: transparent;
+  }
+
+  .ui-tabs-trigger-classic {
+    border: 0;
+    background: transparent;
+    color: var(--color-text-label);
+    border-radius: var(--radius-pill, 9999px);
+    transition:
+      background 0.2s ease,
+      color 0.15s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .ui-tabs-trigger-classic:not([data-state='active']):hover {
+    color: var(--color-primary);
+  }
+
+  .ui-segmented-switch-item {
+    border: 0;
+    background: transparent;
+    border-radius: var(--radius-pill, 9999px);
+    transition:
+      background 0.2s ease,
+      color 0.15s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .ui-tabs-content {
+    background: transparent;
   }
 
   /**
@@ -265,6 +473,32 @@
       calc(100% - var(--_step)) 100%,
       0 100%
     );
+    overflow: hidden;
+  }
+
+  /**
+   * Bordered panels — inset stroke follows clip-path (Tailwind border is stripped in high-tech).
+   */
+  [data-ui-theme='classic'] .ui-shape-panel-bordered,
+  html:not([data-ui-theme]) .ui-shape-panel-bordered {
+    border-width: 1px;
+    border-style: solid;
+    border-color: hsl(var(--border));
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-panel-bordered {
+    position: relative;
+    isolation: isolate;
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-panel-bordered::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    clip-path: inherit;
+    box-shadow: inset 0 0 0 1px hsl(var(--border));
   }
 
   [data-ui-theme='high-tech'] .ui-shape-panel-sm {
@@ -682,24 +916,6 @@
         ellipse 65% 50% at 0% 85%,
         hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
         transparent 50%
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent 0 88px,
-        hsl(var(--foreground) / 0.045) 88px 89px,
-        transparent 89px 160px
-      ),
-      repeating-linear-gradient(
-        0deg,
-        transparent 0 56px,
-        hsl(var(--foreground) / 0.04) 56px 57px,
-        transparent 57px 140px
-      ),
-      repeating-linear-gradient(
-        45deg,
-        transparent 0 110px,
-        hsl(var(--accent-primary) / 0.06) 110px 111px,
-        transparent 111px 220px
       );
   }
 
@@ -732,6 +948,41 @@
     border-color: hsl(var(--shell-chrome-border));
   }
 
+  /**
+   * Dark mode — cards and list rows match left nav shell chrome (opaque, no glass blur).
+   */
+  .dark .glass-card.glass-card-elevate,
+  .dark .glass-card.item-list-row {
+    background-color: hsl(var(--shell-chrome-bg));
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .dark .glass-card.glass-card-elevate:hover {
+    background-color: hsl(var(--shell-chrome-bg));
+  }
+
+  .dark .glass-card.item-list-row:hover {
+    background-color: var(--color-selection);
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-shape-card .ui-shape-card-surface.glass-card,
+  [data-ui-theme='high-tech'] .dark .ui-shape-list-row .ui-shape-list-row-surface.glass-card {
+    background: hsl(var(--shell-chrome-bg));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-shape-list-row.border-primary .ui-shape-list-row-surface.glass-card {
+    background: var(--color-selection);
+  }
+
+  [data-ui-theme='high-tech'] .dark .ui-shape-card .ui-shape-card-surface.glass-card::before,
+  [data-ui-theme='high-tech'] .dark .ui-shape-list-row .ui-shape-list-row-surface.glass-card::before {
+    opacity: 0;
+  }
+
   [data-ui-theme='high-tech'] .glass-card,
   [data-ui-theme='high-tech'] .shell-glass,
   [data-ui-theme='high-tech'] .glass-card-solid,
@@ -757,24 +1008,6 @@
         ellipse 65% 50% at 0% 85%,
         hsl(var(--background-tint) / calc(var(--background-tint-opacity) * 0.85)),
         transparent 50%
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent 0 88px,
-        hsl(var(--foreground) / 0.045) 88px 89px,
-        transparent 89px 160px
-      ),
-      repeating-linear-gradient(
-        0deg,
-        transparent 0 56px,
-        hsl(var(--foreground) / 0.04) 56px 57px,
-        transparent 57px 140px
-      ),
-      repeating-linear-gradient(
-        45deg,
-        transparent 0 110px,
-        hsl(var(--accent-primary) / 0.06) 110px 111px,
-        transparent 111px 220px
       );
     border: 1px solid hsl(var(--glass-border));
     -webkit-backdrop-filter: blur(8px);
@@ -816,96 +1049,96 @@
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='pending'],
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='upcoming'] {
-    background-color: rgb(254 243 199) !important;
-    color: rgb(120 53 15) !important;
+    background-color: var(--color-warning-background) !important;
+    color: var(--color-warning) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='pending'],
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='upcoming'] {
-    background-color: rgb(69 26 3 / 0.92) !important;
-    color: rgb(253 230 138) !important;
+    background-color: var(--color-warning-background) !important;
+    color: var(--color-warning) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='rejected'] {
-    background-color: rgb(254 226 226) !important;
-    color: rgb(127 29 29) !important;
+    background-color: var(--color-error-background) !important;
+    color: var(--color-error) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='rejected'] {
-    background-color: rgb(69 10 10 / 0.92) !important;
-    color: rgb(254 202 202) !important;
+    background-color: var(--color-error-background) !important;
+    color: var(--color-error) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='approved'],
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='current'] {
-    background-color: rgb(209 250 229) !important;
-    color: rgb(6 78 59) !important;
+    background-color: var(--color-success-background) !important;
+    color: var(--color-success) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='approved'],
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='current'] {
-    background-color: rgb(6 44 34 / 0.92) !important;
-    color: rgb(167 243 208) !important;
+    background-color: var(--color-success-background) !important;
+    color: var(--color-success) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='unverified'] {
-    background-color: rgb(255 237 213) !important;
-    color: rgb(124 45 18) !important;
+    background-color: var(--color-warning-background) !important;
+    color: var(--color-warning) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='unverified'] {
-    background-color: rgb(67 20 7 / 0.92) !important;
-    color: rgb(254 215 170) !important;
+    background-color: var(--color-warning-background) !important;
+    color: var(--color-warning) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='verified'] {
-    background-color: rgb(204 251 241) !important;
-    color: rgb(19 78 74) !important;
+    background-color: var(--color-success-background) !important;
+    color: var(--color-success) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='verified'] {
-    background-color: rgb(19 58 55 / 0.92) !important;
-    color: rgb(153 246 228) !important;
+    background-color: var(--color-success-background) !important;
+    color: var(--color-success) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='super_admin'] {
-    background-color: rgb(237 233 254) !important;
-    color: rgb(76 29 149) !important;
+    background-color: var(--color-info-background) !important;
+    color: var(--color-info) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='super_admin'] {
-    background-color: rgb(46 16 101 / 0.92) !important;
-    color: rgb(221 214 254) !important;
+    background-color: var(--color-info-background) !important;
+    color: var(--color-info) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='company_admin'] {
-    background-color: rgb(224 242 254) !important;
-    color: rgb(12 74 110) !important;
+    background-color: var(--color-info-background) !important;
+    color: var(--color-info) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='company_admin'] {
-    background-color: rgb(12 44 66 / 0.92) !important;
-    color: rgb(186 230 253) !important;
+    background-color: var(--color-info-background) !important;
+    color: var(--color-info) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='member'] {
-    background-color: rgb(241 245 249) !important;
-    color: rgb(15 23 42) !important;
+    background-color: var(--color-surface-hover) !important;
+    color: var(--color-text-secondary) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='member'] {
-    background-color: rgb(30 41 59 / 0.92) !important;
-    color: rgb(226 232 240) !important;
+    background-color: var(--color-surface-hover) !important;
+    color: var(--color-text-secondary) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='staff'] {
-    background-color: rgb(224 231 255) !important;
-    color: rgb(49 46 129) !important;
+    background-color: var(--color-primary-light) !important;
+    color: var(--color-primary) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='staff'] {
-    background-color: rgb(30 27 75 / 0.92) !important;
-    color: rgb(199 210 254) !important;
+    background-color: var(--color-primary-light) !important;
+    color: var(--color-primary) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='ended'] {
@@ -920,98 +1153,37 @@
     z-index: 1;
   }
 
-  /**
-   * Tabs — mini accent tabs; layout matches classic (no shell padding/margin).
-   */
-  [data-ui-theme='high-tech'] .ui-tabs-list-shell {
-    overflow: visible;
-    box-shadow: none;
+  /** Compact control labels — tight line box for optical vertical centering in buttons/tabs. */
+  .ui-control-label {
+    line-height: 1;
+    text-box-trim: cap alphabetic;
+    text-box-edge: cap alphabetic;
   }
 
-  [data-ui-theme='high-tech'] .ui-tabs-trigger-shell {
-    overflow: visible;
-    position: relative;
-    display: inline-flex;
-    vertical-align: top;
-    --tab-tone: var(--accent-primary);
-    --_tab-cut: var(--shape-card-cut);
-    --card-tone: var(--tab-tone);
-    --card-tone-surface: 0.24;
-    --card-tone-fill: hsl(var(--tab-tone) / var(--card-tone-surface));
-  }
-
-  [data-ui-theme='high-tech'] .ui-tabs-trigger-shell:nth-child(even) {
-    --tab-tone: var(--accent-secondary);
-  }
-
-  [data-ui-theme='high-tech'] .ui-tabs-trigger-shell::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 2;
-    width: var(--shape-list-tab-before-width);
-    height: var(--shape-list-tab-height);
-    transform: translateY(-100%);
-    background: var(--card-tone-fill);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    pointer-events: none;
-    --_tab-h: var(--shape-list-tab-height);
-    --_tab-cut: calc(var(--_tab-h) / 2);
-    clip-path: polygon(
-      0 var(--_tab-cut),
-      var(--_tab-cut) 0,
-      calc(100% - var(--_tab-cut)) 0,
-      100% var(--_tab-cut),
-      100% 100%,
-      0 100%
-    );
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tabs-trigger-shell::before {
-    --card-tone-surface: 0.3;
-    --card-tone-fill: hsl(var(--tab-tone) / var(--card-tone-surface));
-  }
-
-  /** Tab body — borderless; compact chamfers (control scale). */
-  [data-ui-theme='high-tech'] .ui-tabs-trigger {
-    position: relative;
-    border: none;
-    --_tab-cut-y: 50%;
-    --_tab-cut-x: var(--shape-cut-sm);
-    clip-path: polygon(
-      0 var(--_tab-cut-y),
-      var(--_tab-cut-x) 0,
-      calc(100% - var(--_tab-cut-x)) 0,
-      100% var(--_tab-cut-y),
-      100% 100%,
-      0 100%
-    );
-  }
-
-  /** Primary button — palette accent (color3 → color1) with hover + tinted shadow. */
+  /** Primary button + segmented switch / tab active segment — gradient fill. */
   .btn-primary-gradient,
-  .ui-segmented-switch-item[data-state='checked'] {
+  .ui-segmented-switch-item[data-state='checked'],
+  .ui-tabs-trigger-classic[data-state='active'] {
     border: 0;
     background: linear-gradient(
       to right,
-      hsl(var(--accent-secondary)),
-      hsl(var(--accent-primary))
+      var(--color-secondary),
+      var(--color-primary)
     );
-    color: hsl(var(--accent-button-text));
-    box-shadow: 0 2px 6px hsl(var(--accent-secondary) / 0.12);
+    color: var(--color-primary-text);
+    box-shadow: 0 2px 6px var(--color-focus);
     transition:
       background 0.2s ease,
       box-shadow 0.3s ease;
   }
 
   .btn-primary-gradient:hover:not(:disabled),
-  .ui-segmented-switch-item[data-state='checked']:hover:not(:disabled) {
+  .ui-segmented-switch-item[data-state='checked']:hover:not(:disabled),
+  .ui-tabs-trigger-classic[data-state='active']:hover:not(:disabled) {
     background: linear-gradient(
       to right,
-      hsl(var(--accent-primary-hover)),
-      hsl(var(--accent-primary))
+      var(--color-primary-hover),
+      var(--color-primary)
     );
   }
 
@@ -1024,7 +1196,7 @@
     position: relative;
     isolation: isolate;
     background: transparent;
-    color: hsl(var(--accent-button-text));
+    color: var(--color-primary-text);
     transition: box-shadow 0.3s ease;
   }
 
@@ -1037,16 +1209,16 @@
     clip-path: inherit;
     background: linear-gradient(
       to right,
-      hsl(var(--accent-secondary)),
-      hsl(var(--accent-primary))
+      var(--color-secondary),
+      var(--color-primary)
     );
   }
 
   .btn-primary-gradient[data-list-add-button]:hover:not(:disabled)::before {
     background: linear-gradient(
       to right,
-      hsl(var(--accent-primary-hover)),
-      hsl(var(--accent-primary))
+      var(--color-primary-hover),
+      var(--color-primary)
     );
   }
 

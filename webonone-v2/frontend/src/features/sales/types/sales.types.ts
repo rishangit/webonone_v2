@@ -10,6 +10,8 @@ export type SaleLine = {
   libraryEntityId: string | null
   name: string
   variantName: string | null
+  libraryVariantId?: string | null
+  libraryStockId?: string | null
   quantity: number
   unitPrice: number
   lineTotal: number
@@ -42,6 +44,8 @@ export type CreateSaleLineBody = {
   catalogItemId: string
   quantity: number
   unitPrice: number
+  libraryVariantId?: string
+  libraryStockId?: string
 }
 
 export type CreateSaleBody = {
@@ -77,4 +81,10 @@ export type PosCartLine = {
   name: string
   quantity: number
   unitPrice: number
+  imageUrl?: string | null
+  libraryProductId?: string | null
+  libraryVariantId?: string | null
+  libraryStockId?: string | null
+  variantName?: string | null
+  availableQuantity?: number | null
 }

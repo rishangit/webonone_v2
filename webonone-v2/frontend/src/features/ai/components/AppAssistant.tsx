@@ -152,7 +152,7 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
 
   const insertEntityTagAtCursor = useCallback(
     (entity: PlatformAiEntityRef, options?: { atEnd?: boolean }) => {
-      const tag = formatEntityTag(entity.kind, entity.label)
+      const tag = formatEntityTag(entity)
       setDraft((currentDraft) => {
         const start = options?.atEnd ? currentDraft.length : selectionRef.current.start
         const end = options?.atEnd ? currentDraft.length : selectionRef.current.end
@@ -175,7 +175,16 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
     if (!open) return
     const pending = consumePendingEntity()
     if (!pending) return
-    insertEntityTagAtCursor(pending, { atEnd: true })
+    pending.entities.forEach((entity, index) => {
+      insertEntityTagAtCursor(entity, { atEnd: index > 0 || Boolean(pending.composerText) })
+    })
+    if (pending.composerText) {
+      setDraft((current) => {
+        const trimmed = current.trimEnd()
+        const prefix = trimmed.length > 0 ? `${trimmed} ` : ''
+        return `${prefix}${pending.composerText}`
+      })
+    }
   }, [open, pasteVersion, consumePendingEntity, insertEntityTagAtCursor])
 
   useEffect(() => {
@@ -396,6 +405,9 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
         }
         if (/^(approve_company|set_company_status)$/.test(pendingName)) {
           dispatch(companiesActions.loadAdminCompaniesRequested({ force: true }))
+        }
+        if (/^(register_company|update_company)$/.test(pendingName)) {
+          dispatch(companiesActions.loadMyCompaniesRequested({ force: true }))
         }
       }
     } catch (err) {

@@ -70,12 +70,26 @@ export const DATA_AI_ENTITY_KINDS = [
 
 export type DataAiEntityKind = (typeof DATA_AI_ENTITY_KINDS)[number]
 
-export type PlatformAiEntityRef = {
+/** Company catalog entities attached to the WebOnOne AI assistant (products, services, spaces). */
+export const CATALOG_AI_ENTITY_KINDS = ['product', 'service', 'space'] as const
+
+export type CatalogAiEntityKind = (typeof CATALOG_AI_ENTITY_KINDS)[number]
+
+export type DataAiEntityRef = {
   service: 'data'
   kind: DataAiEntityKind
   id: string
   label: string
 }
+
+export type WebononeAiEntityRef = {
+  service: 'webonone'
+  kind: CatalogAiEntityKind
+  id: string
+  label: string
+}
+
+export type PlatformAiEntityRef = DataAiEntityRef | WebononeAiEntityRef
 
 export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
   SELECT: 'webonone:identity:user-picker-select',
@@ -202,10 +216,14 @@ export type PlatformAiMutationMessage = {
   toolName: string
 }
 
-/** Peer iframe → shell: attach a Data library entity to the AI assistant. */
+/** Peer iframe → shell: attach Data library entities to the AI assistant. */
 export type PlatformAiEntityContextMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT
   entity: PlatformAiEntityRef
+  /** When set, all entities are attached (entity is included for backward compatibility). */
+  entities?: PlatformAiEntityRef[]
+  /** Optional composer text appended after entity tags. */
+  composerText?: string
   openAssistant?: boolean
 }
 
@@ -541,16 +559,20 @@ function isPlatformAiEntityRef(data: unknown): data is PlatformAiEntityRef {
     return false
   }
   const entity = data as Record<string, unknown>
-  return (
-    entity.service === 'data' &&
-    typeof entity.kind === 'string' &&
-    DATA_AI_ENTITY_KINDS.includes(entity.kind as DataAiEntityKind) &&
-    typeof entity.id === 'string' &&
-    entity.id.length >= 8 &&
-    entity.id.length <= 32 &&
-    typeof entity.label === 'string' &&
-    entity.label.trim().length > 0
-  )
+  const hasValidId =
+    typeof entity.id === 'string' && entity.id.length >= 8 && entity.id.length <= 32
+  const hasValidLabel =
+    typeof entity.label === 'string' && entity.label.trim().length > 0
+  if (!hasValidId || !hasValidLabel || typeof entity.kind !== 'string') {
+    return false
+  }
+  if (entity.service === 'data') {
+    return DATA_AI_ENTITY_KINDS.includes(entity.kind as DataAiEntityKind)
+  }
+  if (entity.service === 'webonone') {
+    return CATALOG_AI_ENTITY_KINDS.includes(entity.kind as CatalogAiEntityKind)
+  }
+  return false
 }
 
 export function isPlatformAiEntityContextMessage(
@@ -560,11 +582,27 @@ export function isPlatformAiEntityContextMessage(
     return false
   }
   const message = data as PlatformAiEntityContextMessage
-  return (
-    message.type === PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT &&
-    isPlatformAiEntityRef(message.entity) &&
-    (message.openAssistant === undefined || typeof message.openAssistant === 'boolean')
-  )
+  if (message.type !== PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT) {
+    return false
+  }
+  if (!isPlatformAiEntityRef(message.entity)) {
+    return false
+  }
+  if (message.openAssistant !== undefined && typeof message.openAssistant !== 'boolean') {
+    return false
+  }
+  if (message.composerText !== undefined && typeof message.composerText !== 'string') {
+    return false
+  }
+  if (message.entities !== undefined) {
+    if (!Array.isArray(message.entities) || message.entities.length === 0) {
+      return false
+    }
+    if (!message.entities.every((entry) => isPlatformAiEntityRef(entry))) {
+      return false
+    }
+  }
+  return true
 }
 
 export function isPlatformNavigateMessage(data: unknown): data is PlatformNavigateMessage {

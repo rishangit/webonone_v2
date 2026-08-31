@@ -30,7 +30,7 @@ export const registerCompanyBodySchema = z.object({
     ])
     .optional(),
   contactPhone: optionalTrimmed(64),
-  contactPersonUserId: z.string().trim().min(1).max(21),
+  contactPersonUserId: z.string().trim().min(1).max(21).optional(),
 })
 
 export const updateCompanyStatusBodySchema = z.object({

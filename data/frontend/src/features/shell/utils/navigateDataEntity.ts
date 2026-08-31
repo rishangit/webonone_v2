@@ -74,5 +74,25 @@ export function useNavigateDataEntity() {
     [navigate, parentOrigin, searchParams],
   )
 
-  return { goToList, goToDetail, goToVariantDetail, isEmbedded: Boolean(parentOrigin) }
+  const goToCatalogAttributeDetail = useCallback(
+    (kind: 'products' | 'services' | 'spaces', entityId: string, attributeId: string) => {
+      const path = `/${kind}/${entityId}/attributes/${attributeId}`
+      navigate({
+        pathname: path,
+        search: searchParams.toString(),
+      })
+      if (parentOrigin) {
+        sendPlatformNavigate(parentOrigin, `/data${path}`)
+      }
+    },
+    [navigate, parentOrigin, searchParams],
+  )
+
+  return {
+    goToList,
+    goToDetail,
+    goToVariantDetail,
+    goToCatalogAttributeDetail,
+    isEmbedded: Boolean(parentOrigin),
+  }
 }

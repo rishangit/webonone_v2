@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type {
   WebsiteAddon,
   WebsiteBreakpoint,
@@ -53,10 +54,20 @@ export function resolveTextStyle(
   return textStyleSnapshot(theme, style, breakpoint)
 }
 
+/** Tight label metrics for website button addons — optical vertical centering. */
+export function buttonLabelTypography(): CSSProperties {
+  return {
+    lineHeight: 1,
+    textBoxTrim: 'cap alphabetic',
+    textBoxEdge: 'cap alphabetic',
+  } as unknown as CSSProperties
+}
+
 export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteButtonStyle | undefined) {
   const labelStyle = theme?.textStyles.find((item) => item.id === style?.textStyleId)
   const labelSnap = textStyleSnapshot(theme, labelStyle)
   return {
+    ...buttonLabelTypography(),
     background: colorValue(theme?.colors ?? [], style?.backgroundColorId ?? '', '#111827'),
     textColor: colorValue(theme?.colors ?? [], style?.textColorId ?? '', '#ffffff'),
     borderColor: colorValue(theme?.colors ?? [], style?.borderColorId ?? '', 'transparent'),

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { cn } from '../lib/utils'
 import { AppHeader, type AppHeaderLocale, type AppHeaderProps, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
+import { shellChromeRootClassName } from './shellContentPadding'
 
 interface PageShellProps {
   children: ReactNode
@@ -34,7 +35,7 @@ function PageShell({
   const logoNode = logo ?? (title ? <BrandLogo>{title}</BrandLogo> : undefined)
 
   return (
-    <div className={cn('min-h-screen', className)}>
+    <div className={cn('app-shell-root min-h-screen', shellChromeRootClassName, className)}>
       <AppHeader
         logo={logoNode}
         logoHref={logoHref}

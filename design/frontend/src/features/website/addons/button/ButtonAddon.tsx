@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
-import { resolveButtonStyle } from '../../document/theme'
+import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
@@ -21,6 +21,7 @@ function ButtonAddonRenderer({
   const page = pages.find((item) => item.id === addon.props.linkPageId)
   const href = publish && page && companyId ? `/s/${companyId}${page.path ? `/${page.path}` : ''}` : undefined
   const style = {
+    ...buttonLabelTypography(),
     background: snap.background,
     color: snap.textColor,
     border: `${snap.borderWidth}px solid ${snap.borderColor}`,

@@ -17,12 +17,14 @@ export type CompanyEvent = {
   serviceId: string
   serviceName: string
   serviceImageUrl: string | null
+  staffImageUrl: string | null
+  attendeeImageUrl: string | null
   serviceGalleryImages: EventGalleryImage[]
   spaceGalleryImages: EventGalleryImage[]
   formTemplateId: string | null
   timeMode: EventTimeMode
-  staffId: string
-  staffDisplayName: string
+  staffId: string | null
+  staffDisplayName: string | null
   attendeeUserId: string | null
   attendeeDisplayName: string | null
   attendeeEmail: string | null
@@ -170,7 +172,7 @@ export type CreateSessionTokenBody = {
 
 export type CreateCompanyEventBody = {
   service_id: string
-  staff_id: string
+  staff_id?: string | null
   attendee_user_id?: string | null
   attendee_display_name?: string | null
   attendee_email?: string | null

@@ -3,6 +3,7 @@ import { from, of } from 'rxjs'
 import { catchError, exhaustMap, filter, map, mergeMap, withLatestFrom } from 'rxjs/operators'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { themeApi } from '../services/themeApi'
+import { themeFormToApiBody } from '../utils/themeFormMapping'
 import { systemThemeActions } from './systemThemeSlice'
 
 type SystemThemeEpic = Epic
@@ -11,7 +12,7 @@ const createThemeEpic: SystemThemeEpic = (action$) =>
   action$.pipe(
     ofType(systemThemeActions.createThemeRequested.type),
     exhaustMap((action: ReturnType<typeof systemThemeActions.createThemeRequested>) =>
-      from(themeApi.createTheme(action.payload)).pipe(
+      from(themeApi.createTheme(themeFormToApiBody(action.payload))).pipe(
         mergeMap((theme) =>
           of(
             systemThemeActions.saveThemeSucceeded(theme),
@@ -27,7 +28,7 @@ const updateThemeEpic: SystemThemeEpic = (action$) =>
   action$.pipe(
     ofType(systemThemeActions.updateThemeRequested.type),
     exhaustMap((action: ReturnType<typeof systemThemeActions.updateThemeRequested>) =>
-      from(themeApi.updateTheme(action.payload.id, action.payload.values)).pipe(
+      from(themeApi.updateTheme(action.payload.id, themeFormToApiBody(action.payload.values))).pipe(
         map((theme) => systemThemeActions.saveThemeSucceeded(theme)),
         catchError((err: Error) => of(systemThemeActions.saveThemeFailed(err.message))),
       ),

@@ -22,11 +22,11 @@ export const inputInvalidClassName =
   'aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive/30'
 
 const inputSharedClassName =
-  'flex w-full text-sm text-foreground placeholder:text-muted-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50'
+  'flex w-full text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-[var(--color-text)] disabled:cursor-not-allowed disabled:text-[var(--color-text-disabled)] disabled:opacity-50'
 
 const inputStandaloneClassName = cn(
   inputSharedClassName,
-  'ui-shape-control h-10 border border-input bg-input-background px-3 py-2',
+  'ui-shape-control h-10 border border-[var(--color-border)] bg-transparent px-3 py-2 hover:border-[var(--color-border-hover)]',
   inputFocusRingClassName,
   inputInvalidClassName,
 )

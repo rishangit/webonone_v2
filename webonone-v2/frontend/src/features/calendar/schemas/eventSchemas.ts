@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { UserOption } from '@webonone/ui-kit'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
-import type { CompanyStaff, StaffScheduleDay } from '@/features/staff/types/staff.types'
+import type { StaffScheduleDay } from '@/features/staff/types/staff.types'
 import type {
   CompanyEvent,
   CreateCompanyEventBody,
@@ -10,8 +10,8 @@ import type {
   UpdateCompanyEventBody,
 } from '../types/event.types'
 
-/** 1-based wizard step; both duration and window have 5 steps. */
-export type EventWizardStep = 1 | 2 | 3 | 4 | 5
+/** 1-based wizard step: duration has 4 steps, window has 3. */
+export type EventWizardStep = 1 | 2 | 3 | 4
 
 const timeHhMm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:mm format')
 const dateYmd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format')
@@ -44,9 +44,7 @@ export type EventSpaceOption = {
 
 export type EventWizardFormValues = {
   service: EventServiceOption | null
-  staff: CompanyStaff | null
   attendee: UserOption | null
-  space: EventSpaceOption | null
   startsOn: string
   startTime: string
   weekdays: number[]
@@ -56,9 +54,7 @@ export type EventWizardFormValues = {
 
 export const EMPTY_EVENT_WIZARD_VALUES: EventWizardFormValues = {
   service: null,
-  staff: null,
   attendee: null,
-  space: null,
   startsOn: '',
   startTime: '09:00',
   weekdays: [],
@@ -70,16 +66,8 @@ export const eventWizardStepServiceSchema = z.object({
   service: z.object({ id: z.string().min(1) }, { required_error: 'Select a service' }),
 })
 
-export const eventWizardStepStaffSchema = z.object({
-  staff: z.object({ id: z.string().min(1) }, { required_error: 'Select a staff member' }),
-})
-
 export const eventWizardStepAttendeeSchema = z.object({
   attendee: z.object({ id: z.string().min(1) }, { required_error: 'Select an attendee' }),
-})
-
-export const eventWizardStepSpaceSchema = z.object({
-  space: z.object({ id: z.string().min(1) }, { required_error: 'Select a space' }),
 })
 
 /** Window (Specific time) When-step validation — weekday checkboxes + From–Until. */
@@ -88,7 +76,6 @@ export const eventWizardStepWhenWindowSchema = z
     startsOn: dateYmd,
     weekdays: z.array(z.number().int().min(0).max(6)).min(1, 'Select at least one weekday'),
     recurrenceUntil: dateYmd,
-    staffWorkingWeekdays: z.array(z.number().int().min(0).max(6)),
   })
   .superRefine((data, ctx) => {
     if (data.recurrenceUntil < data.startsOn) {
@@ -97,17 +84,6 @@ export const eventWizardStepWhenWindowSchema = z
         message: 'End date must be on or after the start date',
         path: ['recurrenceUntil'],
       })
-    }
-    const working = new Set(data.staffWorkingWeekdays)
-    for (const day of data.weekdays) {
-      if (!working.has(day)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Selected weekdays must be staff working days',
-          path: ['weekdays'],
-        })
-        break
-      }
     }
   })
 
@@ -124,17 +100,8 @@ export const eventWizardStepWhenDurationSchema = z
       'monthly_by_date',
     ]),
     recurrenceUntil: z.string(),
-    staffWorkingWeekdays: z.array(z.number().int().min(0).max(6)),
   })
   .superRefine((data, ctx) => {
-    const startWeekday = weekdayOfYmd(data.startsOn)
-    if (!data.staffWorkingWeekdays.includes(startWeekday)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Selected date must be a staff working day',
-        path: ['startsOn'],
-      })
-    }
     if (data.recurrence === 'none') {
       return
     }
@@ -257,7 +224,7 @@ function ordinal(n: number): string {
 }
 
 export function toCreateEventPayload(values: EventWizardFormValues): CreateCompanyEventBody {
-  if (!values.service || !values.staff || !values.startsOn) {
+  if (!values.service || !values.startsOn) {
     throw new Error('Incomplete event form')
   }
 
@@ -265,17 +232,12 @@ export function toCreateEventPayload(values: EventWizardFormValues): CreateCompa
     if (values.weekdays.length === 0 || !values.recurrenceUntil) {
       throw new Error('Select weekdays and an end date')
     }
-    if (!values.space) {
-      throw new Error('Select a space for this Specific time event')
-    }
     return {
       service_id: values.service.id,
-      staff_id: values.staff.id,
       starts_on: values.startsOn,
       weekdays: [...values.weekdays].sort((a, b) => a - b),
       recurrence: 'weekly',
       recurrence_until: values.recurrenceUntil,
-      space_id: values.space.id,
     }
   }
 
@@ -288,7 +250,6 @@ export function toCreateEventPayload(values: EventWizardFormValues): CreateCompa
 
   return {
     service_id: values.service.id,
-    staff_id: values.staff.id,
     starts_on: values.startsOn,
     weekdays: [weekday],
     recurrence,
@@ -304,13 +265,13 @@ export function toUpdateEventPayload(values: EventWizardFormValues): UpdateCompa
   return toCreateEventPayload(values)
 }
 
-export function eventWizardTotalSteps(_timeMode?: EventTimeMode | null | undefined): number {
-  return 5
+export function eventWizardTotalSteps(timeMode?: EventTimeMode | null | undefined): number {
+  return timeMode === 'duration' ? 4 : 3
 }
 
 export function parseEventWizardStep(
   value: string | number | null | undefined,
-  maxSteps = 5,
+  maxSteps = 4,
 ): EventWizardStep {
   const n = typeof value === 'number' ? value : Number(value)
   if (!Number.isInteger(n) || n < 1) return 1
@@ -325,10 +286,7 @@ function minutesBetween(start: string, end: string): number | null {
   return diff > 0 ? diff : null
 }
 
-export function valuesFromEvent(
-  event: CompanyEvent,
-  staff: CompanyStaff | null,
-): EventWizardFormValues {
+export function valuesFromEvent(event: CompanyEvent): EventWizardFormValues {
   const isWindow = event.timeMode === 'window'
   return {
     service: {
@@ -339,20 +297,12 @@ export function valuesFromEvent(
       startTime: isWindow ? event.startTime : null,
       endTime: isWindow ? event.endTime : null,
     },
-    staff,
     attendee:
       event.attendeeUserId != null
         ? {
             id: event.attendeeUserId,
             displayName: event.attendeeDisplayName ?? 'Attendee',
             email: event.attendeeEmail,
-          }
-        : null,
-    space:
-      event.spaceId != null
-        ? {
-            id: event.spaceId,
-            name: event.spaceName ?? 'Space',
           }
         : null,
     startsOn: event.startsOn,

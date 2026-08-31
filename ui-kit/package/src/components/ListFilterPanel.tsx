@@ -116,16 +116,18 @@ function ListFilterPanel({
           {children}
         </div>
 
-        <footer className="flex shrink-0 gap-2 border-t p-4">
-          {onClear ? (
-            <Button type="button" variant="outline" className="flex-1" onClick={onClear}>
-              Clear
+        {onApply || onClear ? (
+          <footer className="flex shrink-0 gap-2 border-t p-4">
+            {onClear ? (
+              <Button type="button" variant="outline" className="flex-1" onClick={onClear}>
+                Clear
+              </Button>
+            ) : null}
+            <Button type="button" className="flex-1" onClick={handleApply}>
+              Apply
             </Button>
-          ) : null}
-          <Button type="button" className="flex-1" onClick={handleApply}>
-            Apply
-          </Button>
-        </footer>
+          </footer>
+        ) : null}
       </div>
     </>
   )

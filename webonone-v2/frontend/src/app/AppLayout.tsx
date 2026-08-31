@@ -385,11 +385,19 @@ function AppLayoutShell({
       if (!isPlatformAiEntityContextMessage(event.data)) {
         return
       }
+      const entities =
+        event.data.entities && event.data.entities.length > 0
+          ? event.data.entities
+          : [event.data.entity]
+      const payload = {
+        entities,
+        ...(event.data.composerText ? { composerText: event.data.composerText } : {}),
+      }
       if (event.data.openAssistant === false) {
-        requestEntityPaste(event.data.entity)
+        requestEntityPaste(payload)
         return
       }
-      requestEntityPaste(event.data.entity)
+      requestEntityPaste(payload)
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)

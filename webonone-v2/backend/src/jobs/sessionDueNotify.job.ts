@@ -70,6 +70,8 @@ export async function runSessionDueNotifyPass(): Promise<void> {
         // Due when start is within next 5 minutes, or already past (same day) and not started.
         if (startMinutes > nowMinutes + DUE_WINDOW_MINUTES) continue
 
+        if (!event.staffId) continue
+
         due.push({
           companyId: event.companyId,
           eventId: event.id,

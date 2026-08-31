@@ -30,7 +30,9 @@
     "removeTitle": "{{noun}} ඉවත් කරන්නද?",
     "removeTitleNamed": "{{name}} ඉවත් කරන්නද?",
     "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. අයිතමය ඔබේ සමාගම් නාමාවලියෙන් ඉවත් වේ.",
-    "libraryUnavailable": "පුස්තකාලය නොමැත"
+    "libraryUnavailable": "පුස්තකාලය නොමැත",
+    "copyToAi": "AI වෙත පිටපත් කරන්න",
+    "copyToAiSuccess": "AI සහායකයට එකතු කළා"
   },
   "detail": {
     "notFoundTitle": "හමු නොවීය",
@@ -39,6 +41,7 @@
     "linkedHint": "දත්ත පුස්තකාලයට සජීවී සම්බන්ධතාව. සමාගම් හිමි පිටපතක් තබා ගැනීමට අභිරුචිකරණය කරන්න.",
     "customize": "අභිරුචිකරණය",
     "remove": "ඉවත් කරන්න",
+    "actionsFor": "{{name}} සඳහා ක්‍රියා",
     "ariaSections": "{{noun}} අංශ",
     "loading": "{{noun}} පූරණය වෙමින්…",
     "tabs": {
@@ -247,7 +250,13 @@
     "empty": "තවම ගුණාංග සම්බන්ධ කර නැත.",
     "failedLoad": "ගුණාංග පූරණය අසාර්ථක විය",
     "libraryLinked": "මෙම {{noun}} වෙත සම්බන්ධ පුස්තකාල ගුණාංග.",
-    "customValues": "මෙම {{noun}} සඳහා අභිරුචි ගුණාංග අගයන්."
+    "customValues": "මෙම {{noun}} සඳහා අභිරුචි ගුණාංග අගයන්.",
+    "actionsFor": "{{name}} සඳහා ක්‍රියා",
+    "copyToAi": "AI වෙත පිටපත් කරන්න",
+    "copyToAiSuccess": "AI සහායකයට එකතු කළා",
+    "aiSuggestValues": "AI සමඟ අගයන් යෝජනා කරන්න",
+    "aiSuggestValuesSuccess": "AI සහායකය විවෘත කළා",
+    "aiSuggestValuesPrompt": "{{entityName}} මත {{attributeName}} සඳහා ගුණාංග අගයන් යෝජනා කර ගුණාංග අගය මෙවලම භාවිතයෙන් එකතු කරන්න."
   },
   "variantsTab": {
     "title": "ප්‍රභේද",
@@ -257,7 +266,11 @@
     "loading": "ප්‍රභේද පූරණය වෙමින්…",
     "empty": "මෙම නිෂ්පාදනය සඳහා පුස්තකාලයේ ප්‍රභේද නැත.",
     "failedLoad": "ප්‍රභේද පූරණය අසාර්ථක විය",
-    "sku": "SKU · {{sku}}"
+    "actionsFor": "{{name}} සඳහා ක්‍රියා",
+    "sku": "SKU · {{sku}}",
+    "aiSuggestVariants": "AI සමඟ විවිධතා යෝජනා කරන්න",
+    "aiSuggestVariantsSuccess": "AI සහායකය විවෘත කළා",
+    "aiSuggestVariantsPrompt": "{{productName}} සඳහා සාමාන්‍ය වෙළඳපොළ විවිධතා යෝජනා කරන්න (අවශ්‍ය නම් ශක්තිමත් බව, ආකාරය සහ පැකේජ ප්‍රමාණය සහිත යථාර්ථවාදී SKU). ගුණාංග සහ ලේබල් කළ අගයන් තිබේ යැයි සහතික කර, එක් එක් විවිධතාව නිෂ්පාදන විවිධතා මෙවලමෙන් එකතු කරන්න."
   },
   "workflowTab": {
     "title": "වැඩප්‍රවාහය",
@@ -305,6 +318,10 @@
     "loading": "ප්‍රභේදය පූරණය වෙමින්…",
     "failedLoad": "ප්‍රභේදය පූරණය අසාර්ථක විය",
     "notLinked": "මෙම නිෂ්පාදනය දත්ත පුස්තකාලයට සම්බන්ධ නැති නිසා ප්‍රභේද ලබා ගත නොහැක.",
+    "deleteConfirm": "{{name}} මකන්නද?",
+    "deleteConfirmFallback": "ප්‍රභේදය මකන්නද?",
+    "deleteDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. ප්‍රභේදය සහ එහි තොග කණ්ඩායම් ස්ථිරවම ඉවත් වේ.",
+    "deleteFailed": "ප්‍රභේදය මැකීම අසාර්ථක විය",
     "variantCard": {
       "title": "ප්‍රභේදය",
       "description": "නම, පෙරනිමි ධජය සහ SKU",
@@ -321,6 +338,38 @@
     "meta": {
       "title": "මෙටා",
       "description": "වාර්තා කාල මුද්‍රා"
+    }
+  },
+  "attributeDetail": {
+    "titleFallback": "ගුණාංගය",
+    "description": "කැටලොග් ගුණාංග අගයන්",
+    "loading": "ගුණාංගය පූරණය වෙමින්…",
+    "failedLoad": "ගුණාංගය පූරණය අසාර්ථක විය",
+    "notLinked": "මෙම අයිතමය දත්ත පුස්තකාලයට සම්බන්ධ නැති නිසා ගුණාංග විස්තර ලබා ගත නොහැක.",
+    "notFound": "මෙම අයිතමයේ ගුණාංගය හමු නොවීය.",
+    "noUnit": "—",
+    "addValue": "අගය එකතු කරන්න",
+    "addValueTitle": "අගය එකතු කරන්න",
+    "editValueTitle": "අගය සංස්කරණය කරන්න",
+    "setAsDefault": "පෙරනිමිය ලෙස සකසන්න",
+    "setDefaultFailed": "පෙරනිමි අගය සැකසීම අසාර්ථක විය",
+    "deleteValueConfirm": "{{value}} මකන්නද?",
+    "deleteValueFallback": "අගය මකන්නද?",
+    "deleteValueDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. අගය {{name}} වෙතින් ඉවත් වේ.",
+    "deleteValueFailed": "අගය මැකීම අසාර්ථක විය",
+    "actionsForValue": "{{label}} සඳහා ක්‍රියා",
+    "values": {
+      "title": "අගයන්",
+      "description": "සම්බන්ධිත පුස්තකාල අයිතමයේ මෙම ගුණාංගය සඳහා අර්ථ දක්වන අගයන්.",
+      "empty": "තවම අගයන් නැත.",
+      "default": "පෙරනිමි"
+    },
+    "definition": {
+      "title": "ගුණාංගය",
+      "description": "මෙම අයිතමයට සම්බන්ධිත අර්ථ දැක්වීම",
+      "name": "නම",
+      "valueType": "අගය වර්ගය",
+      "unit": "ඒකකය"
     }
   },
   "stocks": {

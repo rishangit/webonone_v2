@@ -1,7 +1,20 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { applyThemeVariables, type ColorMode } from '@webonone/theme'
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, cn } from '@webonone/ui-kit'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  cn,
+} from '@webonone/ui-kit'
 import type { ThemeFormValues } from '../schemas/themeFormSchema'
+import { themeFormToPreviewDto } from '../utils/themeFormMapping'
 
 interface ThemePreviewProps {
   values: ThemeFormValues
@@ -9,57 +22,104 @@ interface ThemePreviewProps {
   className?: string
 }
 
-export function ThemePreview({ values, colorMode, className }: ThemePreviewProps) {
+export function ThemePreview({ values, colorMode: initialColorMode, className }: ThemePreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null)
+  const [previewMode, setPreviewMode] = useState<ColorMode>(initialColorMode)
+
+  useEffect(() => {
+    setPreviewMode(initialColorMode)
+  }, [initialColorMode])
 
   useEffect(() => {
     if (!previewRef.current) return
 
     applyThemeVariables(
       {
-        theme: {
-          id: 'preview',
-          name: values.name,
-          color1: values.color1,
-          color2: values.color2,
-          color3: values.color3,
-          color4: values.color4,
-          color5: values.color5,
-        },
-        colorMode,
+        theme: themeFormToPreviewDto(values),
+        colorMode: previewMode,
       },
       previewRef.current,
     )
-  }, [values, colorMode])
+  }, [values, previewMode])
 
   return (
-    <div ref={previewRef} className={cn('glass-card flex h-full min-h-[min(24rem,55vh)] flex-col space-y-4 rounded-lg p-4', className)}>
-      <h3 className="text-lg font-semibold text-foreground">Preview</h3>
+    <div
+      ref={previewRef}
+      className={cn(
+        'glass-card flex h-full min-h-[min(28rem,60vh)] flex-col gap-4 rounded-lg border border-[var(--color-border-light)] p-4',
+        className,
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-lg font-semibold text-[var(--color-text)]">Preview</h3>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={previewMode === 'light' ? 'default' : 'outline'}
+            onClick={() => setPreviewMode('light')}
+          >
+            Light
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={previewMode === 'dark' ? 'default' : 'outline'}
+            onClick={() => setPreviewMode('dark')}
+          >
+            Dark
+          </Button>
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-2">
         <Button type="button">Primary</Button>
         <Button type="button" variant="secondary">
           Secondary
         </Button>
-        <Button type="button" variant="destructive">
-          Destructive
-        </Button>
         <Button type="button" variant="outline">
           Outline
         </Button>
+        <Button type="button" variant="destructive">
+          Error
+        </Button>
       </div>
+
+      <Tabs defaultValue="tab-a" className="w-full">
+        <TabsList>
+          <TabsTrigger value="tab-a">Active tab</TabsTrigger>
+          <TabsTrigger value="tab-b">Inactive tab</TabsTrigger>
+        </TabsList>
+        <TabsContent value="tab-a" className="text-sm text-[var(--color-text-muted)]">
+          Tab content uses semantic tokens.
+        </TabsContent>
+      </Tabs>
+
       <Input placeholder="Sample input" readOnly />
-      <Card>
+
+      <Card className="border border-[var(--color-border-light)]">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Sample card</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">Border and text use theme tokens.</CardContent>
+        <CardContent className="text-sm text-[var(--color-text-muted)]">
+          Cards use surface and border tokens.
+        </CardContent>
       </Card>
-      <div className="scrollbar-themed h-28 overflow-y-auto rounded-md border p-2 text-xs text-muted-foreground">
-        {Array.from({ length: 12 }, (_, i) => (
-          <p key={i} className="py-0.5">
-            Scroll line {i + 1}
-          </p>
-        ))}
+
+      <nav className="flex gap-2 rounded-md border border-[var(--color-border-light)] p-2">
+        <span className="text-sm text-label">Nav item</span>
+        <span className="rounded-md bg-[var(--color-selection)] px-3 py-2 text-sm text-primary">
+          Selected
+        </span>
+      </nav>
+
+      <div className="overflow-hidden rounded-md border border-[var(--color-border-light)]">
+        <div className="grid grid-cols-2 gap-px bg-[var(--color-border-light)] text-sm">
+          <div className="bg-surface-hover px-3 py-2 font-medium text-[var(--color-text)]">Name</div>
+          <div className="bg-surface-hover px-3 py-2 font-medium text-[var(--color-text)]">Status</div>
+          <div className="bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)]">Row one</div>
+          <div className="bg-surface-selected px-3 py-2 text-primary">Selected row</div>
+        </div>
       </div>
     </div>
   )

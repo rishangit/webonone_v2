@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { ContactValueLine } from '@webonone/ui-kit'
 import { ProfileAvatarEditor } from '../ProfileAvatarEditor'
 
 interface ProfileWizardStepAccountProps {
@@ -32,7 +33,12 @@ export function ProfileWizardStepAccount({
       />
       <div className="space-y-1 text-center">
         <p className="text-sm font-medium">{displayName}</p>
-        <p className="text-sm text-muted-foreground">{email}</p>
+        <ContactValueLine
+          kind="email"
+          value={email}
+          variant="detail"
+          className="justify-center text-muted-foreground"
+        />
       </div>
       {isGoogleUser ? (
         <p className="text-center text-sm text-muted-foreground">{t('wizard.googleImportHint')}</p>

@@ -65,7 +65,7 @@ export async function notifyAppointmentBookedInApp(input: {
   companyId: string
   eventId: string
   serviceName: string
-  staffId: string
+  staffId: string | null
   attendeeDisplayName?: string | null
 }): Promise<void> {
   const staffUserId = await resolveEventStaffUserId(input.companyId, input.staffId)
@@ -194,5 +194,26 @@ export async function notifySessionDueToStartInApp(input: {
     href: sessionHref(input.eventId, input.occurrenceDate),
     sourceService: SOURCE,
     sourceEventId: `session.due_to_start:${input.eventId}:${input.occurrenceDate}:${staffUserId}`,
+  })
+}
+
+export async function notifySubscriptionInvoiceIssuedInApp(input: {
+  companyId: string
+  ownerUserId: string
+  invoiceId: string
+  invoiceNumber: string
+  billingPeriod: string
+  amount: string
+  dueDate: string
+}): Promise<void> {
+  await createNotification({
+    userId: input.ownerUserId,
+    companyId: input.companyId,
+    type: 'invoice.issued',
+    title: `New invoice: ${input.invoiceNumber}`,
+    body: `${input.billingPeriod} — ${input.amount} due ${input.dueDate}`,
+    href: `/payment/invoices/${input.invoiceId}`,
+    sourceService: 'payment',
+    sourceEventId: `invoice.issued:${input.invoiceId}`,
   })
 }

@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
-  Button,
   Card,
   CardContent,
   CardHeader,
@@ -23,6 +22,7 @@ import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { CatalogPricingDialog } from '../components/CatalogPricingDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
+import { CompanyCatalogDetailPageMenu } from '../components/CompanyCatalogDetailPageMenu'
 import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
 import { CompanyServiceWorkflowOverviewCard } from '../components/CompanyServiceWorkflowOverviewCard'
 import { CompanyServiceWorkflowTab } from '../components/CompanyServiceWorkflowTab'
@@ -219,7 +219,7 @@ export function CompanyCatalogDetailPage({
       <div className="flex flex-col gap-6 lg:col-span-2">
         {showGalleryTabs && overviewGalleryImages.length > 0 ? (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4 sm:p-6">
               <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
             </CardContent>
           </Card>
@@ -342,7 +342,7 @@ export function CompanyCatalogDetailPage({
       <div className="flex flex-col gap-6 lg:col-span-2">
         {showGalleryTabs && overviewGalleryImages.length > 0 ? (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4 sm:p-6">
               <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
             </CardContent>
           </Card>
@@ -431,43 +431,31 @@ export function CompanyCatalogDetailPage({
       onBack={() => navigate(listPath)}
       backLabel={tc('back')}
       actions={
-        canCustomize || canManage ? (
-        <div className="flex flex-wrap items-center gap-2">
-          {canCustomize ? (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => {
-                if (!detail?.hydrated) return
-                dispatch(
-                  companyCatalogActions.forkRequested({
-                    kind,
-                    id,
-                    payload: detail.hydrated,
-                    galleryImages:
-                      detail.galleryImages == null
-                        ? (detail.displayGalleryImages ?? [])
-                        : undefined,
-                  }),
-                )
-              }}
-              disabled={busy}
-            >
-              {t('detail.customize')}
-            </Button>
-          ) : null}
-          {canManage ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              disabled={busy}
-              onClick={() => setPendingRemove(true)}
-            >
-              {t('detail.remove')}
-            </Button>
-          ) : null}
-        </div>
+        detail && showGalleryTabs ? (
+          <CompanyCatalogDetailPageMenu
+            kind={kind}
+            entityId={id}
+            entityLabel={detail.displayName}
+            ariaLabel={t('detail.actionsFor', { name: detail.displayName })}
+            canCustomize={Boolean(canCustomize)}
+            canRemove={canManage}
+            busy={busy}
+            onCustomize={() => {
+              if (!detail?.hydrated) return
+              dispatch(
+                companyCatalogActions.forkRequested({
+                  kind,
+                  id,
+                  payload: detail.hydrated,
+                  galleryImages:
+                    detail.galleryImages == null
+                      ? (detail.displayGalleryImages ?? [])
+                      : undefined,
+                }),
+              )
+            }}
+            onRemove={() => setPendingRemove(true)}
+          />
         ) : undefined
       }
     >
@@ -484,6 +472,11 @@ export function CompanyCatalogDetailPage({
           attributes={
             <CompanyCatalogAttributesTab
               kind={kind}
+              entityId={id}
+              entityName={
+                detail.name ??
+                (typeof entityPayload?.name === 'string' ? entityPayload.name : '')
+              }
               libraryEntityId={detail.libraryEntityId}
               payload={entityPayload}
               canEdit={canEdit && !busy}
@@ -507,7 +500,9 @@ export function CompanyCatalogDetailPage({
             kind === 'products' ? (
               <CompanyProductVariantsTab
                 productId={id}
+                productName={detail.displayName}
                 libraryEntityId={detail.libraryEntityId}
+                canEdit={canEdit && !busy}
               />
             ) : undefined
           }

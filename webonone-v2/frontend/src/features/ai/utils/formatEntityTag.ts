@@ -1,7 +1,11 @@
-import type { DataAiEntityKind } from '@webonone/platform-embed'
+import type { PlatformAiEntityRef } from '@webonone/platform-embed'
 
-export function formatEntityTag(kind: DataAiEntityKind, label: string): string {
-  return `[Data ${kind}: ${label.trim()}]`
+export function formatEntityTag(ref: PlatformAiEntityRef): string {
+  const label = ref.label.trim()
+  if (ref.service === 'webonone') {
+    return `[Company ${ref.kind}: ${label}]`
+  }
+  return `[Data ${ref.kind}: ${label}]`
 }
 
 export function insertTextAtCursor(

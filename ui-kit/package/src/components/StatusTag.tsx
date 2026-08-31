@@ -12,24 +12,15 @@ const statusTagVariants = cva(
   {
     variants: {
       variant: {
-        pending:
-          'border-amber-600/55 bg-amber-500/15 text-amber-900 dark:border-amber-400/50 dark:bg-amber-500/20 dark:text-amber-200',
-        rejected:
-          'border-red-600/55 bg-red-500/15 text-red-900 dark:border-red-400/50 dark:bg-red-500/20 dark:text-red-200',
-        approved:
-          'border-emerald-600/55 bg-emerald-500/15 text-emerald-900 dark:border-emerald-400/50 dark:bg-emerald-500/20 dark:text-emerald-200',
-        unverified:
-          'border-orange-600/55 bg-orange-500/15 text-orange-900 dark:border-orange-400/50 dark:bg-orange-500/20 dark:text-orange-200',
-        verified:
-          'border-teal-600/55 bg-teal-500/15 text-teal-900 dark:border-teal-400/50 dark:bg-teal-500/20 dark:text-teal-200',
-        super_admin:
-          'border-violet-600/55 bg-violet-500/15 text-violet-900 dark:border-violet-400/50 dark:bg-violet-500/20 dark:text-violet-200',
-        company_admin:
-          'border-sky-600/55 bg-sky-500/15 text-sky-900 dark:border-sky-400/50 dark:bg-sky-500/20 dark:text-sky-200',
-        member:
-          'border-slate-600/55 bg-slate-500/15 text-slate-900 dark:border-slate-400/50 dark:bg-slate-500/20 dark:text-slate-200',
-        staff:
-          'border-indigo-600/55 bg-indigo-500/15 text-indigo-900 dark:border-indigo-400/50 dark:bg-indigo-500/20 dark:text-indigo-200',
+        pending: 'border-warning-border bg-warning-background text-warning',
+        rejected: 'border-error-border bg-error-background text-error',
+        approved: 'border-success-border bg-success-background text-success',
+        unverified: 'border-warning-border bg-warning-background text-warning',
+        verified: 'border-success-border bg-success-background text-success',
+        super_admin: 'border-info-border bg-info-background text-info',
+        company_admin: 'border-info-border bg-info-background text-info',
+        member: 'border-[var(--color-border-light)] bg-surface-hover text-[var(--color-text-secondary)]',
+        staff: 'border-[var(--color-border-light)] bg-primary-light text-primary',
       },
     },
     defaultVariants: {

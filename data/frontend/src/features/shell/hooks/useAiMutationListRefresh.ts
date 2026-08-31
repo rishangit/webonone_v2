@@ -8,6 +8,7 @@ import { servicesActions } from '@/features/services/store'
 import { spacesActions } from '@/features/spaces/store'
 import { tagsActions } from '@/features/tags/store'
 import { unitsActions } from '@/features/units/store'
+import { dispatchAiProductVariantsChanged } from '@/features/shell/utils/aiProductVariantsRefresh'
 
 const DATA_LIST_ACTIONS = {
   unit: unitsActions,
@@ -24,7 +25,17 @@ export function dataResourceForToolName(toolName: string): DataListResource | nu
   const match = /^(?:create|update|delete)_data_(unit|tag|attribute|product|service|space)$/.exec(
     toolName,
   )
-  return match ? (match[1] as DataListResource) : null
+  if (match) {
+    return match[1] as DataListResource
+  }
+  const attributeValueMatch = /^create_data_(product|service|space)_attribute_value$/.exec(toolName)
+  if (attributeValueMatch) {
+    return attributeValueMatch[1] as DataListResource
+  }
+  if (toolName === 'create_data_product_variant') {
+    return 'product'
+  }
+  return null
 }
 
 /** Refetch the matching Data list after the WebOnOne assistant confirms a write. */
@@ -46,6 +57,9 @@ export function useAiMutationListRefresh() {
       // Replace from page 1. On-scroll lists store the last appended page; refreshing
       // that page wipes earlier rows and leaves load-more looping on empty pages.
       dispatch(DATA_LIST_ACTIONS[resource].loadListRequested({ page: 1, force: true }))
+      if (event.data.toolName === 'create_data_product_variant') {
+        dispatchAiProductVariantsChanged()
+      }
     }
 
     window.addEventListener('message', onMessage)

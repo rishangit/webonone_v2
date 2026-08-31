@@ -11,29 +11,35 @@ import {
   CardTitle,
   FeaturePage,
   FormField,
+  ImagePreview,
   ListAddButton,
+  itemListThumbClassName,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Textarea,
   UserSelectionDialog,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { identityCustomersApi, type IdentityCustomerOption } from '@/features/company-catalog/services/identityCustomersApi'
-import { dataLibraryApi } from '@/features/company-catalog/services/dataLibraryApi'
-import type { HydratedCatalogItem } from '@/features/company-catalog/types/companyCatalog.types'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import {
+  PosCashPaymentFields,
+  validatePosCashReceived,
+} from '@/features/sales/components/PosCashPaymentFields'
 import { PosCartList } from '@/features/sales/components/PosCartList'
 import { PosItemPickerDialog } from '@/features/sales/components/PosItemPickerDialog'
 import { PosNewCustomerDialog } from '@/features/sales/components/PosNewCustomerDialog'
+import { PosProductVariantDialog } from '@/features/sales/components/PosProductVariantDialog'
+import { usePosProductPick } from '@/features/sales/hooks/usePosProductPick'
 import { createSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesActions } from '@/features/sales/store'
-import type { PosCartLine, SaleItemKind, SalePaymentMethod } from '@/features/sales/types/sales.types'
-import { formatLkr, resolveProductUnitPrice } from '@/features/sales/utils/formatMoney'
+import type { PosCartLine, SalePaymentMethod } from '@/features/sales/types/sales.types'
+import { formatLkr } from '@/features/sales/utils/formatMoney'
+import { findPosCartStockViolation, posCartLinesToSaleLines } from '@/features/sales/utils/posCartSaleLines'
 import { resolvePosEnabledKinds } from '@/features/sales/utils/posEnabledKinds'
 
 export function PosPage() {
@@ -54,8 +60,18 @@ export function PosPage() {
   const [newCustomerOpen, setNewCustomerOpen] = useState(false)
   const [itemOpen, setItemOpen] = useState(false)
   const [lines, setLines] = useState<PosCartLine[]>([])
+  const addCartLine = useCallback((line: PosCartLine) => {
+    setLines((prev) => [...prev, line])
+  }, [])
+  const {
+    handlePick,
+    variantDialogOpen,
+    pendingPick,
+    confirmVariantSelection,
+    closeVariantDialog,
+  } = usePosProductPick({ onAddLine: addCartLine })
   const [paymentMethod, setPaymentMethod] = useState<SalePaymentMethod>('cash')
-  const [notes, setNotes] = useState('')
+  const [cashReceived, setCashReceived] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const submittingRef = useRef(false)
 
@@ -97,42 +113,26 @@ export function PosPage() {
 
   const total = lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0)
 
-  async function handlePick(item: HydratedCatalogItem, itemKind: SaleItemKind) {
-    let unitPrice = item.listPrice ?? 0
-    if (itemKind === 'product') {
-      const resolved = await resolveProductUnitPrice({
-        listPrice: item.listPrice,
-        libraryEntityId: item.libraryEntityId,
-        loadVariants: (productId) => dataLibraryApi.listProductVariants(productId),
-        loadStocks: (productId, variantId) =>
-          dataLibraryApi.listProductVariantStocks(productId, variantId),
-      })
-      if (resolved != null) unitPrice = resolved
-    }
-    setLines((prev) => [
-      ...prev,
-      {
-        key: `${item.id}-${Date.now()}`,
-        itemKind,
-        catalogItemId: item.id,
-        name: item.displayName,
-        quantity: 1,
-        unitPrice,
-      },
-    ])
-  }
-
   function handleComplete() {
+    if (paymentMethod === 'cash' && !validatePosCashReceived(cashReceived, total)) {
+      setFormError(t('pos.cashReceivedInsufficient'))
+      return
+    }
+    const stockViolation = findPosCartStockViolation(lines)
+    if (stockViolation) {
+      setFormError(
+        t('pos.stockExceeded', {
+          name: stockViolation.variantName ?? stockViolation.name,
+          quantity: stockViolation.availableQuantity ?? 0,
+        }),
+      )
+      return
+    }
     const body = {
       customerUserId: customer?.id ?? '',
       paymentMethod,
-      notes: notes.trim() || null,
-      lines: lines.map((line) => ({
-        itemKind: line.itemKind,
-        catalogItemId: line.catalogItemId,
-        quantity: line.quantity,
-        unitPrice: line.unitPrice,
-      })),
+      notes: null,
+      lines: posCartLinesToSaleLines(lines),
     }
     const parsed = createSaleBodySchema.safeParse(body)
     if (!parsed.success) {
@@ -143,6 +143,13 @@ export function PosPage() {
     submittingRef.current = true
     dispatch(salesActions.resetDetail())
     dispatch(salesActions.saveDetailRequested({ body: parsed.data }))
+  }
+
+  function handlePaymentMethodChange(value: SalePaymentMethod) {
+    setPaymentMethod(value)
+    if (value !== 'cash') {
+      setCashReceived('')
+    }
   }
 
   if (selectionComplete && !canManage) {
@@ -200,11 +207,24 @@ export function PosPage() {
               <CardTitle className="text-lg">{t('pos.customerTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm">
-                {customer
-                  ? `${customer.displayName}${customer.email ? ` (${customer.email})` : ''}`
-                  : t('pos.noCustomer')}
-              </p>
+              {customer ? (
+                <div className="flex min-w-0 items-center gap-3">
+                  <ImagePreview
+                    src={customer.avatarUrl ?? null}
+                    alt={customer.displayName}
+                    mode="view"
+                    className={itemListThumbClassName}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{customer.displayName}</p>
+                    {customer.email ? (
+                      <p className="truncate text-xs text-muted-foreground">{customer.email}</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm">{t('pos.noCustomer')}</p>
+              )}
               <Button type="button" variant="outline" size="sm" onClick={() => setCustomerOpen(true)}>
                 {t('pos.selectCustomer')}
               </Button>
@@ -219,7 +239,7 @@ export function PosPage() {
               <FormField label={t('pos.paymentMethod')} htmlFor="pos-payment" required>
                 <Select
                   value={paymentMethod}
-                  onValueChange={(value) => setPaymentMethod(value as SalePaymentMethod)}
+                  onValueChange={(value) => handlePaymentMethodChange(value as SalePaymentMethod)}
                 >
                   <SelectTrigger id="pos-payment">
                     <SelectValue />
@@ -231,14 +251,14 @@ export function PosPage() {
                   </SelectContent>
                 </Select>
               </FormField>
-              <FormField label={t('pos.notes')} htmlFor="pos-notes">
-                <Textarea
-                  id="pos-notes"
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+              {paymentMethod === 'cash' ? (
+                <PosCashPaymentFields
+                  total={total}
+                  cashReceived={cashReceived}
+                  onCashReceivedChange={setCashReceived}
+                  inputId="pos-cash-received"
                 />
-              </FormField>
+              ) : null}
               <p className="text-lg font-semibold">{t('pos.total', { amount: formatLkr(total) })}</p>
               <Button type="button" className="w-full" disabled={saving} onClick={handleComplete}>
                 {t('pos.complete')}
@@ -261,6 +281,7 @@ export function PosPage() {
             id: selected.id,
             displayName: selected.displayName,
             email: selected.email,
+            avatarUrl: selected.avatarUrl ?? null,
           })
         }}
         onAddUser={() => setNewCustomerOpen(true)}
@@ -282,6 +303,15 @@ export function PosPage() {
           void handlePick(item, kind)
         }}
       />
+      {pendingPick ? (
+        <PosProductVariantDialog
+          open={variantDialogOpen}
+          onOpenChange={closeVariantDialog}
+          productName={pendingPick.item.displayName}
+          options={pendingPick.options}
+          onConfirm={confirmVariantSelection}
+        />
+      ) : null}
     </FeaturePage>
   )
 }

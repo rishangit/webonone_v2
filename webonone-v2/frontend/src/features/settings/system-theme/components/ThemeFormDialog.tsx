@@ -21,6 +21,7 @@ import {
 import type { ApiTheme } from '../services/themeApi'
 import { systemThemeActions } from '../store/systemThemeSlice'
 import type { ParsedThemeColors } from '../utils/parseCssThemeVariables'
+import { themeFormFromDto } from '../utils/themeFormMapping'
 import { ThemeCssImportDialog } from './ThemeCssImportDialog'
 import { ThemeWizardProgress } from './theme-wizard/ThemeWizardProgress'
 import { ThemeWizardStepBasics } from './theme-wizard/ThemeWizardStepBasics'
@@ -37,29 +38,22 @@ const STEP_DESCRIPTIONS_CREATE = [
 
 const STEP_DESCRIPTIONS_EDIT = [
   'Theme name.',
-  'Palette colors (primary, secondary, accent, background, text).',
+  'Palette colors (primary, secondary, background, surface, text).',
   'Review your changes before saving.',
 ] as const
 
 function valuesFromTheme(theme: ApiTheme): ThemeFormValues {
-  return {
-    name: theme.name,
-    color1: theme.color1,
-    color2: theme.color2,
-    color3: theme.color3,
-    color4: theme.color4,
-    color5: theme.color5,
-  }
+  return themeFormFromDto(theme)
 }
 
 function emptyValues(): ThemeFormValues {
   return {
     ...EMPTY_THEME_WIZARD_VALUES,
-    color1: platformDefaultFormValues.color1,
-    color2: platformDefaultFormValues.color2,
-    color3: platformDefaultFormValues.color3,
-    color4: platformDefaultFormValues.color4,
-    color5: platformDefaultFormValues.color5,
+    primary: platformDefaultFormValues.primary,
+    secondary: platformDefaultFormValues.secondary,
+    background: platformDefaultFormValues.background,
+    surface: platformDefaultFormValues.surface,
+    text: platformDefaultFormValues.text,
   }
 }
 
@@ -183,11 +177,11 @@ export function ThemeFormDialog({
 
   function handleImport(colors: ParsedThemeColors) {
     patchValues({
-      color1: colors.color1,
-      color2: colors.color2,
-      color3: colors.color3,
-      color4: colors.color4,
-      color5: colors.color5,
+      primary: colors.primary,
+      secondary: colors.secondary,
+      background: colors.background,
+      surface: colors.surface,
+      text: colors.text,
     })
     setFieldErrors({})
   }
@@ -205,11 +199,11 @@ export function ThemeFormDialog({
 
     if (current === 2) {
       const result = themePaletteSchema.safeParse({
-        color1: values.color1,
-        color2: values.color2,
-        color3: values.color3,
-        color4: values.color4,
-        color5: values.color5,
+        primary: values.primary,
+        secondary: values.secondary,
+        background: values.background,
+        surface: values.surface,
+        text: values.text,
       })
       if (!result.success) {
         setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
@@ -304,7 +298,7 @@ export function ThemeFormDialog({
           <Button
             type="button"
             variant="outline"
-            className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+            className="h-10 px-4"
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
@@ -314,7 +308,7 @@ export function ThemeFormDialog({
             <Button
               type="button"
               variant="outline"
-              className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+              className="h-10 px-4"
               onClick={handlePrevious}
               disabled={saving || showLoading}
             >

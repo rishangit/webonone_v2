@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
+import { Mail } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -11,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  ReadOnlyField,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
@@ -163,7 +165,7 @@ export function SaleBillPage() {
                 {sale.status === 'completed' ? t('status.completed') : t('status.void')}
               </StatusTag>
               <DetailField label={t('bill.customer')} value={sale.customerDisplayName} />
-              <DetailField label={t('bill.email')} value={sale.customerEmail ?? '—'} />
+              <ReadOnlyField label={t('bill.email')} value={sale.customerEmail} icon={Mail} />
               <DetailField
                 label={t('bill.payment')}
                 value={sale.paymentMethod ? t(`payment.${sale.paymentMethod}`) : '—'}

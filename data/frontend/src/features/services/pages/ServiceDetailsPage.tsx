@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -15,6 +16,7 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { CatalogAttributesTab } from '@/features/catalog/components/CatalogAttributesTab'
 import {
   CatalogDetailSectionTabs,
@@ -22,7 +24,7 @@ import {
 } from '@/features/catalog/components/CatalogDetailSectionTabs'
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
+import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/CatalogLibraryDetailPageMenu'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
 import { ServiceSpacesTab } from '@/features/services/components/ServiceSpacesTab'
@@ -84,7 +86,9 @@ export function ServiceDetailsPage() {
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.services)
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
+  const canDelete = user?.role === 'super_admin'
   const [dialog, setDialog] = useState<{ initialStep: ServiceWizardStep } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState(false)
   const [tab, setTab] = useDetailTabParam(SERVICE_DETAIL_TABS, 'overview')
 
   useEffect(() => {
@@ -115,7 +119,7 @@ export function ServiceDetailsPage() {
       <div className="flex flex-col gap-6 lg:col-span-2">
         {(service.galleryImages ?? []).length > 0 ? (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4 sm:p-6">
               <ImageCarousel images={service.galleryImages ?? []} alt={service.name} />
             </CardContent>
           </Card>
@@ -187,7 +191,18 @@ export function ServiceDetailsPage() {
       onBack={() => goToList('services')}
       backLabel={t('common:back')}
       actions={
-        service ? <CopyToAiButton kind="service" id={service.id} label={service.name} /> : undefined
+        service ? (
+          <CatalogLibraryDetailPageMenu
+            kind="service"
+            entityId={service.id}
+            entityLabel={service.name}
+            ariaLabel={t('actionsFor', { name: service.name })}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            onEdit={() => openWizard(1)}
+            onDelete={() => setPendingDelete(true)}
+          />
+        ) : undefined
       }
     >
       {detailError ? (
@@ -207,6 +222,7 @@ export function ServiceDetailsPage() {
             <CatalogAttributesTab
               kind="services"
               entityId={id}
+              entityName={service.name}
               attributes={service.attributes}
               canEdit={canEdit}
               onChanged={refreshDetail}
@@ -240,6 +256,25 @@ export function ServiceDetailsPage() {
           }}
         />
       ) : null}
+
+      <PlatformAlertConfirmDialog
+        open={pendingDelete}
+        title={
+          service
+            ? t('deleteConfirm', { name: service.name })
+            : t('deleteConfirmFallback')
+        }
+        description={t('deleteDescription')}
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel={t('common:remove')}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(false)
+        }}
+        onConfirm={() => {
+          dispatch(servicesActions.deleteRequested({ id }))
+          goToList('services')
+        }}
+      />
     </FeaturePage>
   )
 }

@@ -179,6 +179,37 @@ export async function createStock(
   return rowToDto(row)
 }
 
+export async function consumeStock(
+  productId: string,
+  variantId: string,
+  stockId: string,
+  quantity: number,
+): Promise<StockDto> {
+  await assertVariantBelongsToProduct(productId, variantId)
+
+  return db.transaction(async (trx) => {
+    const stock = (await trx('data_stocks')
+      .where({ id: stockId, variant_id: variantId })
+      .forUpdate()
+      .first()) as StockRow | undefined
+    if (!stock) throw new Error('NOT_FOUND')
+
+    const currentQty = Number(stock.quantity)
+    if (currentQty < quantity) {
+      throw new Error('VALIDATION: Insufficient stock quantity')
+    }
+
+    const now = trx.fn.now(3)
+    await trx('data_stocks')
+      .where({ id: stockId })
+      .update({ quantity: currentQty - quantity, updated_at: now })
+
+    const row = (await trx('data_stocks').where({ id: stockId }).first()) as StockRow | undefined
+    if (!row) throw new Error('NOT_FOUND')
+    return rowToDto(row)
+  })
+}
+
 export async function setStockActive(
   productId: string,
   variantId: string,

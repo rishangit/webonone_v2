@@ -20,6 +20,8 @@ const dataEntityKindSchema = z.enum([
   'attribute',
 ])
 
+const catalogEntityKindSchema = z.enum(['product', 'service', 'space'])
+
 export const dataEntityContextRefSchema = z
   .object({
     service: z.literal('data'),
@@ -29,10 +31,24 @@ export const dataEntityContextRefSchema = z
   })
   .strict()
 
+export const webononeCatalogEntityContextRefSchema = z
+  .object({
+    service: z.literal('webonone'),
+    kind: catalogEntityKindSchema,
+    id: nanoidIdSchema,
+    label: z.string().trim().min(1).max(255).optional(),
+  })
+  .strict()
+
+export const entityContextRefSchema = z.discriminatedUnion('service', [
+  dataEntityContextRefSchema,
+  webononeCatalogEntityContextRefSchema,
+])
+
 export const sendMessageSchema = z
   .object({
     content: z.string().trim().min(1).max(8000),
-    context: z.array(dataEntityContextRefSchema).max(8).optional(),
+    context: z.array(entityContextRefSchema).max(8).optional(),
     companyId: z.unknown().optional(),
     userId: z.unknown().optional(),
     guestId: z.unknown().optional(),

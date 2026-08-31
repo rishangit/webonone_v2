@@ -69,6 +69,10 @@ export { TagChip } from './components/TagChip'
 export type { TagChipProps } from './components/TagChip'
 export { CountrySelect } from './components/CountrySelect'
 export type { CountrySelectProps } from './components/CountrySelect'
+export { ContactValueLine } from './components/ContactValueLine'
+export type { ContactKind, ContactValueLineProps } from './components/ContactValueLine'
+export { ReadOnlyField } from './components/ReadOnlyField'
+export type { ReadOnlyFieldProps } from './components/ReadOnlyField'
 export {
   PHONE_COUNTRIES,
   getPhoneCountryByIso2,
@@ -98,7 +102,9 @@ export {
   tabsListScrollClassName,
   tabsListClassName,
   tabsListShellClassName,
+  tabsListShellClassicClassName,
   tabsTriggerShellClassName,
+  tabsTriggerShellClassicClassName,
   tabsTriggerClassName,
   tabsPageClassName,
   tabsPageContentClassName,
@@ -117,6 +123,7 @@ export {
 } from './components/Select'
 export { Slider } from './components/Slider'
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './components/Popover'
+export { popoverPointerBeforeClassName } from './lib/menuPanel'
 export { Calendar } from './components/Calendar'
 export { DatePicker } from './components/DatePicker'
 export type { DatePickerProps } from './components/DatePicker'
@@ -125,6 +132,7 @@ export type {
   FullCalendarProps,
   FullCalendarView,
   FullCalendarEvent,
+  FullCalendarEventPopoverCtx,
 } from './components/FullCalendar'
 export { MultiSelect } from './components/MultiSelect'
 export type { MultiSelectOption, MultiSelectProps } from './components/MultiSelect'
@@ -213,6 +221,7 @@ export {
   itemListMenuClassName,
   itemListStatusClassName,
   itemListThumbClassName,
+  itemListRowBodyClassName,
 } from './components/ItemList'
 export type { ItemListMenuProps } from './components/ItemList'
 export { ConfirmItemList } from './components/ConfirmItemList'
@@ -274,6 +283,7 @@ export {
   CARD_TONES,
   type CardTone,
   shapePanelClassName,
+  shapePanelBorderedClassName,
   shapePanelSmClassName,
   shapePanelLgClassName,
   shapeControlClassName,

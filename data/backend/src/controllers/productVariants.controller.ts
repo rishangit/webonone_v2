@@ -37,4 +37,16 @@ export const productVariantsController = {
       if (!handleServiceError(err, res)) throw err
     }
   },
+
+  async remove(req: AuthenticatedRequest, res: Response) {
+    try {
+      await productVariantsService.deleteProductVariant(
+        String(req.params.id),
+        String(req.params.variantId),
+      )
+      res.status(204).send()
+    } catch (err) {
+      if (!handleServiceError(err, res)) throw err
+    }
+  },
 }

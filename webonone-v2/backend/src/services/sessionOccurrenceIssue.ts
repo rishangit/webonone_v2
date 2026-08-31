@@ -12,10 +12,10 @@ function toYmd(value: string | Date): string {
 }
 
 export function effectiveStaffId(
-  eventStaffId: string,
+  eventStaffId: string | null,
   run: Pick<CompanyEventSessionRunRow, 'staff_id'> | undefined,
 ): string {
-  return run?.staff_id || eventStaffId
+  return run?.staff_id || eventStaffId || ''
 }
 
 export function isRunCancelled(

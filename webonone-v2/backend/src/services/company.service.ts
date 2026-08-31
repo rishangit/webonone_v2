@@ -522,7 +522,7 @@ export async function registerCompany(
     country: input.country?.trim() || null,
     contact_email: input.contactEmail?.trim() || null,
     contact_phone: input.contactPhone?.trim() || null,
-    contact_person_user_id: input.contactPersonUserId,
+    contact_person_user_id: input.contactPersonUserId ?? userId,
     latitude: null,
     longitude: null,
     map_place_id: null,

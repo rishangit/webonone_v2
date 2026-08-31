@@ -7,8 +7,8 @@ export interface CompanyEventRow {
   service_id: string
   service_name: string
   time_mode: 'duration' | 'window'
-  staff_id: string
-  staff_display_name: string
+  staff_id: string | null
+  staff_display_name: string | null
   attendee_user_id: string | null
   attendee_display_name: string | null
   attendee_email: string | null
@@ -103,7 +103,7 @@ export async function memberIsAssignedStaff(
 ): Promise<boolean> {
   const staff = await staffRepo.findStaffByUserId(companyId, userId)
   if (!staff) return false
-  if (event.staff_id === staff.id) return true
+  if (event.staff_id && event.staff_id === staff.id) return true
   if (opts?.effectiveStaffId) {
     if (opts.effectiveStaffId === staff.id) return true
   } else {
@@ -232,8 +232,8 @@ export async function insertEvent(row: {
   service_id: string
   service_name: string
   time_mode: 'duration' | 'window'
-  staff_id: string
-  staff_display_name: string
+  staff_id: string | null
+  staff_display_name: string | null
   attendee_user_id: string | null
   attendee_display_name: string | null
   attendee_email: string | null
@@ -264,8 +264,8 @@ export async function updateEvent(
     service_id: string
     service_name: string
     time_mode: 'duration' | 'window'
-    staff_id: string
-    staff_display_name: string
+    staff_id: string | null
+    staff_display_name: string | null
     attendee_user_id: string | null
     attendee_display_name: string | null
     attendee_email: string | null

@@ -122,6 +122,11 @@ const DataCatalogVariantDetailRoute = lazy(() =>
     default: m.DataCatalogVariantDetailRoute,
   })),
 )
+const DataCatalogAttributeDetailRoute = lazy(() =>
+  import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
+    default: m.DataCatalogAttributeDetailRoute,
+  })),
+)
 const DataLibraryCatchAllRoute = lazy(() =>
   import('@/features/company-catalog/pages/DataCatalogRoutes').then((m) => ({
     default: m.DataLibraryCatchAllRoute,
@@ -417,6 +422,14 @@ export function App() {
             element={
               <LazyRoute>
                 <DataCatalogVariantDetailRoute />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="data/:kind/:entityId/attributes/:attributeId"
+            element={
+              <LazyRoute>
+                <DataCatalogAttributeDetailRoute />
               </LazyRoute>
             }
           />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Edit3 } from 'lucide-react'
 import {
@@ -7,7 +8,9 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ItemListMenu,
 } from '@webonone/ui-kit'
+import { CompanyCatalogAttributeAiMenuItem } from './CompanyCatalogAttributeAiMenuItem'
 import {
   dataLibraryApi,
   formatLibraryAttributeValueLabel,
@@ -22,6 +25,9 @@ import {
 
 type CompanyCatalogAttributesTabProps = {
   kind: CatalogGalleryKind
+  /** Company catalog entity id (for attribute detail navigation). */
+  entityId: string
+  entityName: string
   libraryEntityId: string | null
   /** Company payload / hydrated payload when there is no library id (custom). */
   payload: CatalogPayload | null
@@ -53,6 +59,8 @@ function looksLikeRichAttributes(raw: unknown[]): boolean {
 
 export function CompanyCatalogAttributesTab({
   kind,
+  entityId,
+  entityName,
   libraryEntityId,
   payload,
   canEdit,
@@ -60,6 +68,7 @@ export function CompanyCatalogAttributesTab({
 }: CompanyCatalogAttributesTabProps) {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
+  const navigate = useNavigate()
   const [attributes, setAttributes] = useState<LibraryCatalogAttribute[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -171,9 +180,9 @@ export function CompanyCatalogAttributesTab({
         <ItemListEmpty>{t('attributesTab.empty')}</ItemListEmpty>
       ) : (
         <ItemList>
-          {attributes.map((attr) => (
-            <ItemListItem key={attr.attributeId}>
-              <ItemListContent>
+          {attributes.map((attr) => {
+            const rowBody = (
+              <>
                 <p className="truncate font-medium">{attr.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
                   <span className="capitalize">{attr.valueType}</span>
@@ -189,9 +198,51 @@ export function CompanyCatalogAttributesTab({
                       .join(' · ')}
                   </p>
                 ) : null}
-              </ItemListContent>
-            </ItemListItem>
-          ))}
+              </>
+            )
+            const canOpenDetail = Boolean(libraryEntityId)
+            return (
+              <ItemListItem key={attr.attributeId}>
+                <ItemListContent>
+                  {canOpenDetail ? (
+                    <button
+                      type="button"
+                      className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() =>
+                        navigate(
+                          `/data/${kind}/${entityId}/attributes/${attr.attributeId}`,
+                        )
+                      }
+                    >
+                      {rowBody}
+                    </button>
+                  ) : (
+                    rowBody
+                  )}
+                </ItemListContent>
+                {libraryEntityId ? (
+                  <ItemListMenu ariaLabel={t('attributesTab.actionsFor', { name: attr.name })}>
+                    <CompanyCatalogAttributeAiMenuItem
+                      kind={kind}
+                      libraryEntityId={libraryEntityId}
+                      entityName={entityName}
+                      attributeId={attr.attributeId}
+                      attributeName={attr.name}
+                      mode="copy"
+                    />
+                    <CompanyCatalogAttributeAiMenuItem
+                      kind={kind}
+                      libraryEntityId={libraryEntityId}
+                      entityName={entityName}
+                      attributeId={attr.attributeId}
+                      attributeName={attr.name}
+                      mode="suggest_values"
+                    />
+                  </ItemListMenu>
+                ) : null}
+              </ItemListItem>
+            )
+          })}
         </ItemList>
       )}
     </div>

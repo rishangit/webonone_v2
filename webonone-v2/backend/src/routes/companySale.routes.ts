@@ -1,7 +1,10 @@
 import { Router } from 'express'
 import * as companySaleController from '../controllers/companySale.controller.js'
 import { requireCompanyAdminSession } from '../middleware/requireCompanyAdminSession.js'
-import { requireCompanySession } from '../middleware/requireCompanySession.js'
+import {
+  requireCompanySession,
+  requireCompanySessionOrSuperAdmin,
+} from '../middleware/requireCompanySession.js'
 import { validateBody } from '../middleware/validateBody.js'
 import { createSaleBodySchema, completeSaleBodySchema, upsertDraftSaleBodySchema } from '../schemas/companySaleSchemas.js'
 
@@ -41,6 +44,10 @@ router.post(
   requireCompanyAdminSession,
   companySaleController.voidSale,
 )
-router.get('/company/me/sales/:id', requireCompanySession, companySaleController.getSale)
+router.get(
+  '/company/me/sales/:id',
+  requireCompanySessionOrSuperAdmin,
+  companySaleController.getSale,
+)
 
 export default router

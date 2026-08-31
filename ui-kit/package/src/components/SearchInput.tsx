@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { Search, X } from 'lucide-react'
+import { interactiveHoverTextClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import { PageHeaderSearchContext } from '../layouts/page-header-search-context'
 import { Button } from './Button'
@@ -47,7 +48,7 @@ const SearchInputField = React.forwardRef<HTMLInputElement, SearchInputFieldProp
         {hasValue ? (
           <button
             type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+            className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted-foreground transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50', interactiveHoverTextClassName)}
             onClick={handleClear}
             aria-label="Clear search"
             disabled={disabled}
@@ -63,7 +64,7 @@ SearchInputField.displayName = 'SearchInputField'
 
 function mobileSearchFieldClassName(expanded: boolean) {
   return cn(
-    'h-9 w-full min-w-0 border border-input bg-background shadow-none',
+    'h-9 w-full min-w-0 border border-input bg-transparent shadow-none',
     'focus-within:outline-none focus-within:ring-0 focus-within:ring-offset-0',
     expanded ? 'gap-2 px-2' : 'justify-center gap-0 px-0 [&_input]:max-w-0 [&_input]:opacity-0',
   )

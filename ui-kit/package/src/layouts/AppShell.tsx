@@ -4,7 +4,7 @@ import type { NavConfigItem } from '../types/nav'
 import { AppHeader, type AppHeaderLocale, type AppHeaderProps, type AppHeaderUser } from '../components/AppHeader'
 import { BrandLogo } from '../components/BrandLogo'
 import { AppSidebar, type SidebarSession } from './AppSidebar'
-import { appShellHeaderTopClass } from './shellContentPadding'
+import { shellChromeBodyClassName, shellChromeRootClassName } from './shellContentPadding'
 
 const SIDEBAR_COLLAPSED_KEY = 'webonone:sidebar-collapsed'
 
@@ -132,10 +132,16 @@ function AppShell({
 
   const logoNode = logo ?? <BrandLogo href={logoHref} />
   const hasHeaderNotice = Boolean(headerNotice)
-  const headerTopClass = appShellHeaderTopClass(hasHeaderNotice)
 
   return (
-    <div className={cn('flex h-dvh flex-col overflow-hidden', className)}>
+    <div
+      className={cn(
+        'app-shell-root flex h-dvh flex-col overflow-hidden',
+        shellChromeRootClassName,
+        hasHeaderNotice && 'app-shell-root--notice',
+        className,
+      )}
+    >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:shadow-md"
@@ -157,11 +163,11 @@ function AppShell({
         actions={headerActions}
         notice={headerNotice}
       />
-      <div className="flex min-h-0 flex-1">
+      <div className={cn('app-shell-body relative flex min-h-0 flex-1', shellChromeBodyClassName)}>
         {mobileOpen && !isDesktop ? (
           <button
             type="button"
-            className={cn('fixed inset-x-0 bottom-0 z-30 bg-black/50 md:hidden', headerTopClass)}
+            className="app-shell-mobile-nav-overlay bg-black/50 md:hidden"
             aria-label="Close navigation"
             onClick={() => setMobileOpen(false)}
           />

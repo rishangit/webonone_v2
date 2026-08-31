@@ -4,6 +4,7 @@ export function buildDefaultServiceLine(
   serviceId: string,
   serviceName: string,
   listPrice: number | null | undefined,
+  imageUrl?: string | null,
 ): PosCartLine {
   return {
     key: `service-${serviceId}`,
@@ -12,5 +13,6 @@ export function buildDefaultServiceLine(
     name: serviceName,
     quantity: 1,
     unitPrice: listPrice ?? 0,
+    imageUrl: imageUrl ?? null,
   }
 }

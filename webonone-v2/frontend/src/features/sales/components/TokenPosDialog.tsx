@@ -9,20 +9,25 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
-import { dataLibraryApi } from '@/features/company-catalog/services/dataLibraryApi'
-import type { HydratedCatalogItem } from '@/features/company-catalog/types/companyCatalog.types'
+import { catalogItemImageUrl } from '@/features/company-catalog/utils/firstGalleryImageUrl'
+import { hydrateLinkedCatalogItems } from '@/features/company-catalog/utils/hydrateLinkedCatalog'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { PosCartList } from '@/features/sales/components/PosCartList'
 import { PosItemPickerDialog } from '@/features/sales/components/PosItemPickerDialog'
+import { PosProductVariantDialog } from '@/features/sales/components/PosProductVariantDialog'
+import { usePosProductPick } from '@/features/sales/hooks/usePosProductPick'
 import { upsertDraftSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesApi } from '@/features/sales/services/salesApi'
 import type {
   PosCartLine,
   SaleItemKind,
+  SaleLine,
   TokenPosSubject,
 } from '@/features/sales/types/sales.types'
 import { buildDefaultServiceLine } from '@/features/sales/utils/buildDefaultServiceLine'
-import { formatLkr, resolveProductUnitPrice } from '@/features/sales/utils/formatMoney'
+import { hydratePosCartLineImages } from '@/features/sales/utils/hydratePosCartLineImages'
+import { formatLkr } from '@/features/sales/utils/formatMoney'
+import { findPosCartStockViolation, posCartLinesToSaleLines } from '@/features/sales/utils/posCartSaleLines'
 
 type TokenPosDialogProps = {
   open: boolean
@@ -34,14 +39,7 @@ type TokenPosDialogProps = {
   onBillSaved?: () => void
 }
 
-function saleLinesToCart(lines: {
-  id: string
-  itemKind: SaleItemKind
-  catalogItemId: string
-  name: string
-  quantity: number
-  unitPrice: number
-}[]): PosCartLine[] {
+function saleLinesToCart(lines: SaleLine[]): PosCartLine[] {
   return lines.map((line) => ({
     key: line.id,
     itemKind: line.itemKind,
@@ -49,6 +47,10 @@ function saleLinesToCart(lines: {
     name: line.name,
     quantity: line.quantity,
     unitPrice: line.unitPrice,
+    libraryProductId: line.libraryEntityId,
+    libraryVariantId: line.libraryVariantId ?? null,
+    libraryStockId: line.libraryStockId ?? null,
+    variantName: line.variantName,
   }))
 }
 
@@ -67,6 +69,16 @@ export function TokenPosDialog({
 
   const [itemOpen, setItemOpen] = useState(false)
   const [lines, setLines] = useState<PosCartLine[]>([])
+  const addCartLine = useCallback((line: PosCartLine) => {
+    setLines((prev) => [...prev, line])
+  }, [])
+  const {
+    handlePick,
+    variantDialogOpen,
+    pendingPick,
+    confirmVariantSelection,
+    closeVariantDialog,
+  } = usePosProductPick({ onAddLine: addCartLine })
   const [formError, setFormError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -74,8 +86,8 @@ export function TokenPosDialog({
   usePlatformLoading(loading ? t('bill.loading') : saving ? t('tokenPos.savingBill') : null)
 
   const seedDefaultLines = useCallback(
-    (listPrice: number | null | undefined) => {
-      setLines([buildDefaultServiceLine(serviceId, serviceName, listPrice)])
+    (listPrice: number | null | undefined, imageUrl?: string | null) => {
+      setLines([buildDefaultServiceLine(serviceId, serviceName, listPrice, imageUrl)])
     },
     [serviceId, serviceName],
   )
@@ -91,16 +103,23 @@ export function TokenPosDialog({
       .then(async (draft) => {
         if (cancelled) return
         if (draft?.lines.length) {
-          setLines(saleLinesToCart(draft.lines))
+          const cart = saleLinesToCart(draft.lines)
+          const withImages = await hydratePosCartLineImages(cart)
+          if (!cancelled) setLines(withImages)
           return
         }
         const item = await companyCatalogApi.get('services', serviceId).catch(() => null)
         if (cancelled) return
-        seedDefaultLines(item?.listPrice ?? 0)
+        if (item) {
+          const [hydrated] = await hydrateLinkedCatalogItems('services', [item])
+          seedDefaultLines(hydrated.listPrice, catalogItemImageUrl(hydrated))
+          return
+        }
+        seedDefaultLines(0, null)
       })
       .catch(() => {
         if (cancelled) return
-        seedDefaultLines(0)
+        seedDefaultLines(0, null)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -113,40 +132,20 @@ export function TokenPosDialog({
 
   const total = lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0)
 
-  async function handlePick(item: HydratedCatalogItem, itemKind: SaleItemKind) {
-    let unitPrice = item.listPrice ?? 0
-    if (itemKind === 'product') {
-      const resolved = await resolveProductUnitPrice({
-        listPrice: item.listPrice,
-        libraryEntityId: item.libraryEntityId,
-        loadVariants: (productId) => dataLibraryApi.listProductVariants(productId),
-        loadStocks: (productId, variantId) =>
-          dataLibraryApi.listProductVariantStocks(productId, variantId),
-      })
-      if (resolved != null) unitPrice = resolved
-    }
-    setLines((prev) => [
-      ...prev,
-      {
-        key: `${item.id}-${Date.now()}`,
-        itemKind,
-        catalogItemId: item.id,
-        name: item.displayName,
-        quantity: 1,
-        unitPrice,
-      },
-    ])
-  }
-
   async function handleSave() {
+    const stockViolation = findPosCartStockViolation(lines)
+    if (stockViolation) {
+      setFormError(
+        t('pos.stockExceeded', {
+          name: stockViolation.variantName ?? stockViolation.name,
+          quantity: stockViolation.availableQuantity ?? 0,
+        }),
+      )
+      return
+    }
     const body = {
       customerUserId: token.userId,
-      lines: lines.map((line) => ({
-        itemKind: line.itemKind,
-        catalogItemId: line.catalogItemId,
-        quantity: line.quantity,
-        unitPrice: line.unitPrice,
-      })),
+      lines: posCartLinesToSaleLines(lines),
     }
     const parsed = upsertDraftSaleBodySchema.safeParse(body)
     if (!parsed.success) {
@@ -183,13 +182,14 @@ export function TokenPosDialog({
       <CustomDialog
         open={open}
         onOpenChange={onOpenChange}
-        nestedDismissGuard={itemOpen}
+        nestedDismissGuard={itemOpen || variantDialogOpen}
         title={t('tokenPos.dialogTitle')}
         description={customerLabel}
         sizeWidth="large"
         sizeHeight="large"
         footer={
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex w-full flex-wrap items-center justify-end gap-4">
+            <p className="text-lg font-semibold">{t('pos.total', { amount: formatLkr(total) })}</p>
             <Button
               type="button"
               variant="outline"
@@ -245,17 +245,26 @@ export function TokenPosDialog({
               onRemove={(key) => setLines((prev) => prev.filter((line) => line.key !== key))}
             />
           ) : null}
-          <p className="text-lg font-semibold">{t('pos.total', { amount: formatLkr(total) })}</p>
         </div>
       </CustomDialog>
       <PosItemPickerDialog
         open={itemOpen}
         onOpenChange={setItemOpen}
         enabledKinds={enabledKinds}
+        stackLevel={1}
         onPick={(item, kind) => {
           void handlePick(item, kind)
         }}
       />
+      {pendingPick ? (
+        <PosProductVariantDialog
+          open={variantDialogOpen}
+          onOpenChange={closeVariantDialog}
+          productName={pendingPick.item.displayName}
+          options={pendingPick.options}
+          onConfirm={confirmVariantSelection}
+        />
+      ) : null}
     </>
   )
 }

@@ -14,7 +14,7 @@ const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
       <div
         ref={ref}
         className={cn(
-          'ui-shape-control flex h-10 w-full items-center gap-2 overflow-hidden border border-input bg-input-background px-3',
+          'ui-shape-control flex h-10 w-full items-center gap-2 overflow-hidden border border-input bg-transparent px-3',
           inputGroupFocusRingClassName,
           isInvalid && 'border-destructive focus-within:ring-destructive/30',
           className,

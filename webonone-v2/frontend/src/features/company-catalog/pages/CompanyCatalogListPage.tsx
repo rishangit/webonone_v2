@@ -21,18 +21,19 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { CompanyCatalogAiMenuItem } from '../components/CompanyCatalogAiMenuItem'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
   CATALOG_ENTITY_SINGULAR_KEYS,
   isCatalogGalleryKind,
-  type CatalogEntityKind,
+  type CatalogGalleryKind,
 } from '../types/companyCatalog.types'
 import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
 
 type CompanyCatalogListPageProps = {
-  kind: CatalogEntityKind
+  kind: CatalogGalleryKind
 }
 
 export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
@@ -155,6 +156,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
                   <DropdownMenuItem onClick={() => navigate(`/data/${kind}/${item.id}`)}>
                     {tc('details')}
                   </DropdownMenuItem>
+                  <CompanyCatalogAiMenuItem kind={kind} id={item.id} label={item.displayName} />
                   {canManage ? (
                     <>
                       <DropdownMenuSeparator />

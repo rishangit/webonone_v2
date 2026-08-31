@@ -45,6 +45,28 @@ export async function findStaffById(
   return db<CompanyStaffRow>('company_staff').where({ id: staffId, company_id: companyId }).first()
 }
 
+export async function findStaffByIds(
+  companyId: string,
+  staffIds: string[],
+): Promise<CompanyStaffRow[]> {
+  const unique = [...new Set(staffIds.filter(Boolean))]
+  if (unique.length === 0) return []
+  return db<CompanyStaffRow>('company_staff')
+    .where({ company_id: companyId })
+    .whereIn('id', unique)
+}
+
+export async function findStaffByUserIds(
+  companyId: string,
+  userIds: string[],
+): Promise<CompanyStaffRow[]> {
+  const unique = [...new Set(userIds.filter(Boolean))]
+  if (unique.length === 0) return []
+  return db<CompanyStaffRow>('company_staff')
+    .where({ company_id: companyId })
+    .whereIn('user_id', unique)
+}
+
 export async function findStaffByUserId(
   companyId: string,
   userId: string,

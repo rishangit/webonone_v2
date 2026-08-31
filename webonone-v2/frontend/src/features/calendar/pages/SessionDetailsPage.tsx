@@ -12,6 +12,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ContactValueLine,
   FeaturePage,
   ItemList,
   ItemListContent,
@@ -19,6 +20,7 @@ import {
   ItemListItem,
   ImagePreview,
   StatusTag,
+  itemListThumbClassName,
   useToast,
   type StatusTagVariant,
 } from '@webonone/ui-kit'
@@ -849,7 +851,7 @@ export function SessionDetailsPage() {
                           src={token.userAvatarUrl}
                           alt={token.userDisplayName}
                           mode="view"
-                          className="h-10 w-10 rounded-md"
+                          className={itemListThumbClassName}
                         />
                         <ItemListContent>
                           <div className="flex w-full min-w-0 flex-col gap-3">
@@ -861,9 +863,11 @@ export function SessionDetailsPage() {
                                 <p className="truncate text-sm text-foreground">
                                   {token.userDisplayName}
                                 </p>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {token.userEmail ?? 'No email'}
-                                </p>
+                                <ContactValueLine
+                                  kind="email"
+                                  value={token.userEmail}
+                                  emptyLabel="No email"
+                                />
                               </div>
                               <div className="flex shrink-0 flex-col items-end gap-1">
                                 {tokenStatusTag}
@@ -1016,7 +1020,7 @@ export function SessionDetailsPage() {
             <CardContent className="space-y-3">
               <DetailField
                 label="Name"
-                value={effectiveStaffDisplayName ?? detail.staffDisplayName}
+                value={effectiveStaffDisplayName ?? detail.staffDisplayName ?? '—'}
               />
               {canManageSession && sessionKey ? (
                 <div className="flex flex-wrap gap-2">

@@ -3,10 +3,12 @@ import { useAppSelector } from '@/app/store/hooks'
 import { CompanyCatalogDetailPage } from '@/features/company-catalog/pages/CompanyCatalogDetailPage'
 import { CompanyCatalogListPage } from '@/features/company-catalog/pages/CompanyCatalogListPage'
 import { CompanyProductVariantDetailsPage } from '@/features/company-catalog/pages/CompanyProductVariantDetailsPage'
+import { CompanyCatalogAttributeDetailsPage } from '@/features/company-catalog/pages/CompanyCatalogAttributeDetailsPage'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { PlatformPeerFrame } from '@/features/shell/pages/PlatformPeerFrame'
 import {
   CATALOG_ENTITY_KINDS,
+  isCatalogGalleryKind,
   type CatalogEntityKind,
 } from '@/features/company-catalog/types/companyCatalog.types'
 
@@ -28,7 +30,7 @@ export function DataCatalogListRoute() {
     return <Navigate to="/" replace />
   }
 
-  if (!isCatalogEntityKind(kindParam)) {
+  if (!isCatalogEntityKind(kindParam) || !isCatalogGalleryKind(kindParam)) {
     return <Navigate to="/" replace />
   }
 
@@ -68,6 +70,25 @@ export function DataCatalogVariantDetailRoute() {
   }
 
   return <CompanyProductVariantDetailsPage />
+}
+
+/**
+ * Catalog attribute details — company catalog for company_admin / staff;
+ * Data library embed for super_admin.
+ */
+export function DataCatalogAttributeDetailRoute() {
+  const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
+  const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
+
+  if (activeRole === 'super_admin') {
+    return <PlatformPeerFrame peer="data" />
+  }
+
+  if (!canAccessCompanySession(activeRole, activeCompanyId)) {
+    return <Navigate to="/" replace />
+  }
+
+  return <CompanyCatalogAttributeDetailsPage />
 }
 
 /** Catch-all Data paths (e.g. unknown) — super_admin library; others home. */

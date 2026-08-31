@@ -28,13 +28,15 @@ Import from `@webonone/ui-kit`:
 | Export | Role |
 |--------|------|
 | `ItemList` | `<ul>` with `gap-2` between rows and **`py-4`** vertical padding |
-| `ItemListItem` | Single row — `glass-card item-list-row`, `px-3 py-2`, themed shadow on hover |
+| `ItemListItem` | Single row — `glass-card item-list-row`, `p-2`, themed shadow on hover |
 | `ItemListContent` | Main label/metadata (`flex-1`, truncates) |
 | `ItemListStatus` | Trailing status/verification chip at **top-right**, before `ItemListMenu` |
 | `ItemListMenu` | Vertical 3-dot trigger (`MoreVertical`) at **top-right** of row |
 | `ItemListEmpty` | Empty list copy — centered `py-4 text-center text-muted-foreground`; pass message as children |
 | `itemListRowActiveClassName` | Active/selected row — `border-primary` (border only, no fill) |
 | `itemListMenuClassName` | Menu trigger — `shrink-0 self-start` (pins to top-right; row uses `items-start`) |
+| `itemListThumbClassName` | Leading `ImagePreview` — `h-14 w-14 shrink-0 self-start rounded-md` |
+| `itemListRowBodyClassName` | Image + text inside `ItemListContent` — `flex w-full items-start gap-3` |
 | `itemListStatusClassName` | Status chip slot — `shrink-0 self-start` (same top-right pin as menu) |
 | `DropdownMenuItem`, `DropdownMenuSeparator`, … | Menu entries inside `ItemListMenu` |
 
@@ -131,9 +133,9 @@ When the entity has a details / profile route ([details-page-cards skill](../det
 | Gap between rows | `gap-2` on `ItemList` |
 | Row surface | `glass-card` — `hsl(var(--glass-bg))` + `backdrop-filter: blur(8px)` |
 | Row hover | `item-list-row:hover` → `box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22)` — **shadow only**, no border or background change |
-| Row layout | `ItemListItem` uses `flex items-start` — content left, menu top-right |
+| Row layout | `ItemListItem` uses `flex items-start` — content left, menu top-right; leading images use `self-start` on `itemListThumbClassName` |
 | Menu trigger | `itemListMenuClassName` — `self-start shrink-0` on 3-dot button |
-| Row padding | `px-3 py-2` (via `ItemListItem`) |
+| Row padding | `p-2` (via `ItemListItem`) |
 | Row border (default) | `--glass-border` via `glass-card`; border color stays on hover |
 | Active / selected row | `itemListRowActiveClassName` → `border-primary` |
 | Selection dialog selected | `border-primary` **+** Lucide `Check` rightmost (`ml-auto h-5 w-5 text-primary`) — [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) |

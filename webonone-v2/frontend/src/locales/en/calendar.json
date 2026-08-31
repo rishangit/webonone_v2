@@ -9,6 +9,21 @@
       "staffLeaveDetail": "{{name}} is on approved leave for this session. Cancel the session or reassign another staff member.",
       "cancelledShort": "Cancelled",
       "cancelledDetail": "This session is cancelled and is hidden from customers."
+    },
+    "eventPreview": {
+      "title": "Session details",
+      "openSession": "Open session",
+      "close": "Close",
+      "date": "Date",
+      "weekday": "Weekday",
+      "time": "Time",
+      "status": "Status",
+      "service": "Service",
+      "timeMode": "Time mode",
+      "staff": "Staff",
+      "space": "Space",
+      "attendee": "Attendee",
+      "email": "Email"
     }
   },
   "staffLabel": "{{name}}",

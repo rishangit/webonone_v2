@@ -16,6 +16,11 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import {
+  formatPosCashDefault,
+  PosCashPaymentFields,
+  validatePosCashReceived,
+} from '@/features/sales/components/PosCashPaymentFields'
 import { PosCartList } from '@/features/sales/components/PosCartList'
 import { completeSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesApi } from '@/features/sales/services/salesApi'
@@ -54,6 +59,7 @@ export function TokenBillDialog({
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<SalePaymentMethod>('cash')
+  const [cashReceived, setCashReceived] = useState('')
   const [notes, setNotes] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const completingRef = useRef(false)
@@ -68,12 +74,18 @@ export function TokenBillDialog({
     let cancelled = false
     setFormError(null)
     setPaymentMethod('cash')
+    setCashReceived('')
     setNotes('')
     setLoading(true)
     salesApi
       .getSessionTokenBill(token.id)
       .then((sale) => {
-        if (!cancelled) setBill(sale)
+        if (!cancelled) {
+          setBill(sale)
+          if (sale?.status === 'draft') {
+            setCashReceived(formatPosCashDefault(sale.total))
+          }
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -86,8 +98,21 @@ export function TokenBillDialog({
   const lines = bill ? saleToCartLines(bill) : []
   const total = bill?.total ?? 0
 
+  function handlePaymentMethodChange(value: SalePaymentMethod) {
+    setPaymentMethod(value)
+    if (value === 'cash') {
+      setCashReceived(formatPosCashDefault(total))
+    } else {
+      setCashReceived('')
+    }
+  }
+
   async function handleCloseSale() {
     if (!bill || !isDraft || completingRef.current) return
+    if (paymentMethod === 'cash' && !validatePosCashReceived(cashReceived, total)) {
+      setFormError(t('pos.cashReceivedInsufficient'))
+      return
+    }
     const body = {
       paymentMethod,
       notes: notes.trim() || null,
@@ -223,7 +248,7 @@ export function TokenBillDialog({
                 <FormField label={t('pos.paymentMethod')} htmlFor={`token-bill-payment-${token.id}`} required>
                   <Select
                     value={paymentMethod}
-                    onValueChange={(value) => setPaymentMethod(value as SalePaymentMethod)}
+                    onValueChange={(value) => handlePaymentMethodChange(value as SalePaymentMethod)}
                   >
                     <SelectTrigger id={`token-bill-payment-${token.id}`}>
                       <SelectValue />
@@ -235,6 +260,14 @@ export function TokenBillDialog({
                     </SelectContent>
                   </Select>
                 </FormField>
+                {paymentMethod === 'cash' ? (
+                  <PosCashPaymentFields
+                    total={total}
+                    cashReceived={cashReceived}
+                    onCashReceivedChange={setCashReceived}
+                    inputId={`token-bill-cash-received-${token.id}`}
+                  />
+                ) : null}
                 <FormField label={t('pos.notes')} htmlFor={`token-bill-notes-${token.id}`}>
                   <Textarea
                     id={`token-bill-notes-${token.id}`}

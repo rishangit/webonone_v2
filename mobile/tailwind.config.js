@@ -1,4 +1,6 @@
-const { PLATFORM_DEFAULT_THEME } = require('@webonone/theme')
+const { createPlatformDefaultThemeDto, themeDtoToColors } = require('@webonone/theme')
+
+const defaultColors = themeDtoToColors(createPlatformDefaultThemeDto())
 
 /**
  * NativeWind (Tailwind) config for the mobile app. Palette slots mirror the
@@ -11,11 +13,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: PLATFORM_DEFAULT_THEME.color1,
-        secondary: PLATFORM_DEFAULT_THEME.color2,
-        accent: PLATFORM_DEFAULT_THEME.color3,
-        background: PLATFORM_DEFAULT_THEME.color4,
-        foreground: PLATFORM_DEFAULT_THEME.color5,
+        primary: defaultColors.primary,
+        secondary: defaultColors.secondary,
+        background: defaultColors.background,
+        surface: defaultColors.surface,
+        text: defaultColors.text,
         destructive: '#DC2626',
         muted: '#64748B',
         border: '#E2E8F0',

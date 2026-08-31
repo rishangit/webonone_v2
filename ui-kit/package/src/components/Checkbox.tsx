@@ -11,7 +11,7 @@ const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      'peer flex h-5 w-5 shrink-0 items-center justify-center border border-input disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
+      'peer flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-surface,calc(var(--radius)-4px))] border border-input disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
       inputFocusRingClassName,
       className,
     )}

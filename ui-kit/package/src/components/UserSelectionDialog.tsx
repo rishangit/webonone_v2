@@ -3,6 +3,7 @@ import { Check, Plus } from 'lucide-react'
 import { Alert, AlertDescription } from './Alert'
 import { Button } from './Button'
 import { CustomDialog } from './CustomDialog'
+import { ContactValueLine } from './ContactValueLine'
 import { ImagePreview } from './ImagePreview'
 import { SearchInput } from './SearchInput'
 import {
@@ -347,9 +348,11 @@ export function UserSelectionDialog({
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {user.email?.trim() ? user.email : 'No email'}
-                    </p>
+                    <ContactValueLine
+                      kind="email"
+                      value={user.email}
+                      emptyLabel="No email"
+                    />
                   </ItemListContent>
                   {user.role ? (
                     isStatusTagVariant(user.role) ? (

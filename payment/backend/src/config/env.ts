@@ -33,6 +33,8 @@ const envSchema = z.object({
   INVOICE_GENERATOR_INTERVAL_MS: z.coerce.number().default(3_600_000),
   INVOICE_DUE_DAYS: z.coerce.number().default(14),
   FRONTEND_BASE_URL: z.string().default('http://localhost:3017'),
+  WEBONONE_API_BASE_URL: z.string().optional(),
+  WEBONONE_SERVICE_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -66,4 +68,6 @@ export const env = {
   invoiceGeneratorIntervalMs: parsed.INVOICE_GENERATOR_INTERVAL_MS,
   invoiceDueDays: parsed.INVOICE_DUE_DAYS,
   frontendBaseUrl: parsed.FRONTEND_BASE_URL,
+  webononeApiBaseUrl: parsed.WEBONONE_API_BASE_URL ?? '',
+  webononeServiceApiKey: parsed.WEBONONE_SERVICE_API_KEY ?? '',
 }

@@ -27,6 +27,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  ContactValueLine,
   Spinner,
   StatusTag,
   cn,
@@ -360,9 +361,11 @@ export function UserPickerPage() {
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                      <p className="truncate text-xs text-muted-foreground">
-                        {user.email?.trim() ? user.email : t('noEmail')}
-                      </p>
+                      <ContactValueLine
+                        kind="email"
+                        value={user.email}
+                        emptyLabel={t('noEmail')}
+                      />
                       {user.email?.trim() ? (
                         <StatusTag
                           className="shrink-0"
@@ -372,7 +375,7 @@ export function UserPickerPage() {
                     </div>
                     {user.phoneNumber?.trim() ? (
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                        <p className="truncate text-xs text-muted-foreground">{user.phoneNumber}</p>
+                        <ContactValueLine kind="phone" value={user.phoneNumber} />
                         <StatusTag
                           className="shrink-0"
                           variant={user.isPhoneVerified ? 'verified' : 'unverified'}

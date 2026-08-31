@@ -5,6 +5,7 @@ import {
   Alert,
   AlertDescription,
   Button,
+  ContactValueLine,
   CustomDialog,
   useToast,
 } from '@webonone/ui-kit'
@@ -157,7 +158,7 @@ export function IssueTokenDialog({
 
         <div className="rounded-md border border-border p-3">
           <p className="truncate font-medium">{user.displayName}</p>
-          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <ContactValueLine kind="email" value={user.email} />
         </div>
       </div>
     </CustomDialog>

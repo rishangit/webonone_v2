@@ -1,4 +1,4 @@
-import { Button, type UserOption } from '@webonone/ui-kit'
+import { Button, ContactValueLine, type UserOption } from '@webonone/ui-kit'
 import { User } from 'lucide-react'
 
 type EventWizardStepAttendeeProps = {
@@ -22,9 +22,7 @@ export function EventWizardStepAttendee({
         <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
           <div className="min-w-0">
             <p className="truncate font-medium">{attendee.displayName}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {attendee.email ?? 'No email'}
-            </p>
+            <ContactValueLine kind="email" value={attendee.email} emptyLabel="No email" />
           </div>
           <Button type="button" variant="outline" size="sm" onClick={onOpenPicker}>
             Change

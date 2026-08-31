@@ -230,6 +230,10 @@ export const dataLibraryApi = {
     return dataFetch<LibraryProductVariant>(`/products/${productId}/variants/${variantId}`)
   },
 
+  deleteProductVariant(productId: string, variantId: string) {
+    return dataFetch<void>(`/products/${productId}/variants/${variantId}`, { method: 'DELETE' })
+  },
+
   listProductVariantStocks(productId: string, variantId: string) {
     return dataFetch<{ items: LibraryProductVariantStock[] }>(
       `/products/${productId}/variants/${variantId}/stocks`,
@@ -268,6 +272,28 @@ export const dataLibraryApi = {
     return dataFetch<LibraryProductVariantStock>(
       `/products/${productId}/variants/${variantId}/stocks/${stockId}/active`,
       { method: 'PATCH' },
+    )
+  },
+
+  setCatalogAttributeValueDefault(
+    kind: 'products' | 'services' | 'spaces',
+    entityId: string,
+    valueId: string,
+  ) {
+    return dataFetch<LibraryListItem>(
+      `/${KIND_PATH[kind]}/${entityId}/attribute-values/${valueId}/default`,
+      { method: 'PATCH' },
+    )
+  },
+
+  deleteCatalogAttributeValue(
+    kind: 'products' | 'services' | 'spaces',
+    entityId: string,
+    valueId: string,
+  ) {
+    return dataFetch<LibraryListItem>(
+      `/${KIND_PATH[kind]}/${entityId}/attribute-values/${valueId}`,
+      { method: 'DELETE' },
     )
   },
 }

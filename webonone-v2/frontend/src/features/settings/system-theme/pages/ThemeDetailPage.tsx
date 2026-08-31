@@ -96,13 +96,13 @@ export function ThemeDetailPage() {
       ) : null}
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        <div className="flex flex-col gap-6 lg:col-span-2">
+        <div className="flex flex-col gap-6 lg:col-span-1">
           <ThemeBasicsCard theme={theme} canEdit={canEdit} onEdit={() => openWizard(1)} />
           <ThemePaletteCard theme={theme} canEdit={canEdit} onEdit={() => openWizard(2)} />
-        </div>
-        <div className="flex flex-col gap-6 lg:col-span-1">
-          <ThemePreviewCard theme={theme} colorMode={colorMode} />
           <ThemeMetaCard theme={theme} isActive={isActive} />
+        </div>
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          <ThemePreviewCard theme={theme} colorMode={colorMode} />
         </div>
       </div>
 

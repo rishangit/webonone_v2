@@ -1,4 +1,5 @@
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { interactiveHoverClassName } from '../../lib/selectionStyles'
 import { cn } from '../../lib/utils'
 
 interface SidebarCollapseButtonProps {
@@ -13,7 +14,8 @@ function SidebarCollapseButton({ collapsed, onClick, className }: SidebarCollaps
       type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-center justify-center ui-shape-control p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+        'flex w-full items-center justify-center ui-shape-control p-2 text-label transition-colors',
+        interactiveHoverClassName,
         className,
       )}
       aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}

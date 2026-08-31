@@ -73,6 +73,39 @@ const approveCompany: ToolDefinition = {
   invoke: { method: 'POST', path: '/api/v1/company/admin/:id/approve' },
 }
 
+const listMyCompanies: ToolDefinition = {
+  ...publicSearch,
+  name: 'list_my_companies',
+  requiredRoles: ['member', 'company_admin', 'super_admin'],
+  requiredPermissions: ['ai:company:read'],
+  auth: 'user_jwt',
+  invoke: { method: 'GET', path: '/api/v1/company/me/companies' },
+}
+
+const registerCompany: ToolDefinition = {
+  ...listMyCompanies,
+  name: 'register_company',
+  riskLevel: 'write',
+  requiredPermissions: ['ai:company:register'],
+  invoke: { method: 'POST', path: '/api/v1/company/register' },
+}
+
+const updateCompany: ToolDefinition = {
+  ...listMyCompanies,
+  name: 'update_company',
+  riskLevel: 'write',
+  requiredRoles: ['company_admin', 'super_admin'],
+  requiredPermissions: ['ai:company:write'],
+  invoke: { method: 'PATCH', path: '/api/v1/company/:id' },
+}
+
+const getMyCompany: ToolDefinition = {
+  ...listMyCompanies,
+  name: 'get_my_company',
+  requiredRoles: ['member', 'company_admin'],
+  invoke: { method: 'GET', path: '/api/v1/company/me' },
+}
+
 const allTools = [
   publicSearch,
   readCatalog,
@@ -81,6 +114,10 @@ const allTools = [
   createUnit,
   deleteUnit,
   approveCompany,
+  listMyCompanies,
+  registerCompany,
+  updateCompany,
+  getMyCompany,
 ]
 
 function namesFor(
@@ -99,8 +136,13 @@ describe('filterToolsForContext', () => {
     assert.deepEqual(namesFor('guest', null), ['search_public_catalog'])
   })
 
-  it('lets members read the Data library without a company', () => {
-    assert.deepEqual(namesFor('member', null), ['search_public_catalog', 'list_data_units'])
+  it('lets members read the Data library and company registry tools without a company', () => {
+    assert.deepEqual(namesFor('member', null), [
+      'search_public_catalog',
+      'list_data_units',
+      'list_my_companies',
+      'register_company',
+    ])
   })
 
   it('hides company catalog writes when there is no company_id', () => {
@@ -108,6 +150,9 @@ describe('filterToolsForContext', () => {
       'search_public_catalog',
       'list_data_units',
       'create_data_unit',
+      'list_my_companies',
+      'register_company',
+      'update_company',
     ])
   })
 
@@ -118,6 +163,10 @@ describe('filterToolsForContext', () => {
       'create_catalog_item',
       'list_data_units',
       'create_data_unit',
+      'list_my_companies',
+      'register_company',
+      'update_company',
+      'get_my_company',
     ])
   })
 
@@ -128,7 +177,17 @@ describe('filterToolsForContext', () => {
       'create_data_unit',
       'delete_data_unit',
       'approve_company',
+      'list_my_companies',
+      'register_company',
+      'update_company',
     ])
+  })
+
+  it('hides get_my_company without an active company session', () => {
+    const names = namesFor('company_admin', null)
+    assert.equal(names.includes('get_my_company'), false)
+    const withSession = namesFor('company_admin', 'company00000000000001')
+    assert.equal(withSession.includes('get_my_company'), true)
   })
 
   it('does not give super_admin company catalog writes', () => {

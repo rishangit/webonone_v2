@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -13,6 +15,7 @@ import {
   StatusTag,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { ProductVariantStocksCard } from '@/features/products/components/ProductVariantStocksCard'
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
@@ -36,10 +39,13 @@ export function ProductVariantDetailsPage() {
   const { productId, variantId } = useParams<{ productId: string; variantId: string }>()
   const { goToDetail } = useNavigateDataEntity()
   const { accessToken, user } = useAppSelector((s) => s.auth)
+  const canEdit = user?.role === 'super_admin' || user?.role === 'company_admin'
   const canAddStock = user?.role === 'company_admin'
   const [variant, setVariant] = useState<ProductVariant | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     if (!productId || !variantId) return
@@ -62,6 +68,21 @@ export function ProductVariantDetailsPage() {
 
   usePlatformLoading(loading && !variant ? t('loadingVariant') : null)
 
+  async function handleDelete() {
+    if (!productId || !variantId || !variant || variant.isDefault) return
+    setDeleting(true)
+    setError(null)
+    try {
+      await dataApi.deleteProductVariant(productId, variantId)
+      goToDetail('products', productId, { tab: 'variants' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('variant.deleteFailed'))
+      setDeleteOpen(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (!accessToken) return <Navigate to="/login" replace />
   if (!productId || !variantId) return <Navigate to="/products" replace />
 
@@ -71,6 +92,19 @@ export function ProductVariantDetailsPage() {
       description={t('variantDetails')}
       onBack={() => goToDetail('products', productId, { tab: 'variants' })}
       backLabel={t('common:back')}
+      actions={
+        canEdit && variant && !variant.isDefault ? (
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => setDeleteOpen(true)}
+            disabled={deleting}
+          >
+            {t('common:delete')}
+          </Button>
+        ) : undefined
+      }
     >
       {error ? (
         <Alert variant="destructive">
@@ -136,6 +170,22 @@ export function ProductVariantDetailsPage() {
           </div>
         </div>
       ) : null}
+
+      <PlatformAlertConfirmDialog
+        open={deleteOpen}
+        title={
+          variant
+            ? t('variant.deleteConfirm', { name: variant.name })
+            : t('variant.deleteConfirmFallback')
+        }
+        description={t('variant.deleteDescription')}
+        isAllowedParentOrigin={isAllowedParentOrigin}
+        submitLabel={t('common:delete')}
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => {
+          void handleDelete()
+        }}
+      />
     </FeaturePage>
   )
 }

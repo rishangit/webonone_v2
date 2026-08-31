@@ -102,7 +102,10 @@ export async function registerCompany(req: AuthenticatedRequest, res: Response) 
   }
 
   try {
-    const result = await companyService.registerCompany(req.user.id, req.body)
+    const result = await companyService.registerCompany(req.user.id, {
+      ...req.body,
+      contactPersonUserId: req.body.contactPersonUserId ?? req.user.id,
+    })
     res.status(201).json(result)
   } catch (err) {
     handleServiceError(err, res)

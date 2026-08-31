@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -30,7 +29,7 @@ import {
 import { eventsActions } from '@/features/calendar/store'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 import type { CompanyEvent, EventGalleryImage } from '@/features/calendar/types/event.types'
-import { designFormsApi } from '@/features/design/services/designFormsApi'
+import { CompanyServiceWorkflowOverviewCard } from '@/features/company-catalog/components/CompanyServiceWorkflowOverviewCard'
 import {
   canAccessCompanySession,
   canManageCompanyEvents,
@@ -79,7 +78,6 @@ export function EventDetailsPage() {
   const [dialog, setDialog] = useState<{ initialStep: EventWizardStep } | null>(null)
   const [rawTab, setTab] = useDetailTabParam(EVENT_DETAIL_TAB_PARAM, 'overview')
   const tab: EventDetailTabId = rawTab === 'sessions' ? 'upcoming' : rawTab
-  const [linkedFormName, setLinkedFormName] = useState<string | null>(null)
 
   const loading = detailStatus === 'loading' && !detail
   usePlatformLoading(loading ? 'Loading event…' : null)
@@ -96,27 +94,6 @@ export function EventDetailsPage() {
       dispatch(eventsActions.resetDetail())
     }
   }, [dispatch, eventId])
-
-  useEffect(() => {
-    if (!detail?.formTemplateId) {
-      setLinkedFormName(null)
-      return
-    }
-    let cancelled = false
-    designFormsApi
-      .listPublished()
-      .then((result) => {
-        if (cancelled) return
-        const match = result.items.find((item) => item.id === detail.formTemplateId)
-        setLinkedFormName(match?.name ?? detail.formTemplateId)
-      })
-      .catch(() => {
-        if (!cancelled) setLinkedFormName(detail.formTemplateId)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [detail?.formTemplateId])
 
   const canEdit = selectionComplete && canManageCompanyEvents(activeRole, activeCompanyId)
   const isDuration = detail?.timeMode === 'duration'
@@ -170,7 +147,7 @@ export function EventDetailsPage() {
       <div className="flex flex-col gap-6 lg:col-span-2">
         {overviewGalleryImages.length > 0 ? (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4 sm:p-6">
               <ImageCarousel images={overviewGalleryImages} alt={detail.serviceName} />
             </CardContent>
           </Card>
@@ -192,7 +169,7 @@ export function EventDetailsPage() {
             isDuration ? 'Date, start time, and optional recurrence' : 'Weekdays, date range, and times'
           }
           canEdit={canEdit}
-          onEdit={() => openWizard(4)}
+          onEdit={() => openWizard(isDuration ? 3 : 2)}
         >
           {isDuration ? (
             <>
@@ -227,65 +204,22 @@ export function EventDetailsPage() {
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
-        <EditableSectionCard
-          title="Staff"
-          description="Staff member delivering the service"
-          canEdit={canEdit}
-          onEdit={() => openWizard(2)}
-        >
-          <DetailField label="Name" value={detail.staffDisplayName} />
-        </EditableSectionCard>
-
-        {!isDuration ? (
-          <EditableSectionCard
-            title="Where"
-            description="Space where this event happens"
-            canEdit={canEdit}
-            onEdit={() => openWizard(3)}
-          >
-            <DetailField label="Space" value={detail.spaceName ?? '—'} />
-          </EditableSectionCard>
-        ) : null}
-
         {showAttendee ? (
           <EditableSectionCard
             title="Attendee"
             description="Identity user attending this event"
             canEdit={canEdit && isDuration}
-            onEdit={isDuration ? () => openWizard(3) : undefined}
+            onEdit={isDuration ? () => openWizard(2) : undefined}
           >
             <DetailField label="Name" value={detail.attendeeDisplayName ?? '—'} />
             <DetailField label="Email" value={detail.attendeeEmail ?? '—'} />
           </EditableSectionCard>
         ) : null}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Forms</CardTitle>
-            <CardDescription>
-              Design form linked to this event&apos;s service
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {detail.formTemplateId ? (
-              <>
-                <DetailField label="Linked form" value={linkedFormName ?? detail.formTemplateId} />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => navigate(`/design/forms/${detail.formTemplateId}`)}
-                >
-                  Open form
-                </Button>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No form linked to this service. Link a form on the service catalog page.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <CompanyServiceWorkflowOverviewCard
+          serviceId={detail.serviceId}
+          companyId={activeCompanyId ?? undefined}
+        />
 
         <Card>
           <CardHeader>

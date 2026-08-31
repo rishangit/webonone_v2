@@ -19,7 +19,7 @@ type ReassignSessionStaffDialogProps = {
   open: boolean
   eventId: string
   occurrenceDate: string
-  currentStaffId: string
+  currentStaffId: string | null
   onOpenChange: (open: boolean) => void
   onReassigned: () => void
 }
@@ -33,14 +33,14 @@ export function ReassignSessionStaffDialog({
   onReassigned,
 }: ReassignSessionStaffDialogProps) {
   const [staff, setStaff] = useState<CompanyStaff[]>([])
-  const [staffId, setStaffId] = useState(currentStaffId)
+  const [staffId, setStaffId] = useState(currentStaffId ?? '')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
-    setStaffId(currentStaffId)
+    setStaffId(currentStaffId ?? '')
     setError(null)
     setLoading(true)
     void staffApi
@@ -56,7 +56,7 @@ export function ReassignSessionStaffDialog({
   }, [open, currentStaffId])
 
   async function submit() {
-    if (!staffId || staffId === currentStaffId) {
+    if (!staffId || (currentStaffId != null && staffId === currentStaffId)) {
       setError('Choose a different staff member')
       return
     }

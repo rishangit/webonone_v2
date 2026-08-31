@@ -6,12 +6,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ContactValueLine,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
   ImagePreview,
   StatusTag,
+  itemListThumbClassName,
 } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import type { ServiceWorkflowItem } from '@/features/company-catalog/types/companyCatalog.types'
@@ -237,9 +239,14 @@ function SessionWorkflowTokenRow({
   }
 
   const memberDetails = (
-    <div className="min-w-0 flex-1">
-      <p className="truncate font-medium">{token.tokenLabel}</p>
-      <p className="truncate text-sm text-muted-foreground">{token.userDisplayName}</p>
+    <div className="min-w-0 flex-1 space-y-1">
+      <p className="truncate font-medium text-foreground">{token.tokenLabel}</p>
+      <p className="truncate text-sm text-foreground">{token.userDisplayName}</p>
+      <ContactValueLine
+        kind="email"
+        value={token.userEmail}
+        emptyLabel={t('sessionDetail.checkIn.noEmail')}
+      />
     </div>
   )
 
@@ -260,7 +267,7 @@ function SessionWorkflowTokenRow({
             src={token.userAvatarUrl}
             alt={token.userDisplayName}
             mode="view"
-            className="h-10 w-10 shrink-0 rounded-md"
+            className={itemListThumbClassName}
           />
           {topRow}
         </div>
@@ -397,7 +404,7 @@ export function SessionWorkflowStepPanel({
             src={token.userAvatarUrl}
             alt={token.userDisplayName}
             mode="view"
-            className="h-10 w-10 rounded-md"
+            className={itemListThumbClassName}
           />
           <ItemListContent>{row}</ItemListContent>
         </ItemListItem>

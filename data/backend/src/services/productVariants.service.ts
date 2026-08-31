@@ -319,3 +319,19 @@ export async function createProductVariant(
   if (!created) throw new Error('Failed to create product variant')
   return created
 }
+
+export async function deleteProductVariant(
+  productId: string,
+  variantId: string,
+): Promise<void> {
+  await assertProductExists(productId)
+  const variant = await getById(variantId)
+  if (!variant || variant.productId !== productId) {
+    throw new Error('NOT_FOUND')
+  }
+  if (variant.isDefault) {
+    throw new Error('VALIDATION: Cannot delete the default variant')
+  }
+
+  await db('data_product_variants').where({ id: variantId, product_id: productId }).delete()
+}

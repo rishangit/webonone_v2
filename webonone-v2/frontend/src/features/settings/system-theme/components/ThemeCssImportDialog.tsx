@@ -5,11 +5,11 @@ import type { ParsedThemeColors } from '../utils/parseCssThemeVariables'
 import { parseCssThemeVariables } from '../utils/parseCssThemeVariables'
 
 const PLACEHOLDER = `:root {
-  --color-1: #344CE2;
-  --color-2: #3578E8;
-  --color-3: #3578E8;
-  --color-4: #EFF3FA;
-  --color-5: #0E2F59;
+  --color-primary: #344CE2;
+  --color-secondary: #3578E8;
+  --color-background: #EFF3FA;
+  --color-surface: #FFFFFF;
+  --color-text: #17211D;
 }`
 
 interface ThemeCssImportDialogProps {
@@ -36,7 +36,7 @@ export function ThemeCssImportDialog({ open, onOpenChange, onImport }: ThemeCssI
 
     const parsed = parseCssThemeVariables(text)
     if (!parsed) {
-      setError('Paste a valid :root block with --color-1 through --color-5 in #RRGGBB format.')
+      setError('Paste a valid :root block with semantic --color-* vars or legacy --color-1 through --color-5.')
       return
     }
 
@@ -74,7 +74,7 @@ export function ThemeCssImportDialog({ open, onOpenChange, onImport }: ThemeCssI
           <Button
             type="button"
             variant="outline"
-            className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+            className="h-10 px-4"
             onClick={() => handleOpenChange(false)}
           >
             Cancel

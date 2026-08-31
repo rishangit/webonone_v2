@@ -1,11 +1,15 @@
 import type { ReactNode } from 'react'
 import { Globe, LogOut, Menu, User, X } from 'lucide-react'
+import { interactiveHoverClassName } from '../lib/selectionStyles'
+import { shapePanelClassName } from '../lib/shape'
 import { cn } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
 import { Button } from './Button'
 import { isStatusTagVariant, StatusTag } from './StatusTag'
 import { shellContentPaddingX, APP_HEADER_NOTICE_OFFSET_CLASS } from '../layouts/shellContentPadding'
+import { useUiTheme } from '../ui-theme/UiThemeContext'
+import { themeNeedsShapeDom } from '../ui-theme/uiTheme'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -164,11 +168,13 @@ function AppHeader({
   const sinhalaLabel = labels?.sinhala ?? 'සිංහල'
   const profileLabel = labels?.profile ?? 'Profile'
   const logoutLabel = labels?.logout ?? 'Log out'
+  const shapedShell = themeNeedsShapeDom(useUiTheme())
 
   return (
     <header
       className={cn(
-        'relative shrink-0 shell-glass border-b',
+        'app-shell-header relative shrink-0 shell-glass border-b',
+        shapedShell && cn(shapePanelClassName, 'border-b-0'),
         notice ? APP_HEADER_NOTICE_OFFSET_CLASS : undefined,
         className,
       )}
@@ -190,7 +196,7 @@ function AppHeader({
             <button
               type="button"
               onClick={onMenuClick}
-              className="rounded-md p-2 text-foreground outline-none ring-offset-background hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+              className={cn('rounded-md p-2 text-label outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring md:hidden', interactiveHoverClassName)}
               aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
             >
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

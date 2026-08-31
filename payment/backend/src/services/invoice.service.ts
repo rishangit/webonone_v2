@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid'
+import { notifyInvoiceIssued } from '../clients/webononeNotifyClient.js'
 import { env } from '../config/env.js'
 import {
   db,
@@ -18,6 +19,20 @@ function toNumber(value: number | string): number {
 
 export function normalizePaymentReference(raw: string): string {
   return raw.trim().toUpperCase()
+}
+
+type CreatedInvoiceSnapshot = {
+  id: string
+  invoiceNumber: string
+  paymentReference: string
+  companyId: string
+  currency: string
+  amountMinor: number
+  periodStart: Date
+  periodEnd: Date
+  issuedAt: Date
+  dueAt: Date
+  billingPeriod: string
 }
 
 async function nextInvoiceIdentifiers(
@@ -47,7 +62,7 @@ async function insertInvoiceForPeriod(
     plan: PaymentPlanRow
     period: BillingPeriod
   },
-): Promise<string | null> {
+): Promise<CreatedInvoiceSnapshot | null> {
   const amountMinor = toNumber(input.plan.amount_minor) || env.systemMonthlyAmountMinor
   const currency = input.plan.currency || 'LKR'
   const issuedAt = new Date()
@@ -103,7 +118,19 @@ async function insertInvoiceForPeriod(
     created_at: trx.fn.now(3),
   })
 
-  return invoiceId
+  return {
+    id: invoiceId,
+    invoiceNumber,
+    paymentReference,
+    companyId: input.companyId,
+    currency,
+    amountMinor,
+    periodStart: input.period.periodStart,
+    periodEnd: input.period.periodEnd,
+    issuedAt,
+    dueAt,
+    billingPeriod: description,
+  }
 }
 
 export async function generateInvoicesForSubscription(subscriptionId: string): Promise<number> {
@@ -120,10 +147,11 @@ export async function generateInvoicesForSubscription(subscriptionId: string): P
   }
 
   const periods = periodsThroughNow(new Date(sub.activated_at), new Date(), env.billingTimezone)
+  const currentPeriod = periods[periods.length - 1]
   let created = 0
 
   for (const period of periods) {
-    const createdId = await db.transaction(async (trx) =>
+    const createdInvoice = await db.transaction(async (trx) =>
       insertInvoiceForPeriod(trx as unknown as typeof db, {
         companyId: sub.company_id,
         subscriptionId: sub.id,
@@ -131,17 +159,37 @@ export async function generateInvoicesForSubscription(subscriptionId: string): P
         period,
       }),
     )
-    if (createdId) {
+    if (createdInvoice) {
       created += 1
       await logAudit({
         action: 'invoice.issued',
         entityType: 'invoice',
-        entityId: createdId,
+        entityId: createdInvoice.id,
         metadata: {
           companyId: sub.company_id,
           periodStart: period.periodStart.toISOString(),
         },
       })
+
+      const isCurrentPeriod =
+        period.periodStart.getTime() === currentPeriod.periodStart.getTime()
+      if (isCurrentPeriod) {
+        const baseUrl = env.frontendBaseUrl.replace(/\/$/, '')
+        notifyInvoiceIssued({
+          companyId: createdInvoice.companyId,
+          invoiceId: createdInvoice.id,
+          invoiceNumber: createdInvoice.invoiceNumber,
+          paymentReference: createdInvoice.paymentReference,
+          amountMinor: createdInvoice.amountMinor,
+          currency: createdInvoice.currency,
+          periodStart: createdInvoice.periodStart.toISOString(),
+          periodEnd: createdInvoice.periodEnd.toISOString(),
+          dueAt: createdInvoice.dueAt.toISOString(),
+          issuedAt: createdInvoice.issuedAt.toISOString(),
+          billingPeriod: createdInvoice.billingPeriod,
+          invoicesUrl: `${baseUrl}/invoices/${createdInvoice.id}`,
+        })
+      }
     }
   }
 

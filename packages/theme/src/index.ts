@@ -1,10 +1,19 @@
-export type { ColorMode, ThemeApplyMessage, ThemeDto, ThemePayload } from './types'
+export type {
+  ColorMode,
+  SemanticColors,
+  ThemeApplyMessage,
+  ThemeColors,
+  ThemeDto,
+  ThemePayload,
+} from './types'
 export type { ListPageMode } from './listPageModeConstants'
 export type { UiThemeId } from './uiThemeConstants'
 export {
   PLATFORM_DEFAULT_THEME,
   PLATFORM_DEFAULT_THEME_ID,
+  FIXED_TYPOGRAPHY,
   THEME_CONTRACT_VERSION,
+  THEME_CONTRACT_VERSION_V1,
   THEME_MESSAGE_TYPES,
   THEME_QUERY,
   createPlatformDefaultThemeDto,
@@ -16,20 +25,37 @@ export {
   LIST_PAGE_MODE_QUERY,
 } from './listPageModeConstants'
 export {
+  alpha,
+  brightenForDarkSurface,
+  contrastRatio,
+  darken,
   deriveDarkenedHex,
   deriveDarkBrandTextHex,
   deriveInputBackgroundHex,
   deriveMenuBackgroundHex,
   deriveLightBrandTextHex,
+  ensureContrast,
   hexToHsl,
   hexToHslComponents,
   hexToHslCssVar,
   hslToHex,
   isHexColor,
+  lighten,
+  meetsContrast,
+  mix,
+  pickContrastingText,
   pickForegroundHex,
   resolveBrandTextHex,
   resolveSurfaceColors,
 } from './colorUtils'
+export { deriveSemanticColors, semanticColorToCssVar } from './deriveSemanticColors'
+export {
+  colorsToThemeDto,
+  themeColorsToUrlSlots,
+  themeDtoToColors,
+  urlSlotsToThemeDto,
+  v1UrlSlotsToThemeDto,
+} from './themeMapper'
 export { applyColorMode, applyThemeVariables, buildThemePayload } from './applyTheme'
 export {
   appendThemeToUrl,

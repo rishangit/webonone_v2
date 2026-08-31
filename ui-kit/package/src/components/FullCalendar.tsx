@@ -1,7 +1,11 @@
 import * as React from 'react'
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
+import { interactiveHoverClassName } from '../lib/selectionStyles'
+import { shapePanelBorderedClassName } from '../lib/shape'
 import { cn } from '../lib/utils'
 import { Button } from './Button'
+import { ImagePreview } from './ImagePreview'
+import { ListFilterPanel } from './ListFilterPanel'
 import { Popover, PopoverContent, PopoverTrigger } from './Popover'
 import { SegmentedSwitch, SegmentedSwitchItem } from './SegmentedSwitch'
 import {
@@ -29,10 +33,18 @@ export type FullCalendarEvent = {
   start: Date
   end: Date
   color?: string
+  /** Small service thumbnail on the event chip. */
+  imageUrl?: string | null
   /** Short line under the title (week/day). */
   subtitle?: string
   /** When set, show an Info icon; click opens a popover with this copy. */
   issueDetail?: string
+}
+
+export type FullCalendarEventPopoverCtx = {
+  close: () => void
+  /** `panel` on small screens (right slide-over); `popover` on md+ anchored to the event chip. */
+  presentation: 'popover' | 'panel'
 }
 
 export interface FullCalendarProps {
@@ -43,6 +55,13 @@ export interface FullCalendarProps {
   events?: FullCalendarEvent[]
   onSlotClick?: (range: { start: Date; end: Date }) => void
   onEventClick?: (event: FullCalendarEvent) => void
+  /** When set, clicking an event opens a popover anchored to the chip (md+) or a right panel (< md). */
+  renderEventPopover?: (
+    event: FullCalendarEvent,
+    ctx: FullCalendarEventPopoverCtx,
+  ) => React.ReactNode
+  /** Panel title on small screens; defaults to the event title. */
+  renderEventDetailPanelTitle?: (event: FullCalendarEvent) => string
   showToolbar?: boolean
   className?: string
   id?: string
@@ -58,6 +77,26 @@ const VIEW_LABELS: Record<FullCalendarView, string> = {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const MONTH_EVENT_LIMIT = 3
+const CALENDAR_EVENT_THUMB_CLASS = 'h-4 w-4 shrink-0 rounded-sm'
+const CALENDAR_EVENT_TIMELINE_THUMB_CLASS = 'h-5 w-5 shrink-0 rounded-sm'
+
+function CalendarEventThumb({
+  event,
+  className,
+}: {
+  event: FullCalendarEvent
+  className?: string
+}) {
+  if (!event.imageUrl) return null
+  return (
+    <ImagePreview
+      src={event.imageUrl}
+      alt={event.title}
+      mode="view"
+      className={cn(CALENDAR_EVENT_THUMB_CLASS, className)}
+    />
+  )
+}
 
 function TodayButton({ onClick }: { onClick: () => void }) {
   return (
@@ -133,6 +172,289 @@ function eventChipToneClass(event: FullCalendarEvent): string | undefined {
   return event.issueDetail ? 'bg-destructive/15' : 'bg-primary/15'
 }
 
+const POPOVER_POINTER_EDGE_PADDING_PX = 14
+const POPOVER_EST_WIDTH_PX = 352
+const POPOVER_SIDE_OFFSET_PX = 10
+const POPOVER_COLLISION_PADDING_PX = 12
+
+type EventPopoverSide = 'right' | 'left'
+
+function pickEventPopoverSide(trigger: HTMLElement): EventPopoverSide {
+  const rect = trigger.getBoundingClientRect()
+  const pad = POPOVER_COLLISION_PADDING_PX
+  const offset = POPOVER_SIDE_OFFSET_PX
+  const needW = POPOVER_EST_WIDTH_PX + offset
+  const spaceRight = window.innerWidth - rect.right - pad
+  const spaceLeft = rect.left - pad
+
+  if (spaceRight >= needW) return 'right'
+  if (spaceLeft >= needW) return 'left'
+  return spaceRight >= spaceLeft ? 'right' : 'left'
+}
+
+const SCROLLABLE_OVERFLOW = /(auto|scroll|overlay)/
+
+function getScrollableAncestors(node: HTMLElement | null): HTMLElement[] {
+  if (!node) return []
+  const ancestors: HTMLElement[] = []
+  let parent = node.parentElement
+  while (parent) {
+    const style = window.getComputedStyle(parent)
+    if (
+      SCROLLABLE_OVERFLOW.test(style.overflowY) ||
+      SCROLLABLE_OVERFLOW.test(style.overflowX) ||
+      SCROLLABLE_OVERFLOW.test(style.overflow)
+    ) {
+      ancestors.push(parent)
+    }
+    parent = parent.parentElement
+  }
+  ancestors.push(document.documentElement)
+  return ancestors
+}
+
+function schedulePopoverPointerSync(callback: () => void): void {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(callback)
+  })
+}
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = React.useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.matchMedia(query).matches
+  })
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia(query)
+    const onChange = () => setMatches(mediaQuery.matches)
+    onChange()
+    mediaQuery.addEventListener('change', onChange)
+    return () => mediaQuery.removeEventListener('change', onChange)
+  }, [query])
+
+  return matches
+}
+
+function enhanceEventPopoverTrigger(
+  child: React.ReactElement,
+  triggerRef: React.MutableRefObject<HTMLButtonElement | null>,
+): React.ReactElement {
+  type TriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    ref?: React.Ref<HTMLButtonElement>
+  }
+  const childProps = child.props as TriggerProps
+
+  return React.cloneElement(child, {
+    ref: (node: HTMLButtonElement | null) => {
+      triggerRef.current = node
+      const { ref } = childProps
+      if (typeof ref === 'function') ref(node)
+      else if (ref && typeof ref === 'object') ref.current = node
+    },
+    onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
+      triggerRef.current = event.currentTarget
+      childProps.onPointerDown?.(event)
+    },
+  } as TriggerProps)
+}
+
+function alignPopoverPointerToTrigger(
+  trigger: HTMLElement,
+  content: HTMLElement,
+): void {
+  const triggerRect = trigger.getBoundingClientRect()
+  const contentRect = content.getBoundingClientRect()
+  const side = content.getAttribute('data-side')
+  if (!side) return
+
+  if (side === 'left' || side === 'right') {
+    const triggerCenterY = triggerRect.top + triggerRect.height / 2
+    let pointerY = triggerCenterY - contentRect.top
+    pointerY = Math.min(
+      contentRect.height - POPOVER_POINTER_EDGE_PADDING_PX,
+      Math.max(POPOVER_POINTER_EDGE_PADDING_PX, pointerY),
+    )
+    content.style.setProperty('--popover-pointer-y', `${pointerY}px`)
+    content.style.removeProperty('--popover-pointer-x')
+  }
+}
+
+function EventPopoverWrap({
+  event,
+  renderEventPopover,
+  openEventId,
+  onOpenEventIdChange,
+  usePopoverPresentation,
+  children,
+}: {
+  event: FullCalendarEvent
+  renderEventPopover?: FullCalendarProps['renderEventPopover']
+  openEventId: string | null
+  onOpenEventIdChange: (eventId: string | null) => void
+  usePopoverPresentation: boolean
+  children: React.ReactElement
+}) {
+  const open = openEventId === event.id
+  const [popoverSide, setPopoverSide] = React.useState<EventPopoverSide>('right')
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null)
+  const contentRef = React.useRef<HTMLDivElement | null>(null)
+
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      if (next) {
+        if (usePopoverPresentation && triggerRef.current) {
+          setPopoverSide(pickEventPopoverSide(triggerRef.current))
+        }
+        onOpenEventIdChange(event.id)
+        return
+      }
+      if (openEventId === event.id) {
+        onOpenEventIdChange(null)
+      }
+    },
+    [event.id, onOpenEventIdChange, openEventId, usePopoverPresentation],
+  )
+
+  const handleMobileToggle = React.useCallback(
+    (eventClick: React.MouseEvent<HTMLButtonElement>) => {
+      eventClick.stopPropagation()
+      onOpenEventIdChange(open ? null : event.id)
+    },
+    [event.id, onOpenEventIdChange, open],
+  )
+
+  const syncPointer = React.useCallback(() => {
+    const trigger = triggerRef.current
+    const content = contentRef.current
+    if (!trigger || !content) return
+    if (!content.getAttribute('data-side')) return
+    alignPopoverPointerToTrigger(trigger, content)
+  }, [])
+
+  const syncPointerWithRetry = React.useCallback(
+    (attempt = 0) => {
+      const trigger = triggerRef.current
+      const content = contentRef.current
+      if (!trigger || !content) return
+      if (!content.getAttribute('data-side')) {
+        if (attempt < 12) {
+          window.requestAnimationFrame(() => syncPointerWithRetry(attempt + 1))
+        }
+        return
+      }
+      alignPopoverPointerToTrigger(trigger, content)
+    },
+    [],
+  )
+
+  const handleContentRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      contentRef.current = node
+      if (!node || !open) return
+      window.requestAnimationFrame(() => syncPointerWithRetry())
+    },
+    [open, syncPointerWithRetry],
+  )
+
+  React.useEffect(() => {
+    if (!open) return
+    const trigger = triggerRef.current
+    const content = contentRef.current
+    if (!trigger || !content) return
+
+    syncPointerWithRetry()
+    const frame = window.requestAnimationFrame(syncPointer)
+    const frame2 = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(syncPointer)
+    })
+    const resizeObserver = new ResizeObserver(syncPointer)
+    resizeObserver.observe(content)
+    resizeObserver.observe(trigger)
+    const mutationObserver = new MutationObserver(() => {
+      schedulePopoverPointerSync(syncPointer)
+    })
+    mutationObserver.observe(content, {
+      attributes: true,
+      attributeFilter: ['data-side', 'style'],
+    })
+    const onScroll = () => {
+      schedulePopoverPointerSync(syncPointer)
+    }
+    const scrollTargets = getScrollableAncestors(trigger)
+    for (const target of scrollTargets) {
+      target.addEventListener('scroll', onScroll, { passive: true })
+    }
+    window.addEventListener('resize', syncPointer)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.cancelAnimationFrame(frame2)
+      resizeObserver.disconnect()
+      mutationObserver.disconnect()
+      for (const target of scrollTargets) {
+        target.removeEventListener('scroll', onScroll)
+      }
+      window.removeEventListener('resize', syncPointer)
+    }
+  }, [open, syncPointer, syncPointerWithRetry])
+
+  if (!renderEventPopover) {
+    return children
+  }
+
+  if (!usePopoverPresentation) {
+    type TriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+      ref?: React.Ref<HTMLButtonElement>
+    }
+    const childProps = children.props as TriggerProps
+    return React.cloneElement(children, {
+      ref: (node: HTMLButtonElement | null) => {
+        triggerRef.current = node
+        const { ref } = childProps
+        if (typeof ref === 'function') ref(node)
+        else if (ref && typeof ref === 'object') ref.current = node
+      },
+      onClick: (clickEvent: React.MouseEvent<HTMLButtonElement>) => {
+        childProps.onClick?.(clickEvent)
+        if (!clickEvent.defaultPrevented) {
+          handleMobileToggle(clickEvent)
+        }
+      },
+      'aria-expanded': open,
+    } as TriggerProps)
+  }
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        {enhanceEventPopoverTrigger(children, triggerRef)}
+      </PopoverTrigger>
+      {open ? (
+        <PopoverContent
+          ref={handleContentRef}
+          align="center"
+          side={popoverSide}
+          sideOffset={POPOVER_SIDE_OFFSET_PX}
+          collisionPadding={POPOVER_COLLISION_PADDING_PX}
+          updatePositionStrategy="always"
+          surface="white"
+          showPointer
+          horizontalPointer
+          className="w-[min(22rem,calc(100vw-2rem))] p-0"
+          onClick={(e) => e.stopPropagation()}
+          onPlaced={syncPointer}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault()
+            syncPointerWithRetry()
+          }}
+        >
+          {renderEventPopover(event, { close: () => onOpenEventIdChange(null), presentation: 'popover' })}
+        </PopoverContent>
+      ) : null}
+    </Popover>
+  )
+}
+
 function EventIssueInfo({ detail }: { detail: string }) {
   return (
     <Popover>
@@ -163,13 +485,21 @@ function EventChip({
   style,
   className,
   onEventClick,
+  renderEventPopover,
+  openEventId,
+  onOpenEventIdChange,
+  usePopoverPresentation,
 }: {
   event: FullCalendarEvent
   style?: React.CSSProperties
   className?: string
-  onEventClick?: (event: FullCalendarEvent) => void
+  onEventClick?: FullCalendarProps['onEventClick']
+  renderEventPopover?: FullCalendarProps['renderEventPopover']
+  openEventId: string | null
+  onOpenEventIdChange: (eventId: string | null) => void
+  usePopoverPresentation: boolean
 }) {
-  const interactive = Boolean(onEventClick)
+  const interactive = Boolean(onEventClick) || Boolean(renderEventPopover)
   return (
     <div
       className={cn(
@@ -182,34 +512,45 @@ function EventChip({
         ...(event.color ? { backgroundColor: event.color } : undefined),
       }}
     >
-      <button
-        type="button"
-        tabIndex={interactive ? 0 : -1}
-        disabled={!interactive}
-        onClick={(e) => {
-          e.stopPropagation()
-          onEventClick?.(event)
-        }}
-        onKeyDown={(e) => {
-          if (!interactive) return
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
+      <EventPopoverWrap
+        event={event}
+        renderEventPopover={renderEventPopover}
+        openEventId={openEventId}
+        onOpenEventIdChange={onOpenEventIdChange}
+        usePopoverPresentation={usePopoverPresentation}
+      >
+        <button
+          type="button"
+          tabIndex={interactive ? 0 : -1}
+          disabled={!interactive}
+          onClick={(e) => {
             e.stopPropagation()
             onEventClick?.(event)
-          }
-        }}
-        className={cn(
-          'min-w-0 flex-1 overflow-hidden px-1 py-0.5 text-left',
-          interactive && 'cursor-pointer hover:opacity-90',
-          !interactive && 'cursor-default',
-        )}
-        title={event.title}
-      >
-        <span className="block truncate font-medium">{event.title}</span>
-        {event.subtitle ? (
-          <span className="block truncate text-[10px] text-destructive">{event.subtitle}</span>
-        ) : null}
-      </button>
+          }}
+          onKeyDown={(e) => {
+            if (!interactive) return
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              onEventClick?.(event)
+            }
+          }}
+          className={cn(
+            'flex min-w-0 flex-1 items-start gap-1 overflow-hidden px-1 py-0.5 text-left',
+            interactive && 'cursor-pointer hover:opacity-90',
+            !interactive && 'cursor-default',
+          )}
+          title={event.title}
+        >
+          <CalendarEventThumb event={event} className={CALENDAR_EVENT_TIMELINE_THUMB_CLASS} />
+          <span className="min-w-0 flex-1 overflow-hidden">
+            <span className="block truncate font-medium">{event.title}</span>
+            {event.subtitle ? (
+              <span className="block truncate text-[10px] text-destructive">{event.subtitle}</span>
+            ) : null}
+          </span>
+        </button>
+      </EventPopoverWrap>
       {event.issueDetail ? <EventIssueInfo detail={event.issueDetail} /> : null}
     </div>
   )
@@ -220,12 +561,20 @@ function TimelineColumn({
   events,
   onSlotClick,
   onEventClick,
+  renderEventPopover,
+  openEventId,
+  onOpenEventIdChange,
+  usePopoverPresentation,
   showGutter,
 }: {
   day: Date
   events: FullCalendarEvent[]
   onSlotClick?: FullCalendarProps['onSlotClick']
   onEventClick?: FullCalendarProps['onEventClick']
+  renderEventPopover?: FullCalendarProps['renderEventPopover']
+  openEventId: string | null
+  onOpenEventIdChange: (eventId: string | null) => void
+  usePopoverPresentation: boolean
   showGutter: boolean
 }) {
   const dayEvents = eventsForDay(events, day)
@@ -264,7 +613,7 @@ function TimelineColumn({
               tabIndex={interactiveSlots ? 0 : undefined}
               className={cn(
                 'border-b border-border',
-                interactiveSlots && 'cursor-pointer hover:bg-accent/40',
+                interactiveSlots && cn('cursor-pointer', interactiveHoverClassName),
               )}
               style={{ height: HOUR_HEIGHT_PX }}
               onClick={() => onSlotClick?.(range)}
@@ -289,6 +638,10 @@ function TimelineColumn({
             event={event}
             style={eventStyleInDay(event, day)}
             onEventClick={onEventClick}
+            renderEventPopover={renderEventPopover}
+            openEventId={openEventId}
+            onOpenEventIdChange={onOpenEventIdChange}
+            usePopoverPresentation={usePopoverPresentation}
           />
         ))}
       </div>
@@ -301,11 +654,19 @@ function DayView({
   events,
   onSlotClick,
   onEventClick,
+  renderEventPopover,
+  openEventId,
+  onOpenEventIdChange,
+  usePopoverPresentation,
 }: {
   anchorDate: Date
   events: FullCalendarEvent[]
   onSlotClick?: FullCalendarProps['onSlotClick']
   onEventClick?: FullCalendarProps['onEventClick']
+  renderEventPopover?: FullCalendarProps['renderEventPopover']
+  openEventId: string | null
+  onOpenEventIdChange: (eventId: string | null) => void
+  usePopoverPresentation: boolean
 }) {
   const day = startOfLocalDay(anchorDate)
   return (
@@ -323,6 +684,10 @@ function DayView({
         events={events}
         onSlotClick={onSlotClick}
         onEventClick={onEventClick}
+        renderEventPopover={renderEventPopover}
+        openEventId={openEventId}
+        onOpenEventIdChange={onOpenEventIdChange}
+        usePopoverPresentation={usePopoverPresentation}
         showGutter
       />
     </div>
@@ -334,11 +699,19 @@ function WeekView({
   events,
   onSlotClick,
   onEventClick,
+  renderEventPopover,
+  openEventId,
+  onOpenEventIdChange,
+  usePopoverPresentation,
 }: {
   anchorDate: Date
   events: FullCalendarEvent[]
   onSlotClick?: FullCalendarProps['onSlotClick']
   onEventClick?: FullCalendarProps['onEventClick']
+  renderEventPopover?: FullCalendarProps['renderEventPopover']
+  openEventId: string | null
+  onOpenEventIdChange: (eventId: string | null) => void
+  usePopoverPresentation: boolean
 }) {
   const weekStart = startOfWeek(anchorDate)
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
@@ -382,6 +755,10 @@ function WeekView({
             events={events}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
+            renderEventPopover={renderEventPopover}
+            openEventId={openEventId}
+            onOpenEventIdChange={onOpenEventIdChange}
+            usePopoverPresentation={usePopoverPresentation}
             showGutter={false}
           />
         ))}
@@ -395,11 +772,19 @@ function MonthView({
   events,
   onSlotClick,
   onEventClick,
+  renderEventPopover,
+  openEventId,
+  onOpenEventIdChange,
+  usePopoverPresentation,
 }: {
   anchorDate: Date
   events: FullCalendarEvent[]
   onSlotClick?: FullCalendarProps['onSlotClick']
   onEventClick?: FullCalendarProps['onEventClick']
+  renderEventPopover?: FullCalendarProps['renderEventPopover']
+  openEventId: string | null
+  onOpenEventIdChange: (eventId: string | null) => void
+  usePopoverPresentation: boolean
 }) {
   const days = monthGridDays(anchorDate)
   const month = anchorDate.getMonth()
@@ -418,8 +803,10 @@ function MonthView({
         className="grid min-h-0 flex-1 grid-cols-7"
         style={{ gridTemplateRows: `repeat(${days.length / 7}, minmax(0, 1fr))` }}
       >
-        {days.map((day) => {
+        {days.map((day, index) => {
           const inMonth = day.getMonth() === month
+          const isLastCol = index % 7 === 6
+          const isLastRow = index >= days.length - 7
           const dayEvents = eventsForDay(events, day)
           const visible = dayEvents.slice(0, MONTH_EVENT_LIMIT)
           const overflow = dayEvents.length - visible.length
@@ -432,10 +819,12 @@ function MonthView({
               role={interactive ? 'button' : undefined}
               tabIndex={interactive ? 0 : undefined}
               className={cn(
-                'min-h-0 overflow-hidden border-b border-r border-border p-1 last:border-r-0',
+                'min-h-0 overflow-hidden border-border p-1',
+                !isLastCol && 'border-r',
+                !isLastRow && 'border-b',
                 !inMonth && 'bg-muted/20 text-muted-foreground',
                 isToday(day) && 'bg-accent/40',
-                interactive && 'cursor-pointer hover:bg-accent/40',
+                interactive && cn('cursor-pointer', interactiveHoverClassName),
               )}
               onClick={() => onSlotClick?.({ start: dayStart, end: dayEnd })}
               onKeyDown={(e) => {
@@ -456,34 +845,46 @@ function MonthView({
                 {day.getDate()}
               </div>
               <div className="flex flex-col gap-0.5">
-                {visible.map((event) => (
-                  <div
-                    key={event.id}
-                    className={cn(
-                      'flex items-center rounded-md text-xs text-foreground',
-                      eventChipToneClass(event),
-                    )}
-                    style={event.color ? { backgroundColor: event.color } : undefined}
-                  >
-                    <button
-                      type="button"
-                      tabIndex={onEventClick ? 0 : -1}
-                      disabled={!onEventClick}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEventClick?.(event)
-                      }}
+                {visible.map((event) => {
+                  const eventInteractive = Boolean(onEventClick) || Boolean(renderEventPopover)
+                  return (
+                    <div
+                      key={event.id}
                       className={cn(
-                        'min-w-0 flex-1 truncate px-1 py-0.5 text-left',
-                        onEventClick ? 'cursor-pointer hover:opacity-90' : 'cursor-default',
+                        'flex items-center rounded-md text-xs text-foreground',
+                        eventChipToneClass(event),
                       )}
-                      title={event.title}
+                      style={event.color ? { backgroundColor: event.color } : undefined}
                     >
-                      {event.title}
-                    </button>
-                    {event.issueDetail ? <EventIssueInfo detail={event.issueDetail} /> : null}
-                  </div>
-                ))}
+                      <EventPopoverWrap
+                        event={event}
+                        renderEventPopover={renderEventPopover}
+                        openEventId={openEventId}
+                        onOpenEventIdChange={onOpenEventIdChange}
+                        usePopoverPresentation={usePopoverPresentation}
+                      >
+                        <button
+                          type="button"
+                          tabIndex={eventInteractive ? 0 : -1}
+                          disabled={!eventInteractive}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onEventClick?.(event)
+                          }}
+                          className={cn(
+                            'flex min-w-0 flex-1 items-center gap-1 px-1 py-0.5 text-left',
+                            eventInteractive ? 'cursor-pointer hover:opacity-90' : 'cursor-default',
+                          )}
+                          title={event.title}
+                        >
+                          <CalendarEventThumb event={event} />
+                          <span className="truncate">{event.title}</span>
+                        </button>
+                      </EventPopoverWrap>
+                      {event.issueDetail ? <EventIssueInfo detail={event.issueDetail} /> : null}
+                    </div>
+                  )
+                })}
                 {overflow > 0 ? (
                   <span className="px-1 text-xs text-muted-foreground">+{overflow} more</span>
                 ) : null}
@@ -504,17 +905,24 @@ function FullCalendar({
   events = [],
   onSlotClick,
   onEventClick,
+  renderEventPopover,
+  renderEventDetailPanelTitle,
   showToolbar = true,
   className,
   id,
 }: FullCalendarProps) {
   const label = formatPeriodLabel(anchorDate, view)
+  const [openEventId, setOpenEventId] = React.useState<string | null>(null)
+  const usePopoverPresentation = useMediaQuery('(min-width: 768px)')
+  const selectedEvent = openEventId ? events.find((event) => event.id === openEventId) : null
 
   return (
+    <>
     <div
       id={id}
       className={cn(
-        'flex min-h-[28rem] flex-1 flex-col ui-shape-panel border border-border bg-[hsl(var(--background-base))]',
+        'flex min-h-[28rem] flex-1 flex-col overflow-hidden ui-shape-panel bg-[hsl(var(--background-base))]',
+        shapePanelBorderedClassName,
         className,
       )}
     >
@@ -549,6 +957,10 @@ function FullCalendar({
             events={events}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
+            renderEventPopover={renderEventPopover}
+            openEventId={openEventId}
+            onOpenEventIdChange={setOpenEventId}
+            usePopoverPresentation={usePopoverPresentation}
           />
         ) : null}
         {view === 'week' ? (
@@ -557,6 +969,10 @@ function FullCalendar({
             events={events}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
+            renderEventPopover={renderEventPopover}
+            openEventId={openEventId}
+            onOpenEventIdChange={setOpenEventId}
+            usePopoverPresentation={usePopoverPresentation}
           />
         ) : null}
         {view === 'month' ? (
@@ -565,10 +981,29 @@ function FullCalendar({
             events={events}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
+            renderEventPopover={renderEventPopover}
+            openEventId={openEventId}
+            onOpenEventIdChange={setOpenEventId}
+            usePopoverPresentation={usePopoverPresentation}
           />
         ) : null}
       </div>
     </div>
+    {!usePopoverPresentation && renderEventPopover && selectedEvent ? (
+      <ListFilterPanel
+        open={Boolean(openEventId)}
+        onOpenChange={(open) => {
+          if (!open) setOpenEventId(null)
+        }}
+        title={renderEventDetailPanelTitle?.(selectedEvent) ?? selectedEvent.title}
+      >
+        {renderEventPopover(selectedEvent, {
+          close: () => setOpenEventId(null),
+          presentation: 'panel',
+        })}
+      </ListFilterPanel>
+    ) : null}
+    </>
   )
 }
 

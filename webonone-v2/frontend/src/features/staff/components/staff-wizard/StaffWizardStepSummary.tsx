@@ -1,3 +1,4 @@
+import { ContactValueLine } from '@webonone/ui-kit'
 import {
   DAY_LABELS,
   formatWorkingDaysSummary,
@@ -18,7 +19,7 @@ export function StaffWizardStepSummary({ values }: StaffWizardStepSummaryProps) 
         <h4 className="text-sm font-medium text-foreground">User</h4>
         <div className="space-y-1">
           <p className="text-sm text-foreground">{user?.displayName ?? '—'}</p>
-          <p className="text-xs text-muted-foreground">{user?.email ?? 'No email'}</p>
+          <ContactValueLine kind="email" value={user?.email} emptyLabel="No email" />
         </div>
       </div>
 

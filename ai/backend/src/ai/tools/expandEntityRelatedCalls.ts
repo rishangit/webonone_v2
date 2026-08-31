@@ -21,7 +21,7 @@ function stripMarkdown(value: string): string {
 
 export function isRelatedSuggestionIntent(message: string): boolean {
   const text = message.toLowerCase()
-  const hasTarget = /\b(attribute|tag|unit|tags|attributes|units)\b/.test(text)
+  const hasTarget = /\b(attribute|tag|unit|variant|tags|attributes|units|variants)\b/.test(text)
   const hasAction =
     /\b(suggest|add|fill|missing|attach|link|related|have|need|want|can we|could we)\b/.test(text)
   return hasAction && hasTarget
@@ -202,7 +202,7 @@ export function liftEntityRelatedUpdateCall(options: {
   resolved: ResolvedEntityContext[]
 }): ToolCall | null {
   const primary = options.resolved.find((item) => item.record && !item.error)
-  if (!primary) {
+  if (!primary || primary.ref.service !== 'data') {
     return null
   }
 
@@ -278,7 +278,7 @@ export function expandEntityRelatedCalls(options: {
 }): ToolCall[] {
   if (!isRelatedSuggestionIntent(options.userMessage)) {
     const primary = options.resolved.find((item) => item.record && !item.error)
-    if (!primary || !isAttributeUnitIntent(options.userMessage, primary.ref.kind)) {
+    if (!primary || primary.ref.service !== 'data' || !isAttributeUnitIntent(options.userMessage, primary.ref.kind)) {
       return options.existingCalls
     }
   }
