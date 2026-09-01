@@ -186,10 +186,10 @@ function AppSidebar({
   return (
     <aside
       className={cn(
-        'app-shell-sidebar shell-glass z-40 flex flex-col border-r transition-[width,transform] duration-200',
+        'app-shell-sidebar shell-glass flex flex-col border-r transition-[width,transform] duration-200',
         shapedShell && cn(shapePanelClassName, 'border-r-0'),
         'max-md:app-shell-mobile-sidebar',
-        mobileOpen && 'max-md:app-shell-mobile-sidebar--open',
+        mobileOpen ? 'max-md:z-40 max-md:app-shell-mobile-sidebar--open' : 'max-md:z-0',
         'w-64 md:relative md:sticky md:top-0 md:z-auto md:h-full md:max-h-full md:translate-x-0 md:self-stretch',
         mobileOpen ? 'max-md:pointer-events-auto' : 'max-md:pointer-events-none md:translate-x-0',
         collapsed ? 'md:w-16' : 'md:w-64',

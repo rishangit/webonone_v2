@@ -236,7 +236,7 @@ export function FormDesignerPage() {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
-        <aside className="rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg)/0.35)] p-4">
+        <aside className="shell-glass rounded-lg border border-[hsl(var(--shell-chrome-border))] p-4">
           <FormDesignerToolbox onAdd={addField} disabled={!canManage} />
         </aside>
         <section className="min-w-0">
@@ -246,7 +246,7 @@ export function FormDesignerPage() {
             onSelect={setSelectedId}
           />
         </section>
-        <aside className="rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg)/0.35)] p-4">
+        <aside className="shell-glass rounded-lg border border-[hsl(var(--shell-chrome-border))] p-4">
           <FormDesignerPropsPanel
             field={canManage ? selectedField : null}
             fieldIndex={selectedIndex}

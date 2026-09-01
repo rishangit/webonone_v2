@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Button,
   Card,
@@ -343,6 +343,21 @@ export function SessionWorkflowStepPanel({
   const servingTokenLabel =
     currentToken?.tokenLabel ?? (viewerStepQueue?.currentTokenLabel ?? queue?.currentTokenLabel ?? null)
 
+  const tokenProgressSignature = useMemo(
+    () =>
+      tokens
+        .map(
+          (token) =>
+            `${token.id}:${token.workflowProgress?.currentIndex ?? 'x'}:${token.workflowProgress?.done ?? false}`,
+        )
+        .join('|'),
+    [tokens],
+  )
+
+  useEffect(() => {
+    setFocusedTokenId(null)
+  }, [item.id])
+
   useEffect(() => {
     if (!showQueue || !canComplete) {
       setFocusedTokenId(null)
@@ -356,7 +371,16 @@ export function SessionWorkflowStepPanel({
     const defaultId = servingId ?? atStep[0]?.id ?? stepTokens[0]?.id ?? null
     if (focusedTokenId && atStep.some((token) => token.id === focusedTokenId)) return
     setFocusedTokenId(defaultId)
-  }, [canComplete, checkedInUserIds, focusedTokenId, item, showQueue, stepTokens, tokens])
+  }, [
+    canComplete,
+    checkedInUserIds,
+    focusedTokenId,
+    item,
+    showQueue,
+    stepTokens,
+    tokenProgressSignature,
+    tokens,
+  ])
 
   function renderTokenRow(
     token: SessionToken,

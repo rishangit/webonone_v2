@@ -76,12 +76,13 @@ Multi-section details pages must use the **card grid** (`gap-6`, left span-2 / r
 
 ```text
 FeaturePage onBack (icon before title); actions: Edit | Cancel + Save when inline
-  grid gap-6 lg:grid-cols-3 (Form → also space-y-0 items-start)
-    left flex-col gap-6 lg:col-span-2  → wide Cards
-    right flex-col gap-6 lg:col-span-1 → narrow Cards
+  DetailsPageGrid
+    DetailsPageRow (items-stretch)
+      DetailsPageCol span={2} → Card fill
+      DetailsPageCol span={1} → Card fill
 ```
 
-Inline demos: `DetailsPageDemo`. Wizard-backed: Data `ServiceDetailsPage`, WebOnOne `CompanyProfilePage`, Identity `ProfilePage`.
+Use `DetailsPageGrid`, `DetailsPageRow`, `DetailsPageCol`, and `Card fill` from `@webonone/ui-kit`. Inline demos: `DetailsPageDemo`. Wizard-backed: Data `ServiceDetailsPage`, WebOnOne `CompanyProfilePage`, Identity `ProfilePage`.
 
 ## Reference implementations
 

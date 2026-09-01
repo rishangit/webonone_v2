@@ -15,4 +15,4 @@ export {
   useEpicCatalogList,
   useEpicCatalogEditor,
 } from './hooks'
-export type { CatalogListActions, CatalogEditorActions } from './hooks'
+export type { CatalogListActions, CatalogEditorActions, CatalogListFilterOverride } from './hooks'

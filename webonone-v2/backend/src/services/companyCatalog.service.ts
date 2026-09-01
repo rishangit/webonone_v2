@@ -3,6 +3,7 @@ import { ZodError } from 'zod'
 import { fetchUserAvatarsByIds } from '../clients/identityUserContactClient.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import * as repo from '../repositories/companyCatalog.repository.js'
+import type { WorkflowItemRow } from '../repositories/companyCatalog.repository.js'
 import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import { resolveSpaceNamesById } from './tokenWorkflowProgress.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
@@ -398,8 +399,50 @@ export async function listServiceWorkflow(userId: string, companyId: string, ser
       staff: staffByItem.get(item.id) ?? [],
       forms: formsByItem.get(item.id) ?? [],
       sessionQueue: Number(item.session_queue) === 1 || item.session_queue === true,
+      addItemsEnabled: Number(item.add_items_enabled) === 1 || item.add_items_enabled === true,
     }
   })
+}
+
+type NormalizedWorkflowItem = {
+  kind: 'check_in' | 'space'
+  space_id: string | null
+  staff_ids: string[]
+  form_ids: string[]
+  session_queue: boolean
+  add_items_enabled: boolean
+}
+
+function resolvePreservedWorkflowItems(
+  existing: WorkflowItemRow[],
+  normalized: NormalizedWorkflowItem[],
+): {
+  items: (NormalizedWorkflowItem & { id: string })[]
+  tokenWorkflowItemIdRemap: Map<string, string | null>
+} {
+  const usedExistingIds = new Set<string>()
+  const items = normalized.map((item) => {
+    const match = existing.find((row) => {
+      if (usedExistingIds.has(row.id)) return false
+      if (item.kind === 'check_in') return row.kind === 'check_in'
+      return row.kind === 'space' && row.space_id === item.space_id
+    })
+    const id = match?.id ?? nanoid()
+    if (match) usedExistingIds.add(match.id)
+    return { ...item, id }
+  })
+
+  const newIdSet = new Set(items.map((item) => item.id))
+  const tokenWorkflowItemIdRemap = new Map<string, string | null>()
+  for (const old of existing) {
+    if (newIdSet.has(old.id)) continue
+    const oldIndex = Number(old.sort_order) - 1
+    const replacement =
+      items[oldIndex]?.id ?? items[items.length - 1]?.id ?? items[0]?.id ?? null
+    tokenWorkflowItemIdRemap.set(old.id, replacement)
+  }
+
+  return { items, tokenWorkflowItemIdRemap }
 }
 
 export async function replaceServiceWorkflow(
@@ -413,6 +456,7 @@ export async function replaceServiceWorkflow(
       staff_ids: string[]
       form_ids: string[]
       session_queue?: boolean
+      add_items_enabled?: boolean
     }[]
   },
 ) {
@@ -428,6 +472,7 @@ export async function replaceServiceWorkflow(
     staff_ids: item.staff_ids,
     form_ids: item.form_ids,
     session_queue: allowQueue ? Boolean(item.session_queue) : false,
+    add_items_enabled: Boolean(item.add_items_enabled),
   }))
   const checkInItems = normalized.filter((item) => item.kind === 'check_in')
   if (checkInItems.length !== 1 || normalized[0]?.kind !== 'check_in') {
@@ -464,17 +509,8 @@ export async function replaceServiceWorkflow(
       throw httpError('Catalog item not found', 404)
     }
   }
-  await repo.replaceWorkflowItems(
-    companyId,
-    serviceId,
-    normalized.map((item) => ({
-      id: nanoid(),
-      kind: item.kind,
-      space_id: item.space_id,
-      staff_ids: item.staff_ids,
-      form_ids: item.form_ids,
-      session_queue: item.session_queue,
-    })),
-  )
+  const existing = await repo.listWorkflowItems(companyId, serviceId)
+  const { items, tokenWorkflowItemIdRemap } = resolvePreservedWorkflowItems(existing, normalized)
+  await repo.replaceWorkflowItems(companyId, serviceId, items, tokenWorkflowItemIdRemap)
   return listServiceWorkflow(userId, companyId, serviceId)
 }

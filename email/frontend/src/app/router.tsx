@@ -38,6 +38,21 @@ const TemplateFormEmbedPage = lazy(() =>
     default: m.TemplateFormEmbedPage,
   })),
 )
+const HistoryFilterEmbedPage = lazy(() =>
+  import('@/features/history/pages/HistoryFilterEmbedPage').then((m) => ({
+    default: m.HistoryFilterEmbedPage,
+  })),
+)
+const DashboardFilterEmbedPage = lazy(() =>
+  import('@/features/dashboard/pages/DashboardFilterEmbedPage').then((m) => ({
+    default: m.DashboardFilterEmbedPage,
+  })),
+)
+const QueueFilterEmbedPage = lazy(() =>
+  import('@/features/queue/pages/QueueFilterEmbedPage').then((m) => ({
+    default: m.QueueFilterEmbedPage,
+  })),
+)
 const HistoryPage = lazy(() =>
   import('@/features/history/pages/HistoryPage').then((m) => ({ default: m.HistoryPage })),
 )
@@ -156,6 +171,34 @@ export function App() {
               <RoleRoute roles={[...adminRoles]}>
                 <LazyRoute>
                   <TemplatePreviewPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/embed/panels/dashboard/filters"
+            element={
+              <LazyRoute>
+                <DashboardFilterEmbedPage />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/embed/panels/history/filters"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
+                  <HistoryFilterEmbedPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/embed/panels/queue/filters"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
+                  <QueueFilterEmbedPage />
                 </LazyRoute>
               </RoleRoute>
             }

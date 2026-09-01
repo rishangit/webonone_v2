@@ -132,6 +132,7 @@ export const companyCatalogApi = {
       staff_ids: string[]
       form_ids: string[]
       session_queue: boolean
+      add_items_enabled: boolean
     }[],
   ) {
     return apiClient<{ items: ServiceWorkflowItem[] }>(

@@ -8,7 +8,10 @@ import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as companyRepo from '../repositories/company.repository.js'
 import * as saleRepo from '../repositories/companySale.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
+import * as eventRepo from '../repositories/companyEvent.repository.js'
+import * as sessionRunRepo from '../repositories/companyEventSessionRun.repository.js'
 import { notifySaleBillCompleted } from './saleBillNotify.service.js'
+import { effectiveStaffId } from './sessionOccurrenceIssue.js'
 import type {
   CompleteSaleBody,
   CreateSaleBody,
@@ -298,6 +301,38 @@ async function resolveSessionToken(
   return token.id
 }
 
+function tokenOccurrenceDate(token: { occurrence_date: string | Date }): string {
+  if (typeof token.occurrence_date === 'string') return token.occurrence_date.slice(0, 10)
+  return token.occurrence_date.toISOString().slice(0, 10)
+}
+
+async function assertSessionTokenSaleActor(
+  userId: string,
+  companyId: string,
+  sessionTokenId: string,
+): Promise<void> {
+  const membership = await roleRepo.findCompanyRole(userId, companyId)
+  if (membership?.role === 'company_admin') return
+
+  const token = await sessionTokenRepo.findTokenById(companyId, sessionTokenId)
+  if (!token) {
+    throw httpError('Session token not found', 404)
+  }
+  const event = await eventRepo.findEventById(companyId, token.event_id)
+  if (!event) {
+    throw httpError('Event not found', 404)
+  }
+  const occurrenceDate = tokenOccurrenceDate(token)
+  const run = await sessionRunRepo.findRunForSession(companyId, token.event_id, occurrenceDate)
+  const effectiveId = effectiveStaffId(event.staff_id, run)
+  const allowed = await eventRepo.memberIsAssignedStaff(companyId, userId, event, {
+    effectiveStaffId: effectiveId,
+  })
+  if (!allowed) {
+    throw httpError('Session staff access required', 403)
+  }
+}
+
 async function resolveCustomerContact(
   companyId: string,
   customerUserId: string,
@@ -360,6 +395,7 @@ export async function createSale(
 
   let sessionTokenId: string | null = null
   if (body.sessionTokenId) {
+    await assertSessionTokenSaleActor(userId, companyId, body.sessionTokenId)
     sessionTokenId = await resolveSessionToken(companyId, body.sessionTokenId, body.customerUserId)
   }
 
@@ -442,6 +478,8 @@ export async function upsertDraftSale(
   }
   const enabled = parseDataEntities(company.data_entities)
 
+  await assertSessionTokenSaleActor(userId, companyId, sessionTokenId)
+
   const resolvedTokenId = await resolveSessionToken(companyId, sessionTokenId, body.customerUserId)
 
   const { displayName: customerDisplayName, email: customerEmail } = await resolveCustomerContact(
@@ -502,13 +540,15 @@ export async function completeSale(
   saleId: string,
   body: CompleteSaleBody,
 ): Promise<SaleDto> {
-  void userId
   const existing = await saleRepo.findSaleById(companyId, saleId)
   if (!existing) {
     throw httpError('Sale not found', 404)
   }
   if (existing.status !== 'draft') {
     throw httpError('Only draft sales can be completed', 409)
+  }
+  if (existing.session_token_id) {
+    await assertSessionTokenSaleActor(userId, companyId, existing.session_token_id)
   }
 
   const lines = await saleRepo.listSaleLines(saleId)

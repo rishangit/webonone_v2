@@ -14,6 +14,12 @@ export type CatalogEditorActions = {
   resetDetail: ActionCreatorWithPayload<void>
 }
 
+export type CatalogListFilterOverride = Partial<{
+  q: string
+  status: string
+  extra: Record<string, string>
+}>
+
 export function useEpicCatalogList<T, S = unknown>(
   selectState: (state: S) => CatalogFeatureState<T>,
   actions: CatalogListActions,
@@ -43,16 +49,27 @@ export function useEpicCatalogList<T, S = unknown>(
   )
 
   const dispatchLoad = useCallback(
-    (nextPage: number, nextPageSize = pageSize, force = false) => {
+    (
+      nextPage: number,
+      nextPageSize = pageSize,
+      force = false,
+      filterOverride?: CatalogListFilterOverride,
+    ) => {
       const current = listStateRef.current
-      const query = buildQuery(nextPage, nextPageSize)
+      const query: CatalogListQuery = {
+        page: nextPage,
+        pageSize: nextPageSize,
+        q: filterOverride?.q ?? q,
+        status: filterOverride?.status ?? status,
+        extra: filterOverride?.extra ?? extraFilters,
+      }
       const queryKey = serializeQuery({ ...query, extra: query.extra })
       if (!force && current.queryKey === queryKey && isFresh(current.lastFetchedAt)) {
         return
       }
       dispatch(actions.loadListRequested({ ...query, force }))
     },
-    [actions, buildQuery, dispatch, pageSize],
+    [actions, dispatch, extraFilters, pageSize, q, status],
   )
 
   // Reload page 1 when filters or page size change. Cache timestamps must not be
@@ -62,9 +79,14 @@ export function useEpicCatalogList<T, S = unknown>(
   }, [dispatchLoad])
 
   const load = useCallback(
-    (nextPage = listState.page || 1, nextPageSize = pageSize, force = false) => {
+    (
+      nextPage = listState.page || 1,
+      nextPageSize = pageSize,
+      force = false,
+      filterOverride?: CatalogListFilterOverride,
+    ) => {
       if (nextPageSize !== pageSize) setPageSize(nextPageSize)
-      dispatchLoad(nextPage, nextPageSize, force)
+      dispatchLoad(nextPage, nextPageSize, force, filterOverride)
     },
     [dispatchLoad, listState.page, pageSize],
   )

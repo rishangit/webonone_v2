@@ -30,6 +30,7 @@
     "quantityAria": "{{name}} සඳහා ප්‍රමාණය",
     "unitPriceAria": "{{name}} සඳහා ඒකක මිල",
     "lineActionsAria": "{{name}} සඳහා ක්‍රියා",
+    "removeCustomerAria": "{{name}} ඉවත් කරන්න",
     "priceAtCheckout": "ගෙවීමේදී මිල",
     "pickerTitle": "අයිතමය එකතු කරන්න",
     "pickerDescription": "සමාගමේ කැටලොගයෙන් නිෂ්පාදනය, සේවාව හෝ අවකාශය තෝරන්න.",

@@ -36,6 +36,7 @@ import {
 import { notifyAppointmentBooked } from './appointmentNotify.service.js'
 import {
   buildWorkflowProgress,
+  resolveEffectiveWorkflowItemId,
   firstWorkflowItemId,
   loadWorkflowStepDefs,
   nextWorkflowState,
@@ -1689,7 +1690,15 @@ async function mapSessionTokens(
   ])
   const checkedInUserIds = new Set(checkIns.map((row) => row.user_id))
   const sessionStarted = run?.status === 'started'
-  return rows.map((row) =>
+  const syncedRows = await Promise.all(
+    rows.map((row) =>
+      syncTokenWorkflowPointer(companyId, serviceId, row, {
+        checkedIn: checkedInUserIds.has(row.user_id),
+        sessionStarted,
+      }),
+    ),
+  )
+  return syncedRows.map((row) =>
     mapSessionToken(
       row,
       buildWorkflowProgress(defs, row, {
@@ -1721,6 +1730,22 @@ function mapSessionTokenNotify(
   return mapSessionToken(row, EMPTY_WORKFLOW_PROGRESS)
 }
 
+async function syncTokenWorkflowPointer(
+  companyId: string,
+  serviceId: string,
+  token: sessionTokenRepo.CompanyEventSessionTokenRow,
+  options: { checkedIn: boolean; sessionStarted: boolean },
+): Promise<sessionTokenRepo.CompanyEventSessionTokenRow> {
+  if (token.workflow_completed_at || token.status === 'completed') return token
+  const defs = await loadWorkflowStepDefs(companyId, serviceId)
+  const effectiveId = resolveEffectiveWorkflowItemId(defs, token, options)
+  if (!effectiveId || effectiveId === token.current_workflow_item_id) return token
+  return sessionTokenRepo.updateTokenWorkflow(token.id, {
+    current_workflow_item_id: effectiveId,
+    workflow_completed_at: null,
+  })
+}
+
 async function advanceTokenPastCheckIn(
   companyId: string,
   serviceId: string,
@@ -1728,11 +1753,18 @@ async function advanceTokenPastCheckIn(
 ): Promise<sessionTokenRepo.CompanyEventSessionTokenRow> {
   if (token.workflow_completed_at) return token
   const defs = await loadWorkflowStepDefs(companyId, serviceId)
-  const currentId = token.current_workflow_item_id ?? firstWorkflowItemId(defs)
-  const current = defs.find((def) => def.id === currentId)
-  if (current && current.kind !== 'check_in') return token
+  const synced = await syncTokenWorkflowPointer(companyId, serviceId, token, {
+    checkedIn: true,
+    sessionStarted: true,
+  })
+  const currentId = resolveEffectiveWorkflowItemId(defs, synced, {
+    checkedIn: true,
+    sessionStarted: true,
+  })
+  const current = currentId ? defs.find((def) => def.id === currentId) : undefined
+  if (current && current.kind !== 'check_in') return synced
   const next = nextWorkflowState(defs, currentId)
-  return sessionTokenRepo.updateTokenWorkflow(token.id, next)
+  return sessionTokenRepo.updateTokenWorkflow(synced.id, next)
 }
 
 async function maybeAdvanceTokenPastCheckIn(
@@ -2193,16 +2225,23 @@ export async function completeSessionTokenWorkflow(
     return mapSessionTokenWithProgress(companyId, event.serviceId, token)
   }
   const defs = await loadWorkflowStepDefs(companyId, event.serviceId)
-  const currentId = token.current_workflow_item_id ?? firstWorkflowItemId(defs)
-  const current = defs.find((def) => def.id === currentId)
+  const [run, existingCheckIn] = await Promise.all([
+    sessionRunRepo.findRunForSession(companyId, eventId, occurrenceDate),
+    sessionCheckInRepo.findCheckInByUser(companyId, eventId, occurrenceDate, token.user_id),
+  ])
+  const sessionStarted = run?.status === 'started'
+  const checkedIn = Boolean(existingCheckIn)
+  const synced = await syncTokenWorkflowPointer(companyId, event.serviceId, token, {
+    checkedIn,
+    sessionStarted,
+  })
+  const currentId = resolveEffectiveWorkflowItemId(defs, synced, {
+    checkedIn,
+    sessionStarted,
+  })
+  const current = currentId ? defs.find((def) => def.id === currentId) : undefined
   if (current?.kind === 'check_in') {
-    const existing = await sessionCheckInRepo.findCheckInByUser(
-      companyId,
-      eventId,
-      occurrenceDate,
-      token.user_id,
-    )
-    if (!existing) {
+    if (!existingCheckIn) {
       await sessionCheckInRepo.insertCheckIn({
         id: nanoid(),
         companyId,
@@ -2220,12 +2259,12 @@ export async function completeSessionTokenWorkflow(
       event.serviceId,
       eventId,
       occurrenceDate,
-      token,
+      synced,
     )
     return mapSessionTokenWithProgress(companyId, event.serviceId, updated)
   }
   const next = nextWorkflowState(defs, currentId)
-  const updated = await sessionTokenRepo.updateTokenWorkflow(token.id, next)
+  const updated = await sessionTokenRepo.updateTokenWorkflow(synced.id, next)
   return mapSessionTokenWithProgress(companyId, event.serviceId, updated)
 }
 

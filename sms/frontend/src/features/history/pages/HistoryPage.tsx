@@ -1,30 +1,26 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
   FeaturePage,
-  FormField,
-  ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
   SearchInput,
   ListPageFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { HistoryStatusFilterFields } from '@/features/history/components/HistoryStatusFilterFields'
+import type { SmsHistoryStatusFilterDraft } from '@/features/history/pages/HistoryFilterEmbedPage'
 import { historyActions } from '@/features/history/store'
 import { HistoryList } from '../components/HistoryList'
 
 export function HistoryPage() {
   const { t } = useTranslation('shell')
-  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const userRole = useAppSelector((s) => s.auth.user?.role)
@@ -78,8 +74,10 @@ export function HistoryPage() {
     )
   }
 
-  function handleApplyFilters() {
-    const next = { status, search: searchQuery }
+  function handleApplyFilters(draft?: SmsHistoryStatusFilterDraft) {
+    const nextStatus = draft?.status ?? status
+    const next = { status: nextStatus, search: searchQuery }
+    setStatus(nextStatus)
     setAppliedFilters(next)
     dispatchLoad(1, pageSize, next)
   }
@@ -124,25 +122,18 @@ export function HistoryPage() {
         </div>
       }
     >
-      <ListFilterPanel
+      <PlatformHostedListFilterPanel<SmsHistoryStatusFilterDraft>
+        path="/embed/panels/history/filters"
         open={filterOpen}
         onOpenChange={setFilterOpen}
+        draft={{ status }}
+        onDraftApply={(draft) => setStatus(draft.status)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
+        isAllowedParentOrigin={isAllowedParentOrigin}
       >
-        <FormField label={tc('status')} htmlFor="history-status">
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger id="history-status">
-              <SelectValue placeholder={t('allStatuses')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc('all')}</SelectItem>
-              <SelectItem value="sent">{t('statusSent')}</SelectItem>
-              <SelectItem value="failed">{t('statusFailed')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-      </ListFilterPanel>
+        <HistoryStatusFilterFields value={status} onChange={setStatus} />
+      </PlatformHostedListFilterPanel>
 
       {listError ? (
         <Alert variant="destructive">

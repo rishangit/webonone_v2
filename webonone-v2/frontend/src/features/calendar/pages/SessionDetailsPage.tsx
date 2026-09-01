@@ -255,6 +255,7 @@ export function SessionDetailsPage() {
               name: formNameById.get(form.id) ?? form.name ?? form.id,
             })),
             sessionQueue: Boolean(item.sessionQueue),
+            addItemsEnabled: Boolean(item.addItemsEnabled),
           })),
         )
       })

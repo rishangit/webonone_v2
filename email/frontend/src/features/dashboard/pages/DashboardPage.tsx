@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -8,28 +9,24 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  DatePicker,
   FeaturePage,
-  FormField,
   ItemList,
   ItemListContent,
   ItemListItem,
   ItemListEmpty,
-  ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
   ListPageFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import type { EmailRole } from '@/features/auth/types/auth.types'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { dashboardActions } from '@/features/dashboard/store'
 import { historyActions } from '@/features/history/store'
+import { EmailDeliveryStatusDateFilterFields } from '@/shared/components/EmailDeliveryStatusDateFilterFields'
+import type { EmailDeliveryStatusDateFilterDraft } from '@/shared/types/filterDrafts'
+import { parseFilterDate, serializeFilterDate } from '@/shared/types/filterDrafts'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
@@ -54,7 +51,6 @@ function endOfDayIso(date: Date): string {
 
 export function DashboardPage() {
   const { t } = useTranslation('shell')
-  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const { stats, status: statsStatus, error: statsError } = useAppSelector((s) => s.dashboard)
@@ -142,19 +138,29 @@ export function DashboardPage() {
     )
   }
 
-  function handleApplyFilters() {
-    setAppliedFilters({ status: recentStatus, from: recentFrom, to: recentTo })
+  function applyFilters(draft?: EmailDeliveryStatusDateFilterDraft) {
+    const nextStatus = draft?.status ?? recentStatus
+    const nextFrom = draft ? parseFilterDate(draft.from) : recentFrom
+    const nextTo = draft ? parseFilterDate(draft.to) : recentTo
+    setRecentStatus(nextStatus)
+    setRecentFrom(nextFrom)
+    setRecentTo(nextTo)
+    setAppliedFilters({ status: nextStatus, from: nextFrom, to: nextTo })
     dispatch(
       historyActions.loadListRequested({
         page: 1,
         pageSize: recentPageSize,
-        status: recentStatus,
+        status: nextStatus,
         extra: {
-          from: recentFrom ? startOfDayIso(recentFrom) : undefined,
-          to: recentTo ? endOfDayIso(recentTo) : undefined,
+          from: nextFrom ? startOfDayIso(nextFrom) : undefined,
+          to: nextTo ? endOfDayIso(nextTo) : undefined,
         },
       }),
     )
+  }
+
+  function handleApplyFilters(draft?: EmailDeliveryStatusDateFilterDraft) {
+    applyFilters(draft)
   }
 
   function handleClearFilters() {
@@ -180,45 +186,34 @@ export function DashboardPage() {
       title={t('dashboard')}
       description={isMember ? t('dashboardDescriptionMember') : t('dashboardDescription')}
     >
-      <ListFilterPanel
+      <PlatformHostedListFilterPanel<EmailDeliveryStatusDateFilterDraft>
+        path="/embed/panels/dashboard/filters"
         open={filterOpen}
         onOpenChange={setFilterOpen}
+        draft={{
+          status: recentStatus,
+          from: serializeFilterDate(recentFrom),
+          to: serializeFilterDate(recentTo),
+        }}
+        onDraftApply={(draft) => {
+          setRecentStatus(draft.status)
+          setRecentFrom(parseFilterDate(draft.from))
+          setRecentTo(parseFilterDate(draft.to))
+        }}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
+        isAllowedParentOrigin={isAllowedParentOrigin}
       >
-        <FormField label={tc('status')} htmlFor="dashboard-recent-status">
-          <Select value={recentStatus} onValueChange={setRecentStatus}>
-            <SelectTrigger id="dashboard-recent-status">
-              <SelectValue placeholder={t('allStatuses')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc('all')}</SelectItem>
-              <SelectItem value="sent">{t('statusSent')}</SelectItem>
-              <SelectItem value="failed">{t('statusFailed')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-
-        <FormField label={t('fromDate')} htmlFor="dashboard-recent-from">
-          <DatePicker
-            id="dashboard-recent-from"
-            withIcon
-            value={recentFrom}
-            onChange={setRecentFrom}
-            placeholder={t('startDate')}
-          />
-        </FormField>
-
-        <FormField label={t('toDate')} htmlFor="dashboard-recent-to">
-          <DatePicker
-            id="dashboard-recent-to"
-            withIcon
-            value={recentTo}
-            onChange={setRecentTo}
-            placeholder={t('endDate')}
-          />
-        </FormField>
-      </ListFilterPanel>
+        <EmailDeliveryStatusDateFilterFields
+          idPrefix="dashboard-recent"
+          status={recentStatus}
+          onStatusChange={setRecentStatus}
+          from={recentFrom}
+          onFromChange={setRecentFrom}
+          to={recentTo}
+          onToChange={setRecentTo}
+        />
+      </PlatformHostedListFilterPanel>
 
       {error ? (
         <Alert variant="destructive">

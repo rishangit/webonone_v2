@@ -1,6 +1,18 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useId, type ReactNode } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import {
+  shellPanelBodyClassName,
+  shellPanelFooterBaseClassName,
+  shellPanelHeaderClassName,
+  shellPanelScrimClassName,
+  shellPanelSurfaceClassName,
+  shellSlidePanelClassName,
+  useShapedShellPanelClassName,
+} from '../layouts/shellPanelChrome'
+import { useShellOverlay } from '../layouts/ShellOverlayProvider'
+import { useShellSlidePanel } from '../layouts/useShellSlidePanel'
 import { Button } from './Button'
 
 export interface ListFilterTriggerProps {
@@ -50,6 +62,25 @@ function ListFilterPanel({
   onClear,
   className,
 }: ListFilterPanelProps) {
+  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const shapedShell = useShapedShellPanelClassName()
+  const desktopOverlayId = useId()
+
+  const closeFilters = () => onOpenChange(false)
+
+  const { mobileSlidePanelClassName, renderMobilePanel } = useShellSlidePanel({
+    open,
+    onClose: closeFilters,
+    closeLabel: 'Close filters',
+  })
+
+  const hasShellOverlay = useShellOverlay({
+    id: desktopOverlayId,
+    open: open && isDesktop,
+    onClose: closeFilters,
+    ariaLabel: 'Close filters',
+  })
+
   useEffect(() => {
     if (!open) return
 
@@ -64,14 +95,14 @@ function ListFilterPanel({
   }, [open, onOpenChange])
 
   useEffect(() => {
-    if (!open) return
+    if (!open || !isDesktop) return
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [open])
+  }, [open, isDesktop])
 
   if (!open) {
     return null
@@ -82,55 +113,71 @@ function ListFilterPanel({
     onOpenChange(false)
   }
 
-  return (
-    <>
-      <button
-        type="button"
-        className="fixed inset-0 z-40 bg-black/40"
-        aria-label="Close filters"
-        onClick={() => onOpenChange(false)}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn(
-          'glass-card fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col border-l shadow-lg transition-transform duration-200 overflow-hidden',
-          className,
-        )}
-      >
-        <header className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-          <h2 className="text-base font-semibold">{title}</h2>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Close filters"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </header>
+  const panel = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      className={cn(
+        'app-shell-filter-panel flex min-h-0 flex-col overflow-hidden',
+        shellPanelSurfaceClassName,
+        shapedShell,
+        mobileSlidePanelClassName,
+        isDesktop && shellSlidePanelClassName,
+        isDesktop && shapedShell && 'border-l-0',
+        !isDesktop && shapedShell && 'border-l-0',
+        className,
+      )}
+    >
+      <header className={shellPanelHeaderClassName}>
+        <h2 className="text-base font-semibold">{title}</h2>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Close filters"
+          onClick={closeFilters}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </header>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 scrollbar-themed">
-          {children}
-        </div>
+      <div className={shellPanelBodyClassName}>{children}</div>
 
-        {onApply || onClear ? (
-          <footer className="flex shrink-0 gap-2 border-t p-4">
-            {onClear ? (
-              <Button type="button" variant="outline" className="flex-1" onClick={onClear}>
-                Clear
-              </Button>
-            ) : null}
-            <Button type="button" className="flex-1" onClick={handleApply}>
-              Apply
+      {onApply || onClear ? (
+        <footer className={cn(shellPanelFooterBaseClassName, 'flex gap-2')}>
+          {onClear ? (
+            <Button type="button" variant="outline" className="flex-1" onClick={onClear}>
+              Clear
             </Button>
-          </footer>
-        ) : null}
-      </div>
-    </>
+          ) : null}
+          <Button type="button" className="flex-1" onClick={handleApply}>
+            Apply
+          </Button>
+        </footer>
+      ) : null}
+    </div>
   )
+
+  if (isDesktop) {
+    if (!hasShellOverlay) {
+      return (
+        <>
+          <button
+            type="button"
+            className={shellPanelScrimClassName}
+            aria-label="Close filters"
+            onClick={closeFilters}
+          />
+          {panel}
+        </>
+      )
+    }
+
+    return panel
+  }
+
+  return renderMobilePanel(panel)
 }
 
 export { ListFilterPanel, ListFilterTrigger }

@@ -103,3 +103,46 @@ npm run type-check -w <peer>-root
 ```
 
 Manual: open peer via WebOnOne → dialog covers full shell; Cancel / Previous (wizards) / primary live in host footer only. After in-iframe navigation (query may drop), create/edit still host-hosted — not clipped to `#main-content`.
+
+## Panel variant (`variant: 'panel'`)
+
+When a peer list page inside WebOnOne opens a **right-side filter panel** (`ListFilterPanel`), delegate to the parent shell — same postMessage contract as peer-dialog, but host chrome is **`AppEndPanel`** (full-shell scrim + slide-over geometry) instead of `CustomDialog`.
+
+```text
+Peer list page (iframe)  →  peer-dialog-request (variant: panel)  →  Parent AppEndPanel + footer Apply/Clear
+Peer body (/embed/panels/…)  ←  filter fields only  ←  host title + footer
+```
+
+| Region | Owner when embedded |
+|--------|---------------------|
+| Full-page scrim | Parent `AppShell` / `ShellOverlayProvider` |
+| Panel chrome (title, X, Apply/Clear) | Parent `AppEndPanel` (`forceSlideOver`) |
+| Filter fields | Peer iframe at `/embed/panels/…` |
+
+**Recipe:**
+
+1. Extract shared **filter fields** (body only, no footer).
+2. Add route `/embed/panels/<feature>/filters` (slim layout; no `FeaturePage`).
+3. List page: replace `ListFilterPanel` with `PlatformHostedListFilterPanel` from `@webonone/platform-embed`; pass `path`, `draft`, `onDraftApply`, `onApply(draft?)`, `onClear`, `isAllowedParentOrigin`.
+4. Embed page: `PlatformPeerPanelEmbedPage` + `usePlatformPeerFilterPanelSubmit` — Apply/Clear via existing `peer-dialog-submit` / `peer-dialog-secondary` → `sendPlatformPeerDialogComplete` with `{ action, draft }`.
+
+```tsx
+<PlatformHostedListFilterPanel
+  path="/embed/panels/tags/filters"
+  open={filterOpen}
+  onOpenChange={setFilterOpen}
+  draft={{ status }}
+  onDraftApply={(d) => setStatus(d.status)}
+  onApply={(draft) => list.load(1, list.pageSize, true, draft)}
+  onClear={() => { setStatus('all'); list.load(1, list.pageSize, true) }}
+  isAllowedParentOrigin={isAllowedParentOrigin}
+>
+  <StatusFilterFields … />
+</PlatformHostedListFilterPanel>
+```
+
+Use `useRequestPlatformPeerPanel` alias when calling the hook directly. Standalone (no parent): `PlatformHostedListFilterPanel` renders local ui-kit `ListFilterPanel`.
+
+**Forbidden:** local `ListFilterPanel` scrim inside the page iframe when `parentOrigin` is set; footer Apply/Clear inside `/embed/panels/…` body.
+
+Reference: `packages/platform-embed/src/PlatformHostedListFilterPanel.tsx`, `data/frontend/src/features/tags/pages/TagsPage.tsx`, `webonone-v2/.../PlatformPeerDialogHost.tsx` (panel branch).

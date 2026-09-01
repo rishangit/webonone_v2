@@ -22,11 +22,25 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
     setActiveIndex(0)
   }, [images])
 
+  function scrollActiveThumbIntoStrip(strip: HTMLDivElement, index: number) {
+    const thumb = strip.querySelector<HTMLElement>(`[data-thumb-index="${String(index)}"]`)
+    if (!thumb) return
+
+    const left = thumb.offsetLeft
+    const width = thumb.offsetWidth
+    const viewport = strip.clientWidth
+    const maxScroll = strip.scrollWidth - viewport
+    const target = left - (viewport - width) / 2
+    strip.scrollTo({
+      left: Math.max(0, Math.min(target, maxScroll)),
+      behavior: 'smooth',
+    })
+  }
+
   useEffect(() => {
     const strip = thumbStripRef.current
     if (!strip) return
-    const thumb = strip.querySelector<HTMLElement>(`[data-thumb-index="${String(activeIndex)}"]`)
-    thumb?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+    scrollActiveThumbIntoStrip(strip, activeIndex)
   }, [activeIndex])
 
   if (images.length === 0) {

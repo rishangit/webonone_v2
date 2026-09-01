@@ -30,6 +30,7 @@
     "quantityAria": "Quantity for {{name}}",
     "unitPriceAria": "Unit price for {{name}}",
     "lineActionsAria": "Actions for {{name}}",
+    "removeCustomerAria": "Remove {{name}}",
     "priceAtCheckout": "Price at checkout",
     "pickerTitle": "Add item",
     "pickerDescription": "Choose a product, service, or space from the company catalog.",

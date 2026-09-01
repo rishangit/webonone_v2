@@ -56,7 +56,7 @@ npm run build -w @webonone/store-kit
 ## Identity user picker
 
 `@webonone/platform-embed` exposes `IdentityUserPickerFrame` for consumers that
-need to select a canonical Identity user. The consumer supplies
+need to select a canonical Identity user. It also exposes **`PlatformHostedListFilterPanel`**, **`useRequestPlatformPeerPanel`**, **`PlatformPeerPanelEmbedPage`**, and **`usePlatformPeerFilterPanelSubmit`** for delegating list filter panels to the WebOnOne parent shell when `embed=platform` (body routes under `/embed/panels/`). The consumer supplies
 `identityOrigin`, its own `parentOrigin`, a request `scope`, and its access token
 when available. The token is delivered with `postMessage`; it is never included
 in the iframe URL. An existing non-expired Identity browser session can also

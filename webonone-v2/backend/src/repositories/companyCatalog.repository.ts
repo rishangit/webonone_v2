@@ -526,6 +526,7 @@ export type WorkflowItemRow = {
   kind: WorkflowItemKind
   sort_order: number
   session_queue: boolean | number
+  add_items_enabled: boolean | number
 }
 
 export async function insertDefaultCheckInWorkflowItem(
@@ -544,6 +545,7 @@ export async function insertDefaultCheckInWorkflowItem(
     kind: 'check_in',
     sort_order: 1,
     session_queue: false,
+    add_items_enabled: false,
   })
 }
 
@@ -599,7 +601,9 @@ export async function replaceWorkflowItems(
     staff_ids: string[]
     form_ids: string[]
     session_queue: boolean
+    add_items_enabled: boolean
   }[],
+  tokenWorkflowItemIdRemap?: Map<string, string | null>,
 ): Promise<void> {
   await db.transaction(async (trx) => {
     await trx('company_service_workflow_items')
@@ -620,6 +624,7 @@ export async function replaceWorkflowItems(
         kind: item.kind,
         sort_order: index + 1,
         session_queue: item.session_queue ? 1 : 0,
+        add_items_enabled: item.add_items_enabled ? 1 : 0,
       })),
     )
     const staffRows = items.flatMap((item) =>
@@ -636,6 +641,24 @@ export async function replaceWorkflowItems(
     )
     if (formRows.length > 0) {
       await trx('company_service_workflow_forms').insert(formRows)
+    }
+    if (tokenWorkflowItemIdRemap && tokenWorkflowItemIdRemap.size > 0) {
+      for (const [oldItemId, newItemId] of tokenWorkflowItemIdRemap) {
+        if (oldItemId === newItemId) continue
+        await trx.raw(
+          `UPDATE company_event_session_tokens AS token
+           INNER JOIN company_events AS event
+             ON event.id = token.event_id
+            AND event.company_id = token.company_id
+           SET token.current_workflow_item_id = ?
+           WHERE token.company_id = ?
+             AND event.service_id = ?
+             AND token.current_workflow_item_id = ?
+             AND token.workflow_completed_at IS NULL
+             AND token.status <> 'completed'`,
+          [newItemId, companyId, serviceId, oldItemId],
+        )
+      }
     }
     await trx('company_services')
       .where({ id: serviceId, company_id: companyId })

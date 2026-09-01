@@ -1,26 +1,23 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
-  DatePicker,
   FeaturePage,
-  FormField,
-  ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
   SearchInput,
   ListPageFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { historyActions } from '@/features/history/store'
+import { EmailDeliveryStatusDateFilterFields } from '@/shared/components/EmailDeliveryStatusDateFilterFields'
+import type { EmailDeliveryStatusDateFilterDraft } from '@/shared/types/filterDrafts'
+import { parseFilterDate, serializeFilterDate } from '@/shared/types/filterDrafts'
 import { HistoryList } from '../components/HistoryList'
 
 function startOfDayIso(date: Date): string {
@@ -33,7 +30,6 @@ function endOfDayIso(date: Date): string {
 
 export function HistoryPage() {
   const { t } = useTranslation('shell')
-  const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
   const { accessToken } = useAppSelector((s) => s.auth)
   const userRole = useAppSelector((s) => s.auth.user?.role)
@@ -98,10 +94,20 @@ export function HistoryPage() {
     )
   }
 
-  function handleApplyFilters() {
-    const next = { status, from, to, search: searchQuery }
+  function applyFilters(draft?: EmailDeliveryStatusDateFilterDraft) {
+    const nextStatus = draft?.status ?? status
+    const nextFrom = draft ? parseFilterDate(draft.from) : from
+    const nextTo = draft ? parseFilterDate(draft.to) : to
+    const next = { status: nextStatus, from: nextFrom, to: nextTo, search: searchQuery }
+    setStatus(nextStatus)
+    setFrom(nextFrom)
+    setTo(nextTo)
     setAppliedFilters(next)
     dispatchLoad(1, pageSize, next)
+  }
+
+  function handleApplyFilters(draft?: EmailDeliveryStatusDateFilterDraft) {
+    applyFilters(draft)
   }
 
   function handleClearFilters() {
@@ -146,45 +152,34 @@ export function HistoryPage() {
         </div>
       }
     >
-      <ListFilterPanel
+      <PlatformHostedListFilterPanel<EmailDeliveryStatusDateFilterDraft>
+        path="/embed/panels/history/filters"
         open={filterOpen}
         onOpenChange={setFilterOpen}
+        draft={{
+          status,
+          from: serializeFilterDate(from),
+          to: serializeFilterDate(to),
+        }}
+        onDraftApply={(draft) => {
+          setStatus(draft.status)
+          setFrom(parseFilterDate(draft.from))
+          setTo(parseFilterDate(draft.to))
+        }}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
+        isAllowedParentOrigin={isAllowedParentOrigin}
       >
-        <FormField label={tc('status')} htmlFor="history-status">
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger id="history-status">
-              <SelectValue placeholder={t('allStatuses')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc('all')}</SelectItem>
-              <SelectItem value="sent">{t('statusSent')}</SelectItem>
-              <SelectItem value="failed">{t('statusFailed')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-
-        <FormField label={t('fromDate')} htmlFor="history-from">
-          <DatePicker
-            id="history-from"
-            withIcon
-            value={from}
-            onChange={setFrom}
-            placeholder={t('startDate')}
-          />
-        </FormField>
-
-        <FormField label={t('toDate')} htmlFor="history-to">
-          <DatePicker
-            id="history-to"
-            withIcon
-            value={to}
-            onChange={setTo}
-            placeholder={t('endDate')}
-          />
-        </FormField>
-      </ListFilterPanel>
+        <EmailDeliveryStatusDateFilterFields
+          idPrefix="history"
+          status={status}
+          onStatusChange={setStatus}
+          from={from}
+          onFromChange={setFrom}
+          to={to}
+          onToChange={setTo}
+        />
+      </PlatformHostedListFilterPanel>
 
       {listError ? (
         <Alert variant="destructive">

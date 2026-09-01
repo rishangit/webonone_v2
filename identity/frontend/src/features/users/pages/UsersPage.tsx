@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
   ContactValueLine,
   DropdownMenuItem,
   FeaturePage,
-  FormField,
   ImagePreview,
   ItemList,
   ItemListContent,
@@ -16,17 +16,11 @@ import {
   ItemListMenu,
   itemListThumbClassName,
   itemListRowBodyClassName,
-  ListFilterPanel,
   ListFilterTrigger,
   ListAddButton,
   ListPageBody,
   SearchInput,
   ListPageFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   StatusTag,
   isStatusTagVariant,
   useToast,
@@ -42,6 +36,11 @@ import { isAllowedParentOrigin } from '@/features/shell/utils/platformConfig'
 import { resolvePlatformEmbedParentOrigin } from '@webonone/platform-embed'
 import { AddCompanyUserDialog } from '@/features/users/components/AddCompanyUserDialog'
 import {
+  ALL_ROLES_VALUE,
+  UsersRoleFilterFields,
+} from '@/features/users/components/UsersRoleFilterFields'
+import type { UsersFilterDraft } from '@/features/users/pages/UsersFilterEmbedPage'
+import {
   canAccessCompanyCustomers,
   getSessionCompanyId,
   isSessionSuperAdmin,
@@ -51,7 +50,6 @@ import { usersActions } from '@/features/users/store'
 import type { UserPickerRole, UserPickerUser } from '@/features/users/types'
 import { useNavigateIdentity } from '@/features/shell/utils/navigateIdentity'
 
-const ALL_ROLES_VALUE = '__all__'
 const SEARCH_DEBOUNCE_MS = 300
 const PAGE_SIZE_OPTIONS = [12, 24, 48]
 
@@ -244,31 +242,25 @@ export function UsersPage() {
       }
     >
       {!companyCustomersMode ? (
-        <ListFilterPanel
+        <PlatformHostedListFilterPanel<UsersFilterDraft>
+          path="/embed/panels/users/filters"
           open={filterOpen}
           onOpenChange={setFilterOpen}
-          onApply={() =>
-            setAppliedRole(roleFilter === ALL_ROLES_VALUE ? null : (roleFilter as UserPickerRole))
-          }
+          draft={{ role: roleFilter }}
+          onDraftApply={(draft) => setRoleFilter(draft.role)}
+          onApply={(draft) => {
+            const nextRole = draft?.role ?? roleFilter
+            setRoleFilter(nextRole)
+            setAppliedRole(nextRole === ALL_ROLES_VALUE ? null : (nextRole as UserPickerRole))
+          }}
           onClear={() => {
             setRoleFilter(ALL_ROLES_VALUE)
             setAppliedRole(null)
           }}
+          isAllowedParentOrigin={isAllowedParentOrigin}
         >
-          <FormField label={t('roles.label')} htmlFor="users-role">
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger id="users-role">
-                <SelectValue placeholder={t('roles.all')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_ROLES_VALUE}>{t('roles.all')}</SelectItem>
-                <SelectItem value="super_admin">{t('roles.super_admin')}</SelectItem>
-                <SelectItem value="company_admin">{t('roles.company_admin')}</SelectItem>
-                <SelectItem value="member">{t('roles.member')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </FormField>
-        </ListFilterPanel>
+          <UsersRoleFilterFields value={roleFilter} onChange={setRoleFilter} />
+        </PlatformHostedListFilterPanel>
       ) : null}
 
       {listError ? (

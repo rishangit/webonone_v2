@@ -104,6 +104,45 @@ export function firstWorkflowItemId(defs: WorkflowStepDef[]): string | null {
   return defs[0]?.id ?? null
 }
 
+function firstSpaceWorkflowItemId(defs: WorkflowStepDef[]): string | null {
+  return defs.find((def) => def.kind === 'space')?.id ?? null
+}
+
+function checkInWorkflowItemId(defs: WorkflowStepDef[]): string | null {
+  return defs.find((def) => def.kind === 'check_in')?.id ?? firstWorkflowItemId(defs)
+}
+
+/** Resolve the workflow step a token is on, including null/invalid stored pointers. */
+export function resolveEffectiveWorkflowItemId(
+  defs: WorkflowStepDef[],
+  token: Pick<
+    CompanyEventSessionTokenRow,
+    'current_workflow_item_id' | 'workflow_completed_at' | 'status'
+  >,
+  options?: { checkedIn?: boolean; sessionStarted?: boolean },
+): string | null {
+  if (token.workflow_completed_at || token.status === 'completed') return null
+  const stored = token.current_workflow_item_id
+  if (stored && defs.some((def) => def.id === stored)) return stored
+  if (!options?.checkedIn) return checkInWorkflowItemId(defs)
+  if (!options?.sessionStarted) return checkInWorkflowItemId(defs)
+  return firstSpaceWorkflowItemId(defs) ?? checkInWorkflowItemId(defs)
+}
+
+function resolveWorkflowStepIndex(
+  defs: WorkflowStepDef[],
+  token: Pick<
+    CompanyEventSessionTokenRow,
+    'current_workflow_item_id' | 'workflow_completed_at' | 'status'
+  >,
+  options?: { checkedIn?: boolean; sessionStarted?: boolean },
+): number {
+  const effectiveId = resolveEffectiveWorkflowItemId(defs, token, options)
+  if (!effectiveId) return -1
+  const idx = defs.findIndex((def) => def.id === effectiveId)
+  return idx >= 0 ? idx : -1
+}
+
 export function buildWorkflowProgress(
   defs: WorkflowStepDef[],
   token: Pick<
@@ -128,8 +167,11 @@ export function buildWorkflowProgress(
   if (checkInIndex >= 0 && !options?.sessionStarted) {
     return { steps, currentIndex: checkInIndex, done: false }
   }
-  const idx = defs.findIndex((def) => def.id === token.current_workflow_item_id)
-  return { steps, currentIndex: idx >= 0 ? idx : 0, done: false }
+  const idx = resolveWorkflowStepIndex(defs, token, options)
+  if (idx >= 0) {
+    return { steps, currentIndex: idx, done: false }
+  }
+  return { steps, currentIndex: checkInIndex >= 0 ? checkInIndex : 0, done: false }
 }
 
 export function nextWorkflowState(
@@ -140,7 +182,13 @@ export function nextWorkflowState(
     return { current_workflow_item_id: null, workflow_completed_at: new Date() }
   }
   const idx = currentItemId ? defs.findIndex((def) => def.id === currentItemId) : -1
-  const next = defs[idx + 1]
+  const resolvedIdx =
+    idx >= 0
+      ? idx
+      : currentItemId
+        ? Math.max(0, defs.findIndex((def) => def.kind === 'space'))
+        : -1
+  const next = resolvedIdx < 0 ? defs[0] : defs[resolvedIdx + 1]
   if (!next) {
     return { current_workflow_item_id: null, workflow_completed_at: new Date() }
   }

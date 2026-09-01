@@ -137,6 +137,8 @@
     --shape-list-tab-after-left: 2.75rem;
     --shape-list-cut: var(--shape-cut-sm);
     --shape-step: 0.75rem;
+    /** Details-page card height quantum — Card `heightUnits` × this value (default 8rem). */
+    --details-card-height-unit: 8rem;
     --popover: 210 36% 90% / 0.50;
     --menu-bg: 210 36% 90% / 0.50;
     --popover-foreground: 0 0% 10%;
@@ -372,13 +374,12 @@
   }
 
   [data-ui-theme='high-tech'] {
-    /* Match shellPagePadding: px-2 py-4 sm:px-6 sm:py-6 */
+    /* Match shellPagePadding horizontal; vertical inset stays `p-2` on mobile. */
     --shell-chrome-inset-x: 0.5rem;
-    --shell-chrome-inset-y: 1rem;
     --shell-chrome-gap: 0.5rem;
   }
 
-  /* md+ only — mobile drawer (max 767px) must match constant shell root `p-2`. */
+  /* md+ only — mobile drawer must match constant shell root `p-2`. */
   @media (min-width: 768px) {
     [data-ui-theme='high-tech'] {
       --shell-chrome-inset-x: 1.5rem;
@@ -390,27 +391,109 @@
     --app-shell-notice-band-height: 1.5rem;
   }
 
-  /** Mobile left-nav scrim — fixed to the viewport so shell chrome padding is covered. */
+  /** Full-viewport overlay mount — scrim is viewport-fixed via .app-shell-mobile-nav-overlay. */
+  #shell-overlay-root {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    pointer-events: none;
+  }
+
+  /**
+   * Shared dimming layer for left nav + right panels — full viewport, behind header (z-50).
+   * Viewport-fixed so it is never clipped to #main-content.
+   */
   .app-shell-mobile-nav-overlay {
     position: fixed;
     inset: 0;
-    z-index: 30;
+    z-index: 35;
+    pointer-events: auto;
   }
 
-  /** Mobile drawer — aligned to shell chrome (header left + vertical insets). */
+  .app-shell-body--overlay-open > #main-content,
+  .app-shell-body--mobile-nav-open > #main-content,
+  .app-shell-root:has(#shell-overlay-root > *) > .app-shell-body > #main-content {
+    position: relative;
+    z-index: 0;
+  }
+
+  /**
+   * Mobile slide host — same positioning context as the left nav drawer.
+   * Right panels portal here so `position: absolute` aligns with the shell body row.
+   */
   @media (max-width: 767px) {
-    .app-shell-mobile-sidebar {
-      position: fixed;
-      top: var(--app-shell-mobile-overlay-top);
-      bottom: var(--shell-chrome-inset-y);
-      left: var(--shell-chrome-inset-x);
-      z-index: 40;
-      height: auto;
-      transform: translateX(calc(-100% - var(--shell-chrome-inset-x) - 2px));
+    .app-shell-body {
+      overflow-x: clip;
     }
 
-    .app-shell-mobile-sidebar--open {
+    .app-shell-slide-host {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+    }
+
+    /** Left nav drawer — anchored to the shell body row (below header + gap). */
+    .app-shell-body > .app-shell-mobile-sidebar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 0;
+      width: 16rem;
+      height: auto;
+      transform: translateX(calc(-100% - var(--shell-chrome-inset-x)));
+    }
+
+    .app-shell-body > .app-shell-mobile-sidebar--open {
       transform: translateX(0);
+      z-index: 40;
+    }
+
+    /**
+     * Right slide-over (filters, assistant) — same top/bottom/width as left nav.
+     * `--anchored` panels live in #shell-slide-host; fallback uses viewport-fixed top.
+     */
+    .app-shell-slide-host .app-shell-slide-panel--anchored {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: auto;
+      z-index: 40;
+      width: 16rem;
+      height: auto;
+      max-width: none;
+      pointer-events: auto;
+    }
+
+    .app-shell-slide-panel:not(.app-shell-slide-panel--anchored) {
+      position: fixed;
+      top: var(--app-shell-mobile-overlay-top);
+      right: var(--shell-chrome-inset-x);
+      bottom: var(--shell-chrome-inset-y);
+      left: auto;
+      z-index: 40;
+      width: 16rem;
+      height: auto;
+      max-width: none;
+      pointer-events: auto;
+    }
+  }
+
+  /** Desktop / fallback — viewport-fixed slide-over (showcase, in-flow render). */
+  @media (min-width: 768px) {
+    .app-shell-slide-panel:not(.app-shell-slide-panel--anchored) {
+      position: fixed;
+      top: var(--app-shell-mobile-overlay-top);
+      right: var(--shell-chrome-inset-x);
+      bottom: var(--shell-chrome-inset-y);
+      left: auto;
+      z-index: 40;
+      width: 16rem;
+      height: auto;
+      max-width: none;
+      pointer-events: auto;
     }
   }
 
@@ -1122,13 +1205,13 @@
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='member'] {
-    background-color: var(--color-surface-hover) !important;
-    color: var(--color-text-secondary) !important;
+    background-color: hsl(var(--muted) / 0.92) !important;
+    color: hsl(var(--muted-foreground)) !important;
   }
 
   [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='member'] {
-    background-color: var(--color-surface-hover) !important;
-    color: var(--color-text-secondary) !important;
+    background-color: hsl(var(--muted) / 0.92) !important;
+    color: hsl(var(--muted-foreground)) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='staff'] {

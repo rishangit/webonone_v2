@@ -37,6 +37,11 @@ export function WorkflowItemListContent({
           })}
         </p>
       ) : null}
+      <p className="truncate text-sm text-muted-foreground">
+        {t('workflowTab.addItemsLine', {
+          value: item.addItemsEnabled ? t('workflowTab.yes') : t('workflowTab.no'),
+        })}
+      </p>
     </div>
   )
 }

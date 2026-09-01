@@ -29,6 +29,7 @@ export type WorkflowWizardValues = {
   staff: WorkflowStaffValue[]
   forms: WorkflowFormValue[]
   sessionQueue: boolean
+  addItemsEnabled: boolean
 }
 
 export const EMPTY_WORKFLOW_WIZARD_VALUES: WorkflowWizardValues = {
@@ -36,6 +37,7 @@ export const EMPTY_WORKFLOW_WIZARD_VALUES: WorkflowWizardValues = {
   staff: [],
   forms: [],
   sessionQueue: false,
+  addItemsEnabled: false,
 }
 
 export const workflowWizardStepSpaceSchema = z.object({

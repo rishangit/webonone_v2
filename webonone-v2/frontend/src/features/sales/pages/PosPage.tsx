@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { X } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -12,7 +13,11 @@ import {
   FeaturePage,
   FormField,
   ImagePreview,
+  ItemList,
+  ItemListContent,
+  ItemListItem,
   ListAddButton,
+  itemListRowBodyClassName,
   itemListThumbClassName,
   Select,
   SelectContent,
@@ -157,13 +162,7 @@ export function PosPage() {
   }
 
   return (
-    <FeaturePage
-      title={t('pos.title')}
-      description={t('pos.description')}
-      actions={
-        <ListAddButton onClick={() => setItemOpen(true)}>{t('pos.addItem')}</ListAddButton>
-      }
-    >
+    <FeaturePage title={t('pos.title')} description={t('pos.description')}>
       {formError ? (
         <Alert variant="destructive">
           <AlertDescription>{formError}</AlertDescription>
@@ -173,8 +172,9 @@ export function PosPage() {
       <div className="grid items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
               <CardTitle className="text-lg">{t('pos.cartTitle')}</CardTitle>
+              <ListAddButton onClick={() => setItemOpen(true)}>{t('pos.addItem')}</ListAddButton>
             </CardHeader>
             <CardContent>
               <PosCartList
@@ -206,28 +206,43 @@ export function PosPage() {
             <CardHeader>
               <CardTitle className="text-lg">{t('pos.customerTitle')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               {customer ? (
-                <div className="flex min-w-0 items-center gap-3">
-                  <ImagePreview
-                    src={customer.avatarUrl ?? null}
-                    alt={customer.displayName}
-                    mode="view"
-                    className={itemListThumbClassName}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{customer.displayName}</p>
-                    {customer.email ? (
-                      <p className="truncate text-xs text-muted-foreground">{customer.email}</p>
-                    ) : null}
-                  </div>
-                </div>
+                <ItemList className="py-0">
+                  <ItemListItem>
+                    <ItemListContent>
+                      <div className={itemListRowBodyClassName}>
+                        <ImagePreview
+                          src={customer.avatarUrl ?? null}
+                          alt={customer.displayName}
+                          mode="view"
+                          className={itemListThumbClassName}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">{customer.displayName}</p>
+                          {customer.email ? (
+                            <p className="truncate text-xs text-muted-foreground">{customer.email}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </ItemListContent>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 self-start text-muted-foreground"
+                      onClick={() => setCustomer(null)}
+                      aria-label={t('pos.removeCustomerAria', { name: customer.displayName })}
+                    >
+                      <X className="h-4 w-4" aria-hidden />
+                    </Button>
+                  </ItemListItem>
+                </ItemList>
               ) : (
-                <p className="text-sm">{t('pos.noCustomer')}</p>
+                <Button type="button" variant="outline" size="sm" onClick={() => setCustomerOpen(true)}>
+                  {t('pos.selectCustomer')}
+                </Button>
               )}
-              <Button type="button" variant="outline" size="sm" onClick={() => setCustomerOpen(true)}>
-                {t('pos.selectCustomer')}
-              </Button>
             </CardContent>
           </Card>
 

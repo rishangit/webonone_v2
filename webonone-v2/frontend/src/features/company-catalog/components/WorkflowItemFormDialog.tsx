@@ -73,6 +73,9 @@ function valuesFromItem(item: ServiceWorkflowItem | null): WorkflowWizardValues 
     sessionQueue: Boolean(
       item.sessionQueue ?? (item as { session_queue?: boolean }).session_queue,
     ),
+    addItemsEnabled: Boolean(
+      item.addItemsEnabled ?? (item as { add_items_enabled?: boolean }).add_items_enabled,
+    ),
   }
 }
 
@@ -219,6 +222,7 @@ export function WorkflowItemFormDialog({
       staff: values.staff,
       forms: values.forms,
       sessionQueue: showQueue ? values.sessionQueue : false,
+      addItemsEnabled: values.addItemsEnabled,
     })
   }
 
@@ -304,12 +308,17 @@ export function WorkflowItemFormDialog({
             <WorkflowWizardStepForms
               forms={values.forms}
               onOpenPicker={() => setFormPickerOpen(true)}
+              showAddItemsToggle={!showQueue}
+              addItemsEnabled={values.addItemsEnabled}
+              onAddItemsEnabledChange={(addItemsEnabled) => patchValues({ addItemsEnabled })}
             />
           ) : null}
           {stepKey === 'queue' ? (
             <WorkflowWizardStepQueue
               sessionQueue={values.sessionQueue}
               onChange={(sessionQueue) => patchValues({ sessionQueue })}
+              addItemsEnabled={values.addItemsEnabled}
+              onAddItemsEnabledChange={(addItemsEnabled) => patchValues({ addItemsEnabled })}
             />
           ) : null}
           {stepKey === 'summary' ? (

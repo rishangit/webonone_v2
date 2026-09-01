@@ -1,28 +1,24 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
   FeaturePage,
   ListAddButton,
-  FormField,
-  ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
   SearchInput,
   ListPageFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { UnitFormDialog } from '@/features/units/components/UnitFormDialog'
 import { UnitsList } from '@/features/units/components/UnitsList'
 import { unitsActions } from '@/features/units/store'
+import { StatusFilterFields } from '@/shared/components/StatusFilterFields'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
 export function UnitsPage() {
@@ -61,28 +57,31 @@ export function UnitsPage() {
         </div>
       }
     >
-      <ListFilterPanel
+      <PlatformHostedListFilterPanel
+        path="/embed/panels/units/filters"
         open={list.filterOpen}
         onOpenChange={list.setFilterOpen}
-        onApply={() => list.load(1, list.pageSize, true)}
+        draft={{ status: list.status }}
+        onDraftApply={(draft) => list.setStatus(draft.status)}
+        onApply={(draft) => {
+          const nextStatus = draft?.status ?? list.status
+          if (draft) list.setStatus(nextStatus)
+          list.load(1, list.pageSize, true, { status: nextStatus })
+        }}
         onClear={() => {
           list.setStatus('all')
-          list.load(1, list.pageSize, true)
+          list.load(1, list.pageSize, true, { status: 'all' })
         }}
+        isAllowedParentOrigin={isAllowedParentOrigin}
       >
-        <FormField label={tc('status')} htmlFor="units-status">
-          <Select value={list.status} onValueChange={list.setStatus}>
-            <SelectTrigger id="units-status">
-              <SelectValue placeholder={tc('all')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc('all')}</SelectItem>
-              <SelectItem value="verified">{t('verified')}</SelectItem>
-              <SelectItem value="pending">{t('unverified')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-      </ListFilterPanel>
+        <StatusFilterFields
+          idPrefix="units"
+          value={list.status}
+          onChange={list.setStatus}
+          verifiedLabel={t('verified')}
+          unverifiedLabel={t('unverified')}
+        />
+      </PlatformHostedListFilterPanel>
 
       {list.error ? (
         <Alert variant="destructive">

@@ -19,7 +19,7 @@ const statusTagVariants = cva(
         verified: 'border-success-border bg-success-background text-success',
         super_admin: 'border-info-border bg-info-background text-info',
         company_admin: 'border-info-border bg-info-background text-info',
-        member: 'border-[var(--color-border-light)] bg-surface-hover text-[var(--color-text-secondary)]',
+        member: 'border-border bg-muted text-muted-foreground',
         staff: 'border-[var(--color-border-light)] bg-primary-light text-primary',
       },
     },

@@ -98,6 +98,11 @@ export function SessionWorkflowTab({
         )
       : overviewTokens.filter((token) => checkedInUserIds.has(token.userId))
 
+  const canSellOnStep =
+    canSellDuringSession &&
+    Boolean(item.addItemsEnabled) &&
+    (canManageSession || isAssignedStaff)
+
   return (
     <div className="flex flex-col gap-6">
       <SessionWorkflowStepProgress
@@ -144,7 +149,7 @@ export function SessionWorkflowTab({
         serviceId={serviceId}
         serviceName={serviceName}
         enabledKinds={enabledKinds}
-        canSell={canSellDuringSession}
+        canSell={canSellOnStep}
         stepQueueLabels={isPersonal ? sessionStepQueues?.[item.id] ?? null : null}
         onSaleCompleted={onSaleCompleted}
       />

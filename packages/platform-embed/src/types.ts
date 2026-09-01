@@ -10,6 +10,9 @@ export const PLATFORM_EMBED_QUERY = {
 /** Peer dialog routes must live under this prefix (host allowlist). */
 export const PLATFORM_PEER_DIALOG_PATH_PREFIX = '/embed/dialogs/' as const
 
+/** Peer slide-panel body routes (filter panels, etc.). */
+export const PLATFORM_PEER_PANEL_PATH_PREFIX = '/embed/panels/' as const
+
 /**
  * Sentinel path for shell-hosted AlertDialog confirms (`variant: 'alert'`).
  * Allowlisted only — never loaded as an iframe body.
@@ -19,8 +22,8 @@ export const PLATFORM_ALERT_CONFIRM_PATH = '/embed/dialogs/confirm-delete' as co
 /** Mirrors `@webonone/ui-kit` CustomDialog size presets — kept local to avoid a ui-kit dependency. */
 export type PlatformDialogSizePreset = 'small' | 'medium' | 'large' | 'xlarge' | 'auto'
 
-/** Host chrome: CustomDialog+iframe body vs shell AlertDialog (no iframe). */
-export type PlatformPeerDialogVariant = 'dialog' | 'alert'
+/** Host chrome: CustomDialog+iframe body vs shell AlertDialog vs AppEndPanel slide-over. */
+export type PlatformPeerDialogVariant = 'dialog' | 'alert' | 'panel'
 
 export type IdentityUserPickerMode = 'single' | 'multiple'
 
@@ -369,6 +372,7 @@ export type PlatformPeerDialogRequestMessage = {
    * Host chrome variant.
    * - `dialog` (default): CustomDialog + peer `/embed/dialogs/…` iframe body
    * - `alert`: shell AlertDialog only (no iframe) — strict destructive confirms
+   * - `panel`: AppEndPanel slide-over + peer `/embed/panels/…` iframe body
    */
   variant?: PlatformPeerDialogVariant
   /** Host CustomDialog footer Cancel label (default Cancel). */
@@ -996,15 +1000,28 @@ export function isPlatformDialogSizePreset(value: unknown): value is PlatformDia
   return typeof value === 'string' && PLATFORM_DIALOG_SIZE_PRESETS.has(value)
 }
 
-/** Relative path under `/embed/dialogs/` with no traversal. */
-export function isAllowedPlatformPeerDialogPath(path: string): boolean {
-  if (typeof path !== 'string' || !path.startsWith(PLATFORM_PEER_DIALOG_PATH_PREFIX)) {
+function isAllowedPlatformPeerEmbedPath(path: string, prefix: string): boolean {
+  if (typeof path !== 'string' || !path.startsWith(prefix)) {
     return false
   }
   if (path.includes('..') || path.includes('//') || path.includes('\\')) {
     return false
   }
-  return path.length > PLATFORM_PEER_DIALOG_PATH_PREFIX.length
+  return path.length > prefix.length
+}
+
+/** Relative path under `/embed/dialogs/` with no traversal. */
+export function isAllowedPlatformPeerDialogPath(path: string): boolean {
+  return isAllowedPlatformPeerEmbedPath(path, PLATFORM_PEER_DIALOG_PATH_PREFIX)
+}
+
+/** Relative path under `/embed/panels/` with no traversal. */
+export function isAllowedPlatformPeerPanelPath(path: string): boolean {
+  return isAllowedPlatformPeerEmbedPath(path, PLATFORM_PEER_PANEL_PATH_PREFIX)
+}
+
+export function isAllowedPlatformPeerDialogOrPanelPath(path: string): boolean {
+  return isAllowedPlatformPeerDialogPath(path) || isAllowedPlatformPeerPanelPath(path)
 }
 
 export function isPlatformPeerDialogRequestMessage(
@@ -1020,12 +1037,13 @@ export function isPlatformPeerDialogRequestMessage(
     hasStringProperty(message, 'requestId') &&
     hasStringProperty(message, 'path') &&
     hasStringProperty(message, 'title') &&
-    isAllowedPlatformPeerDialogPath(message.path as string) &&
+    isAllowedPlatformPeerDialogOrPanelPath(message.path as string) &&
     isPlatformDialogSizePreset(message.sizeWidth) &&
     isPlatformDialogSizePreset(message.sizeHeight) &&
     (message.variant === undefined ||
       message.variant === 'dialog' ||
-      message.variant === 'alert') &&
+      message.variant === 'alert' ||
+      message.variant === 'panel') &&
     (message.description === undefined || typeof message.description === 'string') &&
     (message.cancelLabel === undefined || typeof message.cancelLabel === 'string') &&
     (message.secondaryLabel === undefined || typeof message.secondaryLabel === 'string') &&

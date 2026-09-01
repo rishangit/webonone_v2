@@ -1,32 +1,29 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
   FeaturePage,
-  FormField,
   ListAddButton,
-  ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
   ListPageFooter,
   SearchInput,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 import { websitePagesActions } from '../store'
 import { WebsiteHubTabs, websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { WebsitePageDialog } from '../components/WebsiteEntityDialogs'
 import { WebsitePagesList } from '../components/WebsitePagesList'
+import { WebsitePagesStatusFilterFields } from '../components/WebsitePagesStatusFilterFields'
+import type { WebsitePagesFilterDraft } from './WebsitePagesFilterEmbedPage'
 import type { PageMetaValues } from '../schemas/websiteMeta'
 import type { WebsitePage } from '../types'
 
@@ -104,28 +101,25 @@ export function WebsitePagesPage() {
           </>
         }
       />
-      <ListFilterPanel
+      <PlatformHostedListFilterPanel<WebsitePagesFilterDraft>
+        path="/embed/panels/website/pages/filters"
         open={list.filterOpen}
         onOpenChange={list.setFilterOpen}
-        onApply={() => list.load(1, list.pageSize, true)}
+        draft={{ status: list.status }}
+        onDraftApply={(draft) => list.setStatus(draft.status)}
+        onApply={(draft) => {
+          const nextStatus = draft?.status ?? list.status
+          if (draft) list.setStatus(nextStatus)
+          list.load(1, list.pageSize, true, { status: nextStatus })
+        }}
         onClear={() => {
           list.setStatus('all')
-          list.load(1, list.pageSize, true)
+          list.load(1, list.pageSize, true, { status: 'all' })
         }}
+        isAllowedParentOrigin={isAllowedParentOrigin}
       >
-        <FormField label={tc('status')} htmlFor="website-pages-status">
-          <Select value={list.status} onValueChange={list.setStatus}>
-            <SelectTrigger id="website-pages-status">
-              <SelectValue placeholder={tc('all')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc('all')}</SelectItem>
-              <SelectItem value="active">{t('active')}</SelectItem>
-              <SelectItem value="inactive">{t('inactive')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-      </ListFilterPanel>
+        <WebsitePagesStatusFilterFields value={list.status} onChange={list.setStatus} />
+      </PlatformHostedListFilterPanel>
       {list.error ? (
         <Alert variant="destructive">
           <AlertDescription>{list.error}</AlertDescription>

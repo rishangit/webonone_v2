@@ -221,6 +221,7 @@ export const replaceServiceWorkflowBodySchema = z.object({
       staff_ids: z.array(z.string().length(21)),
       form_ids: z.array(z.string().length(21)),
       session_queue: z.boolean().optional().default(false),
+      add_items_enabled: z.boolean().optional().default(false),
     }),
   ),
 })

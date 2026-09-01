@@ -124,6 +124,22 @@ Required flow:
 
 **Embed dialog routes** are exempt from `FeaturePage` (body only).
 
+#### Core-hosted filter panels (list filters in embed)
+
+When a peer list inside WebOnOne opens a right-side filter panel, use **`variant: 'panel'`** on the same `peer-dialog-*` contract. Host renders **`AppEndPanel`** (full-shell scrim); body is peer `/embed/panels/…` (fields only). List opener uses **`PlatformHostedListFilterPanel`**; embed body uses **`PlatformPeerPanelEmbedPage`** + **`usePlatformPeerFilterPanelSubmit`**.
+
+| Region | Owner |
+|--------|--------|
+| Scrim + slide geometry | Parent `AppShell` |
+| Title, close, Apply/Clear footer | Parent `AppEndPanel` |
+| Filter fields | Peer iframe (`/embed/panels/…`) |
+
+Paths must be under `/embed/panels/` (allowlisted in `@webonone/platform-embed`). `sizeWidth` / `sizeHeight` are ignored for panels. Footer mapping: `submitLabel` = Apply, `secondaryLabel` = Clear.
+
+Skill: [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) (panel variant section). Reference: `packages/platform-embed/src/PlatformHostedListFilterPanel.tsx`, `data/frontend/src/features/tags/pages/TagsPage.tsx`.
+
+**Forbidden:** local `ListFilterPanel` inside the page iframe when embedded (scrim clips to `#main-content`); Apply/Clear buttons in `/embed/panels/…` body.
+
 Reference: `packages/platform-embed/src/useRequestPlatformPeerDialog.ts`, `packages/platform-embed/src/usePlatformPeerDialogSubmit.ts`, `webonone-v2/frontend/src/features/shell/PlatformPeerDialogHost.tsx`, `email/frontend/src/features/templates/components/TemplateFormDialog.tsx`, `data/frontend/src/features/tags/components/TagFormDialog.tsx`, `identity/frontend/src/features/users/components/AddCompanyUserDialog.tsx`.
 
 **Redirect auth:** `@webonone/platform-nav` — `exchangeAuthCode`, `usePlatformRedirectBootstrap`, `redirectWithAuthCode`.

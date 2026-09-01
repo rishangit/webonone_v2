@@ -16,6 +16,11 @@ const DashboardPage = lazy(() =>
 const InvoicesPage = lazy(() =>
   import('@/features/invoices/pages/InvoicesPage').then((m) => ({ default: m.InvoicesPage })),
 )
+const InvoicesFilterEmbedPage = lazy(() =>
+  import('@/features/invoices/pages/InvoicesFilterEmbedPage').then((m) => ({
+    default: m.InvoicesFilterEmbedPage,
+  })),
+)
 const InvoiceDetailPage = lazy(() =>
   import('@/features/invoices/pages/InvoiceDetailPage').then((m) => ({
     default: m.InvoiceDetailPage,
@@ -57,6 +62,16 @@ export function App() {
                 <RoleRoute roles={[...adminRoles]}>
                   <LazyRoute>
                     <DashboardPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/panels/invoices/filters"
+              element={
+                <RoleRoute roles={[...adminRoles]}>
+                  <LazyRoute>
+                    <InvoicesFilterEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

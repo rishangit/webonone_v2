@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
   DropdownMenuItem,
   FeaturePage,
-  FormField,
   ImagePreview,
   ItemList,
   ItemListContent,
@@ -14,21 +14,18 @@ import {
   ItemListItem,
   ItemListMenu,
   itemListThumbClassName,
-  ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
   ListPageFooter,
   SearchInput,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { InvoiceStatusFilterFields } from '@/features/invoices/components/InvoiceStatusFilterFields'
+import type { InvoiceStatusFilterDraft } from '@/features/invoices/pages/InvoicesFilterEmbedPage'
 import { invoicesActions } from '@/features/invoices/store'
 import { paymentApi } from '@/shared/services/paymentApi'
 import type { InvoiceListItem, InvoiceStatus } from '@/shared/types/payment.types'
@@ -170,11 +167,16 @@ export function InvoicesPage() {
         </div>
       }
     >
-      <ListFilterPanel
+      <PlatformHostedListFilterPanel<InvoiceStatusFilterDraft>
+        path="/embed/panels/invoices/filters"
         open={filterOpen}
         onOpenChange={setFilterOpen}
-        onApply={() => {
-          setAppliedFilters((prev) => ({ ...prev, status }))
+        draft={{ status }}
+        onDraftApply={(draft) => setStatus(draft.status)}
+        onApply={(draft) => {
+          const nextStatus = draft?.status ?? status
+          setStatus(nextStatus)
+          setAppliedFilters((prev) => ({ ...prev, status: nextStatus }))
           setFilterOpen(false)
         }}
         onClear={() => {
@@ -182,23 +184,10 @@ export function InvoicesPage() {
           setAppliedFilters((prev) => ({ ...prev, status: 'all' }))
           setFilterOpen(false)
         }}
+        isAllowedParentOrigin={isAllowedParentOrigin}
       >
-        <FormField label={tc('status')} htmlFor="invoice-status">
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger id="invoice-status">
-              <SelectValue placeholder={tc('status')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc('all')}</SelectItem>
-              <SelectItem value="issued">{t('statusIssued')}</SelectItem>
-              <SelectItem value="pending_verification">{t('statusPendingReview')}</SelectItem>
-              <SelectItem value="paid">{t('statusPaid')}</SelectItem>
-              <SelectItem value="overdue">{t('statusOverdue')}</SelectItem>
-              <SelectItem value="void">{t('statusVoid')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-      </ListFilterPanel>
+        <InvoiceStatusFilterFields value={status} onChange={setStatus} />
+      </PlatformHostedListFilterPanel>
 
       {(listError || actionError) && (
         <Alert variant="destructive">

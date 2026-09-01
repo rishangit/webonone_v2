@@ -325,7 +325,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           <aside
             id="website-content-tree"
             className={cn(
-              'glass-card z-40 flex w-64 shrink-0 flex-col border-r transition-transform duration-200',
+              'shell-glass z-40 flex w-64 shrink-0 flex-col border-r transition-transform duration-200',
               'fixed bottom-0 left-0 top-14 md:static md:z-auto md:h-auto md:translate-x-0',
               treeOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
             )}

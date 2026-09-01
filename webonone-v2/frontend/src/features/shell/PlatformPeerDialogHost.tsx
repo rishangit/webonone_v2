@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   buildPlatformEmbedUrl,
+  isAllowedPlatformPeerDialogOrPanelPath,
   isAllowedPlatformPeerDialogPath,
   isPlatformMediaDialogRequestMessage,
   isPlatformPeerDialogBusyMessage,
@@ -38,6 +39,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AppEndPanel,
   Button,
   CustomDialog,
 } from '@webonone/ui-kit'
@@ -130,7 +132,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
     if (active.request.variant === 'alert') {
       return null
     }
-    if (!isAllowedPlatformPeerDialogPath(active.request.path)) {
+    if (!isAllowedPlatformPeerDialogOrPanelPath(active.request.path)) {
       return null
     }
     return buildPlatformEmbedUrl({
@@ -146,6 +148,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
   }, [active, hostOrigin])
 
   const isAlertConfirm = active?.request.variant === 'alert'
+  const isPanelChrome = active?.request.variant === 'panel'
 
   const nestedIframeSrc = useMemo(() => {
     if (!nested) {
@@ -405,7 +408,7 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
       responder: PlatformPeerDialogResponder,
       peerOrigin: string,
     ) => {
-      if (!isAllowedPlatformPeerDialogPath(request.path)) {
+      if (!isAllowedPlatformPeerDialogOrPanelPath(request.path)) {
         responder.cancel('invalid-path')
         return
       }
@@ -903,7 +906,59 @@ export function PlatformPeerDialogProvider({ children }: { children: ReactNode }
           </AlertDialogContent>
         </AlertDialog>
       ) : null}
-      {active && iframeSrc ? (
+      {active && iframeSrc && isPanelChrome ? (
+        <AppEndPanel
+          title={active.request.title}
+          onClose={() => {
+            if (nestedOpen || deepNestedOpen || mediaDialogOpen || blockOuterDismiss) {
+              return
+            }
+            cancelActive('cancelled')
+          }}
+          closeLabel={cancelLabel}
+          forceSlideOver
+          footer={
+            <>
+              {secondaryLabel ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={footerBusy || nestedOpen || deepNestedOpen || mediaDialogOpen}
+                  onClick={handleFooterSecondary}
+                >
+                  {secondaryLabel}
+                </Button>
+              ) : null}
+              {submitLabel ? (
+                <Button
+                  type="button"
+                  className="w-full"
+                  disabled={!accessToken || footerBusy || nestedOpen || deepNestedOpen || mediaDialogOpen}
+                  onClick={handleFooterSubmit}
+                >
+                  {submitLabel}
+                </Button>
+              ) : null}
+            </>
+          }
+        >
+          {!accessToken ? (
+            <div className="flex flex-col items-center gap-3 p-6">
+              <p className="text-sm text-muted-foreground">{t('waitingAuth')}</p>
+            </div>
+          ) : (
+            <iframe
+              key={active.openKey}
+              ref={iframeRef}
+              src={iframeSrc}
+              title={active.request.title}
+              className="block h-full min-h-0 w-full flex-1 border-0 bg-transparent"
+            />
+          )}
+        </AppEndPanel>
+      ) : null}
+      {active && iframeSrc && !isPanelChrome ? (
         <CustomDialog
           open
           onOpenChange={handleOpenChange}

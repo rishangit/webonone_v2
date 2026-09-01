@@ -1,35 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
   Button,
   FeaturePage,
-  FormField,
-  ListFilterPanel,
   ListFilterTrigger,
   ListPageBody,
   ListPageFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   useListPageMode,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { QueueStatusFilterFields } from '@/features/queue/components/QueueStatusFilterFields'
+import type { SmsQueueStatusFilterDraft } from '@/features/queue/pages/QueueFilterEmbedPage'
 import { queueActions } from '@/features/queue/store'
 import type { QueueItem, QueueStatus } from '@/shared/types/sms.types'
 import { QueueList } from '../components/QueueList'
-
-const STATUS_KEYS: QueueStatus[] = ['pending', 'processing', 'failed']
 
 const POLL_MS = 30_000
 
 export function QueuePage() {
   const { t } = useTranslation('queue')
-  const { t: tc } = useTranslation('common')
 
   const dispatch = useAppDispatch()
   const role = useAppSelector((s) => s.auth.user?.role ?? 'member')
@@ -82,8 +76,10 @@ export function QueuePage() {
     dispatch(queueActions.retryRequested({ id: item.id }))
   }
 
-  function handleApplyFilters() {
-    dispatch(queueActions.loadListRequested({ status: pendingTab, page: 1, pageSize }))
+  function handleApplyFilters(draft?: SmsQueueStatusFilterDraft) {
+    const nextTab = (draft?.status as QueueStatus | undefined) ?? pendingTab
+    setPendingTab(nextTab)
+    dispatch(queueActions.loadListRequested({ status: nextTab, page: 1, pageSize }))
   }
 
   function handleClearFilters() {
@@ -108,27 +104,18 @@ export function QueuePage() {
         </div>
       }
     >
-      <ListFilterPanel
+      <PlatformHostedListFilterPanel<SmsQueueStatusFilterDraft>
+        path="/embed/panels/queue/filters"
         open={filterOpen}
         onOpenChange={setFilterOpen}
+        draft={{ status: pendingTab }}
+        onDraftApply={(draft) => setPendingTab(draft.status as QueueStatus)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
+        isAllowedParentOrigin={isAllowedParentOrigin}
       >
-        <FormField label={tc('status')} htmlFor="queue-status">
-          <Select value={pendingTab} onValueChange={(value) => setPendingTab(value as QueueStatus)}>
-            <SelectTrigger id="queue-status">
-              <SelectValue placeholder={tc('status')} />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_KEYS.map((key) => (
-                <SelectItem key={key} value={key}>
-                  {t(key)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
-      </ListFilterPanel>
+        <QueueStatusFilterFields value={pendingTab} onChange={setPendingTab} />
+      </PlatformHostedListFilterPanel>
 
       {error ? (
         <Alert variant="destructive">

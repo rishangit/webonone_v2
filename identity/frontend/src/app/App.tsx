@@ -31,6 +31,11 @@ const UserPickerPage = lazy(() =>
 const UsersPage = lazy(() =>
   import('@/features/users/pages/UsersPage').then((m) => ({ default: m.UsersPage })),
 )
+const UsersFilterEmbedPage = lazy(() =>
+  import('@/features/users/pages/UsersFilterEmbedPage').then((m) => ({
+    default: m.UsersFilterEmbedPage,
+  })),
+)
 const UserDetailsPage = lazy(() =>
   import('@/features/users/pages/UserDetailsPage').then((m) => ({ default: m.UserDetailsPage })),
 )
@@ -170,6 +175,14 @@ export function App() {
               element={
                 <LazyRoute>
                   <HistorySubmissionDetailPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/embed/panels/users/filters"
+              element={
+                <LazyRoute>
+                  <UsersFilterEmbedPage />
                 </LazyRoute>
               }
             />

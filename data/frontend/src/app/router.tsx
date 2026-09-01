@@ -28,6 +28,11 @@ const TagSelectEmbedPage = lazy(() =>
     default: m.TagSelectEmbedPage,
   })),
 )
+const TagsFilterEmbedPage = lazy(() =>
+  import('@/features/tags/pages/TagsFilterEmbedPage').then((m) => ({
+    default: m.TagsFilterEmbedPage,
+  })),
+)
 const UnitsPage = lazy(() =>
   import('@/features/units/pages/UnitsPage').then((m) => ({ default: m.UnitsPage })),
 )
@@ -40,6 +45,11 @@ const UnitFormEmbedPage = lazy(() =>
 const UnitSelectEmbedPage = lazy(() =>
   import('@/features/units/pages/UnitSelectEmbedPage').then((m) => ({
     default: m.UnitSelectEmbedPage,
+  })),
+)
+const UnitsFilterEmbedPage = lazy(() =>
+  import('@/features/units/pages/UnitsFilterEmbedPage').then((m) => ({
+    default: m.UnitsFilterEmbedPage,
   })),
 )
 const AttributesPage = lazy(() =>
@@ -58,6 +68,11 @@ const AttributeFormEmbedPage = lazy(() =>
 const AttributeSelectEmbedPage = lazy(() =>
   import('@/features/attributes/pages/AttributeSelectEmbedPage').then((m) => ({
     default: m.AttributeSelectEmbedPage,
+  })),
+)
+const AttributesFilterEmbedPage = lazy(() =>
+  import('@/features/attributes/pages/AttributesFilterEmbedPage').then((m) => ({
+    default: m.AttributesFilterEmbedPage,
   })),
 )
 const CatalogAttributeValueEmbedPage = lazy(() =>
@@ -142,6 +157,11 @@ const CatalogFormEmbedPage = lazy(() =>
     default: m.CatalogFormEmbedPage,
   })),
 )
+const CatalogFilterEmbedPage = lazy(() =>
+  import('@/features/catalog/pages/CatalogFilterEmbedPage').then((m) => ({
+    default: m.CatalogFilterEmbedPage,
+  })),
+)
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -164,6 +184,22 @@ function entityRoutes(
       element={
         <LazyRoute>
           <ListPage />
+        </LazyRoute>
+      }
+    />
+  )
+}
+
+function embedPanelRoute(
+  path: string,
+  Page: React.LazyExoticComponent<() => React.JSX.Element>,
+) {
+  return (
+    <Route
+      path={path}
+      element={
+        <LazyRoute>
+          <Page />
         </LazyRoute>
       }
     />
@@ -255,6 +291,10 @@ export function App() {
           {embedDialogRoute('/embed/dialogs/services/spaces/select', SpaceSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/create', CatalogFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/:id/edit', CatalogFormEmbedPage)}
+          {embedPanelRoute('/embed/panels/tags/filters', TagsFilterEmbedPage)}
+          {embedPanelRoute('/embed/panels/units/filters', UnitsFilterEmbedPage)}
+          {embedPanelRoute('/embed/panels/attributes/filters', AttributesFilterEmbedPage)}
+          {embedPanelRoute('/embed/panels/:kind/filters', CatalogFilterEmbedPage)}
           {entityRoutes('/tags', TagsPage)}
           <Route
             path="/tags/:tagId"

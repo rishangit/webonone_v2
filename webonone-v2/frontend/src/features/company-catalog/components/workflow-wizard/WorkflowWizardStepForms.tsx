@@ -1,13 +1,23 @@
 import { Button } from '@webonone/ui-kit'
 import { FileText } from 'lucide-react'
 import type { WorkflowFormValue } from '@/features/company-catalog/schemas/workflowSchemas'
+import { WorkflowWizardStepAddItemsToggle } from '@/features/company-catalog/components/workflow-wizard/WorkflowWizardStepAddItemsToggle'
 
 type WorkflowWizardStepFormsProps = {
   forms: WorkflowFormValue[]
   onOpenPicker: () => void
+  showAddItemsToggle?: boolean
+  addItemsEnabled?: boolean
+  onAddItemsEnabledChange?: (value: boolean) => void
 }
 
-export function WorkflowWizardStepForms({ forms, onOpenPicker }: WorkflowWizardStepFormsProps) {
+export function WorkflowWizardStepForms({
+  forms,
+  onOpenPicker,
+  showAddItemsToggle = false,
+  addItemsEnabled = false,
+  onAddItemsEnabledChange,
+}: WorkflowWizardStepFormsProps) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
@@ -31,6 +41,12 @@ export function WorkflowWizardStepForms({ forms, onOpenPicker }: WorkflowWizardS
           Select forms
         </Button>
       )}
+      {showAddItemsToggle && onAddItemsEnabledChange ? (
+        <WorkflowWizardStepAddItemsToggle
+          addItemsEnabled={addItemsEnabled}
+          onAddItemsEnabledChange={onAddItemsEnabledChange}
+        />
+      ) : null}
     </div>
   )
 }

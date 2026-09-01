@@ -32,6 +32,11 @@ const FormFillEmbedPage = lazy(() =>
 const WebsitePagesPage = lazy(() =>
   import('@/features/website/pages/WebsitePagesPage').then((m) => ({ default: m.WebsitePagesPage })),
 )
+const WebsitePagesFilterEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsitePagesFilterEmbedPage').then((m) => ({
+    default: m.WebsitePagesFilterEmbedPage,
+  })),
+)
 const WebsiteHeadersPage = lazy(() =>
   import('@/features/website/pages/WebsiteChromePage').then((m) => ({ default: m.WebsiteHeadersPage })),
 )
@@ -260,6 +265,16 @@ export function App() {
                 <RoleRoute roles={[...companyRoles]}>
                   <LazyRoute>
                     <WebsiteMediaPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/panels/website/pages/filters"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsitePagesFilterEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

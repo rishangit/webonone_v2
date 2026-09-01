@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { sendPlatformPeerDialogRequest } from './embedUrl'
+import { writePeerPanelDraft } from './peerPanelDraft'
 import {
   isPlatformPeerDialogCancelMessage,
   isPlatformPeerDialogResultMessage,
@@ -40,6 +41,8 @@ export type UseRequestPlatformPeerDialogOptions = {
    * Host must allowlist this origin (e.g. Design when Identity opens a fill dialog).
    */
   bodyOrigin?: string
+  /** Panel variant: initial filter draft for the embed body (sessionStorage). */
+  panelDraft?: unknown
   onResult?: (payload?: unknown) => void
   onCancel?: (reason?: string) => void
 }
@@ -70,14 +73,18 @@ export function useRequestPlatformPeerDialog(
     secondaryLabel,
     submitLabel,
     bodyOrigin,
+    panelDraft,
     onResult,
     onCancel,
   } = options
 
   const isHosted = Boolean(parentOrigin)
   const requestIdRef = useRef<string | null>(null)
+  const panelDraftRef = useRef(panelDraft)
   const onResultRef = useRef(onResult)
   const onCancelRef = useRef(onCancel)
+
+  panelDraftRef.current = panelDraft
 
   useEffect(() => {
     onResultRef.current = onResult
@@ -92,6 +99,9 @@ export function useRequestPlatformPeerDialog(
 
     const requestId = createPeerDialogRequestId()
     requestIdRef.current = requestId
+    if (panelDraftRef.current !== undefined) {
+      writePeerPanelDraft(requestId, panelDraftRef.current)
+    }
     sendPlatformPeerDialogRequest(parentOrigin, {
       requestId,
       path,
