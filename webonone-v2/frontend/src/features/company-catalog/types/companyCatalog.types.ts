@@ -121,4 +121,5 @@ export type ServiceWorkflowItem = {
   forms: ServiceWorkflowForm[]
   sessionQueue: boolean
   addItemsEnabled: boolean
+  addItemsFromLibraryEnabled: boolean
 }

@@ -66,7 +66,7 @@ export function SessionWorkflowStepProgress({
                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors',
                     isSelected
                       ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-muted-foreground/40 bg-background text-muted-foreground group-hover:border-primary/60',
+                      : 'border-muted-foreground/40 text-muted-foreground group-hover:border-primary/60',
                   )}
                 >
                   {index + 1}

@@ -7,6 +7,8 @@ type WorkflowWizardStepQueueProps = {
   onChange: (sessionQueue: boolean) => void
   addItemsEnabled: boolean
   onAddItemsEnabledChange: (addItemsEnabled: boolean) => void
+  addItemsFromLibraryEnabled: boolean
+  onAddItemsFromLibraryEnabledChange: (addItemsFromLibraryEnabled: boolean) => void
 }
 
 export function WorkflowWizardStepQueue({
@@ -14,6 +16,8 @@ export function WorkflowWizardStepQueue({
   onChange,
   addItemsEnabled,
   onAddItemsEnabledChange,
+  addItemsFromLibraryEnabled,
+  onAddItemsFromLibraryEnabledChange,
 }: WorkflowWizardStepQueueProps) {
   const { t } = useTranslation('catalog')
 
@@ -35,6 +39,8 @@ export function WorkflowWizardStepQueue({
       <WorkflowWizardStepAddItemsToggle
         addItemsEnabled={addItemsEnabled}
         onAddItemsEnabledChange={onAddItemsEnabledChange}
+        addItemsFromLibraryEnabled={addItemsFromLibraryEnabled}
+        onAddItemsFromLibraryEnabledChange={onAddItemsFromLibraryEnabledChange}
       />
     </div>
   )

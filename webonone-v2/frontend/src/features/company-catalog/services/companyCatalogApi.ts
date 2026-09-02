@@ -133,6 +133,7 @@ export const companyCatalogApi = {
       form_ids: string[]
       session_queue: boolean
       add_items_enabled: boolean
+      add_items_from_library_enabled: boolean
     }[],
   ) {
     return apiClient<{ items: ServiceWorkflowItem[] }>(

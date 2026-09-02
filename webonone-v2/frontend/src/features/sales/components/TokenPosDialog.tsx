@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   CustomDialog,
   ListAddButton,
   useToast,
@@ -14,18 +18,25 @@ import { hydrateLinkedCatalogItems } from '@/features/company-catalog/utils/hydr
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { PosCartList } from '@/features/sales/components/PosCartList'
 import { PosItemPickerDialog } from '@/features/sales/components/PosItemPickerDialog'
+import { PosLibraryRequestsCard } from '@/features/sales/components/PosLibraryRequestList'
 import { PosProductVariantDialog } from '@/features/sales/components/PosProductVariantDialog'
 import { usePosProductPick } from '@/features/sales/hooks/usePosProductPick'
+import { useNestedDialogDismissBuffer } from '@/features/sales/hooks/useNestedDialogDismissBuffer'
 import { upsertDraftSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesApi } from '@/features/sales/services/salesApi'
 import type {
   PosCartLine,
+  PosLibraryRequest,
   SaleItemKind,
   SaleLine,
   TokenPosSubject,
 } from '@/features/sales/types/sales.types'
 import { buildDefaultServiceLine } from '@/features/sales/utils/buildDefaultServiceLine'
 import { hydratePosCartLineImages } from '@/features/sales/utils/hydratePosCartLineImages'
+import {
+  mergeLibraryRequestsIntoNotes,
+  parseLibraryRequestsNote,
+} from '@/features/sales/utils/libraryRequestNotes'
 import { formatLkr } from '@/features/sales/utils/formatMoney'
 import { findPosCartStockViolation, posCartLinesToSaleLines } from '@/features/sales/utils/posCartSaleLines'
 
@@ -36,6 +47,7 @@ type TokenPosDialogProps = {
   serviceId: string
   serviceName: string
   enabledKinds: SaleItemKind[]
+  libraryItemsEnabled?: boolean
   onBillSaved?: () => void
 }
 
@@ -61,6 +73,7 @@ export function TokenPosDialog({
   serviceId,
   serviceName,
   enabledKinds,
+  libraryItemsEnabled = false,
   onBillSaved,
 }: TokenPosDialogProps) {
   const { t } = useTranslation('sales')
@@ -68,7 +81,11 @@ export function TokenPosDialog({
   const { toast } = useToast()
 
   const [itemOpen, setItemOpen] = useState(false)
+  const itemOpenRef = useRef(false)
+  const variantOpenRef = useRef(false)
+  const { blockDismiss, armDismissBuffer, isDismissBlocked } = useNestedDialogDismissBuffer()
   const [lines, setLines] = useState<PosCartLine[]>([])
+  const [libraryRequests, setLibraryRequests] = useState<PosLibraryRequest[]>([])
   const addCartLine = useCallback((line: PosCartLine) => {
     setLines((prev) => [...prev, line])
   }, [])
@@ -85,6 +102,54 @@ export function TokenPosDialog({
 
   usePlatformLoading(loading ? t('bill.loading') : saving ? t('tokenPos.savingBill') : null)
 
+  useEffect(() => {
+    itemOpenRef.current = itemOpen
+  }, [itemOpen])
+
+  useEffect(() => {
+    variantOpenRef.current = variantDialogOpen
+  }, [variantDialogOpen])
+
+  const closeVariantDialogSafely = useCallback(
+    (nextOpen: boolean) => {
+      closeVariantDialog(nextOpen)
+      if (!nextOpen) {
+        armDismissBuffer()
+      }
+    },
+    [armDismissBuffer, closeVariantDialog],
+  )
+
+  function handleBillOpenChange(next: boolean) {
+    if (next) {
+      onOpenChange(true)
+      return
+    }
+    if (variantDialogOpen || variantOpenRef.current) {
+      closeVariantDialogSafely(false)
+      return
+    }
+    if (itemOpen || itemOpenRef.current) {
+      setItemOpen(false)
+      return
+    }
+    if (isDismissBlocked()) return
+    onOpenChange(false)
+  }
+
+  function handleItemOpenChange(next: boolean) {
+    if (next) {
+      setItemOpen(true)
+      return
+    }
+    if (variantDialogOpen || variantOpenRef.current) {
+      closeVariantDialogSafely(false)
+      return
+    }
+    if (isDismissBlocked()) return
+    setItemOpen(false)
+  }
+
   const seedDefaultLines = useCallback(
     (listPrice: number | null | undefined, imageUrl?: string | null) => {
       setLines([buildDefaultServiceLine(serviceId, serviceName, listPrice, imageUrl)])
@@ -97,6 +162,7 @@ export function TokenPosDialog({
     let cancelled = false
     setFormError(null)
     setLoading(true)
+    setLibraryRequests([])
 
     salesApi
       .getSessionTokenDraft(token.id)
@@ -106,16 +172,20 @@ export function TokenPosDialog({
           const cart = saleLinesToCart(draft.lines)
           const withImages = await hydratePosCartLineImages(cart)
           if (!cancelled) setLines(withImages)
-          return
+        } else {
+          const item = await companyCatalogApi.get('services', serviceId).catch(() => null)
+          if (cancelled) return
+          if (item) {
+            const [hydrated] = await hydrateLinkedCatalogItems('services', [item])
+            seedDefaultLines(hydrated.listPrice, catalogItemImageUrl(hydrated))
+          } else {
+            seedDefaultLines(0, null)
+          }
         }
-        const item = await companyCatalogApi.get('services', serviceId).catch(() => null)
-        if (cancelled) return
-        if (item) {
-          const [hydrated] = await hydrateLinkedCatalogItems('services', [item])
-          seedDefaultLines(hydrated.listPrice, catalogItemImageUrl(hydrated))
-          return
+        if (draft?.notes) {
+          const parsed = parseLibraryRequestsNote(draft.notes)
+          if (!cancelled) setLibraryRequests(parsed.requests)
         }
-        seedDefaultLines(0, null)
       })
       .catch(() => {
         if (cancelled) return
@@ -132,6 +202,10 @@ export function TokenPosDialog({
 
   const total = lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0)
 
+  function handlePickLibrary(request: PosLibraryRequest) {
+    setLibraryRequests((prev) => [...prev, request])
+  }
+
   async function handleSave() {
     const stockViolation = findPosCartStockViolation(lines)
     if (stockViolation) {
@@ -146,6 +220,7 @@ export function TokenPosDialog({
     const body = {
       customerUserId: token.userId,
       lines: posCartLinesToSaleLines(lines),
+      notes: mergeLibraryRequestsIntoNotes(libraryRequests),
     }
     const parsed = upsertDraftSaleBodySchema.safeParse(body)
     if (!parsed.success) {
@@ -181,8 +256,8 @@ export function TokenPosDialog({
     <>
       <CustomDialog
         open={open}
-        onOpenChange={onOpenChange}
-        nestedDismissGuard={itemOpen || variantDialogOpen}
+        onOpenChange={handleBillOpenChange}
+        nestedDismissGuard={itemOpen || variantDialogOpen || blockDismiss}
         title={t('tokenPos.dialogTitle')}
         description={customerLabel}
         sizeWidth="large"
@@ -195,7 +270,7 @@ export function TokenPosDialog({
               variant="outline"
               className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
               disabled={saving || loading}
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleBillOpenChange(false)}
             >
               {tc('cancel')}
             </Button>
@@ -216,53 +291,82 @@ export function TokenPosDialog({
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <ListAddButton onClick={() => setItemOpen(true)} disabled={loading}>
-              {t('pos.addItem')}
-            </ListAddButton>
-          </div>
           {!loading ? (
-            <PosCartList
-              lines={lines}
-              onQuantityChange={(key, quantity) =>
-                setLines((prev) =>
-                  prev.map((line) =>
-                    line.key === key
-                      ? { ...line, quantity: Number.isFinite(quantity) ? quantity : 0 }
-                      : line,
-                  ),
-                )
-              }
-              onUnitPriceChange={(key, unitPrice) =>
-                setLines((prev) =>
-                  prev.map((line) =>
-                    line.key === key
-                      ? { ...line, unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0 }
-                      : line,
-                  ),
-                )
-              }
-              onRemove={(key) => setLines((prev) => prev.filter((line) => line.key !== key))}
-            />
+            <>
+              <Card variant="list">
+                <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+                  <CardTitle className="text-lg">{t('pos.cartTitle')}</CardTitle>
+                  <ListAddButton onClick={() => setItemOpen(true)} disabled={loading}>
+                    {t('pos.addItem')}
+                  </ListAddButton>
+                </CardHeader>
+                <CardContent>
+                  <PosCartList
+                    lines={lines}
+                    onQuantityChange={(key, quantity) =>
+                      setLines((prev) =>
+                        prev.map((line) =>
+                          line.key === key
+                            ? { ...line, quantity: Number.isFinite(quantity) ? quantity : 0 }
+                            : line,
+                        ),
+                      )
+                    }
+                    onUnitPriceChange={(key, unitPrice) =>
+                      setLines((prev) =>
+                        prev.map((line) =>
+                          line.key === key
+                            ? { ...line, unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0 }
+                            : line,
+                        ),
+                      )
+                    }
+                    onRemove={(key) => setLines((prev) => prev.filter((line) => line.key !== key))}
+                  />
+                </CardContent>
+              </Card>
+              {libraryItemsEnabled ? (
+                <PosLibraryRequestsCard
+                  requests={libraryRequests}
+                  onQuantityChange={(key, quantity) =>
+                    setLibraryRequests((prev) =>
+                      prev.map((request) =>
+                        request.key === key
+                          ? { ...request, quantity: Number.isFinite(quantity) ? quantity : 0 }
+                          : request,
+                      ),
+                    )
+                  }
+                  onRemove={(key) =>
+                    setLibraryRequests((prev) => prev.filter((request) => request.key !== key))
+                  }
+                />
+              ) : null}
+            </>
           ) : null}
         </div>
       </CustomDialog>
       <PosItemPickerDialog
         open={itemOpen}
-        onOpenChange={setItemOpen}
+        onOpenChange={handleItemOpenChange}
         enabledKinds={enabledKinds}
+        libraryModeEnabled={libraryItemsEnabled}
+        onPickLibrary={handlePickLibrary}
         stackLevel={1}
-        onPick={(item, kind) => {
-          void handlePick(item, kind)
-        }}
+        nestedDismissGuard={variantDialogOpen || blockDismiss}
+        onPick={(item, kind) => handlePick(item, kind)}
       />
       {pendingPick ? (
         <PosProductVariantDialog
           open={variantDialogOpen}
-          onOpenChange={closeVariantDialog}
+          onOpenChange={closeVariantDialogSafely}
           productName={pendingPick.item.displayName}
           options={pendingPick.options}
-          onConfirm={confirmVariantSelection}
+          stackLevel={2}
+          onConfirm={(selection) => {
+            confirmVariantSelection(selection)
+            setItemOpen(false)
+          }}
         />
       ) : null}
     </>

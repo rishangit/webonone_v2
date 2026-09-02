@@ -527,6 +527,7 @@ export type WorkflowItemRow = {
   sort_order: number
   session_queue: boolean | number
   add_items_enabled: boolean | number
+  add_items_from_library_enabled: boolean | number
 }
 
 export async function insertDefaultCheckInWorkflowItem(
@@ -546,6 +547,7 @@ export async function insertDefaultCheckInWorkflowItem(
     sort_order: 1,
     session_queue: false,
     add_items_enabled: false,
+    add_items_from_library_enabled: false,
   })
 }
 
@@ -602,6 +604,7 @@ export async function replaceWorkflowItems(
     form_ids: string[]
     session_queue: boolean
     add_items_enabled: boolean
+    add_items_from_library_enabled: boolean
   }[],
   tokenWorkflowItemIdRemap?: Map<string, string | null>,
 ): Promise<void> {
@@ -625,6 +628,7 @@ export async function replaceWorkflowItems(
         sort_order: index + 1,
         session_queue: item.session_queue ? 1 : 0,
         add_items_enabled: item.add_items_enabled ? 1 : 0,
+        add_items_from_library_enabled: item.add_items_from_library_enabled ? 1 : 0,
       })),
     )
     const staffRows = items.flatMap((item) =>

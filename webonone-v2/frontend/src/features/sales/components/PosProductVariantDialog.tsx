@@ -20,6 +20,8 @@ type PosProductVariantDialogProps = {
   productName: string
   options: StockedProductVariantOption[]
   onConfirm: (selection: StockedProductVariantOption) => void
+  /** Stacked inside another dialog (item picker or session workflow sale dialog). */
+  stackLevel?: number
 }
 
 export function PosProductVariantDialog({
@@ -28,6 +30,7 @@ export function PosProductVariantDialog({
   productName,
   options,
   onConfirm,
+  stackLevel,
 }: PosProductVariantDialogProps) {
   const { t } = useTranslation('sales')
   const { t: tc } = useTranslation('common')
@@ -52,6 +55,7 @@ export function PosProductVariantDialog({
       description={t('pos.variantPickerDescription', { name: productName })}
       sizeWidth="medium"
       sizeHeight="large"
+      stackLevel={stackLevel}
       footer={
         <>
           <Button

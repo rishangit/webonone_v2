@@ -19,6 +19,7 @@ type SessionCurrentlyServingCardProps = {
   serviceName?: string
   enabledKinds?: SaleItemKind[]
   canSell?: boolean
+  libraryItemsEnabled?: boolean
   isCheckedIn?: boolean
 }
 
@@ -34,6 +35,7 @@ export function SessionCurrentlyServingCard({
   serviceName,
   enabledKinds = [],
   canSell = false,
+  libraryItemsEnabled = false,
   isCheckedIn = false,
 }: SessionCurrentlyServingCardProps) {
   const { t } = useTranslation('calendar')
@@ -112,6 +114,7 @@ export function SessionCurrentlyServingCard({
                     serviceName={serviceName}
                     enabledKinds={enabledKinds}
                     canSell={canSell}
+                    libraryItemsEnabled={libraryItemsEnabled}
                   />
                 ) : null}
               </div>

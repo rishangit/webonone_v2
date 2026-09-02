@@ -103,6 +103,9 @@ export function SessionWorkflowTab({
     Boolean(item.addItemsEnabled) &&
     (canManageSession || isAssignedStaff)
 
+  const libraryItemsEnabled =
+    canSellOnStep && Boolean(item.addItemsFromLibraryEnabled)
+
   return (
     <div className="flex flex-col gap-6">
       <SessionWorkflowStepProgress
@@ -150,6 +153,7 @@ export function SessionWorkflowTab({
         serviceName={serviceName}
         enabledKinds={enabledKinds}
         canSell={canSellOnStep}
+        libraryItemsEnabled={libraryItemsEnabled}
         stepQueueLabels={isPersonal ? sessionStepQueues?.[item.id] ?? null : null}
         onSaleCompleted={onSaleCompleted}
       />

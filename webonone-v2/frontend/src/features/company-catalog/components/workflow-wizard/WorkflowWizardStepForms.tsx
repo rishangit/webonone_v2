@@ -9,6 +9,8 @@ type WorkflowWizardStepFormsProps = {
   showAddItemsToggle?: boolean
   addItemsEnabled?: boolean
   onAddItemsEnabledChange?: (value: boolean) => void
+  addItemsFromLibraryEnabled?: boolean
+  onAddItemsFromLibraryEnabledChange?: (value: boolean) => void
 }
 
 export function WorkflowWizardStepForms({
@@ -17,6 +19,8 @@ export function WorkflowWizardStepForms({
   showAddItemsToggle = false,
   addItemsEnabled = false,
   onAddItemsEnabledChange,
+  addItemsFromLibraryEnabled = false,
+  onAddItemsFromLibraryEnabledChange,
 }: WorkflowWizardStepFormsProps) {
   return (
     <div className="space-y-3">
@@ -45,6 +49,8 @@ export function WorkflowWizardStepForms({
         <WorkflowWizardStepAddItemsToggle
           addItemsEnabled={addItemsEnabled}
           onAddItemsEnabledChange={onAddItemsEnabledChange}
+          addItemsFromLibraryEnabled={addItemsFromLibraryEnabled}
+          onAddItemsFromLibraryEnabledChange={onAddItemsFromLibraryEnabledChange}
         />
       ) : null}
     </div>

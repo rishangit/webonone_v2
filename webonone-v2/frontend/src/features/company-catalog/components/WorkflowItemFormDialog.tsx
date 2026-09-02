@@ -76,6 +76,10 @@ function valuesFromItem(item: ServiceWorkflowItem | null): WorkflowWizardValues 
     addItemsEnabled: Boolean(
       item.addItemsEnabled ?? (item as { add_items_enabled?: boolean }).add_items_enabled,
     ),
+    addItemsFromLibraryEnabled: Boolean(
+      item.addItemsFromLibraryEnabled ??
+        (item as { add_items_from_library_enabled?: boolean }).add_items_from_library_enabled,
+    ),
   }
 }
 
@@ -223,6 +227,9 @@ export function WorkflowItemFormDialog({
       forms: values.forms,
       sessionQueue: showQueue ? values.sessionQueue : false,
       addItemsEnabled: values.addItemsEnabled,
+      addItemsFromLibraryEnabled: values.addItemsEnabled
+        ? values.addItemsFromLibraryEnabled
+        : false,
     })
   }
 
@@ -311,6 +318,10 @@ export function WorkflowItemFormDialog({
               showAddItemsToggle={!showQueue}
               addItemsEnabled={values.addItemsEnabled}
               onAddItemsEnabledChange={(addItemsEnabled) => patchValues({ addItemsEnabled })}
+              addItemsFromLibraryEnabled={values.addItemsFromLibraryEnabled}
+              onAddItemsFromLibraryEnabledChange={(addItemsFromLibraryEnabled) =>
+                patchValues({ addItemsFromLibraryEnabled })
+              }
             />
           ) : null}
           {stepKey === 'queue' ? (
@@ -319,6 +330,10 @@ export function WorkflowItemFormDialog({
               onChange={(sessionQueue) => patchValues({ sessionQueue })}
               addItemsEnabled={values.addItemsEnabled}
               onAddItemsEnabledChange={(addItemsEnabled) => patchValues({ addItemsEnabled })}
+              addItemsFromLibraryEnabled={values.addItemsFromLibraryEnabled}
+              onAddItemsFromLibraryEnabledChange={(addItemsFromLibraryEnabled) =>
+                patchValues({ addItemsFromLibraryEnabled })
+              }
             />
           ) : null}
           {stepKey === 'summary' ? (

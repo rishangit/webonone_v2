@@ -256,6 +256,7 @@ export function SessionDetailsPage() {
             })),
             sessionQueue: Boolean(item.sessionQueue),
             addItemsEnabled: Boolean(item.addItemsEnabled),
+            addItemsFromLibraryEnabled: Boolean(item.addItemsFromLibraryEnabled),
           })),
         )
       })

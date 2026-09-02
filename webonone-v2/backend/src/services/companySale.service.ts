@@ -490,6 +490,7 @@ export async function upsertDraftSale(
 
   const prepared = await prepareSaleLines(companyId, enabled, body.lines)
   const subtotal = money(prepared.reduce((sum, line) => sum + line.line_total, 0))
+  const notes = body.notes?.trim() || null
   const now = new Date()
 
   const existing = await saleRepo.findDraftBySessionToken(companyId, resolvedTokenId)
@@ -502,6 +503,7 @@ export async function upsertDraftSale(
         total: subtotal,
         customer_display_name: customerDisplayName,
         customer_email: customerEmail,
+        notes,
         updated_at: now,
       })
       await saleRepo.deleteSaleLines(trx, saleId)
@@ -518,7 +520,7 @@ export async function upsertDraftSale(
         currency: 'LKR',
         subtotal,
         total: subtotal,
-        notes: null,
+        notes,
         session_token_id: resolvedTokenId,
         created_by_user_id: userId,
         created_at: now,
@@ -564,7 +566,7 @@ export async function completeSale(
     await saleRepo.completeSaleRow(trx, companyId, saleId, {
       bill_number: billNumber,
       payment_method: body.paymentMethod,
-      notes: body.notes?.trim() || null,
+      notes: body.notes === undefined ? existing.notes : body.notes?.trim() || null,
       updated_at: now,
     })
   })

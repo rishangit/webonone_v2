@@ -42,6 +42,13 @@ export function WorkflowItemListContent({
           value: item.addItemsEnabled ? t('workflowTab.yes') : t('workflowTab.no'),
         })}
       </p>
+      {item.addItemsEnabled ? (
+        <p className="truncate text-sm text-muted-foreground">
+          {t('workflowTab.addItemsFromLibraryLine', {
+            value: item.addItemsFromLibraryEnabled ? t('workflowTab.yes') : t('workflowTab.no'),
+          })}
+        </p>
+      ) : null}
     </div>
   )
 }

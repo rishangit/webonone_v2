@@ -400,6 +400,9 @@ export async function listServiceWorkflow(userId: string, companyId: string, ser
       forms: formsByItem.get(item.id) ?? [],
       sessionQueue: Number(item.session_queue) === 1 || item.session_queue === true,
       addItemsEnabled: Number(item.add_items_enabled) === 1 || item.add_items_enabled === true,
+      addItemsFromLibraryEnabled:
+        Number(item.add_items_from_library_enabled) === 1 ||
+        item.add_items_from_library_enabled === true,
     }
   })
 }
@@ -411,6 +414,7 @@ type NormalizedWorkflowItem = {
   form_ids: string[]
   session_queue: boolean
   add_items_enabled: boolean
+  add_items_from_library_enabled: boolean
 }
 
 function resolvePreservedWorkflowItems(
@@ -457,6 +461,7 @@ export async function replaceServiceWorkflow(
       form_ids: string[]
       session_queue?: boolean
       add_items_enabled?: boolean
+      add_items_from_library_enabled?: boolean
     }[]
   },
 ) {
@@ -473,6 +478,9 @@ export async function replaceServiceWorkflow(
     form_ids: item.form_ids,
     session_queue: allowQueue ? Boolean(item.session_queue) : false,
     add_items_enabled: Boolean(item.add_items_enabled),
+    add_items_from_library_enabled: Boolean(item.add_items_enabled)
+      ? Boolean(item.add_items_from_library_enabled)
+      : false,
   }))
   const checkInItems = normalized.filter((item) => item.kind === 'check_in')
   if (checkInItems.length !== 1 || normalized[0]?.kind !== 'check_in') {

@@ -44,6 +44,7 @@ export const createSaleBodySchema = z.object({
 export const upsertDraftSaleBodySchema = z.object({
   customerUserId: z.string().length(21, 'Customer is required'),
   lines: z.array(createSaleLineSchema).min(1, 'Add at least one item'),
+  notes: z.string().trim().max(2000).optional().nullable(),
 })
 
 export const completeSaleBodySchema = z.object({

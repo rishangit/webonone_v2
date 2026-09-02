@@ -104,6 +104,7 @@ export async function updateSaleDraft(
     total: number
     customer_display_name: string
     customer_email: string | null
+    notes: string | null
     updated_at: Date
   },
 ): Promise<void> {

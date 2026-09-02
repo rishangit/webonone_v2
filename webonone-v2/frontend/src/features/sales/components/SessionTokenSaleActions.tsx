@@ -11,6 +11,7 @@ type SessionTokenSaleActionsProps = {
   serviceName: string
   enabledKinds: SaleItemKind[]
   canSell: boolean
+  libraryItemsEnabled?: boolean
   onSaleCompleted?: (customerEmail?: string | null) => void
 }
 
@@ -20,6 +21,7 @@ export function SessionTokenSaleActions({
   serviceName,
   enabledKinds,
   canSell,
+  libraryItemsEnabled = false,
   onSaleCompleted,
 }: SessionTokenSaleActionsProps) {
   const { t } = useTranslation('calendar')
@@ -53,6 +55,7 @@ export function SessionTokenSaleActions({
         serviceId={serviceId}
         serviceName={serviceName}
         enabledKinds={enabledKinds}
+        libraryItemsEnabled={libraryItemsEnabled}
         onBillSaved={onSaleCompleted}
       />
       <TokenBillDialog

@@ -1,6 +1,7 @@
 import * as companyRepo from '../repositories/company.repository.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
 import type { SaleDto, SaleLineDto } from './companySale.service.js'
+import { parseLibraryRequestsNote } from '../utils/libraryRequestNotes.js'
 
 const TEMPLATE_SLUG = 'sale_bill_completed'
 
@@ -15,6 +16,8 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   card: 'Card',
   other: 'Other',
 }
+
+const RECOMMENDED_HEADING = 'Recommended to use'
 
 /**
  * Best-effort email after a POS sale is completed.
@@ -41,8 +44,10 @@ async function notifySaleBillCompletedAsync(sale: SaleDto): Promise<void> {
   const companyName = company?.name?.trim() || 'Company'
 
   const { linesHtml, linesText } = buildLineItems(sale.lines, sale.currency)
-  const notesBlock = buildNotesHtml(sale.notes)
-  const notesText = buildNotesText(sale.notes)
+  const { requests, remainingNotes } = parseLibraryRequestsNote(sale.notes)
+  const { recommendedHtml, recommendedText } = buildRecommendedItems(requests)
+  const notesBlock = buildNotesHtml(remainingNotes)
+  const notesText = buildNotesText(remainingNotes)
 
   const payload: Record<string, string> = {
     userName: sale.customerDisplayName?.trim() || 'Customer',
@@ -53,6 +58,8 @@ async function notifySaleBillCompletedAsync(sale: SaleDto): Promise<void> {
     totalAmount: formatMoney(sale.total, sale.currency),
     linesHtml,
     linesText,
+    recommendedHtml,
+    recommendedText,
     notes: notesBlock,
     notesText,
   }
@@ -142,6 +149,33 @@ ${rows}
     .join('\n')
 
   return { linesHtml, linesText }
+}
+
+function buildRecommendedItems(
+  requests: Array<{ name: string; quantity: number }>,
+): { recommendedHtml: string; recommendedText: string } {
+  if (requests.length === 0) {
+    return { recommendedHtml: '', recommendedText: '' }
+  }
+
+  const itemsHtml = requests
+    .map(
+      (request) =>
+        `<li style="margin: 4px 0;">${escapeHtml(request.name)} × ${request.quantity}</li>`,
+    )
+    .join('\n')
+
+  const recommendedHtml = `<p style="margin-top: 16px;"><strong>${escapeHtml(RECOMMENDED_HEADING)}</strong></p>
+<ul style="margin: 8px 0 0; padding-left: 20px;">
+${itemsHtml}
+</ul>`
+
+  const recommendedText = [
+    RECOMMENDED_HEADING,
+    ...requests.map((request) => `- ${request.name} × ${request.quantity}`),
+  ].join('\n')
+
+  return { recommendedHtml, recommendedText }
 }
 
 function buildNotesHtml(notes: string | null): string {

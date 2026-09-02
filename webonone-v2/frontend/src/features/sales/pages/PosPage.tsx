@@ -40,6 +40,7 @@ import { PosItemPickerDialog } from '@/features/sales/components/PosItemPickerDi
 import { PosNewCustomerDialog } from '@/features/sales/components/PosNewCustomerDialog'
 import { PosProductVariantDialog } from '@/features/sales/components/PosProductVariantDialog'
 import { usePosProductPick } from '@/features/sales/hooks/usePosProductPick'
+import { useNestedDialogDismissBuffer } from '@/features/sales/hooks/useNestedDialogDismissBuffer'
 import { createSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesActions } from '@/features/sales/store'
 import type { PosCartLine, SalePaymentMethod } from '@/features/sales/types/sales.types'
@@ -64,6 +65,9 @@ export function PosPage() {
   const [customerOpen, setCustomerOpen] = useState(false)
   const [newCustomerOpen, setNewCustomerOpen] = useState(false)
   const [itemOpen, setItemOpen] = useState(false)
+  const itemOpenRef = useRef(false)
+  const variantOpenRef = useRef(false)
+  const { blockDismiss, armDismissBuffer, isDismissBlocked } = useNestedDialogDismissBuffer()
   const [lines, setLines] = useState<PosCartLine[]>([])
   const addCartLine = useCallback((line: PosCartLine) => {
     setLines((prev) => [...prev, line])
@@ -91,6 +95,37 @@ export function PosPage() {
       ),
     [assumableRoles, activeCompanyId],
   )
+
+  useEffect(() => {
+    itemOpenRef.current = itemOpen
+  }, [itemOpen])
+
+  useEffect(() => {
+    variantOpenRef.current = variantDialogOpen
+  }, [variantDialogOpen])
+
+  const closeVariantDialogSafely = useCallback(
+    (nextOpen: boolean) => {
+      closeVariantDialog(nextOpen)
+      if (!nextOpen) {
+        armDismissBuffer()
+      }
+    },
+    [armDismissBuffer, closeVariantDialog],
+  )
+
+  function handleItemOpenChange(next: boolean) {
+    if (next) {
+      setItemOpen(true)
+      return
+    }
+    if (variantDialogOpen || variantOpenRef.current) {
+      closeVariantDialogSafely(false)
+      return
+    }
+    if (isDismissBlocked()) return
+    setItemOpen(false)
+  }
 
   const loadCustomers = useCallback(
     (params: Parameters<typeof identityCustomersApi.loadForSelection>[0]) =>
@@ -312,19 +347,22 @@ export function PosPage() {
       />
       <PosItemPickerDialog
         open={itemOpen}
-        onOpenChange={setItemOpen}
+        onOpenChange={handleItemOpenChange}
         enabledKinds={enabledKinds}
-        onPick={(item, kind) => {
-          void handlePick(item, kind)
-        }}
+        nestedDismissGuard={variantDialogOpen || blockDismiss}
+        onPick={(item, kind) => handlePick(item, kind)}
       />
       {pendingPick ? (
         <PosProductVariantDialog
           open={variantDialogOpen}
-          onOpenChange={closeVariantDialog}
+          onOpenChange={closeVariantDialogSafely}
           productName={pendingPick.item.displayName}
           options={pendingPick.options}
-          onConfirm={confirmVariantSelection}
+          stackLevel={1}
+          onConfirm={(selection) => {
+            confirmVariantSelection(selection)
+            setItemOpen(false)
+          }}
         />
       ) : null}
     </FeaturePage>

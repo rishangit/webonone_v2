@@ -5,6 +5,9 @@ import { interactiveHighlightClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import { menuPanelClassName } from '../lib/menuPanel'
 
+/** Above CustomDialog stacks (100 + level × 10; media dialogs use level 4 → z-140). */
+const FLOATING_MENU_Z_CLASS = 'z-[150]'
+
 const DropdownMenu = DropdownMenuPrimitive.Root
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 const DropdownMenuGroup = DropdownMenuPrimitive.Group
@@ -16,7 +19,7 @@ const dropdownMenuItemClassName =
   `relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors ${interactiveHighlightClassName} data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0`
 
 const dropdownMenuPanelClassName = cn(
-  'z-50 min-w-[8rem] overflow-hidden ui-shape-panel-sm p-1',
+  `${FLOATING_MENU_Z_CLASS} min-w-[8rem] overflow-hidden ui-shape-panel-sm p-1`,
   menuPanelClassName,
 )
 
@@ -53,7 +56,7 @@ function DropdownMenuSubContent({
       <DropdownMenuPrimitive.SubContent
         sideOffset={sideOffset}
         collisionPadding={8}
-        className={cn(dropdownMenuPanelClassName, 'z-[60]', className)}
+        className={cn(dropdownMenuPanelClassName, 'z-[160]', className)}
         {...props}
       />
     </DropdownMenuPrimitive.Portal>

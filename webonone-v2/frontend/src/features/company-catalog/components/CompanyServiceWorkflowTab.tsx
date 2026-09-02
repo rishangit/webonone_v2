@@ -40,6 +40,7 @@ function toPutBody(items: ServiceWorkflowItem[]) {
     form_ids: item.forms.map((entry) => entry.id),
     session_queue: Boolean(item.sessionQueue),
     add_items_enabled: Boolean(item.addItemsEnabled),
+    add_items_from_library_enabled: Boolean(item.addItemsFromLibraryEnabled),
   }))
 }
 
@@ -94,6 +95,10 @@ export function CompanyServiceWorkflowTab({
           addItemsEnabled: Boolean(
             item.addItemsEnabled ?? (item as { add_items_enabled?: boolean }).add_items_enabled,
           ),
+          addItemsFromLibraryEnabled: Boolean(
+            item.addItemsFromLibraryEnabled ??
+              (item as { add_items_from_library_enabled?: boolean }).add_items_from_library_enabled,
+          ),
         })),
       )
     } catch (err) {
@@ -135,6 +140,10 @@ export function CompanyServiceWorkflowTab({
           ),
           addItemsEnabled: Boolean(
             item.addItemsEnabled ?? (item as { add_items_enabled?: boolean }).add_items_enabled,
+          ),
+          addItemsFromLibraryEnabled: Boolean(
+            item.addItemsFromLibraryEnabled ??
+              (item as { add_items_from_library_enabled?: boolean }).add_items_from_library_enabled,
           ),
         })),
       )

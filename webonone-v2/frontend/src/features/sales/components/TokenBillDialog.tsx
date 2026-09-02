@@ -4,6 +4,10 @@ import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   CustomDialog,
   FormField,
   Select,
@@ -12,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
   StatusTag,
-  Textarea,
   useToast,
 } from '@webonone/ui-kit'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -22,10 +25,12 @@ import {
   validatePosCashReceived,
 } from '@/features/sales/components/PosCashPaymentFields'
 import { PosCartList } from '@/features/sales/components/PosCartList'
+import { PosLibraryRequestsCard } from '@/features/sales/components/PosLibraryRequestList'
 import { completeSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesApi } from '@/features/sales/services/salesApi'
 import type { PosCartLine, Sale, SalePaymentMethod, TokenPosSubject } from '@/features/sales/types/sales.types'
 import { formatLkr } from '@/features/sales/utils/formatMoney'
+import { parseLibraryRequestsNote } from '@/features/sales/utils/libraryRequestNotes'
 
 type TokenBillDialogProps = {
   open: boolean
@@ -60,12 +65,12 @@ export function TokenBillDialog({
   const [saving, setSaving] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<SalePaymentMethod>('cash')
   const [cashReceived, setCashReceived] = useState('')
-  const [notes, setNotes] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const completingRef = useRef(false)
 
   const isPaid = bill?.status === 'completed'
   const isDraft = bill?.status === 'draft'
+  const { requests: libraryRequests, remainingNotes } = parseLibraryRequestsNote(bill?.notes)
 
   usePlatformLoading(loading ? t('bill.loading') : saving ? t('tokenBill.closing') : null)
 
@@ -75,7 +80,6 @@ export function TokenBillDialog({
     setFormError(null)
     setPaymentMethod('cash')
     setCashReceived('')
-    setNotes('')
     setLoading(true)
     salesApi
       .getSessionTokenBill(token.id)
@@ -113,10 +117,7 @@ export function TokenBillDialog({
       setFormError(t('pos.cashReceivedInsufficient'))
       return
     }
-    const body = {
-      paymentMethod,
-      notes: notes.trim() || null,
-    }
+    const body = { paymentMethod }
     const parsed = completeSaleBodySchema.safeParse(body)
     if (!parsed.success) {
       setFormError(parsed.error.issues[0]?.message ?? t('pos.validationFailed'))
@@ -228,7 +229,17 @@ export function TokenBillDialog({
                 ) : null}
               </div>
             ) : null}
-            <PosCartList lines={lines} readOnly />
+            <Card variant="list">
+              <CardHeader>
+                <CardTitle className="text-lg">{t('pos.cartTitle')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PosCartList lines={lines} readOnly />
+              </CardContent>
+            </Card>
+            {libraryRequests.length > 0 ? (
+              <PosLibraryRequestsCard requests={libraryRequests} readOnly />
+            ) : null}
             <p className="text-lg font-semibold">{t('pos.total', { amount: formatLkr(total) })}</p>
             {isPaid ? (
               <div className="space-y-2 text-sm">
@@ -237,9 +248,9 @@ export function TokenBillDialog({
                     {t('pos.paymentMethod')}: {t(`payment.${bill.paymentMethod}`)}
                   </p>
                 ) : null}
-                {bill.notes ? (
+                {remainingNotes ? (
                   <p className="text-muted-foreground">
-                    {t('pos.notes')}: {bill.notes}
+                    {t('pos.notes')}: {remainingNotes}
                   </p>
                 ) : null}
               </div>
@@ -268,14 +279,6 @@ export function TokenBillDialog({
                     inputId={`token-bill-cash-received-${token.id}`}
                   />
                 ) : null}
-                <FormField label={t('pos.notes')} htmlFor={`token-bill-notes-${token.id}`}>
-                  <Textarea
-                    id={`token-bill-notes-${token.id}`}
-                    rows={2}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </FormField>
               </>
             )}
           </>

@@ -44,6 +44,12 @@ export function WorkflowWizardStepSummary({
           <SummaryRow label="Session queue" value={values.sessionQueue ? 'Yes' : 'No'} />
         ) : null}
         <SummaryRow label="Add items" value={values.addItemsEnabled ? 'Yes' : 'No'} />
+        {values.addItemsEnabled ? (
+          <SummaryRow
+            label="Add items from library"
+            value={values.addItemsFromLibraryEnabled ? 'Yes' : 'No'}
+          />
+        ) : null}
       </dl>
     </div>
   )

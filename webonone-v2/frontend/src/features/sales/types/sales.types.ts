@@ -59,6 +59,7 @@ export type CreateSaleBody = {
 export type UpsertDraftSaleBody = {
   customerUserId: string
   lines: CreateSaleLineBody[]
+  notes?: string | null
 }
 
 export type CompleteSaleBody = {
@@ -87,4 +88,13 @@ export type PosCartLine = {
   libraryStockId?: string | null
   variantName?: string | null
   availableQuantity?: number | null
+}
+
+export type PosLibraryRequest = {
+  key: string
+  itemKind: SaleItemKind
+  libraryEntityId: string
+  name: string
+  quantity: number
+  imageUrl?: string | null
 }

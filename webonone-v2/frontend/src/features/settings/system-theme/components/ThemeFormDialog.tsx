@@ -75,7 +75,7 @@ export function ThemeFormDialog({
   const dispatch = useAppDispatch()
   const isNew = !id
   const title = isNew ? 'Create theme' : 'Edit theme'
-  const finalSubmitLabel = isNew ? 'Create theme' : 'Save changes'
+  const finalSubmitLabel = isNew ? 'Create theme' : 'Save'
   const descriptions = isNew ? STEP_DESCRIPTIONS_CREATE : STEP_DESCRIPTIONS_EDIT
 
   const themes = useAppSelector((s) => s.systemTheme.themes)

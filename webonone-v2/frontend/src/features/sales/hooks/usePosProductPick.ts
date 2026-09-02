@@ -17,6 +17,8 @@ type PendingProductPick = {
   options: StockedProductVariantOption[]
 }
 
+export type PosProductPickResult = 'added' | 'variant-opened'
+
 type UsePosProductPickOptions = {
   onAddLine: (line: PosCartLine) => void
 }
@@ -75,7 +77,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
   )
 
   const handlePick = useCallback(
-    async (item: HydratedCatalogItem, itemKind: SaleItemKind) => {
+    async (item: HydratedCatalogItem, itemKind: SaleItemKind): Promise<PosProductPickResult> => {
       if (itemKind !== 'product' || !item.libraryEntityId) {
         onAddLine({
           key: `${item.id}-${Date.now()}`,
@@ -86,7 +88,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
           unitPrice: item.listPrice ?? 0,
           imageUrl: catalogItemImageUrl(item),
         })
-        return
+        return 'added'
       }
 
       setPicking(true)
@@ -94,20 +96,22 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
         const options = await resolveStockedProductVariants(item.libraryEntityId)
         if (options.length === 0) {
           await addPlainProduct(item)
-          return
+          return 'added'
         }
         if (options.length === 1) {
           addWithSelection(item, options[0]!)
-          return
+          return 'added'
         }
         setPendingPick({ item, options })
         setVariantDialogOpen(true)
+        return 'variant-opened'
       } catch (err) {
         toast({
           title: t('pos.variantPickerLoadFailed'),
           description: err instanceof Error ? err.message : undefined,
           variant: 'destructive',
         })
+        return 'added'
       } finally {
         setPicking(false)
       }

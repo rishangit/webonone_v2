@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   Button,
   Card,
@@ -50,6 +51,7 @@ type SessionWorkflowStepPanelProps = {
   serviceName: string
   enabledKinds: SaleItemKind[]
   canSell: boolean
+  libraryItemsEnabled?: boolean
   /** Per-step queue from API (personal /me with filtered tokens). */
   stepQueueLabels?: WorkflowStepQueueSnapshot | null
   /** When set, renders a single-attendee card instead of the tokens list (duration sessions). */
@@ -73,6 +75,7 @@ type SessionWorkflowTokenRowProps = {
   serviceName: string
   enabledKinds: SaleItemKind[]
   canSell: boolean
+  libraryItemsEnabled?: boolean
   showCheckedInStatus: boolean
   /** When true, avatar is rendered by the parent (ItemList row). */
   omitAvatar?: boolean
@@ -97,6 +100,7 @@ function SessionWorkflowTokenRow({
   serviceName,
   enabledKinds,
   canSell,
+  libraryItemsEnabled = false,
   showCheckedInStatus,
   omitAvatar = false,
   variant = 'compact',
@@ -153,6 +157,7 @@ function SessionWorkflowTokenRow({
         serviceName={serviceName}
         enabledKinds={enabledKinds}
         canSell={canSell}
+        libraryItemsEnabled={libraryItemsEnabled}
         onSaleCompleted={onSaleCompleted}
       />
     ) : null
@@ -316,6 +321,7 @@ export function SessionWorkflowStepPanel({
   serviceName,
   enabledKinds,
   canSell,
+  libraryItemsEnabled = false,
   stepQueueLabels,
   singleAttendeeToken,
   onSaleCompleted,
@@ -411,6 +417,7 @@ export function SessionWorkflowStepPanel({
         serviceName={serviceName}
         enabledKinds={enabledKinds}
         canSell={canSell}
+        libraryItemsEnabled={libraryItemsEnabled}
         showCheckedInStatus={Boolean(checkedInUserIds)}
         omitAvatar={options?.highlightServing}
         variant={options?.variant ?? 'compact'}
@@ -454,6 +461,7 @@ export function SessionWorkflowStepPanel({
             serviceName={serviceName}
             enabledKinds={enabledKinds}
             canSell={canSell}
+            libraryItemsEnabled={libraryItemsEnabled}
             isCheckedIn={Boolean(
               currentToken && checkedInUserIds?.has(currentToken.userId),
             )}
@@ -520,6 +528,7 @@ export function SessionWorkflowStepPanel({
                           }
                         }}
                       >
+                        <ChevronLeft className="h-4 w-4" aria-hidden />
                         {t('sessionDetail.step.previous')}
                       </Button>
                       <Button
@@ -537,6 +546,9 @@ export function SessionWorkflowStepPanel({
                         {completingId === operatorQueue.currentTokenId
                           ? t('sessionDetail.step.completing')
                           : t('sessionDetail.step.next')}
+                        {completingId !== operatorQueue.currentTokenId ? (
+                          <ChevronRight className="h-4 w-4" aria-hidden />
+                        ) : null}
                       </Button>
                     </div>
                   ) : null
