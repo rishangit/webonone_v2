@@ -156,7 +156,7 @@ export function MemberServiceSessionsCard({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="list">
         <CardHeader>
           <CardTitle className="text-lg">{t('detail.sessions.title')}</CardTitle>
           <CardDescription>{t('detail.sessions.description')}</CardDescription>
@@ -169,7 +169,7 @@ export function MemberServiceSessionsCard({
           ) : sessions.length === 0 ? (
             <ItemListEmpty>{t('detail.sessions.noSessions')}</ItemListEmpty>
           ) : (
-            <ItemList>
+            <ItemList className="py-0">
               {sessions.map((session) => {
                 const token = tokensBySessionKey[sessionKey(session.eventId, session.occurrenceDate)]
                 return (

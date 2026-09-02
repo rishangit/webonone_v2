@@ -621,6 +621,40 @@ export function ComponentsPage() {
         <div className="mt-4">
           <ItemListEmpty>No items to show.</ItemListEmpty>
         </div>
+        <div className="mt-8 max-w-xl">
+          <p className="mb-3 text-sm font-medium text-foreground">Inside a Card (variant=&quot;list&quot;)</p>
+          <Card variant="list">
+            <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+              <div className="space-y-1.5">
+                <CardTitle className="text-lg">Stock batches</CardTitle>
+                <CardDescription>Outer card is borderless; list rows use full content width.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ItemList className="py-0">
+                {[
+                  { id: '1', name: 'Batch #12 · 24 units', active: true },
+                  { id: '2', name: 'Batch #11 · 8 units', active: false },
+                ].map((batch) => (
+                  <ItemListItem
+                    key={batch.id}
+                    className={batch.active ? itemListRowActiveClassName : undefined}
+                  >
+                    <ItemListContent>
+                      <p className="font-medium">{batch.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {batch.active ? 'Active batch' : 'Set active from menu'}
+                      </p>
+                    </ItemListContent>
+                    <ItemListMenu ariaLabel={`Actions for ${batch.name}`}>
+                      <DropdownMenuItem>Set active</DropdownMenuItem>
+                    </ItemListMenu>
+                  </ItemListItem>
+                ))}
+              </ItemList>
+            </CardContent>
+          </Card>
+        </div>
       </DemoSection>
 
       <DemoSection

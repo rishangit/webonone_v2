@@ -524,7 +524,7 @@ export function CatalogDetailPage() {
                   ) : null}
 
                   {item.kind === 'services' && item.timeMode === 'window' ? (
-                    <Card>
+                    <Card variant="list">
                       <CardHeader>
                         <CardTitle className="text-lg">{t('sessions')}</CardTitle>
                         <CardDescription>
@@ -539,7 +539,7 @@ export function CatalogDetailPage() {
                         ) : sessions.length === 0 ? (
                           <ItemListEmpty>{t('noSessions')}</ItemListEmpty>
                         ) : (
-                          <ItemList>
+                          <ItemList className="py-0">
                             {sessions.map((session) => {
                               const token =
                                 tokensBySessionKey[sessionKey(session.eventId, session.occurrenceDate)]

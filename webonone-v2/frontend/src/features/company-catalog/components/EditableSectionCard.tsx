@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  type CardVariant,
 } from '@webonone/ui-kit'
 
 interface EditableSectionCardProps {
@@ -15,6 +16,7 @@ interface EditableSectionCardProps {
   titleExtra?: ReactNode
   canEdit?: boolean
   onEdit?: () => void
+  variant?: CardVariant
   children: ReactNode
 }
 
@@ -24,10 +26,11 @@ export function EditableSectionCard({
   titleExtra,
   canEdit = false,
   onEdit,
+  variant,
   children,
 }: EditableSectionCardProps) {
   return (
-    <Card className="group">
+    <Card className="group" variant={variant}>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1.5">

@@ -144,7 +144,7 @@ export function CompanyServiceWorkflowOverviewCard({
 
   return (
 
-    <Card>
+    <Card variant="list">
 
       <CardHeader>
 
@@ -168,7 +168,7 @@ export function CompanyServiceWorkflowOverviewCard({
 
         ) : (
 
-          <WorkflowItemList items={items} t={t} />
+          <WorkflowItemList className="py-0" items={items} t={t} />
 
         )}
 

@@ -793,7 +793,7 @@ export function SessionDetailsPage() {
             </Card>
           ) : null}
           {!isDuration ? (
-            <Card>
+            <Card variant="list">
               <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                 <div className="space-y-1.5">
                   <CardTitle className="text-lg">Tokens</CardTitle>
@@ -820,7 +820,7 @@ export function SessionDetailsPage() {
                     {isPersonal ? 'No token for your account yet.' : 'No tokens issued yet.'}
                   </ItemListEmpty>
                 ) : (
-                  <ItemList>
+                  <ItemList className="py-0">
                     {overviewTokens.map((token) => {
                       const isCheckedIn = checkedInUserIds.has(token.userId)
                       const tokenStatusTag =

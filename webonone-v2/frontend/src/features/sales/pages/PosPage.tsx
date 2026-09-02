@@ -171,7 +171,7 @@ export function PosPage() {
 
       <div className="grid items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <Card>
+          <Card variant="list">
             <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
               <CardTitle className="text-lg">{t('pos.cartTitle')}</CardTitle>
               <ListAddButton onClick={() => setItemOpen(true)}>{t('pos.addItem')}</ListAddButton>
@@ -202,7 +202,7 @@ export function PosPage() {
         </div>
 
         <div className="flex flex-col gap-6 lg:col-span-1">
-          <Card>
+          <Card variant="list">
             <CardHeader>
               <CardTitle className="text-lg">{t('pos.customerTitle')}</CardTitle>
             </CardHeader>

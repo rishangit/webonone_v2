@@ -40,11 +40,9 @@ function ListAddButton({
   const accessibleName = typeof children === 'string' ? children : undefined
   const showFull = expanded || labelsMatch
 
-  const addButtonClassName = cn('min-w-[7rem] sm:min-w-[8rem]', className)
-
   if (!compact) {
     return (
-      <Button type={type} size="sm" className={addButtonClassName} onClick={onClick} {...props}>
+      <Button type={type} size="sm" className={className} onClick={onClick} {...props}>
         {icon}
         {children}
       </Button>
@@ -59,7 +57,7 @@ function ListAddButton({
         data-list-add-button=""
         aria-label={accessibleName}
         aria-expanded={labelsMatch ? undefined : expanded}
-        className={cn('relative isolate justify-start overflow-hidden sm:hidden', addButtonClassName)}
+        className={cn('relative isolate justify-start overflow-hidden sm:hidden', className)}
         onClick={handleMobileClick}
         {...props}
       >
@@ -81,7 +79,7 @@ function ListAddButton({
       <Button
         type={type}
         size="sm"
-        className={cn('hidden sm:inline-flex', addButtonClassName)}
+        className={cn('hidden sm:inline-flex', className)}
         onClick={onClick}
         {...props}
       >

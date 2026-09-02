@@ -476,7 +476,7 @@ export function SessionWorkflowStepPanel({
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card variant="list">
             <CardHeader>
               <CardTitle className="text-lg">{t('sessionDetail.step.tokensTitle')}</CardTitle>
               <CardDescription>{t('sessionDetail.step.tokensHint')}</CardDescription>
@@ -485,7 +485,7 @@ export function SessionWorkflowStepPanel({
               {stepTokens.length === 0 ? (
                 <ItemListEmpty>{t('sessionDetail.step.tokensEmpty')}</ItemListEmpty>
               ) : (
-                <ItemList>
+                <ItemList className="py-0">
                   {stepTokens.map((token) => renderTokenRow(token, { highlightServing: true }))}
                 </ItemList>
               )}

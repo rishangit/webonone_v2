@@ -34,8 +34,10 @@ export function GuestAuthLayout({ children }: GuestAuthLayoutProps) {
       locale={currentLocale}
       onLocaleChange={handleLocaleChange}
       headerLabels={headerLabels}
+      className="flex h-screen flex-col overflow-hidden"
+      mainClassName="flex min-h-0 flex-1 flex-col overflow-hidden px-0 py-0"
     >
-      <div className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden">
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
         {children}
       </div>
     </PageShell>

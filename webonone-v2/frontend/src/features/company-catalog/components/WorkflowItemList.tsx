@@ -14,6 +14,7 @@ type WorkflowItemListProps = {
   items: ServiceWorkflowItem[]
   t: TFunction<'catalog'>
   showQueue?: boolean
+  className?: string
   renderMenu?: (item: ServiceWorkflowItem, index: number) => ReactNode
 }
 
@@ -21,10 +22,11 @@ export function WorkflowItemList({
   items,
   t,
   showQueue = false,
+  className,
   renderMenu,
 }: WorkflowItemListProps) {
   return (
-    <ItemList>
+    <ItemList className={className}>
       {items.map((item, index) => (
         <ItemListItem key={item.id}>
           <WorkflowOrderThumb orderNumber={item.orderNumber} />

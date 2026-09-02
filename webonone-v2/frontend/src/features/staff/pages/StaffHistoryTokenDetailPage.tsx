@@ -178,7 +178,7 @@ export function StaffHistoryTokenDetailPage() {
             ))
           )}
 
-          <Card>
+          <Card variant="list">
             <CardHeader>
               <CardTitle className="text-lg">Sales</CardTitle>
               <CardDescription>Bills recorded during this session token</CardDescription>
@@ -187,7 +187,7 @@ export function StaffHistoryTokenDetailPage() {
               {detail.sales.length === 0 ? (
                 <ItemListEmpty>No sales for this session yet.</ItemListEmpty>
               ) : (
-                <ItemList>
+                <ItemList className="py-0">
                   {detail.sales.map((sale) => (
                     <ItemListItem
                       key={sale.id}

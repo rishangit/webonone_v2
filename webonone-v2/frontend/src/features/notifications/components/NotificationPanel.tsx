@@ -34,7 +34,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
   }
 
   return (
-    <div className="flex w-[min(100vw-2rem,22rem)] flex-col">
+    <div className="flex w-full min-w-0 flex-col sm:max-w-[22rem]">
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
         <p className="text-sm font-medium text-foreground">{t('notifications.title')}</p>
         <div className="flex items-center gap-1">

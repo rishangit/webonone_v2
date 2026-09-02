@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  type CardVariant,
 } from '@webonone/ui-kit'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 
@@ -16,6 +17,7 @@ interface EditableSectionCardProps {
   status?: string
   canEdit?: boolean
   onEdit?: () => void
+  variant?: CardVariant
   children: React.ReactNode
 }
 
@@ -25,10 +27,11 @@ export function EditableSectionCard({
   status,
   canEdit = false,
   onEdit,
+  variant,
   children,
 }: EditableSectionCardProps) {
   return (
-    <Card className="group">
+    <Card className="group" variant={variant}>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1.5">

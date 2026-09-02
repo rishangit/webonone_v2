@@ -69,7 +69,7 @@ export function DashboardEventList({
   }
 
   return (
-    <ItemList>
+    <ItemList className="py-0">
       {items.map((item) => {
         const time = `${item.startTime}–${item.endTime}`
         const when = showDate

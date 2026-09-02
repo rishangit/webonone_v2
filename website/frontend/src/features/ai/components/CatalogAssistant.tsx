@@ -145,6 +145,7 @@ export function CatalogAssistant({ open, onClose }: CatalogAssistantProps) {
       title={t('assistantTitle')}
       onClose={onClose}
       closeLabel={t('assistantClose')}
+      mobileFullWidth
       footer={
         <>
           {error ? <p className="text-xs text-destructive">{error}</p> : null}

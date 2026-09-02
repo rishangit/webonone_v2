@@ -20,6 +20,8 @@ export interface AppEndPanelProps {
   className?: string
   /** Core-hosted peer panel — slide-over on all breakpoints. */
   forceSlideOver?: boolean
+  /** Span the full shell width on mobile slide-over (e.g. AI assistant chat). */
+  mobileFullWidth?: boolean
 }
 
 function AppEndPanel({
@@ -30,6 +32,7 @@ function AppEndPanel({
   closeLabel = 'Close',
   className,
   forceSlideOver = false,
+  mobileFullWidth = false,
 }: AppEndPanelProps) {
   const shapedShell = useShapedShellPanelClassName()
   const { isDesktop, mobileSlidePanelClassName, renderMobilePanel } = useShellSlidePanel({
@@ -38,6 +41,7 @@ function AppEndPanel({
     closeLabel,
     forceSlideOver,
   })
+  const slideOver = forceSlideOver || !isDesktop
 
   const panel = (
     <aside
@@ -46,6 +50,7 @@ function AppEndPanel({
         shellPanelSurfaceClassName,
         shapedShell,
         mobileSlidePanelClassName,
+        mobileFullWidth && slideOver && 'app-shell-slide-panel--full-width',
         !forceSlideOver && !isDesktop && shapedShell && 'border-l-0',
         !forceSlideOver &&
           isDesktop &&

@@ -144,6 +144,7 @@ export {
   CardDescription,
   CardContent,
   type CardProps,
+  type CardVariant,
 } from './components/Card'
 export {
   Dialog,

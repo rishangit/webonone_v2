@@ -177,6 +177,7 @@ export function CompanyCatalogAttributeDetailsPage() {
             <EditableSectionCard
               title={t('attributeDetail.values.title')}
               description={t('attributeDetail.values.description')}
+              variant="list"
             >
               {canEdit && galleryKind && libraryEntityId ? (
                 <div className="flex justify-end">

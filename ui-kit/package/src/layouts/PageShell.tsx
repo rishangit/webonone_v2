@@ -17,6 +17,7 @@ interface PageShellProps {
   onLocaleChange?: (locale: AppHeaderLocale) => void
   headerLabels?: AppHeaderProps['labels']
   className?: string
+  mainClassName?: string
 }
 
 function PageShell({
@@ -31,6 +32,7 @@ function PageShell({
   onLocaleChange,
   headerLabels,
   className,
+  mainClassName,
 }: PageShellProps) {
   const logoNode = logo ?? (title ? <BrandLogo>{title}</BrandLogo> : undefined)
 
@@ -46,7 +48,7 @@ function PageShell({
         onLocaleChange={onLocaleChange}
         labels={headerLabels}
       />
-      <main className="w-full px-2 py-8 sm:px-4">{children}</main>
+      <main className={cn('w-full px-2 py-8 sm:px-4', mainClassName)}>{children}</main>
     </div>
   )
 }

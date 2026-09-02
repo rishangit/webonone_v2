@@ -8,6 +8,7 @@ import { useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { LoginForm } from '../components/LoginForm'
 import { EmbedAuthLink } from '../components/EmbedAuthLink'
+import { EmbedLoginChrome } from '../components/EmbedLoginChrome'
 import { useEmbedLoginMode } from '../hooks/useEmbedLoginMode'
 import { usePromptLoginSessionClear } from '../hooks/usePromptLoginSessionClear'
 import { useRedirectMode } from '../hooks/useRedirectMode'
@@ -103,21 +104,27 @@ export function LoginPage() {
     (isEmbed || isRedirect) &&
     Boolean(accessToken && user && freshLoginAllowedRef.current)
 
-  return (
+  const loginCard = (
     <AuthLayout
       title={t('signIn')}
       description={t('signInDescription')}
       variant="minimal"
       footer={
-        <span>
-          <EmbedAuthLink to={registerLink} className="text-primary underline-offset-4 hover:underline">
-            {t('createAccount')}
-          </EmbedAuthLink>
-          {' · '}
+        isEmbed ? (
           <EmbedAuthLink to={forgotLink} className="text-primary underline-offset-4 hover:underline">
             {t('forgotPasswordLink')}
           </EmbedAuthLink>
-        </span>
+        ) : (
+          <span>
+            <EmbedAuthLink to={registerLink} className="text-primary underline-offset-4 hover:underline">
+              {t('createAccount')}
+            </EmbedAuthLink>
+            {' · '}
+            <EmbedAuthLink to={forgotLink} className="text-primary underline-offset-4 hover:underline">
+              {t('forgotPasswordLink')}
+            </EmbedAuthLink>
+          </span>
+        )
       }
     >
       <div className="space-y-4">
@@ -140,4 +147,10 @@ export function LoginPage() {
       {error ? <p className="mt-2 text-center text-sm text-destructive">{error}</p> : null}
     </AuthLayout>
   )
+
+  if (isEmbed) {
+    return <EmbedLoginChrome registerLink={registerLink}>{loginCard}</EmbedLoginChrome>
+  }
+
+  return loginCard
 }

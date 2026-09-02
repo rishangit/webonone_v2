@@ -132,6 +132,7 @@ export function CatalogAttributeDetailsPage({ kind }: CatalogAttributeDetailsPag
             <EditableSectionCard
               title={t('catalog.attributeValues')}
               description={t('catalog.attributeValuesDescription')}
+              variant="list"
             >
               {canEdit ? (
                 <div className="flex justify-end">

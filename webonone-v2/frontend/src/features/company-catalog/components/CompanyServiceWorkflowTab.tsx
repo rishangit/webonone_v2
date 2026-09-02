@@ -172,7 +172,7 @@ export function CompanyServiceWorkflowTab({
   }
 
   return (
-    <Card>
+    <Card variant="list">
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div className="space-y-1">
           <CardTitle className="text-lg">{t('workflowTab.title')}</CardTitle>
@@ -200,6 +200,7 @@ export function CompanyServiceWorkflowTab({
           <ItemListEmpty>{t('workflowTab.empty')}</ItemListEmpty>
         ) : (
           <WorkflowItemList
+            className="py-0"
             items={items}
             t={t}
             showQueue={timeMode === 'window'}

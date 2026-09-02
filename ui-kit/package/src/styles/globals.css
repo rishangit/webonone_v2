@@ -467,6 +467,12 @@
       pointer-events: auto;
     }
 
+    .app-shell-slide-host .app-shell-slide-panel--anchored.app-shell-slide-panel--full-width {
+      left: 0;
+      right: 0;
+      width: auto;
+    }
+
     .app-shell-slide-panel:not(.app-shell-slide-panel--anchored) {
       position: fixed;
       top: var(--app-shell-mobile-overlay-top);
@@ -478,6 +484,12 @@
       height: auto;
       max-width: none;
       pointer-events: auto;
+    }
+
+    .app-shell-slide-panel--full-width:not(.app-shell-slide-panel--anchored) {
+      left: var(--shell-chrome-inset-x);
+      right: var(--shell-chrome-inset-x);
+      width: auto;
     }
   }
 
@@ -1402,6 +1414,18 @@ html.platform-embed-canvas .ui-toast-viewport {
 
 html.platform-embed-canvas .platform-embed-shell,
 html.platform-embed-canvas .platform-embed-shell-main {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/** Identity guest-auth iframe (/login, /register, …) — scroll inside iframe like platform embed. */
+html.platform-embed-canvas .identity-guest-auth-shell {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+html.platform-embed-canvas .identity-guest-auth-scroll {
   flex: 1 1 auto;
   min-height: 0;
 }

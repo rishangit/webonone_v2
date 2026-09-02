@@ -426,6 +426,7 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
       title={t('assistant.title')}
       onClose={onClose}
       closeLabel={t('assistant.close')}
+      mobileFullWidth
       footer={
         <>
           {error ? <p className="text-xs text-destructive">{error}</p> : null}

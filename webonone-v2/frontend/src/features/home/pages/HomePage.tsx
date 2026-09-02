@@ -90,7 +90,7 @@ export function HomePage() {
       {audience ? (
         <div className="grid items-start gap-6 lg:grid-cols-3">
           <div className="flex flex-col gap-6 lg:col-span-2">
-            <Card>
+            <Card variant="list">
               <CardHeader>
                 <CardTitle className="text-lg">{t('todayTitle')}</CardTitle>
                 <CardDescription>{formatCalendarYmd(range.today, i18n.language)}</CardDescription>
@@ -106,7 +106,7 @@ export function HomePage() {
             </Card>
           </div>
           <div className="flex flex-col gap-6 lg:col-span-1">
-            <Card>
+            <Card variant="list">
               <CardHeader>
                 <CardTitle className="text-lg">{t('upcomingTitle')}</CardTitle>
               </CardHeader>

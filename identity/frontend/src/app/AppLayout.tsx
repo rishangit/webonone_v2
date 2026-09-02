@@ -366,9 +366,13 @@ function AppLayoutShellContent() {
     location.pathname === '/auth/clear-embed-session'
   ) {
     return (
-      <div className="relative flex h-dvh w-full items-center justify-center overflow-y-auto p-4">
-        <Outlet />
-        {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
+      <div className="identity-guest-auth-shell relative flex h-full min-h-0 w-full flex-col overflow-hidden">
+        <main className="identity-guest-auth-scroll scrollbar-themed flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain">
+          <div className="w-full p-0 sm:p-4">
+            <Outlet />
+            {navError ? <p className="mt-4 text-sm text-destructive">{navError}</p> : null}
+          </div>
+        </main>
         {overlayLabel ? (
           <LoadingState key="platform-loading" overlay overlayScope="content" label={overlayLabel} />
         ) : null}

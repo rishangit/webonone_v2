@@ -193,7 +193,7 @@ export function HistoryTokenDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card variant="list">
             <CardHeader>
               <CardTitle className="text-lg">{t('history.salesCardTitle')}</CardTitle>
               <CardDescription>{t('history.salesCardDescription')}</CardDescription>
@@ -202,7 +202,7 @@ export function HistoryTokenDetailPage() {
               {detail.sales.length === 0 ? (
                 <ItemListEmpty>{t('history.salesEmpty')}</ItemListEmpty>
               ) : (
-                <ItemList>
+                <ItemList className="py-0">
                   {detail.sales.map((sale) => (
                     <ItemListItem
                       key={sale.id}

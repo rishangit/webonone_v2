@@ -60,6 +60,39 @@ Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + **`ListAd
 
 Canonical demo: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` (`ListPageDemo`). Rule: [feature-page-layout.mdc](../../rules/feature-page-layout.mdc).
 
+## ItemList inside a Card
+
+When a **section card** on a details or settings page wraps an `ItemList` (stocks, workflow steps, attribute values, POS cart, etc.), avoid double glass surfaces and wasted horizontal space:
+
+| Piece | Rule |
+|-------|------|
+| Outer card | `Card variant="list"` — transparent, no border/bg/shadow |
+| Header | `CardHeader` is flush horizontally (`px-0` via variant context); vertical padding unchanged |
+| Body | `CardContent` is flush horizontally (`px-0` via variant context) |
+| List | `ItemList className="py-0"` — no extra vertical padding inside the card |
+
+`EditableSectionCard` wrappers accept `variant="list"` and forward it to `Card`.
+
+```tsx
+<Card variant="list">
+  <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+    <CardTitle className="text-lg">Stock batches</CardTitle>
+    {/* optional Add button */}
+  </CardHeader>
+  <CardContent>
+    <ItemList className="py-0">
+      {items.map((item) => (
+        <ItemListItem key={item.id}>…</ItemListItem>
+      ))}
+    </ItemList>
+  </CardContent>
+</Card>
+```
+
+Showcase: `ui-kit/showcase/src/pages/ComponentsPage.tsx` (Item lists section). Reference: `ProductVariantStocksCard.tsx`, `CompanyServiceWorkflowTab.tsx`.
+
+Do **not** use `variant="list"` on read-only field cards, stat cards, or gallery/overview cards that do not contain an `ItemList`.
+
 ## Row actions rule
 
 | Do | Don't |
@@ -129,7 +162,7 @@ When the entity has a details / profile route ([details-page-cards skill](../det
 
 | Concern | Token / class |
 |---------|----------------|
-| List container (`<ul>`) | `itemListClassName` — `flex flex-col gap-2` **`py-4`** |
+| List container (`<ul>`) | `itemListClassName` — `flex flex-col gap-2` **`py-4`** (use `py-0` inside `Card variant="list"` or embed bodies) |
 | Gap between rows | `gap-2` on `ItemList` |
 | Row surface | `glass-card` — `hsl(var(--glass-bg))` + `backdrop-filter: blur(8px)` |
 | Row hover | `item-list-row:hover` → `box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22)` — **shadow only**, no border or background change |
@@ -158,7 +191,7 @@ Dynamic content swatches (e.g. theme color previews) may use inline `backgroundC
 - [ ] Uses `ItemList`, `ItemListItem`, `ItemListContent`, `ItemListMenu`
 - [ ] Row actions in 3-dot menu, not inline button groups
 - [ ] Detail route exists → row body click opens it (button inside `ItemListContent`); menu may duplicate View details — do not open details from the menu alone
-- [ ] `ItemList` uses default `py-4` on the `<ul>` — do not override with `py-0` unless embed layout requires it
+- [ ] `ItemList` uses default `py-4` on standalone collection pages — use `className="py-0"` when nested in `Card variant="list"` or embed/dialog bodies
 - [ ] `gap-2` between rows; same padding on every row
 - [ ] Row surface is `glass-card item-list-row` — no extra `bg-*` on rows
 - [ ] Hover is themed shadow only (`item-list-row`); no `hover:border-*` or `hover:bg-*`

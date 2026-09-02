@@ -34,7 +34,7 @@ export function PosCartList({
   }
 
   return (
-    <ItemList>
+    <ItemList className="py-0">
       {lines.map((line) => (
         <ItemListItem key={line.key}>
           <ItemListContent>

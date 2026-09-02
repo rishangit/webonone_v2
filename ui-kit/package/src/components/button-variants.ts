@@ -16,9 +16,9 @@ export const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline [clip-path:none]',
       },
       size: {
-        default: 'h-10 min-w-[6.5rem] px-4 has-[svg]:px-6',
-        sm: 'h-9 min-w-[5.5rem] px-3 has-[svg]:px-5',
-        lg: 'h-11 min-w-[7.5rem] px-8 has-[svg]:px-10',
+        default: 'h-10 px-4 has-[svg]:px-6',
+        sm: 'h-9 px-3 has-[svg]:px-5',
+        lg: 'h-11 px-8 has-[svg]:px-10',
         icon: 'h-10 w-10',
       },
     },
