@@ -18,6 +18,8 @@ Read [AGENTS.md](../../AGENTS.md) for the delegation map.
 | `identity/` | `.cursor/agents/identity-agent.md` | `.cursor/skills/identity-agent/SKILL.md` |
 | `ui-kit/` | `.cursor/agents/ui-kit-agent.md` | `.cursor/skills/ui-kit-agent/SKILL.md` |
 | `webonone-v2/` | `.cursor/agents/webonone-agent.md` | `.cursor/skills/webonone-agent/SKILL.md` |
+| `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
+| `support/` | `.cursor/agents/support-agent.md` | `.cursor/skills/support-agent/SKILL.md` |
 
 ## Step 1 — Classify scope
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ComponentProps, type Dispatch, type ReactNode, type SetStateAction } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { MessageCircle } from 'lucide-react'
+import { CircleHelp, MessageCircle } from 'lucide-react'
 import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, UiThemeProvider, cn, useToast } from '@webonone/ui-kit'
 import { clearIdentityEmbedSession, isPlatformAiEntityContextMessage } from '@webonone/platform-embed'
 import {
@@ -26,6 +26,7 @@ import { isImpersonatingSession, stopImpersonation } from '@/features/auth/utils
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { getWebsiteOrigin } from '@/features/auth/utils/websiteConfig'
+import { getSupportHomeUrl } from '@/features/support/utils/supportConfig'
 import { clearSessionRoleStorage } from '@/features/session/utils/sessionRoleStorage'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { patchIdentityLocale } from '@/features/auth/services/identityUserApi'
@@ -427,22 +428,29 @@ function AppLayoutShell({
           accordionNavGroups
           headerNotice={headerNotice}
           headerActions={
-            accessToken ? (
-              <>
-                <NotificationBell />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
-                  aria-label={tShell('assistant.open')}
-                  aria-pressed={assistantOpen}
-                  onClick={() => setAssistantOpen((open) => !open)}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                </Button>
-              </>
-            ) : undefined
+            <>
+              <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" asChild>
+                <a href={getSupportHomeUrl()} target="_blank" rel="noreferrer" aria-label={tShell('help')}>
+                  <CircleHelp className="h-4 w-4" />
+                </a>
+              </Button>
+              {accessToken ? (
+                <>
+                  <NotificationBell />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
+                    aria-label={tShell('assistant.open')}
+                    aria-pressed={assistantOpen}
+                    onClick={() => setAssistantOpen((open) => !open)}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : null}
+            </>
           }
           aside={
             accessToken ? (

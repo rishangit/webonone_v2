@@ -25,6 +25,7 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `media/`, `packages/media-embed/` | `.cursor/agents/media-agent.md` | `.cursor/skills/media-agent/SKILL.md` |
 | `design/` | `.cursor/agents/design-agent.md` | `.cursor/skills/design-agent/SKILL.md` |
 | `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
+| `support/` | `.cursor/agents/support-agent.md` | `.cursor/skills/support-agent/SKILL.md` |
 
 Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop). AI tool schemas / `argCompletion` → **owning service** (`data/`, `webonone-v2/`); generic completer only → **AI**. See [ai-capabilities.mdc](../../rules/ai-capabilities.mdc).
 

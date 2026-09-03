@@ -63,6 +63,7 @@ Root `package.json` uses `concurrently` to run each service's own `dev` script i
 | `npm run dev:identity` | Identity FE + BE only |
 | `npm run dev:webonone` | WebOnOne FE + BE only |
 | `npm run dev:website` | Website FE + BE only |
+| `npm run dev:support` | Support help site FE + BE only |
 | `npm run dev:design` | Design FE + BE only |
 | `npm run dev:ui-kit` | UI kit showcase only |
 | `npm run dev:design` | Design FE + BE only |
@@ -106,6 +107,7 @@ Cross-service libraries live under [`packages/`](../../packages/) (`@webonone/pl
 | `email/` | `platform-embed`, `theme`, `store-kit`, `ui-kit` |
 | `data/` | `platform-nav`, `platform-embed`, `theme`, `store-kit`, `ui-kit` |
 | `design/` | `platform-nav`, `platform-embed`, `theme`, `store-kit`, `ui-kit` |
+| `support/` | `ui-kit`, `theme`, `i18n` |
 
 **Forbidden:** relying on Vite aliases alone for production; assuming `npm install` produces `dist/`; importing `packages/*/src` from service code outside Vite alias config.
 

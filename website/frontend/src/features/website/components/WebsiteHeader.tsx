@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { ExternalLink, MessageCircle } from 'lucide-react'
+import { CircleHelp, ExternalLink, MessageCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { normalizeLocale, type AppLocale } from '@webonone/i18n'
 import {
@@ -13,6 +13,7 @@ import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
 import { getWebsiteLoginHref } from '@/features/auth/utils/identityConfig'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { redirectToWebOnOneApp } from '@/features/webonone/utils/webononeConfig'
+import { getSupportHomeUrl } from '@/shared/utils/supportConfig'
 
 type WebsiteHeaderProps = {
   className?: string
@@ -65,19 +66,28 @@ export function WebsiteHeader({
     [user],
   )
 
-  const headerActions = onAssistantOpenChange ? (
-    <Button
-      type="button"
-      variant="outline"
-      size="icon"
-      className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
-      aria-label={tSearch('assistantOpen')}
-      aria-pressed={assistantOpen}
-      onClick={() => onAssistantOpenChange(!assistantOpen)}
-    >
-      <MessageCircle className="h-4 w-4" />
-    </Button>
-  ) : null
+  const headerActions = (
+    <>
+      <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" asChild>
+        <a href={getSupportHomeUrl()} target="_blank" rel="noreferrer" aria-label={ts('help')}>
+          <CircleHelp className="h-4 w-4" />
+        </a>
+      </Button>
+      {onAssistantOpenChange ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
+          aria-label={tSearch('assistantOpen')}
+          aria-pressed={assistantOpen}
+          onClick={() => onAssistantOpenChange(!assistantOpen)}
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
+      ) : null}
+    </>
+  )
 
   const trailingActions = isAuthPending ? (
     <div

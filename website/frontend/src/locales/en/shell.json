@@ -28,5 +28,6 @@
   "openApp": "Open app",
   "userMenu": "User menu",
   "checkingSession": "Checking session…",
-  "login": "Login"
+  "login": "Login",
+  "help": "Help"
 }

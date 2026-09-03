@@ -1,0 +1,16 @@
+{
+  "name": "support-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm run migrate && concurrently -n fe,be -c blue,green \"npm run dev -w @webonone/support-frontend\" \"npm run dev -w @webonone/support-backend\"",
+    "build": "npm run build:ui-kit --prefix .. && npm run build:theme --prefix .. && npm run build:i18n --prefix .. && npm run build -w @webonone/support-frontend && npm run build -w @webonone/support-backend",
+    "deploy": "npm run env:apply --prefix .. && npm run build && npm run stage:deploy",
+    "stage:deploy": "node ../tooling/stage-iis-deploy.mjs support/deploy",
+    "clean:deploy": "node ../tooling/stage-iis-deploy.mjs support/deploy --clean-only",
+    "type-check": "npm run type-check -w @webonone/support-frontend && npm run type-check -w @webonone/support-backend",
+    "migrate": "npm run migrate -w @webonone/support-backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

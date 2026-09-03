@@ -1,0 +1,14 @@
+---
+title: "Website pages"
+category: website-forms
+slug: website-pages
+audience: owner
+order: 4
+summary: "Design → Website යටතේ සමාගම් website pages සාදන්න සහ සංස්කරණය කරන්න."
+---
+
+1. **Design → Website** (pages) විවෘත කරන්න.
+2. පිටුවක් එක් කරන්න හෝ පවතින එකක් විවෘත කරන්න.
+3. අන්තර්ගතය එක් කිරීමට page designer භාවිතා කර, පසුව සුරකින්න.
+
+පිටු [headers and footers](/docs/website-forms/headers-footers) සහ [theme](/docs/website-forms/website-themes) සමඟ යුගල කරන්න.

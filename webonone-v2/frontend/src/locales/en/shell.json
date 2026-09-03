@@ -78,6 +78,7 @@
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation"
   },
+  "help": "Help",
   "impersonation": {
     "notice": "Impersonating: {{name}}",
     "stop": "Stop",

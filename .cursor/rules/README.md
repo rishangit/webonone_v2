@@ -18,6 +18,7 @@
 | [media-project.mdc](media-project.mdc) | `media/**/*` | Media service ports, embed routes, storage |
 | [email-project.mdc](email-project.mdc) | `email/**/*` | Email service ports, platform shell nav, queue/SMTP |
 | [ai-project.mdc](ai-project.mdc) | `ai/**/*` | AI conversations, providers, guest sessions |
+| [support-project.mdc](support-project.mdc) | `support/**/*` | Public help site, Markdown articles |
 | [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic AI completer; peers publish schemas + `argCompletion`; create suggestions fill every property + related `list_*` ids |
 
 ## Deployment
@@ -73,6 +74,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | UI Kit | [ui-kit-agent](../agents/ui-kit-agent.md) | [skill](../skills/ui-kit-agent/SKILL.md) |
 | WebOnOne v2 | [webonone-agent](../agents/webonone-agent.md) | [skill](../skills/webonone-agent/SKILL.md) |
 | AI | [ai-agent](../agents/ai-agent.md) | [skill](../skills/ai-agent/SKILL.md) |
+| Support | [support-agent](../agents/support-agent.md) | [skill](../skills/support-agent/SKILL.md) |
 
 ### Cross-cutting skills
 

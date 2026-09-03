@@ -1,0 +1,38 @@
+---
+description: Support help-site microservice (public Markdown docs)
+globs: support/**/*
+alwaysApply: false
+---
+
+# Support project
+
+Agent skill: [.cursor/skills/support-agent/SKILL.md](../skills/support-agent/SKILL.md)
+
+## Scope
+
+`support/frontend`, `support/backend`, `support/backend/migrations`.
+
+## Ports and env
+
+| Layer | Port | Env file |
+|-------|------|----------|
+| Frontend | 3021 | `support/frontend/.env` (`VITE_*` only) |
+| Backend | 4021 | `support/backend/.env` |
+
+Backend loads only `support/backend/.env`. Production host: `https://support.webonone.com`.
+
+## Ownership
+
+- Public how-tos for WebOnOne users. No login.
+- Articles in `frontend/src/content/en/**/*.md` and `frontend/src/content/si/**/*.md` (Sinhala mirrors English paths; missing `si` file falls back to English).
+- Health API + SPA fallback only. Help content is not stored in MySQL.
+
+## Verification
+
+```bash
+npm run type-check -w support-root
+```
+
+IIS: [iis-deployment.mdc](iis-deployment.mdc) · [support/deploy/IIS.md](../../support/deploy/IIS.md)
+
+All interactive UI must use `@webonone/ui-kit`.

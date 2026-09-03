@@ -44,6 +44,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | Payment | `payment/` | [payment-agent](.cursor/agents/payment-agent.md) | [skill](.cursor/skills/payment-agent/SKILL.md) |
 | Design | `design/` | [design-agent](.cursor/agents/design-agent.md) | [skill](.cursor/skills/design-agent/SKILL.md) |
 | AI | `ai/` | [ai-agent](.cursor/agents/ai-agent.md) | [skill](.cursor/skills/ai-agent/SKILL.md) |
+| Support | `support/` | [support-agent](.cursor/agents/support-agent.md) | [skill](.cursor/skills/support-agent/SKILL.md) |
 | Website | `website/` | — | Public marketing/search site (FE :3018, BE :4018); proxies catalog search to WebOnOne |
 
 AI tools: peers publish `jsonSchema` + optional `argCompletion`; AI stays generic — [.cursor/rules/ai-capabilities.mdc](.cursor/rules/ai-capabilities.mdc).
@@ -71,6 +72,7 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:payment` | Payment FE + BE |
 | `npm run dev:design` | Design FE + BE |
 | `npm run dev:ai` | AI FE + BE |
+| `npm run dev:support` | Support help site FE + BE |
 | `npm run dev:website` | Website FE + BE |
 | `npm run mobile` | Mobile Expo app (not in root `dev`) |
 | `npm run mobile:web` | Mobile app via RN Web |
