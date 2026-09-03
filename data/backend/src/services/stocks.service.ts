@@ -179,6 +179,19 @@ export async function createStock(
   return rowToDto(row)
 }
 
+export async function getStock(
+  productId: string,
+  variantId: string,
+  stockId: string,
+): Promise<StockDto> {
+  await assertVariantBelongsToProduct(productId, variantId)
+  const row = (await db('data_stocks')
+    .where({ id: stockId, variant_id: variantId })
+    .first()) as StockRow | undefined
+  if (!row) throw new Error('NOT_FOUND')
+  return rowToDto(row)
+}
+
 export async function consumeStock(
   productId: string,
   variantId: string,

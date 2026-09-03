@@ -166,6 +166,7 @@ type PreparedSaleLine = {
   variant_name_snapshot: string | null
   library_variant_id: string | null
   library_stock_id: string | null
+  unit_cost: number | null
   quantity: number
   unit_price: number
   line_total: number
@@ -184,6 +185,26 @@ async function resolveVariantNameSnapshot(
     throw httpError('Product variant not found', 400)
   }
   return variant.name
+}
+
+async function resolveProductUnitCost(
+  libraryEntityId: string | null,
+  libraryVariantId: string | null,
+  libraryStockId: string | null,
+): Promise<number | null> {
+  if (!libraryEntityId || !libraryVariantId || !libraryStockId) return null
+  if (!dataStockClient.hasDataStockConfig()) return null
+  try {
+    const stock = await dataStockClient.getLibraryStock({
+      productId: libraryEntityId,
+      variantId: libraryVariantId,
+      stockId: libraryStockId,
+    })
+    if (!stock) return null
+    return money(stock.costPrice)
+  } catch {
+    return null
+  }
 }
 
 async function consumeStockForPreparedLines(lines: PreparedSaleLine[]): Promise<void> {
@@ -266,6 +287,10 @@ async function prepareSaleLines(
     }
 
     const variantNameSnapshot = await resolveVariantNameSnapshot(libraryEntityId, libraryVariantId)
+    const unitCost =
+      line.itemKind === 'product'
+        ? await resolveProductUnitCost(libraryEntityId, libraryVariantId, libraryStockId)
+        : 0
 
     prepared.push({
       id: nanoid(),
@@ -278,6 +303,7 @@ async function prepareSaleLines(
       variant_name_snapshot: variantNameSnapshot,
       library_variant_id: libraryVariantId,
       library_stock_id: libraryStockId,
+      unit_cost: unitCost,
       quantity: qty,
       unit_price: unitPrice,
       line_total: money(qty * unitPrice),
@@ -556,6 +582,20 @@ export async function completeSale(
   const lines = await saleRepo.listSaleLines(saleId)
   if (lines.length === 0) {
     throw httpError('Add at least one item before closing the sale', 400)
+  }
+  for (const line of lines) {
+    if (line.unit_cost != null) continue
+    const cost =
+      line.item_kind === 'product'
+        ? await resolveProductUnitCost(
+            line.library_entity_id,
+            line.library_variant_id,
+            line.library_stock_id,
+          )
+        : 0
+    if (cost != null) {
+      await saleRepo.updateLineUnitCost(line.id, cost)
+    }
   }
 
   await consumeStockForSaleLines(lines)

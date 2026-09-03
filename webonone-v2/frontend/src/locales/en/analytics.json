@@ -1,0 +1,76 @@
+{
+  "title": "Analytics",
+  "description": "Company progress, sales revenue, catalog mix, customers, and events.",
+  "platformDescription": "Platform company registration and staffing overview.",
+  "loading": "Loading analytics…",
+  "needCompany": "Select a company account to view analytics.",
+  "emptyChart": "No data in this range.",
+  "range": {
+    "aria": "Date range",
+    "7d": "Last 7 days",
+    "30d": "Last 30 days",
+    "90d": "Last 90 days",
+    "year": "Last 12 months"
+  },
+  "kpis": {
+    "revenue": "Sales revenue",
+    "profit": "Profit",
+    "sales": "Completed sales",
+    "customers": "Customers",
+    "staff": "Staff",
+    "products": "Products",
+    "services": "Services",
+    "spaces": "Spaces",
+    "occurrences": "Sessions",
+    "checkIns": "Check-ins",
+    "companies": "Companies"
+  },
+  "progress": {
+    "title": "Company status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "enabledEntities": "Enabled catalog"
+  },
+  "charts": {
+    "revenueOverTime": "Revenue over time",
+    "revenueByKind": "Revenue by catalog type",
+    "revenueByPayment": "Revenue by payment method",
+    "topProducts": "Top products",
+    "topServices": "Top services",
+    "topSpaces": "Top spaces",
+    "topCustomers": "Top customers",
+    "salesByStaff": "Sales by staff",
+    "eventRunStatus": "Session status",
+    "tokenStatus": "Queue status",
+    "checkInsOverTime": "Check-ins over time",
+    "companiesByStatus": "Companies by status",
+    "companiesOverTime": "New companies"
+  },
+  "kind": {
+    "product": "Products",
+    "service": "Services",
+    "space": "Spaces"
+  },
+  "payment": {
+    "cash": "Cash",
+    "card": "Card",
+    "other": "Other"
+  },
+  "runStatus": {
+    "scheduled": "Scheduled",
+    "started": "Started",
+    "ended": "Ended",
+    "cancelled": "Cancelled"
+  },
+  "tokenStatus": {
+    "waiting": "Waiting",
+    "serving": "Serving",
+    "completed": "Completed"
+  },
+  "value": {
+    "revenue": "Revenue",
+    "profit": "Profit",
+    "count": "Count"
+  }
+}

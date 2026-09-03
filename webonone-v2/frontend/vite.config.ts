@@ -33,6 +33,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return
+          if (id.includes('recharts')) return 'vendor-charts'
           if (id.includes('react-router')) return 'vendor-router'
           if (id.includes('@radix-ui')) return 'vendor-radix'
         },

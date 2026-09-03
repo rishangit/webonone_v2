@@ -15,6 +15,9 @@ import { useAppSelector } from '@/app/store/hooks'
 const HomePage = lazy(() =>
   import('@/features/home/pages/HomePage').then((m) => ({ default: m.HomePage })),
 )
+const AnalyticsPage = lazy(() =>
+  import('@/features/analytics/pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
+)
 const CompaniesPage = lazy(() =>
   import('@/features/settings/basic/pages/CompaniesPage').then((m) => ({ default: m.CompaniesPage })),
 )
@@ -192,6 +195,14 @@ export function App() {
           <Route
             path="home"
             element={<Navigate to="/" replace />}
+          />
+          <Route
+            path="analytics"
+            element={
+              <LazyRoute>
+                <AnalyticsPage />
+              </LazyRoute>
+            }
           />
           <Route
             path="calendar"

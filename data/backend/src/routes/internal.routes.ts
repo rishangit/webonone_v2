@@ -23,6 +23,11 @@ router.get(
   requireInternalAuth,
   internalProductVariantsController.get,
 )
+router.get(
+  '/internal/products/:id/variants/:variantId/stocks/:stockId',
+  requireInternalAuth,
+  internalStocksController.get,
+)
 router.post(
   '/internal/products/:id/variants/:variantId/stocks/:stockId/consume',
   requireInternalAuth,

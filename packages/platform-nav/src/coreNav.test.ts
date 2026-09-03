@@ -42,6 +42,17 @@ describe('coreNav', () => {
     }
   })
 
+  it('places Analytics after Dashboard for every nav variant', () => {
+    for (const variant of ['main', 'member', 'superAdmin'] as const) {
+      const defs = getPlatformNavDefs(variant)
+      assert.equal(defs[0]?.kind === 'item' && defs[0].path === '/', true, variant)
+      assert.equal(defs[1]?.kind === 'item' && defs[1].path === '/analytics', true, variant)
+      if (defs[1]?.kind === 'item') {
+        assert.equal(defs[1].label, 'Analytics')
+      }
+    }
+  })
+
   it('includes Calendar group with Schedule and Events on main and member nav', () => {
     for (const variant of ['main', 'member'] as const) {
       const defs = getPlatformNavDefs(variant)
@@ -56,7 +67,8 @@ describe('coreNav', () => {
           ],
         )
       }
-      assert.equal(defs[1]?.kind === 'group' && defs[1].label === 'Calendar', true)
+      assert.equal(defs[1]?.kind === 'item' && defs[1].path === '/analytics', true)
+      assert.equal(defs[2]?.kind === 'group' && defs[2].label === 'Calendar', true)
     }
 
     const superAdmin = getPlatformNavDefs('superAdmin')

@@ -547,8 +547,15 @@ const SETTINGS_PLATFORM_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
+const ANALYTICS_NAV_ITEM: CoreNavLeaf = {
+  kind: 'item',
+  path: '/analytics',
+  label: 'Analytics',
+}
+
 export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Dashboard' },
+  ANALYTICS_NAV_ITEM,
   CALENDAR_PLATFORM_NAV_GROUP,
   IDENTITY_COMPANY_NAV_GROUP,
   DATA_PLATFORM_NAV_GROUP,
@@ -596,6 +603,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
 
 export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Dashboard' },
+  ANALYTICS_NAV_ITEM,
   CALENDAR_PLATFORM_NAV_GROUP,
   IDENTITY_COMPANY_NAV_GROUP,
   DATA_PLATFORM_NAV_GROUP,
@@ -606,6 +614,7 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
 
 export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
   { kind: 'item', path: '/', label: 'Dashboard' },
+  ANALYTICS_NAV_ITEM,
   COMPANIES_SUPER_ADMIN_NAV_GROUP,
   {
     kind: 'group',

@@ -15,6 +15,7 @@ import publicCatalogSearchRoutes from './routes/publicCatalogSearch.routes.js'
 import aiCapabilitiesRoutes from './routes/aiCapabilities.routes.js'
 import userActivityRoutes from './routes/userActivity.routes.js'
 import companySaleRoutes from './routes/companySale.routes.js'
+import companyAnalyticsRoutes from './routes/companyAnalytics.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import invoiceNotifyRoutes from './routes/invoiceNotify.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -39,6 +40,7 @@ export function createApp() {
   app.use('/api/v1', aiCapabilitiesRoutes)
   app.use('/api/v1', userActivityRoutes)
   app.use('/api/v1', companySaleRoutes)
+  app.use('/api/v1', companyAnalyticsRoutes)
   app.use('/api/v1', notificationRoutes)
   app.use('/api/v1', invoiceNotifyRoutes)
   app.use('/api/v1', companyCatalogRoutes)

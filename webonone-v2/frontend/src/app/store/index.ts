@@ -8,6 +8,7 @@ import { staffReducer, staffLeavesReducer } from '@/features/staff/store'
 import { salesReducer } from '@/features/sales/store'
 import { eventsReducer, sessionTokensReducer, sessionCheckInsReducer } from '@/features/calendar/store'
 import { homeDashboardReducer } from '@/features/home/store'
+import { analyticsReducer } from '@/features/analytics/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { aiSettingsReducer } from '@/features/settings/basic/store/aiSettingsSlice'
@@ -31,6 +32,7 @@ export const store = configureStore({
     sessionTokens: sessionTokensReducer,
     sessionCheckIns: sessionCheckInsReducer,
     homeDashboard: homeDashboardReducer,
+    analytics: analyticsReducer,
     systemTheme: systemThemeReducer,
     aiSettings: aiSettingsReducer,
     notifications: notificationsReducer,

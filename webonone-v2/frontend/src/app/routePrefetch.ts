@@ -12,6 +12,7 @@ import {
 
 const ROUTE_PREFETCHERS: Record<string, () => Promise<unknown>> = {
   '/': () => import('@/features/home/pages/HomePage'),
+  '/analytics': () => import('@/features/analytics/pages/AnalyticsPage'),
   '/calendar/schedule': () => import('@/features/calendar/pages/CalendarPage'),
   '/calendar/events': () => import('@/features/calendar/pages/EventsPage'),
   '/companies': () => import('@/features/settings/basic/pages/CompaniesPage'),

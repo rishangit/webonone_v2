@@ -33,6 +33,7 @@ export type CompanySaleLineRow = {
   variant_name_snapshot: string | null
   library_variant_id: string | null
   library_stock_id: string | null
+  unit_cost: string | number | null
   quantity: string | number
   unit_price: string | number
   line_total: string | number
@@ -133,10 +134,11 @@ export async function completeSaleRow(
 export async function insertSaleLines(
   trx: Knex.Transaction,
   rows: Array<
-    Omit<CompanySaleLineRow, 'quantity' | 'unit_price' | 'line_total'> & {
+    Omit<CompanySaleLineRow, 'quantity' | 'unit_price' | 'line_total' | 'unit_cost'> & {
       quantity: number
       unit_price: number
       line_total: number
+      unit_cost: number | null
     }
   >,
 ): Promise<void> {
@@ -157,6 +159,10 @@ export async function findSaleByIdAny(id: string): Promise<CompanySaleRow | unde
 
 export async function listSaleLines(saleId: string): Promise<CompanySaleLineRow[]> {
   return db<CompanySaleLineRow>('company_sale_lines').where({ sale_id: saleId }).orderBy('line_no', 'asc')
+}
+
+export async function updateLineUnitCost(id: string, unitCost: number): Promise<void> {
+  await db('company_sale_lines').where({ id }).update({ unit_cost: unitCost })
 }
 
 export async function listSalesForCompany(

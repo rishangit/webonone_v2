@@ -1,0 +1,76 @@
+{
+  "title": "විශ්ලේෂණ",
+  "description": "සමාගම් ප්‍රගතිය, විකුණුම් ආදායම, නාමාවලි මිශ්‍රණය, පාරිභෝගිකයින් සහ සිදුවීම්.",
+  "platformDescription": "වේදිකා සමාගම් ලියාපදිංචිය සහ කාර්ය මණ්ඩල දළ විශ්ලේෂණය.",
+  "loading": "විශ්ලේෂණ පූරණය වෙමින්…",
+  "needCompany": "විශ්ලේෂණ බැලීමට සමාගම් ගිණුමක් තෝරන්න.",
+  "emptyChart": "මෙම කාල සීමාවේ දත්ත නැත.",
+  "range": {
+    "aria": "දින පරාසය",
+    "7d": "පසුගිය දින 7",
+    "30d": "පසුගිය දින 30",
+    "90d": "පසුගිය දින 90",
+    "year": "පසුගිය මාස 12"
+  },
+  "kpis": {
+    "revenue": "විකුණුම් ආදායම",
+    "profit": "ලාභය",
+    "sales": "සම්පූර්ණ විකුණුම්",
+    "customers": "පාරිභෝගිකයින්",
+    "staff": "කාර්ය මණ්ඩලය",
+    "products": "නිෂ්පාදන",
+    "services": "සේවා",
+    "spaces": "අවකාශ",
+    "occurrences": "සැසි",
+    "checkIns": "පැමිණීම්",
+    "companies": "සමාගම්"
+  },
+  "progress": {
+    "title": "සමාගම් තත්ත්වය",
+    "pending": "පොරොත්තුවෙන්",
+    "approved": "අනුමත",
+    "rejected": "ප්‍රතික්ෂේප",
+    "enabledEntities": "සක්‍රිය නාමාවලිය"
+  },
+  "charts": {
+    "revenueOverTime": "කාලය අනුව ආදායම",
+    "revenueByKind": "නාමාවලි වර්ගය අනුව ආදායම",
+    "revenueByPayment": "ගෙවීම් ක්‍රමය අනුව ආදායම",
+    "topProducts": "ඉහළම නිෂ්පාදන",
+    "topServices": "ඉහළම සේවා",
+    "topSpaces": "ඉහළම අවකාශ",
+    "topCustomers": "ඉහළම පාරිභෝගිකයින්",
+    "salesByStaff": "කාර්ය මණ්ඩලය අනුව විකුණුම්",
+    "eventRunStatus": "සැසි තත්ත්වය",
+    "tokenStatus": "පෝලිම් තත්ත්වය",
+    "checkInsOverTime": "කාලය අනුව පැමිණීම්",
+    "companiesByStatus": "තත්ත්වය අනුව සමාගම්",
+    "companiesOverTime": "නව සමාගම්"
+  },
+  "kind": {
+    "product": "නිෂ්පාදන",
+    "service": "සේවා",
+    "space": "අවකාශ"
+  },
+  "payment": {
+    "cash": "මුදල්",
+    "card": "කාඩ්පත",
+    "other": "වෙනත්"
+  },
+  "runStatus": {
+    "scheduled": "කාලසටහන්ගත",
+    "started": "ආරම්භ",
+    "ended": "අවසන්",
+    "cancelled": "අවලංගු"
+  },
+  "tokenStatus": {
+    "waiting": "බලාසිටී",
+    "serving": "සේවය කරමින්",
+    "completed": "සම්පූර්ණ"
+  },
+  "value": {
+    "revenue": "ආදායම",
+    "profit": "ලාභය",
+    "count": "ගණන"
+  }
+}

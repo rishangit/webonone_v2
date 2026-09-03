@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next'
 export const NAV_LABEL_KEYS: Record<string, string> = {
   Home: 'nav.home',
   Dashboard: 'nav.dashboard',
+  Analytics: 'nav.analytics',
   Calendar: 'nav.calendar',
   Schedule: 'nav.schedule',
   Events: 'nav.events',

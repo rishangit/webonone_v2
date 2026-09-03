@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Building2,
   Calendar,
   CalendarDays,
@@ -54,6 +55,7 @@ import type { SessionRole } from '@/features/session/types/sessionRole.types'
 
 const ICON_BY_PATH: Record<string, LucideIcon> = {
   '/': LayoutDashboard,
+  '/analytics': BarChart3,
   '/calendar/schedule': CalendarDays,
   '/calendar/events': List,
   '/companies': Building2,

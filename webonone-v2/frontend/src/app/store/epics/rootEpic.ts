@@ -7,6 +7,7 @@ import { staffEpics, staffLeavesEpics } from '@/features/staff/store'
 import { salesEpics } from '@/features/sales/store'
 import { eventsEpics, sessionTokensEpics, sessionCheckInsEpics } from '@/features/calendar/store'
 import { homeDashboardEpics } from '@/features/home/store'
+import { analyticsEpics } from '@/features/analytics/store'
 import { systemThemeEpics } from '@/features/settings/system-theme/store/systemThemeEpics'
 import { aiSettingsEpics } from '@/features/settings/basic/store/aiSettingsEpics'
 import { notificationsEpics } from '@/features/notifications/store/notificationsEpics'
@@ -23,6 +24,7 @@ export const rootEpic = combineEpics(
   sessionTokensEpics,
   sessionCheckInsEpics,
   homeDashboardEpics,
+  analyticsEpics,
   systemThemeEpics,
   aiSettingsEpics,
   ...notificationsEpics,

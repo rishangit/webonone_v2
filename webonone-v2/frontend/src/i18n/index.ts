@@ -8,6 +8,7 @@ import enStaff from '@/locales/en/staff.json'
 import enCalendar from '@/locales/en/calendar.json'
 import enCatalog from '@/locales/en/catalog.json'
 import enSales from '@/locales/en/sales.json'
+import enAnalytics from '@/locales/en/analytics.json'
 import enSession from '@/locales/en/session.json'
 import siShell from '@/locales/si/shell.json'
 import siAuth from '@/locales/si/auth.json'
@@ -18,6 +19,7 @@ import siStaff from '@/locales/si/staff.json'
 import siCalendar from '@/locales/si/calendar.json'
 import siCatalog from '@/locales/si/catalog.json'
 import siSales from '@/locales/si/sales.json'
+import siAnalytics from '@/locales/si/analytics.json'
 import siSession from '@/locales/si/session.json'
 
 export const WEBONONE_NAMESPACES = [
@@ -30,6 +32,7 @@ export const WEBONONE_NAMESPACES = [
   'calendar',
   'catalog',
   'sales',
+  'analytics',
   'session',
 ] as const
 
@@ -47,6 +50,7 @@ export function initWebOnOneI18n() {
         calendar: enCalendar,
         catalog: enCatalog,
         sales: enSales,
+        analytics: enAnalytics,
         session: enSession,
       },
       si: {
@@ -59,6 +63,7 @@ export function initWebOnOneI18n() {
         calendar: siCalendar,
         catalog: siCatalog,
         sales: siSales,
+        analytics: siAnalytics,
         session: siSession,
       },
     },

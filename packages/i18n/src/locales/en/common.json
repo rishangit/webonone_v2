@@ -54,6 +54,7 @@
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
+    "analytics": "Analytics",
     "calendar": "Calendar",
     "schedule": "Schedule",
     "events": "Events",
