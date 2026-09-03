@@ -4,7 +4,7 @@ category: app-preferences
 slug: dashboard
 audience: all
 order: 1
-summary: "මුල් Dashboard මගින් ඔබේ වර්තමාන role සඳහා අද සහ ඉදිරි සිදුවීම් පෙන්වයි."
+summary: "මුල් Dashboard මගින් ඔබේ වර්තමාන role සඳහා අද සහ ඉදිරි සිදුවීම් පෙන්වයි. Charts සහ විකුණුම් එකතුව Analytics හි ඇත."
 ---
 
 sign in වූ පසු, **Dashboard** යනු මුල් පිටුවයි.
@@ -14,4 +14,4 @@ sign in වූ පසු, **Dashboard** යනු මුල් පිටුව�
 - Owners සහ staff අද සහ ඉදිරි දිනවල සමාගමේ sessions සහ events දකී.
 - Members සම්බන්ධ සමාගම්වල ක්‍රියාකාරකම් සහ ඔවුන්ගේම bookings දකී.
 
-Calendar, People, Data, සහ යෙදුමේ ඉතිරි කොටස් විවෘත කිරීමට වම් menu භාවිතා කරන්න. [සමාගමක් ලියාපදිංචි කිරීම](/docs/companies/register-company) කිරීමට පෙර Dashboard හි කිසිවක් අවශ්‍ය නොවේ.
+Calendar, People, Data, සහ යෙදුමේ ඉතිරි කොටස් විවෘත කිරීමට වම් menu භාවිතා කරන්න. Charts සහ විකුණුම් එකතුව [Analytics](/docs/app-preferences/analytics) හි ඇත. [සමාගමක් ලියාපදිංචි කිරීම](/docs/companies/register-company) කිරීමට පෙර Dashboard හි කිසිවක් අවශ්‍ය නොවේ.

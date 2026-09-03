@@ -30,6 +30,7 @@ description: >-
 - [selection-dialog-list.mdc](../../rules/selection-dialog-list.mdc) — library/picker selection rows show Check on the right
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc) — boundaries
 - [ai-capabilities.mdc](../../rules/ai-capabilities.mdc) — catalog AI tools in `webonone-v2/backend/src/ai/capabilities.ts` (schemas + optional `argCompletion`; not in `ai/`). Create tools must suggest every schema property and related `list_*` ids.
+- [help-articles.mdc](../../rules/help-articles.mdc) — user-visible pages, nav, and workflows need Support how-tos ([help-articles skill](../help-articles/SKILL.md)). This agent does not edit `support/`; it must report the docs follow-up.
 
 ## Platform loading overlay
 
@@ -79,6 +80,18 @@ npm run dev
 
 Login flow manual check: Identity must be running (`npm run dev:identity`).
 
+## Support help (required check)
+
+After any **user-visible** change (new route/nav, workflow, role-gated UI, charts/money meaning, removed screen):
+
+1. Grep `support/frontend/src/content` for the feature. If articles are stale or missing, docs are **required**.
+2. Do not edit `support/` from this agent. Return:
+
+`Support docs: required` — category/slug, audience, what to say, related articles to cross-link  
+or `Support docs: not needed` — one-line why (internal-only / no usage change).
+
+Parent or support-agent writes `en` + `si` Markdown in the same overall task. See [help-articles skill](../help-articles/SKILL.md).
+
 ## Return format
 
-Summarize: files changed, verification results, and whether Identity needs a coordinated change.
+Summarize: files changed, verification results, Identity follow-ups, and **Support docs: required | not needed**.

@@ -13,6 +13,14 @@ description: >-
 - `support/frontend`, `support/backend`, `support/backend/migrations`
 - Consumer Help links: WebOnOne and Website `VITE_SUPPORT_ORIGIN` (parent/consumer agents own those files)
 
+## Product-feature docs (same task)
+
+When WebOnOne (or a peer in the app shell) **adds or changes something users see**, this service owns the how-to. Do not close the parent task until articles match. Workflow: [help-articles skill](../help-articles/SKILL.md).
+
+- Ship **en** and **si** files with the same relative path.
+- New screens get a new article; also patch left-nav, getting-started, dashboard, glossary, and sibling how-tos when the story changed.
+- Categories: `HELP_CATEGORIES` in `support/frontend/src/features/docs/content/types.ts`.
+
 ## Model
 
 - Public knowledge base. No JWT.
@@ -28,6 +36,7 @@ description: >-
 - [microservice-architecture.mdc](../../rules/microservice-architecture.mdc)
 - [iis-deployment.mdc](../../rules/iis-deployment.mdc)
 - [support-project.mdc](../../rules/support-project.mdc)
+- [help-articles.mdc](../../rules/help-articles.mdc) — user-visible product changes ([help-articles skill](../help-articles/SKILL.md))
 
 ## Ports and env
 

@@ -13,4 +13,4 @@ summary: "Sales → POS වෙතින් products, services හෝ spaces ව�
 4. අවශ්‍ය නම් පාරිභෝගිකයා තෝරන්න.
 5. **cash**, **card** හෝ **other** ගෙවීම ලබා ගෙන විකිණීම සම්පූර්ණ කරන්න.
 
-අයිතම [Data](/docs/catalog/catalog-overview) හි තිබිය යුතුය. bill එක නැවත මුද්‍රණය කිරීමට හෝ සමාලෝචනය කිරීමට [Sales history](/docs/sales-billing/sales-history) විවෘත කරන්න.
+අයිතම [Data](/docs/catalog/catalog-overview) හි තිබිය යුතුය. bill එක නැවත මුද්‍රණය කිරීමට හෝ සමාලෝචනය කිරීමට [Sales history](/docs/sales-billing/sales-history) විවෘත කරන්න. Company ownersට [Analytics](/docs/app-preferences/analytics) හි ආදායම සහ ලාභ charts දැකිය හැක.

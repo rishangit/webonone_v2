@@ -27,7 +27,7 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
 | `support/` | `.cursor/agents/support-agent.md` | `.cursor/skills/support-agent/SKILL.md` |
 
-Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop). AI tool schemas / `argCompletion` → **owning service** (`data/`, `webonone-v2/`); generic completer only → **AI**. See [ai-capabilities.mdc](../../rules/ai-capabilities.mdc).
+Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop). AI tool schemas / `argCompletion` → **owning service** (`data/`, `webonone-v2/`); generic completer only → **AI**. See [ai-capabilities.mdc](../../rules/ai-capabilities.mdc). User-visible WebOnOne (or shell) pages, nav, or workflows → also **support-agent** after the product change ([help-articles](../help-articles/SKILL.md)).
 
 **Parent handles directly:** root `package.json`, workspace wiring, non-service `.cursor/` config.
 
@@ -37,12 +37,13 @@ Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code
 |--------------|--------|---------------|
 | `identity/**` only | Delegate identity-agent | `generalPurpose` |
 | `ui-kit/**` only | Delegate ui-kit-agent | `generalPurpose` |
-| `webonone-v2/**` only | Delegate webonone-agent | `generalPurpose` |
+| `webonone-v2/**` only | Delegate webonone-agent; if user-visible, then support-agent | `generalPurpose` |
 | `ai/**` only | Delegate ai-agent (generic completer) | `generalPurpose` |
 | AI tool schema / `argCompletion` on a peer | Delegate that peer (`data/`, `webonone-v2/`) | `generalPurpose` |
 | `media/**` or `packages/media-embed/**` only | Delegate media-agent | `generalPurpose` |
 | Media embed in consumer | Sequential: media then consumer FE agent | `generalPurpose` × 2 |
 | iframe/postMessage/JWT across services | Sequential: identity then webonone | `generalPurpose` × 2 |
+| User-visible product change (new page/nav/workflow) | Sequential: product agent then **support-agent** | `generalPurpose` × 2 |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent | `generalPurpose` × 2 |
 | Read-only exploration in one service | Scoped explore | `explore` |
 | Independent changes in 2+ services | Parallel subagents | `generalPurpose` (parallel) |
@@ -119,7 +120,7 @@ Constraints:
 - Do not edit identity/ or ui-kit/
 - Verify: npm run type-check -w webonone-v2-root
 
-Return: summary, files touched, verification results, Identity follow-ups if any.
+Return: summary, files touched, verification results, Identity follow-ups if any, Support docs required or not needed.
 ```
 
 ## Step 4 — Merge and verify

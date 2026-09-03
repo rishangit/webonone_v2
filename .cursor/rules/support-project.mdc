@@ -23,7 +23,7 @@ Backend loads only `support/backend/.env`. Production host: `https://support.web
 
 ## Ownership
 
-- Public how-tos for WebOnOne users. No login.
+- Public how-tos for WebOnOne users. No login. User-visible product changes must update these articles in the same task — [help-articles.mdc](help-articles.mdc).
 - Articles in `frontend/src/content/en/**/*.md` and `frontend/src/content/si/**/*.md` (Sinhala mirrors English paths; missing `si` file falls back to English).
 - Health API + SPA fallback only. Help content is not stored in MySQL.
 

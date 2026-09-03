@@ -12,6 +12,6 @@ summary: "Open My Companies and choose Login on an approved company to work as t
 3. Find the company with status **Approved**.
 4. Choose **Login**.
 
-The app switches to the **company owner** account. The left menu now includes Calendar, Identity, Data, Email, SMS, Sales, Payment, Design, and Settings.
+The app switches to the **company owner** account. The left menu now includes Analytics, Calendar, Identity, Data, Email, SMS, Sales, Payment, Design, and Settings.
 
 To go back to your personal account, [switch account](/docs/getting-started/switch-account).

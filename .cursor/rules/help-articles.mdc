@@ -1,0 +1,31 @@
+---
+description: User-facing WebOnOne (and shell) features must ship with Support help articles
+globs: webonone-v2/**/*,support/frontend/src/content/**/*,packages/platform-nav/**/*
+alwaysApply: false
+---
+
+# Help articles with product changes
+
+Skill: [help-articles](../skills/help-articles/SKILL.md). Support layout: [support-project.mdc](support-project.mdc).
+
+A **user-visible** WebOnOne change is not done until Support Markdown matches it (`support/frontend/src/content/en` and `si`).
+
+## Document
+
+New/renamed nav or page, new user workflow, role-gated UI, meaning of money or charts, removed/moved screens.
+
+## Skip
+
+Internal APIs, migrations, Redux, tests, i18n-only, bug fixes with no usage change, deploy/dev ops.
+
+## Same task
+
+Product agent may only edit its service root. It **must** return `Support docs: required | not needed` with slug and bullets when required. Parent or **support-agent** writes the articles before the task is closed. Do not store articles in MySQL. Do not put `npm run dev` or IIS in public articles.
+
+## Verification
+
+```bash
+npm run type-check -w support-root
+```
+
+Manual: `http://127.0.0.1:3021/docs/{category}/{slug}`.

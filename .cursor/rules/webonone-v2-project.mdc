@@ -39,6 +39,7 @@ MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, **
 - **AI tools** — publish catalog tools in `backend/src/ai/capabilities.ts` (`jsonSchema`, optional `argCompletion`). Do not put WebOnOne domain into `ai/`. See [ai-capabilities.mdc](ai-capabilities.mdc).
 - **Unified loading overlay** — one AppLayout overlay for session (`SessionRoleGate`), lazy routes (`LazyRoute`), and page fetches (`usePlatformLoading`). See [loading-empty-states.mdc](loading-empty-states.mdc).
 - **Core-hosted peer dialogs** — `PlatformPeerDialogHost` + `PlatformMediaDialogHost` in `AppLayout`; peer form dialogs use `peer-dialog-*` (host header/footer, peer `/embed/dialogs/…` body). New peer dialogs need **no** WebOnOne changes. See [platform-shell-navigation.mdc](platform-shell-navigation.mdc).
+- **Support help** — user-visible nav, pages, and workflows need matching articles in `support/` ([help-articles.mdc](help-articles.mdc)). WebOnOne agents report the follow-up; they do not edit `support/`.
 
 Key paths: `features/auth/pages/LoginPage.tsx`, `features/auth/components/IdentityLoginFrame.tsx`, `features/settings/basic/`, `features/shell/context/PlatformLoadingContext.tsx`, `features/shell/PlatformPeerDialogHost.tsx`, `features/media/PlatformMediaDialogHost.tsx`, `features/session/components/SessionRoleGate.tsx`, `app/LazyRoute.tsx`, `backend/src/routes/company.routes.ts`, `backend/src/services/company.service.ts`, `backend/src/middleware/auth.ts`, `backend/src/middleware/requireSuperAdmin.ts`.
 

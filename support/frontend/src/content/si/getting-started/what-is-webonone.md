@@ -12,6 +12,7 @@ WebOnOne යනු ඔබගේ සමාගමේ දෛනික වැඩ ක
 ඔබ **app** හි පුරන්න. වම් මෙනුවෙන් ඔබට හැකිය:
 
 - **Dashboard** හි අද දින කාලසටහන බලන්න
+- **Analytics** සමාලෝචනය කරන්න (ආදායම, ලාභය, catalog, සහ සිදුවීම්)
 - **Calendar** sessions සහ queue tokens කළමනාකරණය කරන්න
 - **people** (users සහ staff) කළමනාකරණය කරන්න
 - products, services, සහ spaces සඳහා **catalog** තබා ගන්න

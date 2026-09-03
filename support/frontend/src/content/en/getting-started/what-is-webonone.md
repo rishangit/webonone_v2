@@ -12,6 +12,7 @@ WebOnOne is one place to run day-to-day work for your company.
 You sign in at the **app**. From the left menu you can:
 
 - See today’s schedule on the **Dashboard**
+- Review **Analytics** (revenue, profit, catalog, and events)
 - Run **Calendar** sessions and queue tokens
 - Manage **people** (users and staff)
 - Keep a **catalog** of products, services, and spaces

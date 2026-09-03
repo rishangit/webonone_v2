@@ -12,6 +12,6 @@ summary: "My Companies විවෘත කර approved සමාගමක Login 
 3. **Approved** status ඇති සමාගම සොයන්න.
 4. **Login** තෝරන්න.
 
-App එක **company owner** account එකට මාරු වේ. වම් menu එකට දැන් Calendar, Identity, Data, Email, SMS, Sales, Payment, Design, සහ Settings ඇතුළත් වේ.
+App එක **company owner** account එකට මාරු වේ. වම් menu එකට දැන් Analytics, Calendar, Identity, Data, Email, SMS, Sales, Payment, Design, සහ Settings ඇතුළත් වේ.
 
 පුද්ගලික ගිණුමට ආපසු යාමට, [switch account](/docs/getting-started/switch-account) භාවිතා කරන්න.

@@ -10,3 +10,5 @@ summary: "Open Sales → History to find past bills and customer purchases."
 1. Open **Sales → History**.
 2. Search or open a bill for details.
 3. Customer purchase history also appears on the Identity user [History](/docs/people/user-history) tab.
+
+Company owners can review revenue and profit over time on [Analytics](/docs/app-preferences/analytics).

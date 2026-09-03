@@ -19,6 +19,7 @@
 | [email-project.mdc](email-project.mdc) | `email/**/*` | Email service ports, platform shell nav, queue/SMTP |
 | [ai-project.mdc](ai-project.mdc) | `ai/**/*` | AI conversations, providers, guest sessions |
 | [support-project.mdc](support-project.mdc) | `support/**/*` | Public help site, Markdown articles |
+| [help-articles.mdc](help-articles.mdc) | `webonone-v2/**/*`, `support/frontend/src/content/**/*`, `packages/platform-nav/**/*` | User-visible product changes must update Support how-tos |
 | [ai-capabilities.mdc](ai-capabilities.mdc) | `ai/backend/src/ai/**`, `**/backend/src/ai/capabilities.ts` | Generic AI completer; peers publish schemas + `argCompletion`; create suggestions fill every property + related `list_*` ids |
 
 ## Deployment
@@ -88,6 +89,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | [feature-store](../skills/feature-store/SKILL.md) | Standard list/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 | [toast-notifications](../skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
 | [date-display](../skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026`; shared `DISPLAY_DATE_OPTIONS` |
+| [help-articles](../skills/help-articles/SKILL.md) | User-visible WebOnOne/shell features → Support Markdown (`en` + `si`) in the same task |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
@@ -124,3 +126,4 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Dialog sizing, scroll, nested guards, stacked crop | `dialog-windows.mdc` |
 | Core-hosted peer dialogs (header/body/footer on WebOnOne shell) | [core-hosted-peer-dialog skill](../skills/core-hosted-peer-dialog/SKILL.md), [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”), `dialog-windows.mdc` |
 | Mutation toast feedback (`useToast`) | [toast-notifications.mdc](toast-notifications.mdc), [toast-notifications skill](../skills/toast-notifications/SKILL.md) |
+| User-visible product features → public help | [help-articles.mdc](help-articles.mdc), [help-articles skill](../skills/help-articles/SKILL.md) |

@@ -25,7 +25,7 @@ Read [AGENTS.md](../../AGENTS.md) for the delegation map.
 
 Before coding, list which roots the task affects.
 
-Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `peer-dialog` → often **Identity/Email/Data/SMS + WebOnOne** (see `.cursor/rules/platform-shell-navigation.mdc` and `.cursor/skills/platform-orchestrator/SKILL.md`). AI tool schemas / `argCompletion` → owning service; generic completer → `ai/` (`.cursor/rules/ai-capabilities.mdc`).
+Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `peer-dialog` → often **Identity/Email/Data/SMS + WebOnOne** (see `.cursor/rules/platform-shell-navigation.mdc` and `.cursor/skills/platform-orchestrator/SKILL.md`). AI tool schemas / `argCompletion` → owning service; generic completer → `ai/` (`.cursor/rules/ai-capabilities.mdc`). User-visible pages, nav, or workflows → **support-agent** after the product change (`.cursor/skills/help-articles/SKILL.md`).
 
 **Parent handles directly (no subagent):** root `package.json`, workspace wiring, `.cursor/` config that is not service-specific.
 
@@ -35,10 +35,11 @@ Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `
 |--------------|--------|
 | `identity/**` only | Delegate `identity-agent` |
 | `ui-kit/**` only | Delegate `ui-kit-agent` |
-| `webonone-v2/**` only | Delegate `webonone-agent` |
+| `webonone-v2/**` only | Delegate `webonone-agent`; then `support-agent` if user-visible |
 | `ai/**` only | Delegate `ai-agent` (generic completer only) |
 | AI tool schema / `argCompletion` on a peer | Delegate that peer (`data/`, `webonone-v2/`) — not AI |
 | iframe/postMessage/JWT across services | Sequential: identity then webonone |
+| User-visible product change (new page/nav/workflow) | Sequential: product agent then `support-agent` |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent |
 | Read-only exploration in one service | Scoped explore subagent |
 | Independent changes in 2+ services | Parallel subagents |

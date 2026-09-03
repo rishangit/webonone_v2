@@ -30,6 +30,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | [feature-store](.cursor/skills/feature-store/SKILL.md) | List/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
 | [toast-notifications](.cursor/skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
 | [date-display](.cursor/skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026` via shared `DISPLAY_DATE_OPTIONS` and locale-aware helpers |
+| [help-articles](.cursor/skills/help-articles/SKILL.md) | User-visible WebOnOne (and shell) features must get Support Markdown how-tos (`en` + `si`) in the same task |
 
 ## Service agents
 
@@ -56,7 +57,8 @@ Company registration, memberships, platform roles, and super-admin approval are 
 1. Classify which service roots the task affects.
 2. Delegate to the matching subagent (or use the Task tool with the agent skill).
 3. Keep root `package.json` / workspace wiring in the parent unless the task is service-only.
-4. Merge subagent results and run verification.
+4. If the change is **user-visible** in WebOnOne (or a peer in the shell), also update Support help or delegate **support-agent** — [help-articles](.cursor/skills/help-articles/SKILL.md). Do not treat the product PR as done with stale how-tos.
+5. Merge subagent results and run verification.
 
 ## Dev commands (repo root)
 

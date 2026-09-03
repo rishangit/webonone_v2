@@ -10,3 +10,5 @@ summary: "පසුගිය bills සහ පාරිභෝගික මිල�
 1. **Sales → History** විවෘත කරන්න.
 2. විස්තර සඳහා bill එකක් සොයන්න හෝ විවෘත කරන්න.
 3. පාරිභෝගික මිලදී ගැනීම් history Identity user [History](/docs/people/user-history) tab හිදී ද දිස්වේ.
+
+Company ownersට කාලය අනුව ආදායම සහ ලාභය [Analytics](/docs/app-preferences/analytics) හි සමාලෝචනය කළ හැක.

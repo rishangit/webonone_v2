@@ -24,6 +24,7 @@ Follow the user's task and existing code in `webonone-v2/`. Use `.cursor/rules/`
 - WebOnOne globs: `.cursor/rules/webonone-v2-project.mdc`
 - Platform shell / peer dialogs: `.cursor/rules/platform-shell-navigation.mdc` · skill § Core-hosted peer dialogs
 - AI catalog tools: `.cursor/rules/ai-capabilities.mdc` (`webonone-v2/backend/src/ai/capabilities.ts`)
+- User-visible features → Support help: `.cursor/rules/help-articles.mdc` · `.cursor/skills/help-articles/SKILL.md` (do not edit `support/`; report docs follow-up)
 
 ## Verification
 
@@ -37,4 +38,4 @@ Login flow manual check: Identity must be running (`npm run dev:identity`).
 
 ## Return format
 
-Summarize: files changed, verification results, and whether Identity needs a coordinated change.
+Summarize: files changed, verification results, Identity follow-ups, and `Support docs: required | not needed`.

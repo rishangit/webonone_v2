@@ -13,4 +13,4 @@ summary: "Sell products, services, or spaces from Sales → POS and take cash, c
 4. Choose the customer if needed.
 5. Take **cash**, **card**, or **other**, then complete the sale.
 
-Items must exist in [Data](/docs/catalog/catalog-overview). Open [Sales history](/docs/sales-billing/sales-history) to reprint or review a bill.
+Items must exist in [Data](/docs/catalog/catalog-overview). Open [Sales history](/docs/sales-billing/sales-history) to reprint or review a bill. Company owners can see revenue and profit charts on [Analytics](/docs/app-preferences/analytics).
