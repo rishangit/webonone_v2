@@ -239,11 +239,15 @@
     min-height: 100vh;
   }
 
-  /** AppShell owns scrolling on #main-content — keep viewport from double scrollbars. */
+  /**
+   * AppShell owns scrolling on #main-content — keep viewport from double scrollbars.
+   * Use dvh + fixed #root so the header stays visible on iOS/Android (100% ≠ dynamic viewport).
+   */
   html.app-shell-active,
   html.app-shell-active body {
     overflow: hidden;
     height: 100%;
+    height: 100dvh;
   }
 
   html.app-shell-active body {
@@ -251,7 +255,13 @@
   }
 
   html.app-shell-active #root {
-    height: 100%;
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
   /**
@@ -1333,6 +1343,17 @@
   textarea {
     font-size: 1rem !important;
   }
+}
+
+/** Pin shell to the fixed #root canvas (avoids h-dvh vs 100% mismatch on mobile). */
+html.app-shell-active #root > .app-shell-root {
+  height: 100%;
+  min-height: 0;
+}
+
+/** Keep header below the status bar on notched phones (viewport-fit=cover). */
+html.app-shell-active .app-shell-header {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /** Standalone AppShell — fill #main-content so list pagination pins to bottom. */

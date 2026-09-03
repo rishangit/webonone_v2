@@ -247,6 +247,13 @@ export { AppSidebar } from './layouts/AppSidebar'
 export type { AppSidebarProps, SidebarSession } from './layouts/AppSidebar'
 export { AppShell } from './layouts/AppShell'
 export type { AppShellProps } from './layouts/AppShell'
+export { ShellOverlayProvider } from './layouts/ShellOverlayProvider'
+export {
+  shellChromeBodyClassName,
+  shellChromeRootClassName,
+} from './layouts/shellContentPadding'
+export { SHELL_OVERLAY_ROOT_ID, SHELL_SLIDE_HOST_ID } from './layouts/shellOverlay'
+export { shellSlideHostClassName } from './layouts/shellPanelChrome'
 export { AppEndPanel } from './layouts/AppEndPanel'
 export type { AppEndPanelProps } from './layouts/AppEndPanel'
 export type { NavConfigItem, NavItemConfig } from './types/nav'

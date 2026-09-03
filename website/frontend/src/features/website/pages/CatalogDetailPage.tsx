@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Ticket } from 'lucide-react'
+import { Ticket } from 'lucide-react'
 import {
   Button,
   Card,
@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  FeaturePage,
   ImageCarousel,
   ItemList,
   ItemListContent,
@@ -266,6 +267,11 @@ export function CatalogDetailPage() {
     })
   }
 
+  const pageTitle = item?.name
+    ?? (notFound ? t('notFound') : error ? t('somethingWrong') : t('loadingDetails'))
+  const pageDescription = item?.companyName
+    ?? (notFound ? t('notFoundDescription') : error ?? undefined)
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <LocationPermissionDialog
@@ -318,19 +324,17 @@ export function CatalogDetailPage() {
           </div>
         </div>
 
-        <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
-          <div className="mx-auto w-full max-w-5xl pt-4">
-            {loading ? (
-              <p className="text-sm text-muted-foreground">{t('loadingDetails')}</p>
-            ) : notFound ? (
+        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
+          <FeaturePage
+            title={pageTitle}
+            description={pageDescription}
+            onBack={handleBack}
+            backLabel={t('back')}
+            className="mx-auto w-full max-w-5xl px-0 py-4 sm:px-0 sm:pb-0 sm:pt-4"
+          >
+            {loading ? null : notFound ? (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t('notFound')}</CardTitle>
-                  <CardDescription>
-                    {t('notFoundDescription')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <Button type="button" variant="outline" size="sm" asChild>
                     <Link to="/search">{t('backToSearch')}</Link>
                   </Button>
@@ -338,11 +342,7 @@ export function CatalogDetailPage() {
               </Card>
             ) : error ? (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t('somethingWrong')}</CardTitle>
-                  <CardDescription>{error}</CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <Button type="button" variant="outline" size="sm" asChild>
                     <Link to="/search">{t('backToSearch')}</Link>
                   </Button>
@@ -352,34 +352,20 @@ export function CatalogDetailPage() {
               <div className="grid items-start gap-6 lg:grid-cols-3">
                 <div className="flex flex-col gap-6 lg:col-span-2">
                   <Card>
+                    <CardContent className="p-4 sm:p-6">
+                      <ImageCarousel images={detailImages(item)} alt={item.name} />
+                    </CardContent>
+                  </Card>
+                  <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">{t('overview')}</CardTitle>
                       <CardDescription>{t('overviewDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <ImageCarousel images={detailImages(item)} alt={item.name} />
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
                           {kindLabel(item.kind, t)}
                         </span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="mt-0.5 h-9 w-9 shrink-0"
-                          aria-label={t('back')}
-                          onClick={handleBack}
-                        >
-                          <ArrowLeft className="h-5 w-5" aria-hidden />
-                        </Button>
-                        <div>
-                          <h1 className="text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                            {item.name}
-                          </h1>
-                          <p className="mt-1 text-sm text-muted-foreground">{item.companyName}</p>
-                        </div>
                       </div>
                       {item.description ? (
                         <p className="whitespace-pre-wrap text-pretty text-sm leading-relaxed text-foreground">
@@ -596,8 +582,8 @@ export function CatalogDetailPage() {
                 </div>
               </div>
             ) : null}
-          </div>
-        </main>
+          </FeaturePage>
+        </div>
       </div>
     </div>
   )
