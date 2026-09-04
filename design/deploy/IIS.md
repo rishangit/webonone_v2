@@ -40,9 +40,23 @@ On the Windows Server:
 
 ## Step 2 — DNS and certificate
 
+**Production** (`{slug}.webonone.com`):
+
 1. Add DNS record: **design.webonone.com** → server IP (`A` or `CNAME`)
-2. Add a **wildcard** DNS record: **\*.webonone.com** → the same server IP, so company sites resolve as `{company-slug}.webonone.com`
-3. In IIS, have a TLS certificate that covers **design.webonone.com** and **\*.webonone.com**
+2. Add a **wildcard** DNS record: **\*.webonone.com** → the same server IP
+3. TLS certificate that covers **design.webonone.com** and **\*.webonone.com**
+
+**Staging** (`{slug}.staging.webonone.com`):
+
+A production wildcard **does not** cover nested names. `*.webonone.com` matches `acme.webonone.com` only — it does **not** match `acme.staging.webonone.com`. That lookup returns **NXDOMAIN**.
+
+1. Add DNS: **design.staging.webonone.com** → staging server IP
+2. Add a **separate** wildcard: **\*.staging.webonone.com** → the same staging IP
+3. TLS certificate that covers **design.staging.webonone.com** and **\*.staging.webonone.com** (a `*.webonone.com` cert does not cover this)
+4. Set `ORIGIN_DESIGN=https://design.staging.webonone.com` in `production.env` (apply derives `COMPANY_SITE_HOST=staging.webonone.com`). Redeploy Design **and** WebOnOne so profile URLs use the staging host.
+5. IIS Design site: extra HTTPS binding host name `*.staging.webonone.com`
+
+Copy the live URL from the company profile **Website** field — do not guess the slug.
 
 ---
 
@@ -120,8 +134,8 @@ npm run clean:deploy
 2. Right-click **Sites** → **Add Website**
 3. **Site name:** `design`
 4. **Physical path:** `C:\Projects\webonone_v2\design\deploy`
-5. **Binding:** Type `https`, Host name `design.webonone.com`, select your certificate
-6. Add a second **https** binding on the same site: Host name `*.webonone.com`, same certificate. Explicit hosts (`app.webonone.com`, `identity.webonone.com`, …) on other IIS sites take precedence; unmatched company subdomains land here.
+5. **Binding:** Type `https`, Host name `design.webonone.com` (or `design.staging.webonone.com` on staging), select your certificate
+6. Add a second **https** binding on the same site: Host name `*.webonone.com` (production) or `*.staging.webonone.com` (staging), same certificate. Explicit service hosts (`app…`, `identity…`, `design…`) on other IIS sites take precedence; unmatched company subdomains land here.
 7. Also add matching **http** bindings for ACME / HTTPS redirect if you use win-acme
 8. Click **OK**
 
@@ -149,7 +163,8 @@ The app pool also needs **Write** on `design\deploy\logs`.
 |-----|----------|
 | `https://design.webonone.com/api/v1/health` | `{"status":"ok","service":"design"}` |
 | `https://design.webonone.com/` | design UI loads |
-| `https://{web-slug}.webonone.com/` | Public company website (slug from company profile) |
+| `https://{web-slug}.webonone.com/` | Public company website (production; slug from company profile) |
+| `https://{web-slug}.staging.webonone.com/` | Public company website (staging — needs `*.staging.webonone.com` DNS) |
 | Login via platform nav | Redirects to Identity, returns to design |
 
 If the site fails, check `design\deploy\logs\` for Node errors.
@@ -179,7 +194,7 @@ Recycle the IIS app pool or restart the site.
 | API 404 from SPA | Frontend must be built with `VITE_API_BASE_URL=/api/v1` in `frontend\.env.production` |
 | Login callback rejected | Identity `ALLOWED_REDIRECT_URIS` must include `https://*.webonone.com`; redeploy Identity |
 | Billing sync fails from WebOnOne | `design_SERVICE_API_KEY` must match across WebOnOne and design backends |
-| DB errors | Run migrations; verify `DB_*` in `backend\.env` |
+| DNS_PROBE_FINISHED_NXDOMAIN / site can’t be reached | Hostname is not in DNS. `{slug}.staging.webonone.com` needs **`*.staging.webonone.com`**, not only `*.webonone.com`. Copy the URL from the company profile. |
 
 ---
 

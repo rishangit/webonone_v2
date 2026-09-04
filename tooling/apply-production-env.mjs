@@ -84,12 +84,27 @@ function apiBase(origin) {
 
 /**
  * Hostname used for company public sites: `{slug}.{host}`.
- * Derived from ORIGIN_WEBSITE (apex), stripping `www.`.
- * @param {string} origin
+ * Prefer explicit COMPANY_SITE_HOST, else strip `design.` from ORIGIN_DESIGN
+ * so staging `design.staging.webonone.com` → `staging.webonone.com`.
+ * @param {Record<string, string>} master
  */
-function companySiteHost(origin) {
+function companySiteHost(master) {
+  const explicit = get(master, 'COMPANY_SITE_HOST');
+  if (explicit) {
+    try {
+      if (/^https?:\/\//i.test(explicit)) {
+        return new URL(explicit).hostname.replace(/^www\./i, '') || 'webonone.com';
+      }
+    } catch {
+      // fall through to raw hostname
+    }
+    return explicit.replace(/^www\./i, '').replace(/\/.*$/, '') || 'webonone.com';
+  }
+  const originDesign = get(master, 'ORIGIN_DESIGN');
   try {
-    return new URL(origin).hostname.replace(/^www\./i, '') || 'webonone.com';
+    const host = new URL(originDesign).hostname.replace(/^www\./i, '');
+    if (host.startsWith('design.')) return host.slice('design.'.length);
+    return host || 'webonone.com';
   } catch {
     return 'webonone.com';
   }
@@ -296,7 +311,7 @@ function main() {
         `DATA_SERVICE_API_KEY=${dataKey}`,
         '',
         `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
-        `COMPANY_SITE_HOST=${companySiteHost(originWebsite)}`,
+        `COMPANY_SITE_HOST=${companySiteHost(master)}`,
       ]),
     ),
   );
@@ -319,7 +334,7 @@ function main() {
     `VITE_AI_ORIGIN=${originAi}`,
     `VITE_AI_API_BASE_URL=${apiBase(originAi)}`,
     `VITE_SUPPORT_ORIGIN=${originSupport}`,
-    `VITE_COMPANY_SITE_HOST=${companySiteHost(originWebsite)}`,
+    `VITE_COMPANY_SITE_HOST=${companySiteHost(master)}`,
   ];
   if (googleMapsKey) {
     webononeFeLines.push(`VITE_GOOGLE_MAPS_API_KEY=${googleMapsKey}`);
@@ -605,7 +620,7 @@ function main() {
         `VITE_WEBONONE_API_BASE_URL=${apiBase(originWebonone)}`,
         `VITE_MEDIA_ORIGIN=${originMedia}`,
         `VITE_ALLOWED_PARENT_ORIGINS=${joinOrigins([originWebonone, originIdentity, originDesign])}`,
-        `VITE_COMPANY_SITE_HOST=${companySiteHost(originWebsite)}`,
+        `VITE_COMPANY_SITE_HOST=${companySiteHost(master)}`,
       ]),
     ),
   );
