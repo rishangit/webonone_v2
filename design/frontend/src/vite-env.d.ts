@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_SMS_ORIGIN?: string
   readonly VITE_MEDIA_ORIGIN?: string
   readonly VITE_ALLOWED_PARENT_ORIGINS?: string
+  readonly VITE_COMPANY_SITE_HOST?: string
 }
 
 interface ImportMeta {

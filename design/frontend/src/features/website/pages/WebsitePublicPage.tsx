@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LoadingState } from '@webonone/ui-kit'
 import { fetchPublicWebsiteSite } from '../api'
@@ -8,12 +8,18 @@ import { collectGoogleFontUrls } from '../document/mutate'
 import { documentContentHeight } from '../document/layout'
 import { emptyWebsiteDocument, getBreakpointFromWidth } from '../types'
 import type { PublicWebsiteSite, WebsiteBreakpoint } from '../types'
+import { getCompanyPublicHostSlug, publicPageHref } from '../utils/companyPublicHost'
 
 export function WebsitePublicPage() {
   const { t } = useTranslation('website')
   const navigate = useNavigate()
-  const { companyId, '*': splat } = useParams<{ companyId: string; '*': string }>()
-  const path = (splat ?? '').replace(/^\/+/, '')
+  const location = useLocation()
+  const hostSlug = getCompanyPublicHostSlug()
+  const { companyId: paramId, '*': splat } = useParams<{ companyId: string; '*': string }>()
+  const companyKey = hostSlug ?? paramId
+  const path = hostSlug
+    ? location.pathname.replace(/^\/+/, '')
+    : (splat ?? '').replace(/^\/+/, '')
   const [site, setSite] = useState<PublicWebsiteSite | null>(null)
   const [missing, setMissing] = useState(false)
   const [breakpoint, setBreakpoint] = useState<WebsiteBreakpoint>(() =>
@@ -30,9 +36,9 @@ export function WebsitePublicPage() {
   }, [])
 
   useEffect(() => {
-    if (!companyId) return
+    if (!companyKey) return
     let cancelled = false
-    fetchPublicWebsiteSite(companyId, path)
+    fetchPublicWebsiteSite(companyKey, path)
       .then((data) => {
         if (!cancelled) {
           setSite(data)
@@ -48,7 +54,7 @@ export function WebsitePublicPage() {
     return () => {
       cancelled = true
     }
-  }, [companyId, path])
+  }, [companyKey, path])
 
   const fonts = useMemo(() => {
     const urls = new Set(collectGoogleFontUrls(site?.theme ?? null, site?.page.document))
@@ -59,7 +65,7 @@ export function WebsitePublicPage() {
     return [...urls]
   }, [site])
 
-  if (missing || !companyId) {
+  if (missing || !companyKey) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-2 p-6 text-center">
         <h1 className="text-2xl font-semibold">{t('notFoundTitle')}</h1>
@@ -81,6 +87,8 @@ export function WebsitePublicPage() {
   const footerDocument = site.footer?.document ?? emptyWebsiteDocument()
   const showHeader = Boolean(site.header) && documentContentHeight(headerDocument, breakpoint) > 0
   const showFooter = Boolean(site.footer) && documentContentHeight(footerDocument, breakpoint) > 0
+  const navKey = site.webSlug || site.companyId || companyKey
+  const goToPage = (next: string) => navigate(publicPageHref(navKey, next))
 
   return (
     <div
@@ -99,8 +107,8 @@ export function WebsitePublicPage() {
             mode="publish"
             fit="content"
             pages={pages}
-            companyId={companyId}
-            onNavigatePage={(next) => navigate(`/s/${companyId}${next ? `/${next}` : ''}`)}
+            companyId={site.companyId || companyKey}
+            onNavigatePage={goToPage}
           />
         </div>
       ) : null}
@@ -112,8 +120,8 @@ export function WebsitePublicPage() {
           mode="publish"
           fit="page"
           pages={pages}
-          companyId={companyId}
-          onNavigatePage={(next) => navigate(`/s/${companyId}${next ? `/${next}` : ''}`)}
+          companyId={site.companyId || companyKey}
+          onNavigatePage={goToPage}
         />
       </div>
       {showFooter ? (
@@ -124,8 +132,8 @@ export function WebsitePublicPage() {
           mode="publish"
           fit="content"
           pages={pages}
-          companyId={companyId}
-          onNavigatePage={(next) => navigate(`/s/${companyId}${next ? `/${next}` : ''}`)}
+          companyId={site.companyId || companyKey}
+          onNavigatePage={goToPage}
         />
       ) : null}
     </div>

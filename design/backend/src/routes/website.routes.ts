@@ -11,6 +11,14 @@ const manageRoles = ['super_admin', 'company_admin'] as const
 
 router.get('/public/sites/:companyId', pub.getPublicWebsiteSiteHandler)
 
+router.get(
+  '/website/live-url',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...companyRoles),
+  pub.getWebsiteLiveUrlHandler,
+)
+
 router.get('/website/pages', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.listWebsitePagesHandler)
 router.get('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.getWebsitePageHandler)
 router.post('/website/pages', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.createWebsitePageHandler)

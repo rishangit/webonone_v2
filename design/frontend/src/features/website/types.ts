@@ -69,6 +69,13 @@ export type ButtonAddonProps = {
   snapshot: ButtonAddonSnapshot
 }
 
+export type ImageSliderAddonProps = {
+  imagesByBreakpoint: Partial<Record<WebsiteBreakpoint, MediaRef[]>>
+  fit: 'cover' | 'contain'
+  showNavigation: boolean
+  autoSlide: boolean
+}
+
 export type WebsiteAddon =
   | {
       id: string
@@ -90,6 +97,13 @@ export type WebsiteAddon =
       zIndex: number
       layout: LayoutByBreakpoint
       props: ButtonAddonProps
+    }
+  | {
+      id: string
+      type: 'imageSlider'
+      zIndex: number
+      layout: LayoutByBreakpoint
+      props: ImageSliderAddonProps
     }
 
 export type WebsiteBlock = {
@@ -182,6 +196,9 @@ export type WebsiteTheme = {
 }
 
 export type PublicWebsiteSite = {
+  companyId: string
+  webSlug: string
+  webUrl: string
   page: WebsitePage
   header: WebsiteChrome | null
   footer: WebsiteChrome | null

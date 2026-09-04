@@ -83,6 +83,19 @@ function apiBase(origin) {
 }
 
 /**
+ * Hostname used for company public sites: `{slug}.{host}`.
+ * Derived from ORIGIN_WEBSITE (apex), stripping `www.`.
+ * @param {string} origin
+ */
+function companySiteHost(origin) {
+  try {
+    return new URL(origin).hostname.replace(/^www\./i, '') || 'webonone.com';
+  } catch {
+    return 'webonone.com';
+  }
+}
+
+/**
  * @param {string[]} origins
  */
 function joinOrigins(origins) {
@@ -283,6 +296,7 @@ function main() {
         `DATA_SERVICE_API_KEY=${dataKey}`,
         '',
         `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
+        `COMPANY_SITE_HOST=${companySiteHost(originWebsite)}`,
       ]),
     ),
   );
@@ -305,6 +319,7 @@ function main() {
     `VITE_AI_ORIGIN=${originAi}`,
     `VITE_AI_API_BASE_URL=${apiBase(originAi)}`,
     `VITE_SUPPORT_ORIGIN=${originSupport}`,
+    `VITE_COMPANY_SITE_HOST=${companySiteHost(originWebsite)}`,
   ];
   if (googleMapsKey) {
     webononeFeLines.push(`VITE_GOOGLE_MAPS_API_KEY=${googleMapsKey}`);
@@ -590,6 +605,7 @@ function main() {
         `VITE_WEBONONE_API_BASE_URL=${apiBase(originWebonone)}`,
         `VITE_MEDIA_ORIGIN=${originMedia}`,
         `VITE_ALLOWED_PARENT_ORIGINS=${joinOrigins([originWebonone, originIdentity, originDesign])}`,
+        `VITE_COMPANY_SITE_HOST=${companySiteHost(originWebsite)}`,
       ]),
     ),
   );

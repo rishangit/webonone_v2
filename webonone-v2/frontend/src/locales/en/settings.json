@@ -172,6 +172,8 @@
       "title": "Company profile",
       "description": "Identity of the company on the platform",
       "companySize": "Company size",
+      "webUrl": "Website",
+      "webUrlHint": "Auto-generated from the company name. Stays the same if you rename the company.",
       "superAdminView": "Super admin view"
     },
     "contact": {

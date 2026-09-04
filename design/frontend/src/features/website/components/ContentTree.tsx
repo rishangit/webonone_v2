@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronRight,
   ImageIcon,
+  Images,
   LayoutTemplate,
   MoreVertical,
   MousePointerClick,
@@ -30,6 +31,7 @@ const TREE_NAV_ACTIVE = 'border-l-2 border-primary bg-accent/60'
 
 const ADDON_ICONS: Record<WebsiteAddon['type'], LucideIcon> = {
   image: ImageIcon,
+  imageSlider: Images,
   text: Type,
   button: MousePointerClick,
 }

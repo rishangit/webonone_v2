@@ -14,3 +14,5 @@ summary: "Fill profile, contact, address, map location, and tags from the compan
 5. Save.
 
 Keep the public name, phone, and address accurate — they appear on your catalog and public website.
+
+The **Website** field on the profile card is generated from the company name (`https://{slug}.webonone.com`). It is not editable. See [Public company site URL](/docs/website-forms/public-site-url).

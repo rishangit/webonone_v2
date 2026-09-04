@@ -14,3 +14,5 @@ summary: "Company details page වෙතින් profile, contact, address, map
 5. Save කරන්න.
 
 Public name, phone, සහ address නිවැරදිව තබා ගන්න — ඒවා ඔබගේ catalog සහ public website හි දිස්වේ.
+
+Profile card හි **Website** ක්ෂේත්‍රය සමාගම් නාමයෙන් ජනනය වේ (`https://{slug}.webonone.com`). එය edit කළ නොහැක. [Public company site URL](/docs/website-forms/public-site-url) බලන්න.

@@ -47,6 +47,22 @@ export function CompanyProfileCard({ detail, canEdit, onEdit }: CompanyProfileCa
       )}
       <ReadOnlyField label={tc('description')} value={detail.description} />
       <ReadOnlyField label={t('companyCards.profile.companySize')} value={detail.companySize} />
+      {detail.webUrl ? (
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('companyCards.profile.webUrl')}
+          </p>
+          <a
+            href={detail.webUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="break-all text-sm text-primary underline-offset-4 hover:underline"
+          >
+            {detail.webUrl}
+          </a>
+          <p className="text-xs text-muted-foreground">{t('companyCards.profile.webUrlHint')}</p>
+        </div>
+      ) : null}
     </EditableSectionCard>
   )
 }

@@ -9,6 +9,7 @@ import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { useAppSelector } from '@/app/store/hooks'
 import { hasAnyPlatformHandoff } from '@/features/auth/utils/platformReturn'
+import { getCompanyPublicHostSlug } from '@/features/website/utils/companyPublicHost'
 
 const FormsPage = lazy(() =>
   import('@/features/forms/pages/FormsPage').then((m) => ({ default: m.FormsPage })),
@@ -27,6 +28,11 @@ const FormCreateEmbedPage = lazy(() =>
 const FormFillEmbedPage = lazy(() =>
   import('@/features/forms/pages/FormFillEmbedPage').then((m) => ({
     default: m.FormFillEmbedPage,
+  })),
+)
+const FormFieldPropertiesPanelEmbedPage = lazy(() =>
+  import('@/features/forms/pages/FormFieldPropertiesPanelEmbedPage').then((m) => ({
+    default: m.FormFieldPropertiesPanelEmbedPage,
   })),
 )
 const WebsitePagesPage = lazy(() =>
@@ -97,6 +103,26 @@ const manageRoles = ['super_admin', 'company_admin'] as const
 
 export function App() {
   useRedirectThemeBootstrap()
+  const tenantSlug = getCompanyPublicHostSlug()
+
+  if (tenantSlug) {
+    return (
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="*"
+              element={
+                <LazyRoute>
+                  <WebsitePublicPage />
+                </LazyRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    )
+  }
 
   return (
     <ToastProvider>
@@ -174,6 +200,16 @@ export function App() {
                 <RoleRoute roles={[...companyRoles]}>
                   <LazyRoute>
                     <FormFillEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/panels/forms/field-properties"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <FormFieldPropertiesPanelEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

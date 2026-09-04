@@ -1,6 +1,10 @@
 import { nanoid } from 'nanoid'
 import { env } from '../config/env.js'
 import {
+  allocateUniqueCompanyWebSlug,
+  companyWebUrl,
+} from '../utils/companyWebSlug.js'
+import {
   rewriteMediaFileUrl,
   rewriteOptionalMediaFileUrl,
 } from '../utils/rewriteMediaFileUrl.js'
@@ -75,6 +79,8 @@ export type CompanyContactPerson = {
 export type CompanyDetail = {
   id: string
   name: string
+  webSlug: string
+  webUrl: string
   description: string | null
   companySize: string | null
   logoUrl: string | null
@@ -174,6 +180,8 @@ function toCompanyDetail(
   return {
     id: row.id,
     name: row.name,
+    webSlug: row.web_slug,
+    webUrl: companyWebUrl(row.web_slug, env.companySiteHost),
     description: row.description,
     companySize: row.company_size,
     logoUrl: rewriteOptionalMediaFileUrl(row.logo_url),
@@ -505,10 +513,12 @@ export async function registerCompany(
 ): Promise<CompanyWithMembership> {
   const companyId = nanoid()
   const roleId = nanoid()
+  const webSlug = await allocateUniqueCompanyWebSlug(input.name, repo.isCompanyWebSlugTaken)
 
   await repo.insertCompany({
     id: companyId,
     name: input.name,
+    web_slug: webSlug,
     description: input.description?.trim() || null,
     company_size: input.companySize ?? null,
     logo_url: input.logoUrl ?? null,

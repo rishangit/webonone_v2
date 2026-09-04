@@ -14,6 +14,7 @@ import { nanoid } from 'nanoid'
 import { WebsiteImagePicker } from '../../components/WebsiteImagePicker'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon, WebsiteBreakpoint } from '../../types'
+import { imageAddonSampleSrc } from '../addonSamples'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
 
 function mediaForBreakpoint(
@@ -30,11 +31,13 @@ function mediaForBreakpoint(
   )
 }
 
-function ImageAddonRenderer({ addon, breakpoint }: AddonRenderProps) {
+function ImageAddonRenderer({ addon, breakpoint, publish }: AddonRenderProps) {
   const { t } = useTranslation('website')
   if (addon.type !== 'image') return null
   const media = mediaForBreakpoint(addon.props.mediaByBreakpoint, breakpoint)
-  if (!media?.url) {
+  const placeholderSrc = imageAddonSampleSrc(addon.id)
+  const src = media?.url ?? (publish ? null : placeholderSrc)
+  if (!src) {
     return (
       <div className="flex h-full items-center justify-center border border-dashed border-muted-foreground/40 text-sm text-muted-foreground">
         {t('image')}
@@ -44,7 +47,7 @@ function ImageAddonRenderer({ addon, breakpoint }: AddonRenderProps) {
   const height = addon.props.heightMode === 'fixed' ? addon.props.fixedHeight : '100%'
   return (
     <img
-      src={media.url}
+      src={src}
       alt=""
       className="h-full w-full"
       style={{
@@ -66,13 +69,14 @@ function ImageAddonPropsFields({ addon, breakpoint, onChange, onNestedDialogOpen
   }
 
   const media = mediaForBreakpoint(addon.props.mediaByBreakpoint, breakpoint)
+  const previewSrc = media?.url ?? imageAddonSampleSrc(addon.id)
 
   return (
     <>
       <FormField label={t('perBreakpointImage')} htmlFor="image-pick">
         <div>
           <ImagePreview
-            src={media?.url ?? null}
+            src={previewSrc}
             alt={t('image')}
             mode="edit"
             onEdit={() => setPicker(true)}

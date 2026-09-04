@@ -18,7 +18,7 @@ export interface AppEndPanelProps {
   footer?: ReactNode
   closeLabel?: string
   className?: string
-  /** Core-hosted peer panel — slide-over on all breakpoints. */
+  /** Core-hosted peer panel — slide-over on all breakpoints; scrim on mobile only. */
   forceSlideOver?: boolean
   /** Span the full shell width on mobile slide-over (e.g. AI assistant chat). */
   mobileFullWidth?: boolean

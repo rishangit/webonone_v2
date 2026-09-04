@@ -142,3 +142,13 @@ export async function fetchPublicWebsiteSite(companyId: string, path: string): P
   }
   return data as PublicWebsiteSite
 }
+
+export type WebsiteLiveUrl = {
+  companyId: string
+  webSlug: string
+  webUrl: string
+}
+
+export function fetchWebsiteLiveUrl() {
+  return apiClient<WebsiteLiveUrl>('/website/live-url')
+}

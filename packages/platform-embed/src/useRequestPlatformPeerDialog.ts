@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { sendPlatformPeerDialogRequest } from './embedUrl'
 import { writePeerPanelDraft } from './peerPanelDraft'
 import {
@@ -50,6 +50,8 @@ export type UseRequestPlatformPeerDialogOptions = {
 export type UseRequestPlatformPeerDialogResult = {
   /** True when a host dialog should be used instead of a local CustomDialog. */
   isHosted: boolean
+  /** Active host request id while `open` in embed mode. */
+  requestId: string | null
 }
 
 /**
@@ -79,6 +81,7 @@ export function useRequestPlatformPeerDialog(
   } = options
 
   const isHosted = Boolean(parentOrigin)
+  const [requestId, setRequestId] = useState<string | null>(null)
   const requestIdRef = useRef<string | null>(null)
   const panelDraftRef = useRef(panelDraft)
   const onResultRef = useRef(onResult)
@@ -94,16 +97,18 @@ export function useRequestPlatformPeerDialog(
   useEffect(() => {
     if (!parentOrigin || !open) {
       requestIdRef.current = null
+      setRequestId(null)
       return
     }
 
-    const requestId = createPeerDialogRequestId()
-    requestIdRef.current = requestId
+    const nextRequestId = createPeerDialogRequestId()
+    requestIdRef.current = nextRequestId
+    setRequestId(nextRequestId)
     if (panelDraftRef.current !== undefined) {
-      writePeerPanelDraft(requestId, panelDraftRef.current)
+      writePeerPanelDraft(nextRequestId, panelDraftRef.current)
     }
     sendPlatformPeerDialogRequest(parentOrigin, {
-      requestId,
+      requestId: nextRequestId,
       path,
       title,
       description,
@@ -132,6 +137,16 @@ export function useRequestPlatformPeerDialog(
   ])
 
   useEffect(() => {
+    const activeRequestId = requestIdRef.current
+    if (!parentOrigin || !open || !activeRequestId) {
+      return
+    }
+    if (panelDraftRef.current !== undefined) {
+      writePeerPanelDraft(activeRequestId, panelDraftRef.current)
+    }
+  }, [open, parentOrigin, panelDraft])
+
+  useEffect(() => {
     if (!parentOrigin) {
       return
     }
@@ -151,6 +166,7 @@ export function useRequestPlatformPeerDialog(
         event.data.requestId === requestId
       ) {
         requestIdRef.current = null
+        setRequestId(null)
         onResultRef.current?.(event.data.payload)
         return
       }
@@ -160,6 +176,7 @@ export function useRequestPlatformPeerDialog(
         event.data.requestId === requestId
       ) {
         requestIdRef.current = null
+        setRequestId(null)
         onCancelRef.current?.(event.data.reason)
       }
     }
@@ -168,5 +185,5 @@ export function useRequestPlatformPeerDialog(
     return () => window.removeEventListener('message', handleMessage)
   }, [parentOrigin])
 
-  return { isHosted }
+  return { isHosted, requestId }
 }

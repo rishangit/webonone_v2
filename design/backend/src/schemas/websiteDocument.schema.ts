@@ -96,6 +96,23 @@ export const buttonAddonPropsSchema = z.object({
   snapshot: buttonAddonSnapshotSchema.default({}),
 })
 
+const imagesByBreakpointSchema = z
+  .object({
+    sm: z.array(mediaRefSchema).max(20).optional(),
+    md: z.array(mediaRefSchema).max(20).optional(),
+    lg: z.array(mediaRefSchema).max(20).optional(),
+    xl: z.array(mediaRefSchema).max(20).optional(),
+    '2xl': z.array(mediaRefSchema).max(20).optional(),
+  })
+  .default({})
+
+export const imageSliderAddonPropsSchema = z.object({
+  imagesByBreakpoint: imagesByBreakpointSchema,
+  fit: z.enum(['cover', 'contain']).default('cover'),
+  showNavigation: z.boolean().default(true),
+  autoSlide: z.boolean().default(false),
+})
+
 export const websiteAddonSchema = z.discriminatedUnion('type', [
   z.object({
     id: z.string().min(1).max(64),
@@ -117,6 +134,13 @@ export const websiteAddonSchema = z.discriminatedUnion('type', [
     zIndex: z.number().int().default(0),
     layout: layoutByBreakpointSchema,
     props: buttonAddonPropsSchema,
+  }),
+  z.object({
+    id: z.string().min(1).max(64),
+    type: z.literal('imageSlider'),
+    zIndex: z.number().int().default(0),
+    layout: layoutByBreakpointSchema,
+    props: imageSliderAddonPropsSchema,
   }),
 ])
 

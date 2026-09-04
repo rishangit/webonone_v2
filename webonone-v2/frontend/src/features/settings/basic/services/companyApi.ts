@@ -85,6 +85,8 @@ export type CompanyContactPerson = {
 export type CompanyDetail = {
   id: string
   name: string
+  webSlug: string
+  webUrl: string
   description: string | null
   companySize: string | null
   logoUrl: string | null

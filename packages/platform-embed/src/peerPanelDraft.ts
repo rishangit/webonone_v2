@@ -30,9 +30,27 @@ function clearPeerPanelDraft(requestId: string): void {
   }
 }
 
+function subscribePeerPanelDraft<T>(requestId: string, callback: (draft: T) => void): () => void {
+  const key = peerPanelDraftKey(requestId)
+
+  function handleStorage(event: StorageEvent) {
+    if (event.key !== key || !event.newValue) {
+      return
+    }
+    try {
+      callback(JSON.parse(event.newValue) as T)
+    } catch {
+      // ignore malformed draft payloads
+    }
+  }
+
+  window.addEventListener('storage', handleStorage)
+  return () => window.removeEventListener('storage', handleStorage)
+}
+
 export type PeerFilterPanelResult<T = unknown> = {
   action: 'apply' | 'clear'
   draft?: T
 }
 
-export { writePeerPanelDraft, readPeerPanelDraft, clearPeerPanelDraft }
+export { writePeerPanelDraft, readPeerPanelDraft, clearPeerPanelDraft, subscribePeerPanelDraft }

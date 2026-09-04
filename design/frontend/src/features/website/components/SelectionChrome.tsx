@@ -4,6 +4,9 @@ import { ChevronDown, ChevronUp, Plus, Settings2, Trash2 } from 'lucide-react'
 import { Button } from '@webonone/ui-kit'
 import { RESIZE_HANDLES, resizeHandleClassName, type ResizeHandle } from '../document/layout'
 
+const CHROME_ICON_CLASS = 'h-3.5 w-3.5 shrink-0'
+const CHROME_BUTTON_CLASS = 'h-7 w-7 shrink-0 rounded-full p-0'
+
 interface SelectionChromeProps {
   kind: 'block' | 'addon'
   canManage?: boolean
@@ -33,7 +36,7 @@ export function SelectionChrome({
     <>
       {canManage ? (
         <div
-          className="absolute right-1 top-1 z-40 flex max-w-[calc(100%-0.5rem)] flex-wrap justify-end gap-1 rounded-md border border-border bg-background p-0.5 shadow-sm"
+          className="absolute right-1 top-1 z-40 flex max-w-[calc(100%-0.5rem)] flex-wrap items-center justify-end gap-1 rounded-full border border-border bg-background p-0.5 shadow-sm"
           data-chrome-action=""
           onPointerDown={stop}
           onClick={stop}
@@ -43,71 +46,71 @@ export function SelectionChrome({
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="h-7 px-2"
+                size="icon"
+                className={CHROME_BUTTON_CLASS}
                 aria-label={t('addAddon')}
                 onPointerDown={stop}
                 onClick={() => onAddAddon?.()}
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className={CHROME_ICON_CLASS} aria-hidden />
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="h-7 px-2"
+                size="icon"
+                className={CHROME_BUTTON_CLASS}
                 aria-label={t('openSettings')}
                 onPointerDown={stop}
                 onClick={onOpenSettings}
               >
-                <Settings2 className="h-3.5 w-3.5" />
+                <Settings2 className={CHROME_ICON_CLASS} aria-hidden />
               </Button>
             </>
           ) : (
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              className="h-7 px-2"
+              size="icon"
+              className={CHROME_BUTTON_CLASS}
               aria-label={t('openSettings')}
               onPointerDown={stop}
               onClick={onOpenSettings}
             >
-              <Settings2 className="h-3.5 w-3.5" />
+              <Settings2 className={CHROME_ICON_CLASS} aria-hidden />
             </Button>
           )}
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="h-7 px-2"
+            size="icon"
+            className={CHROME_BUTTON_CLASS}
             aria-label={t('layerUp')}
             onPointerDown={stop}
             onClick={() => onLayer('up')}
           >
-            <ChevronUp className="h-3.5 w-3.5" />
+            <ChevronUp className={CHROME_ICON_CLASS} aria-hidden />
           </Button>
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="h-7 px-2"
+            size="icon"
+            className={CHROME_BUTTON_CLASS}
             aria-label={t('layerDown')}
             onPointerDown={stop}
             onClick={() => onLayer('down')}
           >
-            <ChevronDown className="h-3.5 w-3.5" />
+            <ChevronDown className={CHROME_ICON_CLASS} aria-hidden />
           </Button>
           <Button
             type="button"
             variant="destructive"
-            size="sm"
-            className="h-7 px-2"
+            size="icon"
+            className={CHROME_BUTTON_CLASS}
             aria-label={kind === 'addon' ? t('deleteAddon') : t('deleteBlock')}
             onPointerDown={stop}
             onClick={onDelete}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className={CHROME_ICON_CLASS} aria-hidden />
           </Button>
         </div>
       ) : null}

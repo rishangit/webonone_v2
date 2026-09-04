@@ -34,7 +34,10 @@ export function WebsiteHubTabs({
   )
 }
 
-export function websiteLiveUrl(companyId: string, path: string): string {
+export function websiteLiveUrl(liveOrigin: string | null | undefined, companyId: string, path: string): string {
   const suffix = path ? `/${path}` : ''
+  if (liveOrigin) {
+    return `${liveOrigin.replace(/\/$/, '')}${suffix}`
+  }
   return `${window.location.origin}/s/${companyId}${suffix}`
 }

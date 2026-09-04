@@ -41,7 +41,8 @@ On the Windows Server:
 ## Step 2 — DNS and certificate
 
 1. Add DNS record: **design.webonone.com** → server IP (`A` or `CNAME`)
-2. In IIS, have a TLS certificate that covers **design.webonone.com** (or `*.webonone.com`)
+2. Add a **wildcard** DNS record: **\*.webonone.com** → the same server IP, so company sites resolve as `{company-slug}.webonone.com`
+3. In IIS, have a TLS certificate that covers **design.webonone.com** and **\*.webonone.com**
 
 ---
 
@@ -120,7 +121,9 @@ npm run clean:deploy
 3. **Site name:** `design`
 4. **Physical path:** `C:\Projects\webonone_v2\design\deploy`
 5. **Binding:** Type `https`, Host name `design.webonone.com`, select your certificate
-6. Click **OK**
+6. Add a second **https** binding on the same site: Host name `*.webonone.com`, same certificate. Explicit hosts (`app.webonone.com`, `identity.webonone.com`, …) on other IIS sites take precedence; unmatched company subdomains land here.
+7. Also add matching **http** bindings for ACME / HTTPS redirect if you use win-acme
+8. Click **OK**
 
 ### Application pool
 
@@ -146,6 +149,7 @@ The app pool also needs **Write** on `design\deploy\logs`.
 |-----|----------|
 | `https://design.webonone.com/api/v1/health` | `{"status":"ok","service":"design"}` |
 | `https://design.webonone.com/` | design UI loads |
+| `https://{web-slug}.webonone.com/` | Public company website (slug from company profile) |
 | Login via platform nav | Redirects to Identity, returns to design |
 
 If the site fails, check `design\deploy\logs\` for Node errors.

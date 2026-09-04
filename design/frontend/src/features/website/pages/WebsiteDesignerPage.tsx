@@ -6,10 +6,9 @@ import {
   Alert,
   AlertDescription,
   Button,
-  Tabs,
-  TabsList,
-  TabsTrigger,
   cn,
+  SegmentedSwitch,
+  SegmentedSwitchItem,
   useToast,
 } from '@webonone/ui-kit'
 import { resolvePlatformEmbedParentOrigin, sendPlatformNavigate } from '@webonone/platform-embed'
@@ -24,6 +23,7 @@ import { ContentContainerSettingsDialog } from '../components/ContentContainerSe
 import { ContentBlockSettingsDialog } from '../components/ContentBlockSettingsDialog'
 import { AddonSettingsDialog } from '../components/AddonSettingsDialog'
 import { websiteLiveUrl } from '../components/WebsiteHubTabs'
+import { useWebsiteLiveOrigin } from '../hooks/useWebsiteLiveOrigin'
 import {
   addAddon,
   addBlock,
@@ -57,6 +57,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const user = useAppSelector((s) => s.auth.user)
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
+  const liveOrigin = useWebsiteLiveOrigin(Boolean(accessToken && user?.companyId))
   const pagesState = useAppSelector((s) => s.websitePages)
   const headersState = useAppSelector((s) => s.websiteHeaders)
   const footersState = useAppSelector((s) => s.websiteFooters)
@@ -269,12 +270,16 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           </h1>
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-themed">
             <div className="flex shrink-0 items-center gap-2">
-              <Button type="button" size="sm" variant={mode === 'visual' ? 'default' : 'outline'} onClick={() => setMode('visual')}>
-                {t('visual')}
-              </Button>
-              <Button type="button" size="sm" variant={mode === 'edit' ? 'default' : 'outline'} onClick={() => setMode('edit')}>
-                {t('edit')}
-              </Button>
+              <SegmentedSwitch
+                value={mode}
+                onValueChange={(value) => setMode(value as DesignerMode)}
+                size="sm"
+                className="shrink-0"
+                aria-label={t('designerMode')}
+              >
+                <SegmentedSwitchItem value="visual">{t('visual')}</SegmentedSwitchItem>
+                <SegmentedSwitchItem value="edit">{t('edit')}</SegmentedSwitchItem>
+              </SegmentedSwitch>
               {mode === 'edit' ? (
                 <Button type="button" size="sm" variant="outline" onClick={handleAddBlock} disabled={!canManage}>
                   {t('addBlock')}
@@ -286,7 +291,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   size="sm"
                   variant="outline"
                   onClick={() =>
-                    window.open(websiteLiveUrl(pagesState.detail!.companyId, pagesState.detail!.path), '_blank', 'noopener')
+                    window.open(
+                      websiteLiveUrl(liveOrigin, pagesState.detail!.companyId, pagesState.detail!.path),
+                      '_blank',
+                      'noopener',
+                    )
                   }
                 >
                   {t('preview')}
@@ -294,15 +303,19 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               ) : null}
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              <Tabs value={breakpoint} onValueChange={(value) => setBreakpoint(value as WebsiteBreakpoint)}>
-                <TabsList className="h-8 w-auto min-w-0 px-0" aria-label={t('breakpoint')}>
-                  {WEBSITE_BREAKPOINTS.map((item) => (
-                    <TabsTrigger key={item} value={item} className="h-7 px-2 text-xs">
-                      {item}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+              <SegmentedSwitch
+                value={breakpoint}
+                onValueChange={(value) => setBreakpoint(value as WebsiteBreakpoint)}
+                size="sm"
+                className="shrink-0"
+                aria-label={t('breakpoint')}
+              >
+                {WEBSITE_BREAKPOINTS.map((item) => (
+                  <SegmentedSwitchItem key={item} value={item} className="px-2.5 text-xs">
+                    {item}
+                  </SegmentedSwitchItem>
+                ))}
+              </SegmentedSwitch>
               {canManage ? (
                 <Button type="button" size="sm" onClick={save} disabled={feature.detailStatus === 'saving'}>
                   {feature.detailStatus === 'saving' ? t('saving') : t('save')}

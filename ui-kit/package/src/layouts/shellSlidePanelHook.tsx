@@ -15,7 +15,7 @@ interface UseShellSlidePanelOptions {
   open: boolean
   onClose: () => void
   closeLabel?: string
-  /** Always slide-over with shell overlay (core-hosted peer panels on desktop). */
+  /** Slide-over positioning on all breakpoints; scrim still only on mobile (like left nav). */
   forceSlideOver?: boolean
 }
 
@@ -28,33 +28,38 @@ function useShellSlidePanel({
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const overlayId = useId()
   const slideOver = forceSlideOver || !isDesktop
+  const useOverlay = open && !isDesktop
 
   const hasShellOverlay = useShellOverlay({
     id: overlayId,
-    open: open && slideOver,
+    open: useOverlay,
     onClose,
     ariaLabel: closeLabel,
   })
 
   useEffect(() => {
-    if (!slideOver || !open) return
+    if (!useOverlay) return
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [slideOver, open])
+  }, [useOverlay])
 
   const mobileSlidePanelClassName = cn(
     slideOver && open && shellSlidePanelClassName,
-    slideOver && open && hasShellOverlay && shellSlidePanelAnchoredClassName,
+    slideOver && open && !isDesktop && hasShellOverlay && shellSlidePanelAnchoredClassName,
     slideOver && open && 'border-l',
   )
 
   function renderMobilePanel(panel: ReactNode): ReactNode {
     if (!slideOver || !open) {
       return panel
+    }
+
+    if (isDesktop) {
+      return createPortal(panel, getShellSlideHost())
     }
 
     if (!hasShellOverlay) {

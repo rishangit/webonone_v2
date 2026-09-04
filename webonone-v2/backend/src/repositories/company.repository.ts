@@ -13,6 +13,7 @@ export type CompanyDataEntity =
 export type CompanyRow = {
   id: string
   name: string
+  web_slug: string
   description: string | null
   company_size: string | null
   logo_url: string | null
@@ -68,6 +69,15 @@ export type CompanyProfilePatch = {
 
 export async function findCompanyById(id: string): Promise<CompanyRow | undefined> {
   return db<CompanyRow>('companies').where({ id }).first()
+}
+
+export async function findCompanyByWebSlug(webSlug: string): Promise<CompanyRow | undefined> {
+  return db<CompanyRow>('companies').where({ web_slug: webSlug }).first()
+}
+
+export async function isCompanyWebSlugTaken(webSlug: string): Promise<boolean> {
+  const row = await db('companies').where({ web_slug: webSlug }).select('id').first()
+  return Boolean(row)
 }
 
 export async function findCompaniesByIds(ids: string[]): Promise<CompanyRow[]> {

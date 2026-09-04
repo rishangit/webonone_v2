@@ -23,6 +23,7 @@ import { WebsiteHubTabs, websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { WebsitePageDialog } from '../components/WebsiteEntityDialogs'
 import { WebsitePagesList } from '../components/WebsitePagesList'
 import { WebsitePagesStatusFilterFields } from '../components/WebsitePagesStatusFilterFields'
+import { useWebsiteLiveOrigin } from '../hooks/useWebsiteLiveOrigin'
 import type { WebsitePagesFilterDraft } from './WebsitePagesFilterEmbedPage'
 import type { PageMetaValues } from '../schemas/websiteMeta'
 import type { WebsitePage } from '../types'
@@ -37,6 +38,7 @@ export function WebsitePagesPage() {
   const user = useAppSelector((s) => s.auth.user)
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
   const companyId = user?.companyId ?? null
+  const liveOrigin = useWebsiteLiveOrigin(Boolean(accessToken && companyId))
   const [dialog, setDialog] = useState<{ initial?: PageMetaValues; id?: string } | null>(null)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
 
@@ -130,7 +132,7 @@ export function WebsitePagesPage() {
           <WebsitePagesList
             pages={list.items as WebsitePage[]}
             canManage={canManage}
-            onBrowse={(page) => window.open(websiteLiveUrl(page.companyId, page.path), '_blank', 'noopener')}
+            onBrowse={(page) => window.open(websiteLiveUrl(liveOrigin, page.companyId, page.path), '_blank', 'noopener')}
             onEditDetails={(page) =>
               setDialog({ id: page.id, initial: { name: page.name, path: page.path, status: page.status } })
             }

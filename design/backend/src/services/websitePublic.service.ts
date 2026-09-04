@@ -1,9 +1,13 @@
 import { HttpError } from './httpError.js'
+import { resolveCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { getWebsitePageByPath, listWebsitePages, type WebsitePageDto } from './websitePage.service.js'
 import { getDefaultWebsiteChrome, type WebsiteChromeDto } from './websiteChrome.service.js'
 import { getDefaultWebsiteTheme, type WebsiteThemeDto } from './websiteTheme.service.js'
 
 export type PublicWebsiteSiteDto = {
+  companyId: string
+  webSlug: string
+  webUrl: string
   page: WebsitePageDto
   header: WebsiteChromeDto | null
   footer: WebsiteChromeDto | null
@@ -15,15 +19,20 @@ export async function getPublicWebsiteSite(input: {
   companyId: string
   path: string
 }): Promise<PublicWebsiteSiteDto> {
+  const company = await resolveCompanyFromWebOnOne(input.companyId)
+  const companyId = company.id
   try {
     const [page, header, footer, theme, listed] = await Promise.all([
-      getWebsitePageByPath(input),
-      getDefaultWebsiteChrome({ kind: 'headers', companyId: input.companyId }),
-      getDefaultWebsiteChrome({ kind: 'footers', companyId: input.companyId }),
-      getDefaultWebsiteTheme({ companyId: input.companyId }),
-      listWebsitePages({ companyId: input.companyId, page: 1, pageSize: 100, status: 'active' }),
+      getWebsitePageByPath({ companyId, path: input.path }),
+      getDefaultWebsiteChrome({ kind: 'headers', companyId }),
+      getDefaultWebsiteChrome({ kind: 'footers', companyId }),
+      getDefaultWebsiteTheme({ companyId }),
+      listWebsitePages({ companyId, page: 1, pageSize: 100, status: 'active' }),
     ])
     return {
+      companyId,
+      webSlug: company.webSlug,
+      webUrl: company.webUrl,
       page,
       header,
       footer,

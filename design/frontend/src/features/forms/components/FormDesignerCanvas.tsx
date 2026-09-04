@@ -1,4 +1,6 @@
+import { Edit3 } from 'lucide-react'
 import {
+  Button,
   Checkbox,
   Input,
   Label,
@@ -18,7 +20,9 @@ import type { FormField } from '@/shared/types/design.types'
 interface FormDesignerCanvasProps {
   fields: FormField[]
   selectedId: string | null
+  canEdit?: boolean
   onSelect: (id: string) => void
+  onEdit: (id: string) => void
 }
 
 function FieldPreview({ field }: { field: FormField }) {
@@ -92,7 +96,7 @@ function FieldPreview({ field }: { field: FormField }) {
   }
 }
 
-export function FormDesignerCanvas({ fields, selectedId, onSelect }: FormDesignerCanvasProps) {
+export function FormDesignerCanvas({ fields, selectedId, canEdit, onSelect, onEdit }: FormDesignerCanvasProps) {
   const { t } = useTranslation('forms')
 
   if (fields.length === 0) {
@@ -105,20 +109,52 @@ export function FormDesignerCanvas({ fields, selectedId, onSelect }: FormDesigne
 
   return (
     <div className="space-y-3">
-      {fields.map((field) => (
-        <button
-          key={field.id}
-          type="button"
-          onClick={() => onSelect(field.id)}
-          className={cn(
-            'w-full rounded-lg border p-4 text-left transition-shadow',
-            'border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg)/0.4)]',
-            selectedId === field.id && 'ring-2 ring-ring',
-          )}
-        >
-          <FieldPreview field={field} />
-        </button>
-      ))}
+      {fields.map((field) => {
+        const selected = selectedId === field.id
+
+        return (
+          <div
+            key={field.id}
+            role={canEdit ? 'button' : undefined}
+            tabIndex={canEdit ? 0 : undefined}
+            onClick={canEdit ? () => onSelect(field.id) : undefined}
+            onKeyDown={
+              canEdit
+                ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onSelect(field.id)
+                    }
+                  }
+                : undefined
+            }
+            className={cn(
+              'relative w-full rounded-lg border p-4 text-left',
+              'border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg)/0.4)]',
+              canEdit && 'cursor-pointer',
+              selected && 'ring-2 ring-ring',
+              selected && canEdit && 'pr-14',
+            )}
+          >
+            {canEdit && selected ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="absolute right-2 top-2 h-9 w-9 shrink-0 rounded-full"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onEdit(field.id)
+                }}
+                aria-label={t('editField', { name: field.label })}
+              >
+                <Edit3 className="h-4 w-4" aria-hidden />
+              </Button>
+            ) : null}
+            <FieldPreview field={field} />
+          </div>
+        )
+      })}
     </div>
   )
 }

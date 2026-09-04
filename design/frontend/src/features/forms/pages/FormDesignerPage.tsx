@@ -3,6 +3,7 @@ import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Save } from 'lucide-react'
 import { nanoid } from 'nanoid'
+import { PlatformHostedEndPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -17,11 +18,17 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { formsActions } from '@/features/forms/store'
 import { FormDesignerToolbox } from '@/features/forms/components/FormDesignerToolbox'
 import { FormDesignerCanvas } from '@/features/forms/components/FormDesignerCanvas'
 import { FormDesignerPropsPanel } from '@/features/forms/components/FormDesignerPropsPanel'
 import { formDefinitionSchema } from '@/features/forms/schemas/formSchemas'
+import {
+  isFormFieldPropertiesPanelMessage,
+  type FormFieldPropertiesPanelDraft,
+  type FormFieldPropertiesPanelState,
+} from '@/features/forms/utils/formFieldPropertiesPanel'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import type { FormDefinition, FormField, FormFieldType, FormTemplateStatus } from '@/shared/types/design.types'
 
@@ -72,6 +79,7 @@ export function FormDesignerPage() {
   const [name, setName] = useState('')
   const [status, setStatus] = useState<FormTemplateStatus>('draft')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [propsOpen, setPropsOpen] = useState(false)
   const [awaitingSave, setAwaitingSave] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
 
@@ -90,7 +98,8 @@ export function FormDesignerPage() {
     setDefinition(detail.definition)
     setName(detail.name)
     setStatus(detail.status)
-    setSelectedId(detail.definition.fields[0]?.id ?? null)
+    setSelectedId(null)
+    setPropsOpen(false)
   }, [detail, id])
 
   useEffect(() => {
@@ -121,13 +130,15 @@ export function FormDesignerPage() {
 
   if (!hasCompany) {
     return (
-      <FeaturePage title={t('designer')} description={t('companyTemplates')}>
+      <FeaturePage
+        title={t('designer')}
+        description={t('companyTemplates')}
+        onBack={goToList}
+        backLabel={tc('back')}
+      >
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
-        <Button type="button" variant="outline" className="mt-4" onClick={goToList}>
-          {t('backToForms')}
-        </Button>
       </FeaturePage>
     )
   }
@@ -140,6 +151,21 @@ export function FormDesignerPage() {
     const field = defaultField(type, t)
     setDefinition((prev) => ({ ...prev, fields: [...prev.fields, field] }))
     setSelectedId(field.id)
+    setPropsOpen(true)
+  }
+
+  function selectField(id: string) {
+    setSelectedId(id)
+  }
+
+  function openFieldProps(id: string) {
+    setSelectedId(id)
+    setPropsOpen(true)
+  }
+
+  function closeFieldProps() {
+    setPropsOpen(false)
+    setSelectedId(null)
   }
 
   function updateField(next: FormField) {
@@ -153,7 +179,9 @@ export function FormDesignerPage() {
     if (!selectedField) return
     setDefinition((prev) => {
       const fields = prev.fields.filter((f) => f.id !== selectedField.id)
-      setSelectedId(fields[Math.max(0, selectedIndex - 1)]?.id ?? null)
+      const nextId = fields[Math.max(0, selectedIndex - 1)]?.id ?? null
+      setSelectedId(nextId)
+      if (!nextId) setPropsOpen(false)
       return { ...prev, fields }
     })
   }
@@ -190,38 +218,66 @@ export function FormDesignerPage() {
     )
   }
 
+  function handlePanelDraftMessage(draft: unknown) {
+    if (!draft || typeof draft !== 'object' || !('kind' in draft)) {
+      return
+    }
+    const message = draft as FormFieldPropertiesPanelDraft
+    if (!isFormFieldPropertiesPanelMessage(message)) {
+      return
+    }
+    if (message.kind === 'field') {
+      updateField(message.field)
+      return
+    }
+    if (message.kind === 'move') {
+      moveField(message.direction)
+      return
+    }
+    removeField()
+  }
+
+  const panelDraft = useMemo<FormFieldPropertiesPanelState | undefined>(() => {
+    if (!selectedField) {
+      return undefined
+    }
+    return {
+      kind: 'state',
+      field: selectedField,
+      fieldIndex: selectedIndex,
+      fieldCount: definition.fields.length,
+    }
+  }, [definition.fields.length, selectedField, selectedIndex])
+
   return (
     <FeaturePage
       title={name || t('designer')}
       description={t('designerDescription')}
+      onBack={goToList}
+      backLabel={tc('back')}
       actions={
-        <>
-          <Button type="button" variant="outline" size="sm" onClick={goToList}>
-            {tc('back')}
-          </Button>
-          {canManage ? (
-            <>
-              <Select value={status} onValueChange={(v) => setStatus(v as FormTemplateStatus)}>
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">{t('draft')}</SelectItem>
-                  <SelectItem value="published">{t('published')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSave}
-                disabled={detailStatus === 'saving'}
-              >
-                <Save className="h-4 w-4" aria-hidden />
-                {detailStatus === 'saving' ? t('saving') : tc('save')}
-              </Button>
-            </>
-          ) : null}
-        </>
+        canManage ? (
+          <>
+            <Select value={status} onValueChange={(v) => setStatus(v as FormTemplateStatus)}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">{t('draft')}</SelectItem>
+                <SelectItem value="published">{t('published')}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSave}
+              disabled={detailStatus === 'saving'}
+            >
+              <Save className="h-4 w-4" aria-hidden />
+              {detailStatus === 'saving' ? t('saving') : tc('save')}
+            </Button>
+          </>
+        ) : undefined
       }
     >
       {(localError || detailError) && awaitingSave === false && detailStatus === 'error' ? (
@@ -235,27 +291,40 @@ export function FormDesignerPage() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
-        <aside className="shell-glass rounded-lg border border-[hsl(var(--shell-chrome-border))] p-4">
+      <PlatformHostedEndPanel
+        open={propsOpen && canManage}
+        onOpenChange={(open) => {
+          if (!open) closeFieldProps()
+        }}
+        path="/embed/panels/forms/field-properties"
+        title={t('fieldProperties')}
+        panelDraft={panelDraft}
+        onPanelDraftMessage={handlePanelDraftMessage}
+        isAllowedParentOrigin={isAllowedParentOrigin}
+      >
+        <FormDesignerPropsPanel
+          field={selectedField}
+          fieldIndex={selectedIndex}
+          fieldCount={definition.fields.length}
+          onChange={updateField}
+          onRemove={removeField}
+          onMove={moveField}
+        />
+      </PlatformHostedEndPanel>
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+        <aside className="shell-glass rounded-lg border border-[hsl(var(--shell-chrome-border))] p-3 lg:w-[220px] lg:shrink-0 lg:p-4">
           <FormDesignerToolbox onAdd={addField} disabled={!canManage} />
         </aside>
-        <section className="min-w-0">
+        <section className="min-w-0 flex-1">
           <FormDesignerCanvas
             fields={definition.fields}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            canEdit={canManage}
+            onSelect={selectField}
+            onEdit={openFieldProps}
           />
         </section>
-        <aside className="shell-glass rounded-lg border border-[hsl(var(--shell-chrome-border))] p-4">
-          <FormDesignerPropsPanel
-            field={canManage ? selectedField : null}
-            fieldIndex={selectedIndex}
-            fieldCount={definition.fields.length}
-            onChange={updateField}
-            onRemove={removeField}
-            onMove={moveField}
-          />
-        </aside>
       </div>
     </FeaturePage>
   )

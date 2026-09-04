@@ -24,6 +24,9 @@ type ShellOverlayContextValue = {
 const ShellOverlayContext = createContext<ShellOverlayContextValue | null>(null)
 const ShellOverlayActiveContext = createContext(false)
 
+/** Lets shell panels rendered outside AppShell (e.g. core-hosted peer panels) use the same scrim. */
+let activeShellOverlayRegistry: ShellOverlayContextValue['setOverlay'] | null = null
+
 function ShellOverlayProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<Map<string, OverlayEntry>>(new Map())
 
@@ -40,6 +43,15 @@ function ShellOverlayProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(() => ({ setOverlay }), [setOverlay])
+
+  useLayoutEffect(() => {
+    activeShellOverlayRegistry = setOverlay
+    return () => {
+      if (activeShellOverlayRegistry === setOverlay) {
+        activeShellOverlayRegistry = null
+      }
+    }
+  }, [setOverlay])
 
   const activeEntries = [...entries.values()]
   const hasOverlay = activeEntries.length > 0
@@ -86,17 +98,18 @@ function useShellOverlay({
   ariaLabel?: string
 }) {
   const ctx = useContext(ShellOverlayContext)
+  const registerOverlay = ctx?.setOverlay ?? activeShellOverlayRegistry
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
   useLayoutEffect(() => {
-    if (!ctx) return
+    if (!registerOverlay) return
     const close = () => onCloseRef.current()
-    ctx.setOverlay(id, open, close, ariaLabel)
-    return () => ctx.setOverlay(id, false, close, ariaLabel)
-  }, [ctx, id, open, ariaLabel])
+    registerOverlay(id, open, close, ariaLabel)
+    return () => registerOverlay(id, false, close, ariaLabel)
+  }, [registerOverlay, id, open, ariaLabel])
 
-  return Boolean(ctx)
+  return Boolean(registerOverlay)
 }
 
 export { ShellOverlayProvider, useShellOverlay, useShellOverlayActive }

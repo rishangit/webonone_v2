@@ -25,54 +25,46 @@ export function FormDesignerPropsPanel({
   const { t: tc } = useTranslation('common')
 
   if (!field) {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm font-medium">{t('fieldProperties')}</p>
-        <p className="text-xs text-muted-foreground">{t('fieldPropertiesHint')}</p>
-      </div>
-    )
+    return <p className="text-sm text-muted-foreground">{t('fieldPropertiesHint')}</p>
   }
 
   const needsOptions = field.type === 'radio' || field.type === 'select'
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium">{t('fieldProperties')}</p>
-        <div className="flex gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={fieldIndex <= 0}
-            onClick={() => onMove(-1)}
-            aria-label={t('moveUp')}
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={fieldIndex >= fieldCount - 1}
-            onClick={() => onMove(1)}
-            aria-label={t('moveDown')}
-          >
-            <ArrowDown className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 text-destructive"
-            onClick={onRemove}
-            aria-label={t('removeField')}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex items-center justify-end gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          disabled={fieldIndex <= 0}
+          onClick={() => onMove(-1)}
+          aria-label={t('moveUp')}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          disabled={fieldIndex >= fieldCount - 1}
+          onClick={() => onMove(1)}
+          aria-label={t('moveDown')}
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 text-destructive"
+          onClick={onRemove}
+          aria-label={t('removeField')}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
 
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{field.type}</p>

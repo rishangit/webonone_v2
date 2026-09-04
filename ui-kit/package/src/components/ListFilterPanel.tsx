@@ -1,17 +1,14 @@
-import { useEffect, useId, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 import { cn } from '../lib/utils'
-import { useMediaQuery } from '../hooks/useMediaQuery'
 import {
   shellPanelBodyClassName,
   shellPanelFooterBaseClassName,
   shellPanelHeaderClassName,
-  shellPanelScrimClassName,
   shellPanelSurfaceClassName,
   shellSlidePanelClassName,
   useShapedShellPanelClassName,
 } from '../layouts/shellPanelChrome'
-import { useShellOverlay } from '../layouts/ShellOverlayProvider'
 import { useShellSlidePanel } from '../layouts/useShellSlidePanel'
 import { Button } from './Button'
 
@@ -62,23 +59,13 @@ function ListFilterPanel({
   onClear,
   className,
 }: ListFilterPanelProps) {
-  const isDesktop = useMediaQuery('(min-width: 768px)')
   const shapedShell = useShapedShellPanelClassName()
-  const desktopOverlayId = useId()
-
   const closeFilters = () => onOpenChange(false)
 
-  const { mobileSlidePanelClassName, renderMobilePanel } = useShellSlidePanel({
+  const { isDesktop, mobileSlidePanelClassName, renderMobilePanel } = useShellSlidePanel({
     open,
     onClose: closeFilters,
     closeLabel: 'Close filters',
-  })
-
-  const hasShellOverlay = useShellOverlay({
-    id: desktopOverlayId,
-    open: open && isDesktop,
-    onClose: closeFilters,
-    ariaLabel: 'Close filters',
   })
 
   useEffect(() => {
@@ -94,16 +81,6 @@ function ListFilterPanel({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [open, onOpenChange])
 
-  useEffect(() => {
-    if (!open || !isDesktop) return
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [open, isDesktop])
-
   if (!open) {
     return null
   }
@@ -116,16 +93,14 @@ function ListFilterPanel({
   const panel = (
     <div
       role="dialog"
-      aria-modal="true"
+      aria-modal={!isDesktop}
       aria-label={title}
       className={cn(
         'app-shell-filter-panel flex min-h-0 flex-col overflow-hidden',
         shellPanelSurfaceClassName,
         shapedShell,
-        mobileSlidePanelClassName,
-        isDesktop && shellSlidePanelClassName,
-        isDesktop && shapedShell && 'border-l-0',
-        !isDesktop && shapedShell && 'border-l-0',
+        isDesktop ? shellSlidePanelClassName : mobileSlidePanelClassName,
+        shapedShell && 'border-l-0',
         className,
       )}
     >
@@ -159,25 +134,7 @@ function ListFilterPanel({
     </div>
   )
 
-  if (isDesktop) {
-    if (!hasShellOverlay) {
-      return (
-        <>
-          <button
-            type="button"
-            className={shellPanelScrimClassName}
-            aria-label="Close filters"
-            onClick={closeFilters}
-          />
-          {panel}
-        </>
-      )
-    }
-
-    return panel
-  }
-
-  return renderMobilePanel(panel)
+  return isDesktop ? panel : renderMobilePanel(panel)
 }
 
 export { ListFilterPanel, ListFilterTrigger }

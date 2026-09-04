@@ -1,10 +1,16 @@
 import { buttonAddonModule } from './button/ButtonAddon'
 import { imageAddonModule } from './image/ImageAddon'
+import { imageSliderAddonModule } from './imageSlider/ImageSliderAddon'
 import { textAddonModule } from './text/TextAddon'
 import type { AddonModule } from './types'
 import type { WebsiteAddon } from '../types'
 
-const modules: AddonModule[] = [imageAddonModule, textAddonModule, buttonAddonModule]
+const modules: AddonModule[] = [
+  imageAddonModule,
+  imageSliderAddonModule,
+  textAddonModule,
+  buttonAddonModule,
+]
 
 export function getAddonModules(): AddonModule[] {
   return modules

@@ -5,6 +5,7 @@ import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
+import { publicPageHref } from '../../utils/companyPublicHost'
 
 function ButtonAddonRenderer({
   addon,
@@ -19,7 +20,7 @@ function ButtonAddonRenderer({
   const buttonStyle = theme?.buttonStyles.find((item) => item.id === addon.props.buttonStyleId)
   const snap = buttonStyle ? resolveButtonStyle(theme ?? null, buttonStyle) : addon.props.snapshot
   const page = pages.find((item) => item.id === addon.props.linkPageId)
-  const href = publish && page && companyId ? `/s/${companyId}${page.path ? `/${page.path}` : ''}` : undefined
+  const href = publish && page && companyId ? publicPageHref(companyId, page.path) : undefined
   const style = {
     ...buttonLabelTypography(),
     background: snap.background,

@@ -8,6 +8,12 @@ import { requireCompanySessionOrSuperAdmin } from '../middleware/requireCompanyS
 const router = Router()
 
 router.get(
+  '/internal/companies/by-slug/:slug',
+  requireInternalAuth,
+  internalCompanyController.getCompanyBySlugInternal,
+)
+
+router.get(
   '/internal/companies/:id',
   requireInternalAuth,
   internalCompanyController.getCompanyInternal,

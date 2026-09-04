@@ -187,7 +187,7 @@ function BlockView({
       }}
       onPointerDown={(event) => {
         if (!interactive) return
-        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action]')) {
+        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action], [data-addon-control]')) {
           return
         }
         if (!selected && event.target instanceof Element && event.target.closest('[data-addon-node]')) return
@@ -321,7 +321,7 @@ function AddonView({
       }}
       onPointerDown={(event) => {
         if (!interactive || blockSelected) return
-        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action]')) {
+        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action], [data-addon-control]')) {
           return
         }
         event.preventDefault()

@@ -256,8 +256,13 @@ export {
   type UsePlatformPeerFilterPanelSubmitOptions,
 } from './usePlatformPeerFilterPanelSubmit'
 export {
+  PlatformHostedEndPanel,
+  type PlatformHostedEndPanelProps,
+} from './PlatformHostedEndPanel'
+export {
   writePeerPanelDraft,
   readPeerPanelDraft,
   clearPeerPanelDraft,
+  subscribePeerPanelDraft,
   type PeerFilterPanelResult,
 } from './peerPanelDraft'
