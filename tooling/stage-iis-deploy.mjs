@@ -21,7 +21,16 @@ if (!deployArg) {
 const deployDir = resolve(repoRoot, deployArg);
 const serviceRoot = dirname(deployDir);
 const serviceName = basename(serviceRoot);
-const keepNames = new Set(['web.config', 'stage-deploy.ps1', 'IIS.md']);
+const keepNames = new Set([
+  'web.config',
+  'stage-deploy.ps1',
+  'IIS.md',
+  'configure-company-site-bindings.ps1',
+  'issue-staging-company-site-cert.ps1',
+  'namecheap-dns-acme.ps1',
+  'deploy-paths.ps1',
+  'deploy-paths.example.ps1',
+]);
 
 function clearDeployGenerated() {
   for (const name of readdirSync(deployDir)) {

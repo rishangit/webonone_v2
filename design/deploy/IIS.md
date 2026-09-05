@@ -17,7 +17,20 @@ design\backend\.env         ← runtime secrets (read directly by Node on IIS)
 node_modules\              ← at repo root (npm install); Node resolves deps from here
 ```
 
-Committed files in `design\deploy\`: **`web.config`**, **`stage-deploy.ps1`**, **`IIS.md`** only.
+Committed files in `design\deploy\`: **`web.config`**, **`stage-deploy.ps1`**, **`deploy-paths.ps1`**, **`deploy-paths.example.ps1`**, **`configure-company-site-bindings.ps1`**, **`issue-staging-company-site-cert.ps1`**, **`namecheap-dns-acme.ps1`**, **`IIS.md`**.
+
+**Paths:** Scripts use **`$PSScriptRoot`** (the `design\deploy` folder in git) — run them from whatever clone path the server uses. No repo path is hardcoded in code.
+
+Optional **once per server** (machine environment variables):
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `WEBONONE_REPO_ROOT` | Git clone root | `C:\Projects` or `D:\live\webonone` |
+| `WACS_PATH` | win-acme executable | `C:\Software\win-acme.v2.2.9.1701.x64.pluggable\wacs.exe` |
+
+Template: run `deploy-paths.example.ps1` on a new server (edit paths inside first). Otherwise scripts auto-discover `wacs.exe` under `Program Files`, `C:\Software`, etc.
+
+Docs below use `<repo-root>` only as a readable placeholder for `npm` commands — not required for the PowerShell cert scripts.
 
 ---
 
@@ -50,21 +63,46 @@ On the Windows Server:
 
 A production wildcard **does not** cover nested names. `*.webonone.com` matches `acme.webonone.com` only — it does **not** match `acme.staging.webonone.com`. That lookup returns **NXDOMAIN**.
 
-1. Add DNS: **design.staging.webonone.com** → staging server IP
+1. Add DNS: **staging-design.webonone.com** (or **design.staging.webonone.com**) → staging server IP
 2. Add a **separate** wildcard: **\*.staging.webonone.com** → the same staging IP
-3. TLS certificate that covers **design.staging.webonone.com** and **\*.staging.webonone.com** (a `*.webonone.com` cert does not cover this)
-4. Set `ORIGIN_DESIGN=https://design.staging.webonone.com` in `production.env` (apply derives `COMPANY_SITE_HOST=staging.webonone.com`). Redeploy Design **and** WebOnOne so profile URLs use the staging host.
+3. TLS certificate that covers **\*.staging.webonone.com** (a `*.webonone.com` cert does not cover this)
+4. Set `COMPANY_SITE_HOST=staging.webonone.com` in root `production.env` (keep `ORIGIN_DESIGN` on your staging Design host, e.g. `https://staging-design.webonone.com`). Redeploy Design **and** WebOnOne so profile URLs use `{slug}.staging.webonone.com`.
 5. IIS Design site: extra HTTPS binding host name `*.staging.webonone.com`
 
-Copy the live URL from the company profile **Website** field — do not guess the slug.
+Or run the helper script from this folder (HTTP always; pass `-CertThumbprint` after the wildcard cert exists):
+
+```powershell
+cd <repo-root>\design\deploy
+.\configure-company-site-bindings.ps1 -SiteName staging-webonone.design
+# After DNS + *.staging.webonone.com cert:
+# .\configure-company-site-bindings.ps1 -SiteName staging-webonone.design -CertThumbprint <thumbprint>
+```
+
+**HTTPS (wildcard cert):** HTTP-01 cannot issue `*.staging.webonone.com`. Use DNS-01 via win-acme on the IIS server:
+
+```powershell
+cd <repo-root>\design\deploy   # or: cd (Resolve-Path .\design\deploy) from repo root
+.\issue-staging-company-site-cert.ps1
+# Optional overrides:
+# .\issue-staging-company-site-cert.ps1 -WacsPath 'D:\tools\wacs.exe' -SiteName staging-webonone.design
+```
+
+When prompted, add the **TXT** record in Namecheap **Advanced DNS** (Host like `_acme-challenge.staging`, Value from the script). The script polls DNS, installs the cert, and adds the IIS HTTPS binding. Renewals re-use the same DNS script on the win-acme scheduled task.
+
+**Manual win-acme:** run `wacs.exe` from any folder (or set `WACS_PATH`), issue `*.staging.webonone.com` with DNS-01, then:
+
+```powershell
+cd <repo-root>\design\deploy
+.\configure-company-site-bindings.ps1 -SiteName staging-webonone.design -CertThumbprint <thumbprint>
+```
 
 ---
 
 ## Step 3 — Get the code on the server
 
 ```powershell
-git clone <repo-url> C:\Projects\webonone_v2
-cd C:\Projects\webonone_v2
+git clone <repo-url> <repo-root>
+cd <repo-root>
 npm install
 ```
 
@@ -91,7 +129,7 @@ For IIS, HttpPlatformHandler sets `PORT` at runtime — a `PORT` line in generat
 ## Step 5 — Run database migrations
 
 ```powershell
-cd C:\Projects\webonone_v2
+cd <repo-root>
 npm run migrate -w design-root
 ```
 
@@ -100,7 +138,7 @@ npm run migrate -w design-root
 ## Step 6 — Deploy to IIS folder
 
 ```powershell
-cd C:\Projects\webonone_v2
+cd <repo-root>
 npm run deploy:design
 ```
 
@@ -115,14 +153,14 @@ Dependencies are **not** copied into `deploy\`. Node resolves packages from the 
 To re-stage without rebuilding (after you already ran a build):
 
 ```powershell
-cd C:\Projects\webonone_v2\design
+cd <repo-root>\design
 npm run stage:deploy
 ```
 
-To remove generated output during development (keeps only `web.config`, `stage-deploy.ps1`, `IIS.md`):
+To remove generated output during development (keeps committed deploy files):
 
 ```powershell
-cd C:\Projects\webonone_v2\design
+cd <repo-root>\design
 npm run clean:deploy
 ```
 
@@ -133,7 +171,7 @@ npm run clean:deploy
 1. Open **IIS Manager**
 2. Right-click **Sites** → **Add Website**
 3. **Site name:** `design`
-4. **Physical path:** `C:\Projects\webonone_v2\design\deploy`
+4. **Physical path:** `<repo-root>\design\deploy`
 5. **Binding:** Type `https`, Host name `design.webonone.com` (or `design.staging.webonone.com` on staging), select your certificate
 6. Add a second **https** binding on the same site: Host name `*.webonone.com` (production) or `*.staging.webonone.com` (staging), same certificate. Explicit service hosts (`app…`, `identity…`, `design…`) on other IIS sites take precedence; unmatched company subdomains land here.
 7. Also add matching **http** bindings for ACME / HTTPS redirect if you use win-acme
@@ -174,7 +212,7 @@ If the site fails, check `design\deploy\logs\` for Node errors.
 ## Redeploy after code changes
 
 ```powershell
-cd C:\Projects\webonone_v2
+cd <repo-root>
 git pull
 npm run deploy:design
 ```
@@ -204,6 +242,11 @@ Recycle the IIS app pool or restart the site.
 |------|---------|
 | [`web.config`](web.config) | IIS HttpPlatformHandler — runs `node dist/server.js` |
 | [`stage-deploy.ps1`](stage-deploy.ps1) | Copies build output here (run via `npm run deploy -w design-root`) |
+| [`deploy-paths.ps1`](deploy-paths.ps1) | Shared repo / win-acme path discovery (dot-sourced by cert scripts) |
+| [`deploy-paths.example.ps1`](deploy-paths.example.ps1) | One-time machine env template (`WEBONONE_REPO_ROOT`, `WACS_PATH`) |
+| [`configure-company-site-bindings.ps1`](configure-company-site-bindings.ps1) | IIS bindings for `{slug}.staging.webonone.com` (or pass `-WildcardHost` for production) |
+| [`issue-staging-company-site-cert.ps1`](issue-staging-company-site-cert.ps1) | Let's Encrypt wildcard cert + HTTPS binding (staging) |
+| [`namecheap-dns-acme.ps1`](namecheap-dns-acme.ps1) | DNS-01 helper for win-acme + Namecheap TXT |
 | [`IIS.md`](IIS.md) | This deployment guide |
 
 Production secrets/origins: repo-root **`production.env`**. Local-dev templates: **`design\backend\.env.example`** and **`design\frontend\.env.example`**.
