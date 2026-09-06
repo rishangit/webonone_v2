@@ -31,6 +31,7 @@ const RESERVED_PUBLIC_HOST_SLUGS = new Set([
   'localhost',
   'webonone',
   'staging',
+  'live',
   'preview',
   'test',
   'kit',
@@ -43,7 +44,7 @@ export function getCompanySiteHost(): string {
   if (configured) {
     return configured.replace(/^www\./i, '').replace(/^https?:\/\//, '')
   }
-  return 'webonone.com'
+  return 'live.webonone.com'
 }
 
 /** When the SPA is served on `{slug}.webonone.com`, return that slug. */
