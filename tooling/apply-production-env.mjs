@@ -85,7 +85,9 @@ function apiBase(origin) {
 /**
  * Hostname used for company public sites: `{slug}.{host}`.
  * Prefer explicit COMPANY_SITE_HOST, else strip `design.` from ORIGIN_DESIGN
- * so staging `design.staging.webonone.com` → `staging.webonone.com`.
+ * so `design.webonone.com` → `webonone.com` and
+ * `design.staging.webonone.com` → `staging.webonone.com`.
+ * Production should set COMPANY_SITE_HOST=live.webonone.com explicitly.
  * @param {Record<string, string>} master
  */
 function companySiteHost(master) {

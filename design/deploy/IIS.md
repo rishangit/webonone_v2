@@ -53,15 +53,35 @@ On the Windows Server:
 
 ## Step 2 — DNS and certificate
 
-**Production** (`{slug}.webonone.com`):
+**Production** (`{slug}.live.webonone.com`):
+
+Company sites use a **nested** wildcard so they stay off `*.webonone.com` (same idea as staging).
 
 1. Add DNS record: **design.webonone.com** → server IP (`A` or `CNAME`)
-2. Add a **wildcard** DNS record: **\*.webonone.com** → the same server IP
-3. TLS certificate that covers **design.webonone.com** and **\*.webonone.com**
+2. Add a **wildcard** DNS record: **\*.live.webonone.com** → the same server IP (Namecheap host: `*.live`)
+3. TLS certificate that covers **\*.live.webonone.com** (DNS-01; a `*.webonone.com` cert does **not** cover this)
+4. Set `COMPANY_SITE_HOST=live.webonone.com` in root `production.env` (and include `https://*.live.webonone.com` in `ALLOWED_REDIRECT_URIS`). Redeploy Design, WebOnOne, and Identity.
+5. IIS Design site: extra HTTPS binding host name `*.live.webonone.com`
+
+```powershell
+cd <repo-root>\design\deploy
+.\configure-company-site-bindings.ps1 -SiteName webonone.design -WildcardHost '*.live.webonone.com'
+# After DNS + *.live.webonone.com cert:
+# .\configure-company-site-bindings.ps1 -SiteName webonone.design -WildcardHost '*.live.webonone.com' -CertThumbprint <thumbprint>
+# Or issue + bind in one step:
+# .\issue-live-company-site-cert.ps1
+```
+
+**Legacy / flat production** (`{slug}.webonone.com`) — only if you intentionally use root wildcards:
+
+1. DNS: **\*.webonone.com** → server IP
+2. TLS for **\*.webonone.com**
+3. `COMPANY_SITE_HOST=webonone.com` (or omit and derive from `ORIGIN_DESIGN`)
+4. IIS binding `*.webonone.com` on the Design site
 
 **Staging** (`{slug}.staging.webonone.com`):
 
-A production wildcard **does not** cover nested names. `*.webonone.com` matches `acme.webonone.com` only — it does **not** match `acme.staging.webonone.com`. That lookup returns **NXDOMAIN**.
+A production wildcard **does not** cover nested names. `*.webonone.com` matches `acme.webonone.com` only — it does **not** match `acme.staging.webonone.com` or `acme.live.webonone.com`. Those lookups return **NXDOMAIN** without a nested wildcard.
 
 1. Add DNS: **staging-design.webonone.com** (or **design.staging.webonone.com**) → staging server IP
 2. Add a **separate** wildcard: **\*.staging.webonone.com** → the same staging IP
@@ -201,7 +221,7 @@ The app pool also needs **Write** on `design\deploy\logs`.
 |-----|----------|
 | `https://design.webonone.com/api/v1/health` | `{"status":"ok","service":"design"}` |
 | `https://design.webonone.com/` | design UI loads |
-| `https://{web-slug}.webonone.com/` | Public company website (production; slug from company profile) |
+| `https://{web-slug}.live.webonone.com/` | Public company website (production; slug from company profile) |
 | `https://{web-slug}.staging.webonone.com/` | Public company website (staging — needs `*.staging.webonone.com` DNS) |
 | Login via platform nav | Redirects to Identity, returns to design |
 
@@ -230,9 +250,9 @@ Recycle the IIS app pool or restart the site.
 | 500 / Node crash | Check `design\deploy\logs\` and `design\backend\.env` (DB credentials, `JWT_SECRET`) |
 | SPA 404 | Confirm `design\deploy\public\index.html` exists — run `npm run deploy:design` |
 | API 404 from SPA | Frontend must be built with `VITE_API_BASE_URL=/api/v1` in `frontend\.env.production` |
-| Login callback rejected | Identity `ALLOWED_REDIRECT_URIS` must include `https://*.webonone.com`; redeploy Identity |
+| Login callback rejected | Identity `ALLOWED_REDIRECT_URIS` must include `https://*.webonone.com` and `https://*.live.webonone.com`; redeploy Identity |
 | Billing sync fails from WebOnOne | `design_SERVICE_API_KEY` must match across WebOnOne and design backends |
-| DNS_PROBE_FINISHED_NXDOMAIN / site can’t be reached | Hostname is not in DNS. `{slug}.staging.webonone.com` needs **`*.staging.webonone.com`**, not only `*.webonone.com`. Copy the URL from the company profile. |
+| DNS_PROBE_FINISHED_NXDOMAIN / site can’t be reached | Hostname is not in DNS. `{slug}.live.webonone.com` needs **`*.live.webonone.com`**; staging needs **`*.staging.webonone.com`**. Root `*.webonone.com` does not cover nested names. Copy the URL from the company profile. |
 
 ---
 
@@ -244,7 +264,8 @@ Recycle the IIS app pool or restart the site.
 | [`stage-deploy.ps1`](stage-deploy.ps1) | Copies build output here (run via `npm run deploy -w design-root`) |
 | [`deploy-paths.ps1`](deploy-paths.ps1) | Shared repo / win-acme path discovery (dot-sourced by cert scripts) |
 | [`deploy-paths.example.ps1`](deploy-paths.example.ps1) | One-time machine env template (`WEBONONE_REPO_ROOT`, `WACS_PATH`) |
-| [`configure-company-site-bindings.ps1`](configure-company-site-bindings.ps1) | IIS bindings for `{slug}.staging.webonone.com` (or pass `-WildcardHost` for production) |
+| [`configure-company-site-bindings.ps1`](configure-company-site-bindings.ps1) | IIS bindings for `{slug}.live.webonone.com` (default) or pass `-WildcardHost` for staging |
+| [`issue-live-company-site-cert.ps1`](issue-live-company-site-cert.ps1) | Let's Encrypt wildcard cert + HTTPS binding (production live sites) |
 | [`issue-staging-company-site-cert.ps1`](issue-staging-company-site-cert.ps1) | Let's Encrypt wildcard cert + HTTPS binding (staging) |
 | [`namecheap-dns-acme.ps1`](namecheap-dns-acme.ps1) | DNS-01 helper for win-acme + Namecheap TXT |
 | [`IIS.md`](IIS.md) | This deployment guide |

@@ -42,7 +42,7 @@ const envSchema = z.object({
   IDENTITY_API_BASE_URL: z.string().optional(),
   IDENTITY_SERVICE_API_KEY: z.string().optional(),
   IDENTITY_DB_NAME: z.string().default('identity'),
-  COMPANY_SITE_HOST: z.string().default('webonone.com'),
+  COMPANY_SITE_HOST: z.string().default('live.webonone.com'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -101,5 +101,5 @@ export const env = {
   identityDbName: parsed.IDENTITY_DB_NAME,
   companySiteHost:
     parsed.COMPANY_SITE_HOST.replace(/^https?:\/\//, '').replace(/^www\./i, '').replace(/\/.*$/, '') ||
-    'webonone.com',
+    'live.webonone.com',
 }

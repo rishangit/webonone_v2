@@ -36,6 +36,7 @@ export const RESERVED_COMPANY_WEB_SLUGS = new Set([
   'localhost',
   'webonone',
   'staging',
+  'live',
   'preview',
   'test',
   'kit',
