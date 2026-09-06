@@ -1,17 +1,22 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Add IIS bindings so the Design site serves company websites on {slug}.staging.webonone.com.
+  Add IIS bindings so the Design site serves company websites on {slug}.{parent}.
 
 .DESCRIPTION
-  Keeps the existing staging-design.webonone.com admin binding and adds a wildcard host
-  for public company sites. Requires DNS *.staging.webonone.com and a matching TLS cert.
+  Keeps the existing design.webonone.com (or staging-design) admin binding and adds a
+  wildcard host for public company sites.
+
+  Production default:  *.live.webonone.com on site webonone.design
+  Staging:             *.staging.webonone.com on site staging-webonone.design
+
+  Requires matching DNS and (for HTTPS) a TLS cert for the wildcard host.
 
 .PARAMETER SiteName
-  IIS site name. Default: staging-webonone.design
+  IIS site name. Default: webonone.design
 
 .PARAMETER WildcardHost
-  Wildcard host header. Default: *.staging.webonone.com
+  Wildcard host header. Default: *.live.webonone.com
 
 .PARAMETER CertThumbprint
   Optional TLS cert thumbprint (WebHosting store). When omitted, only HTTP is added.
@@ -21,10 +26,13 @@
 
 .EXAMPLE
   .\configure-company-site-bindings.ps1 -CertThumbprint 17CED8FD8AB23C6918698043883416B2B9323D44
+
+.EXAMPLE
+  .\configure-company-site-bindings.ps1 -SiteName staging-webonone.design -WildcardHost '*.staging.webonone.com'
 #>
 param(
-    [string]$SiteName = 'staging-webonone.design',
-    [string]$WildcardHost = '*.staging.webonone.com',
+    [string]$SiteName = 'webonone.design',
+    [string]$WildcardHost = '*.live.webonone.com',
     [string]$CertThumbprint = ''
 )
 
@@ -43,6 +51,8 @@ function Test-SiteBinding {
 if (-not (Get-Website -Name $SiteName -ErrorAction SilentlyContinue)) {
     throw "IIS site '$SiteName' was not found."
 }
+
+$companySiteHost = $WildcardHost.TrimStart('*.')
 
 Write-Host "Configuring company-site bindings on '$SiteName' for host '$WildcardHost' ..."
 
@@ -73,15 +83,19 @@ if ($CertThumbprint) {
 } else {
     Write-Host ''
     Write-Host 'HTTPS binding skipped (no -CertThumbprint).'
-    Write-Host 'Issue a cert for *.staging.webonone.com (Let''s Encrypt DNS-01), then re-run:'
-    Write-Host "  .\configure-company-site-bindings.ps1 -CertThumbprint <thumbprint>"
+    Write-Host "Issue a cert for $WildcardHost (Let's Encrypt DNS-01), then re-run:"
+    Write-Host "  .\configure-company-site-bindings.ps1 -SiteName $SiteName -WildcardHost '$WildcardHost' -CertThumbprint <thumbprint>"
+    if ($WildcardHost -eq '*.live.webonone.com') {
+        Write-Host '  Or: .\issue-live-company-site-cert.ps1'
+    }
 }
 
 Write-Host ''
 Write-Host 'Also required outside IIS:'
-Write-Host '  1. DNS: *.staging.webonone.com -> this server IP'
-Write-Host '  2. production.env: COMPANY_SITE_HOST=staging.webonone.com'
+Write-Host "  1. DNS: $WildcardHost -> this server IP"
+Write-Host "  2. production.env: COMPANY_SITE_HOST=$companySiteHost"
 Write-Host '  3. npm run env:apply && npm run deploy:design && npm run deploy:webonone'
+Write-Host '     (also deploy:identity if ALLOWED_REDIRECT_URIS changed)'
 Write-Host ''
 Write-Host 'Current bindings:'
 Get-WebBinding -Name $SiteName | ForEach-Object {
