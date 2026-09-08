@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import type { WebsiteSection } from '../types'
+import { isLocalWebsitePreviewHost } from '../utils/companyPublicHost'
 
 const SECTIONS: WebsiteSection[] = ['pages', 'headers', 'footers', 'themes', 'media']
 
@@ -36,7 +37,7 @@ export function WebsiteHubTabs({
 
 export function websiteLiveUrl(liveOrigin: string | null | undefined, companyId: string, path: string): string {
   const suffix = path ? `/${path}` : ''
-  if (liveOrigin) {
+  if (!isLocalWebsitePreviewHost() && liveOrigin) {
     return `${liveOrigin.replace(/\/$/, '')}${suffix}`
   }
   return `${window.location.origin}/s/${companyId}${suffix}`

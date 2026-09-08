@@ -16,6 +16,7 @@ import { nanoid } from 'nanoid'
 import { WebsiteImagePicker } from '../../components/WebsiteImagePicker'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { MediaRef, WebsiteAddon, WebsiteBreakpoint } from '../../types'
+import { resolveMediaRefUrl } from '../../utils/mediaConfig'
 import { buildImageSliderPlaceholderSlides } from '../addonSamples'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
 
@@ -49,10 +50,18 @@ function ImageSliderAddonRenderer({ addon, breakpoint, publish }: AddonRenderPro
   const addonId = addon.type === 'imageSlider' ? addon.id : ''
   const usingPlaceholders = storedSlides.length === 0 && addon.type === 'imageSlider'
   const slides = useMemo(() => {
-    if (storedSlides.length > 0) return storedSlides
+    if (storedSlides.length > 0) {
+      if (!publish) return storedSlides
+      return storedSlides
+        .map((slide) => {
+          const url = resolveMediaRefUrl(slide)
+          return url ? { ...slide, url } : null
+        })
+        .filter((slide): slide is MediaRef => slide != null)
+    }
     if (addon.type !== 'imageSlider') return []
     return buildImageSliderPlaceholderSlides(addonId)
-  }, [addon.type, addonId, storedSlides])
+  }, [addon.type, addonId, publish, storedSlides])
 
   const slideSignature = slides.map((slide) => slide.fileId).join('|')
 
@@ -104,75 +113,71 @@ function ImageSliderAddonRenderer({ addon, breakpoint, publish }: AddonRenderPro
   }
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        <img
-          src={activeSlide.url}
-          alt=""
-          className="h-full w-full"
-          style={{ objectFit: fit }}
-        />
-        {showNavigation ? (
-          <>
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              data-addon-control=""
-              className="absolute left-2 top-1/2 z-10 size-8 -translate-y-1/2 shadow-md"
-              aria-label={t('previousSlide')}
-              onPointerDown={stopDesignerDrag}
-              onClick={(event) => {
-                stopDesignerDrag(event)
-                goTo(activeIndex - 1)
-              }}
-            >
-              <ChevronLeft className="size-4" aria-hidden />
-            </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              data-addon-control=""
-              className="absolute right-2 top-1/2 z-10 size-8 -translate-y-1/2 shadow-md"
-              aria-label={t('nextSlide')}
-              onPointerDown={stopDesignerDrag}
-              onClick={(event) => {
-                stopDesignerDrag(event)
-                goTo(activeIndex + 1)
-              }}
-            >
-              <ChevronRight className="size-4" aria-hidden />
-            </Button>
-          </>
-        ) : null}
-      </div>
+    <div className="relative h-full w-full overflow-hidden">
+      <img
+        src={activeSlide.url}
+        alt=""
+        className="h-full w-full"
+        style={{ objectFit: fit }}
+      />
       {showNavigation ? (
-        <div
-          className="flex shrink-0 items-center justify-center gap-1.5 py-2"
-          data-addon-control=""
-          onPointerDown={stopDesignerDrag}
-        >
-          {slides.map((slide, index) => {
-            const selected = index === activeIndex
-            return (
-              <button
-                key={slide.fileId}
-                type="button"
-                data-addon-control=""
-                aria-label={t('goToSlide', { index: index + 1 })}
-                aria-current={selected ? 'true' : undefined}
-                className={`size-2 rounded-full transition ${
-                  selected ? 'bg-primary' : 'bg-muted-foreground/40 hover:bg-muted-foreground/60'
-                }`}
-                onClick={(event) => {
-                  stopDesignerDrag(event)
-                  goTo(index)
-                }}
-              />
-            )
-          })}
-        </div>
+        <>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            data-addon-control=""
+            className="absolute left-2 top-1/2 z-10 size-8 -translate-y-1/2 shadow-md"
+            aria-label={t('previousSlide')}
+            onPointerDown={stopDesignerDrag}
+            onClick={(event) => {
+              stopDesignerDrag(event)
+              goTo(activeIndex - 1)
+            }}
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            data-addon-control=""
+            className="absolute right-2 top-1/2 z-10 size-8 -translate-y-1/2 shadow-md"
+            aria-label={t('nextSlide')}
+            onPointerDown={stopDesignerDrag}
+            onClick={(event) => {
+              stopDesignerDrag(event)
+              goTo(activeIndex + 1)
+            }}
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+          <div
+            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5"
+            data-addon-control=""
+            onPointerDown={stopDesignerDrag}
+          >
+            {slides.map((slide, index) => {
+              const selected = index === activeIndex
+              return (
+                <button
+                  key={slide.fileId}
+                  type="button"
+                  data-addon-control=""
+                  aria-label={t('goToSlide', { index: index + 1 })}
+                  aria-current={selected ? 'true' : undefined}
+                  className={`size-2 rounded-full shadow-sm transition ${
+                    selected ? 'bg-primary' : 'bg-background/70 hover:bg-background/90'
+                  }`}
+                  onClick={(event) => {
+                    stopDesignerDrag(event)
+                    goTo(index)
+                  }}
+                />
+              )
+            })}
+          </div>
+        </>
       ) : null}
     </div>
   )

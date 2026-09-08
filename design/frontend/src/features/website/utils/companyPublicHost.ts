@@ -39,6 +39,14 @@ const RESERVED_PUBLIC_HOST_SLUGS = new Set([
   'mobile',
 ])
 
+/** True when the Design SPA is running locally — preview uses `/s/{companyId}` not production webUrl. */
+export function isLocalWebsitePreviewHost(): boolean {
+  if (import.meta.env.DEV) return true
+  if (typeof window === 'undefined') return false
+  const host = window.location.hostname.toLowerCase()
+  return host === 'localhost' || host === '127.0.0.1'
+}
+
 export function getCompanySiteHost(): string {
   const configured = import.meta.env.VITE_COMPANY_SITE_HOST?.trim()
   if (configured) {
