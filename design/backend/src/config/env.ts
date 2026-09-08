@@ -35,6 +35,7 @@ const envSchema = z.object({
   IDENTITY_SERVICE_API_KEY: z.string().optional(),
   DATA_API_BASE_URL: z.string().optional(),
   DATA_SERVICE_API_KEY: z.string().optional(),
+  MEDIA_PUBLIC_BASE_URL: z.string().default('http://127.0.0.1:4013/api/v1'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -69,4 +70,5 @@ export const env = {
   identityServiceApiKey: parsed.IDENTITY_SERVICE_API_KEY?.trim() ?? '',
   dataApiBaseUrl: parsed.DATA_API_BASE_URL?.trim() || 'http://127.0.0.1:4015',
   dataServiceApiKey: parsed.DATA_SERVICE_API_KEY?.trim() ?? '',
+  mediaPublicBaseUrl: parsed.MEDIA_PUBLIC_BASE_URL.replace(/\/$/, ''),
 }

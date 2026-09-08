@@ -3,6 +3,7 @@ import { resolveCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { getWebsitePageByPath, listWebsitePages, type WebsitePageDto } from './websitePage.service.js'
 import { getDefaultWebsiteChrome, type WebsiteChromeDto } from './websiteChrome.service.js'
 import { getDefaultWebsiteTheme, type WebsiteThemeDto } from './websiteTheme.service.js'
+import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 
 export type PublicWebsiteSiteDto = {
   companyId: string
@@ -33,9 +34,9 @@ export async function getPublicWebsiteSite(input: {
       companyId,
       webSlug: company.webSlug,
       webUrl: company.webUrl,
-      page,
-      header,
-      footer,
+      page: { ...page, document: rewriteWebsiteDocumentMedia(page.document) },
+      header: header ? { ...header, document: rewriteWebsiteDocumentMedia(header.document) } : null,
+      footer: footer ? { ...footer, document: rewriteWebsiteDocumentMedia(footer.document) } : null,
       theme,
       pages: listed.items.map((item) => ({ id: item.id, name: item.name, path: item.path })),
     }
