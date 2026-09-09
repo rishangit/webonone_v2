@@ -10,7 +10,7 @@ import {
   itemListRowActiveClassName,
 } from '@webonone/ui-kit'
 import { getAddonModules } from '../registry'
-import type { WebsiteAddon } from '../../types'
+import type { WebsiteAddon, WebsiteDesignerKind } from '../../types'
 
 export const ADD_ADDON_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
@@ -19,15 +19,16 @@ export const ADD_ADDON_DIALOG_SIZE = {
 
 interface AddAddonDialogProps {
   open: boolean
+  designerKind?: WebsiteDesignerKind
   onOpenChange: (open: boolean) => void
   onAddonAdded: (type: WebsiteAddon['type']) => void
 }
 
-export function AddAddonDialog({ open, onOpenChange, onAddonAdded }: AddAddonDialogProps) {
+export function AddAddonDialog({ open, designerKind, onOpenChange, onAddonAdded }: AddAddonDialogProps) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const [pendingType, setPendingType] = useState<WebsiteAddon['type'] | null>(null)
-  const modules = getAddonModules()
+  const modules = getAddonModules(designerKind)
 
   function select(type: WebsiteAddon['type']) {
     setPendingType(type)

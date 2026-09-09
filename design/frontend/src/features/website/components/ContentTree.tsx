@@ -7,6 +7,7 @@ import {
   ImageIcon,
   Images,
   LayoutTemplate,
+  Menu,
   MoreVertical,
   MousePointerClick,
   Type,
@@ -34,6 +35,7 @@ const ADDON_ICONS: Record<WebsiteAddon['type'], LucideIcon> = {
   imageSlider: Images,
   text: Type,
   button: MousePointerClick,
+  navMenu: Menu,
 }
 
 interface ContentTreeProps {

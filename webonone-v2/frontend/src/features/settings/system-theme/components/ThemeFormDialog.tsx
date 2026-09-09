@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
+import type { ThemeColors } from '@webonone/theme'
 import {
   Alert,
   AlertDescription,
@@ -20,7 +21,6 @@ import {
 } from '../schemas/themeFormSchema'
 import type { ApiTheme } from '../services/themeApi'
 import { systemThemeActions } from '../store/systemThemeSlice'
-import type { ParsedThemeColors } from '../utils/parseCssThemeVariables'
 import { themeFormFromDto } from '../utils/themeFormMapping'
 import { ThemeCssImportDialog } from './ThemeCssImportDialog'
 import { ThemeWizardProgress } from './theme-wizard/ThemeWizardProgress'
@@ -175,7 +175,7 @@ export function ThemeFormDialog({
     setImportOpen(next)
   }, [])
 
-  function handleImport(colors: ParsedThemeColors) {
+  function handleImport(colors: ThemeColors) {
     patchValues({
       primary: colors.primary,
       secondary: colors.secondary,

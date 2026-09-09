@@ -4,6 +4,7 @@ import type {
   PublicWebsiteSite,
   WebsiteChrome,
   WebsiteDocumentV1,
+  WebsiteLayout,
   WebsitePage,
   WebsitePageStatus,
   WebsiteTheme,
@@ -25,10 +26,11 @@ export type CreatePageBody = {
   name: string
   path?: string
   status?: WebsitePageStatus
+  layoutId?: string | null
   document?: WebsiteDocumentV1
 }
 
-export type UpdatePageBody = Partial<CreatePageBody>
+export type UpdatePageBody = Partial<CreatePageBody> & { sortOrder?: number }
 
 export type CreateChromeBody = {
   name: string
@@ -37,6 +39,17 @@ export type CreateChromeBody = {
 }
 
 export type UpdateChromeBody = Partial<CreateChromeBody>
+
+export type CreateLayoutBody = {
+  name: string
+  headerId?: string | null
+  footerId?: string | null
+  themeId?: string | null
+  isDefault?: boolean
+  pageIds?: string[]
+}
+
+export type UpdateLayoutBody = Partial<CreateLayoutBody>
 
 export type CreateThemeBody = {
   name: string
@@ -101,6 +114,31 @@ export const websiteApi = {
   },
   deleteChrome(kind: 'headers' | 'footers', id: string) {
     return apiClient<void>(`/website/${kind}/${id}`, { method: 'DELETE' })
+  },
+
+  listLayouts(query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsiteLayout>>(`/website/layouts${toQueryString(query)}`)
+  },
+  async getLayout(id: string) {
+    const data = await apiClient<{ item: WebsiteLayout }>(`/website/layouts/${id}`)
+    return data.item
+  },
+  async createLayout(body: CreateLayoutBody) {
+    const data = await apiClient<{ item: WebsiteLayout }>('/website/layouts', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  async updateLayout(id: string, body: UpdateLayoutBody) {
+    const data = await apiClient<{ item: WebsiteLayout }>(`/website/layouts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  deleteLayout(id: string) {
+    return apiClient<void>(`/website/layouts/${id}`, { method: 'DELETE' })
   },
 
   listThemes(query: ListQuery = {}) {

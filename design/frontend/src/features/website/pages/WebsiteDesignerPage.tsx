@@ -16,7 +16,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { openWebsiteDesigner } from '@/features/shell/utils/navigateDesign'
-import { websiteFootersActions, websiteHeadersActions, websitePagesActions, websiteThemesActions } from '../store'
+import { websiteFootersActions, websiteHeadersActions, websiteLayoutsActions, websitePagesActions, websiteThemesActions } from '../store'
 import { ContentTree } from '../components/ContentTree'
 import { DesignerCanvas } from '../components/DesignerCanvas'
 import { ContentContainerSettingsDialog } from '../components/ContentContainerSettingsDialog'
@@ -61,6 +61,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const pagesState = useAppSelector((s) => s.websitePages)
   const headersState = useAppSelector((s) => s.websiteHeaders)
   const footersState = useAppSelector((s) => s.websiteFooters)
+  const layoutsState = useAppSelector((s) => s.websiteLayouts)
   const themesState = useAppSelector((s) => s.websiteThemes)
   const feature = kind === 'pages' ? pagesState : kind === 'headers' ? headersState : footersState
   const [document, setDocument] = useState<WebsiteDocumentV1>(emptyWebsiteDocument())
@@ -74,7 +75,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const [addonSettings, setAddonSettings] = useState<{ blockId: string; addonId: string } | null>(null)
   const [treeOpen, setTreeOpen] = useState(false)
 
-  const theme = themesState.items.find((item) => item.isDefault) ?? themesState.items[0] ?? themesState.detail
+  const defaultTheme = themesState.items.find((item) => item.isDefault) ?? themesState.items[0] ?? themesState.detail
   const name =
     kind === 'pages'
       ? pagesState.detail?.name
@@ -83,6 +84,50 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         : footersState.detail?.name
   const defaultHeader = kind === 'pages' ? headersState.items.find((item) => item.isDefault) ?? null : null
   const defaultFooter = kind === 'pages' ? footersState.items.find((item) => item.isDefault) ?? null : null
+  const pageLayout =
+    kind === 'pages'
+      ? pagesState.detail?.layoutId
+        ? layoutsState.items.find((item) => item.id === pagesState.detail?.layoutId) ??
+          (layoutsState.detail?.id === pagesState.detail.layoutId ? layoutsState.detail : null)
+        : layoutsState.items.find((item) => item.isDefault) ?? layoutsState.items[0] ?? null
+      : null
+  const headerFromLayout = pageLayout?.headerId
+    ? headersState.items.find((item) => item.id === pageLayout.headerId) ??
+      (headersState.detail?.id === pageLayout.headerId ? headersState.detail : null)
+    : null
+  const footerFromLayout = pageLayout?.footerId
+    ? footersState.items.find((item) => item.id === pageLayout.footerId) ??
+      (footersState.detail?.id === pageLayout.footerId ? footersState.detail : null)
+    : null
+  const previewHeader = kind === 'pages' ? (pageLayout ? headerFromLayout : defaultHeader) : null
+  const previewFooter = kind === 'pages' ? (pageLayout ? footerFromLayout : defaultFooter) : null
+  const headerPreviewLayout =
+    kind === 'headers'
+      ? layoutsState.items.find((item) => item.headerId === id && item.isDefault) ??
+        layoutsState.items.find((item) => item.headerId === id) ??
+        layoutsState.items.find((item) => item.isDefault) ??
+        layoutsState.items[0] ??
+        null
+      : null
+  const footerPreviewLayout =
+    kind === 'footers'
+      ? layoutsState.items.find((item) => item.footerId === id && item.isDefault) ??
+        layoutsState.items.find((item) => item.footerId === id) ??
+        layoutsState.items.find((item) => item.isDefault) ??
+        layoutsState.items[0] ??
+        null
+      : null
+  const previewLayout =
+    kind === 'pages' ? pageLayout : kind === 'headers' ? headerPreviewLayout : footerPreviewLayout
+  const themeFromLayout = previewLayout?.themeId
+    ? themesState.items.find((item) => item.id === previewLayout.themeId) ??
+      (themesState.detail?.id === previewLayout.themeId ? themesState.detail : null)
+    : null
+  const theme = themeFromLayout ?? defaultTheme
+  const navPages =
+    kind === 'pages'
+      ? (pageLayout?.pages ?? []).filter((item) => item.status === 'active')
+      : (headerPreviewLayout?.pages ?? []).filter((item) => item.status === 'active')
 
   usePlatformLoading(feature.detailStatus === 'loading' && !feature.detail ? t('loadingDesigner') : null)
 
@@ -101,11 +146,36 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     if (kind === 'footers') dispatch(websiteFootersActions.fetchDetailRequested({ id, force: true }))
     dispatch(websiteThemesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     dispatch(websitePagesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+    dispatch(websiteLayoutsActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     if (kind === 'pages') {
       dispatch(websiteHeadersActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
       dispatch(websiteFootersActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     }
+    if (kind === 'headers') {
+      dispatch(websiteHeadersActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+    }
   }, [accessToken, dispatch, id, kind])
+
+  useEffect(() => {
+    if (!accessToken || kind !== 'pages') return
+    const layoutId = pagesState.detail?.layoutId
+    if (layoutId) dispatch(websiteLayoutsActions.fetchDetailRequested({ id: layoutId, force: true }))
+  }, [accessToken, dispatch, kind, pagesState.detail?.layoutId])
+
+  useEffect(() => {
+    if (!accessToken || kind !== 'pages' || !pageLayout) return
+    if (pageLayout.headerId) {
+      dispatch(websiteHeadersActions.fetchDetailRequested({ id: pageLayout.headerId, force: true }))
+    }
+    if (pageLayout.footerId) {
+      dispatch(websiteFootersActions.fetchDetailRequested({ id: pageLayout.footerId, force: true }))
+    }
+  }, [accessToken, dispatch, kind, pageLayout?.footerId, pageLayout?.headerId])
+
+  useEffect(() => {
+    if (!accessToken || !previewLayout?.themeId) return
+    dispatch(websiteThemesActions.fetchDetailRequested({ id: previewLayout.themeId, force: true }))
+  }, [accessToken, dispatch, previewLayout?.themeId])
 
   useEffect(() => {
     const detail = feature.detail
@@ -127,12 +197,12 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
 
   const fontUrls = useMemo(() => {
     const urls = new Set(collectGoogleFontUrls(theme ?? null, document))
-    for (const extra of [defaultHeader?.document, defaultFooter?.document]) {
+    for (const extra of [previewHeader?.document, previewFooter?.document]) {
       if (!extra) continue
       for (const url of collectGoogleFontUrls(null, extra)) urls.add(url)
     }
     return [...urls]
-  }, [theme, document, defaultHeader, defaultFooter])
+  }, [theme, document, previewHeader, previewFooter])
 
   useEffect(() => {
     const previous = window.document.title
@@ -383,14 +453,17 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           ) : null}
           <DesignerCanvas
             document={document}
-            headerDocument={mode === 'visual' ? defaultHeader?.document ?? null : null}
-            footerDocument={mode === 'visual' ? defaultFooter?.document ?? null : null}
+            headerDocument={mode === 'visual' ? previewHeader?.document ?? null : null}
+            footerDocument={mode === 'visual' ? previewFooter?.document ?? null : null}
             breakpoint={breakpoint}
             canvasWidth={WEBSITE_CANVAS_WIDTH[breakpoint]}
             mode={mode}
             selection={selection}
             theme={theme ?? null}
             pages={pagesState.items}
+            navPages={navPages}
+            currentPageId={kind === 'pages' ? pagesState.detail?.id ?? null : null}
+            designerKind={kind}
             canManage={canManage}
             onSelect={setSelection}
             onChangeDocument={setDocument}

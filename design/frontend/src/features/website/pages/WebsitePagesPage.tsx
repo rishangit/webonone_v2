@@ -18,7 +18,7 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
-import { websitePagesActions } from '../store'
+import { websitePagesActions, websiteLayoutsActions } from '../store'
 import { WebsiteHubTabs, websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { WebsitePageDialog } from '../components/WebsiteEntityDialogs'
 import { WebsitePagesList } from '../components/WebsitePagesList'
@@ -43,8 +43,14 @@ export function WebsitePagesPage() {
   const [awaitingCreate, setAwaitingCreate] = useState(false)
 
   const list = useEpicCatalogList((s) => s.websitePages, websitePagesActions)
+  const layouts = useAppSelector((s) => s.websiteLayouts.items)
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websitePages)
   usePlatformLoading(list.loading ? t('loading') : null)
+
+  useEffect(() => {
+    if (!accessToken) return
+    dispatch(websiteLayoutsActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+  }, [accessToken, dispatch])
 
   useEffect(() => {
     if (!awaitingCreate) return
@@ -74,7 +80,6 @@ export function WebsitePagesPage() {
       dispatch(websitePagesActions.saveDetailRequested({ id: dialog.id, body: values }))
       setDialog(null)
       toast({ title: t('saved') })
-      list.load(1, list.pageSize, true)
       return
     }
     setAwaitingCreate(true)
@@ -134,7 +139,15 @@ export function WebsitePagesPage() {
             canManage={canManage}
             onBrowse={(page) => window.open(websiteLiveUrl(liveOrigin, page.companyId, page.path), '_blank', 'noopener')}
             onEditDetails={(page) =>
-              setDialog({ id: page.id, initial: { name: page.name, path: page.path, status: page.status } })
+              setDialog({
+                id: page.id,
+                initial: {
+                  name: page.name,
+                  path: page.path,
+                  status: page.status,
+                  layoutId: page.layoutId,
+                },
+              })
             }
             onDeleted={(id) => {
               dispatch(websitePagesActions.deleteRequested({ id }))
@@ -160,6 +173,7 @@ export function WebsitePagesPage() {
         open={dialog !== null}
         initial={dialog?.initial}
         entityId={dialog?.id}
+        layouts={layouts}
         isSaving={detailStatus === 'saving'}
         error={awaitingCreate ? detailError : null}
         onOpenChange={(open) => {

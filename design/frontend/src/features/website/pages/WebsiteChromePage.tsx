@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
@@ -49,6 +49,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
   const companyId = user?.companyId ?? null
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
   const actions = kind === 'headers' ? websiteHeadersActions : websiteFootersActions
   const select = (s: RootState) => (kind === 'headers' ? s.websiteHeaders : s.websiteFooters)
@@ -56,6 +57,16 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   const detailStatus = useAppSelector((s) => select(s).detailStatus)
   const detailError = useAppSelector((s) => select(s).detailError)
   usePlatformLoading(list.loading ? t('loading') : null)
+
+  useEffect(() => {
+    if (!awaitingCreate) return
+    if (detailStatus === 'idle') {
+      setAwaitingCreate(false)
+      setDialogOpen(false)
+      toast({ title: t('created') })
+    }
+    if (detailStatus === 'error') setAwaitingCreate(false)
+  }, [awaitingCreate, detailStatus, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (!companyId) {
@@ -171,10 +182,8 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
         error={detailError}
         onOpenChange={setDialogOpen}
         onSubmit={(name, isDefault) => {
+          setAwaitingCreate(true)
           dispatch(actions.saveDetailRequested({ body: { name, isDefault } }))
-          setDialogOpen(false)
-          toast({ title: t('created') })
-          list.load(1, list.pageSize, true)
         }}
         onHostedSaved={() => list.load(1, list.pageSize, true)}
       />

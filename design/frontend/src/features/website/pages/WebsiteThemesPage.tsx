@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
@@ -41,10 +41,22 @@ export function WebsiteThemesPage() {
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
   const companyId = user?.companyId ?? null
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
   const list = useEpicCatalogList((s) => s.websiteThemes, websiteThemesActions)
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websiteThemes)
   usePlatformLoading(list.loading ? t('loading') : null)
+
+  useEffect(() => {
+    if (!awaitingCreate) return
+    if (detailStatus === 'idle' && detail) {
+      setAwaitingCreate(false)
+      setDialogOpen(false)
+      toast({ title: t('created') })
+      goToWebsite(`/website/themes/${detail.id}`)
+    }
+    if (detailStatus === 'error') setAwaitingCreate(false)
+  }, [awaitingCreate, detail, detailStatus, goToWebsite, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (!companyId) {
@@ -158,19 +170,16 @@ export function WebsiteThemesPage() {
         isSaving={detailStatus === 'saving'}
         error={detailError}
         onOpenChange={setDialogOpen}
-        onSubmit={(name) => {
-          dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true } }))
-          setDialogOpen(false)
-          toast({ title: t('created') })
-          if (detail) goToWebsite(`/website/themes/${detail.id}`)
-          list.load(1, list.pageSize, true)
+        onSubmit={(values) => {
+          setAwaitingCreate(true)
+          dispatch(websiteThemesActions.saveDetailRequested({ body: { ...values, isActive: true } }))
         }}
         onHostedSaved={() => list.load(1, list.pageSize, true)}
       />
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
         title={pendingDelete ? t('deleteConfirm', { name: pendingDelete.name }) : t('deleteConfirmFallback')}
-        description={t('deleteDescription')}
+        description={t('deleteThemeDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null)

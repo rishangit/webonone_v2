@@ -5,7 +5,7 @@ import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import type { WebsiteSection } from '../types'
 import { isLocalWebsitePreviewHost } from '../utils/companyPublicHost'
 
-const SECTIONS: WebsiteSection[] = ['pages', 'headers', 'footers', 'themes', 'media']
+const SECTIONS: WebsiteSection[] = ['pages', 'layouts', 'headers', 'footers', 'themes', 'media']
 
 export function WebsiteHubTabs({
   section,

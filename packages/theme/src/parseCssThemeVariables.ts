@@ -1,6 +1,4 @@
-import type { ThemeColors } from '@webonone/theme'
-
-export type ParsedThemeColors = ThemeColors
+import type { ThemeColors } from './types'
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/
 
@@ -26,7 +24,7 @@ function parseHexFromCss(input: string, varName: string): string | null {
 }
 
 /** Returns null if required semantic or legacy palette vars are missing. */
-export function parseCssThemeVariables(input: string): ParsedThemeColors | null {
+export function parseCssThemeVariables(input: string): ThemeColors | null {
   const primary =
     parseHexFromCss(input, '--color-primary') ?? parseHexFromCss(input, '--color-1')
   const secondary =
@@ -41,4 +39,20 @@ export function parseCssThemeVariables(input: string): ParsedThemeColors | null 
   if (!primary || !secondary || !background || !surface || !text) return null
 
   return { primary, secondary, background, surface, text }
+}
+
+export const CSS_PALETTE_MAX_SWATCHES = 7
+
+/** Numbered `--color-1`…`--color-7` (1–7 swatches), or a full semantic 5-color block. */
+export function parseCssPaletteSwatches(input: string): string[] | null {
+  const numbered: string[] = []
+  for (let i = 1; i <= CSS_PALETTE_MAX_SWATCHES; i++) {
+    const hex = parseHexFromCss(input, `--color-${i}`)
+    if (hex) numbered.push(hex)
+  }
+  if (numbered.length >= 1) return numbered
+
+  const semantic = parseCssThemeVariables(input)
+  if (!semantic) return null
+  return [semantic.primary, semantic.secondary, semantic.background, semantic.surface, semantic.text]
 }

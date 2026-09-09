@@ -49,6 +49,7 @@ export {
   resolveSurfaceColors,
 } from './colorUtils'
 export { deriveSemanticColors, semanticColorToCssVar } from './deriveSemanticColors'
+export { CSS_PALETTE_MAX_SWATCHES, parseCssPaletteSwatches, parseCssThemeVariables } from './parseCssThemeVariables'
 export {
   colorsToThemeDto,
   themeColorsToUrlSlots,

@@ -153,7 +153,7 @@ function ImageSliderAddonRenderer({ addon, breakpoint, publish }: AddonRenderPro
             <ChevronRight className="size-4" aria-hidden />
           </Button>
           <div
-            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5"
+            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 flex-nowrap items-center gap-1.5"
             data-addon-control=""
             onPointerDown={stopDesignerDrag}
           >

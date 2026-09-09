@@ -13,7 +13,7 @@ import {
 } from 'rxjs/operators'
 import type { CatalogFeatureState, CatalogListQuery, PaginatedResult } from './types'
 import { isFresh, serializeQuery } from './cacheUtils'
-import { mergeAppendedItems } from './mergeAppendedItems'
+import { mergeAppendedItems, upsertCatalogListItem } from './mergeAppendedItems'
 import { isCollapsedReplaceRequest, resolveListPage } from './resolveListPage'
 
 type ListLoader<T> = (query: CatalogListQuery) => Promise<PaginatedResult<T>>
@@ -144,6 +144,9 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
         state.detailLastFetchedAt = Date.now()
         state.detailStatus = 'idle'
         state.lastFetchedAt = null
+        const { items, totalDelta } = upsertCatalogListItem(state.items, action.payload)
+        state.items = items as typeof state.items
+        if (totalDelta > 0) state.total += totalDelta
       },
       saveDetailFailed(state, action: PayloadAction<string>) {
         state.detailStatus = 'error'

@@ -21,7 +21,7 @@ type ThemeTextsTabProps = ThemeEditorTabProps & {
   onTextStyleInUse: () => void
 }
 
-export function ThemeTextsTab({ theme, onChange, onTextStyleInUse }: ThemeTextsTabProps) {
+export function ThemeTextsTab({ theme, onPersist, saving, onTextStyleInUse }: ThemeTextsTabProps) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const [dialog, setDialog] = useState<{ style?: WebsiteTextStyle } | null>(null)
@@ -36,12 +36,17 @@ export function ThemeTextsTab({ theme, onChange, onTextStyleInUse }: ThemeTextsT
       onTextStyleInUse()
       return
     }
-    onChange({ ...theme, textStyles: theme.textStyles.filter((style) => style.id !== id) })
+    onPersist({ ...theme, textStyles: theme.textStyles.filter((style) => style.id !== id) })
   }
 
   return (
     <div className="space-y-2">
-      <ThemeEditorListHeader title={t('texts')} addLabel={t('addTextStyle')} onAdd={() => openDialog()} />
+      <ThemeEditorListHeader
+        title={t('texts')}
+        addLabel={t('addTextStyle')}
+        onAdd={() => openDialog()}
+        disabled={saving}
+      />
       {theme.textStyles.length === 0 ? (
         <ItemListEmpty>{t('emptyTextStyles')}</ItemListEmpty>
       ) : (
@@ -56,9 +61,14 @@ export function ThemeTextsTab({ theme, onChange, onTextStyleInUse }: ThemeTextsT
                     type="button"
                     className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => openDialog(style)}
+                    disabled={saving}
                   >
-                    <p className="font-medium" style={{ fontFamily: snap.fontFamily, color: snap.color }}>
-                      {style.name}
+                    <p className="font-medium">{style.name}</p>
+                    <p
+                      className="truncate text-base leading-snug"
+                      style={{ fontFamily: snap.fontFamily, color: snap.color, fontSize: snap.size }}
+                    >
+                      {t('textPreviewSample')}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {[font?.name || font?.family, `${snap.size}px`].filter(Boolean).join(' · ')}
@@ -66,11 +76,14 @@ export function ThemeTextsTab({ theme, onChange, onTextStyleInUse }: ThemeTextsT
                   </button>
                 </ItemListContent>
                 <ItemListMenu ariaLabel={t('actionsFor', { name: style.name || t('texts') })}>
-                  <DropdownMenuItem onClick={() => openDialog(style)}>{tc('edit')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openDialog(style)} disabled={saving}>
+                    {tc('edit')}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
                     onClick={() => removeTextStyle(style.id)}
+                    disabled={saving}
                   >
                     {tc('delete')}
                   </DropdownMenuItem>
@@ -88,7 +101,7 @@ export function ThemeTextsTab({ theme, onChange, onTextStyleInUse }: ThemeTextsT
           if (!open) setDialog(null)
         }}
         onSubmit={(style) => {
-          onChange({ ...theme, textStyles: upsertById(theme.textStyles, style) })
+          onPersist({ ...theme, textStyles: upsertById(theme.textStyles, style) })
           setDialog(null)
         }}
       />

@@ -1,11 +1,13 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Plus, Settings2, Trash2 } from 'lucide-react'
-import { Button } from '@webonone/ui-kit'
+import { Button, cn } from '@webonone/ui-kit'
 import { RESIZE_HANDLES, resizeHandleClassName, type ResizeHandle } from '../document/layout'
 
 const CHROME_ICON_CLASS = 'h-3.5 w-3.5 shrink-0'
-const CHROME_BUTTON_CLASS = 'h-7 w-7 shrink-0 rounded-full p-0'
+const CHROME_BUTTON_CLASS = 'h-7 w-7 shrink-0 flex-none rounded-full p-0'
+const CHROME_TOOLBAR_CLASS =
+  'pointer-events-auto absolute z-40 flex w-max max-w-none shrink-0 flex-nowrap items-center gap-1 rounded-full border border-border bg-background p-0.5 shadow-sm'
 
 interface SelectionChromeProps {
   kind: 'block' | 'addon'
@@ -36,7 +38,7 @@ export function SelectionChrome({
     <>
       {canManage ? (
         <div
-          className="absolute right-1 top-1 z-40 flex max-w-[calc(100%-0.5rem)] flex-wrap items-center justify-end gap-1 rounded-full border border-border bg-background p-0.5 shadow-sm"
+          className={cn(CHROME_TOOLBAR_CLASS, 'right-1 top-1')}
           data-chrome-action=""
           onPointerDown={stop}
           onClick={stop}

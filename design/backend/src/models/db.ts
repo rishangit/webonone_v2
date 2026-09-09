@@ -44,7 +44,22 @@ export interface DesignWebsitePageRow {
   name: string
   path: string
   status: WebsitePageStatus
+  layout_id: string | null
+  sort_order: number
   document: string | Record<string, unknown>
+  created_by: string | null
+  created_at: Date
+  updated_at: Date
+}
+
+export interface DesignWebsiteLayoutRow {
+  id: string
+  company_id: string
+  name: string
+  header_id: string | null
+  footer_id: string | null
+  theme_id: string | null
+  is_default: number | boolean
   created_by: string | null
   created_at: Date
   updated_at: Date

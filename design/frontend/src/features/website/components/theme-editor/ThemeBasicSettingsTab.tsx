@@ -1,8 +1,8 @@
 import { Card, ColorInput, FormField, Input } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
-import type { ThemeEditorTabProps } from './types'
+import type { ThemeBasicSettingsTabProps } from './types'
 
-export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: ThemeEditorTabProps) {
+export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: ThemeBasicSettingsTabProps) {
   const { t } = useTranslation('website')
 
   return (

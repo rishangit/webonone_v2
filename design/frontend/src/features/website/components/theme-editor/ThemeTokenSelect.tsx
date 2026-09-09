@@ -1,10 +1,13 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
+import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
 import { THEME_TOKEN_NONE } from './types'
 
 export type ThemeTokenOption = {
   id: string
   label: string
   swatch?: string
+  fontFamily?: string
+  previewText?: string
 }
 
 type ThemeTokenSelectProps = {
@@ -41,7 +44,17 @@ export function ThemeTokenSelect({
         <SelectItem value={THEME_TOKEN_NONE}>{noneLabel}</SelectItem>
         {options.map((option) => (
           <SelectItem key={option.id} value={option.id}>
-            {option.swatch ? (
+            {option.fontFamily ? (
+              <span className="flex min-w-0 flex-col gap-0.5 py-0.5">
+                <span className="truncate text-xs text-muted-foreground">{option.label}</span>
+                <span
+                  className="truncate text-base leading-snug"
+                  style={themeFontFamilyStyle(option.fontFamily)}
+                >
+                  {option.previewText ?? 'Aa'}
+                </span>
+              </span>
+            ) : option.swatch ? (
               <span className="flex items-center gap-2">
                 <span
                   className="h-4 w-4 shrink-0 rounded-sm border border-[hsl(var(--glass-border))]"

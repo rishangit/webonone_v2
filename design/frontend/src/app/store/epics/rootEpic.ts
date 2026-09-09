@@ -4,6 +4,7 @@ import { formsEpics } from '@/features/forms/store'
 import {
   websiteFootersEpics,
   websiteHeadersEpics,
+  websiteLayoutsEpics,
   websitePagesEpics,
   websiteThemesEpics,
 } from '@/features/website/store'
@@ -14,5 +15,6 @@ export const rootEpic = combineEpics(
   websitePagesEpics,
   websiteHeadersEpics,
   websiteFootersEpics,
+  websiteLayoutsEpics,
   websiteThemesEpics,
 )

@@ -46,6 +46,9 @@ const WebsitePagesFilterEmbedPage = lazy(() =>
 const WebsiteHeadersPage = lazy(() =>
   import('@/features/website/pages/WebsiteChromePage').then((m) => ({ default: m.WebsiteHeadersPage })),
 )
+const WebsiteLayoutsPage = lazy(() =>
+  import('@/features/website/pages/WebsiteLayoutsPage').then((m) => ({ default: m.WebsiteLayoutsPage })),
+)
 const WebsiteFootersPage = lazy(() =>
   import('@/features/website/pages/WebsiteChromePage').then((m) => ({ default: m.WebsiteFootersPage })),
 )
@@ -76,9 +79,19 @@ const WebsiteChromeCreateEmbedPage = lazy(() =>
     default: m.WebsiteChromeCreateEmbedPage,
   })),
 )
+const WebsiteLayoutCreateEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteLayoutCreateEmbedPage').then((m) => ({
+    default: m.WebsiteLayoutCreateEmbedPage,
+  })),
+)
 const WebsiteThemeCreateEmbedPage = lazy(() =>
   import('@/features/website/pages/WebsiteChromeCreateEmbedPage').then((m) => ({
     default: m.WebsiteThemeCreateEmbedPage,
+  })),
+)
+const WebsiteThemePaletteImportEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteThemePaletteImportEmbedPage').then((m) => ({
+    default: m.WebsiteThemePaletteImportEmbedPage,
   })),
 )
 const WebsiteThemeTokenEmbedPage = lazy(() =>
@@ -236,6 +249,16 @@ export function App() {
               }
             />
             <Route
+              path="/website/layouts"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsiteLayoutsPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/website/headers"
               element={
                 <RoleRoute roles={[...companyRoles]}>
@@ -336,6 +359,26 @@ export function App() {
               }
             />
             <Route
+              path="/embed/dialogs/website/layouts/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteLayoutCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/layouts/:id"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteLayoutCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/embed/dialogs/website/headers/create"
               element={
                 <RoleRoute roles={[...manageRoles]}>
@@ -361,6 +404,16 @@ export function App() {
                 <RoleRoute roles={[...manageRoles]}>
                   <LazyRoute>
                     <WebsiteThemeCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/import-palette"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemePaletteImportEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

@@ -11,7 +11,7 @@ import { Alert, AlertDescription, useToast } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
-import { websitePagesActions } from '../store'
+import { websiteLayoutsActions, websitePagesActions } from '../store'
 import { WebsitePageDialog } from '../components/WebsiteEntityDialogs'
 import type { PageMetaValues } from '../schemas/websiteMeta'
 
@@ -24,12 +24,14 @@ export function WebsitePageCreateEmbedPage() {
   const { goToWebsiteEdit } = useNavigateDesign()
   const { toast } = useToast()
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websitePages)
+  const layouts = useAppSelector((s) => s.websiteLayouts.items)
   const [awaiting, setAwaiting] = useState(false)
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
   const isValid = Boolean(parentOrigin && requestId)
 
   useEffect(() => {
+    dispatch(websiteLayoutsActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     if (id) dispatch(websitePagesActions.fetchDetailRequested({ id, force: true }))
   }, [dispatch, id])
 
@@ -56,7 +58,7 @@ export function WebsitePageCreateEmbedPage() {
 
   const initial: PageMetaValues | undefined =
     isEdit && detail && detail.id === id
-      ? { name: detail.name, path: detail.path, status: detail.status }
+      ? { name: detail.name, path: detail.path, status: detail.status, layoutId: detail.layoutId }
       : undefined
 
   if (isEdit && !initial) {
@@ -77,6 +79,7 @@ export function WebsitePageCreateEmbedPage() {
       chrome="embed-page"
       entityId={id}
       initial={initial}
+      layouts={layouts}
       isSaving={detailStatus === 'saving'}
       error={awaiting ? detailError : null}
       onOpenChange={(next) => {

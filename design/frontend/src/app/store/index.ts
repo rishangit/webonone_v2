@@ -5,6 +5,7 @@ import { formsReducer } from '@/features/forms/store'
 import {
   websiteFootersReducer,
   websiteHeadersReducer,
+  websiteLayoutsReducer,
   websitePagesReducer,
   websiteThemesReducer,
 } from '@/features/website/store'
@@ -20,6 +21,7 @@ export const store = configureStore({
     websitePages: websitePagesReducer,
     websiteHeaders: websiteHeadersReducer,
     websiteFooters: websiteFootersReducer,
+    websiteLayouts: websiteLayoutsReducer,
     websiteThemes: websiteThemesReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware({ thunk: false }).concat(epicMiddleware),

@@ -79,8 +79,8 @@ export function WebsiteThemeCreateEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSubmit={(name) => {
-        dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true } }))
+      onSubmit={(values) => {
+        dispatch(websiteThemesActions.saveDetailRequested({ body: { ...values, isActive: true } }))
         toast({ title: t('created') })
         sendPlatformPeerDialogComplete(parentOrigin, requestId)
       }}

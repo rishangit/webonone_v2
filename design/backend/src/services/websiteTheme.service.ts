@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { db, type DesignWebsiteThemeRow } from '../models/db.js'
 import { HttpError } from './httpError.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
+import { countLayoutsUsingTheme } from './websiteLayout.service.js'
 import type {
   CreateWebsiteThemeBody,
   UpdateWebsiteThemeBody,
@@ -175,8 +176,13 @@ export async function setDefaultWebsiteTheme(input: {
 }
 
 export async function deleteWebsiteTheme(input: { companyId: string; id: string }): Promise<void> {
-  const deleted = await db('design_website_themes')
+  const existing = await db('design_website_themes')
     .where({ id: input.id, company_id: input.companyId })
-    .del()
-  if (!deleted) throw new HttpError(404, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+    .first()
+  if (!existing) throw new HttpError(404, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+  const used = await countLayoutsUsingTheme({ companyId: input.companyId, id: input.id })
+  if (used > 0) {
+    throw new HttpError(409, 'This theme is used by a layout', 'WEBSITE_THEME_IN_USE')
+  }
+  await db('design_website_themes').where({ id: input.id, company_id: input.companyId }).del()
 }

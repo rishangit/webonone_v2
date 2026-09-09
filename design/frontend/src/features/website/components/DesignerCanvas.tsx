@@ -19,6 +19,7 @@ import type {
   LayoutRect,
   WebsiteAddon,
   WebsiteBreakpoint,
+  WebsiteDesignerKind,
   WebsiteDocumentV1,
   WebsitePage,
   WebsiteTheme,
@@ -49,6 +50,9 @@ interface DesignerCanvasProps {
   selection: DesignerSelection | null
   theme: WebsiteTheme | null
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  currentPageId?: string | null
+  designerKind?: WebsiteDesignerKind
   canManage?: boolean
   onSelect: (selection: DesignerSelection) => void
   onChangeDocument: (document: WebsiteDocumentV1) => void
@@ -70,6 +74,9 @@ export function DesignerCanvas({
   selection,
   theme,
   pages,
+  navPages = [],
+  currentPageId = null,
+  designerKind,
   canManage = true,
   onSelect,
   onChangeDocument,
@@ -268,6 +275,8 @@ export function DesignerCanvas({
           mode="visual"
           fit="content"
           pages={pages}
+          navPages={navPages}
+          currentPageId={currentPageId}
         />
       ) : null}
       <DocumentRenderer
@@ -277,6 +286,8 @@ export function DesignerCanvas({
         mode={mode}
         selection={selection}
         pages={pages}
+        navPages={navPages}
+        currentPageId={currentPageId}
         canManage={canManage}
         onSelect={onSelect}
         onMovePointerDown={(event, grabbed) => onHandlePointerDown(event, 'move', grabbed)}
@@ -304,12 +315,15 @@ export function DesignerCanvas({
           mode="visual"
           fit="content"
           pages={pages}
+          navPages={navPages}
+          currentPageId={currentPageId}
         />
       ) : null}
         </div>
       </div>
       <AddAddonDialog
         open={addAddonOpen}
+        designerKind={designerKind}
         onOpenChange={setAddAddonOpen}
         onAddonAdded={onAddAddon}
       />

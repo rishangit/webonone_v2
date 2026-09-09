@@ -17,7 +17,7 @@ import { ThemeButtonStyleDialog } from './ThemeButtonStyleDialog'
 import { ThemeEditorListHeader } from './ThemeEditorListHeader'
 import type { ThemeEditorTabProps } from './types'
 
-export function ThemeButtonsTab({ theme, onChange }: ThemeEditorTabProps) {
+export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProps) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const [dialog, setDialog] = useState<{ style?: WebsiteButtonStyle } | null>(null)
@@ -28,7 +28,7 @@ export function ThemeButtonsTab({ theme, onChange }: ThemeEditorTabProps) {
   }
 
   function removeButtonStyle(id: string) {
-    onChange({
+    onPersist({
       ...theme,
       buttonStyles: theme.buttonStyles.filter((style) => style.id !== id),
     })
@@ -36,7 +36,12 @@ export function ThemeButtonsTab({ theme, onChange }: ThemeEditorTabProps) {
 
   return (
     <div className="space-y-2">
-      <ThemeEditorListHeader title={t('buttons')} addLabel={t('addButtonStyle')} onAdd={() => openDialog()} />
+      <ThemeEditorListHeader
+        title={t('buttons')}
+        addLabel={t('addButtonStyle')}
+        onAdd={() => openDialog()}
+        disabled={saving}
+      />
       {theme.buttonStyles.length === 0 ? (
         <ItemListEmpty>{t('emptyButtonStyles')}</ItemListEmpty>
       ) : (
@@ -50,6 +55,7 @@ export function ThemeButtonsTab({ theme, onChange }: ThemeEditorTabProps) {
                     type="button"
                     className="flex w-full items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => openDialog(style)}
+                    disabled={saving}
                   >
                     <span
                       className="inline-flex shrink-0 items-center justify-center px-3 py-1 text-sm"
@@ -68,11 +74,14 @@ export function ThemeButtonsTab({ theme, onChange }: ThemeEditorTabProps) {
                   </button>
                 </ItemListContent>
                 <ItemListMenu ariaLabel={t('actionsFor', { name: style.name || t('buttons') })}>
-                  <DropdownMenuItem onClick={() => openDialog(style)}>{tc('edit')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openDialog(style)} disabled={saving}>
+                    {tc('edit')}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
                     onClick={() => removeButtonStyle(style.id)}
+                    disabled={saving}
                   >
                     {tc('delete')}
                   </DropdownMenuItem>
@@ -90,7 +99,7 @@ export function ThemeButtonsTab({ theme, onChange }: ThemeEditorTabProps) {
           if (!open) setDialog(null)
         }}
         onSubmit={(style) => {
-          onChange({ ...theme, buttonStyles: upsertById(theme.buttonStyles, style) })
+          onPersist({ ...theme, buttonStyles: upsertById(theme.buttonStyles, style) })
           setDialog(null)
         }}
       />
