@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
@@ -16,12 +16,32 @@ import {
   FormField,
   Input,
   mapZodIssuesToFieldErrors,
+  useToast,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteFontTokenSchema } from '../../schemas/websiteThemeSchemas'
 import type { WebsiteFontToken } from '../../types'
-import { parseGoogleFontFamily } from '../../utils/parseGoogleFontFamily'
+import {
+  normalizeGoogleFontInput,
+  parseGoogleFontFamily,
+} from '../../utils/parseGoogleFontFamily'
+import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
+import { GOOGLE_FONTS_ORIGIN } from '../../utils/googleFontsConfig'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
+
+const GOOGLE_FONT_URL_PLACEHOLDER =
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap'
+
+function mapFontFieldErrors(
+  issues: { path: (string | number)[]; message: string }[],
+  invalidUrlMessage: string,
+): Partial<Record<string, string>> {
+  const errors = mapZodIssuesToFieldErrors(issues)
+  if (errors.googleFontUrl === 'Enter a valid Google Font URL') {
+    errors.googleFontUrl = invalidUrlMessage
+  }
+  return errors
+}
 
 export function ThemeFontDialog({
   open,
@@ -40,6 +60,7 @@ export function ThemeFontDialog({
 }) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
+  const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isEdit = Boolean(initial)
@@ -63,7 +84,15 @@ export function ThemeFontDialog({
     ...WEBSITE_PAGE_DIALOG_SIZE,
     onResult: (payload) => {
       const parsed = websiteFontTokenSchema.safeParse(payload)
-      if (parsed.success) onSubmit(parsed.data)
+      if (parsed.success) {
+        onSubmit(parsed.data)
+      } else {
+        toast({
+          title: t('saveFailed'),
+          description: t('invalidGoogleFontUrl'),
+          variant: 'destructive',
+        })
+      }
       onOpenChange(false)
     },
     onCancel: () => onOpenChange(false),
@@ -81,16 +110,26 @@ export function ThemeFontDialog({
     sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, false)
   }, [dialogRequestId, parentOrigin])
 
+  const normalizedUrl = useMemo(() => normalizeGoogleFontInput(googleFontUrl), [googleFontUrl])
+  const family = parseGoogleFontFamily(googleFontUrl) ?? (initial?.family ?? '')
+  const previewStyles = themeFontFamilyStyle(family)
+
+  function normalizeUrlField() {
+    setGoogleFontUrl((current) => normalizeGoogleFontInput(current))
+  }
+
   function submit() {
-    const family = parseGoogleFontFamily(googleFontUrl) ?? ''
+    const url = normalizeGoogleFontInput(googleFontUrl)
+    const parsedFamily = parseGoogleFontFamily(url) ?? ''
+    const styleName = name.trim() || parsedFamily
     const parsed = websiteFontTokenSchema.safeParse({
       id: initial?.id ?? nanoid(8),
-      name,
-      googleFontUrl,
-      family,
+      name: styleName,
+      googleFontUrl: url,
+      family: parsedFamily,
     })
     if (!parsed.success) {
-      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
+      setFieldErrors(mapFontFieldErrors(parsed.error.issues, t('invalidGoogleFontUrl')))
       return
     }
     setFieldErrors({})
@@ -103,10 +142,9 @@ export function ThemeFontDialog({
     onSubmit: submit,
   })
 
-  const family = parseGoogleFontFamily(googleFontUrl) ?? (initial?.family ?? '')
-
   const body = (
     <Form className="space-y-4">
+      {normalizedUrl ? <link rel="stylesheet" href={normalizedUrl} /> : null}
       <FormField label={t('styleName')} htmlFor="theme-font-name" required error={fieldErrors.name}>
         <Input id="theme-font-name" value={name} onChange={(event) => setName(event.target.value)} />
       </FormField>
@@ -119,12 +157,35 @@ export function ThemeFontDialog({
         <Input
           id="theme-font-url"
           value={googleFontUrl}
-          placeholder={t('googleFontUrl')}
+          placeholder={GOOGLE_FONT_URL_PLACEHOLDER}
           onChange={(event) => setGoogleFontUrl(event.target.value)}
+          onPaste={(event) => {
+            const pasted = event.clipboardData.getData('text')
+            const normalized = normalizeGoogleFontInput(pasted)
+            if (normalized !== pasted.trim()) {
+              event.preventDefault()
+              setGoogleFontUrl(normalized)
+            }
+          }}
+          onBlur={normalizeUrlField}
         />
+        <p className="text-sm text-muted-foreground">{t('googleFontUrlHint')}</p>
+        <a
+          href={GOOGLE_FONTS_ORIGIN}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {t('openGoogleFonts')}
+        </a>
       </FormField>
       <FormField label={t('fontFamily')} htmlFor="theme-font-family" error={fieldErrors.family}>
-        <Input id="theme-font-family" value={family} readOnly />
+        <Input id="theme-font-family" value={family} readOnly style={previewStyles} />
+        {family ? (
+          <p className="text-sm text-muted-foreground" style={previewStyles}>
+            {t('textPreviewSample')}
+          </p>
+        ) : null}
       </FormField>
     </Form>
   )

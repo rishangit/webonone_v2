@@ -1,6 +1,6 @@
 import { createCatalogFeatureStore } from '@webonone/store-kit'
 import { websiteApi } from '../api'
-import type { WebsiteChrome, WebsitePage, WebsiteTheme } from '../types'
+import type { WebsiteChrome, WebsiteLayout, WebsitePage, WebsiteTheme } from '../types'
 
 export const websitePagesStore = createCatalogFeatureStore<WebsitePage>({
   name: 'websitePages',
@@ -29,6 +29,15 @@ export const websiteFootersStore = createCatalogFeatureStore<WebsiteChrome>({
   delete: (id) => websiteApi.deleteChrome('footers', id),
 })
 
+export const websiteLayoutsStore = createCatalogFeatureStore<WebsiteLayout>({
+  name: 'websiteLayouts',
+  list: (q) => websiteApi.listLayouts(q),
+  get: (id) => websiteApi.getLayout(id),
+  create: (body) => websiteApi.createLayout(body as Parameters<typeof websiteApi.createLayout>[0]),
+  update: (id, body) => websiteApi.updateLayout(id, body as Parameters<typeof websiteApi.updateLayout>[1]),
+  delete: (id) => websiteApi.deleteLayout(id),
+})
+
 export const websiteThemesStore = createCatalogFeatureStore<WebsiteTheme>({
   name: 'websiteThemes',
   list: (q) => websiteApi.listThemes(q),
@@ -49,6 +58,10 @@ export const websiteHeadersEpics = websiteHeadersStore.epics
 export const websiteFootersReducer = websiteFootersStore.reducer
 export const websiteFootersActions = websiteFootersStore.actions
 export const websiteFootersEpics = websiteFootersStore.epics
+
+export const websiteLayoutsReducer = websiteLayoutsStore.reducer
+export const websiteLayoutsActions = websiteLayoutsStore.actions
+export const websiteLayoutsEpics = websiteLayoutsStore.epics
 
 export const websiteThemesReducer = websiteThemesStore.reducer
 export const websiteThemesActions = websiteThemesStore.actions

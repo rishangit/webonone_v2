@@ -76,6 +76,11 @@ export type ImageSliderAddonProps = {
   autoSlide: boolean
 }
 
+export type NavMenuAddonProps = {
+  textStyleId: string
+  align: 'start' | 'center' | 'end'
+}
+
 export type WebsiteAddon =
   | {
       id: string
@@ -105,6 +110,13 @@ export type WebsiteAddon =
       layout: LayoutByBreakpoint
       props: ImageSliderAddonProps
     }
+  | {
+      id: string
+      type: 'navMenu'
+      zIndex: number
+      layout: LayoutByBreakpoint
+      props: NavMenuAddonProps
+    }
 
 export type WebsiteBlock = {
   id: string
@@ -128,7 +140,32 @@ export type WebsitePage = {
   name: string
   path: string
   status: WebsitePageStatus
+  layoutId: string | null
+  layoutName: string | null
+  sortOrder: number
   document: WebsiteDocumentV1
+  createdBy: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type WebsiteLayoutPage = {
+  id: string
+  name: string
+  path: string
+  status: WebsitePageStatus
+  sortOrder: number
+}
+
+export type WebsiteLayout = {
+  id: string
+  companyId: string
+  name: string
+  headerId: string | null
+  footerId: string | null
+  themeId: string | null
+  isDefault: boolean
+  pages: WebsiteLayoutPage[]
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -204,10 +241,11 @@ export type PublicWebsiteSite = {
   footer: WebsiteChrome | null
   theme: WebsiteTheme | null
   pages: Array<{ id: string; name: string; path: string }>
+  navPages: Array<{ id: string; name: string; path: string }>
 }
 
 export type WebsiteDesignerKind = 'pages' | 'headers' | 'footers'
-export type WebsiteSection = 'pages' | 'headers' | 'footers' | 'themes' | 'media'
+export type WebsiteSection = 'pages' | 'headers' | 'footers' | 'layouts' | 'themes' | 'media'
 export type DesignerMode = 'visual' | 'edit'
 export type DesignerSelection =
   | { kind: 'container' }

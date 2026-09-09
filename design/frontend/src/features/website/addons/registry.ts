@@ -1,19 +1,22 @@
 import { buttonAddonModule } from './button/ButtonAddon'
 import { imageAddonModule } from './image/ImageAddon'
 import { imageSliderAddonModule } from './imageSlider/ImageSliderAddon'
+import { navMenuAddonModule } from './navMenu/NavMenuAddon'
 import { textAddonModule } from './text/TextAddon'
 import type { AddonModule } from './types'
-import type { WebsiteAddon } from '../types'
+import type { WebsiteAddon, WebsiteDesignerKind } from '../types'
 
 const modules: AddonModule[] = [
   imageAddonModule,
   imageSliderAddonModule,
   textAddonModule,
   buttonAddonModule,
+  navMenuAddonModule,
 ]
 
-export function getAddonModules(): AddonModule[] {
-  return modules
+export function getAddonModules(kind?: WebsiteDesignerKind): AddonModule[] {
+  if (!kind) return modules
+  return modules.filter((module) => !module.allowedKinds || module.allowedKinds.includes(kind))
 }
 
 export function getAddonModuleByType(type: WebsiteAddon['type']): AddonModule | undefined {

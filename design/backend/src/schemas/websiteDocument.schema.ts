@@ -113,6 +113,11 @@ export const imageSliderAddonPropsSchema = z.object({
   autoSlide: z.boolean().default(false),
 })
 
+export const navMenuAddonPropsSchema = z.object({
+  textStyleId: z.string().max(64).default(''),
+  align: z.enum(['start', 'center', 'end']).default('end'),
+})
+
 export const websiteAddonSchema = z.discriminatedUnion('type', [
   z.object({
     id: z.string().min(1).max(64),
@@ -141,6 +146,13 @@ export const websiteAddonSchema = z.discriminatedUnion('type', [
     zIndex: z.number().int().default(0),
     layout: layoutByBreakpointSchema,
     props: imageSliderAddonPropsSchema,
+  }),
+  z.object({
+    id: z.string().min(1).max(64),
+    type: z.literal('navMenu'),
+    zIndex: z.number().int().default(0),
+    layout: layoutByBreakpointSchema,
+    props: navMenuAddonPropsSchema,
   }),
 ])
 

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import * as pages from '../controllers/websitePages.controller.js'
 import * as chrome from '../controllers/websiteChrome.controller.js'
+import * as layouts from '../controllers/websiteLayout.controller.js'
 import * as themes from '../controllers/websiteThemes.controller.js'
 import * as pub from '../controllers/websitePublic.controller.js'
 import { requireAuth, requireCompanyContext, requireRole } from '../middleware/auth.js'
@@ -24,6 +25,19 @@ router.get('/website/pages/:id', requireAuth, requireCompanyContext, requireRole
 router.post('/website/pages', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.createWebsitePageHandler)
 router.patch('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.updateWebsitePageHandler)
 router.delete('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.deleteWebsitePageHandler)
+
+router.get('/website/layouts', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.listWebsiteLayoutsHandler)
+router.get('/website/layouts/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.getWebsiteLayoutHandler)
+router.post('/website/layouts', requireAuth, requireCompanyContext, requireRole(...manageRoles), layouts.createWebsiteLayoutHandler)
+router.patch('/website/layouts/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), layouts.updateWebsiteLayoutHandler)
+router.post(
+  '/website/layouts/:id/default',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  layouts.setDefaultWebsiteLayoutHandler,
+)
+router.delete('/website/layouts/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), layouts.deleteWebsiteLayoutHandler)
 
 router.get('/website/:kind', requireAuth, requireCompanyContext, requireRole(...companyRoles), chrome.listWebsiteChromeHandler)
 router.get('/website/:kind/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), chrome.getWebsiteChromeHandler)

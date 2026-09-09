@@ -121,7 +121,12 @@ export function ThemeTextStyleDialog({
           id="theme-text-font"
           value={values.fontId}
           noneLabel={tc('none')}
-          options={theme.fonts.map((font) => ({ id: font.id, label: font.name || font.family }))}
+          options={theme.fonts.map((font) => ({
+            id: font.id,
+            label: font.name || font.family,
+            fontFamily: font.family,
+            previewText: t('textPreviewSample'),
+          }))}
           onChange={(fontId) => setValues({ ...values, fontId })}
         />
       </FormField>

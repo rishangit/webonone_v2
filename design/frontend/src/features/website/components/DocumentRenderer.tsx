@@ -36,6 +36,8 @@ interface DocumentRendererProps {
   fit?: 'canvas' | 'content' | 'page'
   selection?: DesignerSelection | null
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  currentPageId?: string | null
   companyId?: string
   canManage?: boolean
   onSelect?: (selection: DesignerSelection) => void
@@ -57,6 +59,8 @@ export function DocumentRenderer({
   fit = 'canvas',
   selection,
   pages = [],
+  navPages = [],
+  currentPageId = null,
   companyId,
   canManage = true,
   onSelect,
@@ -107,6 +111,8 @@ export function DocumentRenderer({
           theme={theme}
           selection={selection}
           pages={pages}
+          navPages={navPages}
+          currentPageId={currentPageId}
           companyId={companyId}
           interactive={interactive}
           publish={publish}
@@ -132,6 +138,8 @@ function BlockView({
   theme,
   selection,
   pages,
+  navPages = [],
+  currentPageId = null,
   companyId,
   interactive,
   publish,
@@ -151,6 +159,8 @@ function BlockView({
   theme?: WebsiteTheme | null
   selection?: DesignerSelection | null
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  currentPageId?: string | null
   companyId?: string
   interactive: boolean
   publish: boolean
@@ -235,6 +245,8 @@ function BlockView({
           selected={selection?.kind === 'addon' && selection.addonId === addon.id}
           blockSelected={selected}
           pages={pages}
+          navPages={navPages}
+          currentPageId={currentPageId}
           companyId={companyId}
           interactive={interactive}
           publish={publish}
@@ -271,6 +283,8 @@ function AddonView({
   selected,
   blockSelected,
   pages,
+  navPages = [],
+  currentPageId = null,
   companyId,
   interactive,
   publish,
@@ -290,6 +304,8 @@ function AddonView({
   selected: boolean
   blockSelected: boolean
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
+  currentPageId?: string | null
   companyId?: string
   interactive: boolean
   publish: boolean
@@ -342,6 +358,8 @@ function AddonView({
             breakpoint={breakpoint}
             theme={theme}
             pages={pages}
+            navPages={navPages}
+            currentPageId={currentPageId}
             companyId={companyId}
             interactive={interactive}
             publish={publish}

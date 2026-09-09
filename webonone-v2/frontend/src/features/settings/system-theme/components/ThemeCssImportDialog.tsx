@@ -1,8 +1,7 @@
 import { useState, type MouseEvent } from 'react'
 import { Save } from 'lucide-react'
 import { Button, CustomDialog } from '@webonone/ui-kit'
-import type { ParsedThemeColors } from '../utils/parseCssThemeVariables'
-import { parseCssThemeVariables } from '../utils/parseCssThemeVariables'
+import { parseCssThemeVariables, type ThemeColors } from '@webonone/theme'
 
 const PLACEHOLDER = `:root {
   --color-primary: #344CE2;
@@ -15,7 +14,7 @@ const PLACEHOLDER = `:root {
 interface ThemeCssImportDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onImport: (colors: ParsedThemeColors) => void
+  onImport: (colors: ThemeColors) => void
 }
 
 export function ThemeCssImportDialog({ open, onOpenChange, onImport }: ThemeCssImportDialogProps) {

@@ -4,6 +4,7 @@ import { HttpError } from './httpError.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 import type { CreateWebsiteChromeBody, UpdateWebsiteChromeBody } from '../schemas/websiteChrome.schema.js'
+import { countLayoutsUsingChrome } from './websiteLayout.service.js'
 
 export type WebsiteChromeKind = 'headers' | 'footers'
 
@@ -163,8 +164,19 @@ export async function deleteWebsiteChrome(input: {
   companyId: string
   id: string
 }): Promise<void> {
-  const deleted = await db(tableName(input.kind))
+  const existing = await db<DesignWebsiteChromeRow>(tableName(input.kind))
     .where({ id: input.id, company_id: input.companyId })
-    .del()
-  if (!deleted) throw new HttpError(404, 'Not found', notFoundCode(input.kind))
+    .first()
+  if (!existing) throw new HttpError(404, 'Not found', notFoundCode(input.kind))
+  const used = await countLayoutsUsingChrome({ kind: input.kind, companyId: input.companyId, id: input.id })
+  if (used > 0) {
+    throw new HttpError(
+      409,
+      input.kind === 'headers'
+        ? 'This header is used by a layout'
+        : 'This footer is used by a layout',
+      input.kind === 'headers' ? 'WEBSITE_HEADER_IN_USE' : 'WEBSITE_FOOTER_IN_USE',
+    )
+  }
+  await db(tableName(input.kind)).where({ id: input.id, company_id: input.companyId }).del()
 }

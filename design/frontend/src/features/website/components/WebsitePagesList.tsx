@@ -90,7 +90,10 @@ export function WebsitePagesList({
                     {page.status === 'active' ? t('active') : t('inactive')}
                   </StatusTag>
                 </div>
-                <p className="text-sm text-muted-foreground">/{page.path || ''}</p>
+                <p className="text-sm text-muted-foreground">
+                  /{page.path || ''}
+                  {page.layoutName ? ` · ${page.layoutName}` : ''}
+                </p>
               </a>
             </ItemListContent>
             {menu(page)}
