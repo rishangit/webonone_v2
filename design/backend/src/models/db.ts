@@ -76,6 +76,13 @@ export interface DesignWebsiteChromeRow {
   updated_at: Date
 }
 
+export interface DesignWebsiteSiteSettingsRow {
+  company_id: string
+  home_page_id: string | null
+  created_at: Date
+  updated_at: Date
+}
+
 export interface DesignWebsiteThemeRow {
   id: string
   company_id: string

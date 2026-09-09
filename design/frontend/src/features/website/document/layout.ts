@@ -7,19 +7,34 @@ export const MIN_CONTENT_BLOCK_HEIGHT = 80
 export const DEFAULT_CONTENT_BLOCK_COL_SPAN = 4
 export const DEFAULT_CONTENT_BLOCK_HEIGHT = 160
 
+export const ROW_HEIGHT = 32
+export const MIN_CONTENT_BLOCK_ROW_SPAN = 3
+export const MIN_ADDON_ROW_SPAN = 1
+
 export const CONTENT_BLOCK_LAYOUT_LIMITS = {
   minColSpan: MIN_CONTENT_BLOCK_COL_SPAN,
   minHeight: MIN_CONTENT_BLOCK_HEIGHT,
+  minRowSpan: MIN_CONTENT_BLOCK_ROW_SPAN,
 } as const
 
 export const ADDON_LAYOUT_LIMITS = {
   minColSpan: 1,
   minHeight: 24,
+  minRowSpan: MIN_ADDON_ROW_SPAN,
 } as const
 
 export type LayoutLimits = {
   minColSpan: number
   minHeight: number
+  minRowSpan: number
+}
+
+export function snapToRow(px: number): number {
+  return Math.round(px / ROW_HEIGHT) * ROW_HEIGHT
+}
+
+export function snapRowSpan(heightPx: number, minRows: number): number {
+  return Math.max(minRows, Math.round(heightPx / ROW_HEIGHT)) * ROW_HEIGHT
 }
 
 export function resolveLayoutRect(layout: LayoutByBreakpoint, breakpoint: WebsiteBreakpoint): LayoutRect {
@@ -48,12 +63,9 @@ export function writeLayoutRect(
 export function clampRect(rect: LayoutRect, limits: LayoutLimits = ADDON_LAYOUT_LIMITS): LayoutRect {
   const colSpan = Math.min(12, Math.max(limits.minColSpan, Math.round(rect.colSpan)))
   const col = Math.min(13 - colSpan, Math.max(1, Math.round(rect.col)))
-  return {
-    col,
-    colSpan,
-    top: Math.max(0, Math.round(rect.top)),
-    height: Math.max(limits.minHeight, Math.round(rect.height)),
-  }
+  const top = Math.max(0, snapToRow(rect.top))
+  const height = Math.max(limits.minHeight, snapRowSpan(rect.height, limits.minRowSpan))
+  return { col, colSpan, top, height }
 }
 
 export function rectToStyle(rect: LayoutRect): CSSProperties {

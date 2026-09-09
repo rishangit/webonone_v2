@@ -7,6 +7,7 @@ import type {
   WebsiteLayout,
   WebsitePage,
   WebsitePageStatus,
+  WebsiteSiteSettings,
   WebsiteTheme,
 } from './types'
 
@@ -65,7 +66,23 @@ export type CreateThemeBody = {
 
 export type UpdateThemeBody = Partial<CreateThemeBody>
 
+export type UpdateWebsiteSettingsBody = {
+  homePageId: string | null
+}
+
 export const websiteApi = {
+  async getSettings() {
+    const data = await apiClient<{ settings: WebsiteSiteSettings }>('/website/settings')
+    return data.settings
+  },
+  async updateSettings(body: UpdateWebsiteSettingsBody) {
+    const data = await apiClient<{ settings: WebsiteSiteSettings }>('/website/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+    return data.settings
+  },
+
   listPages(query: ListQuery = {}) {
     return apiClient<PaginatedResult<WebsitePage>>(`/website/pages${toQueryString(query)}`)
   },

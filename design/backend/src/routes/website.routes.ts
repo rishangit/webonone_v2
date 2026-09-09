@@ -4,7 +4,10 @@ import * as chrome from '../controllers/websiteChrome.controller.js'
 import * as layouts from '../controllers/websiteLayout.controller.js'
 import * as themes from '../controllers/websiteThemes.controller.js'
 import * as pub from '../controllers/websitePublic.controller.js'
+import * as settings from '../controllers/websiteSettings.controller.js'
 import { requireAuth, requireCompanyContext, requireRole } from '../middleware/auth.js'
+import { validateBody } from '../middleware/validateBody.js'
+import { updateWebsiteSettingsSchema } from '../schemas/websiteSettings.schema.js'
 
 const router = Router()
 const companyRoles = ['super_admin', 'company_admin', 'member'] as const
@@ -18,6 +21,22 @@ router.get(
   requireCompanyContext,
   requireRole(...companyRoles),
   pub.getWebsiteLiveUrlHandler,
+)
+
+router.get(
+  '/website/settings',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...companyRoles),
+  settings.getWebsiteSettingsHandler,
+)
+router.patch(
+  '/website/settings',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  validateBody(updateWebsiteSettingsSchema),
+  settings.updateWebsiteSettingsHandler,
 )
 
 router.get('/website/pages', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.listWebsitePagesHandler)

@@ -15,3 +15,8 @@ export {
   websiteThemesActions,
   websiteThemesEpics,
 } from './websiteStore'
+export {
+  websiteSettingsReducer,
+  websiteSettingsActions,
+  websiteSettingsEpics,
+} from './websiteSettingsStore'

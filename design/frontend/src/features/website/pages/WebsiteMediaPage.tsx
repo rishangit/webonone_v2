@@ -48,7 +48,7 @@ export function WebsiteMediaPage() {
   return (
     <FeaturePage title={t('title')} description={t('mediaDescription')}>
       <WebsiteHubTabs section="media" />
-      <div className="min-h-[480px] overflow-hidden rounded-lg border border-[hsl(var(--glass-border))]">
+      <div className="mt-6 min-h-[480px] overflow-hidden rounded-lg border border-[hsl(var(--glass-border))]">
         <MediaSelectorFrame
           isOpen
           accessToken={accessToken}
