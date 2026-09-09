@@ -10,7 +10,8 @@ import {
   Input,
   mapZodIssuesToFieldErrors,
 } from '@webonone/ui-kit'
-import { containerSettingsSchema } from '../schemas/websiteDesignerSchemas'
+import { MIN_PAGE_CONTAINER_HEIGHT } from '../document/layout'
+import { createContainerSettingsSchema } from '../schemas/websiteDesignerSchemas'
 import type { WebsiteDocumentV1 } from '../types'
 
 export const CONTAINER_SETTINGS_DIALOG_SIZE = {
@@ -21,6 +22,7 @@ export const CONTAINER_SETTINGS_DIALOG_SIZE = {
 interface ContentContainerSettingsDialogProps {
   open: boolean
   container: WebsiteDocumentV1['container']
+  minHeight?: number
   onOpenChange: (open: boolean) => void
   onSave: (next: WebsiteDocumentV1['container']) => void
 }
@@ -28,6 +30,7 @@ interface ContentContainerSettingsDialogProps {
 export function ContentContainerSettingsDialog({
   open,
   container,
+  minHeight = MIN_PAGE_CONTAINER_HEIGHT,
   onOpenChange,
   onSave,
 }: ContentContainerSettingsDialogProps) {
@@ -45,7 +48,7 @@ export function ContentContainerSettingsDialog({
   }, [container, open])
 
   function submit() {
-    const parsed = containerSettingsSchema.safeParse({ height, backgroundColor })
+    const parsed = createContainerSettingsSchema(minHeight).safeParse({ height, backgroundColor })
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
@@ -83,7 +86,7 @@ export function ContentContainerSettingsDialog({
           <Input
             id="container-settings-height"
             type="number"
-            min={80}
+            min={minHeight}
             max={20000}
             value={height}
             onChange={(event) => setHeight(event.target.value)}

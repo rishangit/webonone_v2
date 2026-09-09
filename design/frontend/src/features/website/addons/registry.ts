@@ -1,7 +1,7 @@
 import { buttonAddonModule } from './button/ButtonAddon'
 import { imageAddonModule } from './image/ImageAddon'
 import { imageSliderAddonModule } from './imageSlider/ImageSliderAddon'
-import { navMenuAddonModule } from './navMenu/NavMenuAddon'
+import { menuAddonModule } from './menu/MenuAddon'
 import { textAddonModule } from './text/TextAddon'
 import type { AddonModule } from './types'
 import type { WebsiteAddon, WebsiteDesignerKind } from '../types'
@@ -11,7 +11,7 @@ const modules: AddonModule[] = [
   imageSliderAddonModule,
   textAddonModule,
   buttonAddonModule,
-  navMenuAddonModule,
+  menuAddonModule,
 ]
 
 export function getAddonModules(kind?: WebsiteDesignerKind): AddonModule[] {

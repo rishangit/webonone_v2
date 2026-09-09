@@ -21,7 +21,6 @@ export type PublicWebsiteSiteDto = {
   footer: WebsiteChromeDto | null
   theme: WebsiteThemeDto | null
   pages: Array<{ id: string; name: string; path: string }>
-  navPages: Array<{ id: string; name: string; path: string }>
 }
 
 async function chromeOrNull(input: {
@@ -112,9 +111,6 @@ export async function getPublicWebsiteSite(input: {
       footer,
       theme,
       pages: listed.items.map((item) => ({ id: item.id, name: item.name, path: item.path })),
-      navPages: (resolvedLayout?.pages ?? [])
-        .filter((item) => item.status === 'active')
-        .map((item) => ({ id: item.id, name: item.name, path: item.path })),
     }
   } catch (err) {
     if (err instanceof HttpError) throw err

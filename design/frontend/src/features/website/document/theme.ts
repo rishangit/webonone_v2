@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { collectMenuTextStyleIds } from '../addons/menu/menuItemUtils'
 import type {
   WebsiteAddon,
   WebsiteBreakpoint,
@@ -130,6 +131,13 @@ export function collectGoogleFontUrls(theme: WebsiteTheme | null, document?: Web
       }
       if (addon.type === 'button' && addon.props.snapshot.googleFontUrl) {
         urls.add(addon.props.snapshot.googleFontUrl)
+      }
+      if (addon.type === 'menu') {
+        for (const textStyleId of collectMenuTextStyleIds(addon.props.items)) {
+          const style = theme?.textStyles.find((item) => item.id === textStyleId)
+          const snap = textStyleSnapshot(theme, style)
+          if (snap.googleFontUrl) urls.add(snap.googleFontUrl)
+        }
       }
     }
   }

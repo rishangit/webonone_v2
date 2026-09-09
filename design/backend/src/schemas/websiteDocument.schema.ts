@@ -113,9 +113,41 @@ export const imageSliderAddonPropsSchema = z.object({
   autoSlide: z.boolean().default(false),
 })
 
-export const navMenuAddonPropsSchema = z.object({
+export const menuDisplayModeSchema = z.enum(['inline', 'hamburger', 'wrap', 'scroll'])
+
+export const menuBreakpointSettingsSchema = z.object({
+  mode: menuDisplayModeSchema.default('inline'),
+  align: z.enum(['start', 'center', 'end']).default('start'),
+  panelSide: z.enum(['left', 'right']).optional(),
+})
+
+export const menuSubItemSchema = z.object({
+  id: z.string().min(1).max(64),
+  label: z.string().max(120).default(''),
   textStyleId: z.string().max(64).default(''),
-  align: z.enum(['start', 'center', 'end']).default('end'),
+  linkPageId: z.string().max(21).nullable().default(null),
+  children: z.tuple([]).default([]),
+})
+
+export const menuItemSchema = z.object({
+  id: z.string().min(1).max(64),
+  label: z.string().max(120).default(''),
+  textStyleId: z.string().max(64).default(''),
+  linkPageId: z.string().max(21).nullable().default(null),
+  children: z.array(menuSubItemSchema).max(12).default([]),
+})
+
+export const menuAddonPropsSchema = z.object({
+  displayByBreakpoint: z
+    .object({
+      sm: menuBreakpointSettingsSchema.optional(),
+      md: menuBreakpointSettingsSchema.optional(),
+      lg: menuBreakpointSettingsSchema.optional(),
+      xl: menuBreakpointSettingsSchema.optional(),
+      '2xl': menuBreakpointSettingsSchema.optional(),
+    })
+    .default({}),
+  items: z.array(menuItemSchema).max(20).default([]),
 })
 
 export const websiteAddonSchema = z.discriminatedUnion('type', [
@@ -149,10 +181,10 @@ export const websiteAddonSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     id: z.string().min(1).max(64),
-    type: z.literal('navMenu'),
+    type: z.literal('menu'),
     zIndex: z.number().int().default(0),
     layout: layoutByBreakpointSchema,
-    props: navMenuAddonPropsSchema,
+    props: menuAddonPropsSchema,
   }),
 ])
 
@@ -167,7 +199,7 @@ export const websiteBlockSchema = z.object({
 export const websiteDocumentSchema = z.object({
   version: z.literal(1),
   container: z.object({
-    height: z.number().min(80).max(20000).default(640),
+    height: z.number().min(64).max(20000).default(640),
     backgroundColor: z.string().max(32).optional(),
   }),
   blocks: z.array(websiteBlockSchema).max(80).default([]),
