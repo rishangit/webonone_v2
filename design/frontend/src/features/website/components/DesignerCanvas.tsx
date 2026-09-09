@@ -9,6 +9,7 @@ import {
   documentContentHeight,
   pointerToRect,
   resolveLayoutRect,
+  ROW_HEIGHT,
   writeLayoutRect,
   type LayoutLimits,
   type ResizeHandle,
@@ -137,7 +138,7 @@ export function DesignerCanvas({
           drag.selection.kind === 'block'
             ? {
                 ...drag.startDocument.container,
-                height: Math.max(drag.startDocument.container.height, nextBottom + 16),
+                height: Math.max(drag.startDocument.container.height, nextBottom + ROW_HEIGHT),
               }
             : drag.startDocument.container,
         blocks: drag.startDocument.blocks.map((item) => {

@@ -6,6 +6,7 @@ import {
   websiteHeadersEpics,
   websiteLayoutsEpics,
   websitePagesEpics,
+  websiteSettingsEpics,
   websiteThemesEpics,
 } from '@/features/website/store'
 
@@ -17,4 +18,5 @@ export const rootEpic = combineEpics(
   websiteFootersEpics,
   websiteLayoutsEpics,
   websiteThemesEpics,
+  websiteSettingsEpics,
 )

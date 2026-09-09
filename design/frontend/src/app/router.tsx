@@ -63,6 +63,11 @@ const WebsiteThemeEditorPage = lazy(() =>
 const WebsiteMediaPage = lazy(() =>
   import('@/features/website/pages/WebsiteMediaPage').then((m) => ({ default: m.WebsiteMediaPage })),
 )
+const WebsiteSettingsPage = lazy(() =>
+  import('@/features/website/pages/WebsiteSettingsPage').then((m) => ({
+    default: m.WebsiteSettingsPage,
+  })),
+)
 const WebsiteDesignerPage = lazy(() =>
   import('@/features/website/pages/WebsiteDesignerPage').then((m) => ({ default: m.WebsiteDesignerPage })),
 )
@@ -324,6 +329,16 @@ export function App() {
                 <RoleRoute roles={[...companyRoles]}>
                   <LazyRoute>
                     <WebsiteMediaPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/settings"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsiteSettingsPage />
                   </LazyRoute>
                 </RoleRoute>
               }

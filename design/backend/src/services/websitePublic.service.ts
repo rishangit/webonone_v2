@@ -1,6 +1,12 @@
 import { HttpError } from './httpError.js'
 import { resolveCompanyFromWebOnOne } from './webononeCompanyClient.js'
-import { getWebsitePageByPath, listWebsitePages, type WebsitePageDto } from './websitePage.service.js'
+import {
+  getWebsitePage,
+  getWebsitePageByPath,
+  listWebsitePages,
+  type WebsitePageDto,
+} from './websitePage.service.js'
+import { getWebsiteSiteSettings } from './websiteSettings.service.js'
 import { getDefaultWebsiteChrome, getWebsiteChrome, type WebsiteChromeDto } from './websiteChrome.service.js'
 import { getDefaultWebsiteTheme, getWebsiteTheme, type WebsiteThemeDto } from './websiteTheme.service.js'
 import { resolveLayoutForPage } from './websiteLayout.service.js'
@@ -41,6 +47,28 @@ async function defaultChrome(input: {
   return item ? { ...item, document: rewriteWebsiteDocumentMedia(item.document) } : null
 }
 
+async function resolvePublicWebsitePage(input: {
+  companyId: string
+  path: string
+}): Promise<WebsitePageDto> {
+  const normalizedPath = input.path.replace(/^\/+/, '')
+  if (normalizedPath !== '') {
+    return getWebsitePageByPath({ companyId: input.companyId, path: normalizedPath })
+  }
+
+  const settings = await getWebsiteSiteSettings({ companyId: input.companyId })
+  if (settings.homePageId) {
+    try {
+      const page = await getWebsitePage({ companyId: input.companyId, id: settings.homePageId })
+      if (page.status === 'active') return page
+    } catch (err) {
+      if (!(err instanceof HttpError && err.status === 404)) throw err
+    }
+  }
+
+  return getWebsitePageByPath({ companyId: input.companyId, path: '' })
+}
+
 async function themeForLayout(companyId: string, themeId: string | null | undefined): Promise<WebsiteThemeDto | null> {
   if (themeId) {
     try {
@@ -60,7 +88,7 @@ export async function getPublicWebsiteSite(input: {
   const companyId = company.id
   try {
     const [page, listed] = await Promise.all([
-      getWebsitePageByPath({ companyId, path: input.path }),
+      resolvePublicWebsitePage({ companyId, path: input.path }),
       listWebsitePages({ companyId, page: 1, pageSize: 100, status: 'active' }),
     ])
     const resolvedLayout = await resolveLayoutForPage({ companyId, layoutId: page.layoutId })

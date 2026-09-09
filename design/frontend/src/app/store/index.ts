@@ -7,6 +7,7 @@ import {
   websiteHeadersReducer,
   websiteLayoutsReducer,
   websitePagesReducer,
+  websiteSettingsReducer,
   websiteThemesReducer,
 } from '@/features/website/store'
 import { initApiClient } from '@/shared/services/apiClient'
@@ -23,6 +24,7 @@ export const store = configureStore({
     websiteFooters: websiteFootersReducer,
     websiteLayouts: websiteLayoutsReducer,
     websiteThemes: websiteThemesReducer,
+    websiteSettings: websiteSettingsReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware({ thunk: false }).concat(epicMiddleware),
 })

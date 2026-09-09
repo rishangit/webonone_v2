@@ -5,6 +5,7 @@ import {
   documentContentHeight,
   resolveLayoutRect,
   rectToStyle,
+  ROW_HEIGHT,
   type ResizeHandle,
 } from '../document/layout'
 import {
@@ -79,6 +80,8 @@ export function DocumentRenderer({
   const containerSelected = interactive && selection?.kind === 'container'
   const contentHeight = documentContentHeight(document, breakpoint)
   const canvasHeight = document.container.height
+  const overlayHeight =
+    fit === 'content' ? contentHeight : fit === 'page' ? Math.max(canvasHeight, contentHeight) : canvasHeight
   const sizeStyle =
     fit === 'content'
       ? { height: contentHeight }
@@ -96,13 +99,16 @@ export function DocumentRenderer({
       }}
       onClick={() => onSelect?.({ kind: 'container' })}
     >
-      <div className="pointer-events-none absolute inset-0 grid grid-cols-12">
-        {interactive
-          ? Array.from({ length: 12 }, (_, index) => (
+      {interactive ? (
+        <>
+          <div className="pointer-events-none absolute inset-0 grid grid-cols-12">
+            {Array.from({ length: 12 }, (_, index) => (
               <div key={index} className="border-r border-dashed border-black/10 last:border-r-0" />
-            ))
-          : null}
-      </div>
+            ))}
+          </div>
+          <RowGridOverlay height={overlayHeight} lineClassName="border-black/10" />
+        </>
+      ) : null}
       {sortedBlocks.map((block) => (
         <BlockView
           key={block.id}
@@ -227,11 +233,14 @@ function BlockView({
         />
       ) : null}
       {interactive ? (
-        <div className="pointer-events-none absolute inset-0 z-[2] grid grid-cols-12">
-          {Array.from({ length: 12 }, (_, index) => (
-            <div key={index} className="border-r border-dashed border-primary/25 last:border-r-0" />
-          ))}
-        </div>
+        <>
+          <div className="pointer-events-none absolute inset-0 z-[2] grid grid-cols-12">
+            {Array.from({ length: 12 }, (_, index) => (
+              <div key={index} className="border-r border-dashed border-primary/25 last:border-r-0" />
+            ))}
+          </div>
+          <RowGridOverlay height={rect.height} lineClassName="border-primary/25" className="z-[2]" />
+        </>
       ) : null}
       {selected ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
       {childSelected ? <div className={CONTENT_ELEMENT_PARENT_FRAME} /> : null}
@@ -378,6 +387,29 @@ function AddonView({
           onResizePointerDown={onResizePointerDown}
         />
       ) : null}
+    </div>
+  )
+}
+
+function RowGridOverlay({
+  height,
+  lineClassName,
+  className,
+}: {
+  height: number
+  lineClassName: string
+  className?: string
+}) {
+  const rowCount = Math.max(1, Math.ceil(height / ROW_HEIGHT))
+  return (
+    <div className={cn('pointer-events-none absolute inset-0', className)}>
+      {Array.from({ length: rowCount }, (_, index) => (
+        <div
+          key={index}
+          className={cn('absolute left-0 right-0 border-b border-dashed', lineClassName)}
+          style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT }}
+        />
+      ))}
     </div>
   )
 }

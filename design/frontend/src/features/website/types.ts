@@ -244,8 +244,14 @@ export type PublicWebsiteSite = {
   navPages: Array<{ id: string; name: string; path: string }>
 }
 
+export type WebsiteSiteSettings = {
+  companyId: string
+  homePageId: string | null
+  updatedAt: string
+}
+
 export type WebsiteDesignerKind = 'pages' | 'headers' | 'footers'
-export type WebsiteSection = 'pages' | 'headers' | 'footers' | 'layouts' | 'themes' | 'media'
+export type WebsiteSection = 'pages' | 'headers' | 'footers' | 'layouts' | 'themes' | 'media' | 'settings'
 export type DesignerMode = 'visual' | 'edit'
 export type DesignerSelection =
   | { kind: 'container' }
