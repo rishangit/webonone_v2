@@ -24,6 +24,7 @@ import { ContentBlockSettingsDialog } from '../components/ContentBlockSettingsDi
 import { AddonSettingsDialog } from '../components/AddonSettingsDialog'
 import { websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { useWebsiteLiveOrigin } from '../hooks/useWebsiteLiveOrigin'
+import { minContainerHeightForDesignerKind } from '../document/layout'
 import {
   addAddon,
   addBlock,
@@ -124,11 +125,6 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       (themesState.detail?.id === previewLayout.themeId ? themesState.detail : null)
     : null
   const theme = themeFromLayout ?? defaultTheme
-  const navPages =
-    kind === 'pages'
-      ? (pageLayout?.pages ?? []).filter((item) => item.status === 'active')
-      : (headerPreviewLayout?.pages ?? []).filter((item) => item.status === 'active')
-
   usePlatformLoading(feature.detailStatus === 'loading' && !feature.detail ? t('loadingDesigner') : null)
 
   useLayoutEffect(() => {
@@ -310,6 +306,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     ? document.blocks.find((item) => item.id === addonSettings.blockId)?.addons.find((item) => item.id === addonSettings.addonId) ??
       null
     : null
+  const minContainerHeight = minContainerHeightForDesignerKind(kind)
 
   function selectFromTree(next: DesignerSelection) {
     setSelection(next)
@@ -461,7 +458,6 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             selection={selection}
             theme={theme ?? null}
             pages={pagesState.items}
-            navPages={navPages}
             currentPageId={kind === 'pages' ? pagesState.detail?.id ?? null : null}
             designerKind={kind}
             canManage={canManage}
@@ -481,6 +477,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       <ContentContainerSettingsDialog
         open={containerSettingsOpen}
         container={document.container}
+        minHeight={minContainerHeight}
         onOpenChange={setContainerSettingsOpen}
         onSave={(next) => setDocument({ ...document, container: next })}
       />

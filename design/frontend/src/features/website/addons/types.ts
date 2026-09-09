@@ -12,7 +12,6 @@ export interface AddonRenderProps {
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
-  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string
   interactive: boolean

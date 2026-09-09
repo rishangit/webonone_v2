@@ -7,9 +7,11 @@ import {
   ADDON_LAYOUT_LIMITS,
   CONTENT_BLOCK_LAYOUT_LIMITS,
   documentContentHeight,
+  minContainerRowSpanForDesignerKind,
   pointerToRect,
   resolveLayoutRect,
   ROW_HEIGHT,
+  snapRowSpan,
   writeLayoutRect,
   type LayoutLimits,
   type ResizeHandle,
@@ -51,7 +53,6 @@ interface DesignerCanvasProps {
   selection: DesignerSelection | null
   theme: WebsiteTheme | null
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
-  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   designerKind?: WebsiteDesignerKind
   canManage?: boolean
@@ -75,7 +76,6 @@ export function DesignerCanvas({
   selection,
   theme,
   pages,
-  navPages = [],
   currentPageId = null,
   designerKind,
   canManage = true,
@@ -238,8 +238,10 @@ export function DesignerCanvas({
     const startY = event.clientY
     const startHeight = document.container.height
     const currentScale = scale
+    const minRowSpan = minContainerRowSpanForDesignerKind(designerKind)
     function onMove(moveEvent: PointerEvent) {
-      onResizeContainer(Math.max(160, Math.round(startHeight + (moveEvent.clientY - startY) / currentScale)))
+      const nextHeight = startHeight + (moveEvent.clientY - startY) / currentScale
+      onResizeContainer(snapRowSpan(nextHeight, minRowSpan))
     }
     function onUp() {
       window.removeEventListener('pointermove', onMove)
@@ -276,7 +278,6 @@ export function DesignerCanvas({
           mode="visual"
           fit="content"
           pages={pages}
-          navPages={navPages}
           currentPageId={currentPageId}
         />
       ) : null}
@@ -287,7 +288,6 @@ export function DesignerCanvas({
         mode={mode}
         selection={selection}
         pages={pages}
-        navPages={navPages}
         currentPageId={currentPageId}
         canManage={canManage}
         onSelect={onSelect}
@@ -316,7 +316,6 @@ export function DesignerCanvas({
           mode="visual"
           fit="content"
           pages={pages}
-          navPages={navPages}
           currentPageId={currentPageId}
         />
       ) : null}

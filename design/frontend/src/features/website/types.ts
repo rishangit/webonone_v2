@@ -76,9 +76,25 @@ export type ImageSliderAddonProps = {
   autoSlide: boolean
 }
 
-export type NavMenuAddonProps = {
-  textStyleId: string
+export type MenuDisplayMode = 'inline' | 'hamburger' | 'wrap' | 'scroll'
+
+export type MenuBreakpointSettings = {
+  mode: MenuDisplayMode
   align: 'start' | 'center' | 'end'
+  panelSide?: 'left' | 'right'
+}
+
+export type MenuItem = {
+  id: string
+  label: string
+  textStyleId: string
+  linkPageId: string | null
+  children: MenuItem[]
+}
+
+export type MenuAddonProps = {
+  displayByBreakpoint: Partial<Record<WebsiteBreakpoint, MenuBreakpointSettings>>
+  items: MenuItem[]
 }
 
 export type WebsiteAddon =
@@ -112,10 +128,10 @@ export type WebsiteAddon =
     }
   | {
       id: string
-      type: 'navMenu'
+      type: 'menu'
       zIndex: number
       layout: LayoutByBreakpoint
-      props: NavMenuAddonProps
+      props: MenuAddonProps
     }
 
 export type WebsiteBlock = {
@@ -241,7 +257,6 @@ export type PublicWebsiteSite = {
   footer: WebsiteChrome | null
   theme: WebsiteTheme | null
   pages: Array<{ id: string; name: string; path: string }>
-  navPages: Array<{ id: string; name: string; path: string }>
 }
 
 export type WebsiteSiteSettings = {

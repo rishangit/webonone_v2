@@ -37,7 +37,6 @@ interface DocumentRendererProps {
   fit?: 'canvas' | 'content' | 'page'
   selection?: DesignerSelection | null
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
-  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string
   canManage?: boolean
@@ -60,7 +59,6 @@ export function DocumentRenderer({
   fit = 'canvas',
   selection,
   pages = [],
-  navPages = [],
   currentPageId = null,
   companyId,
   canManage = true,
@@ -117,7 +115,6 @@ export function DocumentRenderer({
           theme={theme}
           selection={selection}
           pages={pages}
-          navPages={navPages}
           currentPageId={currentPageId}
           companyId={companyId}
           interactive={interactive}
@@ -144,7 +141,6 @@ function BlockView({
   theme,
   selection,
   pages,
-  navPages = [],
   currentPageId = null,
   companyId,
   interactive,
@@ -165,7 +161,6 @@ function BlockView({
   theme?: WebsiteTheme | null
   selection?: DesignerSelection | null
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
-  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string
   interactive: boolean
@@ -254,7 +249,6 @@ function BlockView({
           selected={selection?.kind === 'addon' && selection.addonId === addon.id}
           blockSelected={selected}
           pages={pages}
-          navPages={navPages}
           currentPageId={currentPageId}
           companyId={companyId}
           interactive={interactive}
@@ -292,7 +286,6 @@ function AddonView({
   selected,
   blockSelected,
   pages,
-  navPages = [],
   currentPageId = null,
   companyId,
   interactive,
@@ -313,7 +306,6 @@ function AddonView({
   selected: boolean
   blockSelected: boolean
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
-  navPages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string
   interactive: boolean
@@ -367,7 +359,6 @@ function AddonView({
             breakpoint={breakpoint}
             theme={theme}
             pages={pages}
-            navPages={navPages}
             currentPageId={currentPageId}
             companyId={companyId}
             interactive={interactive}

@@ -1,5 +1,11 @@
 import type { CSSProperties } from 'react'
-import type { LayoutByBreakpoint, LayoutRect, WebsiteBreakpoint, WebsiteDocumentV1 } from '../types'
+import type {
+  LayoutByBreakpoint,
+  LayoutRect,
+  WebsiteBreakpoint,
+  WebsiteDesignerKind,
+  WebsiteDocumentV1,
+} from '../types'
 import { WEBSITE_BREAKPOINTS } from '../types'
 
 export const MIN_CONTENT_BLOCK_COL_SPAN = 4
@@ -8,8 +14,20 @@ export const DEFAULT_CONTENT_BLOCK_COL_SPAN = 4
 export const DEFAULT_CONTENT_BLOCK_HEIGHT = 160
 
 export const ROW_HEIGHT = 32
+export const MIN_CHROME_CONTAINER_ROW_SPAN = 2
+export const MIN_PAGE_CONTAINER_ROW_SPAN = 5
+export const MIN_CHROME_CONTAINER_HEIGHT = ROW_HEIGHT * MIN_CHROME_CONTAINER_ROW_SPAN
+export const MIN_PAGE_CONTAINER_HEIGHT = ROW_HEIGHT * MIN_PAGE_CONTAINER_ROW_SPAN
 export const MIN_CONTENT_BLOCK_ROW_SPAN = 3
 export const MIN_ADDON_ROW_SPAN = 1
+
+export function minContainerHeightForDesignerKind(kind?: WebsiteDesignerKind): number {
+  return kind === 'headers' || kind === 'footers' ? MIN_CHROME_CONTAINER_HEIGHT : MIN_PAGE_CONTAINER_HEIGHT
+}
+
+export function minContainerRowSpanForDesignerKind(kind?: WebsiteDesignerKind): number {
+  return kind === 'headers' || kind === 'footers' ? MIN_CHROME_CONTAINER_ROW_SPAN : MIN_PAGE_CONTAINER_ROW_SPAN
+}
 
 export const CONTENT_BLOCK_LAYOUT_LIMITS = {
   minColSpan: MIN_CONTENT_BLOCK_COL_SPAN,

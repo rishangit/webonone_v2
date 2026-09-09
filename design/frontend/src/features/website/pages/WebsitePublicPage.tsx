@@ -107,7 +107,6 @@ export function WebsitePublicPage() {
             mode="publish"
             fit="content"
             pages={pages}
-            navPages={site.navPages ?? []}
             currentPageId={site.page.id}
             companyId={site.companyId || companyKey}
             onNavigatePage={goToPage}
@@ -122,7 +121,6 @@ export function WebsitePublicPage() {
           mode="publish"
           fit="page"
           pages={pages}
-          navPages={site.navPages ?? []}
           currentPageId={site.page.id}
           companyId={site.companyId || companyKey}
           onNavigatePage={goToPage}
