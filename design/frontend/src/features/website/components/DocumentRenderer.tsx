@@ -45,6 +45,8 @@ interface DocumentRendererProps {
   onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
   onAddAddon?: () => void
   onOpenBlockSettings?: () => void
+  onSaveAsPreset?: () => void
+  saveAsPresetDisabled?: boolean
   onOpenAddonSettings?: () => void
   onLayer?: (direction: 'up' | 'down') => void
   onDeleteSelection?: () => void
@@ -67,6 +69,8 @@ export function DocumentRenderer({
   onResizePointerDown,
   onAddAddon,
   onOpenBlockSettings,
+  onSaveAsPreset,
+  saveAsPresetDisabled = false,
   onOpenAddonSettings,
   onLayer,
   onDeleteSelection,
@@ -125,6 +129,8 @@ export function DocumentRenderer({
           onResizePointerDown={onResizePointerDown}
           onAddAddon={onAddAddon}
           onOpenBlockSettings={onOpenBlockSettings}
+          onSaveAsPreset={onSaveAsPreset}
+          saveAsPresetDisabled={saveAsPresetDisabled}
           onOpenAddonSettings={onOpenAddonSettings}
           onLayer={onLayer}
           onDeleteSelection={onDeleteSelection}
@@ -151,6 +157,8 @@ function BlockView({
   onResizePointerDown,
   onAddAddon,
   onOpenBlockSettings,
+  onSaveAsPreset,
+  saveAsPresetDisabled = false,
   onOpenAddonSettings,
   onLayer,
   onDeleteSelection,
@@ -171,6 +179,8 @@ function BlockView({
   onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
   onAddAddon?: () => void
   onOpenBlockSettings?: () => void
+  onSaveAsPreset?: () => void
+  saveAsPresetDisabled?: boolean
   onOpenAddonSettings?: () => void
   onLayer?: (direction: 'up' | 'down') => void
   onDeleteSelection?: () => void
@@ -269,6 +279,8 @@ function BlockView({
           canManage={canManage}
           onAddAddon={onAddAddon}
           onOpenSettings={() => onOpenBlockSettings?.()}
+          onSaveAsPreset={onSaveAsPreset}
+          saveAsPresetDisabled={saveAsPresetDisabled}
           onLayer={(direction) => onLayer?.(direction)}
           onDelete={() => onDeleteSelection?.()}
           onResizePointerDown={onResizePointerDown}

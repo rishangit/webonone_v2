@@ -51,6 +51,8 @@ interface ContentTreeProps {
   onOpenContainerSettings: () => void
   onOpenBlockSettings: (blockId: string) => void
   onOpenAddonSettings: (blockId: string, addonId: string) => void
+  onSaveAsPreset?: (blockId: string) => void
+  saveAsPresetDisabled?: boolean
 }
 
 type DragState =
@@ -145,6 +147,8 @@ export function ContentTree({
   onOpenContainerSettings,
   onOpenBlockSettings,
   onOpenAddonSettings,
+  onSaveAsPreset,
+  saveAsPresetDisabled = false,
 }: ContentTreeProps) {
   const { t } = useTranslation('website')
   const rootRef = useRef<HTMLElement>(null)
@@ -230,6 +234,13 @@ export function ContentTree({
                           }}
                         >
                           {t('openSettings')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={saveAsPresetDisabled || !onSaveAsPreset}
+                          title={saveAsPresetDisabled ? t('saveAsPresetDisabled') : undefined}
+                          onClick={() => onSaveAsPreset?.(block.id)}
+                        >
+                          {t('saveAsPreset')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onLayer({ blockId: block.id }, 'up')}>
                           {t('layerUp')}

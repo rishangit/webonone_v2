@@ -76,6 +76,16 @@ export interface DesignWebsiteChromeRow {
   updated_at: Date
 }
 
+export interface DesignWebsitePresetRow {
+  id: string
+  company_id: string
+  name: string
+  document: string | Record<string, unknown>
+  created_by: string | null
+  created_at: Date
+  updated_at: Date
+}
+
 export interface DesignWebsiteSiteSettingsRow {
   company_id: string
   home_page_id: string | null
@@ -95,6 +105,29 @@ export interface DesignWebsiteThemeRow {
   colors: string | unknown[]
   text_styles: string | unknown[]
   button_styles: string | unknown[]
+  created_by: string | null
+  created_at: Date
+  updated_at: Date
+}
+
+export type WebsiteDatasetSourceType =
+  | 'products'
+  | 'services'
+  | 'spaces'
+  | 'staff'
+  | 'users'
+  | 'analytics'
+
+export type WebsiteDatasetStatus = 'active' | 'inactive'
+
+export interface DesignWebsiteDatasetRow {
+  id: string
+  company_id: string
+  name: string
+  source_type: WebsiteDatasetSourceType
+  filters: string | Record<string, unknown>
+  config: string | Record<string, unknown> | null
+  status: WebsiteDatasetStatus
   created_by: string | null
   created_at: Date
   updated_at: Date

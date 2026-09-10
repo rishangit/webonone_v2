@@ -25,6 +25,7 @@ import type {
   WebsiteDesignerKind,
   WebsiteDocumentV1,
   WebsitePage,
+  WebsitePreset,
   WebsiteTheme,
 } from '../types'
 
@@ -60,10 +61,14 @@ interface DesignerCanvasProps {
   onChangeDocument: (document: WebsiteDocumentV1) => void
   onResizeContainer: (height: number) => void
   onAddAddon: (type: WebsiteAddon['type']) => void
+  onAddPreset?: (preset: WebsitePreset) => void
+  presets?: WebsitePreset[]
   onLayer: (direction: 'up' | 'down') => void
   onDeleteSelection: () => void
   onOpenBlockSettings: () => void
   onOpenAddonSettings: () => void
+  onSaveAsPreset?: () => void
+  saveAsPresetDisabled?: boolean
 }
 
 export function DesignerCanvas({
@@ -83,10 +88,14 @@ export function DesignerCanvas({
   onChangeDocument,
   onResizeContainer,
   onAddAddon,
+  onAddPreset,
+  presets = [],
   onLayer,
   onDeleteSelection,
   onOpenBlockSettings,
   onOpenAddonSettings,
+  onSaveAsPreset,
+  saveAsPresetDisabled = false,
 }: DesignerCanvasProps) {
   const { t } = useTranslation('website')
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -295,6 +304,8 @@ export function DesignerCanvas({
         onResizePointerDown={(event, handle) => onHandlePointerDown(event, handle)}
         onAddAddon={() => setAddAddonOpen(true)}
         onOpenBlockSettings={onOpenBlockSettings}
+        onSaveAsPreset={onSaveAsPreset}
+        saveAsPresetDisabled={saveAsPresetDisabled}
         onOpenAddonSettings={onOpenAddonSettings}
         onLayer={onLayer}
         onDeleteSelection={onDeleteSelection}
@@ -324,8 +335,10 @@ export function DesignerCanvas({
       <AddAddonDialog
         open={addAddonOpen}
         designerKind={designerKind}
+        presets={presets}
         onOpenChange={setAddAddonOpen}
         onAddonAdded={onAddAddon}
+        onPresetAdded={onAddPreset}
       />
     </div>
   )

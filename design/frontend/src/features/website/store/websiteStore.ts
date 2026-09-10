@@ -1,6 +1,12 @@
 import { createCatalogFeatureStore } from '@webonone/store-kit'
 import { websiteApi } from '../api'
-import type { WebsiteChrome, WebsiteLayout, WebsitePage, WebsiteTheme } from '../types'
+import type {
+  WebsiteChrome,
+  WebsiteLayout,
+  WebsitePage,
+  WebsitePreset,
+  WebsiteTheme,
+} from '../types'
 
 export const websitePagesStore = createCatalogFeatureStore<WebsitePage>({
   name: 'websitePages',
@@ -15,7 +21,8 @@ export const websiteHeadersStore = createCatalogFeatureStore<WebsiteChrome>({
   name: 'websiteHeaders',
   list: (q) => websiteApi.listChrome('headers', q),
   get: (id) => websiteApi.getChrome('headers', id),
-  create: (body) => websiteApi.createChrome('headers', body as Parameters<typeof websiteApi.createChrome>[1]),
+  create: (body) =>
+    websiteApi.createChrome('headers', body as Parameters<typeof websiteApi.createChrome>[1]),
   update: (id, body) => websiteApi.updateChrome('headers', id, body),
   delete: (id) => websiteApi.deleteChrome('headers', id),
 })
@@ -24,7 +31,8 @@ export const websiteFootersStore = createCatalogFeatureStore<WebsiteChrome>({
   name: 'websiteFooters',
   list: (q) => websiteApi.listChrome('footers', q),
   get: (id) => websiteApi.getChrome('footers', id),
-  create: (body) => websiteApi.createChrome('footers', body as Parameters<typeof websiteApi.createChrome>[1]),
+  create: (body) =>
+    websiteApi.createChrome('footers', body as Parameters<typeof websiteApi.createChrome>[1]),
   update: (id, body) => websiteApi.updateChrome('footers', id, body),
   delete: (id) => websiteApi.deleteChrome('footers', id),
 })
@@ -34,8 +42,18 @@ export const websiteLayoutsStore = createCatalogFeatureStore<WebsiteLayout>({
   list: (q) => websiteApi.listLayouts(q),
   get: (id) => websiteApi.getLayout(id),
   create: (body) => websiteApi.createLayout(body as Parameters<typeof websiteApi.createLayout>[0]),
-  update: (id, body) => websiteApi.updateLayout(id, body as Parameters<typeof websiteApi.updateLayout>[1]),
+  update: (id, body) =>
+    websiteApi.updateLayout(id, body as Parameters<typeof websiteApi.updateLayout>[1]),
   delete: (id) => websiteApi.deleteLayout(id),
+})
+
+export const websitePresetsStore = createCatalogFeatureStore<WebsitePreset>({
+  name: 'websitePresets',
+  list: (q) => websiteApi.listPresets(q),
+  get: (id) => websiteApi.getPreset(id),
+  create: (body) => websiteApi.createPreset(body as Parameters<typeof websiteApi.createPreset>[0]),
+  update: (id, body) => websiteApi.updatePreset(id, body),
+  delete: (id) => websiteApi.deletePreset(id),
 })
 
 export const websiteThemesStore = createCatalogFeatureStore<WebsiteTheme>({
@@ -66,3 +84,7 @@ export const websiteLayoutsEpics = websiteLayoutsStore.epics
 export const websiteThemesReducer = websiteThemesStore.reducer
 export const websiteThemesActions = websiteThemesStore.actions
 export const websiteThemesEpics = websiteThemesStore.epics
+
+export const websitePresetsReducer = websitePresetsStore.reducer
+export const websitePresetsActions = websitePresetsStore.actions
+export const websitePresetsEpics = websitePresetsStore.epics

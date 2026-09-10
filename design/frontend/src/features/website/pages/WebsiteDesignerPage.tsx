@@ -16,22 +16,25 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { openWebsiteDesigner } from '@/features/shell/utils/navigateDesign'
-import { websiteFootersActions, websiteHeadersActions, websiteLayoutsActions, websitePagesActions, websiteThemesActions } from '../store'
+import { websiteFootersActions, websiteHeadersActions, websiteLayoutsActions, websitePagesActions, websitePresetsActions, websiteThemesActions } from '../store'
 import { ContentTree } from '../components/ContentTree'
 import { DesignerCanvas } from '../components/DesignerCanvas'
 import { ContentContainerSettingsDialog } from '../components/ContentContainerSettingsDialog'
 import { ContentBlockSettingsDialog } from '../components/ContentBlockSettingsDialog'
 import { AddonSettingsDialog } from '../components/AddonSettingsDialog'
+import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
 import { websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { useWebsiteLiveOrigin } from '../hooks/useWebsiteLiveOrigin'
 import { minContainerHeightForDesignerKind } from '../document/layout'
 import {
   addAddon,
+  addAddonsFromPreset,
   addBlock,
   changeLayer,
   collectGoogleFontUrls,
   deleteAddon,
   deleteBlock,
+  documentFromBlock,
   reorderAddons,
   reorderBlocks,
   snapshotDocument,
@@ -45,6 +48,7 @@ import type {
   WebsiteBreakpoint,
   WebsiteDesignerKind,
   WebsiteDocumentV1,
+  WebsitePreset,
 } from '../types'
 
 export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
@@ -64,7 +68,15 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const footersState = useAppSelector((s) => s.websiteFooters)
   const layoutsState = useAppSelector((s) => s.websiteLayouts)
   const themesState = useAppSelector((s) => s.websiteThemes)
-  const feature = kind === 'pages' ? pagesState : kind === 'headers' ? headersState : footersState
+  const presetsState = useAppSelector((s) => s.websitePresets)
+  const feature =
+    kind === 'pages'
+      ? pagesState
+      : kind === 'headers'
+        ? headersState
+        : kind === 'footers'
+          ? footersState
+          : presetsState
   const [document, setDocument] = useState<WebsiteDocumentV1>(emptyWebsiteDocument())
   const [saved, setSaved] = useState(() => JSON.stringify(emptyWebsiteDocument()))
   const [mode, setMode] = useState<DesignerMode>('edit')
@@ -74,6 +86,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const [containerSettingsOpen, setContainerSettingsOpen] = useState(false)
   const [blockSettingsId, setBlockSettingsId] = useState<string | null>(null)
   const [addonSettings, setAddonSettings] = useState<{ blockId: string; addonId: string } | null>(null)
+  const [saveAsPresetBlockId, setSaveAsPresetBlockId] = useState<string | null>(null)
+  const [awaitingSaveAs, setAwaitingSaveAs] = useState(false)
   const [treeOpen, setTreeOpen] = useState(false)
 
   const defaultTheme = themesState.items.find((item) => item.isDefault) ?? themesState.items[0] ?? themesState.detail
@@ -82,7 +96,9 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       ? pagesState.detail?.name
       : kind === 'headers'
         ? headersState.detail?.name
-        : footersState.detail?.name
+        : kind === 'footers'
+          ? footersState.detail?.name
+          : presetsState.detail?.name
   const defaultHeader = kind === 'pages' ? headersState.items.find((item) => item.isDefault) ?? null : null
   const defaultFooter = kind === 'pages' ? footersState.items.find((item) => item.isDefault) ?? null : null
   const pageLayout =
@@ -119,7 +135,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         null
       : null
   const previewLayout =
-    kind === 'pages' ? pageLayout : kind === 'headers' ? headerPreviewLayout : footerPreviewLayout
+    kind === 'pages' ? pageLayout : kind === 'headers' ? headerPreviewLayout : kind === 'footers' ? footerPreviewLayout : null
   const themeFromLayout = previewLayout?.themeId
     ? themesState.items.find((item) => item.id === previewLayout.themeId) ??
       (themesState.detail?.id === previewLayout.themeId ? themesState.detail : null)
@@ -140,9 +156,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     if (kind === 'pages') dispatch(websitePagesActions.fetchDetailRequested({ id, force: true }))
     if (kind === 'headers') dispatch(websiteHeadersActions.fetchDetailRequested({ id, force: true }))
     if (kind === 'footers') dispatch(websiteFootersActions.fetchDetailRequested({ id, force: true }))
+    if (kind === 'presets') dispatch(websitePresetsActions.fetchDetailRequested({ id, force: true }))
     dispatch(websiteThemesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     dispatch(websitePagesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     dispatch(websiteLayoutsActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+    dispatch(websitePresetsActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     if (kind === 'pages') {
       dispatch(websiteHeadersActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
       dispatch(websiteFootersActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
@@ -191,6 +209,16 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [dirty])
 
+  useEffect(() => {
+    if (!awaitingSaveAs) return
+    if (presetsState.detailStatus === 'idle' && presetsState.detail) {
+      setAwaitingSaveAs(false)
+      setSaveAsPresetBlockId(null)
+      toast({ title: t('presetSaved') })
+    }
+    if (presetsState.detailStatus === 'error') setAwaitingSaveAs(false)
+  }, [awaitingSaveAs, presetsState.detail, presetsState.detailStatus, t, toast])
+
   const fontUrls = useMemo(() => {
     const urls = new Set(collectGoogleFontUrls(theme ?? null, document))
     for (const extra of [previewHeader?.document, previewFooter?.document]) {
@@ -232,6 +260,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     if (kind === 'pages') dispatch(websitePagesActions.saveDetailRequested({ id, body }))
     if (kind === 'headers') dispatch(websiteHeadersActions.saveDetailRequested({ id, body }))
     if (kind === 'footers') dispatch(websiteFootersActions.saveDetailRequested({ id, body }))
+    if (kind === 'presets') dispatch(websitePresetsActions.saveDetailRequested({ id, body }))
     setDocument(next)
     setSaved(JSON.stringify(next))
     toast({ title: t('saved') })
@@ -263,6 +292,20 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     setDocument(addAddon(document, blockId, type))
   }
 
+  function handleAddPreset(preset: WebsitePreset) {
+    const blockId = selectedBlockId()
+    if (!blockId) {
+      const withBlock = addBlock(document)
+      const newId = withBlock.blocks.at(-1)?.id
+      if (newId) {
+        setDocument(addAddonsFromPreset(withBlock, newId, preset.document, kind))
+        setSelection({ kind: 'block', blockId: newId })
+      }
+      return
+    }
+    setDocument(addAddonsFromPreset(document, blockId, preset.document, kind))
+  }
+
   function handleDeleteSelection() {
     if (selection.kind === 'block') setDocument(deleteBlock(document, selection.blockId))
     if (selection.kind === 'addon') setDocument(deleteAddon(document, selection.blockId, selection.addonId))
@@ -280,6 +323,24 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         },
         direction,
       ),
+    )
+  }
+
+  function openSaveAsPreset(blockId: string) {
+    if (kind === 'presets' || !canManage) return
+    setSelection({ kind: 'block', blockId })
+    setSaveAsPresetBlockId(blockId)
+  }
+
+  function handleSaveAsPreset(name: string) {
+    if (!saveAsPresetBlockId) return
+    const block = document.blocks.find((item) => item.id === saveAsPresetBlockId)
+    if (!block) return
+    setAwaitingSaveAs(true)
+    dispatch(
+      websitePresetsActions.saveDetailRequested({
+        body: { name, document: snapshotDocument(documentFromBlock(block), theme ?? null) },
+      }),
     )
   }
 
@@ -439,6 +500,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                 openAddonSettings(blockId, addonId)
                 setTreeOpen(false)
               }}
+              onSaveAsPreset={(blockId) => {
+                openSaveAsPreset(blockId)
+                setTreeOpen(false)
+              }}
+              saveAsPresetDisabled={kind === 'presets'}
             />
           </aside>
         ) : null}
@@ -467,9 +533,15 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               setDocument({ ...document, container: { ...document.container, height } })
             }
             onAddAddon={handleAddAddon}
+            onAddPreset={handleAddPreset}
+            presets={presetsState.items}
             onLayer={handleLayer}
             onDeleteSelection={handleDeleteSelection}
             onOpenBlockSettings={() => openBlockSettings()}
+            onSaveAsPreset={() => {
+              if (selection.kind === 'block' || selection.kind === 'addon') openSaveAsPreset(selection.blockId)
+            }}
+            saveAsPresetDisabled={kind === 'presets'}
             onOpenAddonSettings={() => openAddonSettings()}
           />
         </main>
@@ -507,6 +579,16 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           if (!addonSettings) return
           setDocument(updateAddon(document, addonSettings.blockId, next))
         }}
+      />
+      <WebsitePresetDialog
+        open={saveAsPresetBlockId !== null}
+        saveAs
+        isSaving={presetsState.detailStatus === 'saving'}
+        error={awaitingSaveAs ? presetsState.detailError : null}
+        onOpenChange={(open) => {
+          if (!open && !awaitingSaveAs) setSaveAsPresetBlockId(null)
+        }}
+        onSubmit={handleSaveAsPreset}
       />
     </div>
   )

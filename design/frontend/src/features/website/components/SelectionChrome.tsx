@@ -1,7 +1,14 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronUp, Plus, Settings2, Trash2 } from 'lucide-react'
-import { Button, cn } from '@webonone/ui-kit'
+import { ChevronDown, ChevronUp, MoreVertical, Plus, Settings2, Trash2 } from 'lucide-react'
+import {
+  Button,
+  cn,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@webonone/ui-kit'
 import { RESIZE_HANDLES, resizeHandleClassName, type ResizeHandle } from '../document/layout'
 
 const CHROME_ICON_CLASS = 'h-3.5 w-3.5 shrink-0'
@@ -14,6 +21,8 @@ interface SelectionChromeProps {
   canManage?: boolean
   onAddAddon?: () => void
   onOpenSettings: () => void
+  onSaveAsPreset?: () => void
+  saveAsPresetDisabled?: boolean
   onLayer: (direction: 'up' | 'down') => void
   onDelete: () => void
   onResizePointerDown: (event: ReactPointerEvent, handle: ResizeHandle) => void
@@ -24,6 +33,8 @@ export function SelectionChrome({
   canManage = true,
   onAddAddon,
   onOpenSettings,
+  onSaveAsPreset,
+  saveAsPresetDisabled = false,
   onLayer,
   onDelete,
   onResizePointerDown,
@@ -67,6 +78,29 @@ export function SelectionChrome({
               >
                 <Settings2 className={CHROME_ICON_CLASS} aria-hidden />
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className={CHROME_BUTTON_CLASS}
+                    aria-label={t('blockActions')}
+                    onPointerDown={stop}
+                  >
+                    <MoreVertical className={CHROME_ICON_CLASS} aria-hidden />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48" onClick={stop}>
+                  <DropdownMenuItem
+                    disabled={saveAsPresetDisabled || !onSaveAsPreset}
+                    title={saveAsPresetDisabled ? t('saveAsPresetDisabled') : undefined}
+                    onClick={() => onSaveAsPreset?.()}
+                  >
+                    {t('saveAsPreset')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <Button

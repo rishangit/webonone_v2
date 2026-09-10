@@ -71,6 +71,24 @@ const WebsiteSettingsPage = lazy(() =>
 const WebsiteDesignerPage = lazy(() =>
   import('@/features/website/pages/WebsiteDesignerPage').then((m) => ({ default: m.WebsiteDesignerPage })),
 )
+const WebsitePresetsPage = lazy(() =>
+  import('@/features/website/pages/WebsitePresetsPage').then((m) => ({ default: m.WebsitePresetsPage })),
+)
+const WebsiteDatasetsPage = lazy(() =>
+  import('@/features/website/pages/WebsiteDatasetsPage').then((m) => ({
+    default: m.WebsiteDatasetsPage,
+  })),
+)
+const WebsitePresetCreateEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsitePresetCreateEmbedPage').then((m) => ({
+    default: m.WebsitePresetCreateEmbedPage,
+  })),
+)
+const WebsiteDatasetCreateEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteDatasetCreateEmbedPage').then((m) => ({
+    default: m.WebsiteDatasetCreateEmbedPage,
+  })),
+)
 const WebsitePublicPage = lazy(() =>
   import('@/features/website/pages/WebsitePublicPage').then((m) => ({ default: m.WebsitePublicPage })),
 )
@@ -304,6 +322,36 @@ export function App() {
               }
             />
             <Route
+              path="/website/presets"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsitePresetsPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/presets/:id/edit"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsiteDesignerPage kind="presets" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/datasets"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsiteDatasetsPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/website/themes"
               element={
                 <RoleRoute roles={[...companyRoles]}>
@@ -409,6 +457,46 @@ export function App() {
                 <RoleRoute roles={[...manageRoles]}>
                   <LazyRoute>
                     <WebsiteChromeCreateEmbedPage kind="footers" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/presets/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsitePresetCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/presets/:id"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsitePresetCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/datasets/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteDatasetCreateEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/datasets/:id"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteDatasetCreateEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }
