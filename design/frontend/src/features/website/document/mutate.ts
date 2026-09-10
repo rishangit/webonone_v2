@@ -1,8 +1,8 @@
 import { nanoid } from 'nanoid'
-import { getAddonModuleByType } from '../addons/registry'
+import { getAddonModuleByType, getAddonModulesForKind } from '../addons/registry'
 import { DEFAULT_CONTENT_BLOCK_COL_SPAN, DEFAULT_CONTENT_BLOCK_HEIGHT } from './layout'
 import { emptyLayoutByBreakpoint } from '../types'
-import type { WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
+import type { MenuItem, WebsiteAddon, WebsiteBlock, WebsiteDesignerKind, WebsiteDocumentV1 } from '../types'
 
 export {
   collectGoogleFontUrls,
@@ -42,6 +42,66 @@ export function addAddon(document: WebsiteDocumentV1, blockId: string, type: Web
       const addon = module?.createDefaultAddon(block.addons.length)
       if (!addon) return block
       return { ...block, addons: [...block.addons, addon] }
+    }),
+  }
+}
+
+function remintMenuItems(items: MenuItem[]): MenuItem[] {
+  return items.map((item) => ({
+    ...item,
+    id: nanoid(10),
+    children: remintMenuItems(item.children),
+  }))
+}
+
+function cloneAddon(addon: WebsiteAddon, zIndex: number): WebsiteAddon {
+  const cloned = structuredClone(addon) as WebsiteAddon
+  cloned.id = nanoid(10)
+  cloned.zIndex = zIndex
+  if (cloned.type === 'menu') {
+    cloned.props = { ...cloned.props, items: remintMenuItems(cloned.props.items) }
+  }
+  return cloned
+}
+
+export function documentFromBlock(block: WebsiteBlock): WebsiteDocumentV1 {
+  const addons = [...block.addons].sort((a, b) => a.zIndex - b.zIndex).map((addon, index) => cloneAddon(addon, index))
+  const next: WebsiteBlock = {
+    ...structuredClone(block),
+    id: nanoid(10),
+    zIndex: 0,
+    addons,
+  }
+  const rect = next.layout['2xl']
+  const height = Math.max(
+    DEFAULT_CONTENT_BLOCK_HEIGHT + 32,
+    (rect?.top ?? 0) + (rect?.height ?? DEFAULT_CONTENT_BLOCK_HEIGHT) + 16,
+  )
+  return {
+    version: 1,
+    container: { height },
+    blocks: [next],
+  }
+}
+
+export function addAddonsFromPreset(
+  document: WebsiteDocumentV1,
+  blockId: string,
+  presetDocument: WebsiteDocumentV1,
+  designerKind?: WebsiteDesignerKind,
+): WebsiteDocumentV1 {
+  const allowed = getAddonModulesForKind(designerKind)
+  const incoming = presetDocument.blocks
+    .flatMap((block) => [...block.addons].sort((a, b) => a.zIndex - b.zIndex))
+    .filter((addon) => allowed.has(addon.type))
+  if (incoming.length === 0) return document
+  return {
+    ...document,
+    blocks: document.blocks.map((block) => {
+      if (block.id !== blockId) return block
+      const existing = [...block.addons]
+      const cloned = incoming.map((addon, index) => cloneAddon(addon, existing.length + index))
+      return { ...block, addons: [...existing, ...cloned] }
     }),
   }
 }

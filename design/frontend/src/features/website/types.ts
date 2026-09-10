@@ -198,6 +198,16 @@ export type WebsiteChrome = {
   updatedAt: string
 }
 
+export type WebsitePreset = {
+  id: string
+  companyId: string
+  name: string
+  document: WebsiteDocumentV1
+  createdBy: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type WebsiteFontToken = {
   id: string
   name: string
@@ -265,8 +275,55 @@ export type WebsiteSiteSettings = {
   updatedAt: string
 }
 
-export type WebsiteDesignerKind = 'pages' | 'headers' | 'footers'
-export type WebsiteSection = 'pages' | 'headers' | 'footers' | 'layouts' | 'themes' | 'media' | 'settings'
+export type WebsiteDesignerKind = 'pages' | 'headers' | 'footers' | 'presets'
+export type WebsiteSection =
+  | 'pages'
+  | 'headers'
+  | 'footers'
+  | 'layouts'
+  | 'presets'
+  | 'datasets'
+  | 'themes'
+  | 'media'
+  | 'settings'
+
+export type WebsiteDatasetSourceType =
+  | 'products'
+  | 'services'
+  | 'spaces'
+  | 'staff'
+  | 'users'
+  | 'analytics'
+
+export type WebsiteDatasetStatus = 'active' | 'inactive'
+
+export type WebsiteDatasetFilters = {
+  match: 'all'
+  rules: Array<{
+    field: string
+    operator: string
+    value: string | number | boolean | [number, number] | string[]
+  }>
+}
+
+export type WebsiteDatasetConfig = {
+  dimension?: string
+  dateRange?: { from: string; to: string }
+}
+
+export type WebsiteDataset = {
+  id: string
+  companyId: string
+  name: string
+  sourceType: WebsiteDatasetSourceType
+  filters: WebsiteDatasetFilters
+  config: WebsiteDatasetConfig
+  status: WebsiteDatasetStatus
+  createdBy: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type DesignerMode = 'visual' | 'edit'
 export type DesignerSelection =
   | { kind: 'container' }

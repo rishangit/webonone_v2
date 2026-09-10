@@ -6,14 +6,18 @@ import {
   websiteHeadersEpics,
   websiteLayoutsEpics,
   websitePagesEpics,
-  websiteSettingsEpics,
+  websitePresetsEpics,
   websiteThemesEpics,
-} from '@/features/website/store'
+} from '@/features/website/store/websiteStore'
+import { websiteDatasetsEpics } from '@/features/website/store/websiteDatasetsStore'
+import { websiteSettingsEpics } from '@/features/website/store/websiteSettingsStore'
 
 export const rootEpic = combineEpics(
   authEpics,
   formsEpics,
   websitePagesEpics,
+  websitePresetsEpics,
+  websiteDatasetsEpics,
   websiteHeadersEpics,
   websiteFootersEpics,
   websiteLayoutsEpics,

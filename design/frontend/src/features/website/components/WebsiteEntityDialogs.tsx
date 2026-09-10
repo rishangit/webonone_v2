@@ -361,6 +361,128 @@ export function WebsiteChromeDialog({
   )
 }
 
+export function WebsitePresetDialog({
+  open,
+  isSaving,
+  error,
+  entityId,
+  initialName,
+  onOpenChange,
+  onSubmit,
+  onHostedSaved,
+  chrome = 'dialog',
+  saveAs = false,
+}: {
+  open: boolean
+  isSaving: boolean
+  error: string | null
+  entityId?: string
+  initialName?: string
+  onOpenChange: (open: boolean) => void
+  onSubmit: (name: string) => void
+  onHostedSaved?: () => void
+  chrome?: 'dialog' | 'embed-page'
+  saveAs?: boolean
+}) {
+  const { t } = useTranslation('website')
+  const { t: tc } = useTranslation('common')
+  const [searchParams] = useSearchParams()
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const [name, setName] = useState(initialName ?? '')
+  const isEdit = Boolean(entityId)
+  const isSaveAs = Boolean(saveAs)
+  const dialogRequestId =
+    chrome === 'embed-page'
+      ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
+      : null
+  const title = isSaveAs ? t('saveAsPresetTitle') : isEdit ? t('editPresetTitle') : t('createPresetTitle')
+  const description = isSaveAs
+    ? t('saveAsPresetDescription')
+    : isEdit
+      ? t('editPresetDescription')
+      : t('createPresetDescription')
+  const submitLabel = isSaveAs ? t('saveAsPreset') : isEdit ? tc('save') : t('create')
+  const submitBusyLabel = isSaveAs || isEdit ? t('saving') : t('creating')
+
+  const { isHosted } = useRequestPlatformPeerDialog({
+    parentOrigin: chrome === 'dialog' && !isSaveAs ? parentOrigin : null,
+    open: chrome === 'dialog' && open,
+    path: entityId ? `/embed/dialogs/website/presets/${entityId}` : '/embed/dialogs/website/presets/create',
+    title,
+    description,
+    submitLabel,
+    ...WEBSITE_PAGE_DIALOG_SIZE,
+    onResult: () => {
+      onOpenChange(false)
+      onHostedSaved?.()
+    },
+    onCancel: () => onOpenChange(false),
+  })
+
+  useEffect(() => {
+    if (!open && chrome === 'dialog') return
+    setName(initialName ?? '')
+  }, [open, chrome, initialName])
+
+  useEffect(() => {
+    if (!dialogRequestId || !parentOrigin) return
+    sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, isSaving)
+  }, [dialogRequestId, isSaving, parentOrigin])
+
+  function submit() {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    onSubmit(trimmed)
+  }
+
+  usePlatformPeerDialogSubmit({
+    parentOrigin: dialogRequestId ? parentOrigin : null,
+    requestId: dialogRequestId,
+    onSubmit: submit,
+  })
+
+  const body = (
+    <Form className="space-y-4">
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      <FormField label={t('name')} htmlFor="website-preset-name" required>
+        <Input id="website-preset-name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
+      </FormField>
+    </Form>
+  )
+
+  if (chrome === 'embed-page') {
+    return <div className="flex w-full flex-col gap-4 p-4 sm:p-6">{body}</div>
+  }
+  if (isHosted) return null
+
+  return (
+    <CustomDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      sizeWidth={WEBSITE_PAGE_DIALOG_SIZE.sizeWidth}
+      sizeHeight={WEBSITE_PAGE_DIALOG_SIZE.sizeHeight}
+      footer={
+        <>
+          <Button type="button" variant="outline" className="h-10 px-4" onClick={() => onOpenChange(false)} disabled={isSaving}>
+            {tc('cancel')}
+          </Button>
+          <Button type="button" className="h-10 px-4" onClick={submit} disabled={isSaving}>
+            {isSaving ? submitBusyLabel : submitLabel}
+          </Button>
+        </>
+      }
+    >
+      {body}
+    </CustomDialog>
+  )
+}
+
 export function WebsiteThemeDialog({
   open,
   isSaving,

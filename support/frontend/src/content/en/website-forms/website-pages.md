@@ -12,4 +12,4 @@ summary: "Create and edit company website pages under Design → Website."
 3. Use the page designer to add content, then save.
 4. Open the live site from the company profile **Website** URL, or use Preview / Browse in Design.
 
-Pair pages with a [layout](/docs/website-forms/website-layouts), [headers and footers](/docs/website-forms/headers-footers), and a [theme](/docs/website-forms/website-themes). Share the public address from [Public company site URL](/docs/website-forms/public-site-url).
+Pair pages with a [layout](/docs/website-forms/website-layouts), [headers and footers](/docs/website-forms/headers-footers), and a [theme](/docs/website-forms/website-themes). Reuse designed content elements with [website presets](/docs/website-forms/website-presets). Share the public address from [Public company site URL](/docs/website-forms/public-site-url).

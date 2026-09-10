@@ -16,11 +16,11 @@ import {
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 
 export function isWebsiteDesignerPath(pathname: string): boolean {
-  return /^\/website\/(pages|headers|footers)\/[^/]+\/edit\/?$/.test(pathname)
+  return /^\/website\/(pages|headers|footers|presets)\/[^/]+\/edit\/?$/.test(pathname)
 }
 
 /** Standalone Design origin URL — no embed query, so the tab is chromeless and full width. */
-export function websiteDesignerUrl(kind: 'pages' | 'headers' | 'footers', id: string): string {
+export function websiteDesignerUrl(kind: 'pages' | 'headers' | 'footers' | 'presets', id: string): string {
   let url = new URL(`${window.location.origin}/website/${kind}/${encodeURIComponent(id)}/edit`)
   const theme = appliedThemePayload()
   if (theme) {
@@ -37,7 +37,7 @@ export function websiteDesignerUrl(kind: 'pages' | 'headers' | 'footers', id: st
   return url.toString()
 }
 
-export function openWebsiteDesigner(kind: 'pages' | 'headers' | 'footers', id: string): void {
+export function openWebsiteDesigner(kind: 'pages' | 'headers' | 'footers' | 'presets', id: string): void {
   const url = websiteDesignerUrl(kind, id)
   const anchor = document.createElement('a')
   anchor.href = url
@@ -76,7 +76,7 @@ export function useNavigateDesign() {
     [navigate, parentOrigin, searchParams],
   )
 
-  const goToWebsiteEdit = useCallback((kind: 'pages' | 'headers' | 'footers', id: string) => {
+  const goToWebsiteEdit = useCallback((kind: 'pages' | 'headers' | 'footers' | 'presets', id: string) => {
     openWebsiteDesigner(kind, id)
   }, [])
 

@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import * as pages from '../controllers/websitePages.controller.js'
+import * as presets from '../controllers/websitePresets.controller.js'
+import * as datasets from '../controllers/websiteDatasets.controller.js'
 import * as chrome from '../controllers/websiteChrome.controller.js'
 import * as layouts from '../controllers/websiteLayout.controller.js'
 import * as themes from '../controllers/websiteThemes.controller.js'
@@ -8,12 +10,20 @@ import * as settings from '../controllers/websiteSettings.controller.js'
 import { requireAuth, requireCompanyContext, requireRole } from '../middleware/auth.js'
 import { validateBody } from '../middleware/validateBody.js'
 import { updateWebsiteSettingsSchema } from '../schemas/websiteSettings.schema.js'
+import {
+  createWebsiteDatasetSchema,
+  updateWebsiteDatasetSchema,
+} from '../schemas/websiteDatasets.schema.js'
 
 const router = Router()
 const companyRoles = ['super_admin', 'company_admin', 'member'] as const
 const manageRoles = ['super_admin', 'company_admin'] as const
 
 router.get('/public/sites/:companyId', pub.getPublicWebsiteSiteHandler)
+router.get(
+  '/public/sites/:companyId/datasets/:datasetId/data',
+  datasets.getPublicWebsiteDatasetDataHandler,
+)
 
 router.get(
   '/website/live-url',
@@ -44,6 +54,64 @@ router.get('/website/pages/:id', requireAuth, requireCompanyContext, requireRole
 router.post('/website/pages', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.createWebsitePageHandler)
 router.patch('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.updateWebsitePageHandler)
 router.delete('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.deleteWebsitePageHandler)
+
+router.get('/website/presets', requireAuth, requireCompanyContext, requireRole(...companyRoles), presets.listWebsitePresetsHandler)
+router.get('/website/presets/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), presets.getWebsitePresetHandler)
+router.post('/website/presets', requireAuth, requireCompanyContext, requireRole(...manageRoles), presets.createWebsitePresetHandler)
+router.patch('/website/presets/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), presets.updateWebsitePresetHandler)
+router.delete('/website/presets/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), presets.deleteWebsitePresetHandler)
+
+router.get(
+  '/website/datasets/field-catalog',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...companyRoles),
+  datasets.getWebsiteDatasetFieldCatalogHandler,
+)
+router.get(
+  '/website/datasets',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...companyRoles),
+  datasets.listWebsiteDatasetsHandler,
+)
+router.get(
+  '/website/datasets/:id',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...companyRoles),
+  datasets.getWebsiteDatasetHandler,
+)
+router.post(
+  '/website/datasets',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  validateBody(createWebsiteDatasetSchema),
+  datasets.createWebsiteDatasetHandler,
+)
+router.patch(
+  '/website/datasets/:id',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  validateBody(updateWebsiteDatasetSchema),
+  datasets.updateWebsiteDatasetHandler,
+)
+router.delete(
+  '/website/datasets/:id',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  datasets.deleteWebsiteDatasetHandler,
+)
+router.post(
+  '/website/datasets/:id/preview',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...companyRoles),
+  datasets.previewWebsiteDatasetHandler,
+)
 
 router.get('/website/layouts', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.listWebsiteLayoutsHandler)
 router.get('/website/layouts/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.getWebsiteLayoutHandler)

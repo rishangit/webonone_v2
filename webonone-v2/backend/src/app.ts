@@ -18,6 +18,7 @@ import companySaleRoutes from './routes/companySale.routes.js'
 import companyAnalyticsRoutes from './routes/companyAnalytics.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import invoiceNotifyRoutes from './routes/invoiceNotify.routes.js'
+import internalDatasetRoutes from './routes/internalDataset.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -43,6 +44,7 @@ export function createApp() {
   app.use('/api/v1', companyAnalyticsRoutes)
   app.use('/api/v1', notificationRoutes)
   app.use('/api/v1', invoiceNotifyRoutes)
+  app.use('/api/v1', internalDatasetRoutes)
   app.use('/api/v1', companyCatalogRoutes)
   app.use('/api/v1', companyStaffRoutes)
   app.use('/api/v1', companyEventRoutes)

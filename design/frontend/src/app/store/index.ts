@@ -7,9 +7,11 @@ import {
   websiteHeadersReducer,
   websiteLayoutsReducer,
   websitePagesReducer,
-  websiteSettingsReducer,
+  websitePresetsReducer,
   websiteThemesReducer,
-} from '@/features/website/store'
+} from '@/features/website/store/websiteStore'
+import { websiteDatasetsReducer } from '@/features/website/store/websiteDatasetsStore'
+import { websiteSettingsReducer } from '@/features/website/store/websiteSettingsStore'
 import { initApiClient } from '@/shared/services/apiClient'
 import { rootEpic } from '@/app/store/epics/rootEpic'
 
@@ -20,6 +22,8 @@ export const store = configureStore({
     auth: authReducer,
     forms: formsReducer,
     websitePages: websitePagesReducer,
+    websitePresets: websitePresetsReducer,
+    websiteDatasets: websiteDatasetsReducer,
     websiteHeaders: websiteHeadersReducer,
     websiteFooters: websiteFootersReducer,
     websiteLayouts: websiteLayoutsReducer,

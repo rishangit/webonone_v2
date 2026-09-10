@@ -19,6 +19,10 @@ export function getAddonModules(kind?: WebsiteDesignerKind): AddonModule[] {
   return modules.filter((module) => !module.allowedKinds || module.allowedKinds.includes(kind))
 }
 
+export function getAddonModulesForKind(kind?: WebsiteDesignerKind): Set<WebsiteAddon['type']> {
+  return new Set(getAddonModules(kind).map((module) => module.type))
+}
+
 export function getAddonModuleByType(type: WebsiteAddon['type']): AddonModule | undefined {
   return modules.find((module) => module.type === type)
 }

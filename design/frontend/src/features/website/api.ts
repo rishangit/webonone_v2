@@ -7,6 +7,12 @@ import type {
   WebsiteLayout,
   WebsitePage,
   WebsitePageStatus,
+  WebsitePreset,
+  WebsiteDataset,
+  WebsiteDatasetConfig,
+  WebsiteDatasetFilters,
+  WebsiteDatasetSourceType,
+  WebsiteDatasetStatus,
   WebsiteSiteSettings,
   WebsiteTheme,
 } from './types'
@@ -40,6 +46,59 @@ export type CreateChromeBody = {
 }
 
 export type UpdateChromeBody = Partial<CreateChromeBody>
+
+export type CreatePresetBody = {
+  name: string
+  document?: WebsiteDocumentV1
+}
+
+export type UpdatePresetBody = Partial<CreatePresetBody>
+
+export type CreateDatasetBody = {
+  name: string
+  sourceType: WebsiteDatasetSourceType
+  filters?: WebsiteDatasetFilters
+  config?: WebsiteDatasetConfig
+  status?: WebsiteDatasetStatus
+}
+
+export type UpdateDatasetBody = Partial<CreateDatasetBody>
+
+export type DatasetFieldCatalog = {
+  sourceTypes: WebsiteDatasetSourceType[]
+  operators: string[]
+  fieldsBySource: Record<
+    string,
+    Array<{
+      field: string
+      label: string
+      valueType: 'string' | 'number' | 'enum'
+      operators: string[]
+      enumValues?: string[]
+    }>
+  >
+  analyticsDimensions: string[]
+  fieldsByAnalyticsDimension: Record<
+    string,
+    Array<{
+      field: string
+      label: string
+      valueType: 'string' | 'number' | 'enum'
+      operators: string[]
+      enumValues?: string[]
+    }>
+  >
+}
+
+export type DatasetPreviewResult = {
+  items: Record<string, unknown>[]
+  total: number
+  page: number
+  pageSize: number
+  sourceType: WebsiteDatasetSourceType
+  datasetId: string
+  datasetName: string
+}
 
 export type CreateLayoutBody = {
   name: string
@@ -131,6 +190,65 @@ export const websiteApi = {
   },
   deleteChrome(kind: 'headers' | 'footers', id: string) {
     return apiClient<void>(`/website/${kind}/${id}`, { method: 'DELETE' })
+  },
+
+  listPresets(query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsitePreset>>(`/website/presets${toQueryString(query)}`)
+  },
+  async getPreset(id: string) {
+    const data = await apiClient<{ item: WebsitePreset }>(`/website/presets/${id}`)
+    return data.item
+  },
+  async createPreset(body: CreatePresetBody) {
+    const data = await apiClient<{ item: WebsitePreset }>('/website/presets', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  async updatePreset(id: string, body: UpdatePresetBody) {
+    const data = await apiClient<{ item: WebsitePreset }>(`/website/presets/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  deletePreset(id: string) {
+    return apiClient<void>(`/website/presets/${id}`, { method: 'DELETE' })
+  },
+
+  getDatasetFieldCatalog() {
+    return apiClient<DatasetFieldCatalog>('/website/datasets/field-catalog')
+  },
+  listDatasets(query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsiteDataset>>(`/website/datasets${toQueryString(query)}`)
+  },
+  async getDataset(id: string) {
+    const data = await apiClient<{ item: WebsiteDataset }>(`/website/datasets/${id}`)
+    return data.item
+  },
+  async createDataset(body: CreateDatasetBody) {
+    const data = await apiClient<{ item: WebsiteDataset }>('/website/datasets', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  async updateDataset(id: string, body: UpdateDatasetBody) {
+    const data = await apiClient<{ item: WebsiteDataset }>(`/website/datasets/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  deleteDataset(id: string) {
+    return apiClient<void>(`/website/datasets/${id}`, { method: 'DELETE' })
+  },
+  previewDataset(id: string, query: { page?: number; pageSize?: number } = {}) {
+    return apiClient<DatasetPreviewResult>(`/website/datasets/${id}/preview`, {
+      method: 'POST',
+      body: JSON.stringify(query),
+    })
   },
 
   listLayouts(query: ListQuery = {}) {

@@ -38,6 +38,32 @@ export async function listCompanyAdminUserIds(companyId: string): Promise<string
   return [...new Set(rows.map((row) => row.user_id))]
 }
 
+export type CompanyMemberRoleRow = {
+  user_id: string
+  role: 'company_admin' | 'member'
+}
+
+/** Company members (admin + member roles) for a company — latest role per user. */
+export async function listCompanyMemberRoles(companyId: string): Promise<CompanyMemberRoleRow[]> {
+  const rows = await db<UserRoleRow>('users_roles')
+    .where({ company_id: companyId })
+    .whereIn('role', ['company_admin', 'member'] as UserRoleType[])
+    .orderBy('created_at', 'asc')
+    .select('user_id', 'role')
+
+  const byUser = new Map<string, 'company_admin' | 'member'>()
+  for (const row of rows) {
+    if (row.role === 'company_admin' || row.role === 'member') {
+      // Prefer company_admin when both exist
+      const existing = byUser.get(row.user_id)
+      if (!existing || row.role === 'company_admin') {
+        byUser.set(row.user_id, row.role)
+      }
+    }
+  }
+  return [...byUser.entries()].map(([user_id, role]) => ({ user_id, role }))
+}
+
 export async function findCompanyRolesByUserId(userId: string): Promise<UserRoleRow[]> {
   return db<UserRoleRow>('users_roles')
     .where({ user_id: userId })

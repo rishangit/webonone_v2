@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import authRoutes from './routes/auth.routes.js'
 import customersRoutes from './routes/customers.routes.js'
 import healthRoutes from './routes/health.routes.js'
+import internalCompanyMembersRoutes from './routes/internalCompanyMembers.routes.js'
 import rolesRoutes from './routes/roles.routes.js'
 import usersRoutes from './routes/users.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -26,6 +27,7 @@ export function createApp() {
   app.use('/api/v1', healthRoutes)
   app.use('/api/v1/auth', authRoutes)
   app.use('/api/v1', rolesRoutes)
+  app.use('/api/v1', internalCompanyMembersRoutes)
   app.use('/api/v1', customersRoutes)
   app.use('/api/v1', usersRoutes)
 
