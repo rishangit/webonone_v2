@@ -9,6 +9,7 @@ import {
   datasetFiltersSchema,
   getDatasetFieldCatalogPayload,
   pickPublicFields,
+  resolveSelectedFields,
   type DatasetConfig,
   type DatasetFilters,
   type DatasetSourceType,
@@ -25,6 +26,7 @@ export type WebsiteDatasetDto = {
   sourceType: DatasetSourceType
   filters: DatasetFilters
   config: DatasetConfig
+  selectedFields: string[]
   status: 'active' | 'inactive'
   createdBy: string | null
   createdAt: string
@@ -48,13 +50,17 @@ function toDto(row: DesignWebsiteDatasetRow): WebsiteDatasetDto {
     parseJson(row.filters, { match: 'all', rules: [] }),
   )
   const configParsed = datasetConfigSchema.safeParse(parseJson(row.config, {}))
+  const filters = filtersParsed.success ? filtersParsed.data : { match: 'all' as const, rules: [] }
+  const config = configParsed.success ? configParsed.data : {}
+  const selectedRaw = parseJson<string[]>(row.selected_fields, [])
   return {
     id: row.id,
     companyId: row.company_id,
     name: row.name,
     sourceType: row.source_type,
-    filters: filtersParsed.success ? filtersParsed.data : { match: 'all', rules: [] },
-    config: configParsed.success ? configParsed.data : {},
+    filters,
+    config,
+    selectedFields: resolveSelectedFields(row.source_type, selectedRaw, config),
     status: row.status,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -116,6 +122,7 @@ export async function createWebsiteDataset(input: {
     source_type: input.body.sourceType,
     filters: JSON.stringify(input.body.filters),
     config: JSON.stringify(input.body.config ?? {}),
+    selected_fields: JSON.stringify(input.body.selectedFields ?? []),
     status: input.body.status ?? 'active',
     created_by: input.userId,
     created_at: db.fn.now(3),
@@ -140,6 +147,7 @@ export async function updateWebsiteDataset(input: {
   if (input.body.sourceType != null) updates.source_type = input.body.sourceType
   if (input.body.filters != null) updates.filters = JSON.stringify(input.body.filters)
   if (input.body.config != null) updates.config = JSON.stringify(input.body.config)
+  if (input.body.selectedFields != null) updates.selected_fields = JSON.stringify(input.body.selectedFields)
   if (input.body.status != null) updates.status = input.body.status
 
   await db('design_website_datasets').where({ id: input.id, company_id: input.companyId }).update(updates)
@@ -179,6 +187,9 @@ export async function previewWebsiteDataset(input: {
   })
   return {
     ...result,
+    items: result.items.map((item) =>
+      pickPublicFields(dataset.sourceType, item, dataset.selectedFields),
+    ),
     sourceType: dataset.sourceType,
     datasetId: dataset.id,
     datasetName: dataset.name,
@@ -213,7 +224,9 @@ export async function getPublicWebsiteDatasetData(input: {
     pageSize: input.pageSize,
   })
   return {
-    items: result.items.map((item) => pickPublicFields(dataset.sourceType, item)),
+    items: result.items.map((item) =>
+      pickPublicFields(dataset.sourceType, item, dataset.selectedFields),
+    ),
     total: result.total,
     page: result.page,
     pageSize: result.pageSize,

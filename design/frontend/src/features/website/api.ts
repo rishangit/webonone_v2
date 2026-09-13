@@ -59,6 +59,7 @@ export type CreateDatasetBody = {
   sourceType: WebsiteDatasetSourceType
   filters?: WebsiteDatasetFilters
   config?: WebsiteDatasetConfig
+  selectedFields?: string[]
   status?: WebsiteDatasetStatus
 }
 
@@ -87,6 +88,14 @@ export type DatasetFieldCatalog = {
       operators: string[]
       enumValues?: string[]
     }>
+  >
+  propertyTreesBySource?: Record<
+    string,
+    Array<{ path: string; label: string; children?: Array<{ path: string; label: string }> }>
+  >
+  propertyTreesByAnalyticsDimension?: Record<
+    string,
+    Array<{ path: string; label: string; children?: Array<{ path: string; label: string }> }>
   >
 }
 
@@ -314,6 +323,22 @@ export async function fetchPublicWebsiteSite(companyId: string, path: string): P
     throw error
   }
   return data as PublicWebsiteSite
+}
+
+export async function fetchPublicWebsiteDatasetData(
+  companyId: string,
+  datasetId: string,
+): Promise<DatasetPreviewResult> {
+  const res = await fetch(
+    `${API_BASE}/public/sites/${encodeURIComponent(companyId)}/datasets/${encodeURIComponent(datasetId)}/data`,
+  )
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const error = new Error((data as { message?: string }).message ?? 'Not found') as Error & { status?: number }
+    error.status = res.status
+    throw error
+  }
+  return data as DatasetPreviewResult
 }
 
 export type WebsiteLiveUrl = {

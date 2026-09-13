@@ -9,10 +9,3 @@ export function imageAddonSampleSrc(addonId: string): string {
     [...addonId].reduce((acc, char) => acc + char.charCodeAt(0), 0) % IMAGE_ADDON_SAMPLES.length
   return IMAGE_ADDON_SAMPLES[index]!
 }
-
-export function buildImageSliderPlaceholderSlides(addonId: string) {
-  return IMAGE_ADDON_SAMPLES.map((url, index) => ({
-    fileId: `sample-${addonId}-${String(index)}`,
-    url,
-  }))
-}

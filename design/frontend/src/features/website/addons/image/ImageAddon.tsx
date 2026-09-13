@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FormField,
@@ -32,15 +32,50 @@ function mediaForBreakpoint(
   )
 }
 
+function ImageWithoutBlock({ alt, height }: { alt: string; height: number | string }) {
+  return (
+    <div className="h-full w-full" style={{ height }}>
+      <ImagePreview
+        src={null}
+        alt={alt}
+        mode="view"
+        className="h-full w-full max-h-none max-w-none"
+      />
+    </div>
+  )
+}
+
 function ImageAddonRenderer({ addon, breakpoint, publish }: AddonRenderProps) {
+  const { t } = useTranslation('website')
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  const media =
+    addon.type === 'image'
+      ? mediaForBreakpoint(addon.props.mediaByBreakpoint, breakpoint)
+      : undefined
+  const boundOrPickedUrl = media?.url?.trim() || null
+  // Prefer the stored/bound URL; only synthesize from fileId when a real URL was provided.
+  const resolvedSrc = boundOrPickedUrl ? resolveMediaRefUrl(media) ?? boundOrPickedUrl : null
+  // Designer sample only when nothing is bound/picked yet — never mask an empty bound URL.
+  const src =
+    addon.type === 'image'
+      ? (resolvedSrc ?? (!publish && !media ? imageAddonSampleSrc(addon.id) : null))
+      : null
+  const height =
+    addon.type === 'image' && addon.props.heightMode === 'fixed'
+      ? addon.props.fixedHeight
+      : '100%'
+
+  useEffect(() => {
+    setLoadFailed(false)
+  }, [src])
+
   if (addon.type !== 'image') return null
-  const media = mediaForBreakpoint(addon.props.mediaByBreakpoint, breakpoint)
-  const placeholderSrc = imageAddonSampleSrc(addon.id)
-  const pickedSrc = media?.url?.trim()
-  const src = publish
-    ? (pickedSrc ? (resolveMediaRefUrl(media) ?? pickedSrc) : placeholderSrc)
-    : (pickedSrc || placeholderSrc)
-  const height = addon.props.heightMode === 'fixed' ? addon.props.fixedHeight : '100%'
+
+  if (!src || loadFailed) {
+    return <ImageWithoutBlock alt={t('image')} height={height ?? '100%'} />
+  }
+
   return (
     <img
       src={src}
@@ -50,6 +85,7 @@ function ImageAddonRenderer({ addon, breakpoint, publish }: AddonRenderProps) {
         objectFit: addon.props.fit,
         height,
       }}
+      onError={() => setLoadFailed(true)}
     />
   )
 }

@@ -1,14 +1,14 @@
 import { buttonAddonModule } from './button/ButtonAddon'
 import { imageAddonModule } from './image/ImageAddon'
-import { imageSliderAddonModule } from './imageSlider/ImageSliderAddon'
 import { menuAddonModule } from './menu/MenuAddon'
+import { sliderAddonModule } from './slider/SliderAddon'
 import { textAddonModule } from './text/TextAddon'
 import type { AddonModule } from './types'
 import type { WebsiteAddon, WebsiteDesignerKind } from '../types'
 
 const modules: AddonModule[] = [
   imageAddonModule,
-  imageSliderAddonModule,
+  sliderAddonModule,
   textAddonModule,
   buttonAddonModule,
   menuAddonModule,

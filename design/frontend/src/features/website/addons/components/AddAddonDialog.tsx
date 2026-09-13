@@ -26,6 +26,8 @@ interface AddAddonDialogProps {
   open: boolean
   designerKind?: WebsiteDesignerKind
   presets?: WebsitePreset[]
+  /** Omit these addon types from the list (e.g. nested sliders). */
+  excludeTypes?: readonly WebsiteAddon['type'][]
   onOpenChange: (open: boolean) => void
   onAddonAdded: (type: WebsiteAddon['type']) => void
   onPresetAdded?: (preset: WebsitePreset) => void
@@ -35,6 +37,7 @@ export function AddAddonDialog({
   open,
   designerKind,
   presets = [],
+  excludeTypes = [],
   onOpenChange,
   onAddonAdded,
   onPresetAdded,
@@ -44,7 +47,8 @@ export function AddAddonDialog({
   const [tab, setTab] = useState('addons')
   const [pendingType, setPendingType] = useState<WebsiteAddon['type'] | null>(null)
   const [pendingPresetId, setPendingPresetId] = useState<string | null>(null)
-  const modules = getAddonModules(designerKind)
+  const excluded = new Set(excludeTypes)
+  const modules = getAddonModules(designerKind).filter((module) => !excluded.has(module.type))
 
   useEffect(() => {
     if (open) setTab('addons')

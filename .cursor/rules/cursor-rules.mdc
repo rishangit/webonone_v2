@@ -71,4 +71,4 @@ When retiring spec content, migrate anything agents still need into the matching
 
 After major refactors, audit `.cursor/rules/` against the codebase. Update the [README.md](README.md) index when adding or removing rules. Remove any `spec/` links surfaced during the audit.
 
-For multi-step workflows (releases, showcase registration, new WebpageEditor addons), prefer **project skills** in `.cursor/skills/` over very long always-on rules.
+For multi-step workflows (releases, showcase registration, new WebpageEditor addons), prefer **project skills** in `.cursor/skills/` over very long always-on rules — e.g. [website-designer-addons](../skills/website-designer-addons/SKILL.md) + [website-designer-data-binding.mdc](website-designer-data-binding.mdc).

@@ -127,6 +127,7 @@ export interface DesignWebsiteDatasetRow {
   source_type: WebsiteDatasetSourceType
   filters: string | Record<string, unknown>
   config: string | Record<string, unknown> | null
+  selected_fields: string | string[] | null
   status: WebsiteDatasetStatus
   created_by: string | null
   created_at: Date

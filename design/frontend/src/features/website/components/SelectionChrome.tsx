@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@webonone/ui-kit'
 import { RESIZE_HANDLES, resizeHandleClassName, type ResizeHandle } from '../document/layout'
+import type { DesignerSelection } from '../types'
 
 const CHROME_ICON_CLASS = 'h-3.5 w-3.5 shrink-0'
 const CHROME_BUTTON_CLASS = 'h-7 w-7 shrink-0 flex-none rounded-full p-0'
@@ -18,21 +19,30 @@ const CHROME_TOOLBAR_CLASS =
 
 interface SelectionChromeProps {
   kind: 'block' | 'addon'
+  /** Exact selection being resized — avoids picking up a different item mid-gesture. */
+  grabbed: DesignerSelection
   canManage?: boolean
   onAddAddon?: () => void
   onOpenSettings: () => void
+  onDuplicate?: () => void
   onSaveAsPreset?: () => void
   saveAsPresetDisabled?: boolean
   onLayer: (direction: 'up' | 'down') => void
   onDelete: () => void
-  onResizePointerDown: (event: ReactPointerEvent, handle: ResizeHandle) => void
+  onResizePointerDown: (
+    event: ReactPointerEvent,
+    handle: ResizeHandle,
+    grabbed: DesignerSelection,
+  ) => void
 }
 
 export function SelectionChrome({
   kind,
+  grabbed,
   canManage = true,
   onAddAddon,
   onOpenSettings,
+  onDuplicate,
   onSaveAsPreset,
   saveAsPresetDisabled = false,
   onLayer,
@@ -40,6 +50,7 @@ export function SelectionChrome({
   onResizePointerDown,
 }: SelectionChromeProps) {
   const { t } = useTranslation('website')
+  const showMoreMenu = Boolean(onDuplicate || onSaveAsPreset)
 
   function stop(event: ReactPointerEvent | { stopPropagation: () => void }) {
     event.stopPropagation()
@@ -56,17 +67,19 @@ export function SelectionChrome({
         >
           {kind === 'block' ? (
             <>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className={CHROME_BUTTON_CLASS}
-                aria-label={t('addAddon')}
-                onPointerDown={stop}
-                onClick={() => onAddAddon?.()}
-              >
-                <Plus className={CHROME_ICON_CLASS} aria-hidden />
-              </Button>
+              {onAddAddon ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={CHROME_BUTTON_CLASS}
+                  aria-label={t('addAddon')}
+                  onPointerDown={stop}
+                  onClick={() => onAddAddon()}
+                >
+                  <Plus className={CHROME_ICON_CLASS} aria-hidden />
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="outline"
@@ -78,42 +91,83 @@ export function SelectionChrome({
               >
                 <Settings2 className={CHROME_ICON_CLASS} aria-hidden />
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className={CHROME_BUTTON_CLASS}
-                    aria-label={t('blockActions')}
-                    onPointerDown={stop}
-                  >
-                    <MoreVertical className={CHROME_ICON_CLASS} aria-hidden />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48" onClick={stop}>
-                  <DropdownMenuItem
-                    disabled={saveAsPresetDisabled || !onSaveAsPreset}
-                    title={saveAsPresetDisabled ? t('saveAsPresetDisabled') : undefined}
-                    onClick={() => onSaveAsPreset?.()}
-                  >
-                    {t('saveAsPreset')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {showMoreMenu ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className={CHROME_BUTTON_CLASS}
+                      aria-label={t('blockActions')}
+                      onPointerDown={stop}
+                    >
+                      <MoreVertical className={CHROME_ICON_CLASS} aria-hidden />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48" onClick={stop}>
+                    {onDuplicate ? (
+                      <DropdownMenuItem onClick={() => onDuplicate()}>{t('duplicate')}</DropdownMenuItem>
+                    ) : null}
+                    {onSaveAsPreset ? (
+                      <DropdownMenuItem
+                        disabled={saveAsPresetDisabled}
+                        title={saveAsPresetDisabled ? t('saveAsPresetDisabled') : undefined}
+                        onClick={() => onSaveAsPreset()}
+                      >
+                        {t('saveAsPreset')}
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </>
           ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className={CHROME_BUTTON_CLASS}
-              aria-label={t('openSettings')}
-              onPointerDown={stop}
-              onClick={onOpenSettings}
-            >
-              <Settings2 className={CHROME_ICON_CLASS} aria-hidden />
-            </Button>
+            <>
+              {onAddAddon ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={CHROME_BUTTON_CLASS}
+                  aria-label={t('addAddon')}
+                  onPointerDown={stop}
+                  onClick={() => onAddAddon()}
+                >
+                  <Plus className={CHROME_ICON_CLASS} aria-hidden />
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={CHROME_BUTTON_CLASS}
+                aria-label={t('openSettings')}
+                onPointerDown={stop}
+                onClick={onOpenSettings}
+              >
+                <Settings2 className={CHROME_ICON_CLASS} aria-hidden />
+              </Button>
+              {onDuplicate ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className={CHROME_BUTTON_CLASS}
+                      aria-label={t('addonActions')}
+                      onPointerDown={stop}
+                    >
+                      <MoreVertical className={CHROME_ICON_CLASS} aria-hidden />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48" onClick={stop}>
+                    <DropdownMenuItem onClick={() => onDuplicate()}>{t('duplicate')}</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
+            </>
           )}
           <Button
             type="button"
@@ -149,7 +203,39 @@ export function SelectionChrome({
             <Trash2 className={CHROME_ICON_CLASS} aria-hidden />
           </Button>
         </div>
-      ) : null}
+      ) : (
+        <div
+          className={cn(CHROME_TOOLBAR_CLASS, 'right-1 top-1')}
+          data-chrome-action=""
+          onPointerDown={stop}
+          onClick={stop}
+        >
+          {onAddAddon ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className={CHROME_BUTTON_CLASS}
+              aria-label={t('addAddon')}
+              onPointerDown={stop}
+              onClick={() => onAddAddon()}
+            >
+              <Plus className={CHROME_ICON_CLASS} aria-hidden />
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className={CHROME_BUTTON_CLASS}
+            aria-label={t('openSettings')}
+            onPointerDown={stop}
+            onClick={onOpenSettings}
+          >
+            <Settings2 className={CHROME_ICON_CLASS} aria-hidden />
+          </Button>
+        </div>
+      )}
       {RESIZE_HANDLES.map((handle) => (
         <button
           key={handle}
@@ -158,8 +244,9 @@ export function SelectionChrome({
           aria-label={t('resizeHandle', { handle })}
           className={resizeHandleClassName(handle, kind)}
           onPointerDown={(event) => {
+            event.preventDefault()
             event.stopPropagation()
-            onResizePointerDown(event, handle)
+            onResizePointerDown(event, handle, grabbed)
           }}
           onClick={stop}
         />

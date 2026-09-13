@@ -12,6 +12,7 @@ export const createWebsiteDatasetSchema = z
     sourceType: z.enum(DATASET_SOURCE_TYPES),
     filters: datasetFiltersSchema.optional().default({ match: 'all', rules: [] }),
     config: datasetConfigSchema.optional().default({}),
+    selectedFields: z.array(z.string().trim().min(1).max(128)).max(100).optional().default([]),
     status: z.enum(['active', 'inactive']).optional().default('active'),
   })
   .superRefine((body, ctx) => {
@@ -24,6 +25,13 @@ export const createWebsiteDatasetSchema = z
         path: ['filters'],
       })
     }
+    if ((body.selectedFields?.length ?? 0) === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one property',
+        path: ['selectedFields'],
+      })
+    }
   })
 
 export const updateWebsiteDatasetSchema = z
@@ -32,9 +40,19 @@ export const updateWebsiteDatasetSchema = z
     sourceType: z.enum(DATASET_SOURCE_TYPES).optional(),
     filters: datasetFiltersSchema.optional(),
     config: datasetConfigSchema.optional(),
+    selectedFields: z.array(z.string().trim().min(1).max(128)).max(100).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })
+  .superRefine((body, ctx) => {
+    if (body.selectedFields != null && body.selectedFields.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one property',
+        path: ['selectedFields'],
+      })
+    }
+  })
 
 export const datasetPreviewQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),

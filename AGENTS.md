@@ -31,6 +31,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | [toast-notifications](.cursor/skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
 | [date-display](.cursor/skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026` via shared `DISPLAY_DATE_OPTIONS` and locale-aware helpers |
 | [help-articles](.cursor/skills/help-articles/SKILL.md) | User-visible WebOnOne (and shell) features must get Support Markdown how-tos (`en` + `si`) in the same task |
+| [website-designer-addons](.cursor/skills/website-designer-addons/SKILL.md) | Design website WebpageEditor addons — registry, settings tabs, data binding roles |
 
 ## Service agents
 

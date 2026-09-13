@@ -1,0 +1,55 @@
+---
+description: Website designer data binding — Dataset Owner vs Field Mapper for content blocks and addons
+globs: design/frontend/src/features/website/**/*,design/backend/src/schemas/websiteDocument.schema.ts
+alwaysApply: false
+---
+
+# Website designer data binding
+
+Common contract for Design website documents. Addon workflow: [website-designer-addons skill](../skills/website-designer-addons/SKILL.md).
+
+## Two roles
+
+| Role | Who | Data Binding tab | Storage |
+|------|-----|------------------|---------|
+| **Dataset owner** | Content blocks; list-producing addons (content **slider**) | Choose row source (dataset and/or manual, or **parent path** when nested) | Block: `block.dataBinding` (`datasetId`, `itemGroup`, `itemGap`, `itemsPath`). Slider: `props.dataSource` / `props.datasetId` / `props.itemGroup` / `props.itemsPath` / `props.manualSlides`. Slider **children** live in `props.slideTemplate` (add via Plus like a content block). |
+| **Field mapper** | text, button, image | Map props → dataset field paths | `addon.dataBinding.fields` via `ADDON_BINDABLE_PROP_KEYS` |
+
+```text
+Owner (block or slider) supplies rows
+  → Field mappers overwrite props per row (resolveAddonProps / applyDataItemToBlock)
+```
+
+## UI
+
+- **Blocks:** [`ContentBlockSettingsDialog`](../../design/frontend/src/features/website/components/ContentBlockSettingsDialog.tsx) — dataset via shared [`BoundDatasetSelect`](../../design/frontend/src/features/website/components/BoundDatasetSelect.tsx) (options show **array** type chip).
+- **Addons:** [`AddonSettingsDialog`](../../design/frontend/src/features/website/components/AddonSettingsDialog.tsx) — if module has `DataBindingFields`, render that; else [`AddonDataBindingFields`](../../design/frontend/src/features/website/components/AddonDataBindingFields.tsx) (needs nearest owner dataset or `datasetIdOverride`). Field path options show **array** / **object** / **string** (etc.) chips from `DatasetPropertyNode.valueType`.
+- **Slider:** Data Binding also has **Item group** (`props.itemGroup`) — which child `groupName` under the slide shell is the repeating card per row.
+- Dataset pickers live on the **Data Binding** tab only — not Basic.
+
+## Resolution
+
+| Concern | Entry |
+|---------|--------|
+| Collect dataset ids for preview/publish fetch | `collectBoundDatasetIds` in `document/dataBinding.ts` (includes slider `props.datasetId`) |
+| Block list expand (vertical) | `expandBoundBlocks` / `expandDocumentForPublish` |
+| Addon field overwrite | `resolveAddonProps` |
+| Slider slides (horizontal) | `resolveSliderItems` + `applyDataItemToBlock` in `document/slider.ts` |
+| Nested slider child mutate | `findBlockInTree` / `mapBlockInTree` recurse into nested `slideTemplate`s |
+| Nested field mapper paths | Under parent-path slider, map relative item fields (`url`), not outer `galleryImages.url` |
+
+## Forbidden
+
+- Putting dataset / slide-source controls on Basic for owners
+- Inventing a third binding storage shape without updating this rule and the addon skill
+- Field-mapping on the content slider itself (`ADDON_BINDABLE_PROP_KEYS.slider` stays empty); map nested template addons instead
+- Assuming field mappers fetch datasets — they only read the owner’s current row
+- Tree mutate helpers that only walk `children[]` and skip nested `slider.props.slideTemplate` (breaks nested preset settings save)
+
+## Verification
+
+```bash
+npm run type-check -w design-root
+```
+
+Manual: block Data Binding binds dataset; field addon Data Binding maps props; slider Data Binding sets dataset/manual/parent-path slides + item group; template blocks under a slider show inherited dataset plus **parent property** picker (`itemsPath`); nested parent-path sliders allowed; nested slider children (group name, Image field bind) save via the same template mutate path; Basic keeps structure only.
