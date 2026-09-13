@@ -167,6 +167,170 @@ export const PUBLIC_FIELD_WHITELIST: Record<DatasetSourceType, readonly string[]
   analytics: ['*'],
 }
 
+export type DatasetPropertyNode = {
+  path: string
+  label: string
+  children?: DatasetPropertyNode[]
+  selectable?: boolean
+}
+
+const GALLERY_CHILDREN: DatasetPropertyNode[] = [
+  { path: 'galleryImages.url', label: 'URL' },
+  { path: 'galleryImages.mediaId', label: 'Media ID' },
+  { path: 'galleryImages.fileId', label: 'File ID' },
+  { path: 'galleryImages.fileName', label: 'File name' },
+]
+
+const SCHEDULE_CHILDREN: DatasetPropertyNode[] = [
+  { path: 'schedule.dayOfWeek', label: 'Day of week' },
+  { path: 'schedule.startTime', label: 'Start time' },
+  { path: 'schedule.endTime', label: 'End time' },
+]
+
+function leaf(path: string, label: string): DatasetPropertyNode {
+  return { path, label }
+}
+
+const PRODUCT_PROPERTY_TREE: DatasetPropertyNode[] = [
+  leaf('id', 'ID'),
+  leaf('name', 'Name'),
+  leaf('description', 'Description'),
+  leaf('status', 'Status'),
+  leaf('listPrice', 'Price'),
+  { path: 'galleryImages', label: 'Gallery images', children: GALLERY_CHILDREN },
+]
+
+const SERVICE_PROPERTY_TREE: DatasetPropertyNode[] = [
+  ...PRODUCT_PROPERTY_TREE,
+  leaf('timeMode', 'Time mode'),
+  leaf('durationMinutes', 'Duration (minutes)'),
+  leaf('startTime', 'Start time'),
+  leaf('endTime', 'End time'),
+]
+
+const STAFF_PROPERTY_TREE: DatasetPropertyNode[] = [
+  leaf('id', 'ID'),
+  leaf('displayName', 'Display name'),
+  leaf('avatarUrl', 'Avatar URL'),
+  { path: 'schedule', label: 'Schedule', children: SCHEDULE_CHILDREN },
+]
+
+const USER_PROPERTY_TREE: DatasetPropertyNode[] = [
+  leaf('id', 'ID'),
+  leaf('displayName', 'Display name'),
+  leaf('avatarUrl', 'Avatar URL'),
+  leaf('role', 'Role'),
+]
+
+export const DATASET_PROPERTY_TREES: Record<Exclude<DatasetSourceType, 'analytics'>, DatasetPropertyNode[]> = {
+  products: PRODUCT_PROPERTY_TREE,
+  services: SERVICE_PROPERTY_TREE,
+  spaces: PRODUCT_PROPERTY_TREE,
+  staff: STAFF_PROPERTY_TREE,
+  users: USER_PROPERTY_TREE,
+}
+
+export function propertyTreeForSource(
+  sourceType: DatasetSourceType,
+  config?: { dimension?: AnalyticsDimension } | null,
+): DatasetPropertyNode[] {
+  if (sourceType === 'analytics') {
+    const dimension = config?.dimension ?? 'kpis'
+    return (ANALYTICS_FIELD_CATALOG[dimension] ?? KPI_FIELDS).map((field) =>
+      leaf(field.field, field.label),
+    )
+  }
+  return DATASET_PROPERTY_TREES[sourceType]
+}
+
+export function flattenPropertyPaths(nodes: DatasetPropertyNode[]): string[] {
+  const paths: string[] = []
+  for (const node of nodes) {
+    if (node.selectable !== false) paths.push(node.path)
+    if (node.children?.length) paths.push(...flattenPropertyPaths(node.children))
+  }
+  return paths
+}
+
+export function defaultSelectedFields(
+  sourceType: DatasetSourceType,
+  config?: { dimension?: AnalyticsDimension } | null,
+): string[] {
+  return flattenPropertyPaths(propertyTreeForSource(sourceType, config))
+}
+
+export function resolveSelectedFields(
+  sourceType: DatasetSourceType,
+  selectedFields: string[] | null | undefined,
+  config?: { dimension?: AnalyticsDimension } | null,
+): string[] {
+  if (selectedFields && selectedFields.length > 0) return selectedFields
+  return defaultSelectedFields(sourceType, config)
+}
+
+/** Keep only selected top-level keys (and nested paths applied within those keys). */
+export function projectSelectedFields(
+  item: Record<string, unknown>,
+  selectedFields: string[],
+): Record<string, unknown> {
+  if (selectedFields.length === 0) return {}
+  const topLevel = new Set(selectedFields.map((path) => path.split('.')[0]!).filter(Boolean))
+  const nestedByRoot = new Map<string, string[]>()
+  for (const path of selectedFields) {
+    const parts = path.split('.')
+    const root = parts[0]
+    if (!root || parts.length < 2) continue
+    const list = nestedByRoot.get(root) ?? []
+    list.push(parts.slice(1).join('.'))
+    nestedByRoot.set(root, list)
+  }
+
+  const out: Record<string, unknown> = {}
+  for (const key of topLevel) {
+    if (!(key in item)) continue
+    const value = item[key]
+    const nestedPaths = nestedByRoot.get(key)
+    // Parent path alone (e.g. galleryImages) keeps the full value.
+    if (!nestedPaths || selectedFields.includes(key)) {
+      out[key] = value
+      continue
+    }
+    if (Array.isArray(value)) {
+      out[key] = value.map((entry) =>
+        entry && typeof entry === 'object'
+          ? projectSelectedFields(entry as Record<string, unknown>, nestedPaths)
+          : entry,
+      )
+      continue
+    }
+    if (value && typeof value === 'object') {
+      out[key] = projectSelectedFields(value as Record<string, unknown>, nestedPaths)
+      continue
+    }
+    out[key] = value
+  }
+  return out
+}
+
+export function pickPublicFields(
+  sourceType: DatasetSourceType,
+  item: Record<string, unknown>,
+  selectedFields?: string[] | null,
+): Record<string, unknown> {
+  const whitelist = PUBLIC_FIELD_WHITELIST[sourceType]
+  let base: Record<string, unknown>
+  if (whitelist.includes('*')) {
+    base = item
+  } else {
+    base = {}
+    for (const key of whitelist) {
+      if (key in item) base[key] = item[key]
+    }
+  }
+  if (!selectedFields || selectedFields.length === 0) return base
+  return projectSelectedFields(base, selectedFields)
+}
+
 const filterValueSchema = z.union([
   z.string(),
   z.number(),
@@ -174,6 +338,7 @@ const filterValueSchema = z.union([
   z.tuple([z.number(), z.number()]),
   z.array(z.string()),
 ])
+
 
 export const datasetFilterRuleSchema = z
   .object({
@@ -270,18 +435,12 @@ export function getDatasetFieldCatalogPayload() {
     fieldsBySource: DATASET_FIELD_CATALOG,
     analyticsDimensions: ANALYTICS_DIMENSIONS,
     fieldsByAnalyticsDimension: ANALYTICS_FIELD_CATALOG,
+    propertyTreesBySource: DATASET_PROPERTY_TREES,
+    propertyTreesByAnalyticsDimension: Object.fromEntries(
+      ANALYTICS_DIMENSIONS.map((dimension) => [
+        dimension,
+        propertyTreeForSource('analytics', { dimension }),
+      ]),
+    ) as Record<AnalyticsDimension, DatasetPropertyNode[]>,
   }
-}
-
-export function pickPublicFields(
-  sourceType: DatasetSourceType,
-  item: Record<string, unknown>,
-): Record<string, unknown> {
-  const whitelist = PUBLIC_FIELD_WHITELIST[sourceType]
-  if (whitelist.includes('*')) return item
-  const out: Record<string, unknown> = {}
-  for (const key of whitelist) {
-    if (key in item) out[key] = item[key]
-  }
-  return out
 }

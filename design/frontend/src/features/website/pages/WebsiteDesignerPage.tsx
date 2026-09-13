@@ -17,6 +17,7 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { openWebsiteDesigner } from '@/features/shell/utils/navigateDesign'
 import { websiteFootersActions, websiteHeadersActions, websiteLayoutsActions, websitePagesActions, websitePresetsActions, websiteThemesActions } from '../store'
+import { websiteApi } from '../api'
 import { ContentTree } from '../components/ContentTree'
 import { DesignerCanvas } from '../components/DesignerCanvas'
 import { ContentContainerSettingsDialog } from '../components/ContentContainerSettingsDialog'
@@ -26,21 +27,44 @@ import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
 import { websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { useWebsiteLiveOrigin } from '../hooks/useWebsiteLiveOrigin'
 import { minContainerHeightForDesignerKind } from '../document/layout'
+import { slugifyGroupName } from '../document/blockTree'
+import { collectBoundDatasetIds } from '../document/dataBinding'
+import {
+  changeTemplateAddonLayer,
+  changeTemplateBlockLayer,
+  deleteTemplateAddon,
+  deleteTemplateBlock,
+  duplicateTemplateBlock,
+  findBlockInTree,
+  findEnclosingSliderItemsPath,
+  findSliderHostContext,
+  normalizeSliderSlideShells,
+  resolveTemplateAddon,
+  updateTemplateAddon,
+  updateTemplateBlock,
+} from '../document/slider'
 import {
   addAddon,
-  addAddonsFromPreset,
+  addAddonToSliderTemplate,
   addBlock,
+  addBlockToSliderTemplate,
+  addBlocksFromPreset,
+  addBlocksFromPresetToSliderTemplate,
   changeLayer,
   collectGoogleFontUrls,
   deleteAddon,
   deleteBlock,
   documentFromBlock,
+  duplicateAddon,
+  duplicateBlock,
+  findBlock,
   reorderAddons,
   reorderBlocks,
   snapshotDocument,
   updateAddon,
+  updateBlockById,
 } from '../document/mutate'
-import { emptyWebsiteDocument, WEBSITE_BREAKPOINTS, WEBSITE_CANVAS_WIDTH } from '../types'
+import { emptyWebsiteDocument, MAX_SLIDER_DATA_ITEMS, WEBSITE_BREAKPOINTS, WEBSITE_CANVAS_WIDTH } from '../types'
 import type {
   DesignerMode,
   DesignerSelection,
@@ -69,6 +93,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const layoutsState = useAppSelector((s) => s.websiteLayouts)
   const themesState = useAppSelector((s) => s.websiteThemes)
   const presetsState = useAppSelector((s) => s.websitePresets)
+  const datasetsState = useAppSelector((s) => s.websiteDatasets)
   const feature =
     kind === 'pages'
       ? pagesState
@@ -84,11 +109,23 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const [selection, setSelection] = useState<DesignerSelection>({ kind: 'container' })
   const dirty = JSON.stringify(document) !== saved
   const [containerSettingsOpen, setContainerSettingsOpen] = useState(false)
-  const [blockSettingsId, setBlockSettingsId] = useState<string | null>(null)
-  const [addonSettings, setAddonSettings] = useState<{ blockId: string; addonId: string } | null>(null)
+  const [blockSettings, setBlockSettings] = useState<{
+    blockId: string
+    /** When editing a content element inside a slider preset snapshot. */
+    hostBlockId?: string
+    sliderAddonId?: string
+  } | null>(null)
+  const [addonSettings, setAddonSettings] = useState<{
+    blockId: string
+    addonId: string
+    /** When editing an addon inside a slider slide template. */
+    sliderAddonId?: string
+    templateBlockId?: string
+  } | null>(null)
   const [saveAsPresetBlockId, setSaveAsPresetBlockId] = useState<string | null>(null)
   const [awaitingSaveAs, setAwaitingSaveAs] = useState(false)
   const [treeOpen, setTreeOpen] = useState(false)
+  const [datasetItemsById, setDatasetItemsById] = useState<Record<string, Record<string, unknown>[]>>({})
 
   const defaultTheme = themesState.items.find((item) => item.isDefault) ?? themesState.items[0] ?? themesState.detail
   const name =
@@ -194,7 +231,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   useEffect(() => {
     const detail = feature.detail
     if (!detail || detail.id !== id) return
-    const next = 'document' in detail ? detail.document : emptyWebsiteDocument()
+    const raw = 'document' in detail ? detail.document : emptyWebsiteDocument()
+    const next = normalizeSliderSlideShells(raw)
     setDocument(next)
     setSaved(JSON.stringify(next))
   }, [feature.detail, id])
@@ -227,6 +265,45 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     }
     return [...urls]
   }, [theme, document, previewHeader, previewFooter])
+
+  useEffect(() => {
+    if (mode !== 'visual' && mode !== 'edit') {
+      setDatasetItemsById({})
+      return
+    }
+    if (!accessToken) {
+      setDatasetItemsById({})
+      return
+    }
+    let cancelled = false
+    const ids = new Set<string>([
+      ...collectBoundDatasetIds(document),
+      ...collectBoundDatasetIds(previewHeader?.document ?? emptyWebsiteDocument()),
+      ...collectBoundDatasetIds(previewFooter?.document ?? emptyWebsiteDocument()),
+    ])
+    if (ids.size === 0) {
+      setDatasetItemsById({})
+      return
+    }
+    Promise.all(
+      [...ids].map(async (datasetId) => {
+        try {
+          const result = await websiteApi.previewDataset(datasetId, {
+            page: 1,
+            pageSize: MAX_SLIDER_DATA_ITEMS,
+          })
+          return [datasetId, result.items] as const
+        } catch {
+          return [datasetId, [] as Record<string, unknown>[]] as const
+        }
+      }),
+    ).then((entries) => {
+      if (!cancelled) setDatasetItemsById(Object.fromEntries(entries))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken, document, mode, previewFooter?.document, previewHeader?.document])
 
   useEffect(() => {
     const previous = window.document.title
@@ -267,19 +344,92 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   }
 
   function handleAddBlock() {
-    const next = addBlock(document)
-    const newId = next.blocks.at(-1)?.id
+    const sliderTarget = resolveSliderChildTarget()
+    if (sliderTarget) {
+      setDocument(
+        addBlockToSliderTemplate(
+          document,
+          sliderTarget.hostBlockId,
+          sliderTarget.sliderAddonId,
+          sliderTarget.templateBlockId,
+        ),
+      )
+      return
+    }
+    const parentId = selection.kind === 'block' ? selection.blockId : null
+    const next = addBlock(document, parentId)
+    let newId: string | undefined
+    if (parentId) {
+      const parent = findBlock(next, parentId)
+      newId = parent?.children.at(-1)?.id
+    } else {
+      newId = next.blocks.at(-1)?.id
+    }
     setDocument(next)
     if (newId) setSelection({ kind: 'block', blockId: newId })
   }
 
-  function selectedBlockId() {
+  function resolveSliderChildTarget(): {
+    hostBlockId: string
+    sliderAddonId: string
+    templateBlockId: string | null
+  } | null {
+    if (selection.kind === 'templateBlock' || selection.kind === 'templateAddon') {
+      return {
+        hostBlockId: selection.hostBlockId,
+        sliderAddonId: selection.sliderAddonId,
+        templateBlockId: selection.templateBlockId,
+      }
+    }
+    if (selection.kind === 'addon') {
+      const host = findBlock(document, selection.blockId)
+      const addon = host?.addons.find((item) => item.id === selection.addonId)
+      if (addon?.type === 'slider') {
+        return {
+          hostBlockId: selection.blockId,
+          sliderAddonId: selection.addonId,
+          templateBlockId: addon.props.slideTemplate?.id ?? null,
+        }
+      }
+    }
+    return null
+  }
+
+  function selectedBlockIdForAddon(): string | null {
     if (selection.kind === 'block' || selection.kind === 'addon') return selection.blockId
-    return document.blocks.at(-1)?.id
+    return document.blocks.at(-1)?.id ?? null
   }
 
   function handleAddAddon(type: WebsiteAddon['type']) {
-    const blockId = selectedBlockId()
+    const sliderTarget = resolveSliderChildTarget()
+    if (sliderTarget) {
+      const next = addAddonToSliderTemplate(
+        document,
+        sliderTarget.hostBlockId,
+        sliderTarget.sliderAddonId,
+        type,
+        sliderTarget.templateBlockId,
+      )
+      setDocument(next)
+      const ctx = findSliderHostContext(next, sliderTarget.hostBlockId, sliderTarget.sliderAddonId)
+      if (ctx) {
+        const targetingShell =
+          !sliderTarget.templateBlockId || sliderTarget.templateBlockId === ctx.slideTemplate.id
+        if (targetingShell) {
+          const created = ctx.slideTemplate.children?.at(-1)
+          if (created) {
+            setSelection({
+              kind: 'templateBlock',
+              hostBlockId: sliderTarget.hostBlockId,
+              sliderAddonId: sliderTarget.sliderAddonId,
+              templateBlockId: created.id,
+            })
+          }
+        }
+      }
+      return
+    }
+    const blockId = selectedBlockIdForAddon()
     if (!blockId) {
       const withBlock = addBlock(document)
       const newId = withBlock.blocks.at(-1)?.id
@@ -293,27 +443,102 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   }
 
   function handleAddPreset(preset: WebsitePreset) {
-    const blockId = selectedBlockId()
-    if (!blockId) {
-      const withBlock = addBlock(document)
-      const newId = withBlock.blocks.at(-1)?.id
-      if (newId) {
-        setDocument(addAddonsFromPreset(withBlock, newId, preset.document, kind))
-        setSelection({ kind: 'block', blockId: newId })
+    const sliderTarget = resolveSliderChildTarget()
+    if (sliderTarget) {
+      const next = addBlocksFromPresetToSliderTemplate(
+        document,
+        sliderTarget.hostBlockId,
+        sliderTarget.sliderAddonId,
+        preset.document,
+        sliderTarget.templateBlockId,
+        preset.name,
+      )
+      setDocument(next)
+      const ctx = findSliderHostContext(next, sliderTarget.hostBlockId, sliderTarget.sliderAddonId)
+      const parentId =
+        sliderTarget.templateBlockId &&
+        ctx &&
+        sliderTarget.templateBlockId !== ctx.slideTemplate.id &&
+        findBlockInTree(ctx.slideTemplate, sliderTarget.templateBlockId)
+          ? sliderTarget.templateBlockId
+          : ctx?.slideTemplate.id
+      const parent = parentId && ctx ? findBlockInTree(ctx.slideTemplate, parentId) : null
+      const inserted = parent?.children?.at(-1)
+      if (inserted && ctx) {
+        setSelection({
+          kind: 'templateBlock',
+          hostBlockId: sliderTarget.hostBlockId,
+          sliderAddonId: sliderTarget.sliderAddonId,
+          templateBlockId: inserted.id,
+        })
       }
       return
     }
-    setDocument(addAddonsFromPreset(document, blockId, preset.document, kind))
+    const parentId = selection.kind === 'block' ? selection.blockId : selection.kind === 'addon' ? selection.blockId : null
+    if (parentId) {
+      setDocument(addBlocksFromPreset(document, parentId, preset.document, kind, preset.name))
+      return
+    }
+    const next = addBlocksFromPreset(document, null, preset.document, kind, preset.name)
+    setDocument(next)
+    const newId = next.blocks.at(-1)?.id
+    if (newId) setSelection({ kind: 'block', blockId: newId })
   }
 
   function handleDeleteSelection() {
     if (selection.kind === 'block') setDocument(deleteBlock(document, selection.blockId))
     if (selection.kind === 'addon') setDocument(deleteAddon(document, selection.blockId, selection.addonId))
+    if (selection.kind === 'templateBlock') {
+      setDocument(
+        deleteTemplateBlock(
+          document,
+          selection.hostBlockId,
+          selection.sliderAddonId,
+          selection.templateBlockId,
+        ),
+      )
+    }
+    if (selection.kind === 'templateAddon') {
+      setDocument(
+        deleteTemplateAddon(
+          document,
+          selection.hostBlockId,
+          selection.sliderAddonId,
+          selection.templateBlockId,
+          selection.templateAddonId,
+        ),
+      )
+    }
     setSelection({ kind: 'container' })
   }
 
   function handleLayer(direction: 'up' | 'down') {
     if (selection.kind === 'container') return
+    if (selection.kind === 'templateAddon') {
+      setDocument(
+        changeTemplateAddonLayer(
+          document,
+          selection.hostBlockId,
+          selection.sliderAddonId,
+          selection.templateBlockId,
+          selection.templateAddonId,
+          direction,
+        ),
+      )
+      return
+    }
+    if (selection.kind === 'templateBlock') {
+      setDocument(
+        changeTemplateBlockLayer(
+          document,
+          selection.hostBlockId,
+          selection.sliderAddonId,
+          selection.templateBlockId,
+          direction,
+        ),
+      )
+      return
+    }
     setDocument(
       changeLayer(
         document,
@@ -326,6 +551,53 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     )
   }
 
+  function handleDuplicateSelection() {
+    if (selection.kind === 'block') {
+      const result = duplicateBlock(document, selection.blockId)
+      if (!result) return
+      setDocument(result.document)
+      setSelection({ kind: 'block', blockId: result.id })
+      return
+    }
+    if (selection.kind === 'addon') {
+      const result = duplicateAddon(document, selection.blockId, selection.addonId)
+      if (!result) return
+      setDocument(result.document)
+      setSelection({ kind: 'addon', blockId: selection.blockId, addonId: result.id })
+      return
+    }
+    if (selection.kind === 'templateBlock') {
+      const result = duplicateTemplateBlock(
+        document,
+        selection.hostBlockId,
+        selection.sliderAddonId,
+        selection.templateBlockId,
+      )
+      if (!result) return
+      setDocument(result.document)
+      setSelection({
+        kind: 'templateBlock',
+        hostBlockId: selection.hostBlockId,
+        sliderAddonId: selection.sliderAddonId,
+        templateBlockId: result.id,
+      })
+    }
+  }
+
+  function handleDuplicateBlock(blockId: string) {
+    const result = duplicateBlock(document, blockId)
+    if (!result) return
+    setDocument(result.document)
+    setSelection({ kind: 'block', blockId: result.id })
+  }
+
+  function handleDuplicateAddon(blockId: string, addonId: string) {
+    const result = duplicateAddon(document, blockId, addonId)
+    if (!result) return
+    setDocument(result.document)
+    setSelection({ kind: 'addon', blockId, addonId: result.id })
+  }
+
   function openSaveAsPreset(blockId: string) {
     if (kind === 'presets' || !canManage) return
     setSelection({ kind: 'block', blockId })
@@ -334,28 +606,81 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
 
   function handleSaveAsPreset(name: string) {
     if (!saveAsPresetBlockId) return
-    const block = document.blocks.find((item) => item.id === saveAsPresetBlockId)
+    const block = findBlock(document, saveAsPresetBlockId)
     if (!block) return
     setAwaitingSaveAs(true)
+    const groupStamp = slugifyGroupName(name)
+    const stamped =
+      block.groupName?.trim() || !groupStamp ? block : { ...block, groupName: groupStamp }
     dispatch(
       websitePresetsActions.saveDetailRequested({
-        body: { name, document: snapshotDocument(documentFromBlock(block), theme ?? null) },
+        body: { name, document: snapshotDocument(documentFromBlock(stamped), theme ?? null) },
       }),
     )
   }
 
-  const settingsBlock = blockSettingsId
-    ? document.blocks.find((item) => item.id === blockSettingsId) ?? null
+  const settingsBlock = blockSettings
+    ? blockSettings.sliderAddonId && blockSettings.hostBlockId
+      ? (() => {
+          const ctx = findSliderHostContext(document, blockSettings.hostBlockId, blockSettings.sliderAddonId)
+          return ctx ? findBlockInTree(ctx.slideTemplate, blockSettings.blockId) : null
+        })()
+      : findBlock(document, blockSettings.blockId)
     : null
 
+  const blockInheritedBinding = useMemo(() => {
+    if (!blockSettings?.hostBlockId || !blockSettings.sliderAddonId) return null
+    const ctx = findSliderHostContext(document, blockSettings.hostBlockId, blockSettings.sliderAddonId)
+    if (!ctx || ctx.slider.props.dataSource !== 'dataset' || !ctx.slider.props.datasetId) return null
+    const dataset =
+      datasetsState.items.find((item) => item.id === ctx.slider.props.datasetId) ?? null
+    return {
+      datasetId: ctx.slider.props.datasetId,
+      datasetName: dataset?.name ?? ctx.slider.props.datasetId,
+      source: 'slider' as const,
+      itemGroup: ctx.slider.props.itemGroup ?? null,
+    }
+  }, [blockSettings, document, datasetsState.items])
+
   function openBlockSettings(blockId?: string) {
+    if (selection.kind === 'templateBlock') {
+      setBlockSettings({
+        blockId: selection.templateBlockId,
+        hostBlockId: selection.hostBlockId,
+        sliderAddonId: selection.sliderAddonId,
+      })
+      return
+    }
     const id = blockId ?? (selection.kind === 'block' || selection.kind === 'addon' ? selection.blockId : null)
     if (!id) return
     setSelection({ kind: 'block', blockId: id })
-    setBlockSettingsId(id)
+    setBlockSettings({ blockId: id })
+  }
+
+  function openTemplateBlockSettings(hostBlockId: string, sliderAddonId: string, templateBlockId: string) {
+    setSelection({
+      kind: 'templateBlock',
+      hostBlockId,
+      sliderAddonId,
+      templateBlockId,
+    })
+    setBlockSettings({
+      blockId: templateBlockId,
+      hostBlockId,
+      sliderAddonId,
+    })
   }
 
   function openAddonSettings(blockId?: string, addonId?: string) {
+    if (selection.kind === 'templateAddon') {
+      setAddonSettings({
+        blockId: selection.hostBlockId,
+        addonId: selection.templateAddonId,
+        sliderAddonId: selection.sliderAddonId,
+        templateBlockId: selection.templateBlockId,
+      })
+      return
+    }
     const nextBlockId = blockId ?? (selection.kind === 'addon' ? selection.blockId : null)
     const nextAddonId = addonId ?? (selection.kind === 'addon' ? selection.addonId : null)
     if (!nextBlockId || !nextAddonId) return
@@ -363,10 +688,64 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     setAddonSettings({ blockId: nextBlockId, addonId: nextAddonId })
   }
 
+  function openTemplateAddonSettings(
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    templateAddonId: string,
+  ) {
+    setSelection({
+      kind: 'templateAddon',
+      hostBlockId,
+      sliderAddonId,
+      templateBlockId,
+      templateAddonId,
+    })
+    setAddonSettings({
+      blockId: hostBlockId,
+      addonId: templateAddonId,
+      sliderAddonId,
+      templateBlockId,
+    })
+  }
+
   const settingsAddon = addonSettings
-    ? document.blocks.find((item) => item.id === addonSettings.blockId)?.addons.find((item) => item.id === addonSettings.addonId) ??
-      null
+    ? addonSettings.sliderAddonId && addonSettings.templateBlockId
+      ? resolveTemplateAddon(
+          document,
+          addonSettings.blockId,
+          addonSettings.sliderAddonId,
+          addonSettings.templateBlockId,
+          addonSettings.addonId,
+        )
+      : findBlock(document, addonSettings.blockId)?.addons.find((item) => item.id === addonSettings.addonId) ?? null
     : null
+
+  const settingsDatasetIdOverride =
+    addonSettings?.sliderAddonId != null
+      ? (() => {
+          const slider = findBlock(document, addonSettings.blockId)?.addons.find(
+            (item) => item.id === addonSettings.sliderAddonId,
+          )
+          return slider?.type === 'slider' && slider.props.dataSource === 'dataset'
+            ? slider.props.datasetId
+            : null
+        })()
+      : undefined
+
+  const settingsFieldPathPrefix =
+    addonSettings?.sliderAddonId && addonSettings.templateBlockId
+      ? (() => {
+          const ctx = findSliderHostContext(
+            document,
+            addonSettings.blockId,
+            addonSettings.sliderAddonId,
+          )
+          if (!ctx) return null
+          return findEnclosingSliderItemsPath(ctx.slideTemplate, addonSettings.templateBlockId)
+        })()
+      : null
+
   const minContainerHeight = minContainerHeightForDesignerKind(kind)
 
   function selectFromTree(next: DesignerSelection) {
@@ -478,7 +857,9 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               canManage={canManage}
               onSelect={selectFromTree}
               onReorderAddon={(blockId, from, to) => setDocument(reorderAddons(document, blockId, from, to))}
-              onReorderBlock={(from, to) => setDocument(reorderBlocks(document, from, to))}
+              onReorderBlock={(parentBlockId, from, to) =>
+                setDocument(reorderBlocks(document, from, to, parentBlockId))
+              }
               onLayer={(target, direction) => setDocument(changeLayer(document, target, direction))}
               onDeleteBlock={(blockId) => {
                 setDocument(deleteBlock(document, blockId))
@@ -488,6 +869,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                 setDocument(deleteAddon(document, blockId, addonId))
                 selectFromTree({ kind: 'container' })
               }}
+              onDuplicateBlock={handleDuplicateBlock}
+              onDuplicateAddon={handleDuplicateAddon}
               onOpenContainerSettings={() => {
                 setContainerSettingsOpen(true)
                 setTreeOpen(false)
@@ -499,6 +882,63 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               onOpenAddonSettings={(blockId, addonId) => {
                 openAddonSettings(blockId, addonId)
                 setTreeOpen(false)
+              }}
+              onOpenTemplateBlockSettings={(hostBlockId, sliderAddonId, templateBlockId) => {
+                openTemplateBlockSettings(hostBlockId, sliderAddonId, templateBlockId)
+                setTreeOpen(false)
+              }}
+              onOpenTemplateAddonSettings={(hostBlockId, sliderAddonId, templateBlockId, templateAddonId) => {
+                openTemplateAddonSettings(hostBlockId, sliderAddonId, templateBlockId, templateAddonId)
+                setTreeOpen(false)
+              }}
+              onLayerTemplateBlock={(hostBlockId, sliderAddonId, templateBlockId, direction) => {
+                setDocument(
+                  changeTemplateBlockLayer(
+                    document,
+                    hostBlockId,
+                    sliderAddonId,
+                    templateBlockId,
+                    direction,
+                  ),
+                )
+              }}
+              onDeleteTemplateBlock={(hostBlockId, sliderAddonId, templateBlockId) => {
+                setDocument(deleteTemplateBlock(document, hostBlockId, sliderAddonId, templateBlockId))
+                selectFromTree({ kind: 'addon', blockId: hostBlockId, addonId: sliderAddonId })
+              }}
+              onDuplicateTemplateBlock={(hostBlockId, sliderAddonId, templateBlockId) => {
+                const result = duplicateTemplateBlock(
+                  document,
+                  hostBlockId,
+                  sliderAddonId,
+                  templateBlockId,
+                )
+                if (!result) return
+                setDocument(result.document)
+                selectFromTree({
+                  kind: 'templateBlock',
+                  hostBlockId,
+                  sliderAddonId,
+                  templateBlockId: result.id,
+                })
+              }}
+              onLayerTemplateAddon={(hostBlockId, sliderAddonId, templateBlockId, templateAddonId, direction) => {
+                setDocument(
+                  changeTemplateAddonLayer(
+                    document,
+                    hostBlockId,
+                    sliderAddonId,
+                    templateBlockId,
+                    templateAddonId,
+                    direction,
+                  ),
+                )
+              }}
+              onDeleteTemplateAddon={(hostBlockId, sliderAddonId, templateBlockId, templateAddonId) => {
+                setDocument(
+                  deleteTemplateAddon(document, hostBlockId, sliderAddonId, templateBlockId, templateAddonId),
+                )
+                selectFromTree({ kind: 'addon', blockId: hostBlockId, addonId: sliderAddonId })
               }}
               onSaveAsPreset={(blockId) => {
                 openSaveAsPreset(blockId)
@@ -527,6 +967,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             currentPageId={kind === 'pages' ? pagesState.detail?.id ?? null : null}
             designerKind={kind}
             canManage={canManage}
+            datasetItemsById={datasetItemsById}
             onSelect={setSelection}
             onChangeDocument={setDocument}
             onResizeContainer={(height) =>
@@ -537,12 +978,53 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             presets={presetsState.items}
             onLayer={handleLayer}
             onDeleteSelection={handleDeleteSelection}
+            onDuplicateSelection={handleDuplicateSelection}
             onOpenBlockSettings={() => openBlockSettings()}
             onSaveAsPreset={() => {
               if (selection.kind === 'block' || selection.kind === 'addon') openSaveAsPreset(selection.blockId)
             }}
             saveAsPresetDisabled={kind === 'presets'}
             onOpenAddonSettings={() => openAddonSettings()}
+            onOpenTemplateBlockSettings={openTemplateBlockSettings}
+            onOpenTemplateAddonSettings={openTemplateAddonSettings}
+            onLayerTemplateBlock={(hostBlockId, sliderAddonId, templateBlockId, direction) => {
+              setDocument(
+                changeTemplateBlockLayer(document, hostBlockId, sliderAddonId, templateBlockId, direction),
+              )
+            }}
+            onDeleteTemplateBlock={(hostBlockId, sliderAddonId, templateBlockId) => {
+              setDocument(deleteTemplateBlock(document, hostBlockId, sliderAddonId, templateBlockId))
+              setSelection({ kind: 'addon', blockId: hostBlockId, addonId: sliderAddonId })
+            }}
+            onDuplicateTemplateBlock={(hostBlockId, sliderAddonId, templateBlockId) => {
+              const result = duplicateTemplateBlock(document, hostBlockId, sliderAddonId, templateBlockId)
+              if (!result) return
+              setDocument(result.document)
+              setSelection({
+                kind: 'templateBlock',
+                hostBlockId,
+                sliderAddonId,
+                templateBlockId: result.id,
+              })
+            }}
+            onLayerTemplateAddon={(hostBlockId, sliderAddonId, templateBlockId, templateAddonId, direction) => {
+              setDocument(
+                changeTemplateAddonLayer(
+                  document,
+                  hostBlockId,
+                  sliderAddonId,
+                  templateBlockId,
+                  templateAddonId,
+                  direction,
+                ),
+              )
+            }}
+            onDeleteTemplateAddon={(hostBlockId, sliderAddonId, templateBlockId, templateAddonId) => {
+              setDocument(
+                deleteTemplateAddon(document, hostBlockId, sliderAddonId, templateBlockId, templateAddonId),
+              )
+              setSelection({ kind: 'addon', blockId: hostBlockId, addonId: sliderAddonId })
+            }}
           />
         </main>
       </div>
@@ -554,29 +1036,77 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         onSave={(next) => setDocument({ ...document, container: next })}
       />
       <ContentBlockSettingsDialog
-        open={blockSettingsId !== null}
+        open={blockSettings !== null}
         block={settingsBlock}
+        inheritedBinding={blockInheritedBinding}
         onOpenChange={(open) => {
-          if (!open) setBlockSettingsId(null)
+          if (!open) setBlockSettings(null)
         }}
-        onSave={(blockId, backgroundColor) =>
-          setDocument({
-            ...document,
-            blocks: document.blocks.map((item) => (item.id === blockId ? { ...item, backgroundColor } : item)),
-          })
-        }
+        onSave={(blockId, patch) => {
+          if (blockSettings?.hostBlockId && blockSettings.sliderAddonId) {
+            setDocument(
+              updateTemplateBlock(
+                document,
+                blockSettings.hostBlockId,
+                blockSettings.sliderAddonId,
+                blockId,
+                (item) => ({
+                  ...item,
+                  backgroundColor: patch.backgroundColor,
+                  borderColor: patch.borderColor,
+                  borderRadius: patch.borderRadius,
+                  boxShadow: patch.boxShadow,
+                  padding: patch.padding,
+                  margin: patch.margin,
+                  groupName: patch.groupName,
+                  dataBinding: patch.dataBinding,
+                }),
+              ),
+            )
+            return
+          }
+          setDocument(
+            updateBlockById(document, blockId, (item) => ({
+              ...item,
+              backgroundColor: patch.backgroundColor,
+              borderColor: patch.borderColor,
+              borderRadius: patch.borderRadius,
+              boxShadow: patch.boxShadow,
+              padding: patch.padding,
+              margin: patch.margin,
+              groupName: patch.groupName,
+              dataBinding: patch.dataBinding,
+            })),
+          )
+        }}
       />
       <AddonSettingsDialog
         open={addonSettings !== null}
         addon={settingsAddon}
+        blockId={addonSettings?.blockId ?? null}
+        document={document}
         breakpoint={breakpoint}
         theme={theme ?? null}
         pages={pagesState.items}
+        datasetIdOverride={settingsDatasetIdOverride}
+        fieldPathPrefix={settingsFieldPathPrefix}
         onOpenChange={(open) => {
           if (!open) setAddonSettings(null)
         }}
         onSave={(next) => {
           if (!addonSettings) return
+          if (addonSettings.sliderAddonId && addonSettings.templateBlockId) {
+            setDocument(
+              updateTemplateAddon(
+                document,
+                addonSettings.blockId,
+                addonSettings.sliderAddonId,
+                addonSettings.templateBlockId,
+                next,
+              ),
+            )
+            return
+          }
           setDocument(updateAddon(document, addonSettings.blockId, next))
         }}
       />

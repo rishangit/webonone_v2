@@ -26,12 +26,14 @@ describe('documentContentHeight', () => {
         zIndex: 0,
         layout: emptyLayoutByBreakpoint({ col: 1, colSpan: 12, top: 8, height: 80 }),
         addons: [],
+        children: [],
       },
       {
         id: 'b',
         zIndex: 1,
         layout: emptyLayoutByBreakpoint({ col: 1, colSpan: 6, top: 20, height: 40 }),
         addons: [],
+        children: [],
       },
     ]
     assert.equal(documentContentHeight(document, '2xl'), 88)
@@ -58,6 +60,11 @@ describe('row grid snap', () => {
     const rect = clampRect({ col: 1, colSpan: 4, top: 17, height: 85 }, CONTENT_BLOCK_LAYOUT_LIMITS)
     assert.equal(rect.top, 32)
     assert.equal(rect.height, 96)
+  })
+
+  it('clampRect allows content blocks down to colSpan 1', () => {
+    const rect = clampRect({ col: 1, colSpan: 1, top: 0, height: 96 }, CONTENT_BLOCK_LAYOUT_LIMITS)
+    assert.equal(rect.colSpan, 1)
   })
 
   it('clampRect enforces addon min row span of 1 (32px)', () => {

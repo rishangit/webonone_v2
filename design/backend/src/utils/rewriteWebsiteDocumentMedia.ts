@@ -1,5 +1,5 @@
 import { env } from '../config/env.js'
-import type { WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
+import type { WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 
 type MediaRef = {
   fileId: string
@@ -44,47 +44,69 @@ function rewriteMediaByBreakpoint(
   return next
 }
 
-function rewriteImagesByBreakpoint(
-  imagesByBreakpoint: Partial<Record<string, MediaRef[]>> | undefined,
-): Partial<Record<string, MediaRef[]>> {
-  if (!imagesByBreakpoint) return {}
-  const next: Partial<Record<string, MediaRef[]>> = {}
-  for (const [key, slides] of Object.entries(imagesByBreakpoint)) {
-    if (!slides?.length) continue
-    next[key] = slides
-      .map((slide) => resolveMediaRefUrl(slide))
-      .filter((slide): slide is MediaRef => Boolean(slide))
+function rewriteAddon(addon: WebsiteAddon): WebsiteAddon {
+  if (addon.type === 'image') {
+    return {
+      ...addon,
+      props: {
+        ...addon.props,
+        mediaByBreakpoint: rewriteMediaByBreakpoint(addon.props.mediaByBreakpoint),
+      },
+    }
+  }
+  if (addon.type === 'slider') {
+    return {
+      ...addon,
+      props: {
+        ...addon.props,
+        slideTemplate: addon.props.slideTemplate ? rewriteBlock(addon.props.slideTemplate) : null,
+        manualSlides: addon.props.manualSlides.map((slide) => ({
+          ...slide,
+          data: rewriteSlideData(slide.data),
+        })),
+      },
+    }
+  }
+  return addon
+}
+
+function rewriteSlideData(data: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...data }
+  for (const [key, value] of Object.entries(data)) {
+    if (Array.isArray(value)) {
+      next[key] = value
+        .map((entry) => (isMediaLike(entry) ? resolveMediaRefUrl(entry as MediaRef) : entry))
+        .filter((entry) => entry != null)
+      continue
+    }
+    if (isMediaLike(value)) {
+      next[key] = resolveMediaRefUrl(value as MediaRef)
+    }
   }
   return next
+}
+
+function isMediaLike(value: unknown): value is MediaRef {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      typeof (value as MediaRef).fileId === 'string' &&
+      typeof (value as MediaRef).url === 'string',
+  )
+}
+
+function rewriteBlock(block: WebsiteBlock): WebsiteBlock {
+  return {
+    ...block,
+    addons: block.addons.map(rewriteAddon),
+    children: (block.children ?? []).map(rewriteBlock),
+  }
 }
 
 /** Rewrite stored Media dev URLs to the configured public Media base for anonymous site visitors. */
 export function rewriteWebsiteDocumentMedia(document: WebsiteDocumentV1): WebsiteDocumentV1 {
   return {
     ...document,
-    blocks: document.blocks.map((block) => ({
-      ...block,
-      addons: block.addons.map((addon) => {
-        if (addon.type === 'image') {
-          return {
-            ...addon,
-            props: {
-              ...addon.props,
-              mediaByBreakpoint: rewriteMediaByBreakpoint(addon.props.mediaByBreakpoint),
-            },
-          }
-        }
-        if (addon.type === 'imageSlider') {
-          return {
-            ...addon,
-            props: {
-              ...addon.props,
-              imagesByBreakpoint: rewriteImagesByBreakpoint(addon.props.imagesByBreakpoint),
-            },
-          }
-        }
-        return addon
-      }),
-    })),
+    blocks: document.blocks.map(rewriteBlock),
   }
 }

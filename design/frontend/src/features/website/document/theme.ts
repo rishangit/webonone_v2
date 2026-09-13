@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { collectMenuTextStyleIds } from '../addons/menu/menuItemUtils'
 import type {
   WebsiteAddon,
+  WebsiteBlock,
   WebsiteBreakpoint,
   WebsiteButtonStyle,
   WebsiteColorToken,
@@ -80,13 +81,18 @@ export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteBut
   }
 }
 
+function snapshotBlock(block: WebsiteBlock, theme: WebsiteTheme | null): WebsiteBlock {
+  return {
+    ...block,
+    addons: block.addons.map((addon) => snapshotAddon(addon, theme)),
+    children: (block.children ?? []).map((child) => snapshotBlock(child, theme)),
+  }
+}
+
 export function snapshotDocument(document: WebsiteDocumentV1, theme: WebsiteTheme | null): WebsiteDocumentV1 {
   return {
     ...document,
-    blocks: document.blocks.map((block) => ({
-      ...block,
-      addons: block.addons.map((addon) => snapshotAddon(addon, theme)),
-    })),
+    blocks: document.blocks.map((block) => snapshotBlock(block, theme)),
   }
 }
 
@@ -119,27 +125,38 @@ function snapshotAddon(addon: WebsiteAddon, theme: WebsiteTheme | null): Website
   return addon
 }
 
+function collectBlockGoogleFontUrls(
+  block: WebsiteBlock,
+  theme: WebsiteTheme | null,
+  urls: Set<string>,
+): void {
+  for (const addon of block.addons) {
+    if (addon.type === 'text' && addon.props.snapshot.googleFontUrl) {
+      urls.add(addon.props.snapshot.googleFontUrl)
+    }
+    if (addon.type === 'button' && addon.props.snapshot.googleFontUrl) {
+      urls.add(addon.props.snapshot.googleFontUrl)
+    }
+    if (addon.type === 'menu') {
+      for (const textStyleId of collectMenuTextStyleIds(addon.props.items)) {
+        const style = theme?.textStyles.find((item) => item.id === textStyleId)
+        const snap = textStyleSnapshot(theme, style)
+        if (snap.googleFontUrl) urls.add(snap.googleFontUrl)
+      }
+    }
+  }
+  for (const child of block.children ?? []) {
+    collectBlockGoogleFontUrls(child, theme, urls)
+  }
+}
+
 export function collectGoogleFontUrls(theme: WebsiteTheme | null, document?: WebsiteDocumentV1): string[] {
   const urls = new Set<string>()
   for (const font of theme?.fonts ?? []) {
     if (font.googleFontUrl) urls.add(font.googleFontUrl)
   }
   for (const block of document?.blocks ?? []) {
-    for (const addon of block.addons) {
-      if (addon.type === 'text' && addon.props.snapshot.googleFontUrl) {
-        urls.add(addon.props.snapshot.googleFontUrl)
-      }
-      if (addon.type === 'button' && addon.props.snapshot.googleFontUrl) {
-        urls.add(addon.props.snapshot.googleFontUrl)
-      }
-      if (addon.type === 'menu') {
-        for (const textStyleId of collectMenuTextStyleIds(addon.props.items)) {
-          const style = theme?.textStyles.find((item) => item.id === textStyleId)
-          const snap = textStyleSnapshot(theme, style)
-          if (snap.googleFontUrl) urls.add(snap.googleFontUrl)
-        }
-      }
-    }
+    collectBlockGoogleFontUrls(block, theme, urls)
   }
   return [...urls]
 }

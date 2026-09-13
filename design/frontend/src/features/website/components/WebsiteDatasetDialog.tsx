@@ -17,22 +17,32 @@ import {
   DatePicker,
   Form,
   FormField,
+  ImagePreview,
   Input,
+  ItemList,
+  ItemListContent,
+  ItemListEmpty,
+  ItemListItem,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  itemListRowBodyClassName,
+  itemListThumbClassName,
   mapZodIssuesToFieldErrors,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteApi, type DatasetFieldCatalog } from '../api'
 import { DatasetFilterBuilder } from './DatasetFilterBuilder'
+import { DatasetPropertyTreeSelect } from './DatasetPropertyTreeSelect'
 import {
   ANALYTICS_DIMENSIONS,
   DATASET_SOURCE_TYPES,
   createWebsiteDatasetSchema,
+  defaultSelectedFields,
   fieldsForSource,
+  propertyTreeForSource,
   type AnalyticsDimension,
   type CreateWebsiteDatasetValues,
   type DatasetConfig,
@@ -46,7 +56,7 @@ export const WEBSITE_DATASET_DIALOG_SIZE = {
   sizeHeight: 'xlarge' as const,
 }
 
-const STEP_TITLES = ['basics', 'filters', 'preview'] as const
+const STEP_TITLES = ['basics', 'filters', 'properties', 'preview'] as const
 
 function defaultDateRange(): { from: string; to: string } {
   const to = new Date()
@@ -76,6 +86,7 @@ function emptyValues(): CreateWebsiteDatasetValues {
     sourceType: 'products',
     filters: { match: 'all', rules: [] },
     config: {},
+    selectedFields: defaultSelectedFields('products'),
     status: 'active',
   }
 }
@@ -89,6 +100,10 @@ function fromDataset(item: WebsiteDataset): CreateWebsiteDatasetValues {
       rules: (item.filters?.rules ?? []) as DatasetFilterRule[],
     },
     config: (item.config ?? {}) as DatasetConfig,
+    selectedFields:
+      item.selectedFields?.length > 0
+        ? item.selectedFields
+        : defaultSelectedFields(item.sourceType as DatasetSourceType, item.config as DatasetConfig),
     status: item.status,
   }
 }
@@ -197,7 +212,7 @@ export function WebsiteDatasetDialog({
   }
 
   useEffect(() => {
-    if (step === 2) void loadPreview()
+    if (step === 3) void loadPreview()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload only when entering preview step
   }, [step, entityId])
 
@@ -214,15 +229,15 @@ export function WebsiteDatasetDialog({
       setFieldErrors({})
       return true
     }
-    if (step === 1) {
-      const parsed = createWebsiteDatasetSchema.safeParse(values)
-      if (!parsed.success) {
-        setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
+    if (step === 2) {
+      if (!values.selectedFields || values.selectedFields.length === 0) {
+        setFieldErrors({ selectedFields: t('datasetPropertiesRequired') })
         return false
       }
       setFieldErrors({})
       return true
     }
+    setFieldErrors({})
     return true
   }
 
@@ -230,7 +245,9 @@ export function WebsiteDatasetDialog({
     const parsed = createWebsiteDatasetSchema.safeParse(values)
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
-      setStep(0)
+      const issuePaths = parsed.error.issues.map((issue) => issue.path[0])
+      if (issuePaths.includes('selectedFields')) setStep(2)
+      else setStep(0)
       return
     }
     onSubmit(parsed.data)
@@ -240,7 +257,7 @@ export function WebsiteDatasetDialog({
     parentOrigin: chrome === 'embed-page' ? parentOrigin : null,
     requestId: dialogRequestId,
     onSubmit: () => {
-      if (step < 2) {
+      if (step < 3) {
         if (!validateCurrentStep()) return
         setStep((s) => s + 1)
         return
@@ -258,26 +275,37 @@ export function WebsiteDatasetDialog({
       parentOrigin,
       dialogRequestId,
       isSaving,
-      step < 2 ? tc('next') : isEdit ? tc('save') : t('create'),
+      step < 3 ? tc('next') : isEdit ? tc('save') : t('create'),
       { secondaryLabel: step > 0 ? tc('previous') : null },
     )
   }, [chrome, dialogRequestId, isEdit, isSaving, parentOrigin, step, t, tc])
 
   if (chrome === 'dialog' && isHosted) return null
 
+  const isPreviewStep = step === 3
+  const propertyNodes = propertyTreeForSource(
+    values.sourceType as DatasetSourceType,
+    values.config,
+  )
+
   const body = (
-    <Form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-      <div className="space-y-2 text-center">
+    <Form
+      className={
+        isPreviewStep ? 'flex h-full min-h-0 flex-1 flex-col gap-4' : 'space-y-4'
+      }
+      onSubmit={(e) => e.preventDefault()}
+    >
+      <div className="shrink-0 space-y-2 text-center">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t('datasetStepLabel', { current: step + 1, total: 3, title: stepLabel })}
+          {t('datasetStepLabel', { current: step + 1, total: 4, title: stepLabel })}
         </p>
         <div className="mx-auto h-1.5 w-1/2 overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-primary transition-all" style={{ width: `${((step + 1) / 3) * 100}%` }} />
+          <div className="h-full bg-primary transition-all" style={{ width: `${((step + 1) / 4) * 100}%` }} />
         </div>
       </div>
 
       {error ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="shrink-0">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
@@ -300,15 +328,20 @@ export function WebsiteDatasetDialog({
             <Select
               value={values.sourceType}
               onValueChange={(value) =>
-                setValues((v) => ({
-                  ...v,
-                  sourceType: value as DatasetSourceType,
-                  filters: { match: 'all', rules: [] },
-                  config:
-                    value === 'analytics'
+                setValues((v) => {
+                  const sourceType = value as DatasetSourceType
+                  const config =
+                    sourceType === 'analytics'
                       ? { dimension: 'kpis' as AnalyticsDimension, dateRange: defaultDateRange() }
-                      : {},
-                }))
+                      : {}
+                  return {
+                    ...v,
+                    sourceType,
+                    filters: { match: 'all', rules: [] },
+                    config,
+                    selectedFields: defaultSelectedFields(sourceType, config),
+                  }
+                })
               }
             >
               <SelectTrigger id="dataset-source">
@@ -350,15 +383,19 @@ export function WebsiteDatasetDialog({
                 <Select
                   value={values.config?.dimension ?? 'kpis'}
                   onValueChange={(value) =>
-                    setValues((v) => ({
-                      ...v,
-                      config: {
+                    setValues((v) => {
+                      const config = {
                         ...v.config,
                         dimension: value as AnalyticsDimension,
                         dateRange: v.config?.dateRange ?? defaultDateRange(),
-                      },
-                      filters: { match: 'all', rules: [] },
-                    }))
+                      }
+                      return {
+                        ...v,
+                        config,
+                        filters: { match: 'all', rules: [] },
+                        selectedFields: defaultSelectedFields('analytics', config),
+                      }
+                    })
                   }
                 >
                   <SelectTrigger id="dataset-dimension">
@@ -427,55 +464,83 @@ export function WebsiteDatasetDialog({
       ) : null}
 
       {step === 2 ? (
-        <div className="space-y-3">
-          {previewLoading ? <p className="text-sm text-muted-foreground">{t('datasetPreviewLoading')}</p> : null}
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">{t('datasetPropertiesHelp')}</p>
+          <FormField
+            label={t('datasetProperties')}
+            htmlFor="dataset-properties"
+            required
+            error={fieldErrors.selectedFields}
+          >
+            <DatasetPropertyTreeSelect
+              nodes={propertyNodes}
+              value={values.selectedFields ?? []}
+              onChange={(selectedFields) => setValues((v) => ({ ...v, selectedFields }))}
+            />
+          </FormField>
+        </div>
+      ) : null}
+
+      {isPreviewStep ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          {previewLoading ? (
+            <p className="shrink-0 text-sm text-muted-foreground">{t('datasetPreviewLoading')}</p>
+          ) : null}
           {previewError ? (
-            <Alert>
+            <Alert className="shrink-0">
               <AlertDescription>{previewError}</AlertDescription>
             </Alert>
           ) : null}
           {!previewLoading && !previewError ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="shrink-0 text-sm text-muted-foreground">
               {t('datasetPreviewCount', { count: previewTotal })}
             </p>
           ) : null}
-          {previewItems.length > 0 ? (
-            <div className="max-h-72 overflow-auto rounded-md border border-[hsl(var(--glass-border))]">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    {Object.keys(previewItems[0] ?? {})
-                      .slice(0, 6)
-                      .map((key) => (
-                        <th key={key} className="px-3 py-2 font-medium">
-                          {key}
-                        </th>
-                      ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {previewItems.map((item, index) => (
-                    <tr key={index} className="border-t border-[hsl(var(--glass-border))]">
-                      {Object.keys(previewItems[0] ?? {})
-                        .slice(0, 6)
-                        .map((key) => (
-                          <td key={key} className="px-3 py-2 align-top text-muted-foreground">
-                            {formatCell(item[key])}
-                          </td>
-                        ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed">
+            {!previewLoading && !previewError && previewItems.length === 0 ? (
+              <ItemListEmpty>{t('datasetPreviewEmpty')}</ItemListEmpty>
+            ) : null}
+            {previewItems.length > 0 ? (
+              <ItemList className="py-0">
+                {previewItems.map((item, index) => {
+                  const title = previewItemTitle(item)
+                  const subtitle = previewItemSubtitle(item)
+                  const imageSrc = previewItemImage(item)
+                  return (
+                    <ItemListItem key={typeof item.id === 'string' ? item.id : index}>
+                      <ItemListContent>
+                        <div className={itemListRowBodyClassName}>
+                          <ImagePreview
+                            src={imageSrc}
+                            alt={title}
+                            mode="view"
+                            className={itemListThumbClassName}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium">{title}</p>
+                            {subtitle ? (
+                              <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </ItemListContent>
+                    </ItemListItem>
+                  )
+                })}
+              </ItemList>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </Form>
   )
 
   if (chrome === 'embed-page') {
-    return <div className="p-4">{body}</div>
+    return (
+      <div className={isPreviewStep ? 'flex h-full min-h-0 flex-col p-4' : 'p-4'}>
+        {body}
+      </div>
+    )
   }
 
   return (
@@ -485,6 +550,7 @@ export function WebsiteDatasetDialog({
       title={isEdit ? t('editDatasetTitle') : t('createDatasetTitle')}
       description={isEdit ? undefined : t('createDatasetDescription')}
       {...WEBSITE_DATASET_DIALOG_SIZE}
+      disableContentScroll={isPreviewStep}
       footer={
         <>
           <Button
@@ -505,7 +571,7 @@ export function WebsiteDatasetDialog({
               {tc('previous')}
             </Button>
           ) : null}
-          {step < 2 ? (
+          {step < 3 ? (
             <Button
               type="button"
               className="h-10"
@@ -529,8 +595,56 @@ export function WebsiteDatasetDialog({
   )
 }
 
-function formatCell(value: unknown): string {
+const PREVIEW_TITLE_KEYS = ['name', 'displayName', 'label', 'title'] as const
+const PREVIEW_SKIP_SUBTITLE_KEYS = new Set([
+  'id',
+  'name',
+  'displayName',
+  'label',
+  'title',
+  'description',
+  'galleryImages',
+  'avatarUrl',
+  'schedule',
+])
+
+function formatPreviewValue(value: unknown): string {
   if (value == null) return '—'
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
+}
+
+function previewItemTitle(item: Record<string, unknown>): string {
+  for (const key of PREVIEW_TITLE_KEYS) {
+    const value = item[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  if (item.id != null) return String(item.id)
+  return '—'
+}
+
+function previewItemSubtitle(item: Record<string, unknown>): string {
+  const parts: string[] = []
+  if (typeof item.description === 'string' && item.description.trim()) {
+    parts.push(item.description.trim())
+  }
+  for (const [key, value] of Object.entries(item)) {
+    if (PREVIEW_SKIP_SUBTITLE_KEYS.has(key) || value == null || typeof value === 'object') continue
+    parts.push(`${key}: ${formatPreviewValue(value)}`)
+    if (parts.length >= 3) break
+  }
+  return parts.join(' · ')
+}
+
+function previewItemImage(item: Record<string, unknown>): string | null {
+  if (typeof item.avatarUrl === 'string' && item.avatarUrl.trim()) return item.avatarUrl.trim()
+  const gallery = item.galleryImages
+  if (!Array.isArray(gallery) || gallery.length === 0) return null
+  const first = gallery[0]
+  if (typeof first === 'string' && first.trim()) return first.trim()
+  if (first && typeof first === 'object' && 'url' in first) {
+    const url = (first as { url?: unknown }).url
+    if (typeof url === 'string' && url.trim()) return url.trim()
+  }
+  return null
 }

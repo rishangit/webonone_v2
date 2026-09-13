@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Button } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import { AddAddonDialog } from '../addons/components/AddAddonDialog'
@@ -16,6 +16,13 @@ import {
   type LayoutLimits,
   type ResizeHandle,
 } from '../document/layout'
+import { findBlock, findBlockPath, updateBlockById } from '../document/mutate'
+import {
+  findBlockInTree,
+  findSliderHostContext,
+  updateTemplateAddon,
+  updateTemplateBlock,
+} from '../document/slider'
 import type {
   DesignerMode,
   DesignerSelection,
@@ -40,8 +47,31 @@ type CanvasDragSession = {
   selection: DesignerSelection
   blockId: string
   addonId?: string
+  /** When resizing a slide-template node. */
+  hostBlockId?: string
+  sliderAddonId?: string
+  templateBlockId?: string
+  templateAddonId?: string
   layoutLimits: LayoutLimits
   startDocument: WebsiteDocumentV1
+  isRootBlock: boolean
+}
+
+function layoutParentWidth(
+  document: WebsiteDocumentV1,
+  blockId: string,
+  canvasWidth: number,
+  breakpoint: WebsiteBreakpoint,
+  includeTargetBlock: boolean,
+): number {
+  const path = findBlockPath(document, blockId)
+  if (path.length === 0) return canvasWidth
+  const ancestors = includeTargetBlock ? path : path.slice(0, -1)
+  let width = canvasWidth
+  for (const ancestor of ancestors) {
+    width = width * (resolveLayoutRect(ancestor.layout, breakpoint).colSpan / 12)
+  }
+  return width
 }
 
 interface DesignerCanvasProps {
@@ -57,6 +87,7 @@ interface DesignerCanvasProps {
   currentPageId?: string | null
   designerKind?: WebsiteDesignerKind
   canManage?: boolean
+  datasetItemsById?: Record<string, Record<string, unknown>[]>
   onSelect: (selection: DesignerSelection) => void
   onChangeDocument: (document: WebsiteDocumentV1) => void
   onResizeContainer: (height: number) => void
@@ -65,8 +96,49 @@ interface DesignerCanvasProps {
   presets?: WebsitePreset[]
   onLayer: (direction: 'up' | 'down') => void
   onDeleteSelection: () => void
+  onDuplicateSelection?: () => void
   onOpenBlockSettings: () => void
   onOpenAddonSettings: () => void
+  onOpenTemplateBlockSettings?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+  ) => void
+  onOpenTemplateAddonSettings?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    templateAddonId: string,
+  ) => void
+  onLayerTemplateBlock?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    direction: 'up' | 'down',
+  ) => void
+  onDeleteTemplateBlock?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+  ) => void
+  onDuplicateTemplateBlock?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+  ) => void
+  onLayerTemplateAddon?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    templateAddonId: string,
+    direction: 'up' | 'down',
+  ) => void
+  onDeleteTemplateAddon?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    templateAddonId: string,
+  ) => void
   onSaveAsPreset?: () => void
   saveAsPresetDisabled?: boolean
 }
@@ -84,6 +156,7 @@ export function DesignerCanvas({
   currentPageId = null,
   designerKind,
   canManage = true,
+  datasetItemsById = {},
   onSelect,
   onChangeDocument,
   onResizeContainer,
@@ -92,8 +165,16 @@ export function DesignerCanvas({
   presets = [],
   onLayer,
   onDeleteSelection,
+  onDuplicateSelection,
   onOpenBlockSettings,
   onOpenAddonSettings,
+  onOpenTemplateBlockSettings,
+  onOpenTemplateAddonSettings,
+  onLayerTemplateBlock,
+  onDeleteTemplateBlock,
+  onDuplicateTemplateBlock,
+  onLayerTemplateAddon,
+  onDeleteTemplateAddon,
   onSaveAsPreset,
   saveAsPresetDisabled = false,
 }: DesignerCanvasProps) {
@@ -105,6 +186,18 @@ export function DesignerCanvas({
   changeDocumentRef.current = onChangeDocument
   const [addAddonOpen, setAddAddonOpen] = useState(false)
   const [viewportWidth, setViewportWidth] = useState(0)
+
+  const addAddonExcludeTypes = useMemo((): readonly WebsiteAddon['type'][] => {
+    if (!selection) return []
+    // Adding onto the host block that already owns a top-level slider — avoid a second
+    // sibling slider on the same content element (use nested template children instead).
+    if (selection.kind === 'addon') {
+      const host = findBlock(document, selection.blockId)
+      const addon = host?.addons.find((item) => item.id === selection.addonId)
+      if (addon?.type === 'slider') return []
+    }
+    return []
+  }, [document, selection])
 
   useLayoutEffect(() => {
     const node = viewportRef.current
@@ -141,30 +234,65 @@ export function DesignerCanvas({
         drag.layoutLimits,
       )
       const nextBottom = nextRect.top + nextRect.height
-      changeDocumentRef.current({
-        ...drag.startDocument,
-        container:
-          drag.selection.kind === 'block'
-            ? {
-                ...drag.startDocument.container,
-                height: Math.max(drag.startDocument.container.height, nextBottom + ROW_HEIGHT),
-              }
-            : drag.startDocument.container,
-        blocks: drag.startDocument.blocks.map((item) => {
-          if (item.id !== drag.blockId) return item
-          if (drag.selection.kind === 'block') {
-            return { ...item, layout: writeLayoutRect(item.layout, breakpoint, nextRect, drag.layoutLimits) }
+      let nextDocument = drag.startDocument
+      if (drag.selection.kind === 'block') {
+        nextDocument = updateBlockById(drag.startDocument, drag.blockId, (item) => ({
+          ...item,
+          layout: writeLayoutRect(item.layout, breakpoint, nextRect, drag.layoutLimits),
+        }))
+        if (drag.isRootBlock) {
+          nextDocument = {
+            ...nextDocument,
+            container: {
+              ...nextDocument.container,
+              height: Math.max(nextDocument.container.height, nextBottom + ROW_HEIGHT),
+            },
           }
-          return {
+        }
+      } else if (drag.selection.kind === 'templateBlock' && drag.hostBlockId && drag.sliderAddonId && drag.templateBlockId) {
+        nextDocument = updateTemplateBlock(
+          drag.startDocument,
+          drag.hostBlockId,
+          drag.sliderAddonId,
+          drag.templateBlockId,
+          (item) => ({
             ...item,
-            addons: item.addons.map((child) =>
-              child.id === drag.addonId
-                ? { ...child, layout: writeLayoutRect(child.layout, breakpoint, nextRect, drag.layoutLimits) }
-                : child,
-            ),
-          }
-        }),
-      })
+            layout: writeLayoutRect(item.layout, breakpoint, nextRect, drag.layoutLimits),
+          }),
+        )
+      } else if (
+        drag.selection.kind === 'templateAddon' &&
+        drag.hostBlockId &&
+        drag.sliderAddonId &&
+        drag.templateBlockId &&
+        drag.templateAddonId
+      ) {
+        const ctx = findSliderHostContext(drag.startDocument, drag.hostBlockId, drag.sliderAddonId)
+        const templateBlock = ctx ? findBlockInTree(ctx.slideTemplate, drag.templateBlockId) : null
+        const currentAddon = templateBlock?.addons.find((item) => item.id === drag.templateAddonId)
+        if (currentAddon) {
+          nextDocument = updateTemplateAddon(
+            drag.startDocument,
+            drag.hostBlockId,
+            drag.sliderAddonId,
+            drag.templateBlockId,
+            {
+              ...currentAddon,
+              layout: writeLayoutRect(currentAddon.layout, breakpoint, nextRect, drag.layoutLimits),
+            },
+          )
+        }
+      } else if (drag.addonId) {
+        nextDocument = updateBlockById(drag.startDocument, drag.blockId, (item) => ({
+          ...item,
+          addons: item.addons.map((child) =>
+            child.id === drag.addonId
+              ? { ...child, layout: writeLayoutRect(child.layout, breakpoint, nextRect, drag.layoutLimits) }
+              : child,
+          ),
+        }))
+      }
+      changeDocumentRef.current(nextDocument)
     }
 
     function swallowClick(event: MouseEvent) {
@@ -213,10 +341,59 @@ export function DesignerCanvas({
     if (mode !== 'edit' || !grabbed || grabbed.kind === 'container') return
     event.preventDefault()
     event.stopPropagation()
-    const block = document.blocks.find((item) => item.id === grabbed.blockId)
+
+    if (grabbed.kind === 'templateBlock' || grabbed.kind === 'templateAddon') {
+      const ctx = findSliderHostContext(document, grabbed.hostBlockId, grabbed.sliderAddonId)
+      if (!ctx) return
+      const templateBlock = findBlockInTree(ctx.slideTemplate, grabbed.templateBlockId)
+      if (!templateBlock) return
+      // Slide shell fills the canvas — layout drag is ignored for the root; only children move.
+      if (grabbed.kind === 'templateBlock' && templateBlock.id === ctx.slideTemplate.id) return
+      const templateAddon =
+        grabbed.kind === 'templateAddon'
+          ? templateBlock.addons.find((item) => item.id === grabbed.templateAddonId)
+          : null
+      if (grabbed.kind === 'templateAddon' && !templateAddon) return
+      const startLayout = templateAddon ? templateAddon.layout : templateBlock.layout
+      const hostWidth = layoutParentWidth(document, grabbed.hostBlockId, canvasWidth, breakpoint, true)
+      const sliderRect = resolveLayoutRect(ctx.slider.layout, breakpoint)
+      const sliderWidth = hostWidth * (sliderRect.colSpan / 12)
+      const parentWidth =
+        grabbed.kind === 'templateAddon'
+          ? sliderWidth * (resolveLayoutRect(templateBlock.layout, breakpoint).colSpan / 12)
+          : sliderWidth
+      dragRef.current = {
+        pointerId: event.pointerId,
+        handle,
+        startX: event.clientX,
+        startY: event.clientY,
+        startRect: resolveLayoutRect(startLayout, breakpoint),
+        parentWidth,
+        scale,
+        selection: grabbed,
+        blockId: grabbed.hostBlockId,
+        hostBlockId: grabbed.hostBlockId,
+        sliderAddonId: grabbed.sliderAddonId,
+        templateBlockId: grabbed.templateBlockId,
+        templateAddonId: grabbed.kind === 'templateAddon' ? grabbed.templateAddonId : undefined,
+        layoutLimits: grabbed.kind === 'templateAddon' ? ADDON_LAYOUT_LIMITS : CONTENT_BLOCK_LAYOUT_LIMITS,
+        startDocument: document,
+        isRootBlock: false,
+      }
+      try {
+        canvasRootRef.current?.setPointerCapture(event.pointerId)
+      } catch {
+        /* capture requires an active pointer; window listeners still run */
+      }
+      return
+    }
+
+    const block = findBlock(document, grabbed.blockId)
     if (!block) return
     const addon = grabbed.kind === 'addon' ? block.addons.find((item) => item.id === grabbed.addonId) : null
     const startLayout = addon ? addon.layout : block.layout
+    const path = findBlockPath(document, block.id)
+    const isRootBlock = path.length === 1
     dragRef.current = {
       pointerId: event.pointerId,
       handle,
@@ -225,14 +402,15 @@ export function DesignerCanvas({
       startRect: resolveLayoutRect(startLayout, breakpoint),
       parentWidth:
         grabbed.kind === 'addon'
-          ? canvasWidth * (resolveLayoutRect(block.layout, breakpoint).colSpan / 12)
-          : canvasWidth,
+          ? layoutParentWidth(document, block.id, canvasWidth, breakpoint, true)
+          : layoutParentWidth(document, block.id, canvasWidth, breakpoint, false),
       scale,
       selection: grabbed,
       blockId: block.id,
       addonId: grabbed.kind === 'addon' ? grabbed.addonId : undefined,
       layoutLimits: grabbed.kind === 'addon' ? ADDON_LAYOUT_LIMITS : CONTENT_BLOCK_LAYOUT_LIMITS,
       startDocument: document,
+      isRootBlock: grabbed.kind === 'block' && isRootBlock,
     }
     try {
       canvasRootRef.current?.setPointerCapture(event.pointerId)
@@ -299,14 +477,23 @@ export function DesignerCanvas({
         pages={pages}
         currentPageId={currentPageId}
         canManage={canManage}
+        datasetItemsById={datasetItemsById}
         onSelect={onSelect}
         onMovePointerDown={(event, grabbed) => onHandlePointerDown(event, 'move', grabbed)}
-        onResizePointerDown={(event, handle) => onHandlePointerDown(event, handle)}
+        onResizePointerDown={(event, handle, grabbed) => onHandlePointerDown(event, handle, grabbed)}
         onAddAddon={() => setAddAddonOpen(true)}
         onOpenBlockSettings={onOpenBlockSettings}
+        onDuplicateSelection={onDuplicateSelection}
         onSaveAsPreset={onSaveAsPreset}
         saveAsPresetDisabled={saveAsPresetDisabled}
         onOpenAddonSettings={onOpenAddonSettings}
+        onOpenTemplateBlockSettings={onOpenTemplateBlockSettings}
+        onOpenTemplateAddonSettings={onOpenTemplateAddonSettings}
+        onLayerTemplateBlock={onLayerTemplateBlock}
+        onDeleteTemplateBlock={onDeleteTemplateBlock}
+        onDuplicateTemplateBlock={onDuplicateTemplateBlock}
+        onLayerTemplateAddon={onLayerTemplateAddon}
+        onDeleteTemplateAddon={onDeleteTemplateAddon}
         onLayer={onLayer}
         onDeleteSelection={onDeleteSelection}
       />
@@ -336,6 +523,7 @@ export function DesignerCanvas({
         open={addAddonOpen}
         designerKind={designerKind}
         presets={presets}
+        excludeTypes={addAddonExcludeTypes}
         onOpenChange={setAddAddonOpen}
         onAddonAdded={onAddAddon}
         onPresetAdded={onAddPreset}

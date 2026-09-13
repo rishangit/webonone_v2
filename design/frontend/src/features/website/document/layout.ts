@@ -8,7 +8,7 @@ import type {
 } from '../types'
 import { WEBSITE_BREAKPOINTS } from '../types'
 
-export const MIN_CONTENT_BLOCK_COL_SPAN = 4
+export const MIN_CONTENT_BLOCK_COL_SPAN = 1
 export const MIN_CONTENT_BLOCK_HEIGHT = 80
 export const DEFAULT_CONTENT_BLOCK_COL_SPAN = 4
 export const DEFAULT_CONTENT_BLOCK_HEIGHT = 160

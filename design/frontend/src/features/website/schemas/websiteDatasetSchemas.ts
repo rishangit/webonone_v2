@@ -147,6 +147,197 @@ export const ANALYTICS_FIELD_CATALOG: Record<AnalyticsDimension, DatasetFieldDef
   token_status: NAMED_COUNT_FIELDS,
 }
 
+export type DatasetPropertyValueType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'media'
+
+export type DatasetPropertyNode = {
+  path: string
+  label: string
+  /** Shape of the value at this path — shown in Data Binding field dropdowns. */
+  valueType?: DatasetPropertyValueType
+  children?: DatasetPropertyNode[]
+  selectable?: boolean
+}
+
+const GALLERY_CHILDREN: DatasetPropertyNode[] = [
+  { path: 'galleryImages.url', label: 'URL', valueType: 'string' },
+  { path: 'galleryImages.mediaId', label: 'Media ID', valueType: 'string' },
+  { path: 'galleryImages.fileId', label: 'File ID', valueType: 'string' },
+  { path: 'galleryImages.fileName', label: 'File name', valueType: 'string' },
+]
+
+const SCHEDULE_CHILDREN: DatasetPropertyNode[] = [
+  { path: 'schedule.dayOfWeek', label: 'Day of week', valueType: 'number' },
+  { path: 'schedule.startTime', label: 'Start time', valueType: 'string' },
+  { path: 'schedule.endTime', label: 'End time', valueType: 'string' },
+]
+
+function leaf(
+  path: string,
+  label: string,
+  valueType: DatasetPropertyValueType = 'string',
+): DatasetPropertyNode {
+  return { path, label, valueType }
+}
+
+const PRODUCT_PROPERTY_TREE: DatasetPropertyNode[] = [
+  leaf('id', 'ID'),
+  leaf('name', 'Name'),
+  leaf('description', 'Description'),
+  leaf('status', 'Status'),
+  leaf('listPrice', 'Price', 'number'),
+  { path: 'galleryImages', label: 'Gallery images', valueType: 'array', children: GALLERY_CHILDREN },
+]
+
+const SERVICE_PROPERTY_TREE: DatasetPropertyNode[] = [
+  ...PRODUCT_PROPERTY_TREE,
+  leaf('timeMode', 'Time mode'),
+  leaf('durationMinutes', 'Duration (minutes)', 'number'),
+  leaf('startTime', 'Start time'),
+  leaf('endTime', 'End time'),
+]
+
+const STAFF_PROPERTY_TREE: DatasetPropertyNode[] = [
+  leaf('id', 'ID'),
+  leaf('displayName', 'Display name'),
+  leaf('avatarUrl', 'Avatar URL', 'media'),
+  { path: 'schedule', label: 'Schedule', valueType: 'array', children: SCHEDULE_CHILDREN },
+]
+
+const USER_PROPERTY_TREE: DatasetPropertyNode[] = [
+  leaf('id', 'ID'),
+  leaf('displayName', 'Display name'),
+  leaf('avatarUrl', 'Avatar URL', 'media'),
+  leaf('role', 'Role'),
+]
+
+export const DATASET_PROPERTY_TREES: Record<Exclude<DatasetSourceType, 'analytics'>, DatasetPropertyNode[]> =
+  {
+    products: PRODUCT_PROPERTY_TREE,
+    services: SERVICE_PROPERTY_TREE,
+    spaces: PRODUCT_PROPERTY_TREE,
+    staff: STAFF_PROPERTY_TREE,
+    users: USER_PROPERTY_TREE,
+  }
+
+export function propertyTreeForSource(
+  sourceType: DatasetSourceType,
+  config?: { dimension?: AnalyticsDimension } | null,
+): DatasetPropertyNode[] {
+  if (sourceType === 'analytics') {
+    const dimension = config?.dimension ?? 'kpis'
+    return (ANALYTICS_FIELD_CATALOG[dimension] ?? KPI_FIELDS).map((field) =>
+      leaf(field.field, field.label),
+    )
+  }
+  return DATASET_PROPERTY_TREES[sourceType]
+}
+
+export function findPropertyNodeByPath(
+  nodes: DatasetPropertyNode[],
+  path: string,
+): DatasetPropertyNode | null {
+  for (const node of nodes) {
+    if (node.path === path) return node
+    if (node.children?.length) {
+      const found = findPropertyNodeByPath(node.children, path)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+/**
+ * Field options relative to an array/object path (e.g. galleryImages.url → url)
+ * for mappers sitting inside a parent-path slider row.
+ */
+export function relativeFieldsUnderPath(
+  tree: DatasetPropertyNode[],
+  itemsPath: string,
+): Array<{ field: string; label: string; valueType?: DatasetPropertyValueType }> {
+  const node = findPropertyNodeByPath(tree, itemsPath)
+  if (!node?.children?.length) return []
+  const prefix = `${itemsPath}.`
+  const out: Array<{ field: string; label: string; valueType?: DatasetPropertyValueType }> = []
+  function walk(nodes: DatasetPropertyNode[]) {
+    for (const child of nodes) {
+      if (child.selectable !== false && child.path.startsWith(prefix)) {
+        out.push({
+          field: child.path.slice(prefix.length),
+          label: child.label,
+          valueType: child.valueType,
+        })
+      }
+      if (child.children?.length) walk(child.children)
+    }
+  }
+  walk(node.children)
+  return out
+}
+
+export function flattenPropertyPaths(nodes: DatasetPropertyNode[]): string[] {
+  const paths: string[] = []
+  for (const node of nodes) {
+    if (node.selectable !== false) paths.push(node.path)
+    if (node.children?.length) paths.push(...flattenPropertyPaths(node.children))
+  }
+  return paths
+}
+
+/** Look up the declared value type for a property path in a source tree. */
+export function valueTypeForPropertyPath(
+  nodes: DatasetPropertyNode[],
+  path: string,
+): DatasetPropertyValueType | undefined {
+  for (const node of nodes) {
+    if (node.path === path) return node.valueType
+    if (node.children?.length) {
+      const nested = valueTypeForPropertyPath(node.children, path)
+      if (nested) return nested
+    }
+  }
+  return undefined
+}
+
+export function defaultSelectedFields(
+  sourceType: DatasetSourceType,
+  config?: { dimension?: AnalyticsDimension } | null,
+): string[] {
+  return flattenPropertyPaths(propertyTreeForSource(sourceType, config))
+}
+
+export function collectDescendantPaths(node: DatasetPropertyNode): string[] {
+  const paths: string[] = []
+  if (node.selectable !== false) paths.push(node.path)
+  for (const child of node.children ?? []) paths.push(...collectDescendantPaths(child))
+  return paths
+}
+
+export function togglePropertySelection(
+  selected: string[],
+  node: DatasetPropertyNode,
+  checked: boolean,
+): string[] {
+  const affected = new Set(collectDescendantPaths(node))
+  if (checked) {
+    const next = new Set(selected)
+    for (const path of affected) next.add(path)
+    return [...next]
+  }
+  return selected.filter((path) => !affected.has(path))
+}
+
+export function nodeCheckState(
+  selected: Set<string>,
+  node: DatasetPropertyNode,
+): boolean | 'indeterminate' {
+  const paths = collectDescendantPaths(node)
+  if (paths.length === 0) return false
+  const count = paths.filter((path) => selected.has(path)).length
+  if (count === 0) return false
+  if (count === paths.length) return true
+  return 'indeterminate'
+}
+
 const filterValueSchema = z.union([
   z.string(),
   z.number(),
@@ -214,6 +405,7 @@ export const createWebsiteDatasetSchema = z
     sourceType: z.enum(DATASET_SOURCE_TYPES, { required_error: 'Source type is required' }),
     filters: datasetFiltersSchema.optional().default({ match: 'all', rules: [] }),
     config: datasetConfigSchema.optional().default({}),
+    selectedFields: z.array(z.string().trim().min(1).max(128)).max(100).default([]),
     status: z.enum(['active', 'inactive']).optional().default('active'),
   })
   .superRefine((body, ctx) => {
@@ -224,6 +416,13 @@ export const createWebsiteDatasetSchema = z
         path: ['config', 'dimension'],
       })
     }
+    if (body.selectedFields.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one property',
+        path: ['selectedFields'],
+      })
+    }
   })
 
 export const updateWebsiteDatasetSchema = z
@@ -232,9 +431,19 @@ export const updateWebsiteDatasetSchema = z
     sourceType: z.enum(DATASET_SOURCE_TYPES).optional(),
     filters: datasetFiltersSchema.optional(),
     config: datasetConfigSchema.optional(),
+    selectedFields: z.array(z.string().trim().min(1).max(128)).max(100).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })
+  .superRefine((body, ctx) => {
+    if (body.selectedFields != null && body.selectedFields.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one property',
+        path: ['selectedFields'],
+      })
+    }
+  })
 
 export type DatasetFilterRule = z.infer<typeof datasetFilterRuleSchema>
 export type DatasetFilters = z.infer<typeof datasetFiltersSchema>

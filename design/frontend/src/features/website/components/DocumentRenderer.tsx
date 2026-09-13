@@ -1,21 +1,24 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
+import { useMemo } from 'react'
 import { cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
+import { chromeBoxStyle, chromeClassName, chromeInlineStyle, pickElementChrome } from '../document/chrome'
 import {
   documentContentHeight,
   resolveLayoutRect,
-  rectToStyle,
   ROW_HEIGHT,
   type ResizeHandle,
 } from '../document/layout'
+import { expandDocumentForPublish, resolveAddonProps, resolveBlockDataItem } from '../document/dataBinding'
 import {
   ADDON_FRAME,
   ADDON_OUTLINE,
+  CONTENT_CONTAINER_EDGE,
+  CONTENT_CONTAINER_FRAME,
   CONTENT_ELEMENT_FRAME,
   CONTENT_ELEMENT_OUTLINE,
-  CONTENT_ELEMENT_PARENT_FRAME,
-  CONTENT_ELEMENT_PARENT_OUTLINE,
 } from '../document/selectionOutline'
+import { isChromePointerTarget, shouldDeferToSelectedAncestor } from '../document/selectionPointer'
 import { SelectionChrome } from './SelectionChrome'
 import type {
   DesignerMode,
@@ -40,14 +43,61 @@ interface DocumentRendererProps {
   currentPageId?: string | null
   companyId?: string
   canManage?: boolean
+  /** Dataset rows keyed by dataset id — used in publish mode for bound lists. */
+  datasetItemsById?: Record<string, Record<string, unknown>[]>
   onSelect?: (selection: DesignerSelection) => void
   onMovePointerDown?: (event: ReactPointerEvent, grabbed: DesignerSelection) => void
-  onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
+  onResizePointerDown?: (
+    event: ReactPointerEvent,
+    handle: ResizeHandle,
+    grabbed: DesignerSelection,
+  ) => void
   onAddAddon?: () => void
   onOpenBlockSettings?: () => void
+  onDuplicateSelection?: () => void
   onSaveAsPreset?: () => void
   saveAsPresetDisabled?: boolean
   onOpenAddonSettings?: () => void
+  onOpenTemplateBlockSettings?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+  ) => void
+  onOpenTemplateAddonSettings?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    templateAddonId: string,
+  ) => void
+  onLayerTemplateBlock?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    direction: 'up' | 'down',
+  ) => void
+  onDeleteTemplateBlock?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+  ) => void
+  onDuplicateTemplateBlock?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+  ) => void
+  onLayerTemplateAddon?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    templateAddonId: string,
+    direction: 'up' | 'down',
+  ) => void
+  onDeleteTemplateAddon?: (
+    hostBlockId: string,
+    sliderAddonId: string,
+    templateBlockId: string,
+    templateAddonId: string,
+  ) => void
   onLayer?: (direction: 'up' | 'down') => void
   onDeleteSelection?: () => void
   onNavigatePage?: (path: string) => void
@@ -64,24 +114,47 @@ export function DocumentRenderer({
   currentPageId = null,
   companyId,
   canManage = true,
+  datasetItemsById = {},
   onSelect,
   onMovePointerDown,
   onResizePointerDown,
   onAddAddon,
   onOpenBlockSettings,
+  onDuplicateSelection,
   onSaveAsPreset,
   saveAsPresetDisabled = false,
   onOpenAddonSettings,
+  onOpenTemplateBlockSettings,
+  onOpenTemplateAddonSettings,
+  onLayerTemplateBlock,
+  onDeleteTemplateBlock,
+  onDuplicateTemplateBlock,
+  onLayerTemplateAddon,
+  onDeleteTemplateAddon,
   onLayer,
   onDeleteSelection,
   onNavigatePage,
 }: DocumentRendererProps) {
   const interactive = mode === 'edit'
   const publish = mode === 'publish'
-  const sortedBlocks = [...document.blocks].sort((a, b) => a.zIndex - b.zIndex)
+  const { renderDocument, dataItemByBlockId } = useMemo(() => {
+    if (!publish) {
+      return {
+        renderDocument: document,
+        dataItemByBlockId: {} as Record<string, Record<string, unknown>>,
+      }
+    }
+    const expanded = expandDocumentForPublish(document, datasetItemsById, breakpoint)
+    return {
+      renderDocument: expanded.document,
+      dataItemByBlockId: expanded.dataItemByBlockId,
+    }
+  }, [breakpoint, datasetItemsById, document, publish])
+
+  const sortedBlocks = [...renderDocument.blocks].sort((a, b) => a.zIndex - b.zIndex)
   const containerSelected = interactive && selection?.kind === 'container'
-  const contentHeight = documentContentHeight(document, breakpoint)
-  const canvasHeight = document.container.height
+  const contentHeight = documentContentHeight(renderDocument, breakpoint)
+  const canvasHeight = renderDocument.container.height
   const overlayHeight =
     fit === 'content' ? contentHeight : fit === 'page' ? Math.max(canvasHeight, contentHeight) : canvasHeight
   const sizeStyle =
@@ -93,10 +166,10 @@ export function DocumentRenderer({
 
   return (
     <div
-      className={cn('relative w-full', fit === 'page' && 'flex-1', containerSelected && CONTENT_ELEMENT_OUTLINE)}
+      className={cn('relative w-full', fit === 'page' && 'flex-1')}
       style={{
         ...sizeStyle,
-        backgroundColor: document.container.backgroundColor || theme?.pageBackground || '#ffffff',
+        backgroundColor: renderDocument.container.backgroundColor || theme?.pageBackground || '#ffffff',
         color: theme?.bodyTextColor || '#111827',
       }}
       onClick={() => onSelect?.({ kind: 'container' })}
@@ -124,19 +197,32 @@ export function DocumentRenderer({
           interactive={interactive}
           publish={publish}
           canManage={canManage}
+          dataItemByBlockId={dataItemByBlockId}
+          datasetItemsById={datasetItemsById}
           onSelect={onSelect}
           onMovePointerDown={onMovePointerDown}
           onResizePointerDown={onResizePointerDown}
           onAddAddon={onAddAddon}
           onOpenBlockSettings={onOpenBlockSettings}
+          onDuplicateSelection={onDuplicateSelection}
           onSaveAsPreset={onSaveAsPreset}
           saveAsPresetDisabled={saveAsPresetDisabled}
           onOpenAddonSettings={onOpenAddonSettings}
+          onOpenTemplateBlockSettings={onOpenTemplateBlockSettings}
+          onOpenTemplateAddonSettings={onOpenTemplateAddonSettings}
+          onLayerTemplateBlock={onLayerTemplateBlock}
+          onDeleteTemplateBlock={onDeleteTemplateBlock}
+          onDuplicateTemplateBlock={onDuplicateTemplateBlock}
+          onLayerTemplateAddon={onLayerTemplateAddon}
+          onDeleteTemplateAddon={onDeleteTemplateAddon}
           onLayer={onLayer}
           onDeleteSelection={onDeleteSelection}
           onNavigatePage={onNavigatePage}
         />
       ))}
+      {/* Paint above blocks so flush-to-edge content cannot hide the container border. */}
+      {interactive ? <div className={CONTENT_CONTAINER_EDGE} aria-hidden /> : null}
+      {containerSelected ? <div className={CONTENT_CONTAINER_FRAME} aria-hidden /> : null}
     </div>
   )
 }
@@ -152,14 +238,24 @@ function BlockView({
   interactive,
   publish,
   canManage,
+  dataItemByBlockId = {},
+  datasetItemsById = {},
   onSelect,
   onMovePointerDown,
   onResizePointerDown,
   onAddAddon,
   onOpenBlockSettings,
+  onDuplicateSelection,
   onSaveAsPreset,
   saveAsPresetDisabled = false,
   onOpenAddonSettings,
+  onOpenTemplateBlockSettings,
+  onOpenTemplateAddonSettings,
+  onLayerTemplateBlock,
+  onDeleteTemplateBlock,
+  onDuplicateTemplateBlock,
+  onLayerTemplateAddon,
+  onDeleteTemplateAddon,
   onLayer,
   onDeleteSelection,
   onNavigatePage,
@@ -174,33 +270,59 @@ function BlockView({
   interactive: boolean
   publish: boolean
   canManage: boolean
+  dataItemByBlockId?: Record<string, Record<string, unknown>>
+  datasetItemsById?: Record<string, Record<string, unknown>[]>
   onSelect?: (selection: DesignerSelection) => void
   onMovePointerDown?: (event: ReactPointerEvent, grabbed: DesignerSelection) => void
-  onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
+  onResizePointerDown?: (
+    event: ReactPointerEvent,
+    handle: ResizeHandle,
+    grabbed: DesignerSelection,
+  ) => void
   onAddAddon?: () => void
   onOpenBlockSettings?: () => void
+  onDuplicateSelection?: () => void
   onSaveAsPreset?: () => void
   saveAsPresetDisabled?: boolean
   onOpenAddonSettings?: () => void
+  onOpenTemplateBlockSettings?: DocumentRendererProps['onOpenTemplateBlockSettings']
+  onOpenTemplateAddonSettings?: DocumentRendererProps['onOpenTemplateAddonSettings']
+  onLayerTemplateBlock?: DocumentRendererProps['onLayerTemplateBlock']
+  onDeleteTemplateBlock?: DocumentRendererProps['onDeleteTemplateBlock']
+  onDuplicateTemplateBlock?: DocumentRendererProps['onDuplicateTemplateBlock']
+  onLayerTemplateAddon?: DocumentRendererProps['onLayerTemplateAddon']
+  onDeleteTemplateAddon?: DocumentRendererProps['onDeleteTemplateAddon']
   onLayer?: (direction: 'up' | 'down') => void
   onDeleteSelection?: () => void
   onNavigatePage?: (path: string) => void
 }) {
   const rect = resolveLayoutRect(block.layout, breakpoint)
   const selected = selection?.kind === 'block' && selection.blockId === block.id
-  const childSelected = selection?.kind === 'addon' && selection.blockId === block.id
+  const blockGrabbed: DesignerSelection = { kind: 'block', blockId: block.id }
+  const childSelected =
+    (selection?.kind === 'addon' && selection.blockId === block.id) ||
+    ((selection?.kind === 'templateBlock' || selection?.kind === 'templateAddon') &&
+      selection.hostBlockId === block.id) ||
+    (selection?.kind === 'block' &&
+      selection.blockId !== block.id &&
+      (block.children ?? []).some((child) => isBlockOrDescendantSelected(child, selection)))
   const addons = [...block.addons].sort((a, b) => a.zIndex - b.zIndex)
+  const children = [...(block.children ?? [])].sort((a, b) => a.zIndex - b.zIndex)
+  const hasChildren = children.length > 0
+  const rawDataItem = dataItemByBlockId[block.id] ?? null
+  const dataItem = resolveBlockDataItem(block, rawDataItem)
+  const chrome = pickElementChrome(block)
   return (
     <div
       className={cn(
-        'overflow-hidden',
         interactive && !block.backgroundColor && 'bg-primary/5',
+        selected || childSelected ? 'overflow-visible' : 'overflow-hidden',
         selected && CONTENT_ELEMENT_OUTLINE,
-        childSelected && CONTENT_ELEMENT_PARENT_OUTLINE,
+        chromeClassName(chrome),
       )}
       style={{
-        ...rectToStyle(rect),
-        backgroundColor: block.backgroundColor || undefined,
+        ...chromeBoxStyle(rect, chrome),
+        ...chromeInlineStyle(chrome),
         zIndex: selected || childSelected ? 10000 + block.zIndex : block.zIndex,
         cursor: interactive ? 'move' : undefined,
         touchAction: interactive ? 'none' : undefined,
@@ -208,10 +330,29 @@ function BlockView({
       }}
       onPointerDown={(event) => {
         if (!interactive) return
-        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action], [data-addon-control]')) {
+        if (isChromePointerTarget(event.target)) {
+          event.stopPropagation()
           return
         }
-        if (!selected && event.target instanceof Element && event.target.closest('[data-addon-node]')) return
+        if (
+          shouldDeferToSelectedAncestor(selection, event.currentTarget, {
+            blockId: block.id,
+            hostBlockId: block.id,
+          })
+        ) {
+          return
+        }
+        // Nested block / addon elements own the event when they are the true target.
+        if (event.target instanceof Element) {
+          const targetBlock = event.target.closest('[data-block-id]')
+          if (targetBlock && targetBlock !== event.currentTarget && !selected) return
+          const targetAddon = event.target.closest('[data-addon-node]')
+          if (targetAddon) {
+            const owningBlock = targetAddon.closest('[data-block-id]')
+            // When this block is selected, nested addons defer so we can drag the block.
+            if (owningBlock === event.currentTarget && !selected) return
+          }
+        }
         event.preventDefault()
         event.stopPropagation()
         const grabbed: DesignerSelection = { kind: 'block', blockId: block.id }
@@ -220,20 +361,35 @@ function BlockView({
       }}
       onClick={(event) => {
         event.stopPropagation()
-        if (selected) {
-          const addonId = addonIdAtPoint(event.currentTarget, event.clientX, event.clientY)
-          if (addonId) {
-            onSelect?.({ kind: 'addon', blockId: block.id, addonId })
-            return
+        if (event.target instanceof Element) {
+          const targetBlock = event.target.closest('[data-block-id]')
+          if (targetBlock && targetBlock !== event.currentTarget) return
+          if (selected) {
+            const addonNode = event.target.closest<HTMLElement>('[data-addon-id]')
+            if (addonNode) {
+              const owningBlock = addonNode.closest('[data-block-id]')
+              const addonId = addonNode.dataset.addonId
+              if (owningBlock === event.currentTarget && addonId) {
+                onSelect?.({ kind: 'addon', blockId: block.id, addonId })
+                return
+              }
+            }
           }
         }
         onSelect?.({ kind: 'block', blockId: block.id })
       }}
+      data-block-node=""
+      data-block-id={block.id}
     >
       {interactive ? (
         <div
           data-block-drag=""
-          className={cn('absolute inset-0 cursor-move', selected ? 'z-[25]' : 'z-[1]')}
+          className={cn(
+            'absolute inset-0 cursor-move',
+            selected ? 'z-[25]' : 'z-[1]',
+            // Keep children / nested presets clickable above the wrapper drag layer.
+            hasChildren && 'pointer-events-none',
+          )}
           style={{ touchAction: 'none' }}
         />
       ) : null}
@@ -248,12 +404,11 @@ function BlockView({
         </>
       ) : null}
       {selected ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
-      {childSelected ? <div className={CONTENT_ELEMENT_PARENT_FRAME} /> : null}
       {addons.map((addon) => (
         <AddonView
           key={addon.id}
           blockId={block.id}
-          addon={addon}
+          addon={resolveAddonProps(addon, dataItem)}
           breakpoint={breakpoint}
           theme={theme}
           selected={selection?.kind === 'addon' && selection.addonId === addon.id}
@@ -264,10 +419,59 @@ function BlockView({
           interactive={interactive}
           publish={publish}
           canManage={canManage}
+          datasetItemsById={datasetItemsById}
+          parentDataItem={dataItem}
+          hostItemsPath={block.dataBinding?.itemsPath ?? null}
+          selection={selection}
           onSelect={onSelect}
           onMovePointerDown={onMovePointerDown}
           onResizePointerDown={onResizePointerDown}
           onOpenAddonSettings={onOpenAddonSettings}
+          onAddAddon={onAddAddon}
+          onOpenTemplateBlockSettings={onOpenTemplateBlockSettings}
+          onOpenTemplateAddonSettings={onOpenTemplateAddonSettings}
+          onLayerTemplateBlock={onLayerTemplateBlock}
+          onDeleteTemplateBlock={onDeleteTemplateBlock}
+          onDuplicateTemplateBlock={onDuplicateTemplateBlock}
+          onLayerTemplateAddon={onLayerTemplateAddon}
+          onDeleteTemplateAddon={onDeleteTemplateAddon}
+          onLayer={onLayer}
+          onDeleteSelection={onDeleteSelection}
+          onNavigatePage={onNavigatePage}
+          onDuplicateSelection={onDuplicateSelection}
+        />
+      ))}
+      {children.map((child) => (
+        <BlockView
+          key={child.id}
+          block={child}
+          breakpoint={breakpoint}
+          theme={theme}
+          selection={selection}
+          pages={pages}
+          currentPageId={currentPageId}
+          companyId={companyId}
+          interactive={interactive}
+          publish={publish}
+          canManage={canManage}
+          dataItemByBlockId={dataItemByBlockId}
+          datasetItemsById={datasetItemsById}
+          onSelect={onSelect}
+          onMovePointerDown={onMovePointerDown}
+          onResizePointerDown={onResizePointerDown}
+          onAddAddon={onAddAddon}
+          onOpenBlockSettings={onOpenBlockSettings}
+          onDuplicateSelection={onDuplicateSelection}
+          onSaveAsPreset={onSaveAsPreset}
+          saveAsPresetDisabled={saveAsPresetDisabled}
+          onOpenAddonSettings={onOpenAddonSettings}
+          onOpenTemplateBlockSettings={onOpenTemplateBlockSettings}
+          onOpenTemplateAddonSettings={onOpenTemplateAddonSettings}
+          onLayerTemplateBlock={onLayerTemplateBlock}
+          onDeleteTemplateBlock={onDeleteTemplateBlock}
+          onDuplicateTemplateBlock={onDuplicateTemplateBlock}
+          onLayerTemplateAddon={onLayerTemplateAddon}
+          onDeleteTemplateAddon={onDeleteTemplateAddon}
           onLayer={onLayer}
           onDeleteSelection={onDeleteSelection}
           onNavigatePage={onNavigatePage}
@@ -276,9 +480,11 @@ function BlockView({
       {interactive && selected && onResizePointerDown ? (
         <SelectionChrome
           kind="block"
+          grabbed={blockGrabbed}
           canManage={canManage}
           onAddAddon={onAddAddon}
           onOpenSettings={() => onOpenBlockSettings?.()}
+          onDuplicate={onDuplicateSelection}
           onSaveAsPreset={onSaveAsPreset}
           saveAsPresetDisabled={saveAsPresetDisabled}
           onLayer={(direction) => onLayer?.(direction)}
@@ -303,13 +509,26 @@ function AddonView({
   interactive,
   publish,
   canManage,
+  datasetItemsById = {},
+  parentDataItem = null,
+  hostItemsPath = null,
+  selection = null,
   onSelect,
   onMovePointerDown,
   onResizePointerDown,
   onOpenAddonSettings,
+  onAddAddon,
+  onOpenTemplateBlockSettings,
+  onOpenTemplateAddonSettings,
+  onLayerTemplateBlock,
+  onDeleteTemplateBlock,
+  onDuplicateTemplateBlock,
+  onLayerTemplateAddon,
+  onDeleteTemplateAddon,
   onLayer,
   onDeleteSelection,
   onNavigatePage,
+  onDuplicateSelection,
 }: {
   blockId: string
   addon: WebsiteAddon
@@ -323,36 +542,74 @@ function AddonView({
   interactive: boolean
   publish: boolean
   canManage: boolean
+  datasetItemsById?: Record<string, Record<string, unknown>[]>
+  parentDataItem?: Record<string, unknown> | null
+  hostItemsPath?: string | null
+  selection?: DesignerSelection | null
   onSelect?: (selection: DesignerSelection) => void
   onMovePointerDown?: (event: ReactPointerEvent, grabbed: DesignerSelection) => void
-  onResizePointerDown?: (event: ReactPointerEvent, handle: ResizeHandle) => void
+  onResizePointerDown?: (
+    event: ReactPointerEvent,
+    handle: ResizeHandle,
+    grabbed: DesignerSelection,
+  ) => void
   onOpenAddonSettings?: () => void
+  onAddAddon?: () => void
+  onOpenTemplateBlockSettings?: DocumentRendererProps['onOpenTemplateBlockSettings']
+  onOpenTemplateAddonSettings?: DocumentRendererProps['onOpenTemplateAddonSettings']
+  onLayerTemplateBlock?: DocumentRendererProps['onLayerTemplateBlock']
+  onDeleteTemplateBlock?: DocumentRendererProps['onDeleteTemplateBlock']
+  onDuplicateTemplateBlock?: DocumentRendererProps['onDuplicateTemplateBlock']
+  onLayerTemplateAddon?: DocumentRendererProps['onLayerTemplateAddon']
+  onDeleteTemplateAddon?: DocumentRendererProps['onDeleteTemplateAddon']
   onLayer?: (direction: 'up' | 'down') => void
   onDeleteSelection?: () => void
   onNavigatePage?: (path: string) => void
+  onDuplicateSelection?: () => void
 }) {
   const module = getAddonModuleByType(addon.type)
   const RenderComponent = module?.RenderComponent
   const rect = resolveLayoutRect(addon.layout, breakpoint)
+  const hostSelected = selection?.kind === 'addon' && selection.addonId === addon.id
+  const templateChildSelected =
+    (selection?.kind === 'templateBlock' || selection?.kind === 'templateAddon') &&
+    selection.sliderAddonId === addon.id
+  const chrome = pickElementChrome(addon)
+  const addonGrabbed: DesignerSelection = { kind: 'addon', blockId, addonId: addon.id }
+  // Sliders stay interactive under a selected host so nested presets remain clickable
+  // after the host is deselected; while the host is selected they defer pointer events.
+  const blockLocksPointers = blockSelected && addon.type !== 'slider'
+  // Keep slider chrome (dots/arrows) clipped to the resized addon frame unless a nested
+  // template item is selected and needs visible selection chrome.
+  const clipSliderFrame = addon.type === 'slider' && !templateChildSelected
   return (
     <div
-      className={cn(selected && ADDON_OUTLINE)}
+      className={cn(hostSelected && ADDON_OUTLINE, chromeClassName(chrome))}
       data-addon-node=""
       data-addon-id={addon.id}
       style={{
-        ...rectToStyle(rect),
-        zIndex: selected ? 10000 + addon.zIndex : addon.zIndex + 2,
-        overflow: 'visible',
-        cursor: interactive && !blockSelected ? 'move' : undefined,
-        touchAction: interactive && !blockSelected ? 'none' : undefined,
+        ...chromeBoxStyle(rect, chrome),
+        ...chromeInlineStyle(chrome),
+        zIndex: selected || templateChildSelected ? 10000 + addon.zIndex : addon.zIndex + 2,
+        overflow: clipSliderFrame ? 'hidden' : 'visible',
+        cursor: interactive && !blockLocksPointers ? 'move' : undefined,
+        touchAction: interactive && !blockLocksPointers ? 'none' : undefined,
         userSelect: interactive ? 'none' : undefined,
-        pointerEvents: blockSelected ? 'none' : undefined,
+        pointerEvents: blockLocksPointers ? 'none' : undefined,
       }}
       onPointerDown={(event) => {
-        if (!interactive || blockSelected) return
-        if (event.target instanceof Element && event.target.closest('[data-resize-handle], [data-chrome-action], [data-addon-control]')) {
+        if (!interactive || blockLocksPointers) return
+        if (isChromePointerTarget(event.target)) {
+          event.stopPropagation()
           return
         }
+        // Host page block is selected — bubble so the block keeps the drag.
+        if (selection?.kind === 'block' && selection.blockId === blockId) return
+        const onTemplateChild =
+          event.target instanceof Element &&
+          Boolean(event.target.closest('[data-template-block-id], [data-template-addon-id]'))
+        // Dive into slide content only when this slider is not already selected.
+        if (onTemplateChild && !hostSelected) return
         event.preventDefault()
         event.stopPropagation()
         const grabbed: DesignerSelection = { kind: 'addon', blockId, addonId: addon.id }
@@ -361,10 +618,27 @@ function AddonView({
       }}
       onClick={(event) => {
         event.stopPropagation()
+        if (selection?.kind === 'block' && selection.blockId === blockId) return
+        if (
+          event.target instanceof Element &&
+          event.target.closest('[data-template-block-id], [data-template-addon-id]') &&
+          !hostSelected
+        ) {
+          return
+        }
         onSelect?.({ kind: 'addon', blockId, addonId: addon.id })
       }}
     >
-      <div className="h-full w-full overflow-hidden">
+      <div
+        className={cn(
+          'h-full w-full',
+          clipSliderFrame
+            ? 'overflow-hidden'
+            : addon.type === 'slider' || templateChildSelected
+              ? 'overflow-visible'
+              : 'overflow-hidden',
+        )}
+      >
         {RenderComponent ? (
           <RenderComponent
             addon={addon}
@@ -375,16 +649,50 @@ function AddonView({
             companyId={companyId}
             interactive={interactive}
             publish={publish}
+            datasetItemsById={datasetItemsById}
+            parentDataItem={parentDataItem}
+            hostItemsPath={hostItemsPath}
+            hostBlockId={blockId}
+            selection={selection}
+            canManage={canManage}
+            onSelect={onSelect}
+            onMovePointerDown={onMovePointerDown}
+            onResizePointerDown={onResizePointerDown}
+            onOpenTemplateBlockSettings={(templateBlockId) =>
+              onOpenTemplateBlockSettings?.(blockId, addon.id, templateBlockId)
+            }
+            onOpenTemplateAddonSettings={(templateBlockId, templateAddonId) =>
+              onOpenTemplateAddonSettings?.(blockId, addon.id, templateBlockId, templateAddonId)
+            }
+            onLayerTemplateBlock={(templateBlockId, direction) =>
+              onLayerTemplateBlock?.(blockId, addon.id, templateBlockId, direction)
+            }
+            onDeleteTemplateBlock={(templateBlockId) =>
+              onDeleteTemplateBlock?.(blockId, addon.id, templateBlockId)
+            }
+            onDuplicateTemplateBlock={(templateBlockId) =>
+              onDuplicateTemplateBlock?.(blockId, addon.id, templateBlockId)
+            }
+            onLayerTemplateAddon={(templateBlockId, templateAddonId, direction) =>
+              onLayerTemplateAddon?.(blockId, addon.id, templateBlockId, templateAddonId, direction)
+            }
+            onDeleteTemplateAddon={(templateBlockId, templateAddonId) =>
+              onDeleteTemplateAddon?.(blockId, addon.id, templateBlockId, templateAddonId)
+            }
+            onAddChild={addon.type === 'slider' ? onAddAddon : undefined}
             onNavigatePage={onNavigatePage}
           />
         ) : null}
       </div>
-      {selected ? <div className={ADDON_FRAME} /> : null}
-      {interactive && selected && onResizePointerDown ? (
+      {hostSelected && !templateChildSelected ? <div className={ADDON_FRAME} /> : null}
+      {interactive && hostSelected && !templateChildSelected && onResizePointerDown ? (
         <SelectionChrome
           kind="addon"
+          grabbed={addonGrabbed}
           canManage={canManage}
+          onAddAddon={addon.type === 'slider' ? onAddAddon : undefined}
           onOpenSettings={() => onOpenAddonSettings?.()}
+          onDuplicate={onDuplicateSelection}
           onLayer={(direction) => onLayer?.(direction)}
           onDelete={() => onDeleteSelection?.()}
           onResizePointerDown={onResizePointerDown}
@@ -417,18 +725,8 @@ function RowGridOverlay({
   )
 }
 
-function addonIdAtPoint(blockEl: HTMLElement, clientX: number, clientY: number) {
-  const nodes = blockEl.querySelectorAll<HTMLElement>('[data-addon-id]')
-  let hitId: string | null = null
-  let hitZ = -Infinity
-  for (const node of nodes) {
-    const rect = node.getBoundingClientRect()
-    if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) continue
-    const z = Number.parseFloat(node.style.zIndex || '0')
-    if (z >= hitZ) {
-      hitZ = z
-      hitId = node.dataset.addonId ?? null
-    }
-  }
-  return hitId
+function isBlockOrDescendantSelected(block: WebsiteBlock, selection: DesignerSelection): boolean {
+  if (selection.kind === 'block' && selection.blockId === block.id) return true
+  if (selection.kind === 'addon' && selection.blockId === block.id) return true
+  return (block.children ?? []).some((child) => isBlockOrDescendantSelected(child, selection))
 }

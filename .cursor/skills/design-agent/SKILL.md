@@ -32,6 +32,8 @@ description: >-
 - [feature-store skill](../feature-store/SKILL.md) — catalog CRUD via `@webonone/store-kit`
 - [form-creation skill](../form-creation/SKILL.md) — matching Zod validation FE + BE
 - [item-list skill](../item-list/SKILL.md) — forms list rows
+- [website-designer-addons skill](../website-designer-addons/SKILL.md) — registry, settings tabs, new WebpageEditor addons
+- [website-designer-data-binding.mdc](../../rules/website-designer-data-binding.mdc) — Dataset Owner vs Field Mapper
 - [platform-shell-navigation.mdc](../../rules/platform-shell-navigation.mdc) — embed in WebOnOne
 - [dialog-windows.mdc](../../rules/dialog-windows.mdc) — CustomDialog; peer-dialog chrome split
 - [code-cleanliness.mdc](../../rules/code-cleanliness.mdc) — `@/` imports

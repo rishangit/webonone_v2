@@ -53,6 +53,7 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 | [date-display-format.mdc](date-display-format.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `packages/i18n/**/*` | User-visible dates as `Oct 10, 2026`; shared Intl options |
 | [toast-notifications.mdc](toast-notifications.mdc) | `**/frontend/src/**/*.{ts,tsx}` | `useToast` for mutation API success/fail; ignore soft warnings |
 | [image-preview.mdc](image-preview.mdc) | `**/frontend/src/**/*.{ts,tsx}`, `ui-kit/**/*.{ts,tsx}` | `ImagePreview` for logos/avatars; null `src` = first-upload empty state |
+| [website-designer-data-binding.mdc](website-designer-data-binding.mdc) | `design/frontend/src/features/website/**/*`, `design/backend/src/schemas/websiteDocument.schema.ts` | Dataset Owner vs Field Mapper for website content blocks and addons |
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email/frontend`, and any future `*/frontend` apps.
 
@@ -90,6 +91,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | [toast-notifications](../skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
 | [date-display](../skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026`; shared `DISPLAY_DATE_OPTIONS` |
 | [help-articles](../skills/help-articles/SKILL.md) | User-visible WebOnOne/shell features → Support Markdown (`en` + `si`) in the same task |
+| [website-designer-addons](../skills/website-designer-addons/SKILL.md) | Design website WebpageEditor addons — registry, settings tabs, data binding roles |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
@@ -127,3 +129,4 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Core-hosted peer dialogs (header/body/footer on WebOnOne shell) | [core-hosted-peer-dialog skill](../skills/core-hosted-peer-dialog/SKILL.md), [platform-shell-navigation.mdc](platform-shell-navigation.mdc) (“Peer form dialogs”), `dialog-windows.mdc` |
 | Mutation toast feedback (`useToast`) | [toast-notifications.mdc](toast-notifications.mdc), [toast-notifications skill](../skills/toast-notifications/SKILL.md) |
 | User-visible product features → public help | [help-articles.mdc](help-articles.mdc), [help-articles skill](../skills/help-articles/SKILL.md) |
+| Design website data binding (blocks + addons) | [website-designer-data-binding.mdc](website-designer-data-binding.mdc), [website-designer-addons skill](../skills/website-designer-addons/SKILL.md) |
