@@ -68,6 +68,8 @@ export const updateCompanyEventBodySchema = z
     weekdays: weekdaysSchema.optional(),
     recurrence: eventRecurrenceSchema.optional(),
     recurrence_until: dateYmd.nullable().optional(),
+    /** When set with recurrence_until, expands the series from this date (gap skip). */
+    expand_from: dateYmd.optional(),
   })
   .superRefine((body, ctx) => {
     if (body.recurrence_until && body.starts_on && body.recurrence_until < body.starts_on) {
@@ -88,6 +90,28 @@ export const updateCompanyEventBodySchema = z
         message: 'Single events must end on the start date',
         path: ['recurrence_until'],
       })
+    }
+    if (body.expand_from !== undefined) {
+      if (!body.recurrence_until) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Expand requires a new until date',
+          path: ['recurrence_until'],
+        })
+      } else if (body.recurrence_until < body.expand_from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Until must be on or after From',
+          path: ['recurrence_until'],
+        })
+      }
+      if (body.starts_on && body.expand_from < body.starts_on) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'From must be on or after the start date',
+          path: ['expand_from'],
+        })
+      }
     }
   })
 

@@ -44,6 +44,15 @@ import {
 } from './tokenWorkflowProgress.js'
 import { computeWorkflowStepQueuesForService } from './sessionWorkflowQueue.js'
 import {
+  buildRenumberedCallOrders,
+  callOrderFromTokenNumber,
+  estimateAvgServiceMs,
+  pickEqualWaitInsertIndex,
+  resolveInsertCallOrder,
+  toCheckedInAtMs,
+  type LateQueueWaiter,
+} from './sessionLateCheckInQueue.js'
+import {
   notifyAppointmentBookedInApp,
   notifySessionEndedInApp,
   notifySessionScheduleChangedInApp,
@@ -98,6 +107,8 @@ export type CompanyEventDto = {
     | 'monthly_first_week'
     | 'monthly_by_date'
   recurrenceUntil: string | null
+  /** Dates inside the series range that do not generate sessions (skipped gaps). */
+  excludedDates: string[]
   createdAt: string
   updatedAt: string
   /**
@@ -144,6 +155,8 @@ export type SessionTokenDto = {
   occurrenceDate: string
   tokenNumber: number
   tokenLabel: string
+  /** Live call queue order (may differ from tokenNumber after late check-in). */
+  callOrder: number
   status: SessionTokenStatus
   userId: string
   userDisplayName: string
@@ -218,13 +231,13 @@ function computeSessionQueueLabels(
   const prev = items
     .filter((token) => token.status === 'completed')
     .reduce<SessionTokenDto | null>(
-      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      (best, token) => (!best || token.callOrder > best.callOrder ? token : best),
       null,
     )
   const next = items
     .filter((token) => token.status === 'waiting' && checkedInUserIds.has(token.userId))
     .reduce<SessionTokenDto | null>(
-      (best, token) => (!best || token.tokenNumber < best.tokenNumber ? token : best),
+      (best, token) => (!best || token.callOrder < best.callOrder ? token : best),
       null,
     )
   return {
@@ -371,6 +384,7 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
     weekdays,
     recurrence: row.recurrence,
     recurrenceUntil: row.recurrence_until ? toDateOnly(row.recurrence_until) : null,
+    excludedDates: eventRepo.parseExcludedDates(row.excluded_dates),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
@@ -842,8 +856,19 @@ export function expandOccurrences(
   const rangeEnd = seriesEnd < toYmd ? seriesEnd : toYmd
   if (rangeStart > rangeEnd) return []
 
+  const excluded = new Set(event.excludedDates ?? [])
+
+  function includeDate(occurrenceDate: string): boolean {
+    return !excluded.has(occurrenceDate)
+  }
+
   if (event.recurrence === 'none') {
-    if (seriesStart >= fromYmd && seriesStart <= toYmd && seriesStart <= seriesEnd) {
+    if (
+      seriesStart >= fromYmd &&
+      seriesStart <= toYmd &&
+      seriesStart <= seriesEnd &&
+      includeDate(seriesStart)
+    ) {
       return [toOccurrence(event, seriesStart)]
     }
     return []
@@ -855,7 +880,12 @@ export function expandOccurrences(
     const results: CompanyEventOccurrenceDto[] = []
     for (const { year, monthIndex } of iterateMonthStarts(seriesStart, seriesEnd)) {
       const occurrence = firstWeekDateInMonth(year, monthIndex, weekday)
-      if (occurrence >= rangeStart && occurrence <= rangeEnd && occurrence >= seriesStart) {
+      if (
+        occurrence >= rangeStart &&
+        occurrence <= rangeEnd &&
+        occurrence >= seriesStart &&
+        includeDate(occurrence)
+      ) {
         results.push(toOccurrence(event, occurrence))
       }
     }
@@ -871,7 +901,8 @@ export function expandOccurrences(
         occurrence &&
         occurrence >= rangeStart &&
         occurrence <= rangeEnd &&
-        occurrence >= seriesStart
+        occurrence >= seriesStart &&
+        includeDate(occurrence)
       ) {
         results.push(toOccurrence(event, occurrence))
       }
@@ -885,7 +916,7 @@ export function expandOccurrences(
   const results: CompanyEventOccurrenceDto[] = []
   let cursor = seriesStart
   while (cursor <= seriesEnd && cursor <= toYmd) {
-    if (cursor >= fromYmd && weekdays.has(weekdayOfYmd(cursor))) {
+    if (cursor >= fromYmd && weekdays.has(weekdayOfYmd(cursor)) && includeDate(cursor)) {
       if (event.recurrence === 'biweekly' && weeksBetween(seriesStart, cursor) % 2 !== 0) {
         cursor = addDaysYmd(cursor, 1)
         continue
@@ -1484,6 +1515,33 @@ function normalizeEventSchedule(
   return { weekdays, recurrence: resolvedRecurrence, recurrenceUntil: until }
 }
 
+/** Merge excluded dates when expanding a series From → Until (gap skip / gap fill). */
+export function mergeExcludedDatesForExpand(opts: {
+  currentUntil: string
+  expandFrom: string
+  newUntil: string
+  existingExcluded: string[]
+}): string[] {
+  const { currentUntil, expandFrom, newUntil, existingExcluded } = opts
+  const excluded = new Set(existingExcluded)
+
+  if (expandFrom > currentUntil) {
+    let cursor = addDaysYmd(currentUntil, 1)
+    while (cursor < expandFrom) {
+      excluded.add(cursor)
+      cursor = addDaysYmd(cursor, 1)
+    }
+  }
+
+  for (const date of [...excluded]) {
+    if (date >= expandFrom && date <= newUntil) {
+      excluded.delete(date)
+    }
+  }
+
+  return [...excluded].sort()
+}
+
 export async function createCompanyEvent(
   companyId: string,
   body: CreateCompanyEventBody,
@@ -1539,6 +1597,7 @@ export async function createCompanyEvent(
     start_time: times.startTime,
     end_time: times.endTime,
     weekdays: schedule.weekdays,
+    excluded_dates: [],
     recurrence: schedule.recurrence,
     recurrence_until: schedule.recurrenceUntil,
   })
@@ -1602,6 +1661,32 @@ export async function updateCompanyEvent(
     )
   }
 
+  let excludedDates = mappedExisting.excludedDates
+  if (body.expand_from !== undefined) {
+    const currentUntil = mappedExisting.recurrenceUntil
+    if (!currentUntil) {
+      throw serviceError('Series has no until date to expand', 400)
+    }
+    if (!body.recurrence_until) {
+      throw serviceError('Expand requires a new until date', 400)
+    }
+    if (body.expand_from < startsOn) {
+      throw serviceError('From must be on or after the start date', 400)
+    }
+    if (body.recurrence_until < body.expand_from) {
+      throw serviceError('Until must be on or after From', 400)
+    }
+    if (body.recurrence_until <= currentUntil) {
+      throw serviceError('Choose a date after the current until date', 400)
+    }
+    excludedDates = mergeExcludedDatesForExpand({
+      currentUntil,
+      expandFrom: body.expand_from,
+      newUntil: body.recurrence_until,
+      existingExcluded: mappedExisting.excludedDates,
+    })
+  }
+
   const attendee = resolveAttendee(service.timeMode, {
     attendee_user_id:
       body.attendee_user_id !== undefined ? body.attendee_user_id : existing.attendee_user_id,
@@ -1637,6 +1722,7 @@ export async function updateCompanyEvent(
     start_time: times.startTime,
     end_time: times.endTime,
     weekdays: schedule.weekdays,
+    excluded_dates: excludedDates,
     recurrence: schedule.recurrence,
     recurrence_until: schedule.recurrenceUntil,
   })
@@ -1664,6 +1750,7 @@ function mapSessionToken(
     occurrenceDate,
     tokenNumber: row.token_number,
     tokenLabel: formatTokenLabel(row.token_number),
+    callOrder: row.call_order,
     status: row.status,
     userId: row.user_id,
     userDisplayName: row.user_display_name,
@@ -1891,6 +1978,7 @@ async function ensureDurationAttendeeToken(
       event_id: event.id,
       occurrence_date: occurrenceDate,
       token_number: nextNumber,
+      call_order: callOrderFromTokenNumber(nextNumber),
       user_id: event.attendeeUserId,
       user_display_name: event.attendeeDisplayName ?? 'Customer',
       user_email: event.attendeeEmail,
@@ -2111,6 +2199,7 @@ export async function createSessionToken(
       event_id: eventId,
       occurrence_date: occurrenceDate,
       token_number: nextNumber,
+      call_order: callOrderFromTokenNumber(nextNumber),
       user_id: userId,
       user_display_name: body.user_display_name.trim(),
       user_email: body.user_email?.trim() || null,
@@ -2252,7 +2341,13 @@ export async function completeSessionTokenWorkflow(
         userEmail: token.user_email,
         userAvatarUrl: token.user_avatar_url,
       })
-      await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate, token.user_id)
+      await repositionLateCheckInByWaitBalance(
+        companyId,
+        eventId,
+        occurrenceDate,
+        token.user_id,
+      )
+      await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate)
     }
     const updated = await maybeAdvanceTokenPastCheckIn(
       companyId,
@@ -2781,7 +2876,6 @@ async function maybePromoteCheckedInWaitingToken(
   companyId: string,
   event: CompanyEventDto,
   occurrenceDate: string,
-  userId: string,
 ): Promise<void> {
   const run = await getOrCreateSessionRun(companyId, event.id, occurrenceDate)
   if (run.status !== 'started') return
@@ -2791,16 +2885,15 @@ async function maybePromoteCheckedInWaitingToken(
     occurrenceDate,
   )
   if (serving) return
-  const waiting = await sessionTokenRepo.findTokenByUser(
+  const firstWaiting = await sessionTokenRepo.findFirstWaitingToken(
     companyId,
     event.id,
     occurrenceDate,
-    userId,
   )
-  if (!waiting || waiting.status !== 'waiting') return
-  await sessionTokenRepo.updateTokenStatus(waiting.id, 'serving')
-  await sessionRunRepo.updateRun(run.id, { current_token_id: waiting.id })
-  const token = mapSessionTokenNotify({ ...waiting, status: 'serving' })
+  if (!firstWaiting) return
+  await sessionTokenRepo.updateTokenStatus(firstWaiting.id, 'serving')
+  await sessionRunRepo.updateRun(run.id, { current_token_id: firstWaiting.id })
+  const token = mapSessionTokenNotify({ ...firstWaiting, status: 'serving' })
   notifySessionTokenCalled({ companyId, event, token })
   void notifySessionTokenCalledInApp({
     companyId,
@@ -2812,6 +2905,96 @@ async function maybePromoteCheckedInWaitingToken(
   }).catch((err) => {
     console.error('[companyEvent] in-app token called notify failed:', err)
   })
+}
+
+async function repositionLateCheckInByWaitBalance(
+  companyId: string,
+  eventId: string,
+  occurrenceDate: string,
+  lateUserId: string,
+): Promise<void> {
+  const lateToken = await sessionTokenRepo.findTokenByUser(
+    companyId,
+    eventId,
+    occurrenceDate,
+    lateUserId,
+  )
+  if (!lateToken || lateToken.status !== 'waiting') return
+
+  const [tokens, checkIns, run] = await Promise.all([
+    sessionTokenRepo.listTokensForSession(companyId, eventId, occurrenceDate),
+    sessionCheckInRepo.listCheckInsForSession(companyId, eventId, occurrenceDate),
+    getOrCreateSessionRun(companyId, eventId, occurrenceDate),
+  ])
+
+  const isLate = tokens.some(
+    (token) =>
+      token.id !== lateToken.id &&
+      token.token_number > lateToken.token_number &&
+      (token.status === 'serving' || token.status === 'completed'),
+  )
+  if (!isLate) return
+
+  const checkInByUser = new Map(checkIns.map((row) => [row.user_id, row]))
+  const serving = tokens.find((token) => token.status === 'serving') ?? null
+  const waiters: LateQueueWaiter[] = tokens
+    .filter(
+      (token) =>
+        token.status === 'waiting' &&
+        token.id !== lateToken.id &&
+        checkInByUser.has(token.user_id),
+    )
+    .map((token) => {
+      const checkIn = checkInByUser.get(token.user_id)!
+      return {
+        id: token.id,
+        callOrder: token.call_order,
+        checkedInAtMs: toCheckedInAtMs(checkIn.checked_in_at),
+      }
+    })
+    .sort((a, b) => a.callOrder - b.callOrder || a.id.localeCompare(b.id))
+
+  const nowMs = Date.now()
+  const completed = tokens
+    .filter((token) => token.status === 'completed')
+    .map((token) => ({
+      updatedAtMs: token.updated_at instanceof Date
+        ? token.updated_at.getTime()
+        : toCheckedInAtMs(token.updated_at),
+    }))
+  const startedAtMs =
+    run.started_at == null
+      ? null
+      : run.started_at instanceof Date
+        ? run.started_at.getTime()
+        : toCheckedInAtMs(run.started_at)
+
+  const avgServiceMs = estimateAvgServiceMs({
+    completed,
+    startedAtMs,
+    nowMs,
+  })
+  const insertIndex = pickEqualWaitInsertIndex(waiters, nowMs, avgServiceMs)
+  const servingCallOrder = serving?.call_order ?? null
+  const placement = resolveInsertCallOrder({
+    insertIndex,
+    waiters,
+    servingCallOrder,
+  })
+
+  if (!placement.needsRenumber) {
+    await sessionTokenRepo.updateTokenCallOrder(lateToken.id, placement.callOrder)
+    return
+  }
+
+  const renumbered = buildRenumberedCallOrders({
+    servingId: serving?.id ?? null,
+    servingCallOrder,
+    waiters,
+    lateTokenId: lateToken.id,
+    insertIndex,
+  })
+  await sessionTokenRepo.updateTokenCallOrders(renumbered)
 }
 
 export async function listSessionCheckIns(
@@ -2867,7 +3050,13 @@ export async function createSessionCheckIn(
       userEmail: subject.userEmail,
       userAvatarUrl: subject.userAvatarUrl,
     })
-    await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate, subject.userId)
+    await repositionLateCheckInByWaitBalance(
+      companyId,
+      eventId,
+      occurrenceDate,
+      subject.userId,
+    )
+    await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate)
     const token = await sessionTokenRepo.findTokenByUser(
       companyId,
       eventId,
@@ -2920,12 +3109,13 @@ export async function createMySessionCheckIn(
       userEmail: subject.userEmail,
       userAvatarUrl: subject.userAvatarUrl,
     })
-    await maybePromoteCheckedInWaitingToken(
+    await repositionLateCheckInByWaitBalance(
       event.companyId,
-      event,
+      eventId,
       occurrenceDate,
       subject.userId,
     )
+    await maybePromoteCheckedInWaitingToken(event.companyId, event, occurrenceDate)
     const token = await sessionTokenRepo.findTokenByUser(
       event.companyId,
       eventId,

@@ -14,3 +14,5 @@ On a session day (from the schedule or session screen):
 3. **End** the session when you close.
 
 Exact buttons depend on the service time mode. Window-mode sessions use [queue tokens](/docs/calendar/queue-token). Duration sessions use [one attendee](/docs/calendar/duration-attendee).
+
+In window mode, call next follows **call order** (not only the printed token number). Late check-ins keep their number; call order may place them earlier or later in the waiting line so waits stay roughly equal — see [queue tokens](/docs/calendar/queue-token).

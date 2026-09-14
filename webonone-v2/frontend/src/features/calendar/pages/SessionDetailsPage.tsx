@@ -420,7 +420,7 @@ export function SessionDetailsPage() {
       const bInQueue =
         checkedInUserIds.has(b.userId) || b.status === 'serving' || b.status === 'completed'
       if (aInQueue !== bInQueue) return aInQueue ? -1 : 1
-      return a.tokenNumber - b.tokenNumber
+      return (a.callOrder ?? a.tokenNumber * 1000) - (b.callOrder ?? b.tokenNumber * 1000)
     })
   }, [checkedInUserIds, displayTokens])
   const posEnabledKinds = useMemo(

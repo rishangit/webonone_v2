@@ -36,6 +36,8 @@ export type CompanyEvent = {
   weekdays: number[]
   recurrence: EventRecurrence
   recurrenceUntil: string | null
+  /** Dates inside the series range that do not generate sessions (skipped gaps). */
+  excludedDates: string[]
   createdAt: string
   updatedAt: string
   /** Personal window events — dates where this user holds a token. */
@@ -76,6 +78,8 @@ export type SessionToken = {
   occurrenceDate: string
   tokenNumber: number
   tokenLabel: string
+  /** Live call queue order (may differ from tokenNumber after late check-in). */
+  callOrder: number
   status: SessionTokenStatus
   userId: string
   userDisplayName: string
@@ -184,4 +188,7 @@ export type CreateCompanyEventBody = {
   recurrence_until: string
 }
 
-export type UpdateCompanyEventBody = Partial<CreateCompanyEventBody>
+export type UpdateCompanyEventBody = Partial<CreateCompanyEventBody> & {
+  /** With recurrence_until — expand series from this date (server computes gap exclusions). */
+  expand_from?: string
+}

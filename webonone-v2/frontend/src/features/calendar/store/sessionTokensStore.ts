@@ -121,7 +121,7 @@ const sessionTokensSlice = createSlice({
       const existing = state.items.find((item) => item.id === action.payload.id)
       if (!existing) {
         state.items = [...state.items, action.payload].sort(
-          (a, b) => a.tokenNumber - b.tokenNumber,
+          (a, b) => (a.callOrder ?? a.tokenNumber * 1000) - (b.callOrder ?? b.tokenNumber * 1000),
         )
       } else {
         state.items = state.items.map((item) =>

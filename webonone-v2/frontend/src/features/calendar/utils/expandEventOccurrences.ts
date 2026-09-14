@@ -89,9 +89,16 @@ export function expandEventOccurrences(event: CompanyEvent): CompanyEventOccurre
   const seriesStart = event.startsOn
   const seriesEnd = event.recurrenceUntil ?? event.startsOn
   const recurrence: EventRecurrence = event.recurrence
+  const excluded = new Set(event.excludedDates ?? [])
+
+  function includeDate(occurrenceDate: string): boolean {
+    return !excluded.has(occurrenceDate)
+  }
 
   if (recurrence === 'none') {
-    return seriesStart <= seriesEnd ? [toOccurrence(event, seriesStart)] : []
+    return seriesStart <= seriesEnd && includeDate(seriesStart)
+      ? [toOccurrence(event, seriesStart)]
+      : []
   }
 
   if (recurrence === 'monthly_first_week') {
@@ -100,7 +107,7 @@ export function expandEventOccurrences(event: CompanyEvent): CompanyEventOccurre
     const results: CompanyEventOccurrence[] = []
     for (const { year, monthIndex } of iterateMonthStarts(seriesStart, seriesEnd)) {
       const occurrence = firstWeekDateInMonth(year, monthIndex, weekday)
-      if (occurrence >= seriesStart && occurrence <= seriesEnd) {
+      if (occurrence >= seriesStart && occurrence <= seriesEnd && includeDate(occurrence)) {
         results.push(toOccurrence(event, occurrence))
       }
     }
@@ -112,7 +119,12 @@ export function expandEventOccurrences(event: CompanyEvent): CompanyEventOccurre
     const results: CompanyEventOccurrence[] = []
     for (const { year, monthIndex } of iterateMonthStarts(seriesStart, seriesEnd)) {
       const occurrence = dateInMonthOrNull(year, monthIndex, dayOfMonth)
-      if (occurrence && occurrence >= seriesStart && occurrence <= seriesEnd) {
+      if (
+        occurrence &&
+        occurrence >= seriesStart &&
+        occurrence <= seriesEnd &&
+        includeDate(occurrence)
+      ) {
         results.push(toOccurrence(event, occurrence))
       }
     }
@@ -124,7 +136,7 @@ export function expandEventOccurrences(event: CompanyEvent): CompanyEventOccurre
   const results: CompanyEventOccurrence[] = []
   let cursor = seriesStart
   while (cursor <= seriesEnd) {
-    if (weekdays.has(weekdayOfYmd(cursor))) {
+    if (weekdays.has(weekdayOfYmd(cursor)) && includeDate(cursor)) {
       if (recurrence === 'biweekly' && weeksBetween(seriesStart, cursor) % 2 !== 0) {
         cursor = addDaysYmd(cursor, 1)
         continue

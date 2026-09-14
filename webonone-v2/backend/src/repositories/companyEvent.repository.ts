@@ -18,6 +18,7 @@ export interface CompanyEventRow {
   start_time: string
   end_time: string
   weekdays: string | number[] | null
+  excluded_dates: string | string[] | null
   recurrence:
     | 'none'
     | 'weekly'
@@ -46,6 +47,26 @@ export function parseWeekdays(value: string | number[] | null | undefined): numb
     }
   }
   return []
+}
+
+const YMD = /^\d{4}-\d{2}-\d{2}$/
+
+export function parseExcludedDates(value: string | string[] | null | undefined): string[] {
+  if (value == null) return []
+  const raw = Array.isArray(value)
+    ? value
+    : (() => {
+        try {
+          const parsed = JSON.parse(value) as unknown
+          return Array.isArray(parsed) ? parsed : []
+        } catch {
+          return []
+        }
+      })()
+  const dates = raw
+    .filter((item): item is string => typeof item === 'string' && YMD.test(item))
+    .sort()
+  return [...new Set(dates)]
 }
 
 export async function listEventsByCompany(companyId: string): Promise<CompanyEventRow[]> {
@@ -243,12 +264,14 @@ export async function insertEvent(row: {
   start_time: string
   end_time: string
   weekdays: number[]
+  excluded_dates?: string[]
   recurrence: EventRecurrence
   recurrence_until: string | null
 }): Promise<CompanyEventRow> {
   await db('company_events').insert({
     ...row,
     weekdays: JSON.stringify(row.weekdays),
+    excluded_dates: JSON.stringify(row.excluded_dates ?? []),
     created_at: db.fn.now(3),
     updated_at: db.fn.now(3),
   })
@@ -275,16 +298,20 @@ export async function updateEvent(
     start_time: string
     end_time: string
     weekdays: number[]
+    excluded_dates: string[]
     recurrence: EventRecurrence
     recurrence_until: string | null
   }>,
 ): Promise<CompanyEventRow | undefined> {
-  const { weekdays, ...rest } = patch
+  const { weekdays, excluded_dates, ...rest } = patch
   await db('company_events')
     .where({ id: eventId, company_id: companyId })
     .update({
       ...rest,
       ...(weekdays !== undefined ? { weekdays: JSON.stringify(weekdays) } : {}),
+      ...(excluded_dates !== undefined
+        ? { excluded_dates: JSON.stringify(excluded_dates) }
+        : {}),
       updated_at: db.fn.now(3),
     })
   return findEventById(companyId, eventId)

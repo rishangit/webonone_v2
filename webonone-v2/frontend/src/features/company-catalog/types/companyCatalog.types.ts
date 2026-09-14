@@ -86,6 +86,7 @@ export type CatalogSessionTokenItem = {
   occurrenceDate: string
   tokenNumber: number
   tokenLabel: string
+  callOrder?: number
   userId: string
   userDisplayName: string
   userEmail: string | null

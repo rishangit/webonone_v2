@@ -14,3 +14,5 @@ session දිනයක (schedule හෝ session screen හි සිට):
 3. වසා දැමූ විට session **End** කරන්න.
 
 නිශ්චිත බොත්තම් service time mode අනුව වෙනස් වේ. Window-mode sessions [queue tokens](/docs/calendar/queue-token) භාවිතා කරයි. Duration sessions [one attendee](/docs/calendar/duration-attendee) භාවිතා කරයි.
+
+Window mode හි call next **call order** අනුගමනය කරයි (මුද්‍රිත token අංකය පමණක් නොවේ). Late check-in වලදී අංකය රැඳේ; රැඳීමේ කාලය සමාන කිරීමට call order ඉදිරියට හෝ පසුපසට යා හැක — [queue tokens](/docs/calendar/queue-token) බලන්න.

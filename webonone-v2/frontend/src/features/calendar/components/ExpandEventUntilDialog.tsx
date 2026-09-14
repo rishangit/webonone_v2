@@ -11,6 +11,7 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { eventsApi } from '@/features/calendar/services/eventsApi'
+import { formatLocaleDate } from '@/shared/utils/formatLocaleDate'
 
 const OUTLINE_FOOTER =
   'h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent'
@@ -27,6 +28,10 @@ function toYmd(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+function todayYmd(): string {
+  return toYmd(new Date())
 }
 
 function addDaysYmd(ymd: string, days: number): string {
@@ -53,35 +58,49 @@ export function ExpandEventUntilDialog({
   onOpenChange,
   onExpanded,
 }: ExpandEventUntilDialogProps) {
-  const { t } = useTranslation('calendar')
+  const { t, i18n } = useTranslation('calendar')
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
-  const [until, setUntil] = useState(addDaysYmd(currentUntil, 7))
+  const [from, setFrom] = useState(todayYmd())
+  const [until, setUntil] = useState(addDaysYmd(todayYmd(), 7))
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
-    setUntil(addDaysYmd(currentUntil, 7))
+    const initialFrom = todayYmd()
+    setFrom(initialFrom)
+    setUntil(addDaysYmd(initialFrom, 7))
     setSaving(false)
     setSubmitError(null)
   }, [open, currentUntil])
 
-  const validationError = useMemo(() => {
-    if (!YMD.test(until)) return t('sessionsList.expand.invalidDate')
-    if (until <= currentUntil) return t('sessionsList.expand.mustBeAfter')
-    if (until < startsOn) return t('sessionsList.expand.mustBeOnOrAfterStart')
-    return null
-  }, [currentUntil, startsOn, t, until])
+  const untilBase = from > currentUntil ? from : currentUntil
 
-  const canSave = !validationError && !saving
+  const fromError = useMemo(() => {
+    if (!YMD.test(from)) return t('sessionsList.expand.invalidDate')
+    if (from < startsOn) return t('sessionsList.expand.fromMustBeOnOrAfterStart')
+    return null
+  }, [from, startsOn, t])
+
+  const untilError = useMemo(() => {
+    if (!YMD.test(until)) return t('sessionsList.expand.invalidDate')
+    if (until < from) return t('sessionsList.expand.untilMustBeOnOrAfterFrom')
+    if (until <= currentUntil) return t('sessionsList.expand.mustBeAfter')
+    return null
+  }, [currentUntil, from, t, until])
+
+  const canSave = !fromError && !untilError && !saving
 
   async function handleSave() {
     if (!canSave) return
     setSaving(true)
     setSubmitError(null)
     try {
-      await eventsApi.update(eventId, { recurrence_until: until })
+      await eventsApi.update(eventId, {
+        recurrence_until: until,
+        expand_from: from,
+      })
       toast({ title: t('sessionsList.expand.toastSuccess') })
       onExpanded()
       onOpenChange(false)
@@ -135,8 +154,16 @@ export function ExpandEventUntilDialog({
           <p className="text-xs font-medium text-muted-foreground">
             {t('sessionsList.expand.currentUntil')}
           </p>
-          <p className="text-sm text-foreground">{currentUntil}</p>
+          <p className="text-sm text-foreground">
+            {formatLocaleDate(currentUntil, i18n.language)}
+          </p>
         </div>
+
+        {from > currentUntil ? (
+          <p className="text-sm text-muted-foreground">{t('sessionsList.expand.gapHint')}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t('sessionsList.expand.extendHint')}</p>
+        )}
 
         <div className="flex flex-wrap gap-2">
           <Button
@@ -144,7 +171,7 @@ export function ExpandEventUntilDialog({
             variant="outline"
             size="sm"
             disabled={saving}
-            onClick={() => setUntil(addDaysYmd(currentUntil, 7))}
+            onClick={() => setUntil(addDaysYmd(untilBase, 7))}
           >
             {t('sessionsList.expand.plusOneWeek')}
           </Button>
@@ -153,17 +180,40 @@ export function ExpandEventUntilDialog({
             variant="outline"
             size="sm"
             disabled={saving}
-            onClick={() => setUntil(addDaysYmd(currentUntil, 14))}
+            onClick={() => setUntil(addDaysYmd(untilBase, 14))}
           >
             {t('sessionsList.expand.plusTwoWeeks')}
           </Button>
         </div>
 
         <FormField
+          label={t('sessionsList.expand.from')}
+          htmlFor="expand-event-from"
+          required
+          error={fromError ?? undefined}
+        >
+          <DatePicker
+            id="expand-event-from"
+            value={toDate(from)}
+            onChange={(date) => {
+              const next = date ? toYmd(date) : ''
+              setFrom(next)
+              if (YMD.test(next) && until < next) {
+                setUntil(addDaysYmd(next, 7))
+              }
+            }}
+            withIcon
+            disabled={saving}
+            placeholder={t('sessionsList.expand.fromPlaceholder')}
+            isDateDisabled={(date) => toYmd(date) < startsOn}
+          />
+        </FormField>
+
+        <FormField
           label={t('sessionsList.expand.newUntil')}
           htmlFor="expand-event-until"
           required
-          error={validationError ?? undefined}
+          error={untilError ?? undefined}
         >
           <DatePicker
             id="expand-event-until"
@@ -172,7 +222,10 @@ export function ExpandEventUntilDialog({
             withIcon
             disabled={saving}
             placeholder={t('sessionsList.expand.placeholder')}
-            isDateDisabled={(date) => toYmd(date) <= currentUntil || toYmd(date) < startsOn}
+            isDateDisabled={(date) => {
+              const ymd = toYmd(date)
+              return ymd < from || ymd <= currentUntil
+            }}
           />
         </FormField>
       </div>

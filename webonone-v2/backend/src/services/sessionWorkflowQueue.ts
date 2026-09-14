@@ -12,9 +12,14 @@ type SessionTokenForQueue = {
   id: string
   tokenNumber: number
   tokenLabel: string
+  callOrder: number
   status: 'waiting' | 'serving' | 'completed'
   userId: string
   workflowProgress: TokenWorkflowProgressDto
+}
+
+function callOrderOf(token: SessionTokenForQueue): number {
+  return token.callOrder ?? token.tokenNumber * 1000
 }
 
 function tokensAtWorkflowStep(
@@ -40,7 +45,7 @@ function tokensAtWorkflowStep(
       return progress.steps[progress.currentIndex]?.id === itemId
     })
     .slice()
-    .sort((a, b) => a.tokenNumber - b.tokenNumber)
+    .sort((a, b) => callOrderOf(a) - callOrderOf(b))
 }
 
 /** Per-step Prev/Current/Next for viewers — computed from the full session token list. */
@@ -79,7 +84,7 @@ export function computeWorkflowStepViewerQueue(
       return progress.done
     })
     .reduce<SessionTokenForQueue | null>(
-      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      (best, token) => (!best || callOrderOf(token) > callOrderOf(best) ? token : best),
       null,
     )
   return {

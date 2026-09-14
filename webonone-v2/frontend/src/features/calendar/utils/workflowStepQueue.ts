@@ -12,6 +12,14 @@ export type WorkflowStepQueueSnapshot = SessionQueueLabels & {
   previousTokenId?: string | null
 }
 
+function callOrderOf(token: SessionToken): number {
+  return token.callOrder ?? token.tokenNumber * 1000
+}
+
+function compareByCallOrder(a: SessionToken, b: SessionToken): number {
+  return callOrderOf(a) - callOrderOf(b)
+}
+
 export function isWorkflowStepCompleted(
   progress: SessionToken['workflowProgress'] | undefined,
   itemId: string,
@@ -51,7 +59,7 @@ export function tokensAtWorkflowStep(
       return progress.steps[progress.currentIndex]?.id === itemId
     })
     .slice()
-    .sort((a, b) => a.tokenNumber - b.tokenNumber)
+    .sort(compareByCallOrder)
 }
 
 /** Session-wide Prev/Current/Next — mirrors backend computeSessionQueueLabels. */
@@ -67,7 +75,7 @@ export function computeSessionRunQueue(
   const prev = tokens
     .filter((token) => token.status === 'completed')
     .reduce<SessionToken | null>(
-      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      (best, token) => (!best || callOrderOf(token) > callOrderOf(best) ? token : best),
       null,
     )
   const next = tokens
@@ -76,7 +84,7 @@ export function computeSessionRunQueue(
         token.status === 'waiting' && (checkedInUserIds?.has(token.userId) ?? true),
     )
     .reduce<SessionToken | null>(
-      (best, token) => (!best || token.tokenNumber < best.tokenNumber ? token : best),
+      (best, token) => (!best || callOrderOf(token) < callOrderOf(best) ? token : best),
       null,
     )
   return {
@@ -125,7 +133,7 @@ export function computeWorkflowStepViewerQueue(
       return Boolean(token.workflowProgress?.done)
     })
     .reduce<SessionToken | null>(
-      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      (best, token) => (!best || callOrderOf(token) > callOrderOf(best) ? token : best),
       null,
     )
   return {
@@ -175,7 +183,7 @@ export function computeWorkflowStepQueue(
       return Boolean(token.workflowProgress?.done)
     })
     .reduce<SessionToken | null>(
-      (best, token) => (!best || token.tokenNumber > best.tokenNumber ? token : best),
+      (best, token) => (!best || callOrderOf(token) > callOrderOf(best) ? token : best),
       null,
     )
   return {
