@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   getPlatformEmbedParentOrigin,
   PLATFORM_EMBED_QUERY,
@@ -6,7 +8,6 @@ import {
   sendPlatformPeerDialogDismiss,
 } from '@webonone/platform-embed'
 import { Alert, AlertDescription, useToast } from '@webonone/ui-kit'
-import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteFootersActions, websiteHeadersActions, websiteThemesActions } from '../store'
@@ -18,9 +19,22 @@ export function WebsiteChromeCreateEmbedPage({ kind }: { kind: 'headers' | 'foot
   const [searchParams] = useSearchParams()
   const { toast } = useToast()
   const actions = kind === 'headers' ? websiteHeadersActions : websiteFootersActions
-  const state = useAppSelector((s) => (kind === 'headers' ? s.websiteHeaders : s.websiteFooters))
+  const { detail, detailStatus, detailError } = useAppSelector((s) =>
+    kind === 'headers' ? s.websiteHeaders : s.websiteFooters,
+  )
+  const [awaiting, setAwaiting] = useState(false)
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
+
+  useEffect(() => {
+    if (!awaiting || !parentOrigin || !requestId) return
+    if (detailStatus === 'idle' && detail) {
+      setAwaiting(false)
+      toast({ title: t('created') })
+      sendPlatformPeerDialogComplete(parentOrigin, requestId, { id: detail.id })
+    }
+    if (detailStatus === 'error') setAwaiting(false)
+  }, [awaiting, detail, detailStatus, parentOrigin, requestId, t, toast])
 
   if (!parentOrigin || !requestId) {
     return (
@@ -37,15 +51,14 @@ export function WebsiteChromeCreateEmbedPage({ kind }: { kind: 'headers' | 'foot
       kind={kind}
       open
       chrome="embed-page"
-      isSaving={state.detailStatus === 'saving'}
-      error={state.detailError}
+      isSaving={detailStatus === 'saving'}
+      error={awaiting ? detailError : null}
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
       onSubmit={(name, isDefault) => {
+        setAwaiting(true)
         dispatch(actions.saveDetailRequested({ body: { name, isDefault } }))
-        toast({ title: t('created') })
-        sendPlatformPeerDialogComplete(parentOrigin, requestId)
       }}
     />
   )
@@ -56,9 +69,20 @@ export function WebsiteThemeCreateEmbedPage() {
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const { toast } = useToast()
-  const { detailStatus, detailError } = useAppSelector((s) => s.websiteThemes)
+  const { detail, detailStatus, detailError } = useAppSelector((s) => s.websiteThemes)
+  const [awaiting, setAwaiting] = useState(false)
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
+
+  useEffect(() => {
+    if (!awaiting || !parentOrigin || !requestId) return
+    if (detailStatus === 'idle' && detail) {
+      setAwaiting(false)
+      toast({ title: t('created') })
+      sendPlatformPeerDialogComplete(parentOrigin, requestId, { id: detail.id })
+    }
+    if (detailStatus === 'error') setAwaiting(false)
+  }, [awaiting, detail, detailStatus, parentOrigin, requestId, t, toast])
 
   if (!parentOrigin || !requestId) {
     return (
@@ -75,14 +99,13 @@ export function WebsiteThemeCreateEmbedPage() {
       open
       chrome="embed-page"
       isSaving={detailStatus === 'saving'}
-      error={detailError}
+      error={awaiting ? detailError : null}
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
       onSubmit={(values) => {
+        setAwaiting(true)
         dispatch(websiteThemesActions.saveDetailRequested({ body: { ...values, isActive: true } }))
-        toast({ title: t('created') })
-        sendPlatformPeerDialogComplete(parentOrigin, requestId)
       }}
     />
   )
