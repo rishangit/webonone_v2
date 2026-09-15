@@ -240,10 +240,11 @@ export function propertyTreeForSource(
       leaf(field.field, field.label),
     )
   }
-  return DATASET_PROPERTY_TREES[sourceType]
+  return DATASET_PROPERTY_TREES[sourceType] ?? []
 }
 
-export function flattenPropertyPaths(nodes: DatasetPropertyNode[]): string[] {
+export function flattenPropertyPaths(nodes: DatasetPropertyNode[] | null | undefined): string[] {
+  if (!Array.isArray(nodes)) return []
   const paths: string[] = []
   for (const node of nodes) {
     if (node.selectable !== false) paths.push(node.path)

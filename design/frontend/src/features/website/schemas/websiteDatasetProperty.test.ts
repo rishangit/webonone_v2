@@ -4,6 +4,8 @@ import {
   createWebsiteDatasetSchema,
   defaultSelectedFields,
   nodeCheckState,
+  normalizeSelectedFields,
+  resolveSelectedFields,
   togglePropertySelection,
   type DatasetPropertyNode,
 } from './websiteDatasetSchemas.ts'
@@ -26,6 +28,26 @@ describe('dataset selectedFields schema', () => {
       selectedFields,
     })
     assert.equal(result.success, true)
+  })
+
+  it('accepts defaults for services', () => {
+    const selectedFields = defaultSelectedFields('services')
+    assert.ok(selectedFields.includes('timeMode'))
+    const result = createWebsiteDatasetSchema.safeParse({
+      name: 'Services',
+      sourceType: 'services',
+      selectedFields,
+    })
+    assert.equal(result.success, true)
+  })
+
+  it('tolerates invalid source types when resolving defaults', () => {
+    assert.deepEqual(defaultSelectedFields(undefined as never), defaultSelectedFields('products'))
+  })
+
+  it('parses selected fields from JSON strings', () => {
+    assert.deepEqual(normalizeSelectedFields('["id","name"]'), ['id', 'name'])
+    assert.deepEqual(resolveSelectedFields('services', '["id","name"]'), ['id', 'name'])
   })
 })
 

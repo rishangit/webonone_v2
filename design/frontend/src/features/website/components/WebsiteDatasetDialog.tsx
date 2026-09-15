@@ -42,7 +42,9 @@ import {
   createWebsiteDatasetSchema,
   defaultSelectedFields,
   fieldsForSource,
+  isDatasetSourceType,
   propertyTreeForSource,
+  resolveSelectedFields,
   type AnalyticsDimension,
   type CreateWebsiteDatasetValues,
   type DatasetConfig,
@@ -92,18 +94,17 @@ function emptyValues(): CreateWebsiteDatasetValues {
 }
 
 function fromDataset(item: WebsiteDataset): CreateWebsiteDatasetValues {
+  const sourceType = isDatasetSourceType(item.sourceType) ? item.sourceType : 'products'
+  const config = (item.config ?? {}) as DatasetConfig
   return {
     name: item.name,
-    sourceType: item.sourceType,
+    sourceType,
     filters: {
       match: 'all',
       rules: (item.filters?.rules ?? []) as DatasetFilterRule[],
     },
-    config: (item.config ?? {}) as DatasetConfig,
-    selectedFields:
-      item.selectedFields?.length > 0
-        ? item.selectedFields
-        : defaultSelectedFields(item.sourceType as DatasetSourceType, item.config as DatasetConfig),
+    config,
+    selectedFields: resolveSelectedFields(sourceType, item.selectedFields, config),
     status: item.status,
   }
 }
@@ -169,13 +170,32 @@ export function WebsiteDatasetDialog({
 
   useEffect(() => {
     if (!open && chrome === 'dialog') return
-    setValues(initial ? fromDataset(initial) : emptyValues())
     setFieldErrors({})
     setStep(0)
     setPreviewItems([])
     setPreviewTotal(0)
     setPreviewError(null)
-  }, [open, chrome, initial])
+
+    let cancelled = false
+
+    async function loadValues() {
+      if (entityId) {
+        try {
+          const item = await websiteApi.getDataset(entityId)
+          if (!cancelled) setValues(fromDataset(item))
+          return
+        } catch {
+          // Fall back to the list row when detail fetch fails.
+        }
+      }
+      if (!cancelled) setValues(initial ? fromDataset(initial) : emptyValues())
+    }
+
+    void loadValues()
+    return () => {
+      cancelled = true
+    }
+  }, [open, chrome, entityId, initial])
 
   useEffect(() => {
     if (!open && chrome === 'dialog') return
@@ -327,9 +347,10 @@ export function WebsiteDatasetDialog({
           >
             <Select
               value={values.sourceType}
-              onValueChange={(value) =>
+              onValueChange={(value) => {
+                if (!value || !isDatasetSourceType(value) || value === values.sourceType) return
                 setValues((v) => {
-                  const sourceType = value as DatasetSourceType
+                  const sourceType = value
                   const config =
                     sourceType === 'analytics'
                       ? { dimension: 'kpis' as AnalyticsDimension, dateRange: defaultDateRange() }
@@ -342,7 +363,7 @@ export function WebsiteDatasetDialog({
                     selectedFields: defaultSelectedFields(sourceType, config),
                   }
                 })
-              }
+              }}
             >
               <SelectTrigger id="dataset-source">
                 <SelectValue />
@@ -382,7 +403,9 @@ export function WebsiteDatasetDialog({
               >
                 <Select
                   value={values.config?.dimension ?? 'kpis'}
-                  onValueChange={(value) =>
+                  onValueChange={(value) => {
+                    const currentDimension = values.config?.dimension ?? 'kpis'
+                    if (!value || value === currentDimension) return
                     setValues((v) => {
                       const config = {
                         ...v.config,
@@ -396,7 +419,7 @@ export function WebsiteDatasetDialog({
                         selectedFields: defaultSelectedFields('analytics', config),
                       }
                     })
-                  }
+                  }}
                 >
                   <SelectTrigger id="dataset-dimension">
                     <SelectValue />

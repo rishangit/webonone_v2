@@ -219,6 +219,10 @@ export const DATASET_PROPERTY_TREES: Record<Exclude<DatasetSourceType, 'analytic
     users: USER_PROPERTY_TREE,
   }
 
+export function isDatasetSourceType(value: unknown): value is DatasetSourceType {
+  return typeof value === 'string' && (DATASET_SOURCE_TYPES as readonly string[]).includes(value)
+}
+
 export function propertyTreeForSource(
   sourceType: DatasetSourceType,
   config?: { dimension?: AnalyticsDimension } | null,
@@ -229,7 +233,7 @@ export function propertyTreeForSource(
       leaf(field.field, field.label),
     )
   }
-  return DATASET_PROPERTY_TREES[sourceType]
+  return DATASET_PROPERTY_TREES[sourceType] ?? []
 }
 
 export function findPropertyNodeByPath(
@@ -274,7 +278,8 @@ export function relativeFieldsUnderPath(
   return out
 }
 
-export function flattenPropertyPaths(nodes: DatasetPropertyNode[]): string[] {
+export function flattenPropertyPaths(nodes: DatasetPropertyNode[] | null | undefined): string[] {
+  if (!Array.isArray(nodes)) return []
   const paths: string[] = []
   for (const node of nodes) {
     if (node.selectable !== false) paths.push(node.path)
@@ -302,7 +307,37 @@ export function defaultSelectedFields(
   sourceType: DatasetSourceType,
   config?: { dimension?: AnalyticsDimension } | null,
 ): string[] {
-  return flattenPropertyPaths(propertyTreeForSource(sourceType, config))
+  const resolvedSourceType = isDatasetSourceType(sourceType) ? sourceType : 'products'
+  return flattenPropertyPaths(propertyTreeForSource(resolvedSourceType, config))
+}
+
+export function normalizeSelectedFields(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((field): field is string => typeof field === 'string' && field.trim().length > 0)
+  }
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw) as unknown
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (field): field is string => typeof field === 'string' && field.trim().length > 0,
+        )
+      }
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
+export function resolveSelectedFields(
+  sourceType: DatasetSourceType,
+  selectedFields: unknown,
+  config?: { dimension?: AnalyticsDimension } | null,
+): string[] {
+  const parsed = normalizeSelectedFields(selectedFields)
+  if (parsed.length > 0) return parsed
+  return defaultSelectedFields(sourceType, config)
 }
 
 export function collectDescendantPaths(node: DatasetPropertyNode): string[] {
