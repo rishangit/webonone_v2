@@ -1,9 +1,12 @@
 import * as React from 'react'
 import { cn } from '../lib/utils'
+import { AiAssistIconButton, useFieldAiAssist } from './useFieldAiAssist'
 
 export type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   /** When true, border/focus ring are provided by a parent InputGroup. */
   inGroup?: boolean
+  /** Show in-field AI polish when the app provider is enabled. Default is auto (skip identifiers). */
+  aiAssist?: boolean
 }
 
 /** Standalone input focus — ring flush with border (no offset gap). */
@@ -32,13 +35,66 @@ const inputStandaloneClassName = cn(
 )
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, inGroup = false, ...props }, ref) => (
-    <input
-      ref={ref}
-      className={cn(inGroup ? cn(inputSharedClassName, inputInGroupFieldClassName) : inputStandaloneClassName, className)}
-      {...props}
-    />
-  ),
+  ({ className, inGroup = false, aiAssist, onChange, type, name, id, autoComplete, readOnly, disabled, value, defaultValue, ...props }, ref) => {
+    const innerRef = React.useRef<HTMLInputElement | null>(null)
+    const { enabled, loading, onPolish, trackChange } = useFieldAiAssist<HTMLInputElement>({
+      control: 'input',
+      aiAssist,
+      type,
+      name,
+      id,
+      autoComplete,
+      readOnly,
+      disabled,
+      inGroup,
+      value,
+      defaultValue,
+      onChange,
+    })
+
+    const setRefs = React.useCallback(
+      (node: HTMLInputElement | null) => {
+        innerRef.current = node
+        if (typeof ref === 'function') ref(node)
+        else if (ref) ref.current = node
+      },
+      [ref],
+    )
+
+    const input = (
+      <input
+        ref={setRefs}
+        id={id}
+        name={name}
+        type={type}
+        autoComplete={autoComplete}
+        readOnly={readOnly}
+        disabled={disabled}
+        value={value}
+        defaultValue={defaultValue}
+        onChange={enabled ? trackChange : onChange}
+        className={cn(
+          inGroup ? cn(inputSharedClassName, inputInGroupFieldClassName) : inputStandaloneClassName,
+          enabled && !inGroup && 'pr-9',
+          className,
+        )}
+        {...props}
+      />
+    )
+
+    if (!enabled) return input
+
+    return (
+      <div className="relative w-full">
+        {input}
+        <AiAssistIconButton
+          loading={loading}
+          className="right-1.5 top-1/2 -translate-y-1/2"
+          onClick={() => void onPolish(innerRef.current)}
+        />
+      </div>
+    )
+  },
 )
 Input.displayName = 'Input'
 

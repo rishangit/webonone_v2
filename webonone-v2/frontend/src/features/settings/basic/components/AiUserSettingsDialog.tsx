@@ -10,12 +10,19 @@ import {
   FormField,
   Input,
   PasswordInput,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   mapZodIssuesToFieldErrors,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import {
+  AI_PROVIDER_OPTIONS,
   OLLAMA_CLOUD_DEFAULTS,
+  defaultsForProvider,
   isUnchangedSavedApiKey,
   userAiSettingsFormSchema,
   type UserAiSettingsFormValues,
@@ -137,11 +144,42 @@ export function AiUserSettingsDialog({ open, settings, onOpenChange }: AiUserSet
       ) : null}
 
       <Form id={USER_FORM_ID} onSubmit={handleSubmit}>
+        <FormField label={t('ai.fields.provider')} htmlFor="ai-user-provider" required>
+          <Select
+            value={form.provider}
+            onValueChange={(value) => {
+              const provider = value as UserAiSettingsFormValues['provider']
+              if (provider !== 'ollama' && provider !== 'openai') return
+              setForm((prev) => {
+                const defaults = defaultsForProvider(provider)
+                return {
+                  ...prev,
+                  provider,
+                  model: defaults.model,
+                  baseUrl: defaults.baseUrl,
+                }
+              })
+            }}
+          >
+            <SelectTrigger id="ai-user-provider">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AI_PROVIDER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
         <FormField
-          label={t('ai.fields.apiKey')}
+          label={
+            form.provider === 'openai' ? t('ai.fields.apiKeyOpenAi') : t('ai.fields.apiKey')
+          }
           htmlFor="ai-user-api-key"
           error={fieldErrors.apiKey}
-          required={!configured}
+          required={!configured || form.provider === 'openai'}
         >
           <PasswordInput
             id="ai-user-api-key"
@@ -150,7 +188,9 @@ export function AiUserSettingsDialog({ open, settings, onOpenChange }: AiUserSet
             placeholder={
               configured && settings?.hasApiKey
                 ? t('ai.fields.apiKeyPlaceholderSaved')
-                : t('ai.fields.apiKeyPlaceholder')
+                : form.provider === 'openai'
+                  ? t('ai.fields.apiKeyPlaceholderOpenAi')
+                  : t('ai.fields.apiKeyPlaceholder')
             }
             value={apiKey}
             onChange={(event) => setApiKey(event.target.value)}

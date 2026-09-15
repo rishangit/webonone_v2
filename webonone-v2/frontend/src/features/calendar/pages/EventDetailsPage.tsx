@@ -13,6 +13,7 @@ import {
   ImageCarousel,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { WebononeCopyToAiButton } from '@/features/ai/components/WebononeCopyToAiButton'
 import { EditableSectionCard } from '@/features/calendar/components/EditableSectionCard'
 import {
   EventDetailSectionTabs,
@@ -247,6 +248,7 @@ export function EventDetailsPage() {
       description="Company calendar event details."
       onBack={() => navigate('/calendar/events')}
       backLabel="Back"
+      actions={<WebononeCopyToAiButton kind="event" id={eventId} label={detail.serviceName} />}
     >
       <EventDetailSectionTabs
         ariaLabel={t('eventDetail.ariaSections')}

@@ -13,6 +13,17 @@ export const CATALOG_ENTITY_KINDS = ['product', 'service', 'space'] as const
 
 export type CatalogEntityKind = (typeof CATALOG_ENTITY_KINDS)[number]
 
+export const WEBONONE_ENTITY_KINDS = [
+  'product',
+  'service',
+  'space',
+  'staff',
+  'event',
+  'company',
+] as const
+
+export type WebononeEntityKind = (typeof WEBONONE_ENTITY_KINDS)[number]
+
 export type DataEntityContextRef = {
   service: 'data'
   kind: DataEntityKind
@@ -20,6 +31,14 @@ export type DataEntityContextRef = {
   label?: string
 }
 
+export type WebononeEntityContextRef = {
+  service: 'webonone'
+  kind: WebononeEntityKind
+  id: string
+  label?: string
+}
+
+/** @deprecated Prefer WebononeEntityContextRef — catalog kinds are a subset. */
 export type WebononeCatalogEntityContextRef = {
   service: 'webonone'
   kind: CatalogEntityKind
@@ -27,7 +46,7 @@ export type WebononeCatalogEntityContextRef = {
   label?: string
 }
 
-export type EntityContextRef = DataEntityContextRef | WebononeCatalogEntityContextRef
+export type EntityContextRef = DataEntityContextRef | WebononeEntityContextRef
 
 export type ResolvedEntityContext = {
   ref: EntityContextRef

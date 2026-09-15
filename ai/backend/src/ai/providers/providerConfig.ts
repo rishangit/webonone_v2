@@ -35,6 +35,9 @@ export function isProviderConfigComplete(config: AiProviderConfig): boolean {
   if (!config.aiProvider || !config.aiModel.trim() || !config.aiProviderBaseUrl.trim()) {
     return false
   }
+  if (config.aiProvider === 'openai') {
+    return Boolean(config.aiProviderApiKey.trim())
+  }
   if (config.aiProvider === 'ollama' && ollamaCloudBaseUrl(config.aiProviderBaseUrl)) {
     const apiKey = config.aiProviderApiKey.trim()
     return Boolean(apiKey) && isValidOllamaCloudApiKey(apiKey)

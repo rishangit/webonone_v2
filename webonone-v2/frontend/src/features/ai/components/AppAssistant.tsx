@@ -20,6 +20,11 @@ import { searchDataEntities, type DataEntitySearchHit } from '@/features/ai/util
 import { formatEntityTag, insertTextAtCursor } from '@/features/ai/utils/formatEntityTag'
 import { notifyPeerAiMutation } from '@/features/ai/utils/notifyPeerAiMutation'
 import {
+  catalogIdFromToolArgs,
+  catalogKindFromToolArgs,
+  isCompanyCatalogWriteTool,
+} from '@/features/ai/utils/catalogAiMutationRefresh'
+import {
   RecordResultList,
   parseRecordsFromText,
   readRecordOpen,
@@ -127,6 +132,20 @@ function toolNameForCall(pending: PendingTool, toolCallId: string): string | nul
   return null
 }
 
+function toolArgsForCall(
+  pending: PendingTool,
+  toolCallId: string,
+): Record<string, unknown> | undefined {
+  const row = pending.calls?.find((call) => call.toolCallId === toolCallId)
+  if (row) {
+    return row.arguments
+  }
+  if (pending.toolCallId === toolCallId) {
+    return pending.arguments
+  }
+  return undefined
+}
+
 export function AppAssistant({ open, onClose }: AppAssistantProps) {
   const { t } = useTranslation('shell')
   const navigate = useNavigate()
@@ -134,6 +153,7 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
   const { consumePendingEntity, pasteVersion } = useAiEntityPaste()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const catalogKind = useAppSelector((s) => s.companyCatalog.kind)
+  const catalogDetail = useAppSelector((s) => s.companyCatalog.detail)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatLine[]>([])
   const [draft, setDraft] = useState('')
@@ -365,6 +385,11 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
     const pendingName = messages
       .map((message) => (message.pendingTool ? toolNameForCall(message.pendingTool, toolCallId) : null))
       .find((name): name is string => Boolean(name))
+    const pendingArgs = messages
+      .map((message) =>
+        message.pendingTool ? toolArgsForCall(message.pendingTool, toolCallId) : undefined,
+      )
+      .find((args): args is Record<string, unknown> => Boolean(args))
     setPendingReply(true)
     setError(null)
     try {
@@ -395,13 +420,15 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
       })
       if (action === 'confirm' && pendingName) {
         notifyPeerAiMutation(pendingName)
-        if (
-          catalogKind &&
-          /^(create|update|delete)_catalog_item$|^link_catalog_item$|^from_library_catalog$|^fork_catalog_item$/.test(
-            pendingName,
-          )
-        ) {
-          dispatch(companyCatalogActions.listRequested({ kind: catalogKind }))
+        if (isCompanyCatalogWriteTool(pendingName)) {
+          const kind = catalogKindFromToolArgs(pendingArgs, catalogKind)
+          if (kind) {
+            dispatch(companyCatalogActions.listRequested({ kind }))
+            const mutatedId = catalogIdFromToolArgs(pendingArgs)
+            if (mutatedId && catalogDetail?.id === mutatedId) {
+              dispatch(companyCatalogActions.detailRequested({ kind, id: mutatedId }))
+            }
+          }
         }
         if (/^(approve_company|set_company_status)$/.test(pendingName)) {
           dispatch(companiesActions.loadAdminCompaniesRequested({ force: true }))

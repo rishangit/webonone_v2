@@ -22,4 +22,6 @@ WebOnOne යනු ඔබගේ සමාගමේ දෛනික වැඩ ක
 
 webonone.com හි public site visitors catalog සොයා බැලීමටය. මෙම help site යෙදුම භාවිතා කරන ආකාරය පැහැදිලි කරයි.
 
+ඔබට browser එකේ හෝ [desktop app](/docs/getting-started/desktop-app) install කර වැඩ කළ හැක. Website හි නව features desktop app එකේ ස්වයංක්‍රීයව පෙනේ.
+
 ඔබට තවම සමාගමක් නැත්නම්, [ගිණුමක් සාදන්න](/docs/getting-started/create-account) සහ [ඔබගේ සමාගම ලියාපදිංචි කරන්න](/docs/companies/register-company) සමඟ ආරම්භ කරන්න.

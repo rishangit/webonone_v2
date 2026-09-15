@@ -12,6 +12,7 @@ import {
   itemListThumbClassName,
   StatusTag,
 } from '@webonone/ui-kit'
+import { WebononeCopyToAiMenuItem } from '@/features/ai/components/WebononeCopyToAiMenuItem'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 import type { AdminCompany, CompanyStatus } from '../services/companyApi'
 
@@ -65,6 +66,7 @@ export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesLi
           </ItemListContent>
           <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
             <DropdownMenuItem onClick={() => openProfile(item.id)}>View details</DropdownMenuItem>
+            <WebononeCopyToAiMenuItem kind="company" id={item.id} label={item.name} />
             <DropdownMenuItem
               disabled={updatingId === item.id || item.status === 'approved'}
               onClick={() => onStatusChange(item.id, 'approved')}

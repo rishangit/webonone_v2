@@ -5,8 +5,10 @@ import enHome from '@/locales/en/home.json'
 import siHome from '@/locales/si/home.json'
 import enDocs from '@/locales/en/docs.json'
 import siDocs from '@/locales/si/docs.json'
+import enFeedback from '@/locales/en/feedback.json'
+import siFeedback from '@/locales/si/feedback.json'
 
-export const NAMESPACES = ['shell', 'home', 'docs'] as const
+export const NAMESPACES = ['shell', 'home', 'docs', 'feedback'] as const
 
 export function initSupportI18n() {
   return createAppI18n({
@@ -16,11 +18,13 @@ export function initSupportI18n() {
         shell: enShell,
         home: enHome,
         docs: enDocs,
+        feedback: enFeedback,
       },
       si: {
         shell: siShell,
         home: siHome,
         docs: siDocs,
+        feedback: siFeedback,
       },
     },
   })

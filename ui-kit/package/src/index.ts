@@ -175,6 +175,13 @@ export {
   AlertDialogCancel,
 } from './components/AlertDialog'
 export { Form, FormField } from './components/Form'
+export { AiFieldAssistProvider, useAiFieldAssist } from './components/AiFieldAssist'
+export type {
+  AiFieldAssistRequest,
+  AiFieldAssistField,
+  AiFieldAssistFormField,
+  AiFieldAssistContextValue,
+} from './components/AiFieldAssist'
 export { Alert, AlertTitle, AlertDescription } from './components/Alert'
 export { Callout, CalloutTitle, CalloutDescription, CalloutAction, calloutVariants } from './components/Callout'
 export type { CalloutProps } from './components/Callout'

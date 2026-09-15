@@ -11,6 +11,7 @@ When you are signed in, a **chat** button appears in the header.
 
 1. Click it to open the assistant panel.
 2. Ask in plain language (for example, help finding a setting).
-3. If the assistant wants to create or change something, confirm the action when asked.
+3. From **staff**, **events**, **companies**, or **catalog** lists and detail pages, use **Copy to AI** to attach that record to the chat.
+4. If the assistant wants to create or change something, confirm the action when asked.
 
-The assistant needs a working API key. Configure it under [AI API key](/docs/app-preferences/ai-api-key). Guests on the public website use a separate [catalog assistant](/docs/public-catalog/guest-assistant).
+The assistant needs a working API key. Configure it under [AI API key](/docs/app-preferences/ai-api-key). The same setup enables the [sparkle on text fields](/docs/app-preferences/field-ai-polish). Guests on the public website use a separate [catalog assistant](/docs/public-catalog/guest-assistant).

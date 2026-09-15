@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   BookOpen,
+  Bug,
   Building2,
   Calendar,
   ChevronDown,
@@ -77,6 +78,8 @@ export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
     }
   }, [activeCategoryId])
 
+  const feedbackActive = activePath === '/feedback' || activePath.startsWith('/feedback/')
+
   return (
     <nav
       aria-label={ts('docsNav')}
@@ -127,6 +130,20 @@ export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         )
       })}
+
+      <div className="mt-auto border-t border-[hsl(var(--glass-border))] pt-2">
+        <NavLink
+          to="/feedback"
+          onClick={onNavigate}
+          aria-current={feedbackActive ? 'page' : undefined}
+          className={({ isActive }) =>
+            cn(navItemClassName, (isActive || feedbackActive) && navItemActiveClassName)
+          }
+        >
+          <Bug className="h-5 w-5 shrink-0" aria-hidden />
+          <span className="truncate">{ts('feedbackNav')}</span>
+        </NavLink>
+      </div>
     </nav>
   )
 }

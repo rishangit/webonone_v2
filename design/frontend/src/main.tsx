@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { ensurePlatformEmbedCanvas } from '@webonone/platform-embed'
 import { applyListPageModeFromQueryParams, applyThemeFromQueryParams, applyThemeVariables, applyUiTheme, applyUiThemeFromQueryParams, readPersistedTheme, resolveUiTheme } from '@webonone/theme'
+import { ToastProvider } from '@webonone/ui-kit'
 import '@webonone/ui-kit/styles'
 import { store } from '@/app/store'
 import { App } from '@/app/router'
+import { AiFieldAssistHost } from '@/features/ai/components/AiFieldAssistHost'
 import { initDesignI18n } from '@/i18n'
 
 ensurePlatformEmbedCanvas()
@@ -22,7 +24,11 @@ initDesignI18n()
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <App />
+      <ToastProvider>
+        <AiFieldAssistHost>
+          <App />
+        </AiFieldAssistHost>
+      </ToastProvider>
     </Provider>
   </StrictMode>,
 )

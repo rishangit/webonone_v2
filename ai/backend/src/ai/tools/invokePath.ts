@@ -39,10 +39,11 @@ const SERVICE_PATH_ALLOWED: Record<ToolServiceId, (path: string) => boolean> = {
     /^\/api\/v1\/(tags|units|attributes|products|services|spaces)(\/:id)?$/.test(path) ||
     /^\/api\/v1\/(products|services|spaces)\/:id\/attributes\/:attributeId\/values$/.test(path) ||
     /^\/api\/v1\/(products|services|spaces)\/:id\/attribute-values\/:valueId(\/default)?$/.test(path) ||
-    /^\/api\/v1\/products\/:id\/variants(\/:variantId)?$/.test(path),
+    /^\/api\/v1\/products\/:id\/variants(\/:variantId)?$/.test(path) ||
+    /^\/api\/v1\/products\/:id\/variants\/:variantId\/stocks(\/:stockId\/active)?$/.test(path),
   email: () => false,
-  sms: () => false,
-  payment: () => false,
+  sms: (path) => /^\/api\/v1\/templates(\/:id)?$/.test(path),
+  payment: (path) => /^\/api\/v1\/invoices(\/:id)?$/.test(path),
   design: () => false,
 }
 
@@ -88,7 +89,7 @@ export function buildInvokeRequest(
       }
       return value
     }
-    if (name === 'id' || name === 'attributeId' || name === 'valueId') {
+    if (name === 'id' || name === 'attributeId' || name === 'valueId' || name === 'variantId' || name === 'stockId') {
       if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{8,32}$/.test(value)) {
         throw new Error('invalid_id')
       }

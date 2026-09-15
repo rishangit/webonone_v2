@@ -3,6 +3,7 @@ import express from 'express'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import feedbackRoutes from './routes/feedback.routes.js'
 import healthRoutes from './routes/health.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
@@ -19,6 +20,7 @@ export function createApp() {
   app.use(cors({ origin: true, credentials: true }))
   app.use(express.json())
   app.use('/api/v1', healthRoutes)
+  app.use('/api/v1', feedbackRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

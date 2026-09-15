@@ -7,6 +7,8 @@ import {
   formatPhoneE164,
   getBrowserDefaultCountryIso2,
   getPhoneCountryByIso2,
+  Form,
+  FormField,
   Input,
   InputGroup,
   InputGroupIcon,
@@ -105,10 +107,12 @@ export function ControlsPage() {
       </DemoSection>
 
       <DemoSection id="input-text" title="Input text">
-        <div className="grid max-w-md gap-4">
-          <Input placeholder="Plain text" />
+        <Form className="grid max-w-md gap-4 space-y-0">
+          <FormField label="Display name" htmlFor="demo-display-name">
+            <Input id="demo-display-name" name="displayName" placeholder="Plain text" defaultValue="Acme nme" />
+          </FormField>
           <Input placeholder="Disabled" disabled />
-        </div>
+        </Form>
       </DemoSection>
 
       <DemoSection id="input-text-with-icon" title="Input text (with icon)">
@@ -418,10 +422,12 @@ export function ControlsPage() {
       </DemoSection>
 
       <DemoSection id="text-area" title="Text area">
-        <div className="max-w-md space-y-4">
-          <Textarea placeholder="Write a message…" />
+        <Form className="max-w-md space-y-4">
+          <FormField label="Description" htmlFor="demo-description">
+            <Textarea id="demo-description" name="description" placeholder="Write a message…" defaultValue="Teh product is ready." />
+          </FormField>
           <Textarea placeholder="Disabled" disabled />
-        </div>
+        </Form>
       </DemoSection>
 
       <DemoSection id="otp-input" title="OTP input">

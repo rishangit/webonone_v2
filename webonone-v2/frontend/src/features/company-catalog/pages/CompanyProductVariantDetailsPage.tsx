@@ -12,8 +12,10 @@ import {
   CardTitle,
   FeaturePage,
   StatusTag,
+  useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
+import { useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { CompanyProductVariantStocksCard } from '@/features/company-catalog/components/CompanyProductVariantStocksCard'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
@@ -39,6 +41,8 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 export function CompanyProductVariantDetailsPage() {
   const { t, i18n } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
+  const { toast } = useToast()
+  const { requestEntityPaste } = useAiEntityPaste()
   const { productId = '', variantId = '' } = useParams()
   const navigate = useNavigate()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
@@ -46,6 +50,7 @@ export function CompanyProductVariantDetailsPage() {
   const canAddStock = activeRole === 'company_admin'
   const [variant, setVariant] = useState<LibraryProductVariant | null>(null)
   const [libraryProductId, setLibraryProductId] = useState<string | null>(null)
+  const [productName, setProductName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -60,15 +65,18 @@ export function CompanyProductVariantDetailsPage() {
       if (!product.libraryEntityId) {
         setVariant(null)
         setLibraryProductId(null)
+        setProductName('')
         setError(t('variantDetail.notLinked'))
         return
       }
       setLibraryProductId(product.libraryEntityId)
+      setProductName(typeof product.name === 'string' ? product.name.trim() : '')
       const result = await dataLibraryApi.getProductVariant(product.libraryEntityId, variantId)
       setVariant(result)
     } catch (err) {
       setVariant(null)
       setLibraryProductId(null)
+      setProductName('')
       setError(err instanceof Error ? err.message : t('variantDetail.failedLoad'))
     } finally {
       setLoading(false)
@@ -107,17 +115,42 @@ export function CompanyProductVariantDetailsPage() {
       onBack={() => navigate(`/data/products/${productId}?tab=variants`)}
       backLabel={tc('back')}
       actions={
-        canEdit && variant && !variant.isDefault ? (
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={() => setDeleteOpen(true)}
-            disabled={deleting}
-          >
-            {tc('delete')}
-          </Button>
-        ) : undefined
+        <div className="flex flex-wrap items-center gap-2">
+          {variant && libraryProductId ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                requestEntityPaste({
+                  entities: [
+                    {
+                      service: 'data',
+                      kind: 'product',
+                      id: libraryProductId,
+                      label: productName || variant.name,
+                    },
+                  ],
+                  composerText: `Focus on variant "${variant.name}" (variantId: ${variantId}). List existing stocks with list_data_product_variant_stocks, then suggest or create stock batches with create_data_product_variant_stock when asked.`,
+                })
+                toast({ title: t('attributesTab.copyToAiSuccess') })
+              }}
+            >
+              {t('attributesTab.copyToAi')}
+            </Button>
+          ) : null}
+          {canEdit && variant && !variant.isDefault ? (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteOpen(true)}
+              disabled={deleting}
+            >
+              {tc('delete')}
+            </Button>
+          ) : null}
+        </div>
       }
     >
       {error ? (

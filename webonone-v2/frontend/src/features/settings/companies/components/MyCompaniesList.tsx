@@ -14,6 +14,7 @@ import {
   StatusTag,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { WebononeCopyToAiMenuItem } from '@/features/ai/components/WebononeCopyToAiMenuItem'
 import { authActions } from '@/features/auth/store/authSlice'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
@@ -125,6 +126,7 @@ export function MyCompaniesList({
                   <DropdownMenuItem onClick={() => openProfile(item.id)}>
                     {t('myCompanies.viewDetails')}
                   </DropdownMenuItem>
+                  <WebononeCopyToAiMenuItem kind="company" id={item.id} label={item.name} />
                   <DropdownMenuItem
                     disabled={!loginEnabled || loggingInId === item.id}
                     title={
@@ -144,6 +146,7 @@ export function MyCompaniesList({
                   <DropdownMenuItem onClick={() => openProfile(item.id)}>
                     {t('myCompanies.viewDetails')}
                   </DropdownMenuItem>
+                  <WebononeCopyToAiMenuItem kind="company" id={item.id} label={item.name} />
                 </ItemListMenu>
               )}
             </ItemListItem>

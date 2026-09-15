@@ -8,8 +8,10 @@ import { errorHandler } from './middleware/errorHandler.js'
 import { createHealthRoutes } from './routes/health.routes.js'
 import { createConversationRoutes } from './routes/conversations.routes.js'
 import { createAiSettingsRoutes } from './routes/aiSettings.routes.js'
+import { createTextPolishRoutes } from './routes/textPolish.routes.js'
 import type { ConversationService } from './services/conversation.service.js'
 import type { AiSettingsService } from './services/aiSettings.service.js'
+import type { TextPolishService } from './services/textPolish.service.js'
 import type { RateLimiter } from './middleware/rateLimit.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -23,6 +25,7 @@ export type CreateAppOptions = {
   conversationService: ConversationService
   aiSettingsService: AiSettingsService
   rateLimiter: RateLimiter
+  textPolishService?: TextPolishService
 }
 
 export function createApp(options: CreateAppOptions) {
@@ -45,6 +48,9 @@ export function createApp(options: CreateAppOptions) {
   app.use('/api/v1', createHealthRoutes(options.rateLimiter))
   app.use('/api/v1', createConversationRoutes(options.conversationService, options.rateLimiter))
   app.use('/api/v1', createAiSettingsRoutes(options.aiSettingsService))
+  if (options.textPolishService) {
+    app.use('/api/v1', createTextPolishRoutes(options.textPolishService, options.rateLimiter))
+  }
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -13,12 +13,14 @@ import {
   CardTitle,
   FeaturePage,
   StatusTag,
+  useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { ProductVariantStocksCard } from '@/features/products/components/ProductVariantStocksCard'
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
+import { copyProductVariantToAi } from '@/features/shell/utils/copyProductVariantToAi'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { dataApi } from '@/shared/services/dataApi'
@@ -36,6 +38,9 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 export function ProductVariantDetailsPage() {
   const { t } = useTranslation('products')
+  const { t: ts } = useTranslation('shell')
+  const { toast } = useToast()
+  const [searchParams] = useSearchParams()
   const { productId, variantId } = useParams<{ productId: string; variantId: string }>()
   const { goToDetail } = useNavigateDataEntity()
   const { accessToken, user } = useAppSelector((s) => s.auth)
@@ -46,21 +51,30 @@ export function ProductVariantDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [productName, setProductName] = useState('')
 
   const load = useCallback(async () => {
     if (!productId || !variantId) return
     setLoading(true)
     setError(null)
     try {
-      const result = await dataApi.getProductVariant(productId, variantId)
+      const [result, product] = await Promise.all([
+        dataApi.getProductVariant(productId, variantId),
+        dataApi.getProduct(productId).catch(() => null),
+      ])
       setVariant(result)
+      setProductName(
+        product && typeof product.name === 'string' && product.name.trim()
+          ? product.name.trim()
+          : '',
+      )
     } catch (err) {
       setVariant(null)
       setError(err instanceof Error ? err.message : t('variant.loadDetailFailed'))
     } finally {
       setLoading(false)
     }
-  }, [productId, variantId])
+  }, [productId, variantId, t])
 
   useEffect(() => {
     void load()
@@ -93,17 +107,41 @@ export function ProductVariantDetailsPage() {
       onBack={() => goToDetail('products', productId, { tab: 'variants' })}
       backLabel={t('common:back')}
       actions={
-        canEdit && variant && !variant.isDefault ? (
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={() => setDeleteOpen(true)}
-            disabled={deleting}
-          >
-            {t('common:delete')}
-          </Button>
-        ) : undefined
+        <div className="flex flex-wrap items-center gap-2">
+          {variant ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const ok = copyProductVariantToAi(searchParams, {
+                  productId,
+                  productName: productName || variant.name,
+                  variantId,
+                  variantName: variant.name,
+                })
+                if (ok) {
+                  toast({ title: ts('copyToAiSuccess') })
+                  return
+                }
+                toast({ title: ts('copyToAiUnavailable'), variant: 'destructive' })
+              }}
+            >
+              {ts('copyToAi')}
+            </Button>
+          ) : null}
+          {canEdit && variant && !variant.isDefault ? (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteOpen(true)}
+              disabled={deleting}
+            >
+              {t('common:delete')}
+            </Button>
+          ) : null}
+        </div>
       }
     >
       {error ? (

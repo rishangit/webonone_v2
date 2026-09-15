@@ -4,5 +4,15 @@
   "homeSite": "Home",
   "searchPlaceholder": "Search help",
   "searchAria": "Search help articles",
-  "docsNav": "Help topics"
+  "docsNav": "Help topics",
+  "feedbackNav": "Bug & feature reports",
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "signInTitle": "Sign in to continue",
+  "signInDescription": "Use your WebOnOne account to view and submit bug and feature reports.",
+  "continueToSignIn": "Continue to sign in",
+  "backToSignIn": "Back to sign in",
+  "completingSignIn": "Completing sign in…",
+  "authCallbackMissing": "Missing authorization response",
+  "authCallbackInvalid": "Invalid or expired sign-in session"
 }

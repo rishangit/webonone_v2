@@ -48,6 +48,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | AI | `ai/` | [ai-agent](.cursor/agents/ai-agent.md) | [skill](.cursor/skills/ai-agent/SKILL.md) |
 | Support | `support/` | [support-agent](.cursor/agents/support-agent.md) | [skill](.cursor/skills/support-agent/SKILL.md) |
 | Website | `website/` | — | Public marketing/search site (FE :3018, BE :4018); proxies catalog search to WebOnOne |
+| Desktop | `desktop/` | — | Electron client around live WebOnOne (parent-owned; not a microservice) |
 
 AI tools: peers publish `jsonSchema` + optional `argCompletion`; AI stays generic — [.cursor/rules/ai-capabilities.mdc](.cursor/rules/ai-capabilities.mdc).
 
@@ -57,7 +58,7 @@ Company registration, memberships, platform roles, and super-admin approval are 
 
 1. Classify which service roots the task affects.
 2. Delegate to the matching subagent (or use the Task tool with the agent skill).
-3. Keep root `package.json` / workspace wiring in the parent unless the task is service-only.
+3. Keep root `package.json` / workspace wiring in the parent unless the task is service-only. Parent also owns `desktop/` (Electron shell).
 4. If the change is **user-visible** in WebOnOne (or a peer in the shell), also update Support help or delegate **support-agent** — [help-articles](.cursor/skills/help-articles/SKILL.md). Do not treat the product PR as done with stale how-tos.
 5. Merge subagent results and run verification.
 
@@ -79,6 +80,8 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:website` | Website FE + BE |
 | `npm run mobile` | Mobile Expo app (not in root `dev`) |
 | `npm run mobile:web` | Mobile app via RN Web |
+| `npm run dev:desktop` | Electron desktop shell (not in root `dev`) |
+| `npm run build:desktop` | Windows NSIS installer (`desktop/release/WebOnOne-Setup.exe`) |
 | `npm run build:platform-nav` | Build `@webonone/platform-nav` |
 | `npm run build:platform-embed` | Build `@webonone/platform-embed` |
 | `npm run build:media-embed` | Build `@webonone/media-embed` |

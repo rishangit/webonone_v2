@@ -6,6 +6,7 @@ import { ToastProvider } from '@webonone/ui-kit'
 import '@webonone/ui-kit/styles'
 import { store } from '@/app/store'
 import { App } from '@/app/router'
+import { AiFieldAssistHost } from '@/features/ai/components/AiFieldAssistHost'
 import { initWebOnOneI18n } from '@/i18n'
 
 const bootstrapSearch = new URLSearchParams(window.location.search)
@@ -19,7 +20,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <ToastProvider>
-        <App />
+        <AiFieldAssistHost>
+          <App />
+        </AiFieldAssistHost>
       </ToastProvider>
     </Provider>
   </StrictMode>,

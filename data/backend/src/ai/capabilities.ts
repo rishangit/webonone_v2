@@ -420,6 +420,106 @@ function productVariantTools(): ToolDefinition[] {
       invoke: { method: 'POST', path: '/api/v1/products/:id/variants' },
       viewPath,
     }),
+    dataTool({
+      name: 'get_data_product_variant',
+      description: 'Get one product variant by product id and variant id.',
+      jsonSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'variantId'],
+        properties: {
+          id: { ...stringId, description: 'Data library product id.' },
+          variantId: { ...stringId, description: 'Product variant id.' },
+        },
+      },
+      riskLevel: 'read',
+      requiredRoles: libraryReadRoles,
+      requiredPermissions: ['ai:data_library:read'],
+      auth: 'user_jwt',
+      invoke: { method: 'GET', path: '/api/v1/products/:id/variants/:variantId' },
+      viewPath: '/products/{id}/variants/{variantId}',
+    }),
+    dataTool({
+      name: 'list_data_product_variant_stocks',
+      description:
+        'List stock batches for a product variant. Call get_data_product_variant first when the variant is unknown.',
+      jsonSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'variantId'],
+        properties: {
+          id: { ...stringId, description: 'Data library product id.' },
+          variantId: { ...stringId, description: 'Product variant id.' },
+        },
+      },
+      riskLevel: 'read',
+      requiredRoles: libraryReadRoles,
+      requiredPermissions: ['ai:data_library:read'],
+      auth: 'user_jwt',
+      invoke: { method: 'GET', path: '/api/v1/products/:id/variants/:variantId/stocks' },
+      viewPath: '/products/{id}/variants/{variantId}',
+    }),
+    dataTool({
+      name: 'create_data_product_variant_stock',
+      description:
+        'Create one stock batch for a product variant. Call list_data_product_variant_stocks first. Suggest quantity, batch_number, cost_price, sell_price, and purchase_date (YYYY-MM-DD). Optional expired_date must be on or after purchase_date. Do not invent supplier_user_id — omit supplier fields unless the user provided an Identity user id and display name together.',
+      jsonSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'variantId', 'quantity', 'batch_number', 'cost_price', 'sell_price', 'purchase_date'],
+        properties: {
+          id: { ...stringId, description: 'Data library product id.' },
+          variantId: { ...stringId, description: 'Product variant id.' },
+          quantity: { type: 'number', exclusiveMinimum: 0, title: 'Quantity' },
+          batch_number: { type: 'string', minLength: 1, maxLength: 255, title: 'Batch number' },
+          cost_price: { type: 'number', minimum: 0, title: 'Cost price' },
+          sell_price: { type: 'number', minimum: 0, title: 'Sell price' },
+          purchase_date: {
+            type: 'string',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+            title: 'Purchase date',
+            description: 'YYYY-MM-DD',
+          },
+          expired_date: {
+            type: 'string',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+            title: 'Expiry date',
+            description: 'Optional YYYY-MM-DD on or after purchase_date.',
+          },
+        },
+      },
+      riskLevel: 'write',
+      requiredRoles: catalogWriteRoles,
+      requiredPermissions: ['ai:data_catalog:write'],
+      auth: 'user_jwt',
+      invoke: { method: 'POST', path: '/api/v1/products/:id/variants/:variantId/stocks' },
+      viewPath: '/products/{id}/variants/{variantId}',
+    }),
+    dataTool({
+      name: 'set_data_product_variant_stock_active',
+      description:
+        'Set whether a stock batch is active for a product variant. Call list_data_product_variant_stocks first to resolve stockId.',
+      jsonSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'variantId', 'stockId', 'active'],
+        properties: {
+          id: { ...stringId, description: 'Data library product id.' },
+          variantId: { ...stringId, description: 'Product variant id.' },
+          stockId: { ...stringId, description: 'Stock batch id.' },
+          active: { type: 'boolean', title: 'Active' },
+        },
+      },
+      riskLevel: 'write',
+      requiredRoles: catalogWriteRoles,
+      requiredPermissions: ['ai:data_catalog:write'],
+      auth: 'user_jwt',
+      invoke: {
+        method: 'PATCH',
+        path: '/api/v1/products/:id/variants/:variantId/stocks/:stockId/active',
+      },
+      viewPath: '/products/{id}/variants/{variantId}',
+    }),
   ]
 }
 

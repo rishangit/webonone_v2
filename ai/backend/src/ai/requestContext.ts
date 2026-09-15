@@ -17,6 +17,8 @@ export const AI_PERMISSIONS = [
   'ai:data_library:write',
   'ai:data_library:admin',
   'ai:data_catalog:write',
+  'ai:payment:read',
+  'ai:sms:read',
 ] as const
 
 export type AiPermission = (typeof AI_PERMISSIONS)[number]
@@ -58,6 +60,8 @@ export function permissionsForRole(role: AiRole, companyId: string | null): AiPe
       'ai:data_catalog:write',
       'ai:company:admin',
       'ai:company:write',
+      'ai:payment:read',
+      'ai:sms:read',
     ]
   }
 
@@ -66,7 +70,7 @@ export function permissionsForRole(role: AiRole, companyId: string | null): AiPe
     : signedIn
 
   if (role === 'member') {
-    return withSessionCompany
+    return [...withSessionCompany, 'ai:sms:read']
   }
 
   const companyAdmin: AiPermission[] = [
@@ -74,6 +78,8 @@ export function permissionsForRole(role: AiRole, companyId: string | null): AiPe
     'ai:data_library:write',
     'ai:data_catalog:write',
     'ai:company:write',
+    'ai:payment:read',
+    'ai:sms:read',
   ]
   if (companyId) {
     companyAdmin.push('ai:catalog:write', 'ai:events:write', 'ai:staff:write')

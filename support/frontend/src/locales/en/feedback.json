@@ -1,0 +1,35 @@
+{
+  "pageTitle": "Bug and feature reports",
+  "pageDescription": "Log issues or ideas for WebOnOne. Everyone signed in can view all reports; Super Admin updates status.",
+  "searchPlaceholder": "Search reports",
+  "searchAria": "Search bug and feature reports",
+  "addReport": "Report issue",
+  "empty": "No reports yet. Be the first to submit one.",
+  "createTitle": "Report a bug or feature",
+  "createDescription": "Describe what went wrong or what you would like added.",
+  "submitReport": "Submit report",
+  "createSuccess": "Report submitted",
+  "updateFailed": "Could not update status",
+  "reportedBy": "Reported by {{email}}",
+  "statusMenuAria": "Status actions for {{title}}",
+  "filterType": "Type",
+  "filterStatus": "Status",
+  "filterAll": "All",
+  "type": {
+    "bug": "Bug",
+    "feature": "Feature request"
+  },
+  "status": {
+    "todo": "To do",
+    "in_progress": "In progress",
+    "completed": "Completed"
+  },
+  "fields": {
+    "type": "Type",
+    "typePlaceholder": "Choose type",
+    "title": "Title",
+    "titlePlaceholder": "Short summary",
+    "description": "Description",
+    "descriptionPlaceholder": "Steps, expected behavior, or feature details"
+  }
+}

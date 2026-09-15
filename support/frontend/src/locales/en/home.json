@@ -3,5 +3,8 @@
   "subtitle": "Guides for setting up your account, company, and every WebOnOne feature.",
   "browse": "Browse topics",
   "popular": "Start here",
-  "articleCount": "{{count}} articles"
+  "articleCount": "{{count}} articles",
+  "feedbackTitle": "Report a bug or feature request",
+  "feedbackDescription": "Tell us what broke or what you would like added. Sign in to view the shared list and submit a report.",
+  "feedbackCta": "Open bug and feature log"
 }

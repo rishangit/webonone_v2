@@ -19,6 +19,7 @@ import {
   tabsPageContentClassName,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { WebononeCopyToAiButton } from '@/features/ai/components/WebononeCopyToAiButton'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { StaffFormDialog } from '@/features/staff/components/StaffFormDialog'
@@ -163,6 +164,7 @@ export function StaffDetailsPage() {
       description={t('detail.pageDescription')}
       onBack={() => navigate('/staff')}
       backLabel={t('common:back')}
+      actions={<WebononeCopyToAiButton kind="staff" id={staffId} label={detail.displayName} />}
     >
       <Tabs
         value={tab}

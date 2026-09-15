@@ -1,0 +1,56 @@
+{
+  "name": "@webonone/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WebOnOne desktop shell — native window around the live web app",
+  "author": "WebOnOne",
+  "main": "out/main.js",
+  "scripts": {
+    "start": "npm run build:main && electron .",
+    "build:main": "tsc -p tsconfig.json",
+    "type-check": "tsc --noEmit -p tsconfig.json",
+    "icon": "node scripts/generate-icon.mjs",
+    "dist": "npm run build:main && electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "electron": "35.7.5",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3"
+  },
+  "build": {
+    "appId": "com.webonone.desktop",
+    "productName": "WebOnOne",
+    "copyright": "Copyright © WebOnOne",
+    "electronVersion": "35.7.5",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "out/main.js"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "WebOnOne-Setup.${ext}"
+    }
+  }
+}

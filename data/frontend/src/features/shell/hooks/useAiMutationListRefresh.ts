@@ -35,6 +35,12 @@ export function dataResourceForToolName(toolName: string): DataListResource | nu
   if (toolName === 'create_data_product_variant') {
     return 'product'
   }
+  if (
+    toolName === 'create_data_product_variant_stock' ||
+    toolName === 'set_data_product_variant_stock_active'
+  ) {
+    return 'product'
+  }
   return null
 }
 
@@ -57,7 +63,11 @@ export function useAiMutationListRefresh() {
       // Replace from page 1. On-scroll lists store the last appended page; refreshing
       // that page wipes earlier rows and leaves load-more looping on empty pages.
       dispatch(DATA_LIST_ACTIONS[resource].loadListRequested({ page: 1, force: true }))
-      if (event.data.toolName === 'create_data_product_variant') {
+      if (
+        event.data.toolName === 'create_data_product_variant' ||
+        event.data.toolName === 'create_data_product_variant_stock' ||
+        event.data.toolName === 'set_data_product_variant_stock_active'
+      ) {
         dispatchAiProductVariantsChanged()
       }
     }

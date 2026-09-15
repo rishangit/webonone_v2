@@ -2,6 +2,56 @@ import * as React from 'react'
 import { cn } from '../lib/utils'
 import { Label } from './Label'
 
+export type FormAiFieldSnapshot = {
+  id: string
+  label: string
+  name?: string
+  value: string
+  secret: boolean
+}
+
+type FormAiRegistry = {
+  upsert: (field: FormAiFieldSnapshot) => void
+  remove: (id: string) => void
+  snapshot: (excludeId?: string) => { label: string; name?: string; value: string }[]
+}
+
+const FormAiContext = React.createContext<FormAiRegistry | null>(null)
+const FormFieldMetaContext = React.createContext<{ htmlFor: string; label: string } | null>(null)
+
+export function useFormAiRegistry() {
+  return React.useContext(FormAiContext)
+}
+
+export function useFormFieldMeta() {
+  return React.useContext(FormFieldMetaContext)
+}
+
+function FormAiProvider({ children }: { children: React.ReactNode }) {
+  const fieldsRef = React.useRef(new Map<string, FormAiFieldSnapshot>())
+  const registry = React.useMemo<FormAiRegistry>(
+    () => ({
+      upsert(field) {
+        fieldsRef.current.set(field.id, field)
+      },
+      remove(id) {
+        fieldsRef.current.delete(id)
+      },
+      snapshot(excludeId) {
+        const out: { label: string; name?: string; value: string }[] = []
+        for (const field of fieldsRef.current.values()) {
+          if (field.id === excludeId || field.secret) continue
+          if (!field.value.trim()) continue
+          out.push({ label: field.label, name: field.name, value: field.value })
+        }
+        return out
+      },
+    }),
+    [],
+  )
+  return <FormAiContext.Provider value={registry}>{children}</FormAiContext.Provider>
+}
+
 interface FormFieldProps {
   label: string
   htmlFor: string
@@ -12,7 +62,11 @@ interface FormFieldProps {
 }
 
 function Form({ className, ...props }: React.FormHTMLAttributes<HTMLFormElement>) {
-  return <form className={cn('space-y-4', className)} {...props} />
+  return (
+    <FormAiProvider>
+      <form className={cn('space-y-4', className)} {...props} />
+    </FormAiProvider>
+  )
 }
 
 function FormField({ label, htmlFor, error, required, children, className }: FormFieldProps) {
@@ -42,7 +96,7 @@ function FormField({ label, htmlFor, error, required, children, className }: For
           </span>
         ) : null}
       </Label>
-      {control}
+      <FormFieldMetaContext.Provider value={{ htmlFor, label }}>{control}</FormFieldMetaContext.Provider>
       {error ? (
         <p id={errorId} className="text-sm text-destructive">
           {error}

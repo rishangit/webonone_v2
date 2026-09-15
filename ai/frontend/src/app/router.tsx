@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-r
 import { useRedirectThemeBootstrap } from '@webonone/theme'
 import { ToastProvider } from '@webonone/ui-kit'
 import { AppLayout } from '@/app/AppLayout'
+import { AiFieldAssistHost } from '@/features/ai/components/AiFieldAssistHost'
 import { LazyRoute } from '@/app/LazyRoute'
 import { RoleRoute } from '@/app/RoleRoute'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
@@ -35,6 +36,7 @@ export function App() {
 
   return (
     <ToastProvider>
+      <AiFieldAssistHost>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -69,6 +71,7 @@ export function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </AiFieldAssistHost>
     </ToastProvider>
   )
 }

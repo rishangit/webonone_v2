@@ -7,7 +7,7 @@ order: 3
 summary: "Open the app, enter your email and password, then continue to choose an account if you have more than one role."
 ---
 
-1. Open the WebOnOne app. The sign-in screen is hosted by Identity inside the app.
+1. Open the WebOnOne app in the browser or the [desktop app](/docs/getting-started/desktop-app). The sign-in screen is hosted by Identity inside the app.
 2. Enter your **email** and **password**.
 3. Choose **Sign in**.
 4. If you belong to more than one account (member, company, staff, or Super Admin), [choose which account to use](/docs/getting-started/choose-account).

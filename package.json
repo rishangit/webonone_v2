@@ -39,6 +39,7 @@
     "support/frontend",
     "support/backend",
     "mobile",
+    "desktop",
     "packages/*"
   ],
   "scripts": {
@@ -58,6 +59,8 @@
     "mobile": "npm run start -w @webonone/mobile",
     "mobile:android": "npm run android -w @webonone/mobile",
     "mobile:web": "npm run web -w @webonone/mobile",
+    "dev:desktop": "npm run start -w @webonone/desktop",
+    "build:desktop": "npm run dist -w @webonone/desktop",
     "install:packages": "npm install -w @webonone/platform-nav -w @webonone/platform-embed -w @webonone/theme -w @webonone/i18n -w @webonone/ui-kit -w @webonone/media-embed -w @webonone/store-kit",
     "install:identity": "npm install -w @webonone/identity-frontend -w @webonone/identity-backend",
     "install:webonone": "npm install -w @webonone/webonone-frontend -w @webonone/webonone-backend",

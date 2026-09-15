@@ -1,5 +1,6 @@
 import { env } from '../../config/env.js'
 import { OllamaProvider } from './ollamaProvider.js'
+import { OpenAiProvider } from './openaiProvider.js'
 import type { AiProviderConfig } from './providerConfig.js'
 import type { AiProvider } from './types.js'
 import { UnconfiguredProvider } from './unconfiguredProvider.js'
@@ -7,6 +8,15 @@ import { UnconfiguredProvider } from './unconfiguredProvider.js'
 export function createAiProvider(config: AiProviderConfig): AiProvider {
   if (config.aiProvider === 'ollama') {
     return new OllamaProvider({
+      baseUrl: config.aiProviderBaseUrl,
+      model: config.aiModel,
+      timeoutMs: config.aiProviderTimeoutMs,
+      apiKey: config.aiProviderApiKey,
+    })
+  }
+
+  if (config.aiProvider === 'openai') {
+    return new OpenAiProvider({
       baseUrl: config.aiProviderBaseUrl,
       model: config.aiModel,
       timeoutMs: config.aiProviderTimeoutMs,

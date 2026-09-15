@@ -76,4 +76,27 @@ describe('providerConfig', () => {
       true,
     )
   })
+
+  it('requires api key for openai', () => {
+    assert.equal(
+      isProviderConfigComplete({
+        aiProvider: 'openai',
+        aiModel: 'gpt-4o-mini',
+        aiProviderBaseUrl: 'https://api.openai.com',
+        aiProviderApiKey: '',
+        aiProviderTimeoutMs: 60_000,
+      }),
+      false,
+    )
+    assert.equal(
+      isProviderConfigComplete({
+        aiProvider: 'openai',
+        aiModel: 'gpt-4o-mini',
+        aiProviderBaseUrl: 'https://api.openai.com',
+        aiProviderApiKey: 'sk-test',
+        aiProviderTimeoutMs: 60_000,
+      }),
+      true,
+    )
+  })
 })

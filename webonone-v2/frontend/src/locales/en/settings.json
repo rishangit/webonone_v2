@@ -6,7 +6,21 @@
     "tabs": {
       "account": "Account",
       "appearance": "Appearance",
-      "ai": "AI"
+      "ai": "AI",
+      "downloads": "Downloads"
+    }
+  },
+  "downloads": {
+    "desktop": {
+      "title": "Desktop app",
+      "description": "Install WebOnOne on Windows for the same experience as the browser in a dedicated window.",
+      "summary": "The desktop app loads the live WebOnOne website. New features appear automatically after you reopen or refresh the app.",
+      "bulletSync": "Calendar, people, catalog, messages, sales, and your website — same as the browser.",
+      "bulletWindows": "Windows 10 or later (64-bit).",
+      "bulletInternet": "An internet connection is required.",
+      "download": "Download for Windows",
+      "help": "Installation help",
+      "afterInstall": "After installing, open WebOnOne from the Start menu and sign in with the same account you use here."
     }
   },
   "account": {
@@ -53,11 +67,11 @@
   },
   "ai": {
     "title": "AI assistant",
-    "description": "Connect your own Ollama Cloud account for the in-app assistant.",
+    "description": "Connect Ollama Cloud or OpenAI for the in-app assistant.",
     "setup": {
       "step1": "Create a free account at",
       "step2": "Open",
-      "step3": "Use Edit on this card, paste your API key, and save."
+      "step3": "Use Edit on this card, choose a provider, paste your API key, and save."
     },
     "configuredSummary": "Using model {{model}}. API key: {{hasKey}}.",
     "keySaved": "saved",
@@ -76,9 +90,12 @@
       "hide": "Hide advanced settings"
     },
     "fields": {
+      "provider": "Provider",
       "apiKey": "Ollama Cloud API key",
+      "apiKeyOpenAi": "OpenAI API key",
       "apiKeyRequired": "API key is required for first-time setup",
       "apiKeyPlaceholder": "Paste the full key from ollama.com/settings/keys (includes a dot)",
+      "apiKeyPlaceholderOpenAi": "Paste your OpenAI API key (starts with sk-)",
       "apiKeyPlaceholderSaved": "Paste a new full key to replace the saved one",
       "apiKeyPlaceholderOptional": "Optional for local Ollama",
       "model": "Model",

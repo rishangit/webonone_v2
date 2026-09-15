@@ -13,6 +13,7 @@ import {
   tabsPageContentClassName,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { WebononeCopyToAiButton } from '@/features/ai/components/WebononeCopyToAiButton'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import type { CompanyWizardStep } from '@/features/settings/basic/schemas/companySchemas'
@@ -236,6 +237,11 @@ export function CompanyProfilePage({
       description={pageDescription}
       onBack={() => navigate(backTo)}
       backLabel={backLabel}
+      actions={
+        companyId ? (
+          <WebononeCopyToAiButton kind="company" id={companyId} label={detail.name} />
+        ) : null
+      }
     >
       <div className="flex flex-col gap-6">
         {detailError ? (

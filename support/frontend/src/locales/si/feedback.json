@@ -1,0 +1,35 @@
+{
+  "pageTitle": "දෝෂ සහ විශේෂාංග වාර්තා",
+  "pageDescription": "WebOnOne සඳහා ගැටලු හෝ අදහස් ලියාපදිංචි කරන්න. Sign in කළ සියලු දෙනා සියලු වාර්තා බලන්න පුළුවන්; Super Admin status යාවත්කාලීන කරයි.",
+  "searchPlaceholder": "වාර්තා සොයන්න",
+  "searchAria": "දෝෂ සහ විශේෂාංග වාර්තා සොයන්න",
+  "addReport": "ගැටලුව වාර්තා කරන්න",
+  "empty": "තවම වාර්තා නැත. පළමු වාර්තාව ඔබ යොමු කරන්න.",
+  "createTitle": "දෝෂයක් හෝ විශේෂාංගයක් වාර්තා කරන්න",
+  "createDescription": "වැරදි වූ දෙය හෝ එකතු කිරීමට අවශ්‍ය දෙය විස්තර කරන්න.",
+  "submitReport": "වාර්තාව යොමු කරන්න",
+  "createSuccess": "වාර්තාව යොමු විය",
+  "updateFailed": "Status යාවත්කාලීන කළ නොහැකි විය",
+  "reportedBy": "{{email}} විසින් වාර්තා කරන ලදී",
+  "statusMenuAria": "{{title}} සඳහා status ක්‍රියා",
+  "filterType": "වර්ගය",
+  "filterStatus": "Status",
+  "filterAll": "සියල්ල",
+  "type": {
+    "bug": "දෝෂය",
+    "feature": "විශේෂාංග ඉල්ලීම"
+  },
+  "status": {
+    "todo": "To do",
+    "in_progress": "In progress",
+    "completed": "Completed"
+  },
+  "fields": {
+    "type": "වර්ගය",
+    "typePlaceholder": "වර්ගය තෝරන්න",
+    "title": "ශීර්ෂය",
+    "titlePlaceholder": "කෙටි සාරාංශය",
+    "description": "විස්තරය",
+    "descriptionPlaceholder": "පියවර, අපේක්ෂිත හැසිරීම, හෝ විශේෂාංග විස්තර"
+  }
+}

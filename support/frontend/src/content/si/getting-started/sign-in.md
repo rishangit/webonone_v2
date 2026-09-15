@@ -7,7 +7,7 @@ order: 3
 summary: "App විවෘත කර email සහ password ඇතුළත් කරන්න; එක් ටිකට වඩා role තිබේ නම් ගිණුමක් තෝරන්න."
 ---
 
-1. WebOnOne app විවෘත කරන්න. Sign-in screen app තුළ Identity මගින් host කෙරේ.
+1. Browser හෝ [desktop app](/docs/getting-started/desktop-app) හි WebOnOne app විවෘත කරන්න. Sign-in screen app තුළ Identity මගින් host කෙරේ.
 2. ඔබගේ **email** සහ **password** ඇතුළත් කරන්න.
 3. **Sign in** තෝරන්න.
 4. ඔබ එක් ටිකට වඩා account එකකට අයත් නම් (member, company, staff, හෝ Super Admin), [භාවිතා කිරීමට ගිණුම තෝරන්න](/docs/getting-started/choose-account).

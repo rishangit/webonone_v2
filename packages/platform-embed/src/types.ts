@@ -78,6 +78,21 @@ export const CATALOG_AI_ENTITY_KINDS = ['product', 'service', 'space'] as const
 
 export type CatalogAiEntityKind = (typeof CATALOG_AI_ENTITY_KINDS)[number]
 
+/**
+ * All WebOnOne entities that can be pasted into the AI assistant
+ * (company catalog + staff, events, companies).
+ */
+export const WEBONONE_AI_ENTITY_KINDS = [
+  'product',
+  'service',
+  'space',
+  'staff',
+  'event',
+  'company',
+] as const
+
+export type WebononeAiEntityKind = (typeof WEBONONE_AI_ENTITY_KINDS)[number]
+
 export type DataAiEntityRef = {
   service: 'data'
   kind: DataAiEntityKind
@@ -87,7 +102,7 @@ export type DataAiEntityRef = {
 
 export type WebononeAiEntityRef = {
   service: 'webonone'
-  kind: CatalogAiEntityKind
+  kind: WebononeAiEntityKind
   id: string
   label: string
 }
@@ -574,7 +589,7 @@ function isPlatformAiEntityRef(data: unknown): data is PlatformAiEntityRef {
     return DATA_AI_ENTITY_KINDS.includes(entity.kind as DataAiEntityKind)
   }
   if (entity.service === 'webonone') {
-    return CATALOG_AI_ENTITY_KINDS.includes(entity.kind as CatalogAiEntityKind)
+    return WEBONONE_AI_ENTITY_KINDS.includes(entity.kind as WebononeAiEntityKind)
   }
   return false
 }

@@ -8,6 +8,7 @@ import { ToolRegistry } from './ai/tools/registry.js'
 import { createAiSettingsService } from './services/aiSettings.service.js'
 import { createKnexConversationRepository } from './services/conversation.repository.js'
 import { createConversationService } from './services/conversation.service.js'
+import { createTextPolishService } from './services/textPolish.service.js'
 import { createMemoryRateLimiter } from './middleware/rateLimit.js'
 
 const registry = new ToolRegistry()
@@ -21,6 +22,14 @@ const executor = new HttpToolExecutor({
     data: {
       apiBaseUrl: env.dataApiBaseUrl,
       serviceApiKey: env.dataServiceApiKey,
+    },
+    payment: {
+      apiBaseUrl: env.paymentApiBaseUrl,
+      serviceApiKey: env.paymentServiceApiKey,
+    },
+    sms: {
+      apiBaseUrl: env.smsApiBaseUrl,
+      serviceApiKey: env.smsServiceApiKey,
     },
   },
   timeoutMs: env.aiToolHttpTimeoutMs,
@@ -42,6 +51,20 @@ function configuredPeers(): CapabilityPeer[] {
       serviceApiKey: env.dataServiceApiKey,
     })
   }
+  if (env.paymentApiBaseUrl && env.paymentServiceApiKey) {
+    peers.push({
+      service: 'payment',
+      apiBaseUrl: env.paymentApiBaseUrl,
+      serviceApiKey: env.paymentServiceApiKey,
+    })
+  }
+  if (env.smsApiBaseUrl && env.smsServiceApiKey) {
+    peers.push({
+      service: 'sms',
+      apiBaseUrl: env.smsApiBaseUrl,
+      serviceApiKey: env.smsServiceApiKey,
+    })
+  }
   return peers
 }
 
@@ -53,18 +76,24 @@ const capabilityRefresher = createCapabilityRefresher(registry, configuredPeers)
 
 const aiSettingsService = createAiSettingsService()
 
+const resolveProvider = (ctx: Parameters<typeof aiSettingsService.resolveProvider>[0]) =>
+  aiSettingsService.resolveProvider(ctx)
+
 const conversationService = createConversationService({
   repository: createKnexConversationRepository(db),
-  resolveProvider: (ctx) => aiSettingsService.resolveProvider(ctx),
+  resolveProvider,
   defaultSystemPrompt: env.aiSystemPrompt,
   registry,
   executor,
   ensureCapabilitiesReady: () => capabilityRefresher.ensureReady(),
 })
 
+const textPolishService = createTextPolishService({ resolveProvider })
+
 const app = createApp({
   conversationService,
   aiSettingsService,
+  textPolishService,
   rateLimiter: createMemoryRateLimiter({
     max: env.guestRateLimitMax,
     windowMs: env.guestRateLimitWindowMs,

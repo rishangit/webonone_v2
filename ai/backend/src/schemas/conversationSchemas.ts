@@ -20,7 +20,14 @@ const dataEntityKindSchema = z.enum([
   'attribute',
 ])
 
-const catalogEntityKindSchema = z.enum(['product', 'service', 'space'])
+const webononeEntityKindSchema = z.enum([
+  'product',
+  'service',
+  'space',
+  'staff',
+  'event',
+  'company',
+])
 
 export const dataEntityContextRefSchema = z
   .object({
@@ -34,11 +41,14 @@ export const dataEntityContextRefSchema = z
 export const webononeCatalogEntityContextRefSchema = z
   .object({
     service: z.literal('webonone'),
-    kind: catalogEntityKindSchema,
+    kind: webononeEntityKindSchema,
     id: nanoidIdSchema,
     label: z.string().trim().min(1).max(255).optional(),
   })
   .strict()
+
+/** @deprecated Alias — kinds now include staff, event, and company. */
+export const webononeEntityContextRefSchema = webononeCatalogEntityContextRefSchema
 
 export const entityContextRefSchema = z.discriminatedUnion('service', [
   dataEntityContextRefSchema,

@@ -60,4 +60,9 @@ export const aiApi = {
       { method: 'POST', body: JSON.stringify({ remaining }) },
     ),
   getAiSettings: () => apiClient<AiSettingsResponse>('/me/ai-settings'),
+  polishText: (body: { text: string; field?: unknown; form?: unknown }) =>
+    apiClient<{ text: string }>('/text/polish', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 }

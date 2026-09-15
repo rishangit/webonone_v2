@@ -10,12 +10,19 @@ import {
   FormField,
   Input,
   PasswordInput,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Textarea,
   mapZodIssuesToFieldErrors,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import {
+  AI_PROVIDER_OPTIONS,
+  defaultsForProvider,
   isUnchangedSavedApiKey,
   platformAiSettingsFormSchema,
   type PlatformAiSettingsFormValues,
@@ -106,6 +113,10 @@ export function AiPlatformSettingsDialog({
       setFieldErrors(fieldErrorsFromIssues(parsed.error.issues))
       return
     }
+    if (form.provider === 'openai' && !nextApiKey && !settings?.hasApiKey) {
+      setFieldErrors({ apiKey: t('ai.fields.apiKeyRequired') })
+      return
+    }
     setFieldErrors({})
     wasSaving.current = true
     dispatch(aiSettingsActions.patchPlatformSettingsRequested(parsed.data))
@@ -144,6 +155,35 @@ export function AiPlatformSettingsDialog({
       ) : null}
 
       <Form id={PLATFORM_FORM_ID} onSubmit={handleSubmit}>
+        <FormField label={t('ai.fields.provider')} htmlFor="ai-platform-provider" required>
+          <Select
+            value={form.provider}
+            onValueChange={(value) => {
+              const provider = value as PlatformAiSettingsFormValues['provider']
+              if (provider !== 'ollama' && provider !== 'openai') return
+              setForm((prev) => {
+                const defaults = defaultsForProvider(provider)
+                return {
+                  ...prev,
+                  provider,
+                  model: defaults.model,
+                  baseUrl: defaults.baseUrl,
+                }
+              })
+            }}
+          >
+            <SelectTrigger id="ai-platform-provider">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AI_PROVIDER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
         <FormField label={t('ai.fields.model')} htmlFor="ai-platform-model" error={fieldErrors.model} required>
           <Input
             id="ai-platform-model"
@@ -163,7 +203,14 @@ export function AiPlatformSettingsDialog({
             onChange={(event) => setForm((prev) => ({ ...prev, baseUrl: event.target.value }))}
           />
         </FormField>
-        <FormField label={t('ai.fields.apiKey')} htmlFor="ai-platform-api-key" error={fieldErrors.apiKey}>
+        <FormField
+          label={
+            form.provider === 'openai' ? t('ai.fields.apiKeyOpenAi') : t('ai.fields.apiKey')
+          }
+          htmlFor="ai-platform-api-key"
+          error={fieldErrors.apiKey}
+          required={form.provider === 'openai'}
+        >
           <PasswordInput
             id="ai-platform-api-key"
             autoComplete="off"
@@ -171,7 +218,9 @@ export function AiPlatformSettingsDialog({
             placeholder={
               settings?.hasApiKey
                 ? t('ai.fields.apiKeyPlaceholderSaved')
-                : t('ai.fields.apiKeyPlaceholderOptional')
+                : form.provider === 'openai'
+                  ? t('ai.fields.apiKeyPlaceholderOpenAi')
+                  : t('ai.fields.apiKeyPlaceholderOptional')
             }
             value={apiKey}
             onChange={(event) => setApiKey(event.target.value)}

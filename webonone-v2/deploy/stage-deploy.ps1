@@ -70,6 +70,17 @@ if (-not (Test-Path $logsDir)) {
 Copy-Item -Path (Join-Path $FrontendDist '*') -Destination (Join-Path $DeployDir 'public') -Recurse -Force
 Copy-Item -Path (Join-Path $BackendDist '*') -Destination (Join-Path $DeployDir 'dist') -Recurse -Force
 
+$RepoRoot = Split-Path $ServiceRoot -Parent
+$DesktopInstaller = Join-Path $RepoRoot 'desktop\release\WebOnOne-Setup.exe'
+$DownloadsDir = Join-Path $DeployDir 'public\downloads'
+if (Test-Path $DesktopInstaller) {
+    New-Item -ItemType Directory -Path $DownloadsDir -Force | Out-Null
+    Copy-Item -Path $DesktopInstaller -Destination (Join-Path $DownloadsDir 'WebOnOne-Setup.exe') -Force
+    Write-Host 'Copied desktop installer to public\downloads\WebOnOne-Setup.exe'
+} else {
+    Write-Host "Desktop installer not found at $DesktopInstaller — run npm run build:desktop before deploy to publish the download."
+}
+
 Write-Host ''
 Write-Host 'Staging complete. IIS physical path:'
 Write-Host "  $DeployDir"

@@ -16,6 +16,7 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
+import { WebononeCopyToAiMenuItem } from '@/features/ai/components/WebononeCopyToAiMenuItem'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { formatWorkingDaysSummary } from '@/features/staff/schemas/staffSchemas'
 import { staffActions } from '@/features/staff/store'
@@ -93,6 +94,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
               <DropdownMenuItem onSelect={() => openDetails(item.id)}>
                 {t('list.viewDetails')}
               </DropdownMenuItem>
+              <WebononeCopyToAiMenuItem kind="staff" id={item.id} label={item.displayName} />
               {canManage ? (
                 <>
                   <DropdownMenuSeparator />

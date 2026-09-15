@@ -15,6 +15,7 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
+import { WebononeCopyToAiMenuItem } from '@/features/ai/components/WebononeCopyToAiMenuItem'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { formatEventWhen } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions } from '@/features/calendar/store'
@@ -101,6 +102,7 @@ export function EventsList({
               <DropdownMenuItem onSelect={() => openDetails(item.id)}>
                 {t('events.viewDetails')}
               </DropdownMenuItem>
+              <WebononeCopyToAiMenuItem kind="event" id={item.id} label={item.serviceName} />
               {canManage ? (
                 <>
                   <DropdownMenuSeparator />

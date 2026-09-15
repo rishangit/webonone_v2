@@ -680,7 +680,7 @@ export function createConversationService(deps: {
 
           if (!hasWriteToolCalls(toolCalls, tools)) {
             const primary = resolvedEntityContext.find((item) => item.record)
-            if (primary) {
+            if (primary?.ref.service === 'data') {
               const updateToolName = getUpdateToolNameForDataEntityKind(primary.ref.kind)
               const updateTool = tools.find((tool) => tool.name === updateToolName)
               if (updateTool?.relatedArgs?.length) {

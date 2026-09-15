@@ -4,5 +4,15 @@
   "homeSite": "මුල් පිටුව",
   "searchPlaceholder": "උපකාර සොයන්න",
   "searchAria": "උපකාර ලිපි සොයන්න",
-  "docsNav": "උපකාර මාතෘකා"
+  "docsNav": "උපකාර මාතෘකා",
+  "feedbackNav": "දෝෂ සහ විශේෂාංග වාර්තා",
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "signInTitle": "ඉදිරියට යාමට sign in කරන්න",
+  "signInDescription": "දෝෂ සහ විශේෂාංග වාර්තා බැලීමට හා යොමු කිරීමට ඔබගේ WebOnOne ගිණුම භාවිතා කරන්න.",
+  "continueToSignIn": "Sign in වෙත යන්න",
+  "backToSignIn": "Sign in වෙත ආපසු",
+  "completingSignIn": "Sign in සම්පූර්ණ කරමින්…",
+  "authCallbackMissing": "Authorization ප්‍රතිචාරය නැත",
+  "authCallbackInvalid": "අවලංගු හෝ කල් ඉකුත් වූ sign-in සැසිය"
 }

@@ -23,9 +23,10 @@ Backend loads only `support/backend/.env`. Production host: `https://support.web
 
 ## Ownership
 
-- Public how-tos for WebOnOne users. No login. User-visible product changes must update these articles in the same task — [help-articles.mdc](help-articles.mdc).
+- Public how-tos for WebOnOne users. Help articles need no login; **`/feedback`** uses Identity JWT.
+- Bug/feature reports API + `feedback_reports` table in `webonone_support`. Super admin updates status via JWT `platform_role`.
 - Articles in `frontend/src/content/en/**/*.md` and `frontend/src/content/si/**/*.md` (Sinhala mirrors English paths; missing `si` file falls back to English).
-- Health API + SPA fallback only. Help content is not stored in MySQL.
+- Help article bodies are not stored in MySQL (Markdown at build time).
 
 ## Verification
 

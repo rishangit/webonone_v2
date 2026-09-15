@@ -6,7 +6,8 @@ import type {
   DataEntityKind,
   EntityContextRef,
   ResolvedEntityContext,
-  WebononeCatalogEntityContextRef,
+  WebononeEntityContextRef,
+  WebononeEntityKind,
 } from './types.js'
 
 const GET_TOOL_BY_KIND: Record<DataEntityKind, string> = {
@@ -45,6 +46,37 @@ const CATALOG_KIND_API: Record<CatalogEntityKind, string> = {
 const GET_CATALOG_ITEM_TOOL = 'get_catalog_item'
 const UPDATE_CATALOG_ITEM_TOOL = 'update_catalog_item'
 const SEARCH_COMPANY_CATALOG_TOOL = 'search_company_catalog'
+
+const WEBONONE_GET_TOOL_BY_KIND: Record<WebononeEntityKind, string> = {
+  product: GET_CATALOG_ITEM_TOOL,
+  service: GET_CATALOG_ITEM_TOOL,
+  space: GET_CATALOG_ITEM_TOOL,
+  staff: 'get_staff',
+  event: 'get_event',
+  company: 'get_company',
+}
+
+const WEBONONE_UPDATE_TOOL_BY_KIND: Partial<Record<WebononeEntityKind, string>> = {
+  product: UPDATE_CATALOG_ITEM_TOOL,
+  service: UPDATE_CATALOG_ITEM_TOOL,
+  space: UPDATE_CATALOG_ITEM_TOOL,
+  staff: 'update_staff',
+  event: 'update_event',
+  company: 'update_company',
+}
+
+const WEBONONE_LIST_TOOL_BY_KIND: Partial<Record<WebononeEntityKind, string>> = {
+  product: SEARCH_COMPANY_CATALOG_TOOL,
+  service: SEARCH_COMPANY_CATALOG_TOOL,
+  space: SEARCH_COMPANY_CATALOG_TOOL,
+  staff: 'list_staff',
+  event: 'list_events',
+  company: 'list_my_companies',
+}
+
+function isCatalogEntityKind(kind: WebononeEntityKind): kind is CatalogEntityKind {
+  return kind === 'product' || kind === 'service' || kind === 'space'
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -192,8 +224,8 @@ async function resolveDataEntityRef(
   return { ref, record }
 }
 
-async function resolveWebononeCatalogRef(
-  ref: WebononeCatalogEntityContextRef,
+async function resolveWebononeEntityRef(
+  ref: WebononeEntityContextRef,
   options: {
     registry: ToolRegistry | undefined
     executor: ToolExecutor | undefined
@@ -201,16 +233,22 @@ async function resolveWebononeCatalogRef(
   },
 ): Promise<ResolvedEntityContext> {
   const { registry, executor, ctx } = options
-  const tool = registry?.get(GET_CATALOG_ITEM_TOOL)
+  const toolName = WEBONONE_GET_TOOL_BY_KIND[ref.kind]
+  const tool = registry?.get(toolName)
   if (!tool || !executor) {
     return { ref, error: 'Entity lookup unavailable' }
+  }
+
+  const argumentsPayload: Record<string, unknown> = { id: ref.id }
+  if (isCatalogEntityKind(ref.kind)) {
+    argumentsPayload.kind = CATALOG_KIND_API[ref.kind]
   }
 
   const result = await executor.execute(
     {
       id: `ctx:webonone:${ref.kind}:${ref.id}`,
-      name: GET_CATALOG_ITEM_TOOL,
-      arguments: { kind: CATALOG_KIND_API[ref.kind], id: ref.id },
+      name: toolName,
+      arguments: argumentsPayload,
     },
     ctx,
     { confirmed: true },
@@ -248,7 +286,7 @@ export async function resolveEntityContext(
       continue
     }
     if (ref.service === 'webonone') {
-      results.push(await resolveWebononeCatalogRef(ref, options))
+      results.push(await resolveWebononeEntityRef(ref, options))
       continue
     }
     results.push({ ref, error: 'Unsupported entity service' })
@@ -268,16 +306,29 @@ function formatDataEntityBlock(item: ResolvedEntityContext & { ref: DataEntityCo
   return `--- Data ${item.ref.kind}: ${label} (id: ${item.ref.id}) ---\nLookup failed: ${item.error ?? 'UNKNOWN'}`
 }
 
-function formatWebononeCatalogBlock(
-  item: ResolvedEntityContext & { ref: WebononeCatalogEntityContextRef },
+function formatWebononeEntityBlock(
+  item: ResolvedEntityContext & { ref: WebononeEntityContextRef },
 ): string {
   const label = item.ref.label?.trim() || item.ref.kind
-  const catalogKind = CATALOG_KIND_API[item.ref.kind]
-  if (item.record) {
-    const summary = summarizeCompanyCatalogRecord(item.record)
-    return `--- Company ${item.ref.kind}: ${label} (company catalog id: ${item.ref.id}; kind: ${catalogKind}) ---\n${summary}\nRead tool: ${GET_CATALOG_ITEM_TOOL}\nUpdate tool: ${UPDATE_CATALOG_ITEM_TOOL} (forked/custom only; linked items are read-only until forked)\nList tool: ${SEARCH_COMPANY_CATALOG_TOOL}\n${JSON.stringify(item.record, null, 2)}`
+  const getTool = WEBONONE_GET_TOOL_BY_KIND[item.ref.kind]
+  const updateTool = WEBONONE_UPDATE_TOOL_BY_KIND[item.ref.kind]
+  const listTool = WEBONONE_LIST_TOOL_BY_KIND[item.ref.kind]
+
+  if (isCatalogEntityKind(item.ref.kind)) {
+    const catalogKind = CATALOG_KIND_API[item.ref.kind]
+    if (item.record) {
+      const summary = summarizeCompanyCatalogRecord(item.record)
+      return `--- Company ${item.ref.kind}: ${label} (company catalog id: ${item.ref.id}; kind: ${catalogKind}) ---\n${summary}\nRead tool: ${getTool}\nUpdate tool: ${UPDATE_CATALOG_ITEM_TOOL} (forked/custom only; linked items are read-only until forked)\nList tool: ${SEARCH_COMPANY_CATALOG_TOOL}\n${JSON.stringify(item.record, null, 2)}`
+    }
+    return `--- Company ${item.ref.kind}: ${label} (company catalog id: ${item.ref.id}) ---\nLookup failed: ${item.error ?? 'UNKNOWN'}`
   }
-  return `--- Company ${item.ref.kind}: ${label} (company catalog id: ${item.ref.id}) ---\nLookup failed: ${item.error ?? 'UNKNOWN'}`
+
+  if (item.record) {
+    const updateLine = updateTool ? `\nUpdate tool: ${updateTool}` : ''
+    const listLine = listTool ? `\nList tool: ${listTool}` : ''
+    return `--- WebOnOne ${item.ref.kind}: ${label} (id: ${item.ref.id}) ---\nRead tool: ${getTool}${updateLine}${listLine}\n${JSON.stringify(item.record, null, 2)}`
+  }
+  return `--- WebOnOne ${item.ref.kind}: ${label} (id: ${item.ref.id}) ---\nLookup failed: ${item.error ?? 'UNKNOWN'}`
 }
 
 export function formatEntityContextSupplement(resolved: ResolvedEntityContext[]): string {
@@ -287,7 +338,7 @@ export function formatEntityContextSupplement(resolved: ResolvedEntityContext[])
 
   const blocks = resolved.map((item) => {
     if (item.ref.service === 'webonone') {
-      return formatWebononeCatalogBlock(item as ResolvedEntityContext & { ref: WebononeCatalogEntityContextRef })
+      return formatWebononeEntityBlock(item as ResolvedEntityContext & { ref: WebononeEntityContextRef })
     }
     return formatDataEntityBlock(item as ResolvedEntityContext & { ref: DataEntityContextRef })
   })
@@ -301,6 +352,7 @@ export function formatEntityContextSupplement(resolved: ResolvedEntityContext[])
     '- Write tools park Confirm/Skip rows; missing related records appear as nested checkboxes under the parent row.',
     '- When the user asks to suggest or add attribute values on an attached product, service, or space, call create_data_*_attribute_value once per value with the attached id and attributeId from get_data_*.',
     '- When the user asks to suggest or add market variants on an attached product, call list_data_product_variants and get_data_product first, ensure attributes and labeled attribute values exist, then call create_data_product_variant once per retail SKU with name, sku, kind, and attribute_value_ids from get_data_product. Skip existing combinations. Confirm rows must show name and sku — not bare attribute ids or orphan numbers.',
+    '- When the user asks about stocks on a product variant, call list_data_product_variant_stocks with the product id and variantId, then create_data_product_variant_stock for new batches (quantity, batch_number, cost_price, sell_price, purchase_date).',
   ].join('\n')
 
   const companyInstructions = [
@@ -309,6 +361,9 @@ export function formatEntityContextSupplement(resolved: ResolvedEntityContext[])
     '- Use update_catalog_item only for forked or custom company items; linked items must be forked first.',
     '- For Data library attribute values on a linked library entity, use the library_entity_id with create_data_*_attribute_value when appropriate.',
     '- For Data library product variants on a linked library entity, use the library_entity_id with list_data_product_variants and create_data_product_variant.',
+    'When the user asks about an attached staff member, calendar event, or company profile:',
+    '- Use get_staff / get_event / get_company with the attached id.',
+    '- Use the matching update_* tool when the user asks to change fields; write tools park Confirm/Skip rows.',
   ].join('\n')
 
   return `Attached records (authoritative; use these ids and fields when answering or calling tools):\n\n${blocks.join('\n\n')}\n\n${dataInstructions}\n\n${companyInstructions}`

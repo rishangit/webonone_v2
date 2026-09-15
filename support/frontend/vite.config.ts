@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 const uiKitRoot = path.resolve(__dirname, '../../ui-kit/package')
+const platformNavRoot = path.resolve(__dirname, '../../packages/platform-nav')
+const platformEmbedRoot = path.resolve(__dirname, '../../packages/platform-embed')
+const storeKitRoot = path.resolve(__dirname, '../../packages/store-kit')
 const themeRoot = path.resolve(__dirname, '../../packages/theme')
 const i18nRoot = path.resolve(__dirname, '../../packages/i18n')
 
@@ -13,6 +16,9 @@ export default defineConfig({
       { find: '@webonone/ui-kit/styles', replacement: path.join(uiKitRoot, 'src/styles/globals.css') },
       { find: '@webonone/ui-kit/tailwind', replacement: path.join(uiKitRoot, 'tailwind.config.ts') },
       { find: '@webonone/ui-kit', replacement: path.join(uiKitRoot, 'src/index.ts') },
+      { find: '@webonone/platform-nav', replacement: path.join(platformNavRoot, 'src/index.ts') },
+      { find: '@webonone/platform-embed', replacement: path.join(platformEmbedRoot, 'src/index.ts') },
+      { find: '@webonone/store-kit', replacement: path.join(storeKitRoot, 'src/index.ts') },
       { find: '@webonone/theme', replacement: path.join(themeRoot, 'src/index.ts') },
       { find: '@webonone/i18n', replacement: path.join(i18nRoot, 'src/index.ts') },
       { find: '@', replacement: path.resolve(__dirname, './src') },

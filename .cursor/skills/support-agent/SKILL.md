@@ -23,7 +23,8 @@ When WebOnOne (or a peer in the app shell) **adds or changes something users see
 
 ## Model
 
-- Public knowledge base. No JWT.
+- Public knowledge base for help articles. **`/feedback`** requires Identity JWT (login via `/login` → `/callback`).
+- Bug/feature reports: `GET/POST /api/v1/feedback`, `PATCH /api/v1/feedback/:id/status` (super admin only); data in MySQL `feedback_reports`.
 - Articles: YAML frontmatter (`title`, `category`, `slug`, `audience`, `order`, `summary`) + Markdown body.
 - Catalog is built at compile time with `import.meta.glob` from `content/en` and `content/si`.
 - Chrome i18n `en`/`si`; article bodies follow the active locale with English fallback when a Sinhala file is missing.
@@ -45,7 +46,7 @@ When WebOnOne (or a peer in the app shell) **adds or changes something users see
 | Frontend | 3021 | `support/frontend/.env` |
 | Backend | 4021 | `support/backend/.env` |
 
-FE: `VITE_API_BASE_URL`, `VITE_WEBONONE_ORIGIN`, `VITE_WEBSITE_ORIGIN`.
+FE: `VITE_API_BASE_URL`, `VITE_IDENTITY_ORIGIN`, `VITE_IDENTITY_API_BASE_URL`, `VITE_WEBONONE_ORIGIN`, `VITE_WEBSITE_ORIGIN`. BE: `JWT_SECRET` (match Identity).
 
 ## Key paths
 
@@ -53,6 +54,7 @@ FE: `VITE_API_BASE_URL`, `VITE_WEBONONE_ORIGIN`, `VITE_WEBSITE_ORIGIN`.
 - Catalog: `support/frontend/src/features/docs/content/catalog.ts` (locale-aware; `useHelpCatalog` hook)
 - Layout: `support/frontend/src/app/SupportLayout.tsx`
 - Health: `support/backend/src/routes/health.routes.ts`
+- Feedback: `support/frontend/src/features/feedback/`, `support/backend/src/routes/feedback.routes.ts`
 
 ## Verification
 

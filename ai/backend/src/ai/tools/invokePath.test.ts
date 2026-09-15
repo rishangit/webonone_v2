@@ -36,10 +36,25 @@ describe('isAllowedInvokePath', () => {
   it('allows product variant paths', () => {
     assert.equal(isAllowedInvokePath('data', '/api/v1/products/:id/variants'), true)
     assert.equal(isAllowedInvokePath('data', '/api/v1/products/:id/variants/:variantId'), true)
+    assert.equal(
+      isAllowedInvokePath('data', '/api/v1/products/:id/variants/:variantId/stocks'),
+      true,
+    )
+    assert.equal(
+      isAllowedInvokePath(
+        'data',
+        '/api/v1/products/:id/variants/:variantId/stocks/:stockId/active',
+      ),
+      true,
+    )
   })
 
   it('rejects unpublished services and other nested Data paths', () => {
     assert.equal(isAllowedInvokePath('email', '/api/v1/templates'), false)
+    assert.equal(isAllowedInvokePath('payment', '/api/v1/invoices'), true)
+    assert.equal(isAllowedInvokePath('payment', '/api/v1/invoices/:id'), true)
+    assert.equal(isAllowedInvokePath('sms', '/api/v1/templates'), true)
+    assert.equal(isAllowedInvokePath('sms', '/api/v1/templates/:id'), true)
     assert.equal(isAllowedInvokePath('data', '/api/v1/products/:id/stocks'), false)
     assert.equal(isAllowedInvokePath('webonone', '/api/v1/internal/ai/capabilities'), false)
   })

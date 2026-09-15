@@ -17,3 +17,4 @@ coverage/
 **/deploy/public/
 **/deploy/logs/
 **/deploy/storage/
+webonone-v2/frontend/public/downloads/*.exe

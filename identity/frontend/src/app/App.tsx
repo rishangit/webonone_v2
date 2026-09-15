@@ -2,6 +2,7 @@ import { lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@webonone/ui-kit'
 import { AppLayout } from '@/app/AppLayout'
+import { AiFieldAssistHost } from '@/features/ai/components/AiFieldAssistHost'
 import { LazyRoute } from '@/app/LazyRoute'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { LogoutPage } from '@/features/auth/pages/LogoutPage'
@@ -83,6 +84,7 @@ const VerifyPhoneEmbedPage = lazy(() =>
 export function App() {
   return (
     <ToastProvider>
+      <AiFieldAssistHost>
       <BrowserRouter>
         <Routes>
           <Route element={<AppLayout />}>
@@ -230,6 +232,7 @@ export function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </AiFieldAssistHost>
     </ToastProvider>
   )
 }

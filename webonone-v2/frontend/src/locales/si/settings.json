@@ -6,7 +6,21 @@
     "tabs": {
       "account": "ගිණුම",
       "appearance": "පෙනුම",
-      "ai": "AI"
+      "ai": "AI",
+      "downloads": "Downloads"
+    }
+  },
+  "downloads": {
+    "desktop": {
+      "title": "Desktop app",
+      "description": "Browser එකේ ඇති අත්දැකීම dedicated කවුළුවක Windows හි WebOnOne install කරන්න.",
+      "summary": "Desktop app live WebOnOne website load කරයි. App නැවත විවෘත කිරීමෙන් හෝ refresh කිරීමෙන් පසු නව features ස්වයංක්‍රීයව පෙනේ.",
+      "bulletSync": "Calendar, people, catalog, messages, sales, සහ website — browser එකේ මෙන්ම.",
+      "bulletWindows": "Windows 10 හෝ නවත (64-bit).",
+      "bulletInternet": "Internet සම්බන්ධතාවය අවශ්‍යයි.",
+      "download": "Windows සඳහා download",
+      "help": "ස්ථාපන උදව්",
+      "afterInstall": "Install කිරීමෙන් පසු Start menu හි WebOnOne විවෘත කර මෙහි භාවිතා කරන එම ගිණුමෙන් sign in වන්න."
     }
   },
   "account": {
@@ -53,11 +67,11 @@
   },
   "ai": {
     "title": "AI සහායක",
-    "description": "යෙදුම් සහායක සඳහා ඔබේම Ollama Cloud ගිණුම සම්බන්ධ කරන්න.",
+    "description": "යෙදුම් සහායක සඳහා Ollama Cloud හෝ OpenAI සම්බන්ධ කරන්න.",
     "setup": {
       "step1": "නොමිලේ ගිණුමක් සාදන්න",
       "step2": "විවෘත කරන්න",
-      "step3": "මෙම කාඩ්පතේ Edit එබී API key ඇතුළත් කර සුරකින්න."
+      "step3": "මෙම කාඩ්පතේ Edit එබී provider තෝරා API key ඇතුළත් කර සුරකින්න."
     },
     "configuredSummary": "Model {{model}} භාවිතා කරයි. API key: {{hasKey}}.",
     "keySaved": "සුරකින ලදී",
@@ -76,9 +90,12 @@
       "hide": "උසස් සැකසුම් සඟවන්න"
     },
     "fields": {
+      "provider": "Provider",
       "apiKey": "Ollama Cloud API key",
+      "apiKeyOpenAi": "OpenAI API key",
       "apiKeyRequired": "පළමු වර සැකසීම සඳහා API key අවශ්‍යයි",
       "apiKeyPlaceholder": "ollama.com/settings/keys වෙතින් සම්පූර්ණ key ඇතුළත් කරන්න (dot එක ඇතුළත්)",
+      "apiKeyPlaceholderOpenAi": "ඔබේ OpenAI API key ඇතුළත් කරන්න (sk- වලින් ආරම්භ වේ)",
       "apiKeyPlaceholderSaved": "පවතින key එක වෙනුවට අලුත් සම්පූර්ණ key එකක් ඇතුළත් කරන්න",
       "apiKeyPlaceholderOptional": "දේශීය Ollama සඳහා අනිවාර්ය නොවේ",
       "model": "Model",

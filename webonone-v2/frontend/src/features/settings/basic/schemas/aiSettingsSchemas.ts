@@ -90,3 +90,24 @@ export const OLLAMA_CLOUD_DEFAULTS: UserAiSettingsFormValues = {
   baseUrl: 'https://ollama.com',
   timeoutMs: 180_000,
 }
+
+export const OPENAI_DEFAULTS: UserAiSettingsFormValues = {
+  provider: 'openai',
+  model: 'gpt-4o-mini',
+  baseUrl: 'https://api.openai.com',
+  timeoutMs: 180_000,
+}
+
+export const AI_PROVIDER_OPTIONS = [
+  { value: 'ollama' as const, label: 'Ollama' },
+  { value: 'openai' as const, label: 'OpenAI' },
+]
+
+export function defaultsForProvider(
+  provider: UserAiSettingsFormValues['provider'],
+): UserAiSettingsFormValues {
+  if (provider === 'openai') {
+    return { ...OPENAI_DEFAULTS }
+  }
+  return { ...OLLAMA_CLOUD_DEFAULTS }
+}

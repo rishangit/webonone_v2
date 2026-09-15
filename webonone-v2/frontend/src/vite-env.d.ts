@@ -18,6 +18,7 @@ interface ImportMetaEnv {
   readonly VITE_AI_ORIGIN?: string
   readonly VITE_AI_API_BASE_URL?: string
   readonly VITE_SUPPORT_ORIGIN?: string
+  readonly VITE_DESKTOP_INSTALLER_URL?: string
   readonly VITE_GOOGLE_MAPS_API_KEY?: string
   readonly VITE_COMPANY_SITE_HOST?: string
 }
