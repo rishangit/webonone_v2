@@ -15,4 +15,6 @@ On a session day (from the schedule or session screen):
 
 Exact buttons depend on the service time mode. Window-mode sessions use [queue tokens](/docs/calendar/queue-token). Duration sessions use [one attendee](/docs/calendar/duration-attendee).
 
+About **5 minutes before** start, the staff assigned to that session get a **Session due to start** alert (in-app bell, and on the mobile app the phone notification tray even if the app is closed).
+
 In window mode, call next follows **call order** (not only the printed token number). Late check-ins keep their number; call order may place them earlier or later in the waiting line so waits stay roughly equal — see [queue tokens](/docs/calendar/queue-token).

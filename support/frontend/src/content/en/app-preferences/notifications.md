@@ -14,4 +14,6 @@ In the header:
 - The **bell** opens **Notifications**.
 - **Log out** signs you out of the app.
 
+On the **mobile app**, the same alerts also appear in the phone notification tray when the app is closed or the phone is asleep — including **Session due to start** for the staff assigned to that session. Allow notifications when Android or iOS asks. Tap a tray alert to open the related screen.
+
 To change company or role without logging out, use [Switch account](/docs/getting-started/switch-account).

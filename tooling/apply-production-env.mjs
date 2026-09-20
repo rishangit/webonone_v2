@@ -331,6 +331,7 @@ function main() {
         '',
         `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
         `COMPANY_SITE_HOST=${companySiteHost(master)}`,
+        `EXPO_ACCESS_TOKEN=${get(master, 'EXPO_ACCESS_TOKEN')}`,
       ]),
     ),
   );

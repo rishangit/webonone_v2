@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "691568839902",
+    "project_id": "webonone",
+    "storage_bucket": "webonone.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:691568839902:android:ee2d21cc6a1934f69e864f",
+        "android_client_info": {
+          "package_name": "com.webonone.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvDAfIndjZ7QZTQd8VA4iK6bA1n_KcH5E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

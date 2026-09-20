@@ -8,6 +8,9 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { Platform } from 'react-native'
+import { useRouter } from 'expo-router'
+import * as Notifications from 'expo-notifications'
 import { useToast } from '@webonone/mobile-ui'
 import { useTranslation } from 'react-i18next'
 import {
@@ -15,6 +18,11 @@ import {
   type NotificationItem,
 } from '@/features/notifications/services/notificationsApi'
 import { useSession } from '@/features/auth/SessionContext'
+import {
+  notificationIdFromData,
+  registerPushDevice,
+  resolvePushHref,
+} from '@/features/notifications/utils/pushNotifications'
 
 const POLL_INTERVAL_MS = 30_000
 
@@ -37,6 +45,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useSession()
   const { toast } = useToast()
   const { t } = useTranslation('shell')
+  const router = useRouter()
   const [items, setItems] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -45,6 +54,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const previousUnreadRef = useRef<number | null>(null)
   const listLimitRef = useRef(20)
+  const handledPushRef = useRef<string | null>(null)
 
   const pollUnread = useCallback(async () => {
     if (!isAuthenticated) return
@@ -133,6 +143,40 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     setUnreadCount(0)
     previousUnreadRef.current = 0
   }, [])
+
+  const openPushResponse = useCallback(
+    async (response: Notifications.NotificationResponse) => {
+      const identifier = response.notification.request.identifier
+      if (handledPushRef.current === identifier) return
+      handledPushRef.current = identifier
+
+      const data = response.notification.request.content.data
+      const notificationId = notificationIdFromData(data)
+      if (notificationId) {
+        try {
+          await markRead(notificationId)
+        } catch {
+          /* navigation still proceeds */
+        }
+      }
+      const href = resolvePushHref(data)
+      if (href) router.push(href)
+    },
+    [markRead, router],
+  )
+
+  useEffect(() => {
+    if (!isAuthenticated || Platform.OS === 'web') return
+    void registerPushDevice()
+
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      void openPushResponse(response)
+    })
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) void openPushResponse(response)
+    })
+    return () => sub.remove()
+  }, [isAuthenticated, openPushResponse])
 
   const value = useMemo(
     () => ({

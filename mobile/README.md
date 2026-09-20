@@ -73,6 +73,16 @@ npm run type-check -w @webonone/mobile
 
 Sending real SMS requires a **dev/prebuild** build on a physical Android phone. Expo Go cannot send SMS.
 
+## OS tray notifications (push)
+
+In-app bell polling only runs while the app is open. Tray alerts when the phone is asleep or the app is killed use **Expo Push** (FCM on Android).
+
+1. Create an Expo project (`npx eas init` in `mobile/`) and set `EXPO_PROJECT_ID` in `mobile/.env`.
+2. Upload an Android FCM V1 service account in [Expo credentials](https://docs.expo.dev/push-notifications/fcm-credentials/). Do not commit `google-services.json`.
+3. Optional for production: set `EXPO_ACCESS_TOKEN` on the WebOnOne backend (from expo.dev access tokens).
+4. Rebuild the native app after adding the `expo-notifications` plugin (`npm run mobile:android`). Expo Go cannot receive these pushes.
+5. Sign in on a **physical** phone and allow notifications. Session due-to-start (and every other in-app notification) is delivered to the assigned staff user's tray.
+
 Dev-only **UI Kit** gallery: `/dev/kit` (also listed in the drawer in development).
 
 ## Notes

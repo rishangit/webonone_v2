@@ -6,6 +6,7 @@ import type { AppLocale, StickySessionRole } from '@/shared/types'
 const ACCESS_TOKEN_KEY = 'webonone.mobile.accessToken'
 const DEVICE_KEY_KEY = 'webonone.mobile.deviceKey'
 const DEVICE_ID_KEY = 'webonone.mobile.deviceId'
+const PUSH_TOKEN_KEY = 'webonone.mobile.pushToken'
 const SESSION_ROLE_KEY = 'webonone.mobile.sessionRole'
 const LOCALE_KEY = 'webonone.locale'
 
@@ -99,5 +100,14 @@ export const secureStorage = {
   async clearDevice(): Promise<void> {
     await deleteItem(DEVICE_KEY_KEY)
     await deleteItem(DEVICE_ID_KEY)
+  },
+  async getPushToken(): Promise<string | null> {
+    return getItem(PUSH_TOKEN_KEY)
+  },
+  async setPushToken(token: string): Promise<void> {
+    await setItem(PUSH_TOKEN_KEY, token)
+  },
+  async clearPushToken(): Promise<void> {
+    await deleteItem(PUSH_TOKEN_KEY)
   },
 }

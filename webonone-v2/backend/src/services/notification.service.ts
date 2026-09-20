@@ -1,6 +1,8 @@
 import { nanoid } from 'nanoid'
 import * as notificationRepo from '../repositories/notification.repository.js'
+import * as pushDeviceRepo from '../repositories/pushDevice.repository.js'
 import type { CreateNotificationBody } from '../schemas/notificationSchemas.js'
+import { sendPushForNotification } from './expoPush.service.js'
 
 export type NotificationDto = {
   id: string
@@ -59,7 +61,16 @@ export async function createNotification(
       source_service: input.sourceService,
       source_event_id: input.sourceEventId ?? null,
     })
-    return row ? toDto(row) : null
+    if (!row) return null
+    const dto = toDto(row)
+    void sendPushForNotification({
+      userId: dto.userId,
+      id: dto.id,
+      title: dto.title,
+      body: dto.body,
+      href: dto.href,
+    })
+    return dto
   } catch (err) {
     console.error('[notifications] createNotification failed:', err)
     return null
@@ -140,4 +151,28 @@ export async function markAllNotificationsRead(userId: string): Promise<{ update
 export async function getLatestUnreadTitle(userId: string): Promise<string | null> {
   const row = await notificationRepo.findLatestUnread(userId)
   return row?.title ?? null
+}
+
+export async function registerPushDevice(
+  userId: string,
+  input: { token: string; platform: 'android' | 'ios' },
+): Promise<void> {
+  const existing = await pushDeviceRepo.findPushDeviceByToken(input.token)
+  if (existing) {
+    await pushDeviceRepo.updatePushDeviceOwner(existing.id, {
+      user_id: userId,
+      platform: input.platform,
+    })
+    return
+  }
+  await pushDeviceRepo.insertPushDevice({
+    id: nanoid(),
+    user_id: userId,
+    expo_push_token: input.token,
+    platform: input.platform,
+  })
+}
+
+export async function unregisterPushDevice(userId: string, token: string): Promise<void> {
+  await pushDeviceRepo.deletePushDeviceForUser(userId, token)
 }

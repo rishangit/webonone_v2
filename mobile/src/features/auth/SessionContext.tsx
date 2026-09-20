@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { normalizeLocale, type AppLocale } from '@webonone/i18n'
 import { authApi } from './authApi'
 import { getGoogleIdToken, GoogleSignInCancelledError } from './googleSignIn'
@@ -11,6 +11,7 @@ import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { setUnauthorizedHandler } from '@/shared/services/apiClient'
 import { secureStorage } from '@/shared/services/secureStorage'
 import type { UserProfile } from '@/shared/types'
+import { unregisterPushDevice } from '@/features/notifications/utils/pushNotifications'
 
 interface SessionContextValue {
   user: UserProfile | null
@@ -41,6 +42,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [blockReason, setBlockReason] = useState<string | null>(null)
   const [roleOptions, setRoleOptions] = useState<SessionRoleOption[]>([])
   const [locale, setLocaleState] = useState<AppLocale>('en')
+  const loggingOutRef = useRef(false)
 
   const clearSessionState = useCallback(() => {
     setUser(null)
@@ -51,10 +53,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = useCallback(async () => {
-    await secureStorage.clearAccessToken()
-    await secureStorage.clearSessionRole()
-    await secureStorage.clearDevice()
-    clearSessionState()
+    if (loggingOutRef.current) return
+    loggingOutRef.current = true
+    try {
+      await unregisterPushDevice()
+      await secureStorage.clearAccessToken()
+      await secureStorage.clearSessionRole()
+      await secureStorage.clearDevice()
+      clearSessionState()
+    } finally {
+      loggingOutRef.current = false
+    }
   }, [clearSessionState])
 
   const applyLocalLocale = useCallback(async (next: AppLocale) => {

@@ -42,6 +42,8 @@ interface MobileEnv {
 
   googleWebClientId: string
 
+  expoProjectId: string
+
 }
 
 
@@ -295,6 +297,8 @@ export const env: MobileEnv = {
   aiOrigin: resolveOrigin(extra.aiOrigin, 'http://localhost:3020', extra.aiApiBaseUrl),
 
   googleWebClientId: (extra.googleWebClientId ?? '').trim(),
+
+  expoProjectId: (extra.expoProjectId ?? '').trim(),
 
 }
 

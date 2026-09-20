@@ -20,4 +20,15 @@ export const internalCreateNotificationBodySchema = z.union([
   createNotificationsBatchBodySchema,
 ])
 
+export const pushDeviceBodySchema = z.object({
+  token: z.string().min(16).max(255),
+  platform: z.enum(['android', 'ios']),
+})
+
+export const unregisterPushDeviceBodySchema = z.object({
+  token: z.string().min(16).max(255),
+})
+
 export type CreateNotificationBody = z.infer<typeof createNotificationBodySchema>
+export type PushDeviceBody = z.infer<typeof pushDeviceBodySchema>
+export type UnregisterPushDeviceBody = z.infer<typeof unregisterPushDeviceBodySchema>

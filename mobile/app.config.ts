@@ -32,6 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'com.webonone.mobile',
+    googleServicesFile: './google-services.json',
     permissions: [
       'android.permission.SEND_SMS',
       'android.permission.READ_PHONE_STATE',
@@ -44,7 +45,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundler: 'metro',
     output: 'single',
   },
-  plugins: ['expo-router', 'expo-secure-store', '@react-native-google-signin/google-signin'],
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    '@react-native-google-signin/google-signin',
+    [
+      'expo-notifications',
+      {
+        color: '#2563eb',
+        defaultChannel: 'webonone-alerts',
+      },
+    ],
+  ],
   experiments: {
     typedRoutes: true,
   },
@@ -92,5 +104,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'http://localhost:4020/api/v1',
     ),
     googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID ?? '',
+    expoProjectId: process.env.EXPO_PROJECT_ID ?? '',
+    eas: {
+      projectId: process.env.EXPO_PROJECT_ID ?? '',
+    },
   },
 })

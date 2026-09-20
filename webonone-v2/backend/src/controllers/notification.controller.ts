@@ -5,6 +5,8 @@ import * as notificationService from '../services/notification.service.js'
 import {
   createNotificationBodySchema,
   createNotificationsBatchBodySchema,
+  type PushDeviceBody,
+  type UnregisterPushDeviceBody,
 } from '../schemas/notificationSchemas.js'
 
 export async function listMyNotifications(req: AuthenticatedRequest, res: Response) {
@@ -32,6 +34,18 @@ export async function markMyNotificationRead(req: AuthenticatedRequest, res: Res
 export async function markAllMyNotificationsRead(req: AuthenticatedRequest, res: Response) {
   const result = await notificationService.markAllNotificationsRead(req.user!.id)
   res.json(result)
+}
+
+export async function registerMyPushDevice(req: AuthenticatedRequest, res: Response) {
+  const body = req.body as PushDeviceBody
+  await notificationService.registerPushDevice(req.user!.id, body)
+  res.json({ ok: true })
+}
+
+export async function unregisterMyPushDevice(req: AuthenticatedRequest, res: Response) {
+  const body = req.body as UnregisterPushDeviceBody
+  await notificationService.unregisterPushDevice(req.user!.id, body.token)
+  res.json({ ok: true })
 }
 
 export async function createInternalNotification(req: Request, res: Response) {

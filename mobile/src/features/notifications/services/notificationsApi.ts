@@ -41,4 +41,18 @@ export const notificationsApi = {
       method: 'POST',
     })
   },
+
+  registerPushDevice(body: { token: string; platform: 'android' | 'ios' }) {
+    return client<{ ok: true }>('/notifications/push-devices', {
+      method: 'PUT',
+      body,
+    })
+  },
+
+  unregisterPushDevice(token: string) {
+    return client<{ ok: true }>('/notifications/push-devices', {
+      method: 'DELETE',
+      body: { token },
+    })
+  },
 }

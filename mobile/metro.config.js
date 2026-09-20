@@ -15,6 +15,19 @@ const workspaceRoot = path.resolve(projectRoot, '..')
 
 const config = getDefaultConfig(projectRoot)
 
+// Gradle codegen under hoisted node_modules (Windows Metro watcher ENOENT during run:android).
+// Do not require metro-config internals — Node 24 on Windows then loads this file as ESM
+// and fails with ERR_UNSUPPORTED_ESM_URL_SCHEME (protocol 'd:').
+const extraBlockList = [
+  /[/\\]node_modules[/\\].*[/\\]android[/\\]build[/\\].*/,
+  /[/\\]node_modules[/\\].*[/\\]ios[/\\]build[/\\].*/,
+  /[/\\]mobile[/\\]android[/\\]build[/\\].*/,
+]
+const existingBlockList = config.resolver.blockList
+config.resolver.blockList = existingBlockList
+  ? [existingBlockList, ...extraBlockList].flat()
+  : extraBlockList
+
 config.watchFolders = [workspaceRoot]
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
