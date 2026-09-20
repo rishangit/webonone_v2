@@ -1,0 +1,54 @@
+---
+description: Mobile app src and feature module structure
+globs: mobile/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Mobile structure standards
+
+Related: [mobile-ui-consumption.mdc](mobile-ui-consumption.mdc), [code-cleanliness.mdc](code-cleanliness.mdc).
+
+## Top-level layout
+
+- **`mobile/app/`** — Expo Router only (thin route files that re-export screens). No business logic.
+- **`mobile/src/features/`** — domain modules (auth, shell, sms, email, payment, …).
+- **`mobile/src/shared/`** — cross-feature APIs, env, types (`apiClient`, `secureStorage`, `*AdminApi.ts`).
+
+## Feature module contract
+
+Each feature under `src/features/<domain>/`:
+
+| Folder | Purpose |
+|--------|---------|
+| `screens/` | Route-level screens (e.g. `QueueScreen.tsx`) — mobile equivalent of web `pages/` |
+| `components/` | Feature-scoped UI (dialogs, form sections) |
+| `services/` | API wrappers when not in `shared/` |
+| `schemas/` | Zod validation for this feature |
+| `hooks/` | Feature hooks |
+| `utils/` | Feature helpers |
+| `types/` | Feature types |
+
+## Routing convention
+
+```text
+mobile/app/(app)/sms/queue.tsx  →  export { QueueScreen } from '@/features/sms/screens/QueueScreen'
+```
+
+Keep `app/` files to one or two lines. Screen logic lives in `src/features/`.
+
+## Imports
+
+- Use **`@/`** for modules under `mobile/src/` (e.g. `@/shared/services/apiClient`, `@/features/sms/screens/QueueScreen`).
+- Use **`@webonone/mobile-ui`** for UI primitives.
+- Relative imports only for siblings within the same feature folder when that matches existing patterns.
+
+## Cross-feature dependencies
+
+- Shared APIs and types → `mobile/src/shared/`.
+- Do not import another feature's internals across feature boundaries — expose via `shared/` when needed.
+
+## Verification
+
+```bash
+npm run type-check -w @webonone/mobile
+```

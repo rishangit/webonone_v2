@@ -1,10 +1,11 @@
 ---
 name: toast-notifications
 description: >-
-  Wires UI Kit useToast / ToastProvider for mutation API success and failure
-  feedback across service frontends. Use when adding or editing create/update/
-  delete/send flows, dialog submit results, epic status toasts, or replacing
-  page Alerts for mutation outcomes. Soft API warnings stay silent.
+  Wires useToast / ToastProvider for mutation API success and failure feedback
+  across service frontends (@webonone/ui-kit) and the Expo app
+  (@webonone/mobile-ui). Use when adding or editing create/update/delete/send
+  flows, dialog submit results, epic status toasts, or replacing page Alerts for
+  mutation outcomes. Soft API warnings stay silent.
 ---
 
 # Toast notifications
@@ -127,3 +128,30 @@ npm run lint
 - Soft warnings on success → no Alert / no warning toast
 
 Showcase demo: `ui-kit/showcase/src/pages/ComponentsPage.tsx` (Toast section).
+
+## Mobile (@webonone/mobile-ui)
+
+Same success/destructive semantics. Import `ToastProvider` and `useToast` from `@webonone/mobile-ui`.
+
+- `ToastProvider` wraps the app in `mobile/app/_layout.tsx` (already wired).
+- Call `toast({ title })` on mutation success; `variant: 'destructive'` on failure.
+- Mobile uses local state + try/catch (no Redux epics) — fire toast in the `catch` block directly.
+
+```tsx
+const { toast } = useToast()
+
+try {
+  await smsAdminApi.retryQueueItem(id)
+  toast({ title: 'Message queued again' })
+} catch (err) {
+  toast({
+    title: 'Retry failed',
+    description: err instanceof Error ? err.message : undefined,
+    variant: 'destructive',
+  })
+}
+```
+
+Reference: `mobile/src/features/sms/screens/QueueScreen.tsx`.
+
+Verification: `npm run type-check -w @webonone/mobile`

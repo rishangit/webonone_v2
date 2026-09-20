@@ -5,6 +5,8 @@ import {
   clampRect,
   CONTENT_BLOCK_LAYOUT_LIMITS,
   documentContentHeight,
+  pinchScaleFromSpans,
+  pinchToRect,
   pointerToRect,
   ROW_HEIGHT,
   snapRowSpan,
@@ -93,5 +95,21 @@ describe('row grid snap', () => {
     assert.equal(resized.top % ROW_HEIGHT, 0)
     assert.equal(resized.height % ROW_HEIGHT, 0)
     assert.equal(resized.colSpan, 5)
+  })
+
+  it('pinchToRect scales from center and snaps to the grid', () => {
+    const start = { col: 3, colSpan: 4, top: 32, height: 96 }
+    const resized = pinchToRect(start, 2, 2, 1200, CONTENT_BLOCK_LAYOUT_LIMITS)
+    assert.equal(resized.colSpan, 8)
+    assert.equal(resized.height, 192)
+    assert.equal(resized.top % ROW_HEIGHT, 0)
+  })
+
+  it('pinchScaleFromSpans follows each axis when spans are large enough', () => {
+    const start = { spanX: 100, spanY: 80, distance: 128 }
+    const current = { spanX: 150, spanY: 80, distance: 170 }
+    const scale = pinchScaleFromSpans(start, current)
+    assert.equal(scale.scaleX, 1.5)
+    assert.equal(scale.scaleY, 1)
   })
 })

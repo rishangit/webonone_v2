@@ -7,7 +7,7 @@ order: 3
 summary: "Sidebar මගින් ඔබේ වර්තමාන ගිණුමට විවෘත කිරීමට අවසර ඇති ප්‍රදේශ පමණක් ලැයිස්තු කරයි."
 ---
 
-වම් menu කණ්ඩායම් වශයෙන් සකසා ඇත (Dashboard, Analytics, Calendar, Identity, Data, Email, SMS, Sales, Payment, Design, Companies, Settings).
+වම් menu කණ්ඩායම් වශයෙන් සකසා ඇත (Dashboard, Analytics, Calendar, Identity, Data, Email, SMS, Sales, Payment, Design, Companies, Settings). [mobile app](/docs/getting-started/mobile-app) හි එකම කණ්ඩායම් ඉහළ වම් menu එකෙන් විවෘත වේ. SMS හි දුරකථනයේ පමණක් **This device** ඇත (Android gateway).
 
 ඔබ තෝරාගත් [account](/docs/getting-started/choose-account) සඳහා පමණක් අයිතම දිස්වේ. Super Admin එක් සමාගමක Calendar සහ POS වෙනුවට All Companies දකී.
 

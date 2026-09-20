@@ -1,13 +1,30 @@
 import '../global.css'
 import { useEffect } from 'react'
 import { ActivityIndicator, View } from 'react-native'
-import { Slot, useRouter, useSegments } from 'expo-router'
-import { StatusBar } from 'expo-status-bar'
+import { Slot, useRouter, useSegments, type Href } from 'expo-router'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { ToastProvider } from '@webonone/mobile-ui'
+import { I18nextProvider } from 'react-i18next'
 import { SessionProvider, useSession } from '@/features/auth/SessionContext'
+import { AppThemeProvider, useThemeColors } from '@/features/theme/AppThemeProvider'
+import { getAppI18n, initMobileI18n } from '@/i18n'
 
+initMobileI18n()
+
+/** Guest auth routes reachable while signed out (before role selection). */
+const GUEST_AUTH_SEGMENTS = new Set([
+  'login',
+  'register',
+  'forgot-password',
+  'verify-reset-otp',
+  'reset-password',
+  'select-role',
+])
+
+/** Gates routing until session bootstrap finishes. */
 function AuthGate() {
   const { isAuthenticated, isBootstrapping, needsRoleSelection, isBlocked } = useSession()
+  const colors = useThemeColors()
   const segments = useSegments()
   const router = useRouter()
 
@@ -15,26 +32,25 @@ function AuthGate() {
     if (isBootstrapping) return
 
     const segment = segments[0]
-    const onLogin = segment === 'login'
-    const onSelectRole = segment === 'select-role'
-    const inTabs = segment === '(tabs)'
+    const inApp = segment === '(app)'
+    const onGuestAuth = segment !== undefined && GUEST_AUTH_SEGMENTS.has(segment)
 
     if (isAuthenticated) {
-      if (!inTabs) router.replace('/(tabs)')
+      if (!inApp) router.replace('/(app)' as Href)
       return
     }
 
     if (needsRoleSelection || isBlocked) {
-      if (!onSelectRole) router.replace('/select-role')
+      if (segment !== 'select-role') router.replace('/select-role')
       return
     }
 
-    if (inTabs || onSelectRole) {
+    if (inApp || segment === 'select-role') {
       router.replace('/login')
       return
     }
 
-    if (!onLogin && segment !== undefined) {
+    if (segment !== undefined && !onGuestAuth) {
       router.replace('/login')
     }
   }, [isAuthenticated, isBootstrapping, needsRoleSelection, isBlocked, router, segments])
@@ -42,7 +58,7 @@ function AuthGate() {
   if (isBootstrapping) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#344CE2" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
@@ -52,11 +68,16 @@ function AuthGate() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <SessionProvider>
-        <StatusBar style="auto" />
-        <AuthGate />
-      </SessionProvider>
-    </SafeAreaProvider>
+    <I18nextProvider i18n={getAppI18n()}>
+      <SafeAreaProvider>
+        <SessionProvider>
+          <AppThemeProvider>
+            <ToastProvider>
+              <AuthGate />
+            </ToastProvider>
+          </AppThemeProvider>
+        </SessionProvider>
+      </SafeAreaProvider>
+    </I18nextProvider>
   )
 }

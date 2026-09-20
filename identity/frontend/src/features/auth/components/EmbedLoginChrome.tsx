@@ -21,7 +21,7 @@ export function EmbedLoginChrome({ registerLink, children }: EmbedLoginChromePro
         <p>
           {t('noAccount')}{' '}
           <EmbedAuthLink to={registerLink} className="text-primary underline-offset-4 hover:underline">
-            {t('signUp')}
+            {t('createAccount')}
           </EmbedAuthLink>
         </p>
         <p>{t('copyright', { year })}</p>

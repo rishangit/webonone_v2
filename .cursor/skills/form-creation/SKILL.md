@@ -2,12 +2,13 @@
 name: form-creation
 description: >-
   Creates React forms with matching Zod validation on frontend and backend,
-  required-field asterisks, and inline field errors using @webonone/ui-kit.
-  Use when adding or editing forms, form fields, Zod schemas, API body validation,
-  validateBody middleware, FormField, validation messages, or required indicators
-  in any service frontend or backend that handles the same user input. When the
-  form lives in a dialog box, dialog window, modal, or wizard, also read
-  core-hosted-peer-dialog and dialog-windows.
+  required-field asterisks, and inline field errors using @webonone/ui-kit
+  (web) or @webonone/mobile-ui (mobile). Use when adding or editing forms,
+  form fields, Zod schemas, API body validation, validateBody middleware,
+  FormField, validation messages, or required indicators in any service
+  frontend, mobile/ screen, or backend that handles the same user input. When
+  the form lives in a dialog on web, also read core-hosted-peer-dialog and
+  dialog-windows; on mobile read mobile-dialogs.mdc.
 ---
 
 # Form creation
@@ -223,3 +224,21 @@ npm run lint
 
 - Frontend: empty required field → `*` on label, red message under field, no submit
 - Backend: send invalid JSON body (e.g. missing required field) → `400` with `VALIDATION_ERROR`
+
+## Mobile (@webonone/mobile-ui)
+
+Same Zod schemas and backend `validateBody` rules apply. Frontend uses `@webonone/mobile-ui`:
+
+| Export | Role |
+|--------|------|
+| `FormField` | Label, required `*`, inline error message |
+| `TextField`, `Textarea`, `PasswordInput`, `PhoneInput`, `OtpInput` | Controlled inputs |
+| `NativeSelect`, `SelectUser`, `SelectTag` | Pickers |
+
+- Controlled `useState` + `safeParse` on submit — same as web (not react-hook-form).
+- Dialog forms: `CustomDialog` with `footer` slot — see [mobile-dialogs.mdc](../../rules/mobile-dialogs.mdc).
+- Schemas live in `mobile/src/features/<domain>/schemas/`.
+
+Reference: `mobile/src/features/email/components/TemplateFormDialog.tsx`, `mobile/src/features/auth/schemas/loginSchema.ts`.
+
+Verification: `npm run type-check -w @webonone/mobile`

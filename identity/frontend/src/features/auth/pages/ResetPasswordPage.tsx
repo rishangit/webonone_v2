@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { AuthLayout } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { ResetPasswordForm } from '../components/ResetPasswordForm'
+import { useEmbedGuestAuthSync } from '../hooks/useEmbedGuestAuthSync'
 import { EmbedAuthLink } from '../components/EmbedAuthLink'
 import { useEmbedAuthNavigate } from '../hooks/useEmbedAuthNavigate'
 import { clearResetSessionToken } from '../utils/resetSessionStorage'
@@ -11,6 +12,7 @@ import { withPromptLoginRedirectQuery } from '../utils/redirectQuery'
 
 export function ResetPasswordPage() {
   const { t } = useTranslation('auth')
+  useEmbedGuestAuthSync()
   const { navigateAuth } = useEmbedAuthNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()

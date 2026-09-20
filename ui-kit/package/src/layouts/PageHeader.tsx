@@ -20,7 +20,7 @@ function mobileSearchOverlayClassName(expanded: boolean, revealed: boolean) {
     'absolute inset-y-0 z-10 flex items-center justify-end overflow-hidden sm:hidden',
     'right-[-2.75rem] transition-[left] duration-300 ease-out',
     expanded ? 'left-0' : 'left-[calc(100%+0.5rem)]',
-    revealed ? 'visible' : 'invisible pointer-events-none',
+    revealed ? 'visible pointer-events-auto' : 'invisible pointer-events-none',
   )
 }
 
@@ -131,7 +131,7 @@ function PageHeader({
   ) : null
 
   return (
-    <PageHeaderSearchContext.Provider value={searchController}>
+    <PageHeaderSearchContext.Provider value={actions ? searchController : null}>
       <header ref={headerRef} className={cn('space-y-1', className)}>
         <div className="flex items-start gap-2">
           {onBack ? (

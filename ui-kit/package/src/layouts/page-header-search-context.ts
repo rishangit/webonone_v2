@@ -11,5 +11,5 @@ export interface PageHeaderSearchController {
   collapseAdd: () => void
 }
 
-/** Set when SearchInput / ListAddButton are rendered inside PageHeader actions (compact on small screens). */
+/** Set when SearchInput / ListAddButton are inside PageHeader actions or ListPageActions (compact below `sm`). */
 export const PageHeaderSearchContext = createContext<PageHeaderSearchController | null>(null)

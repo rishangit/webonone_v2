@@ -26,6 +26,7 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `design/` | `.cursor/agents/design-agent.md` | `.cursor/skills/design-agent/SKILL.md` |
 | `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
 | `support/` | `.cursor/agents/support-agent.md` | `.cursor/skills/support-agent/SKILL.md` |
+| `mobile/`, `packages/mobile-ui/` | `.cursor/agents/mobile-agent.md` | `.cursor/skills/mobile-agent/SKILL.md` |
 
 Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop). AI tool schemas / `argCompletion` → **owning service** (`data/`, `webonone-v2/`); generic completer only → **AI**. See [ai-capabilities.mdc](../../rules/ai-capabilities.mdc). User-visible WebOnOne (or shell) pages, nav, or workflows → also **support-agent** after the product change ([help-articles](../help-articles/SKILL.md)).
 
@@ -45,6 +46,8 @@ Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code
 | iframe/postMessage/JWT across services | Sequential: identity then webonone | `generalPurpose` × 2 |
 | User-visible product change (new page/nav/workflow) | Sequential: product agent then **support-agent** | `generalPurpose` × 2 |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent | `generalPurpose` × 2 |
+| `mobile/**` or `packages/mobile-ui/**` only | Delegate mobile-agent | `generalPurpose` |
+| New nav item in platform-nav + native screen + web FE | Sequential: owning service agent then mobile-agent | `generalPurpose` × 2 |
 | Read-only exploration in one service | Scoped explore | `explore` |
 | Independent changes in 2+ services | Parallel subagents | `generalPurpose` (parallel) |
 

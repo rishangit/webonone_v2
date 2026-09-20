@@ -2,11 +2,13 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AuthLayout } from '@webonone/ui-kit'
 import { ForgotPasswordForm } from '../components/ForgotPasswordForm'
+import { useEmbedGuestAuthSync } from '../hooks/useEmbedGuestAuthSync'
 import { EmbedAuthLink } from '../components/EmbedAuthLink'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 export function ForgotPasswordPage() {
   const { t } = useTranslation('auth')
+  useEmbedGuestAuthSync()
   const [searchParams] = useSearchParams()
   const loginLink = withRedirectQuery('/login', searchParams)
 

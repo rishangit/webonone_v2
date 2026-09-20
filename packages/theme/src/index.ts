@@ -16,6 +16,10 @@ export {
   THEME_CONTRACT_VERSION_V1,
   THEME_MESSAGE_TYPES,
   THEME_QUERY,
+  SHELL_CHROME_BG,
+  SHELL_CHROME_BORDER,
+  LIGHT_CANVAS_BASE,
+  DARK_CANVAS_BASE,
   createPlatformDefaultThemeDto,
 } from './constants'
 export {

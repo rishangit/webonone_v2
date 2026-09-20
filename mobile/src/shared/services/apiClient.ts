@@ -1,5 +1,17 @@
 import { secureStorage } from './secureStorage'
 
+export class ApiError extends Error {
+  readonly code?: string
+  readonly attemptsRemaining?: number
+
+  constructor(message: string, extras?: { code?: string; attemptsRemaining?: number }) {
+    super(message)
+    this.name = 'ApiError'
+    this.code = extras?.code
+    this.attemptsRemaining = extras?.attemptsRemaining
+  }
+}
+
 type UnauthorizedHandler = () => void
 
 let onUnauthorized: UnauthorizedHandler | null = null
@@ -38,7 +50,7 @@ async function request<T>(baseUrl: string, path: string, options: RequestOptions
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'Network request failed'
     throw new Error(
-      `${reason}. Check that Identity/SMS backends are running and reachable from this device (use your PC's LAN IP in mobile/.env, not localhost).`,
+      `${reason}. Check that the API backend is running and reachable from this device (set PAYMENT_API_BASE_URL or PAYMENT_ORIGIN in mobile/.env; use your PC's LAN IP for local dev, not localhost).`,
     )
   }
 
@@ -48,16 +60,42 @@ async function request<T>(baseUrl: string, path: string, options: RequestOptions
   }
 
   const text = await response.text()
-  const data = text ? JSON.parse(text) : null
+  const data = parseJsonBody(text, `${baseUrl}${path}`, response.status) as {
+    message?: unknown
+    code?: unknown
+    attemptsRemaining?: unknown
+  } | null
 
   if (!response.ok) {
     const message =
       (data && typeof data === 'object' && 'message' in data && String(data.message)) ||
       `Request failed (${response.status})`
-    throw new Error(message)
+    const code =
+      data && typeof data === 'object' && 'code' in data && typeof data.code === 'string'
+        ? data.code
+        : undefined
+    const attemptsRemaining =
+      data && typeof data === 'object' && typeof data.attemptsRemaining === 'number'
+        ? data.attemptsRemaining
+        : undefined
+    throw new ApiError(message, { code, attemptsRemaining })
   }
 
   return data as T
+}
+
+function parseJsonBody(text: string, url: string, status: number): unknown {
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    const looksHtml = text.trimStart().startsWith('<')
+    throw new Error(
+      looksHtml
+        ? `API returned HTML instead of JSON (${status}) from ${url}. Check the service API base URL (use /api/v1, not the frontend origin).`
+        : `Invalid JSON (${status}) from ${url}.`,
+    )
+  }
 }
 
 export function createApiClient(baseUrl: string) {

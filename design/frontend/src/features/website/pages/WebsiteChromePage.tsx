@@ -13,10 +13,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
-  ListAddButton,
   ListPageBody,
-  ListPageFooter,
-  SearchInput,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
@@ -26,6 +23,8 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteDesignerUrl } from '@/features/shell/utils/navigateDesign'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 import { websiteFootersActions, websiteHeadersActions } from '../store'
+import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
+import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteChromeDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsiteChrome } from '../types'
@@ -88,19 +87,16 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
       <WebsiteHubTabs
         section={kind}
         actions={
-          <>
-            <SearchInput
-              value={list.q}
-              onChange={(event) => list.setQ(event.target.value)}
-              placeholder={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
-              className="w-64"
-            />
-            {canManage ? (
-              <ListAddButton onClick={() => setDialogOpen(true)} compactLabel={tc('add')}>
-                {kind === 'headers' ? t('addHeader') : t('addFooter')}
-              </ListAddButton>
-            ) : null}
-          </>
+          <WebsiteHubListToolbar
+            searchValue={list.q}
+            onSearchChange={list.setQ}
+            searchPlaceholder={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
+            searchAriaLabel={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
+            canManage={canManage}
+            addLabel={kind === 'headers' ? t('addHeader') : t('addFooter')}
+            onAdd={() => setDialogOpen(true)}
+            compactAddLabel={tc('add')}
+          />
         }
       />
       {list.error ? (
@@ -110,7 +106,8 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
       ) : null}
       <ListPageBody>
         <div className="flex-1">
-          {list.items.length === 0 ? (
+          {!list.loading ? (
+            list.items.length === 0 ? (
             <ItemListEmpty>{kind === 'headers' ? t('emptyHeaders') : t('emptyFooters')}</ItemListEmpty>
           ) : (
             <ItemList>
@@ -159,21 +156,10 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                 </ItemListItem>
               ))}
             </ItemList>
-          )}
+          )
+          ) : null}
         </div>
-        <ListPageFooter
-          className="mt-auto"
-          currentPage={list.page}
-          pageSize={list.pageSize}
-          totalCount={list.total}
-          loadedCount={list.items.length}
-          hasMore={list.hasMore}
-          loadingMore={list.loadingMore}
-          onPageChange={(next) => list.load(next, list.pageSize, true)}
-          onPageSizeChange={(next) => list.load(1, next, true)}
-          onLoadMore={() => list.loadMore()}
-          onModeChange={() => list.load(1, list.pageSize, true)}
-        />
+        <WebsiteListPageFooter list={list} />
       </ListPageBody>
       <WebsiteChromeDialog
         kind={kind}

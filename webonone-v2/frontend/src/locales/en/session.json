@@ -22,5 +22,9 @@
   },
   "errors": {
     "failedToSetSessionRole": "Failed to set session role ({{status}})"
-  }
+  },
+  "blockedTitle": "Cannot continue",
+  "blockedDefault": "This account has no available roles.",
+  "blockedHint": "Sign in with a WebOnOne account that has Super Admin, company, or member access.",
+  "accounts": "Accounts"
 }

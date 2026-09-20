@@ -82,6 +82,15 @@ export type {
   OAuthStatePayload,
   RedirectWithAuthCodeOptions,
 } from './types'
+export {
+  COMPANY_SESSION_ONLY_GROUPS,
+  MOBILE_SMS_THIS_DEVICE_NAV,
+  appendMobileSmsThisDeviceNav,
+  buildNavDefsForSessionRole,
+  sessionRoleToNavVariant,
+  withoutCompanySessionOnlyGroups,
+} from './sessionRoleNav'
+export type { SessionRole } from './sessionRoleNav'
 export type {
   CompanyDataEntityKey,
   CoreNavDef,

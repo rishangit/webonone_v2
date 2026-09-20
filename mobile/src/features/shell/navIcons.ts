@@ -1,0 +1,95 @@
+import {
+  BarChart3,
+  Building2,
+  Calendar,
+  CalendarDays,
+  Database,
+  Globe,
+  History,
+  Home,
+  Layers,
+  LayoutDashboard,
+  List,
+  Mail,
+  MessageSquare,
+  Package,
+  Palette,
+  Receipt,
+  Rows3,
+  Ruler,
+  Send,
+  Settings,
+  Shapes,
+  ShoppingCart,
+  Smartphone,
+  Tag,
+  Users,
+  Wallet,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react-native'
+import {
+  DATA_NAV_SENTINELS,
+  DESIGN_NAV_SENTINELS,
+  EMAIL_NAV_SENTINELS,
+  IDENTITY_NAV_SENTINELS,
+  PAYMENT_NAV_SENTINELS,
+  SMS_NAV_SENTINELS,
+} from '@webonone/platform-nav'
+
+const ICON_BY_PATH: Record<string, LucideIcon> = {
+  '/': LayoutDashboard,
+  '/analytics': BarChart3,
+  '/calendar/schedule': CalendarDays,
+  '/calendar/events': List,
+  '/companies': Building2,
+  '/settings/companies': Building2,
+  '/settings/connected-companies': Building2,
+  '/staff': Users,
+  '/sales/pos': ShoppingCart,
+  '/sales': Receipt,
+  [IDENTITY_NAV_SENTINELS.users]: Users,
+  [EMAIL_NAV_SENTINELS.send]: Send,
+  [EMAIL_NAV_SENTINELS.queue]: Rows3,
+  [EMAIL_NAV_SENTINELS.history]: History,
+  [EMAIL_NAV_SENTINELS.templates]: Mail,
+  [DATA_NAV_SENTINELS.tags]: Tag,
+  [DATA_NAV_SENTINELS.units]: Ruler,
+  [DATA_NAV_SENTINELS.attributes]: Shapes,
+  [DATA_NAV_SENTINELS.products]: Package,
+  [DATA_NAV_SENTINELS.services]: Wrench,
+  [DATA_NAV_SENTINELS.spaces]: Layers,
+  [SMS_NAV_SENTINELS.send]: Send,
+  [SMS_NAV_SENTINELS.devices]: Smartphone,
+  [SMS_NAV_SENTINELS.gateway]: Smartphone,
+  [SMS_NAV_SENTINELS.queue]: Rows3,
+  [SMS_NAV_SENTINELS.history]: History,
+  [SMS_NAV_SENTINELS.templates]: MessageSquare,
+  [PAYMENT_NAV_SENTINELS.invoices]: Wallet,
+  [DESIGN_NAV_SENTINELS.forms]: Palette,
+  [DESIGN_NAV_SENTINELS.website]: Globe,
+  '/settings/basic': Building2,
+  '/settings/system-theme': Palette,
+  '/dev/kit': Palette,
+}
+
+const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
+  Settings: Settings,
+  Companies: Building2,
+  Identity: Users,
+  Email: Mail,
+  Data: Database,
+  SMS: MessageSquare,
+  Payment: Wallet,
+  Sales: ShoppingCart,
+  Design: Palette,
+  Calendar: Calendar,
+}
+
+export function iconForNavPath(path: string): LucideIcon {
+  return ICON_BY_PATH[path] ?? Home
+}
+
+export function iconForNavGroup(label: string): LucideIcon {
+  return GROUP_ICON_BY_LABEL[label] ?? Settings
+}

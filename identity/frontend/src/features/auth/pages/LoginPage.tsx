@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AuthLayout, FeaturePage } from '@webonone/ui-kit'
 import { decodeJwtPayload, sendAuthSuccess } from '@webonone/platform-embed'
-import { useEmbedThemeListener } from '@webonone/theme'
+import { useEmbedGuestAuthSync } from '../hooks/useEmbedGuestAuthSync'
 import { useAppSelector } from '@/app/store/hooks'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { LoginForm } from '../components/LoginForm'
@@ -35,7 +35,7 @@ export function LoginPage() {
   const wasLoadingRef = useRef(false)
 
   usePromptLoginSessionClear()
-  useEmbedThemeListener(isEmbed ? parentOrigin : null)
+  useEmbedGuestAuthSync()
 
   useEffect(() => {
     if (wasLoadingRef.current && !isLoading && accessToken && user) {

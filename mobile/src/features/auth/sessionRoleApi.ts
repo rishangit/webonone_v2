@@ -1,13 +1,16 @@
 import { env } from '@/shared/config/env'
 import { createApiClient } from '@/shared/services/apiClient'
+import type { DataEntityKey } from '@webonone/platform-nav'
+import type { SessionRole } from '@/shared/types'
 
-export type GatewaySessionRole = 'super_admin' | 'company_admin'
-
-export type GatewayRoleOption = {
-  role: GatewaySessionRole
+export type SessionRoleOption = {
+  role: SessionRole
   companyId: string | null
   label: string
   companyName: string | null
+  companyLogoUrl?: string | null
+  accountKind?: 'staff'
+  dataEntities?: DataEntityKey[]
 }
 
 type AssumableRoleOption = {
@@ -15,7 +18,9 @@ type AssumableRoleOption = {
   companyId: string | null
   label: string
   companyName?: string
-  accountKind?: string
+  companyLogoUrl?: string | null
+  accountKind?: 'staff'
+  dataEntities?: DataEntityKey[]
 }
 
 type AssumableRolesResponse = {
@@ -25,41 +30,43 @@ type AssumableRolesResponse = {
 const webononeClient = createApiClient(env.webononeApiBaseUrl)
 const identityClient = createApiClient(env.identityApiBaseUrl)
 
-/** Keep Super Admin and Company Owner only — no member/staff for SMS gateway. */
-export function filterGatewayRoles(roles: AssumableRoleOption[]): GatewayRoleOption[] {
+function isSessionRole(value: string): value is SessionRole {
+  return value === 'super_admin' || value === 'company_admin' || value === 'member'
+}
+
+export function mapAssumableRoles(roles: AssumableRoleOption[]): SessionRoleOption[] {
   return roles
-    .filter((r): r is AssumableRoleOption & { role: GatewaySessionRole } => {
-      return r.role === 'super_admin' || r.role === 'company_admin'
-    })
+    .filter((r): r is AssumableRoleOption & { role: SessionRole } => isSessionRole(r.role))
     .map((r) => ({
       role: r.role,
       companyId: r.companyId,
-      label: r.role === 'super_admin' ? 'Super Admin' : (r.companyName ?? r.label),
-      companyName: r.role === 'company_admin' ? (r.companyName ?? r.label) : null,
+      label: r.label,
+      companyName: r.companyName ?? (r.role === 'company_admin' || r.role === 'member' ? r.label : null),
+      companyLogoUrl: r.companyLogoUrl ?? null,
+      accountKind: r.accountKind,
+      dataEntities: r.dataEntities,
     }))
 }
 
-export function findMatchingGatewayRole(
-  options: GatewayRoleOption[],
-  role: GatewaySessionRole,
+export function findMatchingSessionRole(
+  options: SessionRoleOption[],
+  role: SessionRole,
   companyId: string | null,
-): GatewayRoleOption | undefined {
-  return options.find(
-    (o) => o.role === role && (o.companyId ?? null) === (companyId ?? null),
-  )
+): SessionRoleOption | undefined {
+  return options.find((o) => o.role === role && (o.companyId ?? null) === (companyId ?? null))
 }
 
 export const sessionRoleApi = {
-  async getAssumableRoles(accessToken: string): Promise<GatewayRoleOption[]> {
+  async getAssumableRoles(accessToken: string): Promise<SessionRoleOption[]> {
     const result = await webononeClient<AssumableRolesResponse>('/company/me/assumable-roles', {
       bearer: accessToken,
     })
-    return filterGatewayRoles(result.roles ?? [])
+    return mapAssumableRoles(result.roles ?? [])
   },
 
   async reissueSessionRole(
     accessToken: string,
-    platformRole: GatewaySessionRole,
+    platformRole: SessionRole,
     companyId: string | null,
   ): Promise<{ accessToken: string }> {
     const result = await identityClient<{ accessToken: string }>('/auth/session-role', {
@@ -68,5 +75,13 @@ export const sessionRoleApi = {
       bearer: accessToken,
     })
     return { accessToken: result.accessToken }
+  },
+
+  async patchLocale(accessToken: string, locale: 'en' | 'si'): Promise<void> {
+    await identityClient('/auth/me', {
+      method: 'PATCH',
+      body: { locale },
+      bearer: accessToken,
+    })
   },
 }

@@ -60,6 +60,9 @@ export function useServiceAuthStorageSync({
       applyStoredAuth(true)
     }
 
+    // Same-tab embed hosts (e.g. React Native WebView) seed storage without a storage event.
+    applyStoredAuth(true)
+
     window.addEventListener('storage', onStorage)
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', onFocus)

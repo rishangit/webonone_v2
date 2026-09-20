@@ -14,6 +14,7 @@ Cross-service libraries that are **not** UI Kit and **not** microservices. See [
 | `@webonone/platform-embed` | Platform nav iframe embed URL builder, JWT postMessage, PlatformServiceFrame |
 | `@webonone/media-embed` | Media iframe embed URL builder, postMessage types, React hooks |
 | `@webonone/store-kit` | Redux slice + redux-observable epics factories for list/detail CRUD (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), cache utils, catalog hooks |
+| `@webonone/mobile-ui` | React Native UI kit (NativeWind) for the Expo app — header, drawer, lists, forms. Not `@webonone/ui-kit` (web/Radix). |
 | `@webonone/i18n` | Locale plumbing (`en`/`si`), shared `common` JSON, `lng` query/storage helpers |
 
 Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run build:media-embed`, `npm run build:store-kit`, `npm run build:i18n`. Parent agent owns new entries under `packages/*`.
@@ -23,12 +24,12 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | Skill | Description |
 |-------|-------------|
 | [core-hosted-peer-dialog](.cursor/skills/core-hosted-peer-dialog/SKILL.md) | Any dialog box / dialog window (create/edit/wizard/selection) in a peer FE — host chrome + `/embed/dialogs/…` body when embedded in WebOnOne |
-| [form-creation](.cursor/skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` |
-| [item-list](.cursor/skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives |
+| [form-creation](.cursor/skills/form-creation/SKILL.md) | Matching Zod validation on frontend + backend, required-field asterisks, inline errors via `@webonone/ui-kit` (web) or `@webonone/mobile-ui` (mobile) |
+| [item-list](.cursor/skills/item-list/SKILL.md) | Gapped glass-card list rows, themed shadow hover, per-item 3-dot menus via `ItemList` primitives (web or mobile) |
 | [details-page-cards](.cursor/skills/details-page-cards/SKILL.md) | Profile/details pages: `Card` sections in 3-col left(2)+right(1) stacks, equal `gap-6`, page-level Edit |
 | [details-page-wizard-edit](.cursor/skills/details-page-wizard-edit/SKILL.md) | Wizard-backed details: Overview `ImageCarousel` when images exist; per-card Edit → shared wizard |
 | [feature-store](.cursor/skills/feature-store/SKILL.md) | List/detail CRUD stores via `@webonone/store-kit` factories (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), Tier-2 epic composition |
-| [toast-notifications](.cursor/skills/toast-notifications/SKILL.md) | UI Kit `useToast` for mutation API success/fail; soft warnings stay silent |
+| [toast-notifications](.cursor/skills/toast-notifications/SKILL.md) | `useToast` for mutation API success/fail (web ui-kit or mobile-ui); soft warnings stay silent |
 | [date-display](.cursor/skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026` via shared `DISPLAY_DATE_OPTIONS` and locale-aware helpers |
 | [help-articles](.cursor/skills/help-articles/SKILL.md) | User-visible WebOnOne (and shell) features must get Support Markdown how-tos (`en` + `si`) in the same task |
 | [website-designer-addons](.cursor/skills/website-designer-addons/SKILL.md) | Design website WebpageEditor addons — registry, settings tabs, data binding roles |
@@ -42,7 +43,8 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | WebOnOne v2 | `webonone-v2/` | [webonone-agent](.cursor/agents/webonone-agent.md) | [skill](.cursor/skills/webonone-agent/SKILL.md) |
 | Media | `media/` | [media-agent](.cursor/agents/media-agent.md) | [skill](.cursor/skills/media-agent/SKILL.md) |
 | Data | `data/` | [data-agent](.cursor/agents/data-agent.md) | [skill](.cursor/skills/data-agent/SKILL.md) |
-| SMS | `sms/` + `mobile/` | [sms-agent](.cursor/agents/sms-agent.md) | [skill](.cursor/skills/sms-agent/SKILL.md) |
+| SMS | `sms/` | [sms-agent](.cursor/agents/sms-agent.md) | [skill](.cursor/skills/sms-agent/SKILL.md) |
+| Mobile | `mobile/` + `packages/mobile-ui/` | [mobile-agent](.cursor/agents/mobile-agent.md) | [skill](.cursor/skills/mobile-agent/SKILL.md) |
 | Payment | `payment/` | [payment-agent](.cursor/agents/payment-agent.md) | [skill](.cursor/skills/payment-agent/SKILL.md) |
 | Design | `design/` | [design-agent](.cursor/agents/design-agent.md) | [skill](.cursor/skills/design-agent/SKILL.md) |
 | AI | `ai/` | [ai-agent](.cursor/agents/ai-agent.md) | [skill](.cursor/skills/ai-agent/SKILL.md) |

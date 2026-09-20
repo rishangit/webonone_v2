@@ -22,6 +22,6 @@ You sign in at the **app**. From the left menu you can:
 
 The public site at webonone.com is for visitors who search the catalog. This help site explains how to use the app.
 
-You can work in the browser or install the [desktop app](/docs/getting-started/desktop-app). New website features appear in the desktop app automatically.
+You can work in the browser, the [desktop app](/docs/getting-started/desktop-app), or the [mobile app](/docs/getting-started/mobile-app). New website features appear in the desktop app automatically. The phone app uses the same menu and roles; some areas still open the web page until a native screen exists.
 
 If you do not have a company yet, start with [Create an account](/docs/getting-started/create-account) and [Register your company](/docs/companies/register-company).

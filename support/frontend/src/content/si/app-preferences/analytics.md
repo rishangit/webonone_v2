@@ -7,7 +7,7 @@ order: 2
 summary: "සමාගම් ප්‍රගතිය, විකුණුම් ආදායම සහ ලාභය, නාමාවලි මිශ්‍රණය, පාරිභෝගිකයින්, සහ සිදුවීම් තත්ත්වය සඳහා Analytics විවෘත කරන්න."
 ---
 
-**Analytics** යනු [Dashboard](/docs/app-preferences/dashboard) වෙතින් වෙනම පිටුවකි. Dashboard තවමත් අද සහ ඉදිරි සිදුවීම් පෙන්වයි. Charts සහ එකතුව **Analytics** වම් menu යටතේ ඇත.
+**Analytics** යනු [Dashboard](/docs/app-preferences/dashboard) වෙතින් වෙනම පිටුවකි. Dashboard තවමත් අද සහ ඉදිරි සිදුවීම් පෙන්වයි. Charts සහ එකතුව web යෙදුමේ සහ [mobile app](/docs/getting-started/mobile-app) හි **Analytics** වම් menu යටතේ ඇත.
 
 1. Sign in කර, අවශ්‍ය නම් [ගිණුමක් තෝරන්න](/docs/getting-started/choose-account).
 2. **Analytics** විවෘත කරන්න.
@@ -23,6 +23,6 @@ summary: "සමාගම් ප්‍රගතිය, විකුණුම් 
 
 ආදායම [POS](/docs/sales-billing/pos) හි සම්පූර්ණ bills වල LKR වේ. කාලය අනුව ආදායම් chart හි **ලාභය** යනු ආදායම අඩු කළ නිෂ්පාදන **පිරිවැය මිල** (stock cost × quantity) ය. Services සහ spaces වල stock පිරිවැයක් නැති නිසා එම පේළිවල ලාභය ආදායමට සමාන වේ.
 
-පේළි දෙක වෙනස් වර්ණ භාවිතා කරයි (ආදායම vs ලාභය). නිශ්චිත මුදල් සඳහා ලක්ෂ්‍යයක් hover කරන්න.
+පේළි දෙක වෙනස් වර්ණ භාවිතා කරයි (ආදායම vs ලාභය). web හි ලක්ෂ්‍යයක් hover කරන්න, දුරකථනයේ තට්ටු කරන්න — නිශ්චිත මුදල් පෙනේ.
 
 සමාගමක් තෝරා නැත්නම්, Analytics පළමුව සමාගම් ගිණුමක් තෝරන ලෙස ඉල්ලයි.

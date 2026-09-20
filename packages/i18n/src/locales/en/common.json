@@ -51,6 +51,7 @@
   "download": "Download",
   "copy": "Copy",
   "more": "More",
+  "showingCount": "Showing {{loaded}} of {{total}}",
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -78,6 +79,7 @@
     "sms": "SMS",
     "sendSms": "Send SMS",
     "devices": "Devices",
+    "thisDevice": "This device",
     "history": "History",
     "payment": "Payment",
     "invoices": "Invoices",

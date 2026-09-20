@@ -39,7 +39,7 @@ function FeaturePage({
   return (
     <div className={cn('feature-page flex min-h-0 w-full flex-1 flex-col gap-3', shellPagePadding, className)}>
       {headerNode}
-      <div className="feature-page-body flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+      <div className="feature-page-body flex min-h-0 min-w-0 flex-1 flex-col gap-3">{children}</div>
     </div>
   )
 }

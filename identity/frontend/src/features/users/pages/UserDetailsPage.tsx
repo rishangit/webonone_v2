@@ -5,14 +5,12 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
-  StatusTag,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   tabsPageClassName,
   tabsPageContentClassName,
-  isStatusTagVariant,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -31,13 +29,6 @@ import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 
 const USER_DETAIL_TABS = ['overview', 'history'] as const
 type UserDetailTab = (typeof USER_DETAIL_TABS)[number]
-
-function formatRoleLabel(role: string): string {
-  return role
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
 
 export function UserDetailsPage() {
   const { t } = useTranslation('users')
@@ -129,15 +120,6 @@ export function UserDetailsPage() {
       description={t('userDetailsDescription')}
       onBack={handleBack}
       backLabel={t('common:back')}
-      actions={
-        user?.role ? (
-          isStatusTagVariant(user.role) ? (
-            <StatusTag variant={user.role} />
-          ) : (
-            <StatusTag variant="member">{formatRoleLabel(user.role)}</StatusTag>
-          )
-        ) : undefined
-      }
     >
       {error && !user ? (
         <Alert variant="destructive">
@@ -161,7 +143,12 @@ export function UserDetailsPage() {
 
           <TabsContent value={tab} className={tabsPageContentClassName}>
             {tab === 'overview' ? (
-              <ProfileView user={user} avatarUrl={user.avatarUrl} canEdit={false} />
+              <ProfileView
+                user={user}
+                avatarUrl={user.avatarUrl}
+                canEdit={false}
+                role={user.role}
+              />
             ) : (
               <UserHistoryPanel user={user} />
             )}

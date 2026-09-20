@@ -20,6 +20,7 @@ All packages here use the `@webonone/` scope:
 | `theme/` | `@webonone/theme` | System theme CSS variables, URL redirect handoff, embed postMessage |
 | `i18n/` | `@webonone/i18n` | Locale plumbing (`en`/`si`), shared `common` JSON, `lng` query/storage helpers |
 | `store-kit/` | `@webonone/store-kit` | Redux Toolkit slice + redux-observable epics factories for list/detail CRUD (`createCatalogFeatureStore`, `createPaginatedFeatureStore`), cache utils, catalog hooks |
+| `mobile-ui/` | `@webonone/mobile-ui` | React Native + NativeWind primitives for the Expo app (source exports; Metro transpiles). Not `@webonone/ui-kit`. |
 | *(future)* `event-schemas/` | `@webonone/event-schemas` | Shared event DTO types |
 | *(future)* `api-types/` | `@webonone/api-types` | REST contract types |
 
@@ -52,6 +53,10 @@ npm run build -w @webonone/store-kit
 ## Store kit
 
 `@webonone/store-kit` is build-time state plumbing (no domain logic, no store instance) shared across service frontends. Consumers add the workspace dep, alias `@webonone/store-kit` to its `src/` in `vite.config.ts` (dev), and chain `build:store-kit` before the frontend build (prod). Standard list/detail CRUD features use `createCatalogFeatureStore`; list-only reads use `createPaginatedFeatureStore`. See [redux-store-and-epics.mdc](../.cursor/rules/redux-store-and-epics.mdc) and the [feature-store skill](../.cursor/skills/feature-store/SKILL.md).
+
+## Mobile UI
+
+`@webonone/mobile-ui` is the React Native control kit for `mobile/` (NativeWind + `@webonone/theme` tokens). It exports source (`src/index.ts`); Metro transpiles it. There is no `dist/` build — do not import it from web service frontends. Feature screens must use kit primitives (`Button`, `TextField`, `MobileAppShell`, `ItemList`, …) so a control change applies everywhere it is used. Dev gallery: `/dev/kit` in the Expo app.
 
 ## Identity user picker
 

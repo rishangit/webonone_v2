@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --color-primary: #344ce2;
+  --color-secondary: #3578e8;
+  --color-background: #fafafa;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-foreground: #17211d;
+  --color-title: #17211d;
+  --color-muted: #5c6560;
+  --color-border: #d5dde8;
+  --color-input-border: rgba(52, 76, 226, 0.22);
+  --color-destructive: #dc2626;
+  --color-primary-text: #ffffff;
+  --color-secondary-text: #ffffff;
+  --color-shell: #f5f5f6;
+  --color-shell-border: #e0e0e2;
+  --color-input: #ffffff;
+}

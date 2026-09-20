@@ -46,6 +46,8 @@ Before considering a change complete for touched files, ensure there are no new 
 
 **Front-end:** `cd front-end` then `npm run type-check`, `npm run lint`, and `npm run format:check` if Prettier is configured.
 
+**Mobile:** `npm run type-check -w @webonone/mobile-ui` and `npm run type-check -w @webonone/mobile`. Use `@/` imports under `mobile/src/`.
+
 **Backend:** see [nodejs-express.mdc](nodejs-express.mdc) verification commands for the service package.
 
 Empty directories are **not** reported by type-check or lint—spot-check the folder tree after big moves.

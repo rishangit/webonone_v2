@@ -4,7 +4,7 @@ description: >-
   Formats user-visible dates as Oct 10, 2026 (short month, numeric day, comma,
   year) via shared Intl options and locale-aware helpers. Use when rendering
   dates in lists, details pages, invoices, history, media metadata, calendars,
-  or any frontend copy that shows a calendar date to the user.
+  mobile/ screens, or any frontend copy that shows a calendar date to the user.
 ---
 
 # Date display
@@ -102,3 +102,23 @@ npm run type-check -w @webonone/<service>-frontend
 ```
 
 Manual: English shows `Oct 10, 2026`; Sinhala localizes the month name while keeping the same structural pattern.
+
+## Mobile (@webonone/mobile-ui)
+
+Use the same `DISPLAY_DATE_OPTIONS` shape:
+
+```typescript
+const DISPLAY_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+}
+```
+
+- Format at render time only; APIs stay ISO.
+- Prefer a shared helper in `mobile/src/shared/utils/formatDisplayDate.ts` over per-feature copies.
+- Locale: pass active `AppLocale` (`en` / `si`) from `SessionContext` when i18n is wired; until then `'en'` is acceptable.
+
+Reference: `mobile/src/features/email/utils/formatTemplateMeta.ts`, `mobile/src/features/payment/utils/formatInvoiceMoney.ts`.
+
+Verification: `npm run type-check -w @webonone/mobile`

@@ -1,39 +1,37 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { normalizeLocale, type AppLocale } from '@webonone/i18n'
 import { authApi } from './authApi'
 import { getGoogleIdToken, GoogleSignInCancelledError } from './googleSignIn'
 import {
-  findMatchingGatewayRole,
+  findMatchingSessionRole,
   sessionRoleApi,
-  type GatewayRoleOption,
+  type SessionRoleOption,
 } from './sessionRoleApi'
+import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { setUnauthorizedHandler } from '@/shared/services/apiClient'
 import { secureStorage } from '@/shared/services/secureStorage'
 import type { UserProfile } from '@/shared/types'
 
 interface SessionContextValue {
   user: UserProfile | null
-  /** JWT reissued + SMS /me with Super Admin or Company Owner scope. */
   isAuthenticated: boolean
   isBootstrapping: boolean
-  /** Has token and gateway role options; waiting for user to Continue. */
   needsRoleSelection: boolean
-  /** Signed in but not Super Admin / Company Owner. */
   isBlocked: boolean
-  /** Message when isBlocked (or role resolve failure). */
   blockReason: string | null
-  /** Filtered Super Admin / Company Owner options for the select-role screen. */
-  roleOptions: GatewayRoleOption[]
+  roleOptions: SessionRoleOption[]
+  locale: AppLocale
   login: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => Promise<void>
-  selectRole: (option: GatewayRoleOption) => Promise<void>
+  selectRole: (option: SessionRoleOption) => Promise<void>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
+  setLocale: (locale: AppLocale) => Promise<void>
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
 
-const NO_GATEWAY_ROLES =
-  'SMS gateway setup is only available for Super Admins and Company Owners.'
+const NO_ROLES = 'No accounts are available for this user.'
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -41,7 +39,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [needsRoleSelection, setNeedsRoleSelection] = useState(false)
   const [isBlocked, setBlocked] = useState(false)
   const [blockReason, setBlockReason] = useState<string | null>(null)
-  const [roleOptions, setRoleOptions] = useState<GatewayRoleOption[]>([])
+  const [roleOptions, setRoleOptions] = useState<SessionRoleOption[]>([])
+  const [locale, setLocaleState] = useState<AppLocale>('en')
 
   const clearSessionState = useCallback(() => {
     setUser(null)
@@ -58,7 +57,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     clearSessionState()
   }, [clearSessionState])
 
-  const applyGatewayRole = useCallback(async (option: GatewayRoleOption, accessToken: string) => {
+  const applyLocalLocale = useCallback(async (next: AppLocale) => {
+    const lng = normalizeLocale(next)
+    setLocaleState(lng)
+    await secureStorage.setLocale(lng)
+    await changeAppLocale(lng)
+  }, [])
+
+  const applySessionRole = useCallback(async (option: SessionRoleOption, accessToken: string) => {
     const { accessToken: nextToken } = await sessionRoleApi.reissueSessionRole(
       accessToken,
       option.role,
@@ -69,24 +75,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       role: option.role,
       companyId: option.companyId,
       companyName: option.companyName,
+      accountKind: option.accountKind,
     })
 
-    const profile = await authApi.fetchProfile(option.companyName)
-    if (!profile.scope || (profile.role !== 'super_admin' && profile.role !== 'company_admin')) {
-      setUser(null)
-      setNeedsRoleSelection(false)
-      setRoleOptions([])
-      setBlocked(true)
-      setBlockReason(NO_GATEWAY_ROLES)
-      return
-    }
-
+    const profile = await authApi.fetchProfile({
+      companyName: option.companyName,
+      accountKind: option.accountKind,
+    })
     setUser(profile)
     setNeedsRoleSelection(false)
     setBlocked(false)
     setBlockReason(null)
-    setRoleOptions([])
-  }, [])
+    if (profile.locale === 'en' || profile.locale === 'si') {
+      await applyLocalLocale(profile.locale)
+    }
+  }, [applyLocalLocale])
 
   const resolveRolesAfterAuth = useCallback(
     async (accessToken: string, opts?: { preferSticky?: boolean; clearSticky?: boolean }) => {
@@ -101,16 +104,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
         setNeedsRoleSelection(false)
         setBlocked(true)
-        setBlockReason(NO_GATEWAY_ROLES)
+        setBlockReason(NO_ROLES)
         return
       }
 
       if (opts?.preferSticky) {
         const sticky = await secureStorage.getSessionRole()
         if (sticky) {
-          const match = findMatchingGatewayRole(options, sticky.role, sticky.companyId)
+          const match = findMatchingSessionRole(options, sticky.role, sticky.companyId)
           if (match) {
-            await applyGatewayRole(match, accessToken)
+            await applySessionRole(match, accessToken)
             return
           }
           await secureStorage.clearSessionRole()
@@ -118,7 +121,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (options.length === 1) {
-        await applyGatewayRole(options[0], accessToken)
+        await applySessionRole(options[0], accessToken)
         return
       }
 
@@ -127,24 +130,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setBlockReason(null)
       setNeedsRoleSelection(true)
     },
-    [applyGatewayRole],
+    [applySessionRole],
   )
 
   const refreshProfile = useCallback(async () => {
     const sticky = await secureStorage.getSessionRole()
-    const profile = await authApi.fetchProfile(sticky?.companyName ?? null)
-    if (!profile.scope || (profile.role !== 'super_admin' && profile.role !== 'company_admin')) {
-      setUser(null)
-      setBlocked(true)
-      setBlockReason(NO_GATEWAY_ROLES)
-      setNeedsRoleSelection(false)
-      return
-    }
+    const profile = await authApi.fetchProfile({
+      companyName: sticky?.companyName ?? null,
+      accountKind: sticky?.accountKind,
+    })
     setUser(profile)
     setBlocked(false)
     setBlockReason(null)
     setNeedsRoleSelection(false)
-  }, [])
+    if (profile.locale === 'en' || profile.locale === 'si') {
+      await applyLocalLocale(profile.locale)
+    }
+  }, [applyLocalLocale])
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -168,14 +170,29 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [resolveRolesAfterAuth])
 
   const selectRole = useCallback(
-    async (option: GatewayRoleOption) => {
+    async (option: SessionRoleOption) => {
       const token = await secureStorage.getAccessToken()
       if (!token) {
         throw new Error('Session expired. Please sign in again.')
       }
-      await applyGatewayRole(option, token)
+      await applySessionRole(option, token)
     },
-    [applyGatewayRole],
+    [applySessionRole],
+  )
+
+  const setLocale = useCallback(
+    async (next: AppLocale) => {
+      await applyLocalLocale(next)
+      const token = await secureStorage.getAccessToken()
+      if (token) {
+        try {
+          await sessionRoleApi.patchLocale(token, next)
+        } catch {
+          // Locale still applies locally if Identity is unreachable.
+        }
+      }
+    },
+    [applyLocalLocale],
   )
 
   useEffect(() => {
@@ -188,6 +205,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let active = true
     void (async () => {
+      const storedLocale = await secureStorage.getLocale()
+      if (storedLocale && active) {
+        setLocaleState(storedLocale)
+        await changeAppLocale(storedLocale)
+      }
       const token = await secureStorage.getAccessToken()
       if (token) {
         try {
@@ -210,17 +232,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<SessionContextValue>(
     () => ({
       user,
-      isAuthenticated: user !== null && user.scope !== null,
+      isAuthenticated: user !== null,
       isBootstrapping,
       needsRoleSelection,
       isBlocked,
       blockReason,
       roleOptions,
+      locale,
       login,
       loginWithGoogle,
       selectRole,
       logout,
       refreshProfile,
+      setLocale,
     }),
     [
       user,
@@ -229,11 +253,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       isBlocked,
       blockReason,
       roleOptions,
+      locale,
       login,
       loginWithGoogle,
       selectRole,
       logout,
       refreshProfile,
+      setLocale,
     ],
   )
 

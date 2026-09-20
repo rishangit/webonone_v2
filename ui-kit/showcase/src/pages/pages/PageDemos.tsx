@@ -1,18 +1,13 @@
 import { useMemo, useState } from 'react'
-import { Edit3, Globe, Mail, MapPin, Phone, User } from 'lucide-react'
+import { Globe, Mail, MapPin, Phone, User } from 'lucide-react'
 import { z } from 'zod'
 import {
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Checkbox,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  EditableSectionCard,
   FeaturePage,
-  Form,
   FormField,
   Input,
   ImagePreview,
@@ -27,6 +22,7 @@ import {
   ListAddButton,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   ListPageModeProvider,
@@ -125,7 +121,7 @@ function ListPageDemoBody({
       title="List page"
       description="Production list composition: FeaturePage actions, ListFilterPanel, ListPageBody, ItemList, and ListPageFooter. Toggle pagination vs on-scroll."
       actions={
-        <div className="flex flex-wrap items-center gap-2">
+        <ListPageActions>
           <SearchInput
             value={searchQuery}
             onChange={(event) => {
@@ -137,7 +133,7 @@ function ListPageDemoBody({
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           <ListAddButton>Add item</ListAddButton>
-        </div>
+        </ListPageActions>
       }
     >
       <div className="flex flex-wrap gap-2">
@@ -263,7 +259,7 @@ const INITIAL_PROFILE_DETAILS: ProfileDetailsValues = {
   addressLine1: '120 Platform Avenue',
   city: 'San Francisco',
   country: 'US',
-  bio: 'Profile details page pattern with view and edit modes.',
+  bio: 'Profile details page pattern with per-card edit icons.',
 }
 
 function ReadOnlyField({
@@ -286,22 +282,48 @@ function ReadOnlyField({
   )
 }
 
+type DetailsSection = 'profile' | 'address' | 'contact' | 'name'
+
+function SectionEditActions({
+  onCancel,
+  onSave,
+}: {
+  onCancel: () => void
+  onSave: () => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button type="button" size="sm" onClick={onSave}>
+        Save
+      </Button>
+    </div>
+  )
+}
+
 export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
   const [savedValues, setSavedValues] = useState<ProfileDetailsValues>(INITIAL_PROFILE_DETAILS)
   const [values, setValues] = useState<ProfileDetailsValues>(INITIAL_PROFILE_DETAILS)
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileDetailsValues, string>>>({})
+  const [editingSection, setEditingSection] = useState<DetailsSection | null>(null)
   const [notify, setNotify] = useState(true)
   const [featured, setFeatured] = useState(false)
 
-  function handleCancelEdit() {
+  function startEdit(section: DetailsSection) {
     setValues(savedValues)
     setErrors({})
-    setMode('view')
+    setEditingSection(section)
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function cancelEdit() {
+    setValues(savedValues)
+    setErrors({})
+    setEditingSection(null)
+  }
+
+  function saveSection() {
     const parsed = profileDetailsSchema.safeParse(values)
     if (!parsed.success) {
       setErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
@@ -309,113 +331,26 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
     }
     setErrors({})
     setSavedValues(parsed.data)
-    setMode('view')
+    setEditingSection(null)
   }
 
   return (
     <FeaturePage
       title="Details page"
-      description="Profile-style details composition with view mode and edit mode."
+      description="Read-only section cards with per-card edit icons that open inline fields or a wizard."
       onBack={onBack}
       backLabel="Back"
-      actions={
-        mode === 'view' ? (
-          <Button type="button" size="sm" onClick={() => setMode('edit')}>
-            <Edit3 className="h-4 w-4" aria-hidden />
-            Edit
-          </Button>
-        ) : (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={handleCancelEdit}>
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" form="pages-details-form">
-              Save
-            </Button>
-          </div>
-        )
-      }
     >
-      {mode === 'view' ? (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Profile</CardTitle>
-                <CardDescription>Identity and short bio for this account</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-                  <ImagePreview src={null} alt={savedValues.displayName} mode="view" className="rounded-full" />
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <h2 className="text-xl font-semibold">{savedValues.displayName}</h2>
-                    <p className="text-sm text-muted-foreground">{savedValues.email}</p>
-                    <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
-                      <span>Email verified</span>
-                      <span>Platform profile</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{savedValues.bio}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Address</CardTitle>
-                <CardDescription>Postal / street address</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ReadOnlyField label="Address line 1" value={savedValues.addressLine1} icon={MapPin} />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <ReadOnlyField label="City" value={savedValues.city} icon={MapPin} />
-                  <ReadOnlyField label="Country" value={savedValues.country} icon={Globe} />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Contact</CardTitle>
-                <CardDescription>How others can reach you</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ReadOnlyField label="Email" value={savedValues.email} icon={Mail} />
-                <ReadOnlyField label="Phone number" value={savedValues.phoneNumber} icon={Phone} />
-                <ReadOnlyField label="Locale" value={savedValues.locale} icon={Globe} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Name</CardTitle>
-                <CardDescription>Legal and display names</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <ReadOnlyField label="First name" value={savedValues.firstName} icon={User} />
-                  <ReadOnlyField label="Last name" value={savedValues.lastName} icon={User} />
-                </div>
-                <ReadOnlyField label="Display name" value={savedValues.displayName} icon={User} />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      ) : (
-        <Form
-          id="pages-details-form"
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 items-start gap-6 space-y-0 lg:grid-cols-3"
-        >
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Profile</CardTitle>
-                <CardDescription>Identity and short bio for this account</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          <EditableSectionCard
+            title="Profile"
+            description="Identity and short bio for this account"
+            canEdit
+            onEdit={() => startEdit('profile')}
+          >
+            {editingSection === 'profile' ? (
+              <>
                 <FormField label="Bio" htmlFor="pages-details-bio" error={errors.bio}>
                   <Textarea
                     rows={4}
@@ -437,18 +372,32 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
                   />
                   <Label htmlFor="pages-details-featured">Featured item</Label>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Tip: clear Display name or Email and click Save profile to see inline field errors.
-                </p>
-              </CardContent>
-            </Card>
+                <SectionEditActions onCancel={cancelEdit} onSave={saveSection} />
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+                <ImagePreview src={null} alt={savedValues.displayName} mode="view" className="rounded-full" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <h2 className="text-xl font-semibold">{savedValues.displayName}</h2>
+                  <p className="text-sm text-muted-foreground">{savedValues.email}</p>
+                  <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
+                    <span>Email verified</span>
+                    <span>Platform profile</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{savedValues.bio}</p>
+                </div>
+              </div>
+            )}
+          </EditableSectionCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Address</CardTitle>
-                <CardDescription>Postal / street address</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          <EditableSectionCard
+            title="Address"
+            description="Postal / street address"
+            canEdit
+            onEdit={() => startEdit('address')}
+          >
+            {editingSection === 'address' ? (
+              <>
                 <FormField label="Address line 1" htmlFor="pages-details-address" error={errors.addressLine1}>
                   <Input
                     value={values.addressLine1 ?? ''}
@@ -476,17 +425,29 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
                     />
                   </FormField>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <SectionEditActions onCancel={cancelEdit} onSave={saveSection} />
+              </>
+            ) : (
+              <>
+                <ReadOnlyField label="Address line 1" value={savedValues.addressLine1} icon={MapPin} />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ReadOnlyField label="City" value={savedValues.city} icon={MapPin} />
+                  <ReadOnlyField label="Country" value={savedValues.country} icon={Globe} />
+                </div>
+              </>
+            )}
+          </EditableSectionCard>
+        </div>
 
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Contact</CardTitle>
-                <CardDescription>How others can reach you</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        <div className="flex flex-col gap-6 lg:col-span-1">
+          <EditableSectionCard
+            title="Contact"
+            description="How others can reach you"
+            canEdit
+            onEdit={() => startEdit('contact')}
+          >
+            {editingSection === 'contact' ? (
+              <>
                 <FormField label="Email" htmlFor="pages-details-email" required error={errors.email}>
                   <Input
                     type="email"
@@ -518,15 +479,25 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
                     </SelectContent>
                   </Select>
                 </FormField>
-              </CardContent>
-            </Card>
+                <SectionEditActions onCancel={cancelEdit} onSave={saveSection} />
+              </>
+            ) : (
+              <>
+                <ReadOnlyField label="Email" value={savedValues.email} icon={Mail} />
+                <ReadOnlyField label="Phone number" value={savedValues.phoneNumber} icon={Phone} />
+                <ReadOnlyField label="Locale" value={savedValues.locale} icon={Globe} />
+              </>
+            )}
+          </EditableSectionCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Name</CardTitle>
-                <CardDescription>Legal and display names</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          <EditableSectionCard
+            title="Name"
+            description="Legal and display names"
+            canEdit
+            onEdit={() => startEdit('name')}
+          >
+            {editingSection === 'name' ? (
+              <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     label="First name"
@@ -568,11 +539,20 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
                     }
                   />
                 </FormField>
-              </CardContent>
-            </Card>
-          </div>
-        </Form>
-      )}
+                <SectionEditActions onCancel={cancelEdit} onSave={saveSection} />
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ReadOnlyField label="First name" value={savedValues.firstName} icon={User} />
+                  <ReadOnlyField label="Last name" value={savedValues.lastName} icon={User} />
+                </div>
+                <ReadOnlyField label="Display name" value={savedValues.displayName} icon={User} />
+              </>
+            )}
+          </EditableSectionCard>
+        </div>
+      </div>
     </FeaturePage>
   )
 }

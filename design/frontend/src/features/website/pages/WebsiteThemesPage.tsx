@@ -13,10 +13,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
-  ListAddButton,
   ListPageBody,
-  ListPageFooter,
-  SearchInput,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
@@ -26,6 +23,8 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 import { websiteThemesActions } from '../store'
+import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
+import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteThemeDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsiteTheme } from '../types'
@@ -75,19 +74,16 @@ export function WebsiteThemesPage() {
       <WebsiteHubTabs
         section="themes"
         actions={
-          <>
-            <SearchInput
-              value={list.q}
-              onChange={(event) => list.setQ(event.target.value)}
-              placeholder={t('searchThemes')}
-              className="w-64"
-            />
-            {canManage ? (
-              <ListAddButton onClick={() => setDialogOpen(true)} compactLabel={tc('add')}>
-                {t('addTheme')}
-              </ListAddButton>
-            ) : null}
-          </>
+          <WebsiteHubListToolbar
+            searchValue={list.q}
+            onSearchChange={list.setQ}
+            searchPlaceholder={t('searchThemes')}
+            searchAriaLabel={t('searchThemes')}
+            canManage={canManage}
+            addLabel={t('addTheme')}
+            onAdd={() => setDialogOpen(true)}
+            compactAddLabel={tc('add')}
+          />
         }
       />
       {list.error ? (
@@ -97,7 +93,8 @@ export function WebsiteThemesPage() {
       ) : null}
       <ListPageBody>
         <div className="flex-1">
-          {list.items.length === 0 ? (
+          {!list.loading ? (
+            list.items.length === 0 ? (
             <ItemListEmpty>{t('emptyThemes')}</ItemListEmpty>
           ) : (
             <ItemList>
@@ -149,21 +146,10 @@ export function WebsiteThemesPage() {
                 </ItemListItem>
               ))}
             </ItemList>
-          )}
+          )
+          ) : null}
         </div>
-        <ListPageFooter
-          className="mt-auto"
-          currentPage={list.page}
-          pageSize={list.pageSize}
-          totalCount={list.total}
-          loadedCount={list.items.length}
-          hasMore={list.hasMore}
-          loadingMore={list.loadingMore}
-          onPageChange={(next) => list.load(next, list.pageSize, true)}
-          onPageSizeChange={(next) => list.load(1, next, true)}
-          onLoadMore={() => list.loadMore()}
-          onModeChange={() => list.load(1, list.pageSize, true)}
-        />
+        <WebsiteListPageFooter list={list} />
       </ListPageBody>
       <WebsiteThemeDialog
         open={dialogOpen}

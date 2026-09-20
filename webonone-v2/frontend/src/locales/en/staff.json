@@ -163,7 +163,12 @@
       "staffDescription": "Staff member for this session",
       "name": "Name",
       "noAnswers": "No answers recorded.",
-      "tokenSubtitle": "Token {{label}} · {{date}}"
+      "tokenSubtitle": "Token {{label}} · {{date}}",
+      "fillForm": "Fill form",
+      "viewForm": "View form",
+      "salesTitle": "Sales",
+      "salesDescription": "Bills recorded during this session token",
+      "salesEmpty": "No sales for this session yet."
     },
     "submissionDetail": {
       "title": "Form submission",
@@ -178,7 +183,8 @@
       "subject": "Subject",
       "filledBy": "Filled by",
       "service": "Service",
-      "submitted": "Submitted"
+      "submitted": "Submitted",
+      "viewForm": "View form"
     }
   }
 }

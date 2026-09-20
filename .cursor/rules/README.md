@@ -57,6 +57,17 @@ Agent delegation map: [AGENTS.md](../../AGENTS.md)
 
 Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email/frontend`, and any future `*/frontend` apps.
 
+## Mobile (`mobile/`, `packages/mobile-ui/`)
+
+| Rule | Globs | Description |
+|------|-------|-------------|
+| [mobile-project.mdc](mobile-project.mdc) | `mobile/**/*` | Expo app scope, auth, env, WebView policy, verification |
+| [mobile-ui-consumption.mdc](mobile-ui-consumption.mdc) | `mobile/src/**/*.{ts,tsx}` | Mandatory `@webonone/mobile-ui` for interactive UI |
+| [mobile-structure.mdc](mobile-structure.mdc) | `mobile/src/**/*.{ts,tsx}` | Feature folders, Expo Router thin routes, `@/` imports |
+| [mobile-dialogs.mdc](mobile-dialogs.mdc) | `mobile/src/**/*.{ts,tsx}`, `packages/mobile-ui/**/*.{ts,tsx}` | RN `CustomDialog` — no peer-dialog bridge |
+| [mobile-ui-project.mdc](mobile-ui-project.mdc) | `packages/mobile-ui/**/*` | Kit package conventions, exports, `/dev/kit` showcase |
+| [mobile-list-pagination.mdc](mobile-list-pagination.mdc) | `mobile/src/**/*.{ts,tsx}` | On-scroll `ListPageFooter` + hooks for native collection pages |
+
 ## Backend (`backend/`)
 
 | Rule | Globs | Description |
@@ -77,6 +88,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | WebOnOne v2 | [webonone-agent](../agents/webonone-agent.md) | [skill](../skills/webonone-agent/SKILL.md) |
 | AI | [ai-agent](../agents/ai-agent.md) | [skill](../skills/ai-agent/SKILL.md) |
 | Support | [support-agent](../agents/support-agent.md) | [skill](../skills/support-agent/SKILL.md) |
+| Mobile | [mobile-agent](../agents/mobile-agent.md) | [skill](../skills/mobile-agent/SKILL.md) |
 
 ### Cross-cutting skills
 
@@ -130,3 +142,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Mutation toast feedback (`useToast`) | [toast-notifications.mdc](toast-notifications.mdc), [toast-notifications skill](../skills/toast-notifications/SKILL.md) |
 | User-visible product features → public help | [help-articles.mdc](help-articles.mdc), [help-articles skill](../skills/help-articles/SKILL.md) |
 | Design website data binding (blocks + addons) | [website-designer-data-binding.mdc](website-designer-data-binding.mdc), [website-designer-addons skill](../skills/website-designer-addons/SKILL.md) |
+| Mobile UI consumption (`@webonone/mobile-ui`) | [mobile-ui-consumption.mdc](mobile-ui-consumption.mdc), [mobile-agent skill](../skills/mobile-agent/SKILL.md) |
+| Mobile dialogs (RN CustomDialog) | [mobile-dialogs.mdc](mobile-dialogs.mdc) |
+| Mobile feature structure (Expo Router, screens/) | [mobile-structure.mdc](mobile-structure.mdc) |
+| Mobile forms/lists/toasts (stack-agnostic skills) | [form-creation](../skills/form-creation/SKILL.md), [item-list](../skills/item-list/SKILL.md), [toast-notifications](../skills/toast-notifications/SKILL.md) — see Mobile sections |

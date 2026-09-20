@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.webonone.sms'
+    namespace 'com.webonone.mobile'
     defaultConfig {
-        applicationId 'com.webonone.sms'
+        applicationId 'com.webonone.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

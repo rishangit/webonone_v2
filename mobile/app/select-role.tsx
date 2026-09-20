@@ -1,5 +1,10 @@
 import { SelectRoleScreen } from '@/features/auth/SelectRoleScreen'
+import { GuestAuthLayout } from '@/features/auth/GuestAuthLayout'
 
 export default function SelectRole() {
-  return <SelectRoleScreen />
+  return (
+    <GuestAuthLayout>
+      <SelectRoleScreen />
+    </GuestAuthLayout>
+  )
 }

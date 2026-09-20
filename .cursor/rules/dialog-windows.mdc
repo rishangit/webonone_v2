@@ -261,7 +261,7 @@ Reference: [`ProfileMediaSelectorModal.tsx`](identity/frontend/src/features/prof
 
 ## Responsive / mobile-first
 
-**Shell (built into `CustomDialog` — do not override):** outer padding `px-2 py-2` → `sm:px-4 sm:py-4`; `max-h-[calc(100vh-1rem)]`; width is `w-full` below `sm`; percent presets and `maxWidth` / `max-w-*` apply from `sm:` up; body scroll per height preset.
+**Shell (built into `CustomDialog` — do not override):** outer padding uses `shellDialogOverlayClassName` (`px-2 py-2 sm:py-4`) so horizontal inset matches `app-shell-root` / AppHeader bar width; `max-h-[calc(100vh-1rem)]`; width is `w-full` below `sm`; percent presets and `maxWidth` / `max-w-*` apply from `sm:` up; body scroll per height preset.
 
 **Sizing on mobile:** shell fills the padded content area below `sm` (640px); from `sm:` up, percent presets (`sm:w-1/2` …) and `max-w-*` caps apply. Prefer `auto` + `maxWidth` for short confirms; no fixed `px` shell widths.
 

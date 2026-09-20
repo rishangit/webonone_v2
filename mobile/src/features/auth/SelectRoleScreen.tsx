@@ -1,24 +1,27 @@
 import { useState } from 'react'
-import { Pressable, View } from 'react-native'
-import { Body, Button, Card, Heading, Muted, Screen, Subheading } from '@/ui'
+import { Platform, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
+import {
+  AccountOptionRow,
+  Body,
+  Button,
+  Card,
+  Heading,
+  Muted,
+  Subheading,
+} from '@webonone/mobile-ui'
 import { useSession } from './SessionContext'
-import type { GatewayRoleOption } from './sessionRoleApi'
-
-function optionTitle(option: GatewayRoleOption): string {
-  if (option.role === 'super_admin') return 'Super Admin'
-  return option.companyName ?? option.label
-}
-
-function optionSubtitle(option: GatewayRoleOption): string {
-  if (option.role === 'super_admin') return 'Platform gateway — system-level SMS'
-  return 'Company owner — company SMS gateway'
-}
+import type { SessionRoleOption } from './sessionRoleApi'
+import { accountTitle } from '@/features/settings/utils/accountLabels'
 
 export function SelectRoleScreen() {
-  const { roleOptions, isBlocked, blockReason, selectRole, logout } = useSession()
-  const [pending, setPending] = useState<GatewayRoleOption | null>(null)
+  const { t } = useTranslation('session')
+  const { t: tc } = useTranslation('common')
+  const { roleOptions, isBlocked, selectRole, logout } = useSession()
+  const [pending, setPending] = useState<SessionRoleOption | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const stackedActions = Platform.OS === 'web'
 
   async function handleContinue() {
     if (!pending) return
@@ -27,7 +30,7 @@ export function SelectRoleScreen() {
     try {
       await selectRole(pending)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to set account')
+      setError(err instanceof Error ? err.message : t('errors.failedToSetSessionRole', { status: '' }))
     } finally {
       setSubmitting(false)
     }
@@ -35,63 +38,69 @@ export function SelectRoleScreen() {
 
   if (isBlocked) {
     return (
-      <Screen>
+      <>
         <View className="gap-1">
-          <Heading>Cannot use SMS gateway</Heading>
-          <Muted>{blockReason ?? 'This account cannot set up an SMS gateway.'}</Muted>
+          <Heading>{t('blockedTitle')}</Heading>
+          <Muted>{t('blockedDefault')}</Muted>
         </View>
         <Card className="gap-3">
-          <Body>
-            Sign in with a Super Admin or Company Owner account. Member and staff accounts are not
-            supported on this app.
-          </Body>
-          <Button variant="outline" onPress={logout}>
-            Sign out
+          <Body>{t('blockedHint')}</Body>
+          <Button variant="outline" className={stackedActions ? 'w-full' : undefined} onPress={logout}>
+            {tc('logout')}
           </Button>
         </Card>
-      </Screen>
+      </>
     )
   }
 
   return (
-    <Screen>
+    <>
       <View className="gap-1">
-        <Heading>Choose account</Heading>
-        <Muted>
-          Select Super Admin for system SMS, or a company you own for company SMS. Your choice stays
-          active until you sign out.
-        </Muted>
+        <Heading>{t('chooseAccount.title')}</Heading>
+        <Muted>{t('chooseAccount.descriptionInitial')}</Muted>
       </View>
 
       <Card className="gap-3">
-        <Subheading>Accounts</Subheading>
+        <Subheading>{t('accounts')}</Subheading>
         <View className="gap-2">
           {roleOptions.map((option) => {
             const selected =
-              pending?.role === option.role &&
-              (pending.companyId ?? null) === (option.companyId ?? null)
+              pending?.role === option.role && (pending.companyId ?? null) === (option.companyId ?? null)
             return (
-              <Pressable
-                key={`${option.role}-${option.companyId ?? 'platform'}`}
+              <AccountOptionRow
+                key={`${option.role}-${option.companyId ?? 'platform'}-${option.accountKind ?? 'default'}`}
+                title={accountTitle(option, t)}
+                role={option.role}
+                accountKind={option.accountKind}
+                companyId={option.companyId}
+                logoUrl={option.companyLogoUrl}
+                logoAlt={option.companyName ?? option.label}
+                selected={selected}
                 onPress={() => setPending(option)}
-                className={`rounded-lg border px-3 py-3 ${
-                  selected ? 'border-primary bg-primary/10' : 'border-border'
-                }`}
-              >
-                <Body className="font-semibold">{optionTitle(option)}</Body>
-                <Muted>{optionSubtitle(option)}</Muted>
-              </Pressable>
+              />
             )
           })}
         </View>
         {error ? <Body className="text-destructive">{error}</Body> : null}
-        <Button loading={submitting} disabled={!pending || submitting} onPress={handleContinue}>
-          Continue
-        </Button>
-        <Button variant="outline" disabled={submitting} onPress={logout}>
-          Sign out
-        </Button>
+        <View className="gap-2">
+          <Button
+            className={stackedActions ? 'w-full' : undefined}
+            loading={submitting}
+            disabled={!pending || submitting}
+            onPress={handleContinue}
+          >
+            {tc('continue')}
+          </Button>
+          <Button
+            variant="outline"
+            className={stackedActions ? 'w-full' : undefined}
+            disabled={submitting}
+            onPress={logout}
+          >
+            {tc('logout')}
+          </Button>
+        </View>
       </Card>
-    </Screen>
+    </>
   )
 }

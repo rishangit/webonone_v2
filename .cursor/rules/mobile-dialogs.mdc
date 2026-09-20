@@ -1,0 +1,44 @@
+---
+description: React Native dialog standards for mobile and mobile-ui
+globs: mobile/src/**/*.{ts,tsx},packages/mobile-ui/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Mobile dialogs
+
+Use **`CustomDialog`** from `@webonone/mobile-ui` for create/edit/confirm flows in the Expo app.
+
+Related: [mobile-ui-consumption.mdc](mobile-ui-consumption.mdc), [form-creation skill](../skills/form-creation/SKILL.md).
+
+**Do not** use web [dialog-windows.mdc](dialog-windows.mdc) or [core-hosted-peer-dialog](../skills/core-hosted-peer-dialog/SKILL.md) — there is no iframe parent on native.
+
+## API
+
+| Prop | Role |
+|------|------|
+| `open` / `onOpenChange` | Controlled visibility |
+| `title`, `description`, `icon` | Header content |
+| `footer` | Cancel / primary actions (host owns footer in the dialog component) |
+| `sizeWidth`, `sizeHeight` | Presets: `small`, `medium`, `large`, `xlarge`, `auto` |
+
+Also available: `ConfirmDialog` for destructive confirms.
+
+## Patterns
+
+- Form dialogs: fields in dialog body; submit in `footer`; validation errors inline via `FormField`.
+- Wizards: one step per dialog open state or separate screens — no peer-dialog bridge.
+- Selection: `UserSelectionDialog`, `TagSelectionDialog` from mobile-ui.
+
+## Reference implementations
+
+- `mobile/src/features/profile/ProfileEditDialog.tsx`
+- `mobile/src/features/email/components/TemplateFormDialog.tsx`
+- `mobile/src/features/kit/pages/DialogsShowcase.tsx`
+- `packages/mobile-ui/src/components/CustomDialog.tsx`
+
+## Verification
+
+```bash
+npm run type-check -w @webonone/mobile-ui
+npm run type-check -w @webonone/mobile
+```

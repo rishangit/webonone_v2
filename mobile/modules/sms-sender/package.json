@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "private": true,
   "main": "index.ts",
-  "description": "Android SmsManager bridge for the WebOnOne SMS gateway"
+  "description": "Android SmsManager bridge for the WebOnOne mobile app SMS gateway"
 }

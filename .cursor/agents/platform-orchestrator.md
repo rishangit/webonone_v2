@@ -20,6 +20,7 @@ Read [AGENTS.md](../../AGENTS.md) for the delegation map.
 | `webonone-v2/` | `.cursor/agents/webonone-agent.md` | `.cursor/skills/webonone-agent/SKILL.md` |
 | `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
 | `support/` | `.cursor/agents/support-agent.md` | `.cursor/skills/support-agent/SKILL.md` |
+| `mobile/`, `packages/mobile-ui/` | `.cursor/agents/mobile-agent.md` | `.cursor/skills/mobile-agent/SKILL.md` |
 
 ## Step 1 — Classify scope
 
@@ -41,6 +42,8 @@ Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `
 | iframe/postMessage/JWT across services | Sequential: identity then webonone |
 | User-visible product change (new page/nav/workflow) | Sequential: product agent then `support-agent` |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent |
+| `mobile/**` or `packages/mobile-ui/**` only | Delegate `mobile-agent` |
+| New nav item + native screen + web FE | Sequential: owning service agent then `mobile-agent` |
 | Read-only exploration in one service | Scoped explore subagent |
 | Independent changes in 2+ services | Parallel subagents |
 

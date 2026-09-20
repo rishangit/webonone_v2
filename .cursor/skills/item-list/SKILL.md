@@ -2,12 +2,11 @@
 name: item-list
 description: >-
   Builds vertical item lists with uniform row padding, small gaps between rows,
-  glass-card row surfaces (light translucent --glass-bg + blur), small themed
-  box-shadow on hover, and a per-item three-dot overflow menu for row actions
-  using @webonone/ui-kit ItemList primitives and DropdownMenu. Use when creating
-  or editing item lists, list rows, collection lists, resource lists, settings
-  lists, selectable rows, overflow menus, kebab menus, or three-dot menus on
-  list items in any service frontend.
+  glass-card row surfaces, themed shadow on hover, and per-item three-dot menus
+  using @webonone/ui-kit (web) or @webonone/mobile-ui (mobile) ItemList
+  primitives. Use when creating or editing item lists, list rows, collection
+  lists, resource lists, settings lists, selectable rows, overflow menus, or
+  three-dot menus in any service frontend or mobile/ screen.
 ---
 
 # Item list
@@ -258,3 +257,33 @@ npm run lint
 - Tab to 3-dot trigger → menu opens; Escape closes
 - When a detail route exists: click row body → detail page; 3-dot menu still works without navigating
 - All rows align; padding matches other lists in the app
+
+## Mobile (@webonone/mobile-ui)
+
+Import from `@webonone/mobile-ui`:
+
+| Export | Role |
+|--------|------|
+| `ItemList` | List container with gap between rows |
+| `ItemListItem` | Single glass-card row |
+| `ItemListContent` | Main label/metadata |
+| `ItemListEmpty` | Empty state copy |
+| `ItemListMenu`, `ItemListMenuItem` | Per-row 3-dot overflow menu |
+| `FeatureScreen` | Page wrapper with title/description |
+| `ListPageFooter` | “Showing X of Y” + loading-more spinner below the list |
+
+Wrap list screens in `FeatureScreen`. Pass `onScroll` from `useListPageScroll` for on-scroll pagination. Use `Spinner` for first-page loading; mutation feedback via `useToast`.
+
+**On-scroll pagination (required on collection pages):**
+
+| Data source | Hook | Location |
+|-------------|------|----------|
+| Server `{ items, total }` API | `useServerPaginatedList` | `mobile/src/shared/hooks/` |
+| Client-filtered full array | `useClientInfiniteList` | same |
+| Scroll wiring | `useListPageScroll` | same |
+
+Do **not** use `Pagination` on native list screens. Rule: [mobile-list-pagination.mdc](../../rules/mobile-list-pagination.mdc).
+
+Reference: `mobile/src/features/sales/screens/SalesHistoryScreen.tsx`, `mobile/src/features/data/screens/TagsListScreen.tsx`.
+
+Verification: `npm run type-check -w @webonone/mobile`

@@ -18,6 +18,8 @@ export { SearchInput } from './components/SearchInput'
 export type { SearchInputProps } from './components/SearchInput'
 export { ListAddButton } from './components/ListAddButton'
 export type { ListAddButtonProps } from './components/ListAddButton'
+export { ListPageActions } from './components/ListPageActions'
+export type { ListPageActionsProps } from './components/ListPageActions'
 export { PhoneInput } from './components/PhoneInput'
 export type { PhoneInputProps } from './components/PhoneInput'
 export { OtpInput } from './components/OtpInput'
@@ -146,6 +148,8 @@ export {
   type CardProps,
   type CardVariant,
 } from './components/Card'
+export { EditableSectionCard } from './components/EditableSectionCard'
+export type { EditableSectionCardProps } from './components/EditableSectionCard'
 export {
   Dialog,
   DialogPortal,
@@ -197,6 +201,8 @@ export { ImageCarousel } from './components/ImageCarousel'
 export type { ImageCarouselProps, ImageCarouselImage } from './components/ImageCarousel'
 export { StatusTag, statusTagVariants, isStatusTagVariant } from './components/StatusTag'
 export type { StatusTagProps, StatusTagVariant } from './components/StatusTag'
+export { AccountOptionRow, resolveAccountRoleVariant } from './components/AccountOptionRow'
+export type { AccountOptionRowProps } from './components/AccountOptionRow'
 export { AvatarGroup } from './components/AvatarGroup'
 export type { AvatarGroupProps, AvatarGroupUser } from './components/AvatarGroup'
 export {

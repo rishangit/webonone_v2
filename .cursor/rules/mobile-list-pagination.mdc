@@ -1,0 +1,115 @@
+---
+description: On-scroll list pagination for native mobile collection screens
+globs: mobile/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Mobile list pagination
+
+Native collection screens in the Expo app use **on-scroll pagination only** — no pager controls. Append the next page when the user scrolls near the bottom of `FeatureScreen`.
+
+Skill: [item-list skill](../skills/item-list/SKILL.md). Hooks live in `mobile/src/shared/hooks/`.
+
+## Required pieces
+
+| Piece | Source |
+|-------|--------|
+| Page wrapper | `FeatureScreen` with `onScroll={onScroll}` and scroll content `flex-grow` |
+| List body | `ListPageBody` wrapping list + footer (`flex-1` column) |
+| List footer | `ListPageFooter` below `ItemList` / list component (`mt-auto`) |
+| Scroll handler | `useListPageScroll` → `useScrollLoadMore` from `@webonone/mobile-ui` |
+| Server pages | `useServerPaginatedList` |
+| Client slice | `useClientInfiniteList` (full array already in memory) |
+
+**Forbidden on native list pages:** `Pagination` from `@webonone/mobile-ui` (kit showcase may still demo the control in Components).
+
+## Defaults
+
+| Setting | Value |
+|---------|--------|
+| Initial `pageSize` | **12** (`DEFAULT_LIST_PAGE_SIZE`) |
+| Queue / history API lists | **24** when the screen passes `pageSize: 24` to the hook |
+
+Filter or search change → page 1 **replace**. Near-bottom scroll → **append** next page.
+
+## Server-paginated API
+
+Use when the backend returns `{ items, total, page, pageSize }`.
+
+```tsx
+const list = useServerPaginatedList({
+  fetchPage: async (query) => {
+    const result = await myApi.list({
+      page: Number(query.page ?? 1),
+      pageSize: Number(query.pageSize ?? 12),
+      q: query.q as string | undefined,
+      status: String(query.status ?? 'all'),
+    })
+    return {
+      items: result.items,
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+    }
+  },
+})
+const onScroll = useListPageScroll(list)
+
+return (
+  <FeatureScreen title="…" onScroll={onScroll}>
+    <ListPageBody>
+      <MyList items={list.items} />
+      <ListPageFooter
+        loadedCount={list.items.length}
+        totalCount={list.total}
+        hasMore={list.hasMore}
+        loadingMore={list.loadingMore}
+      />
+    </ListPageBody>
+  </FeatureScreen>
+)
+```
+
+Search: `list.searchQuery` + `list.setSearchQuery`. Extra filters: `list.patchQueryParams({ status: value })`. After mutations: `list.reload()`.
+
+Reference: `SalesHistoryScreen.tsx`, `InvoicesScreen.tsx`, `sms/screens/HistoryScreen.tsx`.
+
+## Client-sliced lists
+
+Use when the screen loads the full array once and filters in memory (companies, themes, templates).
+
+```tsx
+const pagination = useClientInfiniteList(filteredItems, 12, resetKey)
+const onScroll = useListPageScroll(pagination)
+
+<ListPageBody>
+  <MyList items={pagination.visibleItems} />
+  <ListPageFooter
+    loadedCount={pagination.loadedCount}
+    totalCount={pagination.totalCount}
+    hasMore={pagination.hasMore}
+    loadingMore={pagination.loadingMore}
+  />
+</ListPageBody>
+```
+
+Pass a `resetKey` (e.g. search query string) so scroll position resets when filters change.
+
+Reference: `AllCompaniesScreen.tsx`, `SystemThemeScreen.tsx`, `sms/screens/TemplatesScreen.tsx`.
+
+## Data catalog helper
+
+Entity list screens may use `usePaginatedEntityList` in `mobile/src/features/data/hooks/` — it wraps `useServerPaginatedList` with Data API query params.
+
+## Small static lists
+
+Screens that always return a short fixed set (e.g. SMS devices) may omit `ListPageFooter` when pagination adds no value.
+
+## Verification
+
+```bash
+npm run type-check -w @webonone/mobile-ui
+npm run type-check -w @webonone/mobile
+```
+
+Confirm no `Pagination` import under `mobile/src/features/**` except kit `ComponentsShowcase`.

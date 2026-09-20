@@ -31,7 +31,7 @@ const SearchInputField = React.forwardRef<HTMLInputElement, SearchInputFieldProp
 
     return (
       <InputGroup
-        className={cn(className)}
+        className={cn('h-9', className)}
         invalid={props['aria-invalid'] === true || props['aria-invalid'] === 'true'}
       >
         <InputGroupIcon icon={Search} />
@@ -94,7 +94,7 @@ function MobileHeaderSearch({
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     onKeyDown?.(event)
     if (event.defaultPrevented) return
-    if (event.key === 'Enter' || event.key === 'Escape') {
+    if (event.key === 'Escape') {
       event.preventDefault()
       ctx?.close()
     }
@@ -151,7 +151,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     return (
       <>
         <MobileHeaderSearch {...props} />
-        <SearchInputField ref={ref} className={cn('hidden sm:flex', className)} {...props} />
+        <SearchInputField ref={ref} className={cn('hidden w-64 sm:flex', className)} {...props} />
       </>
     )
   },

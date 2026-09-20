@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@webonone/ui-kit'
+import { broadcastLocaleToIframes, normalizeLocale } from '@webonone/i18n'
 import { broadcastThemeToIframes } from '@webonone/theme'
 import { useIdentityAuthMessage } from '../hooks/useIdentityAuthMessage'
 import { getGuestThemePayload } from '../utils/buildIdentityLoginUrl'
@@ -22,11 +23,12 @@ export function IdentityLoginFrame({
   returnPath = '/',
   websiteReturnUrl = null,
 }: IdentityLoginFrameProps) {
-  const { t } = useTranslation('auth')
+  const { t, i18n } = useTranslation('auth')
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const promptLogin = searchParams.get('prompt') === 'login'
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const currentLocale = normalizeLocale(i18n.language)
   const resolvedPath = isIdentityGuestAuthPath(location.pathname)
     ? location.pathname
     : identityPath
@@ -51,9 +53,22 @@ export function IdentityLoginFrame({
     broadcastThemeToIframes(getGuestThemePayload(), [iframe])
   }, [])
 
+  const applyLocale = useCallback(() => {
+    const iframe = iframeRef.current
+    if (!iframe) {
+      return
+    }
+    broadcastLocaleToIframes(currentLocale, [iframe])
+  }, [currentLocale])
+
+  useEffect(() => {
+    applyLocale()
+  }, [applyLocale])
+
   function handleLoad() {
     setLoadError(false)
     applyTheme()
+    applyLocale()
   }
 
   function handleRetry() {

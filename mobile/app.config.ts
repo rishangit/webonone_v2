@@ -1,26 +1,37 @@
 import type { ExpoConfig, ConfigContext } from 'expo/config'
 
+function resolveApiBaseUrlEnv(
+  apiEnv: string | undefined,
+  originEnv: string | undefined,
+  localDefault: string,
+): string {
+  const api = apiEnv?.trim()
+  if (api) return api
+  const origin = originEnv?.trim()?.replace(/\/+$/, '')
+  if (origin) return origin.endsWith('/api/v1') ? origin : `${origin}/api/v1`
+  return localDefault
+}
+
 /**
- * Expo config for the WebOnOne mobile gateway app.
+ * Expo config for the WebOnOne mobile product app (main platform shell on phones).
  *
- * v1 scope: login + SMS gateway configuration. Android declares SEND_SMS and
- * runs a foreground service; iOS logs in but shows an Android-only gateway state.
+ * Full role-filtered nav + native screens; SMS this-device gateway on Android only.
  */
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'WebOnOne SMS',
-  slug: 'webonone-sms',
-  scheme: 'webonone-sms',
+  name: 'WebOnOne',
+  slug: 'webonone',
+  scheme: 'webonone',
   version: '1.0.0',
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.webonone.sms',
+    bundleIdentifier: 'com.webonone.mobile',
   },
   android: {
-    package: 'com.webonone.sms',
+    package: 'com.webonone.mobile',
     permissions: [
       'android.permission.SEND_SMS',
       'android.permission.READ_PHONE_STATE',
@@ -40,8 +51,46 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     identityApiBaseUrl: process.env.IDENTITY_API_BASE_URL ?? 'http://localhost:4011/api/v1',
     smsApiBaseUrl: process.env.SMS_API_BASE_URL ?? 'http://localhost:4016/api/v1',
+    emailApiBaseUrl: resolveApiBaseUrlEnv(
+      process.env.EMAIL_API_BASE_URL,
+      process.env.EMAIL_ORIGIN,
+      'http://localhost:4014/api/v1',
+    ),
+    dataApiBaseUrl: resolveApiBaseUrlEnv(
+      process.env.DATA_API_BASE_URL,
+      process.env.DATA_ORIGIN,
+      'http://localhost:4015/api/v1',
+    ),
     webononeApiBaseUrl: process.env.WEBONONE_API_BASE_URL ?? 'http://localhost:4010/api/v1',
-    /** Same Web OAuth client ID as Identity `VITE_GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_ID`. */
+    identityOrigin: process.env.IDENTITY_ORIGIN ?? 'http://localhost:3011',
+    emailOrigin: process.env.EMAIL_ORIGIN ?? 'http://localhost:3014',
+    dataOrigin: process.env.DATA_ORIGIN ?? 'http://localhost:3015',
+    paymentOrigin: process.env.PAYMENT_ORIGIN ?? 'http://localhost:3017',
+    mediaOrigin: process.env.MEDIA_ORIGIN ?? 'http://localhost:3013',
+    paymentApiBaseUrl: resolveApiBaseUrlEnv(
+      process.env.PAYMENT_API_BASE_URL,
+      process.env.PAYMENT_ORIGIN,
+      'http://localhost:4017/api/v1',
+    ),
+    mediaApiBaseUrl: resolveApiBaseUrlEnv(
+      process.env.MEDIA_API_BASE_URL,
+      process.env.MEDIA_ORIGIN,
+      'http://localhost:4013/api/v1',
+    ),
+    designOrigin: process.env.DESIGN_ORIGIN ?? 'http://localhost:3019',
+    designApiBaseUrl: resolveApiBaseUrlEnv(
+      process.env.DESIGN_API_BASE_URL,
+      process.env.DESIGN_ORIGIN,
+      'http://localhost:4019/api/v1',
+    ),
+    webononeOrigin: process.env.WEBONONE_ORIGIN ?? 'http://localhost:3010',
+    supportOrigin: process.env.SUPPORT_ORIGIN ?? 'http://localhost:3021',
+    aiOrigin: process.env.AI_ORIGIN ?? 'http://localhost:3020',
+    aiApiBaseUrl: resolveApiBaseUrlEnv(
+      process.env.AI_API_BASE_URL,
+      process.env.AI_ORIGIN,
+      'http://localhost:4020/api/v1',
+    ),
     googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID ?? '',
   },
 })

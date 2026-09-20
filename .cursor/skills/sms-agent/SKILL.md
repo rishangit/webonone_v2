@@ -2,11 +2,11 @@
 name: sms-agent
 description: >-
   SMS service agent for webonone-platform. Handles sms/ frontend, backend,
-  migrations and the mobile/ Expo gateway app — OTP, SMS templates, queue, and
-  device or Text.lk gateway delivery. Use when tasks touch sms/, mobile/, the
-  SMS API, WebOnOne/Identity SMS integration, or SMS template/create/edit
-  dialog boxes — also read core-hosted-peer-dialog and dialog-windows for any
-  dialog or modal.
+  migrations — OTP, SMS templates, queue, and device or Text.lk gateway
+  delivery. Use when tasks touch sms/, the SMS API, WebOnOne/Identity SMS
+  integration, or SMS template/create/edit dialog boxes — also read
+  core-hosted-peer-dialog and dialog-windows for any dialog or modal. Mobile
+  gateway UI and native screens → mobile-agent.
 ---
 
 # SMS agent skill
@@ -14,7 +14,8 @@ description: >-
 ## Scope
 
 - `sms/frontend`, `sms/backend`, `sms/backend/migrations`
-- `mobile/` — Expo app (React Native + RN Web): Identity login + Android SMS gateway
+
+Mobile gateway UI, Android `sms-sender` module, and native SMS screens → [mobile-agent](../mobile-agent/SKILL.md).
 - Identity consumer (optional): `identity/backend/src/services/smsClient.service.ts` → `POST /internal/otp/send`
 
 ## Model
@@ -64,7 +65,7 @@ Reference: `sms/frontend/src/features/templates/components/TemplateFormDialog.ts
 - Device API: `sms/backend/src/routes/device.routes.ts` (+ `deviceAuth` middleware)
 - Gateway API: `sms/backend/src/routes/gateway.routes.ts`
 - Admin UI: `sms/frontend/src/features/{dashboard,devices,queue,history,templates,send}/` — gateway mode/credentials live on Devices → Settings (`GatewaySettingsCard`)
-- Mobile: `mobile/src/features/{auth,gateway}/`, `mobile/modules/sms-sender`
+- Mobile (gateway UI): `mobile/src/features/sms-gateway/`, `mobile/modules/sms-sender` — owned by mobile-agent
 
 ## iOS note
 
@@ -76,5 +77,4 @@ Programmatic silent SMS sending is Android-only. The iOS build still logs in and
 npm run type-check -w sms-root
 npm run migrate -w sms-root
 npm run build -w sms-root
-npm run type-check -w @webonone/mobile
 ```

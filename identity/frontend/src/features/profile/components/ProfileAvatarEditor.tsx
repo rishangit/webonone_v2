@@ -29,7 +29,7 @@ export function ProfileAvatarEditor({
         fallback={getInitials(displayName)}
         mode="edit"
         onEdit={onEditImage}
-        className="rounded-full"
+        className="h-40 w-40"
       />
       <p className="text-xs text-muted-foreground">{t('wizard.clickEditImage')}</p>
     </div>

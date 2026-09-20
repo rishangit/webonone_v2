@@ -4,9 +4,11 @@ export {
   DEFAULT_LOCALE,
   LOCALE_STORAGE_KEY,
   LOCALE_QUERY,
+  LOCALE_MESSAGE_TYPES,
   LANGUAGE_MENU_LABELS,
   INTL_LOCALE_TAGS,
 } from './constants'
+export { broadcastLocaleToIframes, useEmbedLocaleListener } from './embedLocale'
 export {
   isAppLocale,
   normalizeLocale,

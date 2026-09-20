@@ -8,6 +8,11 @@ export const LOCALE_STORAGE_KEY = 'webonone.locale'
 
 export const LOCALE_QUERY = 'lng'
 
+export const LOCALE_MESSAGE_TYPES = {
+  APPLY: 'webonone:locale:apply',
+  READY: 'webonone:locale:ready',
+} as const
+
 /** Display labels for language menus (bilingual; not loaded via i18n). */
 export const LANGUAGE_MENU_LABELS: Record<AppLocale, string> = {
   en: 'English',

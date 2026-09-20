@@ -146,6 +146,55 @@ export function pointerToRect(
   return clampRect({ col, colSpan, top, height }, limits)
 }
 
+const MIN_PINCH_SPAN = 24
+
+export type PinchSpans = {
+  spanX: number
+  spanY: number
+  distance: number
+}
+
+export function pinchSpansFromPoints(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+): PinchSpans {
+  const spanX = Math.abs(a.x - b.x)
+  const spanY = Math.abs(a.y - b.y)
+  return { spanX, spanY, distance: Math.hypot(spanX, spanY) }
+}
+
+/** Map two-finger spread to width/height scale (axis-aware; tiny spans use overall distance). */
+export function pinchScaleFromSpans(start: PinchSpans, current: PinchSpans): { scaleX: number; scaleY: number } {
+  const distScale = start.distance > MIN_PINCH_SPAN ? current.distance / start.distance : 1
+  const scaleX = start.spanX > MIN_PINCH_SPAN ? current.spanX / start.spanX : distScale
+  const scaleY = start.spanY > MIN_PINCH_SPAN ? current.spanY / start.spanY : distScale
+  return {
+    scaleX: Math.min(8, Math.max(0.2, Number.isFinite(scaleX) ? scaleX : 1)),
+    scaleY: Math.min(8, Math.max(0.2, Number.isFinite(scaleY) ? scaleY : 1)),
+  }
+}
+
+/** Two-finger resize — scale from the element's center, then snap to the 12-col / row grid. */
+export function pinchToRect(
+  start: LayoutRect,
+  scaleX: number,
+  scaleY: number,
+  canvasWidth: number,
+  limits: LayoutLimits = ADDON_LAYOUT_LIMITS,
+): LayoutRect {
+  const colWidth = canvasWidth / 12
+  const minWidth = colWidth * limits.minColSpan
+  const startLeft = (start.col - 1) * colWidth
+  const startWidth = start.colSpan * colWidth
+  const width = Math.max(minWidth, startWidth * scaleX)
+  const height = Math.max(limits.minHeight, start.height * scaleY)
+  const left = startLeft + startWidth / 2 - width / 2
+  const top = start.top + start.height / 2 - height / 2
+  const col = Math.round(left / colWidth) + 1
+  const colSpan = Math.round(width / colWidth)
+  return clampRect({ col, colSpan, top, height }, limits)
+}
+
 export type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 export const RESIZE_HANDLES: ResizeHandle[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']
 

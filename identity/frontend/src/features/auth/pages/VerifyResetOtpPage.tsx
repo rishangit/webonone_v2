@@ -14,6 +14,7 @@ import {
 } from '@webonone/ui-kit'
 import { verifyResetOtpSchema, type VerifyResetOtpFormValues } from '../schemas/authSchemas'
 import { EmbedAuthLink } from '../components/EmbedAuthLink'
+import { useEmbedGuestAuthSync } from '../hooks/useEmbedGuestAuthSync'
 import { useEmbedAuthNavigate } from '../hooks/useEmbedAuthNavigate'
 import { authApi, type AuthApiError } from '@/shared/services/authApi'
 import { saveResetSessionToken } from '../utils/resetSessionStorage'
@@ -31,6 +32,7 @@ function maskEmail(email: string): string {
 
 export function VerifyResetOtpPage() {
   const { t } = useTranslation('auth')
+  useEmbedGuestAuthSync()
   const { navigateAuth } = useEmbedAuthNavigate()
   const [searchParams] = useSearchParams()
   const emailFromQuery = searchParams.get('email') ?? ''

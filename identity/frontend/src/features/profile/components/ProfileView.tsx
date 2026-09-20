@@ -1,6 +1,6 @@
 import { Globe, MapPin, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { ImagePreview } from '@webonone/ui-kit'
+import { ImagePreview, StatusTag, isStatusTagVariant } from '@webonone/ui-kit'
 import type { UserProfile } from '@/shared/types/auth.types'
 import type { ProfileWizardStep } from '../schemas/profileSchemas'
 import { formatCountryName } from '../utils/formatCountryName'
@@ -28,10 +28,18 @@ function ReadOnlyField({
   )
 }
 
+function formatRoleLabel(role: string): string {
+  return role
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 interface ProfileViewProps {
   user: UserProfile
   avatarUrl: string | null
   canEdit?: boolean
+  role?: string
   onEditSection?: (step: ProfileWizardStep) => void
   onVerifyEmail?: () => void
   onVerifyPhone?: () => void
@@ -41,12 +49,14 @@ export function ProfileView({
   user,
   avatarUrl,
   canEdit = true,
+  role,
   onEditSection,
   onVerifyEmail,
   onVerifyPhone,
 }: ProfileViewProps) {
   const { t } = useTranslation('profile')
   const { t: tc } = useTranslation('common')
+  const { t: tu } = useTranslation('users')
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
@@ -57,16 +67,30 @@ export function ProfileView({
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(1) : undefined}
         >
-          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+          <div className="flex flex-col items-start gap-4 text-left sm:flex-row">
             <ImagePreview
               key={avatarUrl ?? 'empty'}
               src={avatarUrl}
               alt={user.displayName}
               mode="view"
-              className="rounded-full"
+              className="h-40 w-40 self-center sm:self-start"
             />
-            <div className="min-w-0 flex-1 space-y-3">
-              <h2 className="text-xl font-semibold">{user.displayName}</h2>
+            <div className="min-w-0 w-full flex-1 space-y-3">
+              <h2 className="text-center text-xl font-semibold sm:text-left">{user.displayName}</h2>
+              {role ? (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {tu('roles.label')}
+                  </p>
+                  <div className="flex justify-start">
+                    {isStatusTagVariant(role) ? (
+                      <StatusTag variant={role} />
+                    ) : (
+                      <StatusTag variant="member">{formatRoleLabel(role)}</StatusTag>
+                    )}
+                  </div>
+                </div>
+              ) : null}
               <ContactVerifiedRow
                 kind="email"
                 label={t('fields.email')}
@@ -77,7 +101,7 @@ export function ProfileView({
                 verifyLabel={t('verify.email.button')}
               />
               {user.isGoogleUser ? (
-                <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground sm:justify-start">
+                <div className="flex flex-wrap justify-start gap-2 text-xs text-muted-foreground">
                   <span>{t('wizard.signedInWithGoogle')}</span>
                 </div>
               ) : null}

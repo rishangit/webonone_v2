@@ -163,7 +163,12 @@
       "staffDescription": "මෙම සැසිය සඳහා කාර්ය මණ්ඩල සාමාජික",
       "name": "නම",
       "noAnswers": "පිළිතුරු වාර්තා කර නැත.",
-      "tokenSubtitle": "ටෝකනය {{label}} · {{date}}"
+      "tokenSubtitle": "ටෝකනය {{label}} · {{date}}",
+      "fillForm": "පෝරමය පුරවන්න",
+      "viewForm": "පෝරමය බලන්න",
+      "salesTitle": "විකුණුම්",
+      "salesDescription": "මෙම සැසි ටෝකනය අතරතුර වාර්තා කළ බිල්පත්",
+      "salesEmpty": "තවම මෙම සැසිය සඳහා විකුණුම් නැත."
     },
     "submissionDetail": {
       "title": "පෝරම ඉදිරිපත් කිරීම",
@@ -178,7 +183,8 @@
       "subject": "විෂය",
       "filledBy": "පුරවූයේ",
       "service": "සේවාව",
-      "submitted": "ඉදිරිපත් කළේ"
+      "submitted": "ඉදිරිපත් කළේ",
+      "viewForm": "පෝරමය බලන්න"
     }
   }
 }

@@ -1,0 +1,67 @@
+---
+description: Mobile Expo app scope, auth, env, WebView policy, and verification
+globs: mobile/**/*
+alwaysApply: false
+---
+
+# Mobile project
+
+Agent skill: [.cursor/skills/mobile-agent/SKILL.md](../skills/mobile-agent/SKILL.md)
+
+## Scope
+
+`mobile/` — Expo product app. `packages/mobile-ui/` — React Native UI kit. `mobile/modules/sms-sender/` — Android SMS native module.
+
+## Stack
+
+| Concern | Choice |
+|---------|--------|
+| Framework | Expo (TypeScript, Expo Router), React Native Web |
+| Styling | NativeWind; `tailwind.config.js` extends `@webonone/theme` |
+| UI | `@webonone/mobile-ui` — not `@webonone/ui-kit` |
+| Nav / roles | `@webonone/platform-nav` `buildNavDefsForSessionRole` |
+| Auth | Identity login → WebOnOne assumable roles → Identity session-role |
+
+## Env
+
+Config file: `mobile/.env` only (see `mobile/.env.example`). Loaded via `app.config.ts` → `extra` → `mobile/src/shared/config/env.ts`.
+
+| Key pattern | Purpose |
+|-------------|---------|
+| `*_API_BASE_URL` | Service API bases (include `/api/v1`) |
+| `*_ORIGIN` | Peer frontend origins for WebView |
+| `GOOGLE_WEB_CLIENT_ID` | Android Google Sign-In (optional) |
+| `EXPO_NO_METRO_WORKSPACE_ROOT` | Required for Android release in monorepo |
+
+**Local LAN:** use `http://<lan-ip>:port` for physical devices; backends must listen on `0.0.0.0`.
+
+## Auth flow
+
+1. Identity `POST /auth/login` → JWT in `expo-secure-store`.
+2. WebOnOne `GET /company/me/assumable-roles` → role selection when needed.
+3. Identity `POST /auth/session-role` → reissued JWT.
+4. All API calls use `Authorization: Bearer <JWT>` via `mobile/src/shared/services/apiClient.ts`.
+
+## Native vs WebView
+
+| Area | Strategy |
+|------|----------|
+| Profile, SMS, Email, Payment, Sales, Companies, Settings, Data, Identity/Users, Staff, Calendar, Analytics, Design Forms, Design Website | Native screens |
+| Other web-only nav | Browser fallback |
+
+WebView injects JWT into peer `localStorage` + `postMessage` `webonone:platform:init`. Profile is native because Identity web embed stays blank on Android WebView when bootstrapping from injected storage.
+
+## Platform notes
+
+- SMS gateway (This device) is **Android-only**.
+- Google Sign-In is Android-only; requires dev/prebuild (not Expo Go).
+- Text.lk gateway mode does not require the mobile app.
+
+## Verification
+
+```bash
+npm run type-check -w @webonone/mobile-ui
+npm run type-check -w @webonone/mobile
+```
+
+Manual: `npm run mobile` from repo root; sign in and open a native screen + a WebView peer.

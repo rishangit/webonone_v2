@@ -35,6 +35,7 @@ import {
   IDENTITY_NAV_SENTINELS,
   PAYMENT_NAV_SENTINELS,
   SMS_NAV_SENTINELS,
+  buildNavDefsForSessionRole,
   filterCompanyDataEntities,
   filterPlatformNavDataEntities,
   getPlatformNavDefs,
@@ -45,6 +46,7 @@ import {
   isPaymentNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
+  sessionRoleToNavVariant,
   type CoreNavDef,
   type CoreNavLeaf,
   type DataEntityKey,
@@ -152,38 +154,14 @@ export function buildPlatformNav(
   return buildNavItems(defs)
 }
 
-/** Identity/Data/Design remain staff/company-session only. Default User keeps Calendar. */
-const COMPANY_SESSION_ONLY_GROUPS = new Set(['Identity', 'Data', 'Design'])
-
-function withoutCompanySessionOnlyGroups(defs: CoreNavDef[]): CoreNavDef[] {
-  return defs.filter(
-    (item) => !(item.kind === 'group' && COMPANY_SESSION_ONLY_GROUPS.has(item.label)),
-  )
-}
-
-export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
-  if (role === 'super_admin') return 'superAdmin'
-  if (role === 'company_admin') return 'main'
-  return 'member'
-}
+export { sessionRoleToNavVariant }
 
 export function buildNavForSessionRole(
   role: SessionRole,
   dataEntities?: readonly DataEntityKey[],
   companyId?: string | null,
 ): NavConfigItem[] {
-  const variant = sessionRoleToNavVariant(role)
-  if (role === 'company_admin') {
-    return buildPlatformNav(variant, dataEntities ?? [])
-  }
-  // Default User (member, no company) — Calendar + Settings; Identity/Data need a company session.
-  if (role === 'member' && !companyId) {
-    return buildNavItems(withoutCompanySessionOnlyGroups(getPlatformNavDefs('member')))
-  }
-  if (role === 'member') {
-    return buildPlatformNav(variant, dataEntities ?? [])
-  }
-  return buildPlatformNav(variant)
+  return buildNavItems(buildNavDefsForSessionRole(role, dataEntities, companyId))
 }
 
 export const mainNav = buildPlatformNav('main')

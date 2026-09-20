@@ -1,86 +1,96 @@
 import { Pressable, View } from 'react-native'
-import { Badge, Body, Button, Card, Heading, Muted, Screen, Subheading } from '@/ui'
+import { useTranslation } from 'react-i18next'
+import { Badge, Body, Button, Card, FeatureScreen, Muted, Subheading } from '@webonone/mobile-ui'
 import { useSession } from '../auth/SessionContext'
 import { useGateway } from './useGateway'
 
 export function GatewayScreen() {
+  const { t } = useTranslation('devices')
+  const { t: tSession } = useTranslation('session')
   const { user } = useSession()
   const { state, register, requestPermission, selectSim, start, stop } = useGateway()
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'company_admin'
 
-  if (!state.supported) {
+  if (!isAdmin) {
     return (
-      <Screen>
-        <Heading>SMS Gateway</Heading>
-        <Card className="gap-2">
-          <Subheading>Android-only feature</Subheading>
-          <Muted>
-            Sending SMS over a SIM is only available on Android gateway builds. You are signed in,
-            but this device cannot act as a gateway.
-          </Muted>
+      <FeatureScreen title={t('thisDevice.title')} description={t('thisDevice.descriptionRestricted')}>
+        <Card>
+          <Muted>{t('thisDevice.restricted')}</Muted>
         </Card>
-      </Screen>
+      </FeatureScreen>
     )
   }
 
-  const scopeLabel = user?.scope === 'platform' ? 'Platform (system SMS)' : 'Company SMS'
-  const isOwner = user?.role === 'company_admin'
-  const contextLine = isOwner
-    ? `${user?.companyName ?? 'Company'} · Company owner`
-    : 'Super Admin'
+  if (!state.supported) {
+    return (
+      <FeatureScreen title={t('thisDevice.title')} description={t('thisDevice.descriptionUnsupported')}>
+        <Card className="gap-2">
+          <Subheading>{t('thisDevice.androidOnlyTitle')}</Subheading>
+          <Muted>{t('thisDevice.androidOnlyBody')}</Muted>
+        </Card>
+      </FeatureScreen>
+    )
+  }
+
+  const scopeLabel =
+    user?.scope === 'platform' ? t('thisDevice.scopePlatform') : t('thisDevice.scopeCompany')
+  const contextLine =
+    user?.role === 'company_admin'
+      ? `${user.companyName ?? t('company')} · ${t('thisDevice.companyOwner')}`
+      : tSession('roles.superAdmin')
 
   return (
-    <Screen>
+    <FeatureScreen title={t('thisDevice.title')} description={t('thisDevice.description')}>
       <View className="gap-1">
-        <Heading>SMS Gateway</Heading>
         <Body className="font-semibold">{contextLine}</Body>
         <Muted>{scopeLabel}</Muted>
       </View>
 
       <Card className="gap-3">
         <View className="flex-row items-center justify-between">
-          <Subheading>1 · Register device</Subheading>
+          <Subheading>{t('thisDevice.stepRegister')}</Subheading>
           {state.registered ? (
             <Badge tone={state.approved ? 'success' : 'warning'}>
-              {state.approved ? 'Approved' : 'Pending approval'}
+              {state.approved ? t('approved') : t('thisDevice.pendingApproval')}
             </Badge>
           ) : (
-            <Badge tone="neutral">Not registered</Badge>
+            <Badge tone="neutral">{t('thisDevice.notRegistered')}</Badge>
           )}
         </View>
         {!state.registered ? (
           <>
-            <Muted>Register this phone so an admin can approve it in the SMS admin app.</Muted>
+            <Muted>{t('thisDevice.registerHint')}</Muted>
             <Button loading={state.busy} onPress={register}>
-              Register this device
+              {t('thisDevice.register')}
             </Button>
           </>
         ) : !state.approved ? (
-          <Muted>Waiting for an administrator to approve this device.</Muted>
+          <Muted>{t('thisDevice.waitingApproval')}</Muted>
         ) : (
-          <Muted>This device is approved and can send SMS for your scope.</Muted>
+          <Muted>{t('thisDevice.approvedHint')}</Muted>
         )}
       </Card>
 
       <Card className="gap-3">
         <View className="flex-row items-center justify-between">
-          <Subheading>2 · Permission</Subheading>
+          <Subheading>{t('thisDevice.stepPermission')}</Subheading>
           <Badge tone={state.permissionGranted ? 'success' : 'warning'}>
-            {state.permissionGranted ? 'Granted' : 'Required'}
+            {state.permissionGranted ? t('thisDevice.granted') : t('thisDevice.required')}
           </Badge>
         </View>
         {!state.permissionGranted ? (
           <Button variant="outline" onPress={requestPermission}>
-            Grant SEND_SMS permission
+            {t('thisDevice.grantPermission')}
           </Button>
         ) : (
-          <Muted>SEND_SMS permission granted.</Muted>
+          <Muted>{t('thisDevice.permissionGranted')}</Muted>
         )}
       </Card>
 
       <Card className="gap-3">
-        <Subheading>3 · SIM</Subheading>
+        <Subheading>{t('thisDevice.stepSim')}</Subheading>
         {state.simSlots.length === 0 ? (
-          <Muted>No SIM cards detected.</Muted>
+          <Muted>{t('thisDevice.noSim')}</Muted>
         ) : (
           <View className="gap-2">
             {state.simSlots.map((sim) => {
@@ -94,11 +104,11 @@ export function GatewayScreen() {
                   }`}
                 >
                   <Body>
-                    SIM {sim.slot + 1}
+                    {t('thisDevice.simLabel', { slot: sim.slot + 1 })}
                     {sim.carrier ? ` · ${sim.carrier}` : ''}
                     {sim.number ? ` · ${sim.number}` : ''}
                   </Body>
-                  {selected ? <Badge tone="success">Selected</Badge> : null}
+                  {selected ? <Badge tone="success">{t('thisDevice.selected')}</Badge> : null}
                 </Pressable>
               )
             })}
@@ -108,19 +118,21 @@ export function GatewayScreen() {
 
       <Card className="gap-3">
         <View className="flex-row items-center justify-between">
-          <Subheading>4 · Gateway</Subheading>
-          <Badge tone={state.running ? 'success' : 'neutral'}>{state.running ? 'Running' : 'Stopped'}</Badge>
+          <Subheading>{t('thisDevice.stepGateway')}</Subheading>
+          <Badge tone={state.running ? 'success' : 'neutral'}>
+            {state.running ? t('thisDevice.running') : t('thisDevice.stopped')}
+          </Badge>
         </View>
         {state.running ? (
           <Button variant="destructive" onPress={stop}>
-            Stop gateway
+            {t('thisDevice.stop')}
           </Button>
         ) : (
           <Button onPress={start} disabled={!state.approved}>
-            Start gateway
+            {t('thisDevice.start')}
           </Button>
         )}
-        {!state.approved ? <Muted>Approve the device before starting.</Muted> : null}
+        {!state.approved ? <Muted>{t('thisDevice.approveBeforeStart')}</Muted> : null}
       </Card>
 
       {state.error ? (
@@ -130,9 +142,9 @@ export function GatewayScreen() {
       ) : null}
 
       <Card className="gap-2">
-        <Subheading>Recent activity</Subheading>
+        <Subheading>{t('thisDevice.recentActivity')}</Subheading>
         {state.log.length === 0 ? (
-          <Muted>No messages sent yet.</Muted>
+          <Muted>{t('thisDevice.noMessages')}</Muted>
         ) : (
           state.log.map((entry) => (
             <View key={`${entry.id}-${entry.at}`} className="flex-row items-center justify-between">
@@ -141,12 +153,12 @@ export function GatewayScreen() {
                 {entry.error ? <Muted className="text-destructive">{entry.error}</Muted> : null}
               </View>
               <Badge tone={entry.status === 'sent' ? 'success' : 'danger'}>
-                {entry.status === 'sent' ? 'Sent' : 'Failed'}
+                {entry.status === 'sent' ? t('thisDevice.sent') : t('thisDevice.failed')}
               </Badge>
             </View>
           ))
         )}
       </Card>
-    </Screen>
+    </FeatureScreen>
   )
 }

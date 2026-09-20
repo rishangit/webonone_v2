@@ -7,7 +7,7 @@ order: 2
 summary: "Open Analytics for company progress, sales revenue and profit, catalog mix, customers, and event status."
 ---
 
-**Analytics** is a separate page from the [Dashboard](/docs/app-preferences/dashboard). The Dashboard still shows today’s and upcoming events. Charts and totals live under **Analytics** in the left menu.
+**Analytics** is a separate page from the [Dashboard](/docs/app-preferences/dashboard). The Dashboard still shows today’s and upcoming events. Charts and totals live under **Analytics** in the left menu on the web app and the [mobile app](/docs/getting-started/mobile-app).
 
 1. Sign in and [choose an account](/docs/getting-started/choose-account) if asked.
 2. Open **Analytics**.
@@ -23,6 +23,6 @@ What you see depends on [role](/docs/getting-started/roles):
 
 Revenue is completed bills in LKR from [POS](/docs/sales-billing/pos). **Profit** on the revenue-over-time chart is revenue minus product **cost price** (stock cost × quantity). Services and spaces have no stock cost, so their profit matches revenue for those lines.
 
-The two lines use different colors (revenue vs profit). Hover a point for the exact amounts.
+The two lines use different colors (revenue vs profit). Hover a point on the web, or tap a point on the phone, for the exact amounts.
 
 If you have not selected a company, Analytics asks you to choose a company account first.

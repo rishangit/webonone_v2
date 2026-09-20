@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { isAccessTokenExpired } from './jwtClaims'
+import { readServiceAuthSession, type ServiceAuthSession } from './serviceAuthStorage'
 import { isPlatformInitMessage, PLATFORM_MESSAGE_TYPES } from './types'
-import type { ServiceAuthSession } from './serviceAuthStorage'
 import { useServiceAuthStorageSync } from './useServiceAuthStorageSync'
 
 export type UsePlatformEmbedAuthOptions = {
@@ -71,6 +71,19 @@ export function usePlatformEmbedAuth({
   })
 
   useEffect(() => {
+    if (!authStorageKey) {
+      return
+    }
+
+    const stored = readServiceAuthSession(authStorageKey)
+    if (!stored?.accessToken || isAccessTokenExpired(stored.accessToken)) {
+      return
+    }
+
+    handlePersistedSession(stored)
+  }, [authStorageKey, handlePersistedSession])
+
+  useEffect(() => {
     if (!parentOrigin || !isAllowedParentOrigin(parentOrigin)) {
       return
     }
@@ -85,10 +98,21 @@ export function usePlatformEmbedAuth({
       }
     }
 
+    function signalReady() {
+      window.parent.postMessage({ type: PLATFORM_MESSAGE_TYPES.READY }, parentOrigin)
+
+      const bridge = (
+        window as Window & { ReactNativeWebView?: { postMessage: (message: string) => void } }
+      ).ReactNativeWebView
+      if (typeof bridge?.postMessage === 'function') {
+        bridge.postMessage(JSON.stringify({ type: PLATFORM_MESSAGE_TYPES.READY }))
+      }
+    }
+
     window.addEventListener('message', onMessage)
 
-    // Signal readiness to receive INIT (parent resends JWT after READY).
-    window.parent.postMessage({ type: PLATFORM_MESSAGE_TYPES.READY }, parentOrigin)
+    // Signal readiness to receive INIT (parent / native host resends JWT after READY).
+    signalReady()
 
     return () => window.removeEventListener('message', onMessage)
   }, [handleAccessToken, isAllowedParentOrigin, parentOrigin])

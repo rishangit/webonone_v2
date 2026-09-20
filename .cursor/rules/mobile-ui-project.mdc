@@ -1,0 +1,39 @@
+---
+description: @webonone/mobile-ui package conventions and exports
+globs: packages/mobile-ui/**/*
+alwaysApply: false
+---
+
+# Mobile UI project
+
+Agent skill: [.cursor/skills/mobile-agent/SKILL.md](../skills/mobile-agent/SKILL.md)
+
+## Package
+
+`packages/mobile-ui/` — `@webonone/mobile-ui`. React Native + NativeWind primitives for the Expo app. **Not** `@webonone/ui-kit`.
+
+## Build model
+
+- Source-only exports via `packages/mobile-ui/src/index.ts` — no `dist/` build.
+- Metro transpiles source in dev; `npm run type-check` validates types.
+- Do not import from web service frontends.
+
+## Styling
+
+- NativeWind (`className`) with tokens from `@webonone/theme`.
+- Use `cn()` from `packages/mobile-ui/src/lib/cn.ts` for conditional classes.
+- `ThemeProvider` wraps the app; use `useThemeColors` / `useThemedControlIconColor` for themed icons.
+
+## Adding primitives
+
+1. Add component under `packages/mobile-ui/src/components/` (or `layouts/`).
+2. Export from `packages/mobile-ui/src/index.ts`.
+3. Add showcase entry in `mobile/src/features/kit/` (`/dev/kit` route).
+4. Run `npm run type-check -w @webonone/mobile-ui`.
+
+## Verification
+
+```bash
+npm run type-check -w @webonone/mobile-ui
+npm run type-check -w @webonone/mobile
+```

@@ -51,6 +51,7 @@
   "download": "බාගත කරන්න",
   "copy": "පිටපත් කරන්න",
   "more": "තවත්",
+  "showingCount": "{{total}} න් {{loaded}} පෙන්වයි",
   "nav": {
     "home": "මුල් පිටුව",
     "dashboard": "උපකරණ පුවරුව",
@@ -78,6 +79,7 @@
     "sms": "SMS",
     "sendSms": "SMS යවන්න",
     "devices": "උපාංග",
+    "thisDevice": "මෙම උපාංගය",
     "history": "ඉතිහාසය",
     "payment": "ගෙවීම්",
     "invoices": "ඉන්වොයිස්",

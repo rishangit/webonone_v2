@@ -1,3 +1,5 @@
+import { relayLocaleQueryParams } from '@webonone/i18n'
+
 const DEFAULT_IDENTITY_ORIGIN = 'http://127.0.0.1:3011'
 const DEFAULT_IDENTITY_API_BASE = 'http://127.0.0.1:4011/api/v1'
 
@@ -62,6 +64,12 @@ export function buildIdentityEmbedAuthUrl(
   const prompt = new URLSearchParams(window.location.search).get('prompt')
   if (prompt === 'login') {
     url.searchParams.set('prompt', 'login')
+  }
+
+  for (const [key, value] of Object.entries(
+    relayLocaleQueryParams(new URLSearchParams(window.location.search)),
+  )) {
+    url.searchParams.set(key, value)
   }
 
   return url.toString()

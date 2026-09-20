@@ -1,0 +1,56 @@
+---
+description: Mandatory @webonone/mobile-ui usage for the Expo app
+globs: mobile/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Mobile UI consumption
+
+The Expo app (`mobile/src`) must use **`@webonone/mobile-ui`** for interactive UI — not raw React Native controls for standard patterns, and not `@webonone/ui-kit` (web/Radix).
+
+Related: [mobile-ui-project.mdc](mobile-ui-project.mdc), [mobile-dialogs.mdc](mobile-dialogs.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md), [toast-notifications skill](../skills/toast-notifications/SKILL.md).
+
+## Dependency and wiring
+
+| Requirement | Where |
+|-------------|-------|
+| `"@webonone/mobile-ui": "*"` in dependencies | `mobile/package.json` |
+| Metro alias to package `src/` | `mobile/metro.config.js` |
+| `@/` path alias | `mobile/tsconfig.json` |
+
+Package is source-only (no `dist/`); Metro transpiles. Do not import mobile-ui from web service frontends.
+
+## Forbidden
+
+- Raw `TextInput` / `Pressable` for standard buttons, fields, lists, dialogs
+- `@webonone/ui-kit` or Radix components in the Expo app
+- Copying kit source into `features/` or re-implementing kit primitives locally
+- Page loading as plain text — use `Spinner`
+
+## Required component mapping
+
+| UI need | Use from `@webonone/mobile-ui` | Rule/skill |
+|---------|-------------------------------|------------|
+| Feature screens | `FeatureScreen`, `PageHeader` | [mobile-structure.mdc](mobile-structure.mdc) |
+| Forms | `FormField`, `TextField`, `Textarea`, `PhoneInput`, `OtpInput` | [form-creation skill](../skills/form-creation/SKILL.md) |
+| Lists | `ItemList`, `ItemListItem`, `ItemListContent`, `ItemListMenu`, `ItemListEmpty` | [item-list skill](../skills/item-list/SKILL.md) |
+| Dialogs | `CustomDialog`, `ConfirmDialog` | [mobile-dialogs.mdc](mobile-dialogs.mdc) |
+| Toasts | `ToastProvider`, `useToast` | [toast-notifications skill](../skills/toast-notifications/SKILL.md) |
+| Shell | `MobileAppShell`, `AppHeader`, `AppDrawer` | [mobile-project.mdc](mobile-project.mdc) |
+| Loading | `Spinner` | — |
+| Search / filter | `SearchInput`, `ListFilterPanel`, `ListFilterTrigger` | — |
+| List pagination | `ListPageBody`, `ListPageFooter`, `useScrollLoadMore` (via app hooks) | [mobile-list-pagination.mdc](mobile-list-pagination.mdc) |
+| Selection | `SelectUser`, `SelectTag`, `UserSelectionDialog`, `TagSelectionDialog` | — |
+
+## Kit changes
+
+Edit `packages/mobile-ui` first when a primitive is missing or needs API changes. Add a showcase entry under `/dev/kit` when adding new controls.
+
+Reference: `mobile/src/features/kit/`, `packages/mobile-ui/src/index.ts`.
+
+## Verification
+
+```bash
+npm run type-check -w @webonone/mobile-ui
+npm run type-check -w @webonone/mobile
+```

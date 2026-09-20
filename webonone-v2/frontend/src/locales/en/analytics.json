@@ -3,6 +3,8 @@
   "description": "Company progress, sales revenue, catalog mix, customers, and events.",
   "platformDescription": "Platform company registration and staffing overview.",
   "loading": "Loading analytics…",
+  "failed": "Failed to load analytics.",
+  "tapPoint": "Tap a point for the exact amount.",
   "needCompany": "Select a company account to view analytics.",
   "emptyChart": "No data in this range.",
   "range": {

@@ -14,6 +14,7 @@ import { useRedirectMode } from '../hooks/useRedirectMode'
 import { completeAuthRedirect } from '../utils/completeAuthRedirect'
 import { clearRegistrationWizardStorage } from '../utils/resetRegistrationWizard'
 import { authActions } from '../store'
+import { useEmbedGuestAuthSync } from '../hooks/useEmbedGuestAuthSync'
 import { withRedirectQuery } from '../utils/redirectQuery'
 
 type RegisterStep = 1 | 2 | 3 | 4
@@ -30,6 +31,8 @@ export function RegisterPage() {
   const [step, setStep] = useState<RegisterStep>(1)
   const [email, setEmail] = useState('')
   const [profile, setProfile] = useState<RegisterProfileFormValues>({ firstName: '', lastName: '' })
+
+  useEmbedGuestAuthSync()
 
   useLayoutEffect(() => {
     clearRegistrationWizardStorage()

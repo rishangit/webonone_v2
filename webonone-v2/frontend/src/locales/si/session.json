@@ -22,5 +22,9 @@
   },
   "errors": {
     "failedToSetSessionRole": "සැසි භූමිකාව සැකසීම අසාර්ථක විය ({{status}})"
-  }
+  },
+  "blockedTitle": "ඉදිරියට යා නොහැක",
+  "blockedDefault": "මෙම ගිණුමට භාවිතා කළ හැකි භූමිකා නැත.",
+  "blockedHint": "Super Admin, සමාගම්, හෝ සාමාජික ප්‍රවේශයක් ඇති WebOnOne ගිණුමකින් පිවිසෙන්න.",
+  "accounts": "ගිණුම්"
 }

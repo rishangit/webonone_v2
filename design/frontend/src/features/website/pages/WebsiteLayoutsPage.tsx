@@ -13,10 +13,6 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
-  ListAddButton,
-  ListPageBody,
-  ListPageFooter,
-  SearchInput,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
@@ -25,6 +21,8 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 import { websiteFootersActions, websiteHeadersActions, websiteLayoutsActions, websiteThemesActions } from '../store'
+import { WebsiteHubListPage } from '../components/WebsiteHubListPage'
+import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteLayoutDialog } from '../components/WebsiteLayoutDialog'
 import type { LayoutMetaValues } from '../schemas/websiteMeta'
@@ -83,36 +81,29 @@ export function WebsiteLayoutsPage() {
     : null
 
   return (
-    <FeaturePage title={t('title')} description={t('layoutsDescription')}>
-      <WebsiteHubTabs
+    <FeaturePage title={t('title')} description={t('layoutsDescription')} className="min-h-full">
+      <WebsiteHubListPage
         section="layouts"
-        actions={
-          <>
-            <SearchInput
-              value={list.q}
-              onChange={(event) => list.setQ(event.target.value)}
-              placeholder={t('searchLayouts')}
-              className="w-64"
-            />
-            {canManage ? (
-              <ListAddButton onClick={() => setDialog({})} compactLabel={tc('add')}>
-                {t('addLayout')}
-              </ListAddButton>
-            ) : null}
-          </>
+        list={list}
+        loading={list.loading}
+        error={list.error}
+        toolbar={
+          <WebsiteHubListToolbar
+            searchValue={list.q}
+            onSearchChange={list.setQ}
+            searchPlaceholder={t('searchLayouts')}
+            searchAriaLabel={t('searchLayouts')}
+            canManage={canManage}
+            addLabel={t('addLayout')}
+            onAdd={() => setDialog({})}
+            compactAddLabel={tc('add')}
+          />
         }
-      />
-      {list.error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{list.error}</AlertDescription>
-        </Alert>
-      ) : null}
-      <ListPageBody>
-        <div className="flex-1">
-          {list.items.length === 0 ? (
-            <ItemListEmpty>{t('emptyLayouts')}</ItemListEmpty>
-          ) : (
-            <ItemList>
+      >
+        {list.items.length === 0 ? (
+          <ItemListEmpty>{t('emptyLayouts')}</ItemListEmpty>
+        ) : (
+          <ItemList>
               {(list.items as WebsiteLayout[]).map((item) => (
                 <ItemListItem key={item.id}>
                   <ItemListContent>
@@ -188,23 +179,9 @@ export function WebsiteLayoutsPage() {
                   ) : null}
                 </ItemListItem>
               ))}
-            </ItemList>
-          )}
-        </div>
-        <ListPageFooter
-          className="mt-auto"
-          currentPage={list.page}
-          pageSize={list.pageSize}
-          totalCount={list.total}
-          loadedCount={list.items.length}
-          hasMore={list.hasMore}
-          loadingMore={list.loadingMore}
-          onPageChange={(next) => list.load(next, list.pageSize, true)}
-          onPageSizeChange={(next) => list.load(1, next, true)}
-          onLoadMore={() => list.loadMore()}
-          onModeChange={() => list.load(1, list.pageSize, true)}
-        />
-      </ListPageBody>
+          </ItemList>
+        )}
+      </WebsiteHubListPage>
       <WebsiteLayoutDialog
         open={dialog !== null}
         entityId={dialog?.id}

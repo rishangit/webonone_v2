@@ -5,6 +5,12 @@ const shellContentPaddingX = 'px-2 sm:px-6'
 const shellPagePadding = 'px-2 py-4 sm:px-6 sm:py-6'
 
 /**
+ * CustomDialog overlay inset — horizontal matches `shellChromeRootClassName` (`p-2`) so the
+ * dialog panel width aligns with the AppHeader bar inside AppShell.
+ */
+const shellDialogOverlayClassName = 'px-2 py-2 sm:py-4'
+
+/**
  * Shell chrome outer inset — matches the gap between header, left nav, and main (`gap-2`).
  */
 const shellChromeRootClassName = 'gap-2 p-2'
@@ -18,6 +24,7 @@ const APP_HEADER_NOTICE_OFFSET_CLASS = 'pt-6'
 export {
   shellContentPaddingX,
   shellPagePadding,
+  shellDialogOverlayClassName,
   shellChromeRootClassName,
   shellChromeBodyClassName,
   APP_HEADER_NOTICE_OFFSET_CLASS,

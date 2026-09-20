@@ -2,9 +2,20 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@webonone/mobile-ui": ["../packages/mobile-ui/src/index.ts"],
+      "@webonone/platform-nav": ["../packages/platform-nav/src/index.ts"],
+      "@webonone/i18n": ["../packages/i18n/src/index.ts"],
+      "@locales/webonone/*": ["../webonone-v2/frontend/src/locales/*"],
+      "@locales/identity/*": ["../identity/frontend/src/locales/*"],
+      "@locales/data/*": ["../data/frontend/src/locales/*"],
+      "@locales/sms/*": ["../sms/frontend/src/locales/*"],
+      "@locales/email/*": ["../email/frontend/src/locales/*"],
+      "@locales/payment/*": ["../payment/frontend/src/locales/*"],
+      "@locales/design/*": ["../design/frontend/src/locales/*"]
     }
   },
   "include": [

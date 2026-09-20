@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { shellDialogOverlayClassName } from '../layouts/shellContentPadding'
 
 export type DialogSizePreset = 'small' | 'medium' | 'large' | 'xlarge' | 'auto'
 
@@ -127,8 +128,8 @@ function CustomDialog({
     disableContentScroll
       ? 'min-h-0 flex-1 overflow-hidden'
       : isAutoHeight
-        ? 'min-h-0 shrink overflow-y-auto overscroll-y-contain max-h-[calc(100vh-10rem)] scrollbar-themed scrollbar-gutter-stable transform-gpu'
-        : 'min-h-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed scrollbar-gutter-stable transform-gpu',
+        ? 'min-h-0 shrink overflow-y-auto overscroll-y-contain max-h-[calc(100vh-10rem)] scrollbar-themed transform-gpu'
+        : 'min-h-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed transform-gpu',
   )
 
   return (
@@ -136,7 +137,10 @@ function CustomDialog({
       <DialogPrimitive.Portal>
         <CustomDialogOverlay stackLevel={stackLevel} />
         <div
-          className="fixed inset-0 flex items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-4"
+          className={cn(
+            'fixed inset-0 flex items-center justify-center overflow-hidden',
+            shellDialogOverlayClassName,
+          )}
           style={{ zIndex: dialogStackZIndex(stackLevel) }}
         >
           <DialogPrimitive.Content

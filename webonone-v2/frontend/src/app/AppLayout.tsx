@@ -3,10 +3,8 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CircleHelp, MessageCircle } from 'lucide-react'
 import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, UiThemeProvider, cn, useToast } from '@webonone/ui-kit'
-import { clearIdentityEmbedSession, isPlatformAiEntityContextMessage } from '@webonone/platform-embed'
+import { isPlatformAiEntityContextMessage } from '@webonone/platform-embed'
 import {
-  appendPromptLogin,
-  buildClearFirstLogoutUrl,
   createNavItemNavigate,
   IDENTITY_NAV_SENTINELS,
   isDataNavSentinel,
@@ -20,14 +18,12 @@ import {
 import { normalizeLocale, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions, clearWebOnOneAuthStorage } from '@/features/auth/store/authSlice'
+import { authActions } from '@/features/auth/store/authSlice'
 import { useIdentitySessionHandoff } from '@/features/auth/hooks/useIdentitySessionHandoff'
 import { isImpersonatingSession, stopImpersonation } from '@/features/auth/utils/impersonation'
-import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
-import { getWebsiteOrigin } from '@/features/auth/utils/websiteConfig'
+import { performWebOnOneLogout } from '@/features/auth/utils/performWebOnOneLogout'
 import { getSupportHomeUrl } from '@/features/support/utils/supportConfig'
-import { clearSessionRoleStorage } from '@/features/session/utils/sessionRoleStorage'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { patchIdentityLocale } from '@/features/auth/services/identityUserApi'
 import { buildNavForSessionRole } from '@/features/shell/config/navItems'
@@ -182,25 +178,7 @@ function AppLayoutContent() {
   }, [canChangeAccount, dispatch])
 
   function handleLogout() {
-    const websiteOrigin = getWebsiteOrigin()
-    const loginUrl = appendPromptLogin(`${window.location.origin}/login`)
-    const identityOrigin = getIdentityOrigin()
-    const logoutUrl = buildClearFirstLogoutUrl([websiteOrigin], identityOrigin, loginUrl)
-
-    console.log('[webonone-auth]', 'logout() start', {
-      href: window.location.href,
-      logoutUrl,
-      websiteOrigin,
-      identityOrigin,
-    })
-
-    clearWebOnOneAuthStorage()
-    clearSessionRoleStorage()
-
-    // Navigate immediately — do not await embed clear (same race as website logout).
-    void clearIdentityEmbedSession({ identityOrigin })
-    console.log('[webonone-auth]', 'logout() → replace clear-first chain', { logoutUrl })
-    window.location.replace(logoutUrl)
+    performWebOnOneLogout()
   }
 
   function handleProfileClick() {

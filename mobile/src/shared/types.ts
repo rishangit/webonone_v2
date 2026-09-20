@@ -1,4 +1,8 @@
-export type SmsRole = 'super_admin' | 'company_admin' | 'member'
+import type { AppLocale } from '@webonone/i18n'
+
+export type { AppLocale }
+
+export type SessionRole = 'super_admin' | 'company_admin' | 'member'
 
 export type DeviceScope = 'platform' | 'company'
 
@@ -7,18 +11,22 @@ export type DeviceStatus = 'pending' | 'approved' | 'revoked'
 export interface UserProfile {
   id: string
   email: string
-  role: SmsRole
+  displayName: string
+  avatarUrl: string | null
+  role: SessionRole
   companyId: string | null
-  /** Company display name when role is company_admin; null for Super Admin. */
   companyName: string | null
+  accountKind?: 'staff'
   scope: DeviceScope | null
+  locale?: AppLocale | null
 }
 
 /** Sticky post-login role choice (cleared on logout). */
 export interface StickySessionRole {
-  role: 'super_admin' | 'company_admin'
+  role: SessionRole
   companyId: string | null
   companyName: string | null
+  accountKind?: 'staff'
 }
 
 export interface SmsDevice {
@@ -29,6 +37,7 @@ export interface SmsDevice {
   status: DeviceStatus
   appVersion: string | null
   lastSeenAt: string | null
+  online?: boolean
 }
 
 export interface DeviceMessage {

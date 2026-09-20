@@ -1,18 +1,33 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
-import type { StickySessionRole } from '@/shared/types'
+import type { AppLocale, StickySessionRole } from '@/shared/types'
 
-const ACCESS_TOKEN_KEY = 'webonone.sms.accessToken'
-const DEVICE_KEY_KEY = 'webonone.sms.deviceKey'
-const DEVICE_ID_KEY = 'webonone.sms.deviceId'
-const SESSION_ROLE_KEY = 'webonone.sms.sessionRole'
+const ACCESS_TOKEN_KEY = 'webonone.mobile.accessToken'
+const DEVICE_KEY_KEY = 'webonone.mobile.deviceKey'
+const DEVICE_ID_KEY = 'webonone.mobile.deviceId'
+const SESSION_ROLE_KEY = 'webonone.mobile.sessionRole'
+const LOCALE_KEY = 'webonone.locale'
+
+const LEGACY_KEYS: Record<string, string> = {
+  [ACCESS_TOKEN_KEY]: 'webonone.sms.accessToken',
+  [DEVICE_KEY_KEY]: 'webonone.sms.deviceKey',
+  [DEVICE_ID_KEY]: 'webonone.sms.deviceId',
+  [SESSION_ROLE_KEY]: 'webonone.sms.sessionRole',
+}
 
 const useSecureStore = Platform.OS !== 'web'
 
 async function getItem(key: string): Promise<string | null> {
-  if (useSecureStore) return SecureStore.getItemAsync(key)
-  return AsyncStorage.getItem(key)
+  const value = useSecureStore ? await SecureStore.getItemAsync(key) : await AsyncStorage.getItem(key)
+  if (value != null) return value
+  const legacyKey = LEGACY_KEYS[key]
+  if (!legacyKey) return null
+  const legacy = useSecureStore
+    ? await SecureStore.getItemAsync(legacyKey)
+    : await AsyncStorage.getItem(legacyKey)
+  if (legacy != null) await setItem(key, legacy)
+  return legacy
 }
 
 async function setItem(key: string, value: string): Promise<void> {
@@ -31,6 +46,10 @@ async function deleteItem(key: string): Promise<void> {
   await AsyncStorage.removeItem(key)
 }
 
+function isSessionRole(value: unknown): value is StickySessionRole['role'] {
+  return value === 'super_admin' || value === 'company_admin' || value === 'member'
+}
+
 export const secureStorage = {
   async getAccessToken(): Promise<string | null> {
     return getItem(ACCESS_TOKEN_KEY)
@@ -46,7 +65,7 @@ export const secureStorage = {
     if (!raw) return null
     try {
       const parsed = JSON.parse(raw) as StickySessionRole
-      if (parsed.role !== 'super_admin' && parsed.role !== 'company_admin') return null
+      if (!isSessionRole(parsed.role)) return null
       return parsed
     } catch {
       return null
@@ -57,6 +76,13 @@ export const secureStorage = {
   },
   async clearSessionRole(): Promise<void> {
     await deleteItem(SESSION_ROLE_KEY)
+  },
+  async getLocale(): Promise<AppLocale | null> {
+    const raw = await getItem(LOCALE_KEY)
+    return raw === 'en' || raw === 'si' ? raw : null
+  },
+  async setLocale(locale: AppLocale): Promise<void> {
+    await setItem(LOCALE_KEY, locale)
   },
   async getDeviceKey(): Promise<string | null> {
     return getItem(DEVICE_KEY_KEY)

@@ -1,0 +1,125 @@
+import type { CompanyEvent, CompanyEventOccurrence, EventRecurrence } from '../types/event.types'
+import { addDaysYmd, dayOfMonthOfYmd, parseYmd, toYmd, weekdayOfYmd } from './dateYmd'
+
+function weeksBetween(startYmd: string, cursorYmd: string): number {
+  const start = parseYmd(startYmd)
+  const cursor = parseYmd(cursorYmd)
+  if (!start || !cursor) return 0
+  return Math.floor((cursor.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000))
+}
+
+function firstWeekDateInMonth(year: number, monthIndex: number, weekday: number): string {
+  for (let day = 1; day <= 7; day++) {
+    const date = new Date(year, monthIndex, day)
+    if (date.getDay() === weekday) return toYmd(date)
+  }
+  return toYmd(new Date(year, monthIndex, 1))
+}
+
+function dateInMonthOrNull(year: number, monthIndex: number, dayOfMonth: number): string | null {
+  const date = new Date(year, monthIndex, dayOfMonth)
+  if (date.getFullYear() !== year || date.getMonth() !== monthIndex || date.getDate() !== dayOfMonth) {
+    return null
+  }
+  return toYmd(date)
+}
+
+function iterateMonthStarts(
+  fromYmd: string,
+  toYmdValue: string,
+): Array<{ year: number; monthIndex: number }> {
+  const start = parseYmd(fromYmd)
+  const end = parseYmd(toYmdValue)
+  if (!start || !end) return []
+  const months: Array<{ year: number; monthIndex: number }> = []
+  let year = start.getFullYear()
+  let monthIndex = start.getMonth()
+  const endYear = end.getFullYear()
+  const endMonth = end.getMonth()
+  while (year < endYear || (year === endYear && monthIndex <= endMonth)) {
+    months.push({ year, monthIndex })
+    monthIndex += 1
+    if (monthIndex > 11) {
+      monthIndex = 0
+      year += 1
+    }
+  }
+  return months
+}
+
+function toOccurrence(event: CompanyEvent, occurrenceDate: string): CompanyEventOccurrence {
+  return {
+    ...event,
+    occurrenceDate,
+    start: `${occurrenceDate}T${event.startTime}:00`,
+    end: `${occurrenceDate}T${event.endTime}:00`,
+    title: event.serviceName,
+    runStatus: 'scheduled',
+    scheduleChanged: false,
+    scheduleChangeKind: null,
+    originalStartTime: event.startTime,
+    originalEndTime: event.endTime,
+  }
+}
+
+export function expandEventOccurrences(event: CompanyEvent): CompanyEventOccurrence[] {
+  const seriesStart = event.startsOn
+  const seriesEnd = event.recurrenceUntil ?? event.startsOn
+  const recurrence: EventRecurrence = event.recurrence
+  const excluded = new Set(event.excludedDates ?? [])
+
+  function includeDate(occurrenceDate: string): boolean {
+    return !excluded.has(occurrenceDate)
+  }
+
+  if (recurrence === 'none') {
+    return seriesStart <= seriesEnd && includeDate(seriesStart)
+      ? [toOccurrence(event, seriesStart)]
+      : []
+  }
+
+  if (recurrence === 'monthly_first_week') {
+    const weekday = event.weekdays.length > 0 ? event.weekdays[0]! : weekdayOfYmd(seriesStart)
+    const results: CompanyEventOccurrence[] = []
+    for (const { year, monthIndex } of iterateMonthStarts(seriesStart, seriesEnd)) {
+      const occurrence = firstWeekDateInMonth(year, monthIndex, weekday)
+      if (occurrence >= seriesStart && occurrence <= seriesEnd && includeDate(occurrence)) {
+        results.push(toOccurrence(event, occurrence))
+      }
+    }
+    return results
+  }
+
+  if (recurrence === 'monthly_by_date') {
+    const dayOfMonth = dayOfMonthOfYmd(seriesStart)
+    const results: CompanyEventOccurrence[] = []
+    for (const { year, monthIndex } of iterateMonthStarts(seriesStart, seriesEnd)) {
+      const occurrence = dateInMonthOrNull(year, monthIndex, dayOfMonth)
+      if (
+        occurrence &&
+        occurrence >= seriesStart &&
+        occurrence <= seriesEnd &&
+        includeDate(occurrence)
+      ) {
+        results.push(toOccurrence(event, occurrence))
+      }
+    }
+    return results
+  }
+
+  const weekdays =
+    event.weekdays.length > 0 ? new Set(event.weekdays) : new Set([weekdayOfYmd(seriesStart)])
+  const results: CompanyEventOccurrence[] = []
+  let cursor = seriesStart
+  while (cursor <= seriesEnd) {
+    if (weekdays.has(weekdayOfYmd(cursor)) && includeDate(cursor)) {
+      if (recurrence === 'biweekly' && weeksBetween(seriesStart, cursor) % 2 !== 0) {
+        cursor = addDaysYmd(cursor, 1)
+        continue
+      }
+      results.push(toOccurrence(event, cursor))
+    }
+    cursor = addDaysYmd(cursor, 1)
+  }
+  return results
+}

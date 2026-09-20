@@ -28,8 +28,33 @@ config.resolver.nodeModulesPaths = [
 const reactSingletons = new Set(['react', 'react-dom'])
 const reactAnchor = path.join(projectRoot, 'node_modules', 'react', 'index.js')
 const defaultResolveRequest = config.resolver.resolveRequest
+const sourcePackages = {
+  '@webonone/platform-nav': path.join(workspaceRoot, 'packages/platform-nav/src/index.ts'),
+  '@webonone/mobile-ui': path.join(workspaceRoot, 'packages/mobile-ui/src/index.ts'),
+  '@webonone/i18n': path.join(workspaceRoot, 'packages/i18n/src/index.ts'),
+}
+
+const localePackages = {
+  '@locales/webonone': path.join(workspaceRoot, 'webonone-v2/frontend/src/locales'),
+  '@locales/identity': path.join(workspaceRoot, 'identity/frontend/src/locales'),
+  '@locales/data': path.join(workspaceRoot, 'data/frontend/src/locales'),
+  '@locales/sms': path.join(workspaceRoot, 'sms/frontend/src/locales'),
+  '@locales/email': path.join(workspaceRoot, 'email/frontend/src/locales'),
+  '@locales/payment': path.join(workspaceRoot, 'payment/frontend/src/locales'),
+  '@locales/design': path.join(workspaceRoot, 'design/frontend/src/locales'),
+}
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const resolve = defaultResolveRequest ?? context.resolveRequest
+  if (sourcePackages[moduleName]) {
+    return { filePath: sourcePackages[moduleName], type: 'sourceFile' }
+  }
+  for (const [prefix, localeRoot] of Object.entries(localePackages)) {
+    if (moduleName === prefix || moduleName.startsWith(`${prefix}/`)) {
+      const rest = moduleName.slice(prefix.length).replace(/^\//, '')
+      return { filePath: path.join(localeRoot, rest), type: 'sourceFile' }
+    }
+  }
   const base = moduleName.split('/')[0]
   if (reactSingletons.has(base)) {
     return resolve({ ...context, originModulePath: reactAnchor }, moduleName, platform)

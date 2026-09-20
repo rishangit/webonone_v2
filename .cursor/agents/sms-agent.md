@@ -1,6 +1,8 @@
 # SMS agent
 
-Scope: `sms/frontend`, `sms/backend`, `sms/backend/migrations`, `mobile/`.
+Scope: `sms/frontend`, `sms/backend`, `sms/backend/migrations`.
+
+Mobile gateway UI and native SMS screens → [mobile-agent](mobile-agent.md).
 
 Skill: [.cursor/skills/sms-agent/SKILL.md](../skills/sms-agent/SKILL.md)
 
@@ -10,7 +12,6 @@ Skill: [.cursor/skills/sms-agent/SKILL.md](../skills/sms-agent/SKILL.md)
 - Delivery is per-scope: **mobile device** (Android SIM) **or** **Text.lk API** — mutually exclusive. Default is mobile when no gateway config exists.
 - Device/gateway scope derived server-side from JWT role: `super_admin` → `platform`, `company_admin` → `company`.
 - Admin SPA using `@webonone/ui-kit` list and form patterns.
-- `mobile/` Expo app (React Native + RN Web): Identity login + gateway configuration.
 - JWT verification locally (same `JWT_SECRET` as Identity/WebOnOne).
 - Core-hosted template dialogs when embedded: peer-dialog recipe in skill + `platform-shell-navigation.mdc`.
 

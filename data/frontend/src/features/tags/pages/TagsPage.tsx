@@ -8,6 +8,7 @@ import {
   FeaturePage,
   ListAddButton,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   SearchInput,
   ListPageFooter,
@@ -40,7 +41,7 @@ export function TagsPage() {
       title={t('title')}
       description={t('description')}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
@@ -57,7 +58,7 @@ export function TagsPage() {
               {t('add')}
             </ListAddButton>
           ) : null}
-        </div>
+        </ListPageActions>
       }
     >
       <PlatformHostedListFilterPanel

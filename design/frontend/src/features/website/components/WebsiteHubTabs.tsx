@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
+import { ListPageActions, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import type { WebsiteSection } from '../types'
@@ -20,15 +20,18 @@ const SECTIONS: WebsiteSection[] = [
 export function WebsiteHubTabs({
   section,
   actions,
+  actionsVariant = 'list',
 }: {
   section: WebsiteSection
   actions?: ReactNode
+  /** `list` — search/filter/add row with mobile collapse; `end` — right-aligned controls only (e.g. upload). */
+  actionsVariant?: 'list' | 'end'
 }) {
   const { t } = useTranslation('website')
   const { goToWebsite } = useNavigateDesign()
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex w-full flex-col gap-2">
       <Tabs value={section} onValueChange={(value) => goToWebsite(`/website/${value}`)}>
         <TabsList aria-label={t('ariaSections')}>
           {SECTIONS.map((item) => (
@@ -39,7 +42,11 @@ export function WebsiteHubTabs({
         </TabsList>
       </Tabs>
       {actions ? (
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">{actions}</div>
+        actionsVariant === 'end' ? (
+          <div className="flex w-full flex-wrap items-center justify-end gap-2">{actions}</div>
+        ) : (
+          <ListPageActions>{actions}</ListPageActions>
+        )
       ) : null}
     </div>
   )

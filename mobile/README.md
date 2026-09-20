@@ -1,81 +1,66 @@
 # @webonone/mobile
 
-WebOnOne platform mobile app (Expo + React Native + React Native Web).
+WebOnOne product app for phones (Expo + React Native + React Native Web).
 
-**v1 scope:** login + SMS gateway configuration. A signed-in admin registers the
-phone as a gateway; once an admin approves it in the SMS admin app, the phone
-polls the SMS backend, sends queued messages over its SIM, and reports status.
+Native **header** and **left drawer** use the same role-filtered nav as the web app (`@webonone/platform-nav`). SMS — including **This device** (Android SIM gateway) — lives under the SMS group, not as the whole app.
 
 ## Stack
 
 | Concern | Choice |
 |--------|--------|
 | Framework | Expo (TypeScript, Expo Router), React Native Web |
-| Styling | NativeWind (Tailwind syntax); `tailwind.config.js` extends `@webonone/theme` tokens |
-| UI layer | `src/ui/*` — NativeWind-styled RN primitives mirroring the `@webonone/ui-kit` prop API (`variant`, `size`). This is the gluestack-compatible universal layer; wrappers can be swapped to gluestack-ui primitives without changing screen code. |
-| Shared code | `@webonone/store-kit`, `@webonone/theme`, Zod |
-| Native | `modules/sms-sender` — Android `SmsManager` + `SubscriptionManager`, `SEND_SMS` |
-| Auth | Identity login (email/password + Google on Android) → Choose account (Super Admin / Company Owner) → SMS `/me` |
+| Styling | NativeWind; `tailwind.config.js` extends `@webonone/theme` tokens |
+| UI | `@webonone/mobile-ui` — change a kit control once; every screen that imports it updates |
+| Nav / roles | `@webonone/platform-nav` `buildNavDefsForSessionRole` (same Super Admin / owner / staff / default user as web) |
+| Native SMS | `modules/sms-sender` — Android `SmsManager` |
+| Auth | Identity login → Choose account (all assumable roles) → JWT |
 
 ## Setup
 
-This is a new workspace. Install dependencies from the repo root once:
+Install from the repo root:
 
 ```bash
 npm install
 ```
 
-Copy env and set API base URLs (include `/api/v1` — same convention as
-`VITE_IDENTITY_API_BASE_URL` / `VITE_API_BASE_URL` in other services).
-
-**Local LAN:** point at your PC's LAN IP (not `localhost`), set `HOST=0.0.0.0` in
-`identity/backend/.env`, `sms/backend/.env`, and `webonone-v2/backend/.env`, and use a
-**debug** build — Android **release** APKs block cleartext HTTP.
-
-**Production release:** use `https://` hosts (e.g. `https://identity.webonone.com/api/v1`).
-`http://` Identity URLs work in debug but fail with "Network request failed" on release.
+Copy env:
 
 ```bash
 cp .env.example .env
-# Local:  IDENTITY_API_BASE_URL=http://<lan-ip>:4011/api/v1
-#         WEBONONE_API_BASE_URL=http://<lan-ip>:4010/api/v1
-# Prod:   IDENTITY_API_BASE_URL=https://identity.webonone.com/api/v1
-#         WEBONONE_API_BASE_URL=https://app.webonone.com/api/v1
 ```
 
-### Role selection (Super Admin / Company Owner)
+**Local LAN:** point API bases and origins at your PC's LAN IP (not `localhost`), set `HOST=0.0.0.0` on backends, and use a **debug** build — Android **release** APKs block cleartext HTTP.
 
-After login, the app loads WebOnOne `GET /company/me/assumable-roles`, keeps only
-**Super Admin** and **Company Owner** options (no member/staff), then:
+Every `*_API_BASE_URL` should use the same environment as its matching `*_ORIGIN` when you rely on in-app WebViews. `IDENTITY_ORIGIN` and `WEBONONE_ORIGIN` are derived from their API bases when omitted. For Payment, Data, Email, and Media, you can set only `*_ORIGIN` — the app derives `{origin}/api/v1` when `*_API_BASE_URL` is omitted.
 
-1. **One option** → auto Identity `POST /auth/session-role` → SMS `/me`
-2. **Several** → Choose account screen → Continue → reissue JWT → SMS `/me`
-3. **None** → blocked message (gateway is admin/owner only)
+## Profile
 
-Company owners see company name + role on Home/Gateway (company SMS scope).
-Super Admins see role only (platform / system SMS scope). Rebuild after changing
-`WEBONONE_API_BASE_URL`.
+**Profile** (header avatar menu → Profile) is a **native screen**. It calls Identity `GET /auth/me` with the app JWT — the same token used after login. It does not load Identity’s web UI in a WebView (that path stays blank on Android because production Identity only reads `localStorage` when the SPA boots).
 
-### Google Sign-In (Android)
+**Payment → Invoices** is a native screen (list + detail, receipt upload, super-admin actions). It calls the Payment API (`PAYMENT_API_BASE_URL`) and Media API for receipt files (`MEDIA_API_BASE_URL`).
 
-Uses the same Identity flow as the web app: native Google ID token →
-`POST /api/v1/auth/google` → then the role selection step above.
+**Email** (Send, Queue, History, Templates — including template detail, preview, version history, and create/edit) is native — same admin screens as the web Email service, via `EMAIL_API_BASE_URL`.
 
-1. In Google Cloud Console (same project as Identity), keep the existing **Web**
-   OAuth client. Set `GOOGLE_WEB_CLIENT_ID` in `mobile/.env` to that client ID
-   (same value as Identity `VITE_GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_ID`).
-2. Create an **Android** OAuth client: package `com.webonone.sms`, plus SHA-1 for
-   the Expo debug keystore (`mobile/android/app/debug.keystore`) and any release /
-   Play App Signing key. The Android client ID is **not** stored in env.
-3. Rebuild with `expo run:android` / prebuild. Google Sign-In does **not** work
-   in Expo Go (native module). Leave `GOOGLE_WEB_CLIENT_ID` empty to hide the
-   button. iOS and RN Web hide the button (out of scope for v1).
+**Identity → Users** (`IDENTITY_API_BASE_URL`) and **Staff** (`WEBONONE_API_BASE_URL`) are native — list, detail, search/filter, add user, and staff wizard — matching the web Identity and WebOnOne admin flows.
 
-Debug SHA-1 (Expo project keystore):
+**Analytics** is a native screen. It calls WebOnOne `GET /company/me/analytics` (company accounts) or `GET /company/analytics/platform` (Super Admin) with the same date ranges, KPIs, and charts as the web Analytics page.
 
-```bash
-keytool -list -v -alias androiddebugkey -keystore mobile/android/app/debug.keystore -storepass android -keypass android
-```
+**Design** still uses an in-app WebView. After changing `.env`, restart Metro (`Ctrl+C`, then `npm run mobile` or `npm run mobile:android`).
+
+## Accounts
+
+After login the app loads WebOnOne `GET /company/me/assumable-roles` (Super Admin, company owner, staff, default user), then Identity `POST /auth/session-role`. The drawer matches that role. Switch accounts from the drawer footer when you have more than one.
+
+SMS admin screens and **This device** appear only for Super Admin and company owners (same as web).
+
+## SMS → This device (Android gateway)
+
+1. Sign in as Super Admin or company owner.
+2. Open **SMS → This device**.
+3. Register the phone; approve it under **SMS → Devices** (app or web).
+4. Grant `SEND_SMS`, pick a SIM, start the gateway.
+
+iOS can sign in and use the rest of the app; the gateway step is Android-only. Text.lk mode does not need this phone.
 
 ## Run
 
@@ -86,15 +71,12 @@ npm run mobile:android  # dev build on a connected Android device
 npm run type-check -w @webonone/mobile
 ```
 
-Sending real SMS requires a **dev/prebuild** build on a physical Android phone
-(`expo run:android`) — Expo Go and emulators cannot send SMS. iOS logs in but
-shows an "Android-only" gateway state.
+Sending real SMS requires a **dev/prebuild** build on a physical Android phone. Expo Go cannot send SMS.
 
-## Notes / follow-ups
+Dev-only **UI Kit** gallery: `/dev/kit` (also listed in the drawer in development).
 
-- The polling engine (`src/features/sms-gateway/useGateway.ts`) runs a JS loop
-  (claim → send → report + heartbeat). `FOREGROUND_SERVICE*` permissions are
-  declared in `app.config.ts`; a dedicated Android foreground service to keep the
-  loop alive under Doze is a follow-up on top of this scaffold.
-- The native module Kotlin sources under `modules/sms-sender/android` are wired
-  via `expo prebuild`.
+## Notes
+
+- Other web areas (Design, …) open in an in-app WebView or the browser until native screens exist. Adding a left-nav item in `packages/platform-nav` should get a mobile destination (native or WebView) in the same change.
+- Gateway polling is a JS loop; a dedicated Android foreground service for Doze is a follow-up.
+- Google Sign-In is Android-only and does not work in Expo Go.

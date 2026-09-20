@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check } from 'lucide-react'
-import { Button, CustomDialog, cn, isStatusTagVariant, StatusTag } from '@webonone/ui-kit'
+import { AccountOptionRow, Button, CustomDialog } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store/authSlice'
+import { performWebOnOneLogout } from '@/features/auth/utils/performWebOnOneLogout'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
 import type { AssumableRoleOption } from '@/features/session/types/sessionRole.types'
 import {
-  accountDescription,
   findDefaultUser,
   findMatchingRole,
 } from '@/features/session/utils/accountLabels'
@@ -78,6 +77,8 @@ export function RoleSelectionDialog() {
     }
   }
 
+  const actionButtonClassName = 'h-10 w-full sm:w-auto'
+
   return (
     <CustomDialog
       open={dialogOpen}
@@ -89,27 +90,37 @@ export function RoleSelectionDialog() {
       sizeWidth="medium"
       sizeHeight="auto"
       footer={
-        <>
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
           {isSettingsMode ? (
             <Button
               type="button"
               variant="outline"
-              className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+              className={`${actionButtonClassName} border-[hsl(var(--glass-border))] text-foreground hover:bg-accent`}
               disabled={submitting}
               onClick={() => dispatch(sessionRoleActions.closeDialog())}
             >
               {t('common:cancel')}
             </Button>
-          ) : null}
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className={`${actionButtonClassName} border-[hsl(var(--glass-border))] text-foreground hover:bg-accent`}
+              disabled={submitting}
+              onClick={performWebOnOneLogout}
+            >
+              {t('common:logout')}
+            </Button>
+          )}
           <Button
             type="button"
-            className="h-10"
+            className={actionButtonClassName}
             disabled={!pendingRole || submitting}
             onClick={() => void handleContinue()}
           >
             {t('common:continue')}
           </Button>
-        </>
+        </div>
       }
     >
       <ul className="flex max-h-[min(24rem,50vh)] flex-col gap-2 overflow-y-auto">
@@ -118,39 +129,16 @@ export function RoleSelectionDialog() {
             pendingRole?.role === option.role && pendingRole?.companyId === option.companyId
           return (
             <li key={`${option.role}-${option.companyId ?? 'platform'}`}>
-              <button
-                type="button"
-                aria-pressed={selected}
-                className={cn(
-                  'flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors',
-                  selected
-                    ? 'border-primary'
-                    : 'border-border bg-glass-bg hover:border-primary/50',
-                )}
+              <AccountOptionRow
+                title={option.label}
+                role={option.role}
+                accountKind={option.accountKind}
+                companyId={option.companyId}
+                logoUrl={option.companyLogoUrl}
+                logoAlt={option.companyName ?? option.label}
+                selected={selected}
                 onClick={() => setPendingRole(option)}
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-foreground">{option.label}</span>
-                    {option.accountKind === 'staff' ? (
-                      <StatusTag variant="staff" className="shrink-0" />
-                    ) : isStatusTagVariant(option.role) ? (
-                      <StatusTag variant={option.role} className="shrink-0" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">{option.role}</span>
-                    )}
-                  </span>
-                  <span className="mt-1 block text-sm text-muted-foreground">
-                    {accountDescription(option)}
-                  </span>
-                </span>
-                {selected ? (
-                  <Check
-                    className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
-                    aria-hidden
-                  />
-                ) : null}
-              </button>
+              />
             </li>
           )
         })}
