@@ -88,8 +88,10 @@ export function usePlatformEmbedAuth({
       return
     }
 
+    const allowedParentOrigin = parentOrigin
+
     function onMessage(event: MessageEvent) {
-      if (event.origin !== parentOrigin) {
+      if (event.origin !== allowedParentOrigin) {
         return
       }
 
@@ -99,7 +101,7 @@ export function usePlatformEmbedAuth({
     }
 
     function signalReady() {
-      window.parent.postMessage({ type: PLATFORM_MESSAGE_TYPES.READY }, parentOrigin)
+      window.parent.postMessage({ type: PLATFORM_MESSAGE_TYPES.READY }, allowedParentOrigin)
 
       const bridge = (
         window as Window & { ReactNativeWebView?: { postMessage: (message: string) => void } }
