@@ -12,6 +12,7 @@ import { analyticsReducer } from '@/features/analytics/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { aiSettingsReducer } from '@/features/settings/basic/store/aiSettingsSlice'
+import { pushBroadcastReducer } from '@/features/settings/basic/store/pushBroadcastSlice'
 import { notificationsReducer } from '@/features/notifications/store/notificationsSlice'
 import { rootEpic } from '@/app/store/epics/rootEpic'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
@@ -35,6 +36,7 @@ export const store = configureStore({
     analytics: analyticsReducer,
     systemTheme: systemThemeReducer,
     aiSettings: aiSettingsReducer,
+    pushBroadcast: pushBroadcastReducer,
     notifications: notificationsReducer,
   },
   middleware: (getDefaultMiddleware) =>

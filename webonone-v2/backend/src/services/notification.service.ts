@@ -176,3 +176,73 @@ export async function registerPushDevice(
 export async function unregisterPushDevice(userId: string, token: string): Promise<void> {
   await pushDeviceRepo.deletePushDeviceForUser(userId, token)
 }
+
+export type PushTargetStats = {
+  deviceCount: number
+  userCount: number
+}
+
+export async function getPushTargetStats(): Promise<PushTargetStats> {
+  const [deviceCount, userIds] = await Promise.all([
+    pushDeviceRepo.countPushDevices(),
+    pushDeviceRepo.listDistinctUserIdsWithPushDevices(),
+  ])
+  return { deviceCount, userCount: userIds.length }
+}
+
+export type AdminBroadcastPushInput = {
+  title: string
+  body?: string | null
+  href?: string | null
+}
+
+export type AdminBroadcastPushResult = {
+  broadcastId: string
+  deviceCount: number
+  userCount: number
+  notificationsCreated: number
+}
+
+/** Super-admin broadcast: in-app notification + Expo push per user with a registered device. */
+export async function broadcastPushToAllDevices(
+  input: AdminBroadcastPushInput,
+): Promise<AdminBroadcastPushResult> {
+  const broadcastId = nanoid()
+  const [deviceCount, userIds] = await Promise.all([
+    pushDeviceRepo.countPushDevices(),
+    pushDeviceRepo.listDistinctUserIdsWithPushDevices(),
+  ])
+
+  if (userIds.length === 0) {
+    return {
+      broadcastId,
+      deviceCount: 0,
+      userCount: 0,
+      notificationsCreated: 0,
+    }
+  }
+
+  const results = await Promise.all(
+    userIds.map((userId) =>
+      createNotification({
+        userId,
+        companyId: null,
+        type: 'admin.broadcast',
+        title: input.title,
+        body: input.body ?? null,
+        href: input.href ?? null,
+        sourceService: 'webonone',
+        sourceEventId: `admin.broadcast:${broadcastId}:${userId}`,
+      }),
+    ),
+  )
+
+  const notificationsCreated = results.filter(Boolean).length
+
+  return {
+    broadcastId,
+    deviceCount,
+    userCount: userIds.length,
+    notificationsCreated,
+  }
+}

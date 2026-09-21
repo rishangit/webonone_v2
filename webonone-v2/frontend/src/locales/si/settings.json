@@ -7,7 +7,26 @@
       "account": "ගිණුම",
       "appearance": "පෙනුම",
       "ai": "AI",
-      "downloads": "Downloads"
+      "downloads": "Downloads",
+      "push": "Push"
+    }
+  },
+  "pushBroadcast": {
+    "title": "Mobile push broadcast",
+    "description": "ලියාපදිංචි සියලු මොබයිල් උපාංගවලට (Expo push) අභිරුචි දැනුම්දීමක් යවන්න. ලබන්නන්ට in-app දැනුම්දීමක් ද ලැබේ.",
+    "loading": "Push ඉලක්ක පූරණය වෙමින්…",
+    "targetsSummary": "{{devices}} උපාංග(ය) {{users}} පරිශීලක(යන්) හරහා ලියාපදිංචි වී ඇත.",
+    "send": "දැනුම්දීම යවන්න",
+    "confirmTitle": "සියලු උපාංගවලට යවන්නද?",
+    "confirmDescription": "“{{title}}” {{devices}} උපාංග(යට) ({{users}} පරිශීලක) යවනු ඇත. මෙය අහෝසි කළ නොහැක.",
+    "confirmSend": "දැන් යවන්න",
+    "toastSent": "{{count}} පරිශීලක(යන්) වෙත යවන ලදී ({{devices}} උපාංග ලියාපදිංචි).",
+    "toastFailed": "Push broadcast අසාර්ථක විය",
+    "fields": {
+      "title": "ශීර්ෂය",
+      "body": "පණිවිඩය",
+      "href": "Open path (optional)",
+      "hrefHelp": "දැනුම්දීම තට්ටු කළ විට in-app මාර්ගය, උදා. /settings/basic"
     }
   },
   "downloads": {

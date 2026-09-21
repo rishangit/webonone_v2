@@ -29,6 +29,13 @@ export const unregisterPushDeviceBodySchema = z.object({
   token: z.string().min(16).max(255),
 })
 
+export const adminBroadcastPushBodySchema = z.object({
+  title: z.string().min(1).max(255),
+  body: z.string().max(4000).nullable().optional(),
+  href: z.string().max(512).nullable().optional(),
+})
+
 export type CreateNotificationBody = z.infer<typeof createNotificationBodySchema>
 export type PushDeviceBody = z.infer<typeof pushDeviceBodySchema>
 export type UnregisterPushDeviceBody = z.infer<typeof unregisterPushDeviceBodySchema>
+export type AdminBroadcastPushBody = z.infer<typeof adminBroadcastPushBodySchema>

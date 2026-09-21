@@ -2,8 +2,10 @@ import { Router } from 'express'
 import * as notificationController from '../controllers/notification.controller.js'
 import { requireAuth } from '../middleware/auth.js'
 import { requireInternalAuth } from '../middleware/internalAuth.js'
+import { requireSuperAdmin } from '../middleware/requireSuperAdmin.js'
 import { validateBody } from '../middleware/validateBody.js'
 import {
+  adminBroadcastPushBodySchema,
   pushDeviceBodySchema,
   unregisterPushDeviceBodySchema,
 } from '../schemas/notificationSchemas.js'
@@ -39,6 +41,18 @@ router.delete(
   requireAuth,
   validateBody(unregisterPushDeviceBodySchema),
   notificationController.unregisterMyPushDevice,
+)
+
+router.get(
+  '/notifications/admin/push-targets',
+  requireSuperAdmin,
+  notificationController.getAdminPushTargets,
+)
+router.post(
+  '/notifications/admin/broadcast',
+  requireSuperAdmin,
+  validateBody(adminBroadcastPushBodySchema),
+  notificationController.broadcastAdminPush,
 )
 
 export default router

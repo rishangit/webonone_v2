@@ -10,6 +10,7 @@ import { homeDashboardEpics } from '@/features/home/store'
 import { analyticsEpics } from '@/features/analytics/store'
 import { systemThemeEpics } from '@/features/settings/system-theme/store/systemThemeEpics'
 import { aiSettingsEpics } from '@/features/settings/basic/store/aiSettingsEpics'
+import { pushBroadcastEpics } from '@/features/settings/basic/store/pushBroadcastEpics'
 import { notificationsEpics } from '@/features/notifications/store/notificationsEpics'
 
 export const rootEpic = combineEpics(
@@ -27,5 +28,6 @@ export const rootEpic = combineEpics(
   analyticsEpics,
   systemThemeEpics,
   aiSettingsEpics,
+  pushBroadcastEpics,
   ...notificationsEpics,
 )

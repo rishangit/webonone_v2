@@ -7,7 +7,26 @@
       "account": "Account",
       "appearance": "Appearance",
       "ai": "AI",
-      "downloads": "Downloads"
+      "downloads": "Downloads",
+      "push": "Push"
+    }
+  },
+  "pushBroadcast": {
+    "title": "Mobile push broadcast",
+    "description": "Send a custom notification to every registered mobile device (Expo push). Recipients also get an in-app notification.",
+    "loading": "Loading push targets…",
+    "targetsSummary": "{{devices}} device(s) across {{users}} user(s) are registered.",
+    "send": "Send notification",
+    "confirmTitle": "Send to all devices?",
+    "confirmDescription": "“{{title}}” will be sent to {{devices}} device(s) ({{users}} user(s)). This cannot be undone.",
+    "confirmSend": "Send now",
+    "toastSent": "Sent to {{count}} user(s) ({{devices}} device(s) registered).",
+    "toastFailed": "Push broadcast failed",
+    "fields": {
+      "title": "Title",
+      "body": "Message",
+      "href": "Open path (optional)",
+      "hrefHelp": "In-app route when the user taps the notification, e.g. /settings/basic"
     }
   },
   "downloads": {
