@@ -26,26 +26,40 @@ function resolveExpoProjectId(): string {
   return extra?.eas?.projectId?.trim() ?? ''
 }
 
-if (Platform.OS !== 'web') {
+/** Show lock-screen / status-bar alerts (not only in-app polling toasts). */
+const OS_NOTIFICATION_BEHAVIOR: Notifications.NotificationBehavior = {
+  shouldShowAlert: true,
+  shouldPlaySound: true,
+  shouldSetBadge: true,
+  shouldShowBanner: true,
+  shouldShowList: true,
+}
+
+let pushConfigured = false
+
+export function configurePushNotifications(): void {
+  if (Platform.OS === 'web' || pushConfigured) return
+  pushConfigured = true
+
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: false,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-      shouldShowBanner: false,
-      shouldShowList: false,
-    }),
+    handleNotification: async () => OS_NOTIFICATION_BEHAVIOR,
   })
 }
+
+configurePushNotifications()
 
 async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return
   await Notifications.setNotificationChannelAsync(ANDROID_ALERTS_CHANNEL_ID, {
     name: 'WebOnOne alerts',
-    importance: Notifications.AndroidImportance.HIGH,
+    importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     enableVibrate: true,
+    enableLights: true,
+    lightColor: '#2563eb',
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    bypassDnd: false,
+    showBadge: true,
   })
 }
 
@@ -58,8 +72,15 @@ export async function registerPushDevice(): Promise<void> {
     const projectId = resolveExpoProjectId()
     if (!projectId) return
 
+    configurePushNotifications()
     await ensureAndroidChannel()
-    const permission = await Notifications.requestPermissionsAsync()
+    const permission = await Notifications.requestPermissionsAsync({
+      ios: {
+        allowAlert: true,
+        allowBadge: true,
+        allowSound: true,
+      },
+    })
     if (!permission.granted) return
 
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId })

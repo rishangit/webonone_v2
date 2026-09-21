@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { Platform } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { useToast } from '@webonone/mobile-ui'
@@ -55,13 +55,21 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const previousUnreadRef = useRef<number | null>(null)
   const listLimitRef = useRef(20)
   const handledPushRef = useRef<string | null>(null)
+  const lastPushReceivedAtRef = useRef(0)
 
   const pollUnread = useCallback(async () => {
     if (!isAuthenticated) return
     try {
       const { count } = await notificationsApi.unreadCount()
       const previous = previousUnreadRef.current
-      if (previous !== null && count > previous) {
+      const pushRecentlyHandled = Date.now() - lastPushReceivedAtRef.current < 15_000
+      const appActive = AppState.currentState === 'active'
+      if (
+        appActive &&
+        !pushRecentlyHandled &&
+        previous !== null &&
+        count > previous
+      ) {
         const list = await notificationsApi.list({ limit: 1 })
         const latestTitle = list.items[0]?.title
         if (latestTitle) {
@@ -169,14 +177,22 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated || Platform.OS === 'web') return
     void registerPushDevice()
 
+    const receivedSub = Notifications.addNotificationReceivedListener(() => {
+      lastPushReceivedAtRef.current = Date.now()
+      void pollUnread()
+    })
+
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       void openPushResponse(response)
     })
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) void openPushResponse(response)
     })
-    return () => sub.remove()
-  }, [isAuthenticated, openPushResponse])
+    return () => {
+      receivedSub.remove()
+      sub.remove()
+    }
+  }, [isAuthenticated, openPushResponse, pollUnread])
 
   const value = useMemo(
     () => ({

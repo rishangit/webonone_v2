@@ -1,4 +1,5 @@
 import '../global.css'
+import '@/features/notifications/utils/pushNotifications'
 import { useEffect } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { Slot, useRouter, useSegments, type Href } from 'expo-router'

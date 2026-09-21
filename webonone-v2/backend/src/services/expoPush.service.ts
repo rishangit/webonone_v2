@@ -57,13 +57,20 @@ export async function sendPushForNotification(payload: PushNotificationPayload):
 
     const stale: string[] = []
     for (const tokenChunk of chunk(tokens, CHUNK_SIZE)) {
+      const bodyText = payload.body?.trim() ? payload.body.trim() : payload.title
       const messages = tokenChunk.map((to) => ({
         to,
         title: payload.title,
-        body: payload.body ?? '',
+        body: bodyText,
         sound: 'default',
         priority: 'high',
         channelId: ANDROID_CHANNEL_ID,
+        android: {
+          channelId: ANDROID_CHANNEL_ID,
+          priority: 'high',
+          sound: 'default',
+          visibility: 'public',
+        },
         data: {
           href: payload.href ?? '',
           notificationId: payload.id,
@@ -71,9 +78,12 @@ export async function sendPushForNotification(payload: PushNotificationPayload):
       }))
       const tickets = await postExpoPush(messages)
       tickets.forEach((ticket, index) => {
-        if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
-          const token = tokenChunk[index]
-          if (token) stale.push(token)
+        if (ticket.status !== 'error') return
+        const token = tokenChunk[index]
+        const detail = ticket.details?.error ?? ticket.message ?? 'unknown'
+        console.error(`[notifications] Expo push error for token ${token ?? '?'}: ${detail}`)
+        if (ticket.details?.error === 'DeviceNotRegistered' && token) {
+          stale.push(token)
         }
       })
     }
