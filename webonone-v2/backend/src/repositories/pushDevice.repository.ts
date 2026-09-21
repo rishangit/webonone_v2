@@ -54,11 +54,12 @@ export async function deletePushDevicesByTokens(tokens: string[]): Promise<void>
 }
 
 export async function countPushDevices(): Promise<number> {
-  const row = await db('push_devices').count<{ count: number }[]>('* as count').first()
-  return Number(row?.count ?? 0)
+  const row = await db('push_devices').count({ count: '*' }).first()
+  const count = row && typeof row === 'object' && 'count' in row ? row.count : 0
+  return Number(count ?? 0)
 }
 
 export async function listDistinctUserIdsWithPushDevices(): Promise<string[]> {
-  const rows = await db<PushDeviceRow>('push_devices').distinct('user_id').select('user_id')
-  return rows.map((row) => row.user_id).filter(Boolean)
+  const rows = await db('push_devices').groupBy('user_id').select('user_id')
+  return rows.map((row) => String(row.user_id)).filter(Boolean)
 }

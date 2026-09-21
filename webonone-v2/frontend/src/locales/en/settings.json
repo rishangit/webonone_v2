@@ -22,6 +22,8 @@
     "confirmSend": "Send now",
     "toastSent": "Sent to {{count}} user(s) ({{devices}} device(s) registered).",
     "toastFailed": "Push broadcast failed",
+    "retry": "Retry",
+    "targetsUnknown": "Could not load device counts. You can still send after entering a title, or retry loading targets.",
     "fields": {
       "title": "Title",
       "body": "Message",

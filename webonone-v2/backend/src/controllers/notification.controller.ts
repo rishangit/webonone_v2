@@ -1,4 +1,4 @@
-import type { Response } from 'express'
+import type { NextFunction, Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { Request } from 'express'
 import type { SuperAdminRequest } from '../middleware/requireSuperAdmin.js'
@@ -76,22 +76,30 @@ export async function createInternalNotification(req: Request, res: Response) {
   res.status(201).json({ item: row, created: row ? 1 : 0 })
 }
 
-export async function getAdminPushTargets(_req: SuperAdminRequest, res: Response) {
-  const stats = await notificationService.getPushTargetStats()
-  res.json(stats)
+export async function getAdminPushTargets(_req: SuperAdminRequest, res: Response, next: NextFunction) {
+  try {
+    const stats = await notificationService.getPushTargetStats()
+    res.json(stats)
+  } catch (err) {
+    next(err)
+  }
 }
 
-export async function broadcastAdminPush(req: SuperAdminRequest, res: Response) {
-  const parsed = adminBroadcastPushBodySchema.safeParse(req.body)
-  if (!parsed.success) {
-    res.status(400).json({
-      message: 'Validation failed',
-      code: 'VALIDATION_ERROR',
-      details: parsed.error.flatten(),
-    })
-    return
-  }
+export async function broadcastAdminPush(req: SuperAdminRequest, res: Response, next: NextFunction) {
+  try {
+    const parsed = adminBroadcastPushBodySchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({
+        message: 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        details: parsed.error.flatten(),
+      })
+      return
+    }
 
-  const result = await notificationService.broadcastPushToAllDevices(parsed.data)
-  res.status(201).json(result)
+    const result = await notificationService.broadcastPushToAllDevices(parsed.data)
+    res.status(201).json(result)
+  } catch (err) {
+    next(err)
+  }
 }

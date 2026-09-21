@@ -1,5 +1,6 @@
 import type { NextFunction, Response } from 'express'
 import jwt from 'jsonwebtoken'
+import { findSuperAdminByUserId } from '../clients/identityRoleClient.js'
 import { env } from '../config/env.js'
 import type { AuthenticatedRequest } from './auth.js'
 
@@ -60,4 +61,54 @@ export function requireSuperAdmin(
   } catch {
     res.status(401).json({ message: 'Invalid or expired token', code: 'UNAUTHORIZED' })
   }
+}
+
+/**
+ * Super-admin gate for admin APIs. Accepts JWT `platform_role=super_admin`, or verifies
+ * super_admin in Identity when the session UI role is ahead of the token (sticky selection).
+ */
+export function requireSuperAdminAccess(
+  req: SuperAdminRequest,
+  res: Response,
+  next: NextFunction,
+): void {
+  void (async () => {
+    const header = req.headers.authorization
+    if (!header?.startsWith('Bearer ')) {
+      res.status(401).json({ message: 'Missing or invalid authorization header', code: 'UNAUTHORIZED' })
+      return
+    }
+
+    const token = header.slice(7)
+    try {
+      const decoded = parseJwtUserClaims(token)
+      req.user = { id: decoded.sub, email: decoded.email }
+
+      const jwtIsSuperAdmin = sessionRoleFromClaims(decoded) === 'super_admin'
+      const identitySuperAdmin = jwtIsSuperAdmin ? true : Boolean(await findSuperAdminByUserId(decoded.sub))
+
+      if (!identitySuperAdmin) {
+        res.status(403).json({ message: 'Super admin access required', code: 'FORBIDDEN' })
+        return
+      }
+
+      req.superAdmin = {
+        id: decoded.sub,
+        email: decoded.email,
+        displayName: env.superAdminDisplayName,
+      }
+      next()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes('IDENTITY') || message.includes('Identity')) {
+        console.error('[auth] requireSuperAdminAccess:', err)
+        res.status(503).json({
+          message: 'Super admin verification unavailable',
+          code: 'SERVICE_UNAVAILABLE',
+        })
+        return
+      }
+      res.status(401).json({ message: 'Invalid or expired token', code: 'UNAUTHORIZED' })
+    }
+  })()
 }

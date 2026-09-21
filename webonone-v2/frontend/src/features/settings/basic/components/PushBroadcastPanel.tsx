@@ -105,6 +105,8 @@ export function PushBroadcastPanel() {
   const sending = broadcastStatus === 'loading'
   const deviceCount = targets?.deviceCount ?? 0
   const userCount = targets?.userCount ?? 0
+  const targetsLoaded = targetsStatus === 'success' && targets !== null
+  const titleFilled = form.title.trim().length > 0
 
   if (loadingTargets) {
     return null
@@ -120,13 +122,28 @@ export function PushBroadcastPanel() {
         <CardContent className="space-y-6">
           {targetsError ? (
             <Alert variant="destructive">
-              <AlertDescription>{targetsError}</AlertDescription>
+              <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span>{targetsError}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 shrink-0"
+                  onClick={() => dispatch(pushBroadcastActions.loadTargetsRequested({ force: true }))}
+                >
+                  {t('pushBroadcast.retry')}
+                </Button>
+              </AlertDescription>
             </Alert>
           ) : null}
 
-          <p className="text-sm text-muted-foreground">
-            {t('pushBroadcast.targetsSummary', { devices: deviceCount, users: userCount })}
-          </p>
+          {targetsLoaded ? (
+            <p className="text-sm text-muted-foreground">
+              {t('pushBroadcast.targetsSummary', { devices: deviceCount, users: userCount })}
+            </p>
+          ) : targetsError ? (
+            <p className="text-sm text-muted-foreground">{t('pushBroadcast.targetsUnknown')}</p>
+          ) : null}
 
           <Form id={FORM_ID} onSubmit={handleSubmit} className="max-w-xl space-y-4">
             <FormField
@@ -177,7 +194,7 @@ export function PushBroadcastPanel() {
             <Button
               type="submit"
               className="h-10"
-              disabled={sending || deviceCount === 0}
+              disabled={sending || !titleFilled || (targetsLoaded && deviceCount === 0)}
             >
               <Send className="mr-2 h-4 w-4" aria-hidden />
               {t('pushBroadcast.send')}

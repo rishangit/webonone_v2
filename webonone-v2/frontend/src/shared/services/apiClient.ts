@@ -46,7 +46,9 @@ export async function apiClient<T>(path: string, options?: RequestInit): Promise
     if (res.status === 401) {
       onAuthRequired?.()
     }
-    throw new Error(data.message ?? 'Request failed')
+    const fallback =
+      typeof data.code === 'string' ? `Request failed (${data.code})` : `Request failed (${res.status})`
+    throw new Error(typeof data.message === 'string' && data.message.trim() ? data.message : fallback)
   }
   return data as T
 }
