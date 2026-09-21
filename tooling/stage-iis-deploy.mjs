@@ -84,6 +84,20 @@ if (!existsSync(logsDir)) {
 cpSync(frontendDist, publicDir, { recursive: true });
 cpSync(backendDist, distDir, { recursive: true });
 
+if (serviceName === 'webonone-v2') {
+  const desktopInstaller = join(repoRoot, 'desktop', 'release', 'WebOnOne-Setup.exe');
+  const downloadsDir = join(publicDir, 'downloads');
+  if (existsSync(desktopInstaller)) {
+    mkdirSync(downloadsDir, { recursive: true });
+    cpSync(desktopInstaller, join(downloadsDir, 'WebOnOne-Setup.exe'));
+    console.log('Copied desktop installer to public\\downloads\\WebOnOne-Setup.exe');
+  } else {
+    console.warn(
+      `Desktop installer not found at ${desktopInstaller} — run npm run build:desktop before deploy or the download link will not work.`,
+    );
+  }
+}
+
 console.log('');
 console.log('Staging complete. IIS physical path:');
 console.log(`  ${deployDir}`);

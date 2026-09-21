@@ -50,7 +50,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | AI | `ai/` | [ai-agent](.cursor/agents/ai-agent.md) | [skill](.cursor/skills/ai-agent/SKILL.md) |
 | Support | `support/` | [support-agent](.cursor/agents/support-agent.md) | [skill](.cursor/skills/support-agent/SKILL.md) |
 | Website | `website/` | — | Public marketing/search site (FE :3018, BE :4018); proxies catalog search to WebOnOne |
-| Desktop | `desktop/` | — | Electron client around live WebOnOne (parent-owned; not a microservice) |
+| Desktop | `desktop/` | [desktop-agent](.cursor/agents/desktop-agent.md) | [skill](.cursor/skills/desktop-agent/SKILL.md) |
 
 AI tools: peers publish `jsonSchema` + optional `argCompletion`; AI stays generic — [.cursor/rules/ai-capabilities.mdc](.cursor/rules/ai-capabilities.mdc).
 
@@ -60,9 +60,10 @@ Company registration, memberships, platform roles, and super-admin approval are 
 
 1. Classify which service roots the task affects.
 2. Delegate to the matching subagent (or use the Task tool with the agent skill).
-3. Keep root `package.json` / workspace wiring in the parent unless the task is service-only. Parent also owns `desktop/` (Electron shell).
-4. If the change is **user-visible** in WebOnOne (or a peer in the shell), also update Support help or delegate **support-agent** — [help-articles](.cursor/skills/help-articles/SKILL.md). Do not treat the product PR as done with stale how-tos.
-5. Merge subagent results and run verification.
+3. Keep root `package.json` / workspace wiring in the parent unless the task is service-only.
+4. User-visible WebOnOne (or shell) changes that affect popups, OAuth, permissions, or cross-origin handoffs: product agent returns a **desktop shell** assessment; delegate **desktop-agent** when the shell must change (see [desktop-agent skill](.cursor/skills/desktop-agent/SKILL.md)).
+5. If the change is **user-visible** in WebOnOne (or a peer in the shell), also update Support help or delegate **support-agent** — [help-articles](.cursor/skills/help-articles/SKILL.md). Do not treat the product PR as done with stale how-tos.
+6. Merge subagent results and run verification.
 
 ## Dev commands (repo root)
 

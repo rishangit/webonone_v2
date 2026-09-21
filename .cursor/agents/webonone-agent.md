@@ -38,4 +38,4 @@ Login flow manual check: Identity must be running (`npm run dev:identity`).
 
 ## Return format
 
-Summarize: files changed, verification results, Identity follow-ups, and `Support docs: required | not needed`.
+Summarize: files changed, verification results, Identity follow-ups, `Support docs: required | not needed`, and `Desktop shell: no change | follow-up` (see `.cursor/skills/desktop-agent/SKILL.md` parity checklist).

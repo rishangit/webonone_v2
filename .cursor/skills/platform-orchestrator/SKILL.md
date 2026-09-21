@@ -27,6 +27,7 @@ Read [AGENTS.md](../../../AGENTS.md).
 | `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
 | `support/` | `.cursor/agents/support-agent.md` | `.cursor/skills/support-agent/SKILL.md` |
 | `mobile/`, `packages/mobile-ui/` | `.cursor/agents/mobile-agent.md` | `.cursor/skills/mobile-agent/SKILL.md` |
+| `desktop/` | `.cursor/agents/desktop-agent.md` | `.cursor/skills/desktop-agent/SKILL.md` |
 
 Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop). AI tool schemas / `argCompletion` → **owning service** (`data/`, `webonone-v2/`); generic completer only → **AI**. See [ai-capabilities.mdc](../../rules/ai-capabilities.mdc). User-visible WebOnOne (or shell) pages, nav, or workflows → also **support-agent** after the product change ([help-articles](../help-articles/SKILL.md)).
 
@@ -48,6 +49,8 @@ Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent | `generalPurpose` × 2 |
 | `mobile/**` or `packages/mobile-ui/**` only | Delegate mobile-agent | `generalPurpose` |
 | New nav item in platform-nav + native screen + web FE | Sequential: owning service agent then mobile-agent | `generalPurpose` × 2 |
+| `desktop/**` only | Delegate desktop-agent | `generalPurpose` |
+| Auth/popup/permission/download/cross-origin handoff (web) | Product agent first; then desktop-agent if skill checklist applies | `generalPurpose` × 1–2 |
 | Read-only exploration in one service | Scoped explore | `explore` |
 | Independent changes in 2+ services | Parallel subagents | `generalPurpose` (parallel) |
 
@@ -123,7 +126,24 @@ Constraints:
 - Do not edit identity/ or ui-kit/
 - Verify: npm run type-check -w webonone-v2-root
 
-Return: summary, files touched, verification results, Identity follow-ups if any, Support docs required or not needed.
+Return: summary, files touched, verification results, Identity follow-ups if any, Support docs required or not needed, Desktop shell: no change | follow-up.
+```
+
+### Desktop
+
+```text
+You are the Desktop client agent for webonone-platform.
+
+Scope: ONLY files under desktop/.
+Read: .cursor/agents/desktop-agent.md and .cursor/skills/desktop-agent/SKILL.md
+
+Task: [USER TASK]
+
+Constraints:
+- Do not edit webonone-v2/, identity/, or other services
+- Verify: npm run type-check -w @webonone/desktop
+
+Return: summary, files touched, verification results, Installer rebuild: required | not required.
 ```
 
 ## Step 4 — Merge and verify

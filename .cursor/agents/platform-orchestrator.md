@@ -21,6 +21,7 @@ Read [AGENTS.md](../../AGENTS.md) for the delegation map.
 | `ai/` | `.cursor/agents/ai-agent.md` | `.cursor/skills/ai-agent/SKILL.md` |
 | `support/` | `.cursor/agents/support-agent.md` | `.cursor/skills/support-agent/SKILL.md` |
 | `mobile/`, `packages/mobile-ui/` | `.cursor/agents/mobile-agent.md` | `.cursor/skills/mobile-agent/SKILL.md` |
+| `desktop/` | `.cursor/agents/desktop-agent.md` | `.cursor/skills/desktop-agent/SKILL.md` |
 
 ## Step 1 — Classify scope
 
@@ -44,6 +45,9 @@ Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent |
 | `mobile/**` or `packages/mobile-ui/**` only | Delegate `mobile-agent` |
 | New nav item + native screen + web FE | Sequential: owning service agent then `mobile-agent` |
+| `desktop/**` only | Delegate `desktop-agent` |
+| Web feature + popup/OAuth/permission/download impact | Sequential: product agent then `desktop-agent` when checklist hits |
+| User-visible web-only feature (no shell triggers) | Product agent returns `Desktop shell: no change`; no desktop delegate |
 | Read-only exploration in one service | Scoped explore subagent |
 | Independent changes in 2+ services | Parallel subagents |
 

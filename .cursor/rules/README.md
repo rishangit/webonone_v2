@@ -68,6 +68,12 @@ Applies to `identity/frontend`, `webonone-v2/frontend`, `media/frontend`, `email
 | [mobile-ui-project.mdc](mobile-ui-project.mdc) | `packages/mobile-ui/**/*` | Kit package conventions, exports, `/dev/kit` showcase |
 | [mobile-list-pagination.mdc](mobile-list-pagination.mdc) | `mobile/src/**/*.{ts,tsx}` | On-scroll `ListPageFooter` + hooks for native collection pages |
 
+## Desktop (`desktop/`)
+
+| Rule | Globs | Description |
+|------|-------|-------------|
+| [desktop-project.mdc](desktop-project.mdc) | `desktop/**/*` | Electron thin shell, env, guards, web parity checklist |
+
 ## Backend (`backend/`)
 
 | Rule | Globs | Description |
@@ -89,6 +95,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | AI | [ai-agent](../agents/ai-agent.md) | [skill](../skills/ai-agent/SKILL.md) |
 | Support | [support-agent](../agents/support-agent.md) | [skill](../skills/support-agent/SKILL.md) |
 | Mobile | [mobile-agent](../agents/mobile-agent.md) | [skill](../skills/mobile-agent/SKILL.md) |
+| Desktop | [desktop-agent](../agents/desktop-agent.md) | [skill](../skills/desktop-agent/SKILL.md) |
 
 ### Cross-cutting skills
 

@@ -1,5 +1,9 @@
 import type { ExpoConfig, ConfigContext } from 'expo/config'
 
+/** Expo project @rish_nk/webonone — override with EXPO_PROJECT_ID in mobile/.env */
+const EAS_PROJECT_ID =
+  process.env.EXPO_PROJECT_ID?.trim() || 'e1a94cff-03df-4cad-9693-4641a5e03273'
+
 function resolveApiBaseUrlEnv(
   apiEnv: string | undefined,
   originEnv: string | undefined,
@@ -104,9 +108,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'http://localhost:4020/api/v1',
     ),
     googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID ?? '',
-    expoProjectId: process.env.EXPO_PROJECT_ID ?? '',
+    expoProjectId: EAS_PROJECT_ID,
     eas: {
-      projectId: process.env.EXPO_PROJECT_ID ?? '',
+      projectId: EAS_PROJECT_ID,
     },
   },
 })

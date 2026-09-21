@@ -80,6 +80,17 @@ npm run dev
 
 Login flow manual check: Identity must be running (`npm run dev:identity`).
 
+## Desktop shell (required check)
+
+The Windows desktop app loads this frontend from `WEBONONE_APP_URL` — most features need **no** `desktop/` changes.
+
+After auth, popup, permission, download, or cross-origin redirect work, read the parity table in [desktop-agent skill](../desktop-agent/SKILL.md). Return:
+
+`Desktop shell: no change — web deploy only` — one-line why  
+or `Desktop shell: follow-up` — bullets for desktop-agent (popup allowlist, OAuth URL, dev port range, permission handler, preload IPC, etc.)
+
+Do not edit `desktop/` from this agent; parent delegates desktop-agent when follow-up is required.
+
 ## Support help (required check)
 
 After any **user-visible** change (new route/nav, workflow, role-gated UI, charts/money meaning, removed screen):
@@ -94,4 +105,4 @@ Parent or support-agent writes `en` + `si` Markdown in the same overall task. Se
 
 ## Return format
 
-Summarize: files changed, verification results, Identity follow-ups, and **Support docs: required | not needed**.
+Summarize: files changed, verification results, Identity follow-ups, **Desktop shell: no change | follow-up**, and **Support docs: required | not needed**.

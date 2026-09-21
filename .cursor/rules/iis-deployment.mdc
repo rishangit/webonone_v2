@@ -103,6 +103,7 @@ Pre-deploy: `npm run type-check -w {service-root-workspace}`
 | 502.3 | Install HttpPlatformHandler; verify Node path in `web.config` |
 | Page spins / timeout | Do not hardcode `PORT` in `web.config` |
 | SPA 404 | Run deploy; confirm `deploy/public/` |
+| Desktop download won't install | Confirm `deploy/public/downloads/WebOnOne-Setup.exe` exists and `curl -I` shows `Content-Type: application/octet-stream` (or similar), not `text/html` |
 | API 404 from SPA | Rebuild frontend with `VITE_API_BASE_URL=/api/v1` |
 | DB errors | Run migrations; verify `DB_*` in `backend/.env` |
 

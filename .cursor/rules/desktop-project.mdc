@@ -1,0 +1,40 @@
+---
+description: WebOnOne desktop Electron shell — live URL, guards, env, parity with web
+globs: desktop/**/*
+alwaysApply: false
+---
+
+# Desktop project
+
+Agent skill: [.cursor/skills/desktop-agent/SKILL.md](../skills/desktop-agent/SKILL.md)
+
+## Model
+
+`@webonone/desktop` is a **thin Electron shell**, not a microservice. It loads `WEBONONE_APP_URL` in a persistent session. Product features live in web frontends; the shell picks up website deploys on refresh/reopen.
+
+Do **not** duplicate WebOnOne UI under `desktop/`. Do **not** load `file://` Vite output — Identity and peer iframes need real http(s) origins.
+
+## Env
+
+| File | Keys |
+|------|------|
+| `desktop/.env` | `WEBONONE_APP_URL` (optional override) |
+
+Load only from `desktop/.env` via `desktop/src/config.ts`. Never read repo-root or service `.env` at runtime.
+
+## Local dev ports
+
+Unpackaged mode allows main-frame navigation to `localhost` / `127.0.0.1` frontends on ports **3010–3021** (`origins.ts`). Adding a new local FE port outside that range requires updating `LOCAL_FRONTEND_PORT_MIN` / `MAX` or documenting a single `WEBONONE_APP_URL` for desktop testing.
+
+## Product agent parity checklist
+
+When changing auth, popups, permissions, downloads, or cross-origin redirects, assess whether the shell needs an update (see skill table). Report `Desktop shell: no change` or delegate **desktop-agent**.
+
+## Verification
+
+```bash
+npm run type-check -w @webonone/desktop
+npm run dev:desktop
+```
+
+(from repo root; platform should be running for manual sign-in)

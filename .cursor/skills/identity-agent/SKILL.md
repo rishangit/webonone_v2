@@ -78,4 +78,4 @@ Optional: `npm run lint` in `identity/frontend` and `identity/backend` if you ch
 
 ## Return format
 
-Summarize: files changed, verification results, and any follow-up needed in WebOnOne or UI Kit.
+Summarize: files changed, verification results, follow-up needed in WebOnOne or UI Kit, and **`Desktop shell: no change | follow-up`** when login/OAuth uses new popup URLs (see [desktop-agent skill](../desktop-agent/SKILL.md)).

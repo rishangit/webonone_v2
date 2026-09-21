@@ -52,7 +52,12 @@ export function createApp() {
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))
-    app.get(/^(?!\/api\/).*/, (_req, res, next) => {
+    app.get(/^(?!\/api\/).*/, (req, res, next) => {
+      // Missing static assets (e.g. /downloads/WebOnOne-Setup.exe) must 404 — not index.html.
+      if (/\.[a-zA-Z0-9]+$/.test(req.path)) {
+        next()
+        return
+      }
       res.sendFile(path.join(publicDir, 'index.html'), (err) => {
         if (err) next(err)
       })

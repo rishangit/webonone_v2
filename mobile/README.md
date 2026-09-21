@@ -77,11 +77,30 @@ Sending real SMS requires a **dev/prebuild** build on a physical Android phone. 
 
 In-app bell polling only runs while the app is open. Tray alerts when the phone is asleep or the app is killed use **Expo Push** (FCM on Android).
 
-1. Create an Expo project (`npx eas init` in `mobile/`) and set `EXPO_PROJECT_ID` in `mobile/.env`.
-2. Upload an Android FCM V1 service account in [Expo credentials](https://docs.expo.dev/push-notifications/fcm-credentials/). Do not commit `google-services.json`.
+1. Create an Expo project (`npx eas init` in `mobile/`) and set `EXPO_PROJECT_ID` in `mobile/.env` (must match the project on expo.dev).
+2. **FCM V1 on Expo (required for Android tray)** — see below. `google-services.json` in the app is not enough; Expo's push servers need the service account key uploaded on expo.dev.
 3. Optional for production: set `EXPO_ACCESS_TOKEN` on the WebOnOne backend (from expo.dev access tokens).
 4. Rebuild the native app after adding the `expo-notifications` plugin (`npm run mobile:android`). Expo Go cannot receive these pushes.
 5. Sign in on a **physical** phone and allow notifications. Session due-to-start (and every other in-app notification) is delivered to the assigned staff user's tray.
+
+### FCM V1 credentials (fix `InvalidCredentials` from Expo)
+
+If [expo.dev/notifications](https://expo.dev/notifications) or your backend push returns:
+
+`InvalidCredentials: Unable to retrieve the FCM server key for the recipient's app`
+
+Expo does **not** have FCM configured for this Expo project yet.
+
+1. **Firebase** — use the same project as `mobile/google-services.json` (e.g. `project_id: webonone`, package `com.webonone.mobile`).
+   - [Firebase Console](https://console.firebase.google.com/) → Project settings → **Service accounts**.
+   - **Generate new private key** (JSON). Keep it secret; do not commit.
+2. **Expo** — [expo.dev](https://expo.dev) → your app → **Project settings** → **Credentials** → **Android**.
+   - Under **FCM V1 service account key**, upload the Firebase JSON (not `google-services.json`).
+   - Docs: [FCM credentials](https://docs.expo.dev/push-notifications/fcm-credentials/).
+3. Wait a minute, then resend from expo.dev/notifications with channel `webonone-alerts` and your `ExponentPushToken[...]` (app killed).
+4. No app rebuild is required for the Expo upload alone; sign in again only if you change `EXPO_PROJECT_ID` or Firebase app.
+
+Legacy **FCM server key** (Cloud Messaging API key) is deprecated; use **FCM V1 service account** only.
 
 Dev-only **UI Kit** gallery: `/dev/kit` (also listed in the drawer in development).
 

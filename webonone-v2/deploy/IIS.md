@@ -2,7 +2,7 @@
 
 Host **app.webonone.com** with IIS physical path set to **`webonone-v2\deploy`**.
 
-Run **`npm run deploy:webonone`** when you are ready to publish. That builds the app and stages output into `webonone-v2\deploy\`. Normal development (`npm run dev:webonone`) and compile-only builds (`npm run build:webonone`) do **not** touch this folder.
+Run **`npm run deploy:webonone`** when you are ready to publish. That builds the app, builds **`WebOnOne-Setup.exe`** (`npm run build:desktop`), and stages output into `webonone-v2\deploy\` including **`public\downloads\WebOnOne-Setup.exe`**. Normal development (`npm run dev:webonone`) and compile-only builds (`npm run build:webonone`) do **not** touch this folder.
 
 ```text
 webonone-v2\deploy\          ← IIS physical path (generated on deploy)
