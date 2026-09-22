@@ -756,9 +756,10 @@ function main() {
         '',
         'VITE_API_BASE_URL=/api/v1',
         `VITE_IDENTITY_ORIGIN=${originIdentity}`,
-        'VITE_IDENTITY_API_BASE_URL=/api/v1',
+        `VITE_IDENTITY_API_BASE_URL=${apiBase(originIdentity)}`,
         `VITE_WEBONONE_ORIGIN=${originWebonone}`,
         `VITE_WEBSITE_ORIGIN=${originWebsite}`,
+        `VITE_ALLOWED_PARENT_ORIGINS=${joinOrigins([originWebonone, originIdentity])}`,
       ]),
     ),
   );
