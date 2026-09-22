@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useUiThemeValue } from '@webonone/theme'
-import { cn, shapePanelClassName, themeNeedsShapeDom, UiThemeProvider, useUiTheme } from '@webonone/ui-kit'
+import {
+  Alert,
+  AlertDescription,
+  cn,
+  shapePanelClassName,
+  themeNeedsShapeDom,
+  UiThemeProvider,
+  useUiTheme,
+} from '@webonone/ui-kit'
+import { PlatformHandoffSpinner } from '@/features/auth/components/PlatformHandoffSpinner'
+import { usePlatformSessionBootstrap } from '@/features/auth/hooks/usePlatformSessionBootstrap'
 import { DocsSidebar } from '@/features/docs/components/DocsSidebar'
 import { SupportHeader } from '@/features/docs/components/SupportHeader'
 import {
@@ -41,6 +51,7 @@ function SupportLayoutContent() {
   const isDesktop = useIsMdDesktop()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const location = useLocation()
+  const { isBootstrapping, bootstrapError } = usePlatformSessionBootstrap()
   const showMobileNav = mobileNavOpen && !isDesktop
 
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), [])
@@ -106,7 +117,15 @@ function SupportLayoutContent() {
           id="main-content"
           className="relative min-h-0 min-w-0 flex-1 overflow-y-auto scrollbar-themed"
         >
+          {bootstrapError ? (
+            <div className="p-6">
+              <Alert variant="destructive">
+                <AlertDescription>{bootstrapError}</AlertDescription>
+              </Alert>
+            </div>
+          ) : null}
           <Outlet />
+          {isBootstrapping ? <PlatformHandoffSpinner /> : null}
         </main>
       </div>
     </div>

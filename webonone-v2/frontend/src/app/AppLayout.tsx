@@ -14,6 +14,7 @@ import {
   isPaymentNavSentinel,
   isProfileNavSentinel,
   isSmsNavSentinel,
+  redirectWithAuthCode,
 } from '@webonone/platform-nav'
 import { normalizeLocale, translateNavItems, type AppLocale } from '@webonone/i18n'
 import { prefetchNavTarget } from '@/app/routePrefetch'
@@ -23,7 +24,7 @@ import { useIdentitySessionHandoff } from '@/features/auth/hooks/useIdentitySess
 import { isImpersonatingSession, stopImpersonation } from '@/features/auth/utils/impersonation'
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { performWebOnOneLogout } from '@/features/auth/utils/performWebOnOneLogout'
-import { getSupportHomeUrl } from '@/features/support/utils/supportConfig'
+import { getSupportHomeUrl, getSupportRedirectOptions } from '@/features/support'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { patchIdentityLocale } from '@/features/auth/services/identityUserApi'
 import { buildNavForSessionRole } from '@/features/shell/config/navItems'
@@ -259,6 +260,20 @@ function AppLayoutContent() {
   const [assistantOpen, setAssistantOpen] = useState(false)
   const openAssistant = useCallback(() => setAssistantOpen(true), [])
 
+  const handleOpenSupport = useCallback(() => {
+    if (!accessToken) {
+      window.open(getSupportHomeUrl(), '_blank', 'noopener,noreferrer')
+      return
+    }
+    void redirectWithAuthCode(getSupportRedirectOptions({ accessToken })).catch((err: Error) => {
+      toast({
+        title: tShell('help'),
+        description: err.message,
+        variant: 'destructive',
+      })
+    })
+  }, [accessToken, tShell, toast])
+
   return (
     <AiEntityPasteProvider onOpenAssistant={openAssistant}>
       <AppLayoutShell
@@ -284,6 +299,7 @@ function AppLayoutContent() {
         canChangeAccount={canChangeAccount}
         onSidebarSessionClick={handleSidebarSessionClick}
         sidebarSessionClickLabel={tSession('chooseAccount.changeFromNav')}
+        onOpenSupport={handleOpenSupport}
       />
     </AiEntityPasteProvider>
   )
@@ -327,6 +343,7 @@ type AppLayoutShellProps = {
   canChangeAccount: boolean
   onSidebarSessionClick: () => void
   sidebarSessionClickLabel: string
+  onOpenSupport: () => void
 }
 
 function AppLayoutShell({
@@ -352,6 +369,7 @@ function AppLayoutShell({
   canChangeAccount,
   onSidebarSessionClick,
   sidebarSessionClickLabel,
+  onOpenSupport,
 }: AppLayoutShellProps) {
   const { requestEntityPaste } = useAiEntityPaste()
 
@@ -407,10 +425,15 @@ function AppLayoutShell({
           headerNotice={headerNotice}
           headerActions={
             <>
-              <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" asChild>
-                <a href={getSupportHomeUrl()} target="_blank" rel="noreferrer" aria-label={tShell('help')}>
-                  <CircleHelp className="h-4 w-4" />
-                </a>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                aria-label={tShell('help')}
+                onClick={onOpenSupport}
+              >
+                <CircleHelp className="h-4 w-4" />
               </Button>
               {accessToken ? (
                 <>

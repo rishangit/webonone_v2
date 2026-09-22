@@ -1,9 +1,8 @@
-import { Linking } from 'react-native'
 import { CircleHelp, MessageCircle } from 'lucide-react-native'
+import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { HeaderIconButton, useThemedControlIconColor } from '@webonone/mobile-ui'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
-import { env } from '@/shared/config/env'
 
 type AppShellHeaderActionsProps = {
   assistantOpen: boolean
@@ -19,6 +18,7 @@ export function AppShellHeaderActions({
   onNotificationsOpenChange,
 }: AppShellHeaderActionsProps) {
   const { t } = useTranslation('shell')
+  const router = useRouter()
   const iconColor = useThemedControlIconColor()
   const assistantIconColor = useThemedControlIconColor({ active: assistantOpen })
 
@@ -26,7 +26,7 @@ export function AppShellHeaderActions({
     <>
       <HeaderIconButton
         label={t('help')}
-        onPress={() => void Linking.openURL(env.supportOrigin)}
+        onPress={() => router.push('/help')}
       >
         <CircleHelp size={16} color={iconColor} strokeWidth={2} />
       </HeaderIconButton>

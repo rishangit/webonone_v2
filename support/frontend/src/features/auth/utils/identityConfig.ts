@@ -17,3 +17,17 @@ export function getAuthCallbackUrl(): string {
 export function getIdentityProfileUrl(): string {
   return `${getIdentityOrigin()}/profile`
 }
+
+export function parseAllowedParentOrigins(): string[] {
+  const raw =
+    import.meta.env.VITE_ALLOWED_PARENT_ORIGINS ??
+    'http://127.0.0.1:3010,http://127.0.0.1:3011'
+  return raw
+    .split(',')
+    .map((entry: string) => entry.trim())
+    .filter(Boolean)
+}
+
+export function isAllowedParentOrigin(origin: string): boolean {
+  return parseAllowedParentOrigins().includes(origin)
+}
