@@ -36,6 +36,7 @@ const envSchema = z.object({
   SMS_ORIGIN: z.string().default('http://127.0.0.1:3016'),
   PAYMENT_ORIGIN: z.string().default('http://127.0.0.1:3017'),
   DESIGN_ORIGIN: z.string().default('http://127.0.0.1:3019'),
+  SUPPORT_ORIGIN: z.string().default('http://127.0.0.1:3021'),
   ALLOWED_ORIGINS: z.string().optional(),
   AI_PROVIDER: z.enum(['ollama', 'openai', 'gemini', 'anthropic']).default('ollama'),
   AI_MODEL: z.string().default('llama3.2'),
@@ -85,6 +86,7 @@ const allowedOrigins = [
   parsed.SMS_ORIGIN,
   parsed.PAYMENT_ORIGIN,
   parsed.DESIGN_ORIGIN,
+  parsed.SUPPORT_ORIGIN,
 ]
   .filter((value): value is string => Boolean(value))
   .flatMap((entry) => entry.split(','))

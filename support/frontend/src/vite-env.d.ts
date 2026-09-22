@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_WEBONONE_ORIGIN?: string
   readonly VITE_WEBSITE_ORIGIN?: string
   readonly VITE_ALLOWED_PARENT_ORIGINS?: string
+  readonly VITE_AI_ORIGIN?: string
+  readonly VITE_AI_API_BASE_URL?: string
 }
 
 interface ImportMeta {

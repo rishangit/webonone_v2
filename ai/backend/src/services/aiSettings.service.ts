@@ -147,7 +147,14 @@ export function createAiSettingsService() {
   return {
     async getUserSettings(userId: string): Promise<AiSettingsDto> {
       const row = await findUserRow(userId)
-      return row ? toDto(row) : userDefaultsDto()
+      if (row) {
+        return toDto(row)
+      }
+      const envFallback = toDto(null)
+      if (envFallback.configured) {
+        return envFallback
+      }
+      return userDefaultsDto()
     },
 
     async patchUserSettings(userId: string, body: PatchUserAiSettingsBody): Promise<AiSettingsDto> {
@@ -197,6 +204,10 @@ export function createAiSettingsService() {
 
       const userRow = await findUserRow(ctx.userId)
       if (!userRow) {
+        const envConfig = envProviderConfig()
+        if (isProviderConfigComplete(envConfig)) {
+          return { provider: createAiProvider(envConfig), systemPrompt: basePrompt }
+        }
         throw new HttpError(
           409,
           'AI provider is not configured. Set up your Ollama Cloud account in Basic Settings.',

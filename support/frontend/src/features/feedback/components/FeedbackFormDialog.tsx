@@ -110,6 +110,8 @@ export function FeedbackFormDialog({
         <FormField htmlFor="feedback-title" label={t('fields.title')} required error={fieldErrors.title}>
           <Input
             id="feedback-title"
+            name="title"
+            aiAssist
             value={values.title}
             onChange={(event) => setValues((current) => ({ ...current, title: event.target.value }))}
             placeholder={t('fields.titlePlaceholder')}
@@ -118,6 +120,8 @@ export function FeedbackFormDialog({
         <FormField htmlFor="feedback-description" label={t('fields.description')} required error={fieldErrors.description}>
           <Textarea
             id="feedback-description"
+            name="description"
+            aiAssist
             value={values.description}
             onChange={(event) =>
               setValues((current) => ({ ...current, description: event.target.value }))

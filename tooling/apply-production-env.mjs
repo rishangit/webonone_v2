@@ -682,6 +682,7 @@ function main() {
         `SMS_ORIGIN=${originSms}`,
         `PAYMENT_ORIGIN=${originPayment}`,
         `DESIGN_ORIGIN=${originDesign}`,
+        `SUPPORT_ORIGIN=${originSupport}`,
         `ALLOWED_ORIGINS=${joinOrigins([
           originAi,
           originWebsite,
@@ -693,6 +694,7 @@ function main() {
           originSms,
           originPayment,
           originDesign,
+          originSupport,
         ])}`,
         '',
         `WEBONONE_API_BASE_URL=${originWebonone}`,
@@ -760,6 +762,8 @@ function main() {
         `VITE_WEBONONE_ORIGIN=${originWebonone}`,
         `VITE_WEBSITE_ORIGIN=${originWebsite}`,
         `VITE_ALLOWED_PARENT_ORIGINS=${joinOrigins([originWebonone, originIdentity])}`,
+        `VITE_AI_ORIGIN=${originAi}`,
+        `VITE_AI_API_BASE_URL=${apiBase(originAi)}`,
       ]),
     ),
   );
