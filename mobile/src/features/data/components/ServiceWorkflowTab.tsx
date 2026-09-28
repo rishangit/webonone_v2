@@ -12,17 +12,24 @@ import {
   Subheading,
 } from '@webonone/mobile-ui'
 import {
-  listServiceWorkflow,
+  companyCatalogApi,
   resolveCompanyCatalogServiceId,
-  type ServiceWorkflowItem,
-} from '@/features/data/services/companyCatalogWorkflowApi'
+} from '@/features/data/services/companyCatalogApi'
+import type { ServiceWorkflowItem } from '@/features/sales/types/catalog.types'
 
 function workflowItemTitle(item: ServiceWorkflowItem, checkInLabel: string): string {
   if (item.kind === 'check_in') return checkInLabel
   return item.space?.name ?? checkInLabel
 }
 
-export function ServiceWorkflowTab({ libraryServiceId }: { libraryServiceId: string }) {
+/** Read-only workflow for Data library service detail (super_admin). */
+export function ServiceWorkflowTab({
+  libraryServiceId,
+  catalogServiceId,
+}: {
+  libraryServiceId?: string
+  catalogServiceId?: string
+}) {
   const { t } = useTranslation('catalog')
   const [items, setItems] = useState<ServiceWorkflowItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,12 +39,15 @@ export function ServiceWorkflowTab({ libraryServiceId }: { libraryServiceId: str
     setLoading(true)
     setError(null)
     try {
-      const catalogId = await resolveCompanyCatalogServiceId(libraryServiceId)
+      let catalogId = catalogServiceId ?? null
+      if (!catalogId && libraryServiceId) {
+        catalogId = await resolveCompanyCatalogServiceId(libraryServiceId)
+      }
       if (!catalogId) {
         setItems([])
         return
       }
-      const result = await listServiceWorkflow(catalogId)
+      const result = await companyCatalogApi.listServiceWorkflow(catalogId)
       setItems(result.items ?? [])
     } catch (err) {
       setItems([])
@@ -45,7 +55,7 @@ export function ServiceWorkflowTab({ libraryServiceId }: { libraryServiceId: str
     } finally {
       setLoading(false)
     }
-  }, [libraryServiceId, t])
+  }, [catalogServiceId, libraryServiceId, t])
 
   useEffect(() => {
     void load()
@@ -67,24 +77,13 @@ export function ServiceWorkflowTab({ libraryServiceId }: { libraryServiceId: str
           {items.map((item) => {
             const staffNames =
               item.staff.length > 0
-                ? item.staff.map((entry) => entry.displayName).join(', ')
-                : t('workflowTab.none')
-            const formNames =
-              item.forms.length > 0
-                ? item.forms.map((entry) => entry.name ?? entry.id).join(', ')
-                : t('workflowTab.none')
-            const extra = [
-              t('workflowTab.staffLine', { value: staffNames }),
-              t('workflowTab.formsLine', { value: formNames }),
-              t('workflowTab.addItemsLine', {
-                value: item.addItemsEnabled ? t('workflowTab.yes') : t('workflowTab.no'),
-              }),
-            ].join(' · ')
+                ? item.staff.map((member) => member.displayName).join(', ')
+                : '—'
             return (
               <ItemListItem key={item.id}>
                 <ItemListContent
-                  title={workflowItemTitle(item, t('workflowTab.checkIn'))}
-                  subtitle={extra}
+                  title={`${item.orderNumber}. ${workflowItemTitle(item, t('workflowTab.checkIn'))}`}
+                  subtitle={staffNames}
                 />
               </ItemListItem>
             )

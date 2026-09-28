@@ -25,7 +25,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     toasts.length > 0 ? (
       <div
         aria-live="polite"
-        className="ui-toast-viewport pointer-events-none fixed bottom-4 right-4 z-[100] flex w-auto flex-col items-end gap-2"
+        className="ui-toast-viewport pointer-events-none fixed bottom-4 right-4 z-[100] flex w-auto max-w-[min(24rem,calc(100vw-2rem))] flex-col items-end gap-2 pb-[env(safe-area-inset-bottom,0px)] pr-[env(safe-area-inset-right,0px)]"
       >
         {toasts.map((t) => (
           <div

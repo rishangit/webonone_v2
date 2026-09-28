@@ -131,13 +131,18 @@ export function ScheduleScreen() {
         onViewChange={setView}
         anchorDate={anchorDate}
         onAnchorDateChange={setAnchorDate}
+        onDayHeaderPress={(date) => {
+          setAnchorDate(date)
+          setView('day')
+        }}
         events={events}
-        renderEventPopover={(event, { close }) => {
+        renderEventPopover={(event, { close, presentation }) => {
           const occurrence = occurrenceFromCalendarEvent(event, occurrences)
           if (!occurrence) return null
           return (
             <ScheduleEventDetail
               occurrence={occurrence}
+              layout={presentation}
               onOpenSession={() => {
                 close()
                 router.push(sessionDetailPath(occurrence.id, occurrence.occurrenceDate) as Href)

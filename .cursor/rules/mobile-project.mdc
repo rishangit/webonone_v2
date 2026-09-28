@@ -57,6 +57,10 @@ WebView injects JWT into peer `localStorage` + `postMessage` `webonone:platform:
 - Google Sign-In is Android-only; requires dev/prebuild (not Expo Go).
 - Text.lk gateway mode does not require the mobile app.
 
+## UI kit
+
+All interactive UI from **`@webonone/mobile-ui`** — never fork kit primitives under `features/` (see [mobile-ui-consumption.mdc](mobile-ui-consumption.mdc)). Wizard detail sections: `EditableSectionCard` + `ReadOnlyField` from the kit.
+
 ## Verification
 
 ```bash

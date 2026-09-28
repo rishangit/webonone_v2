@@ -7,6 +7,7 @@ import { useSession } from '@/features/auth/SessionContext'
 import { AccountSwitchDialog } from '@/features/settings/components/AccountSwitchDialog'
 import { NotificationsProvider } from '@/features/notifications/context/NotificationsContext'
 import { AppAssistantPanel } from '@/features/ai/components/AppAssistantPanel'
+import { AiEntityPasteProvider } from '@/features/ai/context/AiEntityPasteContext'
 import { NotificationDropdown } from '@/features/notifications/components/NotificationDropdown'
 import { AppShellHeaderActions } from '@/features/shell/components/AppShellHeaderActions'
 import { useAppHeaderLabels } from '@/features/shell/hooks/useAppHeaderLabels'
@@ -75,6 +76,12 @@ export function AppShellLayout() {
   return (
     <NotificationsProvider>
       <ShellStartPanelProvider>
+        <AiEntityPasteProvider
+          onOpenAssistant={() => {
+            setAssistantOpen(true)
+            setNotificationsOpen(false)
+          }}
+        >
       <MobileAppShell
         nav={nav}
         activePath={pathname}
@@ -123,6 +130,7 @@ export function AppShellLayout() {
           onSwitched={() => router.replace('/' as Href)}
         />
       </MobileAppShell>
+        </AiEntityPasteProvider>
       </ShellStartPanelProvider>
     </NotificationsProvider>
   )

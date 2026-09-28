@@ -15,6 +15,7 @@ import { TranslatedListPageFooter } from '@/shared/components/TranslatedListPage
 import { TagFormDialog } from '@/features/data/components/TagFormDialog'
 import { TagsList } from '@/features/data/components/TagsList'
 import { useDataPermissions } from '@/features/data/hooks/useDataPermissions'
+import { useRequireDataLibrarySession } from '@/features/data/hooks/useRequireDataLibrarySession'
 import { usePaginatedEntityList } from '@/features/data/hooks/usePaginatedEntityList'
 import { tagDetailPath } from '@/features/data/utils/dataPaths'
 import { useListPageScroll } from '@/shared/hooks/useListPageScroll'
@@ -22,6 +23,7 @@ import { dataAdminApi } from '@/shared/services/dataAdminApi'
 import type { Tag } from '@/shared/types/data.types'
 
 export function TagsListScreen() {
+  const isLibrarySession = useRequireDataLibrarySession()
   const { t } = useTranslation('tags')
   const router = useRouter()
   const { toast } = useToast()
@@ -32,6 +34,10 @@ export function TagsListScreen() {
 
   const list = usePaginatedEntityList((query) => dataAdminApi.listTags(query))
   const onScroll = useListPageScroll(list)
+
+  if (!isLibrarySession) {
+    return null
+  }
 
   async function handleVerify(tag: Tag) {
     setBusyId(tag.id)

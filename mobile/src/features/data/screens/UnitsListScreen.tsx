@@ -15,6 +15,7 @@ import { TranslatedListPageFooter } from '@/shared/components/TranslatedListPage
 import { UnitFormDialog } from '@/features/data/components/UnitFormDialog'
 import { UnitsList } from '@/features/data/components/UnitsList'
 import { useDataPermissions } from '@/features/data/hooks/useDataPermissions'
+import { useRequireDataLibrarySession } from '@/features/data/hooks/useRequireDataLibrarySession'
 import { usePaginatedEntityList } from '@/features/data/hooks/usePaginatedEntityList'
 import { unitDetailPath } from '@/features/data/utils/dataPaths'
 import { useListPageScroll } from '@/shared/hooks/useListPageScroll'
@@ -22,6 +23,7 @@ import { dataAdminApi } from '@/shared/services/dataAdminApi'
 import type { Unit } from '@/shared/types/data.types'
 
 export function UnitsListScreen() {
+  const isLibrarySession = useRequireDataLibrarySession()
   const { t } = useTranslation('units')
   const router = useRouter()
   const { toast } = useToast()
@@ -32,6 +34,10 @@ export function UnitsListScreen() {
 
   const list = usePaginatedEntityList((query) => dataAdminApi.listUnits(query))
   const onScroll = useListPageScroll(list)
+
+  if (!isLibrarySession) {
+    return null
+  }
 
   async function handleVerify(unit: Unit) {
     setBusyId(unit.id)

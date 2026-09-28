@@ -31,6 +31,8 @@ Agent skill: [.cursor/skills/mobile-agent/SKILL.md](../skills/mobile-agent/SKILL
 3. Add showcase entry in `mobile/src/features/kit/` (`/dev/kit` route).
 4. Run `npm run type-check -w @webonone/mobile-ui`.
 
+Do **not** add parallel components under `mobile/src/features/**` when the same role is already exported from mobile-ui (or belongs in the kit). Example: wizard detail sections use **`EditableSectionCard`** from the kit — extend the kit with props like `titleExtra` instead of copying the component into a feature folder.
+
 ## Verification
 
 ```bash

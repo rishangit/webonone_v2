@@ -19,6 +19,10 @@ import {
   type SpaceFormValues,
 } from '@/features/data/schemas/dataSchemas'
 import { dataAdminApi } from '@/shared/services/dataAdminApi'
+import {
+  dataLibraryApi,
+  type LibraryListItem,
+} from '@/features/sales/services/dataLibraryApi'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 function emptyValues(): SpaceFormValues & { tags: SelectTagValue[] } {
@@ -36,15 +40,18 @@ export function SpaceFormDialog({
   canSetStatus,
   onOpenChange,
   onSaved,
+  onLibraryCreate,
 }: {
   open: boolean
   space?: CatalogItem | null
   canSetStatus: boolean
   onOpenChange: (open: boolean) => void
   onSaved?: (saved: CatalogItem) => void
+  onLibraryCreate?: (item: LibraryListItem) => void
 }) {
   const { toast } = useToast()
   const isNew = !space
+  const libraryCreateOnly = Boolean(onLibraryCreate) && isNew
   const [values, setValues] = useState(emptyValues())
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const [saving, setSaving] = useState(false)
@@ -75,6 +82,13 @@ export function SpaceFormDialog({
     setSaving(true)
     try {
       const body = toCreateSpacePayload({ ...parsed.data, tags: values.tags }, { canSetStatus })
+      if (libraryCreateOnly && onLibraryCreate) {
+        const saved = await dataLibraryApi.createSpace(body)
+        toast({ title: 'Space created' })
+        onOpenChange(false)
+        onLibraryCreate(saved)
+        return
+      }
       const saved = space
         ? await dataAdminApi.updateSpace(space.id, body)
         : await dataAdminApi.createSpace(body)

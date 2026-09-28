@@ -15,6 +15,7 @@ import { TranslatedListPageFooter } from '@/shared/components/TranslatedListPage
 import { AttributesList } from '@/features/data/components/AttributesList'
 import { AttributeFormDialog } from '@/features/data/components/AttributeFormDialog'
 import { useDataPermissions } from '@/features/data/hooks/useDataPermissions'
+import { useRequireDataLibrarySession } from '@/features/data/hooks/useRequireDataLibrarySession'
 import { usePaginatedEntityList } from '@/features/data/hooks/usePaginatedEntityList'
 import { attributeDetailPath } from '@/features/data/utils/dataPaths'
 import { useListPageScroll } from '@/shared/hooks/useListPageScroll'
@@ -22,6 +23,7 @@ import { dataAdminApi } from '@/shared/services/dataAdminApi'
 import type { Attribute } from '@/shared/types/data.types'
 
 export function AttributesListScreen() {
+  const isLibrarySession = useRequireDataLibrarySession()
   const { t } = useTranslation('attributes')
   const router = useRouter()
   const { toast } = useToast()
@@ -32,6 +34,10 @@ export function AttributesListScreen() {
 
   const list = usePaginatedEntityList((query) => dataAdminApi.listAttributes(query))
   const onScroll = useListPageScroll(list)
+
+  if (!isLibrarySession) {
+    return null
+  }
 
   async function handleVerify(attribute: Attribute) {
     setBusyId(attribute.id)

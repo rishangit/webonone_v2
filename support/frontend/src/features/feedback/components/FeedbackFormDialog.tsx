@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Save } from 'lucide-react'
+import type { SelectMediaValue } from '@webonone/ui-kit'
 import {
   Button,
   CustomDialog,
@@ -15,12 +16,14 @@ import {
   SelectValue,
   Textarea,
 } from '@webonone/ui-kit'
+import { FeedbackScreenshotField } from '@/features/feedback/components/FeedbackScreenshotField'
 import {
   createFeedbackFormSchema,
   type CreateFeedbackFormValues,
 } from '@/features/feedback/schemas/feedbackSchemas'
+import { createFeedbackUploadSessionId } from '@/features/feedback/utils/uploadSessionId'
 
-const EMPTY_VALUES: CreateFeedbackFormValues = {
+const EMPTY_VALUES: Omit<CreateFeedbackFormValues, 'uploadSessionId' | 'attachment'> = {
   type: 'bug',
   title: '',
   description: '',
@@ -30,6 +33,7 @@ type FeedbackFormDialogProps = {
   open: boolean
   isSaving: boolean
   error: string | null
+  accessToken: string | null
   onOpenChange: (open: boolean) => void
   onSubmit: (values: CreateFeedbackFormValues) => void
 }
@@ -38,23 +42,47 @@ export function FeedbackFormDialog({
   open,
   isSaving,
   error,
+  accessToken,
   onOpenChange,
   onSubmit,
 }: FeedbackFormDialogProps) {
   const { t } = useTranslation('feedback')
-  const [values, setValues] = useState<CreateFeedbackFormValues>(EMPTY_VALUES)
+  const [values, setValues] = useState(EMPTY_VALUES)
+  const [uploadSessionId, setUploadSessionId] = useState('')
+  const [screenshot, setScreenshot] = useState<SelectMediaValue | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setUploadSessionId(createFeedbackUploadSessionId())
       setValues(EMPTY_VALUES)
+      setScreenshot(null)
       setFieldErrors({})
+      return
     }
+    setUploadSessionId('')
+    setValues(EMPTY_VALUES)
+    setScreenshot(null)
+    setFieldErrors({})
   }, [open])
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
-    const result = createFeedbackFormSchema.safeParse(values)
+    const payload: CreateFeedbackFormValues = {
+      ...values,
+      ...(screenshot
+        ? {
+            uploadSessionId,
+            attachment: {
+              mediaId: screenshot.id,
+              url: screenshot.url,
+              fileName: screenshot.fileName,
+              mimeType: screenshot.mimeType,
+            },
+          }
+        : {}),
+    }
+    const result = createFeedbackFormSchema.safeParse(payload)
     if (!result.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues) as Record<string, string>)
       return
@@ -130,6 +158,15 @@ export function FeedbackFormDialog({
             rows={6}
           />
         </FormField>
+        {uploadSessionId ? (
+          <FeedbackScreenshotField
+            accessToken={accessToken}
+            uploadSessionId={uploadSessionId}
+            value={screenshot}
+            onChange={setScreenshot}
+            error={fieldErrors.attachment}
+          />
+        ) : null}
       </Form>
     </CustomDialog>
   )

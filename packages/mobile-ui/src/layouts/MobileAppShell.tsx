@@ -1,17 +1,13 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 import { Pressable, View } from 'react-native'
 
 import { SafeAreaView } from 'react-native-safe-area-context'
-
 import {
-
   AppDrawer,
-
+  findActiveNavGroupLabel,
   type DrawerSession,
-
   type MobileNavItem,
-
 } from '../components/AppDrawer'
 
 import { AppHeader, type AppHeaderLabels, type AppHeaderLocale, type AppHeaderUser } from '../components/AppHeader'
@@ -90,30 +86,19 @@ export function MobileAppShell({
 
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const initialGroup = useMemo(() => {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(() =>
+    findActiveNavGroupLabel(nav, activePath),
+  )
 
-    const match = nav.find(
-
-      (item) =>
-
-        item.type === 'group' &&
-
-        item.children.some((child) => activePath === child.to || activePath.startsWith(`${child.to}/`)),
-
-    )
-
-    return match?.type === 'group' ? match.label : null
-
+  useEffect(() => {
+    const activeGroup = findActiveNavGroupLabel(nav, activePath)
+    if (activeGroup) {
+      setExpandedGroup(activeGroup)
+    }
   }, [activePath, nav])
 
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(initialGroup)
-
-
-
   function handleToggleGroup(label: string) {
-
     setExpandedGroup((prev) => (prev === label ? null : label))
-
   }
 
 

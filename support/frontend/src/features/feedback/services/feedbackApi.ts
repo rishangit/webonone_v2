@@ -9,6 +9,11 @@ export interface FeedbackReport {
   status: FeedbackStatus
   reporterUserId: string
   reporterEmail: string
+  uploadSessionId: string | null
+  attachmentMediaId: string | null
+  attachmentUrl: string | null
+  attachmentFileName: string | null
+  attachmentMimeType: string | null
   createdAt: string
   updatedAt: string
 }

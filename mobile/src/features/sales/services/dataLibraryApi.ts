@@ -1,35 +1,15 @@
 import { env } from '@/shared/config/env'
 import { createApiClient } from '@/shared/services/apiClient'
-import type { CatalogEntityKind } from '@/features/sales/types/catalog.types'
+import type { CatalogEntityKind, CatalogPayload } from '@/features/sales/types/catalog.types'
 
 const client = createApiClient(env.dataApiBaseUrl)
 
 type Paginated<T> = { items: T[]; total: number; page: number; pageSize: number }
 
-export type LibraryListItem = Record<string, unknown> & {
-  id: string
-  name: string
-  description?: string | null
-  galleryImages?: { mediaId: string; url: string }[]
-}
-
-export type LibraryProductVariant = {
-  id: string
-  productId: string
-  name: string
-  sku: string
-  isDefault: boolean
-}
-
-export type LibraryProductVariantStock = {
-  id: string
-  variantId: string
-  quantity: number
-  sellPrice: number
-  isActive: boolean
-}
-
-const KIND_PATH: Record<CatalogEntityKind, string> = {
+const KIND_PATH: Record<CatalogEntityKind | 'tags' | 'units' | 'attributes', string> = {
+  tags: 'tags',
+  units: 'units',
+  attributes: 'attributes',
   products: 'products',
   services: 'services',
   spaces: 'spaces',
@@ -49,8 +29,156 @@ function toQueryString(params: Record<string, string | number | string[] | undef
   return qs ? `?${qs}` : ''
 }
 
+export type LibraryAttributeUnit = {
+  id: string
+  name: string
+  symbol: string
+}
+
+export type LibraryAttributeValueEntry = {
+  id: string
+  valueText: string | null
+  valueNumber: number | null
+  isDefault: boolean
+}
+
+export type LibraryCatalogAttribute = {
+  attributeId: string
+  name: string
+  valueType: 'number' | 'text'
+  unit: LibraryAttributeUnit | null
+  values: LibraryAttributeValueEntry[]
+}
+
+export type LibraryListItem = CatalogPayload & {
+  id: string
+  name: string
+  description?: string | null
+  galleryImages?: { mediaId: string; url: string }[]
+  attributes?: LibraryCatalogAttribute[] | unknown
+  tags?: { id: string; name?: string; color?: string }[]
+}
+
+export type LibraryProductVariantAttributeValue = {
+  attributeId: string
+  attributeName: string
+  attributeValueId: string
+  valueText: string | null
+  valueNumber: number | null
+  valueType: 'number' | 'text'
+  unitSymbol: string | null
+}
+
+export type LibraryProductVariant = {
+  id: string
+  productId: string
+  name: string
+  sku: string
+  isDefault: boolean
+  values: LibraryProductVariantAttributeValue[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type LibraryProductVariantStock = {
+  id: string
+  variantId: string
+  quantity: number
+  batchNumber: string
+  costPrice: number
+  sellPrice: number
+  purchaseDate: string
+  expiredDate: string | null
+  supplierUserId: string | null
+  supplierDisplayName: string | null
+  supplierEmail: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function parseUnit(raw: unknown): LibraryAttributeUnit | null {
+  if (!isRecord(raw)) return null
+  if (typeof raw.id !== 'string' || typeof raw.name !== 'string' || typeof raw.symbol !== 'string') {
+    return null
+  }
+  return { id: raw.id, name: raw.name, symbol: raw.symbol }
+}
+
+function parseAttributeValues(raw: unknown): LibraryAttributeValueEntry[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter(isRecord)
+    .map((entry) => ({
+      id: typeof entry.id === 'string' ? entry.id : '',
+      valueText: typeof entry.valueText === 'string' ? entry.valueText : null,
+      valueNumber: typeof entry.valueNumber === 'number' ? entry.valueNumber : null,
+      isDefault: entry.isDefault === true,
+    }))
+    .filter((entry) => entry.id.length > 0)
+}
+
+export function parseLibraryAttributes(raw: unknown): LibraryCatalogAttribute[] {
+  if (!Array.isArray(raw)) return []
+
+  const result: LibraryCatalogAttribute[] = []
+  for (const entry of raw) {
+    if (!isRecord(entry) || typeof entry.attributeId !== 'string') continue
+
+    const valueType = entry.valueType === 'number' ? 'number' : 'text'
+    const name = typeof entry.name === 'string' ? entry.name : entry.attributeId
+    const unit = parseUnit(entry.unit)
+    let values = parseAttributeValues(entry.values)
+
+    if (values.length === 0 && (entry.valueText != null || entry.valueNumber != null)) {
+      values = [
+        {
+          id: `${entry.attributeId}-legacy`,
+          valueText: typeof entry.valueText === 'string' ? entry.valueText : null,
+          valueNumber: typeof entry.valueNumber === 'number' ? entry.valueNumber : null,
+          isDefault: true,
+        },
+      ]
+    }
+
+    result.push({
+      attributeId: entry.attributeId,
+      name,
+      valueType,
+      unit,
+      values,
+    })
+  }
+  return result
+}
+
+function attributesToPayload(raw: unknown): Record<string, unknown>[] | undefined {
+  const attrs = parseLibraryAttributes(raw)
+  if (attrs.length === 0) return undefined
+
+  return attrs.map((attr) => {
+    const preferred = attr.values.find((v) => v.isDefault) ?? attr.values[0]
+    return {
+      attributeId: attr.attributeId,
+      name: attr.name,
+      valueType: attr.valueType,
+      unit: attr.unit,
+      values: attr.values,
+      valueText: preferred?.valueText ?? null,
+      valueNumber: preferred?.valueNumber ?? null,
+    }
+  })
+}
+
 export const dataLibraryApi = {
-  list(kind: CatalogEntityKind, query: { q?: string; page?: number; pageSize?: number; ids?: string[] } = {}) {
+  list(
+    kind: CatalogEntityKind | 'tags' | 'attributes',
+    query: { q?: string; page?: number; pageSize?: number; ids?: string[] } = {},
+  ) {
     return client<Paginated<LibraryListItem>>(
       `/${KIND_PATH[kind]}${toQueryString({
         q: query.q,
@@ -61,8 +189,20 @@ export const dataLibraryApi = {
     )
   },
 
+  get(kind: CatalogEntityKind, id: string) {
+    return client<LibraryListItem>(`/${KIND_PATH[kind]}/${id}`)
+  },
+
   listProductVariants(productId: string) {
     return client<{ items: LibraryProductVariant[] }>(`/products/${productId}/variants`)
+  },
+
+  getProductVariant(productId: string, variantId: string) {
+    return client<LibraryProductVariant>(`/products/${productId}/variants/${variantId}`)
+  },
+
+  deleteProductVariant(productId: string, variantId: string) {
+    return client<void>(`/products/${productId}/variants/${variantId}`, { method: 'DELETE' })
   },
 
   listProductVariantStocks(productId: string, variantId: string) {
@@ -70,4 +210,142 @@ export const dataLibraryApi = {
       `/products/${productId}/variants/${variantId}/stocks`,
     )
   },
+
+  suggestStockBatchNumber() {
+    return client<{ batchNumber: string }>('/stocks/suggested-batch-number')
+  },
+
+  createProductVariantStock(
+    productId: string,
+    variantId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id?: string | null
+      supplier_display_name?: string | null
+      supplier_email?: string | null
+    },
+  ) {
+    return client<LibraryProductVariantStock>(
+      `/products/${productId}/variants/${variantId}/stocks`,
+      { method: 'POST', body },
+    )
+  },
+
+  setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
+    return client<LibraryProductVariantStock>(
+      `/products/${productId}/variants/${variantId}/stocks/${stockId}/active`,
+      { method: 'PATCH' },
+    )
+  },
+
+  createProduct(body: Record<string, unknown>) {
+    return client<LibraryListItem>('/products', { method: 'POST', body })
+  },
+
+  createService(body: Record<string, unknown>) {
+    return client<LibraryListItem>('/services', { method: 'POST', body })
+  },
+
+  createSpace(body: Record<string, unknown>) {
+    return client<LibraryListItem>('/spaces', { method: 'POST', body })
+  },
+
+  addCatalogAttributeValue(
+    kind: 'products' | 'services' | 'spaces',
+    entityId: string,
+    attributeId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return client<LibraryListItem>(`/${KIND_PATH[kind]}/${entityId}/attributes/${attributeId}/values`, {
+      method: 'POST',
+      body,
+    })
+  },
+
+  updateCatalogAttributeValue(
+    kind: 'products' | 'services' | 'spaces',
+    entityId: string,
+    valueId: string,
+    body: { value_text?: string | null; value_number?: number | null },
+  ) {
+    return client<LibraryListItem>(`/${KIND_PATH[kind]}/${entityId}/attribute-values/${valueId}`, {
+      method: 'PATCH',
+      body,
+    })
+  },
+
+  setCatalogAttributeValueDefault(
+    kind: 'products' | 'services' | 'spaces',
+    entityId: string,
+    valueId: string,
+  ) {
+    return client<LibraryListItem>(`/${KIND_PATH[kind]}/${entityId}/attribute-values/${valueId}/default`, {
+      method: 'PATCH',
+    })
+  },
+
+  deleteCatalogAttributeValue(
+    kind: 'products' | 'services' | 'spaces',
+    entityId: string,
+    valueId: string,
+  ) {
+    return client<LibraryListItem>(`/${KIND_PATH[kind]}/${entityId}/attribute-values/${valueId}`, {
+      method: 'DELETE',
+    })
+  },
+}
+
+export function libraryItemToPayload(
+  kind: CatalogEntityKind,
+  item: LibraryListItem,
+): CatalogPayload {
+  const base: CatalogPayload = {
+    name: item.name,
+    description: item.description ?? null,
+    status: item.status,
+  }
+
+  switch (kind) {
+    case 'services':
+      return {
+        ...base,
+        tagIds: Array.isArray(item.tags)
+          ? item.tags.map((t) => t.id).filter((id): id is string => typeof id === 'string')
+          : undefined,
+        attributes: attributesToPayload(item.attributes),
+        timeMode: item.timeMode,
+        durationMinutes: item.durationMinutes ?? null,
+        startTime: item.startTime ?? null,
+        endTime: item.endTime ?? null,
+      }
+    case 'products':
+    case 'spaces':
+      return {
+        ...base,
+        tagIds: Array.isArray(item.tags)
+          ? item.tags.map((t) => t.id).filter((id): id is string => typeof id === 'string')
+          : undefined,
+        attributes: attributesToPayload(item.attributes),
+      }
+    default:
+      return base
+  }
+}
+
+export function formatLibraryAttributeValueLabel(
+  value: { valueText: string | null; valueNumber: number | null },
+  unitSymbol?: string | null,
+): string {
+  const base =
+    value.valueText != null && value.valueText !== ''
+      ? value.valueText
+      : value.valueNumber != null
+        ? String(value.valueNumber)
+        : '—'
+  return unitSymbol ? `${base} ${unitSymbol}` : base
 }

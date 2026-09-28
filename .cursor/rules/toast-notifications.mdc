@@ -14,6 +14,8 @@ Authoritative workflow: [toast-notifications skill](../skills/toast-notification
 
 Wrap the app once at the service root (`App.tsx`) with `ToastProvider`. Do **not** wrap individual pages or dialogs.
 
+Toasts render **bottom-right** (with safe-area padding on notched mobile browsers). Native mobile uses the same placement via `@webonone/mobile-ui` `ToastProvider`.
+
 Reference: `identity/frontend/src/app/App.tsx`.
 
 ## Feedback mapping

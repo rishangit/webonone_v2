@@ -30,6 +30,16 @@
     "title": "ශීර්ෂය",
     "titlePlaceholder": "කෙටි සාරාංශය",
     "description": "විස්තරය",
-    "descriptionPlaceholder": "පියවර, අපේක්ෂිත හැසිරීම, හෝ විශේෂාංග විස්තර"
-  }
+    "descriptionPlaceholder": "පියවර, අපේක්ෂිත හැසිරීම, හෝ විශේෂාංග විස්තර",
+    "screenshot": "Screenshot",
+    "screenshotPlaceholder": "අවශ්‍ය නම් screenshot එකක් එක් කරන්න",
+    "screenshotAria": "Screenshot රූපය තෝරන්න",
+    "screenshotRemove": "Screenshot ඉවත් කරන්න",
+    "screenshotWaitingAuth": "Screenshot එක් කිරීමට sign in වන්න.",
+    "screenshotPickerTitle": "Screenshot තෝරන්න",
+    "screenshotPickerDescription": "නව රූපය upload කරන්න හෝ මෙම වාර්තාවේ folder එකෙන් තෝරන්න.",
+    "screenshotUnavailable": "Media සකසා නැත. Screenshot නැතිව ද වාර්තා කළ හැක."
+  },
+  "screenshotAlt": "වාර්තා screenshot",
+  "screenshotLinkAria": "{{title}} සඳහා screenshot විවෘත කරන්න ({{fileName}})"
 }

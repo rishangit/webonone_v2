@@ -110,7 +110,7 @@ export async function listItems(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function getItem(req: AuthenticatedRequest, res: Response) {
-  const item = await mediaService.getMediaItemById(String(req.params.id))
+  const item = await mediaService.getMediaItemDetail(String(req.params.id))
   if (!item) {
     res.status(404).json({ message: 'Media item not found', code: 'NOT_FOUND' })
     return

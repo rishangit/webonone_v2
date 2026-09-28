@@ -18,6 +18,7 @@
     "@webonone/i18n": "*",
     "@webonone/mobile-ui": "*",
     "@webonone/platform-nav": "*",
+    "@webonone/platform-embed": "*",
     "@webonone/store-kit": "*",
     "@webonone/theme": "*",
     "expo": "^54.0.0",

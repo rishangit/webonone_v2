@@ -40,6 +40,7 @@ description: >-
 | [item-list](../item-list/SKILL.md) | `ItemList*` primitives from mobile-ui |
 | [toast-notifications](../toast-notifications/SKILL.md) | `useToast` from mobile-ui |
 | [date-display](../date-display/SKILL.md) | Same `DISPLAY_DATE_OPTIONS` shape |
+| [details-page-wizard-edit](../details-page-wizard-edit/SKILL.md) | Catalog/company detail cards — **`EditableSectionCard`** + **`ReadOnlyField`** from mobile-ui only |
 
 **Web-only (do not apply):** core-hosted-peer-dialog, feature-store, redux-store-and-epics, platform-shell-navigation, ui-kit-consumption.
 
@@ -94,6 +95,7 @@ Config lives in `mobile/.env` only (see `mobile/.env.example`). Loaded via `app.
 | Dialog form | `mobile/src/features/email/components/TemplateFormDialog.tsx` |
 | App shell + drawer | `mobile/src/features/shell/AppShellLayout.tsx` |
 | Profile edit dialog | `mobile/src/features/profile/ProfileEditDialog.tsx` |
+| Company catalog detail (wizard cards) | `mobile/src/features/data/screens/CompanyCatalogDetailScreen.tsx` |
 | UI kit gallery | `mobile/src/features/kit/pages/DialogsShowcase.tsx` |
 | Kit barrel | `packages/mobile-ui/src/index.ts` |
 

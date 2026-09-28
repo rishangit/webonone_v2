@@ -32,7 +32,14 @@ export type { PhoneInputProps, PhoneCountry } from './components/PhoneInput'
 export { Checkbox } from './components/Checkbox'
 export { Switch } from './components/Switch'
 export { RadioGroup, RadioGroupItem } from './components/RadioGroup'
-export { SegmentedSwitch, SegmentedSwitchItem } from './components/SegmentedSwitch'
+export { findActiveNavGroupLabel, isNavPathActive, navTargetPath } from './lib/navTargetPath'
+export {
+  SegmentedSwitch,
+  SegmentedSwitchItem,
+  SegmentedSwitchItemText,
+  useSegmentedSwitchItemColors,
+} from './components/SegmentedSwitch'
+export type { SegmentedSwitchSize } from './components/SegmentedSwitch'
 export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './components/Select'
 export { NativeSelect, NATIVE_SELECT_EMPTY_VALUE } from './components/NativeSelect'
 export type { NativeSelectOption, NativeSelectProps } from './components/NativeSelect'

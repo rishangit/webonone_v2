@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, type ComponentType } from 'react'
 import { View } from 'react-native'
-import { ArrowRight, Plus, RefreshCw } from 'lucide-react-native'
+import { ArrowRight, Calendar, CalendarDays, Plus, RefreshCw } from 'lucide-react-native'
 import {
   Body,
   Button,
@@ -15,6 +15,8 @@ import {
   SearchInput,
   SegmentedSwitch,
   SegmentedSwitchItem,
+  SegmentedSwitchItemText,
+  useSegmentedSwitchItemColors,
   DateField,
   NativeSelect,
   Select,
@@ -46,6 +48,8 @@ export function ControlsShowcase() {
   const [notify, setNotify] = useState(true)
   const [plan, setPlan] = useState('starter')
   const [period, setPeriod] = useState('week')
+  const [iconPeriod, setIconPeriod] = useState('week')
+  const [smPeriod, setSmPeriod] = useState('week')
   const [role, setRole] = useState('admin')
   const [companySize, setCompanySize] = useState('')
   const [tab, setTab] = useState('account')
@@ -142,12 +146,56 @@ export function ControlsShowcase() {
         </RadioGroup>
       </DemoSection>
 
-      <DemoSection title="Segmented switch">
-        <SegmentedSwitch value={period} onValueChange={setPeriod}>
-          <SegmentedSwitchItem value="day">Day</SegmentedSwitchItem>
-          <SegmentedSwitchItem value="week">Week</SegmentedSwitchItem>
-          <SegmentedSwitchItem value="month">Month</SegmentedSwitchItem>
-        </SegmentedSwitch>
+      <DemoSection
+        title="Segmented switch"
+        description="Transparent track, gradient selection; heights match native buttons (h-12 / sm h-11)."
+      >
+        <View className="gap-6">
+          <View className="gap-2">
+            <Muted>Period</Muted>
+            <SegmentedSwitch value={period} onValueChange={setPeriod} accessibilityLabel="Period">
+              <SegmentedSwitchItem value="day">Day</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">Week</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">Month</SegmentedSwitchItem>
+            </SegmentedSwitch>
+            <Muted>Selected: {period}</Muted>
+          </View>
+          <View className="gap-2">
+            <Muted>With icons</Muted>
+            <SegmentedSwitch value={iconPeriod} onValueChange={setIconPeriod} accessibilityLabel="Period with icons">
+              <SegmentedSwitchItem value="day">
+                <SegmentedSwitchIconLabel icon={Calendar} label="Day" />
+              </SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">
+                <SegmentedSwitchIconLabel icon={CalendarDays} label="Week" />
+              </SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">
+                <SegmentedSwitchIconLabel icon={CalendarDays} label="Month" />
+              </SegmentedSwitchItem>
+            </SegmentedSwitch>
+          </View>
+          <View className="gap-2">
+            <Muted>Small (calendar toolbar)</Muted>
+            <SegmentedSwitch value={smPeriod} onValueChange={setSmPeriod} size="sm" accessibilityLabel="Small period">
+              <SegmentedSwitchItem value="day">Day</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">Week</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">Month</SegmentedSwitchItem>
+            </SegmentedSwitch>
+          </View>
+          <View className="gap-2">
+            <Muted>Disabled</Muted>
+            <SegmentedSwitch
+              value="week"
+              onValueChange={() => undefined}
+              disabled
+              accessibilityLabel="Disabled period"
+            >
+              <SegmentedSwitchItem value="day">Day</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="week">Week</SegmentedSwitchItem>
+              <SegmentedSwitchItem value="month">Month</SegmentedSwitchItem>
+            </SegmentedSwitch>
+          </View>
+        </View>
       </DemoSection>
 
       <DemoSection
@@ -196,5 +244,21 @@ export function ControlsShowcase() {
         </Tabs>
       </DemoSection>
     </View>
+  )
+}
+
+function SegmentedSwitchIconLabel({
+  icon: Icon,
+  label,
+}: {
+  icon: ComponentType<{ size?: number; color?: string }>
+  label: string
+}) {
+  const { labelColor } = useSegmentedSwitchItemColors()
+  return (
+    <>
+      <Icon size={16} color={labelColor} />
+      <SegmentedSwitchItemText>{label}</SegmentedSwitchItemText>
+    </>
   )
 }

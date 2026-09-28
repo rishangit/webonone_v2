@@ -10,6 +10,8 @@ import { Muted, Subheading } from './Typography'
 export interface EditableSectionCardProps {
   title: string
   description?: string
+  /** Optional chip or tag beside the title (e.g. binding mode). */
+  titleExtra?: ReactNode
   canEdit?: boolean
   onEdit?: () => void
   className?: string
@@ -20,6 +22,7 @@ export interface EditableSectionCardProps {
 export function EditableSectionCard({
   title,
   description,
+  titleExtra,
   canEdit = false,
   onEdit,
   className,
@@ -51,7 +54,10 @@ export function EditableSectionCard({
           accessibilityRole={showEdit ? 'button' : undefined}
           accessibilityLabel={showEdit ? `Show edit for ${title}` : undefined}
         >
-          <Subheading>{title}</Subheading>
+          <View className="flex-row flex-wrap items-center gap-2">
+            <Subheading>{title}</Subheading>
+            {titleExtra}
+          </View>
           {description ? <Muted>{description}</Muted> : null}
         </Pressable>
         {showEdit && editVisible ? (

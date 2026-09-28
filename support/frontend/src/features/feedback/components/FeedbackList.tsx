@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { formatDisplayDateTime } from '@webonone/i18n'
 import {
+  ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -50,6 +51,25 @@ export function FeedbackList({
                 </StatusTag>
               </div>
               <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
+              {item.attachmentUrl ? (
+                <a
+                  href={item.attachmentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block pt-1"
+                  aria-label={t('screenshotLinkAria', {
+                    title: item.title,
+                    fileName: item.attachmentFileName ?? 'screenshot',
+                  })}
+                >
+                  <ImagePreview
+                    src={item.attachmentUrl}
+                    alt={item.attachmentFileName ?? t('screenshotAlt')}
+                    mode="view"
+                    className="h-16 w-16 rounded-md"
+                  />
+                </a>
+              ) : null}
               <p className="text-xs text-muted-foreground">
                 {t('reportedBy', { email: item.reporterEmail })} ·{' '}
                 {formatDisplayDateTime(item.createdAt, i18n.language)}

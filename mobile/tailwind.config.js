@@ -22,6 +22,7 @@ module.exports = {
         foreground: 'var(--color-foreground)',
         title: 'var(--color-title)',
         muted: 'var(--color-muted)',
+        label: 'var(--color-label)',
         border: 'var(--color-border)',
         'input-border': 'var(--color-input-border)',
         destructive: 'var(--color-destructive)',
@@ -30,6 +31,7 @@ module.exports = {
         shell: 'var(--color-shell)',
         'shell-border': 'var(--color-shell-border)',
         input: 'var(--color-input)',
+        focus: 'var(--color-focus)',
       },
       borderRadius: {
         /** Matches web ui-kit `--radius` (cards, dialogs, alerts). */

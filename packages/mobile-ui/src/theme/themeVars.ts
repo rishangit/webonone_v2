@@ -44,6 +44,10 @@ const INPUT_BORDER_OPACITY: Record<ColorMode, number> = {
   dark: 0.38,
 }
 
+export function deriveInputBorderRgba(colors: SemanticColors, colorMode: ColorMode): string {
+  return hexToRgba(colors.primary, INPUT_BORDER_OPACITY[colorMode])
+}
+
 export function semanticColorsToVars(colors: SemanticColors, colorMode: ColorMode): Record<`--${string}`, string> {
   return {
     '--color-primary': colors.primary,
@@ -54,6 +58,7 @@ export function semanticColorsToVars(colors: SemanticColors, colorMode: ColorMod
     '--color-foreground': colors.text,
     '--color-title': colors.textTitle,
     '--color-muted': colors.textMuted,
+    '--color-label': colors.textLabel,
     '--color-border': colors.border,
     '--color-input-border': hexToRgba(colors.primary, INPUT_BORDER_OPACITY[colorMode]),
     '--color-destructive': colors.error,
@@ -62,5 +67,7 @@ export function semanticColorsToVars(colors: SemanticColors, colorMode: ColorMod
     '--color-shell': hslComponentsToHex(SHELL_CHROME_BG[colorMode]),
     '--color-shell-border': hslComponentsToHex(SHELL_CHROME_BORDER[colorMode]),
     '--color-input': deriveInputBackgroundHex(colors.primary, colorMode),
+    '--color-focus': colors.focus,
+    '--color-selection': colors.selection,
   }
 }

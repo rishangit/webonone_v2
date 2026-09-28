@@ -146,6 +146,10 @@ export function CalendarPage() {
         onViewChange={setView}
         anchorDate={anchorDate}
         onAnchorDateChange={setAnchorDate}
+        onDayHeaderPress={(date) => {
+          setAnchorDate(date)
+          setView('day')
+        }}
         events={events}
         renderEventPopover={(event, { close, presentation }) => {
           const occurrence = occurrenceFromCalendarEvent(event, occurrences)

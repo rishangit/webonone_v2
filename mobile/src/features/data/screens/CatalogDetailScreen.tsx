@@ -26,7 +26,9 @@ import { ProductVariantsTab } from '@/features/data/components/ProductVariantsTa
 import { ServiceFormDialog } from '@/features/data/components/ServiceFormDialog'
 import { ServiceWorkflowTab } from '@/features/data/components/ServiceWorkflowTab'
 import { SpaceFormDialog } from '@/features/data/components/SpaceFormDialog'
+import { useDataCatalogScope } from '@/features/data/hooks/useDataCatalogScope'
 import { useDataPermissions } from '@/features/data/hooks/useDataPermissions'
+import { CompanyCatalogDetailScreen } from '@/features/data/screens/CompanyCatalogDetailScreen'
 import { catalogListPath, type CatalogKind } from '@/features/data/utils/dataPaths'
 import { dataAdminApi } from '@/shared/services/dataAdminApi'
 import type { CatalogItem } from '@/shared/types/data.types'
@@ -72,6 +74,14 @@ function serviceWizardStep(section: CatalogOverviewEditSection): 1 | 2 | 3 | 4 |
 }
 
 export function CatalogDetailScreen({ kind, itemId }: { kind: CatalogKind; itemId: string }) {
+  const { isDataLibrarySession } = useDataCatalogScope()
+  if (!isDataLibrarySession) {
+    return <CompanyCatalogDetailScreen kind={kind} itemId={itemId} />
+  }
+  return <DataLibraryCatalogDetailScreen kind={kind} itemId={itemId} />
+}
+
+function DataLibraryCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind; itemId: string }) {
   const config = CONFIG[kind]
   const { t } = useTranslation(kind)
   const { t: tc } = useTranslation('common')

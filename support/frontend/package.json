@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^5.0.1",
     "@reduxjs/toolkit": "^2.8.2",
     "@webonone/i18n": "*",
+    "@webonone/media-embed": "*",
     "@webonone/platform-embed": "*",
     "@webonone/platform-nav": "*",
     "@webonone/store-kit": "*",

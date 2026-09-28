@@ -7,6 +7,8 @@ import type {
   ListFeedbackQuery,
   UpdateFeedbackStatusBody,
 } from '../schemas/feedbackSchemas.js'
+import { buildSupportFeedbackMediaScope } from '../schemas/feedbackSchemas.js'
+import { fetchMediaItem } from './mediaClient.service.js'
 
 export interface FeedbackReportRow {
   id: string
@@ -16,6 +18,11 @@ export interface FeedbackReportRow {
   status: FeedbackStatus
   reporter_user_id: string
   reporter_email: string
+  upload_session_id: string | null
+  attachment_media_id: string | null
+  attachment_url: string | null
+  attachment_file_name: string | null
+  attachment_mime_type: string | null
   created_at: Date
   updated_at: Date
 }
@@ -28,6 +35,11 @@ export interface FeedbackReportDto {
   status: FeedbackStatus
   reporterUserId: string
   reporterEmail: string
+  uploadSessionId: string | null
+  attachmentMediaId: string | null
+  attachmentUrl: string | null
+  attachmentFileName: string | null
+  attachmentMimeType: string | null
   createdAt: string
   updatedAt: string
 }
@@ -41,6 +53,11 @@ function rowToDto(row: FeedbackReportRow): FeedbackReportDto {
     status: row.status,
     reporterUserId: row.reporter_user_id,
     reporterEmail: row.reporter_email,
+    uploadSessionId: row.upload_session_id,
+    attachmentMediaId: row.attachment_media_id,
+    attachmentUrl: row.attachment_url,
+    attachmentFileName: row.attachment_file_name,
+    attachmentMimeType: row.attachment_mime_type,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
@@ -84,10 +101,41 @@ export async function listFeedbackReports(query: ListFeedbackQuery) {
   }
 }
 
+async function validateAttachment(
+  body: CreateFeedbackBody,
+  reporterId: string,
+  accessToken: string,
+): Promise<void> {
+  if (!body.attachment || !body.uploadSessionId) {
+    return
+  }
+
+  const expectedScope = buildSupportFeedbackMediaScope(body.uploadSessionId)
+  const media = await fetchMediaItem(body.attachment.mediaId, accessToken)
+  if (!media) {
+    throw new Error('INVALID_ATTACHMENT')
+  }
+  if (media.scope !== expectedScope) {
+    throw new Error('INVALID_ATTACHMENT')
+  }
+  if (media.uploadedByUserId !== reporterId) {
+    throw new Error('INVALID_ATTACHMENT')
+  }
+  if (!media.mimeType.startsWith('image/')) {
+    throw new Error('INVALID_ATTACHMENT')
+  }
+  if (media.id !== body.attachment.mediaId) {
+    throw new Error('INVALID_ATTACHMENT')
+  }
+}
+
 export async function createFeedbackReport(
   body: CreateFeedbackBody,
   reporter: { id: string; email: string },
+  accessToken: string,
 ): Promise<FeedbackReportDto> {
+  await validateAttachment(body, reporter.id, accessToken)
+
   const id = nanoid()
   const now = db.fn.now(3)
 
@@ -99,6 +147,11 @@ export async function createFeedbackReport(
     status: 'todo',
     reporter_user_id: reporter.id,
     reporter_email: reporter.email,
+    upload_session_id: body.uploadSessionId ?? null,
+    attachment_media_id: body.attachment?.mediaId ?? null,
+    attachment_url: body.attachment?.url ?? null,
+    attachment_file_name: body.attachment?.fileName ?? null,
+    attachment_mime_type: body.attachment?.mimeType ?? null,
     created_at: now,
     updated_at: now,
   })

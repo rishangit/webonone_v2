@@ -36,16 +36,19 @@ function weekdayLabel(ymd: string): string {
 export function ScheduleEventDetail({
   occurrence,
   onOpenSession,
+  layout = 'panel',
 }: {
   occurrence: CompanyEventOccurrence
   onOpenSession: () => void
+  layout?: 'popover' | 'panel'
 }) {
+  const isPanel = layout === 'panel'
   const staffName = occurrence.effectiveStaffDisplayName ?? occurrence.staffDisplayName ?? '—'
   const runStatus = occurrence.runStatus ?? 'scheduled'
   const isDuration = occurrence.timeMode === 'duration'
 
   return (
-    <View className="gap-4">
+    <View className={isPanel ? 'gap-4' : 'gap-4 px-3 py-3'}>
       {occurrence.sessionIssue === 'staff_leave' ? (
         <Alert variant="destructive">
           <AlertDescription>

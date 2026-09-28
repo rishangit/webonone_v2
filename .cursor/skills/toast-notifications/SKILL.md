@@ -134,6 +134,7 @@ Showcase demo: `ui-kit/showcase/src/pages/ComponentsPage.tsx` (Toast section).
 Same success/destructive semantics. Import `ToastProvider` and `useToast` from `@webonone/mobile-ui`.
 
 - `ToastProvider` wraps the app in `mobile/app/_layout.tsx` (already wired).
+- Toasts stack at the **bottom-right** of the screen (respects safe-area insets).
 - Call `toast({ title })` on mutation success; `variant: 'destructive'` on failure.
 - Mobile uses local state + try/catch (no Redux epics) — fire toast in the `catch` block directly.
 

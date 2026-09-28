@@ -16,6 +16,7 @@ const SCOPE_TYPE_TO_PLURAL: Record<string, string> = {
   site: 'sites',
   library: 'library',
   showcase: 'showcase',
+  feedback: 'feedbacks',
 }
 
 function sanitizeFileName(fileName: string): string {

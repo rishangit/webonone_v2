@@ -234,6 +234,7 @@ export function FeedbackListPage() {
         open={createOpen}
         isSaving={createStatus === 'loading'}
         error={createError}
+        accessToken={accessToken}
         onOpenChange={setCreateOpen}
         onSubmit={(values) => dispatch(feedbackActions.createRequested(values))}
       />

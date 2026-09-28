@@ -25,13 +25,18 @@ Package is source-only (no `dist/`); Metro transpiles. Do not import mobile-ui f
 - Raw `TextInput` / `Pressable` for standard buttons, fields, lists, dialogs
 - `@webonone/ui-kit` or Radix components in the Expo app
 - Copying kit source into `features/` or re-implementing kit primitives locally
+- Feature-local copies of kit exports — e.g. `EditableSectionCard`, `ReadOnlyField`, `ItemList*`, `CustomDialog`, `FormField` wrappers with different chrome
 - Page loading as plain text — use `Spinner`
+
+Before adding a “shared” UI helper under `mobile/src/features/**`, check `packages/mobile-ui/src/index.ts`. If the primitive exists, import it. If it is missing or wrong, **extend mobile-ui** (see [mobile-ui-project.mdc](mobile-ui-project.mdc)), then consume from the app.
 
 ## Required component mapping
 
 | UI need | Use from `@webonone/mobile-ui` | Rule/skill |
 |---------|-------------------------------|------------|
 | Feature screens | `FeatureScreen`, `PageHeader` | [mobile-structure.mdc](mobile-structure.mdc) |
+| Wizard-backed details | `EditableSectionCard` (`canEdit`, `onEdit`, optional `titleExtra`) — tap card to reveal **Edit3** icon; do not fork | [details-page-wizard-edit skill](../skills/details-page-wizard-edit/SKILL.md) |
+| Read-only label/value rows | `ReadOnlyField` | — |
 | Forms | `FormField`, `TextField`, `Textarea`, `PhoneInput`, `OtpInput` | [form-creation skill](../skills/form-creation/SKILL.md) |
 | Lists | `ItemList`, `ItemListItem`, `ItemListContent`, `ItemListMenu`, `ItemListEmpty` | [item-list skill](../skills/item-list/SKILL.md) |
 | Dialogs | `CustomDialog`, `ConfirmDialog` | [mobile-dialogs.mdc](mobile-dialogs.mdc) |

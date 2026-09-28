@@ -435,6 +435,7 @@ function main() {
           originData,
           originPayment,
           originDesign,
+          originSupport,
         ])}`,
         `VITE_AI_ORIGIN=${originAi}`,
         `VITE_AI_API_BASE_URL=${apiBase(originAi)}`,
@@ -746,6 +747,7 @@ function main() {
         `JWT_SECRET=${jwt}`,
         '',
         `FRONTEND_BASE_URL=${originSupport}`,
+        `MEDIA_API_BASE_URL=${apiBase(originMedia)}`,
       ]),
     ),
   );
@@ -764,6 +766,7 @@ function main() {
         `VITE_ALLOWED_PARENT_ORIGINS=${joinOrigins([originWebonone, originIdentity])}`,
         `VITE_AI_ORIGIN=${originAi}`,
         `VITE_AI_API_BASE_URL=${apiBase(originAi)}`,
+        `VITE_MEDIA_ORIGIN=${originMedia}`,
       ]),
     ),
   );

@@ -28,6 +28,7 @@ Consumer embed contract: `@webonone/media-embed` (`packages/media-embed/`).
 - All blob storage and media metadata in `webonone_media`.
 - Embed routes `/picker`, `/upload` with `parentOrigin` + `scope` query params.
 - JWT verification locally; no per-request Identity HTTP.
+- Reserved scope **`support:feedback:{uploadSessionId}`** — Support bug/feature screenshots only (`support/feedbacks/` on disk). Image uploads only; not used by library or company pickers.
 
 ## Verification
 

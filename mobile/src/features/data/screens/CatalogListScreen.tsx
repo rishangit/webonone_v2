@@ -16,7 +16,9 @@ import { CatalogList } from '@/features/data/components/CatalogList'
 import { ProductFormDialog } from '@/features/data/components/ProductFormDialog'
 import { ServiceFormDialog } from '@/features/data/components/ServiceFormDialog'
 import { SpaceFormDialog } from '@/features/data/components/SpaceFormDialog'
+import { useDataCatalogScope } from '@/features/data/hooks/useDataCatalogScope'
 import { useDataPermissions } from '@/features/data/hooks/useDataPermissions'
+import { CompanyCatalogListScreen } from '@/features/data/screens/CompanyCatalogListScreen'
 import { usePaginatedEntityList } from '@/features/data/hooks/usePaginatedEntityList'
 import { catalogDetailPath, type CatalogKind } from '@/features/data/utils/dataPaths'
 import { useListPageScroll } from '@/shared/hooks/useListPageScroll'
@@ -49,6 +51,14 @@ const CONFIG: Record<
 }
 
 export function CatalogListScreen({ kind }: { kind: CatalogKind }) {
+  const { isDataLibrarySession } = useDataCatalogScope()
+  if (!isDataLibrarySession) {
+    return <CompanyCatalogListScreen kind={kind} />
+  }
+  return <DataLibraryCatalogListScreen kind={kind} />
+}
+
+function DataLibraryCatalogListScreen({ kind }: { kind: CatalogKind }) {
   const { t } = useTranslation(kind)
   const config = CONFIG[kind]
   const router = useRouter()

@@ -16,6 +16,7 @@ import {
   eventsForDay,
   formatPeriodLabel,
   hourSlotRange,
+  isSameDay,
   isToday,
   monthGridDays,
   shiftAnchor,
@@ -54,6 +55,8 @@ export interface FullCalendarProps {
   onAnchorDateChange: (date: Date) => void
   events?: FullCalendarEvent[]
   onSlotClick?: (range: { start: Date; end: Date }) => void
+  /** Week view: tap a column header to focus that day (defaults to day view). */
+  onDayHeaderPress?: (date: Date) => void
   onEventClick?: (event: FullCalendarEvent) => void
   /** When set, clicking an event opens a popover anchored to the chip (md+) or a right panel (< md). */
   renderEventPopover?: (
@@ -698,6 +701,7 @@ function WeekView({
   anchorDate,
   events,
   onSlotClick,
+  onDayHeaderPress,
   onEventClick,
   renderEventPopover,
   openEventId,
@@ -707,6 +711,7 @@ function WeekView({
   anchorDate: Date
   events: FullCalendarEvent[]
   onSlotClick?: FullCalendarProps['onSlotClick']
+  onDayHeaderPress: (date: Date) => void
   onEventClick?: FullCalendarProps['onEventClick']
   renderEventPopover?: FullCalendarProps['renderEventPopover']
   openEventId: string | null
@@ -720,20 +725,32 @@ function WeekView({
     <div className="overflow-auto">
       <div className="sticky top-0 z-30 flex border-b border-border bg-[hsl(var(--background-base))]">
         <div className="w-14 shrink-0 border-r border-border" />
-        {days.map((day) => (
-          <div
-            key={day.toISOString()}
-            className={cn(
-              'min-w-0 flex-1 border-r border-border px-1 py-2 text-center text-sm last:border-r-0',
-              isToday(day) && 'bg-accent',
-            )}
-          >
-            <div className="text-xs text-muted-foreground">
-              {WEEKDAY_LABELS[day.getDay()]}
-            </div>
-            <div className="font-medium">{day.getDate()}</div>
-          </div>
-        ))}
+        {days.map((day) => {
+          const selected = isSameDay(day, anchorDate)
+          const today = isToday(day)
+          return (
+            <button
+              key={day.toISOString()}
+              type="button"
+              aria-label={formatPickerDate(day)}
+              aria-pressed={selected}
+              onClick={() => onDayHeaderPress(startOfLocalDay(day))}
+              className={cn(
+                'min-w-0 flex-1 border-r border-border px-1 py-2 text-center text-sm last:border-r-0',
+                interactiveHoverClassName,
+                today && !selected && 'bg-accent',
+                selected && 'bg-primary/15',
+              )}
+            >
+              <div className="text-xs text-muted-foreground">
+                {WEEKDAY_LABELS[day.getDay()]}
+              </div>
+              <div className={cn('font-medium', (selected || today) && 'text-primary')}>
+                {day.getDate()}
+              </div>
+            </button>
+          )
+        })}
       </div>
       <div className="flex">
         <div
@@ -904,6 +921,7 @@ function FullCalendar({
   onAnchorDateChange,
   events = [],
   onSlotClick,
+  onDayHeaderPress,
   onEventClick,
   renderEventPopover,
   renderEventDetailPanelTitle,
@@ -915,6 +933,19 @@ function FullCalendar({
   const [openEventId, setOpenEventId] = React.useState<string | null>(null)
   const usePopoverPresentation = useMediaQuery('(min-width: 768px)')
   const selectedEvent = openEventId ? events.find((event) => event.id === openEventId) : null
+
+  const handleDayHeaderPress = React.useCallback(
+    (date: Date) => {
+      const day = startOfLocalDay(date)
+      if (onDayHeaderPress) {
+        onDayHeaderPress(day)
+        return
+      }
+      onAnchorDateChange(day)
+      onViewChange('day')
+    },
+    [onAnchorDateChange, onDayHeaderPress, onViewChange],
+  )
 
   return (
     <>
@@ -968,6 +999,7 @@ function FullCalendar({
             anchorDate={anchorDate}
             events={events}
             onSlotClick={onSlotClick}
+            onDayHeaderPress={handleDayHeaderPress}
             onEventClick={onEventClick}
             renderEventPopover={renderEventPopover}
             openEventId={openEventId}

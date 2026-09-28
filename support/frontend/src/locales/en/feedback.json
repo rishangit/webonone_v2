@@ -30,6 +30,16 @@
     "title": "Title",
     "titlePlaceholder": "Short summary",
     "description": "Description",
-    "descriptionPlaceholder": "Steps, expected behavior, or feature details"
-  }
+    "descriptionPlaceholder": "Steps, expected behavior, or feature details",
+    "screenshot": "Screenshot",
+    "screenshotPlaceholder": "Add an optional screenshot",
+    "screenshotAria": "Choose a screenshot image",
+    "screenshotRemove": "Remove screenshot",
+    "screenshotWaitingAuth": "Sign in to attach a screenshot.",
+    "screenshotPickerTitle": "Choose screenshot",
+    "screenshotPickerDescription": "Upload a new image or pick one from this report’s folder.",
+    "screenshotUnavailable": "Media is not configured. You can still submit without a screenshot."
+  },
+  "screenshotAlt": "Report screenshot",
+  "screenshotLinkAria": "Open screenshot for {{title}} ({{fileName}})"
 }

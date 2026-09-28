@@ -21,6 +21,10 @@ import {
   type ServiceWizardFormValues,
 } from '@/features/data/schemas/dataSchemas'
 import { dataAdminApi } from '@/shared/services/dataAdminApi'
+import {
+  dataLibraryApi,
+  type LibraryListItem,
+} from '@/features/sales/services/dataLibraryApi'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 const TOTAL_STEPS = 5
@@ -47,6 +51,7 @@ export function ServiceFormDialog({
   initialStep = 1,
   onOpenChange,
   onSaved,
+  onLibraryCreate,
 }: {
   open: boolean
   service?: CatalogItem | null
@@ -54,9 +59,11 @@ export function ServiceFormDialog({
   initialStep?: 1 | 2 | 3 | 4 | 5
   onOpenChange: (open: boolean) => void
   onSaved?: (saved: CatalogItem) => void
+  onLibraryCreate?: (item: LibraryListItem) => void
 }) {
   const { toast } = useToast()
   const isNew = !service
+  const libraryCreateOnly = Boolean(onLibraryCreate) && isNew
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ServiceWizardFormValues>(emptyValues())
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
@@ -118,6 +125,13 @@ export function ServiceFormDialog({
     setSaving(true)
     try {
       const body = toCreateServicePayload(values, { canSetStatus })
+      if (libraryCreateOnly && onLibraryCreate) {
+        const saved = await dataLibraryApi.createService(body)
+        toast({ title: 'Service created' })
+        onOpenChange(false)
+        onLibraryCreate(saved)
+        return
+      }
       const saved = service
         ? await dataAdminApi.updateService(service.id, body)
         : await dataAdminApi.createService(body)

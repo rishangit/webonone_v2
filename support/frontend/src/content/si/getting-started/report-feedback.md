@@ -24,13 +24,14 @@ Sign in නොකළ නම්, පළමුව **Sign in** කරන්න (ය
 1. [වාර්තා ලැයිස්තුව](/feedback) මත **Report issue** තෝරන්න.
 2. **Bug** හෝ **Feature request** තෝරන්න.
 3. කෙටි **title** සහ **description** ඇතුළත් කරන්න.
-4. **Submit report** තෝරන්න.
+4. අවශ්‍ය නම් **Screenshot** තෝරා රූපය upload කරන්න හෝ තෝරන්න (මෙය මෙම වාර්තාවට පමණි — ඔබේ company Media library එක නොවේ).
+5. **Submit report** තෝරන්න.
 
 Sign in කළ සියලු දෙනාට එකම බෙදාගත් ලැයිස්තුවේ ඔබේ වාර්තාව දිස්වයි.
 
 ## වාර්තා බලන්න
 
-Sign in කළ සියලු දෙනාට එකම වාර්තා ලැයිස්තුව, type, status, යොමු කළ අය සහ දිනය සමඟ දිස්වේ.
+Sign in කළ සියලු දෙනාට එකම වාර්තා ලැයිස්තුව, type, status, යොමු කළ අය, දිනය සහ screenshot එක් කළ විට thumbnail (සම්පූර්ණ රූපයට click කරන්න) සමඟ දිස්වේ.
 
 ශීර්ෂ හෝ විස්තර සොයා ගැනීමට **Search** භාවිතා කරන්න. type හෝ status අනුව filter panel භාවිතා කරන්න.
 

@@ -24,13 +24,14 @@ If you are not signed in, choose **Sign in** first (same WebOnOne email and pass
 1. On the [report list](/feedback), choose **Report issue**.
 2. Pick **Bug** or **Feature request**.
 3. Enter a short **title** and a **description** (steps to reproduce, expected behavior, or what you want added).
-4. Choose **Submit report**.
+4. Optionally choose **Screenshot** to upload or pick one image (stored only for this report — not your company Media library).
+5. Choose **Submit report**.
 
 Your report appears in the shared list for everyone who is signed in.
 
 ## View reports
 
-All signed-in users see the same list of reports, with type, status, who submitted it, and when.
+All signed-in users see the same list of reports, with type, status, who submitted it, when, and a thumbnail when a screenshot was attached (click to open the full image).
 
 Use **Search** to find text in titles or descriptions. Use the filter panel to narrow by type or status.
 

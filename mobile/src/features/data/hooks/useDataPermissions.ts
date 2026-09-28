@@ -3,12 +3,14 @@ import { useSession } from '@/features/auth/SessionContext'
 export function useDataPermissions() {
   const { user } = useSession()
   const role = user?.role
+  const isDataLibrarySession = role === 'super_admin'
 
   return {
-    canCreateCatalog: role === 'super_admin' || role === 'company_admin',
-    canEditCatalog: role === 'super_admin' || role === 'company_admin',
-    canMutateReferenceData: role === 'super_admin',
-    canDelete: role === 'super_admin',
-    canSetStatus: role === 'super_admin',
+    canCreateCatalog: isDataLibrarySession || role === 'company_admin',
+    canEditCatalog: isDataLibrarySession || role === 'company_admin',
+    canMutateReferenceData: isDataLibrarySession,
+    canDelete: isDataLibrarySession,
+    canSetStatus: isDataLibrarySession,
+    canRemoveCompanyCatalog: role === 'company_admin',
   }
 }

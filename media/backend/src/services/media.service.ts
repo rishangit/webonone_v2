@@ -10,6 +10,7 @@ import {
   writeBlob,
 } from './storage.service.js'
 import { ensureFolderPath } from './folder.service.js'
+import { assertScopeAllowedForList, assertScopeAllowedForUpload } from './scopePolicy.service.js'
 import { env } from '../config/env.js'
 
 interface MediaItemRow {
@@ -74,6 +75,7 @@ export async function uploadMediaItem(input: {
   if (!isMimeAllowed(input.mimeType)) {
     throw new Error(`MIME type not allowed: ${input.mimeType}`)
   }
+  assertScopeAllowedForUpload(input.scope, input.mimeType)
 
   const id = nanoid()
   const storageKey = buildStorageKey(input.scope, input.folderPath, id, input.fileName)
@@ -119,6 +121,7 @@ export async function listMediaItems(query: ListMediaQuery): Promise<{
   pageSize: number
 }> {
   const { scope, folderPath, page, pageSize, mimeType } = query
+  assertScopeAllowedForList(scope)
   const baseQuery = db<MediaItemRow>('media_items')
     .where({ scope, folder_path: folderPath })
     .whereNull('deleted_at')
@@ -147,6 +150,14 @@ export async function listMediaItems(query: ListMediaQuery): Promise<{
 export async function getMediaItemById(id: string): Promise<MediaItemDto | null> {
   const row = await db<MediaItemRow>('media_items').where({ id }).whereNull('deleted_at').first()
   return row ? rowToDto(row) : null
+}
+
+export async function getMediaItemDetail(id: string): Promise<MediaItemDto | null> {
+  const row = await db<MediaItemRow>('media_items').where({ id }).whereNull('deleted_at').first()
+  if (!row) {
+    return null
+  }
+  return { ...rowToDto(row), uploadedByUserId: row.uploaded_by_user_id }
 }
 
 export async function deleteMediaItem(id: string): Promise<boolean> {

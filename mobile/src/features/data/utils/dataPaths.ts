@@ -35,3 +35,15 @@ export function catalogListPath(kind: CatalogKind): Href {
 export function catalogDetailPath(kind: CatalogKind, id: string): Href {
   return `${DATA_NAV_SENTINELS[kind]}/${id}` as Href
 }
+
+export function companyProductVariantDetailPath(productId: string, variantId: string): Href {
+  return `${DATA_NAV_SENTINELS.products}/${productId}/variants/${variantId}` as Href
+}
+
+export function companyCatalogAttributeDetailPath(
+  kind: CatalogKind,
+  entityId: string,
+  attributeId: string,
+): Href {
+  return `${DATA_NAV_SENTINELS[kind]}/${entityId}/attributes/${attributeId}` as Href
+}

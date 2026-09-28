@@ -3,7 +3,7 @@ description: >-
   Wizard-backed entity details — Overview ImageCarousel when gallery images
   exist; read-only section cards with per-card Edit opening a shared create/edit
   wizard at the mapped step
-globs: "**/frontend/src/features/**/pages/**/*.{ts,tsx},**/frontend/src/features/**/components/**/*Dialog*.{ts,tsx},ui-kit/showcase/src/pages/**/*.{ts,tsx}"
+globs: "**/frontend/src/features/**/pages/**/*.{ts,tsx},**/frontend/src/features/**/components/**/*Dialog*.{ts,tsx},ui-kit/showcase/src/pages/**/*.{ts,tsx},mobile/src/features/**/screens/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 
@@ -111,7 +111,9 @@ On save from the details page: refresh detail when needed and close the dialog.
 
 ## EditableSectionCard
 
-Copy the Data `EditableSectionCard` shape per feature (not in UI Kit yet). **Do not invent different Edit chrome.**
+### Web
+
+Prefer `@webonone/ui-kit` **`EditableSectionCard`** (`ui-kit/package/src/components/EditableSectionCard.tsx`). Where a service still keeps a local copy, match this shape — **do not invent different Edit chrome.**
 
 | Requirement | Exact chrome |
 |-------------|--------------|
@@ -123,31 +125,11 @@ Copy the Data `EditableSectionCard` shape per feature (not in UI Kit yet). **Do 
 | A11y | `aria-label={`Edit ${title}`}` |
 | Gate | Render only when `canEdit && onEdit` |
 
-```tsx
-<Card className="group">
-  <CardHeader>
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <CardTitle className="text-lg">{title}</CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
-      </div>
-      {canEdit && onEdit ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-          onClick={onEdit}
-          aria-label={`Edit ${title}`}
-        >
-          <Edit3 className="h-4 w-4" aria-hidden />
-        </Button>
-      ) : null}
-    </div>
-  </CardHeader>
-  <CardContent className="space-y-4">{children}</CardContent>
-</Card>
-```
+### Mobile
+
+Import **`EditableSectionCard`** and **`ReadOnlyField`** from **`@webonone/mobile-ui`** only. Tap-to-reveal **Edit3** icon button (`size="icon"`). See [mobile-ui-consumption.mdc](mobile-ui-consumption.mdc). Forbidden: feature-local duplicates, `Pencil`, always-visible edit buttons.
+
+Reference: `packages/mobile-ui/src/components/EditableSectionCard.tsx`, `mobile/src/features/data/screens/CompanyCatalogDetailScreen.tsx`.
 
 Forbidden Edit chrome: `size="sm"` with text “Edit”, always-visible labeled buttons, page-level Edit in `FeaturePage` actions.
 
@@ -172,6 +154,8 @@ Forbidden Edit chrome: `size="sm"` with text “Edit”, always-visible labeled 
 - WebOnOne company: `…/companies/pages/CompanyProfilePage.tsx` · `CompanyFormDialog.tsx`
 - WebOnOne theme: `…/system-theme/pages/ThemeDetailPage.tsx` · `ThemeFormDialog.tsx`
 - Identity profile: `identity/.../profile/pages/ProfilePage.tsx` · `ProfileFormDialog.tsx`
+- Mobile company catalog: `mobile/src/features/data/screens/CompanyCatalogDetailScreen.tsx`
+- Mobile kit: `packages/mobile-ui/src/components/EditableSectionCard.tsx`
 
 Skill: [details-page-wizard-edit](../skills/details-page-wizard-edit/SKILL.md).
 

@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'node:url'
+import { expandLoopbackOrigins } from '../../packages/platform-nav/src/redirectAllowlist.ts'
 
 const configDir = path.dirname(fileURLToPath(import.meta.url))
 const uiKitRoot = path.resolve(configDir, '../../ui-kit/package')
@@ -16,8 +17,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, configDir, '')
   const allowedParentOrigins =
     env.VITE_ALLOWED_PARENT_ORIGINS ??
-    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012,http://127.0.0.1:3013,http://127.0.0.1:3015,http://127.0.0.1:3017,http://127.0.0.1:3019'
-  const frameAncestors = ["'self'", ...allowedParentOrigins.split(',').map((entry) => entry.trim()).filter(Boolean)]
+    'http://127.0.0.1:3010,http://127.0.0.1:3011,http://127.0.0.1:3012,http://127.0.0.1:3013,http://127.0.0.1:3015,http://127.0.0.1:3017,http://127.0.0.1:3019,http://127.0.0.1:3021'
+  const frameAncestors = [
+    "'self'",
+    ...expandLoopbackOrigins(
+      allowedParentOrigins.split(',').map((entry) => entry.trim()).filter(Boolean),
+    ),
+  ]
     .filter((value, index, list) => list.indexOf(value) === index)
     .join(' ')
 

@@ -9,6 +9,14 @@ function handleServiceError(err: unknown, res: Response): boolean {
     res.status(404).json({ message: 'Not found', code: 'NOT_FOUND' })
     return true
   }
+  if (err instanceof Error && err.message === 'INVALID_ATTACHMENT') {
+    res.status(400).json({ message: 'Invalid screenshot attachment', code: 'INVALID_ATTACHMENT' })
+    return true
+  }
+  if (err instanceof Error && err.message === 'MEDIA_FETCH_FAILED') {
+    res.status(502).json({ message: 'Could not verify attachment with Media service', code: 'MEDIA_UNAVAILABLE' })
+    return true
+  }
   return false
 }
 
@@ -33,12 +41,22 @@ export async function createFeedback(req: AuthenticatedRequest, res: Response) {
     return
   }
 
+  const token = req.headers.authorization?.slice(7)
+  if (!token) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
   try {
     const body = req.body as CreateFeedbackBody
-    const item = await feedbackService.createFeedbackReport(body, {
-      id: req.user.id,
-      email: req.user.email,
-    })
+    const item = await feedbackService.createFeedbackReport(
+      body,
+      {
+        id: req.user.id,
+        email: req.user.email,
+      },
+      token,
+    )
     res.status(201).json(item)
   } catch (err) {
     if (!handleServiceError(err, res)) {

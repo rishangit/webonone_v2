@@ -52,6 +52,8 @@ export interface MediaItemDto {
   url: string
   createdAt: string
   updatedAt: string
+  /** Present on GET /media/:id for ownership checks by consumers */
+  uploadedByUserId?: string
 }
 
 export interface MediaFolderDto {

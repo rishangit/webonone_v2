@@ -119,8 +119,11 @@ function SessionLogo({
 function findActiveGroupLabel(nav: NavConfigItem[], activePath: string | undefined): string | null {
   if (!activePath) return null
   for (const item of nav) {
-    if (item.type === 'group' && item.children.some((child) => isNavPathActive(activePath, child.to))) {
-      return item.label
+    if (item.type === 'group') {
+      const siblingTos = item.children.map((child) => child.to)
+      if (item.children.some((child) => isNavPathActive(activePath, child.to, siblingTos))) {
+        return item.label
+      }
     }
   }
   return null

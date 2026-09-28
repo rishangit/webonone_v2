@@ -20,7 +20,7 @@ const SegmentedSwitch = React.forwardRef<
       ref={ref}
       orientation={orientation}
       className={cn(
-        'inline-flex items-stretch ui-shape-control border border-input bg-muted p-1',
+        'inline-flex items-stretch ui-shape-control border border-input bg-transparent p-1',
         size === 'sm' ? 'h-9' : 'h-10',
         className,
       )}

@@ -20,6 +20,10 @@ import {
   type ProductWizardFormValues,
 } from '@/features/data/schemas/dataSchemas'
 import { dataAdminApi } from '@/shared/services/dataAdminApi'
+import {
+  dataLibraryApi,
+  type LibraryListItem,
+} from '@/features/sales/services/dataLibraryApi'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 const TOTAL_STEPS = 4
@@ -42,6 +46,7 @@ export function ProductFormDialog({
   initialStep = 1,
   onOpenChange,
   onSaved,
+  onLibraryCreate,
 }: {
   open: boolean
   product?: CatalogItem | null
@@ -49,9 +54,11 @@ export function ProductFormDialog({
   initialStep?: 1 | 2 | 3 | 4
   onOpenChange: (open: boolean) => void
   onSaved?: (saved: CatalogItem) => void
+  onLibraryCreate?: (item: LibraryListItem) => void
 }) {
   const { toast } = useToast()
   const isNew = !product
+  const libraryCreateOnly = Boolean(onLibraryCreate) && isNew
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ProductWizardFormValues>(emptyValues())
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
@@ -97,6 +104,13 @@ export function ProductFormDialog({
     setSaving(true)
     try {
       const body = toCreateProductPayload(values, { canSetStatus })
+      if (libraryCreateOnly && onLibraryCreate) {
+        const saved = await dataLibraryApi.createProduct(body)
+        toast({ title: 'Product created' })
+        onOpenChange(false)
+        onLibraryCreate(saved)
+        return
+      }
       const saved = product
         ? await dataAdminApi.updateProduct(product.id, body)
         : await dataAdminApi.createProduct(body)
