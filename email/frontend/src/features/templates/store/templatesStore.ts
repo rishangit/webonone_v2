@@ -7,6 +7,7 @@ import {
   exhaustMap,
   filter,
   map,
+  mergeMap,
   switchMap,
   withLatestFrom,
 } from 'rxjs/operators'
@@ -318,7 +319,15 @@ const setActiveEpic: Epic = (action$) =>
         action as ReturnType<typeof templatesActions.setActiveRequested>
       ).payload
       return from(emailApi.setTemplateActive(id, isActive)).pipe(
-        map((template) => templatesActions.setActiveSucceeded(template)),
+        mergeMap((template) => {
+          if (template.id !== id) {
+            return of(
+              templatesActions.setActiveSucceeded(template),
+              templatesActions.loadListRequested({ force: true }),
+            )
+          }
+          return of(templatesActions.setActiveSucceeded(template))
+        }),
         catchError((err: Error) => of(templatesActions.setActiveFailed(err.message))),
       )
     }),

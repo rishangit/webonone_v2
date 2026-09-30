@@ -27,6 +27,7 @@ function HistoryStatusFilterFields({ value, onChange }: HistoryStatusFilterField
           <SelectItem value="all">{tc('all')}</SelectItem>
           <SelectItem value="sent">{t('statusSent')}</SelectItem>
           <SelectItem value="failed">{t('statusFailed')}</SelectItem>
+          <SelectItem value="skipped">{t('statusSkipped')}</SelectItem>
         </SelectContent>
       </Select>
     </FormField>

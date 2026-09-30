@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import pkg from './package.json'
 
 const uiKitRoot = path.resolve(__dirname, '../../ui-kit/package')
 const platformNavRoot = path.resolve(__dirname, '../../packages/platform-nav')
@@ -13,6 +14,9 @@ const storeKitRoot = path.resolve(__dirname, '../../packages/store-kit')
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __WEBONONE_APP_VERSION__: JSON.stringify(pkg.version),
+  },
   resolve: {
     alias: [
       { find: '@webonone/ui-kit/styles', replacement: path.join(uiKitRoot, 'src/styles/globals.css') },

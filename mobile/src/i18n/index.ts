@@ -9,6 +9,7 @@ import enCatalog from '@locales/webonone/en/catalog.json'
 import enSales from '@locales/webonone/en/sales.json'
 import enAnalytics from '@locales/webonone/en/analytics.json'
 import enSession from '@locales/webonone/en/session.json'
+import enReviews from '@locales/webonone/en/reviews.json'
 import siShell from '@locales/webonone/si/shell.json'
 import siHome from '@locales/webonone/si/home.json'
 import siSettings from '@locales/webonone/si/settings.json'
@@ -18,6 +19,7 @@ import siCatalog from '@locales/webonone/si/catalog.json'
 import siSales from '@locales/webonone/si/sales.json'
 import siAnalytics from '@locales/webonone/si/analytics.json'
 import siSession from '@locales/webonone/si/session.json'
+import siReviews from '@locales/webonone/si/reviews.json'
 
 import enAuth from '@locales/identity/en/auth.json'
 import enProfile from '@locales/identity/en/profile.json'
@@ -79,6 +81,7 @@ export const MOBILE_NAMESPACES = [
   'sales',
   'analytics',
   'session',
+  'reviews',
   'auth',
   'profile',
   'users',
@@ -119,6 +122,7 @@ export function initMobileI18n() {
         sales: enSales,
         analytics: enAnalytics,
         session: enSession,
+        reviews: enReviews,
         auth: enAuth,
         profile: enProfile,
         users: enUsers,
@@ -152,6 +156,7 @@ export function initMobileI18n() {
         sales: siSales,
         analytics: siAnalytics,
         session: siSession,
+        reviews: siReviews,
         auth: siAuth,
         profile: siProfile,
         users: siUsers,

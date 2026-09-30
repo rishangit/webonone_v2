@@ -21,6 +21,13 @@ router.get(
   publicCatalogSearchController.listServiceSessions,
 )
 
+/** Public catalog reviews for website BFF (resolves company id from marketplace row → Data API). */
+router.get(
+  '/internal/catalog/:kind/:id/reviews',
+  requireInternalAuth,
+  publicCatalogSearchController.listCatalogReviews,
+)
+
 /** Service-key marketplace detail for website BFF. */
 router.get(
   '/internal/catalog/:kind/:id',

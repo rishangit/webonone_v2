@@ -44,6 +44,7 @@ const envSchema = z.object({
   IDENTITY_DB_NAME: z.string().default('identity'),
   COMPANY_SITE_HOST: z.string().default('live.webonone.com'),
   EXPO_ACCESS_TOKEN: z.string().optional(),
+  WEBONONE_APP_ORIGIN: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -104,4 +105,5 @@ export const env = {
     parsed.COMPANY_SITE_HOST.replace(/^https?:\/\//, '').replace(/^www\./i, '').replace(/\/.*$/, '') ||
     'live.webonone.com',
   expoAccessToken: parsed.EXPO_ACCESS_TOKEN?.trim() ?? '',
+  webononeAppOrigin: parsed.WEBONONE_APP_ORIGIN?.trim() ?? '',
 }

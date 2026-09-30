@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { PLATFORM_MESSAGE_TYPES } from '@webonone/platform-embed'
 import {
@@ -68,6 +68,9 @@ import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
+import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
+import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
+import { isSessionReviewEligible } from '@/features/reviews/utils/personalSessionReviewEligible'
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -114,6 +117,8 @@ const TOKEN_STATUS_VARIANT: Record<SessionTokenStatus, StatusTagVariant> = {
 }
 
 export function SessionDetailsPage() {
+  const [searchParams] = useSearchParams()
+  const openReviewFromLink = searchParams.get('openReview') === '1'
   const { eventId, occurrenceDate } = useParams<{
     eventId: string
     occurrenceDate: string
@@ -124,6 +129,7 @@ export function SessionDetailsPage() {
   const { openPeerDialog } = usePlatformPeerDialog()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
+  const currentUserId = useAppSelector((s) => s.auth.user?.id ?? null)
   const assumableRoles = useAppSelector((s) => s.sessionRole.assumableRoles)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
   const detail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
@@ -561,6 +567,15 @@ export function SessionDetailsPage() {
   const formTemplateId = detail.formTemplateId
   const serviceId = detail.serviceId
   const serviceName = detail.serviceName
+  const viewerCheckedIn = Boolean(currentUserId && checkedInUserIds.has(currentUserId))
+  const sessionReviewEligible = isSessionReviewEligible({
+    currentUserId,
+    timeMode: detail.timeMode,
+    runStatus,
+    attendeeUserId: detail.attendeeUserId,
+    tokens,
+    viewerCheckedIn,
+  })
 
   function openFillForm(subject: {
     userId: string
@@ -1013,6 +1028,31 @@ export function SessionDetailsPage() {
               <DetailField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
             </CardContent>
           </Card>
+
+          {serviceId ? (
+            <CompanyCatalogReviewsPanel
+              companyId={detail.companyId}
+              entityKind="service"
+              entityId={serviceId}
+            />
+          ) : null}
+
+          {currentUserId && serviceId ? (
+            <CompanyCatalogReviewCard
+              companyId={detail.companyId}
+              entityKind="service"
+              entityId={serviceId}
+              displayName={serviceName}
+              imageUrl={detail.serviceImageUrl}
+              autoPromptWhenEligible={isPersonal}
+              sessionEligible={sessionReviewEligible}
+              allowSubmit={sessionReviewEligible}
+              attendanceGated
+              sourceEventId={eventId ?? null}
+              sourceOccurrenceDate={occurrenceDate ?? null}
+              autoOpenDialog={openReviewFromLink}
+            />
+          ) : null}
 
           <Card>
             <CardHeader>

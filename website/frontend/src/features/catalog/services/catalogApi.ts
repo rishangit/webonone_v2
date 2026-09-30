@@ -1,6 +1,7 @@
 import type {
   CatalogDetailItem,
   CatalogKind,
+  CatalogPublicReviewListResult,
   CatalogSearchResult,
   CatalogSessionItem,
   SessionTokenItem,
@@ -60,6 +61,26 @@ export const catalogApi = {
       })
     }
     return data as CatalogDetailItem
+  },
+
+  async listReviews(
+    kind: CatalogKind,
+    id: string,
+    _companyId?: string,
+    options?: { page?: number; pageSize?: number },
+  ): Promise<CatalogPublicReviewListResult> {
+    const params = new URLSearchParams()
+    if (options?.page != null) params.set('page', String(options.page))
+    if (options?.pageSize != null) params.set('pageSize', String(options.pageSize))
+    const res = await fetch(
+      `${API_BASE}/catalog/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/reviews?${params}`,
+      { headers: { 'Content-Type': 'application/json' } },
+    )
+    const data = (await res.json().catch(() => ({}))) as { message?: string } & Partial<CatalogPublicReviewListResult>
+    if (!res.ok) {
+      throw new Error(data.message ?? 'Failed to load reviews')
+    }
+    return data as CatalogPublicReviewListResult
   },
 
   async listSessions(

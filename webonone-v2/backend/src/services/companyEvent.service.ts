@@ -27,6 +27,10 @@ import {
   type SessionIssueKind,
 } from './sessionOccurrenceIssue.js'
 import {
+  notifyCatalogReviewAfterDurationSessionEnd,
+  notifyCatalogReviewAfterWorkflowComplete,
+} from './catalogReviewRequestNotify.service.js'
+import {
   notifySessionEnded,
   notifySessionScheduleChanged,
   notifySessionStarted,
@@ -59,6 +63,7 @@ import {
   notifySessionStartedInApp,
   notifySessionTokenCalledInApp,
 } from './inAppNotify.service.js'
+import { resolveSessionCustomerUserIds } from './notificationRecipients.service.js'
 import type { PlatformRole } from '../middleware/requireSuperAdmin.js'
 
 export type EventViewer = {
@@ -2356,11 +2361,25 @@ export async function completeSessionTokenWorkflow(
       occurrenceDate,
       synced,
     )
-    return mapSessionTokenWithProgress(companyId, event.serviceId, updated)
+    const dto = await mapSessionTokenWithProgress(companyId, event.serviceId, updated)
+    notifyCatalogReviewAfterWorkflowComplete({
+      companyId,
+      event,
+      occurrenceDate,
+      token: dto,
+    })
+    return dto
   }
   const next = nextWorkflowState(defs, currentId)
   const updated = await sessionTokenRepo.updateTokenWorkflow(synced.id, next)
-  return mapSessionTokenWithProgress(companyId, event.serviceId, updated)
+  const dto = await mapSessionTokenWithProgress(companyId, event.serviceId, updated)
+  notifyCatalogReviewAfterWorkflowComplete({
+    companyId,
+    event,
+    occurrenceDate,
+    token: dto,
+  })
+  return dto
 }
 
 export async function backfillSessionTokenMemberRoles(): Promise<{
@@ -2582,6 +2601,30 @@ export async function endSession(
   }).catch((err) => {
     console.error('[companyEvent] in-app session ended notify failed:', err)
   })
+
+  if (event.timeMode === 'duration') {
+    void resolveSessionCustomerUserIds(
+      companyId,
+      eventId,
+      occurrenceDate,
+      event.attendeeUserId,
+    )
+      .then((userIds) => {
+        for (const userId of userIds) {
+          notifyCatalogReviewAfterDurationSessionEnd({
+            companyId,
+            event,
+            occurrenceDate,
+            userId,
+            userDisplayName: event.attendeeDisplayName,
+            userEmail: event.attendeeEmail,
+          })
+        }
+      })
+      .catch((err) => {
+        console.error('[companyEvent] catalog review session end notify failed:', err)
+      })
+  }
 
   return buildSessionDetail(companyId, eventId, occurrenceDate, event)
 }

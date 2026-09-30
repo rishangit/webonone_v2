@@ -47,6 +47,26 @@ export async function getCatalogItem(req: Request, res: Response) {
   res.json(item)
 }
 
+export async function listCatalogReviews(req: Request, res: Response) {
+  const kind = typeof req.params.kind === 'string' ? req.params.kind : ''
+  const id = typeof req.params.id === 'string' ? req.params.id : ''
+  try {
+    const result = await publicCatalogSearchService.listPublicCatalogReviews({
+      kind,
+      id,
+      page: req.query.page,
+      pageSize: req.query.pageSize,
+    })
+    if (!result) {
+      res.status(404).json({ message: 'Catalog item not found', code: 'NOT_FOUND' })
+      return
+    }
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function listServiceSessions(req: Request, res: Response) {
   const id = typeof req.params.id === 'string' ? req.params.id : ''
   const result = await publicCatalogSearchService.listPublicServiceSessions({

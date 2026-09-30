@@ -18,6 +18,7 @@ import {
 } from '@webonone/ui-kit'
 import { LoginRequiredDialog } from '@/features/auth/components/LoginRequiredDialog'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
+import { CatalogPublicReviewsPanel } from '@/features/catalog/components/CatalogPublicReviewsPanel'
 import { IssueTokenDialog } from '@/features/catalog/components/IssueTokenDialog'
 import { TokenWorkflowProgress } from '@/features/catalog/components/TokenWorkflowProgress'
 import { catalogApi } from '@/features/catalog/services/catalogApi'
@@ -376,6 +377,8 @@ export function CatalogDetailPage() {
                       )}
                     </CardContent>
                   </Card>
+
+                  <CatalogPublicReviewsPanel kind={item.kind} itemId={item.id} companyId={item.companyId} />
 
                   <Card>
                     <CardHeader>

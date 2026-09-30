@@ -23,6 +23,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  CatalogReviewDialog,
+  StarRatingInput,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -475,6 +477,31 @@ function AppShellDemo() {
   )
 }
 
+function CatalogReviewDemo() {
+  const [rating, setRating] = useState<number | null>(3)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  return (
+    <div className="space-y-4 max-w-md">
+      <StarRatingInput value={rating} onChange={setRating} label="Demo rating" />
+      <Button type="button" variant="outline" onClick={() => setDialogOpen(true)}>
+        Open review dialog
+      </Button>
+      <CatalogReviewDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        target={{
+          companyId: 'demo_company_id_12',
+          entityKind: 'service',
+          entityId: 'demo_service_id_12',
+          displayName: 'Haircut',
+        }}
+        onSubmit={() => setDialogOpen(false)}
+      />
+    </div>
+  )
+}
+
 export function ComponentsPage() {
   const { toast } = useToast()
   const [listPage, setListPage] = useState(1)
@@ -503,6 +530,10 @@ export function ComponentsPage() {
 
   return (
     <>
+      <DemoSection id="reviews" title="Catalog reviews" description="Star rating and review dialog for company catalog items.">
+        <CatalogReviewDemo />
+      </DemoSection>
+
       <DemoSection id="forms" title="Forms">
         <FormsDemo />
       </DemoSection>

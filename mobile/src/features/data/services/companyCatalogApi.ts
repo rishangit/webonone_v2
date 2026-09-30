@@ -37,6 +37,12 @@ export const companyCatalogApi = {
     return client<CompanyCatalogItem>(`/company/me/catalog/${kind}/${encodeURIComponent(id)}`)
   },
 
+  getForCompany(companyId: string, kind: CatalogEntityKind, id: string) {
+    return client<CompanyCatalogItem>(
+      `/company/${encodeURIComponent(companyId)}/catalog/${kind}/${encodeURIComponent(id)}`,
+    )
+  },
+
   link(kind: CatalogEntityKind, libraryEntityId: string) {
     return client<CompanyCatalogItem>(`/company/me/catalog/${kind}/link`, {
       method: 'POST',

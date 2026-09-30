@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { Redirect, useRouter, type Href } from 'expo-router'
+import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router'
 import {
   Alert,
   AlertDescription,
@@ -57,6 +57,9 @@ import {
   timingDisplayText,
 } from '@/features/calendar/utils/sessionControlTiming'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
+import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
+import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
+import { isSessionReviewEligible } from '@/features/reviews/utils/personalSessionReviewEligible'
 
 const DATE_YMD = /^\d{4}-\d{2}-\d{2}$/
 
@@ -138,6 +141,8 @@ export function SessionDetailScreen({
   occurrenceDate: string
 }) {
   const router = useRouter()
+  const { openReview } = useLocalSearchParams<{ openReview?: string }>()
+  const openReviewFromLink = openReview === '1'
   const { toast } = useToast()
   const { user } = useSession()
   const personal = isPersonalCalendarSession(user?.role, user?.companyId)
@@ -358,6 +363,17 @@ export function SessionDetailScreen({
     endedAt: run?.endedAt,
   }
   const showAttendee = isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
+  const viewerCheckedIn = Boolean(user?.id && checkedInUserIds.has(user.id))
+  const sessionReviewEligible = detail
+    ? isSessionReviewEligible({
+        currentUserId: user?.id,
+        timeMode: detail.timeMode,
+        runStatus,
+        attendeeUserId: detail.attendeeUserId,
+        tokens,
+        viewerCheckedIn,
+      })
+    : false
 
   return (
     <FeatureScreen
@@ -532,6 +548,31 @@ export function SessionDetailScreen({
           <ReadOnlyField label="Name" value={detail.serviceName} />
           <ReadOnlyField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
         </Card>
+
+        {detail.serviceId ? (
+          <CompanyCatalogReviewsPanel
+            companyId={detail.companyId}
+            entityKind="service"
+            entityId={detail.serviceId}
+          />
+        ) : null}
+
+        {user?.id && detail.serviceId ? (
+          <CompanyCatalogReviewCard
+            companyId={detail.companyId}
+            entityKind="service"
+            entityId={detail.serviceId}
+            displayName={detail.serviceName}
+            imageUrl={detail.serviceImageUrl}
+            autoPromptWhenEligible={personal}
+            sessionEligible={sessionReviewEligible}
+            allowSubmit={sessionReviewEligible}
+            attendanceGated
+            sourceEventId={eventId}
+            sourceOccurrenceDate={occurrenceDate}
+            autoOpenDialog={openReviewFromLink}
+          />
+        ) : null}
 
         <Card className="gap-3">
           <Subheading>Staff</Subheading>

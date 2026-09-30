@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { Globe, LogOut, Menu, User, X } from 'lucide-react-native'
 import { cn } from '../lib/cn'
 import { useThemedControlIconColor } from '../theme/useThemedControlIconColor'
@@ -11,6 +11,7 @@ import {
   HeaderMenuSeparator,
 } from './HeaderMenu'
 import { StatusTag } from './StatusTag'
+import { WebOnOneLogoMark } from './WebOnOneLogoMark'
 
 export type AppHeaderLocale = 'en' | 'si'
 
@@ -224,9 +225,9 @@ export function AppHeader({
             )}
           </HeaderIconButton>
         ) : null}
-        <Text className="min-w-0 flex-1 text-lg font-bold text-title" numberOfLines={1}>
-          {title}
-        </Text>
+        <View className="min-w-0 flex-1">
+          <WebOnOneLogoMark accessibilityLabel={title} />
+        </View>
         <View className="shrink-0 flex-row items-center gap-2">
           {headerActions}
           {onLocaleChange ? (

@@ -3,7 +3,11 @@ import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { SendEmailBody, SendTestEmailBody } from '../schemas/send.schema.js'
 import { logAudit } from '../services/audit.service.js'
 import { enqueue } from '../services/queue.service.js'
-import { canAccessTemplate, resolveTemplate } from '../services/template.service.js'
+import {
+  canAccessTemplate,
+  resolveTemplateForDelivery,
+  type TemplateDto,
+} from '../services/template.service.js'
 
 async function assertSendAccess(
   req: AuthenticatedRequest,
@@ -16,12 +20,16 @@ async function assertSendAccess(
   }
 
   const effectiveCompanyId = user.role === 'company_admin' ? (user.companyId ?? companyId) : companyId
-  const template = await resolveTemplate(templateSlug, effectiveCompanyId)
-  if (!template) {
+  const resolved = await resolveTemplateForDelivery(templateSlug, effectiveCompanyId)
+  if (resolved.outcome === 'inactive') {
+    throw new Error('TEMPLATE_INACTIVE')
+  }
+  if (resolved.outcome === 'missing') {
     throw new Error(`Template not found: ${templateSlug}`)
   }
 
-  const dto = {
+  const template = resolved.template
+  const dto: TemplateDto = {
     id: template.id,
     slug: template.slug,
     name: template.name,
@@ -58,6 +66,11 @@ export async function sendEmail(req: AuthenticatedRequest, res: Response) {
       companyId,
     })
 
+    if (result.status === 'skipped') {
+      res.status(400).json({ message: 'Template is inactive', code: 'TEMPLATE_INACTIVE' })
+      return
+    }
+
     await logAudit({
       userId: req.user?.id,
       action: 'manual_send',
@@ -69,6 +82,10 @@ export async function sendEmail(req: AuthenticatedRequest, res: Response) {
     res.status(202).json(result)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Send failed'
+    if (message === 'TEMPLATE_INACTIVE') {
+      res.status(400).json({ message: 'Template is inactive', code: 'TEMPLATE_INACTIVE' })
+      return
+    }
     const status = message === 'Forbidden' ? 403 : 400
     res.status(status).json({ message, code: status === 403 ? 'FORBIDDEN' : 'BAD_REQUEST' })
   }
@@ -92,6 +109,11 @@ export async function sendTestEmail(req: AuthenticatedRequest, res: Response) {
       companyId,
     })
 
+    if (result.status === 'skipped') {
+      res.status(400).json({ message: 'Template is inactive', code: 'TEMPLATE_INACTIVE' })
+      return
+    }
+
     await logAudit({
       userId: req.user?.id,
       action: 'test_send',
@@ -103,6 +125,10 @@ export async function sendTestEmail(req: AuthenticatedRequest, res: Response) {
     res.status(202).json(result)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Send failed'
+    if (message === 'TEMPLATE_INACTIVE') {
+      res.status(400).json({ message: 'Template is inactive', code: 'TEMPLATE_INACTIVE' })
+      return
+    }
     const status = message === 'Forbidden' ? 403 : 400
     res.status(status).json({ message, code: status === 403 ? 'FORBIDDEN' : 'BAD_REQUEST' })
   }

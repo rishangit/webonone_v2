@@ -45,13 +45,26 @@ function rowToDto(row: SmsTemplateRow): TemplateDto {
   }
 }
 
-/** Company override wins over platform default; returns null if neither exists. */
-export async function resolveTemplate(slug: string, companyId?: string | null): Promise<SmsTemplateRow | null> {
+export const TEMPLATE_INACTIVE_CODE = 'template_inactive'
+
+export type TemplateDeliveryResolution =
+  | { outcome: 'active'; template: SmsTemplateRow }
+  | { outcome: 'inactive' }
+  | { outcome: 'missing' }
+
+export async function resolveTemplateForDelivery(
+  slug: string,
+  companyId?: string | null,
+): Promise<TemplateDeliveryResolution> {
   if (companyId) {
     const companyTemplate = await db<SmsTemplateRow>('sms_templates')
-      .where({ slug, scope: 'company', company_id: companyId, is_active: true })
+      .where({ slug, scope: 'company', company_id: companyId })
       .first()
-    if (companyTemplate) return companyTemplate
+    if (companyTemplate) {
+      return companyTemplate.is_active
+        ? { outcome: 'active', template: companyTemplate }
+        : { outcome: 'inactive' }
+    }
   }
 
   const platformTemplate = await db<SmsTemplateRow>('sms_templates')
@@ -59,7 +72,13 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
     .whereNull('company_id')
     .first()
 
-  return platformTemplate ?? null
+  return platformTemplate ? { outcome: 'active', template: platformTemplate } : { outcome: 'missing' }
+}
+
+/** Company override wins over platform default; returns null if inactive or missing. */
+export async function resolveTemplate(slug: string, companyId?: string | null): Promise<SmsTemplateRow | null> {
+  const resolved = await resolveTemplateForDelivery(slug, companyId)
+  return resolved.outcome === 'active' ? resolved.template : null
 }
 
 /**

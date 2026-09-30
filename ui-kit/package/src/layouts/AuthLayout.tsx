@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '../lib/utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/Card'
+import { BrandLogo } from '../components/BrandLogo'
 
 interface AuthLayoutProps {
   title?: string
@@ -45,8 +46,8 @@ function AuthLayout({
 
   return (
     <div className={cn('flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4', className)}>
-      <div className="mb-8 text-center">
-        <h1 className="ui-title text-2xl font-bold tracking-tight">WebOnOne Identity</h1>
+      <div className="mb-8 flex flex-col items-center gap-2 text-center">
+        <BrandLogo mark alt="WebOnOne" />
         <p className="text-sm text-muted-foreground">Secure authentication</p>
       </div>
       <Card className="w-full max-w-2xl">

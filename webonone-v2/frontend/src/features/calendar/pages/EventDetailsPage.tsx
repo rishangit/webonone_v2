@@ -31,6 +31,7 @@ import { eventsActions } from '@/features/calendar/store'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 import type { CompanyEvent, EventGalleryImage } from '@/features/calendar/types/event.types'
 import { CompanyServiceWorkflowOverviewCard } from '@/features/company-catalog/components/CompanyServiceWorkflowOverviewCard'
+import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
 import {
   canAccessCompanySession,
   canManageCompanyEvents,
@@ -163,6 +164,12 @@ export function EventDetailsPage() {
           <DetailField label="Name" value={detail.serviceName} />
           <DetailField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
         </EditableSectionCard>
+
+        <CompanyCatalogReviewsPanel
+          companyId={detail.companyId}
+          entityKind="service"
+          entityId={detail.serviceId}
+        />
 
         <EditableSectionCard
           title="When"

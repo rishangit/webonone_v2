@@ -302,7 +302,42 @@ export async function getCatalogItem(
 
 }
 
+export type PublicReviewListResult = {
+  summary: { averageRating: number | null; count: number }
+  items: Array<{
+    id: string
+    rating: number
+    comment: string | null
+    createdAt: string
+  }>
+  total: number
+  page: number
+  pageSize: number
+}
 
+/** Proxy public catalog reviews (WebOnOne resolves company id → Data API). */
+export async function listCatalogReviews(
+  kind: string,
+  id: string,
+  query: { page?: number; pageSize?: number } = {},
+): Promise<PublicReviewListResult> {
+  const params = new URLSearchParams()
+  if (query.page != null) params.set('page', String(query.page))
+  if (query.pageSize != null) params.set('pageSize', String(query.pageSize))
+  const qs = params.toString()
+  const url = `${apiBase()}/api/v1/internal/catalog/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/reviews${qs ? `?${qs}` : ''}`
+  const res = await fetch(url, {
+    headers: {
+      'X-WebOnOne-Service-Key': requireServiceKey(),
+      'Content-Type': 'application/json',
+    },
+  })
+  if (!res.ok) {
+    const message = await parseErrorMessage(res, `WebOnOne catalog reviews failed (${res.status})`)
+    throw Object.assign(new Error(message), { statusCode: mapUpstreamStatus(res.status) })
+  }
+  return (await res.json()) as PublicReviewListResult
+}
 
 /** Proxy Specific-time sessions for a marketplace service. */
 

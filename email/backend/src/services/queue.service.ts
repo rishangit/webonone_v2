@@ -1,8 +1,18 @@
 import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
-import type { EmailHistoryRow, EmailQueueRow, QueueStatus } from '../models/db.js'
+import type { EmailHistoryRow, EmailQueueRow, HistoryStatus, QueueStatus } from '../models/db.js'
 import { sendMail } from './mail.service.js'
-import { renderEmail, resolveTemplate, validateTemplatePayload, ensureLocalCompany } from './template.service.js'
+import {
+  renderEmail,
+  resolveTemplateForDelivery,
+  TEMPLATE_INACTIVE_CODE,
+  validateTemplatePayload,
+  ensureLocalCompany,
+} from './template.service.js'
+
+export type EnqueueResult =
+  | { status: 'queued'; queueId: string }
+  | { status: 'skipped'; historyId: string }
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 900_000]
 
@@ -36,7 +46,7 @@ export interface QueueItemDto {
 export interface HistoryItemDto {
   id: string
   queueId: string | null
-  status: 'sent' | 'failed'
+  status: 'sent' | 'failed' | 'skipped'
   providerMessageId: string | null
   sentAt: string
   recipient: string
@@ -88,18 +98,49 @@ function historyRowToDto(row: EmailHistoryRow): HistoryItemDto {
   }
 }
 
-export async function enqueue(input: EnqueueInput): Promise<{ queueId: string; status: 'queued' }> {
+async function recordSkippedEmailHistory(input: {
+  toEmail: string
+  templateSlug: string
+  companyId?: string | null
+  queueId?: string | null
+}): Promise<string> {
+  const historyId = nanoid()
+  await db('email_history').insert({
+    id: historyId,
+    queue_id: input.queueId ?? null,
+    status: 'skipped',
+    provider_message_id: null,
+    sent_at: db.fn.now(3),
+    recipient: input.toEmail,
+    template_slug: input.templateSlug,
+    company_id: input.companyId ?? null,
+    error_message: TEMPLATE_INACTIVE_CODE,
+    created_at: db.fn.now(3),
+  })
+  return historyId
+}
+
+export async function enqueue(input: EnqueueInput): Promise<EnqueueResult> {
   if (input.companyId) {
     const companyName =
       typeof input.payload?.companyName === 'string' ? input.payload.companyName : undefined
     await ensureLocalCompany(input.companyId, companyName)
   }
 
-  const template = await resolveTemplate(input.templateSlug, input.companyId)
-  if (!template) {
+  const resolved = await resolveTemplateForDelivery(input.templateSlug, input.companyId)
+  if (resolved.outcome === 'inactive') {
+    const historyId = await recordSkippedEmailHistory({
+      toEmail: input.toEmail,
+      templateSlug: input.templateSlug,
+      companyId: input.companyId,
+    })
+    return { status: 'skipped', historyId }
+  }
+  if (resolved.outcome === 'missing') {
     throw new Error(`Template not found: ${input.templateSlug}`)
   }
 
+  const template = resolved.template
   await validateTemplatePayload(template, input.payload, input.companyId)
 
   const id = nanoid()
@@ -144,15 +185,43 @@ export async function getNextQueueItem(): Promise<EmailQueueRow | null> {
   })
 }
 
+async function finalizeInactiveQueueItem(row: EmailQueueRow): Promise<void> {
+  await db.transaction(async (trx) => {
+    await trx('email_queue').where({ id: row.id }).update({
+      status: 'failed',
+      last_error: TEMPLATE_INACTIVE_CODE,
+      processed_at: trx.fn.now(3),
+    })
+
+    await trx('email_history').insert({
+      id: nanoid(),
+      queue_id: row.id,
+      status: 'skipped',
+      provider_message_id: null,
+      sent_at: trx.fn.now(3),
+      recipient: row.to_email,
+      template_slug: row.template_slug,
+      company_id: row.company_id,
+      error_message: TEMPLATE_INACTIVE_CODE,
+      created_at: trx.fn.now(3),
+    })
+  })
+}
+
 export async function processQueueItem(row: EmailQueueRow): Promise<void> {
   const payload = parsePayload(row)
 
   try {
-    const template = await resolveTemplate(row.template_slug, row.company_id)
-    if (!template) {
+    const resolved = await resolveTemplateForDelivery(row.template_slug, row.company_id)
+    if (resolved.outcome === 'inactive') {
+      await finalizeInactiveQueueItem(row)
+      return
+    }
+    if (resolved.outcome === 'missing') {
       throw new Error(`Template not found: ${row.template_slug}`)
     }
 
+    const template = resolved.template
     const rendered = await renderEmail(template, payload, row.company_id)
     const result = await sendMail({
       to: row.to_email,
@@ -270,7 +339,7 @@ export async function retryQueueItem(id: string): Promise<QueueItemDto> {
 }
 
 export async function listHistory(filters: {
-  status?: 'sent' | 'failed'
+  status?: HistoryStatus
   templateSlug?: string
   search?: string
   companyId?: string

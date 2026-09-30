@@ -1,11 +1,12 @@
 import { useLocalSearchParams } from 'expo-router'
 import { BasicSettingsScreen } from '@/features/settings/BasicSettingsScreen'
 
-type BasicSettingsTab = 'account' | 'appearance' | 'ai' | 'downloads'
+type BasicSettingsTab = 'general' | 'account' | 'appearance' | 'ai' | 'downloads'
 
 function parseBasicTab(tab?: string): BasicSettingsTab {
-  if (tab === 'appearance' || tab === 'ai' || tab === 'downloads') return tab
-  return 'account'
+  if (tab === 'account' || tab === 'appearance' || tab === 'ai' || tab === 'downloads') return tab
+  if (tab === 'general') return 'general'
+  return 'general'
 }
 
 export default function BasicSettingsRoute() {

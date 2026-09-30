@@ -13,14 +13,32 @@ import { AccountSettingsPanel } from '@/features/settings/components/AccountSett
 import { AppearanceSettingsPanel } from '@/features/settings/components/AppearanceSettingsPanel'
 import { AiSettingsPanel } from '@/features/settings/components/AiSettingsPanel'
 import { DownloadsSettingsPanel } from '@/features/settings/components/DownloadsSettingsPanel'
+import { GeneralSettingsPanel } from '@/features/settings/components/GeneralSettingsPanel'
 
-type BasicSettingsTab = 'account' | 'appearance' | 'ai' | 'downloads'
+type BasicSettingsTab = 'general' | 'account' | 'appearance' | 'ai' | 'downloads'
 
 type BasicSettingsScreenProps = {
   initialTab?: BasicSettingsTab
 }
 
-export function BasicSettingsScreen({ initialTab = 'account' }: BasicSettingsScreenProps) {
+function BasicSettingsTabPanel({ tab }: { tab: BasicSettingsTab }) {
+  switch (tab) {
+    case 'general':
+      return <GeneralSettingsPanel />
+    case 'account':
+      return <AccountSettingsPanel />
+    case 'appearance':
+      return <AppearanceSettingsPanel />
+    case 'ai':
+      return <AiSettingsPanel />
+    case 'downloads':
+      return <DownloadsSettingsPanel />
+    default:
+      return null
+  }
+}
+
+export function BasicSettingsScreen({ initialTab = 'general' }: BasicSettingsScreenProps) {
   const { t } = useTranslation('settings')
   const [tab, setTab] = useState<BasicSettingsTab>(initialTab)
 
@@ -36,23 +54,15 @@ export function BasicSettingsScreen({ initialTab = 'account' }: BasicSettingsScr
         className={tabsPageClassName}
       >
         <TabsList aria-label={t('basic.ariaSections')}>
+          <TabsTrigger value="general">{t('basic.tabs.general')}</TabsTrigger>
           <TabsTrigger value="account">{t('basic.tabs.account')}</TabsTrigger>
           <TabsTrigger value="appearance">{t('basic.tabs.appearance')}</TabsTrigger>
           <TabsTrigger value="ai">{t('basic.tabs.ai')}</TabsTrigger>
           <TabsTrigger value="downloads">{t('basic.tabs.downloads')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="account" className={tabsPageContentClassName}>
-          <AccountSettingsPanel />
-        </TabsContent>
-        <TabsContent value="appearance" className={tabsPageContentClassName}>
-          <AppearanceSettingsPanel />
-        </TabsContent>
-        <TabsContent value="ai" className={tabsPageContentClassName}>
-          <AiSettingsPanel />
-        </TabsContent>
-        <TabsContent value="downloads" className={tabsPageContentClassName}>
-          <DownloadsSettingsPanel />
+        <TabsContent value={tab} className={tabsPageContentClassName}>
+          <BasicSettingsTabPanel tab={tab} />
         </TabsContent>
       </Tabs>
     </FeatureScreen>

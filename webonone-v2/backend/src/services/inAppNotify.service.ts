@@ -197,6 +197,25 @@ export async function notifySessionDueToStartInApp(input: {
   })
 }
 
+export async function notifyCatalogReviewRequestInApp(input: {
+  userId: string
+  companyId: string
+  itemName: string
+  href: string
+  sourceEventId: string
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    companyId: input.companyId,
+    type: 'catalog.review_request',
+    title: `Share your feedback: ${input.itemName}`,
+    body: `Leave or update your review for ${input.itemName}.`,
+    href: input.href,
+    sourceService: SOURCE,
+    sourceEventId: input.sourceEventId,
+  })
+}
+
 export async function notifySubscriptionInvoiceIssuedInApp(input: {
   companyId: string
   ownerUserId: string

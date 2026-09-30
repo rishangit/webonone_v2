@@ -7,6 +7,7 @@ import {
   type DataLibraryCatalogItem,
   type DataTagSummary,
 } from '../clients/dataCatalogClient.js'
+import * as dataReviewsClient from '../clients/dataReviewsClient.js'
 import {
   findApprovedCompanyCatalogById,
   isSellableCatalogKind,
@@ -85,6 +86,12 @@ type HydratedCatalogItem = Omit<
 }
 
 const KINDS: CatalogKind[] = ['products', 'services', 'spaces']
+
+const REVIEW_ENTITY_KIND: Record<CatalogKind, 'product' | 'service' | 'space'> = {
+  products: 'product',
+  services: 'service',
+  spaces: 'space',
+}
 
 function emptyResult(page: number, pageSize: number): PublicCatalogSearchResult {
   return { items: [], total: 0, page, pageSize }
@@ -383,6 +390,31 @@ export async function searchPublicCatalog(query: {
   const items = itemsWithDistance.slice(start, start + pageSize)
 
   return { items, total, page, pageSize }
+}
+
+export async function listPublicCatalogReviews(options: {
+  kind: string
+  id: string
+  page?: unknown
+  pageSize?: unknown
+}): Promise<dataReviewsClient.PublicReviewListResult | null> {
+  if (!isSellableCatalogKind(options.kind)) return null
+  const id = typeof options.id === 'string' ? options.id.trim() : ''
+  if (!id) return null
+
+  const row = await findApprovedCompanyCatalogById(options.kind, id)
+  if (!row) return null
+
+  const page = parsePage(options.page)
+  const pageSize = Math.min(50, parsePageSize(options.pageSize))
+
+  return dataReviewsClient.listPublicReviews({
+    companyId: row.company_id,
+    entityKind: REVIEW_ENTITY_KIND[options.kind],
+    entityId: id,
+    page,
+    pageSize,
+  })
 }
 
 export async function getPublicCatalogItem(options: {

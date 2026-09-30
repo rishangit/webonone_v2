@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -39,6 +39,12 @@ import {
   type CatalogEntityKind,
   type CatalogPayload,
 } from '../types/companyCatalog.types'
+import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
+import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
+import {
+  catalogKindToReviewKind,
+  isReviewableCatalogKind,
+} from '@/features/reviews/utils/catalogReviewKind'
 
 const CATALOG_TABS_BASE = [
   'overview',
@@ -98,6 +104,8 @@ export function CompanyCatalogDetailPage({
   const kind = isCatalogEntityKind(kindParam) ? kindParam : null
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const openReviewFromLink = searchParams.get('openReview') === '1'
   const { detail, detailStatus, mutateStatus, mutateError } = useAppSelector((s) => s.companyCatalog)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const allowedTabs = useMemo(() => {
@@ -205,6 +213,29 @@ export function CompanyCatalogDetailPage({
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
   const entityPayload = detail?.payload ?? detail?.hydrated ?? null
   const overviewGalleryImages = detail?.displayGalleryImages ?? detail?.galleryImages ?? []
+  const reviewEntityKind =
+    kind && isReviewableCatalogKind(kind) ? catalogKindToReviewKind(kind) : null
+  /** Membership routes pass `companyId` in the URL; company admin Data nav uses `detail.companyId`. */
+  const reviewCompanyId = companyId ?? detail?.companyId ?? null
+  const reviewsPanel =
+    reviewCompanyId && detail && reviewEntityKind ? (
+      <CompanyCatalogReviewsPanel
+        companyId={reviewCompanyId}
+        entityKind={reviewEntityKind}
+        entityId={id}
+      />
+    ) : null
+  const memberReviewCard =
+    readOnly && reviewCompanyId && detail && reviewEntityKind ? (
+      <CompanyCatalogReviewCard
+        companyId={reviewCompanyId}
+        entityKind={reviewEntityKind}
+        entityId={id}
+        displayName={detail.displayName}
+        imageUrl={overviewGalleryImages[0]?.url ?? null}
+        autoOpenDialog={openReviewFromLink}
+      />
+    ) : null
 
   function openAttributesEdit() {
     if (kind === 'services') {
@@ -242,6 +273,8 @@ export function CompanyCatalogDetailPage({
             <div className="text-destructive">{t('detail.libraryItemUnavailable')}</div>
           ) : null}
         </EditableSectionCard>
+        {reviewsPanel}
+        {memberReviewCard}
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
         <EditableSectionCard
@@ -295,8 +328,8 @@ export function CompanyCatalogDetailPage({
           ) : null}
         </EditableSectionCard>
 
-        {readOnly && companyId && servicePayload?.timeMode === 'window' ? (
-          <MemberServiceSessionsCard companyId={companyId} serviceId={id} />
+        {readOnly && reviewCompanyId && servicePayload?.timeMode === 'window' ? (
+          <MemberServiceSessionsCard companyId={reviewCompanyId} serviceId={id} />
         ) : null}
 
         <EditableSectionCard
@@ -316,7 +349,10 @@ export function CompanyCatalogDetailPage({
           )}
         </EditableSectionCard>
 
-        <CompanyServiceWorkflowOverviewCard serviceId={id} companyId={companyId} />
+        <CompanyServiceWorkflowOverviewCard
+          serviceId={id}
+          companyId={reviewCompanyId ?? companyId ?? ''}
+        />
 
         <Card>
           <CardHeader>
@@ -365,6 +401,8 @@ export function CompanyCatalogDetailPage({
             <div className="text-destructive">{t('detail.libraryItemUnavailable')}</div>
           ) : null}
         </EditableSectionCard>
+        {reviewsPanel}
+        {memberReviewCard}
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
         {kind === 'products' || kind === 'spaces' ? (
@@ -510,7 +548,7 @@ export function CompanyCatalogDetailPage({
             kind === 'services' ? (
               <CompanyServiceWorkflowTab
                 serviceId={id}
-                companyId={companyId}
+                companyId={reviewCompanyId ?? companyId ?? ''}
                 timeMode={
                   servicePayload?.timeMode === 'window' ? 'window' : 'duration'
                 }

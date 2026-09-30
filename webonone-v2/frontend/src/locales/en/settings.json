@@ -4,11 +4,20 @@
     "description": "Manage your active account and appearance.",
     "ariaSections": "Basic Settings sections",
     "tabs": {
+      "general": "General",
       "account": "Account",
       "appearance": "Appearance",
       "ai": "AI",
       "downloads": "Downloads",
       "push": "Push"
+    }
+  },
+  "general": {
+    "about": {
+      "title": "About",
+      "description": "WebOnOne application information.",
+      "versionLabel": "Version",
+      "desktopVersionLabel": "Desktop app"
     }
   },
   "pushBroadcast": {

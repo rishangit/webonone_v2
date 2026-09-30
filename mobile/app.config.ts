@@ -29,6 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: '1.0.0',
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
+  icon: './assets/icon.png',
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
@@ -36,6 +37,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'com.webonone.mobile',
+    adaptiveIcon: {
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#FFFFFF',
+    },
     googleServicesFile: './google-services.json',
     permissions: [
       'android.permission.SEND_SMS',

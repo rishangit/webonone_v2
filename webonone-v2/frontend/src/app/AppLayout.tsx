@@ -409,7 +409,7 @@ function AppLayoutShell({
           embedMain={embedMain}
           nav={nav}
           activePath={location.pathname}
-          logo={<BrandLogo>{tShell('brand')}</BrandLogo>}
+          logo={<BrandLogo mark alt={tShell('brand')} />}
           user={headerUser}
           sidebarSession={sidebarSession}
           onSidebarSessionClick={canChangeAccount ? onSidebarSessionClick : undefined}

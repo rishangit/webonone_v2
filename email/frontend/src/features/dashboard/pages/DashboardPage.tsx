@@ -249,7 +249,11 @@ export function DashboardPage() {
                           <p className="font-medium">{item.recipient}</p>
                           <p className="text-xs text-muted-foreground">
                             {item.templateSlug} ·{' '}
-                            {item.status === 'sent' ? t('statusSent') : t('statusFailed')}
+                            {item.status === 'sent'
+                              ? t('statusSent')
+                              : item.status === 'skipped'
+                                ? t('statusSkipped')
+                                : t('statusFailed')}
                             {item.sentAt ? ` · ${formatDisplayDateTime(item.sentAt)}` : ''}
                           </p>
                         </ItemListContent>

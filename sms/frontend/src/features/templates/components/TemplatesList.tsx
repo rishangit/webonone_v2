@@ -82,11 +82,9 @@ export function TemplatesList({
                 <DropdownMenuItem onClick={() => goToPreview(template.id)} disabled={isBusy}>
                   {t('preview')}
                 </DropdownMenuItem>
-                {!isDefault ? (
-                  <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
-                    {template.isActive ? t('deactivate') : t('activate')}
-                  </DropdownMenuItem>
-                ) : null}
+                <DropdownMenuItem onClick={() => onToggleActive(template)} disabled={isBusy}>
+                  {template.isActive ? t('deactivate') : t('activate')}
+                </DropdownMenuItem>
                 {!isDefault ? (
                   <DropdownMenuItem onClick={() => goToVersions(template.id)} disabled={isBusy}>
                     {t('versionHistory')}

@@ -1,8 +1,24 @@
 import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
-import type { DeviceScope, QueueStatus, SmsDeviceRow, SmsHistoryRow, SmsQueueRow } from '../models/db.js'
+import type {
+  DeviceScope,
+  HistoryStatus,
+  QueueStatus,
+  SmsDeviceRow,
+  SmsHistoryRow,
+  SmsQueueRow,
+} from '../models/db.js'
 import { getGatewayMode, isTextLkReady } from './gatewayConfig.service.js'
-import { renderBody, resolveTemplate, validateTemplatePayload } from './template.service.js'
+import {
+  renderBody,
+  resolveTemplateForDelivery,
+  TEMPLATE_INACTIVE_CODE,
+  validateTemplatePayload,
+} from './template.service.js'
+
+export type EnqueueResult =
+  | { status: 'queued'; queueId: string }
+  | { status: 'skipped'; historyId: string }
 import { ensureLocalCompany } from './user.service.js'
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 900_000]
@@ -42,7 +58,7 @@ export interface HistoryItemDto {
   id: string
   queueId: string | null
   toNumber: string
-  status: 'sent' | 'failed'
+  status: 'sent' | 'failed' | 'skipped'
   deviceId: string | null
   simSlot: number | null
   providerMessageRef: string | null
@@ -96,8 +112,31 @@ function historyRowToDto(row: SmsHistoryRow): HistoryItemDto {
   }
 }
 
+async function recordSkippedSmsHistory(input: {
+  toNumber: string
+  templateSlug: string | null
+  companyId?: string | null
+  queueId?: string | null
+}): Promise<string> {
+  const historyId = nanoid()
+  await db('sms_history').insert({
+    id: historyId,
+    queue_id: input.queueId ?? null,
+    to_number: input.toNumber,
+    status: 'skipped',
+    device_id: null,
+    sim_slot: null,
+    provider_message_ref: null,
+    template_slug: input.templateSlug,
+    company_id: input.companyId ?? null,
+    error_message: TEMPLATE_INACTIVE_CODE,
+    created_at: db.fn.now(3),
+  })
+  return historyId
+}
+
 /** Resolve final body (raw or templated) and enqueue a pending row scoped by companyId. */
-export async function enqueue(input: EnqueueInput): Promise<{ queueId: string; status: 'queued' }> {
+export async function enqueue(input: EnqueueInput): Promise<EnqueueResult> {
   if (input.companyId) {
     const companyName =
       typeof input.payload?.companyName === 'string' ? input.payload.companyName : undefined
@@ -109,10 +148,19 @@ export async function enqueue(input: EnqueueInput): Promise<{ queueId: string; s
   let templateSlug: string | null = input.templateSlug ?? null
 
   if (input.templateSlug) {
-    const template = await resolveTemplate(input.templateSlug, input.companyId)
-    if (!template) {
+    const resolved = await resolveTemplateForDelivery(input.templateSlug, input.companyId)
+    if (resolved.outcome === 'inactive') {
+      const historyId = await recordSkippedSmsHistory({
+        toNumber: input.toNumber,
+        templateSlug: input.templateSlug,
+        companyId: input.companyId,
+      })
+      return { status: 'skipped', historyId }
+    }
+    if (resolved.outcome === 'missing') {
       throw new Error(`Template not found: ${input.templateSlug}`)
     }
+    const template = resolved.template
     await validateTemplatePayload(template, payload)
     body = renderBody(template, payload)
     templateSlug = template.slug
@@ -396,7 +444,7 @@ export async function retryQueueItem(id: string): Promise<QueueItemDto> {
 }
 
 export async function listHistory(filters: {
-  status?: 'sent' | 'failed'
+  status?: HistoryStatus
   search?: string
   companyId?: string
   page: number

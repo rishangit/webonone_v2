@@ -199,6 +199,23 @@ export { ImagePreview } from './components/ImagePreview'
 export type { ImagePreviewProps, ImagePreviewMode } from './components/ImagePreview'
 export { ImageCarousel } from './components/ImageCarousel'
 export type { ImageCarouselProps, ImageCarouselImage } from './components/ImageCarousel'
+export { StarRatingInput } from './components/StarRatingInput'
+export type { StarRatingInputProps } from './components/StarRatingInput'
+export { CatalogReviewForm } from './components/CatalogReviewForm'
+export type { CatalogReviewFormProps } from './components/CatalogReviewForm'
+export { CatalogReviewDialog } from './components/CatalogReviewDialog'
+export type { CatalogReviewDialogProps } from './components/CatalogReviewDialog'
+export { CatalogReviewsDisplayCard } from './components/CatalogReviewsDisplayCard'
+export type {
+  CatalogReviewListItem,
+  CatalogReviewsDisplayCardProps,
+} from './components/CatalogReviewsDisplayCard'
+export type {
+  CatalogReviewEntityKind,
+  CatalogReviewExisting,
+  CatalogReviewSubmitPayload,
+  CatalogReviewTarget,
+} from './components/catalogReviewTypes'
 export { StatusTag, statusTagVariants, isStatusTagVariant } from './components/StatusTag'
 export type { StatusTagProps, StatusTagVariant } from './components/StatusTag'
 export { AccountOptionRow, resolveAccountRoleVariant } from './components/AccountOptionRow'

@@ -11,6 +11,7 @@ import attributesRoutes from './routes/attributes.routes.js'
 import catalogRoutes from './routes/catalog.routes.js'
 import internalRoutes from './routes/internal.routes.js'
 import aiCapabilitiesRoutes from './routes/aiCapabilities.routes.js'
+import reviewsRoutes from './routes/reviews.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -33,6 +34,7 @@ export function createApp() {
   app.use('/api/v1', catalogRoutes)
   app.use('/api/v1', internalRoutes)
   app.use('/api/v1', aiCapabilitiesRoutes)
+  app.use('/api/v1', reviewsRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

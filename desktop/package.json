@@ -28,9 +28,11 @@
       "output": "release",
       "buildResources": "resources"
     },
-    "files": [
-      "out/**/*",
-      "package.json"
+    "extraResources": [
+      {
+        "from": "resources/icon.png",
+        "to": "icon.png"
+      }
     ],
     "extraMetadata": {
       "main": "out/main.js"

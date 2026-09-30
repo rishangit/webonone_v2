@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import {
   Body,
@@ -47,6 +47,12 @@ import { dataLibraryApi } from '@/features/sales/services/dataLibraryApi'
 import { hydrateCatalogItems } from '@/features/sales/utils/hydrateCatalogItems'
 import type { CatalogPayload, HydratedCatalogItem } from '@/features/sales/types/catalog.types'
 import { isCatalogGalleryKind } from '@/features/sales/types/catalog.types'
+import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
+import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
+import {
+  catalogKindToReviewKind,
+  isReviewableCatalogKind,
+} from '@/features/reviews/utils/catalogReviewKind'
 
 type DetailTab = 'overview' | 'gallery' | 'attributes' | 'variants' | 'workflow'
 
@@ -61,14 +67,28 @@ function formatListPrice(value: number | null | undefined): string {
   return `LKR ${value.toFixed(2)}`
 }
 
-export function CompanyCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind; itemId: string }) {
+export function CompanyCatalogDetailScreen({
+  kind,
+  itemId,
+  membershipCompanyId,
+}: {
+  kind: CatalogKind
+  itemId: string
+  /** Settings → Connected companies catalog (membership-scoped API). */
+  membershipCompanyId?: string
+}) {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const router = useRouter()
+  const { openReview } = useLocalSearchParams<{ openReview?: string }>()
+  const openReviewFromLink = openReview === '1'
   const { toast } = useToast()
   const { user } = useSession()
-  const companyId = user?.companyId ?? ''
+  const sessionCompanyId = user?.companyId ?? ''
+  const companyId = membershipCompanyId ?? sessionCompanyId
+  const memberCatalogView = Boolean(membershipCompanyId)
   const { canManageCompanyCatalog, isCompanyCatalogReadOnly } = useDataCatalogScope()
+  const readOnlyMember = memberCatalogView || isCompanyCatalogReadOnly
   const noun = t(`entities.${kind === 'products' ? 'product' : kind === 'services' ? 'service' : 'space'}`)
 
   const [item, setItem] = useState<HydratedCatalogItem | null>(null)
@@ -91,7 +111,9 @@ export function CompanyCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind
     setLoading(true)
     setError(null)
     try {
-      const raw = await companyCatalogApi.get(kind, itemId)
+      const raw = membershipCompanyId
+        ? await companyCatalogApi.getForCompany(membershipCompanyId, kind, itemId)
+        : await companyCatalogApi.get(kind, itemId)
       const [hydrated] = await hydrateCatalogItems(kind, [raw])
       setItem(hydrated ?? null)
     } catch (err) {
@@ -100,7 +122,7 @@ export function CompanyCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind
     } finally {
       setLoading(false)
     }
-  }, [itemId, kind, noun, t])
+  }, [itemId, kind, membershipCompanyId, noun, t])
 
   useEffect(() => {
     void load()
@@ -158,7 +180,7 @@ export function CompanyCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind
     }
   }, [item])
 
-  const canManage = canManageCompanyCatalog
+  const canManage = canManageCompanyCatalog && !memberCatalogView
   const canEdit =
     canManage && (item?.bindingMode === 'forked' || item?.bindingMode === 'custom')
   const canCustomize =
@@ -241,6 +263,28 @@ export function CompanyCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind
     )
   }
 
+  const reviewEntityKind = isReviewableCatalogKind(kind) ? catalogKindToReviewKind(kind) : null
+  const reviewCompanyId = companyId || item.companyId
+  const reviewsPanel =
+    reviewCompanyId && reviewEntityKind ? (
+      <CompanyCatalogReviewsPanel
+        companyId={reviewCompanyId}
+        entityKind={reviewEntityKind}
+        entityId={itemId}
+      />
+    ) : null
+  const memberReviewCard =
+    readOnlyMember && reviewCompanyId && reviewEntityKind ? (
+      <CompanyCatalogReviewCard
+        companyId={reviewCompanyId}
+        entityKind={reviewEntityKind}
+        entityId={itemId}
+        displayName={item.displayName}
+        imageUrl={overviewGalleryImages[0]?.url ?? null}
+        autoOpenDialog={openReviewFromLink}
+      />
+    ) : null
+
   const overviewContent =
     kind === 'services' ? (
       <View className="gap-6">
@@ -262,6 +306,8 @@ export function CompanyCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind
             value={item.displayDescription?.trim() ? item.displayDescription : '—'}
           />
         </EditableSectionCard>
+        {reviewsPanel}
+        {memberReviewCard}
         <EditableSectionCard
           title={t('detail.pricing.title')}
           description={t('detail.pricing.description')}
@@ -324,6 +370,8 @@ export function CompanyCatalogDetailScreen({ kind, itemId }: { kind: CatalogKind
             value={item.displayDescription?.trim() ? item.displayDescription : '—'}
           />
         </EditableSectionCard>
+        {reviewsPanel}
+        {memberReviewCard}
         <EditableSectionCard
           title={t('detail.pricing.title')}
           description={t('detail.pricing.description')}

@@ -35,6 +35,7 @@ import {
   isPersonalCalendarSession,
 } from '@/features/calendar/utils/calendarAccess'
 import { CALENDAR_EVENTS_PATH, sessionDetailPath } from '@/features/calendar/utils/calendarPaths'
+import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
 import { formatCalendarYmd, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 type EventDetailTab = 'overview' | 'upcoming' | 'past'
@@ -145,6 +146,12 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                 <ReadOnlyField label="Name" value={detail.serviceName} />
                 <ReadOnlyField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
               </EditableSectionCard>
+
+              <CompanyCatalogReviewsPanel
+                companyId={detail.companyId}
+                entityKind="service"
+                entityId={detail.serviceId}
+              />
 
               <EditableSectionCard
                 title="When"

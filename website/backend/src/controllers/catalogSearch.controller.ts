@@ -28,6 +28,27 @@ export async function getCatalogItem(req: Request, res: Response) {
   res.json(item)
 }
 
+export async function listCatalogReviews(req: Request, res: Response, next: NextFunction) {
+  const kind = typeof req.params.kind === 'string' ? req.params.kind : ''
+  const id = typeof req.params.id === 'string' ? req.params.id : ''
+  if (!kind || !id) {
+    res.status(400).json({ message: 'Invalid catalog review query', code: 'VALIDATION' })
+    return
+  }
+  try {
+    const pageRaw = typeof req.query.page === 'string' ? Number(req.query.page) : undefined
+    const pageSizeRaw =
+      typeof req.query.pageSize === 'string' ? Number(req.query.pageSize) : undefined
+    const result = await webononeCatalogClient.listCatalogReviews(kind, id, {
+      page: pageRaw != null && Number.isFinite(pageRaw) ? pageRaw : undefined,
+      pageSize: pageSizeRaw != null && Number.isFinite(pageSizeRaw) ? pageSizeRaw : undefined,
+    })
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function listServiceSessions(req: Request, res: Response) {
   const id = typeof req.params.id === 'string' ? req.params.id : ''
   const result = await webononeCatalogClient.listServiceSessions(id, {

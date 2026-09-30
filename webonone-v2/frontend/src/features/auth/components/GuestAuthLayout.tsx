@@ -30,7 +30,7 @@ export function GuestAuthLayout({ children }: GuestAuthLayoutProps) {
 
   return (
     <PageShell
-      logo={<BrandLogo>{tShell('brand')}</BrandLogo>}
+      logo={<BrandLogo mark alt={tShell('brand')} />}
       locale={currentLocale}
       onLocaleChange={handleLocaleChange}
       headerLabels={headerLabels}

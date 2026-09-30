@@ -1,4 +1,5 @@
 import * as companyRepo from '../repositories/company.repository.js'
+import { notifyCatalogReviewAfterSaleCompleted } from './catalogReviewRequestNotify.service.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
 import type { SaleDto, SaleLineDto } from './companySale.service.js'
 import { parseLibraryRequestsNote } from '../utils/libraryRequestNotes.js'
@@ -24,6 +25,7 @@ const RECOMMENDED_HEADING = 'Recommended to use'
  * Never throws — sale completion must succeed even if notify fails.
  */
 export function notifySaleBillCompleted(sale: SaleDto): void {
+  notifyCatalogReviewAfterSaleCompleted(sale)
   void notifySaleBillCompletedAsync(sale).catch((err) => {
     console.error('[saleBillNotify] unexpected error:', err)
   })

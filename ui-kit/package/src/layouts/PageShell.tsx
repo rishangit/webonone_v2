@@ -34,7 +34,7 @@ function PageShell({
   className,
   mainClassName,
 }: PageShellProps) {
-  const logoNode = logo ?? (title ? <BrandLogo>{title}</BrandLogo> : undefined)
+  const logoNode = logo ?? <BrandLogo href={logoHref} alt={title} />
 
   return (
     <div className={cn('app-shell-root min-h-screen', shellChromeRootClassName, className)}>

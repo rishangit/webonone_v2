@@ -2,6 +2,7 @@ import {
   app,
   BrowserWindow,
   Menu,
+  nativeImage,
   session,
   shell,
   ipcMain,
@@ -88,6 +89,18 @@ function loadApp(): void {
   void mainWindow.loadURL(appUrl)
 }
 
+function getAboutSettingsUrl(): string {
+  const base = appUrl.replace(/\/+$/, '')
+  return `${base}/settings/basic?tab=general`
+}
+
+function openAboutSettings(): void {
+  if (!mainWindow) {
+    return
+  }
+  void mainWindow.loadURL(getAboutSettingsUrl())
+}
+
 function createMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
@@ -120,6 +133,12 @@ function createMenu(): void {
       label: 'Help',
       submenu: [
         {
+          label: 'About WebOnOne',
+          click: () => {
+            openAboutSettings()
+          },
+        },
+        {
           label: 'WebOnOne Help',
           click: () => {
             void shell.openExternal('https://support.webonone.com')
@@ -145,13 +164,22 @@ function configureSession(): void {
   })
 }
 
+function resolveWindowIconPath(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'icon.png')
+  }
+  return path.join(__dirname, '..', 'resources', 'icon.png')
+}
+
 function createWindow(): void {
+  const icon = nativeImage.createFromPath(resolveWindowIconPath())
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 1024,
     minHeight: 640,
     title: 'WebOnOne',
+    icon: icon.isEmpty() ? undefined : icon,
     show: false,
     autoHideMenuBar: false,
     webPreferences: popupWebPreferences(),

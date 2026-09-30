@@ -15,6 +15,8 @@
   "noRecent": "ඔබේ විෂය පථය සඳහා තවම යැවීම් නැත.",
   "statusSent": "යැවූ",
   "statusFailed": "අසාර්ථක",
+  "statusSkipped": "මඟ හැරිණි",
+  "historySkipTemplateInactive": "මෙම සමාගම සඳහා ආකෘතිය අක්‍රිය විය",
   "allStatuses": "සියලු තත්ත්ව",
   "fromDate": "ආරම්භ දිනය",
   "toDate": "අවසාන දිනය",

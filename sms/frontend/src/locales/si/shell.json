@@ -24,6 +24,8 @@
   "allStatuses": "සියලු තත්ත්ව",
   "statusSent": "යැවූ",
   "statusFailed": "අසාර්ථක",
+  "statusSkipped": "මඟ හැරිණි",
+  "historySkipTemplateInactive": "මෙම සමාගම සඳහා ආකෘතිය අක්‍රිය විය",
   "historyEmpty": "තෝරාගත් පෙරහන් සඳහා යැවීම් ඉතිහාසයක් නැත.",
   "historyActionsFor": "{{name}} සඳහා ඉතිහාසය",
   "completingSignIn": "පිවිසීම සම්පූර්ණ කරමින්…",

@@ -1,6 +1,6 @@
 export type EmailTemplateScope = 'platform' | 'company'
 
-export type MessageStatus = 'sent' | 'failed'
+export type MessageStatus = 'sent' | 'failed' | 'skipped'
 
 export type QueueStatus = 'pending' | 'processing' | 'failed'
 

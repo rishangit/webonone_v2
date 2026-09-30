@@ -33,11 +33,13 @@ npm run build:desktop
 
 Output: `desktop/release/WebOnOne-Setup.exe` (Windows x64 NSIS). Unsigned builds are expected for internal / customer beta until a signing cert is added.
 
+**Icons:** `resources/icon.png` (**512×512** PNG). Replace it when the brand mark changes, then rebuild. Do **not** run `npm run icon` — that overwrites the file with a legacy placeholder.
+
 **Production:** `npm run deploy -w webonone-v2-root` builds the installer and publishes it to `https://app.webonone.com/downloads/WebOnOne-Setup.exe` (via staged `deploy/public/downloads/`). If the file is missing on the server, the download button will 404 instead of serving the SPA HTML.
 
-**SmartScreen:** unsigned installers may show “Windows protected your PC” — choose **More info** → **Run anyway**, or add code signing for production.
+**Local download link:** after `npm run build:desktop`, copy the installer to `webonone-v2/frontend/public/downloads/WebOnOne-Setup.exe` (see that folder’s README).
 
-Regenerate the app icon: `npm run icon -w @webonone/desktop` (writes `desktop/resources/icon.png`).
+**SmartScreen:** unsigned installers may show “Windows protected your PC” — choose **More info** → **Run anyway**, or add code signing for production.
 
 ## Security
 

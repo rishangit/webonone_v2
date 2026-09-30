@@ -33,7 +33,7 @@ export interface EmailCompanyRow {
 
 export type TemplateScope = 'platform' | 'company'
 export type QueueStatus = 'pending' | 'processing' | 'sent' | 'failed'
-export type HistoryStatus = 'sent' | 'failed'
+export type HistoryStatus = 'sent' | 'failed' | 'skipped'
 
 export interface EmailTemplateRow {
   id: string

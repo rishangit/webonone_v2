@@ -31,6 +31,21 @@ export type CatalogSearchResult = {
   pageSize: number
 }
 
+export type CatalogPublicReviewItem = {
+  id: string
+  rating: number
+  comment: string | null
+  createdAt: string
+}
+
+export type CatalogPublicReviewListResult = {
+  summary: { averageRating: number | null; count: number }
+  items: CatalogPublicReviewItem[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 export type CatalogSessionItem = {
   eventId: string
   occurrenceDate: string

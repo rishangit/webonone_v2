@@ -10,6 +10,7 @@ import enCatalog from '@/locales/en/catalog.json'
 import enSales from '@/locales/en/sales.json'
 import enAnalytics from '@/locales/en/analytics.json'
 import enSession from '@/locales/en/session.json'
+import enReviews from '@/locales/en/reviews.json'
 import siShell from '@/locales/si/shell.json'
 import siAuth from '@/locales/si/auth.json'
 import siProfile from '@/locales/si/profile.json'
@@ -21,6 +22,7 @@ import siCatalog from '@/locales/si/catalog.json'
 import siSales from '@/locales/si/sales.json'
 import siAnalytics from '@/locales/si/analytics.json'
 import siSession from '@/locales/si/session.json'
+import siReviews from '@/locales/si/reviews.json'
 
 export const WEBONONE_NAMESPACES = [
   'shell',
@@ -34,6 +36,7 @@ export const WEBONONE_NAMESPACES = [
   'sales',
   'analytics',
   'session',
+  'reviews',
 ] as const
 
 export function initWebOnOneI18n() {
@@ -52,6 +55,7 @@ export function initWebOnOneI18n() {
         sales: enSales,
         analytics: enAnalytics,
         session: enSession,
+        reviews: enReviews,
       },
       si: {
         shell: siShell,
@@ -65,6 +69,7 @@ export function initWebOnOneI18n() {
         sales: siSales,
         analytics: siAnalytics,
         session: siSession,
+        reviews: siReviews,
       },
     },
   })

@@ -57,12 +57,26 @@ function rowToDto(row: EmailTemplateRow): TemplateDto {
   }
 }
 
-export async function resolveTemplate(slug: string, companyId?: string | null): Promise<EmailTemplateRow | null> {
+export const TEMPLATE_INACTIVE_CODE = 'template_inactive'
+
+export type TemplateDeliveryResolution =
+  | { outcome: 'active'; template: EmailTemplateRow }
+  | { outcome: 'inactive' }
+  | { outcome: 'missing' }
+
+export async function resolveTemplateForDelivery(
+  slug: string,
+  companyId?: string | null,
+): Promise<TemplateDeliveryResolution> {
   if (companyId) {
     const companyTemplate = await db<EmailTemplateRow>('email_templates')
-      .where({ slug, scope: 'company', company_id: companyId, is_active: true })
+      .where({ slug, scope: 'company', company_id: companyId })
       .first()
-    if (companyTemplate) return companyTemplate
+    if (companyTemplate) {
+      return companyTemplate.is_active
+        ? { outcome: 'active', template: companyTemplate }
+        : { outcome: 'inactive' }
+    }
   }
 
   const platformTemplate = await db<EmailTemplateRow>('email_templates')
@@ -70,7 +84,12 @@ export async function resolveTemplate(slug: string, companyId?: string | null): 
     .whereNull('company_id')
     .first()
 
-  return platformTemplate ?? null
+  return platformTemplate ? { outcome: 'active', template: platformTemplate } : { outcome: 'missing' }
+}
+
+export async function resolveTemplate(slug: string, companyId?: string | null): Promise<EmailTemplateRow | null> {
+  const resolved = await resolveTemplateForDelivery(slug, companyId)
+  return resolved.outcome === 'active' ? resolved.template : null
 }
 
 /**
@@ -86,6 +105,7 @@ const SESSION_COMPANY_PLATFORM_SLUGS = [
   'appointment_booked',
   'appointment_reminder_24h',
   'sale_bill_completed',
+  'catalog_review_request',
 ] as const
 
 /** Platform slugs company owners may see/customize as defaults (1.13.6). */

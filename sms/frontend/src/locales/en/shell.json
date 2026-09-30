@@ -24,6 +24,8 @@
   "allStatuses": "All statuses",
   "statusSent": "Sent",
   "statusFailed": "Failed",
+  "statusSkipped": "Skipped",
+  "historySkipTemplateInactive": "Template was inactive for this company",
   "historyEmpty": "No send history for the selected filters.",
   "historyActionsFor": "History for {{name}}",
   "completingSignIn": "Completing sign in…",

@@ -4,11 +4,20 @@
     "description": "ඔබේ සක්‍රිය ගිණුම සහ පෙනුම කළමනාකරණය කරන්න.",
     "ariaSections": "මූලික සැකසුම් අංශ",
     "tabs": {
+      "general": "සාමාන්‍ය",
       "account": "ගිණුම",
       "appearance": "පෙනුම",
       "ai": "AI",
       "downloads": "Downloads",
       "push": "Push"
+    }
+  },
+  "general": {
+    "about": {
+      "title": "පිළිබඳව",
+      "description": "WebOnOne යෙදුම් තොරතුරු.",
+      "versionLabel": "අනුවාදය",
+      "desktopVersionLabel": "Desktop යෙදුම"
     }
   },
   "pushBroadcast": {
