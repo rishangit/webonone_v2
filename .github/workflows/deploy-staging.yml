@@ -129,19 +129,13 @@ jobs:
         with:
           node-version: "22"
 
-      # IIS Node keeps native DLLs loaded from repo node_modules (sharp/libvips).
-      # npm ci cannot unlink those files until the app pools are stopped.
-      - name: Stop IIS app pools
-        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
-        shell: powershell
-        run: |
-          $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\recycle-iis-app-pools.ps1'
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Action Stop -SkipMissing
-
+      # npm ci deletes node_modules and fails with EPERM while IIS Node has
+      # native DLLs loaded (sharp/libvips). NETWORK SERVICE cannot stop IIS
+      # app pools (redirection.config). Use npm install in place instead.
       - name: Install dependencies
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: cmd
-        run: npm ci
+        run: npm install
 
       - name: Apply production.env
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
@@ -157,14 +151,6 @@ jobs:
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: cmd
         run: npm run deploy:all
-
-      - name: Start IIS app pools
-        if: always()
-        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
-        shell: powershell
-        run: |
-          $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\recycle-iis-app-pools.ps1'
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Action Start -SkipMissing
 
       - name: Smoke health checks
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}

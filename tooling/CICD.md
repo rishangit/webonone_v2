@@ -5,7 +5,7 @@ Automated **quality checks** on pull requests and **full IIS deploy** when **`de
 | Workflow | Trigger | Runner | Purpose |
 |----------|---------|--------|---------|
 | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | PR → `deploy_staging`, push → `deploy_staging` | `ubuntu-latest` | `build:packages`, `type-check`, `lint`, workspace tests |
-| [`.github/workflows/deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | push → `deploy_staging`, `workflow_dispatch` | Self-hosted Windows | `migrate:all`, `deploy:all`, IIS recycle, health smoke |
+| [`.github/workflows/deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | push → `deploy_staging`, `workflow_dispatch` | Self-hosted Windows | `migrate:all`, `deploy:all`, health smoke |
 
 **Warning:** `npm run env:apply` and `npm run deploy:all` overwrite every service’s `backend/.env` and `frontend/.env.production` from repo-root `production.env`. Run deploy only on the staging/IIS ops machine.
 
@@ -14,38 +14,18 @@ Automated **quality checks** on pull requests and **full IIS deploy** when **`de
 On the Windows IIS server (same host as `production.env` and IIS sites):
 
 1. GitHub → **Settings → Actions → Runners → New self-hosted runner** (Windows x64).
-2. Install and register as a **service**. Add labels: `self-hosted`, `Windows`, `webonone-staging` (must match `deploy-staging.yml`).
-3. **Log on the runner service as a local Administrator** (not the default **NETWORK SERVICE**). Stopping IIS app pools and reading `inetsrv\config\redirection.config` require admin. Services → GitHub Actions runner → **Log on** → this account (the same admin that cloned `C:\Projects`) → restart the service.
-4. **Repository variable** (Settings → Secrets and variables → Actions → Variables):
+2. Install and register as a **service**. Add labels: `self-hosted`, `Windows`, `webonone-staging` (must match `deploy-staging.yml`). Default logon **NETWORK SERVICE** is fine for this workflow (it does not stop IIS app pools).
+3. **Repository variable** (Settings → Secrets and variables → Actions → Variables):
    - `DEPLOY_REPO_ROOT` — clone path IIS uses (e.g. `C:\Projects\webonone_v2`). See [identity/deploy/IIS.md](../identity/deploy/IIS.md).
-5. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
-6. Install **Git for Windows** and **Node.js 22 LTS**. The runner **Windows service** often has a stale PATH (Git works in an interactive shell but not in Actions). The workflow looks for `C:\Program Files\Git\cmd\git.exe` and reloads Machine/User PATH; **restart the runner service** after installing Git so other tools are visible too.
-7. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows - do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
-8. That admin account already owns the clone in typical setups. If you keep **NETWORK SERVICE**, grant it **Modify** on `{DEPLOY_REPO_ROOT}` (see below) — but IIS stop/start will still fail until the runner is an Administrator.
-9. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
+4. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
+5. Install **Git for Windows** and **Node.js 22 LTS**. The runner **Windows service** often has a stale PATH (Git works in an interactive shell but not in Actions). The workflow looks for `C:\Program Files\Git\cmd\git.exe` and reloads Machine/User PATH; **restart the runner service** after installing Git so other tools are visible too.
+6. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows - do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
+7. Grant the runner **Modify** on `{DEPLOY_REPO_ROOT}` if logon is NETWORK SERVICE (admin-owned clone). See below.
+8. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
 
-### Runner account and IIS
+### IIS app pools (not used by the workflow)
 
-The latest job log still shows `NT AUTHORITY\NETWORK SERVICE`. Changing YAML cannot fix IIS: that account cannot read `inetsrv\config\redirection.config`.
-
-**Do this once in an elevated Administrator PowerShell on the IIS server** (does not wait for git pull; copy the file after pull, or run the same commands):
-
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\Projects\tooling\enable-actions-runner-iis.ps1
-```
-
-That script adds **NETWORK SERVICE** to local **Administrators**, grants Modify on IIS `inetsrv\config`, and **restarts** the `actions.runner*` service so the new group token applies. Then re-run **Deploy staging**.
-
-Confirm before the next run:
-
-```powershell
-Get-LocalGroupMember Administrators | Where-Object { $_.Name -like '*NETWORK SERVICE*' }
-Get-CimInstance Win32_Service | Where-Object { $_.Name -like 'actions.runner*' } | Select-Object Name, StartName, State
-```
-
-You should see NETWORK SERVICE listed in Administrators, and the runner **Running**. GitHub → Settings → Actions → Runners should show **Idle**.
-
-Alternative: Services → runner → Log on → local Administrator → restart. If Log on was not changed, jobs keep running as NETWORK SERVICE (this is what the current error shows).
+The workflow does **not** stop or start IIS. `NETWORK SERVICE` cannot read `inetsrv\config\redirection.config`. After a successful deploy, recycle app pools yourself (IIS Manager, or elevated `npm run recycle:iis`) so Node reloads `deploy/dist`.
 
 ### NETWORK SERVICE cannot write to the clone
 
@@ -94,13 +74,13 @@ In `DEPLOY_REPO_ROOT`:
 
 1. Preflight: `production.env` must exist
 2. `git fetch` / force-checkout `origin/deploy_staging` (tracked files reset; untracked `production.env` is kept)
-3. Stop IIS app pools (`npm run iis:stop`) so Node releases `node_modules` native DLLs (e.g. sharp `libvips-42.dll`). Windows cannot unlink a loaded DLL (`npm ci` `EPERM`).
-4. `npm ci`
-5. `npm run env:apply` (write each service `backend/.env` before migrate)
-6. `npm run migrate:all`
-7. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
-8. Start IIS app pools (`npm run iis:start`) even if a later step failed, so sites are not left stopped
-9. Smoke GET each `/api/v1/health` URL
+3. `npm install` (not `npm ci` - `npm ci` deletes `node_modules` and hits `EPERM` on DLLs still loaded by IIS Node)
+4. `npm run env:apply` (write each service `backend/.env` before migrate)
+5. `npm run migrate:all`
+6. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
+7. Smoke GET each `/api/v1/health` URL
+
+After deploy, recycle IIS app pools manually if Node is still serving the previous `dist`.
 
 Expect **tens of minutes** for a full `deploy:all`.
 
@@ -109,11 +89,11 @@ Expect **tens of minutes** for a full `deploy:all`.
 ```powershell
 cd $env:DEPLOY_REPO_ROOT   # or your clone path
 git pull origin deploy_staging
-npm run iis:stop
+npm install
 npm run env:apply
 npm run migrate:all
 npm run deploy:all
-npm run iis:start
+npm run recycle:iis
 powershell -ExecutionPolicy Bypass -File tooling/smoke-production-health.ps1
 ```
 
