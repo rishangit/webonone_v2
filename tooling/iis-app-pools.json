@@ -1,0 +1,16 @@
+{
+  "comment": "Default IIS app pool names (match typical names in each service deploy/IIS.md). Edit if your pool names differ.",
+  "appPools": [
+    "Identity",
+    "WebOnOne",
+    "Media",
+    "Email",
+    "Data",
+    "SMS",
+    "Payment",
+    "Website",
+    "design",
+    "AI",
+    "Support"
+  ]
+}

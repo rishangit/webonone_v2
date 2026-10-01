@@ -1,0 +1,80 @@
+name: Deploy staging
+
+on:
+  push:
+    branches: [deploy_staging]
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to IIS
+    runs-on: [self-hosted, Windows, webonone-production]
+    timeout-minutes: 180
+
+    env:
+      DEPLOY_REPO_ROOT: ${{ vars.DEPLOY_REPO_ROOT }}
+      DEPLOY_BRANCH: deploy_staging
+
+    steps:
+      - name: Require DEPLOY_REPO_ROOT
+        shell: pwsh
+        run: |
+          if (-not $env:DEPLOY_REPO_ROOT) {
+            Write-Error 'Set repository variable DEPLOY_REPO_ROOT (e.g. C:\Projects\webonone_v2). See tooling/CICD.md'
+          }
+          if (-not (Test-Path -LiteralPath $env:DEPLOY_REPO_ROOT)) {
+            Write-Error "DEPLOY_REPO_ROOT does not exist: $env:DEPLOY_REPO_ROOT"
+          }
+
+      - name: Preflight production.env
+        shell: pwsh
+        run: |
+          $envFile = Join-Path $env:DEPLOY_REPO_ROOT 'production.env'
+          if (-not (Test-Path -LiteralPath $envFile)) {
+            Write-Error "Missing production.env at $envFile — copy from production.env.example"
+          }
+
+      - name: Sync deploy_staging branch
+        shell: pwsh
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        run: |
+          git fetch origin $env:DEPLOY_BRANCH
+          git checkout $env:DEPLOY_BRANCH
+          git pull origin $env:DEPLOY_BRANCH
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ${{ env.DEPLOY_REPO_ROOT }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        run: npm ci
+
+      - name: Run migrations
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        run: npm run migrate:all
+
+      - name: Build and stage deploy
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        run: npm run deploy:all
+
+      - name: Recycle IIS app pools
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: pwsh
+        run: |
+          & powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -SkipMissing
+
+      - name: Smoke health checks
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: pwsh
+        env:
+          SMOKE_HEALTH_URLS: ${{ vars.SMOKE_HEALTH_URLS }}
+        run: |
+          & powershell -ExecutionPolicy Bypass -File tooling/smoke-production-health.ps1

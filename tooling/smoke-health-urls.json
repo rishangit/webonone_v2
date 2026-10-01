@@ -1,0 +1,16 @@
+{
+  "comment": "Default production health endpoints (ORIGIN_* + /api/v1/health). Override with repo variable SMOKE_HEALTH_URLS (comma-separated).",
+  "healthUrls": [
+    "https://identity.webonone.com/api/v1/health",
+    "https://app.webonone.com/api/v1/health",
+    "https://media.webonone.com/api/v1/health",
+    "https://email.webonone.com/api/v1/health",
+    "https://data.webonone.com/api/v1/health",
+    "https://sms.webonone.com/api/v1/health",
+    "https://payment.webonone.com/api/v1/health",
+    "https://webonone.com/api/v1/health",
+    "https://design.webonone.com/api/v1/health",
+    "https://ai.webonone.com/api/v1/health",
+    "https://support.webonone.com/api/v1/health"
+  ]
+}

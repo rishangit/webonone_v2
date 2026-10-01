@@ -96,6 +96,8 @@ npm run deploy:{service}
 
 Pre-deploy: `npm run type-check -w {service-root-workspace}`
 
+Automated deploy on merge to `main`: [tooling/CICD.md](../../tooling/CICD.md)
+
 ## Common failures
 
 | Symptom | Fix |
