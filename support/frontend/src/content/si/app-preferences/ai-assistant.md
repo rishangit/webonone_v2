@@ -15,3 +15,5 @@ summary: "යෙදුම තුළ ප්‍රශ්න අසන්නට ස
 4. සහායකයට යමක් සාදන්න හෝ වෙනස් කරන්න අවශ්‍ය නම්, ඉල්ලූ විට ක්‍රියාව තහවුරු කරන්න.
 
 සහායකයට ක්‍රියාත්මක API key එකක් අවශ්‍යයි. [AI API key](/docs/app-preferences/ai-api-key) යටතේ එය සකස් කරන්න. එම සැකසුම [text field sparkle](/docs/app-preferences/field-ai-polish) ද සක්‍රිය කරයි. public website හි guests වෙනම [catalog assistant](/docs/public-catalog/guest-assistant) භාවිතා කරයි.
+
+**Basic Settings → AI** යටතේ **What the assistant can do** කාඩ්පත chat හට platform tools (list, create, update, delete) කැඳවිය හැකි ක්ෂේත්‍ර ඔබේ role සහ company session අනුව පෙන්වයි. ලිවීම් සැමවිටම chat panel හි confirm අවශ්‍යයි.

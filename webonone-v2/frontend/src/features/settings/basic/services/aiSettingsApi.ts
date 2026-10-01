@@ -4,6 +4,27 @@ import type {
   UserAiSettingsFormValues,
 } from '@/features/settings/basic/schemas/aiSettingsSchemas'
 
+export type AiToolOperationKind =
+  | 'list'
+  | 'get'
+  | 'create'
+  | 'update'
+  | 'delete'
+  | 'manage'
+  | 'read'
+
+export type AiSupportedArea = {
+  id: string
+  service: string
+  operations: AiToolOperationKind[]
+  requiresCompany: boolean
+  toolCount: number
+}
+
+export type AiSupportedAreasResponse = {
+  areas: AiSupportedArea[]
+}
+
 export type AiSettingsResponse = {
   configured: boolean
   provider: 'ollama' | 'openai' | 'gemini' | 'anthropic'
@@ -37,5 +58,9 @@ export const aiSettingsApi = {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
+  },
+
+  getSupportedAreas(accessToken: string) {
+    return aiFetch<AiSupportedAreasResponse>('/me/ai-supported-areas', accessToken)
   },
 }

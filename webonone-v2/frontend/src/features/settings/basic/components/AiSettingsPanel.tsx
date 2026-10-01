@@ -9,6 +9,7 @@ import { AiPlatformSettingsCard } from '@/features/settings/basic/components/AiP
 import { AiPlatformSettingsDialog } from '@/features/settings/basic/components/AiPlatformSettingsDialog'
 import { AiUserSettingsCard } from '@/features/settings/basic/components/AiUserSettingsCard'
 import { AiUserSettingsDialog } from '@/features/settings/basic/components/AiUserSettingsDialog'
+import { AiSupportedAreasCard } from '@/features/settings/basic/components/AiSupportedAreasCard'
 import { aiSettingsActions } from '@/features/settings/basic/store/aiSettingsSlice'
 
 export function AiSettingsPanel() {
@@ -55,6 +56,7 @@ export function AiSettingsPanel() {
             canEdit
             onEdit={() => setUserDialogOpen(true)}
           />
+          <AiSupportedAreasCard />
         </div>
 
         {isSuperAdmin ? (

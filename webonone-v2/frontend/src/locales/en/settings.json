@@ -163,6 +163,90 @@
         "saved": "Guest assistant settings saved",
         "saveFailed": "Could not save guest assistant settings"
       }
+    },
+    "supportedAreas": {
+      "title": "What the assistant can do",
+      "description": "Areas where chat can call platform tools for you. Writes (create, update, delete) always need your Confirm in the assistant. Lists reflect your role, company session, and permissions.",
+      "loading": "Loading supported areas…",
+      "empty": "No tool areas are available for your account right now.",
+      "loadFailed": "Could not load supported areas.",
+      "requiresCompany": "Needs active company",
+      "footnote": "Field-level polish (sparkle on forms) works on many screens even when a row is not listed here. This card only covers assistant tools and CRUD actions.",
+      "operations": {
+        "list": "List & search",
+        "get": "View details",
+        "read": "Read",
+        "create": "Create",
+        "update": "Update",
+        "manage": "Link & manage",
+        "delete": "Delete"
+      },
+      "areas": {
+        "webonone": {
+          "publicCatalog": {
+            "title": "Public marketplace catalog",
+            "detail": "Search products, services, and spaces published across companies (website guest assistant and signed-in discovery)."
+          },
+          "companyCatalog": {
+            "title": "Your company catalog",
+            "detail": "Browse and manage company copies of products, services, spaces, tags, units, and attributes — add custom items, link from the Data library, fork, or update linked items."
+          },
+          "events": {
+            "title": "Calendar & events",
+            "detail": "List, view, create, update, and delete company calendar events (services, sessions, and bookings you manage)."
+          },
+          "staff": {
+            "title": "Staff",
+            "detail": "List staff profiles, open details, and create or update staff records for your company."
+          },
+          "staffLeaves": {
+            "title": "Staff leave",
+            "detail": "List leave requests and approve or reject them when you have permission."
+          },
+          "companies": {
+            "title": "Companies & registration",
+            "detail": "Register a company, list companies you belong to, open company profiles, update settings, discover public companies, and (super admin) review pending registrations."
+          }
+        },
+        "data": {
+          "tags": {
+            "title": "Data library — Tags",
+            "detail": "Shared tag library used across catalogs. Super admins can delete tags; company admins can create and update."
+          },
+          "units": {
+            "title": "Data library — Units",
+            "detail": "Measurement units for numeric attributes (name, symbol, description)."
+          },
+          "attributes": {
+            "title": "Data library — Attributes",
+            "detail": "Reusable attribute definitions (text or number) linked to units where needed."
+          },
+          "products": {
+            "title": "Data library — Products",
+            "detail": "Platform product templates with descriptions, tags, and attributes before they are linked into a company catalog."
+          },
+          "services": {
+            "title": "Data library — Services",
+            "detail": "Platform service templates with descriptions, tags, and attributes."
+          },
+          "spaces": {
+            "title": "Data library — Spaces",
+            "detail": "Platform space/venue templates with descriptions, tags, and attributes."
+          }
+        },
+        "payment": {
+          "invoices": {
+            "title": "Payment — Invoices",
+            "detail": "Read-only access to subscription invoices for admins who can open Payment in the shell."
+          }
+        },
+        "sms": {
+          "templates": {
+            "title": "SMS — Templates",
+            "detail": "List and view SMS templates when your role includes SMS access."
+          }
+        }
+      }
     }
   },
   "companiesAdmin": {

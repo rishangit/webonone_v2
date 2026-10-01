@@ -163,6 +163,90 @@
         "saved": "Guest assistant සැකසුම් සුරකින ලදී",
         "saveFailed": "Guest assistant සැකසුම් සුරැකිය නොහැක"
       }
+    },
+    "supportedAreas": {
+      "title": "සහායකට කළ හැකි දේ",
+      "description": "Chat හරහා platform tools කැඳවන ක්ෂේත්‍ර. ලිවීම් (create, update, delete) සැමවිටම සහායකයේ Confirm අවශ්‍යයි. ලැයිස්තුව ඔබේ role, company session සහ permissions මත රඳා පවතී.",
+      "loading": "සහායක ක්ෂේත්‍ර පූරණය වෙමින්…",
+      "empty": "මෙම ගිණුම සඳහා දැන් tool ක්ෂේත්‍ර නොමැත.",
+      "loadFailed": "සහායක ක්ෂේත්‍ර පූරණය කළ නොහැක.",
+      "requiresCompany": "සක්‍රිය company අවශ්‍ය",
+      "footnote": "බොහෝ තිරවල field-level polish (form sparkle) මෙහි ලැයිස්තුගත නොවන අවස්ථාවලදීත් ක්‍රියා කරයි. මෙම කාඩ්පත assistant tools සහ CRUD ක්‍රියා සඳහා පමණි.",
+      "operations": {
+        "list": "ලැයිස්තු & සෙවීම",
+        "get": "විස්තර බලන්න",
+        "read": "කියවීම",
+        "create": "සෑදීම",
+        "update": "යාවත්කාලීන",
+        "manage": "සම්බන්ධ & කළමනාකරණ",
+        "delete": "මකන්න"
+      },
+      "areas": {
+        "webonone": {
+          "publicCatalog": {
+            "title": "පොදු marketplace catalog",
+            "detail": "සමාගම් හරහා ප්‍රකාශිත products, services, spaces සොයන්න."
+          },
+          "companyCatalog": {
+            "title": "ඔබේ company catalog",
+            "detail": "Company products, services, spaces, tags, units, attributes — custom එකතු කිරීම, Data library සම්බන්ධ කිරීම, fork, linked items යාවත්කාලීන කිරීම."
+          },
+          "events": {
+            "title": "දින දර්ශනය & events",
+            "detail": "Company calendar events ලැයිස්තුගත කිරීම, බැලීම, සෑදීම, යාවත්කාලීන කිරීම, මකන්න."
+          },
+          "staff": {
+            "title": "Staff",
+            "detail": "Staff profiles ලැයිස්තුගත කිරීම, විස්තර, සෑදීම සහ යාවත්කාලීන කිරීම."
+          },
+          "staffLeaves": {
+            "title": "Staff leave",
+            "detail": "Leave requests ලැයිස්තුගත කිරීම; අනුමත/ප්‍රතික්ෂේප කිරීම permissions ඇති විට."
+          },
+          "companies": {
+            "title": "සමාගම් & ලියාපදිංචිය",
+            "detail": "සමාගම ලියාපදිංචි කිරීම, ඔබට අයිති සමාගම්, profiles, settings; super admin pending approvals."
+          }
+        },
+        "data": {
+          "tags": {
+            "title": "Data library — Tags",
+            "detail": "Catalog හරහා බෙදාගන්නා tag library. Super admin delete; company admin create/update."
+          },
+          "units": {
+            "title": "Data library — Units",
+            "detail": "සංඛ්‍යාත්මක attributes සඳහා මිනුම් ඒකක."
+          },
+          "attributes": {
+            "title": "Data library — Attributes",
+            "detail": "නැවත භාවිත attribute definitions (text හෝ number)."
+          },
+          "products": {
+            "title": "Data library — Products",
+            "detail": "Company catalog ට link කිරීමට පෙර platform product templates."
+          },
+          "services": {
+            "title": "Data library — Services",
+            "detail": "Platform service templates."
+          },
+          "spaces": {
+            "title": "Data library — Spaces",
+            "detail": "Platform space/venue templates."
+          }
+        },
+        "payment": {
+          "invoices": {
+            "title": "Payment — Invoices",
+            "detail": "Payment shell ප්‍රවේශය ඇති admins සඳහා subscription invoices (read-only)."
+          }
+        },
+        "sms": {
+          "templates": {
+            "title": "SMS — Templates",
+            "detail": "SMS access ඇති role සඳහා templates ලැයිස්තුගත කිරීම සහ බැලීම."
+          }
+        }
+      }
     }
   },
   "companiesAdmin": {

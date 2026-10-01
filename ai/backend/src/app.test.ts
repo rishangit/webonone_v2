@@ -142,6 +142,7 @@ async function withApi(
       executor: tools?.executor,
     }),
     aiSettingsService,
+    toolRegistry: tools?.registry ?? new ToolRegistry(),
     rateLimiter: createMemoryRateLimiter(limiter),
   })
   const server = createServer(app)
