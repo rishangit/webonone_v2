@@ -20,12 +20,30 @@ On the Windows IIS server (same host as `production.env` and IIS sites):
 4. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
 5. Install **Git for Windows** and **Node.js 22 LTS**. The runner **Windows service** often has a stale PATH (Git works in an interactive shell but not in Actions). The workflow looks for `C:\Program Files\Git\cmd\git.exe` and reloads Machine/User PATH; **restart the runner service** after installing Git so other tools are visible too.
 6. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows - do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
-7. Grant the runner service account:
-   - Read/execute on the repo and root `node_modules`
-   - Read on `production.env` and generated `backend/.env` files
-   - Permission to **recycle IIS app pools** (admin or delegated)
+7. Grant the runner service account **Modify** on `{DEPLOY_REPO_ROOT}` (not Read-only). Deploy must write `.git` (`git fetch`), `node_modules` (`npm ci`), and generated `.env` files. Also grant permission to **recycle IIS app pools**.
 8. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
-9. The default runner service account is **NETWORK SERVICE**. Folders created by an admin (e.g. `C:\Projects`) will trigger Git `dubious ownership`. The workflow sets `safe.directory` in **that account’s** global gitconfig (`C:\Windows\ServiceProfiles\NetworkService\.gitconfig`). Do not run `git config --global` in an admin PowerShell expecting it to fix Actions.
+9. The default runner service account is **NETWORK SERVICE**. Admin-created folders (e.g. `C:\Projects`) cause Git `dubious ownership` (the workflow sets `safe.directory` in **that account’s** gitconfig) and **Permission denied** on `.git/FETCH_HEAD` unless ACLs allow write. Do not run `git config --global` in an admin PowerShell expecting it to fix Actions.
+
+### NETWORK SERVICE cannot write to the clone
+
+`cannot open '.git/FETCH_HEAD': Permission denied` and `unable to unlink '.git/objects/...'` mean the runner cannot modify the clone. Fix this **once as Administrator** on the IIS server (the workflow cannot grant itself NTFS rights).
+
+**Option A (fastest):** grant Modify to NETWORK SERVICE. Use the same path as `DEPLOY_REPO_ROOT` (if Git reported `C:/Projects`, that folder is the repo):
+
+```powershell
+# Elevated PowerShell. Replace C:\Projects with DEPLOY_REPO_ROOT if different.
+icacls C:\Projects /grant "NT AUTHORITY\NETWORK SERVICE:(OI)(CI)M" /T
+```
+
+Confirm:
+
+```powershell
+icacls C:\Projects | Select-String 'NETWORK SERVICE'
+```
+
+You should see `(OI)(CI)(M)` or `(M)`. Then re-run **Deploy staging**.
+
+**Option B (cleaner long-term):** run the runner as the Windows account that already owns the clone (the user who ran `git clone`). Services → GitHub Actions runner → Log on → that account → restart the service. That account still needs Modify on the clone and IIS recycle rights.
 
 Optional repository variable:
 

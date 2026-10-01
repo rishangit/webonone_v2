@@ -100,6 +100,23 @@ jobs:
             $listed += $value
           }
 
+      - name: Require write access to clone
+        shell: powershell
+        run: |
+          $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+          $gitDir = Join-Path $env:DEPLOY_REPO_ROOT '.git'
+          if (-not (Test-Path -LiteralPath $gitDir)) {
+            throw "Not a git repository: $env:DEPLOY_REPO_ROOT"
+          }
+          $probe = Join-Path $gitDir 'actions-write-probe'
+          try {
+            [System.IO.File]::WriteAllText($probe, 'ok')
+            Remove-Item -LiteralPath $probe -Force
+          } catch {
+            throw "Runner account '$identity' cannot write under $gitDir. Grant Modify on DEPLOY_REPO_ROOT (including .git) to that account, or run the Actions runner service as the user who owns the clone. See tooling/CICD.md"
+          }
+          Write-Host "Write probe ok as $identity"
+
       - name: Sync deploy_staging branch
         shell: powershell
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
