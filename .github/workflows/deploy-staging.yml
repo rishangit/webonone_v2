@@ -12,7 +12,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to IIS
-    runs-on: [self-hosted, Windows, webonone-production]
+    runs-on: [self-hosted, Windows, webonone-staging]
     timeout-minutes: 180
 
     env:

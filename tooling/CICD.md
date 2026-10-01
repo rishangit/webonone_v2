@@ -14,7 +14,7 @@ Automated **quality checks** on pull requests and **full IIS deploy** when **`de
 On the Windows IIS server (same host as `production.env` and IIS sites):
 
 1. GitHub → **Settings → Actions → Runners → New self-hosted runner** (Windows x64).
-2. Install and register as a **service**. Add labels: `self-hosted`, `Windows`, `webonone-production` (must match `deploy-staging.yml`).
+2. Install and register as a **service**. Add labels: `self-hosted`, `Windows`, `webonone-staging` (must match `deploy-staging.yml`).
 3. **Repository variable** (Settings → Secrets and variables → Actions → Variables):
    - `DEPLOY_REPO_ROOT` — clone path IIS uses (e.g. `C:\Projects\webonone_v2`). See [identity/deploy/IIS.md](../identity/deploy/IIS.md).
 4. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
