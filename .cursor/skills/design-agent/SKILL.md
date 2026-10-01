@@ -72,6 +72,7 @@ Reference: `design/frontend/src/features/forms/components/FormCreateDialog.tsx`,
 
 ```bash
 npm run type-check -w design-root
+npm run lint -w @webonone/design-frontend
 npm run migrate -w design-root
 npm run build -w design-root
 ```

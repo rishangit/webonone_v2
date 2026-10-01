@@ -247,7 +247,7 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
     )
 
     const replace$ = prepared$.pipe(
-      filter(([action]) => !Boolean((action as ReturnType<typeof actions.loadListRequested>).payload.append)),
+      filter(([action]) => !(action as ReturnType<typeof actions.loadListRequested>).payload.append),
       debounce(([action]) =>
         (action as ReturnType<typeof actions.loadListRequested>).payload.force ? timer(0) : timer(400),
       ),

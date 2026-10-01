@@ -10,7 +10,7 @@ import type {
   SessionToken,
 } from '../types/event.types'
 
-function usePersonalEventsApi(): boolean {
+function shouldUsePersonalEventsApi(): boolean {
   const stored = readSessionRoleStorage()
   return isPersonalCalendarSession(stored?.activeRole, stored?.activeCompanyId)
 }
@@ -18,7 +18,7 @@ function usePersonalEventsApi(): boolean {
 function sessionPath(eventId: string, occurrenceDate: string): string {
   const event = encodeURIComponent(eventId)
   const date = encodeURIComponent(occurrenceDate)
-  if (usePersonalEventsApi()) {
+  if (shouldUsePersonalEventsApi()) {
     return `/me/events/${event}/sessions/${date}`
   }
   return `/company/events/${event}/sessions/${date}`
@@ -30,7 +30,7 @@ export const sessionTokensApi = {
   },
 
   list(eventId: string, occurrenceDate: string): Promise<SessionDetail> {
-    if (usePersonalEventsApi()) {
+    if (shouldUsePersonalEventsApi()) {
       return apiClient<SessionDetail>(sessionPath(eventId, occurrenceDate))
     }
     return apiClient<SessionDetail>(

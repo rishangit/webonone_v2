@@ -221,7 +221,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     if (pageLayout.footerId) {
       dispatch(websiteFootersActions.fetchDetailRequested({ id: pageLayout.footerId, force: true }))
     }
-  }, [accessToken, dispatch, kind, pageLayout?.footerId, pageLayout?.headerId])
+  }, [accessToken, dispatch, kind, pageLayout])
 
   useEffect(() => {
     if (!accessToken || !previewLayout?.themeId) return
@@ -325,6 +325,20 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [treeOpen])
+
+  const blockInheritedBinding = useMemo(() => {
+    if (!blockSettings?.hostBlockId || !blockSettings.sliderAddonId) return null
+    const ctx = findSliderHostContext(document, blockSettings.hostBlockId, blockSettings.sliderAddonId)
+    if (!ctx || ctx.slider.props.dataSource !== 'dataset' || !ctx.slider.props.datasetId) return null
+    const dataset =
+      datasetsState.items.find((item) => item.id === ctx.slider.props.datasetId) ?? null
+    return {
+      datasetId: ctx.slider.props.datasetId,
+      datasetName: dataset?.name ?? ctx.slider.props.datasetId,
+      source: 'slider' as const,
+      itemGroup: ctx.slider.props.itemGroup ?? null,
+    }
+  }, [blockSettings, document, datasetsState.items])
 
   if (embedParentOrigin) return null
   if (!accessToken) return <Navigate to="/login" replace />
@@ -627,20 +641,6 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         })()
       : findBlock(document, blockSettings.blockId)
     : null
-
-  const blockInheritedBinding = useMemo(() => {
-    if (!blockSettings?.hostBlockId || !blockSettings.sliderAddonId) return null
-    const ctx = findSliderHostContext(document, blockSettings.hostBlockId, blockSettings.sliderAddonId)
-    if (!ctx || ctx.slider.props.dataSource !== 'dataset' || !ctx.slider.props.datasetId) return null
-    const dataset =
-      datasetsState.items.find((item) => item.id === ctx.slider.props.datasetId) ?? null
-    return {
-      datasetId: ctx.slider.props.datasetId,
-      datasetName: dataset?.name ?? ctx.slider.props.datasetId,
-      source: 'slider' as const,
-      itemGroup: ctx.slider.props.itemGroup ?? null,
-    }
-  }, [blockSettings, document, datasetsState.items])
 
   function openBlockSettings(blockId?: string) {
     if (selection.kind === 'templateBlock') {

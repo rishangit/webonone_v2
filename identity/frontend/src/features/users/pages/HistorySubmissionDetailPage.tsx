@@ -60,7 +60,7 @@ export function HistorySubmissionDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [submissionId])
+  }, [submissionId, t])
 
   const back = () => {
     if (detail?.sessionTokenId && userId) {

@@ -139,7 +139,7 @@ export function CatalogFormDialog({
     if (phase === 'library') return `Add ${pluralLabel} from library`
     if (phase === 'source') return `Add ${noun}`
     return mode === 'create' ? `Create company ${noun}` : `Edit company ${noun}`
-  }, [kind, mode, noun, phase, pluralLabel])
+  }, [mode, noun, phase, pluralLabel])
 
   const description = useMemo(() => {
     if (phase === 'library') {

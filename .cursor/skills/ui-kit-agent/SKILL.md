@@ -51,6 +51,7 @@ From repo root:
 ```bash
 npm run build -w @webonone/ui-kit
 npm run type-check -w ui-kit-root
+npm run lint -w @webonone/ui-kit
 ```
 
 Optional: `npm run dev -w ui-kit-root` to preview showcase.

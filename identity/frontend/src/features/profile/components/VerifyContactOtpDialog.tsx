@@ -165,7 +165,7 @@ export function VerifyContactOtpDialog({
     setLoading(false)
     setSecondsLeft(config.countdownSeconds)
     void sendOtp()
-  }, [open, isHosted, channel, chrome, sendOtp])
+  }, [open, isHosted, channel, chrome, config.countdownSeconds, sendOtp])
 
   useEffect(() => {
     if (!open || isHosted || secondsLeft <= 0) return

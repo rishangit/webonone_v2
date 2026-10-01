@@ -42,7 +42,7 @@ export function LibraryPage() {
     }
     uploadPendingRef.current = false
     dispatch(mediaActions.resetUpload())
-  }, [dispatch, lastUploadFailed, lastUploadedItems, storeUploadError, uploadStatus])
+  }, [dispatch, lastUploadFailed, lastUploadedItems, storeUploadError, t, uploadStatus])
 
   function uploadFile(file: File) {
     setUploadError(null)

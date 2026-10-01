@@ -93,7 +93,7 @@ export function UserHistoryPanel({ user }: UserHistoryPanelProps) {
     return () => {
       cancelled = true
     }
-  }, [user.id])
+  }, [t, user.id])
 
   function openHistoryItem(item: UserHistoryItem) {
     if (item.kind === 'form_submission') {

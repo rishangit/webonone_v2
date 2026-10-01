@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -112,13 +112,17 @@ export function ProfileFormDialog({
     t('wizard.steps.summary'),
   ] as const
 
-  const STEP_DESCRIPTIONS = [
-    t('wizard.descriptions.account'),
-    t('wizard.descriptions.address'),
-    t('wizard.descriptions.contact'),
-    t('wizard.descriptions.name'),
-    t('wizard.descriptions.summary'),
-  ] as const
+  const STEP_DESCRIPTIONS = useMemo(
+    () =>
+      [
+        t('wizard.descriptions.account'),
+        t('wizard.descriptions.address'),
+        t('wizard.descriptions.contact'),
+        t('wizard.descriptions.name'),
+        t('wizard.descriptions.summary'),
+      ] as const,
+    [t],
+  )
 
   const title = t('editProfile')
   const finalSubmitLabel = t('saveChanges')
@@ -140,11 +144,14 @@ export function ProfileFormDialog({
   const blockOuterDismissRef = useRef(false)
   const blockTimerRef = useRef<number | null>(null)
 
-  const primaryLabelForStep = (current: ProfileWizardStep, saving: boolean) => {
-    if (saving) return t('saving')
-    if (current < PROFILE_WIZARD_TOTAL_STEPS) return tc('next')
-    return finalSubmitLabel
-  }
+  const primaryLabelForStep = useCallback(
+    (current: ProfileWizardStep, saving: boolean) => {
+      if (saving) return t('saving')
+      if (current < PROFILE_WIZARD_TOTAL_STEPS) return tc('next')
+      return finalSubmitLabel
+    },
+    [finalSubmitLabel, t, tc],
+  )
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
@@ -384,7 +391,17 @@ export function ProfileFormDialog({
         secondaryLabel: step > 1 ? tc('previous') : null,
       },
     )
-  }, [chrome, dialogRequestId, isProfileSaving, parentOrigin, selectorOpen, step])
+  }, [
+    STEP_DESCRIPTIONS,
+    chrome,
+    dialogRequestId,
+    isProfileSaving,
+    parentOrigin,
+    primaryLabelForStep,
+    selectorOpen,
+    step,
+    tc,
+  ])
 
   function handleFormOpenChange(next: boolean) {
     if (next) return

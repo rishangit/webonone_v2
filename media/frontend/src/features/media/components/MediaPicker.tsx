@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
@@ -70,7 +70,7 @@ export function MediaPicker({
   } = useAppSelector((s) => s.media)
 
   const listReady = storeQueryKey === listQueryKey
-  const displayItems = listReady ? items : []
+  const displayItems = useMemo(() => (listReady ? items : []), [items, listReady])
   const displayFolders: MediaFolderDto[] = listReady ? folders : []
   const loading = !listReady || listStatus === 'loading' || uploadStatus === 'uploading'
 

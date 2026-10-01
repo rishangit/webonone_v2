@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
@@ -105,11 +105,10 @@ export function ProductVariantFormDialog({
     t('variant.wizardStepIdentity'),
     t('variant.wizardStepSummary'),
   ]
-  const stepDescriptions = [
-    t('variant.descType'),
-    t('variant.descIdentity'),
-    t('variant.descSummary'),
-  ]
+  const stepDescriptions = useMemo(
+    () => [t('variant.descType'), t('variant.descIdentity'), t('variant.descSummary')],
+    [t],
+  )
 
   const [step, setStep] = useState<ProductVariantWizardStep>(embedStep)
   const [values, setValues] = useState<ProductVariantWizardFormValues>(() => ({
@@ -120,11 +119,14 @@ export function ProductVariantFormDialog({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const primaryLabelForStep = (current: ProductVariantWizardStep, isSaving: boolean) => {
-    if (isSaving) return t('saving')
-    if (current < TOTAL_STEPS) return tc('next')
-    return t('variant.addTitle')
-  }
+  const primaryLabelForStep = useCallback(
+    (current: ProductVariantWizardStep, isSaving: boolean) => {
+      if (isSaving) return t('saving')
+      if (current < TOTAL_STEPS) return tc('next')
+      return t('variant.addTitle')
+    },
+    [t, tc],
+  )
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
@@ -275,7 +277,16 @@ export function ProductVariantFormDialog({
         secondaryLabel: step > 1 ? tc('previous') : null,
       },
     )
-  }, [chrome, dialogRequestId, parentOrigin, saving, step])
+  }, [
+    chrome,
+    dialogRequestId,
+    parentOrigin,
+    primaryLabelForStep,
+    saving,
+    step,
+    stepDescriptions,
+    tc,
+  ])
 
   const stepIndex = step - 1
   const isSubmitting = saving

@@ -80,7 +80,7 @@ export function HistoryTokenDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [tokenId])
+  }, [t, tokenId])
 
   const backToUser = () => {
     if (userId) navigate(`/users/${userId}?tab=history`)

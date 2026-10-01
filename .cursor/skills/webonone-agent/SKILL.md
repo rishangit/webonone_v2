@@ -65,6 +65,13 @@ Reference: `features/shell/PlatformPeerDialogHost.tsx`, `features/media/Platform
 
 ## Verification
 
+Run after frontend changes:
+
+```bash
+npm run lint -w @webonone/webonone-frontend
+```
+
+
 From repo root:
 
 ```bash

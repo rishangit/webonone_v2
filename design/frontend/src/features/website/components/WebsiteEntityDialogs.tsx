@@ -535,7 +535,7 @@ export function WebsiteThemeDialog({
     setSlots(defaultWebsitePaletteTokens(slotNames))
     setImportOpen(false)
     nestedImportIdRef.current = null
-  }, [open, chrome])
+  }, [chrome, open, slotNames])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
@@ -572,7 +572,7 @@ export function WebsiteThemeDialog({
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [chrome, dialogRequestId, parentOrigin])
+  }, [chrome, dialogRequestId, parentOrigin, slotNames])
 
   function openImport() {
     if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {

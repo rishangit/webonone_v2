@@ -17,7 +17,7 @@ type EventsListResponse = {
   mode: 'series' | 'occurrences'
 }
 
-function usePersonalEventsApi(): boolean {
+function shouldUsePersonalEventsApi(): boolean {
   const stored = readSessionRoleStorage()
   return isPersonalCalendarSession(stored?.activeRole, stored?.activeCompanyId)
 }
@@ -29,7 +29,7 @@ export const eventsApi = {
     params.set('page', String(query.page ?? 1))
     params.set('pageSize', String(query.pageSize ?? 20))
     const qs = params.toString()
-    const path = usePersonalEventsApi() ? `/me/events?${qs}` : `/company/events?${qs}`
+    const path = shouldUsePersonalEventsApi() ? `/me/events?${qs}` : `/company/events?${qs}`
     const result = await apiClient<EventsListResponse>(path)
     return {
       items: result.items as CompanyEvent[],
@@ -41,7 +41,7 @@ export const eventsApi = {
 
   async listOccurrences(from: string, to: string): Promise<CompanyEventOccurrence[]> {
     const params = new URLSearchParams({ from, to })
-    const path = usePersonalEventsApi()
+    const path = shouldUsePersonalEventsApi()
       ? `/me/events?${params.toString()}`
       : `/company/events?${params.toString()}`
     const result = await apiClient<EventsListResponse>(path)
@@ -49,7 +49,7 @@ export const eventsApi = {
   },
 
   get(id: string): Promise<CompanyEvent> {
-    const path = usePersonalEventsApi()
+    const path = shouldUsePersonalEventsApi()
       ? `/me/events/${encodeURIComponent(id)}`
       : `/company/events/${encodeURIComponent(id)}`
     return apiClient<CompanyEvent>(path)

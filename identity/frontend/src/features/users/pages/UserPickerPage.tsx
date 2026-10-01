@@ -196,7 +196,7 @@ export function UserPickerPage() {
         }
       }
     },
-    [canLoadUsers, debouncedSearch, selectedRole],
+    [canLoadUsers, debouncedSearch, selectedRole, t],
   )
 
   useEffect(() => {

@@ -51,7 +51,7 @@ export function StaffLeavesPanel({ staff, canManage }: StaffLeavesPanelProps) {
 
   useEffect(() => {
     list.setExtraFilters({ staffId: staff.id })
-  }, [staff.id, list.setExtraFilters])
+  }, [list, staff.id, list.setExtraFilters])
 
   const reloadLeaves = useCallback(
     (page = 1, force = true) => {
