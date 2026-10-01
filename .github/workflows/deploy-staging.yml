@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Require DEPLOY_REPO_ROOT
-        shell: pwsh
+        shell: powershell
         run: |
           if (-not $env:DEPLOY_REPO_ROOT) {
             Write-Error 'Set repository variable DEPLOY_REPO_ROOT (e.g. C:\Projects\webonone_v2). See tooling/CICD.md'
@@ -31,7 +31,7 @@ jobs:
           }
 
       - name: Preflight production.env
-        shell: pwsh
+        shell: powershell
         run: |
           $envFile = Join-Path $env:DEPLOY_REPO_ROOT 'production.env'
           if (-not (Test-Path -LiteralPath $envFile)) {
@@ -39,7 +39,7 @@ jobs:
           }
 
       - name: Sync deploy_staging branch
-        shell: pwsh
+        shell: powershell
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         run: |
           git fetch origin $env:DEPLOY_BRANCH
@@ -67,13 +67,13 @@ jobs:
 
       - name: Recycle IIS app pools
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
-        shell: pwsh
+        shell: powershell
         run: |
           & powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -SkipMissing
 
       - name: Smoke health checks
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
-        shell: pwsh
+        shell: powershell
         env:
           SMOKE_HEALTH_URLS: ${{ vars.SMOKE_HEALTH_URLS }}
         run: |

@@ -19,11 +19,12 @@ On the Windows IIS server (same host as `production.env` and IIS sites):
    - `DEPLOY_REPO_ROOT` — clone path IIS uses (e.g. `C:\Projects\webonone_v2`). See [identity/deploy/IIS.md](../identity/deploy/IIS.md).
 4. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
 5. Install **Node.js 22 LTS** on the PATH the runner service uses.
-6. Grant the runner service account:
+6. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows — do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
+7. Grant the runner service account:
    - Read/execute on the repo and root `node_modules`
    - Read on `production.env` and generated `backend/.env` files
    - Permission to **recycle IIS app pools** (admin or delegated)
-7. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
+8. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
 
 Optional repository variable:
 
