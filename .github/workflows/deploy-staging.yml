@@ -129,6 +129,15 @@ jobs:
         with:
           node-version: "22"
 
+      # IIS Node keeps native DLLs loaded from repo node_modules (sharp/libvips).
+      # npm ci cannot unlink those files until the app pools are stopped.
+      - name: Stop IIS app pools
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: powershell
+        run: |
+          $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\recycle-iis-app-pools.ps1'
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Action Stop -SkipMissing
+
       - name: Install dependencies
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: cmd
@@ -149,12 +158,13 @@ jobs:
         shell: cmd
         run: npm run deploy:all
 
-      - name: Recycle IIS app pools
+      - name: Start IIS app pools
+        if: always()
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: powershell
         run: |
           $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\recycle-iis-app-pools.ps1'
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -SkipMissing
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Action Start -SkipMissing
 
       - name: Smoke health checks
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}

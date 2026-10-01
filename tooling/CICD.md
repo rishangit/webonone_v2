@@ -20,7 +20,7 @@ On the Windows IIS server (same host as `production.env` and IIS sites):
 4. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
 5. Install **Git for Windows** and **Node.js 22 LTS**. The runner **Windows service** often has a stale PATH (Git works in an interactive shell but not in Actions). The workflow looks for `C:\Program Files\Git\cmd\git.exe` and reloads Machine/User PATH; **restart the runner service** after installing Git so other tools are visible too.
 6. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows - do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
-7. Grant the runner service account **Modify** on `{DEPLOY_REPO_ROOT}` (not Read-only). Deploy must write `.git` (`git fetch`), `node_modules` (`npm ci`), and generated `.env` files. Also grant permission to **recycle IIS app pools**.
+7. Grant the runner service account **Modify** on `{DEPLOY_REPO_ROOT}` (not Read-only). Deploy must write `.git` (`git fetch`), `node_modules` (`npm ci`), and generated `.env` files. Also grant permission to **stop/start IIS app pools** (the runner stops pools before `npm ci` so Node releases native DLLs).
 8. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
 9. The default runner service account is **NETWORK SERVICE**. Admin-created folders (e.g. `C:\Projects`) cause Git `dubious ownership` (the workflow sets `safe.directory` in **that account’s** gitconfig) and **Permission denied** on `.git/FETCH_HEAD` unless ACLs allow write. Do not run `git config --global` in an admin PowerShell expecting it to fix Actions.
 
@@ -71,12 +71,13 @@ In `DEPLOY_REPO_ROOT`:
 
 1. Preflight: `production.env` must exist
 2. `git fetch` / force-checkout `origin/deploy_staging` (tracked files reset; untracked `production.env` is kept)
-3. `npm ci`
-4. `npm run env:apply` (write each service `backend/.env` before migrate)
-5. `npm run migrate:all`
-6. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
-7. `npm run recycle:iis` - restart app pools listed in [`iis-app-pools.json`](iis-app-pools.json)
-8. Smoke GET each `/api/v1/health` URL
+3. Stop IIS app pools (`npm run iis:stop`) so Node releases `node_modules` native DLLs (e.g. sharp `libvips-42.dll`). Windows cannot unlink a loaded DLL (`npm ci` `EPERM`).
+4. `npm ci`
+5. `npm run env:apply` (write each service `backend/.env` before migrate)
+6. `npm run migrate:all`
+7. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
+8. Start IIS app pools (`npm run iis:start`) even if a later step failed, so sites are not left stopped
+9. Smoke GET each `/api/v1/health` URL
 
 Expect **tens of minutes** for a full `deploy:all`.
 
@@ -85,10 +86,11 @@ Expect **tens of minutes** for a full `deploy:all`.
 ```powershell
 cd $env:DEPLOY_REPO_ROOT   # or your clone path
 git pull origin deploy_staging
+npm run iis:stop
 npm run env:apply
 npm run migrate:all
 npm run deploy:all
-npm run recycle:iis
+npm run iis:start
 powershell -ExecutionPolicy Bypass -File tooling/smoke-production-health.ps1
 ```
 

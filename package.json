@@ -120,6 +120,8 @@
     "migrate:support": "npm run migrate -w support-root",
     "migrate:all": "npm run migrate:identity && npm run migrate:webonone && npm run migrate:media && npm run migrate:email && npm run migrate:data && npm run migrate:sms && npm run migrate:payment && npm run migrate:website && npm run migrate:design && npm run migrate:ai && npm run migrate:support",
     "recycle:iis": "powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -SkipMissing",
+    "iis:stop": "powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -Action Stop -SkipMissing",
+    "iis:start": "powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -Action Start -SkipMissing",
     "type-check": "npm run type-check --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
