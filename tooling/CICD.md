@@ -15,14 +15,20 @@ On the Windows IIS server (same host as `production.env` and IIS sites):
 
 1. GitHub → **Settings → Actions → Runners → New self-hosted runner** (Windows x64).
 2. Install and register as a **service**. Add labels: `self-hosted`, `Windows`, `webonone-staging` (must match `deploy-staging.yml`).
-3. **Repository variable** (Settings → Secrets and variables → Actions → Variables):
+3. **Log on the runner service as a local Administrator** (not the default **NETWORK SERVICE**). Stopping IIS app pools and reading `inetsrv\config\redirection.config` require admin. Services → GitHub Actions runner → **Log on** → this account (the same admin that cloned `C:\Projects`) → restart the service.
+4. **Repository variable** (Settings → Secrets and variables → Actions → Variables):
    - `DEPLOY_REPO_ROOT` — clone path IIS uses (e.g. `C:\Projects\webonone_v2`). See [identity/deploy/IIS.md](../identity/deploy/IIS.md).
-4. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
-5. Install **Git for Windows** and **Node.js 22 LTS**. The runner **Windows service** often has a stale PATH (Git works in an interactive shell but not in Actions). The workflow looks for `C:\Program Files\Git\cmd\git.exe` and reloads Machine/User PATH; **restart the runner service** after installing Git so other tools are visible too.
-6. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows - do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
-7. Grant the runner service account **Modify** on `{DEPLOY_REPO_ROOT}` (not Read-only). Deploy must write `.git` (`git fetch`), `node_modules` (`npm ci`), and generated `.env` files. Also grant permission to **stop/start IIS app pools** (the runner stops pools before `npm ci` so Node releases native DLLs).
-8. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
-9. The default runner service account is **NETWORK SERVICE**. Admin-created folders (e.g. `C:\Projects`) cause Git `dubious ownership` (the workflow sets `safe.directory` in **that account’s** gitconfig) and **Permission denied** on `.git/FETCH_HEAD` unless ACLs allow write. Do not run `git config --global` in an admin PowerShell expecting it to fix Actions.
+5. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
+6. Install **Git for Windows** and **Node.js 22 LTS**. The runner **Windows service** often has a stale PATH (Git works in an interactive shell but not in Actions). The workflow looks for `C:\Program Files\Git\cmd\git.exe` and reloads Machine/User PATH; **restart the runner service** after installing Git so other tools are visible too.
+7. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows - do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
+8. That admin account already owns the clone in typical setups. If you keep **NETWORK SERVICE**, grant it **Modify** on `{DEPLOY_REPO_ROOT}` (see below) — but IIS stop/start will still fail until the runner is an Administrator.
+9. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
+
+### Runner account and IIS
+
+Default runner logon is **NETWORK SERVICE**. That account cannot read `C:\Windows\System32\inetsrv\config\redirection.config`, so `appcmd` / WebAdministration fail with `insufficient permissions`. Granting Modify on `C:\Projects` does **not** fix IIS.
+
+**Required:** Services → runner → Log on → local **Administrators** account → restart. Then re-run **Deploy staging**.
 
 ### NETWORK SERVICE cannot write to the clone
 
