@@ -9,6 +9,10 @@ concurrency:
   group: staging-deploy
   cancel-in-progress: false
 
+# Windows PowerShell 5.1 (shell: powershell) reads GitHub's temp .ps1 as
+# Windows-1252. Keep every run: script ASCII-only: an em dash (UTF-8 E2 80 94)
+# is read as a smart quote and yields "string is missing the terminator".
+
 jobs:
   deploy:
     name: Deploy to IIS
@@ -24,10 +28,10 @@ jobs:
         shell: powershell
         run: |
           if (-not $env:DEPLOY_REPO_ROOT) {
-            Write-Error 'Set repository variable DEPLOY_REPO_ROOT (e.g. C:\Projects\webonone_v2). See tooling/CICD.md'
+            throw 'Set repository variable DEPLOY_REPO_ROOT (e.g. C:\Projects\webonone_v2). See tooling/CICD.md'
           }
           if (-not (Test-Path -LiteralPath $env:DEPLOY_REPO_ROOT)) {
-            Write-Error "DEPLOY_REPO_ROOT does not exist: $env:DEPLOY_REPO_ROOT"
+            throw "DEPLOY_REPO_ROOT does not exist: $env:DEPLOY_REPO_ROOT"
           }
 
       - name: Preflight production.env
@@ -35,7 +39,7 @@ jobs:
         run: |
           $envFile = Join-Path $env:DEPLOY_REPO_ROOT 'production.env'
           if (-not (Test-Path -LiteralPath $envFile)) {
-            Write-Error "Missing production.env at $envFile — copy from production.env.example"
+            throw "Missing production.env at $envFile. Copy from production.env.example"
           }
 
       - name: Sync deploy_staging branch
@@ -43,33 +47,39 @@ jobs:
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         run: |
           git fetch origin $env:DEPLOY_BRANCH
-          git checkout $env:DEPLOY_BRANCH
-          git pull origin $env:DEPLOY_BRANCH
+          git checkout --force -B $env:DEPLOY_BRANCH "origin/$($env:DEPLOY_BRANCH)"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: ${{ env.DEPLOY_REPO_ROOT }}/package-lock.json
 
       - name: Install dependencies
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: cmd
         run: npm ci
+
+      - name: Apply production.env
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: cmd
+        run: npm run env:apply
 
       - name: Run migrations
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: cmd
         run: npm run migrate:all
 
       - name: Build and stage deploy
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: cmd
         run: npm run deploy:all
 
       - name: Recycle IIS app pools
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: powershell
         run: |
-          & powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -SkipMissing
+          $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\recycle-iis-app-pools.ps1'
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -SkipMissing
 
       - name: Smoke health checks
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
@@ -77,4 +87,5 @@ jobs:
         env:
           SMOKE_HEALTH_URLS: ${{ vars.SMOKE_HEALTH_URLS }}
         run: |
-          & powershell -ExecutionPolicy Bypass -File tooling/smoke-production-health.ps1
+          $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\smoke-production-health.ps1'
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script

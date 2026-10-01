@@ -51,12 +51,13 @@ Deploy runs **after** merge via `push` to `deploy_staging`; it does not replace 
 In `DEPLOY_REPO_ROOT`:
 
 1. Preflight: `production.env` must exist
-2. `git fetch` / `checkout deploy_staging` / `pull`
+2. `git fetch` / force-checkout `origin/deploy_staging` (tracked files reset; untracked `production.env` is kept)
 3. `npm ci`
-4. `npm run migrate:all`
-5. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
-6. `npm run recycle:iis` — restart app pools listed in [`iis-app-pools.json`](iis-app-pools.json)
-7. Smoke GET each `/api/v1/health` URL
+4. `npm run env:apply` (write each service `backend/.env` before migrate)
+5. `npm run migrate:all`
+6. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
+7. `npm run recycle:iis` - restart app pools listed in [`iis-app-pools.json`](iis-app-pools.json)
+8. Smoke GET each `/api/v1/health` URL
 
 Expect **tens of minutes** for a full `deploy:all`.
 
@@ -65,6 +66,7 @@ Expect **tens of minutes** for a full `deploy:all`.
 ```powershell
 cd $env:DEPLOY_REPO_ROOT   # or your clone path
 git pull origin deploy_staging
+npm run env:apply
 npm run migrate:all
 npm run deploy:all
 npm run recycle:iis

@@ -31,20 +31,20 @@ foreach ($url in $urls) {
     try {
         $response = Invoke-WebRequest -Uri $url -Method Get -UseBasicParsing -TimeoutSec 60
     } catch {
-        Write-Host "FAIL $url — $($_.Exception.Message)"
+        Write-Host "FAIL $url - $($_.Exception.Message)"
         $failed = $true
         continue
     }
 
     if ($response.StatusCode -ne 200) {
-        Write-Host "FAIL $url — HTTP $($response.StatusCode)"
+        Write-Host "FAIL $url - HTTP $($response.StatusCode)"
         $failed = $true
         continue
     }
 
     $body = $response.Content
     if ($body -notmatch '"status"\s*:\s*"ok"') {
-        Write-Host "FAIL $url — body does not contain `"status`":`"ok`""
+        Write-Host "FAIL $url - body does not contain `"status`":`"ok`""
         Write-Host $body
         $failed = $true
         continue

@@ -78,7 +78,7 @@ if (Test-Path $DesktopInstaller) {
     Copy-Item -Path $DesktopInstaller -Destination (Join-Path $DownloadsDir 'WebOnOne-Setup.exe') -Force
     Write-Host 'Copied desktop installer to public\downloads\WebOnOne-Setup.exe'
 } else {
-    Write-Host "Desktop installer not found at $DesktopInstaller — run npm run build:desktop before deploy to publish the download."
+    Write-Host "Desktop installer not found at $DesktopInstaller - run npm run build:desktop before deploy to publish the download."
 }
 
 Write-Host ''
