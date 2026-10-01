@@ -26,9 +26,26 @@ On the Windows IIS server (same host as `production.env` and IIS sites):
 
 ### Runner account and IIS
 
-Default runner logon is **NETWORK SERVICE**. That account cannot read `C:\Windows\System32\inetsrv\config\redirection.config`, so `appcmd` / WebAdministration fail with `insufficient permissions`. Granting Modify on `C:\Projects` does **not** fix IIS.
+The latest job log still shows `NT AUTHORITY\NETWORK SERVICE`. Changing YAML cannot fix IIS: that account cannot read `inetsrv\config\redirection.config`.
 
-**Required:** Services → runner → Log on → local **Administrators** account → restart. Then re-run **Deploy staging**.
+**Do this once in an elevated Administrator PowerShell on the IIS server** (does not wait for git pull; copy the file after pull, or run the same commands):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Projects\tooling\enable-actions-runner-iis.ps1
+```
+
+That script adds **NETWORK SERVICE** to local **Administrators**, grants Modify on IIS `inetsrv\config`, and **restarts** the `actions.runner*` service so the new group token applies. Then re-run **Deploy staging**.
+
+Confirm before the next run:
+
+```powershell
+Get-LocalGroupMember Administrators | Where-Object { $_.Name -like '*NETWORK SERVICE*' }
+Get-CimInstance Win32_Service | Where-Object { $_.Name -like 'actions.runner*' } | Select-Object Name, StartName, State
+```
+
+You should see NETWORK SERVICE listed in Administrators, and the runner **Running**. GitHub → Settings → Actions → Runners should show **Idle**.
+
+Alternative: Services → runner → Log on → local Administrator → restart. If Log on was not changed, jobs keep running as NETWORK SERVICE (this is what the current error shows).
 
 ### NETWORK SERVICE cannot write to the clone
 
