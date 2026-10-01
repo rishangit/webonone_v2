@@ -141,8 +141,5 @@
     },
     "react": "19.1.0",
     "react-dom": "19.1.0"
-  },
-  "dependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.62.2"
   }
 }
