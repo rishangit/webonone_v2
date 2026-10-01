@@ -9,6 +9,7 @@ import { createApp } from './app.js'
 import { createConversationService } from './services/conversation.service.js'
 import { createMemoryConversationRepository } from './services/conversation.repository.js'
 import { createMemoryRateLimiter } from './middleware/rateLimit.js'
+import { ToolRegistry } from './ai/tools/registry.js'
 import type { AiSettingsService } from './services/aiSettings.service.js'
 
 const secret = env.jwtSecret
@@ -94,6 +95,7 @@ async function withApi(settings: AiSettingsService, fn: (base: string, token: st
       defaultSystemPrompt: 'test-prompt',
     }),
     aiSettingsService: settings,
+    toolRegistry: new ToolRegistry(),
     rateLimiter: createMemoryRateLimiter({ max: 100, windowMs: 60_000 }),
   })
   const server = createServer(app)
@@ -119,6 +121,7 @@ describe('AI settings API', () => {
         defaultSystemPrompt: 'test',
       }),
       aiSettingsService: settings,
+      toolRegistry: new ToolRegistry(),
       rateLimiter: createMemoryRateLimiter({ max: 100, windowMs: 60_000 }),
     })
     const server = createServer(app)
@@ -176,6 +179,7 @@ describe('AI settings API', () => {
         defaultSystemPrompt: 'test',
       }),
       aiSettingsService: settings,
+      toolRegistry: new ToolRegistry(),
       rateLimiter: createMemoryRateLimiter({ max: 100, windowMs: 60_000 }),
     })
     const server = createServer(app)

@@ -9,6 +9,7 @@ import { createApp } from './app.js'
 import { createConversationService } from './services/conversation.service.js'
 import { createMemoryConversationRepository } from './services/conversation.repository.js'
 import { createMemoryRateLimiter } from './middleware/rateLimit.js'
+import { ToolRegistry } from './ai/tools/registry.js'
 import { createTextPolishService, stripPolishedText } from './services/textPolish.service.js'
 import type { AiSettingsService } from './services/aiSettings.service.js'
 import type { AiProvider, ChatCompletionInput, ChatCompletionResult } from './ai/providers/types.js'
@@ -88,6 +89,7 @@ describe('POST /text/polish', () => {
         defaultSystemPrompt: 'test',
       }),
       aiSettingsService: settings,
+      toolRegistry: new ToolRegistry(),
       textPolishService: createTextPolishService({
         resolveProvider: async (ctx) => {
           try {
@@ -135,6 +137,7 @@ describe('POST /text/polish', () => {
         defaultSystemPrompt: 'test',
       }),
       aiSettingsService: settings,
+      toolRegistry: new ToolRegistry(),
       textPolishService: createTextPolishService({
         resolveProvider: async () => ({ provider, systemPrompt: 'chat' }),
       }),
@@ -191,6 +194,7 @@ describe('POST /text/polish', () => {
         defaultSystemPrompt: 'test',
       }),
       aiSettingsService: settings,
+      toolRegistry: new ToolRegistry(),
       textPolishService: createTextPolishService({
         resolveProvider: async () => {
           throw new Error('unused')

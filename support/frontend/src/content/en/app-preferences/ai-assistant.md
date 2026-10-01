@@ -15,3 +15,5 @@ When you are signed in, a **chat** button appears in the header.
 4. If the assistant wants to create or change something, confirm the action when asked.
 
 The assistant needs a working API key. Configure it under [AI API key](/docs/app-preferences/ai-api-key). The same setup enables the [sparkle on text fields](/docs/app-preferences/field-ai-polish). Guests on the public website use a separate [catalog assistant](/docs/public-catalog/guest-assistant).
+
+Under **Basic Settings → AI**, the **What the assistant can do** card lists the areas where chat can call platform tools (list, create, update, delete) for your role and company session. Writes always need your confirm in the chat panel.

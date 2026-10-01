@@ -93,6 +93,7 @@ const textPolishService = createTextPolishService({ resolveProvider })
 const app = createApp({
   conversationService,
   aiSettingsService,
+  toolRegistry: registry,
   textPolishService,
   rateLimiter: createMemoryRateLimiter({
     max: env.guestRateLimitMax,
