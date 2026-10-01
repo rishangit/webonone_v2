@@ -25,6 +25,7 @@ On the Windows IIS server (same host as `production.env` and IIS sites):
    - Read on `production.env` and generated `backend/.env` files
    - Permission to **recycle IIS app pools** (admin or delegated)
 8. For a **private** repo, ensure the runner can `git pull` (runner’s credentials or deploy key).
+9. The default runner service account is **NETWORK SERVICE**. Folders created by an admin (e.g. `C:\Projects`) will trigger Git `dubious ownership`. The workflow sets `safe.directory` in **that account’s** global gitconfig (`C:\Windows\ServiceProfiles\NetworkService\.gitconfig`). Do not run `git config --global` in an admin PowerShell expecting it to fix Actions.
 
 Optional repository variable:
 

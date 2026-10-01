@@ -74,6 +74,32 @@ jobs:
           Write-Host "Using git: $gitExe"
           & $gitExe --version
 
+      - name: Trust git checkout directory
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $listed = @(git config --global --get-all safe.directory 2>$null)
+          $ErrorActionPreference = 'Stop'
+          $global:LASTEXITCODE = 0
+
+          $toAdd = @('*')
+          $current = $env:DEPLOY_REPO_ROOT.TrimEnd('\')
+          while ($current) {
+            $toAdd += ($current -replace '\\', '/')
+            $parent = Split-Path -Parent $current
+            if (-not $parent -or $parent -eq $current) { break }
+            $current = $parent
+          }
+
+          foreach ($value in $toAdd) {
+            if ($listed -contains $value) { continue }
+            git config --global --add safe.directory $value
+            if ($LASTEXITCODE -ne 0) {
+              throw "git config --global --add safe.directory failed for $value"
+            }
+            $listed += $value
+          }
+
       - name: Sync deploy_staging branch
         shell: powershell
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
