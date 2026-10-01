@@ -42,6 +42,38 @@ jobs:
             throw "Missing production.env at $envFile. Copy from production.env.example"
           }
 
+      - name: Locate Git for Windows
+        shell: powershell
+        run: |
+          $machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+          $userPath = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+          $env:Path = "$machinePath;$userPath;$env:Path"
+
+          $gitExe = $null
+          $gitCmd = Get-Command git.exe -ErrorAction SilentlyContinue
+          if ($gitCmd) {
+            $gitExe = $gitCmd.Source
+          }
+          if (-not $gitExe) {
+            foreach ($candidate in @(
+              'C:\Program Files\Git\cmd\git.exe',
+              'C:\Program Files (x86)\Git\cmd\git.exe'
+            )) {
+              if (Test-Path -LiteralPath $candidate) {
+                $gitExe = $candidate
+                break
+              }
+            }
+          }
+          if (-not $gitExe) {
+            throw 'git.exe not found. Install Git for Windows and restart the GitHub Actions runner service.'
+          }
+
+          $gitDir = Split-Path -Parent $gitExe
+          $gitDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Write-Host "Using git: $gitExe"
+          & $gitExe --version
+
       - name: Sync deploy_staging branch
         shell: powershell
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}

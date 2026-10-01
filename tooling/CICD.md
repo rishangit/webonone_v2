@@ -18,8 +18,8 @@ On the Windows IIS server (same host as `production.env` and IIS sites):
 3. **Repository variable** (Settings → Secrets and variables → Actions → Variables):
    - `DEPLOY_REPO_ROOT` — clone path IIS uses (e.g. `C:\Projects\webonone_v2`). See [identity/deploy/IIS.md](../identity/deploy/IIS.md).
 4. Create **`{DEPLOY_REPO_ROOT}\production.env`** from [`production.env.example`](../production.env.example). Never commit `production.env`.
-5. Install **Node.js 22 LTS** on the PATH the runner service uses.
-6. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows — do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
+5. Install **Git for Windows** and **Node.js 22 LTS**. The runner **Windows service** often has a stale PATH (Git works in an interactive shell but not in Actions). The workflow looks for `C:\Program Files\Git\cmd\git.exe` and reloads Machine/User PATH; **restart the runner service** after installing Git so other tools are visible too.
+6. **Windows PowerShell 5.1** (built-in) is enough for deploy workflows - do **not** require PowerShell 7 (`pwsh`) unless you change workflow `shell` settings.
 7. Grant the runner service account:
    - Read/execute on the repo and root `node_modules`
    - Read on `production.env` and generated `backend/.env` files
