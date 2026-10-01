@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
+  isAccessTokenExpired,
   readServiceAuthSession,
   sendIdentitySsoNone,
   sendIdentitySsoSession,
@@ -39,7 +40,12 @@ export function SilentSsoPage() {
     // Read storage directly — do not use loadStoredAuthSession (prompt=login side effects).
     const session = readServiceAuthSession<UserProfile>(IDENTITY_AUTH_STORAGE_KEY)
 
-    if (session?.accessToken && session.user?.id && session.user.email) {
+    if (
+      session?.accessToken &&
+      !isAccessTokenExpired(session.accessToken) &&
+      session.user?.id &&
+      session.user.email
+    ) {
       sendIdentitySsoSession(parentOrigin, {
         accessToken: session.accessToken,
         user: {

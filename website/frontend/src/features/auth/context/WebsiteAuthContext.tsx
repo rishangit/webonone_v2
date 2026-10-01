@@ -34,6 +34,7 @@ const SSO_PROBE_COOLDOWN_MS = 4000
 
 type WebsiteAuthContextValue = {
   accessToken: string | null
+  refreshToken: string | null
   user: WebsiteUser | null
   isAuthenticated: boolean
   /** True while silent SSO or auth-code exchange is still resolving. */
@@ -42,7 +43,11 @@ type WebsiteAuthContextValue = {
   /** Bump when another tab/app may have a new session — silent SSO re-probes. */
   ssoProbeEpoch: number
   requestSsoProbe: (reason: string) => void
-  login: (session: { accessToken: string; user: WebsiteUser }) => void
+  login: (session: {
+    accessToken: string
+    user: WebsiteUser
+    refreshToken?: string | null
+  }) => void
   logout: () => void
 }
 
@@ -56,12 +61,20 @@ function clearSsoBridgePending(): void {
   }
 }
 
-function loadInitialSession(): { accessToken: string | null; user: WebsiteUser | null } {
+function loadInitialSession(): {
+  accessToken: string | null
+  refreshToken: string | null
+  user: WebsiteUser | null
+} {
   const stored = readWebsiteAuthSession()
   if (!stored) {
-    return { accessToken: null, user: null }
+    return { accessToken: null, refreshToken: null, user: null }
   }
-  return { accessToken: stored.accessToken, user: stored.user }
+  return {
+    accessToken: stored.accessToken,
+    refreshToken: stored.refreshToken ?? null,
+    user: stored.user,
+  }
 }
 
 /** Guests start pending until silent SSO / code bootstrap settles; stored session is ready. */
@@ -107,12 +120,19 @@ export function WebsiteAuthProvider({ children }: { children: ReactNode }) {
     setSsoProbeEpoch((n) => n + 1)
   }, [])
 
-  const login = useCallback((next: { accessToken: string; user: WebsiteUser }) => {
-    console.log(LOG, 'login()', { userId: next.user.id, email: next.user.email })
-    clearWebsiteSsoSkip('login')
-    writeWebsiteAuthSession(next)
-    setSession({ accessToken: next.accessToken, user: next.user })
-  }, [])
+  const login = useCallback(
+    (next: { accessToken: string; user: WebsiteUser; refreshToken?: string | null }) => {
+      console.log(LOG, 'login()', { userId: next.user.id, email: next.user.email })
+      clearWebsiteSsoSkip('login')
+      writeWebsiteAuthSession(next)
+      setSession({
+        accessToken: next.accessToken,
+        refreshToken: next.refreshToken ?? null,
+        user: next.user,
+      })
+    },
+    [],
+  )
 
   const logout = useCallback(() => {
     const path = `${window.location.pathname}${window.location.search}` || '/'
@@ -164,7 +184,11 @@ export function WebsiteAuthProvider({ children }: { children: ReactNode }) {
           userId: stored.user.id,
         })
         clearWebsiteSsoSkip('storage SET')
-        setSession({ accessToken: stored.accessToken, user: stored.user })
+        setSession({
+          accessToken: stored.accessToken,
+          refreshToken: stored.refreshToken ?? null,
+          user: stored.user,
+        })
         setAuthPending(false)
         return
       }
@@ -172,7 +196,7 @@ export function WebsiteAuthProvider({ children }: { children: ReactNode }) {
       console.log(LOG, 'storage CLEAR → peer/other-tab logout')
       markWebsiteSsoSkipped('storage CLEAR')
       clearSsoBridgePending()
-      setSession({ accessToken: null, user: null })
+      setSession({ accessToken: null, refreshToken: null, user: null })
       setAuthPending(false)
     }
 
@@ -230,6 +254,7 @@ export function WebsiteAuthProvider({ children }: { children: ReactNode }) {
       accessToken: session.accessToken,
       user: session.user,
       isAuthenticated: Boolean(session.accessToken && session.user),
+      refreshToken: session.refreshToken,
       isAuthPending,
       setAuthPending,
       ssoProbeEpoch,
@@ -243,6 +268,7 @@ export function WebsiteAuthProvider({ children }: { children: ReactNode }) {
       logout,
       requestSsoProbe,
       session.accessToken,
+      session.refreshToken,
       session.user,
       ssoProbeEpoch,
     ],

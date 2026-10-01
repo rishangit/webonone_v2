@@ -1,4 +1,6 @@
 import { parseCoreReturnPath, redirectWithAuthCode } from '@webonone/platform-nav'
+import { resolveAccessTokenForHandoff } from '@/features/auth/utils/accessTokenHandoff'
+import type { WebsiteAuthSession } from '@/features/auth/utils/authStorage'
 import { getIdentityApiBase } from '@/features/auth/utils/identityConfig'
 
 const DEFAULT_WEBONONE_ORIGIN = 'http://127.0.0.1:3010'
@@ -24,7 +26,16 @@ export function getWebOnOneAuthHandoffUrl(): string {
 }
 
 /** Open App while logged into the website — share session via Identity auth code. */
-export async function redirectToWebOnOneApp(accessToken: string, returnPath?: string): Promise<void> {
+export async function redirectToWebOnOneApp(
+  session: WebsiteAuthSession,
+  returnPath?: string,
+  onAccessTokenRefreshed?: (next: Pick<WebsiteAuthSession, 'accessToken' | 'refreshToken'>) => void,
+): Promise<void> {
+  const { accessToken, refreshToken } = await resolveAccessTokenForHandoff(session)
+  if (accessToken !== session.accessToken) {
+    onAccessTokenRefreshed?.({ accessToken, refreshToken })
+  }
+
   const target = new URL(getWebOnOneAuthHandoffUrl())
   const parsed = returnPath ? parseCoreReturnPath(returnPath) : null
   if (parsed) {

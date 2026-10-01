@@ -56,7 +56,7 @@ async function ensureAndroidChannel(): Promise<void> {
     vibrationPattern: [0, 250, 250, 250],
     enableVibrate: true,
     enableLights: true,
-    lightColor: '#2563eb',
+    lightColor: '#171717',
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     bypassDnd: false,
     showBadge: true,

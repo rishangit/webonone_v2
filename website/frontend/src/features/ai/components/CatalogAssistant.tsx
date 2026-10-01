@@ -36,7 +36,7 @@ const setupLinkClassName = 'text-primary underline-offset-4 hover:underline'
 
 export function CatalogAssistant({ open, onClose }: CatalogAssistantProps) {
   const { t } = useTranslation('search')
-  const { accessToken } = useWebsiteAuth()
+  const { accessToken, refreshToken, user, login } = useWebsiteAuth()
   const navigate = useNavigate()
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatLine[]>([])
@@ -129,8 +129,12 @@ export function CatalogAssistant({ open, onClose }: CatalogAssistantProps) {
   }
 
   function openAiSettings() {
-    if (accessToken) {
-      void redirectToWebOnOneApp(accessToken, AI_SETTINGS_PATH)
+    if (accessToken && user) {
+      void redirectToWebOnOneApp(
+        { accessToken, refreshToken, user },
+        AI_SETTINGS_PATH,
+        (next) => login({ accessToken: next.accessToken, refreshToken: next.refreshToken, user }),
+      )
       return
     }
     window.location.assign(getWebOnOneAiSettingsUrl())
@@ -242,8 +246,13 @@ export function CatalogAssistant({ open, onClose }: CatalogAssistantProps) {
                     }
                     try {
                       const path = new URL(href).pathname
-                      if (accessToken) {
-                        void redirectToWebOnOneApp(accessToken, path)
+                      if (accessToken && user) {
+                        void redirectToWebOnOneApp(
+                          { accessToken, refreshToken, user },
+                          path,
+                          (next) =>
+                            login({ accessToken: next.accessToken, refreshToken: next.refreshToken, user }),
+                        )
                         return
                       }
                     } catch {

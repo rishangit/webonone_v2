@@ -28,7 +28,7 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const { isRedirect, redirectUri, state } = useRedirectMode()
   const { isEmbed, parentOrigin } = useEmbedLoginMode()
-  const { accessToken, user, isLoading, error } = useAppSelector((s) => s.auth)
+  const { accessToken, refreshToken, user, isLoading, error } = useAppSelector((s) => s.auth)
   const handledRef = useRef(false)
   const promptLogin = searchParams.get('prompt') === 'login'
   const freshLoginAllowedRef = useRef(!promptLogin)
@@ -54,6 +54,7 @@ export function LoginPage() {
       sendAuthSuccess(parentOrigin, {
         accessToken,
         expiresIn: resolveExpiresIn(accessToken),
+        ...(refreshToken ? { refreshToken } : {}),
         user: {
           id: user.id,
           email: user.email ?? '',
@@ -73,6 +74,7 @@ export function LoginPage() {
     }
   }, [
     accessToken,
+    refreshToken,
     user,
     isLoading,
     isEmbed,

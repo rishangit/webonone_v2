@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CircleHelp, ExternalLink, MessageCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { normalizeLocale, type AppLocale } from '@webonone/i18n'
@@ -8,8 +9,10 @@ import {
   Button,
   DropdownMenuItem,
   cn,
+  useToast,
 } from '@webonone/ui-kit'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
+import { WebsiteSessionHandoffError } from '@/features/auth/utils/accessTokenHandoff'
 import { getWebsiteLoginHref } from '@/features/auth/utils/identityConfig'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { redirectToWebOnOneApp } from '@/features/webonone/utils/webononeConfig'
@@ -26,7 +29,10 @@ export function WebsiteHeader({
   assistantOpen = false,
   onAssistantOpenChange,
 }: WebsiteHeaderProps) {
-  const { user, accessToken, isAuthenticated, isAuthPending, logout } = useWebsiteAuth()
+  const navigate = useNavigate()
+  const { toast } = useToast()
+  const { user, accessToken, refreshToken, isAuthenticated, isAuthPending, login, logout } =
+    useWebsiteAuth()
   const { t, i18n } = useTranslation('common')
   const { t: ts } = useTranslation('shell')
   const { t: ta } = useTranslation('auth')
@@ -40,9 +46,27 @@ export function WebsiteHeader({
   }, [])
 
   const handleOpenApp = useCallback(() => {
-    if (!accessToken) return
-    void redirectToWebOnOneApp(accessToken)
-  }, [accessToken])
+    if (!accessToken || !user) {
+      return
+    }
+    void redirectToWebOnOneApp(
+      { accessToken, refreshToken, user },
+      undefined,
+      (next) => login({ accessToken: next.accessToken, refreshToken: next.refreshToken, user }),
+    ).catch((err: unknown) => {
+      const message =
+        err instanceof WebsiteSessionHandoffError || err instanceof Error
+          ? err.message
+          : 'Could not open the app'
+      toast({ title: message, variant: 'destructive' })
+      if (
+        err instanceof WebsiteSessionHandoffError ||
+        (err instanceof Error && err.message.includes('Invalid or expired token'))
+      ) {
+        navigate(getWebsiteLoginHref('/'), { replace: true })
+      }
+    })
+  }, [accessToken, login, navigate, refreshToken, toast, user])
 
   const headerLabels = useMemo(
     () => ({

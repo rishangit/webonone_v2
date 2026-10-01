@@ -61,7 +61,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-notifications',
       {
-        color: '#2563eb',
+        icon: './assets/notification-icon.png',
+        color: '#171717',
         defaultChannel: 'webonone-alerts',
       },
     ],

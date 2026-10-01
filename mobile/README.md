@@ -80,7 +80,7 @@ In-app bell polling only runs while the app is open. Tray alerts when the phone 
 1. Create an Expo project (`npx eas init` in `mobile/`) and set `EXPO_PROJECT_ID` in `mobile/.env` (must match the project on expo.dev).
 2. **FCM V1 on Expo (required for Android tray)** — see below. `google-services.json` in the app is not enough; Expo's push servers need the service account key uploaded on expo.dev.
 3. Optional for production: set `EXPO_ACCESS_TOKEN` on the WebOnOne backend (from expo.dev access tokens).
-4. Rebuild the native app after adding the `expo-notifications` plugin (`npm run mobile:android`). Expo Go cannot receive these pushes.
+4. Rebuild the native app after notification icon or plugin changes (`npm run generate-icons -w @webonone/mobile`, then `npm run mobile:android`). Expo Go cannot receive these pushes and uses the wrong tray icon.
 5. Sign in on a **physical** phone and allow notifications. Session due-to-start (and every other in-app notification) is delivered to the assigned staff user's tray.
 
 ### FCM V1 credentials (fix `InvalidCredentials` from Expo)

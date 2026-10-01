@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { QUERY, redirectWithAuthCode } from '@webonone/platform-nav'
-import { readWebsiteAuthSession } from '@/features/auth/utils/authStorage'
+import { resolveAccessTokenForHandoff } from '@/features/auth/utils/accessTokenHandoff'
+import { readWebsiteAuthSession, writeWebsiteAuthSession } from '@/features/auth/utils/authStorage'
 import {
   getAppHandoffFallbackUrl,
   parseAppReturnUrl,
@@ -75,15 +76,22 @@ export function AuthSsoBridgePage() {
         parsedReturn,
         userId: session.user.id,
       })
-      void redirectWithAuthCode({
-        accessToken: session.accessToken,
-        authCodeEndpoint: `${getIdentityApiBase()}/auth/code`,
-        targetUrl: parsedReturn,
-        errorMessage: 'Failed to hand off session to app',
-      }).catch((err: unknown) => {
-        console.error(LOG, 'auth-code mint failed → done', err)
-        window.location.replace(appendSsoBridgeDone(parsedReturn))
-      })
+      void resolveAccessTokenForHandoff(session)
+        .then(({ accessToken, refreshToken }) => {
+          if (accessToken !== session.accessToken) {
+            writeWebsiteAuthSession({ ...session, accessToken, refreshToken })
+          }
+          return redirectWithAuthCode({
+            accessToken,
+            authCodeEndpoint: `${getIdentityApiBase()}/auth/code`,
+            targetUrl: parsedReturn,
+            errorMessage: 'Failed to hand off session to app',
+          })
+        })
+        .catch((err: unknown) => {
+          console.error(LOG, 'auth-code mint failed → done', err)
+          window.location.replace(appendSsoBridgeDone(parsedReturn))
+        })
       return
     }
 

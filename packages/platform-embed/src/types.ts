@@ -165,6 +165,8 @@ export type AuthSuccessMessage = {
   accessToken: string
   expiresIn: number
   user: AuthSuccessUser
+  /** Optional — lets website parents refresh before auth-code handoff. */
+  refreshToken?: string
   embedId?: string
 }
 
@@ -670,6 +672,7 @@ export function isAuthSuccessMessage(data: unknown): data is AuthSuccessMessage 
     typeof message.expiresIn === 'number' &&
     Number.isFinite(message.expiresIn) &&
     isAuthSuccessUser(message.user) &&
+    (message.refreshToken === undefined || typeof message.refreshToken === 'string') &&
     (message.embedId === undefined || typeof message.embedId === 'string')
   )
 }

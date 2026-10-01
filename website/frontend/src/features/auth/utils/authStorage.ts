@@ -10,6 +10,7 @@ export const WEBSITE_AUTH_STORAGE_KEY = 'website_auth'
 export type WebsiteAuthSession = {
   accessToken: string
   user: WebsiteUser
+  refreshToken?: string | null
 }
 
 export function readWebsiteAuthSession(): WebsiteAuthSession | null {

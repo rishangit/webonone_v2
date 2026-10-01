@@ -669,6 +669,7 @@ export type SendAuthSuccessPayload = {
   accessToken: string
   expiresIn: number
   user: AuthSuccessUser
+  refreshToken?: string
   embedId?: string
 }
 
@@ -683,6 +684,7 @@ export function sendAuthSuccess(parentOrigin: string, payload: SendAuthSuccessPa
     accessToken: payload.accessToken,
     expiresIn: payload.expiresIn,
     user: payload.user,
+    ...(payload.refreshToken !== undefined ? { refreshToken: payload.refreshToken } : {}),
     ...(payload.embedId !== undefined ? { embedId: payload.embedId } : {}),
   }
   window.parent.postMessage(message, parentOrigin)

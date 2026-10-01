@@ -46,6 +46,7 @@ export function IdentityLoginFrame({ returnPath = '/' }: IdentityLoginFrameProps
         console.log(LOG, 'Identity login success', { userId: event.data.user.id })
         login({
           accessToken: event.data.accessToken,
+          refreshToken: event.data.refreshToken ?? null,
           user: {
             id: event.data.user.id,
             email: event.data.user.email,

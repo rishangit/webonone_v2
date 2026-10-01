@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import {
   buildIdentitySilentSsoUrl,
+  isAccessTokenExpired,
   isIdentitySsoNoneMessage,
   isIdentitySsoSessionMessage,
 } from '@webonone/platform-embed'
@@ -124,6 +125,11 @@ export function useWebsiteSilentSso(): SilentSsoState {
         return
       }
       if (isIdentitySsoSessionMessage(event.data)) {
+        if (isAccessTokenExpired(event.data.accessToken)) {
+          console.log(LOG, 'Identity silent → expired token ignored')
+          settle('expired-token')
+          return
+        }
         console.log(LOG, 'Identity silent → session', { userId: event.data.user.id })
         login({
           accessToken: event.data.accessToken,
