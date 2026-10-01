@@ -80,7 +80,7 @@ export function UserDetailsPage() {
     return () => {
       cancelled = true
     }
-  }, [canView, id])
+  }, [canView, id, t])
 
   if (!accessToken) {
     if (isEmbedHandoff) {

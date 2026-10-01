@@ -40,11 +40,28 @@ Apply these expectations in every coding task for this repo.
 - Do not delete exports that are part of the public API or used by other packages unless the task explicitly includes that change.
 - Keep intentionally unused parameters when required by an interface (use `_name` or omit via ESLint overrides only if the codebase already does).
 
+## ESLint during implementation
+
+Treat **lint errors in files you touch** as blocking before marking work done (CI runs root `npm run lint` on every PR).
+
+| Scope | Command |
+|-------|---------|
+| Service frontend | `npm run lint -w @webonone/<service>-frontend` |
+| Shared package | `npm run lint -w @webonone/<package>` |
+| UI Kit | `npm run lint -w @webonone/ui-kit` |
+| Whole monorepo | `npm run lint` (from repo root) |
+
+After substantive edits, run lint for the **workspace you changed** (or root lint when multiple workspaces changed). Fix new `error`-severity findings in touched files; do not leave hook-rule violations (`react-hooks/rules-of-hooks`) or parsing/tsconfig ESLint errors behind.
+
+**Naming:** functions that are not React components or custom hooks must **not** use a `use` prefix — ESLint treats them as hooks (`eventsApi` helpers → `shouldUse…`, not `use…`).
+
+**React Refresh:** `react-refresh/only-export-components` is **off** in `eslint.react.config.mjs` — co-located providers, hooks, helpers, and addon subcomponents are intentional; the rule only affects dev HMR, not production builds.
+
 ## Verification
 
 Before considering a change complete for touched files, ensure there are no new unused symbols and imports remain minimal and accurate. For refactors or deletions, confirm **no empty folders** remain and **imports use `@/`** where this rule expects aliases (not deep `../../` hops to shared modules).
 
-**Front-end:** `cd front-end` then `npm run type-check`, `npm run lint`, and `npm run format:check` if Prettier is configured.
+**Front-end (any `*/frontend`):** `npm run type-check` and `npm run lint` in that frontend workspace (or `-w @webonone/<name>-frontend` from root).
 
 **Mobile:** `npm run type-check -w @webonone/mobile-ui` and `npm run type-check -w @webonone/mobile`. Use `@/` imports under `mobile/src/`.
 

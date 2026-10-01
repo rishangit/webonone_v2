@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
@@ -139,13 +139,16 @@ export function ServiceFormDialog({
     t('wizard.stepAttributes'),
     t('wizard.stepSummary'),
   ]
-  const stepDescriptions = [
-    t('wizard.descBasics'),
-    t('wizard.descTime'),
-    t('wizard.descTags'),
-    t('wizard.descAttributes'),
-    t('wizard.descSummary'),
-  ]
+  const stepDescriptions = useMemo(
+    () => [
+      t('wizard.descBasics'),
+      t('wizard.descTime'),
+      t('wizard.descTags'),
+      t('wizard.descAttributes'),
+      t('wizard.descSummary'),
+    ],
+    [t],
+  )
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
@@ -181,11 +184,14 @@ export function ServiceFormDialog({
         : null
   const showLoading = Boolean(!isNew && editor.loading && !detailForForm)
 
-  const primaryLabelForStep = (current: ServiceWizardStep, saving: boolean) => {
-    if (saving) return t('saving')
-    if (current < TOTAL_STEPS) return tc('next')
-    return finalSubmitLabel
-  }
+  const primaryLabelForStep = useCallback(
+    (current: ServiceWizardStep, saving: boolean) => {
+      if (saving) return t('saving')
+      if (current < TOTAL_STEPS) return tc('next')
+      return finalSubmitLabel
+    },
+    [finalSubmitLabel, t, tc],
+  )
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
@@ -289,7 +295,7 @@ export function ServiceFormDialog({
     }
     tagPickerOpenRef.current = true
     setTagPickerOpen(true)
-  }, [chrome, dialogRequestId, parentOrigin, values.tags])
+  }, [chrome, dialogRequestId, parentOrigin, t, tc, values.tags])
 
   useEffect(() => {
     if (chrome !== 'embed-page' || !parentOrigin || !dialogRequestId) {
@@ -472,9 +478,11 @@ export function ServiceFormDialog({
     dialogRequestId,
     editor.saving,
     parentOrigin,
+    primaryLabelForStep,
     step,
+    stepDescriptions,
     tagPickerOpen,
-    finalSubmitLabel,
+    tc,
   ])
 
   function handleFormOpenChange(next: boolean) {

@@ -150,7 +150,9 @@ Return: summary, files touched, verification results, Installer rebuild: require
 
 1. Collect subagent summaries.
 2. Resolve conflicts on shared cross-service contracts.
-3. Run repo- or service-level verification when appropriate.
+3. Run repo- or service-level verification when appropriate:
+   - **Type-check:** `npm run type-check -w <service-root>` (or affected workspaces).
+   - **Lint (required when frontends or `packages/*` changed):** `npm run lint -w <workspace>` for each touched lint-enabled workspace, or `npm run lint` from repo root before closing multi-service work. Fix all new ESLint **errors** in changed files ([code-cleanliness.mdc](../../rules/code-cleanliness.mdc)).
 4. Report to user.
 
 ## Do not

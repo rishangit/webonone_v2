@@ -114,7 +114,7 @@ export function WebsiteLayoutDialog({
         : { name: '', headerId: null, footerId: null, themeId: defaultThemeId ?? undefined, isDefault: false, pageIds: [] },
     )
     setFieldErrors({})
-  }, [assignedPages, chrome, initial, open])
+  }, [assignedPages, chrome, defaultThemeId, initial, open])
 
   useEffect(() => {
     if (isEdit || values.themeId !== undefined || !defaultThemeId) return

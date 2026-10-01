@@ -75,7 +75,7 @@ export function IssueTokenDialog({
     return () => {
       cancelled = true
     }
-  }, [open, serviceId, eventId, occurrenceDate, accessToken])
+  }, [accessToken, eventId, occurrenceDate, open, serviceId, t])
 
   async function handleIssue() {
     if (existing) {

@@ -124,6 +124,18 @@ export function FormDesignerPage() {
     ? definition.fields.findIndex((f) => f.id === selectedField.id)
     : -1
 
+  const panelDraft = useMemo<FormFieldPropertiesPanelState | undefined>(() => {
+    if (!selectedField) {
+      return undefined
+    }
+    return {
+      kind: 'state',
+      field: selectedField,
+      fieldIndex: selectedIndex,
+      fieldCount: definition.fields.length,
+    }
+  }, [definition.fields.length, selectedField, selectedIndex])
+
   if (!accessToken) {
     return <Navigate to="/login" replace />
   }
@@ -236,18 +248,6 @@ export function FormDesignerPage() {
     }
     removeField()
   }
-
-  const panelDraft = useMemo<FormFieldPropertiesPanelState | undefined>(() => {
-    if (!selectedField) {
-      return undefined
-    }
-    return {
-      kind: 'state',
-      field: selectedField,
-      fieldIndex: selectedIndex,
-      fieldCount: definition.fields.length,
-    }
-  }, [definition.fields.length, selectedField, selectedIndex])
 
   return (
     <FeaturePage

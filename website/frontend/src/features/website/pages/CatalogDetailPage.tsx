@@ -178,7 +178,7 @@ export function CatalogDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [kind, id, coords?.lat, coords?.lng])
+  }, [coords, kind, id, coords?.lat, coords?.lng, t])
 
   useEffect(() => {
     if (!item || item.kind !== 'services' || item.timeMode !== 'window') {
@@ -211,7 +211,7 @@ export function CatalogDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [item])
+  }, [item, t])
 
   useEffect(() => {
     if (!item || !isAuthenticated || !accessToken || sessions.length === 0) {

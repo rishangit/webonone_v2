@@ -314,7 +314,7 @@ export function AddCompanyUserDialog({
       !pendingSelection,
       t('addDialog.submit'),
     )
-  }, [chrome, createOpen, dialogRequestId, parentOrigin, pendingSelection])
+  }, [chrome, createOpen, dialogRequestId, parentOrigin, pendingSelection, t])
 
   function handlePickerOpenChange(next: boolean) {
     if (!next && (createOpenRef.current || blockOuterDismissRef.current || blockOuterDismiss)) {

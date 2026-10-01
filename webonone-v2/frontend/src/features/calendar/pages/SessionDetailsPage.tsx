@@ -292,7 +292,7 @@ export function SessionDetailsPage() {
     return () => {
       window.clearInterval(id)
     }
-  }, [dispatch, eventId, occurrenceDate, isPersonal, detail?.timeMode])
+  }, [detail, dispatch, eventId, occurrenceDate, isPersonal, detail?.timeMode])
 
   useEffect(() => {
     if (!eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return

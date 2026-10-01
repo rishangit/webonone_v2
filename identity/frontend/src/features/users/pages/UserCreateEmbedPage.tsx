@@ -51,7 +51,7 @@ export function UserCreateEmbedPage() {
       creating,
       creating ? t('createDialog.creating') : t('createDialog.submit'),
     )
-  }, [creating, parentOrigin, requestId])
+  }, [creating, parentOrigin, requestId, t])
 
   async function handleSubmit(values: CreateCompanyUserPayload) {
     if (!companyId || !parentOrigin || !requestId) {

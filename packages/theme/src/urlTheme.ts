@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { THEME_CONTRACT_VERSION, THEME_CONTRACT_VERSION_V1, THEME_QUERY } from './constants'
 import { applyThemeVariables } from './applyTheme'
 import { persistAppliedTheme, readPersistedTheme } from './themeSession'
-import type { ColorMode, ThemeDto, ThemePayload } from './types'
+import type { ThemePayload } from './types'
 import { isHexColor } from './colorUtils'
 import {
   themeColorsToUrlSlots,

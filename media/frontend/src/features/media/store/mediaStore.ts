@@ -302,7 +302,7 @@ const loadListEpic: Epic = (action$, state$) => {
   const replace$ = prepared$.pipe(
     filter(
       ([action]) =>
-        !Boolean((action as ReturnType<typeof mediaActions.loadListRequested>).payload.append),
+        !(action as ReturnType<typeof mediaActions.loadListRequested>).payload.append,
     ),
     debounceTime(400),
     distinctUntilChanged(([a], [b]) => {

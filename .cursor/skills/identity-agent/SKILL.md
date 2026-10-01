@@ -65,6 +65,7 @@ From repo root:
 
 ```bash
 npm run type-check -w identity-root
+npm run lint -w @webonone/identity-frontend
 ```
 
 From `identity/`:

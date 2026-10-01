@@ -22,8 +22,10 @@ import {
   createEmptyManualSlide,
 } from '../../document/slider'
 import { websiteDatasetsActions } from '../../store'
-import { MAX_SLIDER_DATA_ITEMS, type MediaRef } from '../../types'
+import { MAX_SLIDER_DATA_ITEMS, type MediaRef, type WebsiteAddon } from '../../types'
 import type { AddonPropsFieldsProps } from '../types'
+
+type SliderWebsiteAddon = Extract<WebsiteAddon, { type: 'slider' }>
 
 function mediaRefFromData(value: unknown): MediaRef | null {
   if (!value || typeof value !== 'object') return null
@@ -40,22 +42,24 @@ function mediaRefFromData(value: unknown): MediaRef | null {
 }
 
 /** Dataset owner controls for the content slider — Data Binding tab only. */
-export function SliderDataBindingFields({
-  addon,
+export function SliderDataBindingFields(props: AddonPropsFieldsProps) {
+  if (props.addon.type !== 'slider') return null
+  return <SliderDataBindingFieldsInner {...props} sliderAddon={props.addon} />
+}
+
+function SliderDataBindingFieldsInner({
+  sliderAddon,
   onChange,
   onNestedDialogOpenChange,
   inheritedFromParent = false,
   parentDataset = null,
-}: AddonPropsFieldsProps) {
+}: Omit<AddonPropsFieldsProps, 'addon'> & { sliderAddon: SliderWebsiteAddon }) {
   const { t } = useTranslation('website')
   const dispatch = useAppDispatch()
   const datasetsState = useAppSelector((s) => s.websiteDatasets)
   const [mediaPicker, setMediaPicker] = useState<{ slideId: string; path: string; multi: boolean } | null>(
     null,
   )
-
-  if (addon.type !== 'slider') return null
-  const sliderAddon = addon
 
   const bindableFields = useMemo(
     () => collectBindableFieldsFromTemplate(sliderAddon.props.slideTemplate),

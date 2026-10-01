@@ -54,7 +54,7 @@ export function ProductVariantsTab({
     } finally {
       setLoading(false)
     }
-  }, [productId])
+  }, [productId, t])
 
   useEffect(() => {
     void load()

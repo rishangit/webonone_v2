@@ -160,7 +160,7 @@ export function addBlocksFromPresetToSliderTemplate(
   if (incoming.length === 0) return document
   // When targeting the shell, append presets as shell children (visible content elements).
   const parentId = target.templateBlockId
-  let doc = updateTemplateBlock(
+  const doc = updateTemplateBlock(
     target.document,
     hostBlockId,
     sliderAddonId,
@@ -186,7 +186,7 @@ export function addBlockToSliderTemplate(
 ): WebsiteDocumentV1 {
   const target = resolveSliderTemplateTarget(document, hostBlockId, sliderAddonId, templateBlockId)
   if (!target) return document
-  let doc = updateTemplateBlock(
+  const doc = updateTemplateBlock(
     target.document,
     hostBlockId,
     sliderAddonId,

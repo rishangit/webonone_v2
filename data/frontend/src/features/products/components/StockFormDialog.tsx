@@ -300,7 +300,7 @@ export function StockFormDialog({
       saving || Boolean(nestedSupplierRequestIdRef.current),
       saving ? t('saving') : submitLabel,
     )
-  }, [chrome, dialogRequestId, parentOrigin, saving, supplierPickerOpen])
+  }, [chrome, dialogRequestId, parentOrigin, saving, submitLabel, supplierPickerOpen, t])
 
   const body = (
     <form id="stock-form" className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>

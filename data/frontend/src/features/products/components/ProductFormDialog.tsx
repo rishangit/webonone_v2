@@ -188,12 +188,15 @@ export function ProductFormDialog({
     t('wizard.stepAttributes'),
     t('wizard.stepSummary'),
   ]
-  const stepDescriptions = [
-    t('wizard.descBasics'),
-    t('wizard.descTags'),
-    t('wizard.descAttributes'),
-    t('wizard.descSummary'),
-  ]
+  const stepDescriptions = useMemo(
+    () => [
+      t('wizard.descBasics'),
+      t('wizard.descTags'),
+      t('wizard.descAttributes'),
+      t('wizard.descSummary'),
+    ],
+    [t],
+  )
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
@@ -230,11 +233,14 @@ export function ProductFormDialog({
         : null
   const showLoading = Boolean(!isNew && editor.loading && !detailForForm)
 
-  const primaryLabelForStep = (current: ProductWizardStep, saving: boolean) => {
-    if (saving) return t('saving')
-    if (current < TOTAL_STEPS) return tc('next')
-    return finalSubmitLabel
-  }
+  const primaryLabelForStep = useCallback(
+    (current: ProductWizardStep, saving: boolean) => {
+      if (saving) return t('saving')
+      if (current < TOTAL_STEPS) return tc('next')
+      return finalSubmitLabel
+    },
+    [finalSubmitLabel, t, tc],
+  )
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
@@ -352,7 +358,7 @@ export function ProductFormDialog({
     }
     tagPickerOpenRef.current = true
     setTagPickerOpen(true)
-  }, [chrome, dialogRequestId, parentOrigin, values.tags])
+  }, [chrome, dialogRequestId, parentOrigin, t, tc, values.tags])
 
   const openAttributePicker = useCallback(() => {
     if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {
@@ -596,8 +602,10 @@ export function ProductFormDialog({
     editor.saving,
     nestedPickerOpen,
     parentOrigin,
+    primaryLabelForStep,
     step,
-    finalSubmitLabel,
+    stepDescriptions,
+    tc,
   ])
 
   function handleFormOpenChange(next: boolean) {

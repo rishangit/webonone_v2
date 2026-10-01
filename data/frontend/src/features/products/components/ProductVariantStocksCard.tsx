@@ -59,7 +59,7 @@ export function ProductVariantStocksCard({
     } finally {
       setLoading(false)
     }
-  }, [productId, variantId])
+  }, [productId, t, variantId])
 
   useEffect(() => {
     void load()
