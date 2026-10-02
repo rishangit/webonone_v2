@@ -60,7 +60,8 @@ export class SupportFeedbackApi {
 
   static fromEnv(): SupportFeedbackApi {
     const baseUrl = process.env.SUPPORT_API_BASE_URL?.trim()
-    const bearerToken = process.env.SUPPORT_FEEDBACK_BEARER_TOKEN?.trim()
+    const rawToken = process.env.SUPPORT_FEEDBACK_BEARER_TOKEN?.trim()
+    const bearerToken = rawToken?.replace(/^Bearer\s+/i, '') ?? ''
     if (!baseUrl) {
       throw new Error('SUPPORT_API_BASE_URL is required')
     }

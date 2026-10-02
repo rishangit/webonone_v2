@@ -19,7 +19,9 @@ import {
 import { FeedbackScreenshotField } from '@/features/feedback/components/FeedbackScreenshotField'
 import {
   createFeedbackFormSchema,
+  updateFeedbackFormSchema,
   type CreateFeedbackFormValues,
+  type UpdateFeedbackFormValues,
 } from '@/features/feedback/schemas/feedbackSchemas'
 import { createFeedbackUploadSessionId } from '@/features/feedback/utils/uploadSessionId'
 
@@ -30,15 +32,19 @@ const EMPTY_VALUES: Omit<CreateFeedbackFormValues, 'uploadSessionId' | 'attachme
 }
 
 type FeedbackFormDialogProps = {
+  mode?: 'create' | 'edit'
+  initialValues?: Partial<CreateFeedbackFormValues>
   open: boolean
   isSaving: boolean
   error: string | null
   accessToken: string | null
   onOpenChange: (open: boolean) => void
-  onSubmit: (values: CreateFeedbackFormValues) => void
+  onSubmit: (values: CreateFeedbackFormValues | UpdateFeedbackFormValues) => void
 }
 
 export function FeedbackFormDialog({
+  mode = 'create',
+  initialValues,
   open,
   isSaving,
   error,
@@ -55,8 +61,21 @@ export function FeedbackFormDialog({
   useEffect(() => {
     if (open) {
       setUploadSessionId(createFeedbackUploadSessionId())
-      setValues(EMPTY_VALUES)
-      setScreenshot(null)
+      setValues({
+        type: initialValues?.type ?? EMPTY_VALUES.type,
+        title: initialValues?.title ?? '',
+        description: initialValues?.description ?? '',
+      })
+      setScreenshot(
+        initialValues?.attachment
+          ? {
+              id: initialValues.attachment.mediaId,
+              url: initialValues.attachment.url,
+              fileName: initialValues.attachment.fileName,
+              mimeType: initialValues.attachment.mimeType,
+            }
+          : null,
+      )
       setFieldErrors({})
       return
     }
@@ -64,7 +83,7 @@ export function FeedbackFormDialog({
     setValues(EMPTY_VALUES)
     setScreenshot(null)
     setFieldErrors({})
-  }, [open])
+  }, [initialValues?.attachment, initialValues?.description, initialValues?.title, initialValues?.type, open])
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -82,7 +101,15 @@ export function FeedbackFormDialog({
           }
         : {}),
     }
-    const result = createFeedbackFormSchema.safeParse(payload)
+    const schema = mode === 'edit' ? updateFeedbackFormSchema : createFeedbackFormSchema
+    const editPayload =
+      mode === 'edit'
+        ? {
+            ...payload,
+            clearAttachment: !screenshot && Boolean(initialValues?.attachment),
+          }
+        : payload
+    const result = schema.safeParse(editPayload)
     if (!result.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues) as Record<string, string>)
       return
@@ -95,8 +122,8 @@ export function FeedbackFormDialog({
     <CustomDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t('createTitle')}
-      description={t('createDescription')}
+      title={mode === 'edit' ? t('editTitle') : t('createTitle')}
+      description={mode === 'edit' ? t('editDescription') : t('createDescription')}
       sizeWidth="small"
       sizeHeight="large"
       footer={
@@ -112,7 +139,7 @@ export function FeedbackFormDialog({
           </Button>
           <Button type="submit" form="feedback-create-form" className="h-10" disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
-            {t('submitReport')}
+            {mode === 'edit' ? t('saveChanges') : t('submitReport')}
           </Button>
         </>
       }

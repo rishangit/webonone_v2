@@ -5,8 +5,10 @@ import type {
   FeedbackStatus,
   FeedbackType,
   ListFeedbackQuery,
+  UpdateFeedbackBody,
   UpdateFeedbackStatusBody,
 } from '../schemas/feedbackSchemas.js'
+import { countUnreadCommentsForReports } from './feedbackComments.service.js'
 import { buildSupportFeedbackMediaScope } from '../schemas/feedbackSchemas.js'
 import { fetchMediaItem } from './mediaClient.service.js'
 
@@ -42,6 +44,7 @@ export interface FeedbackReportDto {
   attachmentMimeType: string | null
   createdAt: string
   updatedAt: string
+  unreadCommentCount?: number
 }
 
 function rowToDto(row: FeedbackReportRow): FeedbackReportDto {
@@ -63,7 +66,7 @@ function rowToDto(row: FeedbackReportRow): FeedbackReportDto {
   }
 }
 
-export async function listFeedbackReports(query: ListFeedbackQuery) {
+export async function listFeedbackReports(query: ListFeedbackQuery, viewerUserId?: string) {
   const { page, pageSize, type, status, q } = query
   const base = db<FeedbackReportRow>('feedback_reports')
 
@@ -92,8 +95,22 @@ export async function listFeedbackReports(query: ListFeedbackQuery) {
     .offset((page - 1) * pageSize)
     .limit(pageSize)
 
+  const items = rows.map(rowToDto)
+  if (viewerUserId && items.length > 0) {
+    const unread = await countUnreadCommentsForReports(
+      items.map((item) => item.id),
+      viewerUserId,
+    )
+    for (const item of items) {
+      const count = unread[item.id]
+      if (count) {
+        item.unreadCommentCount = count
+      }
+    }
+  }
+
   return {
-    items: rows.map(rowToDto),
+    items,
     total,
     page,
     pageSize,
@@ -169,6 +186,65 @@ export async function getFeedbackReportById(id: string): Promise<FeedbackReportD
     throw new Error('NOT_FOUND')
   }
   return rowToDto(row)
+}
+
+function canEditFeedbackReport(
+  row: FeedbackReportRow,
+  user: { id: string; platformRole: string },
+): boolean {
+  return user.platformRole === 'super_admin' || row.reporter_user_id === user.id
+}
+
+export async function updateFeedbackReport(
+  id: string,
+  body: UpdateFeedbackBody,
+  user: { id: string; email: string; platformRole: string },
+  accessToken: string,
+): Promise<FeedbackReportDto> {
+  const existing = await db<FeedbackReportRow>('feedback_reports').where({ id }).first()
+  if (!existing) {
+    throw new Error('NOT_FOUND')
+  }
+  if (!canEditFeedbackReport(existing, user)) {
+    throw new Error('FORBIDDEN')
+  }
+
+  await validateAttachment(
+    {
+      type: body.type,
+      title: body.title,
+      description: body.description,
+      uploadSessionId: body.uploadSessionId,
+      attachment: body.attachment,
+    },
+    user.id,
+    accessToken,
+  )
+
+  const patch: Record<string, unknown> = {
+    type: body.type,
+    title: body.title,
+    description: body.description,
+    updated_at: db.fn.now(3),
+  }
+
+  if (body.clearAttachment) {
+    patch.upload_session_id = null
+    patch.attachment_media_id = null
+    patch.attachment_url = null
+    patch.attachment_file_name = null
+    patch.attachment_mime_type = null
+  } else if (body.attachment && body.uploadSessionId) {
+    patch.upload_session_id = body.uploadSessionId
+    patch.attachment_media_id = body.attachment.mediaId
+    patch.attachment_url = body.attachment.url
+    patch.attachment_file_name = body.attachment.fileName
+    patch.attachment_mime_type = body.attachment.mimeType
+  }
+
+  await db('feedback_reports').where({ id }).update(patch)
+
+  return getFeedbackReportById(id)
 }
 
 export async function updateFeedbackStatus(

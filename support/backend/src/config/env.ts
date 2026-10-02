@@ -28,6 +28,10 @@ const envSchema = z.object({
   IIS_NODE_HOSTED: z.string().optional(),
   FRONTEND_BASE_URL: z.string().default('http://127.0.0.1:3021'),
   MEDIA_API_BASE_URL: z.string().url().default('http://127.0.0.1:4013/api/v1'),
+  EMAIL_API_BASE_URL: z.string().optional(),
+  EMAIL_SERVICE_API_KEY: z.string().optional(),
+  /** Platform default inbox — same value as Identity / WebOnOne (production.env SUPER_ADMIN_EMAIL). */
+  SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -54,4 +58,7 @@ export const env = {
   iisHosted,
   frontendBaseUrl: parsed.FRONTEND_BASE_URL,
   mediaApiBaseUrl: parsed.MEDIA_API_BASE_URL,
+  emailApiBaseUrl: parsed.EMAIL_API_BASE_URL?.trim() ?? '',
+  emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY?.trim() ?? '',
+  superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
 }

@@ -64,5 +64,41 @@ export const FEEDBACK_STATUS_ORDER: FeedbackStatus[] = [
   'closed',
 ]
 
+export const updateFeedbackFormSchema = z
+  .object({
+    type: feedbackTypeSchema,
+    title: z.string().trim().min(1, 'Title is required').max(200, 'Title is too long'),
+    description: z
+      .string()
+      .trim()
+      .min(1, 'Description is required')
+      .max(10000, 'Description is too long'),
+    uploadSessionId: uploadSessionIdSchema.optional(),
+    attachment: feedbackAttachmentSchema.optional(),
+    clearAttachment: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.attachment && !data.uploadSessionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Upload session is required with a screenshot',
+        path: ['attachment'],
+      })
+    }
+    if (!data.attachment && data.uploadSessionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Remove upload session or add a screenshot',
+        path: ['uploadSessionId'],
+      })
+    }
+  })
+
+export const feedbackCommentFormSchema = z.object({
+  body: z.string().trim().min(1, 'Comment is required').max(10000, 'Comment is too long'),
+})
+
 export type CreateFeedbackFormValues = z.infer<typeof createFeedbackFormSchema>
+export type UpdateFeedbackFormValues = z.infer<typeof updateFeedbackFormSchema>
+export type FeedbackCommentFormValues = z.infer<typeof feedbackCommentFormSchema>
 export type FeedbackAttachment = z.infer<typeof feedbackAttachmentSchema>

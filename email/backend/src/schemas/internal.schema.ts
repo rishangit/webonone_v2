@@ -7,7 +7,7 @@ export const internalSendBodySchema = z.object({
   companyId: z.string().length(21).optional(),
   /** ISO datetime; when set, queue processes the message at/after this time. */
   scheduledAt: z.string().datetime().optional(),
-  requestedByService: z.enum(['identity', 'webonone']),
+  requestedByService: z.enum(['identity', 'webonone', 'support']),
 })
 
 

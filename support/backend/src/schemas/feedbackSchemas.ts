@@ -48,6 +48,36 @@ export const updateFeedbackStatusBodySchema = z.object({
   status: feedbackStatusSchema,
 })
 
+export const updateFeedbackBodySchema = z
+  .object({
+    type: feedbackTypeSchema,
+    title: z.string().trim().min(1).max(200),
+    description: z.string().trim().min(1).max(10000),
+    uploadSessionId: uploadSessionIdSchema.optional(),
+    attachment: feedbackAttachmentSchema.optional(),
+    clearAttachment: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.attachment && !data.uploadSessionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'uploadSessionId is required when attachment is provided',
+        path: ['uploadSessionId'],
+      })
+    }
+    if (!data.attachment && data.uploadSessionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'uploadSessionId must not be sent without an attachment',
+        path: ['uploadSessionId'],
+      })
+    }
+  })
+
+export const createFeedbackCommentBodySchema = z.object({
+  body: z.string().trim().min(1).max(10000),
+})
+
 export const listFeedbackQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(12),
@@ -60,6 +90,8 @@ export type FeedbackType = z.infer<typeof feedbackTypeSchema>
 export type FeedbackStatus = z.infer<typeof feedbackStatusSchema>
 export type CreateFeedbackBody = z.infer<typeof createFeedbackBodySchema>
 export type UpdateFeedbackStatusBody = z.infer<typeof updateFeedbackStatusBodySchema>
+export type UpdateFeedbackBody = z.infer<typeof updateFeedbackBodySchema>
+export type CreateFeedbackCommentBody = z.infer<typeof createFeedbackCommentBodySchema>
 export type ListFeedbackQuery = z.infer<typeof listFeedbackQuerySchema>
 
 export function buildSupportFeedbackMediaScope(uploadSessionId: string): string {

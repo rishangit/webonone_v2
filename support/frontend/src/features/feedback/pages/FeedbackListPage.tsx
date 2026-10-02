@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
+  Button,
   FeaturePage,
   FormField,
   ListAddButton,
@@ -21,8 +22,12 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isSessionSuperAdmin } from '@/features/auth/utils/currentRole'
+import { getSessionUserId } from '@/features/auth/utils/sessionUser'
+import { getEmailAppUrl } from '@/features/email/utils/emailConfig'
+import { FeedbackDetailDialog } from '@/features/feedback/components/FeedbackDetailDialog'
 import { FeedbackFormDialog } from '@/features/feedback/components/FeedbackFormDialog'
 import { FeedbackList } from '@/features/feedback/components/FeedbackList'
+import type { FeedbackReport } from '@/features/feedback/services/feedbackApi'
 import type { FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
 import { feedbackActions } from '@/features/feedback/store/feedbackSlice'
 
@@ -44,6 +49,7 @@ export function FeedbackListPage() {
     createError,
     updatingId,
     updateError,
+    editStatus,
   } = useAppSelector((s) => s.feedback)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -56,8 +62,10 @@ export function FeedbackListPage() {
     status: 'all' as 'all' | FeedbackStatus,
   })
   const [createOpen, setCreateOpen] = useState(false)
+  const [detailReport, setDetailReport] = useState<FeedbackReport | null>(null)
 
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
+  const sessionUserId = getSessionUserId(accessToken)
   const loading = listStatus === 'loading' && items.length === 0
 
   const hasActiveFilters = appliedFilters.type !== 'all' || appliedFilters.status !== 'all'
@@ -91,6 +99,19 @@ export function FeedbackListPage() {
       toast({ title: t('updateFailed'), description: updateError, variant: 'destructive' })
     }
   }, [t, toast, updateError])
+
+  useEffect(() => {
+    if (editStatus === 'succeeded') {
+      toast({ title: t('editSuccess') })
+      dispatch(feedbackActions.resetEditStatus())
+    }
+  }, [dispatch, editStatus, t, toast])
+
+  useEffect(() => {
+    if (!detailReport) return
+    const fresh = items.find((item) => item.id === detailReport.id)
+    if (fresh) setDetailReport(fresh)
+  }, [detailReport, items])
 
   function dispatchLoad(nextPage: number, nextPageSize: number, append = false) {
     dispatch(
@@ -150,6 +171,11 @@ export function FeedbackListPage() {
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          {isSuperAdmin ? (
+            <Button variant="outline" className="h-10" asChild>
+              <a href={getEmailAppUrl('/templates')}>{t('emailTemplateLink')}</a>
+            </Button>
+          ) : null}
           <ListAddButton onClick={() => setCreateOpen(true)}>{t('addReport')}</ListAddButton>
         </div>
       }
@@ -214,6 +240,7 @@ export function FeedbackListPage() {
                 isSuperAdmin={isSuperAdmin}
                 updatingId={updatingId}
                 onStatusChange={handleStatusChange}
+                onOpenDetail={(item) => setDetailReport(item)}
               />
             </div>
             <ListPageFooter
@@ -232,6 +259,19 @@ export function FeedbackListPage() {
           </>
         )}
       </ListPageBody>
+
+      <FeedbackDetailDialog
+        report={detailReport}
+        open={detailReport !== null}
+        canEdit={
+          Boolean(detailReport) &&
+          (isSuperAdmin || detailReport?.reporterUserId === sessionUserId)
+        }
+        accessToken={accessToken}
+        onOpenChange={(open) => {
+          if (!open) setDetailReport(null)
+        }}
+      />
 
       <FeedbackFormDialog
         open={createOpen}

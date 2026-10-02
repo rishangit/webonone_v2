@@ -1,7 +1,7 @@
 import { ofType } from 'redux-observable'
 import type { Epic } from 'redux-observable'
 import { combineEpics } from 'redux-observable'
-import { catchError, debounceTime, exhaustMap, from, map, mergeMap, of } from 'rxjs'
+import { catchError, debounceTime, exhaustMap, from, map, mergeMap, of, switchMap } from 'rxjs'
 import { feedbackApi } from '@/features/feedback/services/feedbackApi'
 import { feedbackActions } from '@/features/feedback/store/feedbackSlice'
 
@@ -59,8 +59,51 @@ const updateFeedbackStatusEpic: Epic = (action$) =>
     }),
   )
 
+const updateFeedbackEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(feedbackActions.updateRequested.type),
+    exhaustMap((action) => {
+      const payload = (action as ReturnType<typeof feedbackActions.updateRequested>).payload
+      return from(feedbackApi.update(payload.id, payload.values)).pipe(
+        map((item) => feedbackActions.updateSucceeded(item)),
+        catchError((err: Error) => of(feedbackActions.updateFailed(err.message))),
+      )
+    }),
+  )
+
+const loadCommentsEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(feedbackActions.loadCommentsRequested.type),
+    switchMap((action) => {
+      const reportId = (action as ReturnType<typeof feedbackActions.loadCommentsRequested>).payload
+      return from(feedbackApi.listComments(reportId)).pipe(
+        map((result) =>
+          feedbackActions.loadCommentsSucceeded({ reportId, items: result.items }),
+        ),
+        catchError((err: Error) => of(feedbackActions.loadCommentsFailed(err.message))),
+      )
+    }),
+  )
+
+const createCommentEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(feedbackActions.commentCreateRequested.type),
+    exhaustMap((action) => {
+      const payload = (action as ReturnType<typeof feedbackActions.commentCreateRequested>).payload
+      return from(feedbackApi.createComment(payload.reportId, payload.body)).pipe(
+        map((comment) =>
+          feedbackActions.commentCreateSucceeded({ reportId: payload.reportId, comment }),
+        ),
+        catchError((err: Error) => of(feedbackActions.commentCreateFailed(err.message))),
+      )
+    }),
+  )
+
 export const feedbackEpics = combineEpics(
   loadFeedbackListEpic,
   createFeedbackEpic,
   updateFeedbackStatusEpic,
+  updateFeedbackEpic,
+  loadCommentsEpic,
+  createCommentEpic,
 )

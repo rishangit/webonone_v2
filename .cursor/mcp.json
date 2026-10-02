@@ -9,7 +9,7 @@
       "args": ["tooling/support-feedback-mcp/dist/index.js"],
       "env": {
         "SUPPORT_API_BASE_URL": "https://staging-support.webonone.com/api/v1",
-        "SUPPORT_FEEDBACK_BEARER_TOKEN": "suport_feedback_bearer_token"
+        "SUPPORT_FEEDBACK_BEARER_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb3ZweTY3TW5KZ29obnZMdk90UWQiLCJlbWFpbCI6Im5vcmVwbHlAd2Vib25vbmUuY29tIiwiaXNzIjoid2Vib25vbmUtaWRlbnRpdHkiLCJhdWQiOiJ3ZWJvbm9uZS1hcGkiLCJwbGF0Zm9ybV9yb2xlIjoic3VwZXJfYWRtaW4iLCJjb21wYW55X2lkIjpudWxsLCJpYXQiOjE3OTA5MjkzNDcsImV4cCI6MTc5MTUzNDE0N30.YuVbqREjS8DL80a2OHU8zdPYxgkk3LvdG-6x7U6ECcA"
       }
     }
   }

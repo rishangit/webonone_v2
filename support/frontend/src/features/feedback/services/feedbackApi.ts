@@ -1,5 +1,11 @@
 import { apiClient } from '@/shared/services/apiClient'
-import type { CreateFeedbackFormValues, FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
+import type {
+  CreateFeedbackFormValues,
+  FeedbackCommentFormValues,
+  FeedbackStatus,
+  FeedbackType,
+  UpdateFeedbackFormValues,
+} from '@/features/feedback/schemas/feedbackSchemas'
 
 export interface FeedbackReport {
   id: string
@@ -16,6 +22,16 @@ export interface FeedbackReport {
   attachmentMimeType: string | null
   createdAt: string
   updatedAt: string
+  unreadCommentCount?: number
+}
+
+export interface FeedbackComment {
+  id: string
+  feedbackReportId: string
+  authorUserId: string
+  authorEmail: string
+  body: string
+  createdAt: string
 }
 
 export interface FeedbackListResult {
@@ -57,5 +73,27 @@ export const feedbackApi = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     })
+  },
+
+  update(id: string, body: UpdateFeedbackFormValues): Promise<FeedbackReport> {
+    return apiClient<FeedbackReport>(`/feedback/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
+  listComments(feedbackId: string): Promise<{ items: FeedbackComment[] }> {
+    return apiClient<{ items: FeedbackComment[] }>(`/feedback/${feedbackId}/comments`)
+  },
+
+  createComment(feedbackId: string, body: FeedbackCommentFormValues): Promise<FeedbackComment> {
+    return apiClient<FeedbackComment>(`/feedback/${feedbackId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  markViewed(feedbackId: string): Promise<void> {
+    return apiClient<void>(`/feedback/${feedbackId}/viewed`, { method: 'POST' })
   },
 }

@@ -21,6 +21,7 @@ type FeedbackListProps = {
   isSuperAdmin: boolean
   updatingId: string | null
   onStatusChange: (id: string, status: FeedbackStatus) => void
+  onOpenDetail: (item: FeedbackReport) => void
 }
 
 export function FeedbackList({
@@ -28,6 +29,7 @@ export function FeedbackList({
   isSuperAdmin,
   updatingId,
   onStatusChange,
+  onOpenDetail,
 }: FeedbackListProps) {
   const { t, i18n } = useTranslation('feedback')
 
@@ -40,7 +42,11 @@ export function FeedbackList({
       {items.map((item) => (
         <ItemListItem key={item.id}>
           <ItemListContent>
-            <div className="min-w-0 space-y-1">
+            <button
+              type="button"
+              className="min-w-0 space-y-1 text-left"
+              onClick={() => onOpenDetail(item)}
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <p className="truncate font-medium">{item.title}</p>
                 <StatusTag variant={feedbackTypeTagVariant(item.type)}>
@@ -49,6 +55,11 @@ export function FeedbackList({
                 <StatusTag variant={feedbackStatusTagVariant(item.status)}>
                   {t(`status.${item.status}`)}
                 </StatusTag>
+                {item.unreadCommentCount ? (
+                  <StatusTag variant="member">
+                    {t('unreadComments', { count: item.unreadCommentCount })}
+                  </StatusTag>
+                ) : null}
               </div>
               <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
               {item.attachmentUrl ? (
@@ -74,7 +85,7 @@ export function FeedbackList({
                 {t('reportedBy', { email: item.reporterEmail })} ·{' '}
                 {formatDisplayDateTime(item.createdAt, i18n.language)}
               </p>
-            </div>
+            </button>
           </ItemListContent>
           {isSuperAdmin ? (
             <FeedbackStatusMenu
