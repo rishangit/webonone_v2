@@ -8,7 +8,8 @@
       "command": "node",
       "args": ["tooling/support-feedback-mcp/dist/index.js"],
       "env": {
-        "SUPPORT_API_BASE_URL": "https://staging-support.webonone.com/api/v1"
+        "SUPPORT_API_BASE_URL": "https://staging-support.webonone.com/api/v1",
+        "SUPPORT_FEEDBACK_BEARER_TOKEN": "suport_feedback_bearere_token"
       }
     }
   }
