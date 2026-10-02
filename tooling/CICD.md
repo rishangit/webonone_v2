@@ -48,9 +48,11 @@ You should see `(OI)(CI)(M)` or `(M)`. Then re-run **Deploy staging**.
 
 **Option B (cleaner long-term):** run the runner as the Windows account that already owns the clone (the user who ran `git clone`). Services → GitHub Actions runner → Log on → that account → restart the service. That account still needs Modify on the clone and IIS recycle rights.
 
-Optional repository variable:
+Optional repository variables:
 
 - `SMOKE_HEALTH_URLS` — comma-separated full health URLs (overrides [`tooling/smoke-health-urls.json`](smoke-health-urls.json)).
+- `SMOKE_HEALTH_RETRIES` — passed to the smoke script (default **3** attempts per URL with 15s delay).
+- `IIS_APP_POOLS_JSON` — absolute path to a JSON file `{ "appPools": ["..."] }` for the pre-smoke recycle step (defaults to [`tooling/iis-app-pools.json`](iis-app-pools.json)). Use production pool names when `SMOKE_HEALTH_URLS` targets live hosts.
 
 ## Branch `deploy_staging`
 
@@ -78,9 +80,10 @@ In `DEPLOY_REPO_ROOT`:
 4. `npm run env:apply` (write each service `backend/.env` before migrate)
 5. `npm run migrate:all`
 6. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
-7. Smoke GET each `/api/v1/health` URL
+7. Try `npm run recycle:iis` (continues on failure if the runner cannot run `appcmd`)
+8. Wait 30s, then smoke GET each `/api/v1/health` URL (retries per URL)
 
-After deploy, recycle IIS app pools manually if Node is still serving the previous `dist`.
+If smoke still fails (e.g. **email** times out), recycle the **email** app pool in IIS Manager (or elevated `npm run recycle:iis` on the host that serves those URLs), then re-run [`tooling/smoke-production-health.ps1`](smoke-production-health.ps1).
 
 Expect **tens of minutes** for a full `deploy:all`.
 

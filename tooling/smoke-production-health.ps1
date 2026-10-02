@@ -2,7 +2,17 @@
 # Usage (from repo root):
 #   powershell -ExecutionPolicy Bypass -File tooling/smoke-production-health.ps1
 #
-# Optional env: SMOKE_HEALTH_URLS = comma-separated full URLs (overrides smoke-health-urls.json)
+# Optional env:
+#   SMOKE_HEALTH_URLS = comma-separated full URLs (overrides smoke-health-urls.json)
+#   SMOKE_HEALTH_TIMEOUT_SEC = per-request timeout (default 60)
+#   SMOKE_HEALTH_RETRIES = attempts per URL on failure (default 3)
+#   SMOKE_HEALTH_RETRY_DELAY_SEC = sleep between attempts (default 15)
+
+param(
+    [int] $TimeoutSec = $(if ($env:SMOKE_HEALTH_TIMEOUT_SEC) { [int]$env:SMOKE_HEALTH_TIMEOUT_SEC } else { 60 }),
+    [int] $Retries = $(if ($env:SMOKE_HEALTH_RETRIES) { [int]$env:SMOKE_HEALTH_RETRIES } else { 3 }),
+    [int] $RetryDelaySec = $(if ($env:SMOKE_HEALTH_RETRY_DELAY_SEC) { [int]$env:SMOKE_HEALTH_RETRY_DELAY_SEC } else { 15 })
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -25,32 +35,63 @@ if ($urls.Count -eq 0) {
     Write-Error 'No health URLs configured.'
 }
 
-$failed = $false
-foreach ($url in $urls) {
-    Write-Host "Checking $url"
-    try {
-        $response = Invoke-WebRequest -Uri $url -Method Get -UseBasicParsing -TimeoutSec 60
-    } catch {
-        Write-Host "FAIL $url - $($_.Exception.Message)"
-        $failed = $true
-        continue
-    }
+function Test-HealthUrl {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Url,
+        [int] $RequestTimeoutSec
+    )
 
+    $response = Invoke-WebRequest -Uri $Url -Method Get -UseBasicParsing -TimeoutSec $RequestTimeoutSec
     if ($response.StatusCode -ne 200) {
-        Write-Host "FAIL $url - HTTP $($response.StatusCode)"
-        $failed = $true
-        continue
+        return @{ Ok = $false; Message = "HTTP $($response.StatusCode)" }
     }
 
     $body = $response.Content
     if ($body -notmatch '"status"\s*:\s*"ok"') {
-        Write-Host "FAIL $url - body does not contain `"status`":`"ok`""
-        Write-Host $body
-        $failed = $true
-        continue
+        return @{ Ok = $false; Message = 'body does not contain "status":"ok"' ; Body = $body }
     }
 
-    Write-Host "OK $url"
+    return @{ Ok = $true; Message = 'OK' }
+}
+
+$failed = $false
+foreach ($url in $urls) {
+    Write-Host "Checking $url"
+    $lastError = $null
+    $success = $false
+
+    for ($attempt = 1; $attempt -le $Retries; $attempt++) {
+        if ($attempt -gt 1) {
+            Write-Host "  Retry $attempt of $Retries after ${RetryDelaySec}s..."
+            Start-Sleep -Seconds $RetryDelaySec
+        }
+
+        try {
+            $result = Test-HealthUrl -Url $url -RequestTimeoutSec $TimeoutSec
+            if ($result.Ok) {
+                Write-Host "OK $url"
+                $success = $true
+                break
+            }
+
+            $lastError = $result.Message
+            if ($result.Body) {
+                Write-Host $result.Body
+            }
+        } catch {
+            $lastError = $_.Exception.Message
+        }
+
+        if (-not $success -and $attempt -lt $Retries) {
+            Write-Host "  Attempt $attempt failed: $lastError"
+        }
+    }
+
+    if (-not $success) {
+        Write-Host "FAIL $url - $lastError"
+        $failed = $true
+    }
 }
 
 if ($failed) {

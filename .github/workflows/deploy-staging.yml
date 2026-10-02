@@ -152,11 +152,32 @@ jobs:
         shell: cmd
         run: npm run deploy:all
 
+      # Node/iisnode may still serve old workers until pools recycle (email often hangs until then).
+      - name: Recycle IIS app pools (before smoke)
+        continue-on-error: true
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: powershell
+        env:
+          IIS_APP_POOLS_JSON: ${{ vars.IIS_APP_POOLS_JSON }}
+        run: |
+          if ($env:IIS_APP_POOLS_JSON -and -not (Test-Path -LiteralPath $env:IIS_APP_POOLS_JSON)) {
+            Write-Warning "IIS_APP_POOLS_JSON path not found: $env:IIS_APP_POOLS_JSON"
+          }
+          npm run recycle:iis
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning 'IIS recycle failed or skipped (runner may lack appcmd rights). Recycle pools manually if smoke fails.'
+          }
+
+      - name: Wait for health endpoints after recycle
+        shell: powershell
+        run: Start-Sleep -Seconds 30
+
       - name: Smoke health checks
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: powershell
         env:
           SMOKE_HEALTH_URLS: ${{ vars.SMOKE_HEALTH_URLS }}
+          SMOKE_HEALTH_RETRIES: ${{ vars.SMOKE_HEALTH_RETRIES }}
         run: |
           $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\smoke-production-health.ps1'
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
