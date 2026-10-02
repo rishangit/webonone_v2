@@ -748,6 +748,10 @@ function main() {
         '',
         `FRONTEND_BASE_URL=${originSupport}`,
         `MEDIA_API_BASE_URL=${apiBase(originMedia)}`,
+        '',
+        '# Cursor /feedback-fix MCP (not read by Support backend at runtime)',
+        `SUPPORT_API_BASE_URL=${apiBase(originSupport)}`,
+        `SUPPORT_FEEDBACK_BEARER_TOKEN=${get(master, 'SUPPORT_FEEDBACK_BEARER_TOKEN')}`,
       ]),
     ),
   );

@@ -9,12 +9,14 @@ stdio MCP server for WebOnOne Support bug/feature reports. Used by Cursor `/feed
 
 ## Environment variables
 
-Set these on the MCP server entry in Cursor (project [`.cursor/mcp.json`](../../.cursor/mcp.json) or user MCP settings). **Do not commit tokens.**
+Set these on the MCP server entry in Cursor (user MCP settings preferred; **do not commit tokens** in [`.cursor/mcp.json`](../../.cursor/mcp.json)).
 
 | Variable | Example |
 |----------|---------|
 | `SUPPORT_API_BASE_URL` | `https://staging-support.webonone.com/api/v1` |
 | `SUPPORT_FEEDBACK_BEARER_TOKEN` | `eyJ...` (Bearer access token) |
+
+**Ops / after `npm run env:apply`:** same keys are written to `support/backend/.env` from repo-root `production.env` (`SUPPORT_FEEDBACK_BEARER_TOKEN` + `SUPPORT_API_BASE_URL` derived from `ORIGIN_SUPPORT`). Point Cursor MCP env at those values or copy into user MCP settings.
 
 Local dev: `http://127.0.0.1:4021/api/v1`
 
