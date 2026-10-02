@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { DropdownMenuItem, ItemListMenu } from '@webonone/ui-kit'
 import type { FeedbackReport } from '@/features/feedback/services/feedbackApi'
-import type { FeedbackStatus } from '@/features/feedback/schemas/feedbackSchemas'
+import {
+  FEEDBACK_STATUS_ORDER,
+  type FeedbackStatus,
+} from '@/features/feedback/schemas/feedbackSchemas'
 
 type FeedbackStatusMenuProps = {
   item: FeedbackReport
@@ -14,24 +17,15 @@ export function FeedbackStatusMenu({ item, updatingId, onStatusChange }: Feedbac
 
   return (
     <ItemListMenu ariaLabel={t('statusMenuAria', { title: item.title })}>
-      <DropdownMenuItem
-        disabled={updatingId === item.id || item.status === 'todo'}
-        onClick={() => onStatusChange(item.id, 'todo')}
-      >
-        {t('status.todo')}
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        disabled={updatingId === item.id || item.status === 'in_progress'}
-        onClick={() => onStatusChange(item.id, 'in_progress')}
-      >
-        {t('status.in_progress')}
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        disabled={updatingId === item.id || item.status === 'completed'}
-        onClick={() => onStatusChange(item.id, 'completed')}
-      >
-        {t('status.completed')}
-      </DropdownMenuItem>
+      {FEEDBACK_STATUS_ORDER.map((status) => (
+        <DropdownMenuItem
+          key={status}
+          disabled={updatingId === item.id || item.status === status}
+          onClick={() => onStatusChange(item.id, status)}
+        >
+          {t(`status.${status}`)}
+        </DropdownMenuItem>
+      ))}
     </ItemListMenu>
   )
 }

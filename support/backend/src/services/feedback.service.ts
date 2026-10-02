@@ -163,6 +163,14 @@ export async function createFeedbackReport(
   return rowToDto(row)
 }
 
+export async function getFeedbackReportById(id: string): Promise<FeedbackReportDto> {
+  const row = await db<FeedbackReportRow>('feedback_reports').where({ id }).first()
+  if (!row) {
+    throw new Error('NOT_FOUND')
+  }
+  return rowToDto(row)
+}
+
 export async function updateFeedbackStatus(
   id: string,
   body: UpdateFeedbackStatusBody,

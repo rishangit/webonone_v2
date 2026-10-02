@@ -10,6 +10,7 @@ import {
 const router = Router()
 
 router.get('/feedback', requireAuth, feedbackController.listFeedback)
+router.get('/feedback/:id', requireAuth, feedbackController.getFeedback)
 router.post(
   '/feedback',
   requireAuth,

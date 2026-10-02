@@ -24,7 +24,7 @@ When WebOnOne (or a peer in the app shell) **adds or changes something users see
 ## Model
 
 - Public knowledge base for help articles. **`/feedback`** requires Identity JWT (login via `/login` → `/callback`).
-- Bug/feature reports: `GET/POST /api/v1/feedback`, `PATCH /api/v1/feedback/:id/status` (super admin only); data in MySQL `feedback_reports`.
+- Bug/feature reports: `GET/POST /api/v1/feedback`, `GET /api/v1/feedback/:id`, `PATCH /api/v1/feedback/:id/status` (super admin only); statuses include `ready_to_develop` for `/feedback-fix`; data in MySQL `feedback_reports`. Cursor MCP: `tooling/support-feedback-mcp`.
 - Articles: YAML frontmatter (`title`, `category`, `slug`, `audience`, `order`, `summary`) + Markdown body.
 - Catalog is built at compile time with `import.meta.glob` from `content/en` and `content/si`.
 - Chrome i18n `en`/`si`; article bodies follow the active locale with English fallback when a Sinhala file is missing.

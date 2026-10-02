@@ -1,7 +1,14 @@
 import { z } from 'zod'
 
 export const feedbackTypeSchema = z.enum(['bug', 'feature'])
-export const feedbackStatusSchema = z.enum(['todo', 'in_progress', 'completed'])
+export const feedbackStatusSchema = z.enum([
+  'todo',
+  'ready_to_develop',
+  'in_progress',
+  'developed',
+  'staging',
+  'closed',
+])
 
 const uploadSessionIdSchema = z
   .string()
@@ -47,5 +54,15 @@ export const createFeedbackFormSchema = z
 
 export type FeedbackType = z.infer<typeof feedbackTypeSchema>
 export type FeedbackStatus = z.infer<typeof feedbackStatusSchema>
+
+export const FEEDBACK_STATUS_ORDER: FeedbackStatus[] = [
+  'todo',
+  'ready_to_develop',
+  'in_progress',
+  'developed',
+  'staging',
+  'closed',
+]
+
 export type CreateFeedbackFormValues = z.infer<typeof createFeedbackFormSchema>
 export type FeedbackAttachment = z.infer<typeof feedbackAttachmentSchema>

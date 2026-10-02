@@ -24,7 +24,7 @@ Backend loads only `support/backend/.env`. Production host: `https://support.web
 ## Ownership
 
 - Public how-tos for WebOnOne users. Help articles need no login; **`/feedback`** uses Identity JWT.
-- Bug/feature reports API + `feedback_reports` table in `webonone_support`. Super admin updates status via JWT `platform_role`.
+- Bug/feature reports API + `feedback_reports` table in `webonone_support`. Statuses: `todo`, `ready_to_develop`, `in_progress`, `developed`, `staging`, `closed` (default `todo`). `/feedback-fix` picks `ready_to_develop` → `in_progress` → `developed`. Super admin sets all statuses via JWT `platform_role`. MCP: `tooling/support-feedback-mcp` (hosted API only).
 - Articles in `frontend/src/content/en/**/*.md` and `frontend/src/content/si/**/*.md` (Sinhala mirrors English paths; missing `si` file falls back to English).
 - Help article bodies are not stored in MySQL (Markdown at build time).
 

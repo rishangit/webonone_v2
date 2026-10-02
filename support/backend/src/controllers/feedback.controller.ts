@@ -20,6 +20,17 @@ function handleServiceError(err: unknown, res: Response): boolean {
   return false
 }
 
+export async function getFeedback(req: AuthenticatedRequest, res: Response) {
+  try {
+    const item = await feedbackService.getFeedbackReportById(String(req.params.id))
+    res.json(item)
+  } catch (err) {
+    if (!handleServiceError(err, res)) {
+      throw err
+    }
+  }
+}
+
 export async function listFeedback(req: AuthenticatedRequest, res: Response) {
   const parsed = listFeedbackQuerySchema.safeParse(req.query)
   if (!parsed.success) {

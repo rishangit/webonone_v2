@@ -1,7 +1,14 @@
 import { z } from 'zod'
 
 export const feedbackTypeSchema = z.enum(['bug', 'feature'])
-export const feedbackStatusSchema = z.enum(['todo', 'in_progress', 'completed'])
+export const feedbackStatusSchema = z.enum([
+  'todo',
+  'ready_to_develop',
+  'in_progress',
+  'developed',
+  'staging',
+  'closed',
+])
 
 const uploadSessionIdSchema = z.string().min(1).max(21).regex(/^[A-Za-z0-9_-]+$/, 'Invalid upload session')
 

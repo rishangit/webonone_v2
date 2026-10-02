@@ -5,10 +5,16 @@ export function feedbackStatusTagVariant(status: FeedbackStatus): StatusTagVaria
   switch (status) {
     case 'todo':
       return 'pending'
+    case 'ready_to_develop':
+      return 'verified'
     case 'in_progress':
       return 'unverified'
-    case 'completed':
+    case 'developed':
       return 'approved'
+    case 'staging':
+      return 'pending'
+    case 'closed':
+      return 'rejected'
     default:
       return 'pending'
   }

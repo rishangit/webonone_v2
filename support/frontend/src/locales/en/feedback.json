@@ -20,9 +20,12 @@
     "feature": "Feature request"
   },
   "status": {
-    "todo": "To do",
-    "in_progress": "In progress",
-    "completed": "Completed"
+    "todo": "To Do",
+    "ready_to_develop": "Ready to Developed",
+    "in_progress": "In Progress",
+    "developed": "Developed",
+    "staging": "Staging",
+    "closed": "Closed"
   },
   "fields": {
     "type": "Type",
