@@ -32,6 +32,11 @@ const envSchema = z.object({
   EMAIL_SERVICE_API_KEY: z.string().optional(),
   /** Platform default inbox — same value as Identity / WebOnOne (production.env SUPER_ADMIN_EMAIL). */
   SUPER_ADMIN_EMAIL: z.string().email().default('superadmin@webonone.local'),
+  /** Long-lived key for /feedback-fix MCP + watcher (header X-Support-Feedback-Automation-Key). */
+  SUPPORT_FEEDBACK_AUTOMATION_API_KEY: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().min(32).optional(),
+  ),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -61,4 +66,5 @@ export const env = {
   emailApiBaseUrl: parsed.EMAIL_API_BASE_URL?.trim() ?? '',
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY?.trim() ?? '',
   superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
+  feedbackAutomationApiKey: parsed.SUPPORT_FEEDBACK_AUTOMATION_API_KEY?.trim() ?? '',
 }

@@ -119,6 +119,8 @@
     "migrate:ai": "npm run migrate -w ai-root",
     "migrate:support": "npm run migrate -w support-root",
     "migrate:all": "npm run migrate:identity && npm run migrate:webonone && npm run migrate:media && npm run migrate:email && npm run migrate:data && npm run migrate:sms && npm run migrate:payment && npm run migrate:website && npm run migrate:design && npm run migrate:ai && npm run migrate:support",
+    "feedback-fix:watch": "npm run build --prefix tooling/support-feedback-mcp && node tooling/support-feedback-mcp/dist/watcher.js",
+    "feedback-fix:watch:once": "npm run build --prefix tooling/support-feedback-mcp && node tooling/support-feedback-mcp/dist/watcher.js --once",
     "recycle:iis": "powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -SkipMissing",
     "iis:stop": "powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -Action Stop -SkipMissing",
     "iis:start": "powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -Action Start -SkipMissing",

@@ -20,14 +20,7 @@ type JwtClaims = {
   company_id?: string | null
 }
 
-export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const header = req.headers.authorization
-  if (!header?.startsWith('Bearer ')) {
-    res.status(401).json({ message: 'Missing or invalid authorization header', code: 'UNAUTHORIZED' })
-    return
-  }
-
-  const token = header.slice(7)
+export function attachJwtUser(req: AuthenticatedRequest, token: string): boolean {
   try {
     const decoded = jwt.verify(token, env.jwtSecret, {
       issuer: env.jwtIssuer,
@@ -40,10 +33,24 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
       platformRole: decoded.platform_role ?? 'member',
       companyId: decoded.company_id ?? null,
     }
-    next()
+    return true
   } catch {
-    res.status(401).json({ message: 'Invalid or expired token', code: 'UNAUTHORIZED' })
+    return false
   }
+}
+
+export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  const header = req.headers.authorization
+  if (!header?.startsWith('Bearer ')) {
+    res.status(401).json({ message: 'Missing or invalid authorization header', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  if (!attachJwtUser(req, header.slice(7))) {
+    res.status(401).json({ message: 'Invalid or expired token', code: 'UNAUTHORIZED' })
+    return
+  }
+  next()
 }
 
 export function requireSuperAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {

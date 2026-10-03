@@ -8,6 +8,8 @@ build/
 # Deploy-time source of truth (copy from production.env.example)
 /production.env
 *.log
+.cursor/feedback-fix-watcher.lock
+.cursor/logs/feedback-fix-watcher/
 .DS_Store
 coverage/
 *.tsbuildinfo
