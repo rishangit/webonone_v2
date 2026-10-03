@@ -3,7 +3,7 @@
 #
 # Required env (same as tooling/support-feedback-mcp):
 #   SUPPORT_API_BASE_URL
-#   SUPPORT_FEEDBACK_BEARER_TOKEN  (super_admin JWT)
+#   SUPPORT_FEEDBACK_AUTOMATION_API_KEY
 #
 # Optional:
 #   FEEDBACK_FIX_WORKSPACE          (default: repo root above tooling/)
@@ -27,7 +27,7 @@ if (Test-Path $envPath) {
     $pair = $_ -split '=', 2
     $name = $pair[0].Trim()
     $value = $pair[1].Trim()
-    if ($name -in @('SUPPORT_API_BASE_URL', 'SUPPORT_FEEDBACK_AUTOMATION_API_KEY', 'SUPPORT_FEEDBACK_BEARER_TOKEN')) {
+    if ($name -in @('SUPPORT_API_BASE_URL', 'SUPPORT_FEEDBACK_AUTOMATION_API_KEY')) {
       Set-Item -Path "Env:$name" -Value $value
     }
   }
@@ -36,8 +36,8 @@ if (Test-Path $envPath) {
 if (-not $env:SUPPORT_API_BASE_URL) {
   Write-Error 'Set SUPPORT_API_BASE_URL (support/backend/.env or machine env).'
 }
-if (-not $env:SUPPORT_FEEDBACK_AUTOMATION_API_KEY -and -not $env:SUPPORT_FEEDBACK_BEARER_TOKEN) {
-  Write-Error 'Set SUPPORT_FEEDBACK_AUTOMATION_API_KEY (preferred) or SUPPORT_FEEDBACK_BEARER_TOKEN.'
+if (-not $env:SUPPORT_FEEDBACK_AUTOMATION_API_KEY) {
+  Write-Error 'Set SUPPORT_FEEDBACK_AUTOMATION_API_KEY (support/backend/.env or machine env).'
 }
 
 Push-Location (Join-Path $repoRoot 'tooling\support-feedback-mcp')

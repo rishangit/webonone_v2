@@ -4,7 +4,7 @@ stdio MCP server for WebOnOne Support bug/feature reports. Used by Cursor `/feed
 
 ## Prerequisites
 
-- Identity JWT for a **super_admin** user (required for `feedback_update_status`)
+- `SUPPORT_FEEDBACK_AUTOMATION_API_KEY` on Support backend (validates list/get/status for `/feedback-fix`)
 - Support API base URL (staging or production)
 
 ## Environment variables
@@ -14,12 +14,11 @@ Set these on the MCP server entry in Cursor (user MCP settings preferred; **do n
 | Variable | Example |
 |----------|---------|
 | `SUPPORT_API_BASE_URL` | `https://staging-support.webonone.com/api/v1` |
-| `SUPPORT_FEEDBACK_AUTOMATION_API_KEY` | Long-lived secret (min 32 chars; `openssl rand -hex 32`) — **preferred** |
-| `SUPPORT_FEEDBACK_BEARER_TOKEN` | Optional super_admin JWT (expires; legacy) |
+| `SUPPORT_FEEDBACK_AUTOMATION_API_KEY` | Long-lived secret (min 32 chars; `openssl rand -hex 32`) |
 
 Set `SUPPORT_FEEDBACK_AUTOMATION_API_KEY` to the **same value** on the Support backend and on the MCP/watcher host. The API sends header `X-Support-Feedback-Automation-Key` (list/get/status only).
 
-**Ops / after `npm run env:apply`:** `SUPPORT_FEEDBACK_AUTOMATION_API_KEY`, `SUPPORT_API_BASE_URL`, and optional `SUPPORT_FEEDBACK_BEARER_TOKEN` are written to `support/backend/.env` from repo-root `production.env`. Point Cursor MCP env at the same values (user MCP settings — never commit secrets).
+**Ops / after `npm run env:apply`:** `SUPPORT_FEEDBACK_AUTOMATION_API_KEY` and `SUPPORT_API_BASE_URL` are written to `support/backend/.env` from repo-root `production.env`. Point Cursor MCP env at the same values (user MCP settings — never commit secrets).
 
 Local dev: `http://127.0.0.1:4021/api/v1`
 

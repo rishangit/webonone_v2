@@ -757,8 +757,6 @@ function main() {
         '# /feedback-fix MCP + watcher — same key Support BE validates (min 32 chars)',
         `SUPPORT_FEEDBACK_AUTOMATION_API_KEY=${get(master, 'SUPPORT_FEEDBACK_AUTOMATION_API_KEY')}`,
         `SUPPORT_API_BASE_URL=${apiBase(originSupport)}`,
-        `# Optional legacy JWT (expires); prefer SUPPORT_FEEDBACK_AUTOMATION_API_KEY`,
-        `SUPPORT_FEEDBACK_BEARER_TOKEN=${get(master, 'SUPPORT_FEEDBACK_BEARER_TOKEN')}`,
       ]),
     ),
   );

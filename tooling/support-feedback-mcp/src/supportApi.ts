@@ -44,8 +44,7 @@ export type FeedbackStatus = z.infer<typeof feedbackStatusSchema>
 
 export interface SupportApiConfig {
   baseUrl: string
-  bearerToken?: string
-  automationApiKey?: string
+  automationApiKey: string
 }
 
 function trimTrailingSlash(url: string): string {
@@ -54,42 +53,27 @@ function trimTrailingSlash(url: string): string {
 
 export class SupportFeedbackApi {
   private readonly baseUrl: string
-  private readonly bearerToken: string | undefined
-  private readonly automationApiKey: string | undefined
+  private readonly automationApiKey: string
 
   constructor(config: SupportApiConfig) {
     this.baseUrl = trimTrailingSlash(config.baseUrl)
-    this.bearerToken = config.bearerToken?.replace(/^Bearer\s+/i, '')
-    this.automationApiKey = config.automationApiKey?.trim()
+    this.automationApiKey = config.automationApiKey.trim()
   }
 
   static fromEnv(): SupportFeedbackApi {
     const baseUrl = process.env.SUPPORT_API_BASE_URL?.trim()
     const automationApiKey = process.env.SUPPORT_FEEDBACK_AUTOMATION_API_KEY?.trim()
-    const rawToken = process.env.SUPPORT_FEEDBACK_BEARER_TOKEN?.trim()
-    const bearerToken = rawToken?.replace(/^Bearer\s+/i, '') ?? ''
     if (!baseUrl) {
       throw new Error('SUPPORT_API_BASE_URL is required')
     }
-    if (automationApiKey) {
-      return new SupportFeedbackApi({ baseUrl, automationApiKey })
+    if (!automationApiKey) {
+      throw new Error('SUPPORT_FEEDBACK_AUTOMATION_API_KEY is required')
     }
-    if (!bearerToken) {
-      throw new Error(
-        'SUPPORT_FEEDBACK_AUTOMATION_API_KEY or SUPPORT_FEEDBACK_BEARER_TOKEN is required',
-      )
-    }
-    return new SupportFeedbackApi({ baseUrl, bearerToken })
+    return new SupportFeedbackApi({ baseUrl, automationApiKey })
   }
 
   private authHeaders(): Record<string, string> {
-    if (this.automationApiKey) {
-      return { 'X-Support-Feedback-Automation-Key': this.automationApiKey }
-    }
-    if (this.bearerToken) {
-      return { Authorization: `Bearer ${this.bearerToken}` }
-    }
-    throw new Error('Support API client is not configured with credentials')
+    return { 'X-Support-Feedback-Automation-Key': this.automationApiKey }
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {

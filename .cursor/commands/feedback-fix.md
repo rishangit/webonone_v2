@@ -27,7 +27,7 @@ Invoking `/feedback-fix` **pre-authorizes** Support Feedback MCP (`feedback_list
 Server: **`support-feedback`** in [`.cursor/mcp.json`](.cursor/mcp.json). Point at **staging or live** Support API (not local). Requires env:
 
 - `SUPPORT_API_BASE_URL` — e.g. `https://staging-support.webonone.com/api/v1`
-- `SUPPORT_FEEDBACK_BEARER_TOKEN` — super_admin JWT (set in Cursor MCP env; never commit)
+- `SUPPORT_FEEDBACK_AUTOMATION_API_KEY` — long-lived secret (same value as Support `backend/.env`; never commit)
 
 See [`tooling/support-feedback-mcp/README.md`](../../tooling/support-feedback-mcp/README.md).
 
