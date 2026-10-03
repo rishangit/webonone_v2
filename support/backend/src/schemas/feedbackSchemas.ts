@@ -4,11 +4,16 @@ export const feedbackTypeSchema = z.enum(['bug', 'feature'])
 export const feedbackStatusSchema = z.enum([
   'todo',
   'ready_to_develop',
+  'planned',
   'in_progress',
   'developed',
   'staging',
   'closed',
 ])
+
+export const feedbackTicketNumberSchema = z
+  .string()
+  .regex(/^\d{4}$/, 'Ticket number must be four digits (e.g. 0001)')
 
 const uploadSessionIdSchema = z.string().min(1).max(21).regex(/^[A-Za-z0-9_-]+$/, 'Invalid upload session')
 
@@ -83,6 +88,7 @@ export const listFeedbackQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(12),
   type: feedbackTypeSchema.optional(),
   status: feedbackStatusSchema.optional(),
+  ticket: feedbackTicketNumberSchema.optional(),
   q: z.string().trim().optional(),
 })
 

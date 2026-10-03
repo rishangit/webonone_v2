@@ -9,6 +9,7 @@ import type {
 
 export interface FeedbackReport {
   id: string
+  ticketNumber: string
   type: FeedbackType
   title: string
   description: string

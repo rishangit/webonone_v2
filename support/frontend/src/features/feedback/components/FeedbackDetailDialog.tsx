@@ -102,7 +102,7 @@ export function FeedbackDetailDialog({
       <CustomDialog
         open={open}
         onOpenChange={onOpenChange}
-        title={report.title}
+        title={`#${report.ticketNumber} — ${report.title}`}
         description={t('detailDescription')}
         sizeWidth="medium"
         sizeHeight="large"

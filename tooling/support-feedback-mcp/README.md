@@ -35,12 +35,14 @@ Cursor starts the server via `node tooling/support-feedback-mcp/dist/index.js` (
 | Tool | Support API |
 |------|-------------|
 | `feedback_list` | `GET /feedback` |
-| `feedback_get` | `GET /feedback/:id` |
+| `feedback_get` | `GET /feedback/:id` or `GET /feedback/ticket/:ticketNumber` when `id` is four digits |
 | `feedback_update_status` | `PATCH /feedback/:id/status` |
+
+List supports `ticket` query (e.g. `0001`). Reports include `ticketNumber`.
 
 ## Workflow
 
 1. Super admin sets a report to **Ready to Developed** (`ready_to_develop`) on hosted `/feedback`.
-2. Run `/feedback-fix` in Cursor Agent mode (reads staging or live API; code changes are local).
-3. Agent claims `in_progress`, implements, then sets `developed`.
+2. Run `/feedback-fix` or `/feedback-fix 0001` in Cursor (staging or live API; spec/code changes are local).
+3. Agent writes `spec/{ticket}/spec.md` and `plan.md`, sets `planned`, implements, then sets `developed`.
 4. Super admin later sets **Staging** and **Closed** in the UI after deploy/release.

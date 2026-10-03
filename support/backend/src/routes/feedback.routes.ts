@@ -12,6 +12,7 @@ import {
 const router = Router()
 
 router.get('/feedback', requireAuth, feedbackController.listFeedback)
+router.get('/feedback/ticket/:ticketNumber', requireAuth, feedbackController.getFeedbackByTicket)
 router.get('/feedback/:id', requireAuth, feedbackController.getFeedback)
 router.get('/feedback/:id/comments', requireAuth, feedbackController.listFeedbackComments)
 router.post(

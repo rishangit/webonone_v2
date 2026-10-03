@@ -12,8 +12,29 @@ import { countUnreadCommentsForReports } from './feedbackComments.service.js'
 import { buildSupportFeedbackMediaScope } from '../schemas/feedbackSchemas.js'
 import { fetchMediaItem } from './mediaClient.service.js'
 
+function formatTicketNumber(sequence: number): string {
+  return String(sequence).padStart(4, '0')
+}
+
+async function allocateNextTicketNumber(): Promise<string> {
+  const maxRow = await db<FeedbackReportRow>('feedback_reports')
+    .select('ticket_number')
+    .orderBy('ticket_number', 'desc')
+    .first()
+  const maxTicket = maxRow?.ticket_number
+  const next =
+    typeof maxTicket === 'string' && /^\d{4}$/.test(maxTicket)
+      ? Number.parseInt(maxTicket, 10) + 1
+      : 1
+  if (next > 9999) {
+    throw new Error('TICKET_NUMBER_EXHAUSTED')
+  }
+  return formatTicketNumber(next)
+}
+
 export interface FeedbackReportRow {
   id: string
+  ticket_number: string
   type: FeedbackType
   title: string
   description: string
@@ -31,6 +52,7 @@ export interface FeedbackReportRow {
 
 export interface FeedbackReportDto {
   id: string
+  ticketNumber: string
   type: FeedbackType
   title: string
   description: string
@@ -50,6 +72,7 @@ export interface FeedbackReportDto {
 function rowToDto(row: FeedbackReportRow): FeedbackReportDto {
   return {
     id: row.id,
+    ticketNumber: row.ticket_number,
     type: row.type,
     title: row.title,
     description: row.description,
@@ -67,7 +90,7 @@ function rowToDto(row: FeedbackReportRow): FeedbackReportDto {
 }
 
 export async function listFeedbackReports(query: ListFeedbackQuery, viewerUserId?: string) {
-  const { page, pageSize, type, status, q } = query
+  const { page, pageSize, type, status, ticket, q } = query
   const base = db<FeedbackReportRow>('feedback_reports')
 
   if (type) {
@@ -76,6 +99,9 @@ export async function listFeedbackReports(query: ListFeedbackQuery, viewerUserId
   if (status) {
     base.where({ status })
   }
+  if (ticket) {
+    base.where({ ticket_number: ticket })
+  }
   if (q) {
     const term = `%${q}%`
     base.where((builder) => {
@@ -83,6 +109,7 @@ export async function listFeedbackReports(query: ListFeedbackQuery, viewerUserId
         .where('title', 'like', term)
         .orWhere('description', 'like', term)
         .orWhere('reporter_email', 'like', term)
+        .orWhere('ticket_number', 'like', term)
     })
   }
 
@@ -154,10 +181,12 @@ export async function createFeedbackReport(
   await validateAttachment(body, reporter.id, accessToken)
 
   const id = nanoid()
+  const ticketNumber = await allocateNextTicketNumber()
   const now = db.fn.now(3)
 
   await db('feedback_reports').insert({
     id,
+    ticket_number: ticketNumber,
     type: body.type,
     title: body.title,
     description: body.description,
@@ -182,6 +211,18 @@ export async function createFeedbackReport(
 
 export async function getFeedbackReportById(id: string): Promise<FeedbackReportDto> {
   const row = await db<FeedbackReportRow>('feedback_reports').where({ id }).first()
+  if (!row) {
+    throw new Error('NOT_FOUND')
+  }
+  return rowToDto(row)
+}
+
+export async function getFeedbackReportByTicketNumber(
+  ticketNumber: string,
+): Promise<FeedbackReportDto> {
+  const row = await db<FeedbackReportRow>('feedback_reports')
+    .where({ ticket_number: ticketNumber })
+    .first()
   if (!row) {
     throw new Error('NOT_FOUND')
   }

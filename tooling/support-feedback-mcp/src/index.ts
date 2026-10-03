@@ -8,11 +8,16 @@ const feedbackTypeArg = z.enum(['bug', 'feature']).optional()
 const feedbackStatusArg = z.enum([
   'todo',
   'ready_to_develop',
+  'planned',
   'in_progress',
   'developed',
   'staging',
   'closed',
 ])
+
+const feedbackTicketArg = z
+  .string()
+  .regex(/^\d{4}$/, 'Four-digit ticket number (e.g. 0001)')
 
 const server = new McpServer({
   name: 'support-feedback',
@@ -42,6 +47,7 @@ server.tool(
       .describe('Page size (default 12, max 100)'),
     type: feedbackTypeArg.describe('Filter by bug or feature'),
     status: feedbackStatusArg.describe('Filter by workflow status'),
+    ticket: feedbackTicketArg.optional().describe('Filter by ticket number (e.g. 0001)'),
     q: z.string().optional().describe('Search title and description'),
   },
   async (args) => {
@@ -54,12 +60,15 @@ server.tool(
 
 server.tool(
   'feedback_get',
-  'Get a single feedback report by id.',
+  'Get a single feedback report by id or four-digit ticket number.',
   {
-    id: z.string().min(1).describe('Feedback report id (21-char nanoid)'),
+    id: z
+      .string()
+      .min(1)
+      .describe('Feedback report id (21-char nanoid) or ticket number (0001–9999)'),
   },
   async ({ id }) => {
-    const report = await api.getFeedback(id)
+    const report = /^\d{4}$/.test(id) ? await api.getFeedbackByTicket(id) : await api.getFeedback(id)
     return {
       content: [{ type: 'text', text: JSON.stringify(report, null, 2) }],
     }

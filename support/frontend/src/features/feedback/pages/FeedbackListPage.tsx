@@ -213,6 +213,7 @@ export function FeedbackListPage() {
               <SelectItem value="all">{t('filterAll')}</SelectItem>
               <SelectItem value="todo">{t('status.todo')}</SelectItem>
               <SelectItem value="ready_to_develop">{t('status.ready_to_develop')}</SelectItem>
+              <SelectItem value="planned">{t('status.planned')}</SelectItem>
               <SelectItem value="in_progress">{t('status.in_progress')}</SelectItem>
               <SelectItem value="developed">{t('status.developed')}</SelectItem>
               <SelectItem value="staging">{t('status.staging')}</SelectItem>

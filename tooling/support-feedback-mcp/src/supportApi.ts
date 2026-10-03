@@ -4,6 +4,7 @@ const feedbackTypeSchema = z.enum(['bug', 'feature'])
 const feedbackStatusSchema = z.enum([
   'todo',
   'ready_to_develop',
+  'planned',
   'in_progress',
   'developed',
   'staging',
@@ -12,6 +13,7 @@ const feedbackStatusSchema = z.enum([
 
 export const feedbackReportSchema = z.object({
   id: z.string(),
+  ticketNumber: z.string(),
   type: feedbackTypeSchema,
   title: z.string(),
   description: z.string(),
@@ -108,6 +110,7 @@ export class SupportFeedbackApi {
     pageSize?: number
     type?: FeedbackType
     status?: FeedbackStatus
+    ticket?: string
     q?: string
   }): Promise<FeedbackListResult> {
     const search = new URLSearchParams()
@@ -115,6 +118,7 @@ export class SupportFeedbackApi {
     search.set('pageSize', String(params.pageSize ?? 12))
     if (params.type) search.set('type', params.type)
     if (params.status) search.set('status', params.status)
+    if (params.ticket) search.set('ticket', params.ticket)
     if (params.q) search.set('q', params.q)
 
     const raw = await this.request<unknown>(`/feedback?${search.toString()}`)
@@ -123,6 +127,13 @@ export class SupportFeedbackApi {
 
   async getFeedback(id: string): Promise<FeedbackReport> {
     const raw = await this.request<unknown>(`/feedback/${encodeURIComponent(id)}`)
+    return feedbackReportSchema.parse(raw)
+  }
+
+  async getFeedbackByTicket(ticketNumber: string): Promise<FeedbackReport> {
+    const raw = await this.request<unknown>(
+      `/feedback/ticket/${encodeURIComponent(ticketNumber)}`,
+    )
     return feedbackReportSchema.parse(raw)
   }
 

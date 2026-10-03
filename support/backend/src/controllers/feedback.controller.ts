@@ -1,6 +1,6 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
-import { listFeedbackQuerySchema } from '../schemas/feedbackSchemas.js'
+import { feedbackTicketNumberSchema, listFeedbackQuerySchema } from '../schemas/feedbackSchemas.js'
 import type {
   CreateFeedbackBody,
   CreateFeedbackCommentBody,
@@ -28,6 +28,27 @@ function handleServiceError(err: unknown, res: Response): boolean {
     return true
   }
   return false
+}
+
+export async function getFeedbackByTicket(req: AuthenticatedRequest, res: Response) {
+  const parsed = feedbackTicketNumberSchema.safeParse(req.params.ticketNumber)
+  if (!parsed.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      details: parsed.error.flatten(),
+    })
+    return
+  }
+
+  try {
+    const item = await feedbackService.getFeedbackReportByTicketNumber(parsed.data)
+    res.json(item)
+  } catch (err) {
+    if (!handleServiceError(err, res)) {
+      throw err
+    }
+  }
 }
 
 export async function getFeedback(req: AuthenticatedRequest, res: Response) {

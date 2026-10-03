@@ -1,25 +1,26 @@
-# Support feedback → Fix workflow
+# Support feedback → Spec, plan, and fix workflow
 
-Implement a bug fix or small feature from the hosted Support **Bug and feature reports** queue when status is **`ready_to_develop`** (UI: **Ready to Developed**). Claim as **In Progress**, implement locally, verify, then mark **`developed`** (UI: **Developed**).
+Implement a bug fix or small feature from the hosted Support **Bug and feature reports** queue. Each report has a **four-digit ticket** (`0001`, `0002`, …). `/feedback-fix` writes a repo spec under `spec/{ticket}/`, plans in **Plan mode**, marks the report **`planned`**, then implements from that spec and marks **`developed`** when verified.
 
 Statuses (super admin manages all except the automated transitions below):
 
 | API value | UI label | Who sets it |
 |-----------|----------|-------------|
 | `todo` | To Do | Default on create |
-| `ready_to_develop` | Ready to Developed | Super admin (queue for `/feedback-fix`) |
-| `in_progress` | In Progress | `/feedback-fix` when work starts |
+| `ready_to_develop` | Ready to Developed | Super admin (queue for spec + plan) |
+| `planned` | Planned | `/feedback-fix` after spec + plan are saved |
+| `in_progress` | In Progress | `/feedback-fix` when implementation starts |
 | `developed` | Developed | `/feedback-fix` when implementation verified |
 | `staging` | Staging | Super admin (deployed to staging) |
 | `closed` | Closed | Super admin (done / released) |
 
-Run in **Agent mode** end-to-end without asking for confirmation unless blocked.
+Run end-to-end without asking for confirmation unless blocked.
 
-**Standalone workflow:** `/feedback-fix` uses only the **Support Feedback MCP** and the report’s `title` / `description` as the requirement. It does **not** use ClickUp MCP and is **not** chained to `/clickup-spec`, `/clickup-plan`, or `/clickup-build`. Run it on its own whenever you want the next `ready_to_develop` item implemented. Large features are handled inside this workflow (scope guard below), not by redirecting to ClickUp.
+**Standalone workflow:** Support Feedback MCP + on-disk `spec/{ticket}/` only — no ClickUp MCP. Each invocation targets one report (by ticket, id, or queue rules).
 
 ## Permissions — auto-run
 
-Invoking `/feedback-fix` **pre-authorizes** Support Feedback MCP (`feedback_list`, `feedback_get`, `feedback_update_status`), git (branch work when needed), service source edits, and verification shell commands (`npm`, `npx`, `node`). Execute immediately; do not wait for Run/Approve prompts. Requires Run Mode **Allowlist** or **Run Everything** — see [`.cursor/permissions.json`](.cursor/permissions.json).
+Invoking `/feedback-fix` **pre-authorizes** Support Feedback MCP (`feedback_list`, `feedback_get`, `feedback_update_status`), **`SwitchMode` to `plan`** (planning phase only), git (branch work when needed), writes under `spec/{ticket}/`, service source edits, and verification shell commands (`npm`, `npx`, `node`). Execute immediately; do not wait for Run/Approve prompts. See [`.cursor/permissions.json`](.cursor/permissions.json).
 
 ## MCP setup
 
@@ -30,87 +31,89 @@ Server: **`support-feedback`** in [`.cursor/mcp.json`](.cursor/mcp.json). Point 
 
 See [`tooling/support-feedback-mcp/README.md`](../../tooling/support-feedback-mcp/README.md).
 
-## Agent mode only
-
-| Forbidden | Required |
-|-----------|----------|
-| `SwitchMode` to `plan` | Pick report, claim, read title/description and develop requirement, implement, verify, update status |
-| `AskQuestion` for which report when one can be resolved | Auto-pick per rules below |
-| Mark `developed` without verification | Run type-check/lint for touched workspaces |
-| Set `staging` or `closed` | Super admin only in Support UI |
-
 ## Pick a report — no questions
 
-1. If the user named a **feedback id** (21-char id or pasted from the list), call **`feedback_get`**. The report **must** have `status === "ready_to_develop"`. Otherwise stop with a clear message.
-2. Else call **`feedback_list`** with `status: "ready_to_develop"`, `pageSize: 100`. If `hasMore`, paginate until all ready items are collected.
-3. If the user said **bug** or **feature** (or “bugs only”), filter by `type`.
-4. Else use a **single queue** (bugs and features together).
-5. Pick **one** report: sort by `createdAt` ascending (oldest first). Tie-break: `id` lexicographic.
-6. If no matches, stop: “No feedback in ready_to_develop.”
+Arguments: `/feedback-fix`, `/feedback-fix 0001`, `/feedback-fix <21-char-id>`, optional **bug** / **feature** filter in the user message.
 
-## Claim
+1. If the user named a **four-digit ticket** (`0001`–`9999`, zero-padded), call **`feedback_get`** with that ticket string. Normalize input: `1` → `0001`, `42` → `0042`.
+2. Else if the user named a **feedback id** (21-char nanoid), call **`feedback_get`** with that id.
+3. For a **named** ticket or id, the report must be **`ready_to_develop`** or **`planned`** (wrong status → stop with a clear message).
+4. Else call **`feedback_list`** twice if needed: collect all **`ready_to_develop`**, then all **`planned`** (`pageSize: 100`, paginate). Optional **bug** / **feature** filter on `type`.
+5. Pick **one** report:
+   - Prefer oldest **`ready_to_develop`** (`createdAt` asc, tie-break `id`).
+   - If none, prefer oldest **`planned`** for the implementation phase.
+6. If no matches, stop: “No feedback in ready_to_develop or planned.”
 
-Immediately call **`feedback_update_status`** with `status: "in_progress"` for the picked id **before** writing code. This prevents double-pick across parallel runs.
+Record **`ticketNumber`** from the MCP JSON for all spec paths and the finish report.
 
-## Read report and develop the requirement
+## Two phases (same command, same session)
 
-After claim, call **`feedback_get`** for the picked id (even if the list response already included fields — use the full report). **Do not edit product code** until you have turned the report into an explicit requirement.
+| Current status | Phase | Outcome status |
+|----------------|-------|----------------|
+| `ready_to_develop` | **Spec + plan** | `planned` |
+| `planned` | **Implement** | `developed` (or stay `in_progress` if blocked) |
 
-From the JSON, read at minimum:
+After picking, call **`feedback_get`** for the full report (`title`, `description`, `type`, `attachmentUrl`, `ticketNumber`, `id`).
 
-| Field | Use |
-|-------|-----|
-| `title` | One-line summary of what to fix or build |
-| `description` | Full user intent, steps to reproduce, expected vs actual, constraints |
-| `type` | `bug` vs `feature` — drives scope guard below |
-| `attachmentUrl` | Optional screenshot — open or fetch when repro/UI context is unclear |
+### Phase A — Spec and plan (`ready_to_develop`)
 
-**Develop the requirement** (write this in the session before searching the codebase):
+**Do not edit product service code** until Phase B.
 
-1. **Restate** — Paraphrase `title` + `description` in your own words (problem or goal).
-2. **Acceptance criteria** — 2–5 concrete, testable bullets (what “done” means for this report).
-3. **Services / areas** — Which monorepo roots and features are likely involved (per [`AGENTS.md`](../../AGENTS.md)); note unknowns to resolve via search.
-4. **Scope check** — If the description is larger than the title, **implement in this session** starting with the title (MVP), then add description items while they stay in one or two service roots. Do **not** stop after claim without coding unless truly blocked (missing credentials, ambiguous product fact, or hard dependency on another team).
-5. **Open questions** — Only if `title`/`description`/`attachmentUrl` are ambiguous; infer from code when possible. Do not use `AskQuestion` to pick a report — only to unblock missing product facts after reading the text.
+1. **Develop the requirement** (in chat before files):
+   - Restate problem/goal from `title` + `description`.
+   - 2–5 acceptance criteria.
+   - Likely monorepo roots ([`AGENTS.md`](../../AGENTS.md)).
+   - Scope guard for large **feature** descriptions (MVP = title first).
+2. **Write spec** — create `spec/{ticketNumber}/spec.md` (e.g. `spec/0001/spec.md`):
+   - Header: ticket, feedback id, type, title, reporter email, link to `attachmentUrl` when present.
+   - Sections: overview, problem/goal, acceptance criteria, services affected, out of scope, verification commands.
+   - Mirror tone/structure of recent `spec/*/` packages (e.g. `01-overview.md` depth in a single `spec.md` for feedback-sized work).
+3. **Plan (Plan mode)** — `SwitchMode` to **`plan`**. Produce the implementation plan from `spec/{ticketNumber}/spec.md` and relevant `.cursor/rules/` / `AGENTS.md`. Save to **`spec/{ticketNumber}/plan.md`** (markdown, not in-chat only). Switch back to **Agent** mode to continue.
+4. **`feedback_update_status`** → **`planned`** only after both files exist on disk.
+5. **Continue** into Phase B in the **same session** unless truly blocked.
 
-Implementation must satisfy the acceptance criteria derived from **title** and **description**, not a different interpretation.
+### Phase B — Implement (`planned`, or same run after Phase A)
 
-## Implement by `type`
-
-Route work per [platform-orchestrator skill](../skills/platform-orchestrator/SKILL.md). Use the developed requirement as the spec; refer back to the original `title` and `description` when verifying the fix.
-
-| `type` | Behavior |
-|--------|----------|
-| `bug` | Fix the defect in the owning service(s). |
-| `feature` | **Always implement** after claim: deliver the **title** first, then as much of the **description** as fits one or two service roots in the same session. Mark **`developed`** when the title is done and any in-scope description items shipped; note follow-ups in the finish report. Only leave **`in_progress`** when blocked mid-implementation (not because the description is long). Splitting extra reports in Support is optional for work left to a later run. Do **not** invoke ClickUp or spec workflows from this command. |
-
-Match existing patterns; `@/` aliases; remove unused imports in touched files.
-
-## User-visible changes
-
-If the fix changes WebOnOne or shell UX, update Support help articles per [help-articles skill](../skills/help-articles/SKILL.md).
-
-## Verify
-
-Before marking developed:
+1. **`feedback_update_status`** → **`in_progress`** before product code (claim implementation).
+2. Implement against `spec/{ticketNumber}/spec.md` and `plan.md` — not a different interpretation.
+3. Route work per [platform-orchestrator skill](../skills/platform-orchestrator/SKILL.md).
+4. User-visible WebOnOne/shell changes → [help-articles skill](../skills/help-articles/SKILL.md).
+5. Verify:
 
 ```bash
 npm run type-check -w <touched-service-root>
 npm run lint -w <touched-frontend-workspace>   # when frontend changed
 ```
 
-Use the workspaces you actually edited.
+6. **`feedback_update_status`** → **`developed`** when acceptance criteria pass.
+
+| `type` | Behavior |
+|--------|----------|
+| `bug` | Fix in owning service(s). |
+| `feature` | Ship title (MVP) then in-scope description items in one or two service roots; note deferrals in the finish report. |
+
+Match existing patterns; `@/` aliases; remove unused imports in touched files.
+
+## Agent mode rules
+
+| Forbidden | Required |
+|-----------|----------|
+| `AskQuestion` to pick a report when rules resolve one | Auto-pick per rules above |
+| Mark `developed` without verification | type-check/lint on touched workspaces |
+| Set `staging` or `closed` | Super admin only in Support UI |
+| Skip on-disk spec/plan for `ready_to_develop` | Write `spec/{ticket}/spec.md` and `plan.md` before `planned` |
+| Product code during Phase A | Spec + plan files only |
 
 ## Finish status
 
 | Outcome | Support status |
 |---------|----------------|
-| Fix verified in this session | **`developed`** via **`feedback_update_status`** |
-| Blocked / epic / out of scope for one session | Stay **`in_progress`** (super admin may revert to **`ready_to_develop`** after splitting the report) |
-| Implementation failed | Stay **`in_progress`** |
+| Spec + plan saved | **`planned`** |
+| Fix verified | **`developed`** |
+| Blocked mid-implementation | **`in_progress`** |
 
-Do **not** set `staging` or `closed` — super admin moves items there after deploy/release.
+Do **not** set `staging` or `closed`.
 
 ## Finish report
 
-Summarize: feedback id, type, **title** (as reported), short restatement of the requirement, services touched, verification commands run, final status.
+Summarize: **ticket number**, feedback id, type, **title**, requirement restatement, paths `spec/{ticket}/spec.md` and `plan.md`, services touched, verification commands, final status.

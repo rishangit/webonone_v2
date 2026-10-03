@@ -48,6 +48,7 @@ export function FeedbackList({
               onClick={() => onOpenDetail(item)}
             >
               <div className="flex flex-wrap items-center gap-2">
+                <StatusTag variant="pending">#{item.ticketNumber}</StatusTag>
                 <p className="truncate font-medium">{item.title}</p>
                 <StatusTag variant={feedbackTypeTagVariant(item.type)}>
                   {t(`type.${item.type}`)}

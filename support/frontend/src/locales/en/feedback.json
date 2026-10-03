@@ -35,6 +35,7 @@
   "status": {
     "todo": "To Do",
     "ready_to_develop": "Ready to Developed",
+    "planned": "Planned",
     "in_progress": "In Progress",
     "developed": "Developed",
     "staging": "Staging",

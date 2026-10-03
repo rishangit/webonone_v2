@@ -4,6 +4,7 @@ export const feedbackTypeSchema = z.enum(['bug', 'feature'])
 export const feedbackStatusSchema = z.enum([
   'todo',
   'ready_to_develop',
+  'planned',
   'in_progress',
   'developed',
   'staging',
@@ -58,6 +59,7 @@ export type FeedbackStatus = z.infer<typeof feedbackStatusSchema>
 export const FEEDBACK_STATUS_ORDER: FeedbackStatus[] = [
   'todo',
   'ready_to_develop',
+  'planned',
   'in_progress',
   'developed',
   'staging',

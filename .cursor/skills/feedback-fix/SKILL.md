@@ -1,53 +1,59 @@
 ---
 name: feedback-fix
-description: Implements bug fixes or small features from hosted Support feedback in ready_to_develop via MCP — claim in_progress, implement locally, developed on success. Super admin sets staging/closed in UI. Use when the user runs /feedback-fix.
+description: Support feedback queue via MCP — spec + plan under spec/{ticket}/, planned status, then implement to developed. Pick by /feedback-fix 0001 or queue. Use when the user runs /feedback-fix.
 ---
 
 # Feedback fix workflow
 
-Invoked by `/feedback-fix` or explicit user request. Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the source of truth.
+Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the source of truth.
 
-**Standalone:** Support Feedback MCP only — no ClickUp MCP, no `/clickup-spec`. Each `/feedback-fix` run is independent (one queue item per invocation).
+**Standalone:** Support Feedback MCP only — no ClickUp. One report per invocation (ticket, id, or queue).
 
-**Auto-run:** Support Feedback MCP, git, implementation edits, and verification commands are pre-authorized — execute without waiting for approval. See `.cursor/permissions.json`.
+**Auto-run:** MCP, `SwitchMode` to `plan` for planning, `spec/{ticket}/` writes, git, implementation, verification — pre-authorized per `.cursor/permissions.json`.
 
-## Status flow (automated vs manual)
+## Status flow
 
 | Status | Set by |
 |--------|--------|
 | `todo` | Default on create |
 | `ready_to_develop` | Super admin |
-| `in_progress` | `/feedback-fix` on start |
+| `planned` | `/feedback-fix` after `spec.md` + `plan.md` |
+| `in_progress` | `/feedback-fix` when implementation starts |
 | `developed` | `/feedback-fix` on verified completion |
-| `staging`, `closed` | Super admin only (not MCP) |
+| `staging`, `closed` | Super admin only |
+
+## Ticket numbers
+
+- Four digits, zero-padded (`0001`). Assigned on create; shown in Support UI and MCP `ticketNumber`.
+- **`feedback_get`** accepts 21-char id **or** ticket string.
+- User command: `/feedback-fix 0001` (normalize `1` → `0001`).
+
+## Spec folder
+
+| File | Purpose |
+|------|---------|
+| `spec/{ticketNumber}/spec.md` | Requirement from feedback title/description |
+| `spec/{ticketNumber}/plan.md` | Implementation plan (written after Plan mode) |
 
 ## MCP tools
 
 | Tool | Use |
 |------|-----|
-| `feedback_list` | Queue with `status: ready_to_develop`; optional `type` filter |
-| `feedback_get` | User-supplied id |
-| `feedback_update_status` | Claim `in_progress`; finish `developed` |
+| `feedback_list` | Queue `ready_to_develop` / `planned`; optional `ticket`, `type`, `status` |
+| `feedback_get` | Id or four-digit ticket |
+| `feedback_update_status` | `planned` after spec+plan; `in_progress` before code; `developed` when done |
 
-Server env: `SUPPORT_API_BASE_URL` (staging/live), `SUPPORT_FEEDBACK_BEARER_TOKEN` (super_admin). See `tooling/support-feedback-mcp/README.md`.
+## Pick order (no user prompt)
 
-## Pick order
+1. User ticket (4 digits) or id → must be `ready_to_develop` or `planned`
+2. Else oldest `ready_to_develop` (spec phase)
+3. Else oldest `planned` (implement phase)
+4. Optional bug/feature filter; tie-break `id`
 
-1. User id → must be `ready_to_develop`
-2. Else list all `ready_to_develop` (paginate)
-3. Optional user filter: bug / feature
-4. Oldest `createdAt`, tie-break `id`
+## Phases
 
-## After claim — read title & description, develop requirement
-
-1. **`feedback_get`** for the picked id.
-2. Read **`title`**, **`description`**, **`type`**, and **`attachmentUrl`** (screenshot when needed).
-3. Before code: restate the problem/goal, list acceptance criteria, name likely service roots, run scope guard.
-4. Implement against that requirement; verify each criterion.
-
-## Scope guard
-
-Do **not** stop after claim without writing product code. For large **feature** descriptions, ship the **title** (MVP) in Support (or the owning service), then continue description items in the same session when they stay in **one or two service roots**. Mark **`developed`** when the title and shipped slices are verified. Leave **`in_progress`** only when blocked (not because the ticket is an epic). Optional: super admin splits follow-up reports for work deferred to another `/feedback-fix` run.
+1. **`ready_to_develop`:** requirement → `spec.md` → Plan mode → `plan.md` → status `planned` → continue to implement in same session
+2. **`planned`:** claim `in_progress` → code per spec/plan → verify → `developed`
 
 ## Verification
 

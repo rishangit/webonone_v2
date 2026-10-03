@@ -7,6 +7,8 @@ export function feedbackStatusTagVariant(status: FeedbackStatus): StatusTagVaria
       return 'pending'
     case 'ready_to_develop':
       return 'verified'
+    case 'planned':
+      return 'member'
     case 'in_progress':
       return 'unverified'
     case 'developed':
