@@ -757,6 +757,8 @@ function main() {
         '# /feedback-fix MCP + watcher — same key Support BE validates (min 32 chars)',
         `SUPPORT_FEEDBACK_AUTOMATION_API_KEY=${get(master, 'SUPPORT_FEEDBACK_AUTOMATION_API_KEY')}`,
         `SUPPORT_API_BASE_URL=${apiBase(originSupport)}`,
+        `FEEDBACK_FIX_TRIGGER_URL=${get(master, 'FEEDBACK_FIX_TRIGGER_URL') || 'http://127.0.0.1:4055/run'}`,
+        `FEEDBACK_FIX_TRIGGER_SECRET=${get(master, 'FEEDBACK_FIX_TRIGGER_SECRET')}`,
       ]),
     ),
   );

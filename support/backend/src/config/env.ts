@@ -37,6 +37,11 @@ const envSchema = z.object({
     (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
     z.string().min(32).optional(),
   ),
+  FEEDBACK_FIX_TRIGGER_URL: z.string().optional(),
+  FEEDBACK_FIX_TRIGGER_SECRET: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().min(32).optional(),
+  ),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -67,4 +72,6 @@ export const env = {
   emailServiceApiKey: parsed.EMAIL_SERVICE_API_KEY?.trim() ?? '',
   superAdminEmail: parsed.SUPER_ADMIN_EMAIL,
   feedbackAutomationApiKey: parsed.SUPPORT_FEEDBACK_AUTOMATION_API_KEY?.trim() ?? '',
+  feedbackFixTriggerUrl: parsed.FEEDBACK_FIX_TRIGGER_URL?.trim() ?? '',
+  feedbackFixTriggerSecret: parsed.FEEDBACK_FIX_TRIGGER_SECRET?.trim() ?? '',
 }

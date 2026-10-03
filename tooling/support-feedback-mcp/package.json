@@ -10,7 +10,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "watch:feedback-fix": "node dist/watcher.js",
-    "watch:feedback-fix:once": "node dist/watcher.js --once"
+    "watch:feedback-fix:once": "node dist/watcher.js --once",
+    "watch:feedback-fix:listen": "node dist/watcher.js --listen"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",

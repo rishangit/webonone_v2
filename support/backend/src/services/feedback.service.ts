@@ -9,6 +9,7 @@ import type {
   UpdateFeedbackStatusBody,
 } from '../schemas/feedbackSchemas.js'
 import { countUnreadCommentsForReports } from './feedbackComments.service.js'
+import { notifyFeedbackStatusChanged } from './feedbackFixTrigger.service.js'
 import { buildSupportFeedbackMediaScope } from '../schemas/feedbackSchemas.js'
 import { fetchMediaItem } from './mediaClient.service.js'
 
@@ -308,5 +309,16 @@ export async function updateFeedbackStatus(
   if (!row) {
     throw new Error('NOT_FOUND')
   }
-  return rowToDto(row)
+  const dto = rowToDto(row)
+  if (existing.status !== body.status) {
+    notifyFeedbackStatusChanged({
+      ticketNumber: dto.ticketNumber,
+      status: dto.status,
+      fromStatus: existing.status,
+      id: dto.id,
+      type: dto.type,
+      title: dto.title,
+    })
+  }
+  return dto
 }

@@ -51,7 +51,7 @@ List supports `ticket` query (e.g. `0001`). Reports include `ticketNumber`.
 
 ## Automated runs (Cursor CLI on a server)
 
-Support does **not** emit webhooks when status changes. To run `/feedback-fix` when a ticket becomes **Ready to Developed**, use the **poll watcher** on a machine with the repo, Cursor CLI (`agent`), and a logged-in Cursor account.
+Support POSTs every real status change to a **localhost listener**. The listener maps status → CLI command. First mapped command: `ready_to_develop` → `agent` + `/feedback-fix {ticket}`. Other statuses return 202 and skip until you add a row in `src/statusCommands.ts`.
 
 ### One-time setup
 
@@ -67,32 +67,35 @@ Support does **not** emit webhooks when status changes. To run `/feedback-fix` w
 
 4. Cursor **Agents → Run mode**: **Run Everything** or an allowlist that matches [`.cursor/permissions.json`](../../.cursor/permissions.json) `/feedback-fix` instructions (CLI uses `--force` / `--approve-mcps`).
 
-### Run the watcher
+### Run the listener (preferred)
+
+Support `PATCH /feedback/:id/status` fire-and-forgets `POST {FEEDBACK_FIX_TRIGGER_URL}` with `{ ticketNumber, status, fromStatus, id, type, title }` and header `X-Feedback-Fix-Trigger-Secret`. Bind is **127.0.0.1 only**.
 
 ```powershell
-# Continuous poll (default every 120s)
-.\tooling\feedback-fix-watcher.ps1
-
-# Single poll cycle (no agent if queue empty)
-.\tooling\feedback-fix-watcher.ps1 -Once
+.\tooling\feedback-fix-watcher.ps1 -Listen
 ```
 
-Or after `npm run build` in this folder:
+Or from repo root: `npm run feedback-fix:listen`
 
-```bash
-npm run watch:feedback-fix
+Task Scheduler: at logon as the user that owns the clone and Cursor login; “Start in” = repo root.
+
+### Poll fallback
+
+```powershell
+.\tooling\feedback-fix-watcher.ps1
+.\tooling\feedback-fix-watcher.ps1 -Once
+.\tooling\feedback-fix-watcher.ps1 -Once -Ticket 0001
 ```
 
 | Env | Default | Purpose |
 |-----|---------|---------|
+| `FEEDBACK_FIX_TRIGGER_URL` | `http://127.0.0.1:4055/run` | Support POST target |
+| `FEEDBACK_FIX_TRIGGER_SECRET` | (required for listen) | Shared secret (min 32 chars) |
+| `FEEDBACK_FIX_LISTEN_PORT` | `4055` | Listener port |
 | `FEEDBACK_FIX_POLL_INTERVAL_MS` | `120000` | Poll interval |
 | `FEEDBACK_FIX_WORKSPACE` | repo root | Path passed to `agent --workspace` |
 | `FEEDBACK_FIX_AGENT_CMD` | `agent.cmd` / `agent` | Cursor CLI entrypoint |
 | `FEEDBACK_FIX_LOCK_PATH` | `.cursor/feedback-fix-watcher.lock` | Prevents overlapping agents |
 | `FEEDBACK_FIX_LOG_DIR` | `.cursor/logs/feedback-fix-watcher` | Per-run agent stdout/stderr logs |
 
-**Behavior:** Each cycle lists `ready_to_develop` (then `planned` if none), skips when any report is `in_progress`, starts one `agent -p --trust --force --approve-mcps` with `/feedback-fix {ticket}`. Only one agent at a time.
-
-**Windows service / Task Scheduler:** Run `feedback-fix-watcher.ps1` at logon as the user that owns the clone and Cursor login; set “Start in” to the repo root. Restart after deploy so the agent runs on fresh code.
-
-**Future:** A Support `PATCH /feedback/:id/status` webhook could call the same watcher with `--once` instead of polling.
+If the listener is down, Support still saves status. The ticket stays `ready_to_develop` until the listener is up or someone runs `/feedback-fix` manually.
