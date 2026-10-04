@@ -16,6 +16,7 @@ import {
   itemListRowActiveClassName,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   SearchInput,
   LoadingState,
@@ -351,10 +352,11 @@ export function ScopedFolderBrowser({
 
   function renderToolbar() {
     return (
-      <div className="flex shrink-0 items-center gap-1">
+      <ListPageActions className="shrink-0">
         <SearchInput
           value={fileNameQuery}
           onChange={(event) => setFileNameQuery(event.target.value)}
+          onClear={() => setFileNameQuery('')}
           placeholder="File or folder name"
           aria-label="Search files and folders"
           className="w-64"
@@ -377,6 +379,7 @@ export function ScopedFolderBrowser({
               variant="outline"
               aria-label="Upload file"
               disabled={isUploading}
+              className="h-9 w-9 shrink-0"
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="h-4 w-4" />
@@ -388,6 +391,7 @@ export function ScopedFolderBrowser({
           size="icon"
           variant="outline"
           aria-label="Create new folder"
+          className="h-9 w-9 shrink-0"
           onClick={() => setCreateFolderOpen(true)}
         >
           <FolderPlus className="h-4 w-4" />
@@ -397,6 +401,7 @@ export function ScopedFolderBrowser({
           size="icon"
           variant={viewMode === 'list' ? 'default' : 'outline'}
           aria-label="List view"
+          className="h-9 w-9 shrink-0"
           onClick={() => setViewMode('list')}
         >
           <List className="h-4 w-4" />
@@ -406,11 +411,12 @@ export function ScopedFolderBrowser({
           size="icon"
           variant={viewMode === 'thumb' ? 'default' : 'outline'}
           aria-label="Thumbnail view"
+          className="h-9 w-9 shrink-0"
           onClick={() => setViewMode('thumb')}
         >
           <LayoutGrid className="h-4 w-4" />
         </Button>
-      </div>
+      </ListPageActions>
     )
   }
 
@@ -610,16 +616,17 @@ export function ScopedFolderBrowser({
       ) : (
         <div className="flex items-center justify-between gap-2">
           {renderBreadcrumb()}
-          <div className="flex items-center gap-2">
+          <ListPageActions className="shrink-0">
             <SearchInput
               value={fileNameQuery}
               onChange={(event) => setFileNameQuery(event.target.value)}
+              onClear={() => setFileNameQuery('')}
               placeholder="File or folder name"
               aria-label="Search files and folders"
               className="w-64"
             />
             <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
-          </div>
+          </ListPageActions>
         </div>
       )}
 
