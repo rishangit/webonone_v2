@@ -50,7 +50,7 @@ FeaturePage (title, description, actions: SearchInput + ListFilterTrigger + CTA)
 |------|--------|
 | Search | **`SearchInput`** in `FeaturePage` `actions` — never plain `Input`; never in page body on list pages ([ui-kit-consumption.mdc](ui-kit-consumption.mdc)). When `description` is set: title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that actions row. |
 | Filters | `ListFilterTrigger` + `ListFilterPanel` for status/date/MIME filters |
-| Primary CTA | **`ListAddButton`** last in `actions`, gated on permission. Children are the full label (e.g. `Add tag`). Below `sm` it shows **+ Add** until tapped, then expands left (same 300ms motion as search) to the full label; a second tap runs `onClick`. Search stays in place. Opening search or tapping outside collapses add. Do **not** use a raw `Button` + `Plus` for list-page create. |
+| Primary CTA | **`ListAddButton`** last in `actions`, gated on permission. Children are the full label (e.g. `Add tag`). Below `sm` it shows **+** only (rounded primary icon button) until tapped, then expands left (same 300ms motion as search) to the full label; a second tap runs `onClick`. Search stays in place. Opening search or tapping outside collapses add. Do **not** use a raw `Button` + `Plus` for list-page create. |
 | Loading | `usePlatformLoading('Loading …')` — AppLayout owns overlay; hide list body while loading |
 | Row actions | `ItemListMenu` — no inline row `Button` groups; destructive item last, after `DropdownMenuSeparator`, styled `text-destructive focus:text-destructive` |
 | Embed peers | Same markup + `min-h-full` flex chain — [platform-shell-navigation.mdc](platform-shell-navigation.mdc) |

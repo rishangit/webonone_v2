@@ -51,7 +51,7 @@ For paginated collection **pages** (not embed pickers), compose:
 
 Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + **`ListAddButton`**. Never use plain `Input` for text search ([ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc)). When `description` is set, `PageHeader` renders title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that row. Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
 
-**Primary CTA (`ListAddButton`):** last in `actions`, permission-gated. Pass the full label as children (e.g. `Add tag`). The Plus icon is built in. Below `sm` the button shows **+ Add** until tapped, then grows left (`duration-300 ease-out`, same as header search) and pushes search/filter left; the second tap runs `onClick`. Opening search or tapping outside collapses add. Optional `compactLabel` for i18n (default `Add`). Do **not** hand-roll `Button` + `Plus` for list-page create.
+**Primary CTA (`ListAddButton`):** last in `actions`, permission-gated. Pass the full label as children (e.g. `Add tag`). The Plus icon is built in. Below `sm` the button shows **+** only (rounded primary icon button) until tapped, then grows left (`duration-300 ease-out`, same as header search) to the full label and pushes search/filter left; the second tap runs `onClick`. Opening search or tapping outside collapses add. Optional `compactLabel` is deprecated/ignored (collapsed is always icon-only). Do **not** hand-roll `Button` + `Plus` for list-page create.
 
 ```tsx
 <ListAddButton onClick={() => setDialog({})}>Add tag</ListAddButton>

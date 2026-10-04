@@ -699,7 +699,7 @@ export function ComponentsPage() {
       <DemoSection
         id="list-filters"
         title="List filters"
-        description="SearchInput filters the list; ListFilterTrigger opens the panel; ListAddButton stays compact (+ Add) on small screens until tapped."
+        description="SearchInput filters the list; ListFilterTrigger opens the panel; ListAddButton stays icon-only (+) on small screens until tapped, then expands to the full label."
       >
         <FeaturePage
           title="Filtered collection"
