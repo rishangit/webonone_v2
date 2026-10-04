@@ -27,6 +27,10 @@ interface FeedbackState {
   listStatus: FeedbackListStatus
   listError: string | null
   loadingMore: boolean
+  detail: FeedbackReport | null
+  detailStatus: FeedbackListStatus
+  detailError: string | null
+  detailTicketNumber: string | null
   createStatus: FeedbackListStatus
   createError: string | null
   updatingId: string | null
@@ -51,6 +55,10 @@ const initialState: FeedbackState = {
   listStatus: 'idle',
   listError: null,
   loadingMore: false,
+  detail: null,
+  detailStatus: 'idle',
+  detailError: null,
+  detailTicketNumber: null,
   createStatus: 'idle',
   createError: null,
   updatingId: null,
@@ -64,6 +72,14 @@ const initialState: FeedbackState = {
   commentsReportId: null,
   commentCreateStatus: 'idle',
   commentCreateError: null,
+}
+
+function mergeReportIntoItems(items: FeedbackReport[], report: FeedbackReport): FeedbackReport[] {
+  const index = items.findIndex((item) => item.id === report.id)
+  if (index === -1) return items
+  const next = [...items]
+  next[index] = { ...next[index], ...report }
+  return next
 }
 
 export const feedbackSlice = createSlice({
@@ -104,6 +120,29 @@ export const feedbackSlice = createSlice({
       state.loadingMore = false
       state.listError = action.payload
     },
+    fetchDetailRequested(state, action: PayloadAction<{ ticketNumber: string }>) {
+      state.detailTicketNumber = action.payload.ticketNumber
+      state.detailError = null
+      if (!state.detail || state.detail.ticketNumber !== action.payload.ticketNumber) {
+        state.detailStatus = 'loading'
+      }
+    },
+    fetchDetailSucceeded(state, action: PayloadAction<FeedbackReport>) {
+      state.detailStatus = 'succeeded'
+      state.detail = action.payload
+      state.detailTicketNumber = action.payload.ticketNumber
+      state.items = mergeReportIntoItems(state.items, action.payload)
+    },
+    fetchDetailFailed(state, action: PayloadAction<string>) {
+      state.detailStatus = 'failed'
+      state.detailError = action.payload
+    },
+    clearDetail(state) {
+      state.detail = null
+      state.detailStatus = 'idle'
+      state.detailError = null
+      state.detailTicketNumber = null
+    },
     createRequested(state, _action: PayloadAction<CreateFeedbackFormValues>) {
       state.createStatus = 'loading'
       state.createError = null
@@ -133,6 +172,9 @@ export const feedbackSlice = createSlice({
       state.items = state.items.map((item) =>
         item.id === action.payload.id ? action.payload : item,
       )
+      if (state.detail?.id === action.payload.id) {
+        state.detail = action.payload
+      }
     },
     updateStatusFailed(state, action: PayloadAction<string>) {
       state.updatingId = null
@@ -152,6 +194,9 @@ export const feedbackSlice = createSlice({
       state.items = state.items.map((item) =>
         item.id === action.payload.id ? action.payload : item,
       )
+      if (state.detail?.id === action.payload.id) {
+        state.detail = action.payload
+      }
     },
     updateFailed(state, action: PayloadAction<string>) {
       state.editStatus = 'failed'

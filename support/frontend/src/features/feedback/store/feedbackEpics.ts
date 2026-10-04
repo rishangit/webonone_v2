@@ -35,6 +35,19 @@ const loadFeedbackListEpic: Epic = (action$) =>
     }),
   )
 
+const fetchFeedbackDetailEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(feedbackActions.fetchDetailRequested.type),
+    debounceTime(300),
+    switchMap((action) => {
+      const payload = (action as ReturnType<typeof feedbackActions.fetchDetailRequested>).payload
+      return from(feedbackApi.getByTicket(payload.ticketNumber)).pipe(
+        map((item) => feedbackActions.fetchDetailSucceeded(item)),
+        catchError((err: Error) => of(feedbackActions.fetchDetailFailed(err.message))),
+      )
+    }),
+  )
+
 const createFeedbackEpic: Epic = (action$) =>
   action$.pipe(
     ofType(feedbackActions.createRequested.type),
@@ -101,6 +114,7 @@ const createCommentEpic: Epic = (action$) =>
 
 export const feedbackEpics = combineEpics(
   loadFeedbackListEpic,
+  fetchFeedbackDetailEpic,
   createFeedbackEpic,
   updateFeedbackStatusEpic,
   updateFeedbackEpic,

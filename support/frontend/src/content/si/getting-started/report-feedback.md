@@ -31,18 +31,12 @@ Sign in කළ සියලු දෙනාට එකම බෙදාගත් �
 
 ## වාර්තා බලන්න
 
-Sign in කළ සියලු දෙනාට එකම වාර්තා ලැයිස්තුව දිස්වේ. එක් එක් පේළියේ වමේ bug හෝ feature අයිකනයක්, දකුණේ status, යොමු කළ අය, දිනය සහ screenshot එක් කළ විට thumbnail (සම්පූර්ණ රූපයට click කරන්න) ඇත.
+Sign in කළ සියලු දෙනාට එකම වාර්තා ලැයිස්තුව දිස්වේ. එක් එක් පේළියේ වමේ bug හෝ feature අයිකනයක්, මැද සම්පූර්ණ title සහ description, දකුණේ වර්ණ-කේත status, යොමු කළ අය, දිනය සහ screenshot එක් කළ විට thumbnail ඇත.
+
+පේළියක් click කර එම වාර්තාවේ **detail page** විවෘත කරන්න (comments, screenshot, සහ status). ලැයිස්තුව හෝ detail page විවෘතව තබා ගත් විට status ස්වයංක්‍රීයව යාවත්කාලීන වේ—පිටුව refresh කිරීම අවශ්‍ය නැත.
 
 ශීර්ෂ හෝ විස්තර සොයා ගැනීමට **Search** භාවිතා කරන්න. type හෝ status අනුව filter panel භාවිතා කරන්න.
 
 ## Status (Super Admin)
 
-**Super Admin** පමණක් වාර්තා status වෙනස් කළ හැක:
-
-| Status | අර්ථය |
-|--------|--------|
-| **To do** | ලැබුණි, තවම ආරම්භ කර නැත |
-| **In progress** | ක්‍රියාත්මක වෙමින් |
-| **Completed** | අවසන් / නිකුත් කළ |
-
-පේළියේ three-dot menu (Super Admin පමණ) විවෘත කර නව status තෝරන්න.
+**Super Admin** පමණක් ලැයිස්තු පේළියේ three-dot menu මගින් වාර්තා status වෙනස් කළ හැක. එක් එක් status සඳහා වෙනස් වර්ණයක් ඇති නිසා ලැයිස්තුව ඉක්මනින් හඳුනාගත හැක.

@@ -31,18 +31,12 @@ Your report appears in the shared list for everyone who is signed in.
 
 ## View reports
 
-All signed-in users see the same list of reports. Each row shows a bug or feature icon on the left, status on the right, who submitted it, when, and a thumbnail when a screenshot was attached (click to open the full image).
+All signed-in users see the same list of reports. Each row shows a bug or feature icon on the left, the full title and description in the middle, and a color-coded status on the right, plus who submitted it, when, and a thumbnail when a screenshot was attached.
+
+Click a row to open that report’s **detail page** (comments, screenshot, and status). Status on the list and detail pages refreshes automatically while you keep the page open—no manual reload needed.
 
 Use **Search** to find text in titles or descriptions. Use the filter panel to narrow by type or status.
 
 ## Status (Super Admin)
 
-Only a **Super Admin** can change report status:
-
-| Status | Meaning |
-|--------|---------|
-| **To do** | Received, not started |
-| **In progress** | Being worked on |
-| **Completed** | Done or shipped |
-
-Open the three-dot menu on a row (Super Admin only) and pick the new status.
+Only a **Super Admin** can change report status from the three-dot menu on a list row. Each status uses a distinct color so you can scan the list quickly.

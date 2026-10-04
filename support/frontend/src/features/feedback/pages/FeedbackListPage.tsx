@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
@@ -22,17 +23,18 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isSessionSuperAdmin } from '@/features/auth/utils/currentRole'
-import { getSessionUserId } from '@/features/auth/utils/sessionUser'
 import { getEmailAppUrl } from '@/features/email/utils/emailConfig'
-import { FeedbackDetailDialog } from '@/features/feedback/components/FeedbackDetailDialog'
 import { FeedbackFormDialog } from '@/features/feedback/components/FeedbackFormDialog'
 import { FeedbackList } from '@/features/feedback/components/FeedbackList'
-import type { FeedbackReport } from '@/features/feedback/services/feedbackApi'
+import { useVisibleInterval } from '@/features/feedback/hooks/useVisibleInterval'
 import type { FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
 import { feedbackActions } from '@/features/feedback/store/feedbackSlice'
 
+const LIST_POLL_MS = 15_000
+
 export function FeedbackListPage() {
   const { t } = useTranslation('feedback')
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -62,29 +64,41 @@ export function FeedbackListPage() {
     status: 'all' as 'all' | FeedbackStatus,
   })
   const [createOpen, setCreateOpen] = useState(false)
-  const [detailReport, setDetailReport] = useState<FeedbackReport | null>(null)
 
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
-  const sessionUserId = getSessionUserId(accessToken)
   const loading = listStatus === 'loading' && items.length === 0
 
   const hasActiveFilters = appliedFilters.type !== 'all' || appliedFilters.status !== 'all'
 
+  function dispatchLoad(nextPage: number, nextPageSize: number, append = false) {
+    dispatch(
+      feedbackActions.loadListRequested({
+        page: nextPage,
+        pageSize: nextPageSize,
+        type: appliedFilters.type === 'all' ? undefined : appliedFilters.type,
+        status: appliedFilters.status === 'all' ? undefined : appliedFilters.status,
+        q: appliedSearch.trim() || undefined,
+        append,
+      }),
+    )
+  }
+
   useEffect(() => {
     if (!accessToken) return
     const timer = window.setTimeout(() => {
-      dispatch(
-        feedbackActions.loadListRequested({
-          page: 1,
-          pageSize,
-          type: appliedFilters.type === 'all' ? undefined : appliedFilters.type,
-          status: appliedFilters.status === 'all' ? undefined : appliedFilters.status,
-          q: appliedSearch.trim() || undefined,
-        }),
-      )
+      dispatchLoad(1, pageSize)
     }, 400)
     return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters/search/token change
   }, [accessToken, appliedFilters, appliedSearch, dispatch, pageSize])
+
+  useVisibleInterval(
+    () => {
+      dispatchLoad(page, pageSize)
+    },
+    LIST_POLL_MS,
+    Boolean(accessToken),
+  )
 
   useEffect(() => {
     if (createStatus === 'succeeded') {
@@ -107,25 +121,6 @@ export function FeedbackListPage() {
     }
   }, [dispatch, editStatus, t, toast])
 
-  useEffect(() => {
-    if (!detailReport) return
-    const fresh = items.find((item) => item.id === detailReport.id)
-    if (fresh) setDetailReport(fresh)
-  }, [detailReport, items])
-
-  function dispatchLoad(nextPage: number, nextPageSize: number, append = false) {
-    dispatch(
-      feedbackActions.loadListRequested({
-        page: nextPage,
-        pageSize: nextPageSize,
-        type: appliedFilters.type === 'all' ? undefined : appliedFilters.type,
-        status: appliedFilters.status === 'all' ? undefined : appliedFilters.status,
-        q: appliedSearch.trim() || undefined,
-        append,
-      }),
-    )
-  }
-
   function handleSearchSubmit() {
     setAppliedSearch(searchQuery)
   }
@@ -133,14 +128,28 @@ export function FeedbackListPage() {
   function handleApplyFilters() {
     const next = { type: typeFilter, status: statusFilter }
     setAppliedFilters(next)
-    dispatchLoad(1, pageSize)
+    dispatch(
+      feedbackActions.loadListRequested({
+        page: 1,
+        pageSize,
+        type: next.type === 'all' ? undefined : next.type,
+        status: next.status === 'all' ? undefined : next.status,
+        q: appliedSearch.trim() || undefined,
+      }),
+    )
   }
 
   function handleClearFilters() {
     setTypeFilter('all')
     setStatusFilter('all')
     setAppliedFilters({ type: 'all', status: 'all' })
-    dispatchLoad(1, pageSize)
+    dispatch(
+      feedbackActions.loadListRequested({
+        page: 1,
+        pageSize,
+        q: appliedSearch.trim() || undefined,
+      }),
+    )
   }
 
   function handleStatusChange(id: string, status: FeedbackStatus) {
@@ -241,7 +250,7 @@ export function FeedbackListPage() {
                 isSuperAdmin={isSuperAdmin}
                 updatingId={updatingId}
                 onStatusChange={handleStatusChange}
-                onOpenDetail={(item) => setDetailReport(item)}
+                onOpenDetail={(item) => navigate(`/feedback/${item.ticketNumber}`)}
               />
             </div>
             <ListPageFooter
@@ -260,19 +269,6 @@ export function FeedbackListPage() {
           </>
         )}
       </ListPageBody>
-
-      <FeedbackDetailDialog
-        report={detailReport}
-        open={detailReport !== null}
-        canEdit={
-          Boolean(detailReport) &&
-          (isSuperAdmin || detailReport?.reporterUserId === sessionUserId)
-        }
-        accessToken={accessToken}
-        onOpenChange={(open) => {
-          if (!open) setDetailReport(null)
-        }}
-      />
 
       <FeedbackFormDialog
         open={createOpen}

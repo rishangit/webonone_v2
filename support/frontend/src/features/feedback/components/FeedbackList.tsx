@@ -13,7 +13,7 @@ import {
 import { FeedbackStatusMenu } from '@/features/feedback/components/FeedbackStatusMenu'
 import type { FeedbackReport } from '@/features/feedback/services/feedbackApi'
 import type { FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
-import { feedbackStatusTagVariant } from '@/features/feedback/utils/feedbackStatus'
+import { feedbackStatusTagProps } from '@/features/feedback/utils/feedbackStatus'
 
 type FeedbackListProps = {
   items: FeedbackReport[]
@@ -52,65 +52,73 @@ export function FeedbackList({
 
   return (
     <ItemList>
-      {items.map((item) => (
-        <ItemListItem key={item.id}>
-          <FeedbackTypeIcon type={item.type} />
-          <ItemListContent>
-            <button
-              type="button"
-              className="min-w-0 w-full space-y-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={`${t(`type.${item.type}`)}: ${item.title}`}
-              onClick={() => onOpenDetail(item)}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusTag variant="pending">#{item.ticketNumber}</StatusTag>
-                <p className="truncate font-medium">{item.title}</p>
-                {item.unreadCommentCount ? (
-                  <StatusTag variant="member">
-                    {t('unreadComments', { count: item.unreadCommentCount })}
-                  </StatusTag>
+      {items.map((item) => {
+        const statusTag = feedbackStatusTagProps(item.status)
+        return (
+          <ItemListItem key={item.id}>
+            <FeedbackTypeIcon type={item.type} />
+            <ItemListContent>
+              <button
+                type="button"
+                className="min-w-0 w-full space-y-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`${t(`type.${item.type}`)}: ${item.title}`}
+                onClick={() => onOpenDetail(item)}
+              >
+                <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
+                  <StatusTag variant="pending">#{item.ticketNumber}</StatusTag>
+                  {item.unreadCommentCount ? (
+                    <StatusTag variant="member">
+                      {t('unreadComments', { count: item.unreadCommentCount })}
+                    </StatusTag>
+                  ) : null}
+                </div>
+                <p className="w-full min-w-0 break-words font-medium text-foreground">
+                  {item.title}
+                </p>
+                <p className="w-full min-w-0 break-words text-sm text-muted-foreground line-clamp-2">
+                  {item.description}
+                </p>
+                {item.attachmentUrl ? (
+                  <a
+                    href={item.attachmentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block pt-1"
+                    aria-label={t('screenshotLinkAria', {
+                      title: item.title,
+                      fileName: item.attachmentFileName ?? 'screenshot',
+                    })}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <ImagePreview
+                      src={item.attachmentUrl}
+                      alt={item.attachmentFileName ?? t('screenshotAlt')}
+                      mode="view"
+                      className="h-16 w-16 rounded-md"
+                    />
+                  </a>
                 ) : null}
-              </div>
-              <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
-              {item.attachmentUrl ? (
-                <a
-                  href={item.attachmentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block pt-1"
-                  aria-label={t('screenshotLinkAria', {
-                    title: item.title,
-                    fileName: item.attachmentFileName ?? 'screenshot',
-                  })}
-                >
-                  <ImagePreview
-                    src={item.attachmentUrl}
-                    alt={item.attachmentFileName ?? t('screenshotAlt')}
-                    mode="view"
-                    className="h-16 w-16 rounded-md"
-                  />
-                </a>
-              ) : null}
-              <p className="text-xs text-muted-foreground">
-                {t('reportedBy', { email: item.reporterEmail })} ·{' '}
-                {formatDisplayDateTime(item.createdAt, i18n.language)}
-              </p>
-            </button>
-          </ItemListContent>
-          <ItemListStatus>
-            <StatusTag variant={feedbackStatusTagVariant(item.status)}>
-              {t(`status.${item.status}`)}
-            </StatusTag>
-          </ItemListStatus>
-          {isSuperAdmin ? (
-            <FeedbackStatusMenu
-              item={item}
-              updatingId={updatingId}
-              onStatusChange={onStatusChange}
-            />
-          ) : null}
-        </ItemListItem>
-      ))}
+                <p className="text-xs text-muted-foreground">
+                  {t('reportedBy', { email: item.reporterEmail })} ·{' '}
+                  {formatDisplayDateTime(item.createdAt, i18n.language)}
+                </p>
+              </button>
+            </ItemListContent>
+            <ItemListStatus>
+              <StatusTag variant={statusTag.variant} className={statusTag.className}>
+                {t(`status.${item.status}`)}
+              </StatusTag>
+            </ItemListStatus>
+            {isSuperAdmin ? (
+              <FeedbackStatusMenu
+                item={item}
+                updatingId={updatingId}
+                onStatusChange={onStatusChange}
+              />
+            ) : null}
+          </ItemListItem>
+        )
+      })}
     </ItemList>
   )
 }

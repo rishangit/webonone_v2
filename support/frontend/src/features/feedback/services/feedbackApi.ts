@@ -62,6 +62,14 @@ export const feedbackApi = {
     return apiClient<FeedbackListResult>(`/feedback?${params.toString()}`)
   },
 
+  getById(id: string): Promise<FeedbackReport> {
+    return apiClient<FeedbackReport>(`/feedback/${id}`)
+  },
+
+  getByTicket(ticketNumber: string): Promise<FeedbackReport> {
+    return apiClient<FeedbackReport>(`/feedback/ticket/${ticketNumber}`)
+  },
+
   create(body: CreateFeedbackFormValues): Promise<FeedbackReport> {
     return apiClient<FeedbackReport>('/feedback', {
       method: 'POST',
