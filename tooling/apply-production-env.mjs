@@ -778,7 +778,6 @@ function main() {
         `VITE_AI_ORIGIN=${originAi}`,
         `VITE_AI_API_BASE_URL=${apiBase(originAi)}`,
         `VITE_MEDIA_ORIGIN=${originMedia}`,
-        `VITE_EMAIL_ORIGIN=${originEmail}`,
       ]),
     ),
   );

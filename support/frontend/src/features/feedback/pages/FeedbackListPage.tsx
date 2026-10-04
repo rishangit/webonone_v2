@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
-  Button,
   FeaturePage,
   FormField,
   ListAddButton,
@@ -23,7 +22,6 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isSessionSuperAdmin } from '@/features/auth/utils/currentRole'
-import { getEmailAppUrl } from '@/features/email/utils/emailConfig'
 import { FeedbackFormDialog } from '@/features/feedback/components/FeedbackFormDialog'
 import { FeedbackList } from '@/features/feedback/components/FeedbackList'
 import { useVisibleInterval } from '@/features/feedback/hooks/useVisibleInterval'
@@ -180,11 +178,6 @@ export function FeedbackListPage() {
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
-          {isSuperAdmin ? (
-            <Button variant="outline" className="h-10" asChild>
-              <a href={getEmailAppUrl('/templates')}>{t('emailTemplateLink')}</a>
-            </Button>
-          ) : null}
           <ListAddButton onClick={() => setCreateOpen(true)}>{t('addReport')}</ListAddButton>
         </div>
       }

@@ -37,7 +37,6 @@
   "createdAtLabel": "Created",
   "updatedAtLabel": "Updated",
   "unreadComments": "{{count}} new",
-  "emailTemplateLink": "Email templates",
   "type": {
     "bug": "Bug",
     "feature": "Feature request"

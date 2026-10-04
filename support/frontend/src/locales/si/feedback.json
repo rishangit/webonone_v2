@@ -37,7 +37,6 @@
   "createdAtLabel": "සාදන ලදී",
   "updatedAtLabel": "යාවත්කාලීන විය",
   "unreadComments": "{{count}} නව",
-  "emailTemplateLink": "Email templates",
   "type": {
     "bug": "දෝෂය",
     "feature": "විශේෂාංග ඉල්ලීම"
