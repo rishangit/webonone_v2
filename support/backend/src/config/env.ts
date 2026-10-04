@@ -42,6 +42,11 @@ const envSchema = z.object({
     (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
     z.string().min(32).optional(),
   ),
+  /** Absolute path to monorepo `spec/` (ticket folders). App pool needs Read. */
+  FEEDBACK_SPEC_ROOT: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().min(1).optional(),
+  ),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -51,6 +56,9 @@ const port = iisHosted ? Number(process.env.PORT) : (parsed.PORT ?? 4021)
 if (iisHosted && !Number.isFinite(port)) {
   throw new Error('IIS HttpPlatformHandler must set PORT (use %HTTP_PLATFORM_PORT% in web.config)')
 }
+
+/** Local: support/backend → ../../spec. IIS: support/deploy → ../../spec (repo root). */
+const defaultFeedbackSpecRoot = path.resolve(backendRoot, '../../spec')
 
 export const env = {
   database: {
@@ -74,4 +82,7 @@ export const env = {
   feedbackAutomationApiKey: parsed.SUPPORT_FEEDBACK_AUTOMATION_API_KEY?.trim() ?? '',
   feedbackFixTriggerUrl: parsed.FEEDBACK_FIX_TRIGGER_URL?.trim() ?? '',
   feedbackFixTriggerSecret: parsed.FEEDBACK_FIX_TRIGGER_SECRET?.trim() ?? '',
+  feedbackSpecRoot: parsed.FEEDBACK_SPEC_ROOT?.trim()
+    ? path.resolve(parsed.FEEDBACK_SPEC_ROOT.trim())
+    : defaultFeedbackSpecRoot,
 }

@@ -1,5 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { FeedbackComment, FeedbackReport } from '@/features/feedback/services/feedbackApi'
+import type {
+  FeedbackComment,
+  FeedbackReport,
+  FeedbackSpecDocBody,
+  FeedbackSpecDocListItem,
+} from '@/features/feedback/services/feedbackApi'
 import type { FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
 import type {
   CreateFeedbackFormValues,
@@ -44,6 +49,14 @@ interface FeedbackState {
   commentsReportId: string | null
   commentCreateStatus: FeedbackListStatus
   commentCreateError: string | null
+  specDocs: FeedbackSpecDocListItem[]
+  specDocsStatus: FeedbackListStatus
+  specDocsError: string | null
+  specDocsTicketNumber: string | null
+  specDoc: FeedbackSpecDocBody | null
+  specDocStatus: FeedbackListStatus
+  specDocError: string | null
+  specDocKey: string | null
 }
 
 const initialState: FeedbackState = {
@@ -72,6 +85,14 @@ const initialState: FeedbackState = {
   commentsReportId: null,
   commentCreateStatus: 'idle',
   commentCreateError: null,
+  specDocs: [],
+  specDocsStatus: 'idle',
+  specDocsError: null,
+  specDocsTicketNumber: null,
+  specDoc: null,
+  specDocStatus: 'idle',
+  specDocError: null,
+  specDocKey: null,
 }
 
 function mergeReportIntoItems(items: FeedbackReport[], report: FeedbackReport): FeedbackReport[] {
@@ -142,6 +163,62 @@ export const feedbackSlice = createSlice({
       state.detailStatus = 'idle'
       state.detailError = null
       state.detailTicketNumber = null
+      state.specDocs = []
+      state.specDocsStatus = 'idle'
+      state.specDocsError = null
+      state.specDocsTicketNumber = null
+    },
+    loadSpecDocsRequested(state, action: PayloadAction<{ ticketNumber: string }>) {
+      const ticketChanged = state.specDocsTicketNumber !== action.payload.ticketNumber
+      state.specDocsTicketNumber = action.payload.ticketNumber
+      state.specDocsError = null
+      if (ticketChanged || state.specDocs.length === 0) {
+        state.specDocsStatus = 'loading'
+      }
+    },
+    loadSpecDocsSucceeded(
+      state,
+      action: PayloadAction<{ ticketNumber: string; items: FeedbackSpecDocListItem[] }>,
+    ) {
+      state.specDocsStatus = 'succeeded'
+      state.specDocsTicketNumber = action.payload.ticketNumber
+      state.specDocs = action.payload.items
+    },
+    loadSpecDocsFailed(state, action: PayloadAction<string>) {
+      state.specDocsStatus = 'failed'
+      state.specDocsError = action.payload
+      state.specDocs = []
+    },
+    fetchSpecDocRequested(
+      state,
+      action: PayloadAction<{ ticketNumber: string; fileName: FeedbackSpecDocBody['fileName'] }>,
+    ) {
+      const key = `${action.payload.ticketNumber}:${action.payload.fileName}`
+      const keyChanged = state.specDocKey !== key
+      state.specDocKey = key
+      state.specDocError = null
+      if (keyChanged || !state.specDoc) {
+        state.specDocStatus = 'loading'
+      }
+    },
+    fetchSpecDocSucceeded(state, action: PayloadAction<FeedbackSpecDocBody & { ticketNumber: string }>) {
+      state.specDocStatus = 'succeeded'
+      state.specDoc = {
+        fileName: action.payload.fileName,
+        markdown: action.payload.markdown,
+      }
+      state.specDocKey = `${action.payload.ticketNumber}:${action.payload.fileName}`
+    },
+    fetchSpecDocFailed(state, action: PayloadAction<string>) {
+      state.specDocStatus = 'failed'
+      state.specDocError = action.payload
+      state.specDoc = null
+    },
+    clearSpecDoc(state) {
+      state.specDoc = null
+      state.specDocStatus = 'idle'
+      state.specDocError = null
+      state.specDocKey = null
     },
     createRequested(state, _action: PayloadAction<CreateFeedbackFormValues>) {
       state.createStatus = 'loading'

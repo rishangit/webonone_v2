@@ -35,6 +35,8 @@ All signed-in users see the same list of reports. Each row shows a bug or featur
 
 Click a row to open that report’s **detail page** (comments, screenshot, and status). Status on the list and detail pages refreshes automatically while you keep the page open—no manual reload needed.
 
+When the team has written planning files for a ticket (`spec.md`, `plan.md`, and later a development summary), the detail page shows a **Planning docs** card. Open a file to read it as formatted Markdown (signed-in users only).
+
 Use the **status tabs** above the list (**All**, **To Do**, **Ready to Developed**, **Planned**, and the other workflow statuses) to show only reports in that status. Use **Search** to find text in titles or descriptions. Use the filter panel to narrow by type (bug or feature request).
 
 ## Status (Super Admin)

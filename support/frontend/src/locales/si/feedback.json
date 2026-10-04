@@ -68,5 +68,18 @@
     "screenshotUnavailable": "Media සකසා නැත. Screenshot නැතිව ද වාර්තා කළ හැක."
   },
   "screenshotAlt": "වාර්තා screenshot",
-  "screenshotLinkAria": "{{title}} සඳහා screenshot විවෘත කරන්න ({{fileName}})"
+  "screenshotLinkAria": "{{title}} සඳහා screenshot විවෘත කරන්න ({{fileName}})",
+  "specDocsCardTitle": "සැලසුම් ලේඛන",
+  "specDocsCardDescription": "මෙම ticket සඳහා ලියන ලද spec සහ plan විවෘත කරන්න.",
+  "specDocsLoading": "සැලසුම් ලේඛන පරීක්ෂා කරමින්…",
+  "specDoc": {
+    "spec": "අවශ්‍යතාව (spec.md)",
+    "plan": "ක්‍රියාත්මක සැලැස්ම (plan.md)",
+    "developmentSummary": "සංවර්ධන සාරාංශය (development-summary.md)",
+    "unknown": "සැලසුම් ලේඛනය",
+    "pageTitle": "#{{ticket}} — {{doc}}",
+    "pageTitleFallback": "සැලසුම් ලේඛනය",
+    "pageDescription": "Ticket හි spec folder එකෙන් read-only Markdown.",
+    "invalidFile": "එම සැලසුම් ලේඛනය ලබා ගත නොහැක."
+  }
 }

@@ -68,5 +68,18 @@
     "screenshotUnavailable": "Media is not configured. You can still submit without a screenshot."
   },
   "screenshotAlt": "Report screenshot",
-  "screenshotLinkAria": "Open screenshot for {{title}} ({{fileName}})"
+  "screenshotLinkAria": "Open screenshot for {{title}} ({{fileName}})",
+  "specDocsCardTitle": "Planning docs",
+  "specDocsCardDescription": "Open the spec and plan written for this ticket.",
+  "specDocsLoading": "Checking for planning docs…",
+  "specDoc": {
+    "spec": "Requirement (spec.md)",
+    "plan": "Implementation plan (plan.md)",
+    "developmentSummary": "Development summary (development-summary.md)",
+    "unknown": "Planning document",
+    "pageTitle": "#{{ticket}} — {{doc}}",
+    "pageTitleFallback": "Planning document",
+    "pageDescription": "Read-only Markdown from the ticket’s spec folder.",
+    "invalidFile": "That planning document is not available."
+  }
 }

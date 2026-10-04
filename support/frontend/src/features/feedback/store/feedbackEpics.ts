@@ -112,6 +112,43 @@ const createCommentEpic: Epic = (action$) =>
     }),
   )
 
+const loadSpecDocsEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(feedbackActions.loadSpecDocsRequested.type),
+    debounceTime(300),
+    switchMap((action) => {
+      const payload = (action as ReturnType<typeof feedbackActions.loadSpecDocsRequested>).payload
+      return from(feedbackApi.listSpecDocs(payload.ticketNumber)).pipe(
+        map((result) =>
+          feedbackActions.loadSpecDocsSucceeded({
+            ticketNumber: payload.ticketNumber,
+            items: result.items,
+          }),
+        ),
+        catchError((err: Error) => of(feedbackActions.loadSpecDocsFailed(err.message))),
+      )
+    }),
+  )
+
+const fetchSpecDocEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(feedbackActions.fetchSpecDocRequested.type),
+    debounceTime(300),
+    switchMap((action) => {
+      const payload = (action as ReturnType<typeof feedbackActions.fetchSpecDocRequested>).payload
+      return from(feedbackApi.getSpecDoc(payload.ticketNumber, payload.fileName)).pipe(
+        map((doc) =>
+          feedbackActions.fetchSpecDocSucceeded({
+            ticketNumber: payload.ticketNumber,
+            fileName: doc.fileName,
+            markdown: doc.markdown,
+          }),
+        ),
+        catchError((err: Error) => of(feedbackActions.fetchSpecDocFailed(err.message))),
+      )
+    }),
+  )
+
 export const feedbackEpics = combineEpics(
   loadFeedbackListEpic,
   fetchFeedbackDetailEpic,
@@ -120,4 +157,6 @@ export const feedbackEpics = combineEpics(
   updateFeedbackEpic,
   loadCommentsEpic,
   createCommentEpic,
+  loadSpecDocsEpic,
+  fetchSpecDocEpic,
 )

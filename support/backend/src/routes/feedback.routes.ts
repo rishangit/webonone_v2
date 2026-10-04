@@ -18,6 +18,16 @@ router.get(
   requireFeedbackAutomationOrJwt,
   feedbackController.getFeedbackByTicket,
 )
+router.get(
+  '/feedback/ticket/:ticketNumber/spec-docs',
+  requireAuth,
+  feedbackController.listFeedbackSpecDocs,
+)
+router.get(
+  '/feedback/ticket/:ticketNumber/spec-docs/:fileName',
+  requireAuth,
+  feedbackController.getFeedbackSpecDoc,
+)
 router.get('/feedback/:id', requireFeedbackAutomationOrJwt, feedbackController.getFeedback)
 router.get('/feedback/:id/comments', requireAuth, feedbackController.listFeedbackComments)
 router.post(

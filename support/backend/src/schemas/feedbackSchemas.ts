@@ -15,6 +15,12 @@ export const feedbackTicketNumberSchema = z
   .string()
   .regex(/^\d{4}$/, 'Ticket number must be four digits (e.g. 0001)')
 
+export const feedbackSpecDocFileNameSchema = z.enum([
+  'spec.md',
+  'plan.md',
+  'development-summary.md',
+])
+
 const uploadSessionIdSchema = z.string().min(1).max(21).regex(/^[A-Za-z0-9_-]+$/, 'Invalid upload session')
 
 export const feedbackAttachmentSchema = z.object({

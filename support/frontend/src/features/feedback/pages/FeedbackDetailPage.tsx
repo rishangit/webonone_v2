@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { formatDisplayDateTime } from '@webonone/i18n'
-import { Pencil, Save } from 'lucide-react'
+import { FileText, Pencil, Save } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -59,6 +59,9 @@ export function FeedbackDetailPage() {
     commentCreateStatus,
     editStatus,
     editError,
+    specDocs,
+    specDocsStatus,
+    specDocsTicketNumber,
   } = useAppSelector((s) => s.feedback)
 
   const [editOpen, setEditOpen] = useState(false)
@@ -101,6 +104,16 @@ export function FeedbackDetailPage() {
       dispatch(feedbackActions.clearUnreadForReport(reportId))
     })
   }, [dispatch, reportId])
+
+  useEffect(() => {
+    if (!accessToken || !ticketNumber || !report) return
+    dispatch(feedbackActions.loadSpecDocsRequested({ ticketNumber }))
+  }, [accessToken, dispatch, report, ticketNumber])
+
+  const planningDocs =
+    specDocsTicketNumber === ticketNumber ? specDocs : []
+  const showPlanningDocs =
+    planningDocs.length > 0 || (specDocsStatus === 'loading' && Boolean(report))
 
   useEffect(() => {
     if (commentCreateStatus === 'succeeded') {
@@ -281,6 +294,42 @@ export function FeedbackDetailPage() {
                 />
               </CardContent>
             </Card>
+
+            {showPlanningDocs ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('specDocsCardTitle')}</CardTitle>
+                  <CardDescription>{t('specDocsCardDescription')}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {specDocsStatus === 'loading' && planningDocs.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t('specDocsLoading')}</p>
+                  ) : null}
+                  {planningDocs.map((doc) => {
+                    const labelKey =
+                      doc.fileName === 'spec.md'
+                        ? 'specDoc.spec'
+                        : doc.fileName === 'plan.md'
+                          ? 'specDoc.plan'
+                          : 'specDoc.developmentSummary'
+                    return (
+                      <Button
+                        key={doc.fileName}
+                        type="button"
+                        variant="outline"
+                        className="h-10 w-full justify-start border-[hsl(var(--glass-border))]"
+                        onClick={() =>
+                          navigate(`/feedback/${report.ticketNumber}/docs/${doc.fileName}`)
+                        }
+                      >
+                        <FileText className="mr-2 h-4 w-4 shrink-0" />
+                        {t(labelKey)}
+                      </Button>
+                    )
+                  })}
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         </div>
       ) : null}

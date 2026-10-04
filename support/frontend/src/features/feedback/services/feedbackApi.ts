@@ -51,6 +51,17 @@ export interface FeedbackListQuery {
   q?: string
 }
 
+export type FeedbackSpecDocFileName = 'spec.md' | 'plan.md' | 'development-summary.md'
+
+export interface FeedbackSpecDocListItem {
+  fileName: FeedbackSpecDocFileName
+}
+
+export interface FeedbackSpecDocBody {
+  fileName: FeedbackSpecDocFileName
+  markdown: string
+}
+
 export const feedbackApi = {
   list(query: FeedbackListQuery): Promise<FeedbackListResult> {
     const params = new URLSearchParams()
@@ -104,5 +115,17 @@ export const feedbackApi = {
 
   markViewed(feedbackId: string): Promise<void> {
     return apiClient<void>(`/feedback/${feedbackId}/viewed`, { method: 'POST' })
+  },
+
+  listSpecDocs(ticketNumber: string): Promise<{ items: FeedbackSpecDocListItem[] }> {
+    return apiClient<{ items: FeedbackSpecDocListItem[] }>(
+      `/feedback/ticket/${ticketNumber}/spec-docs`,
+    )
+  },
+
+  getSpecDoc(ticketNumber: string, fileName: FeedbackSpecDocFileName): Promise<FeedbackSpecDocBody> {
+    return apiClient<FeedbackSpecDocBody>(
+      `/feedback/ticket/${ticketNumber}/spec-docs/${encodeURIComponent(fileName)}`,
+    )
   },
 }

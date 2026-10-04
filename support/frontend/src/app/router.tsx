@@ -26,6 +26,11 @@ const FeedbackDetailPage = lazy(async () => {
   return { default: mod.FeedbackDetailPage }
 })
 
+const FeedbackSpecDocPage = lazy(async () => {
+  const mod = await import('@/features/feedback/pages/FeedbackSpecDocPage')
+  return { default: mod.FeedbackSpecDocPage }
+})
+
 function LazyRoute({ children }: { children: ReactNode }) {
   return <Suspense fallback={null}>{children}</Suspense>
 }
@@ -60,6 +65,16 @@ export function App() {
                 <PrivateRoute>
                   <LazyRoute>
                     <FeedbackListPage />
+                  </LazyRoute>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="feedback/:ticketNumber/docs/:fileName"
+              element={
+                <PrivateRoute>
+                  <LazyRoute>
+                    <FeedbackSpecDocPage />
                   </LazyRoute>
                 </PrivateRoute>
               }

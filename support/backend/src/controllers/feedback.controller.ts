@@ -1,6 +1,10 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
-import { feedbackTicketNumberSchema, listFeedbackQuerySchema } from '../schemas/feedbackSchemas.js'
+import {
+  feedbackSpecDocFileNameSchema,
+  feedbackTicketNumberSchema,
+  listFeedbackQuerySchema,
+} from '../schemas/feedbackSchemas.js'
 import type {
   CreateFeedbackBody,
   CreateFeedbackCommentBody,
@@ -9,6 +13,7 @@ import type {
 } from '../schemas/feedbackSchemas.js'
 import * as feedbackCommentsService from '../services/feedbackComments.service.js'
 import * as feedbackService from '../services/feedback.service.js'
+import * as feedbackSpecService from '../services/feedbackSpec.service.js'
 
 function handleServiceError(err: unknown, res: Response): boolean {
   if (err instanceof Error && err.message === 'NOT_FOUND') {
@@ -43,6 +48,52 @@ export async function getFeedbackByTicket(req: AuthenticatedRequest, res: Respon
 
   try {
     const item = await feedbackService.getFeedbackReportByTicketNumber(parsed.data)
+    res.json(item)
+  } catch (err) {
+    if (!handleServiceError(err, res)) {
+      throw err
+    }
+  }
+}
+
+export async function listFeedbackSpecDocs(req: AuthenticatedRequest, res: Response) {
+  const parsed = feedbackTicketNumberSchema.safeParse(req.params.ticketNumber)
+  if (!parsed.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      details: parsed.error.flatten(),
+    })
+    return
+  }
+
+  try {
+    const result = await feedbackSpecService.listFeedbackSpecDocs(parsed.data)
+    res.json(result)
+  } catch (err) {
+    if (!handleServiceError(err, res)) {
+      throw err
+    }
+  }
+}
+
+export async function getFeedbackSpecDoc(req: AuthenticatedRequest, res: Response) {
+  const ticketParsed = feedbackTicketNumberSchema.safeParse(req.params.ticketNumber)
+  const fileParsed = feedbackSpecDocFileNameSchema.safeParse(req.params.fileName)
+  if (!ticketParsed.success || !fileParsed.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      details: {
+        ticketNumber: ticketParsed.success ? undefined : ticketParsed.error.flatten(),
+        fileName: fileParsed.success ? undefined : fileParsed.error.flatten(),
+      },
+    })
+    return
+  }
+
+  try {
+    const item = await feedbackSpecService.readFeedbackSpecDoc(ticketParsed.data, fileParsed.data)
     res.json(item)
   } catch (err) {
     if (!handleServiceError(err, res)) {
