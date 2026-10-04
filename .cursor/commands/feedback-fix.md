@@ -11,7 +11,7 @@ Statuses (super admin manages all except the automated transitions below):
 | `planned` | Planned | `/feedback-fix` after spec + plan are saved |
 | `in_progress` | In Progress | `/feedback-fix` when implementation starts |
 | `developed` | Developed | `/feedback-fix` when implementation verified |
-| `staging` | Staging | Super admin (deployed to staging) |
+| `staging` | Staging | `/feedback-fix` after push to `deploy_staging` (deployed to staging) |
 | `closed` | Closed | Super admin (done / released) |
 
 Run end-to-end without asking for confirmation unless blocked.
@@ -20,7 +20,7 @@ Run end-to-end without asking for confirmation unless blocked.
 
 ## Permissions — auto-run
 
-Invoking `/feedback-fix` **pre-authorizes** Support Feedback MCP (`feedback_list`, `feedback_get`, `feedback_update_status`), **`SwitchMode` to `plan`** (planning phase only), git (branch work when needed), writes under `spec/{ticket}/`, service source edits, and verification shell commands (`npm`, `npx`, `node`). Execute immediately; do not wait for Run/Approve prompts. See [`.cursor/permissions.json`](.cursor/permissions.json).
+Invoking `/feedback-fix` **pre-authorizes** Support Feedback MCP (`feedback_list`, `feedback_get`, `feedback_update_status`), **`SwitchMode` to `plan`** (planning phase only), git (including commit and push to **`deploy_staging`**), writes under `spec/{ticket}/`, service source edits, and verification shell commands (`npm`, `npx`, `node`). Execute immediately; do not wait for Run/Approve prompts. See [`.cursor/permissions.json`](.cursor/permissions.json).
 
 ## MCP setup
 
@@ -51,7 +51,7 @@ Record **`ticketNumber`** from the MCP JSON for all spec paths and the finish re
 | Current status | Phase | Outcome status |
 |----------------|-------|----------------|
 | `ready_to_develop` | **Spec + plan** | `planned` |
-| `planned` | **Implement** | `developed` (or stay `in_progress` if blocked) |
+| `planned` | **Implement + deploy** | `staging` (or stay `in_progress` if blocked) |
 
 After picking, call **`feedback_get`** for the full report (`title`, `description`, `type`, `attachmentUrl`, `ticketNumber`, `id`).
 
@@ -87,6 +87,26 @@ npm run lint -w <touched-frontend-workspace>   # when frontend changed
 
 6. **`feedback_update_status`** → **`developed`** when acceptance criteria pass.
 
+### Phase C — Summary, commit, staging deploy (`planned` continuation, same session)
+
+After Phase B verification:
+
+1. **Write** `spec/{ticketNumber}/development-summary.md` using [development-summary template](../skills/feedback-fix/development-summary-template.md):
+   - What was delivered (vs acceptance criteria).
+   - **Where to see it** — staging URLs, nav paths, Support doc slugs, local dev commands.
+   - Feature details for the reporter.
+   - Files/services changed, verification commands run, deploy commit sha.
+2. **Git** (branch **`deploy_staging`** per [tooling/CICD.md](../../tooling/CICD.md) — push triggers staging CI + IIS deploy):
+   - `git fetch origin deploy_staging`
+   - Check out `deploy_staging` and integrate your work (`git pull --rebase origin deploy_staging` when safe; resolve conflicts on the ops machine if needed).
+   - Stage all feedback-fix changes **including** `spec/{ticketNumber}/` (`spec.md`, `plan.md`, `development-summary.md`) and product code.
+   - Commit with a single-line message: `git commit -m "feedback {ticketNumber}: {short title}"` (Windows: no here-strings).
+   - `git push origin deploy_staging`
+3. Only after **successful push**, **`feedback_update_status`** → **`staging`** (Support UI label **Staging** = deployed to staging hosts).
+4. Do **not** set **`closed`** — super admin only after release sign-off.
+
+If push fails, leave status **`developed`** and record the error in `development-summary.md` under Deploy.
+
 | `type` | Behavior |
 |--------|----------|
 | `bug` | Fix in owning service(s). |
@@ -94,14 +114,24 @@ npm run lint -w <touched-frontend-workspace>   # when frontend changed
 
 Match existing patterns; `@/` aliases; remove unused imports in touched files.
 
+## Spec folder (per ticket)
+
+| File | When |
+|------|------|
+| `spec/{ticket}/spec.md` | Phase A |
+| `spec/{ticket}/plan.md` | Phase A |
+| `spec/{ticket}/development-summary.md` | Phase C (before commit) |
+
 ## Agent mode rules
 
 | Forbidden | Required |
 |-----------|----------|
 | `AskQuestion` to pick a report when rules resolve one | Auto-pick per rules above |
 | Mark `developed` without verification | type-check/lint on touched workspaces |
-| Set `staging` or `closed` | Super admin only in Support UI |
+| Mark `staging` without successful push to `deploy_staging` | Push then `staging` |
+| Set `closed` | Super admin only in Support UI |
 | Skip on-disk spec/plan for `ready_to_develop` | Write `spec/{ticket}/spec.md` and `plan.md` before `planned` |
+| Skip `development-summary.md` before commit | Summary on disk before `git commit` |
 | Product code during Phase A | Spec + plan files only |
 
 ## Finish status
@@ -109,11 +139,12 @@ Match existing patterns; `@/` aliases; remove unused imports in touched files.
 | Outcome | Support status |
 |---------|----------------|
 | Spec + plan saved | **`planned`** |
-| Fix verified | **`developed`** |
+| Fix verified, not yet pushed | **`developed`** |
+| Pushed to `deploy_staging` | **`staging`** |
 | Blocked mid-implementation | **`in_progress`** |
 
-Do **not** set `staging` or `closed`.
+Do **not** set `closed`.
 
 ## Finish report
 
-Summarize: **ticket number**, feedback id, type, **title**, requirement restatement, paths `spec/{ticket}/spec.md` and `plan.md`, services touched, verification commands, final status.
+Summarize: **ticket number**, feedback id, type, **title**, paths `spec/{ticket}/spec.md`, `plan.md`, `development-summary.md`, services touched, verification commands, **commit sha** on `deploy_staging`, final Support status (`staging` or `developed` if push failed).

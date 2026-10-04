@@ -1,6 +1,6 @@
 ---
 name: feedback-fix
-description: Support feedback queue via MCP — spec + plan under spec/{ticket}/, planned status, then implement to developed. Pick by /feedback-fix 0001 or queue. Use when the user runs /feedback-fix.
+description: Support feedback queue via MCP — spec, plan, development-summary under spec/{ticket}/, push deploy_staging, staging status. Pick by /feedback-fix 0001 or queue. Use when the user runs /feedback-fix.
 ---
 
 # Feedback fix workflow
@@ -9,7 +9,7 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 
 **Standalone:** Support Feedback MCP only — no ClickUp. One report per invocation (ticket, id, or queue).
 
-**Auto-run:** MCP, `SwitchMode` to `plan` for planning, `spec/{ticket}/` writes, git, implementation, verification — pre-authorized per `.cursor/permissions.json`.
+**Auto-run:** MCP, `SwitchMode` to `plan` (IDE only), `spec/{ticket}/` writes, git commit/push to **`deploy_staging`**, implementation, verification — pre-authorized per `.cursor/permissions.json`.
 
 ## Status flow
 
@@ -19,8 +19,9 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 | `ready_to_develop` | Super admin |
 | `planned` | `/feedback-fix` after `spec.md` + `plan.md` |
 | `in_progress` | `/feedback-fix` when implementation starts |
-| `developed` | `/feedback-fix` on verified completion |
-| `staging`, `closed` | Super admin only |
+| `developed` | `/feedback-fix` when verified, before push |
+| `staging` | `/feedback-fix` after successful push to `deploy_staging` |
+| `closed` | Super admin only |
 
 ## Ticket numbers
 
@@ -33,7 +34,8 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 | File | Purpose |
 |------|---------|
 | `spec/{ticketNumber}/spec.md` | Requirement from feedback title/description |
-| `spec/{ticketNumber}/plan.md` | Implementation plan (written after Plan mode) |
+| `spec/{ticketNumber}/plan.md` | Implementation plan |
+| `spec/{ticketNumber}/development-summary.md` | Delivered feature, where to verify, deploy commit — [template](development-summary-template.md) |
 
 ## MCP tools
 
@@ -41,7 +43,7 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 |------|-----|
 | `feedback_list` | Queue `ready_to_develop` / `planned`; optional `ticket`, `type`, `status` |
 | `feedback_get` | Id or four-digit ticket |
-| `feedback_update_status` | `planned` after spec+plan; `in_progress` before code; `developed` when done |
+| `feedback_update_status` | `planned`; `in_progress`; `developed`; `staging` after push |
 
 ## Pick order (no user prompt)
 
@@ -52,9 +54,13 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 
 ## Phases
 
-1. **`ready_to_develop`:** requirement → `spec.md` → Plan mode → `plan.md` → status `planned` → continue to implement in same session
-2. **`planned`:** claim `in_progress` → code per spec/plan → verify → `developed`
+1. **`ready_to_develop`:** requirement → `spec.md` → `plan.md` → status `planned` → continue in same session
+2. **`planned`:** `in_progress` → implement → verify → `developed` → `development-summary.md` → commit → push `deploy_staging` → `staging`
 
 ## Verification
 
 `npm run type-check` / `npm run lint` on touched workspaces before `developed`.
+
+## Deploy branch
+
+Push **`deploy_staging`** only ([tooling/CICD.md](../../tooling/CICD.md)). Single-line `git commit -m "feedback 0001: title"` on Windows.
