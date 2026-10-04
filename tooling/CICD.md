@@ -5,7 +5,7 @@ Automated **quality checks** on pull requests and **full IIS deploy** when **`de
 | Workflow | Trigger | Runner | Purpose |
 |----------|---------|--------|---------|
 | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | PR → `deploy_staging`, push → `deploy_staging` | `ubuntu-latest` | `build:packages`, `type-check`, `lint`, workspace tests |
-| [`.github/workflows/deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | push → `deploy_staging`, `workflow_dispatch` | Self-hosted Windows | `migrate:all`, `deploy:all`, health smoke |
+| [`.github/workflows/deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | push → `deploy_staging`, `workflow_dispatch` | Self-hosted Windows | Selective or full migrate/deploy + health smoke |
 
 **Warning:** `npm run env:apply` and `npm run deploy:all` overwrite every service’s `backend/.env` and `frontend/.env.production` from repo-root `production.env`. Run deploy only on the staging/IIS ops machine.
 
@@ -77,17 +77,55 @@ In `DEPLOY_REPO_ROOT`:
 1. Preflight: `production.env` must exist
 2. `git fetch` / force-checkout `origin/deploy_staging` (tracked files reset; untracked `production.env` is kept)
 3. `npm install` (not `npm ci` - `npm ci` deletes `node_modules` and hits `EPERM` on DLLs still loaded by IIS Node)
-4. `npm run env:apply` (write each service `backend/.env` before migrate)
-5. `npm run migrate:all`
-6. `npm run deploy:all` (`env:apply`, `build:all`, stage all `{service}/deploy/`)
-7. Try `npm run recycle:iis` (continues on failure if the runner cannot run `appcmd`)
-8. Wait 30s, then smoke GET each `/api/v1/health` URL (retries per URL)
+4. **Detect deploy targets** from the git range (previous HEAD / `github.event.before` → new HEAD), unless `workflow_dispatch` overrides
+5. If mode is not `none`: `npm run env:apply`
+6. **Selective:** `npm run migrate:<service>` + `npm run deploy:<service>` for each changed service. **Full:** `migrate:all` + `deploy:all`
+7. Try `npm run recycle:iis` (selective mode sets `IIS_APP_POOLS` to only changed pools; continues on failure if the runner cannot run `appcmd`)
+8. Wait 30s, then smoke GET health URLs (selective mode smokes only changed services)
 
 If smoke still fails (e.g. **email** times out), recycle the **email** app pool in IIS Manager (or elevated `npm run recycle:iis` on the host that serves those URLs), then re-run [`tooling/smoke-production-health.ps1`](smoke-production-health.ps1).
 
-Expect **tens of minutes** for a full `deploy:all`.
+Expect **tens of minutes** for a full deploy; selective deploys are typically much faster.
 
-## Manual fallback (same as before)
+### Selective vs full
+
+Detection config: [`tooling/deploy-services.json`](deploy-services.json). Scripts: `npm run deploy:detect`, `npm run deploy:changed`.
+
+| Mode | When | Behavior |
+|------|------|----------|
+| `selective` | Only paths under one or more service roots changed (e.g. `support/`, `data/`) | Migrate + deploy those services only; recycle/smoke filtered |
+| `all` | Shared paths changed (`packages/`, `ui-kit/`, `tooling/`, root `package.json` / lockfile, `production.env.example`, deploy workflow), or missing base SHA, or `force_all` | Same as classic full deploy |
+| `none` | Diff has no deployable service paths (e.g. `spec/`-only) | Skip env apply, migrate, deploy, recycle, smoke |
+
+Service keys: `identity`, `webonone` (includes `desktop/`), `media`, `email`, `data`, `sms`, `payment`, `website`, `design`, `ai`, `support`.
+
+### Manual workflow_dispatch
+
+In GitHub → **Actions → Deploy staging → Run workflow**:
+
+| Input | Effect |
+|-------|--------|
+| `force_all` | Full `migrate:all` + `deploy:all` |
+| `services` | Comma-separated keys (e.g. `support,data`); skips git auto-detect |
+
+### Manual ops (selective)
+
+```powershell
+cd $env:DEPLOY_REPO_ROOT
+git pull origin deploy_staging
+npm install
+npm run env:apply
+# Auto from last commit:
+npm run deploy:changed -- --base HEAD~1 --head HEAD
+# Or explicit:
+npm run deploy:changed -- --services support
+# Or full:
+npm run deploy:changed -- --all
+npm run recycle:iis
+powershell -ExecutionPolicy Bypass -File tooling/smoke-production-health.ps1
+```
+
+### Manual fallback (full, same as before)
 
 ```powershell
 cd $env:DEPLOY_REPO_ROOT   # or your clone path
@@ -100,7 +138,7 @@ npm run recycle:iis
 powershell -ExecutionPolicy Bypass -File tooling/smoke-production-health.ps1
 ```
 
-Adjust app pool names in `tooling/iis-app-pools.json` if your IIS pool names differ from the defaults.
+Adjust app pool names in `tooling/iis-app-pools.json` if your IIS pool names differ from the defaults. Optional env: `IIS_APP_POOLS` (comma-separated) to recycle a subset.
 
 ## Local development
 

@@ -4,6 +4,8 @@
 #
 # Optional env:
 #   SMOKE_HEALTH_URLS = comma-separated full URLs (overrides smoke-health-urls.json)
+#   SMOKE_HEALTH_URL_FILTER = comma-separated URLs to intersect with the configured list
+#     (used by selective deploy; ignored when SMOKE_HEALTH_URLS is set)
 #   SMOKE_HEALTH_TIMEOUT_SEC = per-request timeout (default 60)
 #   SMOKE_HEALTH_RETRIES = attempts per URL on failure (default 3)
 #   SMOKE_HEALTH_RETRY_DELAY_SEC = sleep between attempts (default 15)
@@ -29,6 +31,16 @@ if ($env:SMOKE_HEALTH_URLS) {
     }
     $config = Get-Content -LiteralPath $defaultJson -Raw | ConvertFrom-Json
     $urls = @($config.healthUrls)
+}
+
+if ($env:SMOKE_HEALTH_URL_FILTER -and $env:SMOKE_HEALTH_URL_FILTER.Trim().Length -gt 0 -and -not $env:SMOKE_HEALTH_URLS) {
+    $filterSet = @(
+        $env:SMOKE_HEALTH_URL_FILTER -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ }
+    )
+    $urls = @(
+        $urls | Where-Object { $filterSet -contains $_.Trim().ToLowerInvariant() }
+    )
+    Write-Host "Applied SMOKE_HEALTH_URL_FILTER ($($urls.Count) URL(s))"
 }
 
 if ($urls.Count -eq 0) {

@@ -1,0 +1,117 @@
+{
+  "comment": "Canonical map for selective staging deploy (detect-changed-services / deploy-changed). Pool names match iis-app-pools.json; health URLs match smoke-health-urls.json defaults.",
+  "services": {
+    "identity": {
+      "roots": ["identity/"],
+      "migrate": "migrate:identity",
+      "deploy": "deploy:identity",
+      "appPool": "staging-webonone.identity",
+      "healthUrl": "https://identity.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["identity."]
+    },
+    "webonone": {
+      "roots": ["webonone-v2/", "desktop/"],
+      "migrate": "migrate:webonone",
+      "deploy": "deploy:webonone",
+      "appPool": "staging-webonone.app",
+      "healthUrl": "https://app.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["app."]
+    },
+    "media": {
+      "roots": ["media/"],
+      "migrate": "migrate:media",
+      "deploy": "deploy:media",
+      "appPool": "staging-webonone.media",
+      "healthUrl": "https://media.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["media."]
+    },
+    "email": {
+      "roots": ["email/"],
+      "migrate": "migrate:email",
+      "deploy": "deploy:email",
+      "appPool": "staging-webonone.email",
+      "healthUrl": "https://email.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["email."]
+    },
+    "data": {
+      "roots": ["data/"],
+      "migrate": "migrate:data",
+      "deploy": "deploy:data",
+      "appPool": "staging-webonone.data",
+      "healthUrl": "https://data.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["data."]
+    },
+    "sms": {
+      "roots": ["sms/"],
+      "migrate": "migrate:sms",
+      "deploy": "deploy:sms",
+      "appPool": "staging-webonone.sms",
+      "healthUrl": "https://sms.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["sms."]
+    },
+    "payment": {
+      "roots": ["payment/"],
+      "migrate": "migrate:payment",
+      "deploy": "deploy:payment",
+      "appPool": "staging-webonone.payment",
+      "healthUrl": "https://payment.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["payment."]
+    },
+    "website": {
+      "roots": ["website/"],
+      "migrate": "migrate:website",
+      "deploy": "deploy:website",
+      "appPool": "staging-webonone.web",
+      "healthUrl": "https://webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["//webonone.com/", "//www.webonone.com/", "staging-webonone.web", "//staging.webonone.com/"]
+    },
+    "design": {
+      "roots": ["design/"],
+      "migrate": "migrate:design",
+      "deploy": "deploy:design",
+      "appPool": "staging-webonone.design",
+      "healthUrl": "https://design.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["design."]
+    },
+    "ai": {
+      "roots": ["ai/"],
+      "migrate": "migrate:ai",
+      "deploy": "deploy:ai",
+      "appPool": "staging-webonone.ai",
+      "healthUrl": "https://ai.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["ai."]
+    },
+    "support": {
+      "roots": ["support/"],
+      "migrate": "migrate:support",
+      "deploy": "deploy:support",
+      "appPool": "staging-webonone.support",
+      "healthUrl": "https://support.webonone.com/api/v1/health",
+      "smokeHostSubstrings": ["support."]
+    }
+  },
+  "forceFullPathPrefixes": [
+    "packages/",
+    "ui-kit/",
+    "tooling/"
+  ],
+  "forceFullExactPaths": [
+    "package.json",
+    "package-lock.json",
+    "production.env.example",
+    ".github/workflows/deploy-staging.yml"
+  ],
+  "serviceOrder": [
+    "identity",
+    "webonone",
+    "media",
+    "email",
+    "data",
+    "sms",
+    "payment",
+    "website",
+    "design",
+    "ai",
+    "support"
+  ]
+}

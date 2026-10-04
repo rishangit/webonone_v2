@@ -104,6 +104,8 @@
     "deploy:ai": "npm run deploy -w ai-root",
     "deploy:support": "npm run deploy -w support-root",
     "deploy:all": "npm run env:apply && npm run build:all && npm run stage:deploy -w identity-root && npm run stage:deploy -w webonone-v2-root && npm run stage:deploy -w media-root && npm run stage:deploy -w email-root && npm run stage:deploy -w data-root && npm run stage:deploy -w sms-root && npm run stage:deploy -w payment-root && npm run stage:deploy -w website-root && npm run stage:deploy -w design-root && npm run stage:deploy -w ai-root && npm run stage:deploy -w support-root",
+    "deploy:changed": "node tooling/deploy-changed.mjs",
+    "deploy:detect": "node tooling/detect-changed-services.mjs",
     "deploy:email": "npm run deploy -w email-root",
     "deploy:media": "npm run deploy -w media-root",
     "deploy:webonone": "npm run deploy -w webonone-v2-root",

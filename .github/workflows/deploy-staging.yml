@@ -4,6 +4,16 @@ on:
   push:
     branches: [deploy_staging]
   workflow_dispatch:
+    inputs:
+      force_all:
+        description: Force full migrate + deploy:all (ignore git diff)
+        type: boolean
+        default: false
+      services:
+        description: Comma-separated service keys (identity,webonone,media,...) - skips auto-detect
+        type: string
+        required: false
+        default: ''
 
 concurrency:
   group: staging-deploy
@@ -118,11 +128,18 @@ jobs:
           Write-Host "Write probe ok as $identity"
 
       - name: Sync deploy_staging branch
+        id: sync
         shell: powershell
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         run: |
+          $before = (git rev-parse HEAD 2>$null)
+          if (-not $before) { $before = '' }
           git fetch origin $env:DEPLOY_BRANCH
           git checkout --force -B $env:DEPLOY_BRANCH "origin/$($env:DEPLOY_BRANCH)"
+          $after = (git rev-parse HEAD)
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "before_sha=$before"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "after_sha=$after"
+          Write-Host "Synced $env:DEPLOY_BRANCH before=$before after=$after"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -137,31 +154,85 @@ jobs:
         shell: cmd
         run: npm install
 
+      - name: Detect deploy targets
+        id: detect
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: powershell
+        env:
+          INPUT_FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && inputs.force_all }}
+          INPUT_SERVICES: ${{ github.event_name == 'workflow_dispatch' && inputs.services || '' }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          SYNC_BEFORE: ${{ steps.sync.outputs.before_sha }}
+          SYNC_AFTER: ${{ steps.sync.outputs.after_sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:INPUT_FORCE_ALL -eq 'true') {
+            node tooling/detect-changed-services.mjs --force-all --github-output
+            exit $LASTEXITCODE
+          }
+          if ($env:INPUT_SERVICES -and $env:INPUT_SERVICES.Trim().Length -gt 0) {
+            node tooling/detect-changed-services.mjs --services $env:INPUT_SERVICES --github-output
+            exit $LASTEXITCODE
+          }
+          $base = $env:PUSH_BEFORE
+          if (-not $base -or $base -match '^0+$') {
+            $base = $env:SYNC_BEFORE
+          }
+          if (-not $base -or $base -match '^0+$') {
+            Write-Host 'No usable base SHA; forcing full deploy'
+            node tooling/detect-changed-services.mjs --force-all --github-output
+            exit $LASTEXITCODE
+          }
+          node tooling/detect-changed-services.mjs --base $base --head $env:SYNC_AFTER --github-output
+          exit $LASTEXITCODE
+
       - name: Apply production.env
+        if: steps.detect.outputs.mode != 'none'
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: cmd
         run: npm run env:apply
 
-      - name: Run migrations
+      - name: Migrate and deploy (changed or all)
+        if: steps.detect.outputs.mode != 'none'
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
-        shell: cmd
-        run: npm run migrate:all
+        shell: powershell
+        env:
+          DEPLOY_MODE: ${{ steps.detect.outputs.mode }}
+          DEPLOY_SERVICES: ${{ steps.detect.outputs.services }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:DEPLOY_MODE -eq 'all') {
+            node tooling/deploy-changed.mjs --all
+          } else {
+            node tooling/deploy-changed.mjs --services $env:DEPLOY_SERVICES
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Build and stage deploy
-        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
-        shell: cmd
-        run: npm run deploy:all
+      - name: Skip deploy (no service changes)
+        if: steps.detect.outputs.mode == 'none'
+        shell: powershell
+        run: |
+          Write-Host "Detect mode=none ($env:DETECT_REASON). Skipping env:apply, migrate, deploy, recycle, and smoke."
+        env:
+          DETECT_REASON: ${{ steps.detect.outputs.reason }}
 
       # Node/iisnode may still serve old workers until pools recycle (email often hangs until then).
       - name: Recycle IIS app pools (before smoke)
+        if: steps.detect.outputs.mode != 'none'
         continue-on-error: true
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: powershell
         env:
           IIS_APP_POOLS_JSON: ${{ vars.IIS_APP_POOLS_JSON }}
+          DETECT_MODE: ${{ steps.detect.outputs.mode }}
+          DETECT_APP_POOLS: ${{ steps.detect.outputs.app_pools }}
         run: |
           if ($env:IIS_APP_POOLS_JSON -and -not (Test-Path -LiteralPath $env:IIS_APP_POOLS_JSON)) {
             Write-Warning "IIS_APP_POOLS_JSON path not found: $env:IIS_APP_POOLS_JSON"
+          }
+          if ($env:DETECT_MODE -eq 'selective' -and $env:DETECT_APP_POOLS) {
+            $env:IIS_APP_POOLS = $env:DETECT_APP_POOLS
+            Write-Host "Selective recycle pools: $env:IIS_APP_POOLS"
           }
           npm run recycle:iis
           if ($LASTEXITCODE -ne 0) {
@@ -169,15 +240,30 @@ jobs:
           }
 
       - name: Wait for health endpoints after recycle
+        if: steps.detect.outputs.mode != 'none'
         shell: powershell
         run: Start-Sleep -Seconds 30
 
       - name: Smoke health checks
+        if: steps.detect.outputs.mode != 'none'
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
         shell: powershell
         env:
-          SMOKE_HEALTH_URLS: ${{ vars.SMOKE_HEALTH_URLS }}
+          REPO_SMOKE_HEALTH_URLS: ${{ vars.SMOKE_HEALTH_URLS }}
           SMOKE_HEALTH_RETRIES: ${{ vars.SMOKE_HEALTH_RETRIES }}
+          DETECT_MODE: ${{ steps.detect.outputs.mode }}
+          DETECT_SERVICES: ${{ steps.detect.outputs.services }}
         run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:DETECT_MODE -eq 'selective' -and $env:DETECT_SERVICES) {
+            $env:SMOKE_HEALTH_URLS = $env:REPO_SMOKE_HEALTH_URLS
+            $resolved = node tooling/resolve-smoke-urls.mjs --services $env:DETECT_SERVICES
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $env:SMOKE_HEALTH_URLS = "$resolved"
+            Write-Host "Selective smoke URLs: $env:SMOKE_HEALTH_URLS"
+          } elseif ($env:REPO_SMOKE_HEALTH_URLS) {
+            $env:SMOKE_HEALTH_URLS = $env:REPO_SMOKE_HEALTH_URLS
+          }
           $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\smoke-production-health.ps1'
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

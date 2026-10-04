@@ -6,7 +6,9 @@
 #   powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -Action Stop -SkipMissing
 #   powershell -ExecutionPolicy Bypass -File tooling/recycle-iis-app-pools.ps1 -Action Start -SkipMissing
 #
-# Optional env: IIS_APP_POOLS_JSON = path to JSON with { "appPools": ["Identity", ...] }
+# Optional env:
+#   IIS_APP_POOLS_JSON = path to JSON with { "appPools": ["Identity", ...] }
+#   IIS_APP_POOLS = comma-separated pool names (overrides JSON when set)
 #
 # Stop before npm ci on a live IIS host: Node loads native DLLs from repo
 # node_modules (e.g. sharp/libvips). Windows cannot unlink a loaded DLL.
@@ -27,14 +29,22 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $defaultJson = Join-Path $scriptDir 'iis-app-pools.json'
 $configPath = if ($env:IIS_APP_POOLS_JSON) { $env:IIS_APP_POOLS_JSON } else { $defaultJson }
 
-if (-not (Test-Path -LiteralPath $configPath)) {
-    Write-Error "App pool config not found: $configPath"
+if ($env:IIS_APP_POOLS -and $env:IIS_APP_POOLS.Trim().Length -gt 0) {
+    $pools = @(
+        $env:IIS_APP_POOLS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    )
+    Write-Host "Using IIS_APP_POOLS override ($($pools.Count) pool(s))"
+} else {
+    if (-not (Test-Path -LiteralPath $configPath)) {
+        Write-Error "App pool config not found: $configPath"
+    }
+
+    $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+    $pools = @($config.appPools)
 }
 
-$config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-$pools = @($config.appPools)
 if ($pools.Count -eq 0) {
-    Write-Error "No appPools listed in $configPath"
+    Write-Error "No appPools listed (IIS_APP_POOLS empty or missing from $configPath)"
 }
 
 $appCmd = Join-Path $env:windir 'System32\inetsrv\appcmd.exe'
