@@ -18,6 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
   Spinner,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  tabsPageClassName,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -25,10 +29,16 @@ import { isSessionSuperAdmin } from '@/features/auth/utils/currentRole'
 import { FeedbackFormDialog } from '@/features/feedback/components/FeedbackFormDialog'
 import { FeedbackList } from '@/features/feedback/components/FeedbackList'
 import { useVisibleInterval } from '@/features/feedback/hooks/useVisibleInterval'
-import type { FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
+import {
+  FEEDBACK_STATUS_ORDER,
+  type FeedbackStatus,
+  type FeedbackType,
+} from '@/features/feedback/schemas/feedbackSchemas'
 import { feedbackActions } from '@/features/feedback/store/feedbackSlice'
 
 const LIST_POLL_MS = 15_000
+
+type StatusTab = 'all' | FeedbackStatus
 
 export function FeedbackListPage() {
   const { t } = useTranslation('feedback')
@@ -56,25 +66,22 @@ export function FeedbackListPage() {
   const [appliedSearch, setAppliedSearch] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [typeFilter, setTypeFilter] = useState<'all' | FeedbackType>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | FeedbackStatus>('all')
-  const [appliedFilters, setAppliedFilters] = useState({
-    type: 'all' as 'all' | FeedbackType,
-    status: 'all' as 'all' | FeedbackStatus,
-  })
+  const [appliedTypeFilter, setAppliedTypeFilter] = useState<'all' | FeedbackType>('all')
+  const [statusTab, setStatusTab] = useState<StatusTab>('all')
   const [createOpen, setCreateOpen] = useState(false)
 
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
   const loading = listStatus === 'loading' && items.length === 0
 
-  const hasActiveFilters = appliedFilters.type !== 'all' || appliedFilters.status !== 'all'
+  const hasActiveFilters = appliedTypeFilter !== 'all'
 
   function dispatchLoad(nextPage: number, nextPageSize: number, append = false) {
     dispatch(
       feedbackActions.loadListRequested({
         page: nextPage,
         pageSize: nextPageSize,
-        type: appliedFilters.type === 'all' ? undefined : appliedFilters.type,
-        status: appliedFilters.status === 'all' ? undefined : appliedFilters.status,
+        type: appliedTypeFilter === 'all' ? undefined : appliedTypeFilter,
+        status: statusTab === 'all' ? undefined : statusTab,
         q: appliedSearch.trim() || undefined,
         append,
       }),
@@ -88,7 +95,7 @@ export function FeedbackListPage() {
     }, 400)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters/search/token change
-  }, [accessToken, appliedFilters, appliedSearch, dispatch, pageSize])
+  }, [accessToken, appliedTypeFilter, statusTab, appliedSearch, dispatch, pageSize])
 
   useVisibleInterval(
     () => {
@@ -124,14 +131,13 @@ export function FeedbackListPage() {
   }
 
   function handleApplyFilters() {
-    const next = { type: typeFilter, status: statusFilter }
-    setAppliedFilters(next)
+    setAppliedTypeFilter(typeFilter)
     dispatch(
       feedbackActions.loadListRequested({
         page: 1,
         pageSize,
-        type: next.type === 'all' ? undefined : next.type,
-        status: next.status === 'all' ? undefined : next.status,
+        type: typeFilter === 'all' ? undefined : typeFilter,
+        status: statusTab === 'all' ? undefined : statusTab,
         q: appliedSearch.trim() || undefined,
       }),
     )
@@ -139,15 +145,19 @@ export function FeedbackListPage() {
 
   function handleClearFilters() {
     setTypeFilter('all')
-    setStatusFilter('all')
-    setAppliedFilters({ type: 'all', status: 'all' })
+    setAppliedTypeFilter('all')
     dispatch(
       feedbackActions.loadListRequested({
         page: 1,
         pageSize,
+        status: statusTab === 'all' ? undefined : statusTab,
         q: appliedSearch.trim() || undefined,
       }),
     )
+  }
+
+  function handleStatusTabChange(value: string) {
+    setStatusTab(value as StatusTab)
   }
 
   function handleStatusChange(id: string, status: FeedbackStatus) {
@@ -203,27 +213,20 @@ export function FeedbackListPage() {
             </SelectContent>
           </Select>
         </FormField>
-        <FormField htmlFor="feedback-filter-status" label={t('filterStatus')}>
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as 'all' | FeedbackStatus)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('filterAll')}</SelectItem>
-              <SelectItem value="todo">{t('status.todo')}</SelectItem>
-              <SelectItem value="ready_to_develop">{t('status.ready_to_develop')}</SelectItem>
-              <SelectItem value="planned">{t('status.planned')}</SelectItem>
-              <SelectItem value="in_progress">{t('status.in_progress')}</SelectItem>
-              <SelectItem value="developed">{t('status.developed')}</SelectItem>
-              <SelectItem value="staging">{t('status.staging')}</SelectItem>
-              <SelectItem value="closed">{t('status.closed')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
       </ListFilterPanel>
+
+      <div className={tabsPageClassName}>
+        <Tabs value={statusTab} onValueChange={handleStatusTabChange}>
+          <TabsList aria-label={t('statusTabsAria')}>
+            <TabsTrigger value="all">{t('filterAll')}</TabsTrigger>
+            {FEEDBACK_STATUS_ORDER.map((status) => (
+              <TabsTrigger key={status} value={status}>
+                {t(`status.${status}`)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
       <ListPageBody>
         {loading ? (

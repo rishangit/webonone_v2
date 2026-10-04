@@ -7,7 +7,6 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
-  ItemListStatus,
   StatusTag,
 } from '@webonone/ui-kit'
 import { FeedbackStatusMenu } from '@/features/feedback/components/FeedbackStatusMenu'
@@ -57,14 +56,9 @@ export function FeedbackList({
         return (
           <ItemListItem key={item.id}>
             <FeedbackTypeIcon type={item.type} />
-            <ItemListContent>
-              <button
-                type="button"
-                className="min-w-0 w-full space-y-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label={`${t(`type.${item.type}`)}: ${item.title}`}
-                onClick={() => onOpenDetail(item)}
-              >
-                <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
+            <ItemListContent className="flex flex-col gap-2">
+              <div className="flex w-full min-w-0 items-start gap-2">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   <StatusTag variant="pending">#{item.ticketNumber}</StatusTag>
                   {item.unreadCommentCount ? (
                     <StatusTag variant="member">
@@ -72,6 +66,25 @@ export function FeedbackList({
                     </StatusTag>
                   ) : null}
                 </div>
+                <div className="flex shrink-0 items-start gap-2">
+                  <StatusTag variant={statusTag.variant} className={statusTag.className}>
+                    {t(`status.${item.status}`)}
+                  </StatusTag>
+                  {isSuperAdmin ? (
+                    <FeedbackStatusMenu
+                      item={item}
+                      updatingId={updatingId}
+                      onStatusChange={onStatusChange}
+                    />
+                  ) : null}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="min-w-0 w-full space-y-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`${t(`type.${item.type}`)}: ${item.title}`}
+                onClick={() => onOpenDetail(item)}
+              >
                 <p className="w-full min-w-0 break-words font-medium text-foreground">
                   {item.title}
                 </p>
@@ -104,18 +117,6 @@ export function FeedbackList({
                 </p>
               </button>
             </ItemListContent>
-            <ItemListStatus>
-              <StatusTag variant={statusTag.variant} className={statusTag.className}>
-                {t(`status.${item.status}`)}
-              </StatusTag>
-            </ItemListStatus>
-            {isSuperAdmin ? (
-              <FeedbackStatusMenu
-                item={item}
-                updatingId={updatingId}
-                onStatusChange={onStatusChange}
-              />
-            ) : null}
           </ItemListItem>
         )
       })}

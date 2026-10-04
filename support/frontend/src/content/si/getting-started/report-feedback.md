@@ -31,11 +31,11 @@ Sign in කළ සියලු දෙනාට එකම බෙදාගත් �
 
 ## වාර්තා බලන්න
 
-Sign in කළ සියලු දෙනාට එකම වාර්තා ලැයිස්තුව දිස්වේ. එක් එක් පේළියේ වමේ bug හෝ feature අයිකනයක්, මැද සම්පූර්ණ title සහ description, දකුණේ වර්ණ-කේත status, යොමු කළ අය, දිනය සහ screenshot එක් කළ විට thumbnail ඇත.
+Sign in කළ සියලු දෙනාට එකම වාර්තා ලැයිස්තුව දිස්වේ. එක් එක් පේළියේ වමේ bug හෝ feature අයිකනයක්, ඉහළින් ticket අංකය සහ වර්ණ-කේත status, ඊළඟට වෙනම පේළිවල සම්පූර්ණ title සහ description, යොමු කළ අය, දිනය සහ screenshot එක් කළ විට thumbnail ඇත.
 
 පේළියක් click කර එම වාර්තාවේ **detail page** විවෘත කරන්න (comments, screenshot, සහ status). ලැයිස්තුව හෝ detail page විවෘතව තබා ගත් විට status ස්වයංක්‍රීයව යාවත්කාලීන වේ—පිටුව refresh කිරීම අවශ්‍ය නැත.
 
-ශීර්ෂ හෝ විස්තර සොයා ගැනීමට **Search** භාවිතා කරන්න. type හෝ status අනුව filter panel භාවිතා කරන්න.
+ලැයිස්තුවට ඉහළින් ඇති **status tabs** (**All**, **To Do**, **Ready to Developed**, **Planned**, සහ අනෙක් workflow status) භාවිතා කර එම status ඇති වාර්තා පමණක් පෙන්වන්න. ශීර්ෂ හෝ විස්තර සොයා ගැනීමට **Search** භාවිතා කරන්න. type (bug හෝ feature request) අනුව filter panel භාවිතා කරන්න.
 
 ## Status (Super Admin)
 

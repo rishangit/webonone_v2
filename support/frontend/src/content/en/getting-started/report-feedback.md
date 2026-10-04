@@ -31,11 +31,11 @@ Your report appears in the shared list for everyone who is signed in.
 
 ## View reports
 
-All signed-in users see the same list of reports. Each row shows a bug or feature icon on the left, the full title and description in the middle, and a color-coded status on the right, plus who submitted it, when, and a thumbnail when a screenshot was attached.
+All signed-in users see the same list of reports. Each row shows a bug or feature icon on the left, ticket number and color-coded status on the top of the row, then the full title and description on their own lines below, plus who submitted it, when, and a thumbnail when a screenshot was attached.
 
 Click a row to open that report’s **detail page** (comments, screenshot, and status). Status on the list and detail pages refreshes automatically while you keep the page open—no manual reload needed.
 
-Use **Search** to find text in titles or descriptions. Use the filter panel to narrow by type or status.
+Use the **status tabs** above the list (**All**, **To Do**, **Ready to Developed**, **Planned**, and the other workflow statuses) to show only reports in that status. Use **Search** to find text in titles or descriptions. Use the filter panel to narrow by type (bug or feature request).
 
 ## Status (Super Admin)
 

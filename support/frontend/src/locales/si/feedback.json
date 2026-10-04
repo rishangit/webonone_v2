@@ -19,6 +19,7 @@
   "filterType": "වර්ගය",
   "filterStatus": "Status",
   "filterAll": "සියල්ල",
+  "statusTabsAria": "Status අනුව වාර්තා filter කරන්න",
   "detailPageTitle": "වාර්තා විස්තර",
   "detailDescription": "විස්තර, comments, සහ සහයෝගීතාව බලන්න.",
   "overviewCardTitle": "දළ විශ්ලේෂණය",

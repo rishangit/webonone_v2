@@ -19,6 +19,7 @@
   "filterType": "Type",
   "filterStatus": "Status",
   "filterAll": "All",
+  "statusTabsAria": "Filter reports by status",
   "detailPageTitle": "Report details",
   "detailDescription": "View details, add comments, and collaborate on this report.",
   "overviewCardTitle": "Overview",
