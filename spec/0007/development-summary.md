@@ -50,10 +50,10 @@ npm run lint -w @webonone/support-frontend
 | Field | Value |
 |-------|-------|
 | Branch | `deploy_staging` |
-| Commit | _(filled after push)_ |
-| Push | pending |
+| Commit | `307745a1` — `feedback 0007: UI improvements for Support feedback list` |
+| Push | success (`origin/deploy_staging`) |
 | CI | `.github/workflows/deploy-staging.yml` |
 
 ## Support status
 
-`developed` → `staging` after successful push (`closed` remains super admin).
+`staging` after successful push (`closed` remains super admin).
