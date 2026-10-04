@@ -47,7 +47,7 @@ npm run lint -w @webonone/support-frontend
 | Field | Value |
 |-------|-------|
 | Branch | `deploy_staging` |
-| Commit | `2e93691c` — `feedback 0008: Improvements for the support feedback list` |
+| Commit | `2f74642d` — `feedback 0008: Improvements for the support feedback list` |
 | Push | triggers `.github/workflows/deploy-staging.yml` |
 
 ## Support status
