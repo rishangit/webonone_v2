@@ -9,7 +9,8 @@ summary: "සංවාද සහ tools සඳහා standalone AI app හෝ in-
 
 Signed-in AI WebOnOne assistant සහ AI service app හි ඇත.
 
-- App හි: [AI assistant](/docs/app-preferences/ai-assistant)
-- සංවාද Data සහ අනෙකුත් services වල tools භාවිතා කළ හැක; assistant වාර්තා සාදන්න හෝ වෙනස් කිරීමට අවශ්‍ය වූ විට **confirm** කරන්න.
+- App හි: [AI සහායක හැකියාවන්](/docs/app-preferences/ai-assistant) — chat විවෘත කිරීම, tooling areas, සහ Confirm
+- සංවාද Data සහ අනෙකුත් services වල tools භාවිතා කළ හැක; assistant වාර්තා සාදන්න හෝ වෙනස් කිරීමට අවශ්‍ය වූ විට **confirm** කරන්න
+- ඔබේ role සහ company session සඳහා live list එක **Settings → Basic Settings → AI → What the assistant can do** හි බලන්න
 
 Assistant Calendar හෝ POS වෙනුවට front-desk වැඩ නොකරයි — එහි වඩා වේගයෙන් ළඟා වීමට උදව් කරයි.

@@ -17,4 +17,4 @@ summary: "AI key සකස් කළ පසු අක්ෂර වින්‍�
 
 Username, password, email, phone, search box, හෝ වෙනත් ස්ථාවර identifiers මත **sparkle නැත**. AI සකස් කරන තෙක්ද sparkle නැත.
 
-යෙදුමේ [chat assistant](/docs/app-preferences/ai-assistant) වෙනමයි — sparkle යාවත්කාලීන කරන්නේ ඔබ click කළ ක්ෂේත්‍රය පමණි.
+යෙදුමේ [chat assistant](/docs/app-preferences/ai-assistant) වෙනමයි — sparkle යාවත්කාලීන කරන්නේ ඔබ click කළ ක්ෂේත්‍රය පමණි. Chat හට list හෝ change කළ හැකි ක්ෂේත්‍ර සඳහා එම ලිපියේ capabilities කොටස (හෝ Basic Settings → AI යටතේ **What the assistant can do**) බලන්න.

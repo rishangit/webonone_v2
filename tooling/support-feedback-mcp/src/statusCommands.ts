@@ -14,23 +14,27 @@ export type StatusCommand = {
   buildPrompt: (payload: StatusCommandPayload) => string
 }
 
-/** Map a Support status to a Cursor CLI prompt. Add rows for future statuses. */
+/**
+ * Single-line prompts only — multi-line breaks Windows cmd when spawning agent.
+ * CLI cannot confirm Plan mode: write plan.md in Agent mode without SwitchMode or user prompts.
+ */
 export const STATUS_COMMANDS: Partial<Record<FeedbackStatus, StatusCommand>> = {
   ready_to_develop: {
     name: 'feedback-fix',
-    buildPrompt: (payload) =>
-      [
-        `/feedback-fix ${payload.ticketNumber}`,
-        '',
-        'Follow `.cursor/commands/feedback-fix.md` and `.cursor/skills/feedback-fix/SKILL.md`.',
-        'Run end-to-end without asking for confirmation unless blocked.',
-        'Use Support Feedback MCP for list/get/update status.',
-        payload.title ? `Ticket title: ${payload.title}` : '',
-        payload.type ? `Type: ${payload.type}` : '',
-        payload.fromStatus ? `Previous status: ${payload.fromStatus}` : '',
+    buildPrompt: (payload) => {
+      const ticket = payload.ticketNumber
+      const bits = [
+        `/feedback-fix ${ticket}.`,
+        'Follow .cursor/commands/feedback-fix.md and .cursor/skills/feedback-fix/SKILL.md.',
+        'Fully non-interactive: do not SwitchMode to plan, do not ask for confirmation.',
+        `Write spec/${ticket}/spec.md and spec/${ticket}/plan.md on disk before feedback_update_status planned.`,
+        'Then implement Phase B in the same run; verify type-check/lint; set developed when done.',
+        'Use Support Feedback MCP for feedback_get, feedback_list, feedback_update_status.',
       ]
-        .filter(Boolean)
-        .join('\n'),
+      if (payload.title) bits.push(`Title: ${payload.title.replace(/\s+/g, ' ').slice(0, 120)}`)
+      if (payload.type) bits.push(`Type: ${payload.type}`)
+      return bits.join(' ')
+    },
   },
 }
 

@@ -6,6 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
+import { resolveCursorAgentSpawn } from './agentSpawn.js'
 import { pickFeedbackTicketForQueue } from './pickFeedbackTicket.js'
 import { commandForStatus, type StatusCommandPayload } from './statusCommands.js'
 import { SupportFeedbackApi, type FeedbackStatus } from './supportApi.js'
@@ -54,12 +55,6 @@ function argValue(flag: string): string | undefined {
   const idx = process.argv.indexOf(flag)
   if (idx < 0) return undefined
   return process.argv[idx + 1]
-}
-
-function resolveAgentCommand(): string {
-  const override = process.env.FEEDBACK_FIX_AGENT_CMD?.trim()
-  if (override) return override
-  return process.platform === 'win32' ? 'agent.cmd' : 'agent'
 }
 
 function secureSecretMatch(provided: string, expected: string): boolean {
@@ -115,8 +110,9 @@ function runAgentOnce(options: {
   logDir: string
   prompt: string
 }): Promise<number> {
-  const agentCmd = resolveAgentCommand()
+  const { command: agentCmd, prefixArgs } = resolveCursorAgentSpawn()
   const args = [
+    ...prefixArgs,
     '-p',
     '--print',
     '--trust',
@@ -134,12 +130,14 @@ function runAgentOnce(options: {
   return new Promise((resolve, reject) => {
     const logStream = fs.createWriteStream(logPath, { flags: 'a' })
     logStream.write(`--- feedback-fix watcher ${new Date().toISOString()} ---\n`)
-    logStream.write(`command: ${agentCmd} ${args.slice(0, -1).join(' ')} <prompt>\n\n`)
+    logStream.write(`spawn: ${agentCmd}\n`)
+    logStream.write(`args: ${JSON.stringify(args)}\n\n`)
 
     const child = spawn(agentCmd, args, {
       cwd: options.workspace,
       env: process.env,
-      shell: process.platform === 'win32',
+      shell: false,
+      windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     })
 

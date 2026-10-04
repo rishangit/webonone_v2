@@ -68,7 +68,7 @@ After picking, call **`feedback_get`** for the full report (`title`, `descriptio
    - Header: ticket, feedback id, type, title, reporter email, link to `attachmentUrl` when present.
    - Sections: overview, problem/goal, acceptance criteria, services affected, out of scope, verification commands.
    - Mirror tone/structure of recent `spec/*/` packages (e.g. `01-overview.md` depth in a single `spec.md` for feedback-sized work).
-3. **Plan (Plan mode)** — `SwitchMode` to **`plan`**. Produce the implementation plan from `spec/{ticketNumber}/spec.md` and relevant `.cursor/rules/` / `AGENTS.md`. Save to **`spec/{ticketNumber}/plan.md`** (markdown, not in-chat only). Switch back to **Agent** mode to continue.
+3. **Plan** — Produce the implementation plan from `spec/{ticketNumber}/spec.md` and relevant `.cursor/rules/` / `AGENTS.md`. Save to **`spec/{ticketNumber}/plan.md`** (markdown, not in-chat only). In **Cursor IDE**, use `SwitchMode` to **`plan`**, then switch back to **Agent** mode. In **Cursor CLI** (`agent -p`), stay in Agent mode: write `plan.md` directly — do not SwitchMode to plan and do not wait for user confirmation.
 4. **`feedback_update_status`** → **`planned`** only after both files exist on disk.
 5. **Continue** into Phase B in the **same session** unless truly blocked.
 

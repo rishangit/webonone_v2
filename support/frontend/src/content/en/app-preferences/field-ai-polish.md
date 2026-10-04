@@ -17,4 +17,4 @@ If the field is part of a form, the assistant uses the form labels and the value
 
 **No sparkle** on usernames, passwords, emails, phone numbers, search boxes, or other fixed identifiers. There is also no sparkle until AI is configured.
 
-The in-app [chat assistant](/docs/app-preferences/ai-assistant) is separate — sparkle only rewrites the field you clicked.
+The in-app [chat assistant](/docs/app-preferences/ai-assistant) is separate — sparkle only rewrites the field you clicked. For which areas chat can list or change records, see that article’s capabilities section (or **What the assistant can do** under Basic Settings → AI).

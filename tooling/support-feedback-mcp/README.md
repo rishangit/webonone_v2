@@ -99,3 +99,5 @@ Task Scheduler: at logon as the user that owns the clone and Cursor login; “St
 | `FEEDBACK_FIX_LOG_DIR` | `.cursor/logs/feedback-fix-watcher` | Per-run agent stdout/stderr logs |
 
 If the listener is down, Support still saves status. The ticket stays `ready_to_develop` until the listener is up or someone runs `/feedback-fix` manually.
+
+**Windows:** The watcher spawns Cursor’s bundled `node.exe` + `index.js` (not `agent.cmd` with `shell: true`) so the full prompt runs. CLI prompts are single-line and instruct writing both `spec.md` and `plan.md` without Plan-mode confirmation.
