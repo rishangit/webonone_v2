@@ -31,7 +31,7 @@ Your report appears in the shared list for everyone who is signed in.
 
 ## View reports
 
-All signed-in users see the same list of reports, with type, status, who submitted it, when, and a thumbnail when a screenshot was attached (click to open the full image).
+All signed-in users see the same list of reports. Each row shows a bug or feature icon on the left, status on the right, who submitted it, when, and a thumbnail when a screenshot was attached (click to open the full image).
 
 Use **Search** to find text in titles or descriptions. Use the filter panel to narrow by type or status.
 

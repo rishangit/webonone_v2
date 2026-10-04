@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Bug, Lightbulb } from 'lucide-react'
 import { formatDisplayDateTime } from '@webonone/i18n'
 import {
   ImagePreview,
@@ -6,15 +7,13 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ItemListStatus,
   StatusTag,
 } from '@webonone/ui-kit'
 import { FeedbackStatusMenu } from '@/features/feedback/components/FeedbackStatusMenu'
 import type { FeedbackReport } from '@/features/feedback/services/feedbackApi'
-import type { FeedbackStatus } from '@/features/feedback/schemas/feedbackSchemas'
-import {
-  feedbackStatusTagVariant,
-  feedbackTypeTagVariant,
-} from '@/features/feedback/utils/feedbackStatus'
+import type { FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
+import { feedbackStatusTagVariant } from '@/features/feedback/utils/feedbackStatus'
 
 type FeedbackListProps = {
   items: FeedbackReport[]
@@ -22,6 +21,20 @@ type FeedbackListProps = {
   updatingId: string | null
   onStatusChange: (id: string, status: FeedbackStatus) => void
   onOpenDetail: (item: FeedbackReport) => void
+}
+
+function FeedbackTypeIcon({ type }: { type: FeedbackType }) {
+  const Icon = type === 'bug' ? Bug : Lightbulb
+  return (
+    <Icon
+      className={
+        type === 'bug'
+          ? 'mt-0.5 h-5 w-5 shrink-0 self-start text-destructive'
+          : 'mt-0.5 h-5 w-5 shrink-0 self-start text-primary'
+      }
+      aria-hidden
+    />
+  )
 }
 
 export function FeedbackList({
@@ -41,21 +54,17 @@ export function FeedbackList({
     <ItemList>
       {items.map((item) => (
         <ItemListItem key={item.id}>
+          <FeedbackTypeIcon type={item.type} />
           <ItemListContent>
             <button
               type="button"
-              className="min-w-0 space-y-1 text-left"
+              className="min-w-0 w-full space-y-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={`${t(`type.${item.type}`)}: ${item.title}`}
               onClick={() => onOpenDetail(item)}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <StatusTag variant="pending">#{item.ticketNumber}</StatusTag>
                 <p className="truncate font-medium">{item.title}</p>
-                <StatusTag variant={feedbackTypeTagVariant(item.type)}>
-                  {t(`type.${item.type}`)}
-                </StatusTag>
-                <StatusTag variant={feedbackStatusTagVariant(item.status)}>
-                  {t(`status.${item.status}`)}
-                </StatusTag>
                 {item.unreadCommentCount ? (
                   <StatusTag variant="member">
                     {t('unreadComments', { count: item.unreadCommentCount })}
@@ -88,6 +97,11 @@ export function FeedbackList({
               </p>
             </button>
           </ItemListContent>
+          <ItemListStatus>
+            <StatusTag variant={feedbackStatusTagVariant(item.status)}>
+              {t(`status.${item.status}`)}
+            </StatusTag>
+          </ItemListStatus>
           {isSuperAdmin ? (
             <FeedbackStatusMenu
               item={item}

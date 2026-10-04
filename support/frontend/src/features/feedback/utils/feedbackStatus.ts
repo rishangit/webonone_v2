@@ -1,5 +1,5 @@
 import type { StatusTagVariant } from '@webonone/ui-kit'
-import type { FeedbackStatus, FeedbackType } from '@/features/feedback/schemas/feedbackSchemas'
+import type { FeedbackStatus } from '@/features/feedback/schemas/feedbackSchemas'
 
 export function feedbackStatusTagVariant(status: FeedbackStatus): StatusTagVariant {
   switch (status) {
@@ -20,8 +20,4 @@ export function feedbackStatusTagVariant(status: FeedbackStatus): StatusTagVaria
     default:
       return 'pending'
   }
-}
-
-export function feedbackTypeTagVariant(type: FeedbackType): StatusTagVariant {
-  return type === 'bug' ? 'rejected' : 'verified'
 }
