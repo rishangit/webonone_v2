@@ -55,7 +55,7 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 ## Phases
 
 1. **`ready_to_develop`:** requirement → `spec.md` → `plan.md` → status `planned` → continue in same session
-2. **`planned`:** `in_progress` → implement → verify → `developed` → `development-summary.md` → commit → push `deploy_staging` → `staging`
+2. **`planned`:** `in_progress` → implement → verify → `developed` → `development-summary.md` → **one** commit → push `deploy_staging` → `staging`
 
 ## Verification
 
@@ -63,4 +63,4 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 
 ## Deploy branch
 
-Push **`deploy_staging`** only ([tooling/CICD.md](../../tooling/CICD.md)). Single-line `git commit -m "feedback 0001: title"` on Windows.
+Push **`deploy_staging`** only ([tooling/CICD.md](../../tooling/CICD.md)). **Exactly one** single-line `git commit -m "feedback 0001: title"` on Windows, then one push. Put the short sha in the finish report only — never a follow-up commit that only updates `development-summary.md` Deploy sha (e.g. `record staging deploy commit`).

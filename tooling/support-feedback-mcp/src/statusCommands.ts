@@ -28,8 +28,8 @@ export const STATUS_COMMANDS: Partial<Record<FeedbackStatus, StatusCommand>> = {
         'Follow .cursor/commands/feedback-fix.md and .cursor/skills/feedback-fix/SKILL.md.',
         'Fully non-interactive: do not SwitchMode to plan, do not ask for confirmation.',
         `Write spec/${ticket}/spec.md and spec/${ticket}/plan.md before feedback_update_status planned.`,
-        `Implement, verify type-check/lint, set developed, write spec/${ticket}/development-summary.md (where to see feature, paths, commit).`,
-        'Commit all changes, push origin deploy_staging, then feedback_update_status staging.',
+        `Implement, verify type-check/lint, set developed, write spec/${ticket}/development-summary.md (where to see feature, paths, commit message).`,
+        'Make exactly one git commit for the ticket (no follow-up commit to record the deploy sha), push origin deploy_staging, then feedback_update_status staging.',
         'Use Support Feedback MCP for feedback_get, feedback_list, feedback_update_status.',
       ]
       if (payload.title) bits.push(`Title: ${payload.title.replace(/\s+/g, ' ').slice(0, 120)}`)

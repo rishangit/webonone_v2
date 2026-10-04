@@ -46,7 +46,7 @@ List supports `ticket` query (e.g. `0001`). Reports include `ticketNumber`.
 
 1. Super admin sets a report to **Ready to Developed** (`ready_to_develop`) on hosted `/feedback`.
 2. Run `/feedback-fix` or `/feedback-fix 0001` in Cursor (staging or live API; spec/code changes are local).
-3. Agent writes `spec/{ticket}/spec.md`, `plan.md`, and `development-summary.md`, sets `planned`, implements, pushes `deploy_staging`, then sets `staging`.
+3. Agent writes `spec/{ticket}/spec.md`, `plan.md`, and `development-summary.md`, sets `planned`, implements, makes **one** commit, pushes `deploy_staging`, then sets `staging` (no second commit to back-fill the deploy sha).
 4. Super admin later sets **Staging** and **Closed** in the UI after deploy/release.
 
 ## Automated runs (Cursor CLI on a server)

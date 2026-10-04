@@ -95,17 +95,18 @@ After Phase B verification:
    - What was delivered (vs acceptance criteria).
    - **Where to see it** — staging URLs, nav paths, Support doc slugs, local dev commands.
    - Feature details for the reporter.
-   - Files/services changed, verification commands run, deploy commit sha.
-2. **Git** (branch **`deploy_staging`** per [tooling/CICD.md](../../tooling/CICD.md) — push triggers staging CI + IIS deploy):
+   - Files/services changed, verification commands run, Deploy table with branch + **commit message** (not the short sha — sha is unknown until after commit).
+2. **Git — exactly one commit** (branch **`deploy_staging`** per [tooling/CICD.md](../../tooling/CICD.md) — push triggers staging CI + IIS deploy):
    - `git fetch origin deploy_staging`
    - Check out `deploy_staging` and integrate your work (`git pull --rebase origin deploy_staging` when safe; resolve conflicts on the ops machine if needed).
    - Stage all feedback-fix changes **including** `spec/{ticketNumber}/` (`spec.md`, `plan.md`, `development-summary.md`) and product code.
-   - Commit with a single-line message: `git commit -m "feedback {ticketNumber}: {short title}"` (Windows: no here-strings).
+   - **One** single-line commit: `git commit -m "feedback {ticketNumber}: {short title}"` (Windows: no here-strings).
    - `git push origin deploy_staging`
+   - After push: put the short sha in the **finish report** only (`git rev-parse --short HEAD`). Do **not** edit `development-summary.md` and commit again to “record” the sha (that second commit retriggers staging CI and delays deploy).
 3. Only after **successful push**, **`feedback_update_status`** → **`staging`** (Support UI label **Staging** = deployed to staging hosts).
 4. Do **not** set **`closed`** — super admin only after release sign-off.
 
-If push fails, leave status **`developed`** and record the error in `development-summary.md` under Deploy.
+If push fails, leave status **`developed`** and record the error in `development-summary.md` under Deploy (retry still uses **one** commit when you push again).
 
 | `type` | Behavior |
 |--------|----------|
@@ -133,6 +134,7 @@ Match existing patterns; `@/` aliases; remove unused imports in touched files.
 | Skip on-disk spec/plan for `ready_to_develop` | Write `spec/{ticket}/spec.md` and `plan.md` before `planned` |
 | Skip `development-summary.md` before commit | Summary on disk before `git commit` |
 | Product code during Phase A | Spec + plan files only |
+| Second commit only to back-fill Deploy sha (e.g. `record staging deploy commit`) | **Exactly one** commit per ticket, then one push; sha in finish report only |
 
 ## Finish status
 
@@ -147,4 +149,4 @@ Do **not** set `closed`.
 
 ## Finish report
 
-Summarize: **ticket number**, feedback id, type, **title**, paths `spec/{ticket}/spec.md`, `plan.md`, `development-summary.md`, services touched, verification commands, **commit sha** on `deploy_staging`, final Support status (`staging` or `developed` if push failed).
+Summarize: **ticket number**, feedback id, type, **title**, paths `spec/{ticket}/spec.md`, `plan.md`, `development-summary.md`, services touched, verification commands, **commit sha** on `deploy_staging` (from `git rev-parse --short HEAD` after the single push — do not create another commit to store it), final Support status (`staging` or `developed` if push failed).
