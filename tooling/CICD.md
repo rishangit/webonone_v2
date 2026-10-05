@@ -87,6 +87,8 @@ If smoke still fails (e.g. **email** times out), recycle the **email** app pool 
 
 Expect **tens of minutes** for a full deploy; selective deploys are typically much faster.
 
+**Desktop installer:** WebOnOne deploy uses `tooling/build-desktop-for-deploy.mjs` (not a hard `npm run build:desktop`). On self-hosted runners with low free RAM, electron-builder is skipped or soft-failed so IIS staging is not blocked by `WebAssembly.Memory(): could not allocate memory`. Publish a new `WebOnOne-Setup.exe` with `npm run build:desktop` on a host with enough memory (or set `SKIP_DESKTOP_BUILD=1` to skip intentionally).
+
 ### Selective vs full
 
 Detection config: [`tooling/deploy-services.json`](deploy-services.json). Scripts: `npm run deploy:detect`, `npm run deploy:changed`.

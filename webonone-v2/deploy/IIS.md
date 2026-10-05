@@ -2,7 +2,7 @@
 
 Host **app.webonone.com** with IIS physical path set to **`webonone-v2\deploy`**.
 
-Run **`npm run deploy:webonone`** when you are ready to publish. That builds the app, builds **`WebOnOne-Setup.exe`** (`npm run build:desktop`), and stages output into `webonone-v2\deploy\` including **`public\downloads\WebOnOne-Setup.exe`**. Normal development (`npm run dev:webonone`) and compile-only builds (`npm run build:webonone`) do **not** touch this folder.
+Run **`npm run deploy:webonone`** when you are ready to publish. That builds the app, **attempts** desktop installer packaging (`tooling/build-desktop-for-deploy.mjs`), and stages output into `webonone-v2\deploy\` including **`public\downloads\WebOnOne-Setup.exe`** when the installer exists. On low-RAM staging hosts (~4 GB), electron-builder may be skipped or soft-fail (`WebAssembly.Memory` OOM) so IIS deploy still succeeds — run **`npm run build:desktop`** on a machine with enough free RAM when you need a new Setup.exe. Normal development (`npm run dev:webonone`) and compile-only builds (`npm run build:webonone`) do **not** touch this folder.
 
 ```text
 webonone-v2\deploy\          ← IIS physical path (generated on deploy)
