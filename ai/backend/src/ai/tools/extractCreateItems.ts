@@ -390,6 +390,7 @@ export function remainingItemsTablePrompt(
   requested: number,
   excludeNames: string[],
   tool?: Pick<ToolDefinition, 'jsonSchema' | 'argCompletion' | 'relatedArgs'> | null,
+  alsoAvoidNames: string[] = [],
 ): string {
   const have = new Set(excludeNames.map((name) => name.trim()).filter(Boolean))
   const remaining = Math.max(1, requested - have.size)
@@ -398,8 +399,12 @@ export function remainingItemsTablePrompt(
   const pascal = tool?.argCompletion?.pascalCaseKeys?.includes('name')
     ? ' Names start with a capital letter (PascalCase, no spaces), for example PharmacyInventory not pharmacyInventory. Description is "Spaced Name - 1-3 sentences".'
     : ' Fill every column with a complete suggested value, including optional properties.'
-  const avoid = have.size > 0 ? ` Do not reuse these names: ${[...have].join(', ')}.` : ''
-  return `The user asked for ${requested} items. Reply with a markdown table of exactly ${remaining} items. Columns: ${columns}.${pascal}${relatedItemsHint(tool)} One row per item.${avoid} Output only the table. Do not call tools.`
+  const avoid = new Set([
+    ...have,
+    ...alsoAvoidNames.map((name) => name.trim()).filter(Boolean),
+  ])
+  const avoidLine = avoid.size > 0 ? ` Do not reuse these names: ${[...avoid].join(', ')}.` : ''
+  return `The user asked for ${requested} items. Reply with a markdown table of exactly ${remaining} items. Columns: ${columns}.${pascal}${relatedItemsHint(tool)} One row per item.${avoidLine} Output only the table. Do not call tools.`
 }
 
 export function remainingCreateCallsPrompt(

@@ -258,6 +258,12 @@ describe('remainingItemsTablePrompt', () => {
     assert.match(prompt, /Milligram/)
     assert.doesNotMatch(prompt, /PharmacyInventory/)
   })
+
+  it('avoids existing library names without counting them toward already-have', () => {
+    const prompt = remainingItemsTablePrompt(10, ['ClinicHours'], createTag, ['Healthcare', 'Medicine'])
+    assert.match(prompt, /exactly 9 items/)
+    assert.match(prompt, /Do not reuse these names: ClinicHours, Healthcare, Medicine/)
+  })
 })
 
 describe('remainingCreateCallsPrompt', () => {

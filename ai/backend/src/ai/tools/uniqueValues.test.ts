@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import type { ToolDefinition } from './registry.js'
-import { partitionUniquePendingWrites, type PendingWrite } from './uniqueValues.js'
+import type { ToolCall, ToolDefinition } from './registry.js'
+import {
+  collectUniqueLookupGroups,
+  dropCreateCallsWithExistingNames,
+  partitionUniquePendingWrites,
+  type PendingWrite,
+} from './uniqueValues.js'
 
 const createTag: ToolDefinition = {
   name: 'create_data_tag',
@@ -31,6 +36,32 @@ function write(id: string, name: string): PendingWrite {
     },
   }
 }
+
+function call(id: string, name: string): ToolCall {
+  return { id, name: 'create_data_tag', arguments: { name } }
+}
+
+describe('dropCreateCallsWithExistingNames', () => {
+  it('keeps new names and drops ones already in the library', () => {
+    const calls = [call('1', 'Healthcare'), call('2', 'Medicine'), call('3', 'FirstAid')]
+    const existing = new Map([['create_data_tag', new Set(['healthcare'])]])
+    const result = dropCreateCallsWithExistingNames(calls, () => createTag, existing)
+    assert.deepEqual(
+      result.kept.map((item) => item.arguments.name),
+      ['Medicine', 'FirstAid'],
+    )
+    assert.deepEqual(result.skippedExisting, ['Healthcare'])
+  })
+
+  it('groups unique lookup values by tool for batch existing checks', () => {
+    const groups = collectUniqueLookupGroups(
+      [call('1', 'Healthcare'), call('2', 'Medicine')],
+      () => createTag,
+    )
+    assert.equal(groups.size, 1)
+    assert.deepEqual(groups.get('create_data_tag')?.values, ['Healthcare', 'Medicine'])
+  })
+})
 
 describe('partitionUniquePendingWrites', () => {
   it('keeps names that are not in the library and drops existing and in-batch duplicates', () => {

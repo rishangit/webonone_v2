@@ -2,7 +2,7 @@
 
 ## Approach
 
-Improve Data CRUD assistance in three layers: (1) generic create-tool resolution so product requests do not lock onto tag creates, (2) N-item refill until unique create count matches the request, (3) ConfirmItemList UI with item-type header and Confirm/Cancel footer. Keep AI completion generic; peer Data descriptions may clarify product vs tag for the model.
+Improve Data CRUD assistance in three layers: (1) generic create-tool resolution so product requests do not lock onto tag creates, (2) N-item refill until unique **new** create count matches the request (including after existing-name skips), (3) ConfirmItemList UI with item-type header and Confirm/Cancel footer. Keep AI completion generic; peer Data descriptions may clarify product vs tag for the model.
 
 ## Implementation steps
 
@@ -15,7 +15,8 @@ Improve Data CRUD assistance in three layers: (1) generic create-tool resolution
 2. **N-item parking (`extractCreateItems` + `conversation.service`)**
    - Tighten `requestedItemCount` if needed for common phrasings (“add 10 products to the library”).
    - Ensure the refill loop continues until `uniqueCreateNameCount === requested` or provider rounds exhaust.
-   - Add/extend unit + app tests: product request does not park tag tool; “10 products” parks 10 when unambiguous.
+   - **Existing-name refill:** before parking, look up `uniqueLookup` values, `dropCreateCallsWithExistingNames`, then table-refill with `alsoAvoidNames` until N **new** names or `MAX_EXISTING_NAME_REFILLS`.
+   - Add/extend unit + app tests: product request does not park tag tool; “10 products” parks 10 when unambiguous; avoid-existing prompt does not shrink remaining count.
 
 3. **Display kind on pending payload**
    - Derive a human label from tool metadata (e.g. area resource from `summarizeToolAreas` / token after `create_`, title-cased) — generic helper, no tool-name switch table of all Data tools.

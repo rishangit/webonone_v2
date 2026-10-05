@@ -29,7 +29,12 @@ import {
 import { buildConfirmDisplayFields, type ConfirmDisplayField } from '../ai/tools/confirmDisplay.js'
 import type { RelatedNode, ToolCall, ToolDefinition, ToolExecutor, ToolRegistry } from '../ai/tools/registry.js'
 import { recordsFromUnknown, withRecordOpen } from '../ai/tools/formatRecord.js'
-import { partitionUniquePendingWrites, type PendingWrite } from '../ai/tools/uniqueValues.js'
+import {
+  collectUniqueLookupGroups,
+  dropCreateCallsWithExistingNames,
+  partitionUniquePendingWrites,
+  type PendingWrite,
+} from '../ai/tools/uniqueValues.js'
 import type { AiConversationRow, AiMessageRow, MessageRole } from '../models/db.js'
 import { HttpError } from './httpError.js'
 import type { ConversationRepository } from './conversation.repository.js'
@@ -48,6 +53,8 @@ import {
 } from '../ai/tools/expandEntityRelatedCalls.js'
 
 const MAX_TOOL_ROUNDS = 6
+/** Extra table refills after dropping names that already exist in the library. */
+const MAX_EXISTING_NAME_REFILLS = 2
 
 export type PendingCallStatus = 'pending_confirmation' | 'confirmed' | 'rejected'
 
@@ -672,6 +679,69 @@ export function createConversationService(deps: {
         if (requested && uniqueCreateNameCount(toolCalls) < requested) {
           await fillRemainingTable(requested)
         }
+        // Drop names already in the library, then refill until N new names (or retries exhaust).
+        if (
+          requested &&
+          deps.executor?.lookupExistingUniqueValues &&
+          deps.registry &&
+          uniqueCreateNameCount(toolCalls) > 0
+        ) {
+          const knownExisting: string[] = []
+          for (let attempt = 0; attempt < MAX_EXISTING_NAME_REFILLS; attempt += 1) {
+            const valuesByTool = collectUniqueLookupGroups(toolCalls, (name) => deps.registry?.get(name))
+            const existingNamesByTool = new Map<string, Set<string>>()
+            for (const [toolName, group] of valuesByTool) {
+              try {
+                const existing = await deps.executor.lookupExistingUniqueValues(
+                  group.tool,
+                  ctx,
+                  group.values,
+                )
+                existingNamesByTool.set(
+                  toolName,
+                  new Set(existing.map((name) => name.trim().toLowerCase()).filter(Boolean)),
+                )
+              } catch {
+                existingNamesByTool.set(toolName, new Set())
+              }
+            }
+            const dropped = dropCreateCallsWithExistingNames(
+              toolCalls,
+              (name) => deps.registry?.get(name),
+              existingNamesByTool,
+            )
+            knownExisting.push(...dropped.skippedExisting)
+            toolCalls = dropped.kept
+            if (uniqueCreateNameCount(toolCalls) >= requested) {
+              break
+            }
+            const beforeRefill = uniqueCreateNameCount(toolCalls)
+            const createTool = resolveCreateTool({ tools, existingCalls: toolCalls, userMessage })
+            const table = await provider.complete({
+              systemPrompt: `${systemPrompt} When the user asks for N items, output a markdown table of exactly those N items including every schema column (required and optional). Do not call tools.`,
+              messages: [
+                ...historyToProviderMessages(history),
+                {
+                  role: 'assistant',
+                  content: completion.content || `Prepared ${beforeRefill || 0} item(s).`,
+                },
+                {
+                  role: 'user',
+                  content: remainingItemsTablePrompt(
+                    requested,
+                    listedCreateNames(toolCalls),
+                    createTool,
+                    knownExisting,
+                  ),
+                },
+              ],
+            })
+            liftFromText(table.content)
+            if (uniqueCreateNameCount(toolCalls) <= beforeRefill) {
+              break
+            }
+          }
+        }
         if (requested && uniqueCreateNameCount(toolCalls) > 0) {
           leadContent = ''
         }
@@ -828,21 +898,10 @@ export function createConversationService(deps: {
 
       const existingNamesByTool = new Map<string, Set<string>>()
       if (deps.executor?.lookupExistingUniqueValues && deps.registry && pendingWrites.length > 0) {
-        const valuesByTool = new Map<string, { tool: ToolDefinition; values: string[] }>()
-        for (const write of pendingWrites) {
-          const tool = deps.registry.get(write.call.name)
-          const uniqueBy = tool?.argCompletion?.uniqueBy
-          if (!tool || !uniqueBy || !tool.argCompletion?.uniqueLookup) {
-            continue
-          }
-          const value = write.output.arguments[uniqueBy]
-          if (typeof value !== 'string' || !value.trim()) {
-            continue
-          }
-          const group = valuesByTool.get(tool.name) ?? { tool, values: [] }
-          group.values.push(value.trim())
-          valuesByTool.set(tool.name, group)
-        }
+        const valuesByTool = collectUniqueLookupGroups(
+          pendingWrites.map((write) => write.call),
+          (name) => deps.registry?.get(name),
+        )
         for (const [toolName, group] of valuesByTool) {
           try {
             const existing = await deps.executor.lookupExistingUniqueValues(group.tool, ctx, group.values)
