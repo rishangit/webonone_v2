@@ -110,13 +110,6 @@ export function CompanyDetailScreen({
   const canEdit = variant === 'admin' || detail.role === 'company_admin'
 
   function handleEditSection(section: CompanyEditSection) {
-    if (section === 'logo') {
-      toast({
-        title: 'Edit on web for now',
-        description: 'Company logo editing uses the media picker and is available on the web app.',
-      })
-      return
-    }
     const step = SECTION_TO_STEP[section]
     if (step == null) return
     setEditDialog({ initialStep: step })

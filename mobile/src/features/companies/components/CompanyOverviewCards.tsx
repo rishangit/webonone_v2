@@ -14,7 +14,6 @@ import type { CompanyDetail } from '@/features/companies/services/companyApi'
 import { formatCountryName } from '@/features/companies/utils/formatCountryName'
 
 export type CompanyEditSection =
-  | 'logo'
   | 'profile'
   | 'contact'
   | 'location'
@@ -53,28 +52,35 @@ export function CompanyProfileCard({
       canEdit={canEdit}
       onEdit={onEdit}
     >
-      <View className="flex-row flex-wrap items-center gap-2">
-        <Body className="text-xl font-semibold">{detail.name}</Body>
-        <StatusTag variant={detail.status} />
-      </View>
-      {detail.role ? (
-        isStatusTagVariant(detail.role) ? (
-          <StatusTag variant={detail.role} />
-        ) : (
-          <Muted>{detail.role}</Muted>
-        )
-      ) : (
-        <Muted>Platform administrator view</Muted>
-      )}
-      <ReadOnlyField label="Description" value={detail.description} />
-      <ReadOnlyField label="Company size" value={detail.companySize} />
-      {detail.webUrl ? (
-        <View className="gap-1">
-          <Muted className="text-xs uppercase tracking-wide">Website</Muted>
-          <Body className="text-primary">{detail.webUrl}</Body>
-          <Muted>Public company page on the platform</Muted>
+      <View className="gap-4">
+        <ImagePreview
+          src={detail.logoUrl}
+          alt={detail.name}
+          className="h-24 w-24 self-center rounded-md"
+        />
+        <View className="flex-row flex-wrap items-center gap-2">
+          <Body className="text-xl font-semibold">{detail.name}</Body>
+          <StatusTag variant={detail.status} />
         </View>
-      ) : null}
+        {detail.role ? (
+          isStatusTagVariant(detail.role) ? (
+            <StatusTag variant={detail.role} />
+          ) : (
+            <Muted>{detail.role}</Muted>
+          )
+        ) : (
+          <Muted>Platform administrator view</Muted>
+        )}
+        <ReadOnlyField label="Description" value={detail.description} />
+        <ReadOnlyField label="Company size" value={detail.companySize} />
+        {detail.webUrl ? (
+          <View className="gap-1">
+            <Muted className="text-xs uppercase tracking-wide">Website</Muted>
+            <Body className="text-primary">{detail.webUrl}</Body>
+            <Muted>Public company page on the platform</Muted>
+          </View>
+        ) : null}
+      </View>
     </EditableSectionCard>
   )
 }
@@ -219,31 +225,6 @@ export function CompanyTagsCard({
   )
 }
 
-export function CompanyLogoCard({
-  detail,
-  canEdit,
-  onEdit,
-}: {
-  detail: CompanyDetail
-  canEdit?: boolean
-  onEdit?: () => void
-}) {
-  return (
-    <EditableSectionCard
-      title="Company logo"
-      description="Logo shown on lists and the public profile"
-      canEdit={canEdit}
-      onEdit={onEdit}
-    >
-      <ImagePreview
-        src={detail.logoUrl}
-        alt={detail.name}
-        className="h-24 w-24 self-center rounded-md"
-      />
-    </EditableSectionCard>
-  )
-}
-
 export function CompanyOverviewTab({
   detail,
   canEdit,
@@ -255,11 +236,6 @@ export function CompanyOverviewTab({
 }) {
   return (
     <View className="gap-6">
-      <CompanyLogoCard
-        detail={detail}
-        canEdit={canEdit}
-        onEdit={onEditSection ? () => onEditSection('logo') : undefined}
-      />
       <CompanyProfileCard
         detail={detail}
         canEdit={canEdit}

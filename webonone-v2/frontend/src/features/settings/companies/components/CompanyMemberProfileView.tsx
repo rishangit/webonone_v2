@@ -26,7 +26,6 @@ import { CompanyAddressCard } from './CompanyAddressCard'
 import { CompanyContactCard } from './CompanyContactCard'
 import { CompanyFormDialog } from './CompanyFormDialog'
 import { CompanyLocationCard } from './CompanyLocationCard'
-import { CompanyLogoCard } from './CompanyLogoCard'
 import { CompanyProfileCard } from './CompanyProfileCard'
 import { CompanyTagsCard } from './CompanyTagsCard'
 
@@ -115,7 +114,6 @@ export function CompanyMemberProfileView({
     !previewMode &&
     Boolean(detail) &&
     (detail?.role === 'company_admin' || activeRole === 'super_admin')
-  const saving = !previewMode && detailStatus === 'saving'
 
   const memberCatalogTabs = useMemo(() => {
     if (!detail) return [] as MemberCatalogTab[]
@@ -184,12 +182,6 @@ export function CompanyMemberProfileView({
           />
         </div>
         <div className="flex flex-col gap-6">
-          <CompanyLogoCard
-            companyId={companyId}
-            logoUrl={detail.logoUrl}
-            canEdit={canEdit}
-            saving={saving}
-          />
           <CompanyContactCard
             detail={detail}
             canEdit={canEdit}

@@ -52,6 +52,9 @@ export function CompanyWizardStepSummary({
         </div>
 
         <dl className="space-y-3 border-t border-[hsl(var(--glass-border))] pt-4">
+          {!isNew ? (
+            <SummaryRow label="Logo" value={values.logoUrl ? 'Set' : 'None'} />
+          ) : null}
           <SummaryRow
             label="Company size"
             value={values.companySize ? `${values.companySize} employees` : ''}

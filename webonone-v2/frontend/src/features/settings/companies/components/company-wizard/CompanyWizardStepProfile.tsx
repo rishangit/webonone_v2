@@ -1,5 +1,6 @@
 import {
   FormField,
+  ImagePreview,
   Input,
   Select,
   SelectContent,
@@ -8,6 +9,7 @@ import {
   SelectValue,
   Textarea,
 } from '@webonone/ui-kit'
+import { useTranslation } from 'react-i18next'
 import {
   COMPANY_SIZE_OPTIONS,
   type CompanyWizardFormValues,
@@ -19,6 +21,8 @@ interface CompanyWizardStepProfileProps {
   isSubmitting: boolean
   /** Edit mode requires description + size. */
   requireAll?: boolean
+  /** When set, logo can be changed via Media (edit existing company only). */
+  onEditLogo?: () => void
   onChange: (patch: Partial<CompanyWizardFormValues>) => void
 }
 
@@ -27,10 +31,30 @@ export function CompanyWizardStepProfile({
   fieldErrors,
   isSubmitting,
   requireAll = false,
+  onEditLogo,
   onChange,
 }: CompanyWizardStepProfileProps) {
+  const { t } = useTranslation('settings')
+
   return (
     <div className="space-y-4">
+      {onEditLogo ? (
+        <div className="flex flex-col items-center gap-2">
+          <ImagePreview
+            key={values.logoUrl ?? 'empty'}
+            src={values.logoUrl}
+            alt={t('companyCards.logo.alt')}
+            mode="edit"
+            onEdit={() => {
+              if (isSubmitting) return
+              onEditLogo()
+            }}
+            className="h-40 w-40"
+          />
+          <p className="text-xs text-muted-foreground">{t('companyWizard.clickEditLogo')}</p>
+        </div>
+      ) : null}
+
       <FormField label="Company name" htmlFor="company-wizard-name" required error={fieldErrors.name}>
         <Input
           id="company-wizard-name"

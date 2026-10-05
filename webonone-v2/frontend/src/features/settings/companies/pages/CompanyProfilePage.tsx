@@ -25,7 +25,6 @@ import { CompanyDataEntitiesCard } from '../components/CompanyDataEntitiesCard'
 import { CompanyFormDialog } from '../components/CompanyFormDialog'
 import { CompanyGalleryCard } from '../components/CompanyGalleryCard'
 import { CompanyLocationCard } from '../components/CompanyLocationCard'
-import { CompanyLogoCard } from '../components/CompanyLogoCard'
 import { CompanyProfileCard } from '../components/CompanyProfileCard'
 import { CompanyTagsCard } from '../components/CompanyTagsCard'
 import {
@@ -150,12 +149,6 @@ export function CompanyProfilePage({
           />
         </div>
         <div className="flex flex-col gap-6">
-          <CompanyLogoCard
-            companyId={companyId}
-            logoUrl={detail.logoUrl}
-            canEdit={canEdit}
-            saving={saving}
-          />
           <CompanyContactCard
             detail={detail}
             canEdit={canEdit}

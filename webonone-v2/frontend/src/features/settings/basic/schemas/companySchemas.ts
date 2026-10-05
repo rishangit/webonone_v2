@@ -28,6 +28,7 @@ export type CompanyWizardFormValues = {
   name: string
   description: string
   companySize: CompanySize | ''
+  logoUrl: string | null
   contactPerson: CompanyWizardContactPerson | null
   contactEmail: string
   phoneCountry: string
@@ -49,6 +50,7 @@ export const EMPTY_COMPANY_WIZARD_VALUES: CompanyWizardFormValues = {
   name: '',
   description: '',
   companySize: '',
+  logoUrl: null,
   contactPerson: null,
   contactEmail: '',
   phoneCountry: '',

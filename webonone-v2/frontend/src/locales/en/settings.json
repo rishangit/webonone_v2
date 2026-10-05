@@ -375,16 +375,9 @@
       "toastFailed": "Failed to update data services"
     },
     "logo": {
-      "title": "Company logo",
-      "cardDescription": "Shown on company lists and profile identity surfaces",
       "alt": "Company logo",
-      "upload": "Upload",
-      "replace": "Replace",
-      "uploadHint": "Upload a company logo",
       "pickerUploadTitle": "Upload company logo",
-      "pickerReplaceTitle": "Replace company logo",
-      "removeTitle": "Remove company logo?",
-      "removeDescription": "This will clear the company logo. You can upload a new one later."
+      "pickerReplaceTitle": "Replace company logo"
     },
     "gallery": {
       "title": "Gallery",
@@ -399,6 +392,7 @@
     }
   },
   "companyWizard": {
+    "clickEditLogo": "Click the edit button to choose a new logo",
     "steps": {
       "profile": "Profile",
       "contact": "Contact",
@@ -416,7 +410,7 @@
       "summary": "Review your details before submitting."
     },
     "descriptionsEdit": {
-      "profile": "Company name, description, and size.",
+      "profile": "Company logo, name, description, and size.",
       "contact": "Contact email and phone.",
       "address": "Postal and street address.",
       "location": "Map pin for this company.",

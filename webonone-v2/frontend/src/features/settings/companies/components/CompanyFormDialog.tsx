@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { PLATFORM_MESSAGE_TYPES } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -15,6 +17,12 @@ import {
   type UserOption,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
+import {
+  buildCompanyMediaScope,
+  buildCompanyProfileFolderPath,
+  COMPANY_MEDIA_SCOPED_ROOT,
+} from '@/features/media/utils/mediaConfig'
 import {
   COMPANY_WIZARD_TOTAL_STEPS,
   companyAddressCardSchema,
@@ -59,7 +67,7 @@ const STEP_DESCRIPTIONS_CREATE = [
 ] as const
 
 const STEP_DESCRIPTIONS_EDIT = [
-  'Company name, description, and size.',
+  'Company logo, name, description, and size.',
   'Contact email and phone.',
   'Postal and street address.',
   'Map pin for this company.',
@@ -101,6 +109,7 @@ function valuesFromDetail(
     name: detail.name,
     description: detail.description ?? '',
     companySize: (detail.companySize as CompanyWizardFormValues['companySize']) || '',
+    logoUrl: detail.logoUrl ?? null,
     contactPerson: contactPersonFromDetail(detail) ?? fallbackContactPerson,
     contactEmail: detail.contactEmail ?? '',
     phoneCountry: phone.iso2,
@@ -152,6 +161,7 @@ function toUpdateBody(values: CompanyWizardFormValues): UpdateCompanyBody {
     name: values.name.trim(),
     description: values.description.trim(),
     companySize: values.companySize || null,
+    logoUrl: values.logoUrl,
     contactPersonUserId: values.contactPerson?.id ?? null,
     contactEmail: values.contactEmail.trim(),
     contactPhone: contactPhoneFromValues(values),
@@ -184,7 +194,9 @@ export function CompanyFormDialog({
   onOpenChange,
   onSaved,
 }: CompanyFormDialogProps) {
+  const { t } = useTranslation('settings')
   const dispatch = useAppDispatch()
+  const { openMediaDialog } = usePlatformMediaDialog()
   const isNew = !id
   const title = isNew ? 'Register company' : 'Edit company'
   const finalSubmitLabel = isNew ? 'Submit registration' : 'Save changes'
@@ -323,6 +335,34 @@ export function CompanyFormDialog({
         return next
       })
     }
+  }
+
+  function openLogoPicker() {
+    if (!id || saving) return
+    openMediaDialog(
+      {
+        type: PLATFORM_MESSAGE_TYPES.MEDIA_DIALOG_REQUEST,
+        requestId: crypto.randomUUID(),
+        title: values.logoUrl
+          ? t('companyCards.logo.pickerReplaceTitle')
+          : t('companyCards.logo.pickerUploadTitle'),
+        scope: buildCompanyMediaScope(id),
+        scopedRoot: COMPANY_MEDIA_SCOPED_ROOT,
+        folderPath: buildCompanyProfileFolderPath(id),
+        mode: 'single',
+        accept: 'image/*',
+        selectorUpload: true,
+        cropAspectPresets: ['1:1'],
+      },
+      {
+        resolve: (items) => {
+          const item = items[0]
+          if (!item?.url) return
+          patchValues({ logoUrl: item.url })
+        },
+        cancel: () => {},
+      },
+    )
   }
 
   const loadContactPersonUsers: LoadUsersFn = useCallback(
@@ -564,6 +604,7 @@ export function CompanyFormDialog({
             fieldErrors={fieldErrors}
             isSubmitting={saving}
             requireAll={!isNew}
+            onEditLogo={!isNew && id ? openLogoPicker : undefined}
             onChange={patchValues}
           />
         ) : null}

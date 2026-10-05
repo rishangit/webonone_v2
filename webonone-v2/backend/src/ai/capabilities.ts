@@ -578,7 +578,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
   webononeTool({
     name: 'register_company',
     description:
-      'Register a new company for the signed-in user. Required: name. Suggest complete values for every optional field (description, companySize, address, contactEmail, contactPhone) before asking the user to confirm. New companies start pending until a platform super admin approves; the registrant becomes company_admin after approval. Map pin, tags, gallery images, and data catalog entities can be completed later on the company profile page. Logo upload requires the Media picker in Settings → My Companies → profile → Overview — only set logoUrl when the user already has a media URL.',
+      'Register a new company for the signed-in user. Required: name. Suggest complete values for every optional field (description, companySize, address, contactEmail, contactPhone) before asking the user to confirm. New companies start pending until a platform super admin approves; the registrant becomes company_admin after approval. Map pin, tags, gallery images, and data catalog entities can be completed later on the company profile page. Logo upload requires Edit on the company profile card (wizard step 1 Media picker) in Settings → My Companies — only set logoUrl when the user already has a media URL.',
     jsonSchema: {
       type: 'object',
       additionalProperties: false,
@@ -682,7 +682,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
   webononeTool({
     name: 'update_company',
     description:
-      'Update a company profile by id (from list_my_companies or get_company). Include at least one field per call. Pending companies can still be updated. For logo, direct the user to Settings → My Companies → company profile → Overview tab (Media picker); for gallery images, use the Gallery tab; only set logoUrl when the user already has a media URL. For tags, call list_data_tags first and copy real tag ids, names, and colors — never invent tag ids.',
+      'Update a company profile by id (from list_my_companies or get_company). Include at least one field per call. Pending companies can still be updated. For logo, direct the user to Settings → My Companies → company profile → Overview → Edit on the company profile card (wizard step 1 Media picker); for gallery images, use the Gallery tab; only set logoUrl when the user already has a media URL. For tags, call list_data_tags first and copy real tag ids, names, and colors — never invent tag ids.',
     jsonSchema: {
       type: 'object',
       additionalProperties: false,
