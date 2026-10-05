@@ -3,6 +3,7 @@ import {
   Body,
   Button,
   EditableSectionCard,
+  ImagePreview,
   isStatusTagVariant,
   Muted,
   ReadOnlyField,
@@ -13,6 +14,7 @@ import type { CompanyDetail } from '@/features/companies/services/companyApi'
 import { formatCountryName } from '@/features/companies/utils/formatCountryName'
 
 export type CompanyEditSection =
+  | 'logo'
   | 'profile'
   | 'contact'
   | 'location'
@@ -217,6 +219,31 @@ export function CompanyTagsCard({
   )
 }
 
+export function CompanyLogoCard({
+  detail,
+  canEdit,
+  onEdit,
+}: {
+  detail: CompanyDetail
+  canEdit?: boolean
+  onEdit?: () => void
+}) {
+  return (
+    <EditableSectionCard
+      title="Company logo"
+      description="Logo shown on lists and the public profile"
+      canEdit={canEdit}
+      onEdit={onEdit}
+    >
+      <ImagePreview
+        src={detail.logoUrl}
+        alt={detail.name}
+        className="h-24 w-24 self-center rounded-md"
+      />
+    </EditableSectionCard>
+  )
+}
+
 export function CompanyOverviewTab({
   detail,
   canEdit,
@@ -228,6 +255,11 @@ export function CompanyOverviewTab({
 }) {
   return (
     <View className="gap-6">
+      <CompanyLogoCard
+        detail={detail}
+        canEdit={canEdit}
+        onEdit={onEditSection ? () => onEditSection('logo') : undefined}
+      />
       <CompanyProfileCard
         detail={detail}
         canEdit={canEdit}

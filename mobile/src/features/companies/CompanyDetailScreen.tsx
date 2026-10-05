@@ -34,7 +34,7 @@ const TAB_LABELS: Record<CompanyDetailTab, string> = {
   data: 'Data',
 }
 
-const SECTION_TO_STEP: Record<CompanyEditSection, CompanyWizardStep> = {
+const SECTION_TO_STEP: Partial<Record<CompanyEditSection, CompanyWizardStep>> = {
   profile: 1,
   contact: 2,
   address: 3,
@@ -110,13 +110,22 @@ export function CompanyDetailScreen({
   const canEdit = variant === 'admin' || detail.role === 'company_admin'
 
   function handleEditSection(section: CompanyEditSection) {
-    setEditDialog({ initialStep: SECTION_TO_STEP[section] })
+    if (section === 'logo') {
+      toast({
+        title: 'Edit on web for now',
+        description: 'Company logo editing uses the media picker and is available on the web app.',
+      })
+      return
+    }
+    const step = SECTION_TO_STEP[section]
+    if (step == null) return
+    setEditDialog({ initialStep: step })
   }
 
-  function handleGalleryEdit(section: CompanyGallerySection) {
+  function handleGalleryEdit(_section: CompanyGallerySection) {
     toast({
       title: 'Edit on web for now',
-      description: `Company ${section} editing uses the media picker and is available on the web app.`,
+      description: 'Company gallery editing uses the media picker and is available on the web app.',
     })
   }
 

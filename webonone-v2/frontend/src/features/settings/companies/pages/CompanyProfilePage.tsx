@@ -149,11 +149,19 @@ export function CompanyProfilePage({
             onEdit={() => openWizard(1)}
           />
         </div>
-        <CompanyContactCard
-          detail={detail}
-          canEdit={canEdit}
-          onEdit={() => openWizard(2)}
-        />
+        <div className="flex flex-col gap-6">
+          <CompanyLogoCard
+            companyId={companyId}
+            logoUrl={detail.logoUrl}
+            canEdit={canEdit}
+            saving={saving}
+          />
+          <CompanyContactCard
+            detail={detail}
+            canEdit={canEdit}
+            onEdit={() => openWizard(2)}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3">
@@ -200,12 +208,6 @@ export function CompanyProfilePage({
           overviewContent
         ) : adminTab === 'gallery' ? (
           <div className="flex flex-col gap-6">
-            <CompanyLogoCard
-              companyId={companyId}
-              logoUrl={detail.logoUrl}
-              canEdit={canEdit}
-              saving={saving}
-            />
             <CompanyGalleryCard
               companyId={companyId}
               galleryImages={detail.galleryImages ?? []}
