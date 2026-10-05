@@ -168,7 +168,9 @@ export function SupportHeader({
               variant="outline"
               className="h-9 shrink-0"
               onClick={() =>
-                navigate(`/login?return=${encodeURIComponent(`${location.pathname}${location.search}` || '/feedback')}`)
+                navigate(
+                  `/login?prompt=login&return=${encodeURIComponent(`${location.pathname}${location.search}` || '/feedback')}`,
+                )
               }
             >
               {ts('signIn')}

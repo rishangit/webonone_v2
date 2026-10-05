@@ -13,6 +13,8 @@ export function buildIdentityLoginUrl(returnPath = '/feedback'): string {
     returnPath,
     stateStorageKeyPrefix: STATE_STORAGE_PREFIX,
     extraSearchParams: {
+      // Force interactive Identity login — do not silent-SSO as a previous user.
+      prompt: 'login',
       ...relayThemeQueryParams(searchParams),
       ...relayLocaleQueryParams(searchParams),
     },

@@ -9,7 +9,12 @@ export function PrivateRoute({ children }: { children: React.ReactNode }) {
 
   if (!accessToken && !hasAnyPlatformHandoff(searchParams)) {
     const returnPath = `${location.pathname}${location.search}`
-    return <Navigate to={`/login?return=${encodeURIComponent(returnPath)}`} replace />
+    return (
+      <Navigate
+        to={`/login?prompt=login&return=${encodeURIComponent(returnPath)}`}
+        replace
+      />
+    )
   }
 
   return children
