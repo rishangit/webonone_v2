@@ -146,14 +146,7 @@ jobs:
         with:
           node-version: "22"
 
-      # npm ci deletes node_modules and fails with EPERM while IIS Node has
-      # native DLLs loaded (sharp/libvips). NETWORK SERVICE cannot stop IIS
-      # app pools (redirection.config). Use npm install in place instead.
-      - name: Install dependencies
-        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
-        shell: cmd
-        run: npm install
-
+      # Detect before npm install so mode=none skips the install (git + node only).
       - name: Detect deploy targets
         id: detect
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
@@ -186,6 +179,24 @@ jobs:
           node tooling/detect-changed-services.mjs --base $base --head $env:SYNC_AFTER --github-output
           exit $LASTEXITCODE
 
+      - name: Skip deploy (no service changes)
+        if: steps.detect.outputs.mode == 'none'
+        shell: powershell
+        run: |
+          Write-Host "Detect mode=none ($env:DETECT_REASON)."
+          Write-Host 'Skipping npm install, env:apply, migrate, deploy, recycle, and smoke.'
+        env:
+          DETECT_REASON: ${{ steps.detect.outputs.reason }}
+
+      # npm ci deletes node_modules and fails with EPERM while IIS Node has
+      # native DLLs loaded (sharp/libvips). NETWORK SERVICE cannot stop IIS
+      # app pools (redirection.config). Use npm install in place instead.
+      - name: Install dependencies
+        if: steps.detect.outputs.mode != 'none'
+        working-directory: ${{ env.DEPLOY_REPO_ROOT }}
+        shell: cmd
+        run: npm install
+
       - name: Apply production.env
         if: steps.detect.outputs.mode != 'none'
         working-directory: ${{ env.DEPLOY_REPO_ROOT }}
@@ -207,14 +218,6 @@ jobs:
             node tooling/deploy-changed.mjs --services $env:DEPLOY_SERVICES
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Skip deploy (no service changes)
-        if: steps.detect.outputs.mode == 'none'
-        shell: powershell
-        run: |
-          Write-Host "Detect mode=none ($env:DETECT_REASON). Skipping env:apply, migrate, deploy, recycle, and smoke."
-        env:
-          DETECT_REASON: ${{ steps.detect.outputs.reason }}
 
       # Node/iisnode may still serve old workers until pools recycle (email often hangs until then).
       - name: Recycle IIS app pools (before smoke)
@@ -267,3 +270,22 @@ jobs:
           $script = Join-Path $env:DEPLOY_REPO_ROOT 'tooling\smoke-production-health.ps1'
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Deploy summary
+        if: always() && steps.detect.outcome == 'success'
+        shell: powershell
+        env:
+          DETECT_MODE: ${{ steps.detect.outputs.mode }}
+          DETECT_SERVICES: ${{ steps.detect.outputs.services }}
+          DETECT_REASON: ${{ steps.detect.outputs.reason }}
+        run: |
+          Write-Host "Deploy summary: mode=$env:DETECT_MODE"
+          Write-Host "services=$env:DETECT_SERVICES"
+          Write-Host "reason=$env:DETECT_REASON"
+          if ($env:DETECT_MODE -eq 'none') {
+            Write-Host 'Outcome: skipped install/migrate/deploy/recycle/smoke (no IIS changes).'
+          } elseif ($env:DETECT_MODE -eq 'selective') {
+            Write-Host "Outcome: selective migrate+deploy for: $env:DETECT_SERVICES"
+          } else {
+            Write-Host 'Outcome: full migrate+deploy (all services).'
+          }

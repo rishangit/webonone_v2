@@ -76,16 +76,18 @@ In `DEPLOY_REPO_ROOT`:
 
 1. Preflight: `production.env` must exist
 2. `git fetch` / force-checkout `origin/deploy_staging` (tracked files reset; untracked `production.env` is kept)
-3. `npm install` (not `npm ci` - `npm ci` deletes `node_modules` and hits `EPERM` on DLLs still loaded by IIS Node)
-4. **Detect deploy targets** from the git range (previous HEAD / `github.event.before` → new HEAD), unless `workflow_dispatch` overrides
-5. If mode is not `none`: `npm run env:apply`
-6. **Selective:** `npm run migrate:<service>` + `npm run deploy:<service>` for each changed service. **Full:** `migrate:all` + `deploy:all`
-7. Try `npm run recycle:iis` (selective mode sets `IIS_APP_POOLS` to only changed pools; continues on failure if the runner cannot run `appcmd`)
-8. Wait 30s, then smoke GET health URLs (selective mode smokes only changed services)
+3. Setup Node, then **Detect deploy targets** from the git range (previous HEAD / `github.event.before` → new HEAD), unless `workflow_dispatch` overrides — **before** `npm install`
+4. If mode is `none`: **Skip deploy** (no install, env apply, migrate, recycle, or smoke), then **Deploy summary**
+5. If mode is not `none`: `npm install` (not `npm ci` - `npm ci` deletes `node_modules` and hits `EPERM` on DLLs still loaded by IIS Node)
+6. `npm run env:apply`
+7. **Selective:** `npm run migrate:<service>` + `npm run deploy:<service>` for each changed service. **Full:** `migrate:all` + `deploy:all`
+8. Try `npm run recycle:iis` (selective mode sets `IIS_APP_POOLS` to only changed pools; continues on failure if the runner cannot run `appcmd`)
+9. Wait 30s, then smoke GET health URLs (selective mode smokes only changed services)
+10. **Deploy summary** always logs mode, services, and reason
 
 If smoke still fails (e.g. **email** times out), recycle the **email** app pool in IIS Manager (or elevated `npm run recycle:iis` on the host that serves those URLs), then re-run [`tooling/smoke-production-health.ps1`](smoke-production-health.ps1).
 
-Expect **tens of minutes** for a full deploy; selective deploys are typically much faster.
+Expect **tens of minutes** for a full deploy; selective deploys are typically much faster. Spec-only / non-IIS pushes skip install entirely.
 
 **Desktop installer:** WebOnOne deploy uses `tooling/build-desktop-for-deploy.mjs` (not a hard `npm run build:desktop`). On self-hosted runners with low free RAM, electron-builder is skipped or soft-failed so IIS staging is not blocked by `WebAssembly.Memory(): could not allocate memory`. Publish a new `WebOnOne-Setup.exe` with `npm run build:desktop` on a host with enough memory (or set `SKIP_DESKTOP_BUILD=1` to skip intentionally).
 
@@ -95,9 +97,22 @@ Detection config: [`tooling/deploy-services.json`](deploy-services.json). Script
 
 | Mode | When | Behavior |
 |------|------|----------|
-| `selective` | Only paths under one or more service roots changed (e.g. `support/`, `data/`) | Migrate + deploy those services only; recycle/smoke filtered |
-| `all` | Shared paths changed (`packages/`, `ui-kit/`, `tooling/`, root `package.json` / lockfile, `production.env.example`, deploy workflow), or missing base SHA, or `force_all` | Same as classic full deploy |
-| `none` | Diff has no deployable service paths (e.g. `spec/`-only) | Skip env apply, migrate, deploy, recycle, smoke |
+| `selective` | Service roots and/or shared libraries map to a **subset** of IIS services | Migrate + deploy those services only; recycle/smoke filtered |
+| `all` | Consumer set is every IIS service (e.g. `ui-kit/`, `packages/theme/`, `packages/i18n/`), or deploy-critical root/tooling files changed, or missing base SHA, or `force_all` | Same as classic full deploy (`migrate:all` + `deploy:all`) |
+| `none` | No IIS-deployable paths (e.g. `spec/`, `mobile/`, `packages/mobile-ui/`, docs-only tooling) | Skip **npm install**, env apply, migrate, deploy, recycle, smoke |
+
+**Shared libraries** (not blanket force-full for all of `packages/`):
+
+| Path | IIS consumers |
+|------|----------------|
+| `ui-kit/`, `packages/theme/`, `packages/i18n/` | All IIS services → `mode=all` |
+| `packages/platform-nav/` | identity, webonone, data, design, ai, website, support |
+| `packages/platform-embed/` | All except none (every IIS FE that embeds) |
+| `packages/media-embed/` | identity, webonone, media, data, payment, design, support |
+| `packages/store-kit/` | All IIS except website |
+| `packages/mobile-ui/` | None (Expo only) → `mode=none` alone |
+
+**Force-full** is limited to root lockfile / `production.env.example` / deploy workflow and deploy-critical tooling scripts listed in `forceFullExactPaths` (not every file under `tooling/`).
 
 Service keys: `identity`, `webonone` (includes `desktop/`), `media`, `email`, `data`, `sms`, `payment`, `website`, `design`, `ai`, `support`.
 

@@ -86,7 +86,7 @@ npm run deploy:{service}
 
 `deploy` always re-runs `env:apply` first. Recycle the IIS app pool or restart the site.
 
-Staging CI on `deploy_staging` uses **selective deploy** (only changed services) via `npm run deploy:changed` — see [tooling/CICD.md](../../tooling/CICD.md). Shared package / tooling changes still force a full deploy.
+Staging CI on `deploy_staging` uses **selective deploy** (only changed services) via `npm run deploy:changed` — see [tooling/CICD.md](../../tooling/CICD.md). Shared libraries map to IIS consumers; `ui-kit` / theme / i18n and deploy-critical tooling still force a full deploy. Non-IIS paths (`spec/`, `mobile/`, `packages/mobile-ui/`) skip install and deploy.
 
 ## Verification
 

@@ -62,7 +62,8 @@ function printHelp() {
   node tooling/detect-changed-services.mjs --force-all [--print] [--github-output]
   node tooling/detect-changed-services.mjs --files <path-to-list> [--print]
 
-Outputs mode=all|selective|none and a comma-separated services list.`);
+Outputs mode=all|selective|none and a comma-separated services list.
+Shared libraries (ui-kit, packages/*) map to IIS consumers; mobile-ui/mobile/spec skip IIS.`);
 }
 
 /**
@@ -111,47 +112,156 @@ function normalizePath(path) {
 }
 
 /**
+ * @param {string} path
+ * @param {string} prefix
+ */
+function pathMatchesPrefix(path, prefix) {
+  const rootNorm = prefix.endsWith('/') ? prefix : `${prefix}/`;
+  return path === rootNorm.slice(0, -1) || path.startsWith(rootNorm);
+}
+
+/**
+ * @param {ReturnType<typeof loadConfig>} config
+ * @param {string} path
+ */
+function isIgnoredPath(config, path) {
+  const ignoreExact = new Set(config.ignoreExactPaths || []);
+  if (ignoreExact.has(path)) return true;
+  for (const prefix of config.ignorePathPrefixes || []) {
+    if (pathMatchesPrefix(path, prefix) || path === prefix.replace(/\/$/, '')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * @param {ReturnType<typeof loadConfig>} config
+ * @param {string} path
+ */
+function isForceFullPath(config, path) {
+  const forceExact = new Set(config.forceFullExactPaths || []);
+  if (forceExact.has(path)) return true;
+  for (const prefix of config.forceFullPathPrefixes || []) {
+    if (pathMatchesPrefix(path, prefix) || path === prefix.replace(/\/$/, '')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Unknown files under packages/ (not listed in sharedLibraries) force full deploy.
+ * @param {ReturnType<typeof loadConfig>} config
+ * @param {string} path
+ */
+function isUnmappedPackagesPath(config, path) {
+  if (!path.startsWith('packages/')) return false;
+  for (const lib of config.sharedLibraries || []) {
+    for (const root of lib.roots || []) {
+      if (pathMatchesPrefix(path, root) || path === root.replace(/\/$/, '')) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/**
  * @param {ReturnType<typeof loadConfig>} config
  * @param {string[]} paths
  */
 function detectFromPaths(config, paths) {
   const normalized = paths.map(normalizePath);
-  const forcePrefixes = config.forceFullPathPrefixes || [];
-  const forceExact = new Set(config.forceFullExactPaths || []);
+  /** @type {string[]} */
+  const reasons = [];
+  /** @type {Set<string>} */
+  const selected = new Set();
 
   for (const path of normalized) {
-    if (forceExact.has(path)) {
-      return { mode: 'all', services: [...config.serviceOrder], reason: `force-full path: ${path}` };
+    if (isForceFullPath(config, path)) {
+      return {
+        mode: 'all',
+        services: [...config.serviceOrder],
+        reason: `force-full path: ${path}`,
+      };
     }
-    for (const prefix of forcePrefixes) {
-      if (path === prefix.replace(/\/$/, '') || path.startsWith(prefix)) {
-        return { mode: 'all', services: [...config.serviceOrder], reason: `force-full prefix: ${prefix} (${path})` };
-      }
+    if (isUnmappedPackagesPath(config, path)) {
+      return {
+        mode: 'all',
+        services: [...config.serviceOrder],
+        reason: `unmapped packages path: ${path}`,
+      };
     }
   }
 
-  /** @type {Set<string>} */
-  const selected = new Set();
   for (const path of normalized) {
+    if (isIgnoredPath(config, path)) {
+      continue;
+    }
+
+    let matched = false;
+
     for (const key of config.serviceOrder) {
       const entry = config.services[key];
       for (const root of entry.roots) {
-        const rootNorm = root.endsWith('/') ? root : `${root}/`;
-        if (path === rootNorm.slice(0, -1) || path.startsWith(rootNorm)) {
+        if (pathMatchesPrefix(path, root) || path === root.replace(/\/$/, '')) {
           selected.add(key);
+          matched = true;
         }
       }
+    }
+
+    for (const lib of config.sharedLibraries || []) {
+      for (const root of lib.roots || []) {
+        if (pathMatchesPrefix(path, root) || path === root.replace(/\/$/, '')) {
+          matched = true;
+          const affects = lib.affects || [];
+          if (affects.length === 0) {
+            reasons.push(`shared library ${lib.id} (no IIS consumers)`);
+          } else {
+            for (const key of affects) {
+              selected.add(key);
+            }
+            reasons.push(`shared library ${lib.id}`);
+          }
+        }
+      }
+    }
+
+    if (!matched) {
+      // Non-service, non-library, non-ignored path (e.g. random root file) — ignore for IIS
+      reasons.push(`ignored unclassified path: ${path}`);
     }
   }
 
   const services = config.serviceOrder.filter((k) => selected.has(k));
   if (services.length === 0) {
-    return { mode: 'none', services: [], reason: 'no deployable service paths changed' };
+    return {
+      mode: 'none',
+      services: [],
+      reason: reasons.length
+        ? `no deployable service paths changed (${reasons.join('; ')})`
+        : 'no deployable service paths changed',
+    };
   }
+
+  if (services.length === config.serviceOrder.length) {
+    return {
+      mode: 'all',
+      services: [...config.serviceOrder],
+      reason: reasons.length
+        ? `all IIS services affected (${reasons.join('; ')})`
+        : 'all IIS services affected',
+    };
+  }
+
   return {
     mode: 'selective',
     services,
-    reason: `changed services: ${services.join(',')}`,
+    reason: reasons.length
+      ? `changed services: ${services.join(',')} (${reasons.join('; ')})`
+      : `changed services: ${services.join(',')}`,
   };
 }
 
@@ -197,6 +307,8 @@ function main() {
     const services = parseServicesCsv(args.services, config);
     if (services.length === 0) {
       result = { mode: 'none', services: [], reason: '--services empty' };
+    } else if (services.length === config.serviceOrder.length) {
+      result = { mode: 'all', services, reason: `--services ${services.join(',')}` };
     } else {
       result = { mode: 'selective', services, reason: `--services ${services.join(',')}` };
     }

@@ -1,5 +1,5 @@
 {
-  "comment": "Canonical map for selective staging deploy (detect-changed-services / deploy-changed). Pool names match iis-app-pools.json; health URLs match smoke-health-urls.json defaults.",
+  "comment": "Canonical map for selective staging deploy (detect-changed-services / deploy-changed). Pool names match iis-app-pools.json; health URLs match smoke-health-urls.json defaults. sharedLibraries map package/ui-kit changes to IIS consumers instead of blanket force-full.",
   "services": {
     "identity": {
       "roots": ["identity/"],
@@ -90,16 +90,137 @@
       "smokeHostSubstrings": ["support."]
     }
   },
-  "forceFullPathPrefixes": [
-    "packages/",
-    "ui-kit/",
-    "tooling/"
+  "sharedLibraries": [
+    {
+      "id": "ui-kit",
+      "roots": ["ui-kit/"],
+      "affects": [
+        "identity",
+        "webonone",
+        "media",
+        "email",
+        "data",
+        "sms",
+        "payment",
+        "website",
+        "design",
+        "ai",
+        "support"
+      ]
+    },
+    {
+      "id": "theme",
+      "roots": ["packages/theme/"],
+      "affects": [
+        "identity",
+        "webonone",
+        "media",
+        "email",
+        "data",
+        "sms",
+        "payment",
+        "website",
+        "design",
+        "ai",
+        "support"
+      ]
+    },
+    {
+      "id": "i18n",
+      "roots": ["packages/i18n/"],
+      "affects": [
+        "identity",
+        "webonone",
+        "media",
+        "email",
+        "data",
+        "sms",
+        "payment",
+        "website",
+        "design",
+        "ai",
+        "support"
+      ]
+    },
+    {
+      "id": "platform-nav",
+      "roots": ["packages/platform-nav/"],
+      "affects": ["identity", "webonone", "data", "design", "ai", "website", "support"]
+    },
+    {
+      "id": "platform-embed",
+      "roots": ["packages/platform-embed/"],
+      "affects": [
+        "identity",
+        "webonone",
+        "media",
+        "email",
+        "data",
+        "sms",
+        "payment",
+        "website",
+        "design",
+        "ai",
+        "support"
+      ]
+    },
+    {
+      "id": "media-embed",
+      "roots": ["packages/media-embed/"],
+      "affects": ["identity", "webonone", "media", "data", "payment", "design", "support"]
+    },
+    {
+      "id": "store-kit",
+      "roots": ["packages/store-kit/"],
+      "affects": [
+        "identity",
+        "webonone",
+        "media",
+        "email",
+        "data",
+        "sms",
+        "payment",
+        "design",
+        "ai",
+        "support"
+      ]
+    },
+    {
+      "id": "mobile-ui",
+      "roots": ["packages/mobile-ui/"],
+      "affects": []
+    }
   ],
+  "ignorePathPrefixes": [
+    "spec/",
+    ".cursor/",
+    "mobile/",
+    "tooling/support-feedback-mcp/",
+    "tooling/CICD.md"
+  ],
+  "ignoreExactPaths": [
+    "AGENTS.md",
+    "README.md",
+    ".gitignore",
+    "tooling/CICD.md"
+  ],
+  "forceFullPathPrefixes": [],
   "forceFullExactPaths": [
     "package.json",
     "package-lock.json",
     "production.env.example",
-    ".github/workflows/deploy-staging.yml"
+    ".github/workflows/deploy-staging.yml",
+    "tooling/deploy-services.json",
+    "tooling/detect-changed-services.mjs",
+    "tooling/deploy-changed.mjs",
+    "tooling/apply-production-env.mjs",
+    "tooling/stage-iis-deploy.mjs",
+    "tooling/resolve-smoke-urls.mjs",
+    "tooling/recycle-iis-app-pools.ps1",
+    "tooling/smoke-production-health.ps1",
+    "tooling/iis-app-pools.json",
+    "tooling/smoke-health-urls.json",
+    "tooling/build-desktop-for-deploy.mjs"
   ],
   "serviceOrder": [
     "identity",
