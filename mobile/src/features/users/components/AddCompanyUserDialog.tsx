@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import {
   Button,
   CustomDialog,
-  SelectUser,
-  Spinner,
   UserSelectionDialog,
   type UserOption,
   useToast,
@@ -33,17 +31,13 @@ export function AddCompanyUserDialog({
   onAdded,
 }: AddCompanyUserDialogProps) {
   const { toast } = useToast()
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [users, setUsers] = useState<UserOption[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
-  const [selected, setSelected] = useState<UserOption | null>(null)
-  const [adding, setAdding] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const addingRef = useRef(false)
 
   const loadUsers = useCallback(async () => {
-    setLoadingUsers(true)
     try {
       const result = await listUsers({
         page: 1,
@@ -61,24 +55,21 @@ export function AddCompanyUserDialog({
       )
     } catch {
       setUsers([])
-    } finally {
-      setLoadingUsers(false)
     }
   }, [companyId])
 
   useEffect(() => {
     if (!open) {
-      setSelected(null)
       setCreateOpen(false)
-      setPickerOpen(false)
       setCreateError(null)
+      addingRef.current = false
       return
     }
     void loadUsers()
   }, [loadUsers, open])
 
   async function handleSelectUser(user: UserOption) {
-    setAdding(true)
+    addingRef.current = true
     try {
       await addCompanyCustomer({
         companyId,
@@ -95,7 +86,7 @@ export function AddCompanyUserDialog({
         variant: 'destructive',
       })
     } finally {
-      setAdding(false)
+      addingRef.current = false
     }
   }
 
@@ -124,52 +115,21 @@ export function AddCompanyUserDialog({
 
   return (
     <>
-      <CustomDialog
-        open={open}
-        onOpenChange={onOpenChange}
-        title="Add user"
-        description="Select a registered user, or register someone new."
-        sizeWidth="medium"
-        sizeHeight="auto"
-        nestedDismissGuard={pickerOpen || createOpen}
-        footer={
-          <View className="flex-row flex-wrap justify-end gap-2">
-            <Button variant="outline" onPress={() => onOpenChange(false)} disabled={adding}>
-              Cancel
-            </Button>
-            <Button
-              variant="outline"
-              onPress={() => setCreateOpen(true)}
-              disabled={adding || creating}
-            >
-              Register new
-            </Button>
-            <Button
-              onPress={() => setPickerOpen(true)}
-              disabled={adding || creating || loadingUsers}
-            >
-              {adding ? 'Adding…' : 'Select user'}
-            </Button>
-          </View>
-        }
-      >
-        {loadingUsers ? <Spinner label="Loading users…" /> : null}
-        {selected ? (
-          <SelectUser selectedUser={selected} onPress={() => setPickerOpen(true)} />
-        ) : (
-          <SelectUser placeholder="No user selected" onPress={() => setPickerOpen(true)} />
-        )}
-      </CustomDialog>
-
       <UserSelectionDialog
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
+        open={open && !createOpen}
+        onOpenChange={(next) => {
+          if (!next) {
+            if (addingRef.current || createOpen) {
+              return
+            }
+            onOpenChange(false)
+          }
+        }}
         users={users}
-        selectedId={selected?.id}
-        title="Select user"
+        title="Add user"
+        onAddUser={() => setCreateOpen(true)}
+        addLabel="Add user"
         onSelect={(user) => {
-          setSelected(user)
-          setPickerOpen(false)
           void handleSelectUser(user)
         }}
       />

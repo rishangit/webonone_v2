@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check } from 'lucide-react'
 import type { DataTagPickerTag } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
   Button,
+  ListAddButton,
+  ListPageActions,
   SearchInput,
   ItemList,
   ItemListContent,
@@ -190,21 +192,18 @@ export function TagPickerPanel({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col p-6">
-      <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
+      <ListPageActions className="shrink-0">
         <SearchInput
           value={searchInput}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchInput(event.target.value)}
           placeholder="Search tags"
           aria-label="Search tags"
-          className="flex-1"
+          className="w-64"
         />
         {canCreate ? (
-          <Button variant="outline" className="shrink-0 gap-2" onClick={onCreateRequest}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Add new tag
-          </Button>
+          <ListAddButton onClick={onCreateRequest}>Add new tag</ListAddButton>
         ) : null}
-      </div>
+      </ListPageActions>
 
       <div
         ref={scrollRootRef}

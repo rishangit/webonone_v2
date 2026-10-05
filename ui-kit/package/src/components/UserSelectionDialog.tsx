@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { Alert, AlertDescription } from './Alert'
 import { Button } from './Button'
 import { CustomDialog } from './CustomDialog'
 import { ContactValueLine } from './ContactValueLine'
 import { ImagePreview } from './ImagePreview'
+import { ListAddButton } from './ListAddButton'
+import { ListPageActions } from './ListPageActions'
 import { SearchInput } from './SearchInput'
 import {
   ItemList,
@@ -263,19 +265,16 @@ export function UserSelectionDialog({
 
   const body = (
     <div className="flex h-full min-h-0 flex-col p-6">
-      <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
+      <ListPageActions className="shrink-0">
         <SearchInput
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           placeholder="Search by name or email"
           aria-label="Search users"
-          className="flex-1"
+          className="w-64"
         />
         {onAddUser ? (
-          <Button type="button" variant="outline" className="h-10 shrink-0 px-3" onClick={onAddUser}>
-            <Plus className="mr-2 h-4 w-4" aria-hidden />
-            Add user
-          </Button>
+          <ListAddButton onClick={onAddUser}>Add user</ListAddButton>
         ) : null}
         {roleOptions && roleOptions.length > 0 ? (
           <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -292,7 +291,7 @@ export function UserSelectionDialog({
             </SelectContent>
           </Select>
         ) : null}
-      </div>
+      </ListPageActions>
 
       <div
         ref={scrollRootRef}

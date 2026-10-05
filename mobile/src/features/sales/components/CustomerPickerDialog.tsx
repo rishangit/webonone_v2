@@ -9,6 +9,8 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ListAddButton,
+  ListPageActions,
   SearchInput,
   Spinner,
   getAvatarInitials,
@@ -76,22 +78,24 @@ export function CustomerPickerDialog({
       sizeWidth="large"
       sizeHeight="xlarge"
       footer={
-        <View className="flex-row flex-wrap justify-end gap-2">
-          {onAddNew ? (
-            <Button variant="outline" onPress={onAddNew}>New customer</Button>
-          ) : null}
-          <Button variant="outline" onPress={() => onOpenChange(false)}>Cancel</Button>
-        </View>
+        <Button variant="outline" onPress={() => onOpenChange(false)}>
+          Cancel
+        </Button>
       }
     >
       <View className="gap-3">
-        <SearchInput
-          value={search}
-          onChangeText={setSearch}
-          onClear={() => setSearch('')}
-          placeholder="Search customers"
-          accessibilityLabel="Search customers"
-        />
+        <ListPageActions>
+          <SearchInput
+            value={search}
+            onChangeText={setSearch}
+            onClear={() => setSearch('')}
+            placeholder="Search customers"
+            accessibilityLabel="Search customers"
+          />
+          {onAddNew ? (
+            <ListAddButton onPress={onAddNew}>Add customer</ListAddButton>
+          ) : null}
+        </ListPageActions>
         {loading ? <Spinner label="Loading customers…" /> : null}
         {error ? <Body className="text-destructive">{error}</Body> : null}
         {!loading && customers.length === 0 ? (

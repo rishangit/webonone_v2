@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check } from 'lucide-react'
 import {
   PLATFORM_MESSAGE_TYPES,
   type PlatformPeerDialogRequestMessage,
@@ -7,7 +7,6 @@ import {
 import {
   Alert,
   AlertDescription,
-  Button,
   ImagePreview,
   ItemList,
   ItemListContent,
@@ -15,6 +14,8 @@ import {
   ItemListItem,
   itemListRowActiveClassName,
   itemListThumbClassName,
+  ListAddButton,
+  ListPageActions,
   SearchInput,
   cn,
 } from '@webonone/ui-kit'
@@ -221,29 +222,24 @@ export function LibraryPickerPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="min-w-[12rem] flex-1">
-          <SearchInput
-            id="library-search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onClear={() => setQ('')}
-            placeholder={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}…`}
-            aria-label={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}`}
-            disabled={createOpen}
-          />
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
+      <ListPageActions className="shrink-0">
+        <SearchInput
+          id="library-search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onClear={() => setQ('')}
+          placeholder={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}…`}
+          aria-label={`Search ${CATALOG_ENTITY_LABELS[kind].toLowerCase()}`}
+          className="w-64"
+          disabled={createOpen}
+        />
+        <ListAddButton
           disabled={!canCreate || busy || createOpen}
           onClick={openCreateInLibrary}
         >
-          <Plus className="h-4 w-4" aria-hidden />
           Add {labelLower} to library
-        </Button>
-      </div>
+        </ListAddButton>
+      </ListPageActions>
       {(loadError || error) && (
         <Alert variant="destructive">
           <AlertDescription>{error ?? loadError}</AlertDescription>

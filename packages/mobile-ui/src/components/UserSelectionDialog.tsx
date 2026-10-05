@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { CustomDialog } from './CustomDialog'
 import { Button } from './Button'
+import { ListAddButton } from './ListAddButton'
+import { ListPageActions } from './ListPageActions'
 import { SearchInput } from './SearchInput'
 import { ItemList, ItemListContent, ItemListEmpty, ItemListItem } from './ItemList'
 import { Avatar, getAvatarInitials } from './Avatar'
@@ -32,6 +34,8 @@ export function UserSelectionDialog({
   selectedId,
   onSelect,
   title = 'Select user',
+  onAddUser,
+  addLabel = 'Add user',
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -39,6 +43,8 @@ export function UserSelectionDialog({
   selectedId?: string | null
   onSelect: (user: UserOption) => void
   title?: string
+  onAddUser?: () => void
+  addLabel?: string
 }) {
   const [search, setSearch] = useState('')
   const filtered = useMemo(() => {
@@ -67,12 +73,18 @@ export function UserSelectionDialog({
       }
     >
       <View className="gap-3">
-        <SearchInput
-          value={search}
-          onChangeText={setSearch}
-          onClear={() => setSearch('')}
-          placeholder="Search users"
-        />
+        <ListPageActions>
+          <SearchInput
+            value={search}
+            onChangeText={setSearch}
+            onClear={() => setSearch('')}
+            placeholder="Search users"
+            accessibilityLabel="Search users"
+          />
+          {onAddUser ? (
+            <ListAddButton onPress={onAddUser}>{addLabel}</ListAddButton>
+          ) : null}
+        </ListPageActions>
         {filtered.length === 0 ? <ItemListEmpty>No users match your search.</ItemListEmpty> : null}
         <ItemList>
           {filtered.map((user) => (
