@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { Check, Plus } from 'lucide-react-native'
+import { Check } from 'lucide-react-native'
 import {
   Body,
-  Button,
   ImagePreview,
   ItemList,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  ListAddButton,
+  ListPageActions,
   SearchInput,
   Spinner,
 } from '@webonone/mobile-ui'
@@ -144,24 +145,21 @@ export function LibraryPickerPanel({
 
   return (
     <View className="min-h-[240px] gap-3">
-      <View className="flex-row flex-wrap items-end gap-2">
-        <View className="min-w-[12rem] flex-1">
-          <SearchInput
-            value={search}
-            onChangeText={setSearch}
-            onClear={search ? () => setSearch('') : undefined}
-            placeholder={t('list.searchPlaceholder', { entity: noun })}
-            accessibilityLabel={t('list.searchAria', { entity: noun })}
-            editable={!createOpen}
-          />
-        </View>
+      <ListPageActions>
+        <SearchInput
+          value={search}
+          onChangeText={setSearch}
+          onClear={search ? () => setSearch('') : undefined}
+          placeholder={t('list.searchPlaceholder', { entity: noun })}
+          accessibilityLabel={t('list.searchAria', { entity: noun })}
+          editable={!createOpen}
+        />
         {canCreateInLibrary(kind) ? (
-          <Button size="sm" variant="outline" disabled={createOpen} onPress={openCreate}>
-            <Plus className="mr-1 h-4 w-4" aria-hidden />
+          <ListAddButton disabled={createOpen} onPress={openCreate}>
             {t('library.addToLibrary', { noun: nounLower })}
-          </Button>
+          </ListAddButton>
         ) : null}
-      </View>
+      </ListPageActions>
       {error ? <Body className="text-destructive">{error}</Body> : null}
       {loading ? <Spinner label={t('library.loading')} /> : null}
       {!loading ? (
