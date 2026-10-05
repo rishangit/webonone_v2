@@ -328,7 +328,7 @@ function AppShellChrome({
 
             'relative min-h-0 min-w-0 flex-1',
 
-            embedMain ? 'overflow-hidden' : 'overflow-y-auto scrollbar-themed',
+            embedMain ? 'overflow-hidden' : 'overflow-y-auto scrollbar-themed scrollbar-gutter-stable',
 
           )}
 

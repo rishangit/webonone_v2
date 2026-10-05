@@ -18,7 +18,7 @@ export function PlatformEmbedShell({ children, className }: PlatformEmbedShellPr
 
   return (
     <div className={shellClassName}>
-      <main className="platform-embed-shell-main scrollbar-themed flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <main className="platform-embed-shell-main scrollbar-themed scrollbar-gutter-stable flex min-h-0 flex-1 flex-col overflow-y-auto">
         {children}
       </main>
     </div>
