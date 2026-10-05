@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ExternalLink, Home, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { normalizeLocale, type AppLocale } from '@webonone/i18n'
+import { performPlatformLogout } from '@webonone/platform-nav'
 import {
   AppHeader,
   BrandLogo,
@@ -11,9 +12,10 @@ import {
   HeaderLocaleMenu,
   SearchInput,
 } from '@webonone/ui-kit'
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { authActions } from '@/features/auth/store/authSlice'
+import { useAppSelector } from '@/app/store/hooks'
+import { clearSupportAuthStorage } from '@/features/auth/store/authSlice'
 import { getSessionPlatformRole } from '@/features/auth/utils/currentRole'
+import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
 import { redirectToIdentityProfile } from '@/features/auth/utils/redirectToIdentityProfile'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { getWebsiteOrigin } from '@/features/docs/utils/peerConfig'
@@ -36,7 +38,6 @@ export function SupportHeader({
   const { t: ts } = useTranslation('shell')
   const navigate = useNavigate()
   const location = useLocation()
-  const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const user = useAppSelector((s) => s.auth.user)
   const [query, setQuery] = useState('')
@@ -71,8 +72,12 @@ export function SupportHeader({
   )
 
   const handleLogout = useCallback(() => {
-    dispatch(authActions.logout())
-  }, [dispatch])
+    clearSupportAuthStorage()
+    performPlatformLogout(null, {
+      identityOrigin: getIdentityOrigin(),
+      postLogoutRedirectUri: `${window.location.origin}/`,
+    })
+  }, [])
 
   const handleProfileClick = useCallback(async () => {
     if (!accessToken) {
