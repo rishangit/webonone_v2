@@ -263,7 +263,8 @@ describe('remainingItemsTablePrompt', () => {
 describe('remainingCreateCallsPrompt', () => {
   it('asks for every unit schema field on each create call', () => {
     const prompt = remainingCreateCallsPrompt(10, createUnit)
-    assert.match(prompt, /create_data_unit/)
+    assert.match(prompt, /matching create tool/)
+    assert.doesNotMatch(prompt, /create_data_unit/)
     assert.match(prompt, /symbol/)
     assert.match(prompt, /is_base/)
     assert.match(prompt, /base_unit/)
@@ -272,11 +273,20 @@ describe('remainingCreateCallsPrompt', () => {
 })
 
 describe('resolveCreateTool', () => {
-  it('prefers an existing create tool call', () => {
+  it('prefers the user message kind over a mismatched existing create call', () => {
     const tool = resolveCreateTool({
       tools: [createTag, createUnit],
       existingCalls: [{ id: 'c1', name: 'create_data_unit', arguments: { name: 'Liter' } }],
       userMessage: 'add tags',
+    })
+    assert.equal(tool?.name, 'create_data_tag')
+  })
+
+  it('falls back to an existing create call when the message is ambiguous', () => {
+    const tool = resolveCreateTool({
+      tools: [createTag, createUnit],
+      existingCalls: [{ id: 'c1', name: 'create_data_unit', arguments: { name: 'Liter' } }],
+      userMessage: 'please handle these',
     })
     assert.equal(tool?.name, 'create_data_unit')
   })
@@ -289,6 +299,29 @@ describe('resolveCreateTool', () => {
     })
     assert.equal(tool?.name, 'create_data_unit')
   })
+
+  it('picks a product tool when the user asks for products even if a tag create was emitted', () => {
+    const createProduct: ToolDefinition = {
+      ...createCatalog,
+      name: 'create_data_product',
+      description: 'Create a Data library product.',
+      service: 'data',
+      invoke: { method: 'POST', path: '/api/v1/products' },
+      requiredPermissions: ['ai:data_catalog:write'],
+    }
+    const tool = resolveCreateTool({
+      tools: [createTag, createProduct],
+      existingCalls: [
+        {
+          id: 'c1',
+          name: 'create_data_tag',
+          arguments: { name: 'ClinicHours', description: 'Hours', status: 'pending' },
+        },
+      ],
+      userMessage: 'add a product to the library for medical supplies',
+    })
+    assert.equal(tool?.name, 'create_data_product')
+  })
 })
 
 describe('requestedItemCount', () => {
@@ -296,6 +329,7 @@ describe('requestedItemCount', () => {
     assert.equal(requestedItemCount('need to add 10 tag to the data library related to medical clinic'), 10)
     assert.equal(requestedItemCount('Add 10 Data library tags'), 10)
     assert.equal(requestedItemCount('add around 10 unit of measures to the library related to medical feild'), 10)
+    assert.equal(requestedItemCount('suggest 10 products for the pharmacy catalog'), 10)
     assert.equal(requestedItemCount('hello'), null)
   })
 })

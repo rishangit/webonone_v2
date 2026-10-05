@@ -252,7 +252,7 @@ function catalogCrud(options: {
       name: `create_data_${singular}`,
       description:
         options.createDescription ??
-        `Create a Data library ${singular} (a catalog ${singular}, not a tag). Fill every schema field before confirm: name, description, relevant tags, relevant attributes (each number attribute with a unit name and symbol), and status. List related tags, attributes, and units first. Use names, never opaque ids. Suggest only related records that fit this item — do not dump the whole library. New related tags, attributes, and units nest under the confirm row. Company-admin creates stay pending until a super admin verifies them.`,
+        `Create a Data library ${singular} (a catalog ${singular}, not a tag or label). Use this only when the user asked for a ${singular}. Do not use create_data_tag for ${singular} requests. Fill every schema field before confirm: name, description, relevant tags, relevant attributes (each number attribute with a unit name and symbol), and status. List related tags, attributes, and units first. Use names, never opaque ids. Suggest only related records that fit this item — do not dump the whole library. New related tags, attributes, and units nest under the confirm row. Company-admin creates stay pending until a super admin verifies them.`,
       jsonSchema: {
         type: 'object',
         additionalProperties: false,

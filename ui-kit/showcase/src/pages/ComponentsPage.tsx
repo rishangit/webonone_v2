@@ -292,6 +292,7 @@ function ConfirmItemListDemo() {
     {
       id: '1',
       status: 'pending_confirmation',
+      itemTypeLabel: 'Service',
       record: {
         Name: 'Dental Checkup and Cleaning',
         'Time mode': 'duration',
@@ -310,6 +311,7 @@ function ConfirmItemListDemo() {
     {
       id: '2',
       status: 'pending_confirmation',
+      itemTypeLabel: 'Tag',
       record: { name: 'Pediatrics', description: 'Care for infants and children.' },
       confirmedLabel: 'Pediatrics added',
       canceledLabel: 'Pediatrics canceled',
@@ -321,7 +323,7 @@ function ConfirmItemListDemo() {
       items={items}
       pendingHint="Confirm each new item to apply it."
       confirmLabel="Confirm"
-      skipLabel="Skip"
+      skipLabel="Cancel"
       onConfirm={(id) =>
         setItems((current) =>
           current.map((item) => (item.id === id ? { ...item, status: 'confirmed' } : item)),
@@ -691,7 +693,7 @@ export function ComponentsPage() {
       <DemoSection
         id="confirm-item-list"
         title="Confirm item list"
-        description="Pending addable records with Confirm and Skip links. Used by the WebOnOne assistant."
+        description="Pending addable records with item-type header and Confirm/Cancel footer. Used by the WebOnOne assistant."
       >
         <ConfirmItemListDemo />
       </DemoSection>

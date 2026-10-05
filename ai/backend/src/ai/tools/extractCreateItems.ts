@@ -359,6 +359,12 @@ export function resolveCreateTool(options: {
   existingCalls: ToolCall[]
   userMessage: string
 }): ToolDefinition | null {
+  // Prefer the user message when it clearly names a library kind (product vs tag).
+  // Falling back to the first create_* call locked wrong-tool parks when the model misfired.
+  const fromHint = pickCreateToolFromHint(options.tools, options.userMessage)
+  if (fromHint) {
+    return fromHint
+  }
   const preferredName = options.existingCalls.find((call) => call.name.startsWith('create_'))?.name
   if (preferredName) {
     const found = options.tools.find((tool) => tool.name === preferredName && isCreateWriteTool(tool))
@@ -366,7 +372,18 @@ export function resolveCreateTool(options: {
       return found
     }
   }
-  return pickCreateToolFromHint(options.tools, options.userMessage)
+  return null
+}
+
+/** When the user message resolves to one create tool, drop other create_* calls. */
+export function scopeCreateCallsToResolvedTool(
+  calls: ToolCall[],
+  resolved: ToolDefinition | null,
+): ToolCall[] {
+  if (!resolved) {
+    return calls
+  }
+  return calls.filter((call) => !call.name.startsWith('create_') || call.name === resolved.name)
 }
 
 export function remainingItemsTablePrompt(
@@ -390,22 +407,25 @@ export function remainingCreateCallsPrompt(
   tool?: Pick<ToolDefinition, 'name' | 'jsonSchema' | 'argCompletion' | 'relatedArgs'> | null,
 ): string {
   const keys = tool ? suggestCreateKeys(tool).join(', ') : 'every schema property (required and optional)'
-  const toolName = tool?.name ?? 'create_*'
-  return `The user asked for ${requested} items. Call ${toolName} once per item for all ${requested} items in this turn. Include ${keys} on every call.${relatedItemsHint(tool)} Do not stop after one item.`
+  return `The user asked for ${requested} items. Call the matching create tool once per item for all ${requested} items in this turn. Include ${keys} on every call.${relatedItemsHint(tool)} Do not stop after one item.`
 }
 
 export function requestedItemCount(message: string): number | null {
-  const match = message.match(
-    /\b(\d{1,2})(?:\s+\w+){0,3}\s+(tags?|units?|attributes?|products?|services?|spaces?|items?)\b/i,
-  )
-  if (!match) {
-    return null
+  const patterns = [
+    /\b(\d{1,2})(?:\s+\w+){0,4}\s+(tags?|units?|attributes?|products?|services?|spaces?|items?)\b/i,
+    /\b(tags?|units?|attributes?|products?|services?|spaces?|items?)\b(?:\s+\w+){0,4}\s*[:=]?\s*(\d{1,2})\b/i,
+  ]
+  for (const pattern of patterns) {
+    const match = message.match(pattern)
+    if (!match) {
+      continue
+    }
+    const count = Number(match[1] && /^\d+$/.test(match[1]) ? match[1] : match[2])
+    if (Number.isInteger(count) && count >= 2 && count <= 25) {
+      return count
+    }
   }
-  const count = Number(match[1])
-  if (!Number.isInteger(count) || count < 2 || count > 25) {
-    return null
-  }
-  return count
+  return null
 }
 
 function createCallKey(call: ToolCall): string | null {
@@ -523,16 +543,21 @@ export function expandCreateCalls(options: {
   role: ToolRole
   existingCalls: ToolCall[]
 }): ToolCall[] {
-  const preferredToolName = options.existingCalls.find((call) => call.name.startsWith('create_'))?.name
+  const resolved = resolveCreateTool({
+    tools: options.tools,
+    existingCalls: options.existingCalls,
+    userMessage: options.userMessage,
+  })
+  const scopedExisting = scopeCreateCallsToResolvedTool(options.existingCalls, resolved)
   const lifted = liftCreateCallsFromText({
     content: options.content,
     tools: options.tools,
     userMessage: options.userMessage,
     role: options.role,
-    preferredToolName,
+    preferredToolName: resolved?.name,
   })
   if (!lifted) {
-    return options.existingCalls
+    return scopedExisting
   }
-  return mergeUniqueCreateCalls(options.existingCalls, lifted.calls)
+  return mergeUniqueCreateCalls(scopedExisting, lifted.calls)
 }

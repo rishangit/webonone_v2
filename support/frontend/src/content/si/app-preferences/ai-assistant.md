@@ -12,7 +12,7 @@ summary: "ගුවන් සහායක විවෘත කරන්න, ම�
 1. සහායක panel විවෘත කිරීමට එය click කරන්න.
 2. සරල භාෂාවෙන් අසන්න (උදාහරණයක් ලෙස, සැකසුමක් සොයා ගැනීමට හෝ catalog අයිතම ලැයිස්තුගත කිරීමට උදව්).
 3. **Staff**, **events**, **companies**, හෝ **catalog** ලැයිස්තු සහ විස්තර පිටු වලින් **Copy to AI** භාවිතා කර එම වාර්තාව chat වෙත එක් කරන්න.
-4. සහායකයට යමක් සාදන්න හෝ වෙනස් කරන්න අවශ්‍ය නම්, ඉල්ලූ විට ක්‍රියාව තහවුරු කරන්න.
+4. සහායකයට යමක් සාදන්න හෝ වෙනස් කරන්න අවශ්‍ය නම්, සෑම suggestion එකක්ම (ඉහළින් item type) පරීක්ෂා කර **Confirm** හෝ **Cancel** තෝරන්න.
 
 සහායකයට ක්‍රියාත්මක API key එකක් අවශ්‍යයි. [AI API key](/docs/app-preferences/ai-api-key) යටතේ එය සකස් කරන්න. එම සැකසුම [text field sparkle](/docs/app-preferences/field-ai-polish) ද සක්‍රිය කරයි. public website හි guests වෙනම [catalog assistant](/docs/public-catalog/guest-assistant) භාවිතා කරයි.
 
@@ -20,7 +20,7 @@ summary: "ගුවන් සහායක විවෘත කරන්න, ම�
 
 **Settings → Basic Settings → AI** යටතේ **What the assistant can do** කාඩ්පත විවෘත කරන්න. එය ඔබේ **වර්තමාන role**, **company session**, සහ permissions අනුව chat හට platform tools කැඳවිය හැකි ක්ෂේත්‍ර ලැයිස්තුගත කරයි. ලැයිස්තුව සජීවීයි — ඔබේ account සඳහා එම tools ඇති විට පමණක් පේළි පෙන්වයි.
 
-සෑම ක්ෂේත්‍රයකටම **List & search**, **View details**, **Create**, **Update**, **Link & manage**, සහ **Delete** chips පෙන්විය හැක. Creates, updates, deletes සහ similar writes සඳහා chat panel හි **Confirm** (or Skip) අවශ්‍යයි. This card does not replace Calendar or POS for front-desk work; it describes assistant tools only.
+සෑම ක්ෂේත්‍රයකටම **List & search**, **View details**, **Create**, **Update**, **Link & manage**, සහ **Delete** chips පෙන්විය හැක. Creates, updates, deletes සහ similar writes සඳහා chat panel හි **Confirm** (හෝ **Cancel**) අවශ්‍යයි — සෑම suggestion එකකම item type (උදා: Product හෝ Tag) සහ fields පෙන්වයි. ඔබ library items කිහිපයක් ඉල්ලූ විට, හැකි නම් එතරම් confirm rows park කරයි. This card does not replace Calendar or POS for front-desk work; it describes assistant tools only.
 
 Form sparkle (field-level polish) can still work on many screens even when an area is not listed on this card.
 

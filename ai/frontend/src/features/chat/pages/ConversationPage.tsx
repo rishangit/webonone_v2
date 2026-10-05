@@ -34,6 +34,7 @@ function pendingRows(pending: PendingTool): PendingToolCall[] {
     {
       toolCallId: pending.toolCallId,
       name: pending.name,
+      displayKind: pending.displayKind,
       riskLevel: pending.riskLevel,
       summary: pending.summary,
       arguments: pending.arguments,
@@ -322,6 +323,7 @@ export function ConversationPage() {
                     items={rows.map((call) => ({
                       id: call.toolCallId,
                       status: call.status,
+                      itemTypeLabel: call.displayKind,
                       record:
                         call.displayArguments && Object.keys(call.displayArguments).length > 0
                           ? call.displayArguments
@@ -335,7 +337,7 @@ export function ConversationPage() {
                     }))}
                     pendingHint={hasPending ? t('pendingChange') : undefined}
                     confirmLabel={t('confirm')}
-                    skipLabel={t('skip')}
+                    skipLabel={t('cancelChange')}
                     disabled={sending}
                     onConfirm={(toolCallId, decision) =>
                       void handleToolDecision(toolCallId, 'confirm', decision)

@@ -40,6 +40,7 @@ type PendingCallStatus = 'pending_confirmation' | 'confirmed' | 'rejected'
 type PendingToolCall = {
   toolCallId: string
   name: string
+  displayKind?: string
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
@@ -52,6 +53,7 @@ type PendingToolCall = {
 type PendingTool = {
   toolCallId: string
   name: string
+  displayKind?: string
   riskLevel: string
   summary: string
   arguments?: Record<string, unknown>
@@ -100,6 +102,7 @@ function pendingRows(pending: PendingTool): PendingToolCall[] {
     {
       toolCallId: pending.toolCallId,
       name: pending.name,
+      displayKind: pending.displayKind,
       riskLevel: pending.riskLevel,
       summary: pending.summary,
       arguments: pending.arguments ?? {},
@@ -599,6 +602,7 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
                   items={rows.map((call) => ({
                     id: call.toolCallId,
                     status: call.status,
+                    itemTypeLabel: call.displayKind,
                     record:
                       call.displayArguments && Object.keys(call.displayArguments).length > 0
                         ? call.displayArguments
@@ -612,7 +616,7 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
                   }))}
                   pendingHint={hasPending ? t('assistant.pendingChange') : undefined}
                   confirmLabel={t('assistant.confirm')}
-                  skipLabel={t('assistant.skip')}
+                  skipLabel={t('assistant.cancelChange')}
                   disabled={pendingReply}
                   onConfirm={(toolCallId, decision) =>
                     void handleToolDecision(toolCallId, 'confirm', decision)

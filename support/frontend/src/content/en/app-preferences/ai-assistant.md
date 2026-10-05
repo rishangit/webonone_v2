@@ -12,7 +12,7 @@ When you are signed in, a **chat** button appears in the header.
 1. Click it to open the assistant panel.
 2. Ask in plain language (for example, help finding a setting or listing catalog items).
 3. From **staff**, **events**, **companies**, or **catalog** lists and detail pages, use **Copy to AI** to attach that record to the chat.
-4. If the assistant wants to create or change something, confirm the action when asked.
+4. If the assistant wants to create or change something, review each suggestion (item type at the top) and choose **Confirm** or **Cancel**.
 
 The assistant needs a working API key. Configure it under [AI API key](/docs/app-preferences/ai-api-key). The same setup enables the [sparkle on text fields](/docs/app-preferences/field-ai-polish). Guests on the public website use a separate [catalog assistant](/docs/public-catalog/guest-assistant).
 
@@ -20,7 +20,7 @@ The assistant needs a working API key. Configure it under [AI API key](/docs/app
 
 Under **Settings → Basic Settings → AI**, open the **What the assistant can do** card. It lists the platform areas where chat can call tools for your **current role**, **company session**, and permissions. The list is live — rows appear only when those tools are available for your account.
 
-For each area you may see operation chips such as **List & search**, **View details**, **Create**, **Update**, **Link & manage**, and **Delete**. Creates, updates, deletes, and similar writes always need your **Confirm** (or Skip) in the chat panel. The card does not replace Calendar or POS for front-desk work; it describes assistant tools only.
+For each area you may see operation chips such as **List & search**, **View details**, **Create**, **Update**, **Link & manage**, and **Delete**. Creates, updates, deletes, and similar writes always need your **Confirm** (or **Cancel**) in the chat panel — each suggestion shows its item type (for example Product or Tag) and the fields to apply. When you ask for a list of several library items, the assistant parks that many confirm rows when it can. The card does not replace Calendar or POS for front-desk work; it describes assistant tools only.
 
 Field-level polish (the sparkle on forms) can still work on many screens even when an area is not listed on this card.
 

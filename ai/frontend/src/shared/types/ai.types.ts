@@ -36,6 +36,7 @@ export type ConfirmItemDecision = {
 export type PendingToolCall = {
   toolCallId: string
   name: string
+  displayKind?: string
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
@@ -48,6 +49,7 @@ export type PendingToolCall = {
 export type PendingTool = {
   toolCallId: string
   name: string
+  displayKind?: string
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>

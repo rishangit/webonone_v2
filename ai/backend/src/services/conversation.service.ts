@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import type { AiRequestContext } from '../ai/requestContext.js'
 import { ownerFromContext } from '../ai/requestContext.js'
 import type { AiProvider, ChatMessage, ProviderTool } from '../ai/providers/types.js'
+import { displayKindFromToolName } from '../ai/tools/createToolDisplay.js'
 import {
   expandCreateCalls,
   listedCreateNames,
@@ -10,6 +11,7 @@ import {
   remainingItemsTablePrompt,
   requestedItemCount,
   resolveCreateTool,
+  scopeCreateCallsToResolvedTool,
   uniqueCreateNameCount,
 } from '../ai/tools/extractCreateItems.js'
 import { filterToolsForContext } from '../ai/tools/filterTools.js'
@@ -52,6 +54,7 @@ export type PendingCallStatus = 'pending_confirmation' | 'confirmed' | 'rejected
 export type PendingToolCall = {
   toolCallId: string
   name: string
+  displayKind?: string
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
@@ -64,6 +67,7 @@ export type PendingToolCall = {
 export type PendingTool = {
   toolCallId: string
   name: string
+  displayKind?: string
   riskLevel: string
   summary: string
   arguments: Record<string, unknown>
@@ -152,6 +156,10 @@ function storedCallsFromPayload(payload: Record<string, unknown> | null, pending
       items.push({
         toolCallId: entry.toolCallId,
         name: entry.name,
+        displayKind:
+          typeof entry.displayKind === 'string' && entry.displayKind.trim()
+            ? entry.displayKind.trim()
+            : displayKindFromToolName(entry.name),
         riskLevel: typeof entry.riskLevel === 'string' ? entry.riskLevel : pending.riskLevel,
         summary: typeof entry.summary === 'string' ? entry.summary : entry.name,
         arguments: isRecord(entry.arguments) ? entry.arguments : {},
@@ -169,6 +177,7 @@ function storedCallsFromPayload(payload: Record<string, unknown> | null, pending
     {
       toolCallId: pending.toolCallId,
       name: pending.name,
+      displayKind: pending.displayKind ?? displayKindFromToolName(pending.name),
       riskLevel: pending.riskLevel,
       summary: pending.summary,
       arguments: pending.arguments,
@@ -263,6 +272,10 @@ function pendingFromPayload(row: AiMessageRow): PendingTool | null {
   const pending: PendingTool = {
     toolCallId: payload.toolCallId,
     name: payload.name,
+    displayKind:
+      typeof payload.displayKind === 'string' && payload.displayKind.trim()
+        ? payload.displayKind.trim()
+        : displayKindFromToolName(payload.name),
     riskLevel: typeof payload.riskLevel === 'string' ? payload.riskLevel : 'write',
     summary: typeof payload.summary === 'string' ? payload.summary : payload.name,
     arguments: isRecord(payload.arguments) ? payload.arguments : {},
@@ -280,6 +293,7 @@ function pendingFromPayload(row: AiMessageRow): PendingTool | null {
     summary: remaining.map((call) => call.summary).join('\n') || pending.summary,
     arguments: remaining[0]?.arguments ?? pending.arguments,
     name: remaining[0]?.name ?? pending.name,
+    displayKind: remaining[0]?.displayKind ?? pending.displayKind,
   }
 }
 
@@ -581,6 +595,12 @@ export function createConversationService(deps: {
       let leadContent = completion.content
       const userMessage = lastUserContent(history)
       if (ctx.role !== 'guest' && deps.executor) {
+        const resolvedCreate = resolveCreateTool({
+          tools,
+          existingCalls: toolCalls,
+          userMessage,
+        })
+        toolCalls = scopeCreateCallsToResolvedTool(toolCalls, resolvedCreate)
         const before = uniqueCreateNameCount(toolCalls)
         toolCalls = expandCreateCalls({
           content: completion.content,
@@ -866,6 +886,7 @@ export function createConversationService(deps: {
           return {
             toolCallId: call.id,
             name: output.name,
+            displayKind: displayKindFromToolName(output.name),
             riskLevel: output.riskLevel,
             arguments: output.arguments,
             displayArguments:
@@ -897,6 +918,7 @@ export function createConversationService(deps: {
             status: 'pending_confirmation',
             toolCallId: firstWrite.call.id,
             name: firstWrite.output.name,
+            displayKind: displayKindFromToolName(firstWrite.output.name),
             riskLevel: firstWrite.output.riskLevel,
             arguments: firstWrite.output.arguments,
             displayArguments: firstWrite.output.displayArguments,

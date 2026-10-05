@@ -31,6 +31,8 @@ export type ConfirmRelatedNode = {
 export type ConfirmListItem = {
   id: string
   status: ConfirmItemStatus
+  /** Small header label for the suggestion kind (e.g. Product, Tag). */
+  itemTypeLabel?: string
   record: Record<string, unknown>
   displayFields?: ConfirmDisplayField[]
   relatedTree?: ConfirmRelatedNode[]
@@ -389,36 +391,45 @@ function ConfirmItem({
   }
 
   return (
-    <>
-      {item.displayFields && item.displayFields.length > 0 ? (
-        <DisplayFieldsLines
-          fields={item.displayFields}
-          overrides={argumentOverrides}
-          onOverride={(key, value) => setArgumentOverrides((current) => ({ ...current, [key]: value }))}
-          disabled={disabled}
-        />
-      ) : (
-        <RecordLines record={item.record} />
-      )}
-      {tree.length > 0 ? (
-        <div className="mt-2">
-          <RelatedTree
-            nodes={tree}
-            selections={selections}
-            ancestorSelected
-            disabled={disabled}
-            relatedOverrides={relatedArgumentOverrides}
-            onToggle={(path, checked) => setSelections((current) => ({ ...current, [path]: checked }))}
-            onRelatedOverride={(path, key, value) =>
-              setRelatedArgumentOverrides((current) => ({
-                ...current,
-                [path]: { ...(current[path] ?? {}), [key]: value },
-              }))
-            }
-          />
+    <div className="flex flex-col">
+      {item.itemTypeLabel ? (
+        <div className="mb-2 border-b border-[hsl(var(--glass-border))] pb-1.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {item.itemTypeLabel}
+          </p>
         </div>
       ) : null}
-      <div className="mt-2 flex justify-end gap-2">
+      <div className="min-w-0 flex-1">
+        {item.displayFields && item.displayFields.length > 0 ? (
+          <DisplayFieldsLines
+            fields={item.displayFields}
+            overrides={argumentOverrides}
+            onOverride={(key, value) => setArgumentOverrides((current) => ({ ...current, [key]: value }))}
+            disabled={disabled}
+          />
+        ) : (
+          <RecordLines record={item.record} />
+        )}
+        {tree.length > 0 ? (
+          <div className="mt-2">
+            <RelatedTree
+              nodes={tree}
+              selections={selections}
+              ancestorSelected
+              disabled={disabled}
+              relatedOverrides={relatedArgumentOverrides}
+              onToggle={(path, checked) => setSelections((current) => ({ ...current, [path]: checked }))}
+              onRelatedOverride={(path, key, value) =>
+                setRelatedArgumentOverrides((current) => ({
+                  ...current,
+                  [path]: { ...(current[path] ?? {}), [key]: value },
+                }))
+              }
+            />
+          </div>
+        ) : null}
+      </div>
+      <div className="mt-2 flex justify-end gap-2 border-t border-[hsl(var(--glass-border))] pt-2">
         <Button
           type="button"
           size="sm"
@@ -454,7 +465,7 @@ function ConfirmItem({
           {skipLabel}
         </Button>
       </div>
-    </>
+    </div>
   )
 }
 
