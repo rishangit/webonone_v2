@@ -1,8 +1,12 @@
 /** Shared horizontal padding — aligns with AppHeader inner row. */
 const shellContentPaddingX = 'px-2 sm:px-6'
 
-/** Page content padding (moved off AppShell main so iframe routes can be full-bleed). */
-const shellPagePadding = 'px-2 py-4 sm:px-6 sm:py-6'
+/**
+ * Page content padding (moved off AppShell main so iframe routes can be full-bleed).
+ * Mobile `px-0`: body width matches the AppHeader bar (shell chrome already applies `p-2`).
+ * `sm:px-6` aligns with AppHeader inner row / `shellContentPaddingX`.
+ */
+const shellPagePadding = 'px-0 py-4 sm:px-6 sm:py-6'
 
 /**
  * CustomDialog overlay inset — horizontal matches `shellChromeRootClassName` (`p-2`) so the
