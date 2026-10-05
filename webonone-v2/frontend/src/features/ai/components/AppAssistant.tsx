@@ -169,9 +169,16 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
   const [error, setError] = useState<string | null>(null)
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null)
+  const [expanded, setExpanded] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const selectionRef = useRef({ start: 0, end: 0 })
+
+  useEffect(() => {
+    if (!open) {
+      setExpanded(false)
+    }
+  }, [open])
 
   const insertEntityTagAtCursor = useCallback(
     (entity: PlatformAiEntityRef, options?: { atEnd?: boolean }) => {
@@ -457,6 +464,11 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
       onClose={onClose}
       closeLabel={t('assistant.close')}
       mobileFullWidth
+      expandable
+      expanded={expanded}
+      onExpandedChange={setExpanded}
+      expandLabel={t('assistant.expand')}
+      collapseLabel={t('assistant.collapse')}
       footer={
         <>
           {error ? <p className="text-xs text-destructive">{error}</p> : null}

@@ -427,6 +427,11 @@
     z-index: 0;
   }
 
+  /** Desktop AI rail expand — hide main so the end panel grows to the left nav. */
+  .app-shell-body:has(> .app-shell-end-panel--expanded) > #main-content {
+    display: none;
+  }
+
   /**
    * Mobile slide host — same positioning context as the left nav drawer.
    * Right panels portal here so `position: absolute` aligns with the shell body row.

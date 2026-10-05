@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { X } from 'lucide-react'
+import { Maximize2, Minimize2, X } from 'lucide-react'
 import { cn } from '../lib/utils'
 import {
   shellPanelBodyClassName,
@@ -22,6 +22,13 @@ export interface AppEndPanelProps {
   forceSlideOver?: boolean
   /** Span the full shell width on mobile slide-over (e.g. AI assistant chat). */
   mobileFullWidth?: boolean
+  /** Desktop rail only — show expand control left of Close. */
+  expandable?: boolean
+  /** When true on desktop (non–slide-over), grow the rail to the left navigation. */
+  expanded?: boolean
+  onExpandedChange?: (expanded: boolean) => void
+  expandLabel?: string
+  collapseLabel?: string
 }
 
 function AppEndPanel({
@@ -33,6 +40,11 @@ function AppEndPanel({
   className,
   forceSlideOver = false,
   mobileFullWidth = false,
+  expandable = false,
+  expanded = false,
+  onExpandedChange,
+  expandLabel = 'Expand',
+  collapseLabel = 'Collapse',
 }: AppEndPanelProps) {
   const shapedShell = useShapedShellPanelClassName()
   const { isDesktop, mobileSlidePanelClassName, renderMobilePanel } = useShellSlidePanel({
@@ -42,6 +54,8 @@ function AppEndPanel({
     forceSlideOver,
   })
   const slideOver = forceSlideOver || !isDesktop
+  const showExpandControl = expandable && isDesktop && !slideOver
+  const desktopExpanded = showExpandControl && expanded
 
   const panel = (
     <aside
@@ -51,10 +65,13 @@ function AppEndPanel({
         shapedShell,
         mobileSlidePanelClassName,
         mobileFullWidth && slideOver && 'app-shell-slide-panel--full-width',
+        desktopExpanded && 'app-shell-end-panel--expanded',
         !forceSlideOver && !isDesktop && shapedShell && 'border-l-0',
         !forceSlideOver &&
           isDesktop &&
-          'md:static md:z-auto md:h-full md:max-h-full md:max-w-sm md:shrink-0 md:self-stretch md:border-l',
+          'md:static md:z-auto md:h-full md:max-h-full md:shrink-0 md:self-stretch md:border-l',
+        !forceSlideOver && isDesktop && !desktopExpanded && 'md:max-w-sm',
+        !forceSlideOver && isDesktop && desktopExpanded && 'md:max-w-none md:min-w-0 md:flex-1',
         !forceSlideOver && isDesktop && shapedShell && 'md:border-l-0',
         forceSlideOver && shapedShell && 'border-l-0',
         className,
@@ -62,10 +79,24 @@ function AppEndPanel({
       aria-label={title}
     >
       <header className={shellPanelHeaderClassName}>
-        <h2 className="text-base font-semibold">{title}</h2>
-        <Button type="button" variant="ghost" size="icon" aria-label={closeLabel} onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
+        <h2 className="min-w-0 flex-1 truncate text-base font-semibold">{title}</h2>
+        <div className="flex shrink-0 items-center gap-1">
+          {showExpandControl ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={desktopExpanded ? collapseLabel : expandLabel}
+              aria-pressed={desktopExpanded}
+              onClick={() => onExpandedChange?.(!expanded)}
+            >
+              {desktopExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          ) : null}
+          <Button type="button" variant="ghost" size="icon" aria-label={closeLabel} onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
       <div className={cn(shellPanelBodyClassName, forceSlideOver && 'p-0')}>{children}</div>
       {footer ? (

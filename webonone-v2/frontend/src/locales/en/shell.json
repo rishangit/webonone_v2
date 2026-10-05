@@ -88,6 +88,8 @@
   "assistant": {
     "open": "ai chat",
     "close": "Close",
+    "expand": "Expand chat",
+    "collapse": "Collapse chat",
     "title": "WebOnOne AI",
     "hint": "Ask to search or change company catalog, events, and staff. Writes wait for Confirm.",
     "placeholder": "Message the assistant…",

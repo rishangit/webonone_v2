@@ -10,9 +10,10 @@ summary: "ගුවන් සහායක විවෘත කරන්න, ම�
 ඔබ sign in වී සිටින විට, header හි **chat** බොත්තමක් දිස්වේ.
 
 1. සහායක panel විවෘත කිරීමට එය click කරන්න.
-2. සරල භාෂාවෙන් අසන්න (උදාහරණයක් ලෙස, සැකසුමක් සොයා ගැනීමට හෝ catalog අයිතම ලැයිස්තුගත කිරීමට උදව්).
-3. **Staff**, **events**, **companies**, හෝ **catalog** ලැයිස්තු සහ විස්තර පිටු වලින් **Copy to AI** භාවිතා කර එම වාර්තාව chat වෙත එක් කරන්න.
-4. සහායකයට යමක් සාදන්න හෝ වෙනස් කරන්න අවශ්‍ය නම්, සෑම suggestion එකක්ම (ඉහළින් item type) පරීක්ෂා කර **Confirm** හෝ **Cancel** තෝරන්න.
+2. Desktop තිරයකදී, Close ට වමින් ඇති **expand** අයිකනය භාවිතා කර chat එක වම් navigation දක්වා පුළුල් කරන්න. නැවත click කර පටු panel එකට ආපසු යන්න. දුරකථනවල chat දැනටමත් සම්පූර්ණ පළලයි.
+3. සරල භාෂාවෙන් අසන්න (උදාහරණයක් ලෙස, සැකසුමක් සොයා ගැනීමට හෝ catalog අයිතම ලැයිස්තුගත කිරීමට උදව්).
+4. **Staff**, **events**, **companies**, හෝ **catalog** ලැයිස්තු සහ විස්තර පිටු වලින් **Copy to AI** භාවිතා කර එම වාර්තාව chat වෙත එක් කරන්න.
+5. සහායකයට යමක් සාදන්න හෝ වෙනස් කරන්න අවශ්‍ය නම්, සෑම suggestion එකක්ම (ඉහළින් item type) පරීක්ෂා කර **Confirm** හෝ **Cancel** තෝරන්න.
 
 සහායකයට ක්‍රියාත්මක API key එකක් අවශ්‍යයි. [AI API key](/docs/app-preferences/ai-api-key) යටතේ එය සකස් කරන්න. එම සැකසුම [text field sparkle](/docs/app-preferences/field-ai-polish) ද සක්‍රිය කරයි. public website හි guests වෙනම [catalog assistant](/docs/public-catalog/guest-assistant) භාවිතා කරයි.
 

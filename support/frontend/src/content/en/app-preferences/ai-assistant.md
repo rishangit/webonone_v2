@@ -10,9 +10,10 @@ summary: "Open the floating assistant, see which areas have tools, and confirm c
 When you are signed in, a **chat** button appears in the header.
 
 1. Click it to open the assistant panel.
-2. Ask in plain language (for example, help finding a setting or listing catalog items).
-3. From **staff**, **events**, **companies**, or **catalog** lists and detail pages, use **Copy to AI** to attach that record to the chat.
-4. If the assistant wants to create or change something, review each suggestion (item type at the top) and choose **Confirm** or **Cancel**.
+2. On a desktop screen, use the **expand** icon (left of Close) to widen the chat until it meets the left navigation. Use it again to return to the narrow panel. On phones the chat is already full width.
+3. Ask in plain language (for example, help finding a setting or listing catalog items).
+4. From **staff**, **events**, **companies**, or **catalog** lists and detail pages, use **Copy to AI** to attach that record to the chat.
+5. If the assistant wants to create or change something, review each suggestion (item type at the top) and choose **Confirm** or **Cancel**.
 
 The assistant needs a working API key. Configure it under [AI API key](/docs/app-preferences/ai-api-key). The same setup enables the [sparkle on text fields](/docs/app-preferences/field-ai-polish). Guests on the public website use a separate [catalog assistant](/docs/public-catalog/guest-assistant).
 
