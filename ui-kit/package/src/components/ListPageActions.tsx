@@ -50,8 +50,14 @@ function ListPageActionsStandalone({ children, className }: ListPageActionsProps
       const target = event.target
       if (target instanceof Element && target.closest('[data-list-add-button]')) return
       if (!(target instanceof Node)) return
+      // Defer in-toolbar collapse so Search click can open before Add layout shifts.
+      if (containerRef.current?.contains(target)) {
+        window.setTimeout(() => {
+          collapseAdd()
+        }, 0)
+        return
+      }
       collapseAdd()
-      if (containerRef.current?.contains(target)) return
       close()
     }
 

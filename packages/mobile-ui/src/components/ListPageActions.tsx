@@ -136,9 +136,10 @@ function ListPageActionsStandalone({ children }: { children: ReactNode }) {
   function markInsidePress(event: GestureResponderEvent) {
     event.stopPropagation()
     insidePressRef.current = true
-    requestAnimationFrame(() => {
+    // Clear after outside-press handlers' setTimeout(0), not on rAF (rAF can win the race).
+    setTimeout(() => {
       insidePressRef.current = false
-    })
+    }, 0)
   }
 
   const value = useMemo(

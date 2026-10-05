@@ -155,7 +155,6 @@ export function SearchInput({
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded: searchExpanded }}
       onPress={listPageActions.openSearch}
-      onTouchStart={(event) => event.stopPropagation()}
       pointerEvents={searchRevealed ? 'none' : 'auto'}
       className={cn(
         CONTROL_HEIGHT_SM_CLASS,

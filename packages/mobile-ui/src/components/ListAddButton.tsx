@@ -85,7 +85,7 @@ export function ListAddButton({
   }
 
   return (
-    <View className="shrink-0" onTouchStart={(event) => event.stopPropagation()}>
+    <View className="shrink-0">
       <Button
         {...props}
         variant="default"
