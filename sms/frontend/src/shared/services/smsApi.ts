@@ -8,6 +8,7 @@ import type {
   SmsTemplate,
   TemplatePreviewResult,
   TemplateVersion,
+  TextLkBalance,
 } from '@/shared/types/sms.types'
 import type { GatewayConfig, GatewayMode } from '@/features/gateway/types/gateway.types'
 
@@ -65,6 +66,11 @@ function toQueryString(params: Record<string, string | number | undefined>): str
 export const smsApi = {
   getDashboardStats() {
     return apiClient<DashboardStats>('/dashboard/stats')
+  },
+
+  getTextLkBalance(options: { force?: boolean } = {}) {
+    const qs = options.force ? '?force=1' : ''
+    return apiClient<TextLkBalance>(`/providers/textlk/balance${qs}`)
   },
 
   listTemplates() {

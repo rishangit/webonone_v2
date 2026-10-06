@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { createEpicMiddleware } from 'redux-observable'
 import { authReducer } from '@/features/auth/store/authSlice'
-import { dashboardReducer } from '@/features/dashboard/store'
+import { dashboardReducer, smsCreditsReducer } from '@/features/dashboard/store'
 import { devicesReducer } from '@/features/devices/store'
 import { gatewayReducer } from '@/features/gateway/store'
 import { historyReducer } from '@/features/history/store'
@@ -17,6 +17,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     dashboard: dashboardReducer,
+    smsCredits: smsCreditsReducer,
     devices: devicesReducer,
     gateway: gatewayReducer,
     history: historyReducer,

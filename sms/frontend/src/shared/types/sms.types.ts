@@ -74,6 +74,14 @@ export interface DashboardStats {
   recentActivity: HistoryItem[]
 }
 
+export interface TextLkBalance {
+  provider: 'textlk'
+  configured: boolean
+  balance: number | null
+  unit: 'SMS'
+  lastUpdated: string | null
+}
+
 export interface TemplatePreviewResult {
   body: string
   chars: number

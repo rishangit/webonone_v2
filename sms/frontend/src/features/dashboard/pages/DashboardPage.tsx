@@ -16,7 +16,8 @@ import {
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { dashboardActions } from '@/features/dashboard/store'
+import { SmsCreditsCard } from '@/features/dashboard/components/SmsCreditsCard'
+import { dashboardActions, smsCreditsActions } from '@/features/dashboard/store'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function StatCard({ title, value }: { title: string; value: number | string }) {
@@ -36,20 +37,36 @@ export function DashboardPage() {
   const { t } = useTranslation('shell')
   const { t: tq } = useTranslation('queue')
   const dispatch = useAppDispatch()
-  const { accessToken } = useAppSelector((s) => s.auth)
+  const { accessToken, user } = useAppSelector((s) => s.auth)
   const { stats, status, error } = useAppSelector((s) => s.dashboard)
+  const smsCredits = useAppSelector((s) => s.smsCredits)
 
+  const role = user?.role ?? 'member'
+  const canViewCredits = role === 'super_admin' || role === 'company_admin'
   const loading = status === 'loading' && !stats
+  const creditsFirstLoad =
+    canViewCredits && smsCredits.lastFetchedAt === null && smsCredits.status === 'loading'
 
-  usePlatformLoading(loading ? t('loadingDashboard') : null)
+  usePlatformLoading(
+    loading || creditsFirstLoad ? t('loadingDashboard') : null,
+  )
 
   useEffect(() => {
     if (!accessToken) return
     dispatch(dashboardActions.loadStatsRequested())
   }, [accessToken, dispatch])
 
+  useEffect(() => {
+    if (!accessToken || !canViewCredits) return
+    dispatch(smsCreditsActions.loadRequested())
+  }, [accessToken, canViewCredits, dispatch])
+
   if (!accessToken) {
     return <Navigate to="/login" replace />
+  }
+
+  function refreshCredits() {
+    dispatch(smsCreditsActions.loadRequested({ force: true }))
   }
 
   return (
@@ -74,6 +91,20 @@ export function DashboardPage() {
               <StatCard title={t('approvedDevices')} value={stats.approvedDevices} />
             )}
           </div>
+
+          {canViewCredits ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <SmsCreditsCard
+                status={smsCredits.status}
+                configured={smsCredits.configured}
+                balance={smsCredits.balance}
+                lastUpdated={smsCredits.lastUpdated}
+                error={smsCredits.error}
+                hasLoaded={smsCredits.lastFetchedAt != null}
+                onRefresh={refreshCredits}
+              />
+            </div>
+          ) : null}
 
           <section className="space-y-3">
             <h2 className="text-lg font-medium">{t('historyTitle')}</h2>

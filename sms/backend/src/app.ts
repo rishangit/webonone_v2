@@ -13,6 +13,7 @@ import queueRoutes from './routes/queue.routes.js'
 import historyRoutes from './routes/history.routes.js'
 import dashboardRoutes from './routes/dashboard.routes.js'
 import gatewayRoutes from './routes/gateway.routes.js'
+import providersRoutes from './routes/providers.routes.js'
 import aiCapabilitiesRoutes from './routes/aiCapabilities.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
@@ -36,6 +37,7 @@ export function createApp() {
   app.use('/api/v1', historyRoutes)
   app.use('/api/v1', dashboardRoutes)
   app.use('/api/v1', gatewayRoutes)
+  app.use('/api/v1', providersRoutes)
   app.use('/api/v1', aiCapabilitiesRoutes)
 
   if (fs.existsSync(publicDir)) {

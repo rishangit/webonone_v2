@@ -11,4 +11,6 @@ summary: "Register a phone as an SMS gateway and approve it under SMS → Device
 2. Follow **Register** instructions, or install the [mobile app](/docs/communications/mobile-gateway) and sign in.
 3. **Approve** the device when it appears.
 
+To use **Text.lk** instead of a phone SIM, open the **Settings** tab on Devices, choose Text.lk, and save your API token and sender ID. Remaining Text.lk credits then appear on [SMS overview / Dashboard](/docs/communications/sms-overview).
+
 A stale or offline device will not send. See [gateway troubleshooting](/docs/glossary/troubleshooting-gateway).

@@ -8,6 +8,7 @@
     "stage:deploy": "node ../tooling/stage-iis-deploy.mjs sms/deploy",
     "clean:deploy": "node ../tooling/stage-iis-deploy.mjs sms/deploy --clean-only",
     "type-check": "npm run type-check -w @webonone/sms-frontend && npm run type-check -w @webonone/sms-backend",
+    "test": "npm run test -w @webonone/sms-backend && npm run test -w @webonone/sms-frontend",
     "migrate": "npm run migrate -w @webonone/sms-backend"
   },
   "devDependencies": {

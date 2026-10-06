@@ -30,5 +30,15 @@
   "historyActionsFor": "{{name}} සඳහා ඉතිහාසය",
   "completingSignIn": "පිවිසීම සම්පූර්ණ කරමින්…",
   "backToSignIn": "පිවිසීමට ආපසු",
-  "loadingSession": "සැසිය පූරණය වෙමින්…"
+  "loadingSession": "සැසිය පූරණය වෙමින්…",
+  "smsCreditsTitle": "SMS ණය ඒකක",
+  "smsCreditsRemaining": "ඉතිරි SMS ණය ඒකක",
+  "smsCreditsNotConfigured": "Text.lk වින්‍යාස කර නැත",
+  "smsCreditsConfigure": "SMS වින්‍යාස කරන්න",
+  "smsCreditsError": "SMS ශේෂය ලබා ගත නොහැක",
+  "smsCreditsRetry": "නැවත උත්සාහ කරන්න",
+  "smsCreditsRefresh": "SMS ණය ඒකක නැවුම් කරන්න",
+  "smsCreditsLoading": "SMS ණය ඒකක පූරණය වෙමින්…",
+  "smsCreditsLastUpdated": "අවසන් යාවත්කාලීනය: {{relative}}",
+  "loadingSmsCredits": "SMS ණය ඒකක පූරණය වෙමින්…"
 }
