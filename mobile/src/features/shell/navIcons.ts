@@ -59,6 +59,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
   [DATA_NAV_SENTINELS.products]: Package,
   [DATA_NAV_SENTINELS.services]: Wrench,
   [DATA_NAV_SENTINELS.spaces]: Layers,
+  [SMS_NAV_SENTINELS.dashboard]: LayoutDashboard,
   [SMS_NAV_SENTINELS.send]: Send,
   [SMS_NAV_SENTINELS.devices]: Smartphone,
   [SMS_NAV_SENTINELS.gateway]: Smartphone,

@@ -183,13 +183,15 @@ describe('coreNav', () => {
     const smsGroup = nav.find((item) => item.kind === 'group' && item.label === 'SMS')
     assert.ok(smsGroup?.kind === 'group')
     if (smsGroup?.kind === 'group') {
-      assert.equal(smsGroup.children.length, 5)
-      assert.equal(smsGroup.children[0]?.href, 'http://localhost:3016/send')
-      assert.equal(smsGroup.children[0]?.label, 'Send SMS')
-      assert.equal(smsGroup.children[1]?.href, 'http://localhost:3016/devices')
-      assert.equal(smsGroup.children[2]?.href, 'http://localhost:3016/queue')
-      assert.equal(smsGroup.children[3]?.href, 'http://localhost:3016/history')
-      assert.equal(smsGroup.children[4]?.href, 'http://localhost:3016/templates')
+      assert.equal(smsGroup.children.length, 6)
+      assert.equal(smsGroup.children[0]?.href, 'http://localhost:3016/')
+      assert.equal(smsGroup.children[0]?.label, 'Dashboard')
+      assert.equal(smsGroup.children[1]?.href, 'http://localhost:3016/send')
+      assert.equal(smsGroup.children[1]?.label, 'Send SMS')
+      assert.equal(smsGroup.children[2]?.href, 'http://localhost:3016/devices')
+      assert.equal(smsGroup.children[3]?.href, 'http://localhost:3016/queue')
+      assert.equal(smsGroup.children[4]?.href, 'http://localhost:3016/history')
+      assert.equal(smsGroup.children[5]?.href, 'http://localhost:3016/templates')
     }
   })
 
@@ -214,12 +216,14 @@ describe('coreNav', () => {
   })
 
   it('maps SMS sentinels to external paths', () => {
+    assert.equal(isSmsNavSentinel(SMS_NAV_SENTINELS.dashboard), true)
     assert.equal(isSmsNavSentinel(SMS_NAV_SENTINELS.send), true)
     assert.equal(isSmsNavSentinel(SMS_NAV_SENTINELS.gateway), true)
     assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1`), true)
     assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1/preview`), true)
     assert.equal(isSmsNavSentinel(`${SMS_NAV_SENTINELS.templates}/tmpl_1/versions`), true)
     assert.equal(isSmsNavSentinel('/email/history'), false)
+    assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.dashboard), '/')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.send), '/send')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.gateway), '/devices?tab=settings')
     assert.equal(smsSentinelToExternalPath(SMS_NAV_SENTINELS.devices), '/devices')

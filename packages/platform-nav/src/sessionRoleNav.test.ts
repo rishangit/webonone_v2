@@ -65,6 +65,7 @@ describe('sessionRoleNav', () => {
   it('appends This device after Devices on mobile SMS nav', () => {
     const defs = appendMobileSmsThisDeviceNav(buildNavDefsForSessionRole('company_admin', [], 'co_1'))
     assert.deepEqual(smsChildLabels(defs), [
+      'Dashboard',
       'Send SMS',
       'Devices',
       'This device',

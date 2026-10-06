@@ -244,6 +244,7 @@ export function identitySentinelToExternalPath(sentinel: string): string | null 
 
 /** Internal sentinels for SMS sub-nav in consumer AppLayouts (not routed on core origin). */
 export const SMS_NAV_SENTINELS = {
+  dashboard: '/sms/dashboard',
   send: '/sms/send',
   gateway: '/sms/gateway',
   devices: '/sms/devices',
@@ -254,6 +255,7 @@ export const SMS_NAV_SENTINELS = {
 
 export function isSmsNavSentinel(to: string): boolean {
   if (
+    to === SMS_NAV_SENTINELS.dashboard ||
     to === SMS_NAV_SENTINELS.send ||
     to === SMS_NAV_SENTINELS.gateway ||
     to === SMS_NAV_SENTINELS.devices ||
@@ -273,6 +275,8 @@ export function isSmsNavSentinel(to: string): boolean {
 
 export function smsSentinelToExternalPath(sentinel: string): string | null {
   switch (sentinel) {
+    case SMS_NAV_SENTINELS.dashboard:
+      return '/'
     case SMS_NAV_SENTINELS.send:
       return '/send'
     case SMS_NAV_SENTINELS.gateway:
@@ -300,6 +304,13 @@ const SMS_PLATFORM_NAV_GROUP: CoreNavGroup = {
   kind: 'group',
   label: 'SMS',
   children: [
+    {
+      kind: 'item',
+      path: SMS_NAV_SENTINELS.dashboard,
+      label: 'Dashboard',
+      externalService: 'sms',
+      externalPath: '/',
+    },
     {
       kind: 'item',
       path: SMS_NAV_SENTINELS.send,

@@ -47,7 +47,7 @@ function resolvePeerPath(peer: PlatformPeerId, pathname: string): string {
     return '/send'
   }
   if (peer === 'sms') {
-    return smsSentinelToExternalPath(pathname) ?? '/send'
+    return smsSentinelToExternalPath(pathname) ?? '/'
   }
   if (peer === 'payment') {
     return paymentSentinelToExternalPath(pathname) ?? '/invoices'
@@ -176,7 +176,7 @@ function isAllowedSmsShellNavigatePath(path: string): boolean {
   if (parts.some((part) => !part || part.includes('..'))) return false
 
   const section = parts[1]
-  const topLevel = new Set(['send', 'gateway', 'devices', 'queue', 'history', 'templates'])
+  const topLevel = new Set(['dashboard', 'send', 'gateway', 'devices', 'queue', 'history', 'templates'])
   if (!topLevel.has(section ?? '')) return false
 
   if (section === 'templates') {

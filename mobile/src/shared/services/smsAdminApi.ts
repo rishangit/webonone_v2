@@ -79,7 +79,16 @@ export type SmsDashboardStats = {
   sentCount24h: number
   approvedDevices: number
   gatewayMode?: 'mobile_device' | 'text_lk'
+  gatewayConfigured?: boolean
   recentActivity: SmsAdminHistoryItem[]
+}
+
+export type TextLkBalance = {
+  provider: 'textlk'
+  configured: boolean
+  balance: number | null
+  unit: 'SMS'
+  lastUpdated: string | null
 }
 
 function toQueryString(params: Record<string, string | number | undefined>): string {
@@ -96,6 +105,11 @@ function toQueryString(params: Record<string, string | number | undefined>): str
 export const smsAdminApi = {
   getDashboardStats() {
     return client<SmsDashboardStats>('/dashboard/stats')
+  },
+
+  getTextLkBalance(options: { force?: boolean } = {}) {
+    const qs = options.force ? '?force=1' : ''
+    return client<TextLkBalance>(`/providers/textlk/balance${qs}`)
   },
 
   listTemplates() {
