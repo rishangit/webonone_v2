@@ -7,16 +7,16 @@ Keep the assistant on the existing desktop in-flow `AppEndPanel` rail. Add an op
 ## Implementation steps
 
 1. **`ui-kit/package/src/layouts/AppEndPanel.tsx`**
-   - Props: `expandable?`, `expanded?`, `onExpandedChange?`, `expandLabel?`, `collapseLabel?`.
-   - Desktop-only header button (Maximize2 / Minimize2) left of Close when `expandable` and not slide-over.
-   - When `expanded` + desktop + not slide-over: class `app-shell-end-panel--expanded` and `md:max-w-none md:min-w-0 md:flex-1`.
+  - Props: `expandable?`, `expanded?`, `onExpandedChange?`, `expandLabel?`, `collapseLabel?`.
+  - Desktop-only header button (Maximize2 / Minimize2) left of Close when `expandable` and not slide-over.
+  - When `expanded` + desktop + not slide-over: class `app-shell-end-panel--expanded` and `md:max-w-none md:min-w-0 md:flex-1`.
 
 2. **`ui-kit/package/src/styles/globals.css`**
-   - `.app-shell-body:has(.app-shell-end-panel--expanded) > #main-content { display: none; }` (or equivalent flex collapse) so expanded rail fills remaining body width beside the sidebar.
+  - `.app-shell-body:has(.app-shell-end-panel--expanded) > #main-content { display: none; }` (or equivalent flex collapse) so expanded rail fills remaining body width beside the sidebar.
 
 3. **`webonone-v2/.../AppAssistant.tsx`**
-   - Local `expanded` state; reset when `open` becomes false.
-   - Pass expand props + labels from `shell` i18n (`assistant.expand` / `assistant.collapse`).
+  - Local `expanded` state; reset when `open` becomes false.
+  - Pass expand props + labels from `shell` i18n (`assistant.expand` / `assistant.collapse`).
 
 4. **i18n** — `webonone-v2/frontend/src/locales/{en,si}/shell.json` expand/collapse strings.
 

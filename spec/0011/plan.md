@@ -7,16 +7,16 @@ Use existing Support list query `status` + UI Kit Tabs. Tabs become the primary 
 ## Implementation steps
 
 1. **`FeedbackListPage.tsx`**
-   - Drive `appliedFilters.status` from a controlled `Tabs` value (`all` | `FeedbackStatus`).
-   - Place tabs above `ListPageBody` (or as first child inside body) with `tabsPageClassName` / scrollable `TabsList`.
-   - On tab change: update applied status, reset to page 1, reload list.
-   - Remove status `Select` from `ListFilterPanel`; `hasActiveFilters` = type only.
-   - Keep draft `statusFilter` state removal (or sync tab → applied only).
+  - Drive `appliedFilters.status` from a controlled `Tabs` value (`all` | `FeedbackStatus`).
+  - Place tabs above `ListPageBody` (or as first child inside body) with `tabsPageClassName` / scrollable `TabsList`.
+  - On tab change: update applied status, reset to page 1, reload list.
+  - Remove status `Select` from `ListFilterPanel`; `hasActiveFilters` = type only.
+  - Keep draft `statusFilter` state removal (or sync tab → applied only).
 
 2. **`FeedbackList.tsx`**
-   - Header row: type icon + ticket/unread tags + `ItemListStatus` + optional status menu.
-   - Full-width block below: title, description, screenshot, reported-by (button for detail).
-   - Prefer wrapping content so title/description never share a horizontal flex sibling with the status chip on narrow screens (e.g. `flex-col` content stack; status in header with `ml-auto`).
+  - Header row: type icon + ticket/unread tags + `ItemListStatus` + optional status menu.
+  - Full-width block below: title, description, screenshot, reported-by (button for detail).
+  - Prefer wrapping content so title/description never share a horizontal flex sibling with the status chip on narrow screens (e.g. `flex-col` content stack; status in header with `ml-auto`).
 
 3. **i18n** — `en`/`si` `feedback.json`: `statusTabsAria` (and optional short tab labels if needed; reuse `status.*` + `filterAll`).
 

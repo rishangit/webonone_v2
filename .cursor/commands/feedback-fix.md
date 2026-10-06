@@ -16,7 +16,7 @@ Statuses (super admin manages all except the automated transitions below):
 
 Run end-to-end without asking for confirmation unless blocked.
 
-**Standalone workflow:** Support Feedback MCP + on-disk `spec/{ticket}/` only — no ClickUp MCP. Each invocation targets one report (by ticket, id, or queue rules).
+**Standalone workflow:** Support Feedback MCP + on-disk `spec/{ticket}/` only. Each invocation targets one report (by ticket, id, or queue rules).
 
 ## Permissions — auto-run
 

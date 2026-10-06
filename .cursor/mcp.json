@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "clickup": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://mcp.clickup.com/mcp"]
-    },
     "support-feedback": {
       "command": "node",
       "args": ["tooling/support-feedback-mcp/dist/index.js"],

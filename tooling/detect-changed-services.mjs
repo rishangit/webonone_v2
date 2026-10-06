@@ -12,7 +12,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const configPath = join(repoRoot, 'tooling', 'deploy-services.json');
@@ -171,7 +171,7 @@ function isUnmappedPackagesPath(config, path) {
  * @param {ReturnType<typeof loadConfig>} config
  * @param {string[]} paths
  */
-function detectFromPaths(config, paths) {
+export function detectFromPaths(config, paths) {
   const normalized = paths.map(normalizePath);
   /** @type {string[]} */
   const reasons = [];
@@ -246,26 +246,18 @@ function detectFromPaths(config, paths) {
     };
   }
 
-  if (services.length === config.serviceOrder.length) {
-    return {
-      mode: 'all',
-      services: [...config.serviceOrder],
-      reason: reasons.length
-        ? `all IIS services affected (${reasons.join('; ')})`
-        : 'all IIS services affected',
-    };
-  }
+  const reasonText = reasons.length
+    ? `changed services: ${services.join(',')} (${reasons.join('; ')})`
+    : `changed services: ${services.join(',')}`;
 
   return {
     mode: 'selective',
     services,
-    reason: reasons.length
-      ? `changed services: ${services.join(',')} (${reasons.join('; ')})`
-      : `changed services: ${services.join(',')}`,
+    reason: reasonText,
   };
 }
 
-function loadConfig() {
+export function loadConfig() {
   if (!existsSync(configPath)) {
     throw new Error(`Missing ${configPath}`);
   }
@@ -298,8 +290,10 @@ function main() {
 
   const config = loadConfig();
 
-  /** @type {{ mode: string, services: string[], reason: string }} */
+  /** @type {{ mode: string, services: string[], reason: string, changedPaths?: string[] }} */
   let result;
+  /** @type {string[] | undefined} */
+  let diffPaths;
 
   if (args.forceAll) {
     result = { mode: 'all', services: [...config.serviceOrder], reason: '--force-all' };
@@ -307,8 +301,6 @@ function main() {
     const services = parseServicesCsv(args.services, config);
     if (services.length === 0) {
       result = { mode: 'none', services: [], reason: '--services empty' };
-    } else if (services.length === config.serviceOrder.length) {
-      result = { mode: 'all', services, reason: `--services ${services.join(',')}` };
     } else {
       result = { mode: 'selective', services, reason: `--services ${services.join(',')}` };
     }
@@ -331,13 +323,18 @@ function main() {
         reason: 'missing or zero base SHA (full deploy)',
       };
     } else {
-      const paths = gitDiffNames(base, head);
-      if (paths.length === 0) {
+      diffPaths = gitDiffNames(base, head);
+      if (diffPaths.length === 0) {
         result = { mode: 'none', services: [], reason: 'empty git diff' };
       } else {
-        result = detectFromPaths(config, paths);
+        result = detectFromPaths(config, diffPaths);
+        result.changedPaths = diffPaths;
       }
     }
+  }
+
+  if (result && diffPaths && !result.changedPaths) {
+    result.changedPaths = diffPaths;
   }
 
   if (args.print || !args.githubOutput) {
@@ -350,26 +347,32 @@ function main() {
     }
     const pools = result.services.map((k) => config.services[k].appPool).filter(Boolean);
     const urls = result.services.map((k) => config.services[k].healthUrl).filter(Boolean);
-    appendFileSync(
-      outFile,
-      [
-        `mode=${result.mode}`,
-        `services=${result.services.join(',')}`,
-        `app_pools=${pools.join(',')}`,
-        `health_urls=${urls.join(',')}`,
-        `reason=${result.reason.replace(/\r?\n/g, ' ')}`,
-      ].join('\n') + '\n',
-      'utf8',
-    );
+    const lines = [
+      `mode=${result.mode}`,
+      `services=${result.services.join(',')}`,
+      `app_pools=${pools.join(',')}`,
+      `health_urls=${urls.join(',')}`,
+      `reason=${result.reason.replace(/\r?\n/g, ' ')}`,
+    ];
+    if (result.changedPaths && result.changedPaths.length > 0) {
+      lines.push(`changed_paths<<EOF`);
+      lines.push(result.changedPaths.join('\n'));
+      lines.push('EOF');
+    }
+    appendFileSync(outFile, `${lines.join('\n')}\n`, 'utf8');
     console.error(
       `detect-changed-services: mode=${result.mode} services=${result.services.join(',') || '(none)'} (${result.reason})`,
     );
   }
 }
 
-try {
-  main();
-} catch (err) {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+const isMain = Boolean(process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href);
+
+if (isMain) {
+  try {
+    main();
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : err);
+    process.exit(1);
+  }
 }

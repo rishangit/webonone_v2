@@ -7,14 +7,14 @@ Remove the duplicate mobile horizontal inset on `FeaturePage` by changing the sh
 ## Implementation steps
 
 1. **`ui-kit/package/src/layouts/shellContentPadding.ts`**
-   - Change `shellPagePadding` from `px-2 py-4 sm:px-6 sm:py-6` to `px-0 py-4 sm:px-6 sm:py-6`.
-   - Leave `shellContentPaddingX`, `shellChromeRootClassName`, and `shellDialogOverlayClassName` unchanged.
+  - Change `shellPagePadding` from `px-2 py-4 sm:px-6 sm:py-6` to `px-0 py-4 sm:px-6 sm:py-6`.
+  - Leave `shellContentPaddingX`, `shellChromeRootClassName`, and `shellDialogOverlayClassName` unchanged.
 
 2. **`support/frontend/src/features/shell/layout/shellLayout.ts`**
-   - Mirror the same `shellPagePadding` string so Support docs pages stay consistent.
+  - Mirror the same `shellPagePadding` string so Support docs pages stay consistent.
 
 3. **`.cursor/rules/feature-page-layout.mdc`** (light touch)
-   - Correct the horizontal-padding note: `FeaturePage` applies `shellPagePadding` (`px-0` mobile / `sm:px-6`); do not add extra `px-*` on page wrappers.
+  - Correct the horizontal-padding note: `FeaturePage` applies `shellPagePadding` (`px-0` mobile / `sm:px-6`); do not add extra `px-*` on page wrappers.
 
 4. **Verify** — type-check/lint on ui-kit and support frontend.
 

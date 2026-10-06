@@ -51,7 +51,7 @@ After feedback 0019 widened mobile feature pages (`shellPagePadding` → `px-0`)
 ```bash
 npm run type-check -w @webonone/ui-kit
 npm run lint -w @webonone/ui-kit
-npm run type-check -w @webonone/platform-embed   # if embed shell changed
+npm run type-check -w @webonone/platform-embed  # if embed shell changed
 npm run type-check -w support-root
 npm run lint -w @webonone/support-frontend
 ```

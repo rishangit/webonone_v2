@@ -7,7 +7,7 @@ description: Support feedback queue via MCP — spec, plan, development-summary 
 
 Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the source of truth.
 
-**Standalone:** Support Feedback MCP only — no ClickUp. One report per invocation (ticket, id, or queue).
+**Standalone:** Support Feedback MCP only. One report per invocation (ticket, id, or queue).
 
 **Auto-run:** MCP, `SwitchMode` to `plan` (IDE only), `spec/{ticket}/` writes, git commit/push to **`deploy_staging`**, implementation, verification — pre-authorized per `.cursor/permissions.json`.
 
@@ -55,11 +55,23 @@ Follow [`.cursor/commands/feedback-fix.md`](../commands/feedback-fix.md) as the 
 ## Phases
 
 1. **`ready_to_develop`:** requirement → `spec.md` → `plan.md` → status `planned` → continue in same session
-2. **`planned`:** `in_progress` → implement → verify → `developed` → `development-summary.md` → **one** commit → push `deploy_staging` → `staging`
+2. **`planned`:** `in_progress` → implement → verify → `developed` → `development-summary.md` (including deploy detect) → **one** commit → push `deploy_staging` → `staging`
 
 ## Verification
 
 `npm run type-check` / `npm run lint` on touched workspaces before `developed`.
+
+## Deploy detection (before commit)
+
+From repo root, before writing the final `development-summary.md` Deploy table:
+
+```bash
+npm run deploy:detect -- --base origin/deploy_staging --head HEAD --print
+```
+
+1. Copy **mode**, **services**, and **reason** into the Deploy section ([template](development-summary-template.md)).
+2. If `mode=none` but product code changed, fix paths or [`tooling/deploy-services.json`](../../tooling/deploy-services.json) mapping before push.
+3. After push, the finish report must include GitHub Actions **Deploy summary** / **Deploy detect job summary** (`mode`, `reason`) to confirm prediction matched runtime — no second commit to update the md.
 
 ## Deploy branch
 

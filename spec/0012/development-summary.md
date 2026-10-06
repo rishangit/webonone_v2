@@ -46,8 +46,8 @@ node --check tooling/deploy-changed.mjs
 node --check tooling/resolve-smoke-urls.mjs
 node tooling/detect-changed-services.mjs --services support --print
 node tooling/detect-changed-services.mjs --files <synthetic support-only list> --print
-node tooling/detect-changed-services.mjs --files <packages/ path> --print   # mode=all
-node tooling/detect-changed-services.mjs --files <spec-only> --print         # mode=none
+node tooling/detect-changed-services.mjs --files <packages/ path> --print  # mode=all
+node tooling/detect-changed-services.mjs --files <spec-only> --print  # mode=none
 node tooling/resolve-smoke-urls.mjs --services support,data
 node tooling/deploy-changed.mjs --mode none
 ```

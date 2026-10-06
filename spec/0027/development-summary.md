@@ -54,7 +54,13 @@ npm run lint -w @webonone/support-frontend
 |-------|-------|
 | Branch | `deploy_staging` |
 | Commit message | `feedback 0027: clear mobile scrollbar from FeaturePage content` |
-| CI | Push runs `.github/workflows/deploy-staging.yml` |
+| Workflow | Push runs `.github/workflows/deploy-staging.yml` |
+| **Expected mode** | `selective` |
+| **Services** | `identity`, `webonone`, `media`, `email`, `data`, `sms`, `payment`, `website`, `design`, `ai`, `support` (all IIS keys) |
+| **Why** | `ui-kit/` and `packages/platform-embed/` map to every IIS consumer; `support/` also changed; `spec/` and `.cursor/` ignored |
+| Detect command | `npm run deploy:detect -- --base origin/deploy_staging --head HEAD --print` |
+
+**Deploy modes:** `selective` with all eleven services is not `deploy:all` — each site runs `deploy:<key>` so its frontend rebuilds bundled ui-kit/platform-embed. See `tooling/CICD.md`.
 
 ## Support status
 

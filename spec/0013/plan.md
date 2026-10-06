@@ -9,24 +9,24 @@ Serve ticket planning Markdown from the monorepo `spec/{ticket}/` folder via aut
 1. **Backend env** — Optional `FEEDBACK_SPEC_ROOT` (absolute path). Default: `path.resolve(backendRoot, '../../spec')` (works for `support/backend` local and `support/deploy` IIS when `backendRoot` is the staged deploy dir → repo `spec/`). Document in `.env.example`.
 
 2. **`feedbackSpec.service.ts`**
-   - Allowlist file names + display keys.
-   - Resolve ticket folder with regex `^\d{4}$` + `path.resolve` + ensure resolved path stays under spec root.
-   - `listSpecDocs(ticket)` → existing files with `{ fileName, labelKey }`.
-   - `readSpecDoc(ticket, fileName)` → `{ fileName, markdown }` or `NOT_FOUND`.
+  - Allowlist file names + display keys.
+  - Resolve ticket folder with regex `^\d{4}$` + `path.resolve` + ensure resolved path stays under spec root.
+  - `listSpecDocs(ticket)` → existing files with `{ fileName, labelKey }`.
+  - `readSpecDoc(ticket, fileName)` → `{ fileName, markdown }` or `NOT_FOUND`.
 
 3. **Routes / controller** (before `/:id` conflicts — use ticket paths):
-   - `GET /feedback/ticket/:ticketNumber/spec-docs` → list
-   - `GET /feedback/ticket/:ticketNumber/spec-docs/:fileName` → body
-   - Auth: `requireAuth` (signed-in viewers; same as comments). Optionally allow automation key via `requireFeedbackAutomationOrJwt` for MCP — prefer `requireAuth` only for UI docs.
+  - `GET /feedback/ticket/:ticketNumber/spec-docs` → list
+  - `GET /feedback/ticket/:ticketNumber/spec-docs/:fileName` → body
+  - Auth: `requireAuth` (signed-in viewers; same as comments). Optionally allow automation key via `requireFeedbackAutomationOrJwt` for MCP — prefer `requireAuth` only for UI docs.
 
 4. **Frontend API + store**
-   - `feedbackApi.listSpecDocs` / `getSpecDoc`.
-   - Slice fields + epics for list (with detail) and doc fetch (viewer page).
+  - `feedbackApi.listSpecDocs` / `getSpecDoc`.
+  - Slice fields + epics for list (with detail) and doc fetch (viewer page).
 
 5. **UI**
-   - Detail page: Planning docs `Card` with link buttons per available file.
-   - New page `FeedbackSpecDocPage` at `/feedback/:ticketNumber/docs/:fileName` — `FeaturePage` + `ArticleBody`.
-   - Router lazy route; i18n en/si keys.
+  - Detail page: Planning docs `Card` with link buttons per available file.
+  - New page `FeedbackSpecDocPage` at `/feedback/:ticketNumber/docs/:fileName` — `FeaturePage` + `ArticleBody`.
+  - Router lazy route; i18n en/si keys.
 
 6. **Help** — `report-feedback.md` en + si: planning docs on detail when present.
 

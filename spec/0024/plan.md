@@ -7,13 +7,13 @@ Identity already clears stale session and skips auto-complete when `prompt=login
 ## Implementation steps
 
 1. **`support/frontend/src/features/auth/utils/buildIdentityLoginUrl.ts`**
-   - Add `prompt: 'login'` to `extraSearchParams` alongside theme/locale relay params so Identity URL always forces interactive login.
+  - Add `prompt: 'login'` to `extraSearchParams` alongside theme/locale relay params so Identity URL always forces interactive login.
 
 2. **`support/frontend/src/features/auth/components/PrivateRoute.tsx`** (optional consistency)
-   - Navigate to `/login?prompt=login&return=…` instead of `/login?return=…`.
+  - Navigate to `/login?prompt=login&return=…` instead of `/login?return=…`.
 
 3. **`support/frontend/src/features/docs/components/SupportHeader.tsx`** (optional consistency)
-   - Sign In button → `/login?prompt=login&return=…`.
+  - Sign In button → `/login?prompt=login&return=…`.
 
 4. **Help articles** — not needed (bug fix; login already expected for Bug & Feature).
 

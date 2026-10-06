@@ -7,21 +7,21 @@ Mirror Media/Email satellite logout: clear Support auth storage synchronously, t
 ## Implementation steps
 
 1. **`support/frontend/src/features/docs/components/SupportHeader.tsx`**
-   - Import `performPlatformLogout` from `@webonone/platform-nav`.
-   - Import `clearSupportAuthStorage` from `@/features/auth/store/authSlice` (keep or drop `authActions` if unused).
-   - Import `getIdentityOrigin` from `@/features/auth/utils/identityConfig`.
-   - Replace `handleLogout`:
-     ```tsx
-     const handleLogout = useCallback(() => {
-       clearSupportAuthStorage()
-       performPlatformLogout(null, {
-         identityOrigin: getIdentityOrigin(),
-         postLogoutRedirectUri: `${window.location.origin}/`,
-       })
-     }, [])
-     ```
-   - Do **not** `dispatch(authActions.logout())` before redirect (avoids flash; storage clear + full navigation is enough).
-   - Remove unused `dispatch` / `useAppDispatch` if no longer needed.
+  - Import `performPlatformLogout` from `@webonone/platform-nav`.
+  - Import `clearSupportAuthStorage` from `@/features/auth/store/authSlice` (keep or drop `authActions` if unused).
+  - Import `getIdentityOrigin` from `@/features/auth/utils/identityConfig`.
+  - Replace `handleLogout`:
+  ```tsx
+  const handleLogout = useCallback(() => {
+  clearSupportAuthStorage()
+  performPlatformLogout(null, {
+  identityOrigin: getIdentityOrigin(),
+  postLogoutRedirectUri: `${window.location.origin}/`,
+  })
+  }, [])
+  ```
+  - Do **not** `dispatch(authActions.logout())` before redirect (avoids flash; storage clear + full navigation is enough).
+  - Remove unused `dispatch` / `useAppDispatch` if no longer needed.
 
 2. **Help articles** — not needed (bug fix; Sign out already documented implicitly).
 

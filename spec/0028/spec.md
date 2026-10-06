@@ -27,9 +27,9 @@ Feedback 0012 added selective staging deploy, but most real pushes still rebuild
 
 1. Changes under a **single service root** (e.g. `support/`) still deploy **only** that service (unchanged from 0012).
 2. Changes under **shared libraries** map to **consumer IIS services** via config (not blanket `mode=all` for all of `packages/`):
-   - `packages/mobile-ui/` and `mobile/` alone → `mode=none` (no IIS deploy).
-   - Packages with a consumer subset (e.g. `media-embed`, `store-kit`) → `mode=selective` for those consumers only.
-   - Libraries that affect every IIS frontend (`ui-kit/`, `packages/theme/`, `packages/i18n/`) may still resolve to a full deploy (`mode=all`) when the consumer set is complete.
+  - `packages/mobile-ui/` and `mobile/` alone → `mode=none` (no IIS deploy).
+  - Packages with a consumer subset (e.g. `media-embed`, `store-kit`) → `mode=selective` for those consumers only.
+  - Libraries that affect every IIS frontend (`ui-kit/`, `packages/theme/`, `packages/i18n/`) may still resolve to a full deploy (`mode=all`) when the consumer set is complete.
 3. Non-deployable paths (`spec/`, `.cursor/`, docs-only tooling such as `tooling/CICD.md`, support-feedback MCP tooling) alone → `mode=none`.
 4. Only **deploy-critical** tooling / root lockfile / workflow files force full deploy (narrowed list; not every file under `tooling/`).
 5. Workflow runs **Detect deploy targets before `npm install`**. When `mode=none`, **Skip deploy** runs and **skips** install, env:apply, migrate, recycle, and smoke.
@@ -59,11 +59,11 @@ Feedback 0012 added selective staging deploy, but most real pushes still rebuild
 
 ```bash
 node --check tooling/detect-changed-services.mjs
-node tooling/detect-changed-services.mjs --files <support-only> --print          # selective support
-node tooling/detect-changed-services.mjs --files <mobile-ui-only> --print        # none
-node tooling/detect-changed-services.mjs --files <ui-kit> --print                # all (all consumers)
-node tooling/detect-changed-services.mjs --files <media-embed> --print           # selective consumers
-node tooling/detect-changed-services.mjs --files <spec-only> --print             # none
-node tooling/detect-changed-services.mjs --files <tooling/CICD.md> --print       # none
+node tooling/detect-changed-services.mjs --files <support-only> --print  # selective support
+node tooling/detect-changed-services.mjs --files <mobile-ui-only> --print  # none
+node tooling/detect-changed-services.mjs --files <ui-kit> --print  # all (all consumers)
+node tooling/detect-changed-services.mjs --files <media-embed> --print  # selective consumers
+node tooling/detect-changed-services.mjs --files <spec-only> --print  # none
+node tooling/detect-changed-services.mjs --files <tooling/CICD.md> --print  # none
 node tooling/detect-changed-services.mjs --services support,data --print
 ```

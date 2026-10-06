@@ -7,21 +7,21 @@ Mirror feedback 0017’s native picker pattern (`CustomerPickerDialog`): replace
 ## Implementation steps
 
 1. **`mobile/.../LibraryPickerPanel.tsx`**
-   - Import `ListPageActions` and `ListAddButton` from `@webonone/mobile-ui`.
-   - Remove `Plus` from lucide imports and the outline `Button` for create-in-library.
-   - Replace the `flex-row` search/button wrapper with:
-     ```tsx
-     <ListPageActions>
-       <SearchInput … />
-       {canCreateInLibrary(kind) ? (
-         <ListAddButton disabled={createOpen} onPress={openCreate}>
-           {t('library.addToLibrary', { noun: nounLower })}
-         </ListAddButton>
-       ) : null}
-     </ListPageActions>
-     ```
-   - Keep existing create host, list selection, and reload behavior unchanged.
-   - Keep `SearchInput` first child (required for `ListPageActions` overlay geometry).
+  - Import `ListPageActions` and `ListAddButton` from `@webonone/mobile-ui`.
+  - Remove `Plus` from lucide imports and the outline `Button` for create-in-library.
+  - Replace the `flex-row` search/button wrapper with:
+  ```tsx
+  <ListPageActions>
+  <SearchInput … />
+  {canCreateInLibrary(kind) ? (
+  <ListAddButton disabled={createOpen} onPress={openCreate}>
+  {t('library.addToLibrary', { noun: nounLower })}
+  </ListAddButton>
+  ) : null}
+  </ListPageActions>
+  ```
+  - Keep existing create host, list selection, and reload behavior unchanged.
+  - Keep `SearchInput` first child (required for `ListPageActions` overlay geometry).
 
 2. **Consumers** — no API change; `CompanyCatalogFormDialog` / service wizard already render `LibraryPickerPanel`.
 

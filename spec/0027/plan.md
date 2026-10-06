@@ -9,20 +9,20 @@ Also reserve a stable scrollbar gutter on the two product scrollports (`#main-co
 ## Implementation steps
 
 1. **`ui-kit/package/src/layouts/shellContentPadding.ts`**
-   - Change `shellPagePadding` from `px-0 py-4 sm:px-6 sm:py-6` to `pl-0 pr-2 py-4 sm:px-6 sm:py-6`.
-   - Update the comment to document asymmetric mobile padding (left flush / right scrollbar clearance).
+  - Change `shellPagePadding` from `px-0 py-4 sm:px-6 sm:py-6` to `pl-0 pr-2 py-4 sm:px-6 sm:py-6`.
+  - Update the comment to document asymmetric mobile padding (left flush / right scrollbar clearance).
 
 2. **`ui-kit/package/src/layouts/AppShell.tsx`**
-   - On non-embed `#main-content`, add `scrollbar-gutter-stable` next to `overflow-y-auto scrollbar-themed`.
+  - On non-embed `#main-content`, add `scrollbar-gutter-stable` next to `overflow-y-auto scrollbar-themed`.
 
 3. **`packages/platform-embed/src/PlatformEmbedShell.tsx`**
-   - Add `scrollbar-gutter-stable` on the scrolling `<main>` class list.
+  - Add `scrollbar-gutter-stable` on the scrolling `<main>` class list.
 
 4. **`support/frontend/src/features/shell/layout/shellLayout.ts`**
-   - Mirror the same `shellPagePadding` string.
+  - Mirror the same `shellPagePadding` string.
 
 5. **`.cursor/rules/feature-page-layout.mdc`**
-   - Update the horizontal-padding note: mobile `pl-0 pr-2` / `sm:px-6`.
+  - Update the horizontal-padding note: mobile `pl-0 pr-2` / `sm:px-6`.
 
 6. **Verify** — type-check/lint on touched workspaces; manual narrow-viewport scroll check.
 

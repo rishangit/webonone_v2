@@ -7,18 +7,18 @@ Fix the Media selector/library toolbar in `ScopedFolderBrowser` so mobile matche
 ## Implementation steps
 
 1. **`media/frontend/.../ScopedFolderBrowser.tsx` — `renderToolbar()`**
-   - Import `ListPageActions`.
-   - Wrap `SearchInput`, `ListFilterTrigger`, Upload, FolderPlus, List, LayoutGrid in `<ListPageActions>`.
-   - Add `onClear={() => setFileNameQuery('')}` on `SearchInput`.
-   - Keep `className="w-64"` on `SearchInput` (desktop width when expanded / `sm+`).
-   - On each icon `Button` (`size="icon"`), add `className="h-9 w-9 shrink-0"` so they match `ListFilterTrigger`.
+  - Import `ListPageActions`.
+  - Wrap `SearchInput`, `ListFilterTrigger`, Upload, FolderPlus, List, LayoutGrid in `<ListPageActions>`.
+  - Add `onClear={() => setFileNameQuery('')}` on `SearchInput`.
+  - Keep `className="w-64"` on `SearchInput` (desktop width when expanded / `sm+`).
+  - On each icon `Button` (`size="icon"`), add `className="h-9 w-9 shrink-0"` so they match `ListFilterTrigger`.
 
 2. **Non-`showIconToolbar` search row**
-   - Replace the ad-hoc `flex` search + filter cluster with the same `ListPageActions` + `SearchInput` (+ `onClear`) + `ListFilterTrigger` pattern for consistent mobile compact search.
+  - Replace the ad-hoc `flex` search + filter cluster with the same `ListPageActions` + `SearchInput` (+ `onClear`) + `ListFilterTrigger` pattern for consistent mobile compact search.
 
 3. **Rules**
-   - `list-filter-panel.mdc`: exception — Media `ScopedFolderBrowser` toolbar uses list-page compact search via `ListPageActions` (ticket 0015).
-   - `ui-kit-consumption.mdc`: Media selector/library toolbar may use compact header-style search; other dialog/picker bodies stay full field unless wrapped in `ListPageActions` intentionally.
+  - `list-filter-panel.mdc`: exception — Media `ScopedFolderBrowser` toolbar uses list-page compact search via `ListPageActions` (ticket 0015).
+  - `ui-kit-consumption.mdc`: Media selector/library toolbar may use compact header-style search; other dialog/picker bodies stay full field unless wrapped in `ListPageActions` intentionally.
 
 4. **Verify** — type-check + lint `@webonone/media-frontend`. No Support help article.
 

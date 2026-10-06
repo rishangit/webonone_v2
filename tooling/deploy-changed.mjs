@@ -2,7 +2,7 @@
  * Migrate and deploy selected services (or all / none).
  *
  * Usage (from repo root, after npm install + env:apply):
- *   node tooling/deploy-changed.mjs --all
+ *   node tooling/deploy-changed.mjs --force-all
  *   node tooling/deploy-changed.mjs --services support,data
  *   node tooling/deploy-changed.mjs --mode none
  *   node tooling/deploy-changed.mjs --base <sha> --head <sha>
@@ -99,7 +99,7 @@ function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     console.log(`Usage:
-  node tooling/deploy-changed.mjs --all
+  node tooling/deploy-changed.mjs --force-all
   node tooling/deploy-changed.mjs --services support,data
   node tooling/deploy-changed.mjs --base <sha> --head HEAD
   node tooling/deploy-changed.mjs --mode none`);
@@ -155,15 +155,20 @@ function main() {
     return;
   }
 
+  const config = loadConfig();
+
   if (selection.mode === 'all') {
     if (!args.skipMigrate) {
       runNpm('migrate:all');
     }
-    runNpm('deploy:all');
+    for (const key of config.serviceOrder) {
+      const entry = config.services[key];
+      runNpm(entry.deploy);
+    }
+    console.log(`deploy-changed: finished ${config.serviceOrder.length} service(s) (force-full).`);
     return;
   }
 
-  const config = loadConfig();
   for (const key of selection.services) {
     const entry = config.services[key];
     if (!args.skipMigrate) {

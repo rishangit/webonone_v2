@@ -38,5 +38,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Deploy detection tests
+        run: node --test tooling/detect-changed-services.test.mjs
+
       - name: Test
         run: npm run test --workspaces --if-present

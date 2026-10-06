@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       force_all:
-        description: Force full migrate + deploy:all (ignore git diff)
+        description: Force full migrate:all + deploy every service (ignore git diff)
         type: boolean
         default: false
       services:
@@ -167,17 +167,62 @@ jobs:
             node tooling/detect-changed-services.mjs --services $env:INPUT_SERVICES --github-output
             exit $LASTEXITCODE
           }
-          $base = $env:PUSH_BEFORE
-          if (-not $base -or $base -match '^0+$') {
+          $head = $env:SYNC_AFTER
+          $base = $null
+          if ($env:SYNC_BEFORE -and $head -and $env:SYNC_BEFORE -ne $head -and $env:SYNC_BEFORE -notmatch '^0+$') {
             $base = $env:SYNC_BEFORE
+            Write-Host "Detect diff base: sync before=$base head=$head"
+          } else {
+            $base = $env:PUSH_BEFORE
+            if (-not $base -or $base -match '^0+$') {
+              $base = $env:SYNC_BEFORE
+            }
+            if ($base -and $head) {
+              Write-Host "Detect diff base: push/sync fallback before=$base head=$head"
+            }
           }
-          if (-not $base -or $base -match '^0+$') {
-            Write-Host 'No usable base SHA; forcing full deploy'
+          if (-not $base -or $base -match '^0+$' -or -not $head) {
+            Write-Host 'No usable base or head SHA; forcing full deploy'
             node tooling/detect-changed-services.mjs --force-all --github-output
             exit $LASTEXITCODE
           }
-          node tooling/detect-changed-services.mjs --base $base --head $env:SYNC_AFTER --github-output
+          if ($base -eq $head) {
+            Write-Host "Sync left HEAD unchanged ($head); empty diff expected"
+          }
+          node tooling/detect-changed-services.mjs --base $base --head $head --github-output
           exit $LASTEXITCODE
+
+      - name: Deploy detect job summary
+        if: steps.detect.outcome == 'success'
+        shell: powershell
+        env:
+          DETECT_MODE: ${{ steps.detect.outputs.mode }}
+          DETECT_SERVICES: ${{ steps.detect.outputs.services }}
+          DETECT_REASON: ${{ steps.detect.outputs.reason }}
+          DETECT_CHANGED_PATHS: ${{ steps.detect.outputs.changed_paths }}
+        run: |
+          $summary = @"
+          ## Staging deploy detection
+
+          | Field | Value |
+          |-------|-------|
+          | **mode** | $($env:DETECT_MODE) |
+          | **services** | $($env:DETECT_SERVICES) |
+          | **reason** | $($env:DETECT_REASON) |
+
+          ### Changed paths
+
+          "@
+          if ($env:DETECT_CHANGED_PATHS) {
+            foreach ($line in $env:DETECT_CHANGED_PATHS -split "`n") {
+              if ($line.Trim().Length -gt 0) {
+                $summary += "- $line`n"
+              }
+            }
+          } else {
+            $summary += "(none recorded)`n"
+          }
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $summary
 
       - name: Skip deploy (no service changes)
         if: steps.detect.outputs.mode == 'none'
@@ -213,9 +258,11 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:DEPLOY_MODE -eq 'all') {
-            node tooling/deploy-changed.mjs --all
-          } else {
+            node tooling/deploy-changed.mjs --force-all
+          } elseif ($env:DEPLOY_SERVICES) {
             node tooling/deploy-changed.mjs --services $env:DEPLOY_SERVICES
+          } else {
+            throw 'Detect mode is not none but services list is empty'
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -233,9 +280,9 @@ jobs:
           if ($env:IIS_APP_POOLS_JSON -and -not (Test-Path -LiteralPath $env:IIS_APP_POOLS_JSON)) {
             Write-Warning "IIS_APP_POOLS_JSON path not found: $env:IIS_APP_POOLS_JSON"
           }
-          if ($env:DETECT_MODE -eq 'selective' -and $env:DETECT_APP_POOLS) {
+          if ($env:DETECT_APP_POOLS) {
             $env:IIS_APP_POOLS = $env:DETECT_APP_POOLS
-            Write-Host "Selective recycle pools: $env:IIS_APP_POOLS"
+            Write-Host "Recycle pools: $env:IIS_APP_POOLS"
           }
           npm run recycle:iis
           if ($LASTEXITCODE -ne 0) {
@@ -258,12 +305,12 @@ jobs:
           DETECT_SERVICES: ${{ steps.detect.outputs.services }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:DETECT_MODE -eq 'selective' -and $env:DETECT_SERVICES) {
+          if ($env:DETECT_SERVICES -and $env:DETECT_MODE -ne 'all') {
             $env:SMOKE_HEALTH_URLS = $env:REPO_SMOKE_HEALTH_URLS
             $resolved = node tooling/resolve-smoke-urls.mjs --services $env:DETECT_SERVICES
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             $env:SMOKE_HEALTH_URLS = "$resolved"
-            Write-Host "Selective smoke URLs: $env:SMOKE_HEALTH_URLS"
+            Write-Host "Smoke URLs for changed services: $env:SMOKE_HEALTH_URLS"
           } elseif ($env:REPO_SMOKE_HEALTH_URLS) {
             $env:SMOKE_HEALTH_URLS = $env:REPO_SMOKE_HEALTH_URLS
           }
@@ -284,8 +331,9 @@ jobs:
           Write-Host "reason=$env:DETECT_REASON"
           if ($env:DETECT_MODE -eq 'none') {
             Write-Host 'Outcome: skipped install/migrate/deploy/recycle/smoke (no IIS changes).'
-          } elseif ($env:DETECT_MODE -eq 'selective') {
-            Write-Host "Outcome: selective migrate+deploy for: $env:DETECT_SERVICES"
           } else {
-            Write-Host 'Outcome: full migrate+deploy (all services).'
+            Write-Host "Outcome: per-service migrate+deploy for: $env:DETECT_SERVICES"
+            if ($env:DETECT_MODE -eq 'all') {
+              Write-Host 'Outcome note: mode=all (force-full); used migrate:all + deploy per service.'
+            }
           }

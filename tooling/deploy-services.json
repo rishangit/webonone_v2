@@ -207,9 +207,7 @@
   "forceFullPathPrefixes": [],
   "forceFullExactPaths": [
     "package.json",
-    "package-lock.json",
     "production.env.example",
-    ".github/workflows/deploy-staging.yml",
     "tooling/deploy-services.json",
     "tooling/detect-changed-services.mjs",
     "tooling/deploy-changed.mjs",

@@ -29,29 +29,29 @@ Keep `deploy:all` as the full path. Add git-based service detection plus a root 
 1. **`tooling/deploy-services.json`** — Canonical map: service key → `{ roots: string[], migrateScript, deployScript, appPool, healthUrlKey or healthUrl }`. Align pool names with `iis-app-pools.json` and URLs with `smoke-health-urls.json` (or embed staging defaults and allow override).
 
 2. **`tooling/detect-changed-services.mjs`**
-   - Inputs: `--base`, `--head`, `--services` (comma list), `--force-all`, `--print` / `--github-output`.
-   - `git diff --name-only base...head` (handle missing base → all).
-   - Map paths → service keys; if any path forces full → `{ mode: 'all', services: [...] }`.
-   - If no service paths and no force paths → `{ mode: 'none', services: [] }`.
-   - Write `GITHUB_OUTPUT` keys: `mode`, `services` (comma-separated).
+  - Inputs: `--base`, `--head`, `--services` (comma list), `--force-all`, `--print` / `--github-output`.
+  - `git diff --name-only base...head` (handle missing base → all).
+  - Map paths → service keys; if any path forces full → `{ mode: 'all', services: [...] }`.
+  - If no service paths and no force paths → `{ mode: 'none', services: [] }`.
+  - Write `GITHUB_OUTPUT` keys: `mode`, `services` (comma-separated).
 
 3. **`tooling/deploy-changed.mjs`**
-   - Read detection result or CLI `--services` / `--all`.
-   - Always: caller already ran `npm install` + `env:apply` in workflow.
-   - For each service: `npm run migrate:{key}` then `npm run deploy:{key}` (deploy scripts already env:apply + build + stage).
-   - `--all` → `npm run migrate:all` && `npm run deploy:all` (preserve today’s path).
-   - Exit 0 on `none` with clear log.
+  - Read detection result or CLI `--services` / `--all`.
+  - Always: caller already ran `npm install` + `env:apply` in workflow.
+  - For each service: `npm run migrate:{key}` then `npm run deploy:{key}` (deploy scripts already env:apply + build + stage).
+  - `--all` → `npm run migrate:all` && `npm run deploy:all` (preserve today’s path).
+  - Exit 0 on `none` with clear log.
 
 4. **Smoke / recycle filters**
-   - `recycle-iis-app-pools.ps1`: optional env `IIS_APP_POOLS` (comma-separated) overrides JSON list.
-   - `smoke-production-health.ps1`: optional env already has `SMOKE_HEALTH_URLS`; workflow sets it from selected services when not overridden by repo variable for selective runs (if repo `SMOKE_HEALTH_URLS` is set for live hosts, filter that list by host/service mapping).
+  - `recycle-iis-app-pools.ps1`: optional env `IIS_APP_POOLS` (comma-separated) overrides JSON list.
+  - `smoke-production-health.ps1`: optional env already has `SMOKE_HEALTH_URLS`; workflow sets it from selected services when not overridden by repo variable for selective runs (if repo `SMOKE_HEALTH_URLS` is set for live hosts, filter that list by host/service mapping).
 
 5. **`deploy-staging.yml`**
-   - After sync: capture `BEFORE_SHA` from `github.event.before` (push) or previous HEAD; `AFTER` = HEAD.
-   - `workflow_dispatch` inputs: `force_all` (boolean), `services` (string).
-   - Step: detect → outputs.
-   - Migrations + Build/stage: `node tooling/deploy-changed.mjs` with mode.
-   - Recycle / smoke: pass filtered pools/URLs when selective; all when full; skip when none.
+  - After sync: capture `BEFORE_SHA` from `github.event.before` (push) or previous HEAD; `AFTER` = HEAD.
+  - `workflow_dispatch` inputs: `force_all` (boolean), `services` (string).
+  - Step: detect → outputs.
+  - Migrations + Build/stage: `node tooling/deploy-changed.mjs` with mode.
+  - Recycle / smoke: pass filtered pools/URLs when selective; all when full; skip when none.
 
 6. **Root `package.json`** — `"deploy:changed": "node tooling/deploy-changed.mjs"`.
 

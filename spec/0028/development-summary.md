@@ -42,13 +42,13 @@ Staging deploy detection no longer treats all of `packages/`, `ui-kit/`, or `too
 ```bash
 node --check tooling/detect-changed-services.mjs
 node --check tooling/deploy-changed.mjs
-node tooling/detect-changed-services.mjs --files <support-only> --print          # selective support
-node tooling/detect-changed-services.mjs --files <mobile-ui-only> --print        # none
-node tooling/detect-changed-services.mjs --files <ui-kit> --print                # all
-node tooling/detect-changed-services.mjs --files <media-embed> --print           # selective consumers
-node tooling/detect-changed-services.mjs --files <store-kit> --print             # selective (no website)
-node tooling/detect-changed-services.mjs --files <spec-only> --print             # none
-node tooling/detect-changed-services.mjs --files <tooling/CICD.md> --print       # none
+node tooling/detect-changed-services.mjs --files <support-only> --print  # selective support
+node tooling/detect-changed-services.mjs --files <mobile-ui-only> --print  # none
+node tooling/detect-changed-services.mjs --files <ui-kit> --print  # all
+node tooling/detect-changed-services.mjs --files <media-embed> --print  # selective consumers
+node tooling/detect-changed-services.mjs --files <store-kit> --print  # selective (no website)
+node tooling/detect-changed-services.mjs --files <spec-only> --print  # none
+node tooling/detect-changed-services.mjs --files <tooling/CICD.md> --print  # none
 node tooling/detect-changed-services.mjs --services support,data --print
 ```
 

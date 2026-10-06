@@ -9,17 +9,17 @@ Fix dismiss timing so in-toolbar Search activation runs first; keep mutual exclu
 ## Implementation steps
 
 1. **`ui-kit/package/src/layouts/PageHeader.tsx`**
-   - In `handlePointerDown`: if the target is inside the header, **defer** `collapseAdd()` with `setTimeout(0)` so Search `onClick` → `open()` runs before layout shift; keep immediate `collapseAdd` + `close` for true outside presses.
-   - Continue ignoring presses on `[data-list-add-button]`.
+  - In `handlePointerDown`: if the target is inside the header, **defer** `collapseAdd()` with `setTimeout(0)` so Search `onClick` → `open()` runs before layout shift; keep immediate `collapseAdd` + `close` for true outside presses.
+  - Continue ignoring presses on `[data-list-add-button]`.
 
 2. **`ui-kit/package/src/components/ListPageActions.tsx`**
-   - Apply the same deferred in-toolbar `collapseAdd` in standalone `ListPageActions` (picker/embed toolbars without `PageHeader` context).
+  - Apply the same deferred in-toolbar `collapseAdd` in standalone `ListPageActions` (picker/embed toolbars without `PageHeader` context).
 
 3. **`packages/mobile-ui/src/components/SearchInput.tsx`**
-   - Stop calling `stopPropagation` on the compact Search icon `onTouchStart` so the press bubbles to `ListPageActions` `markInsidePress` (which stops propagation to `FeatureScreen` and sets `insidePressRef`).
+  - Stop calling `stopPropagation` on the compact Search icon `onTouchStart` so the press bubbles to `ListPageActions` `markInsidePress` (which stops propagation to `FeatureScreen` and sets `insidePressRef`).
 
 4. **`packages/mobile-ui/src/components/ListPageActions.tsx`** (if needed)
-   - Keep `insidePressRef` true until after the outside handler’s `setTimeout(0)` (clear with `setTimeout(0)` instead of `requestAnimationFrame`) so Search open is not cancelled by `emitListPageOutsidePress`.
+  - Keep `insidePressRef` true until after the outside handler’s `setTimeout(0)` (clear with `setTimeout(0)` instead of `requestAnimationFrame`) so Search open is not cancelled by `emitListPageOutsidePress`.
 
 5. **Verify** — type-check/lint ui-kit + mobile-ui; spot-check mobile list toolbar in showcase or a Data list page.
 

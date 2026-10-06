@@ -7,27 +7,27 @@ Reuse existing list-page primitives (`ListPageActions`, `ListAddButton`, compact
 ## Implementation steps
 
 1. **Web ui-kit — `UserSelectionDialog`**
-   - Replace stacked `flex-col` + outline `Button` with `ListPageActions` wrapping `SearchInput` then `ListAddButton` (`children` = “Add user”) when `onAddUser` is set.
-   - Keep optional role `Select` as a trailing sibling inside `ListPageActions`.
-   - Remove unused `Plus` / outline `Button` imports if unused.
-   - Precedent: Media `ScopedFolderBrowser` toolbar.
+  - Replace stacked `flex-col` + outline `Button` with `ListPageActions` wrapping `SearchInput` then `ListAddButton` (`children` = “Add user”) when `onAddUser` is set.
+  - Keep optional role `Select` as a trailing sibling inside `ListPageActions`.
+  - Remove unused `Plus` / outline `Button` imports if unused.
+  - Precedent: Media `ScopedFolderBrowser` toolbar.
 
 2. **Web Data pickers**
-   - `TagPickerPanel`, `UnitPickerPanel`, `AttributePickerPanel`: wrap search + create in `ListPageActions`; swap outline Add for `ListAddButton` with existing labels.
+  - `TagPickerPanel`, `UnitPickerPanel`, `AttributePickerPanel`: wrap search + create in `ListPageActions`; swap outline Add for `ListAddButton` with existing labels.
 
 3. **Web WebOnOne — `LibraryPickerPanel`**
-   - Same toolbar pattern for search + “Add {entity} to library”.
+  - Same toolbar pattern for search + “Add {entity} to library”.
 
 4. **Native mobile-ui — `UserSelectionDialog`**
-   - Add optional `onAddUser?: () => void` and `addLabel?: string` (default “Add user”).
-   - Toolbar: `ListPageActions` → `SearchInput` → `ListAddButton` when `onAddUser` set.
+  - Add optional `onAddUser?: () => void` and `addLabel?: string` (default “Add user”).
+  - Toolbar: `ListPageActions` → `SearchInput` → `ListAddButton` when `onAddUser` set.
 
 5. **Native app**
-   - `CustomerPickerDialog`: toolbar Add via `ListAddButton` / `onAddNew`; remove “New customer” from footer.
-   - `AddCompanyUserDialog`: pass `onAddUser` into `UserSelectionDialog` to open register create; simplify outer shell so primary path is list picker with search+Add (keep create dialog stacked). Prefer opening the picker as the main Add User surface (or keep SelectUser trigger but ensure nested picker has Add).
+  - `CustomerPickerDialog`: toolbar Add via `ListAddButton` / `onAddNew`; remove “New customer” from footer.
+  - `AddCompanyUserDialog`: pass `onAddUser` into `UserSelectionDialog` to open register create; simplify outer shell so primary path is list picker with search+Add (keep create dialog stacked). Prefer opening the picker as the main Add User surface (or keep SelectUser trigger but ensure nested picker has Add).
 
 6. **Support**
-   - Update `company-users` (en + si) and POS-related help if present: on phone / mobile app, search and Add match the list toolbar (tap search / + to expand).
+  - Update `company-users` (en + si) and POS-related help if present: on phone / mobile app, search and Add match the list toolbar (tap search / + to expand).
 
 7. **Verify** — type-check/lint on touched workspaces listed in `spec.md`.
 

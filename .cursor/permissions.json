@@ -1,6 +1,6 @@
 {
-  // ClickUp pipeline automation — ONE-TIME IDE SETUP (per machine):
-  //   0. MCP: `.cursor/mcp.json` — ClickUp (OAuth on first connect) + GitHub (`GITHUB_TOKEN` env var).
+  // IDE automation — ONE-TIME SETUP (per machine):
+  //   0. MCP: `.cursor/mcp.json` — Support Feedback + GitHub (`GITHUB_TOKEN` env var).
   //   1. Cursor Settings → Agents → Run Mode → Allowlist (uses this file) OR Run Everything.
   //   2. Fully quit and restart Cursor (Cmd/Ctrl+Q) after editing this file — Reload Window is not enough.
   //   3. If prompts persist: Agents → Inline Editing & Terminal → enable Legacy Terminal Tool, then restart.
@@ -9,7 +9,6 @@
   //   5. Auto-Run in Sandbox can ignore allowlists; use Allowlist or Run Everything instead.
   // Docs: https://cursor.com/docs/reference/permissions
   "mcpAllowlist": [
-    "clickup:*",
     "github:*",
     "support-feedback:*"
   ],
@@ -46,9 +45,7 @@
   ],
   "autoRun": {
     "allow_instructions": [
-      "During /clickup-spec, /clickup-plan, /clickup-build, /clickup-run, and /clickup-spec-update workflows, allow all shell commands required for git branch work, npm/pnpm builds, type-check, lint, tests, and plan verification in this monorepo.",
       "During /feedback-fix workflows, allow Support Feedback MCP (feedback_list, feedback_get, feedback_update_status), SwitchMode to plan for the planning phase, writes under spec/{ticket}/ (spec.md, plan.md, development-summary.md), git fetch/checkout/commit/push to deploy_staging, and all shell commands required for implementation, type-check, lint, and tests in touched workspaces.",
-      "Allow all ClickUp MCP reads and writes needed to search tasks, fetch descriptions and comments, and batch-update parent and subtask statuses.",
       "Allow GitHub MCP tools when creating branches, pull requests, or checking CI status for spec branches.",
       "Allow WebFetch and WebSearch when gathering external API or documentation references for spec or implementation work.",
       "On Windows PowerShell, use single-line git commit -m \"message\" only. Never use bash HEREDOC or PowerShell here-strings (@' ... '@); Cursor allowlist treats here-string bodies as separate commands."
