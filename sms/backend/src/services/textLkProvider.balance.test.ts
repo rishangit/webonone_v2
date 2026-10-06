@@ -10,6 +10,17 @@ describe('parseTextLkBalanceBody', () => {
     assert.equal(parseTextLkBalanceBody({ status: 'success', data: { balance: 1245 } }), 1245)
   })
 
+  it('reads data.remaining_balance (live Text.lk / API-v3 shape)', () => {
+    assert.equal(
+      parseTextLkBalanceBody({ status: 'success', data: { remaining_balance: 1245 } }),
+      1245,
+    )
+    assert.equal(
+      parseTextLkBalanceBody({ status: true, data: { remaining_balance: '1,250.5' } }),
+      1250.5,
+    )
+  })
+
   it('reads top-level balance and string numbers', () => {
     assert.equal(parseTextLkBalanceBody({ balance: '8,420' }), 8420)
   })
@@ -20,6 +31,7 @@ describe('parseTextLkBalanceBody', () => {
 
   it('rejects error status and malformed bodies', () => {
     assert.equal(parseTextLkBalanceBody({ status: 'error', message: 'nope' }), null)
+    assert.equal(parseTextLkBalanceBody({ status: false, message: 'nope' }), null)
     assert.equal(parseTextLkBalanceBody({ data: { foo: 1 } }), null)
     assert.equal(parseTextLkBalanceBody(null), null)
   })
@@ -54,6 +66,47 @@ describe('fetchTextLkBalance', () => {
       assert.equal(result.retryable, false)
       assert.match(result.error, /rejected|Unauthorized/i)
     }
+  })
+
+  it('maps HTTP 200 Unauthenticated as rejected credentials', async () => {
+    mock.method(globalThis, 'fetch', async () =>
+      new Response(JSON.stringify({ status: 'error', message: 'Unauthenticated.' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    const result = await fetchTextLkBalance('bad')
+    assert.equal(result.ok, false)
+    if (!result.ok) {
+      assert.equal(result.retryable, false)
+      assert.match(result.error, /Unauthenticated/i)
+    }
+  })
+
+  it('maps boolean status false as provider failure', async () => {
+    mock.method(globalThis, 'fetch', async () =>
+      new Response(JSON.stringify({ status: false, message: 'Unavailable' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    const result = await fetchTextLkBalance('token')
+    assert.equal(result.ok, false)
+    if (!result.ok) assert.match(result.error, /Unavailable/i)
+  })
+
+  it('returns remaining_balance on success', async () => {
+    mock.method(globalThis, 'fetch', async () =>
+      new Response(
+        JSON.stringify({ status: 'success', data: { remaining_balance: 900 } }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
+    )
+    const result = await fetchTextLkBalance('token')
+    assert.deepEqual(result, { ok: true, balance: 900 })
   })
 
   it('maps provider HTTP failure', async () => {

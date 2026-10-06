@@ -99,6 +99,9 @@ export async function getTextLkProviderBalance(input: {
 
   const result = await fetchTextLkBalance(credentials.apiToken)
   if (!result.ok) {
+    console.error(
+      `[providerBalance] Text.lk balance failed scope=${input.scope} company=${input.companyId ?? 'platform'}: ${result.error}`,
+    )
     return {
       ok: false,
       status: 502,

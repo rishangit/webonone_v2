@@ -22,13 +22,13 @@ export type TextLkBalanceResult =
   | { ok: false; error: string; retryable: boolean }
 
 interface TextLkSuccessBody {
-  status?: string
+  status?: string | boolean
   message?: string
   data?: { uid?: string; status?: string }
 }
 
 interface TextLkErrorBody {
-  status?: string
+  status?: string | boolean
   message?: string
 }
 
@@ -41,17 +41,26 @@ function asFiniteNumber(value: unknown): number | null {
   return null
 }
 
+/** Text.lk / API-v3 gateways use string "error" or boolean false for failures. */
+export function isTextLkErrorStatus(status: unknown): boolean {
+  return status === 'error' || status === false
+}
+
 /**
  * Parse Text.lk balance JSON. Field names vary; prefer documented SDK shapes.
+ * Live Text.lk (and sibling API-v3 gateways) expose `data.remaining_balance`.
  * Never invent a balance from missing data.
  */
 export function parseTextLkBalanceBody(body: unknown): number | null {
   if (body == null || typeof body !== 'object') return null
   const root = body as Record<string, unknown>
 
-  if (root.status === 'error') return null
+  if (isTextLkErrorStatus(root.status)) return null
 
-  const direct = asFiniteNumber(root.balance) ?? asFiniteNumber(root.credits)
+  const direct =
+    asFiniteNumber(root.balance) ??
+    asFiniteNumber(root.credits) ??
+    asFiniteNumber(root.remaining_balance)
   if (direct != null) return direct
 
   const data = root.data
@@ -61,6 +70,8 @@ export function parseTextLkBalanceBody(body: unknown): number | null {
   if (data && typeof data === 'object') {
     const record = data as Record<string, unknown>
     return (
+      asFiniteNumber(record.remaining_balance) ??
+      asFiniteNumber(record.available_balance) ??
       asFiniteNumber(record.balance) ??
       asFiniteNumber(record.credits) ??
       asFiniteNumber(record.credit) ??
@@ -106,7 +117,7 @@ export async function sendViaTextLk(input: TextLkSendInput): Promise<TextLkSendR
     body = {}
   }
 
-  if (!response.ok || body.status === 'error') {
+  if (!response.ok || isTextLkErrorStatus(body.status)) {
     const error = body.message || `Text.lk HTTP ${response.status}`
     const retryable = response.status >= 500 || response.status === 429
     return { ok: false, error, retryable }
@@ -157,8 +168,12 @@ export async function fetchTextLkBalance(apiToken: string): Promise<TextLkBalanc
   }
 
   const errorBody = body as TextLkErrorBody
-  if (!response.ok || errorBody.status === 'error') {
-    if (response.status === 401 || response.status === 403) {
+  if (!response.ok || isTextLkErrorStatus(errorBody.status)) {
+    const authRejected =
+      response.status === 401 ||
+      response.status === 403 ||
+      /unauthenticated|unauthorized|credentials/i.test(errorBody.message ?? '')
+    if (authRejected) {
       return {
         ok: false,
         error: errorBody.message || 'Text.lk credentials were rejected',
