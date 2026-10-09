@@ -10,6 +10,8 @@ interface WebOnOneLogoMarkProps {
   className?: string
   accessibilityLabel?: string
   height?: number
+  /** Hide from assistive tech when a visible wordmark already names the brand. */
+  decorative?: boolean
 }
 
 /** Header logo mark — keep path in sync with `@webonone/ui-kit` `WebOnOneLogoMark`. */
@@ -17,6 +19,7 @@ function WebOnOneLogoMark({
   className,
   accessibilityLabel = 'WebOnOne',
   height = 32,
+  decorative = false,
 }: WebOnOneLogoMarkProps) {
   const colors = useThemeColors()
   const width = (160 / 139) * height
@@ -24,8 +27,10 @@ function WebOnOneLogoMark({
   return (
     <View
       className={cn('shrink-0', className)}
-      accessibilityRole="image"
-      accessibilityLabel={accessibilityLabel}
+      accessibilityRole={decorative ? undefined : 'image'}
+      accessibilityLabel={decorative ? undefined : accessibilityLabel}
+      accessibilityElementsHidden={decorative}
+      importantForAccessibility={decorative ? 'no-hide-descendants' : 'auto'}
     >
       <Svg width={width} height={height} viewBox="0 0 160 139">
         <Path fill={colors.textTitle} fillRule="evenodd" d={LOGO_PATH} />

@@ -11,6 +11,7 @@ import {
   HeaderMenuSeparator,
 } from './HeaderMenu'
 import { StatusTag } from './StatusTag'
+import { Subheading } from './Typography'
 import { WebOnOneLogoMark } from './WebOnOneLogoMark'
 
 export type AppHeaderLocale = 'en' | 'si'
@@ -225,8 +226,11 @@ export function AppHeader({
             )}
           </HeaderIconButton>
         ) : null}
-        <View className="min-w-0 flex-1">
-          <WebOnOneLogoMark accessibilityLabel={title} />
+        <View className="min-w-0 flex-1 flex-row items-center gap-2">
+          <WebOnOneLogoMark decorative />
+          <Subheading className="shrink" numberOfLines={1}>
+            {title}
+          </Subheading>
         </View>
         <View className="shrink-0 flex-row items-center gap-2">
           {headerActions}

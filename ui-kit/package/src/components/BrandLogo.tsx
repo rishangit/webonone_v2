@@ -14,24 +14,26 @@ interface BrandLogoProps {
 }
 
 function BrandLogo({ href, className, children, mark = true, alt, markClassName }: BrandLogoProps) {
-  const accessibleName = alt ?? 'WebOnOne'
+  const wordmark = children ?? (typeof alt === 'string' && alt.length > 0 ? alt : 'WebOnOne')
+  const wordmarkClassName = cn('text-lg font-semibold tracking-tight text-foreground', className)
   const content = mark ? (
-    <WebOnOneLogoMark className={markClassName} title={accessibleName} />
+    <>
+      <WebOnOneLogoMark className={markClassName} decorative />
+      <span className={wordmarkClassName}>{wordmark}</span>
+    </>
   ) : (
-    <span className={cn('text-lg font-semibold tracking-tight text-foreground', className)}>
-      {children ?? 'WebOnOne'}
-    </span>
+    <span className={wordmarkClassName}>{wordmark}</span>
   )
 
   if (href) {
     return (
-      <a href={href} className="inline-flex items-center hover:opacity-90">
+      <a href={href} className="inline-flex items-center gap-2 hover:opacity-90">
         {content}
       </a>
     )
   }
 
-  return <div className="inline-flex items-center">{content}</div>
+  return <div className="inline-flex items-center gap-2">{content}</div>
 }
 
 export { BrandLogo }

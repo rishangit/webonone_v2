@@ -4,18 +4,25 @@ import { cn } from '../lib/utils'
 interface WebOnOneLogoMarkProps {
   className?: string
   title?: string
+  /** Hide from assistive tech when a visible wordmark already names the brand. */
+  decorative?: boolean
 }
 
-function WebOnOneLogoMark({ className, title = 'WebOnOne' }: WebOnOneLogoMarkProps) {
+function WebOnOneLogoMark({
+  className,
+  title = 'WebOnOne',
+  decorative = false,
+}: WebOnOneLogoMarkProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 160 139"
-      role="img"
-      aria-label={title}
+      role={decorative ? undefined : 'img'}
+      aria-label={decorative ? undefined : title}
+      aria-hidden={decorative ? true : undefined}
       className={cn('h-8 w-auto shrink-0 text-foreground', className)}
     >
-      <title>{title}</title>
+      {decorative ? null : <title>{title}</title>}
       <path
         fill="currentColor"
         fillRule="evenodd"
