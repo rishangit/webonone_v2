@@ -496,6 +496,55 @@ function productVariantTools(): ToolDefinition[] {
       viewPath: '/products/{id}/variants/{variantId}',
     }),
     dataTool({
+      name: 'update_data_product_variant_stock',
+      description:
+        'Update one stock batch for a product variant. Call list_data_product_variant_stocks first to resolve stockId. Suggest every schema property: quantity, batch_number, cost_price, sell_price, and purchase_date (YYYY-MM-DD). Optional expired_date must be on or after purchase_date. Do not invent supplier_user_id — omit supplier fields unless the user provided an Identity user id and display name together.',
+      jsonSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'id',
+          'variantId',
+          'stockId',
+          'quantity',
+          'batch_number',
+          'cost_price',
+          'sell_price',
+          'purchase_date',
+        ],
+        properties: {
+          id: { ...stringId, description: 'Data library product id.' },
+          variantId: { ...stringId, description: 'Product variant id.' },
+          stockId: { ...stringId, description: 'Stock batch id.' },
+          quantity: { type: 'number', exclusiveMinimum: 0, title: 'Quantity' },
+          batch_number: { type: 'string', minLength: 1, maxLength: 255, title: 'Batch number' },
+          cost_price: { type: 'number', minimum: 0, title: 'Cost price' },
+          sell_price: { type: 'number', minimum: 0, title: 'Sell price' },
+          purchase_date: {
+            type: 'string',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+            title: 'Purchase date',
+            description: 'YYYY-MM-DD',
+          },
+          expired_date: {
+            type: 'string',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+            title: 'Expiry date',
+            description: 'Optional YYYY-MM-DD on or after purchase_date.',
+          },
+        },
+      },
+      riskLevel: 'write',
+      requiredRoles: catalogWriteRoles,
+      requiredPermissions: ['ai:data_catalog:write'],
+      auth: 'user_jwt',
+      invoke: {
+        method: 'PATCH',
+        path: '/api/v1/products/:id/variants/:variantId/stocks/:stockId',
+      },
+      viewPath: '/products/{id}/variants/{variantId}',
+    }),
+    dataTool({
       name: 'set_data_product_variant_stock_active',
       description:
         'Set whether a stock batch is active for a product variant. Call list_data_product_variant_stocks first to resolve stockId.',

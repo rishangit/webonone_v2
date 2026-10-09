@@ -89,7 +89,7 @@ export function PlatformEmbedLayout({ parentOrigin }: PlatformEmbedLayoutProps) 
 
   return (
     <PlatformEmbedShell className="min-h-0 flex-1">
-      <div className="platform-embed-outlet relative flex min-h-full w-full flex-col">
+      <div className="platform-embed-outlet relative flex min-h-0 w-full flex-1 flex-col">
         <Outlet />
         {displayLabel ? (
           <LoadingState key="platform-loading" overlay overlayScope="content" label={displayLabel} />

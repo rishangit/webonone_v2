@@ -7,9 +7,11 @@ import {
   DatePicker,
   FeaturePage,
   FormField,
+  ItemListViewToggle,
   ListAddButton,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
@@ -25,6 +27,7 @@ import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingCont
 import { SalesList } from '@/features/sales/components/SalesList'
 import { salesActions } from '@/features/sales/store'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 
 function toYmd(date: Date | undefined): string | undefined {
   if (!date) return undefined
@@ -43,6 +46,7 @@ export function SalesHistoryPage() {
   const canAccess = selectionComplete && canAccessCompanySession(activeRole, activeCompanyId)
 
   const list = useEpicCatalogList((s) => s.sales, salesActions)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   const [from, setFrom] = useState<Date | undefined>()
   const [to, setTo] = useState<Date | undefined>()
 
@@ -67,7 +71,7 @@ export function SalesHistoryPage() {
       title={t('history.title')}
       description={t('history.description')}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
@@ -81,8 +85,9 @@ export function SalesHistoryPage() {
             onClick={() => list.setFilterOpen(!list.filterOpen)}
             aria-label={t('history.status')}
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           <ListAddButton onClick={() => navigate('/sales/pos')}>{t('history.newSale')}</ListAddButton>
-        </div>
+        </ListPageActions>
       }
     >
       <ListFilterPanel

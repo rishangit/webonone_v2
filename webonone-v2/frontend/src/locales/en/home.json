@@ -11,5 +11,6 @@
   "emptyTodayStaff": "No assigned events today.",
   "emptyUpcomingStaff": "No upcoming assigned events.",
   "staffName": "{{name}}",
-  "metaWithAttendee": "{{staff}} · {{attendee}}"
+  "metaWithAttendee": "{{staff}} · {{attendee}}",
+  "smsCreditsFrameTitle": "SMS Credits"
 }

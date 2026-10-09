@@ -1,5 +1,10 @@
 import { redirectWithAuthCode } from '@webonone/platform-nav'
-import { relayListPageModeQueryParams, relayThemeQueryParams, relayUiThemeQueryParams } from '@webonone/theme'
+import {
+  relayListDisplayModeQueryParams,
+  relayListPageModeQueryParams,
+  relayThemeQueryParams,
+  relayUiThemeQueryParams,
+} from '@webonone/theme'
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ??
@@ -19,6 +24,7 @@ export async function completeAuthRedirect(
     extraSearchParams: {
       ...relayThemeQueryParams(new URLSearchParams(window.location.search)),
       ...relayListPageModeQueryParams(new URLSearchParams(window.location.search)),
+      ...relayListDisplayModeQueryParams(new URLSearchParams(window.location.search)),
       ...relayUiThemeQueryParams(new URLSearchParams(window.location.search)),
     },
     errorMessage: 'Failed to create authorization code',

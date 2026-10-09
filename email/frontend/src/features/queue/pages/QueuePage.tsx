@@ -6,11 +6,14 @@ import {
   AlertDescription,
   Button,
   FeaturePage,
+  ItemListViewToggle,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   useListPageMode,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -47,6 +50,7 @@ export function QueuePage() {
   const hasActiveFilters = tab !== 'pending'
   const error = listError ?? retryError
   const listPageMode = useListPageMode()
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
 
   usePlatformLoading(loading ? t('loading') : null)
 
@@ -96,12 +100,13 @@ export function QueuePage() {
       title={t('title')}
       description={t('description')}
       actions={
-        <div className="flex items-center gap-2">
+        <ListPageActions>
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
             {t('refreshNow')}
           </Button>
-        </div>
+        </ListPageActions>
       }
     >
       <PlatformHostedListFilterPanel<EmailQueueStatusFilterDraft>

@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   Spinner,
+  cn,
 } from '@webonone/ui-kit'
 import {
   formatRelativeUpdated,
@@ -22,6 +23,11 @@ interface SmsCreditsCardProps {
   error: string | null
   hasLoaded: boolean
   onRefresh: () => void
+  /** When set (platform embed), Configure navigates the parent shell instead of an in-iframe Link. */
+  onConfigure?: () => void
+  /** Stretch the card to fill the embed iframe (WebOnOne home dashboard widget). */
+  fillHeight?: boolean
+  className?: string
 }
 
 export function SmsCreditsCard({
@@ -32,6 +38,9 @@ export function SmsCreditsCard({
   error,
   hasLoaded,
   onRefresh,
+  onConfigure,
+  fillHeight = false,
+  className,
 }: SmsCreditsCardProps) {
   const { t, i18n } = useTranslation('shell')
   const view = resolveSmsCreditsViewState({
@@ -51,7 +60,9 @@ export function SmsCreditsCard({
       : null
 
   return (
-    <Card>
+    <Card
+      className={cn(fillHeight && 'flex h-full min-h-0 flex-1 flex-col', className)}
+    >
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {t('smsCreditsTitle')}
@@ -74,7 +85,7 @@ export function SmsCreditsCard({
           </Button>
         ) : null}
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className={cn('space-y-2', fillHeight && 'flex min-h-0 flex-1 flex-col')}>
         {view.kind === 'loading' ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Spinner size="sm" />
@@ -85,9 +96,15 @@ export function SmsCreditsCard({
         {view.kind === 'not_configured' ? (
           <>
             <p className="text-base font-medium">{t('smsCreditsNotConfigured')}</p>
-            <Button asChild variant="outline" className="h-10">
-              <Link to="/devices?tab=settings">{t('smsCreditsConfigure')}</Link>
-            </Button>
+            {onConfigure ? (
+              <Button type="button" variant="outline" className="h-10" onClick={onConfigure}>
+                {t('smsCreditsConfigure')}
+              </Button>
+            ) : (
+              <Button asChild variant="outline" className="h-10">
+                <Link to="/devices?tab=settings">{t('smsCreditsConfigure')}</Link>
+              </Button>
+            )}
           </>
         ) : null}
 

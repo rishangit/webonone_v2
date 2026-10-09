@@ -9,6 +9,7 @@ import {
   isHexColor,
   parseThemeQueryParams,
   readPersistedTheme,
+  relayListDisplayModeQueryParams,
   relayListPageModeQueryParams,
   relayUiThemeQueryParams,
   type ThemePayload,
@@ -26,9 +27,14 @@ export function websiteDesignerUrl(kind: 'pages' | 'headers' | 'footers' | 'pres
   if (theme) {
     url = appendThemeToUrl(url, theme)
   }
-  const listMode = relayListPageModeQueryParams(new URLSearchParams(window.location.search))
-  const uiTheme = relayUiThemeQueryParams(new URLSearchParams(window.location.search))
+  const search = new URLSearchParams(window.location.search)
+  const listMode = relayListPageModeQueryParams(search)
+  const listDisplayMode = relayListDisplayModeQueryParams(search)
+  const uiTheme = relayUiThemeQueryParams(search)
   for (const [key, value] of Object.entries(listMode)) {
+    url.searchParams.set(key, value)
+  }
+  for (const [key, value] of Object.entries(listDisplayMode)) {
     url.searchParams.set(key, value)
   }
   for (const [key, value] of Object.entries(uiTheme)) {

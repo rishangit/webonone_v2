@@ -173,7 +173,7 @@ export function CompanyCatalogAttributesTab({
       ) : attributes.length === 0 ? (
         <ItemListEmpty>{t('attributesTab.empty')}</ItemListEmpty>
       ) : (
-        <ItemList className="py-0">
+        <ItemList className="py-0" nestedInCard>
           {attributes.map((attr) => {
             const canOpenDetail = Boolean(libraryEntityId)
             const subtitle = [

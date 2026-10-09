@@ -3,12 +3,14 @@ import { MoreVertical } from 'lucide-react'
 import { interactiveHoverTextClassName } from '../lib/selectionStyles'
 import { cn } from '../lib/utils'
 import {
+  shapeImageFlushClassName,
   shapeListRowClassName,
   shapeListRowSurfaceClassName,
   shapePanelSmClassName,
 } from '../lib/shape'
 import { useUiTheme } from '../ui-theme/UiThemeContext'
 import { themeNeedsShapeDom } from '../ui-theme/uiTheme'
+import { useInsideCard } from './Card'
 import { Button } from './Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from './DropdownMenu'
 
@@ -29,13 +31,22 @@ export const itemListMenuClassName = 'shrink-0 self-start'
 export const itemListStatusClassName = 'shrink-0 self-start'
 
 /** Leading entity image in a list row (logo, avatar, catalog thumb) — pinned to top. */
-export const itemListThumbClassName = 'h-14 w-14 shrink-0 self-start rounded-md'
+export const itemListThumbClassName = cn(
+  shapeImageFlushClassName,
+  'h-14 w-14 shrink-0 self-start rounded-md',
+)
 
 /** Inner row body when image + text share one clickable area inside ItemListContent. */
 export const itemListRowBodyClassName = 'flex w-full items-start gap-3'
 
 /** Selected / active row — stronger border + selected surface */
 export const itemListRowActiveClassName = 'border-primary bg-[var(--color-selection)]'
+
+/** Row inside a `Card` — keep glass fill; no per-row border (see globals.css `.item-list-row-nested-in-card`) */
+export const itemListRowNestedClassName = 'item-list-row-nested-in-card border-0'
+
+/** Active row inside `Card variant="list"` — selection fill without border */
+export const itemListRowNestedActiveClassName = 'border-0 bg-[var(--color-selection)]'
 
 function ItemList({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) {
   return <ul role="list" className={cn(itemListClassName, className)} {...props} />
@@ -44,18 +55,35 @@ function ItemList({ className, ...props }: React.HTMLAttributes<HTMLUListElement
 function ItemListItem({ className, children, ...props }: React.LiHTMLAttributes<HTMLLIElement>) {
   const uiTheme = useUiTheme()
   const shapeDom = themeNeedsShapeDom(uiTheme)
+  const nestedInCard = useInsideCard()
+  const nestedSurface = nestedInCard ? itemListRowNestedClassName : undefined
+  const resolvedClassName =
+    nestedInCard && className?.includes('border-primary')
+      ? cn(className.replace(/\bborder-primary\b/g, '').trim(), itemListRowNestedActiveClassName)
+      : className
 
   if (!shapeDom) {
     return (
-      <li className={cn(itemListRowClassName, className)} {...props}>
+      <li
+        className={cn(itemListRowClassName, resolvedClassName, nestedSurface)}
+        {...props}
+      >
         {children}
       </li>
     )
   }
 
   return (
-    <li className={cn(shapeListRowClassName, className)} {...props}>
-      <div className={cn(itemListRowSurfaceClassName, shapeListRowSurfaceClassName)}>{children}</div>
+    <li className={cn(shapeListRowClassName, resolvedClassName)} {...props}>
+      <div
+        className={cn(
+          itemListRowSurfaceClassName,
+          shapeListRowSurfaceClassName,
+          nestedSurface,
+        )}
+      >
+        {children}
+      </div>
     </li>
   )
 }

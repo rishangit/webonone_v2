@@ -660,7 +660,7 @@ export function ComponentsPage() {
             <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
               <div className="space-y-1.5">
                 <CardTitle className="text-lg">Stock batches</CardTitle>
-                <CardDescription>Outer card is borderless; list rows use full content width.</CardDescription>
+                <CardDescription>Outer card keeps border and background; rows inside have no border.</CardDescription>
               </div>
             </CardHeader>
             <CardContent>

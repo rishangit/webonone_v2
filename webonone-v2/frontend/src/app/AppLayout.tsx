@@ -2,7 +2,18 @@ import { useCallback, useEffect, useMemo, useState, type ComponentProps, type Di
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CircleHelp, MessageCircle } from 'lucide-react'
-import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, UiThemeProvider, cn, useToast } from '@webonone/ui-kit'
+import {
+  AppShell,
+  BrandLogo,
+  Button,
+  ListDisplayModeProvider,
+  ListPageModeProvider,
+  LoadingState,
+  UiThemeProvider,
+  cn,
+  useToast,
+} from '@webonone/ui-kit'
+import { useListDisplayModeValue } from '@webonone/theme'
 import { isPlatformAiEntityContextMessage } from '@webonone/platform-embed'
 import {
   createNavItemNavigate,
@@ -256,6 +267,7 @@ function AppLayoutContent() {
   const overlayLabel = usePlatformOverlayLabel()
   const embedMain = isPlatformPeerEmbedPath(location.pathname, activeRole)
   const listPageMode = useAppSelector((s) => s.systemTheme.preferences?.listPageMode ?? 'pagination')
+  const listDisplayMode = useListDisplayModeValue()
   const uiTheme = useAppSelector((s) => s.systemTheme.preferences?.uiTheme ?? 'classic')
   const [assistantOpen, setAssistantOpen] = useState(false)
   const openAssistant = useCallback(() => setAssistantOpen(true), [])
@@ -282,6 +294,7 @@ function AppLayoutContent() {
         overlayLabel={overlayLabel}
         embedMain={embedMain}
         listPageMode={listPageMode}
+        listDisplayMode={listDisplayMode}
         uiTheme={uiTheme}
         nav={nav}
         location={location}
@@ -311,6 +324,7 @@ type AppLayoutShellProps = {
   overlayLabel: string | null
   embedMain: boolean
   listPageMode: 'pagination' | 'on-scroll'
+  listDisplayMode: 'list' | 'grid' | 'card'
   uiTheme: 'classic' | 'high-tech'
   nav: ComponentProps<typeof AppShell>['nav']
   location: ReturnType<typeof useLocation>
@@ -352,6 +366,7 @@ function AppLayoutShell({
   overlayLabel,
   embedMain,
   listPageMode,
+  listDisplayMode,
   uiTheme,
   nav,
   location,
@@ -404,6 +419,7 @@ function AppLayoutShell({
     <ThemeProviderBridge>
       <UiThemeProvider theme={uiTheme}>
       <ListPageModeProvider mode={listPageMode}>
+      <ListDisplayModeProvider mode={listDisplayMode}>
       <SessionRoleGate>
         <AppShell
           embedMain={embedMain}
@@ -467,6 +483,7 @@ function AppLayoutShell({
           </div>
         </AppShell>
       </SessionRoleGate>
+      </ListDisplayModeProvider>
       </ListPageModeProvider>
       </UiThemeProvider>
     </ThemeProviderBridge>

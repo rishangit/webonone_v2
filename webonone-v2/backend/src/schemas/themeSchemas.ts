@@ -17,6 +17,8 @@ export const updateThemeBodySchema = createThemeBodySchema
 
 export const listPageModeSchema = z.enum(['pagination', 'on-scroll'])
 
+export const listDisplayModeSchema = z.enum(['list', 'grid', 'card'])
+
 export const uiThemeSchema = z.enum(['classic', 'high-tech'])
 
 export const patchPreferencesBodySchema = z
@@ -24,6 +26,7 @@ export const patchPreferencesBodySchema = z
     activeThemeId: z.string().length(21).optional(),
     colorMode: z.enum(['light', 'dark']).optional(),
     listPageMode: listPageModeSchema.optional(),
+    listDisplayMode: listDisplayModeSchema.optional(),
     uiTheme: uiThemeSchema.optional(),
   })
   .refine(
@@ -31,6 +34,7 @@ export const patchPreferencesBodySchema = z
       data.activeThemeId !== undefined ||
       data.colorMode !== undefined ||
       data.listPageMode !== undefined ||
+      data.listDisplayMode !== undefined ||
       data.uiTheme !== undefined,
     {
       message: 'At least one field is required',

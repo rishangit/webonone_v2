@@ -56,5 +56,20 @@ export function useNavigateSms() {
     [navigate, parentOrigin, searchParams],
   )
 
-  return { goToList, goToDetail, goToPreview, goToVersions, isEmbedded: Boolean(parentOrigin) }
+  const goToDevicesSettings = useCallback(() => {
+    if (parentOrigin) {
+      sendPlatformNavigate(parentOrigin, '/sms/devices?tab=settings')
+      return
+    }
+    navigate({ pathname: '/devices', search: 'tab=settings' })
+  }, [navigate, parentOrigin])
+
+  return {
+    goToList,
+    goToDetail,
+    goToPreview,
+    goToVersions,
+    goToDevicesSettings,
+    isEmbedded: Boolean(parentOrigin),
+  }
 }

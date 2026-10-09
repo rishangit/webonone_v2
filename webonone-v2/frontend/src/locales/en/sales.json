@@ -99,7 +99,9 @@
     "to": "To",
     "applyFilters": "Apply filters",
     "empty": "No sales yet.",
-    "viewBill": "View bill"
+    "viewBill": "View bill",
+    "columnBill": "Bill",
+    "columnTotal": "Total"
   },
   "bill": {
     "title": "Bill",

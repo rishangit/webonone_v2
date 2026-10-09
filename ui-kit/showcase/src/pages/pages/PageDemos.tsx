@@ -4,22 +4,16 @@ import { z } from 'zod'
 import {
   Button,
   Checkbox,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   EditableSectionCard,
   FeaturePage,
   FormField,
   Input,
   ImagePreview,
-  ItemList,
-  ItemListContent,
-  ItemListEmpty,
-  ItemListItem,
-  ItemListMenu,
-  ItemListStatus,
-  itemListRowActiveClassName,
+  ItemListViewToggle,
   Label,
   ListAddButton,
+  ListDisplayModeProvider,
+  type ListDisplayMode,
   ListFilterPanel,
   ListFilterTrigger,
   ListPageActions,
@@ -32,41 +26,45 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  StatusTag,
   Switch,
   Textarea,
   mapZodIssuesToFieldErrors,
   useClientListPage,
+  useToast,
   type ListPageMode,
 } from '@webonone/ui-kit'
+import { AppListShowcaseCollectionView } from '@/pages/pages/AppListShowcaseCollectionView'
+import { APP_LIST_SHOWCASE_ENTRIES, type AppListShowcaseEntry } from '@/pages/pages/listItemShowcase'
 
-type MockItem = {
-  id: string
-  name: string
-  status: 'active' | 'archived'
-}
-
-const MOCK_ITEMS: MockItem[] = Array.from({ length: 36 }, (_, index) => ({
-  id: String(index + 1),
-  name: `Catalog item ${index + 1}`,
-  status: index % 5 === 0 ? 'archived' : 'active',
-}))
+const SERVICE_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'All services' },
+  { value: 'data', label: 'Data' },
+  { value: 'identity', label: 'Identity' },
+  { value: 'webonone', label: 'WebOnOne' },
+  { value: 'email', label: 'Email' },
+  { value: 'sms', label: 'SMS' },
+  { value: 'design', label: 'Design' },
+  { value: 'payment', label: 'Payment' },
+  { value: 'ai', label: 'AI' },
+  { value: 'media', label: 'Media' },
+]
 
 export function ListPageDemo() {
   const [mode, setMode] = useState<ListPageMode>('pagination')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterService, setFilterService] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedId, setSelectedId] = useState<string | null>('1')
+  const [pickerSelectedId, setPickerSelectedId] = useState('identity-user-picker')
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    return MOCK_ITEMS.filter((item) => {
-      if (filterStatus !== 'all' && item.status !== filterStatus) return false
+    return APP_LIST_SHOWCASE_ENTRIES.filter((item) => {
+      if (filterService !== 'all' && item.service !== filterService) return false
       if (!query) return true
-      return item.name.toLowerCase().includes(query)
+      const haystack = `${item.source} ${item.component}`.toLowerCase()
+      return haystack.includes(query)
     })
-  }, [filterStatus, searchQuery])
+  }, [filterService, searchQuery])
 
   return (
     <ListPageModeProvider mode={mode}>
@@ -74,12 +72,12 @@ export function ListPageDemo() {
         filteredItems={filteredItems}
         filterOpen={filterOpen}
         setFilterOpen={setFilterOpen}
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
+        filterService={filterService}
+        setFilterService={setFilterService}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        selectedId={selectedId}
-        setSelectedId={setSelectedId}
+        pickerSelectedId={pickerSelectedId}
+        setPickerSelectedId={setPickerSelectedId}
         mode={mode}
         setMode={setMode}
       />
@@ -91,35 +89,38 @@ function ListPageDemoBody({
   filteredItems,
   filterOpen,
   setFilterOpen,
-  filterStatus,
-  setFilterStatus,
+  filterService,
+  setFilterService,
   searchQuery,
   setSearchQuery,
-  selectedId,
-  setSelectedId,
+  pickerSelectedId,
+  setPickerSelectedId,
   mode,
   setMode,
 }: {
-  filteredItems: MockItem[]
+  filteredItems: AppListShowcaseEntry[]
   filterOpen: boolean
   setFilterOpen: (open: boolean) => void
-  filterStatus: string
-  setFilterStatus: (status: string) => void
+  filterService: string
+  setFilterService: (service: string) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
-  selectedId: string | null
-  setSelectedId: (id: string | null) => void
+  pickerSelectedId: string
+  setPickerSelectedId: (id: string) => void
   mode: ListPageMode
   setMode: (mode: ListPageMode) => void
 }) {
+  const { toast } = useToast()
   const listPage = useClientListPage(filteredItems)
   const visibleItems = listPage.visible
-  const hasActiveFilters = filterStatus !== 'all'
+  const hasActiveFilters = filterService !== 'all'
+  const [displayMode, setDisplayMode] = useState<ListDisplayMode>('list')
 
   return (
+    <ListDisplayModeProvider mode={displayMode}>
     <FeaturePage
       title="List page"
-      description="Production list composition: FeaturePage actions, ListFilterPanel, ListPageBody, ItemList, and ListPageFooter. Toggle pagination vs on-scroll."
+      description="List-page chrome with list, grid, and card collection layouts (toggle in the header). List mode shows one production ItemList row per screen with a source breadcrumb; card mode uses the same ItemListCollectionCard patterns as each app list."
       actions={
         <ListPageActions>
           <SearchInput
@@ -127,11 +128,12 @@ function ListPageDemoBody({
             onChange={(event) => {
               setSearchQuery(event.target.value)
             }}
-            placeholder="Item name"
-            aria-label="Search catalog items"
+            placeholder="Service or screen"
+            aria-label="Search app list sources"
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          <ItemListViewToggle value={displayMode} onChange={setDisplayMode} />
           <ListAddButton>Add item</ListAddButton>
         </ListPageActions>
       }
@@ -159,18 +161,20 @@ function ListPageDemoBody({
         onOpenChange={setFilterOpen}
         onApply={() => undefined}
         onClear={() => {
-          setFilterStatus('all')
+          setFilterService('all')
         }}
       >
-        <FormField label="Status" htmlFor="pages-list-filter-status">
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger id="pages-list-filter-status">
+        <FormField label="Microservice" htmlFor="pages-list-filter-service">
+          <Select value={filterService} onValueChange={setFilterService}>
+            <SelectTrigger id="pages-list-filter-service">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
+              {SERVICE_FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </FormField>
@@ -178,44 +182,14 @@ function ListPageDemoBody({
 
       <ListPageBody>
         <div className="flex-1">
-          {visibleItems.length === 0 ? (
-            <ItemListEmpty>No items match your search or filters.</ItemListEmpty>
-          ) : (
-            <ItemList>
-              {visibleItems.map((item) => (
-                <ItemListItem
-                  key={item.id}
-                  className={selectedId === item.id ? itemListRowActiveClassName : undefined}
-                  onClick={() => setSelectedId(item.id)}
-                >
-                  <ItemListContent>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{item.status}</p>
-                  </ItemListContent>
-                  <ItemListStatus>
-                    <StatusTag variant={item.status === 'active' ? 'verified' : 'unverified'} />
-                  </ItemListStatus>
-                  <ItemListMenu ariaLabel={`Actions for ${item.name}`}>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedId(item.id)
-                      }}
-                    >
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </ItemListMenu>
-                </ItemListItem>
-              ))}
-            </ItemList>
-          )}
+          <AppListShowcaseCollectionView
+            entries={visibleItems}
+            pickerSelectedId={pickerSelectedId}
+            onPickerSelect={setPickerSelectedId}
+            onDetailOpen={(title) =>
+              toast({ title: 'Detail navigation', description: `Would open details for ${title}.` })
+            }
+          />
         </div>
         <ListPageFooter
           className="mt-auto"
@@ -231,6 +205,7 @@ function ListPageDemoBody({
         />
       </ListPageBody>
     </FeaturePage>
+    </ListDisplayModeProvider>
   )
 }
 

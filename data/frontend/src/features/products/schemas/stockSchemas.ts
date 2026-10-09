@@ -72,6 +72,30 @@ export function createEmptyStockFormDraft(): StockFormDraft {
   }
 }
 
+export function createStockDraftFromItem(stock: {
+  quantity: number
+  batchNumber: string
+  costPrice: number
+  sellPrice: number
+  purchaseDate: string
+  expiredDate: string | null
+  supplierUserId: string | null
+  supplierDisplayName: string | null
+  supplierEmail: string | null
+}): StockFormDraft {
+  return {
+    quantity: String(stock.quantity),
+    batchNumber: stock.batchNumber,
+    costPrice: String(stock.costPrice),
+    sellPrice: String(stock.sellPrice),
+    purchaseDate: stock.purchaseDate,
+    expiredDate: stock.expiredDate ?? '',
+    supplierUserId: stock.supplierUserId ?? '',
+    supplierDisplayName: stock.supplierDisplayName ?? '',
+    supplierEmail: stock.supplierEmail ?? '',
+  }
+}
+
 export function toCreateStockPayload(values: StockFormValues) {
   const hasSupplier = Boolean(values.supplierUserId && values.supplierUserId !== '')
 

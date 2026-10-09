@@ -360,6 +360,20 @@
     overflow: hidden;
   }
 
+  /**
+   * Thumbs / collection card heroes — inherit the row or card surface radius (no separate image chamfer).
+   */
+  [data-ui-theme='classic'] .ui-shape-image.ui-shape-image-flush,
+  html:not([data-ui-theme]) .ui-shape-image.ui-shape-image-flush {
+    border-radius: var(--radius-surface);
+    clip-path: none;
+  }
+
+  [data-ui-theme='classic'] .item-list-card-media .ui-shape-image-flush,
+  html:not([data-ui-theme]) .item-list-card-media .ui-shape-image-flush {
+    border-radius: 0;
+  }
+
   [data-ui-theme='classic'] .ui-shape-control,
   html:not([data-ui-theme]) .ui-shape-control {
     border-radius: var(--radius-control);
@@ -633,6 +647,11 @@
       100% 100%,
       0 100%
     );
+  }
+
+  [data-ui-theme='high-tech'] .ui-shape-image.ui-shape-image-flush {
+    clip-path: none;
+    border-radius: 0;
   }
 
   /**
@@ -1047,6 +1066,19 @@
     border: 1px solid hsl(var(--glass-border));
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
+  }
+
+  /**
+   * Item rows inside a Card — .glass-card border shorthand wins over Tailwind border-0 utilities.
+   */
+  [data-card-surface] .item-list-row-nested-in-card.glass-card {
+    border: none !important;
+  }
+
+  [data-ui-theme='high-tech'] [data-card-surface] .item-list-row-nested-in-card.ui-shape-list-row::before,
+  [data-ui-theme='high-tech'] [data-card-surface] .item-list-row-nested-in-card.ui-shape-list-row::after {
+    content: none;
+    display: none;
   }
 
   /**

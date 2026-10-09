@@ -211,7 +211,7 @@ export function StaffHistoryTokenDetailScreen({
           {detail.sales.length === 0 ? (
             <ItemListEmpty>{t('history.tokenDetail.salesEmpty')}</ItemListEmpty>
           ) : (
-            <ItemList className="py-0">
+            <ItemList className="py-0" nestedInCard>
               {detail.sales.map((sale) => (
                 <ItemListItem
                   key={sale.id}

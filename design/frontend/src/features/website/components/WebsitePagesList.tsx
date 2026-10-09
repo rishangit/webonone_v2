@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
+  CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemList,
+  ItemListCardPlaceholderImage,
+  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -31,14 +33,44 @@ export function WebsitePagesList({
   onDeleted,
 }: WebsitePagesListProps) {
   const { t } = useTranslation('website')
+  const { t: tc } = useTranslation('common')
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
 
-  if (pages.length === 0) {
-    return <ItemListEmpty>{t('emptyPages')}</ItemListEmpty>
-  }
+  const columns = useMemo(
+    () => [
+      {
+        id: 'name',
+        header: tc('name'),
+        sortable: true,
+        compare: (a: WebsitePage, b: WebsitePage) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+        cell: (page: WebsitePage) => (
+          <a
+            href={websiteDesignerUrl('pages', page.id)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-foreground hover:underline"
+          >
+            {page.name}
+          </a>
+        ),
+      },
+      {
+        id: 'status',
+        header: tc('status'),
+        cell: (page: WebsitePage) => (
+          <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
+            {page.status === 'active' ? t('active') : t('inactive')}
+          </StatusTag>
+        ),
+      },
+    ],
+    [t, tc],
+  )
 
-  const menu = (page: WebsitePage) =>
-    canManage ? (
+  function renderRowMenu(page: WebsitePage) {
+    if (!canManage) return null
+    return (
       <ItemListMenu ariaLabel={t('actionsFor', { name: page.name })}>
         <DropdownMenuItem asChild>
           <a href={websiteDesignerUrl('pages', page.id)} target="_blank" rel="noopener noreferrer">
@@ -55,7 +87,25 @@ export function WebsitePagesList({
           {t('common:delete')}
         </DropdownMenuItem>
       </ItemListMenu>
-    ) : null
+    )
+  }
+
+  function rowBody(page: WebsitePage) {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">{page.name}</p>
+          <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
+            {page.status === 'active' ? t('active') : t('inactive')}
+          </StatusTag>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          /{page.path || ''}
+          {page.layoutName ? ` · ${page.layoutName}` : ''}
+        </p>
+      </>
+    )
+  }
 
   const confirm = (
     <PlatformAlertConfirmDialog
@@ -74,9 +124,14 @@ export function WebsitePagesList({
 
   return (
     <>
-      <ItemList>
-        {pages.map((page) => (
-          <ItemListItem key={page.id}>
+      <CollectionListView
+        items={pages}
+        getRowKey={(page) => page.id}
+        columns={columns}
+        empty={<ItemListEmpty>{t('emptyPages')}</ItemListEmpty>}
+        renderGridActions={renderRowMenu}
+        renderListItem={(page) => (
+          <ItemListItem>
             <ItemListContent>
               <a
                 href={websiteDesignerUrl('pages', page.id)}
@@ -84,22 +139,28 @@ export function WebsitePagesList({
                 rel="noopener noreferrer"
                 className="block w-full text-left"
               >
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{page.name}</p>
-                  <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
-                    {page.status === 'active' ? t('active') : t('inactive')}
-                  </StatusTag>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  /{page.path || ''}
-                  {page.layoutName ? ` · ${page.layoutName}` : ''}
-                </p>
+                {rowBody(page)}
               </a>
             </ItemListContent>
-            {menu(page)}
+            {renderRowMenu(page)}
           </ItemListItem>
-        ))}
-      </ItemList>
+        )}
+        renderCard={(page) => (
+          <ItemListCollectionCard
+            image={<ItemListCardPlaceholderImage alt={page.name} />}
+            menu={renderRowMenu(page)}
+          >
+            <a
+              href={websiteDesignerUrl('pages', page.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-left"
+            >
+              {rowBody(page)}
+            </a>
+          </ItemListCollectionCard>
+        )}
+      />
       {confirm}
     </>
   )

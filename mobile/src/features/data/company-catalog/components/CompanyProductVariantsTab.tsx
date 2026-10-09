@@ -115,7 +115,7 @@ export function CompanyProductVariantsTab({
       ) : items.length === 0 ? (
         <ItemListEmpty>{t('variantsTab.empty')}</ItemListEmpty>
       ) : (
-        <ItemList className="py-0">
+        <ItemList className="py-0" nestedInCard>
           {items.map((variant) => (
             <ItemListItem
               key={variant.id}

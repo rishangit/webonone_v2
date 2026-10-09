@@ -13,27 +13,34 @@ import {
 import { mapZodIssuesToFieldErrors } from '@/features/data/schemas/dataSchemas'
 import {
   createEmptyStockFormDraft,
+  createStockDraftFromItem,
   stockFormSchema,
   toCreateStockPayload,
   type StockFormDraft,
 } from '@/features/data/company-catalog/schemas/stockSchemas'
-import { dataLibraryApi } from '@/features/sales/services/dataLibraryApi'
+import {
+  dataLibraryApi,
+  type LibraryProductVariantStock,
+} from '@/features/sales/services/dataLibraryApi'
 import { loadIdentityUsersForStaff } from '@/features/staff/services/identityUsersApi'
 
 export function CompanyStockFormDialog({
   open,
   libraryProductId,
   variantId,
+  stock = null,
   onOpenChange,
   onSaved,
 }: {
   open: boolean
   libraryProductId: string
   variantId: string
+  stock?: LibraryProductVariantStock | null
   onOpenChange: (open: boolean) => void
   onSaved: () => void
 }) {
   const { toast } = useToast()
+  const isNew = !stock
   const [values, setValues] = useState<StockFormDraft>(createEmptyStockFormDraft)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof StockFormDraft, string>>>({})
   const [saving, setSaving] = useState(false)
@@ -43,12 +50,12 @@ export function CompanyStockFormDialog({
 
   useEffect(() => {
     if (!open) return
-    setValues(createEmptyStockFormDraft())
+    setValues(stock ? createStockDraftFromItem(stock) : createEmptyStockFormDraft())
     setFieldErrors({})
     setSaving(false)
     setGeneratingBatch(false)
     setSupplierPickerOpen(false)
-  }, [open])
+  }, [open, stock])
 
   const loadPickerUsers = useCallback(async () => {
     try {
@@ -106,17 +113,23 @@ export function CompanyStockFormDialog({
 
     setSaving(true)
     try {
-      await dataLibraryApi.createProductVariantStock(
-        libraryProductId,
-        variantId,
-        toCreateStockPayload(parsed.data),
-      )
-      toast({ title: 'Stock added' })
+      const payload = toCreateStockPayload(parsed.data)
+      if (isNew) {
+        await dataLibraryApi.createProductVariantStock(libraryProductId, variantId, payload)
+      } else {
+        await dataLibraryApi.updateProductVariantStock(
+          libraryProductId,
+          variantId,
+          stock.id,
+          payload,
+        )
+      }
+      toast({ title: isNew ? 'Stock added' : 'Stock updated' })
       onSaved()
       onOpenChange(false)
     } catch (err) {
       toast({
-        title: 'Failed to create stock',
+        title: isNew ? 'Failed to create stock' : 'Failed to update stock',
         description: err instanceof Error ? err.message : undefined,
         variant: 'destructive',
       })
@@ -130,8 +143,12 @@ export function CompanyStockFormDialog({
       <CustomDialog
         open={open}
         onOpenChange={onOpenChange}
-        title="Add stock"
-        description="Record a stock batch for this product variant."
+        title={isNew ? 'Add stock' : 'Edit stock'}
+        description={
+          isNew
+            ? 'Record a stock batch for this product variant.'
+            : 'Update this stock batch.'
+        }
         sizeWidth="medium"
         sizeHeight="large"
         nestedDismissGuard={supplierPickerOpen}
@@ -141,7 +158,7 @@ export function CompanyStockFormDialog({
               Cancel
             </Button>
             <Button disabled={saving} onPress={() => void handleSubmit()}>
-              {saving ? 'Saving…' : 'Add stock'}
+              {saving ? 'Saving…' : isNew ? 'Add stock' : 'Save'}
             </Button>
           </>
         }

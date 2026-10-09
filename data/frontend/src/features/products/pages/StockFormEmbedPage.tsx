@@ -11,7 +11,11 @@ import { StockFormDialog } from '@/features/products/components/StockFormDialog'
 import type { ProductVariantStock } from '@/shared/types/data.types'
 
 export function StockFormEmbedPage() {
-  const { productId, variantId } = useParams<{ productId: string; variantId: string }>()
+  const { productId, variantId, stockId } = useParams<{
+    productId: string
+    variantId: string
+    stockId?: string
+  }>()
   const [searchParams] = useSearchParams()
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
@@ -34,6 +38,7 @@ export function StockFormEmbedPage() {
       open
       productId={productId}
       variantId={variantId}
+      stockId={stockId}
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}

@@ -1,18 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import {
-  ImagePreview,
-  ItemList,
-  ItemListContent,
-  ItemListEmpty,
-  ItemListItem,
-  itemListThumbClassName,
-  ListPageBody,
-  SearchInput,
-  Spinner,
-  StatusTag,
-} from '@webonone/ui-kit'
+import { ItemListViewToggle, ListPageBody, SearchInput, Spinner } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
+import { CompanyCatalogItemsList } from '@/features/company-catalog/components/CompanyCatalogItemsList'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
@@ -23,7 +14,6 @@ import {
   type CatalogEntityKind,
 } from '@/features/company-catalog/types/companyCatalog.types'
 import { hydrateLinkedCatalogItems } from '@/features/company-catalog/utils/hydrateLinkedCatalog'
-import { firstGalleryImageUrl } from '@/features/company-catalog/utils/firstGalleryImageUrl'
 import {
   companySettingsCatalogItemPath,
   companySettingsListPath,
@@ -115,32 +105,10 @@ export function MemberCompanyCatalogPanel({
   }, [items, search])
 
   const showThumbnails = isCatalogGalleryKind(kind)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
 
-  function renderRowContent(item: HydratedCatalogItem) {
-    return (
-      <>
-        {showThumbnails ? (
-          <ImagePreview
-            src={firstGalleryImageUrl(item.displayGalleryImages)}
-            alt=""
-            className={itemListThumbClassName}
-          />
-        ) : null}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{item.displayName}</span>
-            <StatusTag variant="verified">{t(`binding.${item.bindingMode}`)}</StatusTag>
-            {item.libraryUnavailable ? (
-              <StatusTag variant="pending">{t('list.libraryUnavailable')}</StatusTag>
-            ) : null}
-          </div>
-          {item.displayDescription ? (
-            <p className="text-sm text-muted-foreground line-clamp-2">{item.displayDescription}</p>
-          ) : null}
-        </div>
-      </>
-    )
-  }
+  const emptyMessage =
+    search.trim() ? t('list.emptySearch', { entity }) : t('list.empty', { entity })
 
   return (
     <div className="flex flex-col gap-4">
@@ -159,6 +127,7 @@ export function MemberCompanyCatalogPanel({
           aria-label={t('list.searchAria', { entity })}
           className="w-64"
         />
+        <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
       </div>
 
       {previewError ? (
@@ -171,40 +140,25 @@ export function MemberCompanyCatalogPanel({
         </div>
       ) : (
         <ListPageBody>
-          <ItemList>
-            {filtered.length === 0 ? (
-              <ItemListEmpty>
-                {search.trim() ? t('list.emptySearch', { entity }) : t('list.empty', { entity })}
-              </ItemListEmpty>
-            ) : (
-              filtered.map((item) => (
-                <ItemListItem key={item.id}>
-                  <ItemListContent>
-                    {previewMode ? (
-                      <div className="flex w-full items-start gap-3">{renderRowContent(item)}</div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        onClick={() =>
-                          navigate(
-                            companySettingsCatalogItemPath(
-                              companySettingsListPath(pathname),
-                              companyId,
-                              kind,
-                              item.id,
-                            ),
-                          )
-                        }
-                      >
-                        {renderRowContent(item)}
-                      </button>
-                    )}
-                  </ItemListContent>
-                </ItemListItem>
-              ))
-            )}
-          </ItemList>
+          <div className="flex-1">
+            <CompanyCatalogItemsList
+              items={filtered}
+              kind={kind}
+              showThumbnails={showThumbnails}
+              empty={emptyMessage}
+              previewMode={previewMode}
+              onOpen={(id) =>
+                navigate(
+                  companySettingsCatalogItemPath(
+                    companySettingsListPath(pathname),
+                    companyId,
+                    kind,
+                    id,
+                  ),
+                )
+              }
+            />
+          </div>
         </ListPageBody>
       )}
     </div>

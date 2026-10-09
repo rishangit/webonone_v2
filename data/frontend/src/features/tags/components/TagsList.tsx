@@ -1,10 +1,11 @@
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
+  CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemList,
+  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -41,77 +42,135 @@ export function TagsList({
     goToDetail('tags', id)
   }
 
-  if (items.length === 0) {
-    return <ItemListEmpty>{t('emptyFound')}</ItemListEmpty>
+  const columns = useMemo(
+    () => [
+      {
+        id: 'name',
+        header: t('columnName'),
+        sortable: true,
+        compare: (a: Tag, b: Tag) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+        cell: (item: Tag) => (
+          <button
+            type="button"
+            className="rounded-md text-left font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => openDetails(item.id)}
+          >
+            <span className="inline-flex items-center gap-0.5">
+              <span style={{ color: normalizeHexColor(item.color) }} aria-hidden>#</span>
+              <span>{item.name}</span>
+            </span>
+          </button>
+        ),
+      },
+      {
+        id: 'refs',
+        header: t('columnRefs'),
+        sortable: true,
+        compare: (a: Tag, b: Tag) => (a.referenceCount ?? 0) - (b.referenceCount ?? 0),
+        cell: (item: Tag) => t('refs', { count: item.referenceCount ?? 0 }),
+      },
+      {
+        id: 'status',
+        header: t('columnStatus'),
+        cell: (item: Tag) => <StatusBadge status={item.status} />,
+      },
+    ],
+    [t],
+  )
+
+  function renderRowMenu(item: Tag) {
+    return (
+      <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
+        <DropdownMenuItem onClick={() => openDetails(item.id)}>{t('viewDetails')}</DropdownMenuItem>
+        <CopyToAiMenuItem kind="tag" id={item.id} label={item.name} />
+        {canMutate && item.status === 'pending' && onVerify ? (
+          <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
+        ) : null}
+        {canMutate ? (
+          <DropdownMenuItem onClick={() => onEdit(item.id)}>{t('common:edit')}</DropdownMenuItem>
+        ) : null}
+        {canMutate ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+            >
+              Delete
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </ItemListMenu>
+    )
+  }
+
+  function rowBody(item: Tag) {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <p className="inline-flex items-center gap-0.5 font-medium text-foreground">
+            <span className="font-medium" style={{ color: normalizeHexColor(item.color) }} aria-hidden>
+              #
+            </span>
+            <span>{item.name}</span>
+          </p>
+          <span className="text-xs text-muted-foreground">
+            {t('refs', { count: item.referenceCount ?? 0 })}
+          </span>
+        </div>
+        {item.description ? (
+          <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+        ) : null}
+      </>
+    )
   }
 
   return (
     <>
-      <ItemList>
-        {items.map((item) => {
-          const rowBody = (
-            <>
-              <div className="flex items-center gap-2">
-                <p className="inline-flex items-center gap-0.5 font-medium text-foreground">
-                  <span
-                    className="font-medium"
-                    style={{ color: normalizeHexColor(item.color) }}
-                    aria-hidden
-                  >
-                    #
-                  </span>
-                  <span>{item.name}</span>
-                </p>
-                <span className="text-xs text-muted-foreground">
-                  {t('refs', { count: item.referenceCount ?? 0 })}
-                </span>
-              </div>
-              {item.description ? (
-                <p className="truncate text-xs text-muted-foreground">{item.description}</p>
-              ) : null}
-            </>
-          )
-          return (
-            <ItemListItem key={item.id}>
-              <ItemListContent>
-                <button
-                  type="button"
-                  className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => openDetails(item.id)}
-                >
-                  {rowBody}
-                </button>
-              </ItemListContent>
+      <CollectionListView
+        items={items}
+        getRowKey={(item) => item.id}
+        columns={columns}
+        empty={<ItemListEmpty>{t('emptyFound')}</ItemListEmpty>}
+        renderGridActions={renderRowMenu}
+        renderListItem={(item) => (
+          <ItemListItem>
+            <ItemListContent>
+              <button
+                type="button"
+                className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => openDetails(item.id)}
+              >
+                {rowBody(item)}
+              </button>
+            </ItemListContent>
+            <ItemListStatus>
+              <StatusBadge status={item.status} />
+            </ItemListStatus>
+            {renderRowMenu(item)}
+          </ItemListItem>
+        )}
+        renderCard={(item) => (
+          <ItemListCollectionCard
+            image={
+              <div
+                className="h-full w-full"
+                style={{ backgroundColor: normalizeHexColor(item.color) }}
+                aria-hidden
+              />
+            }
+            menu={renderRowMenu(item)}
+            onBodyClick={() => openDetails(item.id)}
+          >
+            {rowBody(item)}
+            <div className="mt-2">
               <ItemListStatus>
                 <StatusBadge status={item.status} />
               </ItemListStatus>
-              <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
-                <DropdownMenuItem onClick={() => openDetails(item.id)}>
-                  {t('viewDetails')}
-                </DropdownMenuItem>
-                <CopyToAiMenuItem kind="tag" id={item.id} label={item.name} />
-                {canMutate && item.status === 'pending' && onVerify ? (
-                  <DropdownMenuItem onClick={() => onVerify(item.id)}>{t('verify')}</DropdownMenuItem>
-                ) : null}
-                {canMutate ? (
-                  <DropdownMenuItem onClick={() => onEdit(item.id)}>{t('common:edit')}</DropdownMenuItem>
-                ) : null}
-                {canMutate ? (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => setPendingDelete({ id: item.id, name: item.name })}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
-              </ItemListMenu>
-            </ItemListItem>
-          )
-        })}
-      </ItemList>
+            </div>
+          </ItemListCollectionCard>
+        )}
+      />
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}
         title={pendingDelete ? t('deleteConfirm', { name: pendingDelete.name }) : t('deleteConfirmFallback')}

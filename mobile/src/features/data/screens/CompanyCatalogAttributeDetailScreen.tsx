@@ -179,7 +179,7 @@ export function CompanyCatalogAttributeDetailScreen({
               {attribute.values.length === 0 ? (
                 <ItemListEmpty>{t('attributeDetail.values.empty')}</ItemListEmpty>
               ) : (
-                <ItemList className="py-0">
+                <ItemList className="py-0" nestedInCard>
                   {attribute.values.map((value) => {
                     const label = formatLibraryAttributeValueLabel(value, attribute.unit?.symbol)
                     return (

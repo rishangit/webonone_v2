@@ -15,6 +15,7 @@ export interface PreferencesDto {
   activeThemeId: string
   colorMode: 'light' | 'dark'
   listPageMode: 'pagination' | 'on-scroll'
+  listDisplayMode: 'list' | 'grid' | 'card'
   uiTheme: UiThemeId
   theme: themeService.ThemeDto
 }
@@ -30,6 +31,7 @@ async function ensurePreferencesRow(userId: string): Promise<UserPreferenceRow> 
     active_theme_id: themeService.PLATFORM_DEFAULT_THEME_ID,
     color_mode: 'light',
     list_page_mode: 'pagination',
+    list_display_mode: 'list',
     ui_theme: 'classic',
     updated_at: db.fn.now(3),
   })
@@ -68,6 +70,7 @@ export async function getPreferences(userId: string): Promise<PreferencesDto> {
     activeThemeId: theme.id,
     colorMode: pref.color_mode,
     listPageMode: pref.list_page_mode ?? 'pagination',
+    listDisplayMode: pref.list_display_mode ?? 'list',
     uiTheme: normalizeUiTheme(pref.ui_theme),
     theme,
   }
@@ -99,6 +102,9 @@ export async function patchPreferences(
   }
   if (body.listPageMode !== undefined) {
     patch.list_page_mode = body.listPageMode
+  }
+  if (body.listDisplayMode !== undefined) {
+    patch.list_display_mode = body.listDisplayMode
   }
   if (body.uiTheme !== undefined) {
     patch.ui_theme = body.uiTheme

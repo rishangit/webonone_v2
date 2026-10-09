@@ -5,12 +5,15 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
   useToast,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { formsActions } from '@/features/forms/store'
@@ -49,6 +52,7 @@ export function FormsPage() {
   const canManage = role === 'super_admin' || role === 'company_admin'
   const hasCompany = Boolean(companyId)
   const loading = hasCompany && listStatus === 'loading' && items.length === 0
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(loading ? t('loading') : null)
 
   useEffect(() => {
@@ -119,17 +123,18 @@ export function FormsPage() {
       title={t('title')}
       description={t('description')}
       actions={
-        <>
+        <ListPageActions>
           <SearchInput
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
             className="w-56"
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {canManage ? (
             <ListAddButton onClick={() => setDialogOpen(true)}>{t('add')}</ListAddButton>
           ) : null}
-        </>
+        </ListPageActions>
       }
     >
       <ListPageBody>

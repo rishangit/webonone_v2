@@ -5,11 +5,14 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { EventFormDialog } from '@/features/calendar/components/EventFormDialog'
@@ -27,6 +30,7 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
   const { t } = useTranslation('calendar')
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
   const list = useEpicCatalogList((s) => s.events, eventsActions)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const canManage = !personal && canManageCompanyEvents(activeRole, activeCompanyId)
@@ -47,7 +51,7 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
       title={t('events.title')}
       description={description}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
@@ -56,10 +60,11 @@ function CompanyEventsPage({ personal }: { personal: boolean }) {
             className="w-64"
             aria-label={t('events.searchAria')}
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {canManage ? (
             <ListAddButton onClick={() => setDialog({})}>{t('events.addEvent')}</ListAddButton>
           ) : null}
-        </div>
+        </ListPageActions>
       }
     >
       {list.error ? (

@@ -6,11 +6,14 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   SearchInput,
   ListPageFooter,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -35,6 +38,7 @@ export function HistoryPage() {
   })
 
   const loading = listStatus === 'loading' && items.length === 0
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(loading ? t('loadingHistory') : null)
 
   const hasActiveFilters = appliedFilters.status !== 'all'
@@ -109,7 +113,7 @@ export function HistoryPage() {
         userRole === 'company_admin' ? t('historyDescriptionCompany') : t('historyDescription')
       }
       actions={
-        <div className="flex items-center gap-2">
+        <ListPageActions>
           <SearchInput
             value={searchQuery}
             onChange={(event) => handleSearchChange(event.target.value)}
@@ -119,7 +123,8 @@ export function HistoryPage() {
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
-        </div>
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+        </ListPageActions>
       }
     >
       <PlatformHostedListFilterPanel<SmsHistoryStatusFilterDraft>

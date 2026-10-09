@@ -6,12 +6,15 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListAddButton,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   SearchInput,
   ListPageFooter,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -69,6 +72,7 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList(config.select, config.actions)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(list.loading ? t('loading') : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -78,7 +82,7 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
       title={t('title')}
       description={t('description')}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
@@ -87,12 +91,13 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
             aria-label={t('search')}
           />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {canCreate ? (
             <ListAddButton onClick={() => setDialog({})} compactLabel={tc('add')}>
               {t('add')}
             </ListAddButton>
           ) : null}
-        </div>
+        </ListPageActions>
       }
     >
       <PlatformHostedListFilterPanel

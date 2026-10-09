@@ -5,11 +5,11 @@ import type { CatalogAiEntityKind } from '@webonone/platform-embed'
 import { useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
 import {
   CATALOG_ENTITY_SINGULAR_KEYS,
-  type CatalogGalleryKind,
+  type CatalogEntityKind,
 } from '../types/companyCatalog.types'
 
 type CompanyCatalogAiMenuItemProps = {
-  kind: CatalogGalleryKind
+  kind: CatalogEntityKind
   id: string
   label: string
 }

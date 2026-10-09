@@ -2,7 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
-import { FeaturePage, ListAddButton, ListPageBody, ListPageFooter, SearchInput, useClientListPage } from '@webonone/ui-kit'
+import {
+  FeaturePage,
+  ItemListViewToggle,
+  ListAddButton,
+  ListPageActions,
+  ListPageBody,
+  ListPageFooter,
+  SearchInput,
+  useClientListPage,
+} from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -50,6 +60,7 @@ export function SystemThemePage() {
   }, [deleteTarget, dispatch])
 
   const themeList = useClientListPage(filteredThemes)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   const visibleThemes = themeList.visible
   const emptyMessage = themeSearchQuery.trim() ? t('systemTheme.list.emptySearch') : t('systemTheme.list.empty')
 
@@ -58,7 +69,7 @@ export function SystemThemePage() {
       title={t('systemTheme.list.title')}
       description={t('systemTheme.list.description')}
       actions={
-        <div className="flex items-center gap-2">
+        <ListPageActions>
           <SearchInput
             value={themeSearchQuery}
             onChange={(event) => {
@@ -68,8 +79,9 @@ export function SystemThemePage() {
             aria-label={t('systemTheme.list.searchAria')}
             className="w-64"
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           <ListAddButton onClick={() => setDialog({})}>{t('systemTheme.list.createTheme')}</ListAddButton>
-        </div>
+        </ListPageActions>
       }
     >
       {!dialog && !deleteTarget && error ? (

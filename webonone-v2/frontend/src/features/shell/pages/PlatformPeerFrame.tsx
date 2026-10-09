@@ -15,7 +15,12 @@ import {
   toCoreNavQueryValue,
 } from '@webonone/platform-nav'
 import { getStoredLocale, LOCALE_QUERY, normalizeLocale } from '@webonone/i18n'
-import { buildThemePayload, serializeThemeQueryParams } from '@webonone/theme'
+import {
+  buildThemePayload,
+  serializeListDisplayModeQueryParams,
+  serializeListPageModeQueryParams,
+  serializeThemeQueryParams,
+} from '@webonone/theme'
 import { useAppSelector } from '@/app/store/hooks'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
@@ -24,6 +29,7 @@ import { getDesignOrigin } from '@/features/design/utils/designConfig'
 import { getEmailOrigin } from '@/features/email/utils/emailConfig'
 import { getPaymentOrigin } from '@/features/payment/utils/paymentConfig'
 import { getSmsOrigin } from '@/features/sms/utils/smsConfig'
+import { isAllowedSmsShellNavigatePath } from '@/features/sms/utils/smsShellNavigate'
 import { getNavVariantForSessionRole } from '@/features/session/utils/sessionNav'
 import { usePlatformMediaDialog } from '@/features/media/PlatformMediaDialogContext'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -165,32 +171,6 @@ function isAllowedEmailShellNavigatePath(path: string): boolean {
 }
 
 /**
- * Allow SMS top-level routes and template nested paths
- * (`/sms/templates/:id`, `/preview`, `/versions`). Path may include a query string.
- */
-function isAllowedSmsShellNavigatePath(path: string): boolean {
-  const pathname = path.split('?')[0] ?? path
-  if (!pathname.startsWith('/sms/')) return false
-  const parts = pathname.slice(1).split('/').filter(Boolean)
-  if (parts[0] !== 'sms' || parts.length < 2) return false
-  if (parts.some((part) => !part || part.includes('..'))) return false
-
-  const section = parts[1]
-  const topLevel = new Set(['dashboard', 'send', 'gateway', 'devices', 'queue', 'history', 'templates'])
-  if (!topLevel.has(section ?? '')) return false
-
-  if (section === 'templates') {
-    if (parts.length === 2 || parts.length === 3) return true
-    if (parts.length === 4 && (parts[3] === 'preview' || parts[3] === 'versions')) {
-      return true
-    }
-    return false
-  }
-
-  return parts.length === 2
-}
-
-/**
  * Allow `/data/{entity}`, `/data/{entity}/:id`, nested product variant
  * `/data/products/:productId/variants/:variantId`, and nested catalog attribute
  * `/data/{products|services|spaces}/:entityId/attributes/:attributeId`.
@@ -310,6 +290,14 @@ export function PlatformPeerFrame({ peer }: PlatformPeerFrameProps) {
         serializeThemeQueryParams(
           buildThemePayload(toThemeDto(themePreferences.theme), themePreferences.colorMode),
         ),
+      )
+      Object.assign(
+        params,
+        serializeListPageModeQueryParams(themePreferences.listPageMode ?? 'pagination'),
+      )
+      Object.assign(
+        params,
+        serializeListDisplayModeQueryParams(themePreferences.listDisplayMode ?? 'list'),
       )
     }
     return params

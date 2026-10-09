@@ -46,6 +46,12 @@ export const shapeCompactCardAreaClassName = 'ui-shape-compact-card-area'
 /** Top-right chamfer only — images and tags (no bottom-right inner step). */
 export const shapeImageClassName = 'ui-shape-image'
 
+/**
+ * Image inside a collection card or list thumb — no separate chamfer/radius;
+ * parent row/card surface defines the outer shape.
+ */
+export const shapeImageFlushClassName = 'ui-shape-image-flush'
+
 /** Chamfered industrial panel (dialogs, alerts, compact panels). */
 export const shapePanelClassName = 'ui-shape-panel'
 

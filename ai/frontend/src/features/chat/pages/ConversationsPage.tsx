@@ -1,28 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import {
   Alert,
   AlertDescription,
   Button,
   FeaturePage,
-  ItemList,
-  ItemListContent,
-  ItemListEmpty,
-  ItemListItem,
+  ItemListViewToggle,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   useToast,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
+import { ConversationsList } from '@/features/chat/components/ConversationsList'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { conversationsActions } from '@/features/chat/store'
 import { redirectToWebOnOnePath } from '@/features/auth/utils/redirectToWebOnOne'
 import { aiApi } from '@/shared/services/aiApi'
-import type { Conversation } from '@/shared/types/ai.types'
-
 const OLLAMA_HOME_URL = 'https://ollama.com'
 const OLLAMA_KEYS_URL = 'https://ollama.com/settings/keys'
 const AI_SETTINGS_PATH = '/settings/basic?tab=ai'
@@ -37,6 +34,7 @@ export function ConversationsPage() {
   const { items, total, page, pageSize, listStatus, listError } = useAppSelector((s) => s.conversations)
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null)
   const loading = (listStatus === 'loading' && items.length === 0) || aiConfigured === null
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(loading ? t('loading') : null)
 
   useEffect(() => {
@@ -124,7 +122,12 @@ export function ConversationsPage() {
   return (
     <FeaturePage
       title={t('title')}
-      actions={<ListAddButton onClick={() => void handleCreate()}>{t('newConversation')}</ListAddButton>}
+      actions={
+        <ListPageActions>
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ListAddButton onClick={() => void handleCreate()}>{t('newConversation')}</ListAddButton>
+        </ListPageActions>
+      }
     >
       <ListPageBody>
         {listError ? (
@@ -132,28 +135,12 @@ export function ConversationsPage() {
             <AlertDescription>{listError}</AlertDescription>
           </Alert>
         ) : null}
-        {items.length === 0 && listStatus !== 'loading' ? (
-          <ItemListEmpty>{t('empty')}</ItemListEmpty>
-        ) : (
-          <ItemList>
-            {items.map((conversation: Conversation) => (
-              <ItemListItem key={conversation.id}>
-                <ItemListContent>
-                  <button
-                    type="button"
-                    className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => navigate(`/conversations/${conversation.id}`)}
-                  >
-                    <p className="font-medium">{conversation.title || t('untitled')}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDisplayDateTime(conversation.updatedAt)}
-                    </p>
-                  </button>
-                </ItemListContent>
-              </ItemListItem>
-            ))}
-          </ItemList>
-        )}
+        {listStatus !== 'loading' ? (
+          <ConversationsList
+            items={items}
+            onOpen={(id) => navigate(`/conversations/${id}`)}
+          />
+        ) : null}
         <ListPageFooter
           className="mt-auto"
           currentPage={page}

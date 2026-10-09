@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
+  CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ImagePreview,
   ContactValueLine,
-  ItemList,
+  ImagePreview,
+  ItemListCollectionCard,
+  itemListCardImageClassName,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -31,19 +33,48 @@ type StaffListProps = {
 
 export function StaffList({ items, canManage = false, onRemoved }: StaffListProps) {
   const { t } = useTranslation('staff')
+  const { t: tc } = useTranslation('common')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<CompanyStaff | null>(null)
 
-  if (items.length === 0) {
-    return <ItemListEmpty>{t('list.empty')}</ItemListEmpty>
-  }
-
   function openDetails(id: string) {
     navigate(`/staff/${id}`)
   }
+
+  const columns = useMemo(
+    () => [
+      {
+        id: 'name',
+        header: tc('name'),
+        sortable: true,
+        compare: (a: CompanyStaff, b: CompanyStaff) =>
+          a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }),
+        cell: (item: CompanyStaff) => (
+          <button
+            type="button"
+            className="rounded-md text-left font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => openDetails(item.id)}
+          >
+            {item.displayName}
+          </button>
+        ),
+      },
+      {
+        id: 'email',
+        header: t('list.columnEmail'),
+        cell: (item: CompanyStaff) => item.email ?? '—',
+      },
+      {
+        id: 'schedule',
+        header: t('list.columnSchedule'),
+        cell: (item: CompanyStaff) => formatWorkingDaysSummary(item.schedule),
+      },
+    ],
+    [t, tc],
+  )
 
   async function handleRemove(item: CompanyStaff) {
     setRemovingId(item.id)
@@ -60,57 +91,96 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
     }
   }
 
+  function renderRowMenu(item: CompanyStaff) {
+    return (
+      <ItemListMenu ariaLabel={t('actionsFor', { name: item.displayName })}>
+        <DropdownMenuItem onSelect={() => openDetails(item.id)}>
+          {t('list.viewDetails')}
+        </DropdownMenuItem>
+        <WebononeCopyToAiMenuItem kind="staff" id={item.id} label={item.displayName} />
+        {canManage ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={removingId === item.id}
+              onSelect={() => setPendingRemove(item)}
+              className="text-destructive focus:text-destructive"
+            >
+              {removingId === item.id ? tc('loading') : tc('remove')}
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </ItemListMenu>
+    )
+  }
+
+  function rowBody(item: CompanyStaff) {
+    return (
+      <>
+        <div className="flex items-start gap-3">
+          <ImagePreview
+            src={item.avatarUrl}
+            alt={item.displayName}
+            mode="view"
+            className={itemListThumbClassName}
+          />
+          <div className="min-w-0 space-y-1">{staffDetails(item)}</div>
+        </div>
+      </>
+    )
+  }
+
+  function staffDetails(item: CompanyStaff) {
+    return (
+      <>
+        <p className="truncate font-medium text-foreground">{item.displayName}</p>
+        <ContactValueLine kind="email" value={item.email} emptyLabel={tc('email')} />
+        <p className="truncate text-xs text-muted-foreground">
+          {formatWorkingDaysSummary(item.schedule)}
+        </p>
+      </>
+    )
+  }
+
   return (
     <>
-      <ItemList>
-        {items.map((item) => (
-          <ItemListItem key={item.id}>
+      <CollectionListView
+        items={items}
+        getRowKey={(item) => item.id}
+        columns={columns}
+        empty={<ItemListEmpty>{t('list.empty')}</ItemListEmpty>}
+        renderGridActions={renderRowMenu}
+        renderListItem={(item) => (
+          <ItemListItem>
             <ItemListContent>
               <button
                 type="button"
-                className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => openDetails(item.id)}
               >
-                <ImagePreview
-                  src={item.avatarUrl}
-                  alt={item.displayName}
-                  mode="view"
-                  className={itemListThumbClassName}
-                />
-                <div className="min-w-0 space-y-1">
-                  <p className="truncate font-medium text-foreground">{item.displayName}</p>
-                  <ContactValueLine
-                    kind="email"
-                    value={item.email}
-                    emptyLabel={t('common:email')}
-                  />
-                  <p className="truncate text-xs text-muted-foreground">
-                    {formatWorkingDaysSummary(item.schedule)}
-                  </p>
-                </div>
+                {rowBody(item)}
               </button>
             </ItemListContent>
-            <ItemListMenu ariaLabel={t('actionsFor', { name: item.displayName })}>
-              <DropdownMenuItem onSelect={() => openDetails(item.id)}>
-                {t('list.viewDetails')}
-              </DropdownMenuItem>
-              <WebononeCopyToAiMenuItem kind="staff" id={item.id} label={item.displayName} />
-              {canManage ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    disabled={removingId === item.id}
-                    onSelect={() => setPendingRemove(item)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    {removingId === item.id ? t('common:loading') : t('common:remove')}
-                  </DropdownMenuItem>
-                </>
-              ) : null}
-            </ItemListMenu>
+            {renderRowMenu(item)}
           </ItemListItem>
-        ))}
-      </ItemList>
+        )}
+        renderCard={(item) => (
+          <ItemListCollectionCard
+            image={
+              <ImagePreview
+                src={item.avatarUrl}
+                alt={item.displayName}
+                mode="view"
+                className={itemListCardImageClassName}
+              />
+            }
+            menu={renderRowMenu(item)}
+            onBodyClick={() => openDetails(item.id)}
+          >
+            <div className="min-w-0 space-y-1">{staffDetails(item)}</div>
+          </ItemListCollectionCard>
+        )}
+      />
       <PlatformAlertConfirmDialog
         open={pendingRemove !== null}
         title={
@@ -120,7 +190,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
         }
         description={t('list.removeDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel={t('common:remove')}
+        submitLabel={tc('remove')}
         onOpenChange={(open) => {
           if (!open) setPendingRemove(null)
         }}

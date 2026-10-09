@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { useUiThemeValue } from '@webonone/theme'
+import { useListDisplayModeValue, useListPageModeValue, useUiThemeValue } from '@webonone/theme'
 import {
   Alert,
   AlertDescription,
   cn,
+  ListDisplayModeProvider,
+  ListPageModeProvider,
   shapePanelClassName,
   themeNeedsShapeDom,
   UiThemeProvider,
@@ -134,10 +136,16 @@ function SupportLayoutContent() {
 
 export function SupportLayout() {
   const uiTheme = useUiThemeValue()
+  const listPageMode = useListPageModeValue()
+  const listDisplayMode = useListDisplayModeValue()
 
   return (
     <UiThemeProvider theme={uiTheme}>
-      <SupportLayoutContent />
+      <ListPageModeProvider mode={listPageMode}>
+        <ListDisplayModeProvider mode={listDisplayMode}>
+          <SupportLayoutContent />
+        </ListDisplayModeProvider>
+      </ListPageModeProvider>
     </UiThemeProvider>
   )
 }

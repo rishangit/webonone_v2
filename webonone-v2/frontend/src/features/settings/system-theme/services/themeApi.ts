@@ -17,12 +17,15 @@ export type ApiTheme = {
 
 export type ListPageMode = 'pagination' | 'on-scroll'
 
+export type ListDisplayMode = 'list' | 'grid' | 'card'
+
 export type UiThemeId = 'classic' | 'high-tech'
 
 export type PreferencesResponse = {
   activeThemeId: string
   colorMode: 'light' | 'dark'
   listPageMode: ListPageMode
+  listDisplayMode: ListDisplayMode
   uiTheme: UiThemeId
   theme: ApiTheme
 }
@@ -77,6 +80,7 @@ export const themeApi = {
     activeThemeId?: string
     colorMode?: 'light' | 'dark'
     listPageMode?: ListPageMode
+    listDisplayMode?: ListDisplayMode
     uiTheme?: UiThemeId
   }) {
     return apiClient<PreferencesResponse>('/me/preferences', {

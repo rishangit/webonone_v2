@@ -16,8 +16,15 @@ export type CardVariant = 'default' | 'list'
 
 const CardVariantContext = React.createContext<CardVariant>('default')
 
+const InsideCardContext = React.createContext(false)
+
 function useCardVariant(): CardVariant {
   return React.useContext(CardVariantContext)
+}
+
+/** True when rendered inside a `Card` surface (e.g. nested `ItemList` rows). */
+function useInsideCard(): boolean {
+  return React.useContext(InsideCardContext)
 }
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -31,61 +38,63 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
    */
   compact?: boolean
   /**
-   * `list` — transparent outer surface (no border/bg/shadow) for sections whose body is an ItemList.
-   * CardContent and CardHeader horizontal padding are removed so titles align with list rows.
+   * `list` — section card whose body is an `ItemList`. Same chrome as `default`; nested rows are borderless.
    */
   variant?: CardVariant
 }
 
-const listCardSurfaceClassName =
-  'bg-transparent text-card-foreground border-0 shadow-none rounded-none'
-
 function Card({ className, tone, style, compact, variant = 'default', ...props }: CardProps) {
   const uiTheme = useUiTheme()
-  const isList = variant === 'list'
+  const cardDataAttrs = {
+    'data-card-surface': true as const,
+    ...(variant === 'list' ? { 'data-card-variant': 'list' as const } : {}),
+  }
 
   const surface = (
     <CardVariantContext.Provider value={variant}>
-      {isList ? (
-        <div className={cn(listCardSurfaceClassName, className)} style={style} {...props} />
-      ) : !themeNeedsShapeDom(uiTheme) ? (
-        <div
-          className={cn(
-            'glass-card glass-card-elevate text-card-foreground shadow-sm rounded-lg border border-[var(--color-border-light)]',
-            className,
-          )}
-          style={style}
-          {...props}
-        />
-      ) : compact ? (
-        <div
-          className={cn(shapeCompactCardClassName, tone ? shapeCardToneClassName(tone) : undefined)}
-          style={style}
-        >
+      <InsideCardContext.Provider value={true}>
+        {!themeNeedsShapeDom(uiTheme) ? (
           <div
             className={cn(
-              'glass-card item-list-row text-card-foreground shadow-sm',
-              shapeCompactCardSurfaceClassName,
+              'glass-card glass-card-elevate text-card-foreground shadow-sm rounded-lg border border-[var(--color-border-light)]',
               className,
             )}
+            style={style}
+            {...cardDataAttrs}
             {...props}
           />
-        </div>
-      ) : (
-        <div
-          className={cn(shapeCardClassName, tone ? shapeCardToneClassName(tone) : undefined)}
-          style={style}
-        >
+        ) : compact ? (
           <div
-            className={cn(
-              'glass-card glass-card-elevate text-card-foreground shadow-sm',
-              shapeCardSurfaceClassName,
-              className,
-            )}
-            {...props}
-          />
-        </div>
-      )}
+            className={cn(shapeCompactCardClassName, tone ? shapeCardToneClassName(tone) : undefined)}
+            style={style}
+            {...cardDataAttrs}
+          >
+            <div
+              className={cn(
+                'glass-card item-list-row text-card-foreground shadow-sm',
+                shapeCompactCardSurfaceClassName,
+                className,
+              )}
+              {...props}
+            />
+          </div>
+        ) : (
+          <div
+            className={cn(shapeCardClassName, tone ? shapeCardToneClassName(tone) : undefined)}
+            style={style}
+            {...cardDataAttrs}
+          >
+            <div
+              className={cn(
+                'glass-card glass-card-elevate text-card-foreground shadow-sm',
+                shapeCardSurfaceClassName,
+                className,
+              )}
+              {...props}
+            />
+          </div>
+        )}
+      </InsideCardContext.Provider>
     </CardVariantContext.Provider>
   )
 
@@ -93,18 +102,8 @@ function Card({ className, tone, style, compact, variant = 'default', ...props }
 }
 
 function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const variant = useCardVariant()
-  const isList = variant === 'list'
-
   return (
-    <div
-      className={cn(
-        'flex flex-col space-y-1.5 p-4 sm:p-6',
-        isList && 'px-0 sm:px-0',
-        className,
-      )}
-      {...props}
-    />
+    <div className={cn('flex flex-col space-y-1.5 p-4 sm:p-6', className)} {...props} />
   )
 }
 
@@ -128,35 +127,22 @@ function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParag
 }
 
 function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const variant = useCardVariant()
-  const isList = variant === 'list'
-
-  return (
-    <div
-      className={cn(
-        'p-4 pt-0 sm:p-6 sm:pt-0',
-        isList && 'px-0 sm:px-0',
-        className,
-      )}
-      {...props}
-    />
-  )
+  return <div className={cn('p-4 pt-0 sm:p-6 sm:pt-0', className)} {...props} />
 }
 
 function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const variant = useCardVariant()
-  const isList = variant === 'list'
-
   return (
-    <div
-      className={cn(
-        'flex items-center p-4 pt-0 sm:p-6 sm:pt-0',
-        isList && 'px-0 sm:px-0',
-        className,
-      )}
-      {...props}
-    />
+    <div className={cn('flex items-center p-4 pt-0 sm:p-6 sm:pt-0', className)} {...props} />
   )
 }
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  useCardVariant,
+  useInsideCard,
+}

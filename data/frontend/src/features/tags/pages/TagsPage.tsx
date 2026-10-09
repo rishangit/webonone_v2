@@ -6,6 +6,7 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListAddButton,
   ListFilterTrigger,
   ListPageActions,
@@ -13,6 +14,7 @@ import {
   SearchInput,
   ListPageFooter,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -32,6 +34,7 @@ export function TagsPage() {
   const [dialog, setDialog] = useState<{ id?: string } | null>(null)
 
   const list = useEpicCatalogList((s) => s.tags, tagsActions)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(list.loading ? t('loading') : null)
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -53,6 +56,7 @@ export function TagsPage() {
             active={list.hasActiveFilters}
             onClick={() => list.setFilterOpen(true)}
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {canCreate ? (
             <ListAddButton onClick={() => setDialog({})} compactLabel={tc('add')}>
               {t('add')}

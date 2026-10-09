@@ -25,6 +25,7 @@ import {
   dashboardSessionKey,
   type DashboardEventAudience,
 } from '@/features/home/utils/dashboardRange'
+import { SmsCreditsFrame } from '@/shared/components/sms'
 import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 function emptyTodayKey(
@@ -52,6 +53,7 @@ export function HomePage() {
   const { items, lastFetchedAt, error } = useAppSelector((s) => s.homeDashboard)
 
   const canBrowse = canBrowseCalendar(activeRole)
+  const canViewSmsCredits = activeRole === 'company_admin' || activeRole === 'super_admin'
   const audience = dashboardEventAudience(activeRole, activeCompanyId)
   const range = dashboardOccurrenceRange()
   const todayItems = selectTodayOccurrences(items, range.today)
@@ -87,39 +89,46 @@ export function HomePage() {
         </Alert>
       ) : null}
 
-      {audience ? (
+      {audience || canViewSmsCredits ? (
         <div className="grid items-start gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <Card variant="list">
-              <CardHeader>
-                <CardTitle className="text-lg">{t('todayTitle')}</CardTitle>
-                <CardDescription>{formatCalendarYmd(range.today, i18n.language)}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!awaitingFirstLoad ? (
-                  <DashboardEventList
-                    items={todayItems}
-                    emptyMessage={t(emptyTodayKey(audience))}
-                  />
-                ) : null}
-              </CardContent>
-            </Card>
-          </div>
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            <Card variant="list">
-              <CardHeader>
-                <CardTitle className="text-lg">{t('upcomingTitle')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!awaitingFirstLoad ? (
-                  <DashboardEventList
-                    items={upcomingItems}
-                    emptyMessage={t(emptyUpcomingKey(audience))}
-                    showDate
-                  />
-                ) : null}
-              </CardContent>
-            </Card>
+          {audience ? (
+            <div className="flex flex-col gap-6 lg:col-span-2">
+              <Card variant="list">
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('todayTitle')}</CardTitle>
+                  <CardDescription>{formatCalendarYmd(range.today, i18n.language)}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!awaitingFirstLoad ? (
+                    <DashboardEventList
+                      items={todayItems}
+                      emptyMessage={t(emptyTodayKey(audience))}
+                    />
+                  ) : null}
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+          <div
+            className={`flex flex-col gap-6 lg:col-span-1${audience ? '' : ' lg:col-start-3'}`}
+          >
+            {canViewSmsCredits ? <SmsCreditsFrame /> : null}
+            {audience ? (
+              <Card variant="list">
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('upcomingTitle')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!awaitingFirstLoad ? (
+                    <DashboardEventList
+                      items={upcomingItems}
+                      emptyMessage={t(emptyUpcomingKey(audience))}
+                      showDate
+                    />
+                  ) : null}
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         </div>
       ) : null}

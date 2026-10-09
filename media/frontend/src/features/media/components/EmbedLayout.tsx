@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react'
-import { useEmbedThemeListener, useListPageModeValue, useUiThemeValue } from '@webonone/theme'
-import { cn, ListPageModeProvider, UiThemeProvider } from '@webonone/ui-kit'
+import {
+  useEmbedThemeListener,
+  useListDisplayModeValue,
+  useListPageModeValue,
+  useUiThemeValue,
+} from '@webonone/theme'
+import { cn, ListDisplayModeProvider, ListPageModeProvider, UiThemeProvider } from '@webonone/ui-kit'
 
 interface EmbedLayoutProps {
   title: string
@@ -23,12 +28,14 @@ export function EmbedLayout({
 }: EmbedLayoutProps) {
   useEmbedThemeListener(parentOrigin)
   const listPageMode = useListPageModeValue(parentOrigin)
+  const listDisplayMode = useListDisplayModeValue(parentOrigin)
   const uiTheme = useUiThemeValue(parentOrigin)
 
   if (chromeless) {
     return (
       <UiThemeProvider theme={uiTheme}>
         <ListPageModeProvider mode={listPageMode}>
+          <ListDisplayModeProvider mode={listDisplayMode}>
         <div className={cn('flex h-dvh min-h-0 w-full flex-col overflow-hidden text-foreground')}>
           <main
             className={cn(
@@ -39,6 +46,7 @@ export function EmbedLayout({
             {children}
           </main>
         </div>
+          </ListDisplayModeProvider>
       </ListPageModeProvider>
       </UiThemeProvider>
     )
@@ -47,6 +55,7 @@ export function EmbedLayout({
   return (
     <UiThemeProvider theme={uiTheme}>
       <ListPageModeProvider mode={listPageMode}>
+        <ListDisplayModeProvider mode={listDisplayMode}>
       <div className="flex h-screen flex-col bg-background text-foreground">
         <header className="flex items-center justify-between border-b px-4 py-3">
           <h1 className="text-sm font-semibold">{title}</h1>
@@ -54,6 +63,7 @@ export function EmbedLayout({
         </header>
         <main className="min-h-0 flex-1 overflow-auto p-4 scrollbar-themed">{children}</main>
       </div>
+        </ListDisplayModeProvider>
     </ListPageModeProvider>
     </UiThemeProvider>
   )

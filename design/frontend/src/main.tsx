@@ -2,7 +2,16 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { ensurePlatformEmbedCanvas } from '@webonone/platform-embed'
-import { applyListPageModeFromQueryParams, applyThemeFromQueryParams, applyThemeVariables, applyUiTheme, applyUiThemeFromQueryParams, readPersistedTheme, resolveUiTheme } from '@webonone/theme'
+import {
+  applyListDisplayModeFromQueryParams,
+  applyListPageModeFromQueryParams,
+  applyThemeFromQueryParams,
+  applyThemeVariables,
+  applyUiTheme,
+  applyUiThemeFromQueryParams,
+  readPersistedTheme,
+  resolveUiTheme,
+} from '@webonone/theme'
 import { ToastProvider } from '@webonone/ui-kit'
 import '@webonone/ui-kit/styles'
 import { store } from '@/app/store'
@@ -17,6 +26,7 @@ if (!applyThemeFromQueryParams(search)) {
   if (persisted) applyThemeVariables(persisted)
 }
 applyListPageModeFromQueryParams(search)
+applyListDisplayModeFromQueryParams(search)
 applyUiThemeFromQueryParams(search)
 applyUiTheme(resolveUiTheme(search))
 initDesignI18n()

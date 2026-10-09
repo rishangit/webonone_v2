@@ -8,11 +8,15 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   FormField,
-  ItemList,
+  CollectionListView,
+  ImagePreview,
+  ItemListCollectionCard,
+  itemListCardImageClassName,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  ItemListViewToggle,
   itemListRowActiveClassName,
   ListFilterPanel,
   ListFilterTrigger,
@@ -28,6 +32,7 @@ import {
   SelectValue,
   cn,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { getMediaListQueryKey, mediaActions } from '@/features/media/store'
@@ -105,6 +110,7 @@ export function ScopedFolderBrowser({
   const [mediaPageSize, setMediaPageSize] = useState(12)
   const [listScrollRoot, setListScrollRoot] = useState<HTMLDivElement | null>(null)
   const [viewMode, setViewMode] = useState<BrowserViewMode>('thumb')
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [previewItem, setPreviewItem] = useState<MediaItemDto | null>(null)
   const [deleteFileTarget, setDeleteFileTarget] = useState<MediaItemDto | null>(null)
@@ -416,6 +422,7 @@ export function ScopedFolderBrowser({
         >
           <LayoutGrid className="h-4 w-4" />
         </Button>
+        <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
       </ListPageActions>
     )
   }
@@ -433,29 +440,73 @@ export function ScopedFolderBrowser({
       )
     }
 
+    type BrowserRow =
+      | { kind: 'folder'; id: string; folder: MediaFolderDto }
+      | { kind: 'file'; id: string; item: MediaItemDto }
+
+    const rows: BrowserRow[] = [
+      ...filteredFolders.map((folder) => ({ kind: 'folder' as const, id: folder.id, folder })),
+      ...filteredItems.map((item) => ({ kind: 'file' as const, id: item.id, item })),
+    ]
+
+    const columns = [
+      {
+        id: 'name',
+        header: 'Name',
+        sortable: true,
+        compare: (a: BrowserRow, b: BrowserRow) => {
+          const nameA = a.kind === 'folder' ? a.folder.name : a.item.fileName
+          const nameB = b.kind === 'folder' ? b.folder.name : b.item.fileName
+          return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' })
+        },
+        cell: (row: BrowserRow) =>
+          row.kind === 'folder' ? row.folder.name : row.item.fileName,
+      },
+    ]
+
     return (
-      <ItemList className="min-h-0 flex-1">
-        {filteredFolders.map((folder) => (
-          <ItemListItem key={folder.id}>
-            <ItemListContent>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 text-left text-sm"
-                onClick={() => handleFolderOpen(folder)}
-                onDoubleClick={() => handleFolderOpen(folder)}
-              >
-                <Folder className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                <span className="truncate font-medium">{folder.name}</span>
-              </button>
-            </ItemListContent>
-            {showIconToolbar ? renderFolderMenu(folder) : null}
-          </ItemListItem>
-        ))}
-        {filteredItems.map((item) => {
-          const isSelected = selectedIds.has(item.id)
+      <CollectionListView
+        items={rows}
+        getRowKey={(row) => row.id}
+        columns={columns}
+        empty={
+          <ItemListEmpty>
+            {enableUpload
+              ? 'This folder is empty. Drag files here or use Upload.'
+              : 'This folder is empty.'}
+          </ItemListEmpty>
+        }
+        renderGridActions={(row) =>
+          row.kind === 'folder'
+            ? showIconToolbar
+              ? renderFolderMenu(row.folder)
+              : null
+            : showIconToolbar
+              ? renderFileMenu(row.item)
+              : null
+        }
+        renderListItem={(row) => {
+          if (row.kind === 'folder') {
+            return (
+              <ItemListItem>
+                <ItemListContent>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 text-left text-sm"
+                    onClick={() => handleFolderOpen(row.folder)}
+                    onDoubleClick={() => handleFolderOpen(row.folder)}
+                  >
+                    <Folder className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="truncate font-medium">{row.folder.name}</span>
+                  </button>
+                </ItemListContent>
+                {showIconToolbar ? renderFolderMenu(row.folder) : null}
+              </ItemListItem>
+            )
+          }
+          const isSelected = selectedIds.has(row.item.id)
           return (
             <ItemListItem
-              key={item.id}
               className={cn(isSelected && itemListRowActiveClassName)}
               aria-selected={isSelected}
             >
@@ -463,27 +514,70 @@ export function ScopedFolderBrowser({
                 <button
                   type="button"
                   className="flex w-full items-start gap-2 text-left text-sm"
-                  onClick={() => handleFileClick(item)}
-                  onDoubleClick={() => handleFileDoubleClick(item)}
+                  onClick={() => handleFileClick(row.item)}
+                  onDoubleClick={() => handleFileDoubleClick(row.item)}
                 >
                   <FileIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{item.fileName}</span>
-                    {renderFileMeta(item)}
+                    <span className="block truncate font-medium">{row.item.fileName}</span>
+                    {renderFileMeta(row.item)}
                   </span>
                 </button>
               </ItemListContent>
               {isSelected ? (
-                <Check
-                  className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
-                  aria-hidden
-                />
+                <Check className="ml-auto h-5 w-5 shrink-0 self-center text-primary" aria-hidden />
               ) : null}
-              {showIconToolbar ? renderFileMenu(item) : null}
+              {showIconToolbar ? renderFileMenu(row.item) : null}
             </ItemListItem>
           )
-        })}
-      </ItemList>
+        }}
+        renderCard={(row) => {
+          if (row.kind === 'folder') {
+            return (
+              <ItemListCollectionCard
+                image={
+                  <div className="flex h-full w-full items-center justify-center bg-muted/40">
+                    <Folder className="h-10 w-10 text-muted-foreground" aria-hidden />
+                  </div>
+                }
+                menu={showIconToolbar ? renderFolderMenu(row.folder) : undefined}
+                onBodyClick={() => handleFolderOpen(row.folder)}
+              >
+                <p className="truncate font-medium">{row.folder.name}</p>
+                <p className="text-xs text-muted-foreground">Folder</p>
+              </ItemListCollectionCard>
+            )
+          }
+          const isSelected = selectedIds.has(row.item.id)
+          const isImage = row.item.mimeType.startsWith('image/')
+          return (
+            <ItemListCollectionCard
+              className={cn(isSelected && itemListRowActiveClassName)}
+              image={
+                isImage ? (
+                  <ImagePreview
+                    src={row.item.url}
+                    alt={row.item.fileName}
+                    className={itemListCardImageClassName}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-muted/40">
+                    <FileIcon className="h-10 w-10 text-muted-foreground" aria-hidden />
+                  </div>
+                )
+              }
+              menu={showIconToolbar ? renderFileMenu(row.item) : undefined}
+              onBodyClick={() => handleFileClick(row.item)}
+            >
+              <p className="truncate font-medium">{row.item.fileName}</p>
+              {renderFileMeta(row.item)}
+              {isSelected ? (
+                <Check className="mt-2 h-5 w-5 text-primary" aria-hidden />
+              ) : null}
+            </ItemListCollectionCard>
+          )
+        }}
+      />
     )
   }
 

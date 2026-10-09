@@ -236,6 +236,28 @@ export const dataLibraryApi = {
     )
   },
 
+  updateProductVariantStock(
+    productId: string,
+    variantId: string,
+    stockId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id?: string | null
+      supplier_display_name?: string | null
+      supplier_email?: string | null
+    },
+  ) {
+    return client<LibraryProductVariantStock>(
+      `/products/${productId}/variants/${variantId}/stocks/${stockId}`,
+      { method: 'PATCH', body },
+    )
+  },
+
   setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
     return client<LibraryProductVariantStock>(
       `/products/${productId}/variants/${variantId}/stocks/${stockId}/active`,

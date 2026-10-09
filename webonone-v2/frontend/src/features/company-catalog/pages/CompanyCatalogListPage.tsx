@@ -3,25 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   FeaturePage,
-  ImagePreview,
-  ItemList,
-  ItemListContent,
-  ItemListEmpty,
-  ItemListItem,
-  ItemListMenu,
-  itemListThumbClassName,
+  ItemListViewToggle,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   SearchInput,
-  StatusTag,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { CompanyCatalogAiMenuItem } from '../components/CompanyCatalogAiMenuItem'
+import { CompanyCatalogItemsList } from '../components/CompanyCatalogItemsList'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { companyCatalogActions } from '../store/companyCatalogStore'
@@ -30,8 +23,6 @@ import {
   isCatalogGalleryKind,
   type CatalogGalleryKind,
 } from '../types/companyCatalog.types'
-import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
-
 type CompanyCatalogListPageProps = {
   kind: CatalogGalleryKind
 }
@@ -90,13 +81,17 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   )
 
   const showThumbnails = isCatalogGalleryKind(kind)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
+
+  const emptyMessage =
+    search.trim() ? t('list.emptySearch', { entity }) : t('list.empty', { entity })
 
   return (
     <FeaturePage
       title={entity}
       description={t('list.description', { entity })}
       actions={
-        <div className="flex flex-wrap items-center gap-2">
+        <ListPageActions>
           <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -105,77 +100,27 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
             aria-label={t('list.searchAria', { entity })}
             className="w-64"
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {canManage ? (
             <ListAddButton onClick={() => setAddOpen(true)}>{t('list.add', { noun })}</ListAddButton>
           ) : null}
-        </div>
+        </ListPageActions>
       }
     >
       <ListPageBody>
-        {!loading ? (
-          <ItemList>
-            {filtered.length === 0 ? (
-              <ItemListEmpty>
-                {search.trim()
-                  ? t('list.emptySearch', { entity })
-                  : t('list.empty', { entity })}
-              </ItemListEmpty>
-            ) : (
-              filtered.map((item) => (
-              <ItemListItem key={item.id}>
-                <ItemListContent>
-                  <button
-                    type="button"
-                    className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => navigate(`/data/${kind}/${item.id}`)}
-                  >
-                    {showThumbnails ? (
-                      <ImagePreview
-                        src={firstGalleryImageUrl(item.displayGalleryImages)}
-                        alt=""
-                        className={itemListThumbClassName}
-                      />
-                    ) : null}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{item.displayName}</span>
-                        <StatusTag variant="verified">{t(`binding.${item.bindingMode}`)}</StatusTag>
-                        {item.libraryUnavailable ? (
-                          <StatusTag variant="pending">{t('list.libraryUnavailable')}</StatusTag>
-                        ) : null}
-                      </div>
-                      {item.displayDescription ? (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {item.displayDescription}
-                        </p>
-                      ) : null}
-                    </div>
-                  </button>
-                </ItemListContent>
-                <ItemListMenu ariaLabel={`${tc('actions')} ${item.displayName}`}>
-                  <DropdownMenuItem onClick={() => navigate(`/data/${kind}/${item.id}`)}>
-                    {tc('details')}
-                  </DropdownMenuItem>
-                  <CompanyCatalogAiMenuItem kind={kind} id={item.id} label={item.displayName} />
-                  {canManage ? (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() =>
-                          setPendingRemove({ id: item.id, name: item.displayName })
-                        }
-                      >
-                        {tc('remove')}
-                      </DropdownMenuItem>
-                    </>
-                  ) : null}
-                </ItemListMenu>
-              </ItemListItem>
-            ))
-          )}
-        </ItemList>
-        ) : null}
+        <div className="flex-1">
+          {!loading ? (
+            <CompanyCatalogItemsList
+              items={filtered}
+              kind={kind}
+              showThumbnails={showThumbnails}
+              empty={emptyMessage}
+              canManage={canManage}
+              onOpen={(id) => navigate(`/data/${kind}/${id}`)}
+              onRemove={(item) => setPendingRemove({ id: item.id, name: item.displayName })}
+            />
+          ) : null}
+        </div>
       </ListPageBody>
 
       {canManage && kind === 'services' ? (

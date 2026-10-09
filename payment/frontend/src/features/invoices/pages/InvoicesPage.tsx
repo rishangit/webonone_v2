@@ -5,22 +5,17 @@ import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
-  DropdownMenuItem,
   FeaturePage,
-  ImagePreview,
-  ItemList,
-  ItemListContent,
-  ItemListEmpty,
-  ItemListItem,
-  ItemListMenu,
-  itemListThumbClassName,
+  ItemListViewToggle,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
-  StatusTag,
   useToast,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
+import { InvoicesList } from '@/features/invoices/components/InvoicesList'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -28,36 +23,9 @@ import { InvoiceStatusFilterFields } from '@/features/invoices/components/Invoic
 import type { InvoiceStatusFilterDraft } from '@/features/invoices/pages/InvoicesFilterEmbedPage'
 import { invoicesActions } from '@/features/invoices/store'
 import { paymentApi } from '@/shared/services/paymentApi'
-import type { InvoiceListItem, InvoiceStatus } from '@/shared/types/payment.types'
-import { formatDate, formatLkr, formatPeriod } from '@/shared/utils/money'
-
-function statusVariant(status: InvoiceStatus): 'pending' | 'approved' | 'rejected' {
-  if (status === 'paid') return 'approved'
-  if (status === 'overdue' || status === 'void') return 'rejected'
-  return 'pending'
-}
-
-function statusLabelKey(status: InvoiceStatus): string {
-  switch (status) {
-    case 'issued':
-      return 'statusIssued'
-    case 'paid':
-      return 'statusPaid'
-    case 'overdue':
-      return 'statusOverdue'
-    case 'void':
-      return 'statusVoid'
-    case 'pending_verification':
-      return 'statusPendingReview'
-    default:
-      return status
-  }
-}
-
+import type { InvoiceListItem } from '@/shared/types/payment.types'
 export function InvoicesPage() {
   const { t } = useTranslation('invoices')
-  const { t: tc } = useTranslation('common')
-
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -71,6 +39,7 @@ export function InvoicesPage() {
   const [actionError, setActionError] = useState<string | null>(null)
 
   const loading = listStatus === 'loading' && items.length === 0
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(loading ? t('loading') : null)
 
   const hasActiveFilters = appliedFilters.status !== 'all'
@@ -154,7 +123,7 @@ export function InvoicesPage() {
       title={t('title')}
       description={isCompanyAdmin ? t('descriptionCompany') : t('descriptionAdmin')}
       actions={
-        <div className="flex items-center gap-2">
+        <ListPageActions>
           <SearchInput
             value={searchQuery}
             onChange={(event) => handleSearchChange(event.target.value)}
@@ -164,7 +133,8 @@ export function InvoicesPage() {
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters || filterOpen} onClick={() => setFilterOpen(true)} />
-        </div>
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+        </ListPageActions>
       }
     >
       <PlatformHostedListFilterPanel<InvoiceStatusFilterDraft>
@@ -198,84 +168,14 @@ export function InvoicesPage() {
       {!loading ? (
         <ListPageBody>
           <div className="flex-1">
-            {rows.length === 0 ? (
-              <ItemListEmpty>{t('empty')}</ItemListEmpty>
-            ) : (
-              <ItemList>
-                {rows.map((invoice) => (
-                  <ItemListItem key={invoice.id}>
-                    <ItemListContent>
-                      <button
-                        type="button"
-                        className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        onClick={() => navigate(`/invoices/${invoice.id}`)}
-                      >
-                        <div className="flex items-start gap-3">
-                          <ImagePreview
-                            src={invoice.companyLogoUrl}
-                            alt={
-                              invoice.companyName?.trim() || t('unknownCompany')
-                            }
-                            mode="view"
-                            className={itemListThumbClassName}
-                          />
-                          <div className="min-w-0 space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="truncate font-medium">
-                                {invoice.companyName?.trim() || t('unknownCompany')}
-                              </p>
-                              <StatusTag variant={statusVariant(invoice.status)}>
-                                {t(statusLabelKey(invoice.status))}
-                              </StatusTag>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {invoice.invoiceNumber} ·{' '}
-                              {t('refLabel', { ref: invoice.paymentReference })}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatPeriod(invoice.periodStart, invoice.periodEnd)}
-                            </p>
-                            <p className="text-sm">
-                              {formatLkr(invoice.amountMinor)} ·{' '}
-                              {t('dueLabel', { date: formatDate(invoice.dueAt) })}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    </ItemListContent>
-                    <ItemListMenu
-                      ariaLabel={t('actionsFor', {
-                        name: invoice.companyName || invoice.invoiceNumber,
-                      })}
-                    >
-                      <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}`)}>
-                        {tc('view')}
-                      </DropdownMenuItem>
-                      {role === 'super_admin' &&
-                      (invoice.status === 'issued' ||
-                        invoice.status === 'overdue' ||
-                        invoice.status === 'pending_verification') ? (
-                        <DropdownMenuItem onClick={() => void markPaid(invoice)}>
-                          {t('markPaid')}
-                        </DropdownMenuItem>
-                      ) : null}
-                      {role === 'super_admin' && invoice.status === 'pending_verification' ? (
-                        <DropdownMenuItem onClick={() => void rejectProof(invoice)}>
-                          {t('rejectProof')}
-                        </DropdownMenuItem>
-                      ) : null}
-                      {role === 'super_admin' &&
-                      invoice.status !== 'paid' &&
-                      invoice.status !== 'void' ? (
-                        <DropdownMenuItem onClick={() => void voidInvoice(invoice)}>
-                          {t('voidAction')}
-                        </DropdownMenuItem>
-                      ) : null}
-                    </ItemListMenu>
-                  </ItemListItem>
-                ))}
-              </ItemList>
-            )}
+            <InvoicesList
+              rows={rows}
+              role={role}
+              onOpen={(id) => navigate(`/invoices/${id}`)}
+              onMarkPaid={(invoice) => void markPaid(invoice)}
+              onRejectProof={(invoice) => void rejectProof(invoice)}
+              onVoid={(invoice) => void voidInvoice(invoice)}
+            />
           </div>
           <ListPageFooter
             className="mt-auto"

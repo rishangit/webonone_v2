@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
+  CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
   ImagePreview,
-  ItemList,
+  ItemListCollectionCard,
+  itemListCardImageClassName,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -36,23 +38,49 @@ export function EventsList({
   onRemoved,
 }: EventsListProps) {
   const { t } = useTranslation('calendar')
+  const { t: tc } = useTranslation('common')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<CompanyEvent | null>(null)
 
-  if (items.length === 0) {
-    return (
-      <ItemListEmpty>
-        {emptyMessage ?? (canManage ? t('events.emptyAdmin') : t('events.emptyMember'))}
-      </ItemListEmpty>
-    )
-  }
+  const empty =
+    emptyMessage ?? (canManage ? t('events.emptyAdmin') : t('events.emptyMember'))
 
   function openDetails(id: string) {
     navigate(`/calendar/events/${id}`)
   }
+
+  const columns = useMemo(
+    () => [
+      {
+        id: 'service',
+        header: t('events.columnService'),
+        sortable: true,
+        compare: (a: CompanyEvent, b: CompanyEvent) =>
+          a.serviceName.localeCompare(b.serviceName, undefined, { sensitivity: 'base' }),
+        cell: (item: CompanyEvent) => (
+          <button
+            type="button"
+            className="rounded-md text-left font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => openDetails(item.id)}
+          >
+            {item.serviceName}
+          </button>
+        ),
+      },
+      {
+        id: 'when',
+        header: t('events.columnWhen'),
+        sortable: true,
+        compare: (a: CompanyEvent, b: CompanyEvent) =>
+          `${a.startsOn}${a.startTime}`.localeCompare(`${b.startsOn}${b.startTime}`),
+        cell: (item: CompanyEvent) => formatEventWhen(item),
+      },
+    ],
+    [t],
+  )
 
   async function handleRemove(item: CompanyEvent) {
     setRemovingId(item.id)
@@ -69,56 +97,97 @@ export function EventsList({
     }
   }
 
+  function renderRowMenu(item: CompanyEvent) {
+    return (
+      <ItemListMenu ariaLabel={t('actionsFor', { name: item.serviceName })}>
+        <DropdownMenuItem onSelect={() => openDetails(item.id)}>
+          {t('events.viewDetails')}
+        </DropdownMenuItem>
+        <WebononeCopyToAiMenuItem kind="event" id={item.id} label={item.serviceName} />
+        {canManage ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={removingId === item.id}
+              onSelect={() => setPendingRemove(item)}
+              className="text-destructive focus:text-destructive"
+            >
+              {removingId === item.id ? t('events.removing') : tc('remove')}
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </ItemListMenu>
+    )
+  }
+
+  function eventDetails(item: CompanyEvent) {
+    return (
+      <div className="min-w-0 space-y-1">
+        <p className="truncate font-medium text-foreground">{item.serviceName}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {t('staffLabel', { name: item.staffDisplayName })}
+          {item.attendeeDisplayName
+            ? ` · ${t('attendeeLabel', { name: item.attendeeDisplayName })}`
+            : ''}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">{formatEventWhen(item)}</p>
+      </div>
+    )
+  }
+
+  function rowBody(item: CompanyEvent) {
+    return (
+      <div className="flex items-start gap-3">
+        <ImagePreview
+          src={item.serviceImageUrl}
+          alt={item.serviceName}
+          mode="view"
+          className={itemListThumbClassName}
+        />
+        {eventDetails(item)}
+      </div>
+    )
+  }
+
   return (
     <>
-      <ItemList>
-        {items.map((item) => (
-          <ItemListItem key={item.id}>
+      <CollectionListView
+        items={items}
+        getRowKey={(item) => item.id}
+        columns={columns}
+        empty={<ItemListEmpty>{empty}</ItemListEmpty>}
+        renderGridActions={renderRowMenu}
+        renderListItem={(item) => (
+          <ItemListItem>
             <ItemListContent>
               <button
                 type="button"
-                className="flex w-full items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => openDetails(item.id)}
               >
-                <ImagePreview
-                  src={item.serviceImageUrl}
-                  alt={item.serviceName}
-                  mode="view"
-                  className={itemListThumbClassName}
-                />
-                <div className="min-w-0 space-y-1">
-                  <p className="truncate font-medium text-foreground">{item.serviceName}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {t('staffLabel', { name: item.staffDisplayName })}
-                    {item.attendeeDisplayName
-                      ? ` · ${t('attendeeLabel', { name: item.attendeeDisplayName })}`
-                      : ''}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{formatEventWhen(item)}</p>
-                </div>
+                {rowBody(item)}
               </button>
             </ItemListContent>
-            <ItemListMenu ariaLabel={t('actionsFor', { name: item.serviceName })}>
-              <DropdownMenuItem onSelect={() => openDetails(item.id)}>
-                {t('events.viewDetails')}
-              </DropdownMenuItem>
-              <WebononeCopyToAiMenuItem kind="event" id={item.id} label={item.serviceName} />
-              {canManage ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    disabled={removingId === item.id}
-                    onSelect={() => setPendingRemove(item)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    {removingId === item.id ? t('events.removing') : t('common:remove')}
-                  </DropdownMenuItem>
-                </>
-              ) : null}
-            </ItemListMenu>
+            {renderRowMenu(item)}
           </ItemListItem>
-        ))}
-      </ItemList>
+        )}
+        renderCard={(item) => (
+          <ItemListCollectionCard
+            image={
+              <ImagePreview
+                src={item.serviceImageUrl}
+                alt={item.serviceName}
+                mode="view"
+                className={itemListCardImageClassName}
+              />
+            }
+            menu={renderRowMenu(item)}
+            onBodyClick={() => openDetails(item.id)}
+          >
+            {eventDetails(item)}
+          </ItemListCollectionCard>
+        )}
+      />
       {canManage ? (
         <PlatformAlertConfirmDialog
           open={pendingRemove !== null}
@@ -129,7 +198,7 @@ export function EventsList({
           }
           description={t('events.removeDescription')}
           isAllowedParentOrigin={isAllowedParentOrigin}
-          submitLabel={t('common:remove')}
+          submitLabel={tc('remove')}
           onOpenChange={(open) => {
             if (!open) setPendingRemove(null)
           }}

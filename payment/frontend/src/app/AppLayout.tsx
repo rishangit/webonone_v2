@@ -10,8 +10,26 @@ import {
   useServiceRedirect,
 } from '@webonone/platform-nav'
 import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
-import { Alert, AlertDescription, AppShell, BrandLogo, ListPageModeProvider, LoadingState, PageShell, UiThemeProvider } from '@webonone/ui-kit'
-import { relayListPageModeQueryParams, relayThemeQueryParams, relayUiThemeQueryParams, useListPageModeValue, useUiThemeValue } from '@webonone/theme'
+import {
+  Alert,
+  AlertDescription,
+  AppShell,
+  BrandLogo,
+  ListDisplayModeProvider,
+  ListPageModeProvider,
+  LoadingState,
+  PageShell,
+  UiThemeProvider,
+} from '@webonone/ui-kit'
+import {
+  relayListDisplayModeQueryParams,
+  relayListPageModeQueryParams,
+  relayThemeQueryParams,
+  relayUiThemeQueryParams,
+  useListDisplayModeValue,
+  useListPageModeValue,
+  useUiThemeValue,
+} from '@webonone/theme'
 import { prefetchNavTarget } from '@/app/routePrefetch'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions, clearPaymentAuthStorage } from '@/features/auth/store/authSlice'
@@ -42,6 +60,7 @@ function AppLayoutContent() {
   const [searchParams] = useSearchParams()
   const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const listPageMode = useListPageModeValue(embedParentOrigin)
+  const listDisplayMode = useListDisplayModeValue(embedParentOrigin)
   const uiTheme = useUiThemeValue(embedParentOrigin)
 
   const body = embedParentOrigin ? (
@@ -54,7 +73,9 @@ function AppLayoutContent() {
 
   return (
     <UiThemeProvider theme={uiTheme}>
-      <ListPageModeProvider mode={listPageMode}>{body}</ListPageModeProvider>
+      <ListPageModeProvider mode={listPageMode}>
+        <ListDisplayModeProvider mode={listDisplayMode}>{body}</ListDisplayModeProvider>
+      </ListPageModeProvider>
     </UiThemeProvider>
   )
 }
@@ -85,6 +106,7 @@ function AppLayoutShellContent() {
     () => ({
       ...relayThemeQueryParams(searchParams),
       ...relayListPageModeQueryParams(searchParams),
+      ...relayListDisplayModeQueryParams(searchParams),
       ...relayUiThemeQueryParams(searchParams),
       ...relayLocaleQueryParams(searchParams),
     }),

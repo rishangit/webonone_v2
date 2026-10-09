@@ -5,27 +5,19 @@ import { PlatformHostedListFilterPanel } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
-  ContactValueLine,
-  DropdownMenuItem,
   FeaturePage,
-  ImagePreview,
-  ItemList,
-  ItemListContent,
-  ItemListEmpty,
-  ItemListItem,
-  ItemListMenu,
-  itemListThumbClassName,
-  itemListRowBodyClassName,
+  ItemListViewToggle,
   ListFilterTrigger,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   SearchInput,
   ListPageFooter,
-  StatusTag,
-  isStatusTagVariant,
   useToast,
   type UserOption,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
+import { UsersList } from '@/features/users/components/UsersList'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
 import { authApi } from '@/features/auth/services/authApi'
@@ -52,13 +44,6 @@ import { useNavigateIdentity } from '@/features/shell/utils/navigateIdentity'
 
 const SEARCH_DEBOUNCE_MS = 300
 const PAGE_SIZE_OPTIONS = [12, 24, 48]
-
-function formatRoleLabel(role: string): string {
-  return role
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
 
 export function UsersPage() {
   const { t } = useTranslation('users')
@@ -93,6 +78,7 @@ export function UsersPage() {
     (lastFetchedAt === null
       ? listStatus !== 'error'
       : listStatus === 'loading' && items.length === 0)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(loading ? t('loading.users') : null)
 
   useEffect(() => {
@@ -224,7 +210,7 @@ export function UsersPage() {
         companyCustomersMode ? t('pageDescription.company') : t('pageDescription.platform')
       }
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
@@ -235,10 +221,11 @@ export function UsersPage() {
           {!companyCustomersMode ? (
             <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           ) : null}
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {companyCustomersMode ? (
             <ListAddButton onClick={() => setAddOpen(true)}>{t('addUser')}</ListAddButton>
           ) : null}
-        </div>
+        </ListPageActions>
       }
     >
       {!companyCustomersMode ? (
@@ -272,76 +259,16 @@ export function UsersPage() {
       <ListPageBody>
         <div className="flex-1">
           {!loading ? (
-            emptyLabel ? (
-              <ItemListEmpty>{emptyLabel}</ItemListEmpty>
-            ) : (
-              <ItemList>
-                {items.map((user) => (
-                  <ItemListItem key={user.id}>
-                    <ItemListContent>
-                      <button
-                        type="button"
-                        className={`${itemListRowBodyClassName} rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring`}
-                        onClick={() => goToUserDetail(user.id)}
-                      >
-                        <ImagePreview
-                          src={user.avatarUrl}
-                          alt={user.displayName}
-                          mode="view"
-                          className={itemListThumbClassName}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{user.displayName}</p>
-                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                            <ContactValueLine
-                              kind="email"
-                              value={user.email}
-                              emptyLabel={t('noEmail')}
-                            />
-                            {user.email?.trim() ? (
-                              <StatusTag
-                                className="shrink-0"
-                                variant={user.isEmailVerified ? 'verified' : 'unverified'}
-                              />
-                            ) : null}
-                          </div>
-                          {user.phoneNumber?.trim() ? (
-                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                              <ContactValueLine kind="phone" value={user.phoneNumber} />
-                              <StatusTag
-                                className="shrink-0"
-                                variant={user.isPhoneVerified ? 'verified' : 'unverified'}
-                              />
-                            </div>
-                          ) : null}
-                        </div>
-                        {user.role ? (
-                          isStatusTagVariant(user.role) ? (
-                            <StatusTag className="shrink-0 self-center" variant={user.role} />
-                          ) : (
-                            <StatusTag className="shrink-0 self-center" variant="member">
-                              {formatRoleLabel(user.role)}
-                            </StatusTag>
-                          )
-                        ) : null}
-                      </button>
-                    </ItemListContent>
-                    {isSuperAdmin && !companyCustomersMode && user.id !== currentUserId ? (
-                      <ItemListMenu ariaLabel={t('actionsFor', { name: user.displayName })}>
-                        <DropdownMenuItem
-                          disabled={impersonatingUserId === user.id}
-                          onClick={() => {
-                            void handleImpersonate(user)
-                          }}
-                        >
-                          {t('actions.impersonate')}
-                        </DropdownMenuItem>
-                      </ItemListMenu>
-                    ) : null}
-                  </ItemListItem>
-                ))}
-              </ItemList>
-            )
+            <UsersList
+              items={items}
+              emptyLabel={emptyLabel}
+              isSuperAdmin={isSuperAdmin}
+              companyCustomersMode={companyCustomersMode}
+              currentUserId={currentUserId}
+              impersonatingUserId={impersonatingUserId}
+              onOpen={goToUserDetail}
+              onImpersonate={(user) => void handleImpersonate(user)}
+            />
           ) : null}
         </div>
         <ListPageFooter

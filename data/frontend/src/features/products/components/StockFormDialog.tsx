@@ -20,6 +20,7 @@ import {
   FormField,
   Input,
   SelectUser,
+  Spinner,
   type SelectUserValue,
   UserSelectionDialog,
   type LoadUsersFn,
@@ -35,6 +36,7 @@ import {
 import { loadIdentityUsers } from '@/features/identity/services/identityUsersApi'
 import {
   createEmptyStockFormDraft,
+  createStockDraftFromItem,
   stockFormSchema,
   toCreateStockPayload,
   type StockFormDraft,
@@ -70,6 +72,8 @@ export interface StockFormDialogProps {
   open: boolean
   productId: string
   variantId: string
+  stockId?: string
+  initialStock?: ProductVariantStock | null
   onOpenChange: (open: boolean) => void
   onSaved: (item: ProductVariantStock) => void
   chrome?: 'dialog' | 'embed-page'
@@ -79,6 +83,8 @@ export function StockFormDialog({
   open,
   productId,
   variantId,
+  stockId,
+  initialStock = null,
   onOpenChange,
   onSaved,
   chrome = 'dialog',
@@ -88,18 +94,22 @@ export function StockFormDialog({
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
-  const path = `/embed/dialogs/products/${productId}/variants/${variantId}/stocks/create`
+  const isNew = !stockId
+  const path = isNew
+    ? `/embed/dialogs/products/${productId}/variants/${variantId}/stocks/create`
+    : `/embed/dialogs/products/${productId}/variants/${variantId}/stocks/${stockId}/edit`
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
-  const title = t('stock.addTitle')
-  const description = t('stock.addDescription')
-  const submitLabel = t('stock.addTitle')
+  const title = isNew ? t('stock.addTitle') : t('stock.editTitle')
+  const description = isNew ? t('stock.addDescription') : t('stock.editDescription')
+  const submitLabel = isNew ? t('stock.addTitle') : tc('save')
 
   const [values, setValues] = useState<StockFormDraft>(createEmptyStockFormDraft)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [loadingStock, setLoadingStock] = useState(false)
   const [generatingBatch, setGeneratingBatch] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [supplierPickerOpen, setSupplierPickerOpen] = useState(false)
@@ -208,14 +218,45 @@ export function StockFormDialog({
 
   useEffect(() => {
     if (!open && chrome === 'dialog') return
-    setValues(createEmptyStockFormDraft())
     setFieldErrors({})
     setError(null)
     setSaving(false)
     setGeneratingBatch(false)
     setSupplierPickerOpen(false)
     nestedSupplierRequestIdRef.current = null
-  }, [chrome, open])
+
+    if (!stockId) {
+      setLoadingStock(false)
+      setValues(createEmptyStockFormDraft())
+      return
+    }
+
+    if (initialStock && initialStock.id === stockId) {
+      setLoadingStock(false)
+      setValues(createStockDraftFromItem(initialStock))
+      return
+    }
+
+    let cancelled = false
+    setLoadingStock(true)
+    void dataApi
+      .getProductVariantStock(productId, variantId, stockId)
+      .then((item) => {
+        if (cancelled) return
+        setValues(createStockDraftFromItem(item))
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : t('stock.loadFailed'))
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingStock(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [chrome, initialStock, open, productId, stockId, t, variantId])
 
   const loadUsers: LoadUsersFn = useCallback(
     async (params) => {
@@ -252,7 +293,8 @@ export function StockFormDialog({
 
   async function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault()
-    if (nestedSupplierRequestIdRef.current) return
+    if (nestedSupplierRequestIdRef.current || loadingStock) return
+    if (!isNew && !stockId) return
 
     const parsed = stockFormSchema.safeParse(values)
     if (!parsed.success) {
@@ -268,17 +310,16 @@ export function StockFormDialog({
     setSaving(true)
     setError(null)
     try {
-      const item = await dataApi.createProductVariantStock(
-        productId,
-        variantId,
-        toCreateStockPayload(parsed.data),
-      )
+      const payload = toCreateStockPayload(parsed.data)
+      const item = isNew
+        ? await dataApi.createProductVariantStock(productId, variantId, payload)
+        : await dataApi.updateProductVariantStock(productId, variantId, stockId, payload)
       onSaved(item)
       if (chrome === 'dialog') {
         onOpenChange(false)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create stock')
+      setError(err instanceof Error ? err.message : isNew ? t('stock.createFailed') : t('stock.updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -297,12 +338,16 @@ export function StockFormDialog({
     sendPlatformPeerDialogBusy(
       parentOrigin,
       dialogRequestId,
-      saving || Boolean(nestedSupplierRequestIdRef.current),
+      saving || loadingStock || Boolean(nestedSupplierRequestIdRef.current),
       saving ? t('saving') : submitLabel,
     )
-  }, [chrome, dialogRequestId, parentOrigin, saving, submitLabel, supplierPickerOpen, t])
+  }, [chrome, dialogRequestId, loadingStock, parentOrigin, saving, submitLabel, supplierPickerOpen, t])
 
-  const body = (
+  const body = loadingStock ? (
+    <div className="flex min-h-[200px] items-center justify-center">
+      <Spinner size="lg" />
+    </div>
+  ) : (
     <form id="stock-form" className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
       {error ? (
         <Alert variant="destructive">
@@ -428,7 +473,7 @@ export function StockFormDialog({
       >
         {tc('cancel')}
       </Button>
-      <Button type="button" onClick={() => void handleSubmit()} disabled={saving}>
+      <Button type="button" onClick={() => void handleSubmit()} disabled={saving || loadingStock}>
         {saving ? t('saving') : submitLabel}
       </Button>
     </>

@@ -73,7 +73,7 @@ export function ServiceWorkflowTab({
       ) : items.length === 0 ? (
         <ItemListEmpty>{t('workflowTab.empty')}</ItemListEmpty>
       ) : (
-        <ItemList className="py-0">
+        <ItemList className="py-0" nestedInCard>
           {items.map((item) => {
             const staffNames =
               item.staff.length > 0

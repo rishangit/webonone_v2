@@ -1,6 +1,6 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
-import type { CreateStockBody } from '../schemas/stocks.schema.js'
+import type { CreateStockBody, UpdateStockBody } from '../schemas/stocks.schema.js'
 import * as stocksService from '../services/stocks.service.js'
 import { handleServiceError } from './controllerUtils.js'
 
@@ -40,6 +40,34 @@ export const stocksController = {
         req.user!.companyId ?? null,
       )
       res.status(201).json(item)
+    } catch (err) {
+      if (!handleServiceError(err, res)) throw err
+    }
+  },
+
+  async get(req: AuthenticatedRequest, res: Response) {
+    try {
+      const item = await stocksService.getStock(
+        String(req.params.id),
+        String(req.params.variantId),
+        String(req.params.stockId),
+      )
+      res.json(item)
+    } catch (err) {
+      if (!handleServiceError(err, res)) throw err
+    }
+  },
+
+  async update(req: AuthenticatedRequest, res: Response) {
+    try {
+      const item = await stocksService.updateStock(
+        String(req.params.id),
+        String(req.params.variantId),
+        String(req.params.stockId),
+        req.body as UpdateStockBody,
+        req.user!.companyId ?? null,
+      )
+      res.json(item)
     } catch (err) {
       if (!handleServiceError(err, res)) throw err
     }

@@ -38,7 +38,7 @@ Use **`FeaturePage`** and **`PageHeader`** from `@webonone/ui-kit` for route-lev
 Paginated collection pages inside `FeaturePage` must follow the UI Kit **list page** composition:
 
 ```text
-FeaturePage (title, description, actions: SearchInput + ListFilterTrigger + CTA)
+FeaturePage (title, description, actions: SearchInput + ListFilterTrigger + ItemListViewToggle + CTA)
   ListFilterPanel (panel filters only — not text search)
   Alert (optional errors)
   ListPageBody

@@ -1,4 +1,4 @@
-import { ArrowDownToLine, Cpu, List, Moon, Square, Sun } from 'lucide-react'
+import { ArrowDownToLine, Cpu, LayoutGrid, List, Moon, Square, Sun, Table2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   Card,
@@ -14,7 +14,10 @@ import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { systemThemeActions } from '@/features/settings/system-theme/store/systemThemeSlice'
-import type { ListPageMode } from '@/features/settings/system-theme/services/themeApi'
+import type {
+  ListDisplayMode,
+  ListPageMode,
+} from '@/features/settings/system-theme/services/themeApi'
 
 const UI_THEME_ICONS: Record<UiThemeId, typeof Square> = {
   classic: Square,
@@ -27,6 +30,7 @@ export function AppearanceSettingsPanel() {
   const { preferences, preferencesFetchedAt } = useAppSelector((s) => s.systemTheme)
   const colorMode = preferences?.colorMode ?? 'light'
   const listPageMode = preferences?.listPageMode ?? 'pagination'
+  const listDisplayMode = preferences?.listDisplayMode ?? 'list'
   const uiTheme = preferences?.uiTheme ?? 'classic'
 
   const appearanceOptions: {
@@ -87,6 +91,39 @@ export function AppearanceSettingsPanel() {
       return
     }
     dispatch(systemThemeActions.patchPreferencesRequested({ listPageMode: mode }))
+  }
+
+  const listDisplayOptions: {
+    mode: ListDisplayMode
+    title: string
+    description: string
+    Icon: typeof List
+  }[] = [
+    {
+      mode: 'list',
+      title: t('appearance.listDisplay.list.title'),
+      description: t('appearance.listDisplay.list.description'),
+      Icon: List,
+    },
+    {
+      mode: 'grid',
+      title: t('appearance.listDisplay.grid.title'),
+      description: t('appearance.listDisplay.grid.description'),
+      Icon: Table2,
+    },
+    {
+      mode: 'card',
+      title: t('appearance.listDisplay.card.title'),
+      description: t('appearance.listDisplay.card.description'),
+      Icon: LayoutGrid,
+    },
+  ]
+
+  function handleListDisplaySelect(mode: ListDisplayMode) {
+    if (mode === listDisplayMode) {
+      return
+    }
+    dispatch(systemThemeActions.patchPreferencesRequested({ listDisplayMode: mode }))
   }
 
   function handleUiThemeSelect(theme: UiThemeId) {
@@ -193,6 +230,41 @@ export function AppearanceSettingsPanel() {
                         : 'border-border bg-glass-bg hover:border-primary/50',
                     )}
                     onClick={() => handleListPageSelect(mode)}
+                    aria-pressed={selected}
+                  >
+                    <Icon className="h-5 w-5 text-foreground" aria-hidden />
+                    <span>
+                      <span className="block font-medium text-foreground">{title}</span>
+                      <span className="mt-1 block text-sm text-muted-foreground">{description}</span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('appearance.listDisplay.title')}</CardTitle>
+          <CardDescription>{t('appearance.listDisplay.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid gap-3 sm:grid-cols-3">
+            {listDisplayOptions.map(({ mode, title, description, Icon }) => {
+              const selected = listDisplayMode === mode
+              return (
+                <li key={mode}>
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex w-full flex-col items-start gap-3 rounded-lg border px-4 py-4 text-left transition-colors',
+                      selected
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-glass-bg hover:border-primary/50',
+                    )}
+                    onClick={() => handleListDisplaySelect(mode)}
                     aria-pressed={selected}
                   >
                     <Icon className="h-5 w-5 text-foreground" aria-hidden />

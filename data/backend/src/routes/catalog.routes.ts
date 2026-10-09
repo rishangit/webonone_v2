@@ -25,7 +25,7 @@ import {
 } from '../schemas/catalog.schema.js'
 import { createProductVariantBodySchema } from '../schemas/productVariants.schema.js'
 import { createServiceBodySchema, updateServiceBodySchema } from '../schemas/services.schema.js'
-import { createStockBodySchema } from '../schemas/stocks.schema.js'
+import { createStockBodySchema, updateStockBodySchema } from '../schemas/stocks.schema.js'
 
 function catalogRoutes(
   path: string,
@@ -149,6 +149,18 @@ router.post(
   requireCompanyAdmin,
   validateBody(createStockBodySchema),
   stocksController.create,
+)
+router.get(
+  '/products/:id/variants/:variantId/stocks/:stockId',
+  requireAuth,
+  stocksController.get,
+)
+router.patch(
+  '/products/:id/variants/:variantId/stocks/:stockId',
+  requireAuth,
+  requireCompanyAdmin,
+  validateBody(updateStockBodySchema),
+  stocksController.update,
 )
 router.patch(
   '/products/:id/variants/:variantId/stocks/:stockId/active',

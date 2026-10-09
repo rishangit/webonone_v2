@@ -37,6 +37,7 @@ export function dataResourceForToolName(toolName: string): DataListResource | nu
   }
   if (
     toolName === 'create_data_product_variant_stock' ||
+    toolName === 'update_data_product_variant_stock' ||
     toolName === 'set_data_product_variant_stock_active'
   ) {
     return 'product'
@@ -66,6 +67,7 @@ export function useAiMutationListRefresh() {
       if (
         event.data.toolName === 'create_data_product_variant' ||
         event.data.toolName === 'create_data_product_variant_stock' ||
+        event.data.toolName === 'update_data_product_variant_stock' ||
         event.data.toolName === 'set_data_product_variant_stock_active'
       ) {
         dispatchAiProductVariantsChanged()

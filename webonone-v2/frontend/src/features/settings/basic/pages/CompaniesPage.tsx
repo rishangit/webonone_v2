@@ -5,11 +5,14 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
   useClientListPage,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { isFresh } from '@/shared/store/cacheUtils'
@@ -50,6 +53,7 @@ export function CompaniesPage() {
 
   const listPage = useClientListPage(filteredItems)
   const visibleItems = listPage.visible
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
 
   if (!roleLoading && !isSuperAdmin) {
     return <Navigate to="/" replace />
@@ -60,15 +64,18 @@ export function CompaniesPage() {
       title={t('companiesAdmin.title')}
       description={t('companiesAdmin.description')}
       actions={
-        <SearchInput
-          value={searchQuery}
-          onChange={(event) => {
-            setSearchQuery(event.target.value)
-          }}
-          placeholder={t('companiesAdmin.searchPlaceholder')}
-          aria-label={t('companiesAdmin.searchAria')}
-          className="w-64"
-        />
+        <ListPageActions>
+          <SearchInput
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value)
+            }}
+            placeholder={t('companiesAdmin.searchPlaceholder')}
+            aria-label={t('companiesAdmin.searchAria')}
+            className="w-64"
+          />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+        </ListPageActions>
       }
     >
       {error ? (

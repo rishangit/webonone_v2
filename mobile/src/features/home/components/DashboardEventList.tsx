@@ -68,7 +68,7 @@ export function DashboardEventList({
   }
 
   return (
-    <ItemList className="py-0">
+    <ItemList className="py-0" nestedInCard>
       {items.map((item) => {
         const time = `${item.startTime}–${item.endTime}`
         const when = showDate ? `${formatCalendarYmd(item.occurrenceDate)} · ${time}` : time

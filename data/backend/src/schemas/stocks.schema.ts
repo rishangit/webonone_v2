@@ -39,6 +39,9 @@ export const createStockBodySchema = z
 
 export type CreateStockBody = z.infer<typeof createStockBodySchema>
 
+export const updateStockBodySchema = createStockBodySchema
+export type UpdateStockBody = CreateStockBody
+
 export const consumeStockBodySchema = z.object({
   quantity: z.coerce.number().positive('Quantity must be greater than 0'),
 })

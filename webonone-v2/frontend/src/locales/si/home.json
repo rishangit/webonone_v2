@@ -11,5 +11,6 @@
   "emptyTodayStaff": "අද දිනයේ පැවරූ ඉසව් නැත.",
   "emptyUpcomingStaff": "ඉදිරි පැවරූ ඉසව් නැත.",
   "staffName": "{{name}}",
-  "metaWithAttendee": "{{staff}} · {{attendee}}"
+  "metaWithAttendee": "{{staff}} · {{attendee}}",
+  "smsCreditsFrameTitle": "SMS ණය ඒකක"
 }

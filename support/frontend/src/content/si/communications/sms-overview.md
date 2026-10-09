@@ -11,4 +11,4 @@ summary: "SMS මෙනුවෙන් SMS යැවීම, devices, queue, hist
 
 බෙදාහැරීම ලියාපදිංචි දුරකථනයක් ([mobile gateway](/docs/communications/mobile-gateway)) හෝ සකසන ලද SMS provider එකක් (Text.lk) හරහා සිදු වේ.
 
-**SMS → Dashboard** හි, සමාගම් හිමිකරුවන් සහ Super Admin ට **SMS Credits** කාඩ් එකක් පෙනේ — Text.lk ඉතිරි ණය ඒකක (නැවුම් කිරීම සමඟ). Text.lk සකසා නැත්නම්, කාඩ් එක [Devices සහ gateway settings](/docs/communications/sms-devices) වෙත යොමු කරයි.
+සමාගම් හිමිකරුවන් සහ Super Admin ට **SMS Credits** කාඩ් එකක් පෙනේ — Text.lk ඉතිරි ණය ඒකක (නැවුම් කිරීම සමඟ) — යෙදුමේ [Dashboard](/docs/app-preferences/dashboard) සහ **SMS → Dashboard** යන දෙකෙහිම. Text.lk සකසා නැත්නම්, කාඩ් එක [Devices සහ gateway settings](/docs/communications/sms-devices) වෙත යොමු කරයි.

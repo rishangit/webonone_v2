@@ -51,6 +51,7 @@ export function CompanyProductVariantStocksCard({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingStock, setEditingStock] = useState<LibraryProductVariantStock | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -94,7 +95,15 @@ export function CompanyProductVariantStocksCard({
           <CardDescription>{t('stocks.description')}</CardDescription>
         </div>
         {canEdit ? (
-          <Button type="button" size="sm" onClick={() => setDialogOpen(true)} disabled={loading || saving}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              setEditingStock(null)
+              setDialogOpen(true)
+            }}
+            disabled={loading || saving}
+          >
             <Plus className="h-4 w-4" aria-hidden />
             {tc('add')}
           </Button>
@@ -147,14 +156,24 @@ export function CompanyProductVariantStocksCard({
                     ) : null}
                   </div>
                 </ItemListContent>
-                {canEdit && !stock.isActive ? (
+                {canEdit ? (
                   <ItemListMenu ariaLabel={t('stocks.actionsAria', { number: stock.batchNumber })}>
                     <DropdownMenuItem
-                      disabled={saving}
-                      onClick={() => void handleSetActive(stock)}
+                      onClick={() => {
+                        setEditingStock(stock)
+                        setDialogOpen(true)
+                      }}
                     >
-                      {t('stocks.setAsActive')}
+                      {tc('edit')}
                     </DropdownMenuItem>
+                    {!stock.isActive ? (
+                      <DropdownMenuItem
+                        disabled={saving}
+                        onClick={() => void handleSetActive(stock)}
+                      >
+                        {t('stocks.setAsActive')}
+                      </DropdownMenuItem>
+                    ) : null}
                   </ItemListMenu>
                 ) : null}
               </ItemListItem>
@@ -168,8 +187,13 @@ export function CompanyProductVariantStocksCard({
           open
           libraryProductId={libraryProductId}
           variantId={variantId}
-          onOpenChange={setDialogOpen}
+          stock={editingStock}
+          onOpenChange={(next) => {
+            setDialogOpen(next)
+            if (!next) setEditingStock(null)
+          }}
           onSaved={() => {
+            toast({ title: editingStock ? t('stocks.toastUpdated') : t('stocks.toastCreated') })
             void load()
           }}
         />

@@ -12,7 +12,9 @@
     "removeTitleNamed": "Remove {{name}}?",
     "removeDescription": "This action cannot be undone. The staff member will be removed from the company.",
     "toastRemoved": "Staff removed",
-    "toastRemoveFailed": "Failed to remove staff"
+    "toastRemoveFailed": "Failed to remove staff",
+    "columnEmail": "Email",
+    "columnSchedule": "Schedule"
   },
   "detail": {
     "title": "Staff",
@@ -93,6 +95,8 @@
     "saving": "Saving…",
     "loading": "Loading leaves…",
     "empty": "No leave records yet.",
+    "columnType": "Type",
+    "columnDates": "Dates",
     "filtersTitle": "Filters",
     "filterStatus": "Status",
     "statusAll": "All statuses",

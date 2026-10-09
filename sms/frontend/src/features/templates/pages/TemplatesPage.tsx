@@ -5,12 +5,15 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
   useClientListPage,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { templatesActions } from '@/features/templates/store'
@@ -60,6 +63,7 @@ export function TemplatesPage() {
   }, [templates, searchQuery])
 
   const listPage = useClientListPage(filteredTemplates)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
 
   useEffect(() => {
     if (!accessToken) return
@@ -141,7 +145,7 @@ export function TemplatesPage() {
       title={t('title')}
       description={t('description')}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={searchQuery}
             onChange={(event) => {
@@ -151,10 +155,11 @@ export function TemplatesPage() {
             aria-label={t('searchAria')}
             className="w-64"
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {canManageCompany ? (
             <ListAddButton onClick={handleOpenCreate}>{t('add')}</ListAddButton>
           ) : null}
-        </div>
+        </ListPageActions>
       }
     >
       {listError ? (

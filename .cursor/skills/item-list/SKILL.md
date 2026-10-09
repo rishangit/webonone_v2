@@ -49,7 +49,11 @@ For paginated collection **pages** (not embed pickers), compose:
 
 `FeaturePage` → optional `ListFilterPanel` → `ListPageBody` → `ItemList` / `ItemListEmpty` → `ListPageFooter className="mt-auto"`.
 
-Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + **`ListAddButton`**. Never use plain `Input` for text search ([ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc)). When `description` is set, `PageHeader` renders title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that row. Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
+Header `actions` (in order): **`SearchInput`** + `ListFilterTrigger` + **`ItemListViewToggle`** + **`ListAddButton`**. Never use plain `Input` for text search ([ui-kit-consumption.mdc](../../rules/ui-kit-consumption.mdc)). When `description` is set, `PageHeader` renders title, wrapping description, then actions on their own row. Below `sm`, tap the search icon to expand the field leftward across that row. Loading via `usePlatformLoading` — not inline `"Loading…"` in `ItemListEmpty`.
+
+**Collection layout:** wrap rows in **`CollectionListView`** (`list` | `grid` | `card` from `ListDisplayModeProvider`). Define `columns` for grid sort (current page only), `renderListItem`, `renderCard`, and `renderGridActions`. Toggle via `ItemListViewToggle` + `useListDisplayModeControl` (WebOnOne) or service `shared/hooks/useListDisplayModeControl` (satellites). Default preference: **Settings → Appearance → Collection layout**.
+
+**Card layout (`renderCard`):** use **`ItemListCollectionCard`** — full-width **media on top** (`image` prop: `ImagePreview` with `itemListCardImageClassName`, color band, or `ItemListCardPlaceholderImage` when there is no asset), **details in the padded body** (no duplicate list-row thumb), **`menu` in the top-right over the image** (`itemListCardMenuOverlayClassName`). Optional `onBodyClick` for navigation — applies to **both** the hero image and the body text (same handler as list-row body click); use a plain link inside `children` when the target is external. List rows keep `itemListThumbClassName` beside text; card view moves the thumb to the hero only.
 
 **Primary CTA (`ListAddButton`):** last in `actions`, permission-gated. Pass the full label as children (e.g. `Add tag`). The Plus icon is built in. Below `sm` the button shows **+** only (rounded primary icon button) until tapped, then grows left (`duration-300 ease-out`, same as header search) to the full label and pushes search/filter left; the second tap runs `onClick`. Opening search or tapping outside collapses add. Optional `compactLabel` is deprecated/ignored (collapsed is always icon-only). Do **not** hand-roll `Button` + `Plus` for list-page create.
 
@@ -61,13 +65,13 @@ Canonical demo: `ui-kit/showcase/src/pages/pages/PageDemos.tsx` (`ListPageDemo`)
 
 ## ItemList inside a Card
 
-When a **section card** on a details or settings page wraps an `ItemList` (stocks, workflow steps, attribute values, POS cart, etc.), avoid double glass surfaces and wasted horizontal space:
+When a **section card** on a details or settings page wraps an `ItemList` (stocks, workflow steps, attribute values, POS cart, etc.), use the card frame for the section and flat row borders inside:
 
 | Piece | Rule |
 |-------|------|
-| Outer card | `Card variant="list"` — transparent, no border/bg/shadow |
-| Header | `CardHeader` is flush horizontally (`px-0` via variant context); vertical padding unchanged |
-| Body | `CardContent` is flush horizontally (`px-0` via variant context) |
+| Outer card | `Card variant="list"` — normal card border, background, and padding (same chrome as `default`) |
+| Rows | `ItemListItem` is borderless inside **any** `Card` (`useInsideCard`); keep glass fill and hover shadow |
+| Active row | Use `itemListRowActiveClassName` as usual — rows inside a card apply `itemListRowNestedActiveClassName` automatically |
 | List | `ItemList className="py-0"` — no extra vertical padding inside the card |
 
 `EditableSectionCard` wrappers accept `variant="list"` and forward it to `Card`.

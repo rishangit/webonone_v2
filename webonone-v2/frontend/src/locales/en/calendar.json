@@ -47,7 +47,9 @@
     "removeTitleNamed": "Remove {{name}}?",
     "removeDescription": "This action cannot be undone. The event will be permanently removed.",
     "toastRemoved": "Event removed",
-    "toastRemoveFailed": "Failed to remove event"
+    "toastRemoveFailed": "Failed to remove event",
+    "columnService": "Service",
+    "columnWhen": "When"
   },
   "eventDetail": {
     "title": "Event",

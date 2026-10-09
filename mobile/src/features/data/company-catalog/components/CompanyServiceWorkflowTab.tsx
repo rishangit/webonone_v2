@@ -163,7 +163,7 @@ export function CompanyServiceWorkflowTab({
       ) : items.length === 0 ? (
         <ItemListEmpty>{t('workflowTab.empty')}</ItemListEmpty>
       ) : (
-        <ItemList className="py-0">
+        <ItemList className="py-0" nestedInCard>
           {items.map((item, index) => (
             <ItemListItem key={item.id}>
               <ItemListContent

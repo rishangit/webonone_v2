@@ -4,6 +4,7 @@ import {
   Alert,
   AlertDescription,
   FormField,
+  ItemListViewToggle,
   ListAddButton,
   ListFilterPanel,
   ListFilterTrigger,
@@ -25,6 +26,7 @@ import { staffLeavesActions } from '@/features/staff/store'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
 import { LEAVE_STATUSES } from '@/features/staff/types/staffLeave.types'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 
 type StaffLeavesPanelProps = {
   staff: CompanyStaff
@@ -36,6 +38,7 @@ export function StaffLeavesPanel({ staff, canManage }: StaffLeavesPanelProps) {
   const dispatch = useAppDispatch()
   const { toast } = useToast()
   const authUser = useAppSelector((s) => s.auth.user)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   const list = useEpicCatalogList(
     (s) => s.staffLeaves,
     staffLeavesActions,
@@ -77,6 +80,7 @@ export function StaffLeavesPanel({ staff, canManage }: StaffLeavesPanelProps) {
           onClick={() => list.setFilterOpen(true)}
           aria-label={t('leaves.filterStatus')}
         />
+        <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
         {canAdd ? (
           <ListAddButton onClick={() => setAddOpen(true)}>{t('leaves.addLeave')}</ListAddButton>
         ) : null}

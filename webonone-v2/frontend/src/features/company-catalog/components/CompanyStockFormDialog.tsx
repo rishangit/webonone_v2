@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
@@ -16,6 +17,7 @@ import {
 import { useAppSelector } from '@/app/store/hooks'
 import {
   createEmptyStockFormDraft,
+  createStockDraftFromItem,
   stockFormSchema,
   toCreateStockPayload,
   type StockFormDraft,
@@ -51,6 +53,7 @@ export type CompanyStockFormDialogProps = {
   /** Data library product id */
   libraryProductId: string
   variantId: string
+  stock?: LibraryProductVariantStock | null
   onOpenChange: (open: boolean) => void
   onSaved: (item: LibraryProductVariantStock) => void
 }
@@ -59,10 +62,14 @@ export function CompanyStockFormDialog({
   open,
   libraryProductId,
   variantId,
+  stock = null,
   onOpenChange,
   onSaved,
 }: CompanyStockFormDialogProps) {
+  const { t } = useTranslation('catalog')
+  const { t: tc } = useTranslation('common')
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const isNew = !stock
   const [values, setValues] = useState<StockFormDraft>(createEmptyStockFormDraft)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -72,13 +79,13 @@ export function CompanyStockFormDialog({
 
   useEffect(() => {
     if (!open) return
-    setValues(createEmptyStockFormDraft())
+    setValues(stock ? createStockDraftFromItem(stock) : createEmptyStockFormDraft())
     setFieldErrors({})
     setError(null)
     setSaving(false)
     setGeneratingBatch(false)
     setSupplierPickerOpen(false)
-  }, [open])
+  }, [open, stock])
 
   const selectedSupplier: SelectUserValue | null = values.supplierUserId
     ? {
@@ -152,15 +159,25 @@ export function CompanyStockFormDialog({
     setSaving(true)
     setError(null)
     try {
-      const item = await dataLibraryApi.createProductVariantStock(
-        libraryProductId,
-        variantId,
-        toCreateStockPayload(parsed.data),
-      )
+      const payload = toCreateStockPayload(parsed.data)
+      const item = isNew
+        ? await dataLibraryApi.createProductVariantStock(libraryProductId, variantId, payload)
+        : await dataLibraryApi.updateProductVariantStock(
+            libraryProductId,
+            variantId,
+            stock.id,
+            payload,
+          )
       onSaved(item)
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create stock')
+      setError(
+        err instanceof Error
+          ? err.message
+          : isNew
+            ? t('stockForm.failedCreate')
+            : t('stockForm.failedUpdate'),
+      )
     } finally {
       setSaving(false)
     }
@@ -171,8 +188,8 @@ export function CompanyStockFormDialog({
       <CustomDialog
         open={open}
         onOpenChange={onOpenChange}
-        title="Add stock"
-        description="Record a stock batch for this product variant."
+        title={isNew ? t('stockForm.title') : t('stockForm.editTitle')}
+        description={isNew ? t('stockForm.description') : t('stockForm.editDescription')}
         sizeWidth={STOCK_FORM_DIALOG_SIZE.sizeWidth}
         sizeHeight={STOCK_FORM_DIALOG_SIZE.sizeHeight}
         nestedDismissGuard={supplierPickerOpen}
@@ -184,10 +201,10 @@ export function CompanyStockFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={saving}
             >
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button type="button" onClick={() => void handleSubmit()} disabled={saving}>
-              {saving ? 'Saving…' : 'Add stock'}
+              {saving ? t('stockForm.saving') : isNew ? t('stockForm.addStock') : tc('save')}
             </Button>
           </>
         }

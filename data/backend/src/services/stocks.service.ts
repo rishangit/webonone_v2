@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
-import type { CreateStockBody } from '../schemas/stocks.schema.js'
+import type { CreateStockBody, UpdateStockBody } from '../schemas/stocks.schema.js'
 
 export const COMPANY_STOCK_BATCH_PATTERN = /^BATCH-(\d{6})$/
 
@@ -189,6 +189,54 @@ export async function getStock(
     .where({ id: stockId, variant_id: variantId })
     .first()) as StockRow | undefined
   if (!row) throw new Error('NOT_FOUND')
+  return rowToDto(row)
+}
+
+export async function updateStock(
+  productId: string,
+  variantId: string,
+  stockId: string,
+  body: UpdateStockBody,
+  companyId: string | null = null,
+): Promise<StockDto> {
+  await assertVariantBelongsToProduct(productId, variantId)
+
+  const existing = await db('data_stocks')
+    .where({ id: stockId, variant_id: variantId })
+    .first()
+  if (!existing) throw new Error('NOT_FOUND')
+
+  const duplicate = await db('data_stocks')
+    .where({ variant_id: variantId, batch_number: body.batch_number })
+    .whereNot({ id: stockId })
+    .first()
+  if (duplicate) {
+    throw new Error('VALIDATION: A stock batch with this batch number already exists for this variant')
+  }
+
+  const now = db.fn.now(3)
+  await db('data_stocks')
+    .where({ id: stockId })
+    .update({
+      quantity: body.quantity,
+      batch_number: body.batch_number,
+      cost_price: body.cost_price,
+      sell_price: body.sell_price,
+      purchase_date: body.purchase_date,
+      expired_date: body.expired_date ?? null,
+      supplier_user_id: body.supplier_user_id ?? null,
+      supplier_display_name: body.supplier_display_name ?? null,
+      supplier_email: body.supplier_email ?? null,
+      updated_at: now,
+    })
+
+  const row = (await db('data_stocks').where({ id: stockId }).first()) as StockRow | undefined
+  if (!row) throw new Error('NOT_FOUND')
+
+  if (companyId) {
+    await advanceBatchCounter(companyId, body.batch_number)
+  }
+
   return rowToDto(row)
 }
 

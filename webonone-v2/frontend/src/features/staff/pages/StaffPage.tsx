@@ -5,11 +5,14 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
@@ -26,6 +29,7 @@ export function StaffPage() {
   const [addOpen, setAddOpen] = useState(false)
 
   const list = useEpicCatalogList((s) => s.staff, staffActions)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(list.loading ? t('list.loading') : null)
 
   const existingUserIds = useMemo(
@@ -43,7 +47,7 @@ export function StaffPage() {
       title={t('list.title')}
       description={t('list.description')}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={list.q}
             onChange={(event) => list.setQ(event.target.value)}
@@ -52,10 +56,11 @@ export function StaffPage() {
             className="w-64"
             aria-label={t('list.searchAria')}
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           {canManage ? (
             <ListAddButton onClick={() => setAddOpen(true)}>{t('list.addStaff')}</ListAddButton>
           ) : null}
-        </div>
+        </ListPageActions>
       }
     >
       {list.error ? (

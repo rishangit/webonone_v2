@@ -8,13 +8,25 @@ import {
 import { CORE_NAV_QUERY_PARAM, appendPromptLogin, buildLogoutClearChain, createNavItemNavigate, parsePlatformNavVariant, performPlatformLogout, useServiceRedirect } from '@webonone/platform-nav'
 import { normalizeLocale, relayLocaleQueryParams, translateNavItems, type AppLocale } from '@webonone/i18n'
 import {
+  relayListDisplayModeQueryParams,
   relayListPageModeQueryParams,
   relayThemeQueryParams,
   relayUiThemeQueryParams,
+  useListDisplayModeValue,
   useListPageModeValue,
   useUiThemeValue,
 } from '@webonone/theme'
-import { AppShell, BrandLogo, Button, ListPageModeProvider, LoadingState, PageShell, UiThemeProvider, useToast } from '@webonone/ui-kit'
+import {
+  AppShell,
+  BrandLogo,
+  Button,
+  ListDisplayModeProvider,
+  ListPageModeProvider,
+  LoadingState,
+  PageShell,
+  UiThemeProvider,
+  useToast,
+} from '@webonone/ui-kit'
 import type { NavConfigItem } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { authActions } from '@/features/auth/store'
@@ -105,6 +117,7 @@ function AppLayoutContent() {
     ? null
     : resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const listPageMode = useListPageModeValue(embedParentOrigin)
+  const listDisplayMode = useListDisplayModeValue(embedParentOrigin)
   const uiTheme = useUiThemeValue(embedParentOrigin)
 
   const body = embedParentOrigin ? (
@@ -117,7 +130,9 @@ function AppLayoutContent() {
 
   return (
     <UiThemeProvider theme={uiTheme}>
-      <ListPageModeProvider mode={listPageMode}>{body}</ListPageModeProvider>
+      <ListPageModeProvider mode={listPageMode}>
+        <ListDisplayModeProvider mode={listDisplayMode}>{body}</ListDisplayModeProvider>
+      </ListPageModeProvider>
     </UiThemeProvider>
   )
 }
@@ -141,6 +156,7 @@ function AppLayoutShellContent() {
     () => ({
       ...relayThemeQueryParams(searchParams),
       ...relayListPageModeQueryParams(searchParams),
+      ...relayListDisplayModeQueryParams(searchParams),
       ...relayUiThemeQueryParams(searchParams),
       ...relayLocaleQueryParams(searchParams),
     }),

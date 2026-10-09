@@ -7,6 +7,8 @@ import {
   Button,
   cn,
   FeaturePage,
+  ItemListViewToggle,
+  ListPageActions,
   ListPageBody,
   Tabs,
   TabsContent,
@@ -15,6 +17,7 @@ import {
   tabsPageClassName,
   tabsPageContentClassName,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { devicesActions } from '@/features/devices/store'
@@ -39,6 +42,7 @@ export function DevicesPage() {
 
   const loading = listStatus === 'loading' && items.length === 0
   const error = listError ?? actionError
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   usePlatformLoading(tab === 'devices' && loading ? t('loading') : null)
 
   useEffect(() => {
@@ -77,9 +81,12 @@ export function DevicesPage() {
       description={t('pageDescription')}
       actions={
         tab === 'devices' ? (
-          <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
-            {t('refreshNow')}
-          </Button>
+          <ListPageActions>
+            <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+            <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
+              {t('refreshNow')}
+            </Button>
+          </ListPageActions>
         ) : null
       }
     >

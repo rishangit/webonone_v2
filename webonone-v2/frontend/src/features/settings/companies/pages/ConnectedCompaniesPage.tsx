@@ -4,12 +4,15 @@ import {
   Alert,
   AlertDescription,
   FeaturePage,
+  ItemListViewToggle,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
   useClientListPage,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -54,6 +57,7 @@ export function ConnectedCompaniesPage() {
     : connectedCompanies
 
   const listPage = useClientListPage(filteredItems)
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   const visibleItems = listPage.visible
 
   if (awaitingFirstLoad) {
@@ -65,7 +69,7 @@ export function ConnectedCompaniesPage() {
       title={t('connectedCompanies.title')}
       description={t('connectedCompanies.description')}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={searchQuery}
             onChange={(event) => {
@@ -75,10 +79,11 @@ export function ConnectedCompaniesPage() {
             aria-label={t('connectedCompanies.searchAria')}
             className="w-64"
           />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           <ListAddButton onClick={() => setFindOpen(true)}>
             {t('connectedCompanies.findCompanies')}
           </ListAddButton>
-        </div>
+        </ListPageActions>
       }
     >
       {myCompaniesError ? (

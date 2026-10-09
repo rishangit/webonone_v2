@@ -286,6 +286,10 @@ export function App() {
             '/embed/dialogs/products/:productId/variants/:variantId/stocks/create',
             StockFormEmbedPage,
           )}
+          {embedDialogRoute(
+            '/embed/dialogs/products/:productId/variants/:variantId/stocks/:stockId/edit',
+            StockFormEmbedPage,
+          )}
           {embedDialogRoute('/embed/dialogs/users/select', UserSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/catalog/:kind/select', CatalogLibrarySelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/services/spaces/select', SpaceSelectEmbedPage)}

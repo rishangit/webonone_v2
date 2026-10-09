@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { ensurePlatformEmbedCanvas } from '@webonone/platform-embed'
 import {
+  applyListDisplayModeFromQueryParams,
   applyListPageModeFromQueryParams,
   applyThemeFromQueryParams,
   applyUiTheme,
@@ -18,6 +19,7 @@ ensurePlatformEmbedCanvas()
 const search = new URLSearchParams(window.location.search)
 applyThemeFromQueryParams(search)
 applyListPageModeFromQueryParams(search)
+applyListDisplayModeFromQueryParams(search)
 applyUiThemeFromQueryParams(search)
 applyUiTheme(resolveUiTheme(search))
 initIdentityI18n()

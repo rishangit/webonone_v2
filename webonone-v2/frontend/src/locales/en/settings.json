@@ -82,6 +82,22 @@
         "description": "Load the next page when you reach the bottom."
       }
     },
+    "listDisplay": {
+      "title": "Collection layout",
+      "description": "Choose how items appear on collection pages across the platform.",
+      "list": {
+        "title": "List",
+        "description": "Stacked rows with actions in the row menu."
+      },
+      "grid": {
+        "title": "Grid",
+        "description": "Sortable columns for scanning many fields at once."
+      },
+      "card": {
+        "title": "Card",
+        "description": "Responsive tiles that flow left to right."
+      }
+    },
     "uiTheme": {
       "title": "UI theme",
       "description": "Choose the visual style for cards, buttons, inputs, and other platform surfaces.",
@@ -258,13 +274,15 @@
     "approve": "Approve",
     "setPending": "Set pending",
     "reject": "Reject",
-    "loading": "Loading companies…"
+    "loading": "Loading companies…",
+    "columnCreated": "Registered"
   },
   "myCompanies": {
     "title": "My Companies",
     "description": "View and register companies you own or administer on the platform.",
     "searchPlaceholder": "Company name",
     "searchAria": "Search companies",
+    "columnRole": "Role",
     "empty": "No companies yet. Add a company to get started.",
     "loading": "Loading companies…",
     "addCompany": "Add company",
@@ -484,7 +502,9 @@
       "loading": "Loading themes…",
       "deleteTitle": "Delete theme?",
       "deleteTitleNamed": "Delete {{name}}?",
-      "deleteDescription": "This action cannot be undone. The theme will be permanently removed."
+      "deleteDescription": "This action cannot be undone. The theme will be permanently removed.",
+      "columnType": "Type",
+      "customType": "Custom"
     },
     "detail": {
       "title": "Theme",

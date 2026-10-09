@@ -34,6 +34,11 @@ const QueueFilterEmbedPage = lazy(() =>
     default: m.QueueFilterEmbedPage,
   })),
 )
+const SmsCreditsEmbedPage = lazy(() =>
+  import('@/features/dashboard/pages/SmsCreditsEmbedPage').then((m) => ({
+    default: m.SmsCreditsEmbedPage,
+  })),
+)
 const TemplatesPage = lazy(() =>
   import('@/features/templates/pages/TemplatesPage').then((m) => ({ default: m.TemplatesPage })),
 )
@@ -158,6 +163,16 @@ export function App() {
               <RoleRoute roles={[...adminRoles]}>
                 <LazyRoute>
                   <QueueFilterEmbedPage />
+                </LazyRoute>
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/embed/widgets/credits"
+            element={
+              <RoleRoute roles={[...adminRoles]}>
+                <LazyRoute>
+                  <SmsCreditsEmbedPage />
                 </LazyRoute>
               </RoleRoute>
             }

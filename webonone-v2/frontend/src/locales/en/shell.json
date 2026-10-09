@@ -125,6 +125,7 @@
     "seeAll": "See all",
     "listTitle": "Notifications",
     "listDescription": "All of your recent notifications.",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "columnWhen": "When"
   }
 }

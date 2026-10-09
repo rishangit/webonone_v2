@@ -398,14 +398,19 @@
     "toastActiveUpdated": "Active stock updated",
     "toastActiveFailed": "Could not update active stock",
     "failedSetActive": "Failed to set active stock",
+    "toastCreated": "Stock added",
+    "toastUpdated": "Stock updated",
     "actionsAria": "Actions for batch {{number}}"
   },
   "stockForm": {
     "title": "Add stock",
+    "editTitle": "Edit stock",
     "description": "Record a stock batch for this product variant.",
+    "editDescription": "Update this stock batch.",
     "addStock": "Add stock",
     "saving": "Saving…",
     "failedCreate": "Failed to create stock",
+    "failedUpdate": "Failed to update stock",
     "fields": {
       "quantity": "Quantity",
       "batchNumber": "Batch number",

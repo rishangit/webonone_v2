@@ -40,6 +40,8 @@ export interface SystemThemeRow {
 
 export type ListPageMode = 'pagination' | 'on-scroll'
 
+export type ListDisplayMode = 'list' | 'grid' | 'card'
+
 export type UiThemeId = 'classic' | 'high-tech'
 
 export interface UserPreferenceRow {
@@ -47,6 +49,7 @@ export interface UserPreferenceRow {
   active_theme_id: string
   color_mode: 'light' | 'dark'
   list_page_mode: ListPageMode
+  list_display_mode: ListDisplayMode
   ui_theme: string
   updated_at: Date
 }

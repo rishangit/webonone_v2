@@ -1,4 +1,5 @@
-import { ListAddButton, ListFilterTrigger, SearchInput } from '@webonone/ui-kit'
+import { ItemListViewToggle, ListAddButton, ListFilterTrigger, SearchInput } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 
 /** Standard list-page search width (matches Tags and ui-kit showcase). */
 export const WEBSITE_LIST_SEARCH_CLASS = 'w-64'
@@ -33,6 +34,8 @@ export function WebsiteHubListToolbar({
   onFilterOpen,
   filterAriaLabel = 'Filters',
 }: WebsiteHubListToolbarProps) {
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
+
   return (
     <>
       <SearchInput
@@ -50,6 +53,7 @@ export function WebsiteHubListToolbar({
           aria-label={filterAriaLabel}
         />
       ) : null}
+      <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
       {canManage && addLabel && onAdd ? (
         <ListAddButton onClick={onAdd} compactLabel={compactAddLabel}>
           {addLabel}

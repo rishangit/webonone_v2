@@ -5,8 +5,11 @@ import {
   AlertDescription,
   Button,
   FeaturePage,
+  ItemListViewToggle,
+  ListPageActions,
   ListPageBody,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { NotificationsList } from '../components/NotificationsList'
@@ -23,6 +26,7 @@ export function NotificationsPage() {
   const hasMore = useAppSelector((s) => s.notifications.hasMore)
   const unreadCount = useAppSelector((s) => s.notifications.unreadCount)
 
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
   const loadingFirstPage = status === 'loading' && items.length === 0
   usePlatformLoading(loadingFirstPage ? t('notifications.loading') : null)
 
@@ -47,16 +51,19 @@ export function NotificationsPage() {
       title={t('notifications.listTitle')}
       description={t('notifications.listDescription')}
       actions={
-        unreadCount > 0 ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => dispatch(notificationsActions.markAllReadRequested())}
-          >
-            {t('notifications.markAllRead')}
-          </Button>
-        ) : undefined
+        <ListPageActions>
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          {unreadCount > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => dispatch(notificationsActions.markAllReadRequested())}
+            >
+              {t('notifications.markAllRead')}
+            </Button>
+          ) : null}
+        </ListPageActions>
       }
     >
       {error ? (

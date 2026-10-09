@@ -194,7 +194,7 @@ export function HistoryTokenDetailScreen({ userId, tokenId }: HistoryTokenDetail
           {detail.sales.length === 0 ? (
             <ItemListEmpty>{t('history.salesEmpty')}</ItemListEmpty>
           ) : (
-            <ItemList className="py-0">
+            <ItemList className="py-0" nestedInCard>
               {detail.sales.map((sale) => (
                 <ItemListItem
                   key={sale.id}

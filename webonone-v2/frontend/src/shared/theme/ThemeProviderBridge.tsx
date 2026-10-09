@@ -2,11 +2,13 @@ import { createContext, useCallback, useContext, useEffect, type ReactNode } fro
 import {
   applyThemeVariables,
   applyUiTheme,
+  broadcastListDisplayModeToIframes,
   broadcastListPageModeToIframes,
   broadcastThemeToIframes,
   broadcastUiThemeToIframes,
   buildThemePayload,
   createPlatformDefaultThemeDto,
+  persistListDisplayMode,
   persistListPageMode,
   persistUiTheme,
   THEME_MESSAGE_TYPES,
@@ -51,6 +53,7 @@ export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
     const payload = buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode)
     applyThemeVariables(payload)
     persistListPageMode(preferences.listPageMode ?? 'pagination')
+    persistListDisplayMode(preferences.listDisplayMode ?? 'list')
     const uiTheme = preferences.uiTheme ?? 'classic'
     persistUiTheme(uiTheme)
     applyUiTheme(uiTheme)
@@ -63,6 +66,8 @@ export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
     broadcastThemeToIframes(payload, iframes)
     persistListPageMode(preferences.listPageMode ?? 'pagination')
     broadcastListPageModeToIframes(preferences.listPageMode ?? 'pagination', iframes)
+    persistListDisplayMode(preferences.listDisplayMode ?? 'list')
+    broadcastListDisplayModeToIframes(preferences.listDisplayMode ?? 'list', iframes)
     const uiTheme = preferences.uiTheme ?? 'classic'
     persistUiTheme(uiTheme)
     broadcastUiThemeToIframes(uiTheme, iframes)

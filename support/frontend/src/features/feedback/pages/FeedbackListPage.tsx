@@ -6,9 +6,11 @@ import {
   AlertDescription,
   FeaturePage,
   FormField,
+  ItemListViewToggle,
   ListAddButton,
   ListFilterPanel,
   ListFilterTrigger,
+  ListPageActions,
   ListPageBody,
   ListPageFooter,
   SearchInput,
@@ -24,6 +26,7 @@ import {
   tabsPageClassName,
   useToast,
 } from '@webonone/ui-kit'
+import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isSessionSuperAdmin } from '@/features/auth/utils/currentRole'
 import { FeedbackFormDialog } from '@/features/feedback/components/FeedbackFormDialog'
@@ -72,6 +75,7 @@ export function FeedbackListPage() {
 
   const isSuperAdmin = isSessionSuperAdmin(accessToken)
   const loading = listStatus === 'loading' && items.length === 0
+  const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
 
   const hasActiveFilters = appliedTypeFilter !== 'all'
 
@@ -169,7 +173,7 @@ export function FeedbackListPage() {
       title={t('pageTitle')}
       description={t('pageDescription')}
       actions={
-        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <ListPageActions>
           <SearchInput
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -188,8 +192,9 @@ export function FeedbackListPage() {
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
+          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
           <ListAddButton onClick={() => setCreateOpen(true)}>{t('addReport')}</ListAddButton>
-        </div>
+        </ListPageActions>
       }
     >
       <ListFilterPanel

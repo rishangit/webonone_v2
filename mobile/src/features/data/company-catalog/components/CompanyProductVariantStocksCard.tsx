@@ -47,6 +47,7 @@ export function CompanyProductVariantStocksCard({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingStock, setEditingStock] = useState<LibraryProductVariantStock | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -90,7 +91,14 @@ export function CompanyProductVariantStocksCard({
           <Muted>{t('stocks.description')}</Muted>
         </View>
         {canEdit ? (
-          <Button size="sm" disabled={loading || saving} onPress={() => setDialogOpen(true)}>
+          <Button
+            size="sm"
+            disabled={loading || saving}
+            onPress={() => {
+              setEditingStock(null)
+              setDialogOpen(true)
+            }}
+          >
             {tc('add')}
           </Button>
         ) : null}
@@ -103,7 +111,7 @@ export function CompanyProductVariantStocksCard({
       ) : items.length === 0 ? (
         <ItemListEmpty>{t('stocks.empty')}</ItemListEmpty>
       ) : (
-        <ItemList className="py-0">
+        <ItemList className="py-0" nestedInCard>
           {items.map((stock) => (
             <ItemListItem key={stock.id}>
               <ItemListContent
@@ -126,11 +134,21 @@ export function CompanyProductVariantStocksCard({
                   .join('\n')}
               />
               {stock.isActive ? <StatusTag variant="verified">{t('stocks.active')}</StatusTag> : null}
-              {canEdit && !stock.isActive ? (
+              {canEdit ? (
                 <ItemListMenu ariaLabel={t('stocks.actionsAria', { number: stock.batchNumber })}>
-                  <ItemListMenuItem disabled={saving} onPress={() => void handleSetActive(stock)}>
-                    {t('stocks.setAsActive')}
+                  <ItemListMenuItem
+                    onPress={() => {
+                      setEditingStock(stock)
+                      setDialogOpen(true)
+                    }}
+                  >
+                    {tc('edit')}
                   </ItemListMenuItem>
+                  {!stock.isActive ? (
+                    <ItemListMenuItem disabled={saving} onPress={() => void handleSetActive(stock)}>
+                      {t('stocks.setAsActive')}
+                    </ItemListMenuItem>
+                  ) : null}
                 </ItemListMenu>
               ) : null}
             </ItemListItem>
@@ -143,7 +161,11 @@ export function CompanyProductVariantStocksCard({
           open
           libraryProductId={libraryProductId}
           variantId={variantId}
-          onOpenChange={setDialogOpen}
+          stock={editingStock}
+          onOpenChange={(next) => {
+            setDialogOpen(next)
+            if (!next) setEditingStock(null)
+          }}
           onSaved={() => void load()}
         />
       ) : null}

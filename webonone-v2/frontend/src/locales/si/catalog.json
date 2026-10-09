@@ -398,14 +398,19 @@
     "toastActiveUpdated": "සක්‍රිය තොග යාවත්කාලීන කරන ලදී",
     "toastActiveFailed": "සක්‍රිය තොග යාවත්කාලීන කළ නොහැකි විය",
     "failedSetActive": "සක්‍රිය තොග සැකසීම අසාර්ථක විය",
+    "toastCreated": "තොගය එකතු විය",
+    "toastUpdated": "තොගය යාවත්කාලීන විය",
     "actionsAria": "කණ්ඩායම {{number}} සඳහා ක්‍රියා"
   },
   "stockForm": {
     "title": "තොග එකතු කරන්න",
+    "editTitle": "තොගය සංස්කරණය කරන්න",
     "description": "මෙම නිෂ්පාදන ප්‍රභේදය සඳහා තොග කණ්ඩායමක් වාර්තා කරන්න.",
+    "editDescription": "මෙම තොග කණ්ඩායම යාවත්කාලීන කරන්න.",
     "addStock": "තොග එකතු කරන්න",
     "saving": "සුරකිමින්…",
     "failedCreate": "තොග සෑදීම අසාර්ථක විය",
+    "failedUpdate": "තොගය යාවත්කාලීන කිරීම අසාර්ථක විය",
     "fields": {
       "quantity": "ප්‍රමාණය",
       "batchNumber": "කණ්ඩායම් අංකය",
