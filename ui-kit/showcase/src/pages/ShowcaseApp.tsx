@@ -19,6 +19,7 @@ import { DialogsPage } from '@/pages/DialogsPage'
 import { IconsPage } from '@/pages/IconsPage'
 import { PagesPage } from '@/pages/PagesPage'
 import { TagsPage } from '@/pages/TagsPage'
+import { ColorsPage } from '@/pages/ColorsPage'
 
 export function ShowcaseApp() {
   const [hash, setHash] = useLocationHash()
@@ -93,6 +94,9 @@ export function ShowcaseApp() {
         </TabsContent>
         <TabsContent value="tags" className="space-y-10">
           <TagsPage />
+        </TabsContent>
+        <TabsContent value="colors" className="space-y-10">
+          <ColorsPage />
         </TabsContent>
       </Tabs>
     </PageShell>

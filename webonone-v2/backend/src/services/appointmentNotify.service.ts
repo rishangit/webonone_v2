@@ -3,6 +3,7 @@ import * as companyRepo from '../repositories/company.repository.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
 import { sendTransactionalSms } from './smsClient.service.js'
 import type { CompanyEventDto } from './companyEvent.service.js'
+import { calendarEventUrl } from '../utils/webOnOneAppLinks.js'
 
 const BOOKED_TEMPLATE_SLUG = 'appointment_booked'
 const REMINDER_24H_TEMPLATE_SLUG = 'appointment_reminder_24h'
@@ -50,6 +51,7 @@ async function notifyAppointmentBookedAsync(
     appointmentDate: event.startsOn,
     appointmentTime: event.startTime,
     durationMinutes: String(durationMinutes),
+    webOnOneUrl: calendarEventUrl(event.id),
   }
 
   await sendChannels({

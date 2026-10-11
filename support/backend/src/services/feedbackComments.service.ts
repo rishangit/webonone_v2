@@ -3,6 +3,7 @@ import { env } from '../config/env.js'
 import { db } from '../models/db.js'
 import type { CreateFeedbackCommentBody } from '../schemas/feedbackSchemas.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
+import { webOnOneLoginUrl } from '../utils/webOnOneAppLinks.js'
 import type { FeedbackReportRow } from './feedback.service.js'
 
 const FEEDBACK_COMMENT_TEMPLATE_SLUG = 'feedback_comment'
@@ -75,6 +76,7 @@ async function notifyCommentByEmail(
     commentBody: comment.body,
     commentAuthorEmail: comment.authorEmail,
     feedbackUrl,
+    webOnOneUrl: webOnOneLoginUrl('/companies'),
   }
 
   const recipients: string[] = []

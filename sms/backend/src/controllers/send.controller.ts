@@ -94,7 +94,13 @@ export async function sendTestSms(req: AuthenticatedRequest, res: Response) {
     if (templateSlug) {
       await assertTemplateSendAccess(req, templateSlug, companyId)
     }
-    const payload = { code: '483921', minutes: '5', body: 'This is a test message', ...body.payload }
+    const payload = {
+      code: '483921',
+      minutes: '5',
+      body: 'This is a test message',
+      webOnOneUrl: 'https://app.webonone.com/login',
+      ...body.payload,
+    }
     const result = await enqueue({
       toNumber: body.toNumber,
       body: body.body,

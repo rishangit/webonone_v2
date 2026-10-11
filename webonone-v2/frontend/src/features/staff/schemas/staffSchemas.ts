@@ -13,6 +13,7 @@ export type StaffWizardUser = {
   displayName: string
   email: string | null
   avatarUrl: string | null
+  isEmailVerified?: boolean
 }
 
 export type StaffWizardFormValues = {
@@ -120,6 +121,7 @@ export function valuesFromStaff(staff: CompanyStaff): StaffWizardFormValues {
       displayName: staff.displayName,
       email: staff.email,
       avatarUrl: staff.avatarUrl,
+      isEmailVerified: staff.isEmailVerified,
     },
     schedule: emptyWeekSchedule().map((day) => {
       const existing = byDay.get(day.day_of_week)

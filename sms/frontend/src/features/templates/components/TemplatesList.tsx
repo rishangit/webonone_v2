@@ -5,8 +5,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -131,6 +129,7 @@ export function TemplatesList({
   return (
     <>
       <CollectionListView
+        cardLayout={false}
         items={items}
         getRowKey={(template) => template.id}
         columns={columns}
@@ -149,15 +148,6 @@ export function TemplatesList({
             </ItemListContent>
             {renderRowMenu(template)}
           </ItemListItem>
-        )}
-        renderCard={(template) => (
-          <ItemListCollectionCard
-            image={<ItemListCardPlaceholderImage alt={template.name} />}
-            menu={renderRowMenu(template)}
-            onBodyClick={() => goToDetail(template.id)}
-          >
-            {rowBody(template)}
-          </ItemListCollectionCard>
         )}
       />
       <PlatformAlertConfirmDialog

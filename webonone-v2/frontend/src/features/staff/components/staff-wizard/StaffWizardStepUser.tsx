@@ -1,5 +1,5 @@
 import { UserRound } from 'lucide-react'
-import { Button, ContactValueLine, FormField } from '@webonone/ui-kit'
+import { Button, ContactValueLine, FormField, ImagePreview, itemListThumbClassName } from '@webonone/ui-kit'
 import type { StaffWizardFormValues } from '@/features/staff/schemas/staffSchemas'
 
 type StaffWizardStepUserProps = {
@@ -24,9 +24,23 @@ export function StaffWizardStepUser({
       <FormField label="Staff member" htmlFor="staff-wizard-user" required error={fieldErrors.user}>
         {user ? (
           <div className="flex items-start justify-between gap-3 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg))] p-4">
-            <div className="min-w-0 space-y-1">
-              <p className="truncate text-sm font-medium text-foreground">{user.displayName}</p>
-              <ContactValueLine kind="email" value={user.email} emptyLabel="No email" />
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <ImagePreview
+                src={user.avatarUrl}
+                alt={user.displayName}
+                mode="view"
+                className={itemListThumbClassName}
+              />
+              <div className="min-w-0 space-y-1">
+                <p className="truncate text-sm font-medium text-foreground">{user.displayName}</p>
+                <ContactValueLine
+                  kind="email"
+                  value={user.email}
+                  emptyLabel="No email"
+                  verified={user.email?.trim() ? user.isEmailVerified : undefined}
+                  className="[&_span]:whitespace-normal [&_span]:break-all"
+                />
+              </div>
             </div>
             <div className="flex shrink-0 gap-2">
               <Button

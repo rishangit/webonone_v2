@@ -5,8 +5,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -118,6 +116,7 @@ export function UnitsList({ items, onEdit, onDeleted, onVerify, canMutate }: Uni
   return (
     <>
       <CollectionListView
+        cardLayout={false}
         items={items}
         getRowKey={(item) => item.id}
         columns={columns}
@@ -139,20 +138,6 @@ export function UnitsList({ items, onEdit, onDeleted, onVerify, canMutate }: Uni
             </ItemListStatus>
             {renderRowMenu(item)}
           </ItemListItem>
-        )}
-        renderCard={(item) => (
-          <ItemListCollectionCard
-            image={<ItemListCardPlaceholderImage alt={item.name} />}
-            menu={renderRowMenu(item)}
-            onBodyClick={() => openDetails(item.id)}
-          >
-            {rowBody(item)}
-            <div className="mt-2">
-              <ItemListStatus>
-                <StatusBadge status={item.status} />
-              </ItemListStatus>
-            </div>
-          </ItemListCollectionCard>
         )}
       />
       <PlatformAlertConfirmDialog

@@ -7,6 +7,7 @@ type IdentityUserRow = {
   email: string | null
   role?: string
   avatarUrl?: string | null
+  isEmailVerified?: boolean
 }
 
 type ListUsersResponse = {
@@ -47,6 +48,7 @@ export async function loadIdentityUsersForStaff(
       email: user.email,
       role: user.role,
       avatarUrl: user.avatarUrl ?? null,
+      isEmailVerified: user.isEmailVerified,
     }))
 
   return {

@@ -41,7 +41,10 @@ export {
   ListDisplayModeProvider,
   useListDisplayMode,
 } from './collection-list/ListDisplayModeContext'
-export { DEFAULT_LIST_DISPLAY_MODE } from './collection-list/listDisplayMode'
+export {
+  DEFAULT_LIST_DISPLAY_MODE,
+  resolveCollectionDisplayMode,
+} from './collection-list/listDisplayMode'
 export type { ListDisplayMode } from './collection-list/listDisplayMode'
 export { ItemListViewToggle } from './collection-list/ItemListViewToggle'
 export type { ItemListViewToggleProps } from './collection-list/ItemListViewToggle'
@@ -164,6 +167,21 @@ export {
   SelectSeparator,
 } from './components/Select'
 export { Slider } from './components/Slider'
+export { Progress } from './components/Progress'
+export type { ProgressProps } from './components/Progress'
+export { StockAvailabilityProgress } from './components/StockAvailabilityProgress'
+export type {
+  StockAvailabilityProgressProps,
+  StockAvailabilityProgressSize,
+} from './components/StockAvailabilityProgress'
+export { STOCK_AVAILABILITY_PROGRESS_COMPACT_CLASS } from './components/StockAvailabilityProgress'
+export { StockBatchPriceRow } from './components/StockBatchPriceRow'
+export type { StockBatchPriceRowProps } from './components/StockBatchPriceRow'
+export {
+  FIXED_APP_COLOR_CSS_VARS,
+  FIXED_APP_COLOR_SWATCHES,
+} from './lib/fixedAppColors'
+export type { FixedAppColorId } from './lib/fixedAppColors'
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './components/Popover'
 export { popoverPointerBeforeClassName } from './lib/menuPanel'
 export { Calendar } from './components/Calendar'

@@ -5,6 +5,7 @@ import type { EmailTemplateRow, EmailTemplateVersionRow, TemplateScope } from '.
 import { htmlToText } from '../utils/htmlToText.js'
 import { findMissingPlaceholders, renderPlaceholders } from '../utils/renderPlaceholders.js'
 import { brandingToPlaceholders, getBranding } from './branding.service.js'
+import { injectEmailWebOnOneLink } from '../utils/templateWebOnOneLink.js'
 
 export interface TemplateDto {
   id: string
@@ -373,6 +374,7 @@ export async function previewTemplate(
     userName: 'Sample User',
     companyName: 'Sample Company',
     actionUrl: `${env.frontendBaseUrl}/example`,
+    webOnOneUrl: 'https://app.webonone.com/login',
     otp: '123456',
     message: 'Sample reviewer message',
     ...payload,
@@ -469,7 +471,7 @@ export async function ensureLocalCompany(companyId: string, name?: string): Prom
   await ensureEmailCompany(companyId, name)
 }
 
-const DEFAULT_WELCOME = {
+const DEFAULT_WELCOME_RAW = {
   name: 'Welcome',
   subject: 'Welcome to {{companyName}}',
   htmlBody: `<p>Hi {{userName}},</p>
@@ -481,6 +483,12 @@ Welcome to {{companyName}}!
 
 {{footerHtml}}`,
   requiredKeys: ['userName', 'companyName'],
+}
+
+const DEFAULT_WELCOME = {
+  ...DEFAULT_WELCOME_RAW,
+  ...injectEmailWebOnOneLink(DEFAULT_WELCOME_RAW.htmlBody, DEFAULT_WELCOME_RAW.textBody),
+  requiredKeys: [...DEFAULT_WELCOME_RAW.requiredKeys, 'webOnOneUrl'],
 }
 
 export async function ensureWelcomeTemplate(

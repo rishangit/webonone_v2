@@ -19,6 +19,7 @@ import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import { ensureWelcomeTemplate as ensureEmailWelcomeTemplate, sendTransactionalEmail } from './emailClient.service.js'
+import { webOnOneLoginUrl } from '../utils/webOnOneAppLinks.js'
 import { ensureWelcomeTemplate as ensureSmsWelcomeTemplate } from './smsClient.service.js'
 import { upsertPaymentCompany } from './paymentClient.service.js'
 import {
@@ -680,6 +681,19 @@ export async function updateCompanyProfile(
   return toCompanyDetailWithTags(updated, role)
 }
 
+function companyStatusWebOnOneUrl(
+  templateSlug: 'company_registered' | 'company_approved' | 'company_rejected',
+  companyId: string,
+): string {
+  if (templateSlug === 'company_registered') {
+    return webOnOneLoginUrl('/settings/basic')
+  }
+  if (templateSlug === 'company_rejected') {
+    return webOnOneLoginUrl('/settings/basic')
+  }
+  return webOnOneLoginUrl(`/settings/companies/${companyId}`)
+}
+
 function sendCompanyEmail(
   templateSlug: 'company_registered' | 'company_approved' | 'company_rejected',
   company: repo.CompanyRow,
@@ -694,6 +708,7 @@ function sendCompanyEmail(
     payload: {
       companyName: company.name,
       userName: toEmail,
+      webOnOneUrl: companyStatusWebOnOneUrl(templateSlug, company.id),
       ...extraPayload,
     },
     companyId: company.id,

@@ -53,7 +53,7 @@ export function UnitsPage() {
             aria-label={t('search')}
           />
           <ListFilterTrigger active={list.hasActiveFilters} onClick={() => list.setFilterOpen(true)} />
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
           {canCreate ? (
             <ListAddButton onClick={() => setDialog({})} compactLabel={tc('add')}>
               {t('add')}

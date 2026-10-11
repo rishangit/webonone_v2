@@ -105,6 +105,48 @@ export const companyCatalogApi = {
     })
   },
 
+  listProductVariantStockLimits(productId: string) {
+    return apiClient<{
+      items: Array<{
+        libraryVariantId: string
+        minQuantity: number | null
+        maxQuantity: number | null
+      }>
+    }>(`/company/me/catalog/products/${encodeURIComponent(productId)}/variant-stock-limits`, {
+      cache: 'no-store',
+    })
+  },
+
+  getProductVariantStockLimits(productId: string, variantId: string) {
+    return apiClient<{
+      libraryVariantId: string
+      minQuantity: number | null
+      maxQuantity: number | null
+    }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stock-limits`,
+      { cache: 'no-store' },
+    )
+  },
+
+  upsertProductVariantStockLimits(
+    productId: string,
+    variantId: string,
+    body: { minQuantity: number | null; maxQuantity: number | null },
+  ) {
+    return apiClient<{
+      libraryVariantId: string
+      minQuantity: number | null
+      maxQuantity: number | null
+    }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stock-limits`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(body),
+        cache: 'no-store',
+      },
+    )
+  },
+
   updateServiceForm(id: string, formTemplateId: string | null) {
     return apiClient<CompanyCatalogItem>(`/company/me/catalog/services/${id}/form`, {
       method: 'PATCH',

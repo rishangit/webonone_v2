@@ -33,6 +33,7 @@ export interface UserOption {
   email: string | null
   role?: string
   avatarUrl?: string | null
+  isEmailVerified?: boolean
 }
 
 export interface UserSelectionLoadParams {
@@ -351,6 +352,7 @@ export function UserSelectionDialog({
                       kind="email"
                       value={user.email}
                       emptyLabel="No email"
+                      verified={user.email?.trim() ? user.isEmailVerified : undefined}
                     />
                   </ItemListContent>
                   {user.role ? (

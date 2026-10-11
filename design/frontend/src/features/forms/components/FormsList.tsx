@@ -5,8 +5,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -94,6 +92,7 @@ export function FormsList({ forms, onOpen, onDeleted, canManage }: FormsListProp
   return (
     <>
       <CollectionListView
+        cardLayout={false}
         items={forms}
         getRowKey={(form) => form.id}
         columns={columns}
@@ -112,15 +111,6 @@ export function FormsList({ forms, onOpen, onDeleted, canManage }: FormsListProp
             </ItemListContent>
             {renderRowMenu(form)}
           </ItemListItem>
-        )}
-        renderCard={(form) => (
-          <ItemListCollectionCard
-            image={<ItemListCardPlaceholderImage alt={form.name} />}
-            menu={renderRowMenu(form)}
-            onBodyClick={() => onOpen(form)}
-          >
-            {rowBody(form)}
-          </ItemListCollectionCard>
         )}
       />
       <PlatformAlertConfirmDialog

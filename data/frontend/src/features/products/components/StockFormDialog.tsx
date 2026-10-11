@@ -394,24 +394,38 @@ export function StockFormDialog({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label={t('stock.costPrice')} htmlFor="stock-cost-price" required error={fieldErrors.costPrice}>
+        <FormField
+          label={t('stock.costPrice')}
+          htmlFor="stock-cost-price"
+          required
+          error={fieldErrors.costPrice}
+          labelClassName="text-fixed-pending"
+        >
           <Input
             id="stock-cost-price"
             type="number"
             inputMode="decimal"
             min={0}
             step="any"
+            className="text-fixed-pending tabular-nums"
             value={values.costPrice}
             onChange={(e) => updateField('costPrice', e.target.value)}
           />
         </FormField>
-        <FormField label={t('stock.sellPrice')} htmlFor="stock-sell-price" required error={fieldErrors.sellPrice}>
+        <FormField
+          label={t('stock.sellPrice')}
+          htmlFor="stock-sell-price"
+          required
+          error={fieldErrors.sellPrice}
+          labelClassName="text-fixed-approved"
+        >
           <Input
             id="stock-sell-price"
             type="number"
             inputMode="decimal"
             min={0}
             step="any"
+            className="text-fixed-approved tabular-nums"
             value={values.sellPrice}
             onChange={(e) => updateField('sellPrice', e.target.value)}
           />

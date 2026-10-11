@@ -5,8 +5,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -125,6 +123,7 @@ export function WebsitePagesList({
   return (
     <>
       <CollectionListView
+        cardLayout={false}
         items={pages}
         getRowKey={(page) => page.id}
         columns={columns}
@@ -144,21 +143,6 @@ export function WebsitePagesList({
             </ItemListContent>
             {renderRowMenu(page)}
           </ItemListItem>
-        )}
-        renderCard={(page) => (
-          <ItemListCollectionCard
-            image={<ItemListCardPlaceholderImage alt={page.name} />}
-            menu={renderRowMenu(page)}
-          >
-            <a
-              href={websiteDesignerUrl('pages', page.id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-left"
-            >
-              {rowBody(page)}
-            </a>
-          </ItemListCollectionCard>
         )}
       />
       {confirm}

@@ -37,7 +37,8 @@
     "title": "User",
     "description": "Identity user linked as company staff",
     "name": "Name",
-    "email": "Email"
+    "email": "Email",
+    "viewProfile": "View profile"
   },
   "scheduleCard": {
     "title": "Work schedule",

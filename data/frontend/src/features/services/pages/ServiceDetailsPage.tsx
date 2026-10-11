@@ -117,13 +117,6 @@ export function ServiceDetailsPage() {
   const overview = service ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
-        {(service.galleryImages ?? []).length > 0 ? (
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <ImageCarousel images={service.galleryImages ?? []} alt={service.name} />
-            </CardContent>
-          </Card>
-        ) : null}
         <EditableSectionCard
           title={t('singular')}
           description={t('sectionDescription')}
@@ -131,6 +124,11 @@ export function ServiceDetailsPage() {
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
+          {(service.galleryImages ?? []).length > 0 ? (
+            <div className="overflow-hidden rounded-md">
+              <ImageCarousel images={service.galleryImages ?? []} alt={service.name} />
+            </div>
+          ) : null}
           <h2 className="text-xl font-semibold">{service.name}</h2>
           <ReadOnlyField
             label={t('common:description')}

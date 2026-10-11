@@ -1,6 +1,6 @@
 import { fetchUserContact } from '../clients/identityUserContactClient.js'
-import { env } from '../config/env.js'
 import * as companyRepo from '../repositories/company.repository.js'
+import { absoluteWebOnOneUrl } from '../utils/webOnOneAppLinks.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
 import { notifyCatalogReviewRequestInApp } from './inAppNotify.service.js'
 import type { SaleDto } from './companySale.service.js'
@@ -18,16 +18,6 @@ const SALE_KIND_TO_CATALOG_PATH: Record<string, string> = {
   product: 'products',
   service: 'services',
   space: 'spaces',
-}
-
-function appOrigin(): string {
-  const raw = env.webononeAppOrigin?.trim() || 'http://127.0.0.1:3010'
-  return raw.replace(/\/$/, '')
-}
-
-function absoluteReviewUrl(relativePath: string): string {
-  const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`
-  return `${appOrigin()}${path}`
 }
 
 function sessionReviewHref(eventId: string, occurrenceDate: string): string {
@@ -63,13 +53,14 @@ async function notifyOneCatalogReviewRequest(params: NotifyOneParams): Promise<v
   const userName =
     params.userDisplayName?.trim() || contact?.displayName?.trim() || 'Customer'
 
-  const reviewUrl = absoluteReviewUrl(params.reviewHref)
+  const reviewUrl = absoluteWebOnOneUrl(params.reviewHref)
   const payload: Record<string, string> = {
     userName,
     companyName,
     itemKind: params.itemKindLabel,
     itemName: params.itemName,
     reviewUrl,
+    webOnOneUrl: reviewUrl,
     sessionDate: params.sessionDate?.trim() || '—',
     tokenLabel: params.tokenLabel?.trim() || '—',
   }

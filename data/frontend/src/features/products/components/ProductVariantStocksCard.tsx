@@ -15,6 +15,7 @@ import {
   ItemListItem,
   ItemListMenu,
   StatusTag,
+  StockBatchPriceRow,
   useToast,
 } from '@webonone/ui-kit'
 import { StockFormDialog } from '@/features/products/components/StockFormDialog'
@@ -131,9 +132,6 @@ export function ProductVariantStocksCard({
                       ) : null}
                     </div>
                     <p className="truncate text-sm text-muted-foreground">
-                      {t('stock.costSell', { cost: formatMoney(stock.costPrice), sell: formatMoney(stock.sellPrice) })}
-                    </p>
-                    <p className="truncate text-sm text-muted-foreground">
                       {t('stock.purchased', { date: formatCalendarYmd(stock.purchaseDate) })}
                       {stock.expiredDate ? t('stock.expires', { date: formatCalendarYmd(stock.expiredDate) }) : ''}
                     </p>
@@ -143,6 +141,13 @@ export function ProductVariantStocksCard({
                         {stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}
                       </p>
                     ) : null}
+                    <StockBatchPriceRow
+                      className="pt-1"
+                      costLabel={t('stock.cost')}
+                      sellLabel={t('stock.sell')}
+                      costValue={formatMoney(stock.costPrice)}
+                      sellValue={formatMoney(stock.sellPrice)}
+                    />
                   </div>
                 </ItemListContent>
                 {canEdit ? (

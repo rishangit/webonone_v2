@@ -10,7 +10,9 @@ import {
   ItemListItem,
   ItemListMenu,
   StatusTag,
+  StockAvailabilityProgress,
 } from '@webonone/ui-kit'
+import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import {
   dataLibraryApi,
@@ -39,7 +41,9 @@ export function CompanyProductVariantsTab({
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const navigate = useNavigate()
+  const { byVariantId: stockLimitsByVariantId } = useCompanyProductVariantStockLimitsMap(productId)
   const [items, setItems] = useState<LibraryProductVariant[]>([])
+  const [stockTotalsByVariantId, setStockTotalsByVariantId] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(Boolean(libraryEntityId))
   const [error, setError] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<LibraryProductVariant | null>(null)
@@ -48,6 +52,7 @@ export function CompanyProductVariantsTab({
   const load = useCallback(async () => {
     if (!libraryEntityId) {
       setItems([])
+      setStockTotalsByVariantId({})
       setLoading(false)
       setError(null)
       return
@@ -58,9 +63,18 @@ export function CompanyProductVariantsTab({
     try {
       const result = await dataLibraryApi.listProductVariants(libraryEntityId)
       setItems(result.items)
+      const totals = await Promise.all(
+        result.items.map(async (variant) => {
+          const stocks = await dataLibraryApi.listProductVariantStocks(libraryEntityId, variant.id)
+          const total = stocks.items.reduce((sum, item) => sum + item.quantity, 0)
+          return [variant.id, total] as const
+        }),
+      )
+      setStockTotalsByVariantId(Object.fromEntries(totals))
     } catch (err) {
       setError(err instanceof Error ? err.message : t('variantsTab.failedLoad'))
       setItems([])
+      setStockTotalsByVariantId({})
     } finally {
       setLoading(false)
     }
@@ -144,6 +158,22 @@ export function CompanyProductVariantsTab({
                       .join(' · ')}
                   </p>
                 ) : null}
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">{t('variantsTab.loadingStock')}</p>
+                ) : (
+                  <StockAvailabilityProgress
+                    size="compact"
+                    align="end"
+                    quantity={stockTotalsByVariantId[variant.id] ?? 0}
+                    maxQuantity={stockLimitsByVariantId[variant.id]?.maxQuantity}
+                    minQuantity={stockLimitsByVariantId[variant.id]?.minQuantity}
+                    caption={t('variantsTab.totalStock', {
+                      quantity: (stockTotalsByVariantId[variant.id] ?? 0).toLocaleString(undefined, {
+                        maximumFractionDigits: 3,
+                      }),
+                    })}
+                  />
+                )}
               </>
             )
             return (

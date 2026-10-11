@@ -4,8 +4,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -92,6 +90,7 @@ export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListPro
 
   return (
     <CollectionListView
+      cardLayout={false}
       items={rows}
       getRowKey={(item) => item.id}
       columns={columns}
@@ -102,14 +101,6 @@ export function QueueList({ items, canRetry, onRetry, retryingId }: QueueListPro
           <ItemListContent>{rowBody(item)}</ItemListContent>
           {renderRowMenu(item)}
         </ItemListItem>
-      )}
-      renderCard={(item) => (
-        <ItemListCollectionCard
-          image={<ItemListCardPlaceholderImage />}
-          menu={renderRowMenu(item)}
-        >
-          {rowBody(item)}
-        </ItemListCollectionCard>
       )}
     />
   )

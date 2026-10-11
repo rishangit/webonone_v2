@@ -53,7 +53,7 @@ export function WebsiteHubListToolbar({
           aria-label={filterAriaLabel}
         />
       ) : null}
-      <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+      <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
       {canManage && addLabel && onAdd ? (
         <ListAddButton onClick={onAdd} compactLabel={compactAddLabel}>
           {addLabel}

@@ -5,8 +5,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -144,6 +142,7 @@ export function StaffLeavesList({
   return (
     <>
       <CollectionListView
+        cardLayout={false}
         items={rows}
         getRowKey={(leave) => leave.id}
         columns={columns}
@@ -154,14 +153,6 @@ export function StaffLeavesList({
             <ItemListContent>{rowBody(leave)}</ItemListContent>
             {renderRowMenu(leave)}
           </ItemListItem>
-        )}
-        renderCard={(leave) => (
-          <ItemListCollectionCard
-            image={<ItemListCardPlaceholderImage />}
-            menu={renderRowMenu(leave)}
-          >
-            {rowBody(leave)}
-          </ItemListCollectionCard>
         )}
       />
 

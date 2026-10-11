@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   CollectionListView,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -100,6 +98,7 @@ export function NotificationsList({ items }: NotificationsListProps) {
 
   return (
     <CollectionListView
+      cardLayout={false}
       items={items}
       getRowKey={(item) => item.id}
       columns={columns}
@@ -108,11 +107,6 @@ export function NotificationsList({ items }: NotificationsListProps) {
         <ItemListItem>
           <ItemListContent>{rowBody(item)}</ItemListContent>
         </ItemListItem>
-      )}
-      renderCard={(item) => (
-        <ItemListCollectionCard image={<ItemListCardPlaceholderImage />}>
-          {rowBody(item)}
-        </ItemListCollectionCard>
       )}
     />
   )

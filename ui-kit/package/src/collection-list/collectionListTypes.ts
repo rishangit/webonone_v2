@@ -7,6 +7,8 @@ export type CollectionSortState = {
   direction: CollectionSortDirection
 } | null
 
+export type CollectionColumnAlign = 'left' | 'right'
+
 export type CollectionColumnDef<T> = {
   id: string
   header: ReactNode
@@ -15,4 +17,6 @@ export type CollectionColumnDef<T> = {
   cell: (item: T) => ReactNode
   className?: string
   headerClassName?: string
+  /** Grid table: right-align header and cells (sort control included). */
+  align?: CollectionColumnAlign
 }

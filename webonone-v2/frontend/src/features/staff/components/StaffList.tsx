@@ -44,8 +44,24 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
     navigate(`/staff/${id}`)
   }
 
+  const gridThumbClassName = 'h-10 w-10 shrink-0 rounded-md'
+  const contactValueWrapClassName = '[&_span]:whitespace-normal [&_span]:break-all'
+
   const columns = useMemo(
     () => [
+      {
+        id: 'avatar',
+        header: '',
+        className: 'w-14',
+        cell: (item: CompanyStaff) => (
+          <ImagePreview
+            src={item.avatarUrl}
+            alt={item.displayName}
+            mode="view"
+            className={gridThumbClassName}
+          />
+        ),
+      },
       {
         id: 'name',
         header: tc('name'),
@@ -65,7 +81,15 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
       {
         id: 'email',
         header: t('list.columnEmail'),
-        cell: (item: CompanyStaff) => item.email ?? '—',
+        cell: (item: CompanyStaff) => (
+          <ContactValueLine
+            kind="email"
+            value={item.email}
+            emptyLabel={tc('email')}
+            verified={item.email?.trim() ? item.isEmailVerified : undefined}
+            className={contactValueWrapClassName}
+          />
+        ),
       },
       {
         id: 'schedule',
@@ -73,7 +97,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
         cell: (item: CompanyStaff) => formatWorkingDaysSummary(item.schedule),
       },
     ],
-    [t, tc],
+    [t, tc, contactValueWrapClassName, gridThumbClassName],
   )
 
   async function handleRemove(item: CompanyStaff) {
@@ -134,7 +158,13 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
     return (
       <>
         <p className="truncate font-medium text-foreground">{item.displayName}</p>
-        <ContactValueLine kind="email" value={item.email} emptyLabel={tc('email')} />
+        <ContactValueLine
+          kind="email"
+          value={item.email}
+          emptyLabel={tc('email')}
+          verified={item.email?.trim() ? item.isEmailVerified : undefined}
+          className={contactValueWrapClassName}
+        />
         <p className="truncate text-xs text-muted-foreground">
           {formatWorkingDaysSummary(item.schedule)}
         </p>

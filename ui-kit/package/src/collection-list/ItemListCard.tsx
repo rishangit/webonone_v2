@@ -16,7 +16,7 @@ import {
 
 export const itemListCardClassName = cn(
   itemListRowSurfaceClassName,
-  'flex min-h-0 flex-col overflow-hidden p-0',
+  'flex h-full min-h-0 flex-col overflow-hidden p-0',
   shapePanelSmClassName,
 )
 
@@ -43,7 +43,7 @@ function ItemListCard({ className, children, ...props }: React.LiHTMLAttributes<
       <div
         className={cn(
           itemListRowSurfaceClassName,
-          'flex min-h-0 flex-col overflow-hidden p-0',
+          'flex h-full min-h-0 flex-col overflow-hidden p-0',
           shapeListRowSurfaceClassName,
           nestedSurface,
         )}

@@ -52,7 +52,7 @@ export function NotificationsPage() {
       description={t('notifications.listDescription')}
       actions={
         <ListPageActions>
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
           {unreadCount > 0 ? (
             <Button
               type="button"

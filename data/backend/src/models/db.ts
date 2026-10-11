@@ -73,4 +73,5 @@ export interface ServiceRow extends CatalogRow {
   duration_minutes: number | null
   start_time: string | Date | null
   end_time: string | Date | null
+  list_price: string | number | null
 }

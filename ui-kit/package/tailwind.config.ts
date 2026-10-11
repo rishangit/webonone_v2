@@ -64,6 +64,11 @@ const config: Config = {
           background: 'var(--color-info-background)',
           border: 'var(--color-info-border)',
         },
+        fixed: {
+          pending: 'var(--fixed-color-pending)',
+          approved: 'var(--fixed-color-approved)',
+          rejected: 'var(--fixed-color-rejected)',
+        },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'var(--color-text-muted)',

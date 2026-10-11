@@ -1,0 +1,61 @@
+import { useTranslation } from 'react-i18next'
+import { StatusTag, StockAvailabilityProgress } from '@webonone/ui-kit'
+import { EditableSectionCard } from '@/features/company-catalog/components/EditableSectionCard'
+import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
+import type { LibraryProductVariant } from '@/features/company-catalog/services/dataLibraryApi'
+
+type CompanyProductVariantSummaryCardProps = {
+  variant: LibraryProductVariant
+  companyProductId: string
+  totalQuantity: number
+  stocksLoading: boolean
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm">{value}</p>
+    </div>
+  )
+}
+
+export function CompanyProductVariantSummaryCard({
+  variant,
+  companyProductId,
+  totalQuantity,
+  stocksLoading,
+}: CompanyProductVariantSummaryCardProps) {
+  const { t } = useTranslation('catalog')
+  const { byVariantId } = useCompanyProductVariantStockLimitsMap(companyProductId)
+  const limits = byVariantId[variant.id]
+
+  return (
+    <EditableSectionCard
+      title={t('variantDetail.variantCard.title')}
+      description={t('variantDetail.variantCard.description')}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-xl font-semibold">{variant.name}</h2>
+        {variant.isDefault ? (
+          <StatusTag variant="verified" className="shrink-0">
+            {t('variantDetail.variantCard.default')}
+          </StatusTag>
+        ) : null}
+      </div>
+      <ReadOnlyField label={t('variantDetail.variantCard.sku')} value={variant.sku} />
+      <div className="space-y-1.5 border-t border-border pt-4">
+        <p className="text-xs font-medium text-muted-foreground">{t('stocks.totalAvailability')}</p>
+        {stocksLoading ? (
+          <p className="text-sm text-muted-foreground">{t('stocks.loading')}</p>
+        ) : (
+          <StockAvailabilityProgress
+            quantity={totalQuantity}
+            maxQuantity={limits?.maxQuantity}
+            minQuantity={limits?.minQuantity}
+          />
+        )}
+      </div>
+    </EditableSectionCard>
+  )
+}

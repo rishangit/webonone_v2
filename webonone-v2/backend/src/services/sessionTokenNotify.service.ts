@@ -3,6 +3,7 @@ import * as companyRepo from '../repositories/company.repository.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
 import { sendTransactionalSms } from './smsClient.service.js'
 import type { CompanyEventDto, SessionTokenDto } from './companyEvent.service.js'
+import { calendarSessionUrl } from '../utils/webOnOneAppLinks.js'
 
 const ISSUED_TEMPLATE_SLUG = 'session_token_issued'
 const STARTED_TEMPLATE_SLUG = 'session_started'
@@ -210,6 +211,7 @@ async function notifyOneTokenAsync(params: {
     tokenLabel: token.tokenLabel,
     sessionDate: token.occurrenceDate,
     sessionTime: event.startTime,
+    webOnOneUrl: calendarSessionUrl(event.id, token.occurrenceDate),
   }
 
   if (toEmail) {
@@ -281,6 +283,7 @@ async function notifyScheduleChangeRecipientAsync(params: {
     sessionTime,
     sessionEndTime,
     location,
+    webOnOneUrl: calendarSessionUrl(event.id, recipient.occurrenceDate),
   }
 
   let emailQueued = 0

@@ -7,20 +7,18 @@ import { cn } from '../lib/utils'
  * catalog verification (`unverified` | `verified`), and platform user roles
  * (`super_admin` | `company_admin` | `member` | `staff`).
  */
-const statusTagVariants = cva(
-  'ui-tag inline-flex items-center ui-shape-panel-sm border px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm',
-  {
+const statusTagVariants = cva('ui-tag inline-flex items-center text-xs font-medium', {
     variants: {
       variant: {
-        pending: 'border-warning-border bg-warning-background text-warning',
-        rejected: 'border-error-border bg-error-background text-error',
-        approved: 'border-success-border bg-success-background text-success',
-        unverified: 'border-warning-border bg-warning-background text-warning',
-        verified: 'border-success-border bg-success-background text-success',
-        super_admin: 'border-info-border bg-info-background text-info',
-        company_admin: 'border-info-border bg-info-background text-info',
-        member: 'border-border bg-muted text-muted-foreground',
-        staff: 'border-[var(--color-border-light)] bg-primary-light text-primary',
+        pending: 'text-warning',
+        rejected: 'text-error',
+        approved: 'text-success',
+        unverified: 'text-warning',
+        verified: 'text-success',
+        super_admin: 'text-violet-600 dark:text-violet-400',
+        company_admin: 'text-sky-600 dark:text-sky-400',
+        member: 'text-slate-600 dark:text-slate-400',
+        staff: 'text-indigo-600 dark:text-indigo-400',
       },
     },
     defaultVariants: {

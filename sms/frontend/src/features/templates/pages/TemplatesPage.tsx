@@ -155,7 +155,7 @@ export function TemplatesPage() {
             aria-label={t('searchAria')}
             className="w-64"
           />
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
           {canManageCompany ? (
             <ListAddButton onClick={handleOpenCreate}>{t('add')}</ListAddButton>
           ) : null}

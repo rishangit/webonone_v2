@@ -4,6 +4,10 @@ import type {
   StaffScheduleDay,
   UpdateCompanyStaffBody,
 } from '../schemas/companyStaffSchemas.js'
+import {
+  fetchUserContactsByIds,
+  type IdentityUserContact,
+} from '../clients/identityUserContactClient.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import * as repo from '../repositories/companyStaff.repository.js'
 
@@ -25,6 +29,7 @@ export type CompanyStaffDto = {
   displayName: string
   email: string | null
   avatarUrl: string | null
+  isEmailVerified: boolean
   schedule: StaffScheduleDayDto[]
   createdAt: string
   updatedAt: string
@@ -74,9 +79,25 @@ function mapStaff(
     displayName: row.display_name,
     email: row.email,
     avatarUrl: row.avatar_url,
+    isEmailVerified: false,
     schedule,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
+  }
+}
+
+function mergeStaffWithIdentityContact(
+  item: CompanyStaffDto,
+  contact: IdentityUserContact | undefined,
+): CompanyStaffDto {
+  if (!contact) return item
+  const identityAvatar = contact.avatarUrl?.trim() || null
+  const email = contact.email ?? item.email
+  return {
+    ...item,
+    avatarUrl: identityAvatar ?? item.avatarUrl,
+    email,
+    isEmailVerified: Boolean(email?.trim() && contact.isEmailVerified),
   }
 }
 
@@ -88,7 +109,9 @@ async function hydrateStaff(rows: repo.CompanyStaffRow[]): Promise<CompanyStaffD
     list.push(s)
     byStaff.set(s.staff_id, list)
   }
-  return rows.map((row) => mapStaff(row, byStaff.get(row.id) ?? []))
+  const items = rows.map((row) => mapStaff(row, byStaff.get(row.id) ?? []))
+  const contacts = await fetchUserContactsByIds(items.map((item) => item.userId))
+  return items.map((item) => mergeStaffWithIdentityContact(item, contacts.get(item.userId)))
 }
 
 export async function listCompanyStaff(companyId: string): Promise<{

@@ -80,7 +80,7 @@ export function StaffLeavesPanel({ staff, canManage }: StaffLeavesPanelProps) {
           onClick={() => list.setFilterOpen(true)}
           aria-label={t('leaves.filterStatus')}
         />
-        <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+        <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
         {canAdd ? (
           <ListAddButton onClick={() => setAddOpen(true)}>{t('leaves.addLeave')}</ListAddButton>
         ) : null}

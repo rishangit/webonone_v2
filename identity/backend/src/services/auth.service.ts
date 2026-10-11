@@ -67,6 +67,7 @@ import * as roleRepo from '../repositories/userRole.repository.js'
 import { matchesRedirectUri } from '@webonone/platform-nav'
 import { env } from '../config/env.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
+import { webOnOneLoginUrl } from '../utils/webOnOneAppLinks.js'
 import { sendPhoneOtp, verifyPhoneOtp } from './smsClient.service.js'
 
 export class AuthError extends Error {
@@ -180,6 +181,7 @@ async function issueEmailVerification(user: UserRow): Promise<void> {
     payload: {
       userName: user.display_name,
       actionUrl: `${env.identityFrontendOrigin}/verify-email?token=${verificationToken}`,
+      webOnOneUrl: webOnOneLoginUrl(),
     },
     requestedByService: 'identity',
   })
@@ -215,6 +217,7 @@ export async function requestRegisterEmailOtp(email: string): Promise<void> {
       payload: {
         userName: localPart,
         otp,
+        webOnOneUrl: webOnOneLoginUrl(),
       },
       requestedByService: 'identity',
     }).catch((err) => {
@@ -325,6 +328,7 @@ export async function completeRegistration(input: {
       toEmail: email,
       payload: {
         userName: displayName,
+        webOnOneUrl: webOnOneLoginUrl(),
       },
       requestedByService: 'identity',
     }).catch((err) => {
@@ -490,6 +494,7 @@ export async function requestPasswordReset(_email: string): Promise<void> {
     payload: {
       userName: user.display_name ?? user.email,
       otp,
+      webOnOneUrl: webOnOneLoginUrl(),
     },
     requestedByService: 'identity',
   }).catch((err) => {
@@ -702,6 +707,7 @@ export async function requestProfileEmailOtp(userId: string): Promise<void> {
     payload: {
       userName: user.display_name || email.split('@')[0] || email,
       otp,
+      webOnOneUrl: webOnOneLoginUrl(),
     },
     requestedByService: 'identity',
   }).catch((err) => {

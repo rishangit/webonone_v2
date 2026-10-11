@@ -17,5 +17,6 @@ export async function getUserContactInternal(req: Request, res: Response) {
     phoneNumber: profile.phoneNumber,
     displayName: profile.displayName,
     avatarUrl: profile.avatarUrl,
+    isEmailVerified: profile.isEmailVerified,
   })
 }

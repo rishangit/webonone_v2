@@ -15,6 +15,8 @@ export interface ContactValueLineProps {
   className?: string
   /** `list` — compact muted subtitle; `detail` — body text on detail cards */
   variant?: 'list' | 'detail'
+  /** When set and `value` is non-empty, icon + text use verified / unverified semantic colors. */
+  verified?: boolean
 }
 
 export function ContactValueLine({
@@ -23,19 +25,24 @@ export function ContactValueLine({
   emptyLabel,
   className,
   variant = 'list',
+  verified,
 }: ContactValueLineProps) {
   const Icon = CONTACT_ICONS[kind]
-  const display = value?.trim() ? value : (emptyLabel ?? '—')
+  const hasValue = Boolean(value?.trim())
+  const display = hasValue ? value : (emptyLabel ?? '—')
+  const verificationTone =
+    hasValue && verified !== undefined ? (verified ? 'text-success' : 'text-warning') : null
 
   return (
     <div
       className={cn(
         'flex min-w-0 items-center gap-1.5',
-        variant === 'list' ? 'text-xs text-muted-foreground' : 'text-sm text-foreground',
+        verificationTone ??
+          (variant === 'list' ? 'text-xs text-muted-foreground' : 'text-sm text-foreground'),
         className,
       )}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
       <span className="min-w-0 truncate">{display}</span>
     </div>
   )

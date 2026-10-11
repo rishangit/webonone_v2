@@ -3,6 +3,7 @@ import { notifyCatalogReviewAfterSaleCompleted } from './catalogReviewRequestNot
 import { sendTransactionalEmail } from './emailClient.service.js'
 import type { SaleDto, SaleLineDto } from './companySale.service.js'
 import { parseLibraryRequestsNote } from '../utils/libraryRequestNotes.js'
+import { saleBillUrl } from '../utils/webOnOneAppLinks.js'
 
 const TEMPLATE_SLUG = 'sale_bill_completed'
 
@@ -64,6 +65,7 @@ async function notifySaleBillCompletedAsync(sale: SaleDto): Promise<void> {
     recommendedText,
     notes: notesBlock,
     notesText,
+    webOnOneUrl: saleBillUrl(sale.id),
   }
 
   await sendTransactionalEmail({

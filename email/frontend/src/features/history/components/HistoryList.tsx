@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next'
 import {
   CollectionListView,
   DropdownMenuItem,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -86,6 +84,7 @@ export function HistoryList({ items }: HistoryListProps) {
 
   return (
     <CollectionListView
+      cardLayout={false}
       items={rows}
       getRowKey={(item) => item.id}
       columns={columns}
@@ -96,14 +95,6 @@ export function HistoryList({ items }: HistoryListProps) {
           <ItemListContent>{rowBody(item)}</ItemListContent>
           {renderRowMenu(item)}
         </ItemListItem>
-      )}
-      renderCard={(item) => (
-        <ItemListCollectionCard
-          image={<ItemListCardPlaceholderImage />}
-          menu={renderRowMenu(item)}
-        >
-          {rowBody(item)}
-        </ItemListCollectionCard>
       )}
     />
   )

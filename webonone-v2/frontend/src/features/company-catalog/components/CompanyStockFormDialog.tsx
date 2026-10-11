@@ -269,6 +269,7 @@ export function CompanyStockFormDialog({
               htmlFor="company-stock-cost"
               required
               error={fieldErrors.costPrice}
+              labelClassName="text-fixed-pending"
             >
               <Input
                 id="company-stock-cost"
@@ -276,6 +277,7 @@ export function CompanyStockFormDialog({
                 inputMode="decimal"
                 min={0}
                 step="any"
+                className="text-fixed-pending tabular-nums"
                 value={values.costPrice}
                 onChange={(e) => updateField('costPrice', e.target.value)}
               />
@@ -285,6 +287,7 @@ export function CompanyStockFormDialog({
               htmlFor="company-stock-sell"
               required
               error={fieldErrors.sellPrice}
+              labelClassName="text-fixed-approved"
             >
               <Input
                 id="company-stock-sell"
@@ -292,6 +295,7 @@ export function CompanyStockFormDialog({
                 inputMode="decimal"
                 min={0}
                 step="any"
+                className="text-fixed-approved tabular-nums"
                 value={values.sellPrice}
                 onChange={(e) => updateField('sellPrice', e.target.value)}
               />

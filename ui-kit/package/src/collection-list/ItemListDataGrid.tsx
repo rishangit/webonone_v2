@@ -71,24 +71,50 @@ export function ItemListDataGrid<T>({
           <tr className={itemListDataGridHeaderRowClassName}>
             {columns.map((column) => {
               const sortable = Boolean(column.sortable && column.compare)
+              const alignRight = column.align === 'right'
+              const sortButtonClassName = cn(
+                'h-auto px-2 py-1 font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground',
+                alignRight ? 'mr-0' : '-ml-2',
+              )
               return (
                 <th
                   key={column.id}
                   scope="col"
-                  className={cn(itemListDataGridHeaderCellClassName, column.headerClassName, column.className)}
+                  className={cn(
+                    itemListDataGridHeaderCellClassName,
+                    alignRight && 'text-right',
+                    column.headerClassName,
+                  )}
                   aria-sort={sortable ? sortAriaValue(sort, column.id) : undefined}
                 >
                   {sortable ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="-ml-2 h-auto px-2 py-1 font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground"
-                      onClick={() => onToggleSort(column.id)}
-                    >
-                      {column.header}
-                      <SortIcon sort={sort} columnId={column.id} />
-                    </Button>
+                    alignRight ? (
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className={sortButtonClassName}
+                          onClick={() => onToggleSort(column.id)}
+                        >
+                          {column.header}
+                          <SortIcon sort={sort} columnId={column.id} />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className={sortButtonClassName}
+                        onClick={() => onToggleSort(column.id)}
+                      >
+                        {column.header}
+                        <SortIcon sort={sort} columnId={column.id} />
+                      </Button>
+                    )
+                  ) : alignRight ? (
+                    <div className="text-right">{column.header}</div>
                   ) : (
                     column.header
                   )}
@@ -111,7 +137,11 @@ export function ItemListDataGrid<T>({
               {columns.map((column) => (
                 <td
                   key={column.id}
-                  className={cn(itemListDataGridCellClassName, column.className)}
+                  className={cn(
+                    itemListDataGridCellClassName,
+                    column.align === 'right' && 'text-right',
+                    column.className,
+                  )}
                 >
                   {column.cell(item)}
                 </td>

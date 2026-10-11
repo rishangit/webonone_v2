@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import type { SmsTemplateRow, SmsTemplateVersionRow, TemplateScope } from '../models/db.js'
 import { estimateSegments, findMissingPlaceholders, renderPlaceholders } from '../utils/renderPlaceholders.js'
+import { injectSmsWebOnOneLink } from '../utils/templateWebOnOneLink.js'
 import { ensureLocalCompany } from './user.service.js'
 
 export interface TemplateDto {
@@ -345,8 +346,8 @@ export async function createCompanyOverrideFromPlatform(
   )
 }
 
-const DEFAULT_WELCOME_BODY = 'Welcome to {{companyName}}, {{userName}}!'
-const DEFAULT_WELCOME_KEYS = ['userName', 'companyName']
+const DEFAULT_WELCOME_BODY = injectSmsWebOnOneLink('Welcome to {{companyName}}, {{userName}}!')
+const DEFAULT_WELCOME_KEYS = ['userName', 'companyName', 'webOnOneUrl']
 
 export async function ensureWelcomeTemplate(
   companyId: string,

@@ -5,8 +5,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -108,6 +106,7 @@ export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesLis
   return (
     <>
       <CollectionListView
+        cardLayout={false}
         items={rows}
         getRowKey={(device) => device.id}
         columns={columns}
@@ -118,14 +117,6 @@ export function DevicesList({ devices, busyId, onApprove, onRevoke }: DevicesLis
             <ItemListContent>{rowBody(device)}</ItemListContent>
             {renderRowMenu(device)}
           </ItemListItem>
-        )}
-        renderCard={(device) => (
-          <ItemListCollectionCard
-            image={<ItemListCardPlaceholderImage alt={device.name} />}
-            menu={renderRowMenu(device)}
-          >
-            {rowBody(device)}
-          </ItemListCollectionCard>
         )}
       />
       <PlatformAlertConfirmDialog

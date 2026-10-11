@@ -42,7 +42,7 @@ export function ItemListCollectionCard({
   className,
 }: ItemListCollectionCardProps) {
   const navigableClassName =
-    'w-full cursor-pointer border-0 bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring'
+    'flex w-full flex-col items-stretch cursor-pointer border-0 bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
   const body = onBodyClick ? (
     <button type="button" className={cn(navigableClassName, 'rounded-md')} onClick={onBodyClick}>
@@ -66,7 +66,7 @@ export function ItemListCollectionCard({
         {media}
         {menu ? <div className={itemListCardMenuOverlayClassName}>{menu}</div> : null}
       </div>
-      <div className="min-w-0 p-3">{body}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col p-3">{body}</div>
     </ItemListCard>
   )
 }

@@ -213,6 +213,23 @@ export const updateCatalogPricingBodySchema = z.object({
   listPrice: z.number().min(0).max(99_999_999.99).nullable(),
 })
 
+const variantStockLimitQuantitySchema = z.number().min(0).max(999_999_999.999).nullable()
+
+export const upsertProductVariantStockLimitsBodySchema = z
+  .object({
+    minQuantity: variantStockLimitQuantitySchema,
+    maxQuantity: variantStockLimitQuantitySchema,
+  })
+  .refine(
+    (data) => {
+      if (data.minQuantity != null && data.maxQuantity != null) {
+        return data.minQuantity <= data.maxQuantity
+      }
+      return true
+    },
+    { message: 'Min quantity cannot exceed max quantity', path: ['maxQuantity'] },
+  )
+
 export const replaceServiceWorkflowBodySchema = z.object({
   items: z.array(
     z.object({
@@ -230,6 +247,9 @@ export const replaceServiceWorkflowBodySchema = z.object({
 export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>
 export type UpdateServiceFormBody = z.infer<typeof updateServiceFormBodySchema>
 export type UpdateCatalogPricingBody = z.infer<typeof updateCatalogPricingBodySchema>
+export type UpsertProductVariantStockLimitsBody = z.infer<
+  typeof upsertProductVariantStockLimitsBodySchema
+>
 export type ReplaceServiceWorkflowBody = z.infer<typeof replaceServiceWorkflowBodySchema>
 export type ForkCatalogBody = z.infer<typeof forkCatalogBodySchema>
 

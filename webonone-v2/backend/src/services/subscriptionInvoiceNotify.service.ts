@@ -4,6 +4,7 @@ import type { InvoiceIssuedNotifyBody } from '../schemas/invoiceNotifySchemas.js
 import { sendTransactionalEmail } from './emailClient.service.js'
 import { notifySubscriptionInvoiceIssuedInApp } from './inAppNotify.service.js'
 import { sendTransactionalSms } from './smsClient.service.js'
+import { paymentInvoiceUrl } from '../utils/webOnOneAppLinks.js'
 
 const TEMPLATE_SLUG = 'subscription_invoice_issued'
 
@@ -50,6 +51,7 @@ async function notifySubscriptionInvoiceIssuedAsync(
     amount: formatMoney(input.amountMinor, input.currency),
     dueDate: formatDisplayDate(input.dueAt),
     invoicesUrl: input.invoicesUrl,
+    webOnOneUrl: paymentInvoiceUrl(input.invoiceId),
   }
 
   if (toEmail) {

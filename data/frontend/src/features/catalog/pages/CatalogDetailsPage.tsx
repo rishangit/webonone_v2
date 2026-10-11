@@ -108,13 +108,6 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const overview = item ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
-        {(item.galleryImages ?? []).length > 0 ? (
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <ImageCarousel images={item.galleryImages ?? []} alt={item.name} />
-            </CardContent>
-          </Card>
-        ) : null}
         <EditableSectionCard
           title={config.singular}
           description="Name, status, and description"
@@ -122,6 +115,11 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
           canEdit={canEdit}
           onEdit={() => setEditOpen(true)}
         >
+          {(item.galleryImages ?? []).length > 0 ? (
+            <div className="overflow-hidden rounded-md">
+              <ImageCarousel images={item.galleryImages ?? []} alt={item.name} />
+            </div>
+          ) : null}
           <h2 className="text-xl font-semibold">{item.name}</h2>
           <ReadOnlyField
             label="Description"

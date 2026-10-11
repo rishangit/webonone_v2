@@ -24,7 +24,10 @@ export function TagsShowcase() {
         </View>
       </DemoSection>
 
-      <DemoSection title="Company status tags" description="Pending, Approved, Rejected.">
+      <DemoSection
+        title="Company status tags"
+        description="Pending, Approved, Rejected — colored text only, no pill background."
+      >
         <View className="flex-row flex-wrap gap-2">
           <StatusTag variant="pending" />
           <StatusTag variant="approved" />
@@ -39,7 +42,10 @@ export function TagsShowcase() {
         </View>
       </DemoSection>
 
-      <DemoSection title="User role tags" description="Super Admin, Company Owner, Member, Staff.">
+      <DemoSection
+        title="User role tags"
+        description="Violet, sky, slate, and indigo text — Super Admin, Company Owner, Member, Staff."
+      >
         <View className="flex-row flex-wrap gap-2">
           <StatusTag variant="super_admin" />
           <StatusTag variant="company_admin" />

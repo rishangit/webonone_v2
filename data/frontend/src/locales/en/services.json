@@ -38,6 +38,11 @@
   "unableToLoad": "Unable to load service.",
   "sectionsAria": "Service sections",
   "refs": "Refs: {{count}}",
+  "list": {
+    "price": "Price",
+    "schedule": "Schedule"
+  },
+  "listPrice": "List price (LKR)",
   "actionsFor": "Actions for {{name}}",
   "viewDetails": "View details",
   "verify": "Verify",

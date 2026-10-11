@@ -59,6 +59,8 @@ interface FormFieldProps {
   required?: boolean
   children: React.ReactNode
   className?: string
+  /** e.g. `text-fixed-pending` for stock cost price */
+  labelClassName?: string
 }
 
 function Form({ className, ...props }: React.FormHTMLAttributes<HTMLFormElement>) {
@@ -69,7 +71,15 @@ function Form({ className, ...props }: React.FormHTMLAttributes<HTMLFormElement>
   )
 }
 
-function FormField({ label, htmlFor, error, required, children, className }: FormFieldProps) {
+function FormField({
+  label,
+  htmlFor,
+  error,
+  required,
+  children,
+  className,
+  labelClassName,
+}: FormFieldProps) {
   const errorId = `${htmlFor}-error`
 
   const control = React.isValidElement(children)
@@ -87,7 +97,7 @@ function FormField({ label, htmlFor, error, required, children, className }: For
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Label htmlFor={htmlFor}>
+      <Label htmlFor={htmlFor} className={labelClassName}>
         {label}
         {required ? (
           <span aria-hidden="true" className="text-destructive">

@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   CollectionListView,
   DropdownMenuItem,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -93,6 +91,7 @@ export function SalesList({ items }: SalesListProps) {
 
   return (
     <CollectionListView
+      cardLayout={false}
       items={rows}
       getRowKey={(item) => item.id}
       columns={columns}
@@ -111,15 +110,6 @@ export function SalesList({ items }: SalesListProps) {
           </ItemListContent>
           {renderRowMenu(item)}
         </ItemListItem>
-      )}
-      renderCard={(item) => (
-        <ItemListCollectionCard
-          image={<ItemListCardPlaceholderImage />}
-          menu={renderRowMenu(item)}
-          onBodyClick={() => navigate(`/sales/${item.id}`)}
-        >
-          {rowBody(item)}
-        </ItemListCollectionCard>
       )}
     />
   )

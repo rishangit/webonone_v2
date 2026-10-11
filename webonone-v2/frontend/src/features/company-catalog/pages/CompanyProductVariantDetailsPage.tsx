@@ -11,13 +11,15 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
-  StatusTag,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { CompanyProductVariantStockLimitsCard } from '@/features/company-catalog/components/CompanyProductVariantStockLimitsCard'
 import { CompanyProductVariantStocksCard } from '@/features/company-catalog/components/CompanyProductVariantStocksCard'
+import { CompanyProductVariantSummaryCard } from '@/features/company-catalog/components/CompanyProductVariantSummaryCard'
+import { useLibraryProductVariantStocks } from '@/features/company-catalog/hooks/useLibraryProductVariantStocks'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { EditableSectionCard } from '../components/EditableSectionCard'
@@ -88,6 +90,8 @@ export function CompanyProductVariantDetailsPage() {
   }, [load])
 
   usePlatformLoading(loading && !variant ? t('variantDetail.loading') : null)
+
+  const stocksQuery = useLibraryProductVariantStocks(libraryProductId ?? undefined, variantId)
 
   async function handleDelete() {
     if (!libraryProductId || !variantId || !variant || variant.isDefault) return
@@ -162,29 +166,32 @@ export function CompanyProductVariantDetailsPage() {
       {variant && libraryProductId ? (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="flex flex-col gap-6 lg:col-span-2">
-            <EditableSectionCard
-              title={t('variantDetail.variantCard.title')}
-              description={t('variantDetail.variantCard.description')}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold">{variant.name}</h2>
-                {variant.isDefault ? (
-                  <StatusTag variant="verified" className="shrink-0">
-                    {t('variantDetail.variantCard.default')}
-                  </StatusTag>
-                ) : null}
-              </div>
-              <ReadOnlyField label={t('variantDetail.variantCard.sku')} value={variant.sku} />
-            </EditableSectionCard>
+            <CompanyProductVariantSummaryCard
+              variant={variant}
+              companyProductId={productId}
+              totalQuantity={stocksQuery.totalQuantity}
+              stocksLoading={stocksQuery.loading}
+            />
 
             <CompanyProductVariantStocksCard
               libraryProductId={libraryProductId}
               variantId={variantId}
+              companyProductId={productId}
+              items={stocksQuery.items}
+              loading={stocksQuery.loading}
+              error={stocksQuery.error}
+              onReload={stocksQuery.reload}
               canEdit={canAddStock}
             />
           </div>
 
           <div className="flex flex-col gap-6 lg:col-span-1">
+            <CompanyProductVariantStockLimitsCard
+              companyProductId={productId}
+              libraryVariantId={variantId}
+              canEdit={canEdit}
+            />
+
             <EditableSectionCard
               title={t('variantDetail.attributeValues.title')}
               description={t('variantDetail.attributeValues.description')}

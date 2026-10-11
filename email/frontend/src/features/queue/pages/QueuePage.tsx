@@ -102,7 +102,7 @@ export function QueuePage() {
       actions={
         <ListPageActions>
           <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
           <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
             {t('refreshNow')}
           </Button>

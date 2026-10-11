@@ -99,6 +99,7 @@ export async function sendTestEmail(req: AuthenticatedRequest, res: Response) {
       userName: req.user?.email ?? 'Test User',
       companyName: 'Test Company',
       actionUrl: 'https://example.com/test',
+      webOnOneUrl: 'https://app.webonone.com/login',
       message: 'This is a test message',
       ...body.payload,
     }

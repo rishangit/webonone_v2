@@ -85,7 +85,7 @@ export function SalesHistoryPage() {
             onClick={() => list.setFilterOpen(!list.filterOpen)}
             aria-label={t('history.status')}
           />
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
           <ListAddButton onClick={() => navigate('/sales/pos')}>{t('history.newSale')}</ListAddButton>
         </ListPageActions>
       }

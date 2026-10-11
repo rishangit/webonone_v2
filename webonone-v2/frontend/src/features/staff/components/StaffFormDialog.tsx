@@ -224,6 +224,7 @@ export function StaffFormDialog({
         displayName: user.displayName,
         email: user.email,
         avatarUrl: user.avatarUrl ?? null,
+        isEmailVerified: user.isEmailVerified,
       },
     }))
     setFieldErrors((prev) => {

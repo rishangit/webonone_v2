@@ -7,7 +7,7 @@ const remainingTimeVariants = cva(
   {
     variants: {
       appearance: {
-        chip: 'ui-tag ui-shape-panel-sm border px-2 py-0.5 backdrop-blur-sm',
+        chip: 'ui-tag',
         plain: 'border-0 bg-transparent px-0 py-0 font-medium',
       },
       kind: {
@@ -20,19 +20,17 @@ const remainingTimeVariants = cva(
       {
         appearance: 'chip',
         kind: 'upcoming',
-        className:
-          'border-amber-600/55 bg-amber-500/15 text-amber-900 dark:border-amber-400/50 dark:bg-amber-500/20 dark:text-amber-200',
+        className: 'text-warning',
       },
       {
         appearance: 'chip',
         kind: 'current',
-        className:
-          'border-emerald-600/55 bg-emerald-500/15 text-emerald-900 dark:border-emerald-400/50 dark:bg-emerald-500/20 dark:text-emerald-200',
+        className: 'text-success',
       },
       {
         appearance: 'chip',
         kind: 'ended',
-        className: 'border-border/80 bg-muted/40 font-normal text-muted-foreground',
+        className: 'font-normal text-muted-foreground',
       },
       {
         appearance: 'plain',
@@ -82,7 +80,7 @@ export type RemainingTimeProps = {
    */
   runStatus?: RemainingTimeRunStatus
   labels?: RemainingTimeLabels
-  /** `chip` = bordered tag; `plain` = theme text only (no background/border). */
+  /** `chip` = semantic colored tag text; `plain` = primary/muted text without variant hues. */
   appearance?: 'chip' | 'plain'
   className?: string
 }

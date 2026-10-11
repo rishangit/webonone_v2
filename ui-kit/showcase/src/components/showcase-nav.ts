@@ -5,6 +5,7 @@ export type ShowcaseTab =
   | 'dialogs'
   | 'icons'
   | 'tags'
+  | 'colors'
   | 'pages'
 
 export type PagesNestedTab = 'list' | 'details'
@@ -17,6 +18,7 @@ export const SHOWCASE_TABS: { id: ShowcaseTab; label: string }[] = [
   { id: 'dialogs', label: 'Dialogs' },
   { id: 'icons', label: 'Icons' },
   { id: 'tags', label: 'Tags' },
+  { id: 'colors', label: 'Colors' },
 ]
 
 export const DEFAULT_SHOWCASE_TAB: ShowcaseTab = 'controls'

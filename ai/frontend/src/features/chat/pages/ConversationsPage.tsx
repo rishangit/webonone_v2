@@ -124,7 +124,7 @@ export function ConversationsPage() {
       title={t('title')}
       actions={
         <ListPageActions>
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
           <ListAddButton onClick={() => void handleCreate()}>{t('newConversation')}</ListAddButton>
         </ListPageActions>
       }

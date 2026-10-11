@@ -15,6 +15,7 @@ import {
   type CompanyCustomerRow,
 } from '../repositories/users.repository.js'
 import { sendTransactionalEmail } from './emailClient.service.js'
+import { memberConnectedCompanyUrl } from '../utils/webOnOneAppLinks.js'
 import { getGatewayStatus, sendTransactionalSms } from './smsClient.service.js'
 import { getCompanyName } from './webononeCompanyClient.service.js'
 import { notifyCompanyAdminsCustomerAdded } from './webononeNotify.service.js'
@@ -141,6 +142,7 @@ async function notifyWelcome(input: {
   const payload = {
     userName: input.user.displayName,
     companyName: input.companyName,
+    webOnOneUrl: memberConnectedCompanyUrl(input.companyId),
   }
 
   const email = input.user.email?.trim()
@@ -199,6 +201,7 @@ async function notifyInviteSetPassword(input: {
         userName: input.user.displayName,
         companyName: input.companyName,
         actionUrl: input.actionUrl,
+        webOnOneUrl: memberConnectedCompanyUrl(input.companyId),
       },
       companyId: input.companyId,
       requestedByService: 'identity',
@@ -213,7 +216,7 @@ async function notifyInviteSetPassword(input: {
   if (phone && gateway?.configured) {
     smsSent = await sendTransactionalSms({
       toNumber: phone,
-      body: `Hi ${input.user.displayName}, you were added to ${input.companyName}. Set your password at ${input.actionUrl} — enter your email to receive a verification code.`,
+      body: `Hi ${input.user.displayName}, you were added to ${input.companyName}. Set your password at ${input.actionUrl} — enter your email to receive a verification code. Open in WebOnOne: ${memberConnectedCompanyUrl(input.companyId)}`,
       companyId: input.companyId,
       requestedByService: 'identity',
     })

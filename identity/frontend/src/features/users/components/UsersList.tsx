@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  cn,
   CollectionListView,
   ContactValueLine,
   DropdownMenuItem,
@@ -49,18 +50,81 @@ export function UsersList({
   const { t } = useTranslation('users')
   const { t: tc } = useTranslation('common')
 
+  const gridThumbClassName = 'h-10 w-10 shrink-0 rounded-md'
+  const contactValueWrapClassName = '[&_span]:whitespace-normal [&_span]:break-all'
+
   const columns = useMemo(
     () => [
+      {
+        id: 'avatar',
+        header: '',
+        className: 'w-14',
+        cell: (user: UserPickerUser) => (
+          <ImagePreview
+            src={user.avatarUrl}
+            alt={user.displayName}
+            mode="view"
+            className={gridThumbClassName}
+          />
+        ),
+      },
       {
         id: 'name',
         header: tc('name'),
         sortable: true,
         compare: (a: UserPickerUser, b: UserPickerUser) =>
           a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }),
-        cell: (user: UserPickerUser) => user.displayName,
+        cell: (user: UserPickerUser) => (
+          <button
+            type="button"
+            className="rounded-md text-left font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => onOpen(user.id)}
+          >
+            {user.displayName}
+          </button>
+        ),
+      },
+      {
+        id: 'email',
+        header: tc('email'),
+        sortable: true,
+        compare: (a: UserPickerUser, b: UserPickerUser) =>
+          (a.email ?? '').localeCompare(b.email ?? '', undefined, { sensitivity: 'base' }),
+        cell: (user: UserPickerUser) => (
+          <ContactValueLine
+            kind="email"
+            value={user.email}
+            emptyLabel={t('noEmail')}
+            verified={user.email?.trim() ? user.isEmailVerified : undefined}
+            className={contactValueWrapClassName}
+          />
+        ),
+      },
+      {
+        id: 'phone',
+        header: t('form.phoneNumber'),
+        cell: (user: UserPickerUser) =>
+          user.phoneNumber?.trim() ? (
+            <ContactValueLine
+              kind="phone"
+              value={user.phoneNumber}
+              verified={user.isPhoneVerified}
+              className={contactValueWrapClassName}
+            />
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
+      {
+        id: 'role',
+        header: t('roles.label'),
+        sortable: true,
+        compare: (a: UserPickerUser, b: UserPickerUser) =>
+          (a.role ?? '').localeCompare(b.role ?? '', undefined, { sensitivity: 'base' }),
+        cell: (user: UserPickerUser) => renderRoleTag(user) ?? <span className="text-muted-foreground">—</span>,
       },
     ],
-    [tc],
+    [onOpen, t, tc],
   )
 
   function renderRowMenu(user: UserPickerUser) {
@@ -77,39 +141,57 @@ export function UsersList({
     )
   }
 
-  function userDetails(user: UserPickerUser) {
+  function renderRoleTag(user: UserPickerUser) {
+    if (!user.role) return null
+    if (isStatusTagVariant(user.role)) {
+      return <StatusTag variant={user.role} />
+    }
+    return <StatusTag variant="member">{formatRoleLabel(user.role)}</StatusTag>
+  }
+
+  function userDetails(user: UserPickerUser, layout: 'list' | 'card') {
+    const contactClassName = layout === 'card' ? contactValueWrapClassName : undefined
+
+    const emailLine = (
+      <ContactValueLine
+        kind="email"
+        value={user.email}
+        emptyLabel={t('noEmail')}
+        verified={user.email?.trim() ? user.isEmailVerified : undefined}
+        className={cn('mt-0.5', contactClassName)}
+      />
+    )
+
+    const phoneLine = user.phoneNumber?.trim() ? (
+      <ContactValueLine
+        kind="phone"
+        value={user.phoneNumber}
+        verified={user.isPhoneVerified}
+        className={cn('mt-0.5', contactClassName)}
+      />
+    ) : null
+
+    const roleTag = renderRoleTag(user)
+
+    if (layout === 'card') {
+      return (
+        <div className="flex w-full min-w-0 flex-col gap-0.5">
+          <p className="break-words font-medium leading-snug">{user.displayName}</p>
+          {emailLine}
+          {phoneLine}
+          {roleTag ? <div className="mt-1.5">{roleTag}</div> : null}
+        </div>
+      )
+    }
+
     return (
       <>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{user.displayName}</p>
-          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <ContactValueLine kind="email" value={user.email} emptyLabel={t('noEmail')} />
-            {user.email?.trim() ? (
-              <StatusTag
-                className="shrink-0"
-                variant={user.isEmailVerified ? 'verified' : 'unverified'}
-              />
-            ) : null}
-          </div>
-          {user.phoneNumber?.trim() ? (
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-              <ContactValueLine kind="phone" value={user.phoneNumber} />
-              <StatusTag
-                className="shrink-0"
-                variant={user.isPhoneVerified ? 'verified' : 'unverified'}
-              />
-            </div>
-          ) : null}
+          {emailLine}
+          {phoneLine}
         </div>
-        {user.role ? (
-          isStatusTagVariant(user.role) ? (
-            <StatusTag className="shrink-0 self-center" variant={user.role} />
-          ) : (
-            <StatusTag className="shrink-0 self-center" variant="member">
-              {formatRoleLabel(user.role)}
-            </StatusTag>
-          )
-        ) : null}
+        {roleTag ? <div className="shrink-0 self-center">{roleTag}</div> : null}
       </>
     )
   }
@@ -127,7 +209,7 @@ export function UsersList({
           mode="view"
           className={itemListThumbClassName}
         />
-        {userDetails(user)}
+        {userDetails(user, 'list')}
       </button>
     )
   }
@@ -162,7 +244,7 @@ export function UsersList({
           menu={renderRowMenu(user)}
           onBodyClick={() => onOpen(user.id)}
         >
-          <div className={itemListRowBodyClassName}>{userDetails(user)}</div>
+          <div className="w-full min-w-0">{userDetails(user, 'card')}</div>
         </ItemListCollectionCard>
       )}
     />

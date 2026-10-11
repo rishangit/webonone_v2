@@ -1,13 +1,20 @@
 import {
   dataLibraryApi,
+  type LibraryProductVariantAttributeValue,
   type LibraryProductVariantStock,
 } from '@/features/company-catalog/services/dataLibraryApi'
 
 export type ProductPickerVariantStockLine = {
   variantId: string
   name: string
+  /** Active batch quantity (list / pricing context). */
   quantity: number
+  /** Sum of all batch quantities for this variant. */
+  totalQuantity: number
+  costPrice: number | null
+  sellPrice: number | null
   isDefault: boolean
+  attributeValues: LibraryProductVariantAttributeValue[]
 }
 
 export type ProductPickerStockDisplay = {
@@ -34,7 +41,11 @@ export async function resolveProductPickerStockDisplay(
       variantId: variant.id,
       name: variant.name,
       quantity: active?.quantity ?? 0,
+      totalQuantity: stocks.items.reduce((sum, item) => sum + item.quantity, 0),
+      costPrice: active?.costPrice ?? null,
+      sellPrice: active?.sellPrice ?? null,
       isDefault: variant.isDefault,
+      attributeValues: variant.values,
     })
   }
 

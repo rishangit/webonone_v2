@@ -38,6 +38,11 @@
   "unableToLoad": "සේවාව පූරණය කළ නොහැක.",
   "sectionsAria": "සේවා අංශ",
   "refs": "යොමු: {{count}}",
+  "list": {
+    "price": "මිල",
+    "schedule": "කාලසටහන"
+  },
+  "listPrice": "ලැයිස්තු මිල (LKR)",
   "actionsFor": "{{name}} සඳහා ක්‍රියා",
   "viewDetails": "විස්තර බලන්න",
   "verify": "සත්‍යාපනය කරන්න",

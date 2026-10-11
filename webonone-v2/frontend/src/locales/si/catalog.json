@@ -31,6 +31,13 @@
     "removeTitleNamed": "{{name}} ඉවත් කරන්නද?",
     "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. අයිතමය ඔබේ සමාගම් නාමාවලියෙන් ඉවත් වේ.",
     "libraryUnavailable": "පුස්තකාලය නොමැත",
+    "selectVariant": "ප්‍රභේදය",
+    "price": "මිල",
+    "schedule": "කාලසටහන",
+    "stock": "තොග",
+    "stockPrice": "{{price}}",
+    "stockAvailable": "තොග {{quantity}}",
+    "stockOut": "තොග නැත",
     "copyToAi": "AI වෙත පිටපත් කරන්න",
     "copyToAiSuccess": "AI සහායකයට එකතු කළා"
   },
@@ -62,6 +69,14 @@
       "title": "මිල",
       "description": "විකුණුම් ස්ථානය සඳහා සමාගම් විකුණුම් මිල",
       "listPrice": "ලැයිස්තු මිල"
+    },
+    "variantPricing": {
+      "title": "මිල සහ තොග",
+      "description": "තෝරාගත් ප්‍රභේදයේ මිල සහ තොග. සමාගම් ලැයිස්තු මිල සැකසීමට සංස්කරණය කරන්න.",
+      "loading": "පූරණය වෙමින්…",
+      "emptyVariants": "තවම ප්‍රභේද හෝ තොග නැත. ප්‍රභේද ටැබ් එකේ එකතු කරන්න.",
+      "minStock": "අවම තොග",
+      "maxStock": "උපරිම තොග"
     },
     "time": {
       "title": "වේලාව",
@@ -268,6 +283,8 @@
     "failedLoad": "ප්‍රභේද පූරණය අසාර්ථක විය",
     "actionsFor": "{{name}} සඳහා ක්‍රියා",
     "sku": "SKU · {{sku}}",
+    "totalStock": "මුළු තොග · {{quantity}}",
+    "loadingStock": "තොග පූරණය වෙමින්…",
     "aiSuggestVariants": "AI සමඟ විවිධතා යෝජනා කරන්න",
     "aiSuggestVariantsSuccess": "AI සහායකය විවෘත කළා",
     "aiSuggestVariantsPrompt": "{{productName}} සඳහා සාමාන්‍ය වෙළඳපොළ විවිධතා යෝජනා කරන්න (අවශ්‍ය නම් ශක්තිමත් බව, ආකාරය සහ පැකේජ ප්‍රමාණය සහිත යථාර්ථවාදී SKU). ගුණාංග සහ ලේබල් කළ අගයන් තිබේ යැයි සහතික කර, එක් එක් විවිධතාව නිෂ්පාදන විවිධතා මෙවලමෙන් එකතු කරන්න."
@@ -346,6 +363,15 @@
     "meta": {
       "title": "මෙටා",
       "description": "වාර්තා කාල මුද්‍රා"
+    },
+    "stockLimits": {
+      "title": "තොග සීමා",
+      "description": "මෙම ප්‍රභේදය සඳහා සමාගමේ අවම සහ උපරිම තොග ඉලක්ක (වෙනත් සමාගම් සමඟ බෙදා නොගනී).",
+      "min": "අවම තොග",
+      "max": "උපරිම තොග",
+      "loading": "සීමා පූරණය වෙමින්…",
+      "saved": "තොග සීමා සුරකින ලදී",
+      "saveFailed": "තොග සීමා සුරැකීමට නොහැකි විය"
     }
   },
   "attributeDetail": {
@@ -388,8 +414,11 @@
     "empty": "තවම තොග කණ්ඩායම් නැත. ආරම්භ කිරීමට කණ්ඩායමක් එකතු කරන්න.",
     "failedLoad": "තොග පූරණය අසාර්ථක විය",
     "batchLabel": "කණ්ඩායම {{number}}",
+    "totalAvailability": "මුළු තොගය",
     "qty": "ප්‍රමාණය {{qty}}",
     "active": "සක්‍රිය",
+    "cost": "පිරිවැය",
+    "sell": "විකුණුම",
     "costSell": "පිරිවැය {{cost}} · විකුණුම {{sell}}",
     "purchased": "මිලදී ගත් {{date}}",
     "expires": "කල් ඉකුත් වේ {{date}}",

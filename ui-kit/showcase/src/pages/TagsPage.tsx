@@ -27,7 +27,7 @@ export function TagsPage() {
       <DemoSection
         id="company-status-tags"
         title="Company status tags"
-        description="Approval workflow labels for company registration (Pending, Approved, Rejected). Use the theme toolbar above to verify light and dark modes. Consumers map companies.status to StatusTag variant."
+        description="Approval workflow labels for company registration (Pending, Approved, Rejected). Colored text only — no background or border. Consumers map companies.status to StatusTag variant."
       >
         <div className="flex flex-wrap items-center gap-3">
           <StatusTag variant="pending" />
@@ -39,7 +39,7 @@ export function TagsPage() {
       <DemoSection
         id="verification-status-tags"
         title="Verification status tags"
-        description="Catalog verification labels (Unverified, Verified). Orange = awaiting super-admin review; teal = approved reference data. Map API status pending → unverified, verified → verified."
+        description="Catalog verification labels (Unverified, Verified). Colored text only. Map API status pending → unverified, verified → verified."
       >
         <div className="flex flex-wrap items-center gap-3">
           <StatusTag variant="unverified" />
@@ -50,7 +50,7 @@ export function TagsPage() {
       <DemoSection
         id="user-role-tags"
         title="User role tags"
-        description="Platform membership roles (Super Admin, Company Admin, Member, Staff). Violet / sky / slate / indigo glass chips. Map API role strings to StatusTag variant; use isStatusTagVariant for unknown roles."
+        description="Platform membership roles — distinct hues: violet (Super Admin), sky (Company Admin), slate (Member), indigo (Staff). Text only, no pill background or border. Map API role strings to StatusTag variant; use isStatusTagVariant for unknown roles."
       >
         <div className="flex flex-wrap items-center gap-3">
           <StatusTag variant="super_admin" />

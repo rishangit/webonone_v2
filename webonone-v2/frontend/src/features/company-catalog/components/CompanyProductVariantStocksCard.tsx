@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
@@ -15,9 +15,12 @@ import {
   ItemListItem,
   ItemListMenu,
   StatusTag,
+  StockAvailabilityProgress,
+  StockBatchPriceRow,
   useToast,
 } from '@webonone/ui-kit'
 import { CompanyStockFormDialog } from '@/features/company-catalog/components/CompanyStockFormDialog'
+import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
 import {
   dataLibraryApi,
   type LibraryProductVariantStock,
@@ -25,9 +28,13 @@ import {
 import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 
 type CompanyProductVariantStocksCardProps = {
-  /** Data library product id */
   libraryProductId: string
   variantId: string
+  companyProductId: string
+  items: LibraryProductVariantStock[]
+  loading: boolean
+  error: string | null
+  onReload: () => void
   canEdit: boolean
 }
 
@@ -41,46 +48,31 @@ function formatMoney(value: number): string {
 export function CompanyProductVariantStocksCard({
   libraryProductId,
   variantId,
+  companyProductId,
+  items,
+  loading,
+  error,
+  onReload,
   canEdit,
 }: CompanyProductVariantStocksCardProps) {
   const { t, i18n } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
-  const [items, setItems] = useState<LibraryProductVariantStock[]>([])
-  const [loading, setLoading] = useState(true)
+  const { byVariantId } = useCompanyProductVariantStockLimitsMap(companyProductId)
+  const limits = byVariantId[variantId]
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingStock, setEditingStock] = useState<LibraryProductVariantStock | null>(null)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const result = await dataLibraryApi.listProductVariantStocks(libraryProductId, variantId)
-      setItems(result.items)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('stocks.failedLoad'))
-    } finally {
-      setLoading(false)
-    }
-  }, [libraryProductId, variantId, t])
-
-  useEffect(() => {
-    void load()
-  }, [load])
 
   async function handleSetActive(stock: LibraryProductVariantStock) {
     if (stock.isActive || saving) return
     setSaving(true)
-    setError(null)
     try {
       await dataLibraryApi.setProductVariantStockActive(libraryProductId, variantId, stock.id)
       toast({ title: t('stocks.toastActiveUpdated') })
-      await load()
+      onReload()
     } catch (err) {
       const message = err instanceof Error ? err.message : t('stocks.failedSetActive')
-      setError(message)
       toast({ title: t('stocks.toastActiveFailed'), description: message, variant: 'destructive' })
     } finally {
       setSaving(false)
@@ -98,6 +90,7 @@ export function CompanyProductVariantStocksCard({
           <Button
             type="button"
             size="sm"
+            className="shrink-0"
             onClick={() => {
               setEditingStock(null)
               setDialogOpen(true)
@@ -121,14 +114,10 @@ export function CompanyProductVariantStocksCard({
             {items.map((stock) => (
               <ItemListItem key={stock.id}>
                 <ItemListContent>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <div className="flex min-w-0 items-center gap-2">
                       <p className="truncate font-medium">
                         {t('stocks.batchLabel', { number: stock.batchNumber })}
-                        <span className="font-normal text-muted-foreground">
-                          {' '}
-                          · {t('stocks.qty', { qty: formatMoney(stock.quantity) })}
-                        </span>
                       </p>
                       {stock.isActive ? (
                         <StatusTag variant="verified" className="shrink-0">
@@ -136,16 +125,20 @@ export function CompanyProductVariantStocksCard({
                         </StatusTag>
                       ) : null}
                     </div>
+                    <StockAvailabilityProgress
+                      quantity={stock.quantity}
+                      maxQuantity={limits?.maxQuantity}
+                      minQuantity={limits?.minQuantity}
+                      caption={t('stocks.qty', { qty: formatMoney(stock.quantity) })}
+                    />
                     <p className="truncate text-sm text-muted-foreground">
-                      {t('stocks.costSell', {
-                        cost: formatMoney(stock.costPrice),
-                        sell: formatMoney(stock.sellPrice),
+                      {t('stocks.purchased', {
+                        date: formatCalendarYmd(stock.purchaseDate, i18n.language),
                       })}
-                    </p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      {t('stocks.purchased', { date: formatCalendarYmd(stock.purchaseDate, i18n.language) })}
                       {stock.expiredDate
-                        ? ` · ${t('stocks.expires', { date: formatCalendarYmd(stock.expiredDate, i18n.language) })}`
+                        ? ` · ${t('stocks.expires', {
+                            date: formatCalendarYmd(stock.expiredDate, i18n.language),
+                          })}`
                         : ''}
                     </p>
                     {stock.supplierDisplayName ? (
@@ -154,6 +147,13 @@ export function CompanyProductVariantStocksCard({
                         {stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}
                       </p>
                     ) : null}
+                    <StockBatchPriceRow
+                      className="pt-1"
+                      costLabel={t('stocks.cost')}
+                      sellLabel={t('stocks.sell')}
+                      costValue={formatMoney(stock.costPrice)}
+                      sellValue={formatMoney(stock.sellPrice)}
+                    />
                   </div>
                 </ItemListContent>
                 {canEdit ? (
@@ -194,7 +194,7 @@ export function CompanyProductVariantStocksCard({
           }}
           onSaved={() => {
             toast({ title: editingStock ? t('stocks.toastUpdated') : t('stocks.toastCreated') })
-            void load()
+            onReload()
           }}
         />
       ) : null}

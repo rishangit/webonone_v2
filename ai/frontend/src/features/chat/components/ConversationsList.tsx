@@ -2,8 +2,6 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CollectionListView,
-  ItemListCardPlaceholderImage,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -53,6 +51,7 @@ export function ConversationsList({ items, onOpen }: ConversationsListProps) {
 
   return (
     <CollectionListView
+      cardLayout={false}
       items={items}
       getRowKey={(conversation) => conversation.id}
       columns={columns}
@@ -69,14 +68,6 @@ export function ConversationsList({ items, onOpen }: ConversationsListProps) {
             </button>
           </ItemListContent>
         </ItemListItem>
-      )}
-      renderCard={(conversation) => (
-        <ItemListCollectionCard
-          image={<ItemListCardPlaceholderImage />}
-          onBodyClick={() => onOpen(conversation.id)}
-        >
-          {rowBody(conversation)}
-        </ItemListCollectionCard>
       )}
     />
   )

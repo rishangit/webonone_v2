@@ -86,6 +86,7 @@ function valuesFromCatalogItem(item: CatalogItem): ServiceWizardFormValues {
     name: item.name,
     description: item.description ?? '',
     status: item.status,
+    list_price: item.listPrice != null ? String(item.listPrice) : '',
     time_mode: item.timeMode ?? 'duration',
     duration_minutes:
       item.durationMinutes != null ? String(item.durationMinutes) : '60',

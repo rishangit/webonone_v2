@@ -11,6 +11,7 @@ import {
   linkCatalogBodySchema,
   updateCatalogGalleryBodySchema,
   updateCatalogPricingBodySchema,
+  upsertProductVariantStockLimitsBodySchema,
   updateServiceFormBodySchema,
   replaceServiceWorkflowBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
@@ -27,6 +28,23 @@ router.get(
   '/company/me/catalog/services/with-form',
   requireCompanySession,
   companyCatalogController.listServicesWithForm,
+)
+
+router.get(
+  '/company/me/catalog/products/:productId/variant-stock-limits',
+  requireCompanySession,
+  companyCatalogController.listProductVariantStockLimits,
+)
+router.get(
+  '/company/me/catalog/products/:productId/variants/:variantId/stock-limits',
+  requireCompanySession,
+  companyCatalogController.getProductVariantStockLimits,
+)
+router.put(
+  '/company/me/catalog/products/:productId/variants/:variantId/stock-limits',
+  requireCompanyAdminSession,
+  validateBody(upsertProductVariantStockLimitsBodySchema),
+  companyCatalogController.upsertProductVariantStockLimits,
 )
 
 router.get(

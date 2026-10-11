@@ -130,7 +130,7 @@ export function FormsPage() {
             placeholder={t('searchPlaceholder')}
             className="w-56"
           />
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
           {canManage ? (
             <ListAddButton onClick={() => setDialogOpen(true)}>{t('add')}</ListAddButton>
           ) : null}

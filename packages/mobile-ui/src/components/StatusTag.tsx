@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native'
+import { Text } from 'react-native'
 import { cn } from '../lib/cn'
 
 export type StatusTagVariant =
@@ -13,15 +13,15 @@ export type StatusTagVariant =
   | 'staff'
 
 const VARIANT_CLASS: Record<StatusTagVariant, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  unverified: 'bg-amber-100 text-amber-800',
-  verified: 'bg-teal-100 text-teal-800',
-  super_admin: 'bg-violet-100 text-violet-800',
-  company_admin: 'bg-blue-100 text-blue-800',
-  member: 'bg-slate-100 text-slate-700',
-  staff: 'bg-indigo-100 text-indigo-800',
+  pending: 'text-amber-700',
+  approved: 'text-green-700',
+  rejected: 'text-red-700',
+  unverified: 'text-amber-700',
+  verified: 'text-teal-700',
+  super_admin: 'text-violet-600',
+  company_admin: 'text-sky-600',
+  member: 'text-slate-500',
+  staff: 'text-indigo-600',
 }
 
 const DEFAULT_LABELS: Record<StatusTagVariant, string> = {
@@ -62,8 +62,6 @@ export function StatusTag({
   const tone = VARIANT_CLASS[resolved]
 
   return (
-    <View className={cn('self-start rounded-control px-2.5 py-0.5', tone.split(' ')[0], className)}>
-      <Text className={cn('text-xs font-medium', tone.split(' ')[1])}>{text}</Text>
-    </View>
+    <Text className={cn('self-start text-xs font-medium', tone, className)}>{text}</Text>
   )
 }

@@ -360,27 +360,20 @@ export function UserPickerPage() {
                   />
                   <ItemListContent>
                     <p className="truncate font-medium">{user.displayName}</p>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                      <ContactValueLine
-                        kind="email"
-                        value={user.email}
-                        emptyLabel={t('noEmail')}
-                      />
-                      {user.email?.trim() ? (
-                        <StatusTag
-                          className="shrink-0"
-                          variant={user.isEmailVerified ? 'verified' : 'unverified'}
-                        />
-                      ) : null}
-                    </div>
+                    <ContactValueLine
+                      kind="email"
+                      value={user.email}
+                      emptyLabel={t('noEmail')}
+                      verified={user.email?.trim() ? user.isEmailVerified : undefined}
+                      className="mt-0.5"
+                    />
                     {user.phoneNumber?.trim() ? (
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                        <ContactValueLine kind="phone" value={user.phoneNumber} />
-                        <StatusTag
-                          className="shrink-0"
-                          variant={user.isPhoneVerified ? 'verified' : 'unverified'}
-                        />
-                      </div>
+                      <ContactValueLine
+                        kind="phone"
+                        value={user.phoneNumber}
+                        verified={user.isPhoneVerified}
+                        className="mt-0.5"
+                      />
                     ) : null}
                   </ItemListContent>
                   {user.role ? (

@@ -37,6 +37,7 @@ const PLACEHOLDER_HELP = [
   '{{primaryColor}}',
   '{{contactEmail}}',
   '{{footerHtml}}',
+  '{{webOnOneUrl}}',
   '{{year}}',
 ]
 

@@ -23,6 +23,7 @@ import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { CatalogPricingDialog } from '../components/CatalogPricingDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
 import { CompanyCatalogDetailPageMenu } from '../components/CompanyCatalogDetailPageMenu'
+import { CompanyProductDetailVariantPricingCard } from '../components/CompanyProductDetailVariantPricingCard'
 import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
 import { CompanyServiceWorkflowOverviewCard } from '../components/CompanyServiceWorkflowOverviewCard'
 import { CompanyServiceWorkflowTab } from '../components/CompanyServiceWorkflowTab'
@@ -248,13 +249,6 @@ export function CompanyCatalogDetailPage({
   const serviceProfile = detail && kind === 'services' ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
-        {showGalleryTabs && overviewGalleryImages.length > 0 ? (
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
-            </CardContent>
-          </Card>
-        ) : null}
         <EditableSectionCard
           title={t('detail.serviceBasics.title')}
           description={t('detail.serviceBasics.description')}
@@ -264,6 +258,11 @@ export function CompanyCatalogDetailPage({
           canEdit={canEdit && !busy}
           onEdit={() => setServiceDialog({ initialStep: 1 })}
         >
+          {showGalleryTabs && overviewGalleryImages.length > 0 ? (
+            <div className="overflow-hidden rounded-md">
+              <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
+            </div>
+          ) : null}
           <ReadOnlyField label={tc('name')} value={detail.displayName} />
           <ReadOnlyField
             label={tc('description')}
@@ -376,13 +375,6 @@ export function CompanyCatalogDetailPage({
   const genericProfile = detail && kind !== 'services' ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
-        {showGalleryTabs && overviewGalleryImages.length > 0 ? (
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
-            </CardContent>
-          </Card>
-        ) : null}
         <EditableSectionCard
           title={noun}
           description={t('detail.entityBasics.description')}
@@ -392,6 +384,11 @@ export function CompanyCatalogDetailPage({
           canEdit={canEdit && !busy}
           onEdit={() => setEditOpen(true)}
         >
+          {showGalleryTabs && overviewGalleryImages.length > 0 ? (
+            <div className="overflow-hidden rounded-md">
+              <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
+            </div>
+          ) : null}
           <ReadOnlyField label={tc('name')} value={detail.displayName} />
           <ReadOnlyField
             label={tc('description')}
@@ -405,7 +402,19 @@ export function CompanyCatalogDetailPage({
         {memberReviewCard}
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
-        {kind === 'products' || kind === 'spaces' ? (
+        {kind === 'products' ? (
+          <CompanyProductDetailVariantPricingCard
+            companyProductId={id}
+            libraryProductId={detail.libraryEntityId}
+            libraryUnavailable={Boolean(detail.libraryUnavailable)}
+            listPrice={detail.listPrice}
+            canEdit={canManage}
+            busy={busy}
+            onEditListPrice={() => setPricingOpen(true)}
+          />
+        ) : null}
+
+        {kind === 'spaces' ? (
           <EditableSectionCard
             title={t('detail.pricing.title')}
             description={t('detail.pricing.description')}

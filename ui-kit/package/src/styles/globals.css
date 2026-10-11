@@ -64,6 +64,14 @@
     --color-info-background: rgba(55, 135, 200, 0.12);
     --color-info-border: #b3d4ee;
 
+    /**
+     * Fixed application semantics — not overridden by theme or `.dark`.
+     * Use Tailwind `text-fixed-*` / `bg-fixed-*` (see showcase Colors tab).
+     */
+    --fixed-color-pending: #d99a22;
+    --fixed-color-approved: #2e9b63;
+    --fixed-color-rejected: #d9534f;
+
     /* Semantic fallbacks before ThemeProvider */
     --primary: 232 75% 55%;
     --primary-foreground: 0 0% 100%;
@@ -314,7 +322,35 @@
   }
 }
 
+@layer components {
+  /**
+   * Full-width stock bar (product cards). Not theme-dependent; overrides compact `w-48`.
+   */
+  .stock-availability-progress-full {
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+  }
+
+  .stock-availability-progress-full [role='progressbar'] {
+    width: 100%;
+    max-width: none;
+  }
+}
+
 @layer utilities {
+  .text-fixed-pending {
+    color: var(--fixed-color-pending);
+  }
+
+  .text-fixed-approved {
+    color: var(--fixed-color-approved);
+  }
+
+  .text-fixed-rejected {
+    color: var(--fixed-color-rejected);
+  }
+
   /**
    * Classic UI theme — rounded glass surfaces without industrial clip-path geometry.
    * Radius scale inspired by iOS: generous cards, soft controls, pill action buttons.
@@ -1173,119 +1209,45 @@
     box-shadow: 0 2px 8px hsl(var(--accent-primary) / 0.22);
   }
 
-  /** Status / time chips — borderless; opaque semantic colors (not card tone). */
+  /** Status / time tags — colored label text only (no pill background or border). */
   [data-ui-theme='high-tech'] .ui-tag {
     border: none;
-    --_cut: var(--shape-cut-sm);
-    clip-path: polygon(
-      0 0,
-      calc(100% - var(--_cut)) 0,
-      100% var(--_cut),
-      100% 100%,
-      0 100%
-    );
-    isolation: isolate;
+    background: transparent !important;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='pending'],
-  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='upcoming'] {
-    background-color: var(--color-warning-background) !important;
-    color: var(--color-warning) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='pending'],
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='upcoming'] {
-    background-color: var(--color-warning-background) !important;
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='upcoming'],
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='unverified'] {
     color: var(--color-warning) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='rejected'] {
-    background-color: var(--color-error-background) !important;
-    color: var(--color-error) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='rejected'] {
-    background-color: var(--color-error-background) !important;
     color: var(--color-error) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='approved'],
-  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='current'] {
-    background-color: var(--color-success-background) !important;
-    color: var(--color-success) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='approved'],
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='current'] {
-    background-color: var(--color-success-background) !important;
-    color: var(--color-success) !important;
-  }
-
-  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='unverified'] {
-    background-color: var(--color-warning-background) !important;
-    color: var(--color-warning) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='unverified'] {
-    background-color: var(--color-warning-background) !important;
-    color: var(--color-warning) !important;
-  }
-
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='current'],
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='verified'] {
-    background-color: var(--color-success-background) !important;
-    color: var(--color-success) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='verified'] {
-    background-color: var(--color-success-background) !important;
     color: var(--color-success) !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='super_admin'] {
-    background-color: var(--color-info-background) !important;
-    color: var(--color-info) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='super_admin'] {
-    background-color: var(--color-info-background) !important;
-    color: var(--color-info) !important;
+    color: #a78bfa !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='company_admin'] {
-    background-color: var(--color-info-background) !important;
-    color: var(--color-info) !important;
+    color: #38bdf8 !important;
   }
 
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='company_admin'] {
-    background-color: var(--color-info-background) !important;
-    color: var(--color-info) !important;
-  }
-
-  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='member'] {
-    background-color: hsl(var(--muted) / 0.92) !important;
-    color: hsl(var(--muted-foreground)) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='member'] {
-    background-color: hsl(var(--muted) / 0.92) !important;
-    color: hsl(var(--muted-foreground)) !important;
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='member'],
+  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='ended'] {
+    color: #94a3b8 !important;
   }
 
   [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='staff'] {
-    background-color: var(--color-primary-light) !important;
-    color: var(--color-primary) !important;
-  }
-
-  [data-ui-theme='high-tech'] .dark .ui-tag[data-tag-variant='staff'] {
-    background-color: var(--color-primary-light) !important;
-    color: var(--color-primary) !important;
-  }
-
-  [data-ui-theme='high-tech'] .ui-tag[data-tag-variant='ended'] {
-    background-color: hsl(var(--muted) / 0.92) !important;
-    color: hsl(var(--muted-foreground)) !important;
+    color: #818cf8 !important;
   }
 
   /** Catalog color tags — keep API hex on top of tinted card surfaces. */

@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from 'react'
 import { ItemList } from '../components/ItemList'
 import { useListDisplayMode } from './ListDisplayModeContext'
+import { resolveCollectionDisplayMode } from './listDisplayMode'
 import type { CollectionColumnDef, CollectionSortState } from './collectionListTypes'
 import { ItemListCardGrid } from './ItemListCardGrid'
 import { ItemListDataGrid } from './ItemListDataGrid'
@@ -11,8 +12,14 @@ export interface CollectionListViewProps<T> {
   getRowKey: (item: T) => string
   columns: CollectionColumnDef<T>[]
   renderListItem: (item: T) => ReactNode
-  renderCard: (item: T) => ReactNode
+  /** Omit when `cardLayout` is false (text-only collections). */
+  renderCard?: (item: T) => ReactNode
   empty: ReactNode
+  /**
+   * When false, card layout is unavailable; global `card` preference renders as list.
+   * Default true — use false for collections without entity images.
+   */
+  cardLayout?: boolean
   /** Optional external sort state; defaults to internal client sort on current page. */
   sort?: CollectionSortState
   onSortChange?: (next: CollectionSortState) => void
@@ -31,6 +38,7 @@ export function CollectionListView<T>({
   renderListItem,
   renderCard,
   empty,
+  cardLayout = true,
   sort: sortProp,
   onSortChange,
   getGridRowClassName,
@@ -40,7 +48,7 @@ export function CollectionListView<T>({
   cardGridClassName,
   gridClassName,
 }: CollectionListViewProps<T>) {
-  const mode = useListDisplayMode()
+  const mode = resolveCollectionDisplayMode(useListDisplayMode(), cardLayout)
   const internalSort = useClientCollectionSort(items, columns)
   const sort = sortProp ?? internalSort.sort
   const sortedItems = sortProp !== undefined ? items : internalSort.sortedItems
@@ -82,7 +90,7 @@ export function CollectionListView<T>({
     )
   }
 
-  if (mode === 'card') {
+  if (mode === 'card' && cardLayout && renderCard) {
     return (
       <ItemListCardGrid className={cardGridClassName}>
         {rows.map((item) => (

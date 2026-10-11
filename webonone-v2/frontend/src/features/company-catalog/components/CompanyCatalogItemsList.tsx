@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CollectionListView,
@@ -15,9 +15,28 @@ import {
   StatusTag,
 } from '@webonone/ui-kit'
 import { CompanyCatalogAiMenuItem } from './CompanyCatalogAiMenuItem'
+import { CompanyCatalogListItemStockProgress } from './CompanyCatalogListItemStockProgress'
+import { CompanyCatalogProductListVariantStock } from './CompanyCatalogProductListVariantStock'
+import { CompanyCatalogServiceListMeta } from './CompanyCatalogServiceListMeta'
+import { useCompanyProductListStockMeta } from '../hooks/useCompanyProductListStockMeta'
 import type { HydratedCatalogItem } from '../types/companyCatalog.types'
 import type { CatalogEntityKind } from '../types/companyCatalog.types'
 import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
+import {
+  getActiveCompanyProductListLine,
+  resolveCompanyProductListUnitPrice,
+} from '@/features/company-catalog/utils/companyCatalogProductListStockLine'
+import {
+  companyServiceListHasTimeMeta,
+  formatCompanyServiceScheduleSummary,
+  formatCompanyServiceTimeModeLabel,
+  resolveCompanyServiceTimePayload,
+} from '@/features/company-catalog/utils/companyCatalogServiceListDisplay'
+import { formatLkr } from '@/features/sales/utils/formatMoney'
+import type { ProductPickerStockDisplay } from '@/features/sales/utils/resolveProductPickerStockDisplay'
+
+const gridPriceColumnClass = 'text-right tabular-nums'
+const gridStockColumnClass = 'text-right text-muted-foreground'
 
 type CompanyCatalogItemsListProps = {
   items: HydratedCatalogItem[]
@@ -42,6 +61,27 @@ export function CompanyCatalogItemsList({
 }: CompanyCatalogItemsListProps) {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
+  const [selectedVariantByItemId, setSelectedVariantByItemId] = useState<Record<string, string>>({})
+
+  const libraryProductIds = useMemo(
+    () =>
+      kind === 'products'
+        ? items
+            .map((item) => item.libraryEntityId)
+            .filter((id): id is string => typeof id === 'string' && id.length > 0)
+        : [],
+    [kind, items],
+  )
+  const stockByLibraryId = useCompanyProductListStockMeta(libraryProductIds)
+
+  const onSelectVariant = useCallback((catalogItemId: string, variantId: string) => {
+    setSelectedVariantByItemId((prev) => ({ ...prev, [catalogItemId]: variantId }))
+  }, [])
+
+  function stockMetaForItem(item: HydratedCatalogItem): ProductPickerStockDisplay | undefined {
+    if (!item.libraryEntityId) return undefined
+    return stockByLibraryId[item.libraryEntityId]
+  }
 
   const columns = useMemo(
     () => [
@@ -63,6 +103,20 @@ export function CompanyCatalogItemsList({
         ),
       },
       {
+        id: 'description',
+        header: tc('description'),
+        sortable: true,
+        compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) =>
+          (a.displayDescription ?? '').localeCompare(b.displayDescription ?? '', undefined, {
+            sensitivity: 'base',
+          }),
+        cell: (item: HydratedCatalogItem) => (
+          <p className="max-w-[16rem] truncate text-sm text-muted-foreground sm:max-w-xs md:max-w-sm">
+            {item.displayDescription?.trim() ? item.displayDescription : '—'}
+          </p>
+        ),
+      },
+      {
         id: 'binding',
         header: tc('status'),
         cell: (item: HydratedCatalogItem) => (
@@ -74,11 +128,188 @@ export function CompanyCatalogItemsList({
           </div>
         ),
       },
+      ...(kind === 'products'
+        ? [
+            {
+              id: 'variant',
+              header: t('list.selectVariant'),
+              sortable: false,
+              compare: () => 0,
+              cell: (item: HydratedCatalogItem) =>
+                item.libraryEntityId && !item.libraryUnavailable ? (
+                  <div
+                    className="min-w-[8rem]"
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                    role="presentation"
+                  >
+                    <CompanyCatalogProductListVariantStock
+                      catalogItemId={item.id}
+                      meta={stockMetaForItem(item)}
+                      listPrice={item.listPrice}
+                      selectedVariantId={selectedVariantByItemId[item.id]}
+                      onSelectVariant={onSelectVariant}
+                      showPrice={false}
+                      showStock={false}
+                    />
+                  </div>
+                ) : (
+                  '—'
+                ),
+            },
+            {
+              id: 'stock',
+              header: t('list.stock'),
+              align: 'right' as const,
+              sortable: true,
+              compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) => {
+                const qtyA =
+                  getActiveCompanyProductListLine(
+                    stockMetaForItem(a),
+                    selectedVariantByItemId[a.id],
+                  )?.totalQuantity ?? -1
+                const qtyB =
+                  getActiveCompanyProductListLine(
+                    stockMetaForItem(b),
+                    selectedVariantByItemId[b.id],
+                  )?.totalQuantity ?? -1
+                return qtyA - qtyB
+              },
+              className: gridStockColumnClass,
+              headerClassName: gridStockColumnClass,
+              cell: (item: HydratedCatalogItem) => {
+                const line = getActiveCompanyProductListLine(
+                  stockMetaForItem(item),
+                  selectedVariantByItemId[item.id],
+                )
+                if (!line) return '—'
+                return (
+                  <div
+                    className="flex justify-end"
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                    role="presentation"
+                  >
+                    <CompanyCatalogListItemStockProgress
+                      companyProductId={item.id}
+                      variantId={line.variantId}
+                      quantity={line.totalQuantity}
+                      align="end"
+                    />
+                  </div>
+                )
+              },
+            },
+            {
+              id: 'price',
+              header: t('list.price'),
+              align: 'right' as const,
+              sortable: true,
+              compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) => {
+                const priceA =
+                  resolveCompanyProductListUnitPrice(
+                    getActiveCompanyProductListLine(
+                      stockMetaForItem(a),
+                      selectedVariantByItemId[a.id],
+                    ),
+                    a.listPrice,
+                  ) ?? -1
+                const priceB =
+                  resolveCompanyProductListUnitPrice(
+                    getActiveCompanyProductListLine(
+                      stockMetaForItem(b),
+                      selectedVariantByItemId[b.id],
+                    ),
+                    b.listPrice,
+                  ) ?? -1
+                return priceA - priceB
+              },
+              className: gridPriceColumnClass,
+              headerClassName: gridPriceColumnClass,
+              cell: (item: HydratedCatalogItem) => {
+                const price = resolveCompanyProductListUnitPrice(
+                  getActiveCompanyProductListLine(
+                    stockMetaForItem(item),
+                    selectedVariantByItemId[item.id],
+                  ),
+                  item.listPrice,
+                )
+                return price != null ? formatLkr(price) : '—'
+              },
+            },
+          ]
+        : []),
+      ...(kind === 'services'
+        ? [
+            {
+              id: 'timeMode',
+              header: t('detail.time.timeMode'),
+              sortable: true,
+              compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) => {
+                const modeA = resolveCompanyServiceTimePayload(a).timeMode
+                const modeB = resolveCompanyServiceTimePayload(b).timeMode
+                return formatCompanyServiceTimeModeLabel(modeA, t).localeCompare(
+                  formatCompanyServiceTimeModeLabel(modeB, t),
+                  undefined,
+                  { sensitivity: 'base' },
+                )
+              },
+              cell: (item: HydratedCatalogItem) => (
+                <span className="text-sm text-foreground">
+                  {formatCompanyServiceTimeModeLabel(
+                    resolveCompanyServiceTimePayload(item).timeMode,
+                    t,
+                  )}
+                </span>
+              ),
+            },
+            {
+              id: 'schedule',
+              header: t('list.schedule'),
+              sortable: true,
+              compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) =>
+                formatCompanyServiceScheduleSummary(a, t).localeCompare(
+                  formatCompanyServiceScheduleSummary(b, t),
+                  undefined,
+                  { sensitivity: 'base' },
+                ),
+              cell: (item: HydratedCatalogItem) => (
+                <span className="text-sm text-muted-foreground">
+                  {formatCompanyServiceScheduleSummary(item, t)}
+                </span>
+              ),
+            },
+            {
+              id: 'price',
+              header: t('list.price'),
+              align: 'right' as const,
+              sortable: true,
+              compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) =>
+                (a.listPrice ?? -1) - (b.listPrice ?? -1),
+              className: gridPriceColumnClass,
+              headerClassName: gridPriceColumnClass,
+              cell: (item: HydratedCatalogItem) =>
+                item.listPrice != null ? formatLkr(item.listPrice) : '—',
+            },
+          ]
+        : []),
     ],
-    [onOpen, previewMode, t, tc],
+    [kind, onOpen, onSelectVariant, previewMode, selectedVariantByItemId, stockByLibraryId, t, tc],
   )
 
-  function catalogItemDetails(item: HydratedCatalogItem) {
+  function catalogItemDetails(
+    item: HydratedCatalogItem,
+    options?: {
+      showPrice?: boolean
+      showStock?: boolean
+      showVariant?: boolean
+      showServiceMeta?: boolean
+    },
+  ) {
+    const showPrice = options?.showPrice ?? true
+    const showStock = options?.showStock ?? true
+    const showVariant = options?.showVariant ?? true
+    const showServiceMeta = options?.showServiceMeta ?? true
     return (
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -91,13 +322,79 @@ export function CompanyCatalogItemsList({
         {item.displayDescription ? (
           <p className="line-clamp-2 text-sm text-muted-foreground">{item.displayDescription}</p>
         ) : null}
+        {kind === 'products' && item.libraryEntityId && !item.libraryUnavailable && showVariant ? (
+          <CompanyCatalogProductListVariantStock
+            catalogItemId={item.id}
+            meta={stockMetaForItem(item)}
+            listPrice={item.listPrice}
+            selectedVariantId={selectedVariantByItemId[item.id]}
+            onSelectVariant={onSelectVariant}
+            showPrice={showPrice}
+            showStock={showStock}
+          />
+        ) : null}
+        {kind === 'services' && showServiceMeta ? (
+          <CompanyCatalogServiceListMeta item={item} className="mt-2" showPrice={showPrice} />
+        ) : null}
+      </div>
+    )
+  }
+
+  function serviceListAside(item: HydratedCatalogItem) {
+    if (!companyServiceListHasTimeMeta(item) && item.listPrice == null) return null
+
+    return (
+      <div className="ml-auto flex w-fit max-w-[45%] shrink-0 flex-col items-end self-stretch sm:max-w-none">
+        <CompanyCatalogServiceListMeta item={item} align="end" className="mt-auto" />
+      </div>
+    )
+  }
+
+  function productListAside(item: HydratedCatalogItem) {
+    if (!item.libraryEntityId || item.libraryUnavailable) return null
+    const meta = stockMetaForItem(item)
+    const line = getActiveCompanyProductListLine(meta, selectedVariantByItemId[item.id])
+    const unitPrice = resolveCompanyProductListUnitPrice(line, item.listPrice)
+    if (!meta?.lines.length && unitPrice == null) return null
+
+    return (
+      <div className="ml-auto flex w-fit max-w-[45%] shrink-0 flex-col items-end gap-1 self-stretch sm:max-w-none">
+        <CompanyCatalogProductListVariantStock
+          catalogItemId={item.id}
+          meta={meta}
+          listPrice={item.listPrice}
+          selectedVariantId={selectedVariantByItemId[item.id]}
+          onSelectVariant={onSelectVariant}
+          showPrice={false}
+          showStock={false}
+          align="end"
+        />
+        {line ? (
+          <CompanyCatalogListItemStockProgress
+            companyProductId={item.id}
+            variantId={line.variantId}
+            quantity={line.totalQuantity}
+            align="end"
+          />
+        ) : null}
+        {unitPrice != null ? (
+          <span className="mt-auto text-right text-sm font-medium tabular-nums text-foreground">
+            {formatLkr(unitPrice)}
+          </span>
+        ) : null}
       </div>
     )
   }
 
   function rowBody(item: HydratedCatalogItem) {
     return (
-      <div className="flex w-full items-start gap-3">
+      <div
+        className={
+          kind === 'products' || kind === 'services'
+            ? 'flex w-full items-stretch gap-3'
+            : 'flex w-full items-start gap-3'
+        }
+      >
         {showThumbnails ? (
           <ImagePreview
             src={firstGalleryImageUrl(item.displayGalleryImages)}
@@ -105,8 +402,55 @@ export function CompanyCatalogItemsList({
             className={itemListThumbClassName}
           />
         ) : null}
-        {catalogItemDetails(item)}
+        {catalogItemDetails(item, {
+          showPrice: false,
+          showStock: false,
+          showVariant: false,
+          showServiceMeta: false,
+        })}
+        {kind === 'products' ? productListAside(item) : null}
+        {kind === 'services' ? serviceListAside(item) : null}
       </div>
+    )
+  }
+
+  function productCardVariantStock(item: HydratedCatalogItem) {
+    if (!item.libraryEntityId || item.libraryUnavailable) return null
+    const meta = stockMetaForItem(item)
+    const line = getActiveCompanyProductListLine(meta, selectedVariantByItemId[item.id])
+    if (!meta?.lines.length && !line) return null
+
+    return (
+      <div className="mt-2 flex w-full min-w-0 flex-col items-stretch gap-2 self-stretch">
+        <CompanyCatalogProductListVariantStock
+          catalogItemId={item.id}
+          meta={meta}
+          listPrice={item.listPrice}
+          selectedVariantId={selectedVariantByItemId[item.id]}
+          onSelectVariant={onSelectVariant}
+          showPrice={false}
+          showStock={(meta?.lines.length ?? 0) > 0}
+          fullWidth
+          stockSize="full"
+          align="start"
+        />
+      </div>
+    )
+  }
+
+  function productCardPrice(item: HydratedCatalogItem) {
+    if (!item.libraryEntityId || item.libraryUnavailable) return null
+    const line = getActiveCompanyProductListLine(
+      stockMetaForItem(item),
+      selectedVariantByItemId[item.id],
+    )
+    const unitPrice = resolveCompanyProductListUnitPrice(line, item.listPrice)
+    if (unitPrice == null) return null
+
+    return (
+      <p className="mt-auto pt-2 text-right text-sm font-medium tabular-nums text-foreground">
+        {formatLkr(unitPrice)}
+      </p>
     )
   }
 
@@ -169,11 +513,35 @@ export function CompanyCatalogItemsList({
       )}
       renderCard={(item) => (
         <ItemListCollectionCard
+          className={kind === 'products' || kind === 'services' ? 'h-full' : undefined}
           image={catalogCardImage(item)}
           menu={renderRowMenu(item)}
           onBodyClick={previewMode ? undefined : () => onOpen(item.id)}
         >
-          {catalogItemDetails(item)}
+          <div className="flex h-full min-h-[7.5rem] w-full flex-col items-stretch">
+            {catalogItemDetails(item, {
+              showPrice: false,
+              showStock: false,
+              showVariant: false,
+              showServiceMeta: false,
+            })}
+            {kind === 'products' ? (
+              <div className="flex w-full min-w-0 flex-1 flex-col items-stretch">
+                {productCardVariantStock(item)}
+              </div>
+            ) : null}
+            {kind === 'services' ? (
+              <div className="flex w-full min-w-0 flex-1 flex-col items-stretch">
+                <CompanyCatalogServiceListMeta item={item} className="mt-2 flex-1" showPrice={false} />
+              </div>
+            ) : null}
+            {kind === 'products' ? productCardPrice(item) : null}
+            {kind === 'services' && item.listPrice != null ? (
+              <p className="mt-auto pt-2 text-right text-sm font-medium tabular-nums text-foreground">
+                {formatLkr(item.listPrice)}
+              </p>
+            ) : null}
+          </div>
         </ItemListCollectionCard>
       )}
     />

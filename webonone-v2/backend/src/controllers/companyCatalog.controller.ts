@@ -3,6 +3,7 @@ import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as catalogService from '../services/companyCatalog.service.js'
+import * as variantStockLimitsService from '../services/companyProductVariantStockLimits.service.js'
 import * as memberCatalogBookingService from '../services/memberCatalogBooking.service.js'
 
 function handleServiceError(err: unknown, res: Response) {
@@ -445,6 +446,58 @@ export async function deleteCatalog(req: CompanyAdminSessionRequest, res: Respon
       String(req.params.id),
     )
     res.status(204).send()
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function listProductVariantStockLimits(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const result = await variantStockLimitsService.listProductVariantStockLimits(
+      session.userId,
+      session.companyId,
+      String(req.params.productId),
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getProductVariantStockLimits(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const result = await variantStockLimitsService.getProductVariantStockLimits(
+      session.userId,
+      session.companyId,
+      String(req.params.productId),
+      String(req.params.variantId),
+    )
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function upsertProductVariantStockLimits(
+  req: CompanyAdminSessionRequest,
+  res: Response,
+) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const result = await variantStockLimitsService.upsertProductVariantStockLimits(
+      session.userId,
+      session.companyId,
+      String(req.params.productId),
+      String(req.params.variantId),
+      req.body.minQuantity,
+      req.body.maxQuantity,
+    )
+    res.json(result)
   } catch (err) {
     handleServiceError(err, res)
   }
