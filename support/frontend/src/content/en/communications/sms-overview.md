@@ -11,4 +11,4 @@ Open **SMS** in the left menu. Sub-pages typically include **Dashboard** (first)
 
 Delivery uses either a registered phone ([mobile gateway](/docs/communications/mobile-gateway)) or a configured SMS provider (Text.lk).
 
-Company owners and Super Admins see an **SMS Credits** card with remaining Text.lk credits (and refresh) on both the app [Dashboard](/docs/app-preferences/dashboard) and **SMS → Dashboard**. If Text.lk is not set up, the card links to [Devices and gateway settings](/docs/communications/sms-devices).
+Company owners and Super Admins see an **SMS Credits** card with remaining Text.lk credits (and refresh) on both the app [Dashboard](/docs/app-preferences/dashboard) and **SMS → Dashboard** when Text.lk is set up. If Text.lk is not set up, the card is not shown. Configure Text.lk under [Devices and gateway settings](/docs/communications/sms-devices).

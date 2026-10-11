@@ -92,7 +92,7 @@ export function DashboardPage() {
             )}
           </div>
 
-          {canViewCredits ? (
+          {canViewCredits && smsCredits.configured !== false ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <SmsCreditsCard
                 status={smsCredits.status}
