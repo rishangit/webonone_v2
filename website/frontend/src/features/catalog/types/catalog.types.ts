@@ -31,6 +31,21 @@ export type CatalogSearchResult = {
   pageSize: number
 }
 
+export type NearbyCompanyGroup = {
+  id: string
+  name: string
+  description: string | null
+  imageUrl: string | null
+  distanceKm: number
+  latitude: number
+  longitude: number
+  items: CatalogSearchItem[]
+}
+
+export type NearbyCatalogResult = {
+  companies: NearbyCompanyGroup[]
+}
+
 export type CatalogPublicReviewItem = {
   id: string
   rating: number

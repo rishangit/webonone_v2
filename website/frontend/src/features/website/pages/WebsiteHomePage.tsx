@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button, SearchInput } from '@webonone/ui-kit'
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
+import { NearbyHomeSection } from '@/features/website/components/NearbyHomeSection'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
 
 export function WebsiteHomePage() {
@@ -38,56 +39,34 @@ export function WebsiteHomePage() {
         onNotNow={dismissPermissionPrompt}
       />
 
-      <section className="relative flex min-h-[min(70vh,36rem)] flex-1 flex-col overflow-hidden px-4 pb-16 pt-0 sm:px-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--accent-primary)/0.18),_transparent_55%),linear-gradient(160deg,_hsl(var(--background))_0%,_hsl(var(--muted)/0.45)_50%,_hsl(var(--background))_100%)]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:radial-gradient(hsl(var(--foreground)/0.08)_1px,transparent_1px)] [background-size:18px_18px]"
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-4 sm:px-8 sm:py-6">
+        <CurrentLocationBar
+          coords={coords}
+          placeLabel={placeLabel}
+          status={locationStatus}
+          source={locationSource}
+          permissionDenied={permissionDenied}
+          showPermissionPrompt={showPermissionPrompt}
+          onOpenPermissionPrompt={openPermissionPrompt}
+          onRetry={requestLocation}
         />
 
-        <div className="relative z-10">
-          <CurrentLocationBar
-            coords={coords}
-            placeLabel={placeLabel}
-            status={locationStatus}
-            source={locationSource}
-            permissionDenied={permissionDenied}
-            showPermissionPrompt={showPermissionPrompt}
-            onOpenPermissionPrompt={openPermissionPrompt}
-            onRetry={requestLocation}
+        <form className="flex w-full flex-col gap-3 sm:flex-row sm:items-stretch" onSubmit={handleSubmit}>
+          <SearchInput
+            className="flex-1"
+            value={draftQuery}
+            onChange={(event) => setDraftQuery(event.target.value)}
+            onClear={() => setDraftQuery('')}
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchAria')}
           />
-        </div>
+          <Button type="submit" disabled={!draftQuery.trim()}>
+            {t('cta')}
+          </Button>
+        </form>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-start pt-10 text-center sm:pt-14">
-          <p className="mb-3 text-sm font-medium tracking-wide text-muted-foreground">{t('brand')}</p>
-          <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            {t('headline')}
-          </h1>
-          <p className="mt-3 max-w-lg text-pretty text-sm text-muted-foreground sm:text-base">
-            {t('subtitle')}
-          </p>
-
-          <form
-            className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:items-stretch"
-            onSubmit={handleSubmit}
-          >
-            <SearchInput
-              className="flex-1"
-              value={draftQuery}
-              onChange={(event) => setDraftQuery(event.target.value)}
-              onClear={() => setDraftQuery('')}
-              placeholder={t('searchPlaceholder')}
-              aria-label={t('searchAria')}
-            />
-            <Button type="submit" disabled={!draftQuery.trim()}>
-              {t('cta')}
-            </Button>
-          </form>
-        </div>
-      </section>
+        <NearbyHomeSection coords={coords} locationStatus={locationStatus} />
+      </div>
     </div>
   )
 }

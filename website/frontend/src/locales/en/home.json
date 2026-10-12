@@ -5,5 +5,15 @@
   "subtitle": "Everything you need from businesses around you, all in one place.",
   "searchPlaceholder": "Search by name, description, or tag…",
   "searchAria": "Search catalog",
-  "cta": "Search"
+  "cta": "Search",
+  "nearbyHeading": "Near you",
+  "nearbyLoading": "Loading nearby items…",
+  "nearbyEmpty": "No nearby companies with listed items yet.",
+  "nearbyNeedsLocation": "Allow location to see companies, products, services, and spaces near you.",
+  "nearbyFailed": "Could not load nearby items.",
+  "product": "Product",
+  "service": "Service",
+  "spaceKind": "Space",
+  "metersAway": "{{meters}} m away",
+  "kmAway": "{{km}} km away"
 }

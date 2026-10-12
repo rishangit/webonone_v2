@@ -11,11 +11,14 @@ import * as dataReviewsClient from '../clients/dataReviewsClient.js'
 import {
   findApprovedCompanyCatalogById,
   isSellableCatalogKind,
+  listApprovedCatalogByCompanyIds,
+  listApprovedCompaniesWithCoordinates,
   parseGalleryImages,
   parseTagIds,
   searchApprovedCompanyCatalog,
   type PublicCatalogSearchRow,
 } from '../repositories/publicCatalogSearch.repository.js'
+import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import { buildWindowSessionItems, parseSessionDateRange } from './companyEvent.service.js'
 import { distanceKm, parseLatLng, toFiniteNumber } from '../utils/geo.js'
 
@@ -86,6 +89,9 @@ type HydratedCatalogItem = Omit<
 }
 
 const KINDS: CatalogKind[] = ['products', 'services', 'spaces']
+const NEARBY_COMPANY_LIMIT = 8
+const NEARBY_CANDIDATE_LIMIT = 40
+const NEARBY_ITEMS_PER_COMPANY = 12
 
 const REVIEW_ENTITY_KIND: Record<CatalogKind, 'product' | 'service' | 'space'> = {
   products: 'product',
@@ -467,4 +473,86 @@ export async function listPublicServiceSessions(options: {
 
   const items = await buildWindowSessionItems(row.company_id, serviceId, range.from, range.to)
   return { items }
+}
+
+export type NearbyCompanyGroup = {
+  id: string
+  name: string
+  description: string | null
+  imageUrl: string | null
+  distanceKm: number
+  latitude: number
+  longitude: number
+  items: PublicCatalogSearchItem[]
+}
+
+export type NearbyCatalogResult = {
+  companies: NearbyCompanyGroup[]
+}
+
+/** Closest approved companies that have sellable items, nearest first. */
+export async function listNearbyPublicCatalog(origin: {
+  lat: number
+  lng: number
+}): Promise<NearbyCatalogResult> {
+  const companies = await listApprovedCompaniesWithCoordinates()
+  const ranked: Array<{
+    id: string
+    name: string
+    description: string | null
+    logoUrl: string | null
+    latitude: number
+    longitude: number
+    distanceKm: number
+  }> = []
+
+  for (const row of companies) {
+    const latitude = toFiniteNumber(row.latitude)
+    const longitude = toFiniteNumber(row.longitude)
+    if (latitude == null || longitude == null) continue
+    ranked.push({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      logoUrl: row.logo_url,
+      latitude,
+      longitude,
+      distanceKm: Math.round(distanceKm(origin.lat, origin.lng, latitude, longitude) * 10) / 10,
+    })
+  }
+
+  ranked.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name))
+  const candidates = ranked.slice(0, NEARBY_CANDIDATE_LIMIT)
+  const rows = await listApprovedCatalogByCompanyIds(candidates.map((company) => company.id))
+  const hydrated = await hydrateRows(rows)
+  const itemsWithDistance = withDistance(hydrated, origin)
+
+  const itemsByCompany = new Map<string, PublicCatalogSearchItem[]>()
+  for (const item of itemsWithDistance) {
+    const list = itemsByCompany.get(item.companyId) ?? []
+    list.push(item)
+    itemsByCompany.set(item.companyId, list)
+  }
+
+  const groups: NearbyCompanyGroup[] = []
+  for (const company of candidates) {
+    const companyItems = itemsByCompany.get(company.id)
+    if (!companyItems || companyItems.length === 0) continue
+    companyItems.sort(
+      (a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name),
+    )
+    groups.push({
+      id: company.id,
+      name: company.name,
+      description: company.description,
+      imageUrl: rewriteOptionalMediaFileUrl(company.logoUrl),
+      distanceKm: company.distanceKm,
+      latitude: company.latitude,
+      longitude: company.longitude,
+      items: companyItems.slice(0, NEARBY_ITEMS_PER_COMPANY),
+    })
+    if (groups.length >= NEARBY_COMPANY_LIMIT) break
+  }
+
+  return { companies: groups }
 }

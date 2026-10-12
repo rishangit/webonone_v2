@@ -187,3 +187,57 @@ export async function findApprovedCompanyCatalogById(
   if (!row) return null
   return { ...row, kind }
 }
+
+export type NearbyCompanyRow = {
+  id: string
+  name: string
+  description: string | null
+  logo_url: string | null
+  latitude: string | number | null
+  longitude: string | number | null
+}
+
+/** Approved companies that have a map pin (nearby home listing). */
+export async function listApprovedCompaniesWithCoordinates(): Promise<NearbyCompanyRow[]> {
+  const rows = (await db('companies')
+    .where('status', 'approved')
+    .whereNotNull('latitude')
+    .whereNotNull('longitude')
+    .select('id', 'name', 'description', 'logo_url', 'latitude', 'longitude')) as NearbyCompanyRow[]
+  return rows
+}
+
+/**
+ * Sellable catalog rows for the given approved companies.
+ * Same binding rules as text search.
+ */
+export async function listApprovedCatalogByCompanyIds(
+  companyIds: string[],
+): Promise<PublicCatalogSearchRow[]> {
+  if (companyIds.length === 0) return []
+
+  const rows: PublicCatalogSearchRow[] = []
+  for (const kind of SELLABLE_KINDS) {
+    const table = CATALOG_TABLE_BY_KIND[kind]
+    const query = db(`${table} as item`)
+      .join('companies as company', 'company.id', 'item.company_id')
+      .whereIn('item.company_id', companyIds)
+      .where('company.status', 'approved')
+      .andWhere(function sellable() {
+        this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
+          this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(
+            'item.status',
+            'verified',
+          )
+        })
+      })
+      .select(...BASE_ITEM_SELECT, ...(kind === 'services' ? SERVICE_TIME_SELECT : []))
+
+    const kindRows = (await query) as Array<Omit<PublicCatalogSearchRow, 'kind'>>
+    for (const row of kindRows) {
+      rows.push({ ...row, kind })
+    }
+  }
+
+  return rows
+}

@@ -18,6 +18,17 @@ export async function searchCatalog(req: Request, res: Response) {
   res.json(result)
 }
 
+export async function listNearbyCatalog(req: Request, res: Response) {
+  const lat = typeof req.query.lat === 'string' ? req.query.lat : ''
+  const lng = typeof req.query.lng === 'string' ? req.query.lng : ''
+  if (!lat || !lng) {
+    res.status(400).json({ message: 'Latitude and longitude are required', code: 'VALIDATION' })
+    return
+  }
+  const result = await webononeCatalogClient.listNearbyCatalog({ lat, lng })
+  res.json(result)
+}
+
 export async function getCatalogItem(req: Request, res: Response) {
   const kind = typeof req.params.kind === 'string' ? req.params.kind : ''
   const id = typeof req.params.id === 'string' ? req.params.id : ''

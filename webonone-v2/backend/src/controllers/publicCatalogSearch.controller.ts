@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import * as publicCatalogBookingService from '../services/publicCatalogBooking.service.js'
 import * as publicCatalogSearchService from '../services/publicCatalogSearch.service.js'
+import { parseLatLng } from '../utils/geo.js'
 
 function handleServiceError(err: unknown, res: Response) {
   const statusCode = (err as Error & { statusCode?: number }).statusCode ?? 500
@@ -28,6 +29,19 @@ export async function searchCatalog(req: Request, res: Response) {
     lat: req.query.lat,
     lng: req.query.lng,
   })
+  res.json(result)
+}
+
+export async function listNearbyCatalog(req: Request, res: Response) {
+  const origin = parseLatLng({ lat: req.query.lat, lng: req.query.lng })
+  if (!origin) {
+    res.status(400).json({
+      message: 'Latitude and longitude are required',
+      code: 'REQUEST_FAILED',
+    })
+    return
+  }
+  const result = await publicCatalogSearchService.listNearbyPublicCatalog(origin)
   res.json(result)
 }
 

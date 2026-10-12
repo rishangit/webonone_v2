@@ -14,6 +14,13 @@ router.get(
   publicCatalogSearchController.searchCatalog,
 )
 
+/** Closest companies and their sellable items for the public website home. */
+router.get(
+  '/internal/catalog/nearby',
+  requireInternalAuth,
+  publicCatalogSearchController.listNearbyCatalog,
+)
+
 /** Upcoming Specific-time sessions for a marketplace service. */
 router.get(
   '/internal/catalog/services/:id/sessions',

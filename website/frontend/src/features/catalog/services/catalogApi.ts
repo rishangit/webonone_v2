@@ -3,6 +3,7 @@ import type {
   CatalogKind,
   CatalogPublicReviewListResult,
   CatalogSearchResult,
+  NearbyCatalogResult,
   CatalogSessionItem,
   SessionTokenItem,
 } from '../types/catalog.types'
@@ -38,6 +39,20 @@ export const catalogApi = {
       throw new Error(data.message ?? 'Search failed')
     }
     return data as CatalogSearchResult
+  },
+
+  async nearby(query: { lat: number; lng: number }): Promise<NearbyCatalogResult> {
+    const params = new URLSearchParams()
+    params.set('lat', String(query.lat))
+    params.set('lng', String(query.lng))
+    const res = await fetch(`${API_BASE}/catalog/nearby?${params.toString()}`, {
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const data = (await res.json().catch(() => ({}))) as { message?: string } & Partial<NearbyCatalogResult>
+    if (!res.ok) {
+      throw new Error(data.message ?? 'Failed to load nearby items')
+    }
+    return data as NearbyCatalogResult
   },
 
   async getById(

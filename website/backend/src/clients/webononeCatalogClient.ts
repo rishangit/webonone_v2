@@ -64,6 +64,36 @@ export type CatalogSearchResult = {
 
 
 
+export type NearbyCompanyGroup = {
+
+  id: string
+
+  name: string
+
+  description: string | null
+
+  imageUrl: string | null
+
+  distanceKm: number
+
+  latitude: number
+
+  longitude: number
+
+  items: CatalogSearchItem[]
+
+}
+
+
+
+export type NearbyCatalogResult = {
+
+  companies: NearbyCompanyGroup[]
+
+}
+
+
+
 export type CatalogSessionItem = {
 
   eventId: string
@@ -245,6 +275,56 @@ export async function searchCatalog(query: {
 
 
   return (await res.json()) as CatalogSearchResult
+
+}
+
+
+
+/** Proxy nearby home listing to WebOnOne internal catalog API. */
+
+export async function listNearbyCatalog(query: {
+
+  lat: string | number
+
+  lng: string | number
+
+}): Promise<NearbyCatalogResult> {
+
+  const params = new URLSearchParams()
+
+  params.set('lat', String(query.lat))
+
+  params.set('lng', String(query.lng))
+
+
+
+  const url = `${apiBase()}/api/v1/internal/catalog/nearby?${params.toString()}`
+
+  const res = await fetch(url, {
+
+    headers: {
+
+      'X-WebOnOne-Service-Key': requireServiceKey(),
+
+      'Content-Type': 'application/json',
+
+    },
+
+  })
+
+
+
+  if (!res.ok) {
+
+    const message = await parseErrorMessage(res, `WebOnOne nearby catalog failed (${res.status})`)
+
+    throw Object.assign(new Error(message), { statusCode: mapUpstreamStatus(res.status) })
+
+  }
+
+
+
+  return (await res.json()) as NearbyCatalogResult
 
 }
 

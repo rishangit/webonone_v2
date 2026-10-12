@@ -6,6 +6,9 @@ const router = Router()
 /** Anonymous public catalog search (BFF → WebOnOne internal). */
 router.get('/catalog/search', catalogSearchController.searchCatalog)
 
+/** Nearby companies and sellable items for the public home page. */
+router.get('/catalog/nearby', catalogSearchController.listNearbyCatalog)
+
 /** Upcoming Specific-time sessions for a marketplace service. */
 router.get('/catalog/services/:id/sessions', catalogSearchController.listServiceSessions)
 
