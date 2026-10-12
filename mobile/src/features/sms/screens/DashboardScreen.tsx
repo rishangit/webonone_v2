@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { useRouter } from 'expo-router'
 import {
   Body,
   Button,
@@ -47,7 +46,6 @@ function StatCard({ title, value }: { title: string; value: number | string }) {
 
 export function DashboardScreen() {
   const { t, i18n } = useTranslation('smsShell')
-  const router = useRouter()
   const { user } = useSession()
   const canViewCredits = user?.role === 'super_admin' || user?.role === 'company_admin'
 
@@ -119,7 +117,7 @@ export function DashboardScreen() {
         </View>
       ) : null}
 
-      {canViewCredits ? (
+      {canViewCredits && credits?.configured !== false ? (
         <Card className="mt-4 gap-2 p-4">
           <View className="flex-row items-start justify-between gap-2">
             <Muted className="text-sm">{t('smsCreditsTitle')}</Muted>
@@ -144,15 +142,6 @@ export function DashboardScreen() {
               <Body>{t('smsCreditsError')}</Body>
               <Button size="sm" variant="outline" onPress={() => void loadCredits(true)}>
                 {t('smsCreditsRetry')}
-              </Button>
-            </>
-          ) : null}
-
-          {!creditsError && credits?.configured === false ? (
-            <>
-              <Body>{t('smsCreditsNotConfigured')}</Body>
-              <Button size="sm" variant="outline" onPress={() => router.push('/sms/devices')}>
-                {t('smsCreditsConfigure')}
               </Button>
             </>
           ) : null}

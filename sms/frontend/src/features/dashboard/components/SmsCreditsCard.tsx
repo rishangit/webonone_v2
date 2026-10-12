@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { RefreshCw } from 'lucide-react'
 import {
@@ -23,8 +22,6 @@ interface SmsCreditsCardProps {
   error: string | null
   hasLoaded: boolean
   onRefresh: () => void
-  /** When set (platform embed), Configure navigates the parent shell instead of an in-iframe Link. */
-  onConfigure?: () => void
   /** Stretch the card to fill the embed iframe (WebOnOne home dashboard widget). */
   fillHeight?: boolean
   className?: string
@@ -38,7 +35,6 @@ export function SmsCreditsCard({
   error,
   hasLoaded,
   onRefresh,
-  onConfigure,
   fillHeight = false,
   className,
 }: SmsCreditsCardProps) {
@@ -52,6 +48,10 @@ export function SmsCreditsCard({
     hasLoaded,
   })
   const refreshing = status === 'loading' && hasLoaded
+
+  if (view.kind === 'not_configured') {
+    return null
+  }
 
   const relative = formatRelativeUpdated(lastUpdated)
   const formattedBalance =
@@ -91,21 +91,6 @@ export function SmsCreditsCard({
             <Spinner size="sm" />
             <span>{t('smsCreditsLoading')}</span>
           </div>
-        ) : null}
-
-        {view.kind === 'not_configured' ? (
-          <>
-            <p className="text-base font-medium">{t('smsCreditsNotConfigured')}</p>
-            {onConfigure ? (
-              <Button type="button" variant="outline" className="h-10" onClick={onConfigure}>
-                {t('smsCreditsConfigure')}
-              </Button>
-            ) : (
-              <Button asChild variant="outline" className="h-10">
-                <Link to="/devices?tab=settings">{t('smsCreditsConfigure')}</Link>
-              </Button>
-            )}
-          </>
         ) : null}
 
         {view.kind === 'error' ? (
