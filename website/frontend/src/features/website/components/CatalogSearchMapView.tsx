@@ -7,12 +7,23 @@ import { getGoogleMapsApiKey } from '@/features/website/utils/googleMapsConfig'
 
 type LatLng = { lat: number; lng: number }
 
+export type CatalogMapCompany = {
+  id: string
+  name: string
+  description?: string | null
+  latitude: number
+  longitude: number
+  distanceKm: number
+}
+
 type CatalogSearchMapViewProps = {
   items: CatalogSearchItem[]
+  /** Nearest company pins when browsing the map without a search query. */
+  companies?: CatalogMapCompany[]
   userCoords: UserLocationCoords | null
   /** `fullscreen` fills the parent; `embedded` is a bordered inset card. */
   variant?: 'embedded' | 'fullscreen'
-  /** `${kind}-${id}` of the item to center and open on the map. */
+  /** Catalog `${kind}-${id}` or company `company-${id}` to center and open. */
   focusKey?: string | null
 }
 
@@ -127,6 +138,21 @@ function formatDistanceKm(
   return t('kmAway', { km: distanceKm.toFixed(1) })
 }
 
+function companyInfoWindowHtml(
+  company: CatalogMapCompany,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
+  const distance = `<div style="margin-top:4px;color:#666;font-size:12px">${formatDistanceKm(company.distanceKm, t)}</div>`
+  const searchHref = `/?q=${encodeURIComponent(company.name)}`
+  return `<div style="max-width:220px;padding:2px 0">
+    <div style="font-weight:600;font-size:13px">${escapeHtml(company.name)}</div>
+    ${distance}
+    <div style="margin-top:8px">
+      <a href="${searchHref}" style="font-size:12px;font-weight:600;color:#111;text-decoration:underline">${escapeHtml(t('viewCompanyListings'))}</a>
+    </div>
+  </div>`
+}
+
 function infoWindowHtml(
   item: CatalogSearchItem,
   t: (key: string, options?: Record<string, string>) => string,
@@ -156,6 +182,7 @@ function escapeHtml(value: string): string {
 
 export function CatalogSearchMapView({
   items,
+  companies = [],
   userCoords,
   variant = 'fullscreen',
   focusKey = null,
@@ -180,10 +207,27 @@ export function CatalogSearchMapView({
     [items],
   )
 
+  const mappableCompanies = useMemo(
+    () =>
+      companies.filter(
+        (company) =>
+          Number.isFinite(company.latitude) && Number.isFinite(company.longitude),
+      ),
+    [companies],
+  )
+
   const focusItem = useMemo(
     () => (focusKey ? mappableItems.find((item) => `${item.kind}-${item.id}` === focusKey) : undefined),
     [focusKey, mappableItems],
   )
+
+  const focusCompany = useMemo(() => {
+    if (!focusKey?.startsWith('company-')) return undefined
+    const id = focusKey.slice('company-'.length)
+    return mappableCompanies.find((company) => company.id === id)
+  }, [focusKey, mappableCompanies])
+
+  const hasMapContent = mappableItems.length > 0 || mappableCompanies.length > 0 || userCoords != null
 
   useEffect(() => {
     if (!apiKey) return
@@ -202,19 +246,21 @@ export function CatalogSearchMapView({
 
   useEffect(() => {
     if (!ready || !apiKey || !mapRef.current || !window.google?.maps) return
-    if (mappableItems.length === 0 && !userCoords) return
+    if (!hasMapContent) return
 
     const maps = window.google.maps
     const initialCenter = focusItem
       ? { lat: focusItem.latitude as number, lng: focusItem.longitude as number }
-      : (userCoords ?? {
-          lat: mappableItems[0]?.latitude ?? 0,
-          lng: mappableItems[0]?.longitude ?? 0,
-        })
+      : focusCompany
+        ? { lat: focusCompany.latitude, lng: focusCompany.longitude }
+        : (userCoords ?? {
+            lat: mappableCompanies[0]?.latitude ?? mappableItems[0]?.latitude ?? 0,
+            lng: mappableCompanies[0]?.longitude ?? mappableItems[0]?.longitude ?? 0,
+          })
 
     const map = new maps.Map(mapRef.current, {
       center: initialCenter,
-      zoom: focusItem ? 15 : 12,
+      zoom: focusItem || focusCompany ? 15 : 12,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: true,
@@ -225,6 +271,27 @@ export function CatalogSearchMapView({
     const markers: Array<{ setMap: (map: unknown) => void }> = []
     let focusMarker: { addListener: (event: string, handler: () => void) => void } | null = null
     let focusContent: string | null = null
+
+    for (const company of mappableCompanies) {
+      const position = { lat: company.latitude, lng: company.longitude }
+      const marker = new maps.Marker({
+        map,
+        position,
+        title: company.name,
+      })
+      const content = companyInfoWindowHtml(company, t)
+      marker.addListener('click', () => {
+        infoWindow.setContent(content)
+        infoWindow.open({ map, anchor: marker })
+      })
+      bounds.extend(position)
+      markers.push(marker)
+
+      if (focusCompany && company.id === focusCompany.id) {
+        focusMarker = marker
+        focusContent = content
+      }
+    }
 
     for (const item of mappableItems) {
       const position = { lat: item.latitude as number, lng: item.longitude as number }
@@ -271,11 +338,18 @@ export function CatalogSearchMapView({
       markers.push(userMarker)
     }
 
-    if (focusItem && focusMarker && focusContent) {
-      map.setCenter({
-        lat: focusItem.latitude as number,
-        lng: focusItem.longitude as number,
-      })
+    if ((focusItem || focusCompany) && focusMarker && focusContent) {
+      if (focusItem) {
+        map.setCenter({
+          lat: focusItem.latitude as number,
+          lng: focusItem.longitude as number,
+        })
+      } else if (focusCompany) {
+        map.setCenter({
+          lat: focusCompany.latitude,
+          lng: focusCompany.longitude,
+        })
+      }
       map.setZoom(15)
       infoWindow.setContent(focusContent)
       infoWindow.open({ map, anchor: focusMarker })
@@ -290,7 +364,18 @@ export function CatalogSearchMapView({
         marker.setMap(null)
       }
     }
-  }, [ready, apiKey, mappableItems, userCoords, focusItem, t, ts])
+  }, [
+    ready,
+    apiKey,
+    mappableItems,
+    mappableCompanies,
+    userCoords,
+    focusItem,
+    focusCompany,
+    hasMapContent,
+    t,
+    ts,
+  ])
 
   if (!apiKey) {
     return (
@@ -308,7 +393,7 @@ export function CatalogSearchMapView({
     )
   }
 
-  if (mappableItems.length === 0) {
+  if (!hasMapContent) {
     return (
       <div className={isFullscreen ? 'flex h-full items-center justify-center bg-muted/40 p-6' : undefined}>
         <ItemListEmpty>{t('noMapLocations')}</ItemListEmpty>

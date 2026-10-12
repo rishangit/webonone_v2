@@ -7,7 +7,7 @@ import { ClearSessionPage } from '@/features/auth/pages/ClearSessionPage'
 import { WebsiteLoginPage } from '@/features/auth/pages/WebsiteLoginPage'
 import { WebsiteLayout } from '@/app/WebsiteLayout'
 import { CatalogDetailPage } from '@/features/website/pages/CatalogDetailPage'
-import { CatalogSearchPage } from '@/features/website/pages/CatalogSearchPage'
+import { CatalogSearchRedirectPage } from '@/features/website/pages/CatalogSearchRedirectPage'
 import { WebsiteHomePage } from '@/features/website/pages/WebsiteHomePage'
 
 export function App() {
@@ -19,7 +19,7 @@ export function App() {
           <Routes>
             <Route element={<WebsiteLayout />}>
               <Route index element={<WebsiteHomePage />} />
-              <Route path="search" element={<CatalogSearchPage />} />
+              <Route path="search" element={<CatalogSearchRedirectPage />} />
               <Route path="catalog/:kind/:id" element={<CatalogDetailPage />} />
               <Route path="*" element={<WebsiteHomePage />} />
             </Route>

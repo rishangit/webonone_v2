@@ -29,6 +29,7 @@ export type DataLibraryCatalogItem = {
   name: string
   description: string | null
   status: string
+  referenceCount?: number
   tags: DataTagSummary[]
   galleryImages?: DataLibraryGalleryImage[]
   /** Present on services from Data catalog DTO. */

@@ -20,6 +20,8 @@ export type CatalogSearchItem = {
 
   companyName: string
 
+  companyImageUrl: string | null
+
   tags: Array<{ id: string; name: string; color?: string }>
 
   imageUrl: string | null
@@ -30,13 +32,9 @@ export type CatalogSearchItem = {
 
   longitude: number | null
 
-}
+  referenceCount: number
 
-
-
-export type CatalogDetailItem = CatalogSearchItem & {
-
-  galleryImages: Array<{ mediaId: string; url: string }>
+  listPrice: number | null
 
   timeMode?: 'duration' | 'window' | null
 
@@ -45,6 +43,14 @@ export type CatalogDetailItem = CatalogSearchItem & {
   startTime?: string | null
 
   endTime?: string | null
+
+}
+
+
+
+export type CatalogDetailItem = CatalogSearchItem & {
+
+  galleryImages: Array<{ mediaId: string; url: string }>
 
 }
 

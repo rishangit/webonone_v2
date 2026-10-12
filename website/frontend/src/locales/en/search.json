@@ -60,6 +60,7 @@
   "kmAway": "{{km}} km away",
   "viewInMap": "View in map",
   "viewDetails": "View details",
+  "viewCompanyListings": "View listings",
   "searchHint": "Search products, services, and spaces from companies on WebOnOne.",
   "noMatching": "No matching offerings found. Try another search.",
   "locationUnavailableNote": "Location unavailable — results are sorted by name. Enable location above to see distance.",

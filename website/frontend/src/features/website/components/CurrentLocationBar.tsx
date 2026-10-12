@@ -92,7 +92,7 @@ export function CurrentLocationBar({
 
   return (
     <div className="bg-transparent py-1">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
+      <div className="flex w-full items-center justify-between gap-3">
         <p className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-foreground">
           <span className="shrink-0 font-medium text-muted-foreground">{t('currentLocation')}</span>
           {showRefresh ? (

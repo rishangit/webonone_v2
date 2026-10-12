@@ -18,6 +18,7 @@ import {
   searchApprovedCompanyCatalog,
   type PublicCatalogSearchRow,
 } from '../repositories/publicCatalogSearch.repository.js'
+import { parseMoney } from '../repositories/companyCatalog.repository.js'
 import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import { buildWindowSessionItems, parseSessionDateRange } from './companyEvent.service.js'
 import { distanceKm, parseLatLng, toFiniteNumber } from '../utils/geo.js'
@@ -34,20 +35,23 @@ export type PublicCatalogSearchItem = {
   description: string | null
   companyId: string
   companyName: string
+  companyImageUrl: string | null
   tags: Array<{ id: string; name: string; color?: string }>
   imageUrl: string | null
   distanceKm: number | null
   latitude: number | null
   longitude: number | null
-}
-
-export type PublicCatalogDetailItem = PublicCatalogSearchItem & {
-  galleryImages: PublicCatalogGalleryImage[]
-  /** Services only. */
+  referenceCount: number
+  listPrice: number | null
+  /** Services only — omitted for products and spaces when unset. */
   timeMode?: 'duration' | 'window' | null
   durationMinutes?: number | null
   startTime?: string | null
   endTime?: string | null
+}
+
+export type PublicCatalogDetailItem = PublicCatalogSearchItem & {
+  galleryImages: PublicCatalogGalleryImage[]
 }
 
 export type PublicCatalogSearchResult = {
@@ -135,13 +139,15 @@ function tagsFromLibrary(
   return tags
 }
 
-function companyCoords(row: PublicCatalogSearchRow): {
+function companyLocationFromRow(row: PublicCatalogSearchRow): {
   companyLatitude: number | null
   companyLongitude: number | null
+  companyImageUrl: string | null
 } {
   return {
     companyLatitude: toFiniteNumber(row.company_latitude),
     companyLongitude: toFiniteNumber(row.company_longitude),
+    companyImageUrl: rewriteOptionalMediaFileUrl(row.company_logo_url),
   }
 }
 
@@ -250,7 +256,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
   const items: HydratedCatalogItem[] = []
   for (const row of rows) {
     const localTagIds = parseTagIds(row.tag_ids)
-    const coords = companyCoords(row)
+    const companyLocation = companyLocationFromRow(row)
     if (row.binding_mode === 'linked') {
       const library = row.library_entity_id
         ? libraryByKind.get(row.kind)?.get(row.library_entity_id)
@@ -268,7 +274,9 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
         companyName: row.company_name,
         tags: tagsFromLibrary(library, tagById, localTagIds),
         galleryImages: effectiveGalleryImages(row, library),
-        ...coords,
+        referenceCount: library.referenceCount ?? 0,
+        listPrice: parseMoney(row.list_price),
+        ...companyLocation,
         ...time,
       })
       continue
@@ -287,7 +295,9 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
       companyName: row.company_name,
       tags: tagsFromLibrary(undefined, tagById, localTagIds),
       galleryImages: effectiveGalleryImages(row, undefined),
-      ...coords,
+      referenceCount: 0,
+      listPrice: parseMoney(row.list_price),
+      ...companyLocation,
       ...time,
     })
   }
@@ -300,16 +310,7 @@ function withDistance(
   origin: { lat: number; lng: number } | null,
 ): PublicCatalogSearchItem[] {
   return items.map((item) => {
-    const {
-      companyLatitude,
-      companyLongitude,
-      galleryImages,
-      timeMode: _timeMode,
-      durationMinutes: _durationMinutes,
-      startTime: _startTime,
-      endTime: _endTime,
-      ...rest
-    } = item
+    const { companyLatitude, companyLongitude, galleryImages, ...rest } = item
     let distance: number | null = null
     if (
       origin &&
@@ -447,10 +448,6 @@ export async function getPublicCatalogItem(options: {
   return {
     ...item,
     galleryImages: detail.galleryImages,
-    timeMode: detail.timeMode,
-    durationMinutes: detail.durationMinutes,
-    startTime: detail.startTime,
-    endTime: detail.endTime,
   }
 }
 

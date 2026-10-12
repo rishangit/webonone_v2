@@ -32,6 +32,7 @@ import { CatalogSearchMapView } from '@/features/website/components/CatalogSearc
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
+import { websitePageContentClassName } from '@/features/website/layout/websitePageContent'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 
 function kindLabel(kind: CatalogDetailItem['kind'], t: (key: string) => string): string {
@@ -254,7 +255,7 @@ export function CatalogDetailPage() {
       navigate(-1)
       return
     }
-    navigate('/search')
+    navigate('/')
   }
 
   function handleGetToken(session: CatalogSessionItem) {
@@ -311,7 +312,7 @@ export function CatalogDetailPage() {
 
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="relative z-10 shrink-0 bg-background px-4 pt-2 sm:px-8">
-          <div className="mx-auto flex w-full max-w-5xl flex-col gap-2">
+          <div className={`flex flex-col gap-2 ${websitePageContentClassName}`}>
             <CurrentLocationBar
               coords={coords}
               placeLabel={placeLabel}
@@ -331,13 +332,13 @@ export function CatalogDetailPage() {
             description={pageDescription}
             onBack={handleBack}
             backLabel={t('back')}
-            className="mx-auto w-full max-w-5xl px-0 py-4 sm:px-0 sm:pb-0 sm:pt-4"
+            className={`${websitePageContentClassName} px-0 py-4 sm:px-0 sm:pb-0 sm:pt-4`}
           >
             {loading ? null : notFound ? (
               <Card>
                 <CardContent className="pt-6">
                   <Button type="button" variant="outline" size="sm" asChild>
-                    <Link to="/search">{t('backToSearch')}</Link>
+                    <Link to="/">{t('backToSearch')}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -345,7 +346,7 @@ export function CatalogDetailPage() {
               <Card>
                 <CardContent className="pt-6">
                   <Button type="button" variant="outline" size="sm" asChild>
-                    <Link to="/search">{t('backToSearch')}</Link>
+                    <Link to="/">{t('backToSearch')}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -353,20 +354,23 @@ export function CatalogDetailPage() {
               <div className="grid items-start gap-6 lg:grid-cols-3">
                 <div className="flex flex-col gap-6 lg:col-span-2">
                   <Card>
-                    <CardContent className="p-4 sm:p-6">
-                      <ImageCarousel images={detailImages(item)} alt={item.name} />
-                    </CardContent>
-                  </Card>
-                  <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">{t('overview')}</CardTitle>
                       <CardDescription>{t('overviewDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                          {kindLabel(item.kind, t)}
-                        </span>
+                      {detailImages(item).length > 0 ? (
+                        <div className="overflow-hidden rounded-md">
+                          <ImageCarousel images={detailImages(item)} alt={item.name} />
+                        </div>
+                      ) : null}
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                            {kindLabel(item.kind, t)}
+                          </span>
+                        </div>
+                        <h2 className="text-xl font-semibold text-foreground">{item.name}</h2>
                       </div>
                       {item.description ? (
                         <p className="whitespace-pre-wrap text-pretty text-sm leading-relaxed text-foreground">

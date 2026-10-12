@@ -9,19 +9,22 @@ export type CatalogSearchItem = {
   description: string | null
   companyId: string
   companyName: string
+  companyImageUrl: string | null
   tags: Array<{ id: string; name: string; color?: string }>
   imageUrl: string | null
   distanceKm: number | null
   latitude: number | null
   longitude: number | null
-}
-
-export type CatalogDetailItem = CatalogSearchItem & {
-  galleryImages: Array<{ mediaId: string; url: string }>
+  referenceCount: number
+  listPrice: number | null
   timeMode?: ServiceTimeMode | null
   durationMinutes?: number | null
   startTime?: string | null
   endTime?: string | null
+}
+
+export type CatalogDetailItem = CatalogSearchItem & {
+  galleryImages: Array<{ mediaId: string; url: string }>
 }
 
 export type CatalogSearchResult = {

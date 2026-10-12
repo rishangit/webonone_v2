@@ -7,6 +7,7 @@ export type PublicCatalogSearchRow = {
   id: string
   company_id: string
   company_name: string
+  company_logo_url: string | null
   company_latitude: string | number | null
   company_longitude: string | number | null
   binding_mode: 'linked' | 'forked' | 'custom'
@@ -17,6 +18,7 @@ export type PublicCatalogSearchRow = {
   tag_ids: string | unknown[] | null
   kind: CatalogKind
   gallery_images?: string | unknown[] | null
+  list_price: string | number | null
   /** Services only — null for products/spaces and linked rows without local copy. */
   time_mode?: 'duration' | 'window' | null
   duration_minutes?: number | null
@@ -28,6 +30,7 @@ const BASE_ITEM_SELECT = [
   'item.id',
   'item.company_id',
   'company.name as company_name',
+  'company.logo_url as company_logo_url',
   'company.latitude as company_latitude',
   'company.longitude as company_longitude',
   'item.binding_mode',
@@ -37,6 +40,7 @@ const BASE_ITEM_SELECT = [
   'item.status',
   'item.tag_ids',
   'item.gallery_images',
+  'item.list_price',
 ] as const
 
 const SERVICE_TIME_SELECT = [

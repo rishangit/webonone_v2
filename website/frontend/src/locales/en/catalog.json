@@ -1,0 +1,6 @@
+{
+  "refs": "Refs: {{count}}",
+  "timeModeDuration": "Duration",
+  "timeModeWindow": "Specific time",
+  "durationValue": "{{count}} minutes"
+}
