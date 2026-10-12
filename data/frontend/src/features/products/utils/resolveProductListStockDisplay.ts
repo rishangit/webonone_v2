@@ -26,13 +26,34 @@ function pickActiveStock(stocks: ProductVariantStock[]): ProductVariantStock | n
   return stocks.find((item) => item.isActive) ?? stocks[0] ?? null
 }
 
+export type ResolveProductListStockDisplayOptions = {
+  /** When false, variants are listed without fetching company stock batches (super-admin library view). */
+  includeCompanyStock?: boolean
+}
+
 export async function resolveProductListStockDisplay(
   productId: string,
+  options?: ResolveProductListStockDisplayOptions,
 ): Promise<ProductListStockDisplay> {
+  const includeCompanyStock = options?.includeCompanyStock ?? true
   const variants = await dataApi.listProductVariants(productId)
   const lines: ProductListVariantStockLine[] = []
 
   for (const variant of variants.items) {
+    if (!includeCompanyStock) {
+      lines.push({
+        variantId: variant.id,
+        name: variant.name,
+        quantity: 0,
+        totalQuantity: 0,
+        costPrice: null,
+        sellPrice: null,
+        isDefault: variant.isDefault,
+        attributeValues: variant.values,
+      })
+      continue
+    }
+
     const stocks = await dataApi.listProductVariantStocks(productId, variant.id)
     const active = pickActiveStock(stocks.items)
     lines.push({

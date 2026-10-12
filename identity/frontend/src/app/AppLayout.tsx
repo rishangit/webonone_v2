@@ -323,15 +323,15 @@ function AppLayoutShellContent() {
   const headerNotice =
     accessToken && user && isImpersonatingSession(accessToken)
       ? (
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <span className="min-w-0 truncate">
               {tUsers('impersonation.notice', { name: user.displayName })}
             </span>
             <Button
               type="button"
-              variant="link"
+              variant="destructive"
               size="sm"
-              className="h-auto shrink-0 px-0 text-xs"
+              className="h-7 shrink-0 px-2 text-xs"
               disabled={stoppingImpersonation}
               onClick={() => {
                 void handleStopImpersonation()

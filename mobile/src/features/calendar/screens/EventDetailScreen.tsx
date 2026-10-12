@@ -28,7 +28,8 @@ import {
   type EventWizardStep,
 } from '@/features/calendar/schemas/eventSchemas'
 import { eventsApi } from '@/features/calendar/services/eventsApi'
-import type { CompanyEvent, EventGalleryImage } from '@/features/calendar/types/event.types'
+import type { CompanyEvent } from '@/features/calendar/types/event.types'
+import { combineEventGalleryImages } from '@/features/calendar/utils/combineEventGalleryImages'
 import {
   canAccessCompanySession,
   canManageCompanyEvents,
@@ -39,20 +40,6 @@ import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/Compan
 import { formatCalendarYmd, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 type EventDetailTab = 'overview' | 'upcoming' | 'past'
-
-function combineEventGalleryImages(detail: CompanyEvent): EventGalleryImage[] {
-  const seen = new Set<string>()
-  const combined: EventGalleryImage[] = []
-  for (const image of [
-    ...(detail.serviceGalleryImages ?? []),
-    ...(detail.spaceGalleryImages ?? []),
-  ]) {
-    if (!image.mediaId || seen.has(image.mediaId)) continue
-    seen.add(image.mediaId)
-    combined.push(image)
-  }
-  return combined
-}
 
 export function EventDetailScreen({ eventId }: { eventId: string }) {
   const router = useRouter()
@@ -120,8 +107,13 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
 
           <TabsContent value="overview" className={tabsPageContentClassName}>
             <View className="gap-6">
-              {overviewGalleryImages.length > 0 ? (
-                <Card className="p-2">
+              <EditableSectionCard
+                title="Service"
+                description="Catalog service for this event"
+                canEdit={canEdit}
+                onEdit={() => setDialog({ initialStep: 1 })}
+              >
+                {overviewGalleryImages.length > 0 ? (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View className="flex-row gap-2">
                       {overviewGalleryImages.map((image) => (
@@ -134,15 +126,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                       ))}
                     </View>
                   </ScrollView>
-                </Card>
-              ) : null}
-
-              <EditableSectionCard
-                title="Service"
-                description="Catalog service for this event"
-                canEdit={canEdit}
-                onEdit={() => setDialog({ initialStep: 1 })}
-              >
+                ) : null}
                 <ReadOnlyField label="Name" value={detail.serviceName} />
                 <ReadOnlyField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
               </EditableSectionCard>

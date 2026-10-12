@@ -10,6 +10,7 @@ import type {
 import type { CreateServiceBody, UpdateServiceBody } from '../schemas/services.schema.js'
 import { resolveCreateStatus } from '../utils/createStatus.js'
 import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
+import { resolveCatalogReferenceCounts } from '../utils/referenceCounts.js'
 import {
   applyIdsFilter,
   applyNamesFilter,
@@ -240,7 +241,11 @@ async function loadAttributesForEntity(
   return result
 }
 
-async function rowToDto(kind: CatalogKind, row: CatalogRow | ServiceRow): Promise<CatalogDto> {
+async function rowToDto(
+  kind: CatalogKind,
+  row: CatalogRow | ServiceRow,
+  referenceCount = 0,
+): Promise<CatalogDto> {
   const [tags, attributes] = await Promise.all([
     loadTagsForEntity(kind, row.id),
     loadAttributesForEntity(kind, row.id),
@@ -250,7 +255,7 @@ async function rowToDto(kind: CatalogKind, row: CatalogRow | ServiceRow): Promis
     name: row.name,
     description: row.description,
     status: row.status,
-    referenceCount: 0,
+    referenceCount,
     tags,
     attributes,
     galleryImages: parseGalleryImages(row.gallery_images),
@@ -352,14 +357,21 @@ export function createCatalogService(kind: CatalogKind) {
         .offset((page - 1) * pageSize)
         .limit(pageSize)
 
-      const items = await Promise.all(rows.map((row) => rowToDto(kind, row)))
+      const referenceCounts = await resolveCatalogReferenceCounts(kind, rows.map((row) => row.id))
+      const items = await Promise.all(
+        rows.map((row) => rowToDto(kind, row, referenceCounts.get(row.id) ?? 0)),
+      )
 
       return { items, total, page, pageSize }
     },
 
     async getById(id: string): Promise<CatalogDto | null> {
       const row = await db<CatalogRow>(main).where({ id }).first()
-      return row ? rowToDto(kind, row) : null
+      if (!row) return null
+      const referenceCount = await resolveCatalogReferenceCounts(kind, [id]).then(
+        (counts) => counts.get(id) ?? 0,
+      )
+      return rowToDto(kind, row, referenceCount)
     },
 
     async create(body: CatalogWriteBody, role?: DataRole): Promise<CatalogDto> {

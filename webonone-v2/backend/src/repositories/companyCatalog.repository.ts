@@ -79,6 +79,39 @@ export function isCatalogPricedKind(kind: CatalogEntityKind): kind is CatalogPri
   return (CATALOG_PRICED_KINDS as readonly string[]).includes(kind)
 }
 
+const LIBRARY_ENTITY_REFERENCE_KINDS = ['products', 'services', 'spaces'] as const
+export type LibraryEntityReferenceKind = (typeof LIBRARY_ENTITY_REFERENCE_KINDS)[number]
+
+export function isLibraryEntityReferenceKind(
+  kind: CatalogEntityKind,
+): kind is LibraryEntityReferenceKind {
+  return (LIBRARY_ENTITY_REFERENCE_KINDS as readonly string[]).includes(kind)
+}
+
+/** Company catalog rows (linked or forked) that point at a Data library entity id. */
+export async function countLibraryEntityReferences(
+  kind: LibraryEntityReferenceKind,
+  libraryEntityIds: string[],
+): Promise<Record<string, number>> {
+  const uniqueIds = [...new Set(libraryEntityIds.filter((id) => id.length > 0))]
+  const counts: Record<string, number> = {}
+  for (const id of uniqueIds) counts[id] = 0
+  if (uniqueIds.length === 0) return counts
+
+  const table = CATALOG_TABLE_BY_KIND[kind]
+  const rows = (await db(table)
+    .whereIn('library_entity_id', uniqueIds)
+    .whereNotNull('library_entity_id')
+    .groupBy('library_entity_id')
+    .select('library_entity_id')
+    .count('* as count')) as Array<{ library_entity_id: string; count: number }>
+
+  for (const row of rows) {
+    counts[row.library_entity_id] = Number(row.count ?? 0)
+  }
+  return counts
+}
+
 export function parseMoney(value: unknown): number | null {
   if (value == null || value === '') return null
   const n = typeof value === 'number' ? value : Number(value)

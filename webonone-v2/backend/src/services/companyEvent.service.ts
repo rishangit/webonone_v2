@@ -2299,6 +2299,23 @@ export async function getSessionTokenForUser(
   return row ? mapSessionTokenWithProgress(companyId, event.serviceId, row) : null
 }
 
+async function finalizeTokenWhenWorkflowDone(
+  companyId: string,
+  event: CompanyEventDto,
+  occurrenceDate: string,
+  token: sessionTokenRepo.CompanyEventSessionTokenRow,
+): Promise<sessionTokenRepo.CompanyEventSessionTokenRow> {
+  if (!token.workflow_completed_at) return token
+  if (token.status === 'completed') return token
+  const completed = await sessionTokenRepo.updateTokenStatus(token.id, 'completed')
+  const run = await sessionRunRepo.findRunForSession(companyId, event.id, occurrenceDate)
+  if (run?.current_token_id === token.id) {
+    await sessionRunRepo.updateRun(run.id, { current_token_id: null })
+  }
+  await maybePromoteCheckedInWaitingToken(companyId, event, occurrenceDate)
+  return completed
+}
+
 export async function completeSessionTokenWorkflow(
   companyId: string,
   eventId: string,
@@ -2316,7 +2333,13 @@ export async function completeSessionTokenWorkflow(
     throw serviceError('Session token not found', 404)
   }
   if (token.workflow_completed_at) {
-    return mapSessionTokenWithProgress(companyId, event.serviceId, token)
+    const finalized = await finalizeTokenWhenWorkflowDone(
+      companyId,
+      event,
+      occurrenceDate,
+      token,
+    )
+    return mapSessionTokenWithProgress(companyId, event.serviceId, finalized)
   }
   const defs = await loadWorkflowStepDefs(companyId, event.serviceId)
   const [run, existingCheckIn] = await Promise.all([
@@ -2372,7 +2395,13 @@ export async function completeSessionTokenWorkflow(
   }
   const next = nextWorkflowState(defs, currentId)
   const updated = await sessionTokenRepo.updateTokenWorkflow(synced.id, next)
-  const dto = await mapSessionTokenWithProgress(companyId, event.serviceId, updated)
+  const finalized = await finalizeTokenWhenWorkflowDone(
+    companyId,
+    event,
+    occurrenceDate,
+    updated,
+  )
+  const dto = await mapSessionTokenWithProgress(companyId, event.serviceId, finalized)
   notifyCatalogReviewAfterWorkflowComplete({
     companyId,
     event,

@@ -5,7 +5,6 @@ import {
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  ItemListCollectionCard,
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
@@ -128,6 +127,7 @@ export function TagsList({
   return (
     <>
       <CollectionListView
+        cardLayout={false}
         items={items}
         getRowKey={(item) => item.id}
         columns={columns}
@@ -149,26 +149,6 @@ export function TagsList({
             </ItemListStatus>
             {renderRowMenu(item)}
           </ItemListItem>
-        )}
-        renderCard={(item) => (
-          <ItemListCollectionCard
-            image={
-              <div
-                className="h-full w-full"
-                style={{ backgroundColor: normalizeHexColor(item.color) }}
-                aria-hidden
-              />
-            }
-            menu={renderRowMenu(item)}
-            onBodyClick={() => openDetails(item.id)}
-          >
-            {rowBody(item)}
-            <div className="mt-2">
-              <ItemListStatus>
-                <StatusBadge status={item.status} />
-              </ItemListStatus>
-            </div>
-          </ItemListCollectionCard>
         )}
       />
       <PlatformAlertConfirmDialog

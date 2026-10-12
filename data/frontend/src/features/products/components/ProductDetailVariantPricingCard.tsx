@@ -23,6 +23,7 @@ type ProductDetailVariantPricingCardProps = {
   productId: string
   canEdit: boolean
   onManageVariants: () => void
+  showCompanyStock?: boolean
 }
 
 function formatMoney(value: number | null | undefined): string {
@@ -62,9 +63,10 @@ export function ProductDetailVariantPricingCard({
   productId,
   canEdit,
   onManageVariants,
+  showCompanyStock = true,
 }: ProductDetailVariantPricingCardProps) {
   const { t } = useTranslation('products')
-  const stockByProductId = useProductListStockMeta([productId])
+  const stockByProductId = useProductListStockMeta([productId], showCompanyStock)
   const meta = stockByProductId[productId]
   const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>()
 
@@ -126,13 +128,15 @@ export function ProductDetailVariantPricingCard({
 
           <VariantAttributeFields values={line.attributeValues} />
 
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">{t('list.stock')}</p>
-            <StockAvailabilityProgress
-              quantity={line.totalQuantity}
-              caption={formatProductListStockAvailability(line.totalQuantity, t)}
-            />
-          </div>
+          {showCompanyStock ? (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">{t('list.stock')}</p>
+              <StockAvailabilityProgress
+                quantity={line.totalQuantity}
+                caption={formatProductListStockAvailability(line.totalQuantity, t)}
+              />
+            </div>
+          ) : null}
 
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">{t('list.price')}</p>

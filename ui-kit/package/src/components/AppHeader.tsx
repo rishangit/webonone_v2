@@ -7,7 +7,7 @@ import { Avatar } from './Avatar'
 import { BrandLogo } from './BrandLogo'
 import { Button } from './Button'
 import { isStatusTagVariant, StatusTag } from './StatusTag'
-import { shellContentPaddingX, APP_HEADER_NOTICE_OFFSET_CLASS } from '../layouts/shellContentPadding'
+import { shellContentPaddingX } from '../layouts/shellContentPadding'
 import { useUiTheme } from '../ui-theme/UiThemeContext'
 import { themeNeedsShapeDom } from '../ui-theme/uiTheme'
 import {
@@ -131,7 +131,7 @@ interface AppHeaderProps {
   actions?: ReactNode
   /** Optional header actions after locale (e.g. sign-in), rendered before the user avatar. */
   trailingActions?: ReactNode
-  /** Full-width notice overlay at the top of the header (e.g. impersonation warning). */
+  /** Compact centered notice in the header bar (e.g. impersonation warning). */
   notice?: ReactNode
   className?: string
 }
@@ -175,22 +175,17 @@ function AppHeader({
       className={cn(
         'app-shell-header relative shrink-0 shell-glass border-b',
         shapedShell && cn(shapePanelClassName, 'border-b-0'),
-        notice ? APP_HEADER_NOTICE_OFFSET_CLASS : undefined,
         className,
       )}
     >
-      {notice ? (
-        <div
-          className={cn(
-            'shell-glass absolute inset-x-0 top-0 z-20 border-b border-warning/30 py-1 text-xs text-foreground shadow-sm',
-            shellContentPaddingX,
-          )}
-        >
-          <div className="pointer-events-none absolute inset-0 bg-warning/10" aria-hidden />
-          <div className="relative">{notice}</div>
-        </div>
-      ) : null}
       <div className={cn('relative z-10 flex h-14 w-full items-center justify-between', shellContentPaddingX)}>
+        {notice ? (
+          <div
+            className="absolute left-1/2 top-1/2 z-20 flex w-auto max-w-[min(calc(100%-6rem),32rem)] -translate-x-1/2 -translate-y-1/2 items-center rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-xs text-foreground shadow-sm"
+          >
+            {notice}
+          </div>
+        ) : null}
         <div className="flex min-w-0 items-center gap-2">
           {showMenuButton ? (
             <button

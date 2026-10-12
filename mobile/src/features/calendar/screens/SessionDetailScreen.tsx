@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router'
 import {
   Alert,
@@ -56,6 +56,7 @@ import {
   resolveSessionControlStarted,
   timingDisplayText,
 } from '@/features/calendar/utils/sessionControlTiming'
+import { combineEventGalleryImages } from '@/features/calendar/utils/combineEventGalleryImages'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
 import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
@@ -375,6 +376,8 @@ export function SessionDetailScreen({
       })
     : false
 
+  const overviewGalleryImages = combineEventGalleryImages(detail)
+
   return (
     <FeatureScreen
       title={titleDate}
@@ -402,6 +405,52 @@ export function SessionDetailScreen({
       }
     >
       <View className="gap-6">
+        <Card className="gap-3">
+          <Subheading>Service</Subheading>
+          <Muted>Catalog service for this session</Muted>
+          {overviewGalleryImages.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View className="flex-row gap-2">
+                {overviewGalleryImages.map((image) => (
+                  <ImagePreview
+                    key={image.mediaId}
+                    src={image.url}
+                    alt={detail.serviceName}
+                    className="h-40 w-40 rounded-md"
+                  />
+                ))}
+              </View>
+            </ScrollView>
+          ) : null}
+          <ReadOnlyField label="Name" value={detail.serviceName} />
+          <ReadOnlyField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
+        </Card>
+
+        {detail.serviceId ? (
+          <CompanyCatalogReviewsPanel
+            companyId={detail.companyId}
+            entityKind="service"
+            entityId={detail.serviceId}
+          />
+        ) : null}
+
+        {user?.id && detail.serviceId ? (
+          <CompanyCatalogReviewCard
+            companyId={detail.companyId}
+            entityKind="service"
+            entityId={detail.serviceId}
+            displayName={detail.serviceName}
+            imageUrl={detail.serviceImageUrl}
+            autoPromptWhenEligible={personal}
+            sessionEligible={sessionReviewEligible}
+            allowSubmit={sessionReviewEligible}
+            attendanceGated
+            sourceEventId={eventId}
+            sourceOccurrenceDate={occurrenceDate}
+            autoOpenDialog={openReviewFromLink}
+          />
+        ) : null}
+
         {sessionIssue ? (
           <Alert variant="destructive">
             <AlertDescription>
@@ -540,38 +589,6 @@ export function SessionDetailScreen({
               <Muted>Schedule can only be changed while the session is scheduled.</Muted>
             )}
           </Card>
-        ) : null}
-
-        <Card className="gap-3">
-          <Subheading>Service</Subheading>
-          <Muted>Catalog service for this session</Muted>
-          <ReadOnlyField label="Name" value={detail.serviceName} />
-          <ReadOnlyField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
-        </Card>
-
-        {detail.serviceId ? (
-          <CompanyCatalogReviewsPanel
-            companyId={detail.companyId}
-            entityKind="service"
-            entityId={detail.serviceId}
-          />
-        ) : null}
-
-        {user?.id && detail.serviceId ? (
-          <CompanyCatalogReviewCard
-            companyId={detail.companyId}
-            entityKind="service"
-            entityId={detail.serviceId}
-            displayName={detail.serviceName}
-            imageUrl={detail.serviceImageUrl}
-            autoPromptWhenEligible={personal}
-            sessionEligible={sessionReviewEligible}
-            allowSubmit={sessionReviewEligible}
-            attendanceGated
-            sourceEventId={eventId}
-            sourceOccurrenceDate={occurrenceDate}
-            autoOpenDialog={openReviewFromLink}
-          />
         ) : null}
 
         <Card className="gap-3">

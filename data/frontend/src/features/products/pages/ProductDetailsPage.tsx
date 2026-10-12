@@ -32,6 +32,7 @@ import type { ProductWizardStep } from '@/features/products/schemas/productSchem
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
+import { shouldShowCompanyStock } from '@/features/products/utils/companyStockVisibility'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const PRODUCT_DETAIL_TABS = [
@@ -60,6 +61,7 @@ export function ProductDetailsPage() {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const canDelete = user?.role === 'super_admin'
+  const showCompanyStock = shouldShowCompanyStock(user?.role)
   const [dialog, setDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
   const [pendingDelete, setPendingDelete] = useState(false)
   const [tab, setTab] = useDetailTabParam(PRODUCT_DETAIL_TABS, 'overview')
@@ -115,6 +117,7 @@ export function ProductDetailsPage() {
           productId={id}
           canEdit={canEdit}
           onManageVariants={() => setTab('variants')}
+          showCompanyStock={showCompanyStock}
         />
 
         <EditableSectionCard
@@ -212,6 +215,7 @@ export function ProductDetailsPage() {
               productName={product.name}
               attributes={product.attributes}
               canEdit={canEdit}
+              showCompanyStock={showCompanyStock}
             />
           }
         />

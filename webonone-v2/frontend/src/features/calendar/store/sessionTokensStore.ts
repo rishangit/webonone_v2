@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, exhaustMap, map, mergeMap } from 'rxjs/operators'
+import { catchError, exhaustMap, map, switchMap } from 'rxjs/operators'
 import { sessionTokensApi } from '../services/sessionTokensApi'
 import type {
   CreateSessionTokenBody,
@@ -202,7 +202,7 @@ export const sessionTokensReducer = sessionTokensSlice.reducer
 const fetchListEpic: Epic = (action$) =>
   action$.pipe(
     ofType(sessionTokensActions.fetchListRequested.type),
-    mergeMap((action: ReturnType<typeof sessionTokensActions.fetchListRequested>) =>
+    switchMap((action: ReturnType<typeof sessionTokensActions.fetchListRequested>) =>
       from(
         sessionTokensApi.getSession(action.payload.eventId, action.payload.occurrenceDate),
       ).pipe(

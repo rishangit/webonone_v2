@@ -423,6 +423,7 @@
     "workflow": {
       "title": "Workflow",
       "hint": "Manage this attendee through each service step.",
+      "memberHint": "Open or complete forms linked to each step for your visit.",
       "ariaSteps": "Session workflow steps",
       "noAttendee": "No attendee assigned to this session.",
       "empty": "This service has no workflow steps yet."

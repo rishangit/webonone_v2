@@ -504,6 +504,9 @@ function main() {
         `FRONTEND_BASE_URL=${originData}`,
         '',
         `DATA_SERVICE_API_KEY=${dataKey}`,
+        '',
+        `WEBONONE_API_BASE_URL=${originWebonone}`,
+        `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
       ]),
     ),
   );

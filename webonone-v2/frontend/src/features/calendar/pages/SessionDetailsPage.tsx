@@ -14,6 +14,7 @@ import {
   CardTitle,
   ContactValueLine,
   FeaturePage,
+  ImageCarousel,
   ItemList,
   ItemListContent,
   ItemListEmpty,
@@ -33,6 +34,7 @@ import { eventsActions, sessionCheckInsActions, sessionTokensActions } from '@/f
 import { useSessionTokenAvatars } from '@/features/calendar/hooks/useSessionTokenAvatars'
 import { SessionDetailSectionTabs } from '@/features/calendar/components/SessionDetailSectionTabs'
 import { SessionWorkflowTab } from '@/features/calendar/components/SessionWorkflowTab'
+import { SessionWorkflowOverviewCard } from '@/features/calendar/components/SessionWorkflowOverviewCard'
 import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
 import type { ServiceWorkflowItem } from '@/features/company-catalog/types/companyCatalog.types'
@@ -64,6 +66,12 @@ import {
   resolveSessionControlEnded,
   resolveSessionControlStarted,
 } from '@/features/calendar/utils/sessionControlTiming'
+import {
+  tokenHasCheckedIn,
+  tokenIsCurrentlyServing,
+  tokenWorkflowIsDone,
+} from '@/features/calendar/utils/workflowStepQueue'
+import { combineEventGalleryImages } from '@/features/calendar/utils/combineEventGalleryImages'
 import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { usePlatformPeerDialog } from '@/features/shell/PlatformPeerDialogContext'
@@ -164,6 +172,7 @@ export function SessionDetailsPage() {
   const { t, i18n } = useTranslation('calendar')
   const { t: tSales } = useTranslation('sales')
   const [sessionTab, setSessionTab] = useState('overview')
+  const previousSessionTab = useRef(sessionTab)
   const [selectedWorkflowStepId, setSelectedWorkflowStepId] = useState('')
   const [workflowItems, setWorkflowItems] = useState<ServiceWorkflowItem[]>([])
   const [completingTokenId, setCompletingTokenId] = useState<string | null>(null)
@@ -216,10 +225,11 @@ export function SessionDetailsPage() {
   }, [workflowItems, selectedWorkflowStepId])
 
   useEffect(() => {
+    if (isPersonal) return
     if (workflowItems.length === 0 && sessionTab === 'workflow') {
       setSessionTab('overview')
     }
-  }, [sessionTab, workflowItems.length])
+  }, [isPersonal, sessionTab, workflowItems.length])
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000)
@@ -275,8 +285,8 @@ export function SessionDetailsPage() {
   }, [detail?.companyId, detail?.serviceId, isPersonal])
 
   useEffect(() => {
-    if (!isPersonal || !eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
-    if (detail && detail.timeMode !== 'window') return
+    if (!eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
+    if (detail?.timeMode === 'duration' && run?.status !== 'started') return
 
     const tick = () => {
       if (document.visibilityState !== 'visible') return
@@ -287,12 +297,19 @@ export function SessionDetailsPage() {
           silent: true,
         }),
       )
+      dispatch(
+        sessionCheckInsActions.fetchListRequested({
+          eventId,
+          occurrenceDate,
+          silent: true,
+        }),
+      )
     }
     const id = window.setInterval(tick, 3000)
     return () => {
       window.clearInterval(id)
     }
-  }, [detail, dispatch, eventId, occurrenceDate, isPersonal, detail?.timeMode])
+  }, [detail?.timeMode, dispatch, eventId, occurrenceDate, run?.status])
 
   useEffect(() => {
     if (!eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
@@ -328,8 +345,17 @@ export function SessionDetailsPage() {
     }
   }, [detail?.attendeeUserId, eventId, occurrenceDate])
 
+  const isAssignedStaff =
+    activeRole === 'member' &&
+    Boolean(activeCompanyId) &&
+    (sessionAssignedStaff || detail?.viewerIsAssignedStaff === true)
+  const canManageSession = canManageCompanyEvents(activeRole, activeCompanyId)
+
   useEffect(() => {
-    if (sessionTab !== 'workflow' || detail?.timeMode !== 'duration') return
+    const switchedToOverview =
+      previousSessionTab.current !== 'overview' && sessionTab === 'overview'
+    previousSessionTab.current = sessionTab
+    if (isPersonal || !switchedToOverview) return
     if (!eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
     dispatch(
       sessionTokensActions.fetchListRequested({
@@ -338,12 +364,33 @@ export function SessionDetailsPage() {
         silent: true,
       }),
     )
-  }, [sessionTab, detail?.timeMode, dispatch, eventId, occurrenceDate])
+    dispatch(
+      sessionCheckInsActions.fetchListRequested({
+        eventId,
+        occurrenceDate,
+        silent: true,
+      }),
+    )
+  }, [isPersonal, sessionTab, dispatch, eventId, occurrenceDate])
 
-  const isAssignedStaff =
-    activeRole === 'member' &&
-    Boolean(activeCompanyId) &&
-    (sessionAssignedStaff || detail?.viewerIsAssignedStaff === true)
+  useEffect(() => {
+    if (isPersonal || sessionTab !== 'workflow' || detail?.timeMode !== 'duration') return
+    if (!eventId || !occurrenceDate || !DATE_YMD.test(occurrenceDate)) return
+    dispatch(
+      sessionTokensActions.fetchListRequested({
+        eventId,
+        occurrenceDate,
+        silent: true,
+      }),
+    )
+    dispatch(
+      sessionCheckInsActions.fetchListRequested({
+        eventId,
+        occurrenceDate,
+        silent: true,
+      }),
+    )
+  }, [isPersonal, sessionTab, detail?.timeMode, dispatch, eventId, occurrenceDate])
 
   useEffect(() => {
     if (lastActionStatus.current === 'saving' && actionStatus === 'idle' && !actionError) {
@@ -352,6 +399,13 @@ export function SessionDetailsPage() {
         if (eventId && occurrenceDate && DATE_YMD.test(occurrenceDate)) {
           dispatch(
             sessionTokensActions.fetchListRequested({
+              eventId,
+              occurrenceDate,
+              silent: true,
+            }),
+          )
+          dispatch(
+            sessionCheckInsActions.fetchListRequested({
               eventId,
               occurrenceDate,
               silent: true,
@@ -415,20 +469,28 @@ export function SessionDetailsPage() {
   const runStatus = run?.status ?? 'scheduled'
   const canOperateSession = canAccessCompanySession(activeRole, activeCompanyId) && !sessionIssue
   const canSellDuringSession = canOperateSession && runStatus === 'started'
-  const checkedInUserIds = useMemo(
-    () => new Set(checkIns.map((item) => item.userId)),
-    [checkIns],
-  )
+  const checkedInUserIds = useMemo(() => {
+    const ids = new Set(checkIns.map((item) => item.userId))
+    for (const token of displayTokens) {
+      if (tokenHasCheckedIn(token, ids)) ids.add(token.userId)
+    }
+    return ids
+  }, [checkIns, displayTokens])
   const overviewTokens = useMemo(() => {
     return [...displayTokens].sort((a, b) => {
+      const aServing = tokenIsCurrentlyServing(a, run?.currentTokenId)
+      const bServing = tokenIsCurrentlyServing(b, run?.currentTokenId)
+      const aDone = tokenWorkflowIsDone(a)
+      const bDone = tokenWorkflowIsDone(b)
       const aInQueue =
-        checkedInUserIds.has(a.userId) || a.status === 'serving' || a.status === 'completed'
+        checkedInUserIds.has(a.userId) || aServing || aDone
       const bInQueue =
-        checkedInUserIds.has(b.userId) || b.status === 'serving' || b.status === 'completed'
+        checkedInUserIds.has(b.userId) || bServing || bDone
+      if (aServing !== bServing) return aServing ? -1 : 1
       if (aInQueue !== bInQueue) return aInQueue ? -1 : 1
       return (a.callOrder ?? a.tokenNumber * 1000) - (b.callOrder ?? b.tokenNumber * 1000)
     })
-  }, [checkedInUserIds, displayTokens])
+  }, [checkedInUserIds, displayTokens, run?.currentTokenId])
   const posEnabledKinds = useMemo(
     () =>
       resolvePosEnabledKinds(
@@ -520,7 +582,6 @@ export function SessionDetailsPage() {
   const showAttendee =
     isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
   const canIssueTokens = canOperateSession && runStatus !== 'ended'
-  const canManageSession = canManageCompanyEvents(activeRole, activeCompanyId)
   const canEditSessionSchedule =
     canChangeSession(activeRole, activeCompanyId, isAssignedStaff) && runStatus === 'scheduled'
   const effectiveStartTime = sessionStartTime ?? session.startTime
@@ -689,7 +750,13 @@ export function SessionDetailsPage() {
     try {
       await sessionTokensApi.completeWorkflow(eventId, occurrenceDate, tokenId)
       dispatch(sessionTokensActions.fetchListRequested({ eventId, occurrenceDate, silent: true }))
-      dispatch(sessionCheckInsActions.fetchListRequested({ eventId, occurrenceDate }))
+      dispatch(
+        sessionCheckInsActions.fetchListRequested({
+          eventId,
+          occurrenceDate,
+          silent: true,
+        }),
+      )
     } catch (err) {
       toast({
         title: t('sessionDetail.step.completeFailed'),
@@ -701,42 +768,59 @@ export function SessionDetailsPage() {
     }
   }
 
-  return (
-    <FeaturePage
-      title={titleDate}
-      description={`${detail.serviceName} session`}
-      onBack={backToEvent}
-      backLabel="Back"
-      actions={
-        canOperateSession && runStatus === 'started' && sessionKey ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={actionBusy}
-            onClick={() => dispatch(sessionTokensActions.endRequested(sessionKey))}
-          >
-            End session
-          </Button>
-        ) : undefined
-      }
-    >
-      <SessionDetailSectionTabs
-        ariaLabel={t('sessionDetail.ariaSections')}
-        tab={sessionTab}
-        onTabChange={setSessionTab}
-        tabs={
-          workflowItems.length > 0
-            ? [
-                { id: 'overview', label: t('sessionDetail.tabs.overview') },
-                { id: 'workflow', label: t('sessionDetail.tabs.workflow') },
-              ]
-            : [{ id: 'overview', label: t('sessionDetail.tabs.overview') }]
-        }
-      >
-        {sessionTab === 'overview' ? (
+  const memberToken =
+    isDuration
+      ? durationAttendeeToken
+      : displayTokens.find((token) => token.userId === currentUserId) ??
+        displayTokens[0] ??
+        null
+
+  const overviewGalleryImages = combineEventGalleryImages(detail)
+
+  const overviewGrid = (
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Service</CardTitle>
+              <CardDescription>Catalog service for this session</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {overviewGalleryImages.length > 0 ? (
+                <div className="overflow-hidden rounded-md">
+                  <ImageCarousel images={overviewGalleryImages} alt={serviceName} />
+                </div>
+              ) : null}
+              <DetailField label="Name" value={detail.serviceName} />
+              <DetailField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
+            </CardContent>
+          </Card>
+
+          {serviceId ? (
+            <CompanyCatalogReviewsPanel
+              companyId={detail.companyId}
+              entityKind="service"
+              entityId={serviceId}
+            />
+          ) : null}
+
+          {currentUserId && serviceId ? (
+            <CompanyCatalogReviewCard
+              companyId={detail.companyId}
+              entityKind="service"
+              entityId={serviceId}
+              displayName={serviceName}
+              imageUrl={detail.serviceImageUrl}
+              autoPromptWhenEligible={isPersonal}
+              sessionEligible={sessionReviewEligible}
+              allowSubmit={sessionReviewEligible}
+              attendanceGated
+              sourceEventId={eventId ?? null}
+              sourceOccurrenceDate={occurrenceDate ?? null}
+              autoOpenDialog={openReviewFromLink}
+            />
+          ) : null}
+
           {sessionIssue ? (
             <Alert variant="destructive">
               <AlertDescription>
@@ -838,31 +922,30 @@ export function SessionDetailsPage() {
                 ) : (
                   <ItemList className="py-0">
                     {overviewTokens.map((token) => {
-                      const isCheckedIn = checkedInUserIds.has(token.userId)
-                      const tokenStatusTag =
-                        token.status === 'waiting' ? (
-                          isCheckedIn ? (
-                            <StatusTag variant="verified">
-                              {t('session.tokenStatus.checkedIn')}
-                            </StatusTag>
-                          ) : (
-                            <StatusTag variant="pending">
-                              {t('session.tokenStatus.notCheckedIn')}
-                            </StatusTag>
-                          )
-                        ) : (
-                          <StatusTag variant={TOKEN_STATUS_VARIANT[token.status]}>
-                            {TOKEN_STATUS_LABEL[token.status]}
-                          </StatusTag>
-                        )
+                      const isCheckedIn = tokenHasCheckedIn(token, checkedInUserIds)
+                      const isDone = tokenWorkflowIsDone(token)
+                      const isServing = tokenIsCurrentlyServing(token, run?.currentTokenId)
+                      const tokenStatusTag = isDone ? (
+                        <StatusTag variant={TOKEN_STATUS_VARIANT.completed}>
+                          {TOKEN_STATUS_LABEL.completed}
+                        </StatusTag>
+                      ) : isServing ? (
+                        <StatusTag variant={TOKEN_STATUS_VARIANT.serving}>
+                          {TOKEN_STATUS_LABEL.serving}
+                        </StatusTag>
+                      ) : isCheckedIn ? (
+                        <StatusTag variant="verified">
+                          {t('session.tokenStatus.checkedIn')}
+                        </StatusTag>
+                      ) : (
+                        <StatusTag variant="pending">
+                          {t('session.tokenStatus.notCheckedIn')}
+                        </StatusTag>
+                      )
                       return (
                       <ItemListItem
                         key={token.id}
-                        className={
-                          token.status === 'serving'
-                            ? 'ring-1 ring-primary/40'
-                            : undefined
-                        }
+                        className={isServing ? 'ring-1 ring-primary/40' : undefined}
                       >
                         <ImagePreview
                           src={token.userAvatarUrl}
@@ -903,6 +986,36 @@ export function SessionDetailsPage() {
                 )}
               </CardContent>
             </Card>
+          ) : null}
+          {isPersonal && serviceId ? (
+            <SessionWorkflowOverviewCard
+              items={workflowItems}
+              memberForms={
+                memberToken
+                  ? {
+                      token: memberToken,
+                      submissionByTokenForm,
+                      onFillForm: (token, formId) =>
+                        openFillForm({
+                          userId: token.userId,
+                          displayName: token.userDisplayName,
+                          email: token.userEmail,
+                          sessionTokenId: token.id,
+                          formId,
+                        }),
+                      onViewForm: (token, formId, submissionId) =>
+                        openViewForm({
+                          userId: token.userId,
+                          displayName: token.userDisplayName,
+                          email: token.userEmail,
+                          sessionTokenId: token.id,
+                          formId,
+                          submissionId,
+                        }),
+                    }
+                  : null
+              }
+            />
           ) : null}
         </div>
 
@@ -1020,42 +1133,6 @@ export function SessionDetailsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Service</CardTitle>
-              <CardDescription>Catalog service for this session</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <DetailField label="Name" value={detail.serviceName} />
-              <DetailField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
-            </CardContent>
-          </Card>
-
-          {serviceId ? (
-            <CompanyCatalogReviewsPanel
-              companyId={detail.companyId}
-              entityKind="service"
-              entityId={serviceId}
-            />
-          ) : null}
-
-          {currentUserId && serviceId ? (
-            <CompanyCatalogReviewCard
-              companyId={detail.companyId}
-              entityKind="service"
-              entityId={serviceId}
-              displayName={serviceName}
-              imageUrl={detail.serviceImageUrl}
-              autoPromptWhenEligible={isPersonal}
-              sessionEligible={sessionReviewEligible}
-              allowSubmit={sessionReviewEligible}
-              attendanceGated
-              sourceEventId={eventId ?? null}
-              sourceOccurrenceDate={occurrenceDate ?? null}
-              autoOpenDialog={openReviewFromLink}
-            />
-          ) : null}
-
-          <Card>
-            <CardHeader>
               <CardTitle className="text-lg">Staff</CardTitle>
               <CardDescription>Staff member delivering the service</CardDescription>
             </CardHeader>
@@ -1117,37 +1194,78 @@ export function SessionDetailsPage() {
           ) : null}
         </div>
       </div>
-        ) : (
-          <SessionWorkflowTab
-            isDuration={isDuration}
-            workflowItems={workflowItems}
-            selectedWorkflowStepId={selectedWorkflowStepId}
-            onSelectWorkflowStep={setSelectedWorkflowStepId}
-            displayTokens={displayTokens}
-            overviewTokens={overviewTokens}
-            checkedInUserIds={checkedInUserIds}
-            durationAttendeeToken={durationAttendeeToken}
-            canOperateSession={canOperateSession}
-            canManageSession={canManageSession}
-            isAssignedStaff={isAssignedStaff}
-            completingTokenId={completingTokenId}
-            submissionByTokenForm={submissionByTokenForm}
-            onFillForm={openFillForm}
-            onViewForm={openViewForm}
-            onCompleteWorkflowStep={(tokenId) => {
-              if (!eventId || !occurrenceDate) return
-              void handleCompleteWorkflowStep(tokenId)
-            }}
-            serviceId={detail.serviceId}
-            serviceName={detail.serviceName}
-            enabledKinds={posEnabledKinds}
-            canSellDuringSession={canSellDuringSession}
-            sessionStepQueues={sessionStepQueues}
-            isPersonal={isPersonal}
-            onSaleCompleted={handleSaleCompleted}
-          />
-        )}
-      </SessionDetailSectionTabs>
+  )
+
+  return (
+    <FeaturePage
+      title={titleDate}
+      description={`${detail.serviceName} session`}
+      onBack={backToEvent}
+      backLabel="Back"
+      actions={
+        canOperateSession && runStatus === 'started' && sessionKey ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={actionBusy}
+            onClick={() => dispatch(sessionTokensActions.endRequested(sessionKey))}
+          >
+            End session
+          </Button>
+        ) : undefined
+      }
+    >
+      {isPersonal ? (
+        overviewGrid
+      ) : (
+        <SessionDetailSectionTabs
+          ariaLabel={t('sessionDetail.ariaSections')}
+          tab={sessionTab}
+          onTabChange={setSessionTab}
+          tabs={
+            workflowItems.length > 0
+              ? [
+                  { id: 'overview', label: t('sessionDetail.tabs.overview') },
+                  { id: 'workflow', label: t('sessionDetail.tabs.workflow') },
+                ]
+              : [{ id: 'overview', label: t('sessionDetail.tabs.overview') }]
+          }
+        >
+          {sessionTab === 'overview' ? (
+            overviewGrid
+          ) : (
+            <SessionWorkflowTab
+              isDuration={isDuration}
+              workflowItems={workflowItems}
+              selectedWorkflowStepId={selectedWorkflowStepId}
+              onSelectWorkflowStep={setSelectedWorkflowStepId}
+              displayTokens={displayTokens}
+              overviewTokens={overviewTokens}
+              checkedInUserIds={checkedInUserIds}
+              durationAttendeeToken={durationAttendeeToken}
+              canOperateSession={canOperateSession}
+              canManageSession={canManageSession}
+              isAssignedStaff={isAssignedStaff}
+              completingTokenId={completingTokenId}
+              submissionByTokenForm={submissionByTokenForm}
+              onFillForm={openFillForm}
+              onViewForm={openViewForm}
+              onCompleteWorkflowStep={(tokenId) => {
+                if (!eventId || !occurrenceDate) return
+                void handleCompleteWorkflowStep(tokenId)
+              }}
+              serviceId={detail.serviceId}
+              serviceName={detail.serviceName}
+              enabledKinds={posEnabledKinds}
+              canSellDuringSession={canSellDuringSession}
+              sessionStepQueues={sessionStepQueues}
+              isPersonal={isPersonal}
+              onSaleCompleted={handleSaleCompleted}
+            />
+          )}
+        </SessionDetailSectionTabs>
+      )}
 
       {!isDuration && canIssueTokens ? (
         <IssueTokenDialog

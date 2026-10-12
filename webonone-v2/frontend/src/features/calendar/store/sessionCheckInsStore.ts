@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, exhaustMap, map } from 'rxjs/operators'
+import { catchError, exhaustMap, map, switchMap } from 'rxjs/operators'
 import { sessionTokensApi } from '../services/sessionTokensApi'
 import type { SessionCheckIn, SessionCheckInsResult } from '../types/event.types'
 
@@ -39,9 +39,11 @@ const sessionCheckInsSlice = createSlice({
   reducers: {
     fetchListRequested(
       state,
-      _action: PayloadAction<{ eventId: string; occurrenceDate: string }>,
+      action: PayloadAction<{ eventId: string; occurrenceDate: string; silent?: boolean }>,
     ) {
-      state.listStatus = 'loading'
+      if (!action.payload.silent) {
+        state.listStatus = 'loading'
+      }
       state.listError = null
     },
     fetchListSucceeded(state, action: PayloadAction<SessionCheckInsResult>) {
@@ -79,7 +81,7 @@ export const sessionCheckInsReducer = sessionCheckInsSlice.reducer
 const fetchListEpic: Epic = (action$) =>
   action$.pipe(
     ofType(sessionCheckInsActions.fetchListRequested.type),
-    exhaustMap((action: ReturnType<typeof sessionCheckInsActions.fetchListRequested>) =>
+    switchMap((action: ReturnType<typeof sessionCheckInsActions.fetchListRequested>) =>
       from(
         sessionTokensApi.listCheckIns(action.payload.eventId, action.payload.occurrenceDate),
       ).pipe(

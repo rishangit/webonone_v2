@@ -450,12 +450,6 @@ function AppShell({
 
   }, [lockDocumentScroll])
 
-
-
-  const hasHeaderNotice = Boolean(headerNotice)
-
-
-
   return (
 
     <div
@@ -465,8 +459,6 @@ function AppShell({
         'app-shell-root flex h-dvh flex-col overflow-hidden',
 
         shellChromeRootClassName,
-
-        hasHeaderNotice && 'app-shell-root--notice',
 
         className,
 

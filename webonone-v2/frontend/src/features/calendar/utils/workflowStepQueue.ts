@@ -31,6 +31,33 @@ export function isWorkflowStepCompleted(
   return progress.currentIndex > index
 }
 
+/** Check-in record, completed check-in step, or already serving/completed. */
+export function tokenHasCheckedIn(
+  token: SessionToken,
+  checkedInUserIds?: Set<string>,
+): boolean {
+  if (checkedInUserIds?.has(token.userId)) return true
+  if (token.status === 'serving' || token.status === 'completed') return true
+  const progress = token.workflowProgress
+  if (!progress) return false
+  if (progress.done) return true
+  const checkInIndex = progress.steps.findIndex((step) => step.kind === 'check_in')
+  if (checkInIndex < 0) return false
+  return progress.currentIndex >= 0
+}
+
+export function tokenWorkflowIsDone(token: SessionToken): boolean {
+  return Boolean(token.workflowProgress?.done) || token.status === 'completed'
+}
+
+export function tokenIsCurrentlyServing(
+  token: SessionToken,
+  currentTokenId?: string | null,
+): boolean {
+  if (tokenWorkflowIsDone(token)) return false
+  return token.status === 'serving' || currentTokenId === token.id
+}
+
 export function tokensAtWorkflowStep(
   tokens: SessionToken[],
   itemId: string,

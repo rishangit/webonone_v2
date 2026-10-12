@@ -29,7 +29,8 @@ import {
 } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions } from '@/features/calendar/store'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
-import type { CompanyEvent, EventGalleryImage } from '@/features/calendar/types/event.types'
+import type { CompanyEvent } from '@/features/calendar/types/event.types'
+import { combineEventGalleryImages } from '@/features/calendar/utils/combineEventGalleryImages'
 import { CompanyServiceWorkflowOverviewCard } from '@/features/company-catalog/components/CompanyServiceWorkflowOverviewCard'
 import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
 import {
@@ -49,20 +50,6 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-foreground">{value}</p>
     </div>
   )
-}
-
-function combineEventGalleryImages(detail: CompanyEvent): EventGalleryImage[] {
-  const seen = new Set<string>()
-  const combined: EventGalleryImage[] = []
-  for (const image of [
-    ...(detail.serviceGalleryImages ?? []),
-    ...(detail.spaceGalleryImages ?? []),
-  ]) {
-    if (!image.mediaId || seen.has(image.mediaId)) continue
-    seen.add(image.mediaId)
-    combined.push(image)
-  }
-  return combined
 }
 
 export function EventDetailsPage() {
@@ -147,20 +134,17 @@ export function EventDetailsPage() {
   const overviewPanel = (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
-        {overviewGalleryImages.length > 0 ? (
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <ImageCarousel images={overviewGalleryImages} alt={detail.serviceName} />
-            </CardContent>
-          </Card>
-        ) : null}
-
         <EditableSectionCard
           title="Service"
           description="Catalog service for this event"
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
+          {overviewGalleryImages.length > 0 ? (
+            <div className="overflow-hidden rounded-md">
+              <ImageCarousel images={overviewGalleryImages} alt={detail.serviceName} />
+            </div>
+          ) : null}
           <DetailField label="Name" value={detail.serviceName} />
           <DetailField label="Time mode" value={formatTimeModeLabel(detail.timeMode)} />
         </EditableSectionCard>

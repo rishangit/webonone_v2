@@ -1,9 +1,10 @@
 ---
 name: details-page-wizard-edit
 description: >-
-  Builds wizard-backed entity details pages: Overview ImageCarousel when gallery
-  images exist, read-only section cards with per-card Edit opening a shared
-  create/edit wizard at the mapped step. Use when creating or editing
+  Builds wizard-backed entity details pages: gallery ImageCarousel inside the
+  primary entity section card (same card as name/description), read-only section
+  cards with per-card Edit opening a shared create/edit wizard at the mapped
+  step. Use when creating or editing
   catalog-style detail pages, section Edit buttons, dual-use create/edit
   wizards, ServiceDetails-style flows, or Add dialogs that must also support
   detail-page edit.
@@ -59,25 +60,26 @@ Embed paths: `/embed/dialogs/<kind>/create` and `/embed/dialogs/<kind>/:id/edit`
 2. **Build one dual-use `*FormDialog` first** — Zod schemas, one step component per step, **required** centered label `Step {n} of {total} — {StepTitle}` **plus** progress bar (`w-1/2 mx-auto`), `isNew = !id`, empty seed vs `valuesFromDetail`, size `large` × `xlarge`. Follow form-creation + dialog-windows (Wizard dialogs) + core-hosted-peer-dialog.
 3. **Wire the list** — Add: `setDialog({})` (no id). Edit (row menu): `setDialog({ id })`. Primary CTA per item-list.
 4. **Add the details route** — `FeaturePage` + `onBack` (icon before title); 3-col `gap-6` card grid (left span-2 / right span-1).
-5. **Overview ImageCarousel** — if the entity (or linked catalog items) has gallery images, put `@webonone/ui-kit` `ImageCarousel` as the **first** left-column card (`Card` + `CardContent className="pt-6"`). Omit when `images.length === 0`. Props: `{ mediaId, url }[]` + `alt`. Linked entities (events) combine service + space galleries and dedupe by `mediaId`. Do not use `ImagePreview` or a custom carousel for multi-image Overview.
+5. **Gallery in the primary section card** — when the entity (or linked catalog items) has gallery images, render `@webonone/ui-kit` `ImageCarousel` **inside** the left-column **Basics / Service / product** `EditableSectionCard` (or read-only equivalent), **above** the name and description fields — same single card as Data products/services. Omit the carousel when `images.length === 0`. Props: `{ mediaId, url }[]` + `alt`. Linked entities (events/sessions) combine service + space galleries and dedupe by `mediaId`. **Forbidden:** a separate images-only `Card` on Overview or detail tabs. Do not use `ImagePreview` or a custom carousel for multi-image galleries on web.
 6. **Section cards** — web: copy Data `EditableSectionCard` hover **Edit3** chrome per feature, or use `@webonone/ui-kit` `EditableSectionCard` when available. **Mobile:** import **`EditableSectionCard`** and **`ReadOnlyField`** from `@webonone/mobile-ui` only — tap the card to reveal the outline icon edit control; never add a feature-local card with `Pencil` or always-visible edit buttons. Map each editable section → `openWizard(step)`. Meta/audit → plain `Card`.
 7. **Section tabs** — if the page has a section tablist, sync with `?tab=` via service-local `useDetailTabParam(allowed, defaultTab)` (default omitted from URL; invalid → default; `replace: false`). Same contract for Basic Settings / Email settings even when not wizard-backed. Keep wizard/embed entry on `?step=N`.
 8. **Open wizard from detail** — `<FormDialog open id={entityId} initialStep={…} onSaved={refreshDetail} />`.
 9. **Embed** — routes for create + `:id/edit`; body uses `chrome="embed-page"` and `?step=` via `parse…Step`; host Previous/Next via peer-dialog busy sync.
 
-### Overview ImageCarousel (mandatory when images exist)
+### Gallery inside primary section card (mandatory when images exist)
 
 ```tsx
-{overviewGalleryImages.length > 0 ? (
-  <Card>
-    <CardContent className="pt-6">
+<EditableSectionCard title="…" …>
+  {overviewGalleryImages.length > 0 ? (
+    <div className="overflow-hidden rounded-md">
       <ImageCarousel images={overviewGalleryImages} alt={entityDisplayName} />
-    </CardContent>
-  </Card>
-) : null}
+    </div>
+  ) : null}
+  {/* name, description, and other read-only fields */}
+</EditableSectionCard>
 ```
 
-Canonical: Data `ServiceDetailsPage` / `ProductDetailsPage` / `CatalogDetailsPage`; WebOnOne `CompanyCatalogDetailPage`, `EventDetailsPage`.
+Canonical: Data `ServiceDetailsPage` / `ProductDetailsPage` / `CatalogDetailsPage`; WebOnOne `CompanyCatalogDetailPage`, `EventDetailsPage`, `SessionDetailsPage` (read-only Service card).
 
 ### Section tabs URL sync
 
@@ -150,7 +152,8 @@ Card Edit jumps into the wizard; save still walks the full flow (no section-only
 - Labeled or always-visible “Edit” text buttons on section cards (must match hover icon chrome)
 - Wizard progress bar **without** the `Step {n} of {total} — {Title}` label
 - Section tablist with local-only tab state (must sync `?tab=`)
-- Overview missing `ImageCarousel` when gallery images exist (or a non–UI Kit image gallery)
+- Images-only Overview/detail card separate from the entity section card
+- Primary section missing `ImageCarousel` when gallery images exist (or a non–UI Kit image gallery)
 
 ## Canonical reference
 
@@ -163,7 +166,7 @@ Card Edit jumps into the wizard; save still walks the full flow (no section-only
 | Steps / schemas | `data/frontend/src/features/services/components/service-wizard/`, `…/schemas/serviceSchemas.ts` |
 | Embed body | `data/frontend/src/features/catalog/pages/CatalogFormEmbedPage.tsx` |
 | Company catalog Overview | `webonone-v2/.../company-catalog/pages/CompanyCatalogDetailPage.tsx` |
-| Event Overview (linked galleries) | `webonone-v2/.../calendar/pages/EventDetailsPage.tsx` |
+| Event / session Overview (gallery in Service card) | `webonone-v2/.../calendar/pages/EventDetailsPage.tsx` · `SessionDetailsPage.tsx` |
 | Company details | `webonone-v2/.../companies/pages/CompanyProfilePage.tsx` |
 | Company wizard | `webonone-v2/.../companies/components/CompanyFormDialog.tsx` |
 | Theme details | `webonone-v2/.../system-theme/pages/ThemeDetailPage.tsx` |
@@ -184,4 +187,4 @@ npm run type-check
 npm run lint
 ```
 
-Manual: list Add opens wizard at step 1 with empty values; list Edit and each detail card Edit open the same dialog with entity loaded at the mapped step; Overview shows `ImageCarousel` first in the left column when images exist; section Edit is hover icon-only `Edit3` aligned with other detail pages; save refreshes the detail page; section tabs sync via `?tab=` (default omitted); when embedded in WebOnOne, host owns Cancel / Previous / primary footer.
+Manual: list Add opens wizard at step 1 with empty values; list Edit and each detail card Edit open the same dialog with entity loaded at the mapped step; Overview shows `ImageCarousel` inside the primary entity section card when images exist (not a standalone images card); section Edit is hover icon-only `Edit3` aligned with other detail pages; save refreshes the detail page; section tabs sync via `?tab=` (default omitted); when embedded in WebOnOne, host owns Cancel / Previous / primary footer.

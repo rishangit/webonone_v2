@@ -4,7 +4,10 @@ import {
   type ProductListStockDisplay,
 } from '@/features/products/utils/resolveProductListStockDisplay'
 
-export function useProductListStockMeta(productIds: string[]): Record<string, ProductListStockDisplay> {
+export function useProductListStockMeta(
+  productIds: string[],
+  includeCompanyStock = true,
+): Record<string, ProductListStockDisplay> {
   const [stockByProductId, setStockByProductId] = useState<Record<string, ProductListStockDisplay>>({})
   const idsKey = productIds.slice().sort().join(',')
 
@@ -18,7 +21,7 @@ export function useProductListStockMeta(productIds: string[]): Record<string, Pr
     let cancelled = false
     void Promise.all(
       ids.map(async (id) => {
-        const meta = await resolveProductListStockDisplay(id)
+        const meta = await resolveProductListStockDisplay(id, { includeCompanyStock })
         return { id, meta }
       }),
     )
@@ -33,7 +36,7 @@ export function useProductListStockMeta(productIds: string[]): Record<string, Pr
     return () => {
       cancelled = true
     }
-  }, [idsKey])
+  }, [idsKey, includeCompanyStock])
 
   return stockByProductId
 }

@@ -25,6 +25,7 @@ import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity
 import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { dataApi } from '@/shared/services/dataApi'
 import type { ProductVariant } from '@/shared/types/data.types'
+import { shouldShowCompanyStock } from '@/features/products/utils/companyStockVisibility'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
@@ -46,6 +47,7 @@ export function ProductVariantDetailsPage() {
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canEdit = user?.role === 'super_admin' || user?.role === 'company_admin'
   const canAddStock = user?.role === 'company_admin'
+  const showCompanyStock = shouldShowCompanyStock(user?.role)
   const [variant, setVariant] = useState<ProductVariant | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -168,11 +170,13 @@ export function ProductVariantDetailsPage() {
               <ReadOnlyField label={t('variant.sku')} value={variant.sku} />
             </EditableSectionCard>
 
-            <ProductVariantStocksCard
-              productId={productId}
-              variantId={variantId}
-              canEdit={canAddStock}
-            />
+            {showCompanyStock ? (
+              <ProductVariantStocksCard
+                productId={productId}
+                variantId={variantId}
+                canEdit={canAddStock}
+              />
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-6 lg:col-span-1">
