@@ -279,7 +279,7 @@ export function WebsiteHomePage() {
         ) : null}
 
         <div
-          className={`relative z-10 shrink-0 px-4 pt-4 sm:px-8 sm:pt-6 ${
+          className={`relative z-10 shrink-0 pt-4 sm:pt-6 ${
             isMapView ? 'bg-background/85 backdrop-blur-md' : 'bg-background'
           }`}
         >
@@ -334,7 +334,7 @@ export function WebsiteHomePage() {
         </div>
 
         {!isMapView ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
+          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
             <div className={`flex flex-col gap-6 py-4 ${websitePageContentClassName}`}>
               {hasSearchQuery ? (
                 <>
@@ -365,7 +365,7 @@ export function WebsiteHomePage() {
         ) : null}
 
         {isMapView && hasSearchQuery && !showSearchMap ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
+          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
             <div className={websitePageContentClassName}>
               <CatalogSearchResults
                 items={items}
@@ -378,7 +378,7 @@ export function WebsiteHomePage() {
         ) : null}
 
         {isMapView && !hasSearchQuery && !coords ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
+          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
             <div className={websitePageContentClassName}>
               <p className="text-sm text-muted-foreground">{tHome('nearbyNeedsLocation')}</p>
             </div>
@@ -386,7 +386,7 @@ export function WebsiteHomePage() {
         ) : null}
 
         {isMapView && !hasSearchQuery && coords && nearbyMapError ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
+          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
             <div className={websitePageContentClassName}>
               <p className="text-sm text-destructive">{nearbyMapError}</p>
             </div>
@@ -394,7 +394,7 @@ export function WebsiteHomePage() {
         ) : null}
 
         {isMapView && !hasSearchQuery && coords && !nearbyMapLoading && mapCompanies.length === 0 && !nearbyMapError ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
+          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
             <div className={websitePageContentClassName}>
               <p className="text-sm text-muted-foreground">{tHome('nearbyEmpty')}</p>
             </div>

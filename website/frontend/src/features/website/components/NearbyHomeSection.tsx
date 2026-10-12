@@ -86,7 +86,11 @@ export function NearbyHomeSection({ coords, locationStatus }: NearbyHomeSectionP
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-sm font-medium text-muted-foreground">{t('nearbyHeading')}</h2>
-      <CatalogPublicItemCardGrid items={items} distanceNamespace="home" />
+      <CatalogPublicItemCardGrid
+        items={items}
+        distanceNamespace="home"
+        className="grid-cols-2 py-0 sm:grid-cols-2"
+      />
     </div>
   )
 }
