@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, Pagination, SearchInput, Spinner } from '@webonone/ui-kit'
+import { Pagination, Spinner } from '@webonone/ui-kit'
 import { catalogApi } from '@/features/catalog/services/catalogApi'
 import type { CatalogSearchItem, NearbyCompanyGroup } from '@/features/catalog/types/catalog.types'
 import {
@@ -12,6 +12,7 @@ import { CatalogSearchResults } from '@/features/website/components/CatalogSearc
 import { CurrentLocationBar } from '@/features/website/components/CurrentLocationBar'
 import { LocationPermissionDialog } from '@/features/website/components/LocationPermissionDialog'
 import { NearbyHomeSection } from '@/features/website/components/NearbyHomeSection'
+import { WebsiteHomeSearchForm } from '@/features/website/components/WebsiteHomeSearchForm'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
 import { websitePageContentClassName } from '@/features/website/layout/websitePageContent'
 
@@ -284,23 +285,14 @@ export function WebsiteHomePage() {
           }`}
         >
           <div className={`flex flex-col gap-2 ${websitePageContentClassName}`}>
-            <form
-              className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch"
+            <WebsiteHomeSearchForm
+              value={draftQuery}
+              onChange={setDraftQuery}
+              onClear={handleClearSearch}
               onSubmit={handleSubmit}
-            >
-              <SearchInput
-                className="flex-1"
-                value={draftQuery}
-                onChange={(event) => setDraftQuery(event.target.value)}
-                onClear={handleClearSearch}
-                placeholder={tHome('searchPlaceholder')}
-                aria-label={tHome('searchAria')}
-                disabled={loading}
-              />
-              <Button type="submit" disabled={loading && hasSearchQuery}>
-                {loading && hasSearchQuery ? tSearch('loading') : tHome('cta')}
-              </Button>
-            </form>
+              loading={loading}
+              hasActiveSearch={hasSearchQuery}
+            />
 
             <CurrentLocationBar
               coords={coords}

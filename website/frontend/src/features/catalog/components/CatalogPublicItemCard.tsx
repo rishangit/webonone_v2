@@ -38,12 +38,10 @@ function CatalogCardCompanyRow({
         mode="view"
         className="h-8 w-8 shrink-0 rounded-md"
       />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-foreground">{name}</p>
-        {distanceLabel ? (
-          <p className="truncate text-xs text-muted-foreground">{distanceLabel}</p>
-        ) : null}
-      </div>
+      <p className="min-w-0 flex-1 truncate text-left text-xs font-medium text-foreground">{name}</p>
+      {distanceLabel ? (
+        <p className="shrink-0 text-right text-xs tabular-nums text-muted-foreground">{distanceLabel}</p>
+      ) : null}
     </div>
   )
 }
@@ -125,6 +123,9 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
     item.kind === 'products' && item.listPrice != null ? formatPublicListPrice(item.listPrice) : null
   const servicePrice =
     item.kind === 'services' && item.listPrice != null ? formatPublicListPrice(item.listPrice) : null
+  const showCompany = item.companyName.trim().length > 0
+  const showPrice =
+    (item.kind === 'products' && productPrice) || (item.kind === 'services' && servicePrice)
 
   return (
     <ItemListCollectionCard
@@ -148,23 +149,21 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
             <PublicServiceListMeta item={item} className="mt-2 flex-1" showPrice={false} />
           </div>
         ) : null}
-        {item.kind === 'products' && productPrice ? (
-          <p className="pt-2 text-right text-sm font-medium tabular-nums text-foreground">
-            {productPrice}
-          </p>
-        ) : null}
-        {item.kind === 'services' && servicePrice ? (
-          <p className="pt-2 text-right text-sm font-medium tabular-nums text-foreground">
-            {servicePrice}
-          </p>
-        ) : null}
-        {item.companyName.trim() ? (
-          <div className="mt-auto pt-2">
-            <CatalogCardCompanyRow
-              name={item.companyName}
-              logoUrl={companyLogoUrl ?? null}
-              distanceLabel={companyDistanceLabel}
-            />
+        {showCompany || showPrice ? (
+          <div className="mt-auto flex w-full min-w-0 flex-col gap-1 pt-2">
+            {showCompany ? (
+              <CatalogCardCompanyRow
+                name={item.companyName}
+                logoUrl={companyLogoUrl ?? null}
+                distanceLabel={companyDistanceLabel}
+              />
+            ) : null}
+            {item.kind === 'products' && productPrice ? (
+              <p className="text-right text-sm font-medium tabular-nums text-foreground">{productPrice}</p>
+            ) : null}
+            {item.kind === 'services' && servicePrice ? (
+              <p className="text-right text-sm font-medium tabular-nums text-foreground">{servicePrice}</p>
+            ) : null}
           </div>
         ) : null}
       </div>
