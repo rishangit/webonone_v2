@@ -11,34 +11,38 @@
 
 ## Overview
 
-The public website home page shows nearby catalog item cards (and search results) in a card grid. On a phone the nearby section is two columns with the shared card-grid gap (`gap-3`, 12px). That space between cards is larger than the homepage needs in mobile view.
+The public website home page shows nearby catalog cards (and the same card for search results). On a phone the cards sit too far apart, draw a divider above the company row, wrap tags onto extra lines, and show a reference count next to the item name.
 
 ## Problem / goal
 
-**Problem:** `CatalogPublicItemCardGrid` uses UI Kit `ItemListCardGrid`, whose default gap is `gap-3` at every breakpoint. The home nearby grid forces two columns below `md`, so that 12px gap shows both between columns and between rows and reads as too much space on a phone.
+**Problem:**
 
-**Goal:** On viewports below `md`, reduce the gap between homepage item cards. From `md` up, keep the existing `gap-3`.
+1. Homepage grids use a 12px gap (`gap-3`) even in the two-column phone layout.
+2. The company block on `CatalogPublicItemCard` is separated by `border-t`.
+3. Tags wrap (`flex-wrap`) and only the first three show, with a `+N` remainder. On a phone that uses a second line instead of one swipeable row.
+4. Each card prints `Refs: {count}` beside the name. That count should not appear on website cards, including phone-width layouts.
+
+**Goal:** Tighten the homepage card gap on small screens, drop the company divider, keep tags on one horizontally swipeable row below `md`, and remove the reference label from the card.
 
 ## Acceptance criteria
 
-1. **Tighter mobile card gap** — On the home page, nearby item cards use `gap-2` (8px) below the `md` breakpoint, including the two-column phone layout.
-2. **Search results on the same page** — Catalog search results rendered on the home page use the same mobile gap.
-3. **Desktop unchanged** — From `md` up, the card grid gap stays `gap-3`. Column counts stay as they are today (two columns below `md` for nearby; the kit column ramp from `md` up).
-4. **No other surfaces** — Catalog detail and admin shells are unchanged. Card internals (image, price, company row) are unchanged.
+1. **Tighter mobile card gap** — Nearby home cards and home search-result cards use `gap-2` below `md` and `gap-3` from `md` up. Column counts stay as they are (nearby: two columns below `md`).
+2. **No company divider** — The line above the company name/logo on the homepage card is gone. The company row still sits at the bottom of the card.
+3. **One swipeable tag row on mobile** — Below `md`, tags render in a single non-wrapping row. Extra tags stay on that row and scroll horizontally (swipe). From `md` up, the card still shows the first three tags plus a `+N` remainder when there are more.
+4. **No reference count on the card** — `Refs: {count}` is not rendered on the catalog card used by the home page and search results, at any viewport width.
 
 ## Services affected
 
 | Area | Change |
 |------|--------|
-| `website/` frontend | Homepage card grids pass a smaller gap below `md` |
+| `website/` frontend | Homepage grids and `CatalogPublicItemCard` |
 | `spec/0037/` | This package |
 
 ## Out of scope
 
-- Changing UI Kit `itemListCardGridClassName` (other services share that default)
-- Card content, images, or two-column layout itself
-- Catalog detail page spacing
-- Support articles (spacing only; no new screen, nav, or workflow)
+- UI Kit `itemListCardGridClassName` default (other services share it)
+- Catalog detail pages (they do not use this card)
+- Support articles (visual card tweaks; no new screen, nav, or workflow)
 - Setting Support status `closed`
 
 ## Verification

@@ -75,24 +75,39 @@ function PublicServiceListMeta({
   )
 }
 
-function catalogCardDetails(item: CatalogSearchItem, refsLabel: string) {
+function CatalogCardTags({ tags }: { tags: CatalogSearchItem['tags'] }) {
+  if (tags.length === 0) return null
+
+  return (
+    <div
+      className="flex min-w-0 flex-nowrap gap-1 overflow-x-auto md:flex-wrap md:overflow-x-visible"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {tags.map((tag, index) => (
+        <TagChip
+          key={tag.id}
+          name={tag.name}
+          color={tag.color ?? ''}
+          className={cn('shrink-0', index >= 3 && 'md:hidden')}
+        />
+      ))}
+      {tags.length > 3 ? (
+        <span className="hidden shrink-0 text-xs text-muted-foreground md:inline">
+          +{tags.length - 3}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
+function catalogCardDetails(item: CatalogSearchItem) {
   return (
     <div className="min-w-0 w-full flex-1">
-      <div className="flex items-center gap-2">
-        <p className="font-medium">{item.name}</p>
-        <span className="text-xs text-muted-foreground">{refsLabel}</span>
-      </div>
+      <p className="font-medium">{item.name}</p>
       {item.description ? (
         <p className="line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
       ) : null}
-      <div className="flex flex-wrap gap-1">
-        {item.tags.slice(0, 3).map((tag) => (
-          <TagChip key={tag.id} name={tag.name} color={tag.color ?? ''} />
-        ))}
-        {item.tags.length > 3 ? (
-          <span className="text-xs text-muted-foreground">+{item.tags.length - 3}</span>
-        ) : null}
-      </div>
+      <CatalogCardTags tags={item.tags} />
     </div>
   )
 }
@@ -100,9 +115,7 @@ function catalogCardDetails(item: CatalogSearchItem, refsLabel: string) {
 export function CatalogPublicItemCard({ item, className, companyDistanceLabel }: CatalogPublicItemCardProps) {
   const companyLogoUrl = item.companyImageUrl ?? null
   const navigate = useNavigate()
-  const { t } = useTranslation('catalog')
   const detailPath = `/catalog/${item.kind}/${item.id}`
-  const refsLabel = t('refs', { count: item.referenceCount ?? 0 })
 
   function openDetail() {
     navigate(detailPath)
@@ -129,7 +142,7 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
       onBodyClick={openDetail}
     >
       <div className="flex h-full min-h-[7.5rem] w-full flex-col items-stretch">
-        {catalogCardDetails(item, refsLabel)}
+        {catalogCardDetails(item)}
         {item.kind === 'services' ? (
           <div className="flex w-full min-w-0 flex-1 flex-col items-stretch">
             <PublicServiceListMeta item={item} className="mt-2 flex-1" showPrice={false} />
@@ -146,7 +159,7 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
           </p>
         ) : null}
         {item.companyName.trim() ? (
-          <div className="mt-auto border-t border-border pt-2">
+          <div className="mt-auto pt-2">
             <CatalogCardCompanyRow
               name={item.companyName}
               logoUrl={companyLogoUrl ?? null}

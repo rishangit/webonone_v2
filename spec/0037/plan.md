@@ -2,30 +2,28 @@
 
 ## Current behavior
 
-Homepage item cards render through `CatalogPublicItemCardGrid` → UI Kit `ItemListCardGrid`.
+Homepage cards go through `CatalogPublicItemCardGrid` → `CatalogPublicItemCard`.
 
-Default grid classes (`itemListCardGridClassName`):
+| Request | Today |
+|---------|--------|
+| Mobile gap | Nearby and search grids already pass `gap-2 md:gap-3` |
+| Company line | Company block uses `border-t border-border` |
+| Tags | `flex-wrap`, first 3 chips, then `+N` |
+| References | `t('refs')` next to the item name |
 
-```text
-grid grid-cols-1 items-stretch gap-3 py-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5
-```
-
-| Surface | Extra classes | Result below `md` |
-|---------|---------------|-------------------|
-| Nearby home (`NearbyHomeSection`) | `grid-cols-2 py-0 sm:grid-cols-2` | Two columns, `gap-3` |
-| Search results (`CatalogSearchResults`) | none (`py-0` fallback) | One column, `gap-3` |
-
-`tailwind-merge` lets a later `gap-*` replace the kit `gap-3`. Responsive `md:gap-3` does not conflict with an unprefixed `gap-2`.
+`CatalogPublicItemCard` is only used by the public website home nearby grid and search results.
 
 ## Approach
 
-Pass `gap-2 md:gap-3` on both homepage grids. Do not change the UI Kit default, so admin collection grids stay at `gap-3`.
+Keep the existing homepage gap classes. Change only the card body: drop the divider, drop the refs label, and make the tag row a single horizontal scroller below `md`.
 
 ## Implementation steps
 
-1. **Nearby home** — In `NearbyHomeSection.tsx`, extend the grid `className` to `grid-cols-2 gap-2 py-0 sm:grid-cols-2 md:gap-3`.
-2. **Home search results** — In `CatalogSearchResults.tsx`, pass `className="gap-2 py-0 md:gap-3"` into `CatalogPublicItemCardGrid`.
-3. **Verify** — `npm run type-check -w website-root` and `npm run lint -w @webonone/website-frontend`.
+1. **Company row** — In `CatalogPublicItemCard.tsx`, remove `border-t border-border` from the company wrapper. Keep `mt-auto pt-2`.
+2. **References** — Remove the refs span and the `refs` translation from the card. Leave locale keys in place (unused strings are harmless).
+3. **Tags** — Render every tag in `flex flex-nowrap overflow-x-auto` with `shrink-0` chips. From `md`, hide chips after the third and show `+N`, with wrap as today. Stop click propagation on the tag row so a swipe does not open the detail page.
+4. **Gap** — Leave `NearbyHomeSection` (`grid-cols-2 gap-2 py-0 sm:grid-cols-2 md:gap-3`) and `CatalogSearchResults` (`gap-2 py-0 md:gap-3`) as they are.
+5. **Verify** — `npm run type-check -w website-root` and `npm run lint -w @webonone/website-frontend`.
 
 ## Status transitions
 
@@ -38,5 +36,5 @@ Pass `gap-2 md:gap-3` on both homepage grids. Do not change the UI Kit default, 
 
 ## Risks / notes
 
-- `gap-2` is one step tighter than `gap-3` (12px → 8px). Column counts are unchanged.
-- Support docs are not required for this spacing change.
+- Desktop tag truncation stays at three chips. Only viewports below `md` swipe through the full list.
+- Support docs are not required for this visual change.
