@@ -448,7 +448,7 @@ function AppLayoutShell({
             <Button
               type="button"
               variant="ghost"
-              className="h-auto gap-0 px-1 hover:bg-transparent"
+              className="h-auto gap-0 !px-0 hover:bg-transparent"
               aria-label={tShell('header.homepage')}
               onClick={onOpenHomepage}
             >
