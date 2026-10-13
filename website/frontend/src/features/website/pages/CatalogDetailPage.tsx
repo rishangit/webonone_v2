@@ -311,7 +311,7 @@ export function CatalogDetailPage() {
       ) : null}
 
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <div className="relative z-10 shrink-0 bg-background px-4 pt-2 sm:px-8">
+        <div className="relative z-10 shrink-0 bg-background px-0 pt-2 sm:px-8">
           <div className={`flex flex-col gap-2 ${websitePageContentClassName}`}>
             <CurrentLocationBar
               coords={coords}
@@ -326,7 +326,7 @@ export function CatalogDetailPage() {
           </div>
         </div>
 
-        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-12 sm:px-8">
+        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-0 pb-12 sm:px-8">
           <FeaturePage
             title={pageTitle}
             description={pageDescription}

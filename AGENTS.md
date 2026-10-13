@@ -33,6 +33,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | [date-display](.cursor/skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026` via shared `DISPLAY_DATE_OPTIONS` and locale-aware helpers |
 | [help-articles](.cursor/skills/help-articles/SKILL.md) | User-visible WebOnOne (and shell) features must get Support Markdown how-tos (`en` + `si`) in the same task |
 | [website-designer-addons](.cursor/skills/website-designer-addons/SKILL.md) | Design website WebpageEditor addons — registry, settings tabs, data binding roles |
+| [web-mobile-view](.cursor/skills/web-mobile-view/SKILL.md) | Phone-width web item details use maximum content width (`px-0` below `sm`) so they match the Expo `FeatureScreen` inset |
 
 ## Service agents
 
