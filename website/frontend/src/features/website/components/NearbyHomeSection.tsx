@@ -89,7 +89,7 @@ export function NearbyHomeSection({ coords, locationStatus }: NearbyHomeSectionP
       <CatalogPublicItemCardGrid
         items={items}
         distanceNamespace="home"
-        className="grid-cols-2 py-0 sm:grid-cols-2"
+        className="grid-cols-2 gap-2 py-0 sm:grid-cols-2 md:gap-3"
       />
     </div>
   )

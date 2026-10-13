@@ -44,7 +44,11 @@ export function CatalogSearchResults({
       {locationNote ? (
         <p className="text-sm text-muted-foreground">{locationNote}</p>
       ) : null}
-      <CatalogPublicItemCardGrid items={rows} distanceNamespace="search" />
+      <CatalogPublicItemCardGrid
+        items={rows}
+        distanceNamespace="search"
+        className="gap-2 py-0 md:gap-3"
+      />
     </div>
   )
 }
