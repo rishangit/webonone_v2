@@ -9,7 +9,8 @@ summary: "Use the header for your profile, notification bell, and sign out."
 
 In the header:
 
-- Open your **avatar** for profile, account, and **Log out**.
+- Open your **avatar** for profile, account, **Homepage**, and **Log out**.
+- **Homepage**, and the **WebOnOne** logo in the header, open the public WebOnOne homepage in this tab.
 - **Profile** opens your Identity profile (name, contact, photo).
 - The **bell** opens **Notifications**.
 - **Log out** signs you out of the app.

@@ -106,6 +106,10 @@ interface AppShellProps {
 
   headerNotice?: ReactNode
 
+  /** Extra rows in the signed-in user menu, after the profile block. */
+
+  headerMenuItems?: ReactNode
+
   className?: string
 
 }
@@ -194,6 +198,8 @@ function AppShellChrome({
 
   headerNotice,
 
+  headerMenuItems,
+
   isDesktop,
 
   mobileOpen,
@@ -269,6 +275,8 @@ function AppShellChrome({
         actions={headerActions}
 
         notice={headerNotice}
+
+        menuItems={headerMenuItems}
 
       />
 
@@ -400,6 +408,8 @@ function AppShell({
 
   headerNotice,
 
+  headerMenuItems,
+
   className,
 
 }: AppShellProps) {
@@ -509,6 +519,8 @@ function AppShell({
           headerActions={headerActions}
 
           headerNotice={headerNotice}
+
+          headerMenuItems={headerMenuItems}
 
           className={className}
 

@@ -70,6 +70,8 @@
   },
   "header": {
     "profile": "පැතිකඩ",
+    "homepage": "මුල් පිටුව",
+    "homepageFailed": "මුල් පිටුව විවෘත කළ නොහැක",
     "logout": "ඉවත් වන්න",
     "language": "භාෂාව",
     "english": "English",

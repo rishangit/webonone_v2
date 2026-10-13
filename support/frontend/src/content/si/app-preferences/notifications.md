@@ -9,7 +9,8 @@ summary: "Header හි profile, notification bell, සහ sign out සඳහා
 
 header හි:
 
-- profile, account, සහ **Log out** සඳහා ඔබේ **avatar** විවෘත කරන්න.
+- profile, account, **මුල් පිටුව**, සහ **Log out** සඳහා ඔබේ **avatar** විවෘත කරන්න.
+- **මුල් පිටුව** සහ header හි **WebOnOne** logo මගින් public WebOnOne මුල් පිටුව මෙම tab එකේ විවෘත වේ.
 - **Profile** මගින් Identity profile (නම, සම්බන්ධතා, ඡායාරූපය) විවෘත වේ.
 - **bell** මගින් **Notifications** විවෘත වේ.
 - **Log out** මගින් යෙදුමෙන් sign out වේ.

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ComponentProps, type Dispatch, type ReactNode, type SetStateAction } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CircleHelp, MessageCircle } from 'lucide-react'
+import { CircleHelp, House, MessageCircle } from 'lucide-react'
 import {
   AppShell,
   BrandLogo,
   Button,
+  DropdownMenuItem,
   ListDisplayModeProvider,
   ListPageModeProvider,
   LoadingState,
@@ -36,6 +37,8 @@ import { isImpersonatingSession, stopImpersonation } from '@/features/auth/utils
 import { buildWebOnOneLoginHref } from '@/features/auth/utils/buildWebOnOneLoginHref'
 import { performWebOnOneLogout } from '@/features/auth/utils/performWebOnOneLogout'
 import { getSupportHomeUrl, getSupportRedirectOptions } from '@/features/support'
+import { redirectToWebsiteWithAuthCode } from '@/features/auth/utils/redirectToWebsite'
+import { getWebsiteHomepageUrl } from '@/features/auth/utils/websiteConfig'
 import { useIdentityUserRefresh } from '@/features/auth/hooks/useIdentityUserRefresh'
 import { patchIdentityLocale } from '@/features/auth/services/identityUserApi'
 import { buildNavForSessionRole } from '@/features/shell/config/navItems'
@@ -272,6 +275,19 @@ function AppLayoutContent() {
   const [assistantOpen, setAssistantOpen] = useState(false)
   const openAssistant = useCallback(() => setAssistantOpen(true), [])
 
+  const handleOpenHomepage = useCallback(() => {
+    if (!accessToken) {
+      return
+    }
+    void redirectToWebsiteWithAuthCode(accessToken, getWebsiteHomepageUrl()).catch((err: Error) => {
+      toast({
+        title: tShell('header.homepageFailed'),
+        description: err.message,
+        variant: 'destructive',
+      })
+    })
+  }, [accessToken, tShell, toast])
+
   const handleOpenSupport = useCallback(() => {
     if (!accessToken) {
       window.open(getSupportHomeUrl(), '_blank', 'noopener,noreferrer')
@@ -313,6 +329,7 @@ function AppLayoutContent() {
         onSidebarSessionClick={handleSidebarSessionClick}
         sidebarSessionClickLabel={tSession('chooseAccount.changeFromNav')}
         onOpenSupport={handleOpenSupport}
+        onOpenHomepage={handleOpenHomepage}
       />
     </AiEntityPasteProvider>
   )
@@ -358,6 +375,7 @@ type AppLayoutShellProps = {
   onSidebarSessionClick: () => void
   sidebarSessionClickLabel: string
   onOpenSupport: () => void
+  onOpenHomepage: () => void
 }
 
 function AppLayoutShell({
@@ -385,6 +403,7 @@ function AppLayoutShell({
   onSidebarSessionClick,
   sidebarSessionClickLabel,
   onOpenSupport,
+  onOpenHomepage,
 }: AppLayoutShellProps) {
   const { requestEntityPaste } = useAiEntityPaste()
 
@@ -425,7 +444,23 @@ function AppLayoutShell({
           embedMain={embedMain}
           nav={nav}
           activePath={location.pathname}
-          logo={<BrandLogo mark alt={tShell('brand')} />}
+          logo={
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto gap-0 px-1 hover:bg-transparent"
+              aria-label={tShell('header.homepage')}
+              onClick={onOpenHomepage}
+            >
+              <BrandLogo mark alt={tShell('brand')} />
+            </Button>
+          }
+          headerMenuItems={
+            <DropdownMenuItem onClick={onOpenHomepage}>
+              <House />
+              {tShell('header.homepage')}
+            </DropdownMenuItem>
+          }
           user={headerUser}
           sidebarSession={sidebarSession}
           onSidebarSessionClick={canChangeAccount ? onSidebarSessionClick : undefined}

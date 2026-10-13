@@ -70,6 +70,8 @@
   },
   "header": {
     "profile": "Profile",
+    "homepage": "Homepage",
+    "homepageFailed": "Could not open the homepage",
     "logout": "Log out",
     "language": "Language",
     "english": "English",
