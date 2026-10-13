@@ -8,6 +8,7 @@ import {
 } from '@webonone/media-embed'
 import { Button, CustomDialog } from '@webonone/ui-kit'
 import { getMediaCropDialogUrl, getMediaOrigin } from '../utils/mediaConfig'
+import { withAppliedUserTheme } from '../utils/mediaEmbedTheme'
 
 export interface WebsiteCropContext {
   file: File
@@ -181,7 +182,7 @@ export function WebsiteMediaCropDialog({
             isOpen={open}
             accessToken={accessToken}
             mediaOrigin={getMediaOrigin()}
-            baseUrl={getMediaCropDialogUrl()}
+            baseUrl={withAppliedUserTheme(getMediaCropDialogUrl())}
             parentOrigin={window.location.origin}
             scope={scope}
             folderPath={context.folderPath}

@@ -11,6 +11,7 @@ import {
   getMediaOrigin,
   getMediaSelectorUrl,
 } from '../utils/mediaConfig'
+import { withAppliedUserTheme } from '../utils/mediaEmbedTheme'
 
 export function WebsiteMediaPage() {
   const { t } = useTranslation('website')
@@ -53,7 +54,7 @@ export function WebsiteMediaPage() {
           isOpen
           accessToken={accessToken}
           mediaOrigin={getMediaOrigin()}
-          baseUrl={getMediaSelectorUrl()}
+          baseUrl={withAppliedUserTheme(getMediaSelectorUrl())}
           parentOrigin={parentOrigin}
           scope={scope}
           folderPath={folderPath}
