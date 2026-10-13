@@ -52,20 +52,38 @@ export const tabsContentClassName = 'ui-tabs-content pt-2 pb-4 outline-none'
 
 const Tabs = TabsPrimitive.Root
 
-function mergeRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
-  return (node: T | null) => {
-    for (const ref of refs) {
-      if (!ref) continue
-      if (typeof ref === 'function') {
-        ref(node)
-      } else {
-        ref.current = node
-      }
-    }
-  }
+const tabVisibilityEpsilonPx = 1
+
+function activeTabElement(scrollEl: HTMLElement): HTMLElement | null {
+  return scrollEl.querySelector<HTMLElement>('[data-state="active"]')
 }
 
-function useTabsListTouchScroll(scrollRef: React.RefObject<HTMLDivElement | null>) {
+function tabValueKey(tab: HTMLElement): string {
+  return tab.getAttribute('value') ?? tab.textContent ?? ''
+}
+
+function isTabFullyVisible(scrollEl: HTMLElement, tab: HTMLElement): boolean {
+  const view = scrollEl.getBoundingClientRect()
+  const rect = tab.getBoundingClientRect()
+  return (
+    rect.left >= view.left - tabVisibilityEpsilonPx &&
+    rect.right <= view.right + tabVisibilityEpsilonPx
+  )
+}
+
+function scrollTabIntoCenter(scrollEl: HTMLElement, tab: HTMLElement, behavior: ScrollBehavior) {
+  const view = scrollEl.getBoundingClientRect()
+  const rect = tab.getBoundingClientRect()
+  const delta = rect.left - view.left - (view.width - rect.width) / 2
+  const maxScroll = Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth)
+  const target = Math.max(0, Math.min(scrollEl.scrollLeft + delta, maxScroll))
+  scrollEl.scrollTo({ left: target, behavior })
+}
+
+function useTabsListTouchScroll(
+  scrollRef: React.RefObject<HTMLDivElement | null>,
+  userScrollIntentRef: React.MutableRefObject<boolean>,
+) {
   React.useEffect(() => {
     const el = scrollRef.current
     if (!el) return
@@ -87,6 +105,7 @@ function useTabsListTouchScroll(scrollRef: React.RefObject<HTMLDivElement | null
       if (!isSwiping) {
         if (Math.abs(deltaX) < 8) return
         isSwiping = true
+        userScrollIntentRef.current = true
       }
       el.scrollLeft = startScrollLeft - deltaX
       event.preventDefault()
@@ -94,6 +113,7 @@ function useTabsListTouchScroll(scrollRef: React.RefObject<HTMLDivElement | null
 
     const onTouchEnd = () => {
       isSwiping = false
+      userScrollIntentRef.current = false
     }
 
     el.addEventListener('touchstart', onTouchStart, { passive: true })
@@ -107,7 +127,112 @@ function useTabsListTouchScroll(scrollRef: React.RefObject<HTMLDivElement | null
       el.removeEventListener('touchend', onTouchEnd)
       el.removeEventListener('touchcancel', onTouchEnd)
     }
-  }, [scrollRef])
+  }, [scrollRef, userScrollIntentRef])
+}
+
+function useTabsListScrollPosition(
+  scrollRef: React.RefObject<HTMLDivElement | null>,
+  userScrollIntentRef: React.MutableRefObject<boolean>,
+) {
+  React.useLayoutEffect(() => {
+    const scrollEl = scrollRef.current
+    if (!scrollEl) return
+
+    let activeValue: string | null = null
+    let savedScrollLeft = 0
+    let restoring = false
+    let wheelIntentTimer = 0
+
+    const onWheel = () => {
+      userScrollIntentRef.current = true
+      window.clearTimeout(wheelIntentTimer)
+      wheelIntentTimer = window.setTimeout(() => {
+        userScrollIntentRef.current = false
+      }, 200)
+    }
+
+    const restoreSavedOffset = () => {
+      restoring = true
+      scrollEl.scrollTo({ left: savedScrollLeft, behavior: 'auto' })
+      restoring = false
+    }
+
+    const keepSelectedTabInPlace = (behavior: ScrollBehavior) => {
+      const active = activeTabElement(scrollEl)
+      if (!active) return
+
+      const nextValue = tabValueKey(active)
+      const first = activeValue === null
+      const changed = !first && activeValue !== nextValue
+      activeValue = nextValue
+
+      if (isTabFullyVisible(scrollEl, active)) {
+        savedScrollLeft = scrollEl.scrollLeft
+        return
+      }
+
+      const jumpedToStart =
+        !changed &&
+        !userScrollIntentRef.current &&
+        savedScrollLeft > 0 &&
+        scrollEl.scrollLeft === 0
+
+      if (jumpedToStart) {
+        restoreSavedOffset()
+        if (isTabFullyVisible(scrollEl, active)) return
+      }
+
+      if (first || changed) {
+        scrollTabIntoCenter(scrollEl, active, first ? 'auto' : behavior)
+        savedScrollLeft = scrollEl.scrollLeft
+      }
+    }
+
+    const onScroll = () => {
+      if (restoring) return
+      const active = activeTabElement(scrollEl)
+      const sameTab = active !== null && activeValue !== null && tabValueKey(active) === activeValue
+      const jumpedToStart =
+        sameTab &&
+        !userScrollIntentRef.current &&
+        savedScrollLeft > 0 &&
+        scrollEl.scrollLeft === 0
+
+      if (jumpedToStart && active && !isTabFullyVisible(scrollEl, active)) {
+        restoreSavedOffset()
+        return
+      }
+
+      savedScrollLeft = scrollEl.scrollLeft
+    }
+
+    keepSelectedTabInPlace('auto')
+
+    const list = scrollEl.querySelector<HTMLElement>('[role="tablist"]')
+    const attributeObserver = new MutationObserver(() => keepSelectedTabInPlace('smooth'))
+    if (list) {
+      attributeObserver.observe(list, {
+        attributes: true,
+        attributeFilter: ['data-state'],
+        subtree: true,
+      })
+    }
+
+    const resizeObserver = new ResizeObserver(() => keepSelectedTabInPlace('auto'))
+    resizeObserver.observe(scrollEl)
+    if (list) resizeObserver.observe(list)
+
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    scrollEl.addEventListener('wheel', onWheel, { passive: true })
+
+    return () => {
+      window.clearTimeout(wheelIntentTimer)
+      attributeObserver.disconnect()
+      resizeObserver.disconnect()
+      scrollEl.removeEventListener('scroll', onScroll)
+      scrollEl.removeEventListener('wheel', onWheel)
+    }
+  }, [scrollRef, userScrollIntentRef])
 }
 
 const TabsList = React.forwardRef<
@@ -115,63 +240,14 @@ const TabsList = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => {
   const scrollRef = React.useRef<HTMLDivElement>(null)
-  const listRef = React.useRef<React.ComponentRef<typeof TabsPrimitive.List>>(null)
+  const userScrollIntentRef = React.useRef(false)
 
-  useTabsListTouchScroll(scrollRef)
-
-  React.useLayoutEffect(() => {
-    const scrollEl = scrollRef.current
-    if (!scrollEl) return
-
-    let activeValue: string | null = null
-
-    const scrollActiveTabHorizontally = (behavior: ScrollBehavior = 'smooth') => {
-      const active = scrollEl.querySelector<HTMLElement>('[data-state="active"]')
-      if (!active) return
-
-      const left = active.offsetLeft
-      const width = active.offsetWidth
-      const viewport = scrollEl.clientWidth
-      const maxScroll = scrollEl.scrollWidth - viewport
-      const target = left - (viewport - width) / 2
-      scrollEl.scrollTo({
-        left: Math.max(0, Math.min(target, maxScroll)),
-        behavior,
-      })
-    }
-
-    const scrollActiveIntoView = () => {
-      const active = scrollEl.querySelector<HTMLElement>('[data-state="active"]')
-      if (!active) return
-
-      const nextValue = active.getAttribute('value') ?? active.textContent ?? ''
-      if (activeValue === null) {
-        activeValue = nextValue
-        return
-      }
-      if (activeValue === nextValue) return
-      activeValue = nextValue
-      scrollActiveTabHorizontally('smooth')
-    }
-
-    scrollActiveIntoView()
-
-    const list = listRef.current
-    if (!list) return
-
-    const observer = new MutationObserver(scrollActiveIntoView)
-    observer.observe(list, { attributes: true, attributeFilter: ['data-state'], subtree: true })
-
-    return () => observer.disconnect()
-  }, [])
+  useTabsListTouchScroll(scrollRef, userScrollIntentRef)
+  useTabsListScrollPosition(scrollRef, userScrollIntentRef)
 
   const list = (
     <div ref={scrollRef} className={tabsListScrollClassName}>
-      <TabsPrimitive.List
-        ref={mergeRefs(listRef, ref)}
-        className={cn(tabsListClassName, className)}
-        {...props}
-      />
+      <TabsPrimitive.List ref={ref} className={cn(tabsListClassName, className)} {...props} />
     </div>
   )
 
