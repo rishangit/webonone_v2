@@ -5,9 +5,11 @@ import {
   mergeSessionTokenAvatars,
   resolveSessionTokenAvatarMap,
 } from '@/features/calendar/utils/resolveSessionTokenAvatars'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 export function useSessionTokenAvatars(tokens: SessionToken[]): SessionToken[] {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const sessionUser = useAppSelector((s) => s.auth.user)
   const [avatarByUserId, setAvatarByUserId] = useState<Record<string, string>>({})
 
   const missingUserIdsKey = useMemo(() => {
@@ -34,7 +36,15 @@ export function useSessionTokenAvatars(tokens: SessionToken[]): SessionToken[] {
   }, [accessToken, missingUserIdsKey])
 
   return useMemo(
-    () => mergeSessionTokenAvatars(tokens, avatarByUserId),
-    [avatarByUserId, tokens],
+    () =>
+      mergeSessionTokenAvatars(tokens, avatarByUserId).map((token) =>
+        overlayIdentityFromSessionUser(token, sessionUser, {
+          userId: 'userId',
+          displayName: 'userDisplayName',
+          email: 'userEmail',
+          avatarUrl: 'userAvatarUrl',
+        }),
+      ),
+    [avatarByUserId, sessionUser, tokens],
   )
 }

@@ -206,8 +206,6 @@ export function toCreateEventPayload(values: EventWizardFormValues): CreateCompa
     recurrence_until: recurrenceUntil,
     start_time: values.startTime,
     attendee_user_id: values.attendee?.id ?? null,
-    attendee_display_name: values.attendee?.displayName ?? null,
-    attendee_email: values.attendee?.email ?? null,
   }
 }
 

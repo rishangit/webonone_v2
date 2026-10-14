@@ -29,6 +29,16 @@ export async function listNearbyCatalog(req: Request, res: Response) {
   res.json(result)
 }
 
+export async function getProductVariantOffer(req: Request, res: Response) {
+  const id = typeof req.params.id === 'string' ? req.params.id.trim() : ''
+  if (!id) {
+    res.status(400).json({ message: 'Invalid product id', code: 'VALIDATION' })
+    return
+  }
+  const offer = await webononeCatalogClient.getProductVariantOffer(id)
+  res.json(offer)
+}
+
 export async function getCatalogItem(req: Request, res: Response) {
   const kind = typeof req.params.kind === 'string' ? req.params.kind : ''
   const id = typeof req.params.id === 'string' ? req.params.id : ''

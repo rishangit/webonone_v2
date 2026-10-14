@@ -205,15 +205,14 @@ export async function topCustomers(
     .whereBetween('created_at', [fromAt, toAt])
     .select(
       'customer_user_id as key',
-      'customer_display_name as label',
       db.raw('COALESCE(SUM(total), 0) as amount'),
     )
-    .groupBy('customer_user_id', 'customer_display_name')
+    .groupBy('customer_user_id')
     .orderBy('amount', 'desc')
     .limit(TOP_N)
   return rows.map((row) => ({
     key: String(row.key),
-    label: String(row.label),
+    label: String(row.key),
     amount: asNumber(row.amount),
   }))
 }
@@ -224,27 +223,19 @@ export async function salesByStaff(
   to: string,
 ): Promise<NamedAmount[]> {
   const [fromAt, toAt] = rangeBounds(from, to)
-  const rows = await db('company_sales as s')
-    .leftJoin('company_staff as st', function joinStaff() {
-      this.on('st.user_id', '=', 's.created_by_user_id').andOn(
-        'st.company_id',
-        '=',
-        's.company_id',
-      )
-    })
-    .where({ 's.company_id': companyId, 's.status': 'completed' })
-    .whereBetween('s.created_at', [fromAt, toAt])
+  const rows = await db('company_sales')
+    .where({ company_id: companyId, status: 'completed' })
+    .whereBetween('created_at', [fromAt, toAt])
     .select(
-      's.created_by_user_id as key',
-      db.raw('COALESCE(MAX(st.display_name), s.created_by_user_id) as label'),
-      db.raw('COALESCE(SUM(s.total), 0) as amount'),
+      'created_by_user_id as key',
+      db.raw('COALESCE(SUM(total), 0) as amount'),
     )
-    .groupBy('s.created_by_user_id')
+    .groupBy('created_by_user_id')
     .orderBy('amount', 'desc')
     .limit(TOP_N)
   return rows.map((row) => ({
     key: String(row.key),
-    label: String(row.label),
+    label: String(row.key),
     amount: asNumber(row.amount),
   }))
 }

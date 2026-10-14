@@ -15,9 +15,11 @@ import {
   itemListThumbClassName,
   useToast,
 } from '@webonone/mobile-ui'
+import { useSession } from '@/features/auth/SessionContext'
 import { formatWorkingDaysSummary } from '@/features/staff/schemas/staffSchemas'
 import { staffApi } from '@/features/staff/services/staffApi'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
+import { overlayStaffFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type StaffListProps = {
   items: CompanyStaff[]
@@ -34,6 +36,7 @@ export function StaffList({
   onOpen,
   onRemoved,
 }: StaffListProps) {
+  const { user: sessionUser } = useSession()
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<CompanyStaff | null>(null)
@@ -63,7 +66,9 @@ export function StaffList({
   return (
     <>
       <ItemList>
-        {items.map((item) => (
+        {items.map((raw) => {
+          const item = overlayStaffFromSessionUser(raw, sessionUser)
+          return (
           <ItemListItem key={item.id}>
             <Pressable
               accessibilityRole="button"
@@ -101,7 +106,8 @@ export function StaffList({
               ) : null}
             </ItemListMenu>
           </ItemListItem>
-        ))}
+          )
+        })}
       </ItemList>
 
       <ConfirmDialog

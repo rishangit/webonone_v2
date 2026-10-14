@@ -18,28 +18,29 @@ import {
   toCreateStockPayload,
   type StockFormDraft,
 } from '@/features/data/company-catalog/schemas/stockSchemas'
-import {
-  dataLibraryApi,
-  type LibraryProductVariantStock,
-} from '@/features/sales/services/dataLibraryApi'
+import { companyCatalogApi } from '@/features/data/services/companyCatalogApi'
+import type { LibraryProductVariantStock } from '@/features/sales/services/dataLibraryApi'
 import { loadIdentityUsersForStaff } from '@/features/staff/services/identityUsersApi'
+import { useSession } from '@/features/auth/SessionContext'
+import { overlayStockSupplierFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 export function CompanyStockFormDialog({
   open,
-  libraryProductId,
+  companyProductId,
   variantId,
   stock = null,
   onOpenChange,
   onSaved,
 }: {
   open: boolean
-  libraryProductId: string
+  companyProductId: string
   variantId: string
   stock?: LibraryProductVariantStock | null
   onOpenChange: (open: boolean) => void
   onSaved: () => void
 }) {
   const { toast } = useToast()
+  const { user: sessionUser } = useSession()
   const isNew = !stock
   const [values, setValues] = useState<StockFormDraft>(createEmptyStockFormDraft)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof StockFormDraft, string>>>({})
@@ -50,12 +51,16 @@ export function CompanyStockFormDialog({
 
   useEffect(() => {
     if (!open) return
-    setValues(stock ? createStockDraftFromItem(stock) : createEmptyStockFormDraft())
+    setValues(
+      stock
+        ? createStockDraftFromItem(overlayStockSupplierFromSessionUser(stock, sessionUser))
+        : createEmptyStockFormDraft(),
+    )
     setFieldErrors({})
     setSaving(false)
     setGeneratingBatch(false)
     setSupplierPickerOpen(false)
-  }, [open, stock])
+  }, [open, stock, sessionUser])
 
   const loadPickerUsers = useCallback(async () => {
     try {
@@ -91,7 +96,7 @@ export function CompanyStockFormDialog({
   async function handleGenerateBatchNumber() {
     setGeneratingBatch(true)
     try {
-      const { batchNumber } = await dataLibraryApi.suggestStockBatchNumber()
+      const { batchNumber } = await companyCatalogApi.suggestStockBatchNumber()
       updateField('batchNumber', batchNumber)
     } catch (err) {
       toast({
@@ -115,10 +120,10 @@ export function CompanyStockFormDialog({
     try {
       const payload = toCreateStockPayload(parsed.data)
       if (isNew) {
-        await dataLibraryApi.createProductVariantStock(libraryProductId, variantId, payload)
+        await companyCatalogApi.createProductVariantStock(companyProductId, variantId, payload)
       } else {
-        await dataLibraryApi.updateProductVariantStock(
-          libraryProductId,
+        await companyCatalogApi.updateProductVariantStock(
+          companyProductId,
           variantId,
           stock.id,
           payload,

@@ -13,9 +13,11 @@ import {
   itemListThumbClassName,
   useToast,
 } from '@webonone/mobile-ui'
+import { useSession } from '@/features/auth/SessionContext'
 import { formatEventWhen } from '@/features/calendar/schemas/eventSchemas'
 import { eventsApi } from '@/features/calendar/services/eventsApi'
 import type { CompanyEvent } from '@/features/calendar/types/event.types'
+import { overlayEventAttendeeFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type EventsListProps = {
   items: CompanyEvent[]
@@ -32,6 +34,7 @@ export function EventsList({
   onOpen,
   onRemoved,
 }: EventsListProps) {
+  const { user: sessionUser } = useSession()
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<CompanyEvent | null>(null)
@@ -61,7 +64,9 @@ export function EventsList({
   return (
     <>
       <ItemList>
-        {items.map((item) => (
+        {items.map((raw) => {
+          const item = overlayEventAttendeeFromSessionUser(raw, sessionUser)
+          return (
           <ItemListItem key={item.id}>
             <Pressable
               accessibilityRole="button"
@@ -102,7 +107,8 @@ export function EventsList({
               ) : null}
             </ItemListMenu>
           </ItemListItem>
-        ))}
+          )
+        })}
       </ItemList>
 
       <ConfirmDialog

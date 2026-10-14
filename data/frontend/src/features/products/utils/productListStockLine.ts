@@ -14,16 +14,10 @@ export function resolveProductListUnitPrice(
   line: ProductListVariantStockLine | null,
   listPrice?: number | null,
 ): number | null {
+  if (!line || line.totalQuantity <= 0) return null
   if (listPrice != null) return listPrice
-  if (!line || line.sellPrice == null) return null
+  if (line.sellPrice == null) return null
   return line.sellPrice
-}
-
-export function formatProductListPrice(value: number): string {
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })
 }
 
 export function formatProductListStockAvailability(

@@ -61,7 +61,7 @@ Embed paths: `/embed/dialogs/<kind>/create` and `/embed/dialogs/<kind>/:id/edit`
 3. **Wire the list** — Add: `setDialog({})` (no id). Edit (row menu): `setDialog({ id })`. Primary CTA per item-list.
 4. **Add the details route** — `FeaturePage` + `onBack` (icon before title); 3-col `gap-6` card grid (left span-2 / right span-1).
 5. **Gallery in the primary section card** — when the entity (or linked catalog items) has gallery images, render `@webonone/ui-kit` `ImageCarousel` **inside** the left-column **Basics / Service / product** `EditableSectionCard` (or read-only equivalent), **above** the name and description fields — same single card as Data products/services. Omit the carousel when `images.length === 0`. Props: `{ mediaId, url }[]` + `alt`. Linked entities (events/sessions) combine service + space galleries and dedupe by `mediaId`. **Forbidden:** a separate images-only `Card` on Overview or detail tabs. Do not use `ImagePreview` or a custom carousel for multi-image galleries on web.
-6. **Section cards** — web: copy Data `EditableSectionCard` hover **Edit3** chrome per feature, or use `@webonone/ui-kit` `EditableSectionCard` when available. **Mobile:** import **`EditableSectionCard`** and **`ReadOnlyField`** from `@webonone/mobile-ui` only — tap the card to reveal the outline icon edit control; never add a feature-local card with `Pencil` or always-visible edit buttons. Map each editable section → `openWizard(step)`. Meta/audit → plain `Card`.
+6. **Section cards** — web: import **`EditableSectionCard`** from `@webonone/ui-kit` (`canEdit` + `onEdit`; optional `titleExtra` / `headerTrailing` / `editAriaLabel`). **Mobile:** import **`EditableSectionCard`** and **`ReadOnlyField`** from `@webonone/mobile-ui` only — tap the card to reveal the outline icon edit control; never add a feature-local card with `Pencil` or always-visible edit buttons. Map each editable section → `openWizard(step)`. Meta/audit → plain `Card`.
 7. **Section tabs** — if the page has a section tablist, sync with `?tab=` via service-local `useDetailTabParam(allowed, defaultTab)` (default omitted from URL; invalid → default; `replace: false`). Same contract for Basic Settings / Email settings even when not wizard-backed. Keep wizard/embed entry on `?step=N`.
 8. **Open wizard from detail** — `<FormDialog open id={entityId} initialStep={…} onSaved={refreshDetail} />`.
 9. **Embed** — routes for create + `:id/edit`; body uses `chrome="embed-page"` and `?step=` via `parse…Step`; host Previous/Next via peer-dialog busy sync.
@@ -118,7 +118,7 @@ Match Data / company / Identity profile — **icon-only hover Edit**, not a labe
 | `aria-label={`Edit ${title}`}` | Missing accessible name |
 | Gate with `canEdit && onEdit` | Different chrome per feature |
 
-Prefer `@webonone/ui-kit` **`EditableSectionCard`** when the page already uses UI Kit. Service-local copies under `*/frontend/src/**/EditableSectionCard.tsx` must stay aligned with `ui-kit/package/src/components/EditableSectionCard.tsx` — do not drift.
+Web must import **`EditableSectionCard`** from `@webonone/ui-kit`. Do **not** copy it into a service `features/` or `shared/components/` folder.
 
 ### Mobile (Expo)
 
@@ -161,7 +161,7 @@ Card Edit jumps into the wizard; save still walks the full flow (no section-only
 |-------|------|
 | Details + Overview carousel | `data/frontend/src/features/services/pages/ServiceDetailsPage.tsx` |
 | Product / catalog Overview | `…/products/pages/ProductDetailsPage.tsx` · `…/catalog/pages/CatalogDetailsPage.tsx` |
-| Section card | `data/frontend/src/features/services/components/EditableSectionCard.tsx` |
+| Section card | `ui-kit/package/src/components/EditableSectionCard.tsx` |
 | Wizard dialog | `data/frontend/src/features/services/components/ServiceFormDialog.tsx` |
 | Steps / schemas | `data/frontend/src/features/services/components/service-wizard/`, `…/schemas/serviceSchemas.ts` |
 | Embed body | `data/frontend/src/features/catalog/pages/CatalogFormEmbedPage.tsx` |
@@ -178,7 +178,7 @@ Card Edit jumps into the wizard; save still walks the full flow (no section-only
 | Mobile company catalog detail | `mobile/src/features/data/screens/CompanyCatalogDetailScreen.tsx` |
 | Mobile kit section card | `packages/mobile-ui/src/components/EditableSectionCard.tsx` |
 
-On **web**, `EditableSectionCard` may be feature-local when not using UI Kit — keep copies identical to the canonical Data/ui-kit shape. On **mobile**, do **not** copy into `features/`; extend `@webonone/mobile-ui` instead.
+On **web**, always import `EditableSectionCard` from `@webonone/ui-kit`. On **mobile**, import from `@webonone/mobile-ui` — never copy either into `features/`.
 
 ## Verification
 

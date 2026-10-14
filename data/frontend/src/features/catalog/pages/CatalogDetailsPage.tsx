@@ -11,7 +11,9 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  EditableSectionCard,
   ImageCarousel,
+  ReadOnlyField,
   TagChip,
 } from '@webonone/ui-kit'
 import type { RootState } from '@/app/store'
@@ -28,7 +30,7 @@ import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/Catalo
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { spacesActions } from '@/features/spaces/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
+import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import type { CatalogFeatureState } from '@webonone/store-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
@@ -59,15 +61,6 @@ const CONFIG: Record<
     select: (s) => s.spaces,
     actions: spacesActions,
   },
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
 }
 
 export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
@@ -111,7 +104,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
         <EditableSectionCard
           title={config.singular}
           description="Name, status, and description"
-          status={item.status}
+          headerTrailing={<StatusBadge status={item.status} />}
           canEdit={canEdit}
           onEdit={() => setEditOpen(true)}
         >

@@ -9,6 +9,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ImagePreview,
+  imagePreviewGalleryThumbClassName,
 } from '@webonone/ui-kit'
 import { useAppDispatch } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -113,19 +115,24 @@ export function CompanyGalleryCard({
         </CardHeader>
         <CardContent>
           {images.length === 0 ? (
-            <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                {canEdit ? t('companyCards.gallery.addGalleryImages') : t('companyCards.gallery.empty')}
-              </p>
+            <div className="flex min-h-32 items-center justify-center">
+              <ImagePreview
+                src={null}
+                alt={
+                  canEdit
+                    ? t('companyCards.gallery.addGalleryImages')
+                    : t('companyCards.gallery.empty')
+                }
+              />
             </div>
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {images.map((img) => (
-                <li key={img.mediaId} className="group relative overflow-hidden rounded-lg border">
-                  <img
+                <li key={img.mediaId} className="group relative overflow-hidden">
+                  <ImagePreview
                     src={img.url}
                     alt={t('companyCards.gallery.alt')}
-                    className="aspect-square w-full object-cover"
+                    className={imagePreviewGalleryThumbClassName}
                   />
                   {canEdit ? (
                     <Button

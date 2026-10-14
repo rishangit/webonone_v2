@@ -14,6 +14,7 @@ import {
   FeaturePage,
   ImagePreview,
   StatusTag,
+  PriceDisplay,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -21,7 +22,7 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { ReceiptUploadModal } from '@/features/invoices/components/ReceiptUploadModal'
 import { paymentApi } from '@/shared/services/paymentApi'
 import type { InvoiceDetail, InvoiceStatus } from '@/shared/types/payment.types'
-import { formatDate, formatLkr, formatPeriod } from '@/shared/utils/money'
+import { formatDate, formatPeriod } from '@/shared/utils/money'
 import { copyTextToClipboard } from '@/shared/utils/copyText'
 
 function isReceiptImage(fileName: string | null, url: string | null): boolean {
@@ -230,9 +231,9 @@ export function InvoiceDetailPage() {
                   <span className="text-muted-foreground">{t('company')}: </span>
                   {invoice.companyName}
                 </p>
-                <p>
+                <p className="flex flex-wrap items-baseline gap-1">
                   <span className="text-muted-foreground">{t('amount')}: </span>
-                  {formatLkr(invoice.amountMinor)}
+                  <PriceDisplay value={invoice.amountMinor} minorUnits size="md" />
                 </p>
                 <p>
                   <span className="text-muted-foreground">{t('period')}: </span>
@@ -261,12 +262,12 @@ export function InvoiceDetailPage() {
                 {invoice.lines.map((line) => (
                   <div key={line.id} className="flex items-center justify-between gap-4 text-sm">
                     <span>{line.description}</span>
-                    <span className="font-medium">{formatLkr(line.amountMinor)}</span>
+                    <PriceDisplay value={line.amountMinor} minorUnits size="sm" />
                   </div>
                 ))}
                 <div className="flex items-center justify-between border-t pt-2 font-semibold">
                   <span>{t('total')}</span>
-                  <span>{formatLkr(invoice.amountMinor)}</span>
+                  <PriceDisplay value={invoice.amountMinor} minorUnits size="md" />
                 </div>
               </CardContent>
             </Card>

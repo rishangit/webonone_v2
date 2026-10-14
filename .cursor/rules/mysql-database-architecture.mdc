@@ -10,7 +10,7 @@ Related: [microservice-architecture.mdc](microservice-architecture.mdc) (one DB 
 
 ## Before designing tables
 
-1. Confirm the table belongs to **this service’s bounded context** — other services’ entities are ID copies only.
+1. Confirm the table belongs to **this service’s bounded context**.
 2. List intra-service entities, relationships, state transitions, and query patterns.
 3. Sketch indexes from real access paths.
 
@@ -18,7 +18,10 @@ Related: [microservice-architecture.mdc](microservice-architecture.mdc) (one DB 
 
 - **FK constraints** only within the same database.
 - Cross-service references: `user_id`, `order_id` as `CHAR(21)` nanoid — **no FK** to another service’s tables.
-- Sync and denormalize via **events** or public APIs (see microservice architecture rule).
+- **IDs only across services.** Never copy another service’s **live** fields (`display_name`, `email`, `avatar_url`, current catalog title, etc.) into this database — not even “for convenience” or via events.
+- Resolve live fields from the **owning service** on read (internal contact/catalog API). Frontends cache the result in **Redux** (or session), never persist it to a peer MySQL.
+- **Allowed snapshots:** immutable facts of a completed transaction in the owning service (e.g. sale-line `name_snapshot` / `unit_price` at checkout). Do not snapshot Identity profile fields onto reviews, events, tokens, staff, or stocks.
+- Events provision **memberships and foreign IDs**, not profile mirrors.
 
 ## Naming and types
 
@@ -44,20 +47,11 @@ Optional: `deleted_at DATETIME(3) NULL` for soft deletes.
 ## Nanoid IDs (Node.js)
 
 - Assign `id` **before** `INSERT` in the service layer (`import { nanoid } from 'nanoid'`).
-- Custom `size`/`customAlphabet`: use matching `CHAR(n)` consistently across PKs and FKs.
 - Validate IDs at API boundary: `z.string().length(21)` for default nanoid.
 
 ```typescript
-import { nanoid } from 'nanoid'
-
-export const createOrder = async (input: CreateOrderInput) => {
-  const id = nanoid()
-  await db.query(
-    'INSERT INTO orders (id, user_id, status, total_amount) VALUES (?, ?, ?, ?)',
-    [id, input.userId, 'pending', input.totalAmount],
-  )
-  return { id, ...input, status: 'pending' }
-}
+const id = nanoid()
+await db.query('INSERT INTO orders (id, user_id, status) VALUES (?, ?, ?)', [id, input.userId, 'pending'])
 ```
 
 ## Relationships, migrations, and access
@@ -66,60 +60,31 @@ export const createOrder = async (input: CreateOrderInput) => {
 - Index FK columns and `WHERE`/`ORDER BY`/`JOIN` columns; composite indexes match filter order.
 - **Migrations**: versioned, append-only, one logical change each; seeds separate from schema.
 - **Pool** per process (`DB_POOL_MAX`); **parameterized queries** only; **transactions** for multi-row writes.
-- Least-privilege DB user per service database.
 
 ### Knex connection (mysql2) — required pool + keepalive
 
-The runtime `knex()` instance in `backend/src/models/db.ts` (Identity: `models/user.repository.ts`) **must** enable TCP keep-alive and use `pool.min: 0`. Without this, knex keeps idle connections (default `min: 2`) that MySQL/OS drops after `wait_timeout`, so the next query throws intermittent **`read ECONNRESET`** / `500`.
+The runtime `knex()` instance in `backend/src/models/db.ts` **must** enable TCP keep-alive and use `pool.min: 0`. Without this, idle connections die after MySQL `wait_timeout` and the next query throws **`read ECONNRESET`**.
 
 ```typescript
 export const db = knex({
   client: 'mysql2',
-  connection: {
-    ...env.database,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 10000,
-  },
+  connection: { ...env.database, enableKeepAlive: true, keepAliveInitialDelay: 10000 },
   pool: { min: 0, max: 10 },
 })
 ```
 
-**Forbidden:** `knex({ client: 'mysql2', connection: env.database })` with no `pool` / `enableKeepAlive` for a long-lived server instance. (Migration-only `knexfile.ts` configs are short-lived and do not need this.)
+**Forbidden:** `knex({ client: 'mysql2', connection: env.database })` with no `pool` / `enableKeepAlive` for a long-lived server. (Migration-only `knexfile.ts` is fine.)
 
 ## Microservice data patterns
 
 - **Outbox table**: same transaction as business write; worker publishes events.
 - **Idempotency**: unique `idempotency_key` for retried creates/payments.
-- **Read models**: denormalize via event consumers; treat as eventually consistent.
-
-## Example schema
-
-```sql
-CREATE TABLE orders (
-  id           CHAR(21)      NOT NULL PRIMARY KEY,
-  user_id      CHAR(21)      NOT NULL,
-  status       VARCHAR(32)   NOT NULL,
-  total_amount DECIMAL(19,4) NOT NULL,
-  created_at   DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  updated_at   DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  INDEX idx_orders_user_id (user_id),
-  INDEX idx_orders_status_created (status, created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE order_line_items (
-  id         CHAR(21)    NOT NULL PRIMARY KEY,
-  order_id   CHAR(21)    NOT NULL,
-  product_id CHAR(21)    NOT NULL,
-  quantity   INT         NOT NULL,
-  unit_price DECIMAL(19,4) NOT NULL,
-  CONSTRAINT fk_line_items_order
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
+- **Read models**: store foreign IDs + this service’s own facts. Hydrate peer fields at read time; do not denormalize live peer columns into MySQL.
 
 ## Checklist
 
 - [ ] Correct service database; no cross-service FKs or shared tables
+- [ ] Foreign IDs only — no live copies of Identity/catalog fields from another database
 - [ ] `CHAR(21)` nanoid PKs/FKs generated in Node.js before insert
 - [ ] Indexes and constraints for FKs and query paths
 - [ ] Migration append-only; outbox/idempotency where other services depend on writes
@@ -129,6 +94,6 @@ CREATE TABLE order_line_items (
 ```bash
 npm run type-check
 npm run lint
-npm run migrate:status   # prisma migrate status, knex migrate:list, etc.
+npm run migrate:status
 npm test
 ```

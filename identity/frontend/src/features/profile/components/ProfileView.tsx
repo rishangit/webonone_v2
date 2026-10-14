@@ -1,32 +1,16 @@
 import { Globe, MapPin, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { ImagePreview, StatusTag, isStatusTagVariant } from '@webonone/ui-kit'
+import {
+  EditableSectionCard,
+  ImagePreview,
+  ReadOnlyField,
+  StatusTag,
+  isStatusTagVariant,
+} from '@webonone/ui-kit'
 import type { UserProfile } from '@/shared/types/auth.types'
 import type { ProfileWizardStep } from '../schemas/profileSchemas'
 import { formatCountryName } from '../utils/formatCountryName'
 import { ContactVerifiedRow } from './ContactVerification'
-import { EditableSectionCard } from './EditableSectionCard'
-
-function ReadOnlyField({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string
-  value: string | null | undefined
-  icon?: typeof User
-}) {
-  const display = value?.trim() ? value : '—'
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="flex items-center gap-2 text-sm">
-        {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden /> : null}
-        <span>{display}</span>
-      </div>
-    </div>
-  )
-}
 
 function formatRoleLabel(role: string): string {
   return role
@@ -66,6 +50,7 @@ export function ProfileView({
           description={t('sections.account.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(1) : undefined}
+          editAriaLabel={t('aria.editSection', { title: t('sections.account.title') })}
         >
           <div className="flex flex-col items-start gap-4 text-left sm:flex-row">
             <ImagePreview
@@ -117,6 +102,7 @@ export function ProfileView({
           description={t('sections.address.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(2) : undefined}
+          editAriaLabel={t('aria.editSection', { title: t('sections.address.title') })}
         >
           <ReadOnlyField label={t('fields.addressLine1')} value={user.addressLine1} icon={MapPin} />
           <ReadOnlyField label={t('fields.addressLine2')} value={user.addressLine2} icon={MapPin} />
@@ -141,6 +127,7 @@ export function ProfileView({
           description={t('sections.contact.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(3) : undefined}
+          editAriaLabel={t('aria.editSection', { title: t('sections.contact.title') })}
         >
           <ContactVerifiedRow
             kind="phone"
@@ -169,6 +156,7 @@ export function ProfileView({
           description={t('sections.name.description')}
           canEdit={canEdit}
           onEdit={onEditSection ? () => onEditSection(4) : undefined}
+          editAriaLabel={t('aria.editSection', { title: t('sections.name.title') })}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <ReadOnlyField label={t('fields.firstName')} value={user.firstName} icon={User} />

@@ -1,19 +1,17 @@
 import { useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import * as DocumentPicker from 'expo-document-picker'
 import { useTranslation } from 'react-i18next'
-import { Trash2 } from 'lucide-react-native'
 import {
-  Body,
   Button,
   Card,
   ConfirmDialog,
-  ImagePreview,
   Muted,
   Subheading,
   useToast,
-  useThemedControlIconColor,
 } from '@webonone/mobile-ui'
+import { CatalogGalleryImageGrid } from '@/features/data/components/CatalogGalleryImageGrid'
+import { CATALOG_ENTITY_SINGULAR_KEYS } from '@/features/data/company-catalog/utils/catalogAiKinds'
 import { uploadCompanyCatalogGalleryImage } from '@/features/data/company-catalog/services/companyCatalogMediaApi'
 import { companyCatalogApi } from '@/features/data/services/companyCatalogApi'
 import type { CatalogGalleryImage, CatalogEntityKind } from '@/features/sales/types/catalog.types'
@@ -40,7 +38,6 @@ export function CompanyCatalogGalleryTab({
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
-  const iconColor = useThemedControlIconColor()
   const [saving, setSaving] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const images = galleryImages ?? []
@@ -110,26 +107,15 @@ export function CompanyCatalogGalleryTab({
           {t('gallery.addImages')}
         </Button>
       ) : null}
-      {images.length === 0 ? (
-        <Muted>{t('gallery.empty')}</Muted>
-      ) : (
-        <View className="flex-row flex-wrap gap-3">
-          {images.map((image) => (
-            <View key={image.mediaId} className="relative">
-              <ImagePreview src={image.url} alt="" className="h-24 w-24 rounded-md" />
-              {canEdit ? (
-                <Pressable
-                  className="absolute right-1 top-1 rounded-full bg-background/90 p-1"
-                  onPress={() => setPendingRemoveId(image.mediaId)}
-                  accessibilityLabel={tc('remove')}
-                >
-                  <Trash2 size={14} color={iconColor} />
-                </Pressable>
-              ) : null}
-            </View>
-          ))}
-        </View>
-      )}
+      <CatalogGalleryImageGrid
+        images={images}
+        emptyAlt={t('gallery.empty')}
+        imageAlt={t('gallery.alt', { noun: t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`) })}
+        canEdit={canEdit}
+        saving={saving}
+        removeAriaLabel={tc('remove')}
+        onRequestRemove={setPendingRemoveId}
+      />
       <ConfirmDialog
         open={pendingRemoveId != null}
         onOpenChange={(open) => !open && setPendingRemoveId(null)}

@@ -3,6 +3,15 @@ import * as productVariantsService from '../services/productVariants.service.js'
 import { handleServiceError } from './controllerUtils.js'
 
 export const internalProductVariantsController = {
+  async list(req: Request, res: Response) {
+    try {
+      const items = await productVariantsService.listProductVariants(String(req.params.id))
+      res.json({ items })
+    } catch (err) {
+      if (!handleServiceError(err, res)) throw err
+    }
+  },
+
   async get(req: Request, res: Response) {
     try {
       const item = await productVariantsService.getProductVariant(

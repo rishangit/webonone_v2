@@ -6,6 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  PriceDisplay,
   StockAvailabilityProgress,
 } from '@webonone/ui-kit'
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
@@ -14,7 +15,6 @@ import {
   getActiveCompanyProductListLine,
   resolveCompanyProductListUnitPrice,
 } from '@/features/company-catalog/utils/companyCatalogProductListStockLine'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import type { ProductPickerStockDisplay } from '@/features/sales/utils/resolveProductPickerStockDisplay'
 
 type CompanyCatalogProductListVariantStockProps = {
@@ -117,9 +117,7 @@ export function CompanyCatalogProductListVariantStock({
         </span>
       )}
       {showPrice && unitPrice != null ? (
-        <span className="text-xs text-muted-foreground">
-          {t('list.stockPrice', { price: formatLkr(unitPrice) })}
-        </span>
+        <PriceDisplay value={unitPrice} size="sm" className="text-muted-foreground" />
       ) : null}
       {showStock ? (
         <StockAvailabilityProgress

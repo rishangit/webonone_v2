@@ -6,6 +6,7 @@ import type {
 } from '../schemas/companyStaffSchemas.js'
 import {
   fetchUserContactsByIds,
+  resolveIdentityDisplay,
   type IdentityUserContact,
 } from '../clients/identityUserContactClient.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
@@ -69,35 +70,23 @@ function emptyWeekSchedule(): StaffScheduleDayDto[] {
 function mapStaff(
   row: repo.CompanyStaffRow,
   scheduleRows: repo.CompanyStaffScheduleRow[],
+  contact: IdentityUserContact | undefined,
 ): CompanyStaffDto {
   const byDay = new Map(scheduleRows.map((s) => [Number(s.day_of_week), mapScheduleRow(s)]))
   const schedule = emptyWeekSchedule().map((day) => byDay.get(day.day_of_week) ?? day)
+  const identity = resolveIdentityDisplay(contact, 'Staff')
+  const email = identity.email
   return {
     id: row.id,
     companyId: row.company_id,
     userId: row.user_id,
-    displayName: row.display_name,
-    email: row.email,
-    avatarUrl: row.avatar_url,
-    isEmailVerified: false,
+    displayName: identity.displayName,
+    email,
+    avatarUrl: identity.avatarUrl,
+    isEmailVerified: Boolean(email?.trim() && contact?.isEmailVerified),
     schedule,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
-  }
-}
-
-function mergeStaffWithIdentityContact(
-  item: CompanyStaffDto,
-  contact: IdentityUserContact | undefined,
-): CompanyStaffDto {
-  if (!contact) return item
-  const identityAvatar = contact.avatarUrl?.trim() || null
-  const email = contact.email ?? item.email
-  return {
-    ...item,
-    avatarUrl: identityAvatar ?? item.avatarUrl,
-    email,
-    isEmailVerified: Boolean(email?.trim() && contact.isEmailVerified),
   }
 }
 
@@ -109,9 +98,8 @@ async function hydrateStaff(rows: repo.CompanyStaffRow[]): Promise<CompanyStaffD
     list.push(s)
     byStaff.set(s.staff_id, list)
   }
-  const items = rows.map((row) => mapStaff(row, byStaff.get(row.id) ?? []))
-  const contacts = await fetchUserContactsByIds(items.map((item) => item.userId))
-  return items.map((item) => mergeStaffWithIdentityContact(item, contacts.get(item.userId)))
+  const contacts = await fetchUserContactsByIds(rows.map((row) => row.user_id))
+  return rows.map((row) => mapStaff(row, byStaff.get(row.id) ?? [], contacts.get(row.user_id)))
 }
 
 export async function listCompanyStaff(companyId: string): Promise<{
@@ -149,9 +137,6 @@ export async function createCompanyStaff(
     id,
     company_id: companyId,
     user_id: body.user_id,
-    display_name: body.display_name.trim(),
-    email: body.email?.trim() || null,
-    avatar_url: body.avatar_url?.trim() || null,
   })
   await repo.replaceSchedules(
     id,
@@ -185,18 +170,8 @@ export async function updateCompanyStaff(
   const previousUserId = row.user_id
   const nextUserId = body.user_id !== undefined ? body.user_id : previousUserId
 
-  if (
-    body.user_id !== undefined ||
-    body.display_name !== undefined ||
-    body.email !== undefined ||
-    body.avatar_url !== undefined
-  ) {
-    await repo.updateStaff(companyId, staffId, {
-      ...(body.user_id !== undefined ? { user_id: body.user_id } : {}),
-      ...(body.display_name !== undefined ? { display_name: body.display_name.trim() } : {}),
-      ...(body.email !== undefined ? { email: body.email?.trim() || null } : {}),
-      ...(body.avatar_url !== undefined ? { avatar_url: body.avatar_url?.trim() || null } : {}),
-    })
+  if (body.user_id !== undefined) {
+    await repo.updateStaff(companyId, staffId, { user_id: body.user_id })
   }
 
   if (body.schedule) {

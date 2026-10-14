@@ -20,12 +20,14 @@ import {
   ListPageBody,
   ListPageFooter,
   ListPageModeProvider,
+  ReadOnlyField,
   SearchInput,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  StatusTag,
   Switch,
   Textarea,
   mapZodIssuesToFieldErrors,
@@ -237,26 +239,6 @@ const INITIAL_PROFILE_DETAILS: ProfileDetailsValues = {
   bio: 'Profile details page pattern with per-card edit icons.',
 }
 
-function ReadOnlyField({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string
-  value?: string | null
-  icon?: typeof User
-}) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="flex items-center gap-2 text-sm">
-        {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden /> : null}
-        <span>{value?.trim() ? value : '—'}</span>
-      </div>
-    </div>
-  )
-}
-
 type DetailsSection = 'profile' | 'address' | 'contact' | 'name'
 
 function SectionEditActions({
@@ -418,6 +400,7 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
           <EditableSectionCard
             title="Contact"
             description="How others can reach you"
+            headerTrailing={<StatusTag variant="verified">Verified</StatusTag>}
             canEdit
             onEdit={() => startEdit('contact')}
           >
@@ -468,6 +451,7 @@ export function DetailsPageDemo({ onBack }: { onBack?: () => void }) {
           <EditableSectionCard
             title="Name"
             description="Legal and display names"
+            titleExtra={<StatusTag variant="verified">Primary</StatusTag>}
             canEdit
             onEdit={() => startEdit('name')}
           >

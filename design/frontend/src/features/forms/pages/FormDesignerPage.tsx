@@ -46,8 +46,13 @@ function defaultField(type: FormFieldType, t: (key: string) => string): FormFiel
             ? t('checkbox')
             : type === 'radio'
               ? t('radioGroup')
-              : t('dropdown'),
+              : type === 'media'
+                ? t('documentsField')
+                : t('dropdown'),
     required: false,
+  }
+  if (type === 'media') {
+    base.allowMultiple = false
   }
   if (type === 'radio' || type === 'select') {
     base.options = [

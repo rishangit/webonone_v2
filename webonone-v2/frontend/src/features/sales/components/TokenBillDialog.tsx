@@ -15,6 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  PriceDisplay,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
@@ -29,7 +30,6 @@ import { PosLibraryRequestsCard } from '@/features/sales/components/PosLibraryRe
 import { completeSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesApi } from '@/features/sales/services/salesApi'
 import type { PosCartLine, Sale, SalePaymentMethod, TokenPosSubject } from '@/features/sales/types/sales.types'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import { parseLibraryRequestsNote } from '@/features/sales/utils/libraryRequestNotes'
 
 type TokenBillDialogProps = {
@@ -240,7 +240,10 @@ export function TokenBillDialog({
             {libraryRequests.length > 0 ? (
               <PosLibraryRequestsCard requests={libraryRequests} readOnly />
             ) : null}
-            <p className="text-lg font-semibold">{t('pos.total', { amount: formatLkr(total) })}</p>
+            <p className="flex items-baseline gap-2 text-lg font-semibold">
+              <span>{t('pos.total')}</span>
+              <PriceDisplay value={total} size="lg" />
+            </p>
             {isPaid ? (
               <div className="space-y-2 text-sm">
                 {bill.paymentMethod ? (

@@ -20,13 +20,14 @@ import {
   ItemListEmpty,
   ItemListItem,
   ItemListMenu,
+  EditableSectionCard,
+  ReadOnlyField,
   StatusTag,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useCompanyCatalogAttributeValueDialog } from '@/features/company-catalog/hooks/useCompanyCatalogAttributeValueDialog'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { EditableSectionCard } from '../components/EditableSectionCard'
 import { companyCatalogApi } from '../services/companyCatalogApi'
 import {
   dataLibraryApi,
@@ -40,15 +41,6 @@ import {
   isCatalogGalleryKind,
   type CatalogEntityKind,
 } from '../types/companyCatalog.types'
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
-}
 
 function isCatalogEntityKind(value: string): value is CatalogEntityKind {
   return (CATALOG_ENTITY_KINDS as readonly string[]).includes(value)

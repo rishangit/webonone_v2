@@ -27,8 +27,6 @@ export const createCompanyEventBodySchema = z
     service_id: z.string().trim().min(1).max(21),
     staff_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_user_id: z.string().trim().min(1).max(21).nullable().optional(),
-    attendee_display_name: z.string().trim().min(1).max(255).nullable().optional(),
-    attendee_email: z.string().trim().email().max(255).nullable().optional(),
     /** Optional legacy event-level space; staff and space are normally set on the service workflow. */
     space_id: z.string().trim().min(1).max(21).nullable().optional(),
     starts_on: dateYmd,
@@ -60,8 +58,6 @@ export const updateCompanyEventBodySchema = z
     service_id: z.string().trim().min(1).max(21).optional(),
     staff_id: z.string().trim().min(1).max(21).nullable().optional(),
     attendee_user_id: z.string().trim().min(1).max(21).nullable().optional(),
-    attendee_display_name: z.string().trim().min(1).max(255).nullable().optional(),
-    attendee_email: z.string().trim().email().max(255).nullable().optional(),
     space_id: z.string().trim().min(1).max(21).nullable().optional(),
     starts_on: dateYmd.optional(),
     start_time: timeHhMm.optional(),
@@ -117,17 +113,10 @@ export const updateCompanyEventBodySchema = z
 
 export const createSessionTokenBodySchema = z.object({
   user_id: z.string().trim().min(1).max(21),
-  user_display_name: z.string().trim().min(1).max(255),
-  user_email: z.string().trim().email().max(255).nullable().optional(),
-  user_avatar_url: z.string().trim().max(2048).nullable().optional(),
 })
 
 /** Self-serve public booking — user id comes from JWT. */
-export const bookPublicSessionTokenBodySchema = z.object({
-  user_display_name: z.string().trim().min(1).max(255),
-  user_email: z.string().trim().email().max(255).nullable().optional(),
-  user_avatar_url: z.string().trim().max(2048).nullable().optional(),
-})
+export const bookPublicSessionTokenBodySchema = z.object({})
 
 export const changeSessionScheduleBodySchema = z
   .object({

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  CatalogRatingSummary,
   CollectionListView,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -12,8 +13,11 @@ import {
   ItemListItem,
   ItemListMenu,
   itemListThumbClassName,
+  PriceDisplay,
   StatusTag,
 } from '@webonone/ui-kit'
+import { useCatalogListReviewSummaries } from '../hooks/useCatalogListReviewSummaries'
+import { isReviewableCatalogKind } from '@/features/reviews/utils/catalogReviewKind'
 import { CompanyCatalogAiMenuItem } from './CompanyCatalogAiMenuItem'
 import { CompanyCatalogListItemStockProgress } from './CompanyCatalogListItemStockProgress'
 import { CompanyCatalogProductListVariantStock } from './CompanyCatalogProductListVariantStock'
@@ -32,7 +36,6 @@ import {
   formatCompanyServiceTimeModeLabel,
   resolveCompanyServiceTimePayload,
 } from '@/features/company-catalog/utils/companyCatalogServiceListDisplay'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import type { ProductPickerStockDisplay } from '@/features/sales/utils/resolveProductPickerStockDisplay'
 
 const gridPriceColumnClass = 'text-right tabular-nums'
@@ -61,26 +64,48 @@ export function CompanyCatalogItemsList({
 }: CompanyCatalogItemsListProps) {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
+  const { t: tr } = useTranslation('reviews')
   const [selectedVariantByItemId, setSelectedVariantByItemId] = useState<Record<string, string>>({})
+  const reviewSummaries = useCatalogListReviewSummaries(kind, items)
+  const showRatings = isReviewableCatalogKind(kind)
 
-  const libraryProductIds = useMemo(
+  const productStockRefs = useMemo(
     () =>
       kind === 'products'
         ? items
-            .map((item) => item.libraryEntityId)
-            .filter((id): id is string => typeof id === 'string' && id.length > 0)
+            .filter(
+              (item): item is HydratedCatalogItem & { libraryEntityId: string } =>
+                typeof item.libraryEntityId === 'string' && item.libraryEntityId.length > 0,
+            )
+            .map((item) => ({
+              companyProductId: item.id,
+              libraryProductId: item.libraryEntityId,
+            }))
         : [],
     [kind, items],
   )
-  const stockByLibraryId = useCompanyProductListStockMeta(libraryProductIds)
+  const stockByProductId = useCompanyProductListStockMeta(productStockRefs)
 
   const onSelectVariant = useCallback((catalogItemId: string, variantId: string) => {
     setSelectedVariantByItemId((prev) => ({ ...prev, [catalogItemId]: variantId }))
   }, [])
 
   function stockMetaForItem(item: HydratedCatalogItem): ProductPickerStockDisplay | undefined {
-    if (!item.libraryEntityId) return undefined
-    return stockByLibraryId[item.libraryEntityId]
+    return stockByProductId[item.id]
+  }
+
+  function renderItemRating(item: HydratedCatalogItem) {
+    const summary = reviewSummaries[item.id]
+    if (!summary || summary.count <= 0) return null
+    return (
+      <CatalogRatingSummary
+        className="mt-1"
+        averageRating={summary.averageRating}
+        reviewCount={summary.count}
+        countLabel={tr('listRatingCount', { count: summary.count })}
+        ratingLabel={tr('ratingLabel')}
+      />
+    )
   }
 
   const columns = useMemo(
@@ -116,6 +141,21 @@ export function CompanyCatalogItemsList({
           </p>
         ),
       },
+      ...(showRatings
+        ? [
+            {
+              id: 'rating',
+              header: t('list.rating'),
+              sortable: true,
+              compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) => {
+                const avgA = reviewSummaries[a.id]?.averageRating ?? -1
+                const avgB = reviewSummaries[b.id]?.averageRating ?? -1
+                return avgA - avgB
+              },
+              cell: (item: HydratedCatalogItem) => renderItemRating(item) ?? '—',
+            },
+          ]
+        : []),
       {
         id: 'binding',
         header: tc('status'),
@@ -234,7 +274,7 @@ export function CompanyCatalogItemsList({
                   ),
                   item.listPrice,
                 )
-                return price != null ? formatLkr(price) : '—'
+                return price != null ? <PriceDisplay value={price} size="sm" align="right" /> : '—'
               },
             },
           ]
@@ -289,12 +329,28 @@ export function CompanyCatalogItemsList({
               className: gridPriceColumnClass,
               headerClassName: gridPriceColumnClass,
               cell: (item: HydratedCatalogItem) =>
-                item.listPrice != null ? formatLkr(item.listPrice) : '—',
+                item.listPrice != null ? (
+                  <PriceDisplay value={item.listPrice} size="sm" align="right" />
+                ) : (
+                  '—'
+                ),
             },
           ]
         : []),
     ],
-    [kind, onOpen, onSelectVariant, previewMode, selectedVariantByItemId, stockByLibraryId, t, tc],
+    [
+      kind,
+      onOpen,
+      onSelectVariant,
+      previewMode,
+      reviewSummaries,
+      selectedVariantByItemId,
+      showRatings,
+      stockByProductId,
+      t,
+      tc,
+      tr,
+    ],
   )
 
   function catalogItemDetails(
@@ -322,6 +378,7 @@ export function CompanyCatalogItemsList({
         {item.displayDescription ? (
           <p className="line-clamp-2 text-sm text-muted-foreground">{item.displayDescription}</p>
         ) : null}
+        {showRatings ? renderItemRating(item) : null}
         {kind === 'products' && item.libraryEntityId && !item.libraryUnavailable && showVariant ? (
           <CompanyCatalogProductListVariantStock
             catalogItemId={item.id}
@@ -378,9 +435,7 @@ export function CompanyCatalogItemsList({
           />
         ) : null}
         {unitPrice != null ? (
-          <span className="mt-auto text-right text-sm font-medium tabular-nums text-foreground">
-            {formatLkr(unitPrice)}
-          </span>
+          <PriceDisplay value={unitPrice} size="sm" align="right" className="mt-auto" />
         ) : null}
       </div>
     )
@@ -448,9 +503,7 @@ export function CompanyCatalogItemsList({
     if (unitPrice == null) return null
 
     return (
-      <p className="mt-auto pt-2 text-right text-sm font-medium tabular-nums text-foreground">
-        {formatLkr(unitPrice)}
-      </p>
+      <PriceDisplay value={unitPrice} size="sm" align="right" className="mt-auto pt-2" />
     )
   }
 
@@ -537,9 +590,12 @@ export function CompanyCatalogItemsList({
             ) : null}
             {kind === 'products' ? productCardPrice(item) : null}
             {kind === 'services' && item.listPrice != null ? (
-              <p className="mt-auto pt-2 text-right text-sm font-medium tabular-nums text-foreground">
-                {formatLkr(item.listPrice)}
-              </p>
+              <PriceDisplay
+                value={item.listPrice}
+                size="sm"
+                align="right"
+                className="mt-auto pt-2"
+              />
             ) : null}
           </div>
         </ItemListCollectionCard>

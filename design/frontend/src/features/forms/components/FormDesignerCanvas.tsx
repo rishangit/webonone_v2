@@ -1,4 +1,4 @@
-import { Edit3 } from 'lucide-react'
+import { Edit3, Paperclip } from 'lucide-react'
 import {
   Button,
   Checkbox,
@@ -89,6 +89,18 @@ function FieldPreview({ field }: { field: FormField }) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )
+    case 'media':
+      return (
+        <div>
+          {label}
+          <div
+            className="flex h-10 items-center gap-2 rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--input-background))] px-3 text-sm text-muted-foreground"
+          >
+            <Paperclip className="h-4 w-4 shrink-0" aria-hidden />
+            {field.allowMultiple ? t('mediaPreviewMultiple') : t('mediaPreviewSingle')}
+          </div>
         </div>
       )
     default:

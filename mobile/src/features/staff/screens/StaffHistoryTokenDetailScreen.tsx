@@ -12,6 +12,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   Muted,
+  PriceDisplay,
   ReadOnlyField,
   Spinner,
   Subheading,
@@ -25,7 +26,9 @@ import {
   type SessionTokenHistoryDetail,
 } from '@/features/staff/services/staffHistoryApi'
 import { staffDetailPath } from '@/features/staff/utils/staffPaths'
+import { useSession } from '@/features/auth/SessionContext'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
+import { overlayNamedUserFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type StaffHistoryTokenDetailScreenProps = {
   staffId: string
@@ -39,6 +42,7 @@ export function StaffHistoryTokenDetailScreen({
   const { t } = useTranslation('staff')
   const { t: tc } = useTranslation('common')
   const router = useRouter()
+  const { user: sessionUser } = useSession()
   const [detail, setDetail] = useState<SessionTokenHistoryDetail | null>(null)
   const [submissions, setSubmissions] = useState<FormSubmissionDetail[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -85,8 +89,8 @@ export function StaffHistoryTokenDetailScreen({
       buildDesignFormWebViewPath({
         formTemplateId,
         subjectUserId: detail.userId,
-        subjectDisplayName: detail.userDisplayName,
-        subjectEmail: detail.userEmail,
+        subjectDisplayName: overlayNamedUserFromSessionUser(detail, sessionUser).userDisplayName,
+        subjectEmail: overlayNamedUserFromSessionUser(detail, sessionUser).userEmail,
         serviceId: detail.serviceId,
         serviceName: detail.serviceName,
         eventId: detail.eventId,
@@ -143,6 +147,8 @@ export function StaffHistoryTokenDetailScreen({
 
   if (!detail) return null
 
+  const token = overlayNamedUserFromSessionUser(detail, sessionUser)
+
   return (
     <FeatureScreen
       title={detail.serviceName}
@@ -174,7 +180,7 @@ export function StaffHistoryTokenDetailScreen({
             </View>
           ) : null}
           <ReadOnlyField label={t('history.tokenDetail.status')} value={detail.status} />
-          <ReadOnlyField label={t('history.tokenDetail.customer')} value={detail.userDisplayName} />
+          <ReadOnlyField label={t('history.tokenDetail.customer')} value={token.userDisplayName} />
           {detail.spaceName ? (
             <ReadOnlyField label={t('history.tokenDetail.space')} value={detail.spaceName} />
           ) : null}
@@ -217,10 +223,8 @@ export function StaffHistoryTokenDetailScreen({
                   key={sale.id}
                   onPress={() => router.push(`/sales/${sale.id}` as Href)}
                 >
-                  <ItemListContent
-                    title={sale.billNumber}
-                    subtitle={`${sale.currency} ${sale.total.toFixed(2)} · ${sale.paymentMethod}`}
-                  />
+                  <ItemListContent title={sale.billNumber} subtitle={sale.paymentMethod} />
+                  <PriceDisplay value={sale.total} currency={sale.currency} size="sm" />
                 </ItemListItem>
               ))}
             </ItemList>

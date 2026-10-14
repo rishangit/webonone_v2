@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  PriceDisplay,
   StatusTag,
 } from '@webonone/ui-kit'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -25,10 +26,6 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-foreground">{value}</p>
     </div>
   )
-}
-
-function formatMoney(value: number, currency: string): string {
-  return `${currency} ${value.toFixed(2)}`
 }
 
 export function HistorySaleDetailPage() {
@@ -117,18 +114,28 @@ export function HistorySaleDetailPage() {
                         <td className="py-2 pr-3">{line.name}</td>
                         <td className="py-2 pr-3 text-right">{line.quantity}</td>
                         <td className="py-2 pr-3 text-right">
-                          {formatMoney(line.unitPrice, detail.currency)}
+                          <PriceDisplay
+                            value={line.unitPrice}
+                            currency={detail.currency}
+                            size="sm"
+                            align="right"
+                          />
                         </td>
                         <td className="py-2 text-right">
-                          {formatMoney(line.lineTotal, detail.currency)}
+                          <PriceDisplay
+                            value={line.lineTotal}
+                            currency={detail.currency}
+                            size="sm"
+                            align="right"
+                          />
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-4 text-right text-lg font-semibold">
-                {formatMoney(detail.total, detail.currency)}
+              <p className="mt-4 text-right">
+                <PriceDisplay value={detail.total} currency={detail.currency} size="lg" align="right" />
               </p>
             </CardContent>
           </Card>

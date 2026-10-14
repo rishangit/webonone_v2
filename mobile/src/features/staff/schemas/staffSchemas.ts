@@ -129,9 +129,6 @@ export function toCreateStaffPayload(values: StaffWizardFormValues): CreateCompa
   if (!values.user) throw new Error('Select a user')
   return {
     user_id: values.user.id,
-    display_name: values.user.displayName,
-    email: values.user.email,
-    avatar_url: values.user.avatarUrl,
     schedule: values.schedule.map((day) => ({
       day_of_week: day.day_of_week,
       is_working: day.is_working,
@@ -145,9 +142,6 @@ export function toUpdateStaffPayload(values: StaffWizardFormValues): UpdateCompa
   if (!values.user) throw new Error('Select a user')
   return {
     user_id: values.user.id,
-    display_name: values.user.displayName,
-    email: values.user.email,
-    avatar_url: values.user.avatarUrl,
     schedule: values.schedule.map((day) => ({
       day_of_week: day.day_of_week,
       is_working: day.is_working,

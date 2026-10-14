@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, ContactValueLine, ImagePreview } from '@webonone/ui-kit'
-import { EditableSectionCard } from '@/features/settings/companies/components/EditableSectionCard'
+import { Button, ContactValueLine, EditableSectionCard, ImagePreview } from '@webonone/ui-kit'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
 
 type StaffUserCardProps = {

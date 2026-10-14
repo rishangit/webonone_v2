@@ -1,8 +1,7 @@
 import { Mail, Phone } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { ReadOnlyField } from '@webonone/ui-kit'
+import { EditableSectionCard, ReadOnlyField } from '@webonone/ui-kit'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
-import { EditableSectionCard } from './EditableSectionCard'
 
 type CompanyContactCardProps = {
   detail: CompanyDetail

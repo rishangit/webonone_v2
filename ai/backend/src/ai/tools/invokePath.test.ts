@@ -37,14 +37,7 @@ describe('isAllowedInvokePath', () => {
     assert.equal(isAllowedInvokePath('data', '/api/v1/products/:id/variants'), true)
     assert.equal(isAllowedInvokePath('data', '/api/v1/products/:id/variants/:variantId'), true)
     assert.equal(
-      isAllowedInvokePath('data', '/api/v1/products/:id/variants/:variantId/stocks'),
-      true,
-    )
-    assert.equal(
-      isAllowedInvokePath(
-        'data',
-        '/api/v1/products/:id/variants/:variantId/stocks/:stockId/active',
-      ),
+      isAllowedInvokePath('webonone', '/api/v1/company/me/catalog/products/:id/variants/:variantId/stocks'),
       true,
     )
   })

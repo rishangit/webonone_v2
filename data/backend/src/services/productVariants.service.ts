@@ -62,15 +62,18 @@ async function assertProductExists(productId: string): Promise<void> {
 async function loadProductAttributeSnapshots(
   productId: string,
 ): Promise<ProductAttributeSnapshot[]> {
-  const links = await db('data_product_attributes').where({ product_id: productId })
+  const links = await db('data_catalog_entity_attributes').where({
+    entity_kind: 'products',
+    entity_id: productId,
+  })
   if (links.length === 0) return []
 
   const attributeIds = links.map((link) => link.attribute_id as string)
   const attrRows = await db('data_attributes').whereIn('id', attributeIds)
   const attrById = new Map(attrRows.map((row) => [row.id as string, row]))
 
-  const valueRows = await db('data_product_attribute_values')
-    .where({ product_id: productId })
+  const valueRows = await db('data_catalog_entity_attribute_values')
+    .where({ entity_kind: 'products', entity_id: productId })
     .whereIn('attribute_id', attributeIds)
     .orderBy('created_at', 'asc')
 
@@ -107,7 +110,7 @@ async function loadVariantValues(
 
   const rows = (await db('data_product_variant_values as vv')
     .join('data_attributes as a', 'a.id', 'vv.attribute_id')
-    .join('data_product_attribute_values as pav', 'pav.id', 'vv.attribute_value_id')
+    .join('data_catalog_entity_attribute_values as pav', 'pav.id', 'vv.attribute_value_id')
     .leftJoin('data_units as u', 'u.id', 'a.unit_id')
     .whereIn('vv.variant_id', variantIds)
     .select(

@@ -8,8 +8,8 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  formatLkr,
 } from '@webonone/mobile-ui'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import type { StockedProductVariantOption } from '@/features/sales/utils/resolveStockedProductVariants'
 
 type PosProductVariantDialogProps = {

@@ -13,6 +13,7 @@ import {
   SearchInput,
   SegmentedSwitch,
   SegmentedSwitchItem,
+  PriceDisplay,
   Spinner,
 } from '@webonone/ui-kit'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
@@ -29,7 +30,6 @@ import { buildLibraryRequestFromPick } from '@/features/sales/utils/libraryReque
 import {
   PosPickerProductStockInline,
 } from '@/features/sales/components/PosPickerProductStockMeta'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import {
   resolveProductPickerStockDisplay,
   type ProductPickerStockDisplay,
@@ -156,7 +156,7 @@ export function PosItemPickerDialog({
     let cancelled = false
     void Promise.all(
       linkedProducts.map(async (item) => {
-        const meta = await resolveProductPickerStockDisplay(item.libraryEntityId!)
+        const meta = await resolveProductPickerStockDisplay(item.libraryEntityId!, item.id)
         return { id: item.id, meta }
       }),
     )
@@ -379,7 +379,9 @@ export function PosItemPickerDialog({
                       ) : null}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                         {activeTab ? <span>{t(`kinds.${activeTab.kind}`)}</span> : null}
-                        {item.listPrice != null ? <span>{formatLkr(item.listPrice)}</span> : null}
+                        {item.listPrice != null ? (
+                          <PriceDisplay value={item.listPrice} size="sm" className="inline" />
+                        ) : null}
                         {tabKind === 'product' && item.libraryEntityId ? (
                           <PosPickerProductStockInline meta={productStockById[item.id]} />
                         ) : null}

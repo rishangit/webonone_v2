@@ -1,9 +1,12 @@
 import { Image as ImageIcon, Pencil } from 'lucide-react'
-import { shapeImageClassName } from '../lib/shape'
+import { shapeImageClassName, shapeImageFlushClassName } from '../lib/shape'
 import { cn } from '../lib/utils'
 import { Button } from './Button'
 
 export type ImagePreviewMode = 'view' | 'edit'
+
+/** Gallery edit-grid tile — fills the cell; empty icon scales with the box. */
+export const imagePreviewGalleryThumbClassName = 'aspect-square h-auto w-full'
 
 export interface ImagePreviewProps {
   src: string | null
@@ -22,11 +25,14 @@ export function ImagePreview({
   className,
 }: ImagePreviewProps) {
   const showEditOverlay = mode === 'edit' && onEdit
+  const isFlush = className?.includes(shapeImageFlushClassName) ?? false
+  const showFrameBorder = mode === 'edit' && !isFlush
 
   return (
     <div
       className={cn(
-        'relative h-40 w-40 shrink-0 overflow-hidden border border-border bg-muted',
+        'relative h-40 w-40 shrink-0 overflow-hidden bg-muted',
+        showFrameBorder ? 'border border-border' : 'border-0',
         shapeImageClassName,
         className,
       )}

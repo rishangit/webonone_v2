@@ -1,20 +1,21 @@
 import { useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import {
   ConfirmDialog,
-  ImagePreview,
   ItemList,
-  ItemListContent,
   ItemListEmpty,
-  ItemListItem,
   ItemListMenu,
   ItemListMenuItem,
   TagChip,
 } from '@webonone/mobile-ui'
+import { CatalogEntityListRow } from '@/features/data/components/CatalogEntityListRow'
 import { EntityStatusTag } from '@/features/data/components/EntityStatusTag'
+import { ServiceListMeta } from '@/features/data/components/ServiceListMeta'
+import type { CatalogKind } from '@/features/data/utils/dataPaths'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 export function CatalogList({
+  kind,
   items,
   busyId,
   canEdit,
@@ -25,6 +26,7 @@ export function CatalogList({
   onDelete,
   emptyMessage = 'No items found.',
 }: {
+  kind?: CatalogKind
   items: CatalogItem[]
   busyId: string | null
   canEdit: boolean
@@ -46,49 +48,50 @@ export function CatalogList({
       <ItemList>
         {items.map((item) => {
           const isBusy = busyId === item.id
-          const thumb = item.galleryImages[0]?.url ?? null
           return (
-            <ItemListItem key={item.id}>
-              <ImagePreview src={thumb} alt={item.name} className="mr-3 h-10 w-10 rounded-md" />
-              <Pressable className="min-w-0 flex-1" onPress={() => onOpen(item)}>
-                <ItemListContent
-                  title={item.name}
-                  subtitle={`${item.referenceCount} refs${item.description ? ` · ${item.description}` : ''}`}
-                />
-                {item.tags.length > 0 ? (
-                  <View className="mt-1 flex-row flex-wrap gap-1">
-                    {item.tags.slice(0, 3).map((tag) => (
-                      <TagChip key={tag.id} name={tag.name} color={tag.color} />
-                    ))}
-                  </View>
-                ) : null}
-              </Pressable>
-              <EntityStatusTag status={item.status} />
-              <ItemListMenu ariaLabel={`Actions — ${item.name}`}>
-                <ItemListMenuItem disabled={isBusy} onPress={() => onOpen(item)}>
-                  View details
-                </ItemListMenuItem>
-                {canDelete && item.status === 'pending' ? (
-                  <ItemListMenuItem disabled={isBusy} onPress={() => onVerify(item)}>
-                    Verify
+            <CatalogEntityListRow
+              key={item.id}
+              thumbUrl={item.galleryImages[0]?.url ?? null}
+              name={item.name}
+              subtitle={`${item.referenceCount} refs${item.description ? ` · ${item.description}` : ''}`}
+              onOpen={() => onOpen(item)}
+              trailing={<EntityStatusTag status={item.status} />}
+              menu={
+                <ItemListMenu ariaLabel={`Actions — ${item.name}`}>
+                  <ItemListMenuItem disabled={isBusy} onPress={() => onOpen(item)}>
+                    View details
                   </ItemListMenuItem>
-                ) : null}
-                {canEdit ? (
-                  <ItemListMenuItem disabled={isBusy} onPress={() => onEdit(item)}>
-                    Edit
-                  </ItemListMenuItem>
-                ) : null}
-                {canDelete ? (
-                  <ItemListMenuItem
-                    disabled={isBusy}
-                    destructive
-                    onPress={() => setPendingDelete(item)}
-                  >
-                    Delete
-                  </ItemListMenuItem>
-                ) : null}
-              </ItemListMenu>
-            </ItemListItem>
+                  {canDelete && item.status === 'pending' ? (
+                    <ItemListMenuItem disabled={isBusy} onPress={() => onVerify(item)}>
+                      Verify
+                    </ItemListMenuItem>
+                  ) : null}
+                  {canEdit ? (
+                    <ItemListMenuItem disabled={isBusy} onPress={() => onEdit(item)}>
+                      Edit
+                    </ItemListMenuItem>
+                  ) : null}
+                  {canDelete ? (
+                    <ItemListMenuItem
+                      disabled={isBusy}
+                      destructive
+                      onPress={() => setPendingDelete(item)}
+                    >
+                      Delete
+                    </ItemListMenuItem>
+                  ) : null}
+                </ItemListMenu>
+              }
+            >
+              {kind === 'services' ? <ServiceListMeta item={item} className="mt-1" /> : null}
+              {item.tags.length > 0 ? (
+                <View className="mt-1 flex-row flex-wrap gap-1">
+                  {item.tags.slice(0, 3).map((tag) => (
+                    <TagChip key={tag.id} name={tag.name} color={tag.color} />
+                  ))}
+                </View>
+              ) : null}
+            </CatalogEntityListRow>
           )
         })}
       </ItemList>

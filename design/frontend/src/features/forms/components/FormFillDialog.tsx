@@ -13,22 +13,15 @@ import {
   Alert,
   AlertDescription,
   Button,
-  Checkbox,
   CustomDialog,
-  FormField,
-  Input,
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Spinner,
-  Textarea,
   useToast,
 } from '@webonone/ui-kit'
+import {
+  buildInitialFormAnswers,
+  FormFillFields,
+  validateFormAnswers,
+} from '@/features/forms/components/FormFillFields'
 import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { designApi } from '@/shared/services/designApi'
@@ -104,142 +97,6 @@ export function buildFormFillEmbedPath(subject: FormFillSubject): string {
   if (mode === 'view' || mode === 'edit') params.set('mode', mode)
   if (subject.submissionId) params.set('submissionId', subject.submissionId)
   return `/embed/dialogs/forms/${encodeURIComponent(subject.formTemplateId)}/fill?${params.toString()}`
-}
-
-function FormFillFields({
-  fields,
-  answers,
-  fieldErrors,
-  disabled,
-  onAnswer,
-}: {
-  fields: FormFieldDef[]
-  answers: Record<string, unknown>
-  fieldErrors: Record<string, string>
-  disabled: boolean
-  onAnswer: (fieldId: string, value: unknown) => void
-}) {
-  const { t } = useTranslation('forms')
-  return (
-    <div className="flex flex-col gap-6">
-      {fields.map((field) => {
-        if (field.type === 'checkbox') {
-          return (
-            <div key={field.id} className="flex items-start gap-3">
-              <Checkbox
-                id={field.id}
-                checked={Boolean(answers[field.id])}
-                disabled={disabled}
-                onCheckedChange={(checked) => onAnswer(field.id, checked === true)}
-              />
-              <Label htmlFor={field.id} className="font-normal leading-snug">
-                {field.label}
-                {field.required ? <span className="text-destructive"> *</span> : null}
-              </Label>
-            </div>
-          )
-        }
-
-        if (field.type === 'textarea') {
-          return (
-            <FormField
-              key={field.id}
-              htmlFor={field.id}
-              label={field.label}
-              required={field.required}
-              error={fieldErrors[field.id]}
-            >
-              <Textarea
-                value={String(answers[field.id] ?? '')}
-                placeholder={field.placeholder}
-                disabled={disabled}
-                onChange={(e) => onAnswer(field.id, e.target.value)}
-              />
-            </FormField>
-          )
-        }
-
-        if (field.type === 'select') {
-          return (
-            <FormField
-              key={field.id}
-              htmlFor={field.id}
-              label={field.label}
-              required={field.required}
-              error={fieldErrors[field.id]}
-            >
-              <Select
-                value={String(answers[field.id] ?? '') || undefined}
-                onValueChange={(value) => onAnswer(field.id, value)}
-                disabled={disabled}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={field.placeholder || t('selectPlaceholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(field.options ?? []).map((opt) => (
-                    <SelectItem key={opt.id} value={opt.id}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-          )
-        }
-
-        if (field.type === 'radio') {
-          return (
-            <div key={field.id} className="space-y-2">
-              <Label>
-                {field.label}
-                {field.required ? <span className="text-destructive"> *</span> : null}
-              </Label>
-              <RadioGroup
-                value={String(answers[field.id] ?? '') || undefined}
-                onValueChange={(value) => onAnswer(field.id, value)}
-                disabled={disabled}
-                className="gap-2"
-              >
-                {(field.options ?? []).map((opt) => (
-                  <div key={opt.id} className="flex items-center gap-2">
-                    <RadioGroupItem value={opt.id} id={`${field.id}-${opt.id}`} disabled={disabled} />
-                    <Label htmlFor={`${field.id}-${opt.id}`} className="font-normal">
-                      {opt.label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-              {fieldErrors[field.id] ? (
-                <p className="text-sm text-destructive">{fieldErrors[field.id]}</p>
-              ) : null}
-            </div>
-          )
-        }
-
-        return (
-          <FormField
-            key={field.id}
-            htmlFor={field.id}
-            label={field.label}
-            required={field.required}
-            error={fieldErrors[field.id]}
-          >
-            <Input
-              value={String(answers[field.id] ?? '')}
-              placeholder={field.placeholder}
-              disabled={disabled}
-              onChange={(e) => onAnswer(field.id, e.target.value)}
-            />
-          </FormField>
-        )
-      })}
-
-      {fields.length === 0 ? (
-        <p className="text-sm text-muted-foreground">This form has no fields yet.</p>
-      ) : null}
-    </div>
-  )
 }
 
 export function FormFillDialog({
@@ -325,11 +182,7 @@ export function FormFillDialog({
       if (cancelled) return
       setForm(loaded)
 
-      const initial: Record<string, unknown> = {}
-      for (const field of loaded.definition.fields) {
-        if (field.type === 'checkbox') initial[field.id] = false
-        else initial[field.id] = ''
-      }
+      const initial = buildInitialFormAnswers(loaded.definition.fields)
 
       if ((isView || isEdit) && submissionId) {
         const submission = await designApi.getSubmission(submissionId)
@@ -385,15 +238,7 @@ export function FormFillDialog({
   }
 
   function validate(fieldsToCheck: FormFieldDef[]): boolean {
-    const next: Record<string, string> = {}
-    for (const field of fieldsToCheck) {
-      const value = answers[field.id]
-      if (!field.required) continue
-      if (field.type === 'checkbox') continue
-      if (value == null || value === '') {
-        next[field.id] = t('fieldRequired', { label: field.label })
-      }
-    }
+    const next = validateFormAnswers(fieldsToCheck, answers, t)
     setFieldErrors(next)
     return Object.keys(next).length === 0
   }

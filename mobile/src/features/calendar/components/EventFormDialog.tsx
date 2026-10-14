@@ -33,6 +33,8 @@ import {
 import { eventsApi } from '@/features/calendar/services/eventsApi'
 import { loadIdentityUsers } from '@/features/calendar/services/identityUsersApi'
 import type { CompanyEvent } from '@/features/calendar/types/event.types'
+import { useSession } from '@/features/auth/SessionContext'
+import { overlayEventAttendeeFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type EventFormDialogProps = {
   open: boolean
@@ -50,6 +52,7 @@ export function EventFormDialog({
   onSaved,
 }: EventFormDialogProps) {
   const { toast } = useToast()
+  const { user: sessionUser } = useSession()
   const isNew = !id
   const [step, setStep] = useState<EventWizardStep>(parseEventWizardStep(initialStep))
   const [values, setValues] = useState<EventWizardFormValues>(EMPTY_EVENT_WIZARD_VALUES)
@@ -102,7 +105,7 @@ export function EventFormDialog({
           setStep(parseEventWizardStep(initialStep, 4))
           return
         }
-        const event = await eventsApi.get(id!)
+        const event = overlayEventAttendeeFromSessionUser(await eventsApi.get(id!), sessionUser)
         if (cancelled) return
         setValues(valuesFromEvent(event))
         setStep(parseEventWizardStep(initialStep, eventWizardTotalSteps(event.timeMode)))
@@ -117,7 +120,7 @@ export function EventFormDialog({
     return () => {
       cancelled = true
     }
-  }, [open, id, isNew, initialStep])
+  }, [open, id, isNew, initialStep, sessionUser])
 
   useEffect(() => {
     setStep((prev) => parseEventWizardStep(prev, totalSteps))

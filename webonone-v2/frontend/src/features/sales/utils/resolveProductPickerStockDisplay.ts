@@ -1,3 +1,4 @@
+import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
 import {
   dataLibraryApi,
   type LibraryProductVariantAttributeValue,
@@ -30,12 +31,13 @@ function pickActiveStock(stocks: LibraryProductVariantStock[]): LibraryProductVa
 
 export async function resolveProductPickerStockDisplay(
   libraryProductId: string,
+  companyProductId: string,
 ): Promise<ProductPickerStockDisplay> {
   const variants = await dataLibraryApi.listProductVariants(libraryProductId)
   const lines: ProductPickerVariantStockLine[] = []
 
   for (const variant of variants.items) {
-    const stocks = await dataLibraryApi.listProductVariantStocks(libraryProductId, variant.id)
+    const stocks = await companyCatalogApi.listProductVariantStocks(companyProductId, variant.id)
     const active = pickActiveStock(stocks.items)
     lines.push({
       variantId: variant.id,

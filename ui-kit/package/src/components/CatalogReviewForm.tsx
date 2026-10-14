@@ -82,7 +82,7 @@ export function CatalogReviewForm({
           placeholder={commentPlaceholder}
           disabled={disabled}
           rows={4}
-          className="resize-y min-h-[6rem] bg-[hsl(var(--input-background))] border-[hsl(var(--glass-border))]"
+          className="min-h-[6rem] resize-y"
         />
       </FormField>
     </form>

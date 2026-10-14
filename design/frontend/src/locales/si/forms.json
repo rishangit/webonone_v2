@@ -27,6 +27,7 @@
   "checkbox": "ලකුණු කොටුව",
   "radioGroup": "රේඩියෝ කණ්ඩායම",
   "dropdown": "පතන ලැයිස්තුව",
+  "documentsField": "ලේඛන",
   "option1": "විකල්පය 1",
   "option2": "විකල්පය 2",
   "draft": "කෙටුම්පත",
@@ -46,6 +47,7 @@
   "toolCheckbox": "ලකුණු කොටුව",
   "toolRadio": "රේඩියෝ",
   "toolSelect": "පතන ලැයිස්තුව",
+  "toolMedia": "ලේඛන",
   "canvasEmpty": "මෙම පෝරමයට ක්ෂේත්‍ර එකතු කිරීමට මෙවලම් පෙට්ටියේ පාලකයක් ක්ලික් කරන්න.",
   "placeholderText": "පෙළ ආදානය",
   "placeholderLong": "දිගු පෙළ",
@@ -79,5 +81,14 @@
   "missingSubject": "subjectUserId නැත. පාරිභෝගිකයෙකු හෝ තෝරාගත් පාරිභෝගිකයෙකු සහිත සේවාවකින් පිරවීම විවෘත කරන්න.",
   "noFields": "මෙම පෝරමයේ තවම ක්ෂේත්‍ර නැත.",
   "fieldRequired": "{{label}} අවශ්‍යයි",
-  "comingLater": "spec 1.9.0 හි පසු අදියරකදී එනු ඇත."
+  "comingLater": "spec 1.9.0 හි පසු අදියරකදී එනු ඇත.",
+  "allowMultipleDocuments": "ලේඛන කිහිපයක් ඉඩ දෙන්න",
+  "mediaPreviewSingle": "තනි ලේඛන උඩුගත කිරීම",
+  "mediaPreviewMultiple": "ලේඛන කිහිපය උඩුගත කිරීම",
+  "addDocument": "ලේඛනය අමුණන්න",
+  "addDocuments": "ලේඛන අමුණන්න",
+  "pickDocuments": "ලේඛන තෝරන්න",
+  "attachSelected": "අමුණන්න",
+  "noAttachments": "තවම ලේඛන අමුණ නැත.",
+  "removeAttachment": "අමුණු ලේඛනය ඉවත් කරන්න"
 }

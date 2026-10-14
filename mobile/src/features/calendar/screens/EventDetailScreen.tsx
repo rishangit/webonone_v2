@@ -30,6 +30,7 @@ import {
 import { eventsApi } from '@/features/calendar/services/eventsApi'
 import type { CompanyEvent } from '@/features/calendar/types/event.types'
 import { combineEventGalleryImages } from '@/features/calendar/utils/combineEventGalleryImages'
+import { overlayEventAttendeeFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import {
   canAccessCompanySession,
   canManageCompanyEvents,
@@ -77,15 +78,16 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
     return <Redirect href="/" />
   }
 
-  const isDuration = detail?.timeMode === 'duration'
+  const event = detail ? overlayEventAttendeeFromSessionUser(detail, user) : null
+  const isDuration = event?.timeMode === 'duration'
   const showAttendee = Boolean(
-    isDuration || detail?.attendeeDisplayName || detail?.attendeeUserId,
+    isDuration || event?.attendeeDisplayName || event?.attendeeUserId,
   )
-  const overviewGalleryImages = detail ? combineEventGalleryImages(detail) : []
+  const overviewGalleryImages = event ? combineEventGalleryImages(event) : []
 
   return (
     <FeatureScreen
-      title={detail?.serviceName ?? 'Event'}
+      title={event?.serviceName ?? 'Event'}
       description="Company calendar event details."
       onBack={() => router.push(CALENDAR_EVENTS_PATH as Href)}
       backLabel="Back"
@@ -193,8 +195,8 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                   canEdit={canEdit && isDuration}
                   onEdit={isDuration ? () => setDialog({ initialStep: 2 }) : undefined}
                 >
-                  <ReadOnlyField label="Name" value={detail.attendeeDisplayName ?? '—'} />
-                  <ReadOnlyField label="Email" value={detail.attendeeEmail ?? '—'} />
+                  <ReadOnlyField label="Name" value={event?.attendeeDisplayName ?? '—'} />
+                  <ReadOnlyField label="Email" value={event?.attendeeEmail ?? '—'} />
                 </EditableSectionCard>
               ) : null}
 

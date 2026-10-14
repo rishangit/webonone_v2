@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { cn } from '@webonone/ui-kit'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
+import { cn, PriceDisplay } from '@webonone/ui-kit'
 import type { HydratedCatalogItem } from '../types/companyCatalog.types'
 import {
   formatCompanyServiceScheduleSummary,
@@ -32,19 +31,26 @@ export function CompanyCatalogServiceListMeta({
         className,
       )}
     >
-      <span className="text-foreground">{formatCompanyServiceTimeModeLabel(time.timeMode, t)}</span>
-      <span className="text-muted-foreground">
-        {formatCompanyServiceScheduleSummary(item, t)}
-      </span>
-      {showPrice ? (
-        <span
-          className={cn(
-            'font-medium tabular-nums text-foreground',
-            align === 'end' ? 'mt-auto' : undefined,
-          )}
-        >
-          {item.listPrice != null ? formatLkr(item.listPrice) : '—'}
+      <div
+        className={cn(
+          'flex min-w-0 flex-wrap items-baseline gap-x-1.5',
+          align === 'end' ? 'justify-end' : 'justify-start',
+        )}
+      >
+        <span className="shrink-0 text-foreground">
+          {formatCompanyServiceTimeModeLabel(time.timeMode, t)}
         </span>
+        <span className="min-w-0 text-muted-foreground">
+          {formatCompanyServiceScheduleSummary(item, t)}
+        </span>
+      </div>
+      {showPrice ? (
+        <PriceDisplay
+          value={item.listPrice}
+          size="sm"
+          className={align === 'end' ? 'mt-auto' : undefined}
+          align={align === 'end' ? 'right' : 'left'}
+        />
       ) : null}
     </div>
   )

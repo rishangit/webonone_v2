@@ -37,7 +37,9 @@ export type Sale = {
   lines: SaleLine[]
 }
 
-export type SaleListItem = Omit<Sale, 'lines'>
+export type SaleListItem = Omit<Sale, 'lines'> & {
+  customerAvatarUrl?: string | null
+}
 
 export type CreateSaleLineBody = {
   itemKind: SaleItemKind

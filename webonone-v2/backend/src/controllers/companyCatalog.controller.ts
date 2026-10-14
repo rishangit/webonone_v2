@@ -4,6 +4,7 @@ import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdm
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as catalogService from '../services/companyCatalog.service.js'
 import * as variantStockLimitsService from '../services/companyProductVariantStockLimits.service.js'
+import * as productStockService from '../services/companyProductStock.service.js'
 import * as memberCatalogBookingService from '../services/memberCatalogBooking.service.js'
 
 function handleServiceError(err: unknown, res: Response) {
@@ -204,20 +205,12 @@ export async function bookTokenForCompany(req: AuthenticatedRequest, res: Respon
   const occurrenceDate = parseOccurrenceDate(String(req.params.occurrenceDate), res)
   if (!occurrenceDate) return
   try {
-    const body = req.body as {
-      user_display_name: string
-      user_email?: string | null
-      user_avatar_url?: string | null
-    }
     const item = await memberCatalogBookingService.bookMemberSessionToken({
       userId: user.userId,
       companyId: String(req.params.companyId),
       serviceId: String(req.params.id),
       eventId: String(req.params.eventId),
       occurrenceDate,
-      userDisplayName: body.user_display_name,
-      userEmail: body.user_email ?? req.user?.email ?? null,
-      userAvatarUrl: body.user_avatar_url ?? null,
     })
     res.status(201).json(item)
   } catch (err) {
@@ -349,6 +342,24 @@ export async function updateCatalogPricing(req: CompanyAdminSessionRequest, res:
   }
 }
 
+export async function updateCatalogWebPublish(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const kind = catalogService.parseKindParam(String(req.params.kind))
+    const item = await catalogService.updateCatalogWebPublish(
+      session.userId,
+      session.companyId,
+      kind,
+      String(req.params.id),
+      req.body.webPublishStatus,
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function updateServiceForm(req: CompanyAdminSessionRequest, res: Response) {
   const session = requireSession(req, res)
   if (!session) return
@@ -446,6 +457,97 @@ export async function deleteCatalog(req: CompanyAdminSessionRequest, res: Respon
       String(req.params.id),
     )
     res.status(204).send()
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function suggestProductStockBatchNumber(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const batchNumber = await productStockService.suggestCompanyStockBatchNumber(session.companyId)
+    res.json({ batchNumber })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function listProductVariantStocks(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const items = await productStockService.listCompanyProductVariantStocks(
+      session.companyId,
+      String(req.params.productId),
+      String(req.params.variantId),
+    )
+    res.json({ items })
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function createProductVariantStock(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const item = await productStockService.createCompanyProductStock(
+      session.companyId,
+      String(req.params.productId),
+      String(req.params.variantId),
+      req.body,
+    )
+    res.status(201).json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function getProductVariantStock(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const item = await productStockService.getCompanyProductStock(
+      session.companyId,
+      String(req.params.productId),
+      String(req.params.variantId),
+      String(req.params.stockId),
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function updateProductVariantStock(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const item = await productStockService.updateCompanyProductStock(
+      session.companyId,
+      String(req.params.productId),
+      String(req.params.variantId),
+      String(req.params.stockId),
+      req.body,
+    )
+    res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function setProductVariantStockActive(req: CompanyAdminSessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const item = await productStockService.setCompanyProductStockActive(
+      session.companyId,
+      String(req.params.productId),
+      String(req.params.variantId),
+      String(req.params.stockId),
+    )
+    res.json(item)
   } catch (err) {
     handleServiceError(err, res)
   }

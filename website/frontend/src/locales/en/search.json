@@ -25,6 +25,24 @@
   "reviewsNoOverall": "No reviews yet",
   "reviewsLoading": "Loading reviews…",
   "reviewsRatingLabel": "Rating",
+  "reviewsReviewerFallbackLabel": "Customer",
+  "reviewsListRatingCount": "{{count}} reviews",
+  "serviceOffer": {
+    "title": "Price, time & where",
+    "description": "Price, schedule, and spaces for upcoming sessions."
+  },
+  "productPricing": {
+    "title": "Price & stock",
+    "description": "Choose a variant to see availability and price.",
+    "loading": "Loading variants…",
+    "emptyVariants": "No variants are set up for this product yet.",
+    "libraryUnavailable": "Stock details are temporarily unavailable.",
+    "variant": "Variant",
+    "stock": "Stock",
+    "price": "Price",
+    "stockAvailable": "{{quantity}} in stock",
+    "stockOut": "Out of stock"
+  },
   "location": "Location",
   "noMapPin": "No map pin",
   "noMapPinOffering": "No map pin is available for this offering.",

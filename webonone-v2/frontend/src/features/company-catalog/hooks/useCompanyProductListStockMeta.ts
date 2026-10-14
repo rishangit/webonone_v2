@@ -4,32 +4,45 @@ import {
   type ProductPickerStockDisplay,
 } from '@/features/sales/utils/resolveProductPickerStockDisplay'
 
+export type CompanyProductStockMetaRef = {
+  companyProductId: string
+  libraryProductId: string
+}
+
 export function useCompanyProductListStockMeta(
-  libraryProductIds: string[],
+  products: CompanyProductStockMetaRef[],
 ): Record<string, ProductPickerStockDisplay> {
-  const [stockByLibraryId, setStockByLibraryId] = useState<Record<string, ProductPickerStockDisplay>>({})
-  const idsKey = libraryProductIds.slice().sort().join(',')
+  const [stockByProductId, setStockByProductId] = useState<Record<string, ProductPickerStockDisplay>>(
+    {},
+  )
+  const idsKey = products
+    .map((product) => `${product.companyProductId}:${product.libraryProductId}`)
+    .sort()
+    .join(',')
 
   useEffect(() => {
-    const ids = idsKey.length > 0 ? idsKey.split(',') : []
-    if (ids.length === 0) {
-      setStockByLibraryId({})
+    const refs = idsKey.length > 0 ? idsKey.split(',').map((pair) => {
+      const [companyProductId, libraryProductId] = pair.split(':')
+      return { companyProductId: companyProductId ?? '', libraryProductId: libraryProductId ?? '' }
+    }).filter((ref) => ref.companyProductId && ref.libraryProductId) : []
+    if (refs.length === 0) {
+      setStockByProductId({})
       return
     }
 
     let cancelled = false
     void Promise.all(
-      ids.map(async (id) => {
-        const meta = await resolveProductPickerStockDisplay(id)
-        return { id, meta }
+      refs.map(async (ref) => {
+        const meta = await resolveProductPickerStockDisplay(ref.libraryProductId, ref.companyProductId)
+        return { id: ref.companyProductId, meta }
       }),
     )
       .then((entries) => {
         if (cancelled) return
-        setStockByLibraryId(Object.fromEntries(entries.map((entry) => [entry.id, entry.meta])))
+        setStockByProductId(Object.fromEntries(entries.map((entry) => [entry.id, entry.meta])))
       })
       .catch(() => {
-        if (!cancelled) setStockByLibraryId({})
+        if (!cancelled) setStockByProductId({})
       })
 
     return () => {
@@ -37,5 +50,5 @@ export function useCompanyProductListStockMeta(
     }
   }, [idsKey])
 
-  return stockByLibraryId
+  return stockByProductId
 }

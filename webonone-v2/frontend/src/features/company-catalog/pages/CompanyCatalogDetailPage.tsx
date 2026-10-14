@@ -7,11 +7,14 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  EditableSectionCard,
   FeaturePage,
   ImageCarousel,
   StatusTag,
   TagChip,
   type SelectTagValue,
+  ListPriceField,
+  ReadOnlyField,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -21,13 +24,14 @@ import { CatalogDetailSectionTabs, type CatalogDetailTabId } from '../components
 import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
 import { CatalogPricingDialog } from '../components/CatalogPricingDialog'
+import { CatalogWebPublishDialog } from '../components/CatalogWebPublishDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
 import { CompanyCatalogDetailPageMenu } from '../components/CompanyCatalogDetailPageMenu'
 import { CompanyProductDetailVariantPricingCard } from '../components/CompanyProductDetailVariantPricingCard'
+import { CompanyServiceDetailOfferCard } from '../components/CompanyServiceDetailOfferCard'
 import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
 import { CompanyServiceWorkflowOverviewCard } from '../components/CompanyServiceWorkflowOverviewCard'
 import { CompanyServiceWorkflowTab } from '../components/CompanyServiceWorkflowTab'
-import { EditableSectionCard } from '../components/EditableSectionCard'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { MemberServiceSessionsCard } from '../components/MemberServiceSessionsCard'
 import type { ServiceWizardStep } from '../schemas/serviceSchemas'
@@ -39,6 +43,7 @@ import {
   isCatalogGalleryKind,
   type CatalogEntityKind,
   type CatalogPayload,
+  type WebPublishStatus,
 } from '../types/companyCatalog.types'
 import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
 import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
@@ -67,18 +72,8 @@ function isCatalogEntityKind(value: string): value is CatalogEntityKind {
   return (CATALOG_ENTITY_KINDS as readonly string[]).includes(value)
 }
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
-}
-
-function formatListPrice(value: number | null | undefined): string {
-  if (value == null) return '—'
-  return `LKR ${value.toFixed(2)}`
+function resolveWebPublishStatus(status: WebPublishStatus | undefined): WebPublishStatus {
+  return status === 'published' ? 'published' : 'draft'
 }
 
 export type CompanyCatalogDetailPageProps = {
@@ -121,6 +116,7 @@ export function CompanyCatalogDetailPage({
     null,
   )
   const [pricingOpen, setPricingOpen] = useState(false)
+  const [webPublishOpen, setWebPublishOpen] = useState(false)
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
   const [pendingRemove, setPendingRemove] = useState(false)
 
@@ -276,55 +272,34 @@ export function CompanyCatalogDetailPage({
         {memberReviewCard}
       </div>
       <div className="flex flex-col gap-6 lg:col-span-1">
-        <EditableSectionCard
-          title={t('detail.pricing.title')}
-          description={t('detail.pricing.description')}
-          canEdit={canManage && !busy}
-          onEdit={() => setPricingOpen(true)}
-        >
-          <ReadOnlyField label={t('detail.pricing.listPrice')} value={formatListPrice(detail.listPrice)} />
-        </EditableSectionCard>
+        <CompanyServiceDetailOfferCard
+          serviceId={id}
+          companyId={companyId}
+          servicePayload={servicePayload}
+          listPrice={detail.listPrice}
+          canManagePrice={canManage}
+          canEditSchedule={canEdit}
+          busy={busy}
+          overviewActive={tab === 'overview'}
+          onEditListPrice={() => setPricingOpen(true)}
+          onEditSchedule={() => setServiceDialog({ initialStep: 2 })}
+          onManageWorkflow={() => setTab('workflow')}
+        />
 
         <EditableSectionCard
-          title={t('detail.time.title')}
-          description={t('detail.time.description')}
-          canEdit={canEdit && !busy}
-          onEdit={() => setServiceDialog({ initialStep: 2 })}
+          title={t('detail.webPublish.title')}
+          description={t('detail.webPublish.description')}
+          canEdit={canManage && !busy && !readOnly}
+          onEdit={() => setWebPublishOpen(true)}
         >
           <ReadOnlyField
-            label={t('detail.time.timeMode')}
+            label={t('detail.webPublish.statusLabel')}
             value={
-              servicePayload?.timeMode === 'window'
-                ? t('serviceWizard.fields.specificTime')
-                : servicePayload?.timeMode === 'duration'
-                  ? t('serviceWizard.fields.duration')
-                  : '—'
+              resolveWebPublishStatus(detail.webPublishStatus) === 'published'
+                ? t('detail.webPublish.published')
+                : t('detail.webPublish.draft')
             }
           />
-          {servicePayload?.timeMode === 'duration' ? (
-            <ReadOnlyField
-              label={t('detail.time.duration')}
-              value={
-                servicePayload.durationMinutes != null
-                  ? t('detail.durationMinutes', { count: servicePayload.durationMinutes })
-                  : '—'
-              }
-            />
-          ) : null}
-          {servicePayload?.timeMode === 'window' ? (
-            <>
-              <ReadOnlyField
-                label={t('detail.time.startTime')}
-                value={
-                  typeof servicePayload.startTime === 'string' ? servicePayload.startTime : '—'
-                }
-              />
-              <ReadOnlyField
-                label={t('detail.time.endTime')}
-                value={typeof servicePayload.endTime === 'string' ? servicePayload.endTime : '—'}
-              />
-            </>
-          ) : null}
         </EditableSectionCard>
 
         {readOnly && reviewCompanyId && servicePayload?.timeMode === 'window' ? (
@@ -421,7 +396,25 @@ export function CompanyCatalogDetailPage({
             canEdit={canManage && !busy}
             onEdit={() => setPricingOpen(true)}
           >
-            <ReadOnlyField label={t('detail.pricing.listPrice')} value={formatListPrice(detail.listPrice)} />
+            <ListPriceField label={t('detail.pricing.listPrice')} value={detail.listPrice} />
+          </EditableSectionCard>
+        ) : null}
+
+        {kind === 'products' || kind === 'spaces' ? (
+          <EditableSectionCard
+            title={t('detail.webPublish.title')}
+            description={t('detail.webPublish.description')}
+            canEdit={canManage && !busy && !readOnly}
+            onEdit={() => setWebPublishOpen(true)}
+          >
+            <ReadOnlyField
+              label={t('detail.webPublish.statusLabel')}
+              value={
+                resolveWebPublishStatus(detail.webPublishStatus) === 'published'
+                  ? t('detail.webPublish.published')
+                  : t('detail.webPublish.draft')
+              }
+            />
           </EditableSectionCard>
         ) : null}
 
@@ -621,6 +614,16 @@ export function CompanyCatalogDetailPage({
           id={id}
           listPrice={detail.listPrice}
           onOpenChange={setPricingOpen}
+        />
+      ) : null}
+
+      {!readOnly && canManage && kind && isCatalogGalleryKind(kind) && detail ? (
+        <CatalogWebPublishDialog
+          open={webPublishOpen}
+          kind={kind}
+          id={id}
+          webPublishStatus={resolveWebPublishStatus(detail.webPublishStatus)}
+          onOpenChange={setWebPublishOpen}
         />
       ) : null}
 

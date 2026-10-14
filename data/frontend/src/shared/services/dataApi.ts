@@ -5,7 +5,6 @@ import type {
   DashboardStats,
   PaginatedResult,
   ProductVariant,
-  ProductVariantStock,
   ServiceSpaceLink,
   Tag,
   Unit,
@@ -171,72 +170,6 @@ export const dataApi = {
     return apiClient<void>(`/products/${productId}/variants/${variantId}`, {
       method: 'DELETE',
     })
-  },
-  listProductVariantStocks(productId: string, variantId: string) {
-    return apiClient<{ items: ProductVariantStock[] }>(
-      `/products/${productId}/variants/${variantId}/stocks`,
-    )
-  },
-  suggestStockBatchNumber() {
-    return apiClient<{ batchNumber: string }>('/stocks/suggested-batch-number')
-  },
-  getProductVariantStock(productId: string, variantId: string, stockId: string) {
-    return apiClient<ProductVariantStock>(
-      `/products/${productId}/variants/${variantId}/stocks/${stockId}`,
-    )
-  },
-  createProductVariantStock(
-    productId: string,
-    variantId: string,
-    body: {
-      quantity: number
-      batch_number: string
-      cost_price: number
-      sell_price: number
-      purchase_date: string
-      expired_date?: string | null
-      supplier_user_id?: string | null
-      supplier_display_name?: string | null
-      supplier_email?: string | null
-    },
-  ) {
-    return apiClient<ProductVariantStock>(
-      `/products/${productId}/variants/${variantId}/stocks`,
-      {
-        method: 'POST',
-        body: JSON.stringify(body),
-      },
-    )
-  },
-  updateProductVariantStock(
-    productId: string,
-    variantId: string,
-    stockId: string,
-    body: {
-      quantity: number
-      batch_number: string
-      cost_price: number
-      sell_price: number
-      purchase_date: string
-      expired_date?: string | null
-      supplier_user_id?: string | null
-      supplier_display_name?: string | null
-      supplier_email?: string | null
-    },
-  ) {
-    return apiClient<ProductVariantStock>(
-      `/products/${productId}/variants/${variantId}/stocks/${stockId}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-      },
-    )
-  },
-  setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
-    return apiClient<ProductVariantStock>(
-      `/products/${productId}/variants/${variantId}/stocks/${stockId}/active`,
-      { method: 'PATCH' },
-    )
   },
 
   listServices(query: ListQuery = {}) {

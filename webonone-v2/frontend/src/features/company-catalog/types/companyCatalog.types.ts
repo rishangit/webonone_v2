@@ -13,6 +13,8 @@ export type CatalogGalleryImage = {
   url: string
 }
 
+export type WebPublishStatus = 'draft' | 'published'
+
 export type CompanyCatalogItem = {
   id: string
   companyId: string
@@ -29,6 +31,8 @@ export type CompanyCatalogItem = {
   formTemplateId?: string | null
   /** Company-owned selling price (products, services, spaces) — independent of binding mode. */
   listPrice?: number | null
+  /** Public website / marketplace visibility (products, services, spaces). */
+  webPublishStatus?: WebPublishStatus
   createdAt: string
   updatedAt: string
 }

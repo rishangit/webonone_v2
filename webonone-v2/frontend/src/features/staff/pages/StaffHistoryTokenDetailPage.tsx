@@ -16,7 +16,9 @@ import {
   ItemListItem,
 } from '@webonone/ui-kit'
 import { TokenWorkflowProgress } from '@/features/calendar/components/TokenWorkflowProgress'
+import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import {
   getSessionTokenHistoryDetail,
   listSubmissionsForSessionToken,
@@ -76,6 +78,7 @@ export function StaffHistoryTokenDetailPage() {
   const { staffId, tokenId } = useParams<{ staffId: string; tokenId: string }>()
   const navigate = useNavigate()
   const { i18n } = useTranslation()
+  const sessionUser = useAppSelector((s) => s.auth.user)
   const [detail, setDetail] = useState<SessionTokenHistoryDetail | null>(null)
   const [submissions, setSubmissions] = useState<FormSubmissionDetail[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -131,6 +134,12 @@ export function StaffHistoryTokenDetailPage() {
 
   if (!detail) return null
 
+  const displayDetail = overlayIdentityFromSessionUser(detail, sessionUser, {
+    userId: 'userId',
+    displayName: 'userDisplayName',
+    email: 'userEmail',
+  })
+
   return (
     <FeaturePage
       title={detail.serviceName}
@@ -157,7 +166,7 @@ export function StaffHistoryTokenDetailPage() {
                 </div>
               ) : null}
               <DetailField label="Status" value={detail.status} />
-              <DetailField label="Customer" value={detail.userDisplayName} />
+              <DetailField label="Customer" value={displayDetail.userDisplayName} />
               {detail.spaceName ? <DetailField label="Space" value={detail.spaceName} /> : null}
             </CardContent>
           </Card>

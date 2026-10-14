@@ -9,6 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  PriceDisplay,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -173,11 +174,15 @@ export function AnalyticsPage() {
           <>
             <AnalyticsStatCard
               title={t('kpis.revenue')}
-              value={company ? formatLkr(company.kpis.revenueTotal) : '—'}
+              value={
+                company ? <PriceDisplay value={company.kpis.revenueTotal} size="lg" /> : '—'
+              }
             />
             <AnalyticsStatCard
               title={t('kpis.profit')}
-              value={company ? formatLkr(company.kpis.profitTotal) : '—'}
+              value={
+                company ? <PriceDisplay value={company.kpis.profitTotal} size="lg" /> : '—'
+              }
             />
             <AnalyticsStatCard title={t('kpis.sales')} value={company?.kpis.saleCount ?? '—'} />
             <AnalyticsStatCard title={t('kpis.customers')} value={company?.kpis.uniqueCustomers ?? '—'} />

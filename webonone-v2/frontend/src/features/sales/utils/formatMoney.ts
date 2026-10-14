@@ -10,9 +10,8 @@ export function formatSaleWhen(iso: string, language?: string): string {
 export async function resolveProductUnitPrice(input: {
   listPrice: number | null | undefined
   libraryEntityId: string | null
-  loadVariants: (productId: string) => Promise<{ items: Array<{ id: string; isDefault: boolean }> }>
+  loadVariants: (libraryProductId: string) => Promise<{ items: Array<{ id: string; isDefault: boolean }> }>
   loadStocks: (
-    productId: string,
     variantId: string,
   ) => Promise<{ items: Array<{ sellPrice: number; isActive: boolean }> }>
 }): Promise<number | null> {
@@ -22,7 +21,7 @@ export async function resolveProductUnitPrice(input: {
     const variants = await input.loadVariants(input.libraryEntityId)
     const variant = variants.items.find((item) => item.isDefault) ?? variants.items[0]
     if (!variant) return null
-    const stocks = await input.loadStocks(input.libraryEntityId, variant.id)
+    const stocks = await input.loadStocks(variant.id)
     const active = stocks.items.find((item) => item.isActive) ?? stocks.items[0]
     return active?.sellPrice ?? null
   } catch {

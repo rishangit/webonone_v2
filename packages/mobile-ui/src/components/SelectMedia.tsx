@@ -32,7 +32,7 @@ export function SelectMedia({
       className={cn(controlPickerTriggerClassName, disabled && 'opacity-50')}
     >
       {value ? (
-        <ImagePreview src={value.url} alt={value.alt ?? value.id} className="h-8 w-8 rounded-md" />
+        <ImagePreview flush src={value.url} alt={value.alt ?? value.id} className="h-8 w-8 rounded-md" />
       ) : (
         <View className="h-8 w-8 shrink-0 items-center justify-center rounded-md bg-border">
           <ImageIcon size={20} color={iconColor} />

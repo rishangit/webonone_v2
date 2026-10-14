@@ -169,17 +169,12 @@ export type ChangeSessionScheduleResult = SessionDetail & {
 
 export type CreateSessionTokenBody = {
   user_id: string
-  user_display_name: string
-  user_email?: string | null
-  user_avatar_url?: string | null
 }
 
 export type CreateCompanyEventBody = {
   service_id: string
   staff_id?: string | null
   attendee_user_id?: string | null
-  attendee_display_name?: string | null
-  attendee_email?: string | null
   space_id?: string | null
   starts_on: string
   start_time?: string

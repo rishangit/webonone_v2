@@ -10,10 +10,6 @@ export function handleServiceError(err: unknown, res: Response): boolean {
       res.status(409).json({ message: 'Name already exists', code: 'DUPLICATE_NAME' })
       return true
     }
-    if (err.message === 'DUPLICATE_REVIEW') {
-      res.status(409).json({ message: 'You already reviewed this item', code: 'DUPLICATE_REVIEW' })
-      return true
-    }
     if (err.message === 'FORBIDDEN') {
       res.status(403).json({ message: 'Forbidden', code: 'FORBIDDEN' })
       return true

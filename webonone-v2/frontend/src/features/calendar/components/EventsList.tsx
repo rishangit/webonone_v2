@@ -16,7 +16,8 @@ import {
   itemListThumbClassName,
   useToast,
 } from '@webonone/ui-kit'
-import { useAppDispatch } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import { WebononeCopyToAiMenuItem } from '@/features/ai/components/WebononeCopyToAiMenuItem'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { formatEventWhen } from '@/features/calendar/schemas/eventSchemas'
@@ -41,6 +42,19 @@ export function EventsList({
   const { t: tc } = useTranslation('common')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const sessionUser = useAppSelector((s) => s.auth.user)
+  const displayItems = useMemo(
+    () =>
+      items.map((item) =>
+        overlayIdentityFromSessionUser(item, sessionUser, {
+          userId: 'attendeeUserId',
+          displayName: 'attendeeDisplayName',
+          email: 'attendeeEmail',
+          avatarUrl: 'attendeeImageUrl',
+        }),
+      ),
+    [items, sessionUser],
+  )
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<CompanyEvent | null>(null)
@@ -152,7 +166,7 @@ export function EventsList({
   return (
     <>
       <CollectionListView
-        items={items}
+        items={displayItems}
         getRowKey={(item) => item.id}
         columns={columns}
         empty={<ItemListEmpty>{empty}</ItemListEmpty>}

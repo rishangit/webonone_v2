@@ -12,6 +12,6 @@ summary: "Connected Companies භාවිතා කර ව්‍යාපාර
 1. Default User account එකේම රැඳී සිටින්න.
 2. **Companies → Connected Companies** විවෘත කරන්න.
 3. **Find companies** තෝරා, සොයා, සම්බන්ධ වන්න.
-4. සම්බන්ධ සමාගමක් විවෘත කර **Our Products / Services / Spaces** බලන්න.
+4. සම්බන්ධ සමාගමක් විවෘත කර **Our Products / Services / Spaces** බලන්න. සමාගම **Published** ලෙස වෙබ් වෙත ප්‍රකාශනය කළ අයිතම පමණක් මෙහි සහ ප්‍රසිද්ධ වෙළඳපොළ සෙවීමේ දෘශ්‍යමාන වේ.
 
 මෙය ඔබව එම සමාගමේ staff member හෝ owner කරන්නේ නැත.

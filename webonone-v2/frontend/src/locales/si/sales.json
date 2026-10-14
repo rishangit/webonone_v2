@@ -17,7 +17,7 @@
     "balance": "ඉතිරි {{amount}}",
     "cashReceivedInsufficient": "ලැබුණු මුදල එකතුවට සමාන හෝ වඩා වැඩි විය යුතුය",
     "notes": "සටහන්",
-    "total": "එකතුව {{amount}}",
+    "total": "එකතුව",
     "complete": "විකිණීම සම්පූර්ණ කරන්න",
     "completing": "විකිණීම සම්පූර්ණ කරමින්…",
     "completed": "විකිණීම සම්පූර්ණයි",
@@ -99,7 +99,11 @@
     "to": "දක්වා",
     "applyFilters": "පෙරහන් යොදන්න",
     "empty": "විකුණුම් නැත.",
-    "viewBill": "බිල්පත බලන්න"
+    "viewBill": "බිල්පත බලන්න",
+    "columnBill": "බිල්පත",
+    "columnCustomer": "පාරිභෝගික",
+    "columnPayment": "ගෙවීම",
+    "columnTotal": "මුළු"
   },
   "bill": {
     "title": "බිල්පත",
@@ -118,7 +122,7 @@
     "qty": "ප්‍රමාණය",
     "unit": "ඒකකය",
     "lineTotal": "එකතුව",
-    "total": "එකතුව {{amount}}",
+    "total": "එකතුව",
     "customer": "පාරිභෝගිකයා",
     "email": "විද්‍යුත් තැපෑල",
     "payment": "ගෙවීම",

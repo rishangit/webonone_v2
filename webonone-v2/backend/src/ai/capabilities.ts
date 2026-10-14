@@ -238,6 +238,141 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     viewPath: '/data/{kind}/{id}',
   }),
   webononeTool({
+    name: 'list_company_product_variant_stocks',
+    description:
+      'List stock batches for a company catalog product variant. Use the company catalog product id, not the Data library product id. Call get_catalog_item first when the product is unknown.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'variantId'],
+      properties: {
+        id: { ...stringId, description: 'Company catalog product id.' },
+        variantId: { ...stringId, description: 'Data library product variant id.' },
+      },
+    },
+    riskLevel: 'read',
+    requiredRoles: ['member', 'company_admin'],
+    requiredPermissions: ['ai:catalog:read'],
+    auth: 'user_jwt',
+    invoke: {
+      method: 'GET',
+      path: '/api/v1/company/me/catalog/products/:id/variants/:variantId/stocks',
+    },
+    viewPath: '/data/products/{id}/variants/{variantId}',
+  }),
+  webononeTool({
+    name: 'create_company_product_variant_stock',
+    description:
+      'Create one stock batch for a company catalog product variant. Call list_company_product_variant_stocks first. Suggest quantity, batch_number, cost_price, sell_price, and purchase_date (YYYY-MM-DD). Optional expired_date must be on or after purchase_date. Do not invent supplier_user_id — omit supplier fields unless the user provided an Identity user id.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'variantId', 'quantity', 'batch_number', 'cost_price', 'sell_price', 'purchase_date'],
+      properties: {
+        id: { ...stringId, description: 'Company catalog product id.' },
+        variantId: { ...stringId, description: 'Data library product variant id.' },
+        quantity: { type: 'number', exclusiveMinimum: 0, title: 'Quantity' },
+        batch_number: { type: 'string', minLength: 1, maxLength: 255, title: 'Batch number' },
+        cost_price: { type: 'number', minimum: 0, title: 'Cost price' },
+        sell_price: { type: 'number', minimum: 0, title: 'Sell price' },
+        purchase_date: {
+          type: 'string',
+          pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          title: 'Purchase date',
+          description: 'YYYY-MM-DD',
+        },
+        expired_date: {
+          type: 'string',
+          pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          title: 'Expiry date',
+          description: 'Optional YYYY-MM-DD on or after purchase_date.',
+        },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['company_admin'],
+    requiredPermissions: ['ai:catalog:write'],
+    auth: 'user_jwt',
+    invoke: {
+      method: 'POST',
+      path: '/api/v1/company/me/catalog/products/:id/variants/:variantId/stocks',
+    },
+    viewPath: '/data/products/{id}/variants/{variantId}',
+  }),
+  webononeTool({
+    name: 'update_company_product_variant_stock',
+    description:
+      'Update one stock batch for a company catalog product variant. Call list_company_product_variant_stocks first to resolve stockId. Suggest quantity, batch_number, cost_price, sell_price, and purchase_date (YYYY-MM-DD). Optional expired_date must be on or after purchase_date.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'id',
+        'variantId',
+        'stockId',
+        'quantity',
+        'batch_number',
+        'cost_price',
+        'sell_price',
+        'purchase_date',
+      ],
+      properties: {
+        id: { ...stringId, description: 'Company catalog product id.' },
+        variantId: { ...stringId, description: 'Data library product variant id.' },
+        stockId: { ...stringId, description: 'Stock batch id.' },
+        quantity: { type: 'number', exclusiveMinimum: 0, title: 'Quantity' },
+        batch_number: { type: 'string', minLength: 1, maxLength: 255, title: 'Batch number' },
+        cost_price: { type: 'number', minimum: 0, title: 'Cost price' },
+        sell_price: { type: 'number', minimum: 0, title: 'Sell price' },
+        purchase_date: {
+          type: 'string',
+          pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          title: 'Purchase date',
+          description: 'YYYY-MM-DD',
+        },
+        expired_date: {
+          type: 'string',
+          pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          title: 'Expiry date',
+          description: 'Optional YYYY-MM-DD on or after purchase_date.',
+        },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['company_admin'],
+    requiredPermissions: ['ai:catalog:write'],
+    auth: 'user_jwt',
+    invoke: {
+      method: 'PATCH',
+      path: '/api/v1/company/me/catalog/products/:id/variants/:variantId/stocks/:stockId',
+    },
+    viewPath: '/data/products/{id}/variants/{variantId}',
+  }),
+  webononeTool({
+    name: 'set_company_product_variant_stock_active',
+    description:
+      'Set a stock batch as the active batch for a company catalog product variant. Call list_company_product_variant_stocks first to resolve stockId.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'variantId', 'stockId'],
+      properties: {
+        id: { ...stringId, description: 'Company catalog product id.' },
+        variantId: { ...stringId, description: 'Data library product variant id.' },
+        stockId: { ...stringId, description: 'Stock batch id.' },
+      },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['company_admin'],
+    requiredPermissions: ['ai:catalog:write'],
+    auth: 'user_jwt',
+    invoke: {
+      method: 'PATCH',
+      path: '/api/v1/company/me/catalog/products/:id/variants/:variantId/stocks/:stockId/active',
+    },
+    viewPath: '/data/products/{id}/variants/{variantId}',
+  }),
+  webononeTool({
     name: 'list_events',
     description: 'List company calendar events and appointments.',
     jsonSchema: {
@@ -289,13 +424,10 @@ export const webononeAiCapabilities: ToolDefinition[] = [
           description:
             'Optional legacy event-level staff id. Prefer workflow staff on the service instead.',
         },
-        attendee_display_name: {
-          type: 'string',
-          description: 'Optional attendee name. Only set when the user provided a name. Do not invent people.',
-        },
-        attendee_email: {
-          type: 'string',
-          description: 'Optional attendee email. Only set when the user provided an email. Never invent emails.',
+        attendee_user_id: {
+          ...stringId,
+          description:
+            'Identity user id of the attendee for duration services. Never invent ids. Use list users / picker results only.',
         },
         space_id: {
           ...stringId,
@@ -330,8 +462,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
         id: stringId,
         service_id: stringId,
         staff_id: stringId,
-        attendee_display_name: { type: 'string' },
-        attendee_email: { type: 'string' },
+        attendee_user_id: stringId,
         space_id: stringId,
         starts_on: { type: 'string' },
         start_time: { type: 'string' },
@@ -403,11 +534,9 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     jsonSchema: {
       type: 'object',
       additionalProperties: false,
-      required: ['user_id', 'display_name', 'schedule'],
+      required: ['user_id', 'schedule'],
       properties: {
         user_id: { ...stringId, description: 'Existing Identity user id to add as staff. Never invent ids.' },
-        display_name: { type: 'string', description: 'Staff display name as shown in the company calendar.' },
-        email: { type: 'string', description: 'Optional. Only set when the user provided an email. Never invent emails.' },
         schedule: {
           type: 'array',
           minItems: 7,
@@ -441,8 +570,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
       required: ['id'],
       properties: {
         id: stringId,
-        display_name: { type: 'string' },
-        email: { type: 'string' },
+        user_id: stringId,
         schedule: {
           type: 'array',
           items: {

@@ -7,8 +7,6 @@ export type CompanySaleRow = {
   company_id: string
   bill_number: string | null
   customer_user_id: string
-  customer_display_name: string
-  customer_email: string | null
   status: SaleStatus
   payment_method: SalePaymentMethod | null
   currency: string
@@ -103,8 +101,6 @@ export async function updateSaleDraft(
   patch: {
     subtotal: number
     total: number
-    customer_display_name: string
-    customer_email: string | null
     notes: string | null
     updated_at: Date
   },
@@ -197,9 +193,7 @@ export async function listSalesForCompany(
   if (options.q) {
     const pattern = `%${options.q}%`
     query.andWhere(function search() {
-      this.where('bill_number', 'like', pattern)
-        .orWhere('customer_display_name', 'like', pattern)
-        .orWhere('customer_email', 'like', pattern)
+      this.where('bill_number', 'like', pattern).orWhere('customer_user_id', 'like', pattern)
     })
   }
   if (options.itemKind) {

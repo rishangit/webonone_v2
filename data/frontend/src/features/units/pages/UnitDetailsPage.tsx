@@ -9,7 +9,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EditableSectionCard,
   FeaturePage,
+  ReadOnlyField,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -17,19 +19,10 @@ import { UnitFormDialog } from '@/features/units/components/UnitFormDialog'
 import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { unitsActions } from '@/features/units/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
+import { StatusBadge } from '@/shared/components/StatusBadge'
 import { dataApi } from '@/shared/services/dataApi'
 import type { Unit } from '@/shared/types/data.types'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
-
-function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="text-sm">{value}</div>
-    </div>
-  )
-}
 
 export function UnitDetailsPage() {
   const { t } = useTranslation('units')
@@ -96,7 +89,7 @@ export function UnitDetailsPage() {
             <EditableSectionCard
               title={t('singular')}
               description={t('sectionDescription')}
-              status={unit.status}
+              headerTrailing={<StatusBadge status={unit.status} />}
               canEdit={canEdit}
               onEdit={() => setEditOpen(true)}
             >

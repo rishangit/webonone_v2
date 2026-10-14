@@ -31,6 +31,8 @@ const envSchema = z.object({
   DATA_SERVICE_API_KEY: z.string().optional(),
   WEBONONE_API_BASE_URL: z.string().optional(),
   WEBONONE_SERVICE_API_KEY: z.string().optional(),
+  IDENTITY_API_BASE_URL: z.string().optional(),
+  IDENTITY_SERVICE_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -61,4 +63,6 @@ export const env = {
   dataServiceApiKey: parsed.DATA_SERVICE_API_KEY ?? '',
   webononeApiBaseUrl: parsed.WEBONONE_API_BASE_URL?.trim() ?? '',
   webononeServiceApiKey: parsed.WEBONONE_SERVICE_API_KEY?.trim() ?? '',
+  identityApiBaseUrl: parsed.IDENTITY_API_BASE_URL?.trim() ?? '',
+  identityServiceApiKey: parsed.IDENTITY_SERVICE_API_KEY?.trim() ?? '',
 }

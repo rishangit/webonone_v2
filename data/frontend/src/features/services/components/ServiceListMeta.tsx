@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { cn } from '@webonone/ui-kit'
-import { formatProductListPrice } from '@/features/products/utils/productListStockLine'
+import { cn, PriceDisplay } from '@webonone/ui-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
 import {
   formatServiceScheduleSummary,
@@ -34,14 +33,25 @@ export function ServiceListMeta({
         className,
       )}
     >
-      <span className="text-foreground">
-        {formatServiceTimeModeLabel(service.timeMode, t)}
-      </span>
-      <span className="text-muted-foreground">{formatServiceScheduleSummary(service, t)}</span>
-      {showPrice ? (
-        <span className="font-medium tabular-nums text-foreground">
-          {price != null ? formatProductListPrice(price) : '—'}
+      <div
+        className={cn(
+          'flex min-w-0 flex-wrap items-baseline gap-x-1.5',
+          align === 'end' ? 'justify-end' : 'justify-start',
+        )}
+      >
+        <span className="shrink-0 text-foreground">
+          {formatServiceTimeModeLabel(service.timeMode, t)}
         </span>
+        <span className="min-w-0 text-muted-foreground">
+          {formatServiceScheduleSummary(service, t)}
+        </span>
+      </div>
+      {showPrice ? (
+        <PriceDisplay
+          value={price}
+          size="sm"
+          align={align === 'end' ? 'right' : 'left'}
+        />
       ) : null}
     </div>
   )

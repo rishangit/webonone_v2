@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useToast } from '@webonone/mobile-ui'
+import { companyCatalogApi } from '@/features/data/services/companyCatalogApi'
 import { dataLibraryApi } from '@/features/sales/services/dataLibraryApi'
 import type { HydratedCatalogItem } from '@/features/sales/types/catalog.types'
 import type { PosCartLine, SaleItemKind } from '@/features/sales/types/sales.types'
@@ -57,8 +58,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
         listPrice: item.listPrice,
         libraryEntityId: item.libraryEntityId,
         loadVariants: (productId) => dataLibraryApi.listProductVariants(productId),
-        loadStocks: (productId, variantId) =>
-          dataLibraryApi.listProductVariantStocks(productId, variantId),
+        loadStocks: (variantId) => companyCatalogApi.listProductVariantStocks(item.id, variantId),
       })
       if (resolved != null) unitPrice = resolved
       onAddLine(buildCartLine(item, 'product', unitPrice))
@@ -91,7 +91,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
 
       setPicking(true)
       try {
-        const options = await resolveStockedProductVariants(item.libraryEntityId)
+        const options = await resolveStockedProductVariants(item.libraryEntityId, item.id)
         if (options.length === 0) {
           await addPlainProduct(item)
           return 'added'

@@ -89,9 +89,6 @@ export function IssueTokenDialog({
       await ensureCompanyCustomer(sessionUser.companyId, selected.id)
       await sessionTokensApi.create(eventId, occurrenceDate, {
         user_id: selected.id,
-        user_display_name: selected.displayName,
-        user_email: selected.email,
-        user_avatar_url: selected.avatarUrl ?? null,
       })
       toast({ title: 'Token issued' })
       onIssued()

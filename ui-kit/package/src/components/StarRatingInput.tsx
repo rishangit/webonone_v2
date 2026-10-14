@@ -1,11 +1,19 @@
 import * as React from 'react'
 import { Star } from 'lucide-react'
 import { cn } from '../lib/utils'
+import {
+  STAR_RATING_FILLED_ICON_CLASSES,
+  STAR_RATING_ICON_CLASSES,
+  STAR_RATING_INPUT_BUTTON_PADDING,
+  STAR_RATING_OUTLINE_ICON_CLASSES,
+  type StarRatingSize,
+} from './starRatingSizes'
 
 export type StarRatingInputProps = {
   value: number | null
   onChange: (rating: number) => void
   max?: number
+  size?: StarRatingSize
   disabled?: boolean
   id?: string
   className?: string
@@ -17,11 +25,14 @@ export function StarRatingInput({
   value,
   onChange,
   max = 5,
+  size = 'lg',
   disabled = false,
   id,
   className,
   label = 'Rating',
 }: StarRatingInputProps) {
+  const starClass = STAR_RATING_ICON_CLASSES[size]
+  const buttonPadding = STAR_RATING_INPUT_BUTTON_PADDING[size]
   const [hover, setHover] = React.useState<number | null>(null)
 
   const display = hover ?? value ?? 0
@@ -46,7 +57,8 @@ export function StarRatingInput({
             aria-label={`${label} ${starValue} of ${max}`}
             disabled={disabled}
             className={cn(
-              'rounded-md p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              buttonPadding,
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-accent',
             )}
             onMouseEnter={() => !disabled && setHover(starValue)}
@@ -56,8 +68,8 @@ export function StarRatingInput({
           >
             <Star
               className={cn(
-                'h-7 w-7',
-                filled ? 'fill-primary text-primary' : 'fill-transparent text-muted-foreground',
+                starClass,
+                filled ? STAR_RATING_FILLED_ICON_CLASSES : STAR_RATING_OUTLINE_ICON_CLASSES,
               )}
               aria-hidden
             />

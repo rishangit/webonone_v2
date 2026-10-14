@@ -1,7 +1,6 @@
-import { TagChip } from '@webonone/ui-kit'
+import { EditableSectionCard, TagChip } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import type { CompanyTag } from '@/features/settings/basic/services/companyApi'
-import { EditableSectionCard } from './EditableSectionCard'
 
 type CompanyTagsCardProps = {
   tags: CompanyTag[]

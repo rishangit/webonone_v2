@@ -23,7 +23,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  CatalogOwnReviewCard,
   CatalogReviewDialog,
+  CatalogReviewsDisplayCard,
+  StarRatingDisplay,
   StarRatingInput,
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -479,12 +482,55 @@ function AppShellDemo() {
   )
 }
 
+const CATALOG_REVIEW_LIST_DEMO: Array<{
+  id: string
+  rating: number
+  comment: string | null
+  createdAtLabel: string
+  reviewerDisplayName: string
+  reviewerAvatarUrl: string | null
+}> = [
+  {
+    id: '1',
+    rating: 5,
+    comment: 'Great service — would book again.',
+    createdAtLabel: 'Oct 10, 2026',
+    reviewerDisplayName: 'Ada Perera',
+    reviewerAvatarUrl: null,
+  },
+  {
+    id: '2',
+    rating: 4,
+    comment: null,
+    createdAtLabel: 'Sep 2, 2026',
+    reviewerDisplayName: 'Ravi Kumar',
+    reviewerAvatarUrl: null,
+  },
+]
+
 function CatalogReviewDemo() {
   const [rating, setRating] = useState<number | null>(3)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
-    <div className="space-y-4 max-w-md">
+    <div className="space-y-6 max-w-xl">
+      <CatalogReviewsDisplayCard
+        averageRating={4.5}
+        reviewCount={2}
+        items={CATALOG_REVIEW_LIST_DEMO}
+        title="Customer reviews"
+        overallLabel="4.5 out of 5 · 2 reviews"
+      />
+      <CatalogOwnReviewCard
+        review={CATALOG_REVIEW_LIST_DEMO[0]}
+        onEdit={() => setDialogOpen(true)}
+      />
+      <div className="space-y-4 max-w-md">
+      <div className="flex flex-wrap items-center gap-4">
+        <StarRatingDisplay value={4.3} size="sm" label="Display sm" />
+        <StarRatingDisplay value={4.3} size="md" label="Display md" />
+        <StarRatingDisplay value={4.3} size="lg" label="Display lg" />
+      </div>
       <StarRatingInput value={rating} onChange={setRating} label="Demo rating" />
       <Button type="button" variant="outline" onClick={() => setDialogOpen(true)}>
         Open review dialog
@@ -500,6 +546,7 @@ function CatalogReviewDemo() {
         }}
         onSubmit={() => setDialogOpen(false)}
       />
+      </div>
     </div>
   )
 }

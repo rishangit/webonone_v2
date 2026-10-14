@@ -11,6 +11,7 @@ import {
   itemListCardImageClassName,
   ItemListCardPlaceholderImage,
   itemListRowActiveClassName,
+  PriceDisplay,
   RemainingTime,
   StatusTag,
   TagChip,
@@ -226,7 +227,15 @@ export function AppListShowcaseCard({ entry, onDetailOpen }: AppListShowcaseCard
     case 'webonone-sales-history':
       return (
         <ItemListCollectionCard
-          image={<ItemListCardPlaceholderImage alt="BILL-1042" />}
+          className="h-full"
+          image={
+            <ImagePreview
+              src={null}
+              alt="Walk-in customer"
+              mode="view"
+              className={itemListCardImageClassName}
+            />
+          }
           menu={
             <ItemListMenu ariaLabel="Sale actions">
               <DropdownMenuItem>View bill</DropdownMenuItem>
@@ -234,13 +243,15 @@ export function AppListShowcaseCard({ entry, onDetailOpen }: AppListShowcaseCard
           }
           onBodyClick={() => onDetailOpen('BILL-1042')}
         >
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0 space-y-1">
-              <p className="text-sm font-medium">BILL-1042</p>
-              <p className="text-xs text-muted-foreground">Walk-in customer · LKR 4,500.00 · Cash</p>
-              <p className="text-xs text-muted-foreground">Oct 10, 2026, 3:45 PM</p>
+          <div className="flex h-full min-h-[7.5rem] w-full flex-col items-stretch">
+            <p className="text-sm font-medium">BILL-1042</p>
+            <p className="truncate font-medium text-foreground">Walk-in customer</p>
+            <p className="text-xs text-muted-foreground">Cash</p>
+            <p className="text-xs text-muted-foreground">Oct 10, 2026, 3:45 PM</p>
+            <div className="mt-2">
+              <StatusTag variant="verified">Completed</StatusTag>
             </div>
-            <StatusTag variant="verified">Completed</StatusTag>
+            <PriceDisplay value={4500} currency="LKR" size="sm" align="right" className="mt-auto pt-2" />
           </div>
         </ItemListCollectionCard>
       )

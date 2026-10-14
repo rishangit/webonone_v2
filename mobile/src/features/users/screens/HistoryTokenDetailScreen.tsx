@@ -12,6 +12,7 @@ import {
   ItemListEmpty,
   ItemListItem,
   Muted,
+  PriceDisplay,
   ReadOnlyField,
   Spinner,
   Subheading,
@@ -25,7 +26,9 @@ import {
   type SessionTokenHistoryDetail,
 } from '@/features/users/services/userHistoryApi'
 import { userDetailPath, userHistorySalePath } from '@/features/users/utils/userPaths'
+import { useSession } from '@/features/auth/SessionContext'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
+import { overlayNamedUserFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type HistoryTokenDetailScreenProps = {
   userId: string
@@ -36,6 +39,7 @@ export function HistoryTokenDetailScreen({ userId, tokenId }: HistoryTokenDetail
   const { t } = useTranslation('users')
   const { t: tc } = useTranslation('common')
   const router = useRouter()
+  const { user: sessionUser } = useSession()
   const [detail, setDetail] = useState<SessionTokenHistoryDetail | null>(null)
   const [submissions, setSubmissions] = useState<FormSubmissionDetail[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -82,8 +86,8 @@ export function HistoryTokenDetailScreen({ userId, tokenId }: HistoryTokenDetail
       buildDesignFormWebViewPath({
         formTemplateId,
         subjectUserId: detail.userId,
-        subjectDisplayName: detail.userDisplayName,
-        subjectEmail: detail.userEmail,
+        subjectDisplayName: overlayNamedUserFromSessionUser(detail, sessionUser).userDisplayName,
+        subjectEmail: overlayNamedUserFromSessionUser(detail, sessionUser).userEmail,
         serviceId: detail.serviceId,
         serviceName: detail.serviceName,
         eventId: detail.eventId,
@@ -141,6 +145,8 @@ export function HistoryTokenDetailScreen({ userId, tokenId }: HistoryTokenDetail
 
   if (!detail) return null
 
+  const token = overlayNamedUserFromSessionUser(detail, sessionUser)
+
   return (
     <FeatureScreen
       title={detail.serviceName}
@@ -166,7 +172,7 @@ export function HistoryTokenDetailScreen({ userId, tokenId }: HistoryTokenDetail
             </View>
           ) : null}
           <ReadOnlyField label={t('history.status')} value={detail.status} />
-          <ReadOnlyField label={t('history.customer')} value={detail.userDisplayName} />
+          <ReadOnlyField label={t('history.customer')} value={token.userDisplayName} />
           {detail.spaceName ? (
             <ReadOnlyField label={t('history.space')} value={detail.spaceName} />
           ) : null}
@@ -200,10 +206,8 @@ export function HistoryTokenDetailScreen({ userId, tokenId }: HistoryTokenDetail
                   key={sale.id}
                   onPress={() => router.push(userHistorySalePath(userId, sale.id) as Href)}
                 >
-                  <ItemListContent
-                    title={sale.billNumber}
-                    subtitle={`${sale.currency} ${sale.total.toFixed(2)} · ${sale.paymentMethod}`}
-                  />
+                  <ItemListContent title={sale.billNumber} subtitle={sale.paymentMethod} />
+                  <PriceDisplay value={sale.total} currency={sale.currency} size="sm" />
                 </ItemListItem>
               ))}
             </ItemList>

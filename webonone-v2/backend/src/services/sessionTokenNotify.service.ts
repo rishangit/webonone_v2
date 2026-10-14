@@ -198,14 +198,14 @@ async function notifyOneTokenAsync(params: {
 
   const contact = await fetchUserContact(token.userId)
   const toEmail =
+    contact?.email?.trim() ||
     preferredEmail?.trim() ||
     token.userEmail?.trim() ||
-    contact?.email?.trim() ||
     null
   const toPhone = contact?.phoneNumber?.trim() || null
 
   const payload: Record<string, string> = {
-    userName: token.userDisplayName || contact?.displayName || 'Customer',
+    userName: contact?.displayName?.trim() || token.userDisplayName || 'Customer',
     companyName,
     serviceName: event.serviceName,
     tokenLabel: token.tokenLabel,
@@ -269,12 +269,11 @@ async function notifyScheduleChangeRecipientAsync(params: {
   const company = await companyRepo.findCompanyById(companyId)
   const companyName = company?.name?.trim() || 'Company'
   const contact = await fetchUserContact(recipient.userId)
-  const toEmail =
-    recipient.userEmail?.trim() || contact?.email?.trim() || null
+  const toEmail = contact?.email?.trim() || recipient.userEmail?.trim() || null
   const toPhone = contact?.phoneNumber?.trim() || null
 
   const payload: Record<string, string> = {
-    userName: recipient.userDisplayName || contact?.displayName || 'Customer',
+    userName: contact?.displayName?.trim() || recipient.userDisplayName || 'Customer',
     companyName,
     serviceName: event.serviceName,
     tokenLabel: recipient.tokenLabel,

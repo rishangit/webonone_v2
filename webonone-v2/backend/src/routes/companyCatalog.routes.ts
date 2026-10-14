@@ -11,7 +11,10 @@ import {
   linkCatalogBodySchema,
   updateCatalogGalleryBodySchema,
   updateCatalogPricingBodySchema,
+  updateCatalogWebPublishBodySchema,
   upsertProductVariantStockLimitsBodySchema,
+  createCompanyProductStockBodySchema,
+  updateCompanyProductStockBodySchema,
   updateServiceFormBodySchema,
   replaceServiceWorkflowBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
@@ -30,6 +33,38 @@ router.get(
   companyCatalogController.listServicesWithForm,
 )
 
+router.get(
+  '/company/me/catalog/stocks/suggested-batch-number',
+  requireCompanyAdminSession,
+  companyCatalogController.suggestProductStockBatchNumber,
+)
+router.get(
+  '/company/me/catalog/products/:productId/variants/:variantId/stocks',
+  requireCompanySession,
+  companyCatalogController.listProductVariantStocks,
+)
+router.post(
+  '/company/me/catalog/products/:productId/variants/:variantId/stocks',
+  requireCompanyAdminSession,
+  validateBody(createCompanyProductStockBodySchema),
+  companyCatalogController.createProductVariantStock,
+)
+router.get(
+  '/company/me/catalog/products/:productId/variants/:variantId/stocks/:stockId',
+  requireCompanySession,
+  companyCatalogController.getProductVariantStock,
+)
+router.patch(
+  '/company/me/catalog/products/:productId/variants/:variantId/stocks/:stockId',
+  requireCompanyAdminSession,
+  validateBody(updateCompanyProductStockBodySchema),
+  companyCatalogController.updateProductVariantStock,
+)
+router.patch(
+  '/company/me/catalog/products/:productId/variants/:variantId/stocks/:stockId/active',
+  requireCompanyAdminSession,
+  companyCatalogController.setProductVariantStockActive,
+)
 router.get(
   '/company/me/catalog/products/:productId/variant-stock-limits',
   requireCompanySession,
@@ -91,6 +126,12 @@ router.patch(
   requireCompanyAdminSession,
   validateBody(updateCatalogPricingBodySchema),
   companyCatalogController.updateCatalogPricing,
+)
+router.patch(
+  '/company/me/catalog/:kind/:id/web-publish',
+  requireCompanyAdminSession,
+  validateBody(updateCatalogWebPublishBodySchema),
+  companyCatalogController.updateCatalogWebPublish,
 )
 router.patch(
   '/company/me/catalog/services/:id/form',

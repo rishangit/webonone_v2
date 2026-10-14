@@ -1,20 +1,16 @@
 import { View } from 'react-native'
+import { CatalogReviewListItem } from './CatalogReviewListItem'
+import type { CatalogReviewListItemData } from './catalogReviewTypes'
 import { Card } from './Card'
-import { ItemList, ItemListEmpty, ItemListItem } from './ItemList'
-import { Body, Muted, Subheading } from './Typography'
-import { StarRatingInput } from './StarRatingInput'
-
-export type CatalogReviewListItem = {
-  id: string
-  rating: number
-  comment: string | null
-  createdAtLabel?: string
-}
+import { ItemList, ItemListEmpty } from './ItemList'
+import { Muted, Subheading } from './Typography'
+import { StarRatingDisplay } from './StarRatingDisplay'
+import type { StarRatingSize } from './starRatingSizes'
 
 export type CatalogReviewsDisplayCardProps = {
   averageRating: number | null
   reviewCount: number
-  items: CatalogReviewListItem[]
+  items: CatalogReviewListItemData[]
   loading?: boolean
   title?: string
   description?: string
@@ -22,6 +18,8 @@ export type CatalogReviewsDisplayCardProps = {
   overallLabel?: string
   ratingLabel?: string
   loadingLabel?: string
+  reviewerFallbackLabel?: string
+  starSize?: StarRatingSize
 }
 
 function formatOverall(average: number | null, count: number, overallLabel?: string): string {
@@ -43,6 +41,8 @@ export function CatalogReviewsDisplayCard({
   overallLabel,
   ratingLabel = 'Rating',
   loadingLabel = 'Loading reviews…',
+  reviewerFallbackLabel = 'Customer',
+  starSize = 'md',
 }: CatalogReviewsDisplayCardProps) {
   const overallText = formatOverall(averageRating, reviewCount, overallLabel)
 
@@ -57,12 +57,7 @@ export function CatalogReviewsDisplayCard({
       ) : (
         <View className="gap-4">
           <View className="gap-2">
-            <StarRatingInput
-              value={averageRating != null ? Math.round(averageRating) : null}
-              onChange={() => {}}
-              disabled
-              label={ratingLabel}
-            />
+            <StarRatingDisplay value={averageRating} size={starSize} label={ratingLabel} />
             <Subheading className="text-sm">{overallText}</Subheading>
           </View>
           <ItemList>
@@ -70,26 +65,13 @@ export function CatalogReviewsDisplayCard({
               <ItemListEmpty>{emptyLabel}</ItemListEmpty>
             ) : (
               items.map((review) => (
-                <ItemListItem key={review.id}>
-                  <View className="min-w-0 flex-1 gap-2">
-                    <View className="flex-row flex-wrap items-center justify-between gap-2">
-                      <StarRatingInput
-                        value={review.rating}
-                        onChange={() => {}}
-                        disabled
-                        label={ratingLabel}
-                      />
-                      {review.createdAtLabel ? (
-                        <Muted className="text-xs">{review.createdAtLabel}</Muted>
-                      ) : null}
-                    </View>
-                    {review.comment ? (
-                      <Body className="whitespace-pre-wrap text-sm">{review.comment}</Body>
-                    ) : (
-                      <Muted>—</Muted>
-                    )}
-                  </View>
-                </ItemListItem>
+                <CatalogReviewListItem
+                  key={review.id}
+                  review={review}
+                  ratingLabel={ratingLabel}
+                  starSize={starSize}
+                  reviewerFallbackLabel={reviewerFallbackLabel}
+                />
               ))
             )}
           </ItemList>

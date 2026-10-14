@@ -14,14 +14,16 @@ import {
   FeaturePage,
   ReadOnlyField,
   StatusTag,
+  PriceDisplay,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { canAccessCompanySession, canManageCompanyEvents } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { salesActions } from '@/features/sales/store'
-import { formatLkr, formatSaleWhen } from '@/features/sales/utils/formatMoney'
+import { formatSaleWhen } from '@/features/sales/utils/formatMoney'
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
@@ -42,7 +44,15 @@ export function SaleBillPage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const sale = useAppSelector((s) => s.sales.detail)
+  const sessionUser = useAppSelector((s) => s.auth.user)
+  const rawSale = useAppSelector((s) => s.sales.detail)
+  const sale = rawSale
+    ? overlayIdentityFromSessionUser(rawSale, sessionUser, {
+        userId: 'customerUserId',
+        displayName: 'customerDisplayName',
+        email: 'customerEmail',
+      })
+    : rawSale
   const detailStatus = useAppSelector((s) => s.sales.detailStatus)
   const detailError = useAppSelector((s) => s.sales.detailError)
   const [voidOpen, setVoidOpen] = useState(false)
@@ -141,15 +151,30 @@ export function SaleBillPage() {
                         <td className="py-2 pr-3">{line.name}</td>
                         <td className="py-2 pr-3">{kindLabel[line.itemKind] ?? line.itemKind}</td>
                         <td className="py-2 pr-3 text-right">{line.quantity}</td>
-                        <td className="py-2 pr-3 text-right">{formatLkr(line.unitPrice, sale.currency)}</td>
-                        <td className="py-2 text-right">{formatLkr(line.lineTotal, sale.currency)}</td>
+                        <td className="py-2 pr-3 text-right">
+                          <PriceDisplay
+                            value={line.unitPrice}
+                            currency={sale.currency}
+                            size="sm"
+                            align="right"
+                          />
+                        </td>
+                        <td className="py-2 text-right">
+                          <PriceDisplay
+                            value={line.lineTotal}
+                            currency={sale.currency}
+                            size="sm"
+                            align="right"
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-4 text-right text-lg font-semibold">
-                {t('bill.total', { amount: formatLkr(sale.total, sale.currency) })}
+              <p className="mt-4 flex items-baseline justify-end gap-2 text-lg font-semibold">
+                <span>{t('bill.total')}</span>
+                <PriceDisplay value={sale.total} currency={sale.currency} size="lg" />
               </p>
             </CardContent>
           </Card>

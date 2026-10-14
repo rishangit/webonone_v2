@@ -9,12 +9,14 @@ import {
   StatusTag,
   type StatusTagVariant,
 } from '@webonone/mobile-ui'
+import { useSession } from '@/features/auth/SessionContext'
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
 import { formatTimeModeLabel } from '@/features/calendar/schemas/eventSchemas'
 import { DAY_LABELS } from '@/features/calendar/schemas/eventSchemas'
 import type { CompanyEventOccurrence, SessionRunStatus } from '@/features/calendar/types/event.types'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 import { parseYmd } from '@/features/calendar/utils/dateYmd'
+import { overlayEventAttendeeFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 const RUN_STATUS_VARIANT: Record<SessionRunStatus, StatusTagVariant> = {
   scheduled: 'pending',
@@ -42,8 +44,10 @@ export function ScheduleEventDetail({
   onOpenSession: () => void
   layout?: 'popover' | 'panel'
 }) {
+  const { user: sessionUser } = useSession()
+  const view = overlayEventAttendeeFromSessionUser(occurrence, sessionUser)
   const isPanel = layout === 'panel'
-  const staffName = occurrence.effectiveStaffDisplayName ?? occurrence.staffDisplayName ?? '—'
+  const staffName = view.effectiveStaffDisplayName ?? view.staffDisplayName ?? '—'
   const runStatus = occurrence.runStatus ?? 'scheduled'
   const isDuration = occurrence.timeMode === 'duration'
 
@@ -121,8 +125,8 @@ export function ScheduleEventDetail({
         ) : null}
         {isDuration ? (
           <>
-            <ReadOnlyField label="Attendee" value={occurrence.attendeeDisplayName ?? '—'} />
-            <ReadOnlyField label="Email" value={occurrence.attendeeEmail ?? '—'} />
+            <ReadOnlyField label="Attendee" value={view.attendeeDisplayName ?? '—'} />
+            <ReadOnlyField label="Email" value={view.attendeeEmail ?? '—'} />
           </>
         ) : null}
       </View>

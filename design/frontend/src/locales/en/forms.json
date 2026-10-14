@@ -27,6 +27,7 @@
   "checkbox": "Checkbox",
   "radioGroup": "Radio group",
   "dropdown": "Dropdown",
+  "documentsField": "Documents",
   "option1": "Option 1",
   "option2": "Option 2",
   "draft": "Draft",
@@ -46,6 +47,7 @@
   "toolCheckbox": "Checkbox",
   "toolRadio": "Radio",
   "toolSelect": "Dropdown",
+  "toolMedia": "Documents",
   "canvasEmpty": "Click a toolbox control to add fields to this form.",
   "placeholderText": "Text input",
   "placeholderLong": "Long text",
@@ -79,5 +81,14 @@
   "missingSubject": "Missing subjectUserId. Open fill from a customer or service with a selected customer.",
   "noFields": "This form has no fields yet.",
   "fieldRequired": "{{label}} is required",
-  "comingLater": "Coming in a later phase of spec 1.9.0."
+  "comingLater": "Coming in a later phase of spec 1.9.0.",
+  "allowMultipleDocuments": "Allow multiple documents",
+  "mediaPreviewSingle": "Single document upload",
+  "mediaPreviewMultiple": "Multiple documents upload",
+  "addDocument": "Attach document",
+  "addDocuments": "Attach documents",
+  "pickDocuments": "Choose documents",
+  "attachSelected": "Attach",
+  "noAttachments": "No documents attached yet.",
+  "removeAttachment": "Remove attachment"
 }

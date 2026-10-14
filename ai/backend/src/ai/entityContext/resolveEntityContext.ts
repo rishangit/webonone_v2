@@ -352,7 +352,6 @@ export function formatEntityContextSupplement(resolved: ResolvedEntityContext[])
     '- Write tools park Confirm/Skip rows; missing related records appear as nested checkboxes under the parent row.',
     '- When the user asks to suggest or add attribute values on an attached product, service, or space, call create_data_*_attribute_value once per value with the attached id and attributeId from get_data_*.',
     '- When the user asks to suggest or add market variants on an attached product, call list_data_product_variants and get_data_product first, ensure attributes and labeled attribute values exist, then call create_data_product_variant once per retail SKU with name, sku, kind, and attribute_value_ids from get_data_product. Skip existing combinations. Confirm rows must show name and sku — not bare attribute ids or orphan numbers.',
-    '- When the user asks about stocks on a product variant, call list_data_product_variant_stocks with the product id and variantId, then create_data_product_variant_stock for new batches (quantity, batch_number, cost_price, sell_price, purchase_date).',
   ].join('\n')
 
   const companyInstructions = [
@@ -361,6 +360,7 @@ export function formatEntityContextSupplement(resolved: ResolvedEntityContext[])
     '- Use update_catalog_item only for forked or custom company items; linked items must be forked first.',
     '- For Data library attribute values on a linked library entity, use the library_entity_id with create_data_*_attribute_value when appropriate.',
     '- For Data library product variants on a linked library entity, use the library_entity_id with list_data_product_variants and create_data_product_variant.',
+    '- When the user asks about stocks on a company catalog product, call list_company_product_variant_stocks with the company catalog product id and variantId, then create_company_product_variant_stock for new batches (quantity, batch_number, cost_price, sell_price, purchase_date).',
     'When the user asks about an attached staff member, calendar event, or company profile:',
     '- Use get_staff / get_event / get_company with the attached id.',
     '- Use the matching update_* tool when the user asks to change fields; write tools park Confirm/Skip rows.',

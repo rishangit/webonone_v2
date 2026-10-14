@@ -22,10 +22,8 @@ import {
   toCreateStockPayload,
   type StockFormDraft,
 } from '@/features/company-catalog/schemas/stockSchemas'
-import {
-  dataLibraryApi,
-  type LibraryProductVariantStock,
-} from '@/features/company-catalog/services/dataLibraryApi'
+import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
+import type { LibraryProductVariantStock } from '@/features/company-catalog/services/dataLibraryApi'
 import { loadIdentityUsersForStaff } from '@/features/staff/services/identityUsersApi'
 
 const STOCK_FORM_DIALOG_SIZE = {
@@ -50,8 +48,7 @@ function parseYmd(value: string): Date | undefined {
 
 export type CompanyStockFormDialogProps = {
   open: boolean
-  /** Data library product id */
-  libraryProductId: string
+  companyProductId: string
   variantId: string
   stock?: LibraryProductVariantStock | null
   onOpenChange: (open: boolean) => void
@@ -60,7 +57,7 @@ export type CompanyStockFormDialogProps = {
 
 export function CompanyStockFormDialog({
   open,
-  libraryProductId,
+  companyProductId,
   variantId,
   stock = null,
   onOpenChange,
@@ -134,7 +131,7 @@ export function CompanyStockFormDialog({
     setGeneratingBatch(true)
     setError(null)
     try {
-      const { batchNumber } = await dataLibraryApi.suggestStockBatchNumber()
+      const { batchNumber } = await companyCatalogApi.suggestStockBatchNumber()
       updateField('batchNumber', batchNumber)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate batch number')
@@ -161,9 +158,9 @@ export function CompanyStockFormDialog({
     try {
       const payload = toCreateStockPayload(parsed.data)
       const item = isNew
-        ? await dataLibraryApi.createProductVariantStock(libraryProductId, variantId, payload)
-        : await dataLibraryApi.updateProductVariantStock(
-            libraryProductId,
+        ? await companyCatalogApi.createProductVariantStock(companyProductId, variantId, payload)
+        : await companyCatalogApi.updateProductVariantStock(
+            companyProductId,
             variantId,
             stock.id,
             payload,

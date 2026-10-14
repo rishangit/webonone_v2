@@ -1,18 +1,16 @@
 import { useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import * as DocumentPicker from 'expo-document-picker'
 import { useTranslation } from 'react-i18next'
-import { Trash2 } from 'lucide-react-native'
 import {
   Button,
   Card,
   ConfirmDialog,
-  ImagePreview,
   Muted,
   Subheading,
   useToast,
-  useThemedControlIconColor,
 } from '@webonone/mobile-ui'
+import { CatalogGalleryImageGrid } from '@/features/data/components/CatalogGalleryImageGrid'
 import { updateCatalogGallery } from '@/features/data/services/catalogEntityApi'
 import { uploadCatalogGalleryImage } from '@/features/data/services/catalogMediaApi'
 import type { CatalogKind } from '@/features/data/utils/dataPaths'
@@ -36,7 +34,6 @@ export function CatalogGalleryTab({
   const { t } = useTranslation(kind)
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
-  const iconColor = useThemedControlIconColor()
   const [saving, setSaving] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const images = galleryImages ?? []
@@ -114,34 +111,15 @@ export function CatalogGalleryTab({
           ) : null}
         </View>
 
-        {images.length === 0 ? (
-          <View className="items-center rounded-lg border border-dashed border-border px-4 py-8">
-            <Muted>{canEdit ? t('catalog.addGalleryImages') : t('catalog.noGalleryImages')}</Muted>
-          </View>
-        ) : (
-          <View className="flex-row flex-wrap gap-3">
-            {images.map((img) => (
-              <View key={img.mediaId} className="relative">
-                <ImagePreview
-                  src={img.url}
-                  alt={t('catalog.galleryAlt')}
-                  className="h-28 w-28 rounded-lg"
-                />
-                {canEdit ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t('catalog.removeGalleryImage')}
-                    disabled={saving}
-                    onPress={() => setPendingRemoveId(img.mediaId)}
-                    className="absolute right-1 top-1 h-8 w-8 items-center justify-center rounded-md bg-card"
-                  >
-                    <Trash2 size={16} color={iconColor} strokeWidth={2} />
-                  </Pressable>
-                ) : null}
-              </View>
-            ))}
-          </View>
-        )}
+        <CatalogGalleryImageGrid
+          images={images}
+          emptyAlt={canEdit ? t('catalog.addGalleryImages') : t('catalog.noGalleryImages')}
+          imageAlt={t('catalog.galleryAlt')}
+          canEdit={canEdit}
+          saving={saving}
+          removeAriaLabel={t('catalog.removeGalleryImage')}
+          onRequestRemove={setPendingRemoveId}
+        />
       </Card>
 
       <ConfirmDialog

@@ -11,7 +11,9 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  EditableSectionCard,
   ImageCarousel,
+  ReadOnlyField,
   TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -30,9 +32,8 @@ import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/Catalo
 import { productsActions } from '@/features/products/store'
 import type { ProductWizardStep } from '@/features/products/schemas/productSchemas'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
+import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
-import { shouldShowCompanyStock } from '@/features/products/utils/companyStockVisibility'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const PRODUCT_DETAIL_TABS = [
@@ -41,15 +42,6 @@ const PRODUCT_DETAIL_TABS = [
   'attributes',
   'variants',
 ] as const satisfies readonly CatalogDetailTabId[]
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
-}
 
 export function ProductDetailsPage() {
   const { t } = useTranslation('products')
@@ -61,7 +53,6 @@ export function ProductDetailsPage() {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const canDelete = user?.role === 'super_admin'
-  const showCompanyStock = shouldShowCompanyStock(user?.role)
   const [dialog, setDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
   const [pendingDelete, setPendingDelete] = useState(false)
   const [tab, setTab] = useDetailTabParam(PRODUCT_DETAIL_TABS, 'overview')
@@ -95,7 +86,7 @@ export function ProductDetailsPage() {
         <EditableSectionCard
           title={t('singular')}
           description={t('sectionDescription')}
-          status={product.status}
+          headerTrailing={<StatusBadge status={product.status} />}
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
@@ -117,7 +108,6 @@ export function ProductDetailsPage() {
           productId={id}
           canEdit={canEdit}
           onManageVariants={() => setTab('variants')}
-          showCompanyStock={showCompanyStock}
         />
 
         <EditableSectionCard
@@ -215,7 +205,6 @@ export function ProductDetailsPage() {
               productName={product.name}
               attributes={product.attributes}
               canEdit={canEdit}
-              showCompanyStock={showCompanyStock}
             />
           }
         />

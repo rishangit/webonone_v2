@@ -28,6 +28,8 @@ import {
 import { loadIdentityUsersForStaff } from '@/features/staff/services/identityUsersApi'
 import { staffApi } from '@/features/staff/services/staffApi'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
+import { useSession } from '@/features/auth/SessionContext'
+import { overlayStaffFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 const TOTAL_STEPS = 3
 
@@ -49,6 +51,7 @@ export function StaffFormDialog({
   onSaved,
 }: StaffFormDialogProps) {
   const { toast } = useToast()
+  const { user: sessionUser } = useSession()
   const isNew = !id
   const [step, setStep] = useState<StaffWizardStep>(parseStaffWizardStep(initialStep))
   const [values, setValues] = useState<StaffWizardFormValues>(EMPTY_STAFF_WIZARD_VALUES)
@@ -106,7 +109,7 @@ export function StaffFormDialog({
     staffApi
       .get(id!)
       .then((staff) => {
-        if (!cancelled) setValues(valuesFromStaff(staff))
+        if (!cancelled) setValues(valuesFromStaff(overlayStaffFromSessionUser(staff, sessionUser)))
       })
       .catch((err: unknown) => {
         if (!cancelled) {
@@ -120,7 +123,7 @@ export function StaffFormDialog({
     return () => {
       cancelled = true
     }
-  }, [existingUserIds, id, initialStep, isNew, open])
+  }, [existingUserIds, id, initialStep, isNew, open, sessionUser])
 
   useEffect(() => {
     if (userPickerOpen) void loadPickerUsers()

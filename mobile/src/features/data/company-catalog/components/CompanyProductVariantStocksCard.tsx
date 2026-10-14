@@ -13,15 +13,16 @@ import {
   ItemListMenuItem,
   Muted,
   StatusTag,
+  StockBatchPriceRow,
   Subheading,
   useToast,
 } from '@webonone/mobile-ui'
 import { CompanyStockFormDialog } from '@/features/data/company-catalog/components/CompanyStockFormDialog'
-import {
-  dataLibraryApi,
-  type LibraryProductVariantStock,
-} from '@/features/sales/services/dataLibraryApi'
+import { companyCatalogApi } from '@/features/data/services/companyCatalogApi'
+import type { LibraryProductVariantStock } from '@/features/sales/services/dataLibraryApi'
+import { useSession } from '@/features/auth/SessionContext'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
+import { overlayStockSupplierFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 function formatMoney(value: number): string {
   return value.toLocaleString(undefined, {
@@ -31,16 +32,17 @@ function formatMoney(value: number): string {
 }
 
 export function CompanyProductVariantStocksCard({
-  libraryProductId,
+  companyProductId,
   variantId,
   canEdit,
 }: {
-  libraryProductId: string
+  companyProductId: string
   variantId: string
   canEdit: boolean
 }) {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
+  const { user: sessionUser } = useSession()
   const { toast } = useToast()
   const [items, setItems] = useState<LibraryProductVariantStock[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,14 +55,14 @@ export function CompanyProductVariantStocksCard({
     setLoading(true)
     setError(null)
     try {
-      const result = await dataLibraryApi.listProductVariantStocks(libraryProductId, variantId)
+      const result = await companyCatalogApi.listProductVariantStocks(companyProductId, variantId)
       setItems(result.items)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('stocks.failedLoad'))
     } finally {
       setLoading(false)
     }
-  }, [libraryProductId, variantId, t])
+  }, [companyProductId, variantId, t])
 
   useEffect(() => {
     void load()
@@ -71,7 +73,7 @@ export function CompanyProductVariantStocksCard({
     setSaving(true)
     setError(null)
     try {
-      await dataLibraryApi.setProductVariantStockActive(libraryProductId, variantId, stock.id)
+      await companyCatalogApi.setProductVariantStockActive(companyProductId, variantId, stock.id)
       toast({ title: t('stocks.toastActiveUpdated') })
       await load()
     } catch (err) {
@@ -112,27 +114,34 @@ export function CompanyProductVariantStocksCard({
         <ItemListEmpty>{t('stocks.empty')}</ItemListEmpty>
       ) : (
         <ItemList className="py-0" nestedInCard>
-          {items.map((stock) => (
+          {items.map((raw) => {
+            const stock = overlayStockSupplierFromSessionUser(raw, sessionUser)
+            return (
             <ItemListItem key={stock.id}>
-              <ItemListContent
-                title={`${t('stocks.batchLabel', { number: stock.batchNumber })} · ${t('stocks.qty', { qty: formatMoney(stock.quantity) })}`}
-                subtitle={[
-                  t('stocks.costSell', {
-                    cost: formatMoney(stock.costPrice),
-                    sell: formatMoney(stock.sellPrice),
-                  }),
-                  `${t('stocks.purchased', { date: formatCalendarYmd(stock.purchaseDate) })}${
-                    stock.expiredDate
-                      ? ` · ${t('stocks.expires', { date: formatCalendarYmd(stock.expiredDate) })}`
-                      : ''
-                  }`,
-                  stock.supplierDisplayName
-                    ? `${t('stocks.supplier', { name: stock.supplierDisplayName })}${stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}`
-                    : '',
-                ]
-                  .filter(Boolean)
-                  .join('\n')}
-              />
+              <View className="min-w-0 flex-1 gap-1">
+                <ItemListContent
+                  title={`${t('stocks.batchLabel', { number: stock.batchNumber })} · ${t('stocks.qty', { qty: formatMoney(stock.quantity) })}`}
+                  subtitle={[
+                    `${t('stocks.purchased', { date: formatCalendarYmd(stock.purchaseDate) })}${
+                      stock.expiredDate
+                        ? ` · ${t('stocks.expires', { date: formatCalendarYmd(stock.expiredDate) })}`
+                        : ''
+                    }`,
+                    stock.supplierDisplayName
+                      ? `${t('stocks.supplier', { name: stock.supplierDisplayName })}${stock.supplierEmail ? ` · ${stock.supplierEmail}` : ''}`
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join('\n')}
+                />
+                <StockBatchPriceRow
+                  className="self-start pt-1"
+                  costLabel={t('stocks.cost')}
+                  sellLabel={t('stocks.sell')}
+                  costValue={stock.costPrice}
+                  sellValue={stock.sellPrice}
+                />
+              </View>
               {stock.isActive ? <StatusTag variant="verified">{t('stocks.active')}</StatusTag> : null}
               {canEdit ? (
                 <ItemListMenu ariaLabel={t('stocks.actionsAria', { number: stock.batchNumber })}>
@@ -152,14 +161,15 @@ export function CompanyProductVariantStocksCard({
                 </ItemListMenu>
               ) : null}
             </ItemListItem>
-          ))}
+            )
+          })}
         </ItemList>
       )}
 
       {dialogOpen ? (
         <CompanyStockFormDialog
           open
-          libraryProductId={libraryProductId}
+          companyProductId={companyProductId}
           variantId={variantId}
           stock={editingStock}
           onOpenChange={(next) => {

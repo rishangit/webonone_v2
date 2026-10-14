@@ -122,6 +122,7 @@ export async function searchApprovedCompanyCatalog(options: {
     const query = db(`${table} as item`)
       .join('companies as company', 'company.id', 'item.company_id')
       .where('company.status', 'approved')
+      .andWhere('item.web_publish_status', 'published')
       .andWhere(function sellable() {
         this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
           this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(
@@ -177,6 +178,7 @@ export async function findApprovedCompanyCatalogById(
     .join('companies as company', 'company.id', 'item.company_id')
     .where('item.id', id)
     .where('company.status', 'approved')
+    .andWhere('item.web_publish_status', 'published')
     .andWhere(function sellable() {
       this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
         this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(
@@ -227,6 +229,7 @@ export async function listApprovedCatalogByCompanyIds(
       .join('companies as company', 'company.id', 'item.company_id')
       .whereIn('item.company_id', companyIds)
       .where('company.status', 'approved')
+      .andWhere('item.web_publish_status', 'published')
       .andWhere(function sellable() {
         this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
           this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(

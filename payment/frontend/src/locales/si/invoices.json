@@ -40,6 +40,7 @@
   "issuedLabel": "නිකුත් කළ",
   "due": "නියමිත",
   "paidLabel": "ගෙවූ",
+  "columnReference": "යොමු අංකය",
   "referenceTitle": "ඉන්වොයිස් යොමු අංකය",
   "referenceHint": "ගෙවීම මෙම ඉන්වොයිස් සමඟ ගැලපීමට මාරු විස්තරයේ මෙම යොමු අංකය ඇතුළත් කරන්න.",
   "referenceCopied": "යොමු අංකය පිටපත් විය",

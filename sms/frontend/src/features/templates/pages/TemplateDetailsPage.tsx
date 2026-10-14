@@ -11,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  EditableSectionCard,
+  ReadOnlyField,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
@@ -20,7 +22,6 @@ import { useNavigateSms } from '@/features/shell/utils/navigateSms'
 import { TemplateFormDialog } from '@/features/templates/components/TemplateFormDialog'
 import type { TemplateEditorFormValues } from '@/features/templates/schemas/templateSchemas'
 import { templatesActions } from '@/features/templates/store'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function formatScope(
@@ -39,14 +40,6 @@ function truncateBody(value: string, max = 160): string {
   return `${trimmed.slice(0, max)}…`
 }
 
-function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="text-sm">{value}</div>
-    </div>
-  )
-}
 
 export function TemplateDetailsPage() {
   const { t } = useTranslation('templates')

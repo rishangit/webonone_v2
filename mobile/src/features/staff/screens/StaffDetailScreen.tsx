@@ -20,6 +20,7 @@ import type { CompanyStaff } from '@/features/staff/types/staff.types'
 import type { StaffWizardStep } from '@/features/staff/schemas/staffSchemas'
 import { STAFF_LIST_PATH } from '@/features/staff/utils/staffPaths'
 import { canAccessCompanySession } from '@/features/sales/utils/canAccessCompanySession'
+import { overlayStaffFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type StaffDetailTab = 'overview' | 'history' | 'leaves'
 
@@ -72,7 +73,8 @@ export function StaffDetailScreen({ staffId, initialTab = 'overview' }: StaffDet
     return <Redirect href="/" />
   }
 
-  const title = detail?.displayName ?? t('detail.title')
+  const staff = detail ? overlayStaffFromSessionUser(detail, user) : null
+  const title = staff?.displayName ?? t('detail.title')
 
   return (
     <FeatureScreen
@@ -84,7 +86,7 @@ export function StaffDetailScreen({ staffId, initialTab = 'overview' }: StaffDet
       {loading ? <Spinner label={t('detail.loading')} /> : null}
       {!loading && error && !detail ? <Body className="text-destructive">{error}</Body> : null}
 
-      {detail ? (
+      {staff ? (
         <Tabs value={tab} onValueChange={(value) => setTab(value as StaffDetailTab)}>
           <TabsList aria-label={t('detail.ariaSections')}>
             <TabsTrigger value="overview">{t('detail.tabs.overview')}</TabsTrigger>
@@ -93,16 +95,16 @@ export function StaffDetailScreen({ staffId, initialTab = 'overview' }: StaffDet
           </TabsList>
           <TabsContent value="overview">
             <StaffOverviewView
-              staff={detail}
+              staff={staff}
               canEdit={canEdit}
               onEditStep={(step) => setDialog({ initialStep: step })}
             />
           </TabsContent>
           <TabsContent value="history">
-            <StaffHistoryPanel staffId={staffId} userId={detail.userId} />
+            <StaffHistoryPanel staffId={staffId} userId={staff.userId} />
           </TabsContent>
           <TabsContent value="leaves">
-            <StaffLeavesPanel staff={detail} canManage={canEdit} />
+            <StaffLeavesPanel staff={staff} canManage={canEdit} />
           </TabsContent>
         </Tabs>
       ) : null}

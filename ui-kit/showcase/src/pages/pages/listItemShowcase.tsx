@@ -15,6 +15,7 @@ import {
   itemListRowBodyClassName,
   itemListThumbClassName,
   normalizeHexColor,
+  PriceDisplay,
   RemainingTime,
   StatusTag,
   TagChip,
@@ -340,15 +341,22 @@ function AppListShowcaseRowBody({
               className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => onDetailOpen('BILL-1042')}
             >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 space-y-1">
+              <div className="flex w-full items-stretch gap-3">
+                <ImagePreview
+                  src={null}
+                  alt="Walk-in customer"
+                  mode="view"
+                  className={itemListThumbClassName}
+                />
+                <div className="min-w-0 flex-1 space-y-1">
                   <p className="text-sm font-medium">BILL-1042</p>
-                  <p className="text-xs text-muted-foreground">
-                    Walk-in customer · LKR 4,500.00 · Cash
-                  </p>
+                  <p className="text-xs text-muted-foreground">Walk-in customer · Cash</p>
                   <p className="text-xs text-muted-foreground">Oct 10, 2026, 3:45 PM</p>
                 </div>
-                <StatusTag variant="verified">Completed</StatusTag>
+                <div className="ml-auto flex shrink-0 flex-col items-end gap-2 self-stretch">
+                  <StatusTag variant="verified">Completed</StatusTag>
+                  <PriceDisplay value={4500} currency="LKR" size="sm" align="right" className="mt-auto" />
+                </div>
               </div>
             </button>
           </ItemListContent>

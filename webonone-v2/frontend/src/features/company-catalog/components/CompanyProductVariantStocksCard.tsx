@@ -19,16 +19,15 @@ import {
   StockBatchPriceRow,
   useToast,
 } from '@webonone/ui-kit'
+import { useAppSelector } from '@/app/store/hooks'
 import { CompanyStockFormDialog } from '@/features/company-catalog/components/CompanyStockFormDialog'
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
-import {
-  dataLibraryApi,
-  type LibraryProductVariantStock,
-} from '@/features/company-catalog/services/dataLibraryApi'
+import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
+import type { LibraryProductVariantStock } from '@/features/company-catalog/services/dataLibraryApi'
 import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type CompanyProductVariantStocksCardProps = {
-  libraryProductId: string
   variantId: string
   companyProductId: string
   items: LibraryProductVariantStock[]
@@ -46,7 +45,6 @@ function formatMoney(value: number): string {
 }
 
 export function CompanyProductVariantStocksCard({
-  libraryProductId,
   variantId,
   companyProductId,
   items,
@@ -58,7 +56,15 @@ export function CompanyProductVariantStocksCard({
   const { t, i18n } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
+  const sessionUser = useAppSelector((s) => s.auth.user)
   const { byVariantId } = useCompanyProductVariantStockLimitsMap(companyProductId)
+  const displayItems = items.map((item) =>
+    overlayIdentityFromSessionUser(item, sessionUser, {
+      userId: 'supplierUserId',
+      displayName: 'supplierDisplayName',
+      email: 'supplierEmail',
+    }),
+  )
   const limits = byVariantId[variantId]
   const [saving, setSaving] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -68,7 +74,7 @@ export function CompanyProductVariantStocksCard({
     if (stock.isActive || saving) return
     setSaving(true)
     try {
-      await dataLibraryApi.setProductVariantStockActive(libraryProductId, variantId, stock.id)
+      await companyCatalogApi.setProductVariantStockActive(companyProductId, variantId, stock.id)
       toast({ title: t('stocks.toastActiveUpdated') })
       onReload()
     } catch (err) {
@@ -105,13 +111,13 @@ export function CompanyProductVariantStocksCard({
       <CardContent className="space-y-4">
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        {loading && items.length === 0 ? (
+        {loading && displayItems.length === 0 ? (
           <ItemListEmpty>{t('stocks.loading')}</ItemListEmpty>
-        ) : items.length === 0 ? (
+        ) : displayItems.length === 0 ? (
           <ItemListEmpty>{t('stocks.empty')}</ItemListEmpty>
         ) : (
           <ItemList className="py-0">
-            {items.map((stock) => (
+            {displayItems.map((stock) => (
               <ItemListItem key={stock.id}>
                 <ItemListContent>
                   <div className="space-y-2">
@@ -151,8 +157,8 @@ export function CompanyProductVariantStocksCard({
                       className="pt-1"
                       costLabel={t('stocks.cost')}
                       sellLabel={t('stocks.sell')}
-                      costValue={formatMoney(stock.costPrice)}
-                      sellValue={formatMoney(stock.sellPrice)}
+                      costValue={stock.costPrice}
+                      sellValue={stock.sellPrice}
                     />
                   </div>
                 </ItemListContent>
@@ -185,7 +191,7 @@ export function CompanyProductVariantStocksCard({
       {dialogOpen ? (
         <CompanyStockFormDialog
           open
-          libraryProductId={libraryProductId}
+          companyProductId={companyProductId}
           variantId={variantId}
           stock={editingStock}
           onOpenChange={(next) => {

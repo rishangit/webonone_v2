@@ -9,12 +9,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EditableSectionCard,
   FeaturePage,
   ImageCarousel,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import { WebononeCopyToAiButton } from '@/features/ai/components/WebononeCopyToAiButton'
-import { EditableSectionCard } from '@/features/calendar/components/EditableSectionCard'
 import {
   EventDetailSectionTabs,
   type EventDetailTabId,
@@ -59,7 +60,16 @@ export function EventDetailsPage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const detail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
+  const sessionUser = useAppSelector((s) => s.auth.user)
+  const rawDetail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
+  const detail = rawDetail
+    ? overlayIdentityFromSessionUser(rawDetail, sessionUser, {
+        userId: 'attendeeUserId',
+        displayName: 'attendeeDisplayName',
+        email: 'attendeeEmail',
+        avatarUrl: 'attendeeImageUrl',
+      })
+    : null
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
 

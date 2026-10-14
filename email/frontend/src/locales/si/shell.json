@@ -40,6 +40,7 @@
   "testDescription": "බෙදාහැරීම තහවුරු කිරීමට සැකිල්ලක් භාවිතයෙන් පරීක්ෂණ පණිවිඩයක් යවන්න.",
   "historyEmpty": "තෝරාගත් පෙරහන් සඳහා යැවීම් ඉතිහාසයක් නැත.",
   "historyActionsFor": "{{name}} සඳහා ඉතිහාසය",
+  "historyColumnTemplate": "ආකෘතිය",
   "completingSignIn": "පිවිසීම සම්පූර්ණ කරමින්…",
   "backToSignIn": "පිවිසීමට ආපසු",
   "providers": {

@@ -12,6 +12,7 @@ import {
   FeatureScreen,
   ListAddButton,
   NativeSelect,
+  PriceDisplay,
   Subheading,
   getAvatarInitials,
   useToast,
@@ -32,7 +33,6 @@ import { salesApi } from '@/features/sales/services/salesApi'
 import type { CustomerOption } from '@/features/sales/services/customersApi'
 import type { PosCartLine, SalePaymentMethod } from '@/features/sales/types/sales.types'
 import { canAccessCompanySession } from '@/features/sales/utils/canAccessCompanySession'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import { findPosCartStockViolation, posCartLinesToSaleLines } from '@/features/sales/utils/posCartSaleLines'
 import { resolvePosEnabledKinds } from '@/features/sales/utils/posEnabledKinds'
 import { saleDetailPath } from '@/features/sales/utils/salePaths'
@@ -208,7 +208,10 @@ export function PosScreen() {
             onCashReceivedChange={setCashReceived}
           />
         ) : null}
-        <Body className="text-lg font-semibold">Total {formatLkr(total)}</Body>
+        <View className="flex-row items-baseline gap-2">
+          <Body className="text-lg font-semibold">Total</Body>
+          <PriceDisplay value={total} size="lg" />
+        </View>
         <Button className="w-full" disabled={saving} onPress={() => void handleComplete()}>
           {saving ? 'Completing sale…' : 'Complete sale'}
         </Button>

@@ -177,6 +177,13 @@ export type {
 export { STOCK_AVAILABILITY_PROGRESS_COMPACT_CLASS } from './components/StockAvailabilityProgress'
 export { StockBatchPriceRow } from './components/StockBatchPriceRow'
 export type { StockBatchPriceRowProps } from './components/StockBatchPriceRow'
+export { PriceDisplay, formatPriceDisplayText } from './components/PriceDisplay'
+export type { PriceDisplayProps, PriceDisplayVariant } from './components/PriceDisplay'
+export { ListPriceField } from './components/ListPriceField'
+export type { ListPriceFieldProps } from './components/ListPriceField'
+export { formatMoney, formatLkr } from './lib/formatMoney'
+export type { FormatMoneyOptions } from './lib/formatMoney'
+export type { PriceDisplaySize } from './lib/priceDisplaySizes'
 export {
   FIXED_APP_COLOR_CSS_VARS,
   FIXED_APP_COLOR_SWATCHES,
@@ -253,24 +260,31 @@ export type { LoadingOverlayScope, LoadingStateProps } from './components/Loadin
 export { isLocalNavPath } from './components/nav/isLocalNavPath'
 export { Avatar, avatarVariants } from './components/Avatar'
 export type { AvatarProps } from './components/Avatar'
-export { ImagePreview } from './components/ImagePreview'
+export { ImagePreview, imagePreviewGalleryThumbClassName } from './components/ImagePreview'
 export type { ImagePreviewProps, ImagePreviewMode } from './components/ImagePreview'
 export { ImageCarousel } from './components/ImageCarousel'
 export type { ImageCarouselProps, ImageCarouselImage } from './components/ImageCarousel'
 export { StarRatingInput } from './components/StarRatingInput'
 export type { StarRatingInputProps } from './components/StarRatingInput'
+export { StarRatingDisplay } from './components/StarRatingDisplay'
+export type { StarRatingDisplayProps } from './components/StarRatingDisplay'
+export type { StarRatingSize } from './components/starRatingSizes'
+export { CatalogRatingSummary } from './components/CatalogRatingSummary'
+export type { CatalogRatingSummaryProps } from './components/CatalogRatingSummary'
 export { CatalogReviewForm } from './components/CatalogReviewForm'
 export type { CatalogReviewFormProps } from './components/CatalogReviewForm'
 export { CatalogReviewDialog } from './components/CatalogReviewDialog'
 export type { CatalogReviewDialogProps } from './components/CatalogReviewDialog'
+export { CatalogReviewListItem } from './components/CatalogReviewListItem'
+export type { CatalogReviewListItemProps } from './components/CatalogReviewListItem'
 export { CatalogReviewsDisplayCard } from './components/CatalogReviewsDisplayCard'
-export type {
-  CatalogReviewListItem,
-  CatalogReviewsDisplayCardProps,
-} from './components/CatalogReviewsDisplayCard'
+export type { CatalogReviewsDisplayCardProps } from './components/CatalogReviewsDisplayCard'
+export { CatalogOwnReviewCard } from './components/CatalogOwnReviewCard'
+export type { CatalogOwnReviewCardProps } from './components/CatalogOwnReviewCard'
 export type {
   CatalogReviewEntityKind,
   CatalogReviewExisting,
+  CatalogReviewListItemData,
   CatalogReviewSubmitPayload,
   CatalogReviewTarget,
 } from './components/catalogReviewTypes'

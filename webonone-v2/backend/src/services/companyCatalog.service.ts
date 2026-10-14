@@ -1,10 +1,12 @@
 import { nanoid } from 'nanoid'
 import { ZodError } from 'zod'
-import { fetchUserAvatarsByIds } from '../clients/identityUserContactClient.js'
+import {
+  fetchUserContactsByIds,
+  resolveIdentityDisplay,
+} from '../clients/identityUserContactClient.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 import * as repo from '../repositories/companyCatalog.repository.js'
 import type { WorkflowItemRow } from '../repositories/companyCatalog.repository.js'
-import { rewriteMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import { resolveSpaceNamesById } from './tokenWorkflowProgress.js'
 import * as staffRepo from '../repositories/companyStaff.repository.js'
 import {
@@ -82,7 +84,10 @@ export async function listDiscoverableCatalogItems(
   options?: { q?: string },
 ) {
   await assertDiscoverableCompany(userId, companyId)
-  const rows = await repo.listByCompanyAndKind(companyId, kind, options)
+  const rows = await repo.listByCompanyAndKind(companyId, kind, {
+    ...options,
+    webPublishedOnly: repo.isCatalogPricedKind(kind),
+  })
   return rows.map((row) => toDto(kind, row))
 }
 
@@ -293,6 +298,28 @@ export async function updateCatalogPricing(
   return toDto(kind, updated)
 }
 
+export async function updateCatalogWebPublish(
+  userId: string,
+  companyId: string,
+  kind: CatalogEntityKind,
+  id: string,
+  webPublishStatus: 'draft' | 'published',
+) {
+  await assertCompanyAdmin(userId, companyId)
+  if (!repo.isCatalogPricedKind(kind)) {
+    throw httpError('Web publish is only supported for products, services, and spaces', 400)
+  }
+  const row = await repo.findById(companyId, kind, id)
+  if (!row) {
+    throw httpError('Catalog item not found', 404)
+  }
+  const updated = await repo.updateWebPublishStatus(companyId, kind, id, webPublishStatus)
+  if (!updated) {
+    throw httpError('Catalog item not found', 404)
+  }
+  return toDto(kind, updated)
+}
+
 export async function updateServiceFormTemplate(
   userId: string,
   companyId: string,
@@ -330,31 +357,18 @@ export async function deleteCatalogItem(
   }
 }
 
-function normalizeWorkflowStaffAvatarUrl(url: string | null | undefined): string | null {
-  if (!url?.trim()) return null
-  return rewriteMediaFileUrl(url.trim())
-}
-
 async function buildWorkflowStaffByItemId(
   staffLinks: Awaited<ReturnType<typeof repo.listWorkflowStaffByItemIds>>,
 ): Promise<Map<string, { id: string; displayName: string; avatarUrl: string | null }[]>> {
-  const identityNeeded = [
-    ...new Set(
-      staffLinks
-        .filter((link) => !normalizeWorkflowStaffAvatarUrl(link.avatar_url))
-        .map((link) => link.user_id),
-    ),
-  ]
-  const identityAvatars = await fetchUserAvatarsByIds(identityNeeded)
+  const contacts = await fetchUserContactsByIds(staffLinks.map((link) => link.user_id))
   const staffByItem = new Map<string, { id: string; displayName: string; avatarUrl: string | null }[]>()
   for (const link of staffLinks) {
     const list = staffByItem.get(link.item_id) ?? []
-    const local = normalizeWorkflowStaffAvatarUrl(link.avatar_url)
-    const identity = normalizeWorkflowStaffAvatarUrl(identityAvatars.get(link.user_id))
+    const identity = resolveIdentityDisplay(contacts.get(link.user_id), 'Staff')
     list.push({
       id: link.staff_id,
-      displayName: link.display_name,
-      avatarUrl: local ?? identity ?? null,
+      displayName: identity.displayName,
+      avatarUrl: identity.avatarUrl,
     })
     staffByItem.set(link.item_id, list)
   }

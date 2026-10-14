@@ -1,6 +1,10 @@
 import * as companyRepo from '../repositories/company.repository.js'
 import * as analyticsRepo from '../repositories/companyAnalytics.repository.js'
-import * as dataStockClient from '../clients/dataStockClient.js'
+import * as productStockService from './companyProductStock.service.js'
+import {
+  fetchUserContactsByIds,
+  resolveIdentityDisplay,
+} from '../clients/identityUserContactClient.js'
 
 function parseDataEntities(
   value: string | companyRepo.CompanyDataEntity[] | null | undefined,
@@ -61,22 +65,18 @@ function money(value: number): number {
 }
 
 async function unitCostForLine(
+  companyId: string,
   line: analyticsRepo.SaleLineCostRow,
   cache: Map<string, number>,
 ): Promise<number> {
   if (line.unitCost != null) return line.unitCost
   if (line.itemKind !== 'product') return 0
   if (!line.libraryEntityId || !line.libraryVariantId || !line.libraryStockId) return 0
-  if (!dataStockClient.hasDataStockConfig()) return 0
   const cacheKey = `${line.libraryEntityId}:${line.libraryVariantId}:${line.libraryStockId}`
   const cached = cache.get(cacheKey)
   if (cached != null) return cached
   try {
-    const stock = await dataStockClient.getLibraryStock({
-      productId: line.libraryEntityId,
-      variantId: line.libraryVariantId,
-      stockId: line.libraryStockId,
-    })
+    const stock = await productStockService.getCompanyStockById(companyId, line.libraryStockId)
     const cost = money(stock?.costPrice ?? 0)
     cache.set(cacheKey, cost)
     if (stock) {
@@ -90,6 +90,7 @@ async function unitCostForLine(
 }
 
 async function revenueOverTimeFromLines(
+  companyId: string,
   from: string,
   to: string,
   lines: analyticsRepo.SaleLineCostRow[],
@@ -98,7 +99,7 @@ async function revenueOverTimeFromLines(
   const byDate = new Map<string, { amount: number; profit: number }>()
   let profitTotal = 0
   for (const line of lines) {
-    const unitCost = await unitCostForLine(line, cache)
+    const unitCost = await unitCostForLine(companyId, line, cache)
     const cost = money(line.quantity * unitCost)
     const profit = money(line.lineTotal - cost)
     const current = byDate.get(line.date) ?? { amount: 0, profit: 0 }
@@ -206,10 +207,25 @@ export const getCompanyAnalytics = async (
   ])
 
   const { series: revenueOverTime, profitTotal } = await revenueOverTimeFromLines(
+    companyId,
     from,
     to,
     saleLines,
   )
+
+  const identityUserIds = [
+    ...topCustomers.map((row) => row.key),
+    ...salesByStaff.map((row) => row.key),
+  ]
+  const contacts = await fetchUserContactsByIds(identityUserIds)
+  const labeledCustomers = topCustomers.map((row) => ({
+    ...row,
+    label: resolveIdentityDisplay(contacts.get(row.key), 'Customer').displayName,
+  }))
+  const labeledStaff = salesByStaff.map((row) => ({
+    ...row,
+    label: resolveIdentityDisplay(contacts.get(row.key), 'Staff').displayName,
+  }))
 
   return {
     from,
@@ -235,8 +251,8 @@ export const getCompanyAnalytics = async (
     revenueByKind,
     revenueByPaymentMethod,
     topItems,
-    topCustomers,
-    salesByStaff,
+    topCustomers: labeledCustomers,
+    salesByStaff: labeledStaff,
     eventRunStatus,
     tokenStatus,
     checkInsOverTime: fillDaySeries(from, to, checkInsOverTime),

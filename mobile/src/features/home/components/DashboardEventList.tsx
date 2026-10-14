@@ -12,12 +12,14 @@ import {
   StatusTag,
   type StatusTagVariant,
 } from '@webonone/mobile-ui'
+import { useSession } from '@/features/auth/SessionContext'
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
 import type {
   CompanyEventOccurrence,
   SessionRunStatus,
 } from '@/features/calendar/types/event.types'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
+import { overlayEventAttendeeFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type DashboardEventListProps = {
   items: CompanyEventOccurrence[]
@@ -56,6 +58,7 @@ export function DashboardEventList({
   showDate = false,
   onOpen,
 }: DashboardEventListProps) {
+  const { user: sessionUser } = useSession()
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -69,7 +72,8 @@ export function DashboardEventList({
 
   return (
     <ItemList className="py-0" nestedInCard>
-      {items.map((item) => {
+      {items.map((raw) => {
+        const item = overlayEventAttendeeFromSessionUser(raw, sessionUser)
         const time = `${item.startTime}–${item.endTime}`
         const when = showDate ? `${formatCalendarYmd(item.occurrenceDate)} · ${time}` : time
         const runStatus = occurrenceRunStatus(item)

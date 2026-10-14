@@ -222,6 +222,7 @@ export async function getPublicWebsiteDatasetData(input: {
     config: dataset.config,
     page: input.page,
     pageSize: input.pageSize,
+    catalogAudience: 'public_web',
   })
   return {
     items: result.items.map((item) =>

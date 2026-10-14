@@ -19,16 +19,10 @@ export type CompanyStaff = {
 
 export type CreateCompanyStaffBody = {
   user_id: string
-  display_name: string
-  email?: string | null
-  avatar_url?: string | null
   schedule: StaffScheduleDay[]
 }
 
 export type UpdateCompanyStaffBody = {
   user_id?: string
-  display_name?: string
-  email?: string | null
-  avatar_url?: string | null
   schedule?: StaffScheduleDay[]
 }

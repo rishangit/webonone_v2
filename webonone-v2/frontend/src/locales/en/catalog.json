@@ -33,6 +33,7 @@
     "libraryUnavailable": "Library unavailable",
     "selectVariant": "Variant",
     "price": "Price",
+    "rating": "Rating",
     "schedule": "Schedule",
     "stock": "Stock",
     "stockPrice": "{{price}}",
@@ -70,6 +71,15 @@
       "description": "Company selling price for Point of Sale",
       "listPrice": "List price"
     },
+    "webPublish": {
+      "title": "Website visibility",
+      "description": "Choose whether this item appears on your public website, marketplace search, and company discovery previews.",
+      "statusLabel": "Publish to web",
+      "draft": "Draft (internal only)",
+      "published": "Published",
+      "dialogTitle": "Publish to web",
+      "dialogDescription": "Published items are visible on your company website and in public catalog search. Draft items stay internal for your team."
+    },
     "variantPricing": {
       "title": "Pricing & stock",
       "description": "Price and stock for the selected variant. Edit to set the company list price.",
@@ -85,6 +95,14 @@
       "duration": "Duration",
       "startTime": "Start time",
       "endTime": "End time"
+    },
+    "serviceOffer": {
+      "title": "Price, time & where",
+      "description": "List price, schedule, and workflow spaces for this service.",
+      "loadingSpaces": "Loading spaces…",
+      "noSpaces": "No workflow spaces linked yet.",
+      "editSchedule": "Edit schedule",
+      "manageWorkflow": "Manage workflow"
     },
     "tags": {
       "title": "Tags",

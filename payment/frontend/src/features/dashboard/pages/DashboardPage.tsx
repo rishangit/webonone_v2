@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -9,14 +9,14 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  PriceDisplay,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import type { PaymentRole } from '@/features/auth/types/auth.types'
 import { dashboardActions } from '@/features/dashboard/store'
-import { formatLkr } from '@/shared/utils/money'
 
-function StatCard({ title, value }: { title: string; value: string | number }) {
+function StatCard({ title, value }: { title: string; value: ReactNode }) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -73,7 +73,13 @@ export function DashboardPage() {
         <StatCard title={t('void')} value={summary?.voidCount ?? '—'} />
         <StatCard
           title={t('outstanding')}
-          value={summary ? formatLkr(summary.outstandingAmountMinor) : '—'}
+          value={
+            summary ? (
+              <PriceDisplay value={summary.outstandingAmountMinor} minorUnits size="lg" />
+            ) : (
+              '—'
+            )
+          }
         />
       </div>
     </FeaturePage>

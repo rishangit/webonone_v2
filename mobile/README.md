@@ -104,6 +104,78 @@ Legacy **FCM server key** (Cloud Messaging API key) is deprecated; use **FCM V1 
 
 Dev-only **UI Kit** gallery: `/dev/kit` (also listed in the drawer in development).
 
+## Google Play Store (EAS → AAB)
+
+Play Store releases use an **Android App Bundle (`.aab`)**, not a debug APK. This repo builds that with **EAS Build** (`mobile/eas.json` → `production` profile).
+
+### Before you start
+
+1. **Production backends** are live on HTTPS (same hosts as `production.env.example` `ORIGIN_*`).
+2. **[Google Play Console](https://play.google.com/console)** developer account ($25 one-time).
+3. **[expo.dev](https://expo.dev)** account; link the app (`EXPO_PROJECT_ID` in `mobile/.env` — see `.env.production.example`).
+4. **FCM V1** on Expo for push (section above).
+5. **Privacy policy URL** and Play **Data safety** / **SMS permission** declarations (app uses `SEND_SMS` for the device gateway).
+
+### One-time CLI setup
+
+From the repo root:
+
+```bash
+npm install -g eas-cli
+eas login
+cd mobile
+eas whoami
+```
+
+First production build: EAS will ask to create an **Android upload keystore** — accept (or use Google Play App Signing). Credentials are stored on Expo, not in git.
+
+Optional — set secrets not in `eas.json`:
+
+```bash
+cd mobile
+eas env:create --environment production --name GOOGLE_WEB_CLIENT_ID --value "<same as Identity Web client>"
+eas env:create --environment production --name EXPO_PROJECT_ID --value "<expo project uuid>"
+```
+
+### Build the store bundle
+
+```bash
+npm run mobile:build:android
+```
+
+(or `cd mobile && npm run build:android:production`)
+
+- Output: **`.aab`** on the build page at expo.dev (not under `android/app/build/` unless you build locally).
+- `production` uses `autoIncrement` for Android `versionCode`; bump `version` in `app.config.ts` when you ship a new user-visible release.
+
+Internal testers (installable APK): `npm run build:android:preview -w @webonone/mobile`.
+
+### Upload to Play Console
+
+**Manual (simplest first time)**
+
+1. Play Console → **Create app** → package name **`com.webonone.mobile`** (must match `app.config.ts`).
+2. Complete dashboard tasks: store listing, content rating, data safety, app access (test login for reviewers), privacy policy.
+3. **Testing → Internal testing → Create release** → upload the **`.aab`** from Expo → add testers → roll out.
+4. After QA, **Production → Create release** → upload the same or newer `.aab` → submit for review.
+
+**Automated (after Play API is configured)**
+
+1. Play Console → **Setup → API access** → link a Google Cloud project → create a **service account** with release permissions → download JSON key (keep secret).
+2. `cd mobile && eas submit --platform android --profile production --latest`  
+   (or `npm run mobile:submit:android` from repo root).  
+   Default submit track is **internal** (`eas.json`); change `submit.production.android.track` to `production` when ready.
+
+### Checklist per release
+
+- [ ] Production APIs reachable over HTTPS from a phone network
+- [ ] `version` in `app.config.ts` updated if needed
+- [ ] `npm run mobile:build:android` succeeded; download `.aab`
+- [ ] Play pre-launch report / policy issues resolved
+- [ ] Roll out on internal → closed → production
+
+See also `mobile/.env.production.example` for local production env overrides.
+
 ## Notes
 
 - Other web areas (Design, …) open in an in-app WebView or the browser until native screens exist. Adding a left-nav item in `packages/platform-nav` should get a mobile destination (native or WebView) in the same change.

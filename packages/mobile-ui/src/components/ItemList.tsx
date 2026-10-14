@@ -2,10 +2,20 @@ import { createContext, useContext } from 'react'
 import { Pressable, View } from 'react-native'
 import { cn } from '../lib/cn'
 import { useInsideCard } from './Card'
+import { imagePreviewFlushClassName } from './imagePreviewShape'
 import { Body } from './Typography'
 
 /** Leading entity image in a list row (logo, avatar, catalog thumb). */
-export const itemListThumbClassName = 'h-14 w-14 shrink-0 self-start rounded-md'
+export const itemListThumbClassName = cn(
+  imagePreviewFlushClassName,
+  'h-14 w-14 shrink-0 self-start rounded-md',
+)
+
+/** Compact list thumb (catalog rows, dense lists). */
+export const itemListThumbSmClassName = cn(
+  imagePreviewFlushClassName,
+  'h-10 w-10 shrink-0 rounded-md',
+)
 
 const ItemListNestContext = createContext(false)
 

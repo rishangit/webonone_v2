@@ -9,9 +9,9 @@ import {
   ItemListItem,
   ItemListMenu,
   itemListThumbClassName,
+  PriceDisplay,
 } from '@webonone/ui-kit'
 import type { PosCartLine } from '@/features/sales/types/sales.types'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 
 type PosCartListProps = {
   lines: PosCartLine[]
@@ -61,9 +61,10 @@ export function PosCartList({
                       {t('pos.qty')}: {line.quantity}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {t('pos.unitLkr')}: {formatLkr(line.unitPrice)}
+                      {t('pos.unitLkr')}:{' '}
+                      <PriceDisplay value={line.unitPrice} size="sm" className="inline" />
                     </p>
-                    <p className="text-sm font-medium">{formatLkr(line.quantity * line.unitPrice)}</p>
+                    <PriceDisplay value={line.quantity * line.unitPrice} size="sm" />
                   </>
                 ) : (
                   <>
@@ -91,7 +92,11 @@ export function PosCartList({
                         aria-label={t('pos.unitPriceAria', { name: line.name })}
                       />
                     </label>
-                    <p className="pb-2 text-sm font-medium">{formatLkr(line.quantity * line.unitPrice)}</p>
+                    <PriceDisplay
+                      value={line.quantity * line.unitPrice}
+                      size="sm"
+                      className="pb-2"
+                    />
                   </>
                 )}
               </div>

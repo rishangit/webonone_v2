@@ -1,7 +1,7 @@
 import { themeDtoToColors } from '@webonone/theme'
+import { EditableSectionCard } from '@webonone/ui-kit'
 import { THEME_COLOR_KEYS, THEME_COLOR_LABELS } from '../constants/defaultThemeFormValues'
 import type { ApiTheme } from '../services/themeApi'
-import { EditableSectionCard } from './EditableSectionCard'
 
 type ThemePaletteCardProps = {
   theme: ApiTheme

@@ -47,7 +47,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
     return (
       <div
         className={cn(
-          'flex aspect-[16/10] w-full items-center justify-center overflow-hidden border border-border bg-muted',
+          'flex aspect-[16/10] w-full items-center justify-center overflow-hidden bg-muted',
           shapeImageClassName,
         )}
         aria-label={alt}
@@ -74,7 +74,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
 
   return (
     <div className="space-y-3">
-      <div className={cn('relative overflow-hidden border border-border bg-muted', shapeImageClassName)}>
+      <div className={cn('relative overflow-hidden bg-muted', shapeImageClassName)}>
         <img
           src={active.url}
           alt={alt}
@@ -127,10 +127,10 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
                   role="listitem"
                   aria-label={`Show image ${String(index + 1)}`}
                   aria-current={selected ? 'true' : undefined}
-                  className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-md border transition ${
+                  className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-md transition ${
                     selected
-                      ? 'border-primary ring-2 ring-primary/30'
-                      : 'border-border opacity-80 hover:opacity-100'
+                      ? 'border border-primary ring-2 ring-primary/30'
+                      : 'border-0 opacity-80 hover:opacity-100'
                   }`}
                   onClick={() => setActiveIndex(index)}
                 >

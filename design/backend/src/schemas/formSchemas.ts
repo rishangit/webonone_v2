@@ -5,7 +5,14 @@ export const formFieldOptionSchema = z.object({
   label: z.string().min(1).max(255),
 })
 
-export const formFieldTypeSchema = z.enum(['text', 'textarea', 'checkbox', 'radio', 'select'])
+export const formFieldTypeSchema = z.enum([
+  'text',
+  'textarea',
+  'checkbox',
+  'radio',
+  'select',
+  'media',
+])
 
 export const formFieldSchema = z
   .object({
@@ -15,6 +22,7 @@ export const formFieldSchema = z
     required: z.boolean().optional().default(false),
     placeholder: z.string().max(255).optional(),
     options: z.array(formFieldOptionSchema).max(50).optional(),
+    allowMultiple: z.boolean().optional(),
   })
   .superRefine((field, ctx) => {
     if (field.type === 'radio' || field.type === 'select') {

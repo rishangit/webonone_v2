@@ -6,6 +6,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  PriceDisplay,
   Spinner,
   cn,
 } from '@webonone/ui-kit'
@@ -54,10 +55,7 @@ export function SmsCreditsCard({
   }
 
   const relative = formatRelativeUpdated(lastUpdated)
-  const formattedBalance =
-    view.kind === 'ready'
-      ? view.balance.toLocaleString(i18n.language === 'si' ? 'si-LK' : 'en-US')
-      : null
+  const balanceLocale = i18n.language === 'si' ? 'si-LK' : 'en-US'
 
   return (
     <Card
@@ -104,7 +102,12 @@ export function SmsCreditsCard({
 
         {view.kind === 'ready' ? (
           <>
-            <p className="text-3xl font-semibold tabular-nums">{formattedBalance}</p>
+            <PriceDisplay
+              value={view.balance}
+              size="lg"
+              amountOnly
+              locale={balanceLocale}
+            />
             <p className="text-sm text-muted-foreground">{t('smsCreditsRemaining')}</p>
             <p className="text-xs text-muted-foreground">{t('gatewayTextLk')}</p>
             {relative ? (

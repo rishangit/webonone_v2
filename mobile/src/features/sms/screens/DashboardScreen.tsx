@@ -7,6 +7,7 @@ import {
   FeatureScreen,
   Heading,
   Muted,
+  PriceDisplay,
   Spinner,
 } from '@webonone/mobile-ui'
 import { useTranslation } from 'react-i18next'
@@ -91,10 +92,7 @@ export function DashboardScreen() {
   }, [loadCredits])
 
   const relative = formatRelativeUpdated(credits?.lastUpdated)
-  const formattedBalance =
-    credits?.configured && credits.balance != null
-      ? credits.balance.toLocaleString(i18n.language === 'si' ? 'si-LK' : 'en-US')
-      : null
+  const balanceLocale = i18n.language === 'si' ? 'si-LK' : 'en-US'
 
   return (
     <FeatureScreen title={t('dashboard')} description={t('dashboardDescription')}>
@@ -146,9 +144,14 @@ export function DashboardScreen() {
             </>
           ) : null}
 
-          {!creditsError && formattedBalance != null ? (
+          {!creditsError && credits?.configured && credits.balance != null ? (
             <>
-              <Heading className="text-3xl tabular-nums">{formattedBalance}</Heading>
+              <PriceDisplay
+                value={credits.balance}
+                size="lg"
+                amountOnly
+                locale={balanceLocale}
+              />
               <Muted>{t('smsCreditsRemaining')}</Muted>
               <Muted className="text-xs">{t('gatewayTextLk')}</Muted>
               {relative ? (

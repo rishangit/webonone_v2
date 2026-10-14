@@ -1,7 +1,8 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Pagination, Spinner } from '@webonone/ui-kit'
+import { Pagination, Spinner, cn } from '@webonone/ui-kit'
+import { websiteScrollportClassName } from '@/features/shell/layout/shellLayout'
 import { catalogApi } from '@/features/catalog/services/catalogApi'
 import type { CatalogSearchItem, NearbyCompanyGroup } from '@/features/catalog/types/catalog.types'
 import {
@@ -14,9 +15,22 @@ import { LocationPermissionDialog } from '@/features/website/components/Location
 import { NearbyHomeSection } from '@/features/website/components/NearbyHomeSection'
 import { WebsiteHomeSearchForm } from '@/features/website/components/WebsiteHomeSearchForm'
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
-import { websitePageContentClassName } from '@/features/website/layout/websitePageContent'
+import {
+  websiteHomePageInsetClassName,
+  websitePageContentClassName,
+} from '@/features/website/layout/websitePageContent'
 
 const PAGE_SIZE = 20
+
+const homeContentClassName = cn(
+  websitePageContentClassName,
+  websiteHomePageInsetClassName,
+)
+
+const resultsScrollMainClassName = cn(
+  'relative z-10 min-h-0 flex-1 overflow-y-auto pb-12',
+  websiteScrollportClassName,
+)
 
 type ResultsView = 'list' | 'map'
 
@@ -284,7 +298,7 @@ export function WebsiteHomePage() {
             isMapView ? 'bg-background/85 backdrop-blur-md' : 'bg-background'
           }`}
         >
-          <div className={`flex flex-col gap-2 ${websitePageContentClassName}`}>
+          <div className={cn('flex flex-col gap-2', homeContentClassName)}>
             <WebsiteHomeSearchForm
               value={draftQuery}
               onChange={setDraftQuery}
@@ -326,8 +340,8 @@ export function WebsiteHomePage() {
         </div>
 
         {!isMapView ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
-            <div className={`flex flex-col gap-6 py-4 ${websitePageContentClassName}`}>
+          <main className={resultsScrollMainClassName}>
+            <div className={cn('flex flex-col gap-6 py-4', homeContentClassName)}>
               {hasSearchQuery ? (
                 <>
                   <CatalogSearchResults
@@ -357,8 +371,8 @@ export function WebsiteHomePage() {
         ) : null}
 
         {isMapView && hasSearchQuery && !showSearchMap ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
-            <div className={websitePageContentClassName}>
+          <main className={resultsScrollMainClassName}>
+            <div className={homeContentClassName}>
               <CatalogSearchResults
                 items={items}
                 searched={searched}
@@ -370,24 +384,24 @@ export function WebsiteHomePage() {
         ) : null}
 
         {isMapView && !hasSearchQuery && !coords ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
-            <div className={websitePageContentClassName}>
+          <main className={resultsScrollMainClassName}>
+            <div className={homeContentClassName}>
               <p className="text-sm text-muted-foreground">{tHome('nearbyNeedsLocation')}</p>
             </div>
           </main>
         ) : null}
 
         {isMapView && !hasSearchQuery && coords && nearbyMapError ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
-            <div className={websitePageContentClassName}>
+          <main className={resultsScrollMainClassName}>
+            <div className={homeContentClassName}>
               <p className="text-sm text-destructive">{nearbyMapError}</p>
             </div>
           </main>
         ) : null}
 
         {isMapView && !hasSearchQuery && coords && !nearbyMapLoading && mapCompanies.length === 0 && !nearbyMapError ? (
-          <main className="relative z-10 min-h-0 flex-1 overflow-y-auto pb-12">
-            <div className={websitePageContentClassName}>
+          <main className={resultsScrollMainClassName}>
+            <div className={homeContentClassName}>
               <p className="text-sm text-muted-foreground">{tHome('nearbyEmpty')}</p>
             </div>
           </main>

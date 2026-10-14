@@ -58,6 +58,8 @@
     "dev:support": "npm run dev -w support-root",
     "mobile": "npm run start -w @webonone/mobile",
     "mobile:android": "npm run android -w @webonone/mobile",
+    "mobile:build:android": "npm run build:android:production -w @webonone/mobile",
+    "mobile:submit:android": "npm run submit:android -w @webonone/mobile",
     "mobile:web": "npm run web -w @webonone/mobile",
     "dev:desktop": "npm run start -w @webonone/desktop",
     "build:desktop": "npm run dist -w @webonone/desktop",

@@ -7,28 +7,21 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  StockAvailabilityProgress,
+  EditableSectionCard,
+  ListPriceField,
+  ReadOnlyField,
 } from '@webonone/ui-kit'
 import { useProductListStockMeta } from '@/features/products/hooks/useProductListStockMeta'
 import {
-  formatProductListPrice,
-  formatProductListStockAvailability,
   getActiveProductListLine,
   resolveProductListUnitPrice,
 } from '@/features/products/utils/productListStockLine'
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 
 type ProductDetailVariantPricingCardProps = {
   productId: string
   canEdit: boolean
   onManageVariants: () => void
-  showCompanyStock?: boolean
-}
-
-function formatMoney(value: number | null | undefined): string {
-  if (value == null) return '—'
-  return formatProductListPrice(value)
 }
 
 function VariantAttributeFields({
@@ -48,12 +41,11 @@ function VariantAttributeFields({
   return (
     <div className="space-y-3 border-y border-border py-3">
       {values.map((value) => (
-        <div key={`${value.attributeId}-${value.attributeValueId}`} className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground">{value.attributeName}</p>
-          <p className="text-sm text-foreground">
-            {formatAttributeValueLabel(value, value.unitSymbol)}
-          </p>
-        </div>
+        <ReadOnlyField
+          key={`${value.attributeId}-${value.attributeValueId}`}
+          label={value.attributeName}
+          value={formatAttributeValueLabel(value, value.unitSymbol)}
+        />
       ))}
     </div>
   )
@@ -63,10 +55,9 @@ export function ProductDetailVariantPricingCard({
   productId,
   canEdit,
   onManageVariants,
-  showCompanyStock = true,
 }: ProductDetailVariantPricingCardProps) {
   const { t } = useTranslation('products')
-  const stockByProductId = useProductListStockMeta([productId], showCompanyStock)
+  const stockByProductId = useProductListStockMeta([productId])
   const meta = stockByProductId[productId]
   const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>()
 
@@ -120,30 +111,14 @@ export function ProductDetailVariantPricingCard({
               </Select>
             </FormField>
           ) : (
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">{t('list.selectVariant')}</p>
-              <p className="text-sm">{line.name}</p>
-            </div>
+            <ReadOnlyField label={t('list.selectVariant')} value={line.name} />
           )}
 
           <VariantAttributeFields values={line.attributeValues} />
 
-          {showCompanyStock ? (
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">{t('list.stock')}</p>
-              <StockAvailabilityProgress
-                quantity={line.totalQuantity}
-                caption={formatProductListStockAvailability(line.totalQuantity, t)}
-              />
-            </div>
+          {unitPrice != null ? (
+            <ListPriceField label={t('list.price')} value={unitPrice} />
           ) : null}
-
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">{t('list.price')}</p>
-            <p className="text-xl font-semibold tabular-nums text-foreground">
-              {formatMoney(unitPrice)}
-            </p>
-          </div>
         </div>
       ) : null}
     </EditableSectionCard>

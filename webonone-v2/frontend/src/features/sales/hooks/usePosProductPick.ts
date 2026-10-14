@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '@webonone/ui-kit'
 import type { HydratedCatalogItem } from '@/features/company-catalog/types/companyCatalog.types'
 import { catalogItemImageUrl } from '@/features/company-catalog/utils/firstGalleryImageUrl'
+import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
 import { dataLibraryApi } from '@/features/company-catalog/services/dataLibraryApi'
 import type { PosCartLine, SaleItemKind } from '@/features/sales/types/sales.types'
 import { resolveProductUnitPrice } from '@/features/sales/utils/formatMoney'
@@ -59,8 +60,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
         listPrice: item.listPrice,
         libraryEntityId: item.libraryEntityId,
         loadVariants: (productId) => dataLibraryApi.listProductVariants(productId),
-        loadStocks: (productId, variantId) =>
-          dataLibraryApi.listProductVariantStocks(productId, variantId),
+        loadStocks: (variantId) => companyCatalogApi.listProductVariantStocks(item.id, variantId),
       })
       if (resolved != null) unitPrice = resolved
       onAddLine(buildCartLine(item, 'product', unitPrice))
@@ -93,7 +93,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
 
       setPicking(true)
       try {
-        const options = await resolveStockedProductVariants(item.libraryEntityId)
+        const options = await resolveStockedProductVariants(item.libraryEntityId, item.id)
         if (options.length === 0) {
           await addPlainProduct(item)
           return 'added'

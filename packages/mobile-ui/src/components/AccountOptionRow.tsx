@@ -3,6 +3,7 @@ import { Check } from 'lucide-react-native'
 import { cn } from '../lib/cn'
 import { useThemeColors } from '../theme/ThemeProvider'
 import { ImagePreview } from './ImagePreview'
+import { itemListThumbSmClassName } from './ItemList'
 import { StatusTag, isStatusTagVariant, type StatusTagVariant } from './StatusTag'
 import { Body } from './Typography'
 
@@ -51,7 +52,7 @@ export function AccountOptionRow({
       )}
     >
       {showLogo ? (
-        <ImagePreview src={logoUrl} alt={logoAlt ?? title} className="h-10 w-10 rounded-md" />
+        <ImagePreview src={logoUrl} alt={logoAlt ?? title} className={itemListThumbSmClassName} />
       ) : null}
       <View className="min-w-0 flex-1 gap-1">
         <Body className="font-semibold">{title}</Body>

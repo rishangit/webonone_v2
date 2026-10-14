@@ -6,10 +6,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  PriceDisplay,
   StockAvailabilityProgress,
 } from '@webonone/ui-kit'
 import {
-  formatProductListPrice,
   formatProductListStockAvailability,
   getActiveProductListLine,
   resolveProductListUnitPrice,
@@ -116,9 +116,7 @@ export function ProductListVariantStock({
         </span>
       )}
       {showPrice && unitPrice != null ? (
-        <span className="text-xs text-muted-foreground">
-          {t('list.stockPrice', { price: formatProductListPrice(unitPrice) })}
-        </span>
+        <PriceDisplay value={unitPrice} size="sm" amountOnly className="text-muted-foreground" />
       ) : null}
       {showStock ? (
         <StockAvailabilityProgress

@@ -115,7 +115,7 @@ On save from the details page: refresh detail when needed and close the dialog.
 
 ### Web
 
-Prefer `@webonone/ui-kit` **`EditableSectionCard`** (`ui-kit/package/src/components/EditableSectionCard.tsx`). Where a service still keeps a local copy, match this shape — **do not invent different Edit chrome.**
+Import `@webonone/ui-kit` **`EditableSectionCard`** (`ui-kit/package/src/components/EditableSectionCard.tsx`). Do **not** copy it into a service `features/` folder. Optional `titleExtra` (chip beside title), `headerTrailing` (left of Edit), `editAriaLabel` (i18n).
 
 | Requirement | Exact chrome |
 |-------------|--------------|
@@ -150,7 +150,7 @@ Forbidden Edit chrome: `size="sm"` with text “Edit”, always-visible labeled 
 ## Reference
 
 - Data Overview carousel: `ServiceDetailsPage.tsx` · `ProductDetailsPage.tsx` · `CatalogDetailsPage.tsx`
-- Card chrome: `data/frontend/src/features/services/components/EditableSectionCard.tsx` (canonical)
+- Card chrome: `ui-kit/package/src/components/EditableSectionCard.tsx` (canonical)
 - Wizard: `…/services/components/ServiceFormDialog.tsx`
 - WebOnOne company catalog: `…/company-catalog/pages/CompanyCatalogDetailPage.tsx`
 - WebOnOne events / sessions: `…/calendar/pages/EventDetailsPage.tsx`, `SessionDetailsPage.tsx` (gallery in Service card; combined service + space images)

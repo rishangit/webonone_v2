@@ -5,6 +5,7 @@ import type {
   CatalogSearchResult,
   NearbyCatalogResult,
   CatalogSessionItem,
+  PublicProductVariantOffer,
   SessionTokenItem,
 } from '../types/catalog.types'
 
@@ -76,6 +77,20 @@ export const catalogApi = {
       })
     }
     return data as CatalogDetailItem
+  },
+
+  async getProductVariantOffer(productId: string): Promise<PublicProductVariantOffer> {
+    const res = await fetch(
+      `${API_BASE}/catalog/products/${encodeURIComponent(productId)}/variant-offer`,
+      { headers: { 'Content-Type': 'application/json' } },
+    )
+    const data = (await res.json().catch(() => ({}))) as { message?: string } & Partial<PublicProductVariantOffer>
+    if (!res.ok) {
+      throw Object.assign(new Error(data.message ?? 'Failed to load product offer'), {
+        statusCode: res.status,
+      })
+    }
+    return data as PublicProductVariantOffer
   },
 
   async listReviews(

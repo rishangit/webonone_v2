@@ -11,7 +11,6 @@ import {
   ItemListItem,
   ItemListMenu,
   StatusTag,
-  StockAvailabilityProgress,
 } from '@webonone/ui-kit'
 import { ProductVariantFormDialog } from '@/features/products/components/ProductVariantFormDialog'
 import { ProductVariantsAiMenu } from '@/features/shell/components/ProductVariantsAiMenu'
@@ -19,20 +18,14 @@ import { AI_PRODUCT_VARIANTS_CHANGED_EVENT } from '@/features/shell/utils/aiProd
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { sumVariantStockQuantity } from '@/features/products/utils/sumVariantStockQuantity'
 import { dataApi } from '@/shared/services/dataApi'
 import type { CatalogAttributeValue, ProductVariant } from '@/shared/types/data.types'
-
-function formatStockQuantity(value: number): string {
-  return value.toLocaleString(undefined, { maximumFractionDigits: 3 })
-}
 
 type ProductVariantsTabProps = {
   productId: string
   productName: string
   attributes: CatalogAttributeValue[]
   canEdit: boolean
-  showCompanyStock?: boolean
 }
 
 export function ProductVariantsTab({
@@ -40,12 +33,10 @@ export function ProductVariantsTab({
   productName,
   attributes,
   canEdit,
-  showCompanyStock = true,
 }: ProductVariantsTabProps) {
   const { t } = useTranslation('products')
   const { goToVariantDetail } = useNavigateDataEntity()
   const [items, setItems] = useState<ProductVariant[]>([])
-  const [stockTotalsByVariantId, setStockTotalsByVariantId] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -58,24 +49,12 @@ export function ProductVariantsTab({
     try {
       const result = await dataApi.listProductVariants(productId)
       setItems(result.items)
-      if (showCompanyStock) {
-        const totals = await Promise.all(
-          result.items.map(async (variant) => {
-            const stocks = await dataApi.listProductVariantStocks(productId, variant.id)
-            return [variant.id, sumVariantStockQuantity(stocks.items)] as const
-          }),
-        )
-        setStockTotalsByVariantId(Object.fromEntries(totals))
-      } else {
-        setStockTotalsByVariantId({})
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('variant.loadFailed'))
-      setStockTotalsByVariantId({})
     } finally {
       setLoading(false)
     }
-  }, [productId, showCompanyStock, t])
+  }, [productId, t])
 
   useEffect(() => {
     void load()
@@ -154,20 +133,6 @@ export function ProductVariantsTab({
                       )
                       .join(' · ')}
                   </p>
-                ) : null}
-                {showCompanyStock ? (
-                  loading ? (
-                    <p className="text-sm text-muted-foreground">{t('variant.loadingStock')}</p>
-                  ) : (
-                    <StockAvailabilityProgress
-                      size="compact"
-                      align="end"
-                      quantity={stockTotalsByVariantId[variant.id] ?? 0}
-                      caption={t('variant.totalStock', {
-                        quantity: formatStockQuantity(stockTotalsByVariantId[variant.id] ?? 0),
-                      })}
-                    />
-                  )
                 ) : null}
               </>
             )

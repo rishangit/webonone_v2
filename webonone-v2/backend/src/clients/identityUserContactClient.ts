@@ -9,6 +9,25 @@ export type IdentityUserContact = {
   isEmailVerified: boolean
 }
 
+export function displayNameFromEmail(email: string | null | undefined): string | null {
+  const local = email?.split('@')[0]?.trim()
+  return local || null
+}
+
+/** Identity contact → DTO display fields. Fallback when Identity is down or the user is missing. */
+export function resolveIdentityDisplay(
+  contact: IdentityUserContact | null | undefined,
+  fallbackDisplayName: string,
+): { displayName: string; email: string | null; avatarUrl: string | null } {
+  const displayName =
+    contact?.displayName?.trim() || displayNameFromEmail(contact?.email) || fallbackDisplayName
+  return {
+    displayName,
+    email: contact?.email ?? null,
+    avatarUrl: contact?.avatarUrl ?? null,
+  }
+}
+
 function apiBase(): string | null {
   if (!env.identityApiBaseUrl) {
     console.error('[identityUserContact] IDENTITY_API_BASE_URL not configured')

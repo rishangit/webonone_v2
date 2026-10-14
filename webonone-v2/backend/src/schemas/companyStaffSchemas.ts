@@ -66,17 +66,11 @@ export const staffScheduleSchema = z
 
 export const createCompanyStaffBodySchema = z.object({
   user_id: z.string().trim().min(1).max(21),
-  display_name: z.string().trim().min(1).max(255),
-  email: z.string().trim().email().max(255).nullable().optional(),
-  avatar_url: z.string().trim().max(2048).nullable().optional(),
   schedule: staffScheduleSchema,
 })
 
 export const updateCompanyStaffBodySchema = z.object({
   user_id: z.string().trim().min(1).max(21).optional(),
-  display_name: z.string().trim().min(1).max(255).optional(),
-  email: z.string().trim().email().max(255).nullable().optional(),
-  avatar_url: z.string().trim().max(2048).nullable().optional(),
   schedule: staffScheduleSchema.optional(),
 })
 

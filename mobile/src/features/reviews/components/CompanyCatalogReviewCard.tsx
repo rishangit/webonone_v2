@@ -7,7 +7,7 @@ import {
   Card,
   CatalogReviewDialog,
   Muted,
-  StarRatingInput,
+  StarRatingDisplay,
   Subheading,
   useToast,
   type CatalogReviewEntityKind,
@@ -152,12 +152,7 @@ export function CompanyCatalogReviewCard({
           <Muted>{t('loading')}</Muted>
         ) : review ? (
           <View className="gap-3">
-            <StarRatingInput
-              value={review.rating}
-              onChange={() => {}}
-              disabled
-              label={t('ratingLabel')}
-            />
+            <StarRatingDisplay value={review.rating} size="md" label={t('ratingLabel')} />
             {review.comment ? (
               <Body className="text-sm">{review.comment}</Body>
             ) : (

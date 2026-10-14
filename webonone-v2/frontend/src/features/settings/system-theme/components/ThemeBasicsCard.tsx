@@ -1,14 +1,5 @@
+import { EditableSectionCard, ReadOnlyField } from '@webonone/ui-kit'
 import type { ApiTheme } from '../services/themeApi'
-import { EditableSectionCard } from './EditableSectionCard'
-
-function ReadOnlyField({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-sm">{value?.trim() ? value : '—'}</p>
-    </div>
-  )
-}
 
 type ThemeBasicsCardProps = {
   theme: ApiTheme

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   Card,
   CardContent,
@@ -10,7 +11,7 @@ export function AnalyticsStatCard({
   value,
 }: {
   title: string
-  value: string | number
+  value: ReactNode
 }) {
   return (
     <Card>

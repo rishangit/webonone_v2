@@ -6,6 +6,7 @@ import {
   FeatureScreen,
   NativeSelect,
   Spinner,
+  formatLkr,
 } from '@webonone/mobile-ui'
 import { useTranslation } from 'react-i18next'
 import { normalizeLocale } from '@webonone/i18n'
@@ -26,7 +27,6 @@ import type {
 } from '@/features/analytics/types/analytics.types'
 import { analyticsDateRange } from '@/features/analytics/utils/analyticsRange'
 import { canAccessCompanySession } from '@/features/analytics/utils/canAccessCompanySession'
-import { formatLkr } from '@/features/analytics/utils/formatMoney'
 
 function hasPositive(values: Array<{ amount?: number; value?: number; count?: number; profit?: number }>): boolean {
   return values.some((item) => (item.amount ?? item.value ?? item.count ?? item.profit ?? 0) > 0)

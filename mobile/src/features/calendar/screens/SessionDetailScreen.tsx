@@ -61,6 +61,10 @@ import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
 import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
 import { isSessionReviewEligible } from '@/features/reviews/utils/personalSessionReviewEligible'
+import {
+  overlayEventAttendeeFromSessionUser,
+  overlayNamedUserFromSessionUser,
+} from '@/shared/utils/overlayIdentityFromSessionUser'
 
 const DATE_YMD = /^\d{4}-\d{2}-\d{2}$/
 
@@ -228,15 +232,17 @@ export function SessionDetailScreen({
     [checkIns.items],
   )
   const overviewTokens = useMemo(() => {
-    return [...tokens].sort((a, b) => {
-      const aInQueue =
-        checkedInUserIds.has(a.userId) || a.status === 'serving' || a.status === 'completed'
-      const bInQueue =
-        checkedInUserIds.has(b.userId) || b.status === 'serving' || b.status === 'completed'
-      if (aInQueue !== bInQueue) return aInQueue ? -1 : 1
-      return (a.callOrder ?? a.tokenNumber * 1000) - (b.callOrder ?? b.tokenNumber * 1000)
-    })
-  }, [checkedInUserIds, tokens])
+    return tokens
+      .map((token) => overlayNamedUserFromSessionUser(token, user))
+      .sort((a, b) => {
+        const aInQueue =
+          checkedInUserIds.has(a.userId) || a.status === 'serving' || a.status === 'completed'
+        const bInQueue =
+          checkedInUserIds.has(b.userId) || b.status === 'serving' || b.status === 'completed'
+        if (aInQueue !== bInQueue) return aInQueue ? -1 : 1
+        return (a.callOrder ?? a.tokenNumber * 1000) - (b.callOrder ?? b.tokenNumber * 1000)
+      })
+  }, [checkedInUserIds, tokens, user])
 
   if (
     user &&
@@ -363,7 +369,8 @@ export function SessionDetailScreen({
     startedAt: run?.startedAt,
     endedAt: run?.endedAt,
   }
-  const showAttendee = isDuration || Boolean(detail.attendeeDisplayName || detail.attendeeUserId)
+  const eventView = overlayEventAttendeeFromSessionUser(detail, user)
+  const showAttendee = isDuration || Boolean(eventView.attendeeDisplayName || eventView.attendeeUserId)
   const viewerCheckedIn = Boolean(user?.id && checkedInUserIds.has(user.id))
   const sessionReviewEligible = detail
     ? isSessionReviewEligible({
@@ -465,8 +472,8 @@ export function SessionDetailScreen({
           <Card className="gap-3">
             <Subheading>Session</Subheading>
             <Muted>Duration sessions are for the assigned attendee — no queue tokens</Muted>
-            <ReadOnlyField label="Attendee" value={detail.attendeeDisplayName ?? '—'} />
-            <ReadOnlyField label="Email" value={detail.attendeeEmail ?? '—'} />
+            <ReadOnlyField label="Attendee" value={eventView.attendeeDisplayName ?? '—'} />
+            <ReadOnlyField label="Email" value={eventView.attendeeEmail ?? '—'} />
             <View className="gap-1">
               <Muted className="text-xs uppercase tracking-wide">Status</Muted>
               <StatusTag variant={RUN_STATUS_VARIANT[runStatus]}>
@@ -618,8 +625,8 @@ export function SessionDetailScreen({
           <Card className="gap-3">
             <Subheading>Attendee</Subheading>
             <Muted>Identity user attending this session</Muted>
-            <ReadOnlyField label="Name" value={detail.attendeeDisplayName ?? '—'} />
-            <ReadOnlyField label="Email" value={detail.attendeeEmail ?? '—'} />
+            <ReadOnlyField label="Name" value={eventView.attendeeDisplayName ?? '—'} />
+            <ReadOnlyField label="Email" value={eventView.attendeeEmail ?? '—'} />
           </Card>
         ) : null}
       </View>

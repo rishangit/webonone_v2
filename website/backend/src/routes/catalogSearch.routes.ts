@@ -26,8 +26,11 @@ router.post(
   catalogSearchController.bookSessionToken,
 )
 
-/** Public catalog reviews (BFF → WebOnOne internal → Data). */
+/** Public catalog reviews (BFF → WebOnOne internal). */
 router.get('/catalog/:kind/:id/reviews', catalogSearchController.listCatalogReviews)
+
+/** Product variant, stock, and price for public detail page. */
+router.get('/catalog/products/:id/variant-offer', catalogSearchController.getProductVariantOffer)
 
 /** Anonymous public catalog detail (BFF → WebOnOne internal). */
 router.get('/catalog/:kind/:id', catalogSearchController.getCatalogItem)

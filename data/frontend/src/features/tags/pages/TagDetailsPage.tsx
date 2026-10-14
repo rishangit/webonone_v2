@@ -10,6 +10,8 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  EditableSectionCard,
+  ReadOnlyField,
   TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -18,17 +20,8 @@ import { TagFormDialog } from '@/features/tags/components/TagFormDialog'
 import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { tagsActions } from '@/features/tags/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
+import { StatusBadge } from '@/shared/components/StatusBadge'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
-
-function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="text-sm">{value}</div>
-    </div>
-  )
-}
 
 export function TagDetailsPage() {
   const { t } = useTranslation('tags')
@@ -73,7 +66,7 @@ export function TagDetailsPage() {
             <EditableSectionCard
               title="Tag"
               description="Name, color, status, and description"
-              status={tag.status}
+              headerTrailing={<StatusBadge status={tag.status} />}
               canEdit={canEdit}
               onEdit={() => setEditOpen(true)}
             >

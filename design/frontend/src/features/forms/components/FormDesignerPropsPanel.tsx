@@ -29,6 +29,7 @@ export function FormDesignerPropsPanel({
   }
 
   const needsOptions = field.type === 'radio' || field.type === 'select'
+  const isMedia = field.type === 'media'
 
   return (
     <div className="space-y-4">
@@ -77,7 +78,7 @@ export function FormDesignerPropsPanel({
         />
       </FormField>
 
-      {field.type !== 'checkbox' ? (
+      {field.type !== 'checkbox' && !isMedia ? (
         <FormField label={t('placeholder')} htmlFor="field-placeholder">
           <Input
             id="field-placeholder"
@@ -85,6 +86,17 @@ export function FormDesignerPropsPanel({
             onChange={(e) => onChange({ ...field, placeholder: e.target.value })}
           />
         </FormField>
+      ) : null}
+
+      {isMedia ? (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="field-allow-multiple"
+            checked={Boolean(field.allowMultiple)}
+            onCheckedChange={(checked) => onChange({ ...field, allowMultiple: checked === true })}
+          />
+          <Label htmlFor="field-allow-multiple">{t('allowMultipleDocuments')}</Label>
+        </div>
       ) : null}
 
       <div className="flex items-center gap-2">

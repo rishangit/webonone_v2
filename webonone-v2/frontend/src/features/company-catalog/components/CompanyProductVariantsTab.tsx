@@ -14,6 +14,7 @@ import {
 } from '@webonone/ui-kit'
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
 import {
   dataLibraryApi,
   formatLibraryAttributeValueLabel,
@@ -65,7 +66,7 @@ export function CompanyProductVariantsTab({
       setItems(result.items)
       const totals = await Promise.all(
         result.items.map(async (variant) => {
-          const stocks = await dataLibraryApi.listProductVariantStocks(libraryEntityId, variant.id)
+          const stocks = await companyCatalogApi.listProductVariantStocks(productId, variant.id)
           const total = stocks.items.reduce((sum, item) => sum + item.quantity, 0)
           return [variant.id, total] as const
         }),
@@ -78,7 +79,7 @@ export function CompanyProductVariantsTab({
     } finally {
       setLoading(false)
     }
-  }, [libraryEntityId, t])
+  }, [libraryEntityId, productId, t])
 
   useEffect(() => {
     void load()

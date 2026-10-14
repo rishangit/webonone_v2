@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  dataLibraryApi,
-  type LibraryProductVariantStock,
-} from '@/features/company-catalog/services/dataLibraryApi'
+import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
+import type { LibraryProductVariantStock } from '@/features/company-catalog/services/dataLibraryApi'
 
 type StocksCacheEntry = {
   items: LibraryProductVariantStock[]
@@ -13,8 +11,8 @@ type StocksCacheEntry = {
 const cacheByKey = new Map<string, StocksCacheEntry>()
 const inflightByKey = new Map<string, Promise<LibraryProductVariantStock[]>>()
 
-function cacheKey(libraryProductId: string, variantId: string): string {
-  return `${libraryProductId}:${variantId}`
+function cacheKey(companyProductId: string, variantId: string): string {
+  return `${companyProductId}:${variantId}`
 }
 
 function getOrCreateEntry(key: string): StocksCacheEntry {
@@ -25,8 +23,8 @@ function getOrCreateEntry(key: string): StocksCacheEntry {
   return entry
 }
 
-function fetchStocks(libraryProductId: string, variantId: string): Promise<LibraryProductVariantStock[]> {
-  const key = cacheKey(libraryProductId, variantId)
+function fetchStocks(companyProductId: string, variantId: string): Promise<LibraryProductVariantStock[]> {
+  const key = cacheKey(companyProductId, variantId)
   const inflight = inflightByKey.get(key)
   if (inflight) return inflight
 
@@ -34,8 +32,8 @@ function fetchStocks(libraryProductId: string, variantId: string): Promise<Libra
   entry.loading = true
   entry.error = null
 
-  const promise = dataLibraryApi
-    .listProductVariantStocks(libraryProductId, variantId)
+  const promise = companyCatalogApi
+    .listProductVariantStocks(companyProductId, variantId)
     .then((result) => {
       entry.items = result.items
       entry.loading = false
@@ -56,15 +54,15 @@ function fetchStocks(libraryProductId: string, variantId: string): Promise<Libra
 }
 
 export function invalidateLibraryProductVariantStocks(
-  libraryProductId: string,
+  companyProductId: string,
   variantId: string,
 ): void {
-  cacheByKey.delete(cacheKey(libraryProductId, variantId))
-  inflightByKey.delete(cacheKey(libraryProductId, variantId))
+  cacheByKey.delete(cacheKey(companyProductId, variantId))
+  inflightByKey.delete(cacheKey(companyProductId, variantId))
 }
 
 export function useLibraryProductVariantStocks(
-  libraryProductId: string | undefined,
+  companyProductId: string | undefined,
   variantId: string | undefined,
 ) {
   const [reloadToken, setReloadToken] = useState(0)
@@ -74,19 +72,19 @@ export function useLibraryProductVariantStocks(
     error: null,
   }))
 
-  const libraryId = libraryProductId?.trim() ?? ''
+  const productId = companyProductId?.trim() ?? ''
   const variant = variantId?.trim() ?? ''
-  const key = libraryId && variant ? cacheKey(libraryId, variant) : ''
+  const key = productId && variant ? cacheKey(productId, variant) : ''
 
   const reload = useCallback(() => {
-    if (libraryId && variant) {
-      invalidateLibraryProductVariantStocks(libraryId, variant)
+    if (productId && variant) {
+      invalidateLibraryProductVariantStocks(productId, variant)
     }
     setReloadToken((token) => token + 1)
-  }, [libraryId, variant])
+  }, [productId, variant])
 
   useEffect(() => {
-    if (!libraryId || !variant) {
+    if (!productId || !variant) {
       setSnapshot({ items: [], loading: false, error: null })
       return
     }
@@ -95,7 +93,7 @@ export function useLibraryProductVariantStocks(
     setSnapshot({ ...entry })
 
     let cancelled = false
-    void fetchStocks(libraryId, variant)
+    void fetchStocks(productId, variant)
       .then(() => {
         if (cancelled) return
         const latest = getOrCreateEntry(key)
@@ -110,7 +108,7 @@ export function useLibraryProductVariantStocks(
     return () => {
       cancelled = true
     }
-  }, [key, libraryId, variant, reloadToken])
+  }, [key, productId, variant, reloadToken])
 
   const totalQuantity = useMemo(
     () => snapshot.items.reduce((sum, item) => sum + item.quantity, 0),

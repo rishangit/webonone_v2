@@ -11,6 +11,7 @@ import {
   assertFiltersMatchSource,
 } from '../schemas/datasetQuery.schema.js'
 import * as analyticsService from './companyAnalytics.service.js'
+import { applyLibrarySellPricesWhereMissing } from './companyProductPublicPrice.service.js'
 import * as staffService from './companyStaff.service.js'
 import { applyDatasetFilters, paginateRows } from '../utils/datasetFilterEngine.js'
 
@@ -56,9 +57,14 @@ function payloadNumber(payload: unknown, key: string): number | null {
 async function loadCatalogRows(
   companyId: string,
   kind: 'products' | 'services' | 'spaces',
+  catalogAudience: 'internal' | 'public_web',
 ): Promise<Record<string, unknown>[]> {
-  const rows = await catalogRepo.listByCompanyAndKind(companyId, kind as CatalogEntityKind)
-  const dtos = rows.map((row) => catalogRepo.mapCatalogRow(kind, row as unknown as Record<string, unknown>))
+  const dbRows = await catalogRepo.listByCompanyAndKind(companyId, kind as CatalogEntityKind, {
+    webPublishedOnly: catalogAudience === 'public_web',
+  })
+  const dtos = dbRows.map((row) =>
+    catalogRepo.mapCatalogRow(kind, row as unknown as Record<string, unknown>),
+  )
 
   const linkedIds = dtos
     .filter((d) => d.bindingMode === 'linked' && d.libraryEntityId)
@@ -66,7 +72,7 @@ async function loadCatalogRows(
   const libraryItems = await listLibraryItemsByIds(kind, linkedIds)
   const libraryById = new Map(libraryItems.map((item) => [item.id, item]))
 
-  return dtos.map((dto) => {
+  const rows = dtos.map((dto) => {
     const library = dto.libraryEntityId ? libraryById.get(dto.libraryEntityId) : undefined
     const payload = dto.payload
     const name =
@@ -86,11 +92,17 @@ async function loadCatalogRows(
       ('listPrice' in dto ? (dto.listPrice as number | null) : null) ??
       payloadNumber(payload, 'listPrice')
 
+    const webPublishStatus =
+      'webPublishStatus' in dto && (dto.webPublishStatus === 'published' || dto.webPublishStatus === 'draft')
+        ? dto.webPublishStatus
+        : 'draft'
+
     const base: Record<string, unknown> = {
       id: dto.id,
       name,
       description,
       status,
+      webPublishStatus,
       listPrice,
       galleryImages:
         ('galleryImages' in dto ? dto.galleryImages : null) ?? library?.galleryImages ?? null,
@@ -111,6 +123,22 @@ async function loadCatalogRows(
 
     return base
   })
+
+  if (kind === 'products' && rows.length > 0) {
+    const priceTargets = rows.map((row, index) => ({
+      listPrice: typeof row.listPrice === 'number' ? row.listPrice : null,
+      libraryEntityId: dtos[index]?.libraryEntityId ?? null,
+      companyId,
+    }))
+    await applyLibrarySellPricesWhereMissing(priceTargets)
+    for (let i = 0; i < rows.length; i++) {
+      if (priceTargets[i].listPrice != null) {
+        rows[i].listPrice = priceTargets[i].listPrice
+      }
+    }
+  }
+
+  return rows
 }
 
 async function loadStaffRows(companyId: string): Promise<Record<string, unknown>[]> {
@@ -167,12 +195,13 @@ async function loadSourceRows(
   companyId: string,
   sourceType: DatasetSourceType,
   config: DatasetConfig,
+  catalogAudience: 'internal' | 'public_web',
 ): Promise<Record<string, unknown>[]> {
   switch (sourceType) {
     case 'products':
     case 'services':
     case 'spaces':
-      return loadCatalogRows(companyId, sourceType)
+      return loadCatalogRows(companyId, sourceType, catalogAudience)
     case 'staff':
       return loadStaffRows(companyId)
     case 'users':
@@ -198,7 +227,8 @@ export async function executeDatasetQuery(
     throw httpError(err instanceof Error ? err.message : 'Invalid filters', 400)
   }
 
-  const rows = await loadSourceRows(companyId, input.sourceType, input.config)
+  const catalogAudience = input.catalogAudience ?? 'internal'
+  const rows = await loadSourceRows(companyId, input.sourceType, input.config, catalogAudience)
   const filtered = applyDatasetFilters(rows, input.filters)
   return paginateRows(filtered, input.page, input.pageSize)
 }

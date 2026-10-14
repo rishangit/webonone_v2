@@ -6,7 +6,6 @@ import {
 
 export function useProductListStockMeta(
   productIds: string[],
-  includeCompanyStock = true,
 ): Record<string, ProductListStockDisplay> {
   const [stockByProductId, setStockByProductId] = useState<Record<string, ProductListStockDisplay>>({})
   const idsKey = productIds.slice().sort().join(',')
@@ -21,7 +20,7 @@ export function useProductListStockMeta(
     let cancelled = false
     void Promise.all(
       ids.map(async (id) => {
-        const meta = await resolveProductListStockDisplay(id, { includeCompanyStock })
+        const meta = await resolveProductListStockDisplay(id)
         return { id, meta }
       }),
     )
@@ -36,7 +35,7 @@ export function useProductListStockMeta(
     return () => {
       cancelled = true
     }
-  }, [idsKey, includeCompanyStock])
+  }, [idsKey])
 
   return stockByProductId
 }

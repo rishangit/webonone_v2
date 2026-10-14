@@ -240,8 +240,12 @@ export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unkno
   }
 
   if (kind === 'products' || kind === 'services' || kind === 'spaces') {
+    const webPublishRaw = row.web_publish_status
+    const webPublishStatus =
+      webPublishRaw === 'published' || webPublishRaw === 'draft' ? webPublishRaw : 'draft'
     const withGallery = {
       ...base,
+      webPublishStatus,
       galleryImages: parseGalleryImages(row.gallery_images as string | unknown[] | null),
       listPrice: parseMoney(row.list_price),
     }
@@ -320,6 +324,7 @@ function columnsFromPayload(
         ...common,
         tag_ids: p.tagIds != null ? JSON.stringify(p.tagIds) : null,
         attributes: p.attributes != null ? JSON.stringify(p.attributes) : null,
+        ...(p.webPublishStatus != null ? { web_publish_status: p.webPublishStatus } : {}),
       }
     case 'services':
       return {
@@ -330,6 +335,7 @@ function columnsFromPayload(
         duration_minutes: p.durationMinutes ?? null,
         start_time: p.startTime ?? null,
         end_time: p.endTime ?? null,
+        ...(p.webPublishStatus != null ? { web_publish_status: p.webPublishStatus } : {}),
       }
   }
 }
@@ -337,10 +343,13 @@ function columnsFromPayload(
 export async function listByCompanyAndKind(
   companyId: string,
   kind: CatalogEntityKind,
-  options?: { q?: string },
+  options?: { q?: string; webPublishedOnly?: boolean },
 ): Promise<Record<string, unknown>[]> {
   const table = CATALOG_TABLE_BY_KIND[kind]
   const query = db(table).where({ company_id: companyId })
+  if (options?.webPublishedOnly && isCatalogPricedKind(kind)) {
+    query.andWhere({ web_publish_status: 'published' })
+  }
   const q = options?.q?.trim()
   if (q) {
     const pattern = `%${q}%`
@@ -495,6 +504,25 @@ export async function updateGalleryImages(
 }
 
 /** Company-owned list price — independent of binding mode (including linked). */
+export async function updateWebPublishStatus(
+  companyId: string,
+  kind: CatalogPricedKind,
+  id: string,
+  webPublishStatus: 'draft' | 'published',
+): Promise<Record<string, unknown> | undefined> {
+  const existing = await findById(companyId, kind, id)
+  if (!existing) return undefined
+
+  await db(CATALOG_TABLE_BY_KIND[kind])
+    .where({ id, company_id: companyId })
+    .update({
+      web_publish_status: webPublishStatus,
+      updated_at: new Date(),
+    })
+
+  return findById(companyId, kind, id)
+}
+
 export async function updateListPrice(
   companyId: string,
   kind: CatalogPricedKind,
@@ -599,8 +627,6 @@ export async function listWorkflowStaffByItemIds(
   {
     item_id: string
     staff_id: string
-    display_name: string
-    avatar_url: string | null
     user_id: string
   }[]
 > {
@@ -608,13 +634,7 @@ export async function listWorkflowStaffByItemIds(
   return db('company_service_workflow_staff as link')
     .join('company_staff as staff', 'staff.id', 'link.staff_id')
     .whereIn('link.item_id', itemIds)
-    .select(
-      'link.item_id',
-      'link.staff_id',
-      'staff.display_name',
-      'staff.avatar_url',
-      'staff.user_id',
-    )
+    .select('link.item_id', 'link.staff_id', 'staff.user_id')
 }
 
 export async function listWorkflowFormsByItemIds(

@@ -1,14 +1,16 @@
+import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  CatalogRatingSummary,
   ImagePreview,
   ItemListCollectionCard,
   itemListCardImageClassName,
   TagChip,
   cn,
+  PriceDisplay,
 } from '@webonone/ui-kit'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
-import { formatPublicListPrice } from '@/features/catalog/utils/formatPublicListPrice'
 import {
   formatPublicServiceScheduleSummary,
   formatPublicServiceTimeModeLabel,
@@ -60,15 +62,15 @@ function PublicServiceListMeta({
 
   return (
     <div className={cn('flex min-w-0 flex-col gap-0.5 text-sm', className)}>
-      <span className="text-foreground">
-        {formatPublicServiceTimeModeLabel(item.timeMode, t)}
-      </span>
-      <span className="text-muted-foreground">{formatPublicServiceScheduleSummary(item, t)}</span>
-      {showPrice ? (
-        <span className="font-medium tabular-nums text-foreground">
-          {price != null ? formatPublicListPrice(price) : '—'}
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
+        <span className="shrink-0 text-foreground">
+          {formatPublicServiceTimeModeLabel(item.timeMode, t)}
         </span>
-      ) : null}
+        <span className="min-w-0 text-muted-foreground">
+          {formatPublicServiceScheduleSummary(item, t)}
+        </span>
+      </div>
+      {showPrice ? <PriceDisplay value={price} size="sm" /> : null}
     </div>
   )
 }
@@ -98,13 +100,17 @@ function CatalogCardTags({ tags }: { tags: CatalogSearchItem['tags'] }) {
   )
 }
 
-function catalogCardDetails(item: CatalogSearchItem) {
+function catalogCardDetails(
+  item: CatalogSearchItem,
+  ratingRow: ReactNode,
+) {
   return (
     <div className="min-w-0 w-full flex-1">
       <p className="font-medium">{item.name}</p>
       {item.description ? (
         <p className="line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
       ) : null}
+      {ratingRow}
       <CatalogCardTags tags={item.tags} />
     </div>
   )
@@ -113,19 +119,27 @@ function catalogCardDetails(item: CatalogSearchItem) {
 export function CatalogPublicItemCard({ item, className, companyDistanceLabel }: CatalogPublicItemCardProps) {
   const companyLogoUrl = item.companyImageUrl ?? null
   const navigate = useNavigate()
+  const { t } = useTranslation('search')
   const detailPath = `/catalog/${item.kind}/${item.id}`
 
   function openDetail() {
     navigate(detailPath)
   }
 
-  const productPrice =
-    item.kind === 'products' && item.listPrice != null ? formatPublicListPrice(item.listPrice) : null
-  const servicePrice =
-    item.kind === 'services' && item.listPrice != null ? formatPublicListPrice(item.listPrice) : null
   const showCompany = item.companyName.trim().length > 0
   const showPrice =
-    (item.kind === 'products' && productPrice) || (item.kind === 'services' && servicePrice)
+    (item.kind === 'products' || item.kind === 'services') && item.listPrice != null
+  const reviewSummary = item.reviewSummary
+  const ratingRow =
+    reviewSummary && reviewSummary.count > 0 ? (
+      <CatalogRatingSummary
+        className="mt-1"
+        averageRating={reviewSummary.averageRating}
+        reviewCount={reviewSummary.count}
+        countLabel={t('reviewsListRatingCount', { count: reviewSummary.count })}
+        ratingLabel={t('reviewsRatingLabel')}
+      />
+    ) : null
 
   return (
     <ItemListCollectionCard
@@ -143,7 +157,7 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
       onBodyClick={openDetail}
     >
       <div className="flex h-full min-h-[7.5rem] w-full flex-col items-stretch">
-        {catalogCardDetails(item)}
+        {catalogCardDetails(item, ratingRow)}
         {item.kind === 'services' ? (
           <div className="flex w-full min-w-0 flex-1 flex-col items-stretch">
             <PublicServiceListMeta item={item} className="mt-2 flex-1" showPrice={false} />
@@ -158,11 +172,8 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
                 distanceLabel={companyDistanceLabel}
               />
             ) : null}
-            {item.kind === 'products' && productPrice ? (
-              <p className="text-right text-sm font-medium tabular-nums text-foreground">{productPrice}</p>
-            ) : null}
-            {item.kind === 'services' && servicePrice ? (
-              <p className="text-right text-sm font-medium tabular-nums text-foreground">{servicePrice}</p>
+            {showPrice ? (
+              <PriceDisplay value={item.listPrice} size="sm" align="right" className="w-full" />
             ) : null}
           </div>
         ) : null}

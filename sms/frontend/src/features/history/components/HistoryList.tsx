@@ -18,7 +18,12 @@ interface HistoryListProps {
 
 export function HistoryList({ items }: HistoryListProps) {
   const { t, i18n } = useTranslation('shell')
+  const { t: tQueue } = useTranslation('queue')
   const rows = Array.isArray(items) ? items : []
+
+  function templateLabel(item: HistoryItem): string {
+    return item.templateSlug?.trim() || tQueue('freeform')
+  }
 
   function statusLabel(status: HistoryItem['status']): string {
     if (status === 'sent') return t('statusSent')
@@ -37,6 +42,16 @@ export function HistoryList({ items }: HistoryListProps) {
         cell: (item: HistoryItem) => item.toNumber,
       },
       {
+        id: 'template',
+        header: t('historyColumnTemplate'),
+        sortable: true,
+        compare: (a: HistoryItem, b: HistoryItem) =>
+          templateLabel(a).localeCompare(templateLabel(b), undefined, { sensitivity: 'base' }),
+        cell: (item: HistoryItem) => (
+          <span className="text-muted-foreground">{templateLabel(item)}</span>
+        ),
+      },
+      {
         id: 'status',
         header: 'Status',
         cell: (item: HistoryItem) => statusLabel(item.status),
@@ -48,7 +63,7 @@ export function HistoryList({ items }: HistoryListProps) {
         (iso) => formatDisplayDateTime(iso, i18n.language),
       ),
     ],
-    [i18n.language, t],
+    [i18n.language, t, tQueue],
   )
 
   function renderRowMenu(item: HistoryItem) {
@@ -64,7 +79,7 @@ export function HistoryList({ items }: HistoryListProps) {
       <>
         <p className="font-medium">{item.toNumber}</p>
         <p className="text-xs text-muted-foreground">
-          {item.templateSlug ?? t('queue:freeform')} · {statusLabel(item.status)} ·{' '}
+          {templateLabel(item)} · {statusLabel(item.status)} ·{' '}
           {item.createdAt ? formatDisplayDateTime(item.createdAt, i18n.language) : '—'}
         </p>
         {item.errorMessage ? (

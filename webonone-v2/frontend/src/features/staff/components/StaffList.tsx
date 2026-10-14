@@ -17,7 +17,8 @@ import {
   itemListThumbClassName,
   useToast,
 } from '@webonone/ui-kit'
-import { useAppDispatch } from '@/app/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import { WebononeCopyToAiMenuItem } from '@/features/ai/components/WebononeCopyToAiMenuItem'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { formatWorkingDaysSummary } from '@/features/staff/schemas/staffSchemas'
@@ -36,6 +37,19 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
   const { t: tc } = useTranslation('common')
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const sessionUser = useAppSelector((s) => s.auth.user)
+  const displayItems = useMemo(
+    () =>
+      items.map((item) =>
+        overlayIdentityFromSessionUser(item, sessionUser, {
+          userId: 'userId',
+          displayName: 'displayName',
+          email: 'email',
+          avatarUrl: 'avatarUrl',
+        }),
+      ),
+    [items, sessionUser],
+  )
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<CompanyStaff | null>(null)
@@ -175,7 +189,7 @@ export function StaffList({ items, canManage = false, onRemoved }: StaffListProp
   return (
     <>
       <CollectionListView
-        items={items}
+        items={displayItems}
         getRowKey={(item) => item.id}
         columns={columns}
         empty={<ItemListEmpty>{t('list.empty')}</ItemListEmpty>}

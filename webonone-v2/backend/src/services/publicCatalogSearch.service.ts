@@ -7,7 +7,12 @@ import {
   type DataLibraryCatalogItem,
   type DataTagSummary,
 } from '../clients/dataCatalogClient.js'
-import * as dataReviewsClient from '../clients/dataReviewsClient.js'
+import {
+  getReviewSummariesBatch,
+  listPublicReviews,
+  type PublicReviewListResult,
+  type ReviewSummaryDto,
+} from './reviews.service.js'
 import {
   findApprovedCompanyCatalogById,
   isSellableCatalogKind,
@@ -20,12 +25,18 @@ import {
 } from '../repositories/publicCatalogSearch.repository.js'
 import { parseMoney } from '../repositories/companyCatalog.repository.js'
 import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
+import { applyLibrarySellPricesWhereMissing } from './companyProductPublicPrice.service.js'
 import { buildWindowSessionItems, parseSessionDateRange } from './companyEvent.service.js'
 import { distanceKm, parseLatLng, toFiniteNumber } from '../utils/geo.js'
 
 export type PublicCatalogGalleryImage = {
   mediaId: string
   url: string
+}
+
+export type CatalogReviewSummary = {
+  averageRating: number | null
+  count: number
 }
 
 export type PublicCatalogSearchItem = {
@@ -43,6 +54,7 @@ export type PublicCatalogSearchItem = {
   longitude: number | null
   referenceCount: number
   listPrice: number | null
+  reviewSummary?: CatalogReviewSummary
   /** Services only — omitted for products and spaces when unset. */
   timeMode?: 'duration' | 'window' | null
   durationMinutes?: number | null
@@ -254,6 +266,11 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
   const tagById = new Map(tagRows.map((tag) => [tag.id, tag]))
 
   const items: HydratedCatalogItem[] = []
+  const productPriceSlots: Array<{
+    itemIndex: number
+    libraryEntityId: string | null
+    companyId: string
+  }> = []
   for (const row of rows) {
     const localTagIds = parseTagIds(row.tag_ids)
     const companyLocation = companyLocationFromRow(row)
@@ -265,6 +282,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
         continue
       }
       const time = resolveServiceTime(row, library)
+      const itemIndex = items.length
       items.push({
         id: row.id,
         kind: row.kind,
@@ -279,6 +297,13 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
         ...companyLocation,
         ...time,
       })
+      if (row.kind === 'products') {
+        productPriceSlots.push({
+          itemIndex,
+          libraryEntityId: row.library_entity_id,
+          companyId: row.company_id,
+        })
+      }
       continue
     }
 
@@ -286,6 +311,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
     if (!name) continue
 
     const time = resolveServiceTime(row, undefined)
+    const itemIndex = items.length
     items.push({
       id: row.id,
       kind: row.kind,
@@ -300,6 +326,25 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
       ...companyLocation,
       ...time,
     })
+    if (row.kind === 'products') {
+      productPriceSlots.push({
+        itemIndex,
+        libraryEntityId: row.library_entity_id,
+        companyId: row.company_id,
+      })
+    }
+  }
+
+  if (productPriceSlots.length > 0) {
+    const priceTargets = productPriceSlots.map((slot) => ({
+      listPrice: items[slot.itemIndex].listPrice,
+      libraryEntityId: slot.libraryEntityId,
+      companyId: slot.companyId,
+    }))
+    await applyLibrarySellPricesWhereMissing(priceTargets)
+    for (let i = 0; i < productPriceSlots.length; i++) {
+      items[productPriceSlots[i].itemIndex].listPrice = priceTargets[i].listPrice
+    }
   }
 
   return items
@@ -327,6 +372,49 @@ function withDistance(
       longitude: companyLongitude,
     }
   })
+}
+
+async function attachReviewSummaries(items: PublicCatalogSearchItem[]): Promise<void> {
+  if (items.length === 0) return
+
+  type GroupKey = string
+  const groups = new Map<
+    GroupKey,
+    { companyId: string; entityKind: 'product' | 'service' | 'space'; ids: string[] }
+  >()
+
+  for (const item of items) {
+    const entityKind = REVIEW_ENTITY_KIND[item.kind]
+    const key = `${item.companyId}:${entityKind}`
+    const group = groups.get(key) ?? { companyId: item.companyId, entityKind, ids: [] }
+    group.ids.push(item.id)
+    groups.set(key, group)
+  }
+
+  const summaryLookup = new Map<string, ReviewSummaryDto>()
+  await Promise.all(
+    [...groups.values()].map(async (group) => {
+      const batch = await getReviewSummariesBatch(
+        group.companyId,
+        group.entityKind,
+        group.ids,
+      )
+      for (const [entityId, summary] of Object.entries(batch)) {
+        summaryLookup.set(`${group.companyId}:${group.entityKind}:${entityId}`, summary)
+      }
+    }),
+  )
+
+  for (const item of items) {
+    const entityKind = REVIEW_ENTITY_KIND[item.kind]
+    const summary = summaryLookup.get(`${item.companyId}:${entityKind}:${item.id}`)
+    if (summary && summary.count > 0) {
+      item.reviewSummary = {
+        averageRating: summary.averageRating,
+        count: summary.count,
+      }
+    }
+  }
 }
 
 function sortCatalogItems(
@@ -395,6 +483,7 @@ export async function searchPublicCatalog(query: {
   const total = itemsWithDistance.length
   const start = (page - 1) * pageSize
   const items = itemsWithDistance.slice(start, start + pageSize)
+  await attachReviewSummaries(items)
 
   return { items, total, page, pageSize }
 }
@@ -404,7 +493,7 @@ export async function listPublicCatalogReviews(options: {
   id: string
   page?: unknown
   pageSize?: unknown
-}): Promise<dataReviewsClient.PublicReviewListResult | null> {
+}): Promise<PublicReviewListResult | null> {
   if (!isSellableCatalogKind(options.kind)) return null
   const id = typeof options.id === 'string' ? options.id.trim() : ''
   if (!id) return null
@@ -415,13 +504,13 @@ export async function listPublicCatalogReviews(options: {
   const page = parsePage(options.page)
   const pageSize = Math.min(50, parsePageSize(options.pageSize))
 
-  return dataReviewsClient.listPublicReviews({
-    companyId: row.company_id,
-    entityKind: REVIEW_ENTITY_KIND[options.kind],
-    entityId: id,
+  return listPublicReviews(
+    row.company_id,
+    REVIEW_ENTITY_KIND[options.kind],
+    id,
     page,
     pageSize,
-  })
+  )
 }
 
 export async function getPublicCatalogItem(options: {
@@ -538,6 +627,8 @@ export async function listNearbyPublicCatalog(origin: {
     companyItems.sort(
       (a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name),
     )
+    const slice = companyItems.slice(0, NEARBY_ITEMS_PER_COMPANY)
+    await attachReviewSummaries(slice)
     groups.push({
       id: company.id,
       name: company.name,
@@ -546,7 +637,7 @@ export async function listNearbyPublicCatalog(origin: {
       distanceKm: company.distanceKm,
       latitude: company.latitude,
       longitude: company.longitude,
-      items: companyItems.slice(0, NEARBY_ITEMS_PER_COMPANY),
+      items: slice,
     })
     if (groups.length >= NEARBY_COMPANY_LIMIT) break
   }

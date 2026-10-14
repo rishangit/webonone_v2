@@ -17,6 +17,7 @@ export type CatalogSearchItem = {
   longitude: number | null
   referenceCount: number
   listPrice: number | null
+  reviewSummary?: { averageRating: number | null; count: number }
   timeMode?: ServiceTimeMode | null
   durationMinutes?: number | null
   startTime?: string | null
@@ -25,6 +26,32 @@ export type CatalogSearchItem = {
 
 export type CatalogDetailItem = CatalogSearchItem & {
   galleryImages: Array<{ mediaId: string; url: string }>
+}
+
+export type PublicProductVariantAttributeValue = {
+  attributeId: string
+  attributeName: string
+  attributeValueId: string
+  valueText: string | null
+  valueNumber: number | null
+  valueType: 'number' | 'text'
+  unitSymbol: string | null
+}
+
+export type PublicProductVariantOfferLine = {
+  variantId: string
+  name: string
+  isDefault: boolean
+  attributeValues: PublicProductVariantAttributeValue[]
+  totalQuantity: number
+  sellPrice: number | null
+}
+
+export type PublicProductVariantOffer = {
+  listPrice: number | null
+  libraryUnavailable: boolean
+  variantCount: number
+  lines: PublicProductVariantOfferLine[]
 }
 
 export type CatalogSearchResult = {
@@ -51,9 +78,12 @@ export type NearbyCatalogResult = {
 
 export type CatalogPublicReviewItem = {
   id: string
+  userId?: string
   rating: number
   comment: string | null
   createdAt: string
+  reviewerDisplayName: string
+  reviewerAvatarUrl: string | null
 }
 
 export type CatalogPublicReviewListResult = {

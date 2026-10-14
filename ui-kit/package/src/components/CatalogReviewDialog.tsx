@@ -68,19 +68,12 @@ export function CatalogReviewDialog({
           <Button
             type="button"
             variant="outline"
-            className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
             disabled={saving}
             onClick={() => onOpenChange(false)}
           >
             {cancelLabel}
           </Button>
-          <Button
-            type="submit"
-            form={FORM_ID}
-            variant="default"
-            className="h-10"
-            disabled={saving}
-          >
+          <Button type="submit" form={FORM_ID} variant="default" disabled={saving}>
             <Save className="mr-2 h-4 w-4" aria-hidden />
             {submitLabel}
           </Button>

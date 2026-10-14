@@ -11,7 +11,10 @@ import {
   listLibraryItemsByIds,
 } from '../clients/dataCatalogClient.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
-import { fetchUserAvatarsByIds } from '../clients/identityUserContactClient.js'
+import {
+  fetchUserContactsByIds,
+  resolveIdentityDisplay,
+} from '../clients/identityUserContactClient.js'
 import * as eventRepo from '../repositories/companyEvent.repository.js'
 import * as sessionRunRepo from '../repositories/companyEventSessionRun.repository.js'
 import * as sessionTokenRepo from '../repositories/companyEventSessionToken.repository.js'
@@ -377,10 +380,10 @@ function mapEvent(row: eventRepo.CompanyEventRow): CompanyEventDto {
     formTemplateId: null,
     timeMode: row.time_mode,
     staffId: row.staff_id,
-    staffDisplayName: row.staff_display_name,
+    staffDisplayName: null,
     attendeeUserId: row.attendee_user_id,
-    attendeeDisplayName: row.attendee_display_name,
-    attendeeEmail: row.attendee_email,
+    attendeeDisplayName: null,
+    attendeeEmail: null,
     spaceId: row.space_id,
     spaceName: row.space_name,
     startsOn,
@@ -405,50 +408,6 @@ function normalizeAvatarUrl(url: string | null | undefined): string | null {
   return rewriteMediaFileUrl(url.trim())
 }
 
-async function buildPeopleAvatarMaps(
-  staffRows: Awaited<ReturnType<typeof staffRepo.findStaffByIds>>,
-  attendeeStaffRows: Awaited<ReturnType<typeof staffRepo.findStaffByUserIds>>,
-  attendeeUserIds: string[],
-): Promise<{
-  avatarByStaffId: Map<string, string | null>
-  avatarByUserId: Map<string, string | null>
-}> {
-  const localAvatarByUserId = new Map<string, string | null>()
-  for (const row of [...staffRows, ...attendeeStaffRows]) {
-    if (!localAvatarByUserId.has(row.user_id)) {
-      localAvatarByUserId.set(row.user_id, normalizeAvatarUrl(row.avatar_url))
-    }
-  }
-
-  const userIdsNeedingIdentity = [
-    ...staffRows
-      .filter((row) => !normalizeAvatarUrl(row.avatar_url))
-      .map((row) => row.user_id),
-    ...attendeeUserIds.filter((userId) => !localAvatarByUserId.get(userId)),
-  ]
-  const identityAvatars = await fetchUserAvatarsByIds(userIdsNeedingIdentity)
-
-  const allUserIds = [...new Set([...staffRows.map((row) => row.user_id), ...attendeeUserIds])]
-  const resolvedByUserId = new Map<string, string | null>()
-  for (const userId of allUserIds) {
-    const local = localAvatarByUserId.get(userId) ?? null
-    const identity = identityAvatars.get(userId) ?? null
-    resolvedByUserId.set(userId, local ?? normalizeAvatarUrl(identity))
-  }
-
-  const avatarByStaffId = new Map(
-    staffRows.map((row) => [
-      row.id,
-      normalizeAvatarUrl(row.avatar_url) ?? resolvedByUserId.get(row.user_id) ?? null,
-    ]),
-  )
-  const avatarByUserId = new Map(
-    attendeeUserIds.map((userId) => [userId, resolvedByUserId.get(userId) ?? null]),
-  )
-
-  return { avatarByStaffId, avatarByUserId }
-}
-
 async function enrichEventsWithPeopleImages(
   companyId: string,
   events: CompanyEventDto[],
@@ -462,24 +421,30 @@ async function enrichEventsWithPeopleImages(
     .map((event) => event.attendeeUserId)
     .filter((userId): userId is string => Boolean(userId))
 
-  const [staffRows, attendeeStaffRows] = await Promise.all([
-    staffRepo.findStaffByIds(companyId, staffIds),
-    staffRepo.findStaffByUserIds(companyId, attendeeUserIds),
-  ])
+  const staffRows = await staffRepo.findStaffByIds(companyId, staffIds)
+  const staffUserIds = staffRows.map((row) => row.user_id)
+  const contacts = await fetchUserContactsByIds([...staffUserIds, ...attendeeUserIds])
+  const staffById = new Map(staffRows.map((row) => [row.id, row]))
 
-  const { avatarByStaffId, avatarByUserId } = await buildPeopleAvatarMaps(
-    staffRows,
-    attendeeStaffRows,
-    attendeeUserIds,
-  )
-
-  return events.map((event) => ({
-    ...event,
-    staffImageUrl: event.staffId ? (avatarByStaffId.get(event.staffId) ?? null) : null,
-    attendeeImageUrl: event.attendeeUserId
-      ? (avatarByUserId.get(event.attendeeUserId) ?? null)
-      : null,
-  }))
+  return events.map((event) => {
+    const staffRow = event.staffId ? staffById.get(event.staffId) : undefined
+    const staffIdentity = staffRow
+      ? resolveIdentityDisplay(contacts.get(staffRow.user_id), 'Staff')
+      : null
+    const attendeeIdentity = event.attendeeUserId
+      ? resolveIdentityDisplay(contacts.get(event.attendeeUserId), 'Customer')
+      : null
+    return {
+      ...event,
+      staffDisplayName: staffIdentity?.displayName ?? null,
+      staffImageUrl: staffIdentity ? normalizeAvatarUrl(staffIdentity.avatarUrl) : null,
+      attendeeDisplayName: attendeeIdentity?.displayName ?? null,
+      attendeeEmail: attendeeIdentity?.email ?? null,
+      attendeeImageUrl: attendeeIdentity
+        ? normalizeAvatarUrl(attendeeIdentity.avatarUrl)
+        : null,
+    }
+  })
 }
 
 function normalizeGalleryImages(
@@ -748,7 +713,7 @@ async function resolveEventStaff(
     return { staffId: null, staffDisplayName: null, schedules: [] }
   }
   const { staff, schedules } = await loadStaffWithSchedule(companyId, id)
-  return { staffId: staff.id, staffDisplayName: staff.display_name, schedules }
+  return { staffId: staff.id, staffDisplayName: null, schedules }
 }
 
 function assertStaffWorksOnWeekdays(
@@ -805,19 +770,13 @@ function resolveAttendee(
   timeMode: 'duration' | 'window',
   body: {
     attendee_user_id?: string | null
-    attendee_display_name?: string | null
-    attendee_email?: string | null
   },
 ): {
   attendee_user_id: string | null
-  attendee_display_name: string | null
-  attendee_email: string | null
 } {
   if (timeMode === 'window') {
     return {
       attendee_user_id: null,
-      attendee_display_name: null,
-      attendee_email: null,
     }
   }
   const userId = body.attendee_user_id?.trim()
@@ -826,8 +785,6 @@ function resolveAttendee(
   }
   return {
     attendee_user_id: userId,
-    attendee_display_name: body.attendee_display_name?.trim() || null,
-    attendee_email: body.attendee_email?.trim() || null,
   }
 }
 
@@ -1033,17 +990,19 @@ async function attachOccurrenceRunStatuses(
   ]
   const leaveByStaff = await loadApprovedLeaveDatesByStaff(companyId, staffIds, from, to)
   const staffRows = await staffRepo.findStaffByIds(companyId, staffIds)
-  const staffNameById = new Map(staffRows.map((row) => [row.id, row.display_name]))
-  const identityAvatars = await fetchUserAvatarsByIds(
-    staffRows
-      .filter((row) => !normalizeAvatarUrl(row.avatar_url))
-      .map((row) => row.user_id),
+  const staffContacts = await fetchUserContactsByIds(staffRows.map((row) => row.user_id))
+  const staffNameById = new Map(
+    staffRows.map((row) => [
+      row.id,
+      resolveIdentityDisplay(staffContacts.get(row.user_id), 'Staff').displayName,
+    ]),
   )
   const staffAvatarById = new Map(
     staffRows.map((row) => [
       row.id,
-      normalizeAvatarUrl(row.avatar_url) ??
-        normalizeAvatarUrl(identityAvatars.get(row.user_id) ?? null),
+      normalizeAvatarUrl(
+        resolveIdentityDisplay(staffContacts.get(row.user_id), 'Staff').avatarUrl,
+      ),
     ]),
   )
 
@@ -1592,10 +1551,7 @@ export async function createCompanyEvent(
     service_name: service.name,
     time_mode: service.timeMode,
     staff_id: resolvedStaff.staffId,
-    staff_display_name: resolvedStaff.staffDisplayName,
     attendee_user_id: attendee.attendee_user_id,
-    attendee_display_name: attendee.attendee_display_name,
-    attendee_email: attendee.attendee_email,
     space_id: space.space_id,
     space_name: space.space_name,
     starts_on: body.starts_on,
@@ -1695,12 +1651,6 @@ export async function updateCompanyEvent(
   const attendee = resolveAttendee(service.timeMode, {
     attendee_user_id:
       body.attendee_user_id !== undefined ? body.attendee_user_id : existing.attendee_user_id,
-    attendee_display_name:
-      body.attendee_display_name !== undefined
-        ? body.attendee_display_name
-        : existing.attendee_display_name,
-    attendee_email:
-      body.attendee_email !== undefined ? body.attendee_email : existing.attendee_email,
   })
 
   const spaceIdForResolve =
@@ -1717,10 +1667,7 @@ export async function updateCompanyEvent(
     service_name: service.name,
     time_mode: service.timeMode,
     staff_id: resolvedStaff.staffId,
-    staff_display_name: resolvedStaff.staffDisplayName,
     attendee_user_id: attendee.attendee_user_id,
-    attendee_display_name: attendee.attendee_display_name,
-    attendee_email: attendee.attendee_email,
     space_id: space.space_id,
     space_name: space.space_name,
     starts_on: startsOn,
@@ -1758,9 +1705,9 @@ function mapSessionToken(
     callOrder: row.call_order,
     status: row.status,
     userId: row.user_id,
-    userDisplayName: row.user_display_name,
-    userEmail: row.user_email,
-    userAvatarUrl: row.user_avatar_url,
+    userDisplayName: 'Customer',
+    userEmail: null,
+    userAvatarUrl: null,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     workflowProgress,
@@ -1790,7 +1737,7 @@ async function mapSessionTokens(
       }),
     ),
   )
-  return syncedRows.map((row) =>
+  const mapped = syncedRows.map((row) =>
     mapSessionToken(
       row,
       buildWorkflowProgress(defs, row, {
@@ -1799,6 +1746,21 @@ async function mapSessionTokens(
       }),
     ),
   )
+  return hydrateSessionTokenDtos(mapped)
+}
+
+async function hydrateSessionTokenDtos(items: SessionTokenDto[]): Promise<SessionTokenDto[]> {
+  if (items.length === 0) return items
+  const contacts = await fetchUserContactsByIds(items.map((item) => item.userId))
+  return items.map((item) => {
+    const identity = resolveIdentityDisplay(contacts.get(item.userId), 'Customer')
+    return {
+      ...item,
+      userDisplayName: identity.displayName,
+      userEmail: identity.email,
+      userAvatarUrl: normalizeAvatarUrl(identity.avatarUrl),
+    }
+  })
 }
 
 async function mapSessionTokenWithProgress(
@@ -1985,9 +1947,6 @@ async function ensureDurationAttendeeToken(
       token_number: nextNumber,
       call_order: callOrderFromTokenNumber(nextNumber),
       user_id: event.attendeeUserId,
-      user_display_name: event.attendeeDisplayName ?? 'Customer',
-      user_email: event.attendeeEmail,
-      user_avatar_url: null,
       current_workflow_item_id: firstWorkflowItemId(workflowDefs),
     })
     await roleRepo.ensureCompanyCustomerMemberRole(event.attendeeUserId, companyId, nanoid())
@@ -2206,9 +2165,6 @@ export async function createSessionToken(
       token_number: nextNumber,
       call_order: callOrderFromTokenNumber(nextNumber),
       user_id: userId,
-      user_display_name: body.user_display_name.trim(),
-      user_email: body.user_email?.trim() || null,
-      user_avatar_url: body.user_avatar_url?.trim() || null,
       current_workflow_item_id: firstWorkflowItemId(workflowDefs),
     })
 
@@ -2236,7 +2192,6 @@ export async function createSessionToken(
             companyId,
             event,
             token,
-            preferredEmail: body.user_email,
           })
           notifySessionTokenCalled({ companyId, event, token })
           void notifySessionTokenCalledInApp({
@@ -2259,7 +2214,6 @@ export async function createSessionToken(
       companyId,
       event,
       token,
-      preferredEmail: body.user_email,
     })
     return token
   } catch (err) {
@@ -2365,9 +2319,6 @@ export async function completeSessionTokenWorkflow(
         eventId,
         occurrenceDate,
         userId: token.user_id,
-        userDisplayName: token.user_display_name,
-        userEmail: token.user_email,
-        userAvatarUrl: token.user_avatar_url,
       })
       await repositionLateCheckInByWaitBalance(
         companyId,
@@ -2879,11 +2830,25 @@ function toCheckInDto(row: sessionCheckInRepo.SessionCheckInRow): SessionCheckIn
   return {
     id: row.id,
     userId: row.user_id,
-    userDisplayName: row.user_display_name,
-    userEmail: row.user_email,
-    userAvatarUrl: row.user_avatar_url,
+    userDisplayName: 'Customer',
+    userEmail: null,
+    userAvatarUrl: null,
     checkedInAt,
   }
+}
+
+async function hydrateCheckInDtos(items: SessionCheckInDto[]): Promise<SessionCheckInDto[]> {
+  if (items.length === 0) return items
+  const contacts = await fetchUserContactsByIds(items.map((item) => item.userId))
+  return items.map((item) => {
+    const identity = resolveIdentityDisplay(contacts.get(item.userId), 'Customer')
+    return {
+      ...item,
+      userDisplayName: identity.displayName,
+      userEmail: identity.email,
+      userAvatarUrl: normalizeAvatarUrl(identity.avatarUrl),
+    }
+  })
 }
 
 async function resolveBookedCheckInSubject(
@@ -2891,12 +2856,7 @@ async function resolveBookedCheckInSubject(
   event: CompanyEventDto,
   occurrenceDate: string,
   userId: string,
-): Promise<{
-  userId: string
-  userDisplayName: string
-  userEmail: string | null
-  userAvatarUrl: string | null
-} | null> {
+): Promise<{ userId: string } | null> {
   const token = await sessionTokenRepo.findTokenByUser(
     companyId,
     event.id,
@@ -2904,20 +2864,10 @@ async function resolveBookedCheckInSubject(
     userId,
   )
   if (token) {
-    return {
-      userId: token.user_id,
-      userDisplayName: token.user_display_name,
-      userEmail: token.user_email,
-      userAvatarUrl: token.user_avatar_url,
-    }
+    return { userId: token.user_id }
   }
   if (event.attendeeUserId === userId) {
-    return {
-      userId,
-      userDisplayName: event.attendeeDisplayName?.trim() || 'Member',
-      userEmail: event.attendeeEmail,
-      userAvatarUrl: null,
-    }
+    return { userId }
   }
   return null
 }
@@ -2934,9 +2884,10 @@ async function buildCheckInsDto(
     resolveBookedCheckInSubject(companyId, event, occurrenceDate, userId),
     sessionCheckInRepo.findCheckInByUser(companyId, event.id, occurrenceDate, userId),
   ])
-  const items = options.selfOnly
+  const rawItems = options.selfOnly
     ? rows.filter((row) => row.user_id === userId).map(toCheckInDto)
     : rows.map(toCheckInDto)
+  const items = await hydrateCheckInDtos(rawItems)
   return {
     items,
     canCheckIn: Boolean(subject) && !existing,
@@ -3118,9 +3069,6 @@ export async function createSessionCheckIn(
       eventId,
       occurrenceDate,
       userId: subject.userId,
-      userDisplayName: subject.userDisplayName,
-      userEmail: subject.userEmail,
-      userAvatarUrl: subject.userAvatarUrl,
     })
     await repositionLateCheckInByWaitBalance(
       companyId,
@@ -3177,9 +3125,6 @@ export async function createMySessionCheckIn(
       eventId,
       occurrenceDate,
       userId: subject.userId,
-      userDisplayName: subject.userDisplayName,
-      userEmail: subject.userEmail,
-      userAvatarUrl: subject.userAvatarUrl,
     })
     await repositionLateCheckInByWaitBalance(
       event.companyId,

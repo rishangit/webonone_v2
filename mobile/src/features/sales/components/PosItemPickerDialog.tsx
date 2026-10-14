@@ -13,13 +13,13 @@ import {
   SegmentedSwitch,
   SegmentedSwitchItem,
   Spinner,
+  formatLkr,
   itemListThumbClassName,
 } from '@webonone/mobile-ui'
 import { catalogApi } from '@/features/sales/services/catalogApi'
 import type { CatalogEntityKind, HydratedCatalogItem } from '@/features/sales/types/catalog.types'
 import type { SaleItemKind } from '@/features/sales/types/sales.types'
 import { catalogItemImageUrl } from '@/features/sales/utils/catalogItemImageUrl'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import { hydrateCatalogItems } from '@/features/sales/utils/hydrateCatalogItems'
 
 const TABS: Array<{ kind: SaleItemKind; catalogKind: CatalogEntityKind; label: string }> = [

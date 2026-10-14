@@ -22,8 +22,10 @@ import {
   ListPageBody,
   ListPageFooter,
   Pagination,
+  PriceDisplay,
   ReadOnlyField,
   Spinner,
+  StockBatchPriceRow,
   Subheading,
   useToast,
 } from '@webonone/mobile-ui'
@@ -58,6 +60,11 @@ export function ComponentsShowcase() {
           <Avatar size="xl" fallback="JD" />
         </View>
         <AvatarGroup users={demoAvatarUsers} size="md" max={4} />
+      </DemoSection>
+
+      <DemoSection title="Price">
+        <PriceDisplay value={1250} size="lg" />
+        <StockBatchPriceRow costLabel="Cost" sellLabel="Sell" costValue={800} sellValue={1250} />
       </DemoSection>
 
       <DemoSection title="Card and read-only field">

@@ -3,11 +3,13 @@ import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { cn } from '../lib/cn'
 import { useThemedControlIconColor } from '../theme/useThemedControlIconColor'
+import { STAR_RATING_ICON_PX, type StarRatingSize } from './starRatingSizes'
 
 export type StarRatingInputProps = {
   value: number | null
   onChange: (rating: number) => void
   max?: number
+  size?: StarRatingSize
   disabled?: boolean
   label?: string
   className?: string
@@ -17,10 +19,12 @@ export function StarRatingInput({
   value,
   onChange,
   max = 5,
+  size = 'lg',
   disabled = false,
   label = 'Rating',
   className,
 }: StarRatingInputProps) {
+  const iconPx = STAR_RATING_ICON_PX[size]
   const [hover, setHover] = useState<number | null>(null)
   const iconMuted = useThemedControlIconColor()
   const iconPrimary = useThemedControlIconColor({ active: true })
@@ -48,7 +52,7 @@ export function StarRatingInput({
             onPressOut={() => setHover(null)}
           >
             <Star
-              size={28}
+              size={iconPx}
               color={filled ? iconPrimary : iconMuted}
               fill={filled ? iconPrimary : 'transparent'}
             />

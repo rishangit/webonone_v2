@@ -1,3 +1,8 @@
+import {
+  fetchUserContact,
+  fetchUserContactsByIds,
+  resolveIdentityDisplay,
+} from '../clients/identityUserContactClient.js'
 import { db } from '../models/db.js'
 import type { CompanyEventRow } from '../repositories/companyEvent.repository.js'
 import type { CompanyEventSessionTokenRow } from '../repositories/companyEventSessionToken.repository.js'
@@ -95,6 +100,27 @@ function companyWhere(companyId: string | null): { company_id?: string } {
   return companyId ? { company_id: companyId } : {}
 }
 
+async function staffDisplayNamesByStaffId(
+  events: Array<Pick<CompanyEventRow, 'company_id' | 'staff_id'>>,
+): Promise<Map<string, string | null>> {
+  const names = new Map<string, string | null>()
+  const byCompany = new Map<string, string[]>()
+  for (const event of events) {
+    if (!event.staff_id) continue
+    const list = byCompany.get(event.company_id) ?? []
+    list.push(event.staff_id)
+    byCompany.set(event.company_id, list)
+  }
+  for (const [companyId, staffIds] of byCompany) {
+    const rows = await staffRepo.findStaffByIds(companyId, staffIds)
+    const contacts = await fetchUserContactsByIds(rows.map((row) => row.user_id))
+    for (const row of rows) {
+      names.set(row.id, resolveIdentityDisplay(contacts.get(row.user_id), 'Staff').displayName)
+    }
+  }
+  return names
+}
+
 async function attachCompanyNames(items: UserActivityItem[]): Promise<void> {
   const companyIds = [
     ...new Set(
@@ -141,6 +167,8 @@ export async function listUserActivity(input: {
     }
   }
 
+  const staffNames = await staffDisplayNamesByStaffId([...eventsById.values()])
+
   const tokenItems: UserActivityItem[] = tokens.map((token) => {
     const event = eventsById.get(token.event_id)
     const occurrence = formatDisplayDate(token.occurrence_date)
@@ -164,7 +192,7 @@ export async function listUserActivity(input: {
         serviceId: event?.service_id ?? null,
         serviceName: event?.service_name ?? null,
         staffId: event?.staff_id ?? null,
-        staffDisplayName: event?.staff_display_name ?? null,
+        staffDisplayName: event?.staff_id ? (staffNames.get(event.staff_id) ?? null) : null,
         spaceId: event?.space_id ?? null,
         spaceName: event?.space_name ?? null,
         startTime: start,
@@ -179,6 +207,7 @@ export async function listUserActivity(input: {
     .orderBy('updated_at', 'desc')
     .limit(200)
 
+  const attendeeStaffNames = await staffDisplayNamesByStaffId(attendeeEvents)
   const attendeeItems: UserActivityItem[] = attendeeEvents.map((event) => ({
     id: `attendee:${event.id}`,
     type: 'event_attendee',
@@ -190,7 +219,7 @@ export async function listUserActivity(input: {
       eventId: event.id,
       serviceId: event.service_id,
       staffId: event.staff_id,
-      staffDisplayName: event.staff_display_name,
+      staffDisplayName: event.staff_id ? (attendeeStaffNames.get(event.staff_id) ?? null) : null,
       companyId: event.company_id,
     },
   }))
@@ -212,6 +241,12 @@ export async function listUserActivity(input: {
       staffEventsQuery = staffEventsQuery.andWhere({ company_id: input.companyId })
     }
     const staffEvents = await staffEventsQuery
+    const assignedStaffNames = await staffDisplayNamesByStaffId(staffEvents)
+    const attendeeContacts = await fetchUserContactsByIds(
+      staffEvents
+        .map((event) => event.attendee_user_id)
+        .filter((id): id is string => Boolean(id)),
+    )
     staffItems = staffEvents.map((event) => ({
       id: `staff:${event.id}`,
       type: 'event_staff',
@@ -222,9 +257,14 @@ export async function listUserActivity(input: {
       meta: {
         eventId: event.id,
         serviceId: event.service_id,
-        attendeeDisplayName: event.attendee_display_name,
+        attendeeDisplayName: event.attendee_user_id
+          ? resolveIdentityDisplay(attendeeContacts.get(event.attendee_user_id), 'Customer')
+              .displayName
+          : null,
         staffId: event.staff_id,
-        staffDisplayName: event.staff_display_name,
+        staffDisplayName: event.staff_id
+          ? (assignedStaffNames.get(event.staff_id) ?? null)
+          : null,
         companyId: event.company_id,
       },
     }))
@@ -299,14 +339,17 @@ export async function getSessionTokenHistoryDetail(input: {
 
   const defs = await loadWorkflowStepDefs(companyId, event.service_id)
   const sales = await listSalesForSessionToken(companyId, token.id)
+  const tokenContact = await fetchUserContact(token.user_id)
+  const tokenIdentity = resolveIdentityDisplay(tokenContact, 'Customer')
+  const staffNames = await staffDisplayNamesByStaffId([event])
   return {
     tokenId: token.id,
     tokenNumber: token.token_number,
     tokenLabel: `#${token.token_number}`,
     status: token.status,
     userId: token.user_id,
-    userDisplayName: token.user_display_name,
-    userEmail: token.user_email,
+    userDisplayName: tokenIdentity.displayName,
+    userEmail: tokenIdentity.email,
     eventId: event.id,
     occurrenceDate,
     serviceId: event.service_id,
@@ -318,7 +361,7 @@ export async function getSessionTokenHistoryDetail(input: {
     spaceId: event.space_id,
     spaceName: event.space_name,
     staffId: event.staff_id,
-    staffDisplayName: event.staff_display_name,
+    staffDisplayName: event.staff_id ? (staffNames.get(event.staff_id) ?? null) : null,
     createdAt: toIso(token.created_at),
     workflowProgress: buildWorkflowProgress(defs, token),
     sales,

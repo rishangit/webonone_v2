@@ -117,7 +117,18 @@ function validateAnswersAgainstDefinition(
   for (const field of definition.fields) {
     const value = answers[field.id]
     if (field.required) {
-      if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) {
+      const emptyMedia =
+        field.type === 'media' &&
+        (field.allowMultiple
+          ? !Array.isArray(value) || value.length === 0
+          : value == null ||
+            value === '' ||
+            (typeof value === 'object' && value !== null && !('fileId' in value)))
+      if (
+        emptyMedia ||
+        (field.type !== 'media' &&
+          (value == null || value === '' || (Array.isArray(value) && value.length === 0)))
+      ) {
         throw new HttpError(400, `Field "${field.label}" is required`, 'VALIDATION_FAILED')
       }
     }

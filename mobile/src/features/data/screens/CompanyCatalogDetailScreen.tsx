@@ -4,12 +4,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import {
   Body,
-  Card,
   ConfirmDialog,
   EditableSectionCard,
   FeatureScreen,
+  imagePreviewGalleryClassName,
   ImagePreview,
   Muted,
+  ListPriceField,
   ReadOnlyField,
   Spinner,
   StatusTag,
@@ -31,6 +32,7 @@ import { CompanyCatalogFormDialog } from '@/features/data/company-catalog/compon
 import { CompanyCatalogGalleryTab } from '@/features/data/company-catalog/components/CompanyCatalogGalleryTab'
 import { CompanyProductVariantsTab } from '@/features/data/company-catalog/components/CompanyProductVariantsTab'
 import { CompanyServiceFormDialog } from '@/features/data/company-catalog/components/CompanyServiceFormDialog'
+import { CompanyServiceDetailOfferCard } from '@/features/data/company-catalog/components/CompanyServiceDetailOfferCard'
 import { CompanyServiceWorkflowTab } from '@/features/data/company-catalog/components/CompanyServiceWorkflowTab'
 import { CompanyCatalogDetailPageMenu } from '@/features/data/company-catalog/components/CompanyCatalogDetailPageMenu'
 import { subscribeAiCatalogMutation } from '@/features/ai/utils/aiCatalogEvents'
@@ -60,11 +62,6 @@ function tabsForKind(kind: CatalogKind): DetailTab[] {
   if (kind === 'products') return ['overview', 'gallery', 'attributes', 'variants']
   if (kind === 'services') return ['overview', 'gallery', 'attributes', 'workflow']
   return ['overview', 'gallery', 'attributes']
-}
-
-function formatListPrice(value: number | null | undefined): string {
-  if (value == null) return '—'
-  return `LKR ${value.toFixed(2)}`
 }
 
 export function CompanyCatalogDetailScreen({
@@ -289,9 +286,11 @@ export function CompanyCatalogDetailScreen({
     kind === 'services' ? (
       <View className="gap-6">
         {overviewGalleryImages.length > 0 ? (
-          <Card>
-            <ImagePreview src={overviewGalleryImages[0]?.url ?? null} alt={item.displayName} />
-          </Card>
+          <ImagePreview
+            src={overviewGalleryImages[0]?.url ?? null}
+            alt={item.displayName}
+            className={imagePreviewGalleryClassName}
+          />
         ) : null}
         <EditableSectionCard
           title={t('detail.serviceBasics.title')}
@@ -308,31 +307,18 @@ export function CompanyCatalogDetailScreen({
         </EditableSectionCard>
         {reviewsPanel}
         {memberReviewCard}
-        <EditableSectionCard
-          title={t('detail.pricing.title')}
-          description={t('detail.pricing.description')}
-          canEdit={canManage && !busy}
-          onEdit={() => setPricingOpen(true)}
-        >
-          <ReadOnlyField label={t('detail.pricing.listPrice')} value={formatListPrice(item.listPrice)} />
-        </EditableSectionCard>
-        <EditableSectionCard
-          title={t('detail.time.title')}
-          description={t('detail.time.description')}
-          canEdit={canEdit && !busy}
-          onEdit={() => setServiceDialog({ initialStep: 2 })}
-        >
-          <ReadOnlyField
-            label={t('detail.time.timeMode')}
-            value={
-              servicePayload?.timeMode === 'window'
-                ? t('serviceWizard.fields.specificTime')
-                : servicePayload?.timeMode === 'duration'
-                  ? t('serviceWizard.fields.duration')
-                  : '—'
-            }
-          />
-        </EditableSectionCard>
+        <CompanyServiceDetailOfferCard
+          serviceId={itemId}
+          servicePayload={servicePayload}
+          listPrice={item.listPrice}
+          canManagePrice={canManage}
+          canEditSchedule={canEdit}
+          busy={busy}
+          overviewActive={tab === 'overview'}
+          onEditListPrice={() => setPricingOpen(true)}
+          onEditSchedule={() => setServiceDialog({ initialStep: 2 })}
+          onManageWorkflow={() => setTab('workflow')}
+        />
         <EditableSectionCard
           title={t('detail.tags.title')}
           description={t('detail.tags.description')}
@@ -353,9 +339,11 @@ export function CompanyCatalogDetailScreen({
     ) : (
       <View className="gap-6">
         {overviewGalleryImages.length > 0 ? (
-          <Card>
-            <ImagePreview src={overviewGalleryImages[0]?.url ?? null} alt={item.displayName} />
-          </Card>
+          <ImagePreview
+            src={overviewGalleryImages[0]?.url ?? null}
+            alt={item.displayName}
+            className={imagePreviewGalleryClassName}
+          />
         ) : null}
         <EditableSectionCard
           title={noun}
@@ -378,7 +366,7 @@ export function CompanyCatalogDetailScreen({
           canEdit={canManage && !busy}
           onEdit={() => setPricingOpen(true)}
         >
-          <ReadOnlyField label={t('detail.pricing.listPrice')} value={formatListPrice(item.listPrice)} />
+          <ListPriceField label={t('detail.pricing.listPrice')} value={item.listPrice} />
         </EditableSectionCard>
         {(kind === 'products' || kind === 'spaces') && (
           <EditableSectionCard

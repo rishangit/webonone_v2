@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import * as publicCatalogBookingService from '../services/publicCatalogBooking.service.js'
+import * as publicCatalogProductOfferService from '../services/publicCatalogProductOffer.service.js'
 import * as publicCatalogSearchService from '../services/publicCatalogSearch.service.js'
 import { parseLatLng } from '../utils/geo.js'
 
@@ -43,6 +44,24 @@ export async function listNearbyCatalog(req: Request, res: Response) {
   }
   const result = await publicCatalogSearchService.listNearbyPublicCatalog(origin)
   res.json(result)
+}
+
+export async function getProductVariantOffer(req: Request, res: Response) {
+  const id = typeof req.params.id === 'string' ? req.params.id.trim() : ''
+  if (!id) {
+    res.status(400).json({ message: 'Invalid product id', code: 'VALIDATION' })
+    return
+  }
+  try {
+    const offer = await publicCatalogProductOfferService.getPublicProductVariantOffer(id)
+    if (!offer) {
+      res.status(404).json({ message: 'Catalog item not found', code: 'NOT_FOUND' })
+      return
+    }
+    res.json(offer)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
 }
 
 export async function getCatalogItem(req: Request, res: Response) {
@@ -142,19 +161,11 @@ export async function bookPublicToken(req: AuthenticatedRequest, res: Response) 
   const occurrenceDate = parseOccurrenceDate(String(req.params.occurrenceDate), res)
   if (!occurrenceDate) return
   try {
-    const body = req.body as {
-      user_display_name: string
-      user_email?: string | null
-      user_avatar_url?: string | null
-    }
     const item = await publicCatalogBookingService.bookPublicSessionToken({
       serviceId: String(req.params.serviceId),
       eventId: String(req.params.eventId),
       occurrenceDate,
       userId: req.user.id,
-      userDisplayName: body.user_display_name,
-      userEmail: body.user_email ?? req.user.email ?? null,
-      userAvatarUrl: body.user_avatar_url ?? null,
     })
     res.status(201).json(item)
   } catch (err) {

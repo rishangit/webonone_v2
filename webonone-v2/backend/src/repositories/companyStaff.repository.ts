@@ -4,9 +4,6 @@ export interface CompanyStaffRow {
   id: string
   company_id: string
   user_id: string
-  display_name: string
-  email: string | null
-  avatar_url: string | null
   created_at: Date
   updated_at: Date
 }
@@ -25,7 +22,7 @@ export interface CompanyStaffScheduleRow {
 export async function listStaffByCompany(companyId: string): Promise<CompanyStaffRow[]> {
   return db<CompanyStaffRow>('company_staff')
     .where({ company_id: companyId })
-    .orderBy('display_name', 'asc')
+    .orderBy('created_at', 'asc')
 }
 
 export async function listStaffByUserId(userId: string): Promise<CompanyStaffRow[]> {
@@ -35,7 +32,7 @@ export async function listStaffByUserId(userId: string): Promise<CompanyStaffRow
 }
 
 export async function listAllStaff(): Promise<CompanyStaffRow[]> {
-  return db<CompanyStaffRow>('company_staff').orderBy(['company_id', 'display_name'])
+  return db<CompanyStaffRow>('company_staff').orderBy(['company_id', 'created_at'])
 }
 
 export async function findStaffById(
@@ -80,9 +77,6 @@ export async function insertStaff(row: {
   id: string
   company_id: string
   user_id: string
-  display_name: string
-  email: string | null
-  avatar_url: string | null
 }): Promise<CompanyStaffRow> {
   await db('company_staff').insert({
     ...row,
@@ -99,9 +93,6 @@ export async function updateStaff(
   staffId: string,
   patch: {
     user_id?: string
-    display_name?: string
-    email?: string | null
-    avatar_url?: string | null
   },
 ): Promise<CompanyStaffRow | undefined> {
   await db('company_staff')

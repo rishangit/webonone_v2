@@ -17,7 +17,9 @@ import type {
   SessionRunStatus,
 } from '@/features/calendar/types/event.types'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
+import { useAppSelector } from '@/app/store/hooks'
 import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 const RUN_STATUS_VARIANT: Record<SessionRunStatus, StatusTagVariant> = {
   scheduled: 'pending',
@@ -80,22 +82,30 @@ export function ScheduleEventDetailPopover({
   layout = 'popover',
 }: ScheduleEventDetailPopoverProps) {
   const { t, i18n } = useTranslation('calendar')
+  const sessionUser = useAppSelector((s) => s.auth.user)
   const isPanel = layout === 'panel'
+  const displayOccurrence = overlayIdentityFromSessionUser(occurrence, sessionUser, {
+    userId: 'attendeeUserId',
+    displayName: 'attendeeDisplayName',
+    email: 'attendeeEmail',
+    avatarUrl: 'attendeeImageUrl',
+  })
 
-  const staffName = occurrence.effectiveStaffDisplayName ?? occurrence.staffDisplayName ?? '—'
-  const runStatus = occurrence.runStatus ?? 'scheduled'
-  const isDuration = occurrence.timeMode === 'duration'
-  const isWindow = occurrence.timeMode === 'window'
-  const sessionPath = `/calendar/events/${occurrence.id}/sessions/${occurrence.occurrenceDate}`
+  const staffName =
+    displayOccurrence.effectiveStaffDisplayName ?? displayOccurrence.staffDisplayName ?? '—'
+  const runStatus = displayOccurrence.runStatus ?? 'scheduled'
+  const isDuration = displayOccurrence.timeMode === 'duration'
+  const isWindow = displayOccurrence.timeMode === 'window'
+  const sessionPath = `/calendar/events/${displayOccurrence.id}/sessions/${displayOccurrence.occurrenceDate}`
 
   return (
     <div className="flex flex-col">
       {!isPanel ? (
         <div className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
           <div className="min-w-0 space-y-0.5">
-            <p className="truncate text-sm font-medium text-foreground">{occurrence.serviceName}</p>
+            <p className="truncate text-sm font-medium text-foreground">{displayOccurrence.serviceName}</p>
             <p className="text-xs text-muted-foreground">
-              {t('session.subtitle', { serviceName: occurrence.serviceName })}
+              {t('session.subtitle', { serviceName: displayOccurrence.serviceName })}
             </p>
           </div>
           <Button
@@ -112,14 +122,14 @@ export function ScheduleEventDetailPopover({
       ) : null}
 
       <div className={cn('space-y-4', isPanel ? 'py-0' : 'px-3 py-3')}>
-        {occurrence.sessionIssue === 'staff_leave' ? (
+        {displayOccurrence.sessionIssue === 'staff_leave' ? (
           <Alert variant="destructive">
             <AlertDescription>
               {t('schedule.issue.staffLeaveDetail', { name: staffName })}
             </AlertDescription>
           </Alert>
         ) : null}
-        {occurrence.sessionIssue === 'cancelled' ? (
+        {displayOccurrence.sessionIssue === 'cancelled' ? (
           <Alert variant="destructive">
             <AlertDescription>{t('schedule.issue.cancelledDetail')}</AlertDescription>
           </Alert>
@@ -128,15 +138,15 @@ export function ScheduleEventDetailPopover({
         <div className="grid grid-cols-2 gap-3">
           <DetailField
             label={t('schedule.eventPreview.date')}
-            value={formatCalendarYmd(occurrence.occurrenceDate, i18n.language)}
+            value={formatCalendarYmd(displayOccurrence.occurrenceDate, i18n.language)}
           />
           <DetailField
             label={t('schedule.eventPreview.weekday')}
-            value={weekdayLabel(occurrence.occurrenceDate)}
+            value={weekdayLabel(displayOccurrence.occurrenceDate)}
           />
           <DetailField
             label={t('schedule.eventPreview.time')}
-            value={`${occurrence.startTime}–${occurrence.endTime}`}
+            value={`${displayOccurrence.startTime}–${displayOccurrence.endTime}`}
           />
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">
@@ -145,20 +155,20 @@ export function ScheduleEventDetailPopover({
             <div className="flex flex-wrap gap-2">
               <StatusTag
                 variant={
-                  occurrence.sessionIssue ? 'rejected' : RUN_STATUS_VARIANT[runStatus]
+                  displayOccurrence.sessionIssue ? 'rejected' : RUN_STATUS_VARIANT[runStatus]
                 }
               >
-                {occurrence.sessionIssue === 'staff_leave'
+                {displayOccurrence.sessionIssue === 'staff_leave'
                   ? t('schedule.issue.staffLeaveShort')
-                  : occurrence.sessionIssue === 'cancelled'
+                  : displayOccurrence.sessionIssue === 'cancelled'
                     ? t('schedule.issue.cancelledShort')
                     : t(`sessionStatus.${runStatus}`)}
               </StatusTag>
-              {occurrence.viewerCheckedIn === true ? (
+              {displayOccurrence.viewerCheckedIn === true ? (
                 <StatusTag variant="verified">
                   {t('session.tokenStatus.checkedIn')}
                 </StatusTag>
-              ) : occurrence.viewerCheckedIn === false ? (
+              ) : displayOccurrence.viewerCheckedIn === false ? (
                 <StatusTag variant="pending">
                   {t('session.tokenStatus.notCheckedIn')}
                 </StatusTag>
@@ -168,33 +178,33 @@ export function ScheduleEventDetailPopover({
         </div>
 
         <SessionScheduleChangeMeta
-          scheduleChanged={occurrence.scheduleChanged}
-          scheduleChangeKind={occurrence.scheduleChangeKind}
-          originalStartTime={occurrence.originalStartTime}
-          originalEndTime={occurrence.originalEndTime}
+          scheduleChanged={displayOccurrence.scheduleChanged}
+          scheduleChangeKind={displayOccurrence.scheduleChangeKind}
+          originalStartTime={displayOccurrence.originalStartTime}
+          originalEndTime={displayOccurrence.originalEndTime}
         />
 
         <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
           <DetailFieldWithImage
             label={t('schedule.eventPreview.service')}
-            value={occurrence.serviceName}
-            imageUrl={occurrence.serviceImageUrl}
-            imageAlt={occurrence.serviceName}
+            value={displayOccurrence.serviceName}
+            imageUrl={displayOccurrence.serviceImageUrl}
+            imageAlt={displayOccurrence.serviceName}
           />
           <DetailField
             label={t('schedule.eventPreview.timeMode')}
-            value={formatTimeModeLabel(occurrence.timeMode)}
+            value={formatTimeModeLabel(displayOccurrence.timeMode)}
           />
           <DetailFieldWithImage
             label={t('schedule.eventPreview.staff')}
             value={staffName}
-            imageUrl={occurrence.staffImageUrl}
+            imageUrl={displayOccurrence.staffImageUrl}
             imageAlt={staffName}
           />
           {isWindow ? (
             <DetailField
               label={t('schedule.eventPreview.space')}
-              value={occurrence.spaceName ?? '—'}
+              value={displayOccurrence.spaceName ?? '—'}
             />
           ) : null}
         </div>
@@ -202,13 +212,13 @@ export function ScheduleEventDetailPopover({
           <div className="grid grid-cols-2 gap-3">
             <DetailFieldWithImage
               label={t('schedule.eventPreview.attendee')}
-              value={occurrence.attendeeDisplayName ?? '—'}
-              imageUrl={occurrence.attendeeImageUrl}
-              imageAlt={occurrence.attendeeDisplayName ?? t('schedule.eventPreview.attendee')}
+              value={displayOccurrence.attendeeDisplayName ?? '—'}
+              imageUrl={displayOccurrence.attendeeImageUrl}
+              imageAlt={displayOccurrence.attendeeDisplayName ?? t('schedule.eventPreview.attendee')}
             />
             <DetailField
               label={t('schedule.eventPreview.email')}
-              value={occurrence.attendeeEmail ?? '—'}
+              value={displayOccurrence.attendeeEmail ?? '—'}
             />
           </div>
         ) : null}

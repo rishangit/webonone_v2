@@ -38,13 +38,11 @@ async function notifyAppointmentBookedAsync(
   const companyName = company?.name?.trim() || 'Company'
 
   const contact = await fetchUserContact(event.attendeeUserId)
-  const toEmail =
-    event.attendeeEmail?.trim() || contact?.email?.trim() || null
+  const toEmail = contact?.email?.trim() || event.attendeeEmail?.trim() || null
   const toPhone = contact?.phoneNumber?.trim() || null
 
   const payload: Record<string, string> = {
-    userName:
-      event.attendeeDisplayName?.trim() || contact?.displayName || 'Customer',
+    userName: contact?.displayName?.trim() || event.attendeeDisplayName?.trim() || 'Customer',
     companyName,
     serviceName: event.serviceName,
     staffName: event.staffDisplayName || 'Staff',

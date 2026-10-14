@@ -9,6 +9,7 @@ import {
   ItemListMenu,
   ItemListMenuItem,
   ItemListMenuSeparator,
+  PriceDisplay,
   StatusTag,
   itemListThumbClassName,
 } from '@webonone/mobile-ui'
@@ -16,7 +17,6 @@ import type { InvoiceListItem, InvoiceStatus } from '@/features/payment/types/pa
 import {
   formatInvoiceDate,
   formatInvoicePeriod,
-  formatLkr,
 } from '@/features/payment/utils/formatInvoiceMoney'
 import { invoiceStatusLabel, invoiceStatusVariant } from '@/features/payment/utils/invoiceStatus'
 
@@ -52,18 +52,27 @@ export function InvoicesList({
       {items.map((invoice) => {
         const companyName = invoice.companyName?.trim() || 'Unknown company'
         const subtitle = `${invoice.invoiceNumber} · Ref ${invoice.paymentReference}`
-        const meta = `${formatInvoicePeriod(invoice.periodStart, invoice.periodEnd)} · ${formatLkr(invoice.amountMinor)} · Due ${formatInvoiceDate(invoice.dueAt)}`
+        const meta = `${formatInvoicePeriod(invoice.periodStart, invoice.periodEnd)} · Due ${formatInvoiceDate(invoice.dueAt)}`
 
         return (
           <ItemListItem key={invoice.id}>
             <Pressable className="min-w-0 flex-1 flex-row items-start gap-3" onPress={() => onOpen(invoice.id)}>
               <ImagePreview src={invoice.companyLogoUrl} alt={companyName} className={itemListThumbClassName} />
-              <View className="min-w-0 flex-1 gap-1">
-                <ItemListContent title={companyName} subtitle={subtitle} />
-                <Body className="text-sm text-muted">{meta}</Body>
-                <StatusTag variant={invoiceStatusVariant(invoice.status)}>
-                  {invoiceStatusLabel(invoice.status)}
-                </StatusTag>
+              <View className="min-w-0 flex-1 flex-row items-stretch gap-2">
+                <View className="min-w-0 flex-1 gap-1">
+                  <ItemListContent title={companyName} subtitle={subtitle} />
+                  <Body className="text-sm text-muted">{meta}</Body>
+                  <StatusTag variant={invoiceStatusVariant(invoice.status)}>
+                    {invoiceStatusLabel(invoice.status)}
+                  </StatusTag>
+                </View>
+                <PriceDisplay
+                  value={invoice.amountMinor}
+                  currency={invoice.currency}
+                  minorUnits
+                  size="sm"
+                  className="mt-auto"
+                />
               </View>
             </Pressable>
             <ItemListMenu ariaLabel={`Actions for ${companyName}`}>

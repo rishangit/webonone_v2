@@ -26,6 +26,7 @@ import {
   type StatusTagVariant,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import { IssueTokenDialog } from '@/features/calendar/components/IssueTokenDialog'
 import { ChangeSessionDialog } from '@/features/calendar/components/ChangeSessionDialog'
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
@@ -137,10 +138,19 @@ export function SessionDetailsPage() {
   const { openPeerDialog } = usePlatformPeerDialog()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
-  const currentUserId = useAppSelector((s) => s.auth.user?.id ?? null)
+  const sessionUser = useAppSelector((s) => s.auth.user)
+  const currentUserId = sessionUser?.id ?? null
   const assumableRoles = useAppSelector((s) => s.sessionRole.assumableRoles)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const detail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
+  const rawDetail = useAppSelector((s) => s.events.detail) as CompanyEvent | null
+  const detail = rawDetail
+    ? overlayIdentityFromSessionUser(rawDetail, sessionUser, {
+        userId: 'attendeeUserId',
+        displayName: 'attendeeDisplayName',
+        email: 'attendeeEmail',
+        avatarUrl: 'attendeeImageUrl',
+      })
+    : null
   const detailStatus = useAppSelector((s) => s.events.detailStatus)
   const detailError = useAppSelector((s) => s.events.detailError)
   const tokens = useAppSelector((s) => s.sessionTokens.items)

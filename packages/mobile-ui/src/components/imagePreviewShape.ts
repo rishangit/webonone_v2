@@ -1,7 +1,31 @@
 import type { ImageStyle, ViewStyle } from 'react-native'
 
+/** Matches web `ui-shape-image-flush` — list/card thumbs without a separate image border. */
+export const imagePreviewFlushClassName = 'image-preview-flush'
+
 /** Matches web `ui-shape-image` (classic theme `border-radius: var(--radius)`). */
 export type ImagePreviewShape = 'image' | 'circle' | 'md' | 'sm'
+
+const LIST_THUMB_HEIGHT_PATTERN = /\bh-(8|10|14|16|20|24|28)\b/
+
+/** Overview / detail gallery heroes (product, service, company catalog). */
+const GALLERY_HERO_HEIGHT_PATTERN = /\bh-(32|40|48|56|64)\b/
+
+export const imagePreviewGalleryClassName = `${imagePreviewFlushClassName} h-48 w-full rounded-lg`
+
+export const imagePreviewGalleryThumbClassName = `${imagePreviewFlushClassName} h-28 w-28 rounded-lg`
+
+export const imagePreviewOverviewThumbClassName = `${imagePreviewFlushClassName} h-20 w-20 rounded-lg`
+
+export function imagePreviewIsFlush(className?: string, flush?: boolean): boolean {
+  if (flush) return true
+  if (!className) return false
+  if (className.includes(imagePreviewFlushClassName)) return true
+  if (LIST_THUMB_HEIGHT_PATTERN.test(className)) return true
+  if (GALLERY_HERO_HEIGHT_PATTERN.test(className)) return true
+  if (/\bw-full\b/.test(className)) return true
+  return false
+}
 
 const SHAPE_CLASS: Record<ImagePreviewShape, string> = {
   image: 'rounded-lg',

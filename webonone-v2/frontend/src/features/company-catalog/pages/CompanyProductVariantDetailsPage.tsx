@@ -10,7 +10,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EditableSectionCard,
   FeaturePage,
+  ReadOnlyField,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -22,7 +24,6 @@ import { CompanyProductVariantSummaryCard } from '@/features/company-catalog/com
 import { useLibraryProductVariantStocks } from '@/features/company-catalog/hooks/useLibraryProductVariantStocks'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { EditableSectionCard } from '../components/EditableSectionCard'
 import { companyCatalogApi } from '../services/companyCatalogApi'
 import {
   dataLibraryApi,
@@ -30,15 +31,6 @@ import {
   type LibraryProductVariant,
 } from '../services/dataLibraryApi'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
-}
 
 export function CompanyProductVariantDetailsPage() {
   const { t, i18n } = useTranslation('catalog')
@@ -91,7 +83,7 @@ export function CompanyProductVariantDetailsPage() {
 
   usePlatformLoading(loading && !variant ? t('variantDetail.loading') : null)
 
-  const stocksQuery = useLibraryProductVariantStocks(libraryProductId ?? undefined, variantId)
+  const stocksQuery = useLibraryProductVariantStocks(productId, variantId)
 
   async function handleDelete() {
     if (!libraryProductId || !variantId || !variant || variant.isDefault) return
@@ -120,7 +112,7 @@ export function CompanyProductVariantDetailsPage() {
       backLabel={tc('back')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          {variant && libraryProductId ? (
+          {variant ? (
             <Button
               type="button"
               variant="outline"
@@ -129,13 +121,13 @@ export function CompanyProductVariantDetailsPage() {
                 requestEntityPaste({
                   entities: [
                     {
-                      service: 'data',
+                      service: 'webonone',
                       kind: 'product',
-                      id: libraryProductId,
+                      id: productId,
                       label: productName || variant.name,
                     },
                   ],
-                  composerText: `Focus on variant "${variant.name}" (variantId: ${variantId}). List existing stocks with list_data_product_variant_stocks, then suggest or create stock batches with create_data_product_variant_stock when asked.`,
+                  composerText: `Focus on variant "${variant.name}" (variantId: ${variantId}). List existing stocks with list_company_product_variant_stocks, then suggest or create stock batches with create_company_product_variant_stock when asked.`,
                 })
                 toast({ title: t('attributesTab.copyToAiSuccess') })
               }}
@@ -174,7 +166,6 @@ export function CompanyProductVariantDetailsPage() {
             />
 
             <CompanyProductVariantStocksCard
-              libraryProductId={libraryProductId}
               variantId={variantId}
               companyProductId={productId}
               items={stocksQuery.items}

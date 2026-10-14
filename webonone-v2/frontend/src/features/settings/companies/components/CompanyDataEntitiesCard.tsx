@@ -8,13 +8,13 @@ import {
 import {
   Button,
   Checkbox,
+  EditableSectionCard,
   Label,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
 import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
-import { EditableSectionCard } from './EditableSectionCard'
 
 type CompanyDataEntitiesCardProps = {
   companyId: string

@@ -11,7 +11,9 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  EditableSectionCard,
   ImageCarousel,
+  ReadOnlyField,
   TagChip,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -25,13 +27,13 @@ import {
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/CatalogLibraryDetailPageMenu'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
+import { ServiceDetailOfferCard } from '@/features/services/components/ServiceDetailOfferCard'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
 import { ServiceSpacesTab } from '@/features/services/components/ServiceSpacesTab'
 import { servicesActions } from '@/features/services/store'
 import type { ServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
+import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
-import type { CatalogItem } from '@/shared/types/data.types'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
@@ -40,42 +42,6 @@ const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
   'attributes',
   'spaces',
 ]
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
-}
-
-function ServiceTimeContent({ service }: { service: CatalogItem }) {
-  const { t } = useTranslation('services')
-  const mode = service.timeMode
-  return (
-    <>
-      <ReadOnlyField
-        label={t('timeMode')}
-        value={mode === 'window' ? t('timeModeWindow') : mode === 'duration' ? t('timeModeDuration') : t('noDescription')}
-      />
-      {mode === 'duration' ? (
-        <ReadOnlyField
-          label={t('duration')}
-          value={
-            service.durationMinutes != null ? t('durationValue', { count: service.durationMinutes }) : t('noDescription')
-          }
-        />
-      ) : null}
-      {mode === 'window' ? (
-        <>
-          <ReadOnlyField label={t('startTime')} value={service.startTime ?? t('noDescription')} />
-          <ReadOnlyField label={t('endTime')} value={service.endTime ?? t('noDescription')} />
-        </>
-      ) : null}
-    </>
-  )
-}
 
 export function ServiceDetailsPage() {
   const { t } = useTranslation('services')
@@ -120,7 +86,7 @@ export function ServiceDetailsPage() {
         <EditableSectionCard
           title={t('singular')}
           description={t('sectionDescription')}
-          status={service.status}
+          headerTrailing={<StatusBadge status={service.status} />}
           canEdit={canEdit}
           onEdit={() => openWizard(1)}
         >
@@ -138,14 +104,14 @@ export function ServiceDetailsPage() {
       </div>
 
       <div className="flex flex-col gap-6 lg:col-span-1">
-        <EditableSectionCard
-          title={t('time')}
-          description={t('timeDescription')}
+        <ServiceDetailOfferCard
+          service={service}
+          serviceId={id}
           canEdit={canEdit}
-          onEdit={() => openWizard(2)}
-        >
-          <ServiceTimeContent service={service} />
-        </EditableSectionCard>
+          overviewActive={tab === 'overview'}
+          onEdit={() => openWizard(1)}
+          onManageSpaces={() => setTab('spaces')}
+        />
 
         <EditableSectionCard
           title={t('tags')}

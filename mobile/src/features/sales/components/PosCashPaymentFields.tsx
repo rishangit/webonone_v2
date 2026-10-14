@@ -1,5 +1,5 @@
-import { Body, TextField } from '@webonone/mobile-ui'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
+import { Body, PriceDisplay, TextField } from '@webonone/mobile-ui'
+import { View } from 'react-native'
 
 type PosCashPaymentFieldsProps = {
   total: number
@@ -31,9 +31,16 @@ export function PosCashPaymentFields({
         keyboardType="decimal-pad"
         accessibilityLabel="Cash received"
       />
-      <Body className={insufficient ? 'text-sm font-medium text-destructive' : 'text-sm font-medium'}>
-        Balance {formatLkr(balance ?? 0)}
-      </Body>
+      <View className="flex-row items-baseline gap-2">
+        <Body className={insufficient ? 'text-sm font-medium text-destructive' : 'text-sm font-medium'}>
+          Balance
+        </Body>
+        <PriceDisplay
+          value={balance ?? 0}
+          size="sm"
+          className={insufficient ? 'text-destructive' : undefined}
+        />
+      </View>
     </>
   )
 }

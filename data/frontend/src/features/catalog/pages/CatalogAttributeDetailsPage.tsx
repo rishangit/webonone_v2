@@ -11,7 +11,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EditableSectionCard,
   FeaturePage,
+  ReadOnlyField,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -22,20 +24,10 @@ import {
   type CatalogEntityKind,
 } from '@/features/catalog/utils/catalogAttributeApi'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import type { CatalogAttributeValue, CatalogAttributeValueEntry, CatalogItem } from '@/shared/types/data.types'
 
 type CatalogAttributeDetailsPageProps = {
   kind: CatalogEntityKind
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
 }
 
 function resolveEntityId(kind: CatalogEntityKind, params: Record<string, string | undefined>) {

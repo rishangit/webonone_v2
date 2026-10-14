@@ -9,7 +9,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EditableSectionCard,
   FeaturePage,
+  ReadOnlyField,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
@@ -17,17 +19,8 @@ import { AttributeFormDialog } from '@/features/attributes/components/AttributeF
 import { CopyToAiButton } from '@/features/shell/components/CopyToAiButton'
 import { attributesActions } from '@/features/attributes/store'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
+import { StatusBadge } from '@/shared/components/StatusBadge'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
-
-function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="text-sm">{value}</div>
-    </div>
-  )
-}
 
 export function AttributeDetailsPage() {
   const { t } = useTranslation('attributes')
@@ -78,7 +71,7 @@ export function AttributeDetailsPage() {
             <EditableSectionCard
               title={t('singular')}
               description={t('sectionDescription')}
-              status={attribute.status}
+              headerTrailing={<StatusBadge status={attribute.status} />}
               canEdit={canEdit}
               onEdit={() => setEditOpen(true)}
             >

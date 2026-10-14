@@ -205,66 +205,6 @@ export const dataLibraryApi = {
     return client<void>(`/products/${productId}/variants/${variantId}`, { method: 'DELETE' })
   },
 
-  listProductVariantStocks(productId: string, variantId: string) {
-    return client<{ items: LibraryProductVariantStock[] }>(
-      `/products/${productId}/variants/${variantId}/stocks`,
-    )
-  },
-
-  suggestStockBatchNumber() {
-    return client<{ batchNumber: string }>('/stocks/suggested-batch-number')
-  },
-
-  createProductVariantStock(
-    productId: string,
-    variantId: string,
-    body: {
-      quantity: number
-      batch_number: string
-      cost_price: number
-      sell_price: number
-      purchase_date: string
-      expired_date?: string | null
-      supplier_user_id?: string | null
-      supplier_display_name?: string | null
-      supplier_email?: string | null
-    },
-  ) {
-    return client<LibraryProductVariantStock>(
-      `/products/${productId}/variants/${variantId}/stocks`,
-      { method: 'POST', body },
-    )
-  },
-
-  updateProductVariantStock(
-    productId: string,
-    variantId: string,
-    stockId: string,
-    body: {
-      quantity: number
-      batch_number: string
-      cost_price: number
-      sell_price: number
-      purchase_date: string
-      expired_date?: string | null
-      supplier_user_id?: string | null
-      supplier_display_name?: string | null
-      supplier_email?: string | null
-    },
-  ) {
-    return client<LibraryProductVariantStock>(
-      `/products/${productId}/variants/${variantId}/stocks/${stockId}`,
-      { method: 'PATCH', body },
-    )
-  },
-
-  setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
-    return client<LibraryProductVariantStock>(
-      `/products/${productId}/variants/${variantId}/stocks/${stockId}/active`,
-      { method: 'PATCH' },
-    )
-  },
-
   createProduct(body: Record<string, unknown>) {
     return client<LibraryListItem>('/products', { method: 'POST', body })
   },

@@ -28,11 +28,18 @@ router.get(
   publicCatalogSearchController.listServiceSessions,
 )
 
-/** Public catalog reviews for website BFF (resolves company id from marketplace row → Data API). */
+/** Public catalog reviews for website BFF (company-owned rows in webonone_v2). */
 router.get(
   '/internal/catalog/:kind/:id/reviews',
   requireInternalAuth,
   publicCatalogSearchController.listCatalogReviews,
+)
+
+/** Product variant, stock, and price for public website detail (BFF). */
+router.get(
+  '/internal/catalog/products/:id/variant-offer',
+  requireInternalAuth,
+  publicCatalogSearchController.getProductVariantOffer,
 )
 
 /** Service-key marketplace detail for website BFF. */

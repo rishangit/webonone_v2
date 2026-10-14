@@ -17,7 +17,9 @@ import type {
   SessionRunStatus,
 } from '@/features/calendar/types/event.types'
 import { SessionScheduleChangeMeta } from '@/features/calendar/components/SessionScheduleChangeMeta'
+import { useAppSelector } from '@/app/store/hooks'
 import { formatCalendarYmd } from '@/shared/utils/formatLocaleDate'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type DashboardEventListProps = {
   items: CompanyEventOccurrence[]
@@ -52,6 +54,7 @@ export function DashboardEventList({
 }: DashboardEventListProps) {
   const { t, i18n } = useTranslation('home')
   const { t: tCalendar } = useTranslation('calendar')
+  const sessionUser = useAppSelector((s) => s.auth.user)
   const navigate = useNavigate()
   const [now, setNow] = useState(() => new Date())
 
@@ -70,7 +73,13 @@ export function DashboardEventList({
 
   return (
     <ItemList className="py-0">
-      {items.map((item) => {
+      {items.map((raw) => {
+        const item = overlayIdentityFromSessionUser(raw, sessionUser, {
+          userId: 'attendeeUserId',
+          displayName: 'attendeeDisplayName',
+          email: 'attendeeEmail',
+          avatarUrl: 'attendeeImageUrl',
+        })
         const time = `${item.startTime}–${item.endTime}`
         const when = showDate
           ? `${formatCalendarYmd(item.occurrenceDate, i18n.language)} · ${time}`

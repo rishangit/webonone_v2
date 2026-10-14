@@ -7,10 +7,8 @@ import {
 } from '../controllers/catalog.controller.js'
 import { productVariantsController } from '../controllers/productVariants.controller.js'
 import { serviceSpacesController } from '../controllers/serviceSpaces.controller.js'
-import { stocksController } from '../controllers/stocks.controller.js'
 import {
   requireAuth,
-  requireCompanyAdmin,
   requireCompanyAdminOrSuperAdmin,
   requireSuperAdmin,
 } from '../middleware/auth.js'
@@ -25,7 +23,6 @@ import {
 } from '../schemas/catalog.schema.js'
 import { createProductVariantBodySchema } from '../schemas/productVariants.schema.js'
 import { createServiceBodySchema, updateServiceBodySchema } from '../schemas/services.schema.js'
-import { createStockBodySchema, updateStockBodySchema } from '../schemas/stocks.schema.js'
 
 function catalogRoutes(
   path: string,
@@ -130,43 +127,6 @@ router.delete(
   requireAuth,
   requireCompanyAdminOrSuperAdmin,
   productVariantsController.remove,
-)
-
-router.get(
-  '/stocks/suggested-batch-number',
-  requireAuth,
-  requireCompanyAdmin,
-  stocksController.suggestBatchNumber,
-)
-router.get(
-  '/products/:id/variants/:variantId/stocks',
-  requireAuth,
-  stocksController.list,
-)
-router.post(
-  '/products/:id/variants/:variantId/stocks',
-  requireAuth,
-  requireCompanyAdmin,
-  validateBody(createStockBodySchema),
-  stocksController.create,
-)
-router.get(
-  '/products/:id/variants/:variantId/stocks/:stockId',
-  requireAuth,
-  stocksController.get,
-)
-router.patch(
-  '/products/:id/variants/:variantId/stocks/:stockId',
-  requireAuth,
-  requireCompanyAdmin,
-  validateBody(updateStockBodySchema),
-  stocksController.update,
-)
-router.patch(
-  '/products/:id/variants/:variantId/stocks/:stockId/active',
-  requireAuth,
-  requireCompanyAdmin,
-  stocksController.setActive,
 )
 
 router.get('/services/:id/spaces', requireAuth, serviceSpacesController.list)

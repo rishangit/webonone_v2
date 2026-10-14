@@ -11,6 +11,7 @@ import {
   CustomDialog,
   FeatureScreen,
   Muted,
+  PriceDisplay,
   ReadOnlyField,
   Spinner,
   StatusTag,
@@ -21,8 +22,9 @@ import { useSession } from '@/features/auth/SessionContext'
 import { salesApi } from '@/features/sales/services/salesApi'
 import type { Sale } from '@/features/sales/types/sales.types'
 import { canAccessCompanySession } from '@/features/sales/utils/canAccessCompanySession'
-import { formatLkr, formatSaleWhen } from '@/features/sales/utils/formatMoney'
+import { formatSaleWhen } from '@/features/sales/utils/formatMoney'
 import { SALES_HISTORY_PATH } from '@/features/sales/utils/salePaths'
+import { overlaySaleCustomerFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 const KIND_LABEL: Record<string, string> = {
   product: 'Product',
@@ -113,6 +115,8 @@ export function SaleBillScreen({ saleId }: SaleBillScreenProps) {
     )
   }
 
+  const bill = overlaySaleCustomerFromSessionUser(sale, user)
+
   return (
     <FeatureScreen
       title={t('bill.title')}
@@ -142,20 +146,23 @@ export function SaleBillScreen({ saleId }: SaleBillScreenProps) {
                   <Muted className="text-xs">{KIND_LABEL[line.itemKind] ?? line.itemKind}</Muted>
                 </View>
                 <Muted className="w-12 text-xs">×{line.quantity}</Muted>
-                <Muted className="w-24 text-xs">{formatLkr(line.unitPrice, sale.currency)}</Muted>
-                <Body className="w-24 text-sm font-medium">{formatLkr(line.lineTotal, sale.currency)}</Body>
+                <PriceDisplay value={line.unitPrice} currency={sale.currency} size="sm" className="w-24" />
+                <PriceDisplay value={line.lineTotal} currency={sale.currency} size="sm" className="w-24" />
               </View>
             ))}
           </View>
         </ScrollView>
-        <Body className="text-lg font-semibold">Total {formatLkr(sale.total, sale.currency)}</Body>
+        <View className="flex-row items-baseline justify-end gap-2">
+          <Body className="text-lg font-semibold">Total</Body>
+          <PriceDisplay value={sale.total} currency={sale.currency} size="lg" />
+        </View>
       </Card>
 
       <Card className="gap-3">
         <Subheading>Bill details</Subheading>
         <ReadOnlyField label="Bill number" value={sale.billNumber ?? 'Draft'} />
-        <ReadOnlyField label="Customer" value={sale.customerDisplayName} />
-        {sale.customerEmail ? <ReadOnlyField label="Email" value={sale.customerEmail} /> : null}
+        <ReadOnlyField label="Customer" value={bill.customerDisplayName} />
+        {bill.customerEmail ? <ReadOnlyField label="Email" value={bill.customerEmail} /> : null}
         <ReadOnlyField
           label="Payment"
           value={sale.paymentMethod ? PAYMENT_LABEL[sale.paymentMethod] ?? sale.paymentMethod : '—'}

@@ -24,6 +24,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  PriceDisplay,
   UserSelectionDialog,
   useToast,
 } from '@webonone/ui-kit'
@@ -44,7 +45,6 @@ import { useNestedDialogDismissBuffer } from '@/features/sales/hooks/useNestedDi
 import { createSaleBodySchema } from '@/features/sales/schemas/salesSchemas'
 import { salesActions } from '@/features/sales/store'
 import type { PosCartLine, SalePaymentMethod } from '@/features/sales/types/sales.types'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import { findPosCartStockViolation, posCartLinesToSaleLines } from '@/features/sales/utils/posCartSaleLines'
 import { resolvePosEnabledKinds } from '@/features/sales/utils/posEnabledKinds'
 
@@ -309,7 +309,10 @@ export function PosPage() {
                   inputId="pos-cash-received"
                 />
               ) : null}
-              <p className="text-lg font-semibold">{t('pos.total', { amount: formatLkr(total) })}</p>
+              <p className="flex items-baseline gap-2 text-lg font-semibold">
+                <span>{t('pos.total')}</span>
+                <PriceDisplay value={total} size="lg" />
+              </p>
               <Button type="button" className="w-full" disabled={saving} onClick={handleComplete}>
                 {t('pos.complete')}
               </Button>

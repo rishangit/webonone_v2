@@ -8,6 +8,7 @@ import type {
   CompanyCatalogItem,
   ServiceWorkflowItem,
 } from '@/features/sales/types/catalog.types'
+import type { LibraryProductVariantStock } from '@/features/sales/services/dataLibraryApi'
 
 const client = createApiClient(env.webononeApiBaseUrl)
 
@@ -106,6 +107,62 @@ export const companyCatalogApi = {
       method: 'PATCH',
       body: JSON.stringify({ listPrice }),
     })
+  },
+
+  suggestStockBatchNumber() {
+    return client<{ batchNumber: string }>('/company/me/catalog/stocks/suggested-batch-number')
+  },
+
+  listProductVariantStocks(productId: string, variantId: string) {
+    return client<{ items: LibraryProductVariantStock[] }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks`,
+    )
+  },
+
+  createProductVariantStock(
+    productId: string,
+    variantId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id?: string | null
+    },
+  ) {
+    return client<LibraryProductVariantStock>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks`,
+      { method: 'POST', body },
+    )
+  },
+
+  updateProductVariantStock(
+    productId: string,
+    variantId: string,
+    stockId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id?: string | null
+    },
+  ) {
+    return client<LibraryProductVariantStock>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks/${encodeURIComponent(stockId)}`,
+      { method: 'PATCH', body },
+    )
+  },
+
+  setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
+    return client<LibraryProductVariantStock>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks/${encodeURIComponent(stockId)}/active`,
+      { method: 'PATCH' },
+    )
   },
 
   listServiceWorkflow(serviceId: string) {

@@ -1,20 +1,12 @@
 import {
+  EditableSectionCard,
   ImagePreview,
   isStatusTagVariant,
+  ReadOnlyField,
   StatusTag,
 } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
-import { EditableSectionCard } from './EditableSectionCard'
-
-function ReadOnlyField({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-sm">{value?.trim() ? value : '—'}</p>
-    </div>
-  )
-}
 
 type CompanyProfileCardProps = {
   detail: CompanyDetail

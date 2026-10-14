@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from 'react'
-import { CheckSquare, ChevronDown, CircleDot, Type, AlignLeft } from 'lucide-react'
+import { CheckSquare, ChevronDown, CircleDot, Paperclip, Type, AlignLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button, cn } from '@webonone/ui-kit'
 import type { FormFieldType } from '@/shared/types/design.types'
@@ -10,6 +10,7 @@ const TOOLS: { type: FormFieldType; labelKey: string; icon: typeof Type }[] = [
   { type: 'checkbox', labelKey: 'toolCheckbox', icon: CheckSquare },
   { type: 'radio', labelKey: 'toolRadio', icon: CircleDot },
   { type: 'select', labelKey: 'toolSelect', icon: ChevronDown },
+  { type: 'media', labelKey: 'toolMedia', icon: Paperclip },
 ]
 
 const TOOL_ICON_CLASS = 'h-4 w-4 shrink-0'

@@ -40,6 +40,7 @@
   "issuedLabel": "Issued",
   "due": "Due",
   "paidLabel": "Paid",
+  "columnReference": "Reference",
   "referenceTitle": "Invoice reference number",
   "referenceHint": "Include this reference in the transfer description so payment can be matched to this invoice.",
   "referenceCopied": "Reference copied",

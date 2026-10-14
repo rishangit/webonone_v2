@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
+import { EditableSectionCard } from '@webonone/ui-kit'
 import type { CompanyDetail } from '@/features/settings/basic/services/companyApi'
 import { CompanyMapPicker } from './CompanyMapPicker'
-import { EditableSectionCard } from './EditableSectionCard'
 
 type CompanyLocationCardProps = {
   detail: CompanyDetail

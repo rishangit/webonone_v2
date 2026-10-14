@@ -17,8 +17,9 @@ export function resolveCompanyProductListUnitPrice(
   line: ProductPickerVariantStockLine | null,
   listPrice?: number | null,
 ): number | null {
+  if (!line || line.totalQuantity <= 0) return null
   if (listPrice != null) return listPrice
-  if (!line || line.sellPrice == null) return null
+  if (line.sellPrice == null) return null
   return line.sellPrice
 }
 

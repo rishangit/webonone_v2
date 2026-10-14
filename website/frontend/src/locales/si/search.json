@@ -25,6 +25,24 @@
   "reviewsNoOverall": "තවම සමාලෝචන නැත",
   "reviewsLoading": "සමාලෝචන පූරණය වෙමින්…",
   "reviewsRatingLabel": "ශ්‍රේණිගත කිරීම",
+  "reviewsReviewerFallbackLabel": "පාරිභෝගික",
+  "reviewsListRatingCount": "සමාලෝචන {{count}}",
+  "serviceOffer": {
+    "title": "මිල, කාලය සහ ස්ථානය",
+    "description": "මිල, කාලසටහන සහ ඉදිරි සැසි සඳහා අවකාශ."
+  },
+  "productPricing": {
+    "title": "මිල සහ තොගය",
+    "description": "පවතින තොගය සහ මිල බැලීමට වariant තෝරන්න.",
+    "loading": "වariant පූරණය වෙමින්…",
+    "emptyVariants": "මෙම නිෂ්පාදනයට තවම වariant සකසා නැත.",
+    "libraryUnavailable": "තොග තොරතුරු තාවකාලිකව ලබා ගත නොහැක.",
+    "variant": "වariant",
+    "stock": "තොගය",
+    "price": "මිල",
+    "stockAvailable": "තොගයේ {{quantity}}",
+    "stockOut": "තොග නැත"
+  },
   "location": "ස්ථානය",
   "noMapPin": "සිතියම් පින් නැත",
   "noMapPinOffering": "මෙම දීමනාව සඳහා සිතියම් පින් එකක් නැත.",

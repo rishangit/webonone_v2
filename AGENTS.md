@@ -84,6 +84,8 @@ Company registration, memberships, platform roles, and super-admin approval are 
 | `npm run dev:website` | Website FE + BE |
 | `npm run mobile` | Mobile Expo app (not in root `dev`) |
 | `npm run mobile:web` | Mobile app via RN Web |
+| `npm run mobile:build:android` | EAS production Android App Bundle (Play Store) |
+| `npm run mobile:submit:android` | Submit latest EAS Android build to Play (internal track) |
 | `npm run dev:desktop` | Electron desktop shell (not in root `dev`) |
 | `npm run build:desktop` | Windows NSIS installer (`desktop/release/WebOnOne-Setup.exe`) |
 | `npm run build:platform-nav` | Build `@webonone/platform-nav` |

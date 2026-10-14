@@ -1,6 +1,5 @@
 import { View } from 'react-native'
 import {
-  Body,
   ImagePreview,
   ItemList,
   ItemListEmpty,
@@ -8,12 +7,12 @@ import {
   ItemListMenu,
   ItemListMenuItem,
   Muted,
+  PriceDisplay,
   Subheading,
   TextField,
   itemListThumbClassName,
 } from '@webonone/mobile-ui'
 import type { PosCartLine } from '@/features/sales/types/sales.types'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 
 const KIND_LABEL: Record<PosCartLine['itemKind'], string> = {
   product: 'Product',
@@ -67,9 +66,7 @@ export function PosCartList({ lines, onQuantityChange, onUnitPriceChange, onRemo
                   keyboardType="decimal-pad"
                 />
               </View>
-              <Body className="pb-2 text-sm font-semibold">
-                {formatLkr(line.quantity * line.unitPrice)}
-              </Body>
+              <PriceDisplay value={line.quantity * line.unitPrice} size="sm" className="pb-2" />
             </View>
           </View>
           <ItemListMenu ariaLabel={`Actions for ${line.name}`}>

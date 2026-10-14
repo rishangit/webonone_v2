@@ -17,7 +17,7 @@
     "balance": "Balance {{amount}}",
     "cashReceivedInsufficient": "Received amount must be at least the total",
     "notes": "Notes",
-    "total": "Total {{amount}}",
+    "total": "Total",
     "complete": "Complete sale",
     "completing": "Completing sale…",
     "completed": "Sale completed",
@@ -101,6 +101,8 @@
     "empty": "No sales yet.",
     "viewBill": "View bill",
     "columnBill": "Bill",
+    "columnCustomer": "Customer",
+    "columnPayment": "Payment",
     "columnTotal": "Total"
   },
   "bill": {
@@ -120,7 +122,7 @@
     "qty": "Qty",
     "unit": "Unit",
     "lineTotal": "Total",
-    "total": "Total {{amount}}",
+    "total": "Total",
     "customer": "Customer",
     "email": "Email",
     "payment": "Payment",

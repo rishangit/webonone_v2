@@ -10,7 +10,6 @@ import { eventsReducer, sessionTokensReducer, sessionCheckInsReducer } from '@/f
 import { homeDashboardReducer } from '@/features/home/store'
 import { analyticsReducer } from '@/features/analytics/store'
 import { setDataLibraryTokenGetter } from '@/features/company-catalog/services/dataLibraryApi'
-import { setReviewsTokenGetter } from '@/features/reviews/services/reviewsApi'
 import { systemThemeReducer } from '@/features/settings/system-theme/store/systemThemeSlice'
 import { aiSettingsReducer } from '@/features/settings/basic/store/aiSettingsSlice'
 import { pushBroadcastReducer } from '@/features/settings/basic/store/pushBroadcastSlice'
@@ -46,7 +45,6 @@ export const store = configureStore({
 
 initApiClient(store)
 setDataLibraryTokenGetter(() => store.getState().auth.accessToken)
-setReviewsTokenGetter(() => store.getState().auth.accessToken)
 let authRequiredHandled = false
 setAuthRequiredHandler(() => {
   if (authRequiredHandled) {

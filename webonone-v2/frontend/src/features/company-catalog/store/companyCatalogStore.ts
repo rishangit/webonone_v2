@@ -145,6 +145,17 @@ const companyCatalogSlice = createSlice({
       state.mutateStatus = 'saving'
       state.mutateError = null
     },
+    updateWebPublishRequested(
+      state,
+      _action: PayloadAction<{
+        kind: CatalogGalleryKind
+        id: string
+        webPublishStatus: 'draft' | 'published'
+      }>,
+    ) {
+      state.mutateStatus = 'saving'
+      state.mutateError = null
+    },
     deleteRequested(state, _action: PayloadAction<{ kind: CatalogEntityKind; id: string }>) {
       state.mutateStatus = 'saving'
       state.mutateError = null
@@ -338,6 +349,28 @@ const updatePricingEpic: CatalogEpic = (action$) =>
     }),
   )
 
+const updateWebPublishEpic: CatalogEpic = (action$) =>
+  action$.pipe(
+    ofType(companyCatalogActions.updateWebPublishRequested.type),
+    exhaustMap((action: ReturnType<typeof companyCatalogActions.updateWebPublishRequested>) => {
+      const { kind, id, webPublishStatus } = action.payload
+      return from(companyCatalogApi.updateWebPublish(kind, id, webPublishStatus)).pipe(
+        mergeMap((item) =>
+          from(hydrateOne(kind, item)).pipe(
+            mergeMap((hydrated) =>
+              of(
+                companyCatalogActions.mutateSucceeded(item),
+                companyCatalogActions.detailSucceeded(hydrated),
+                companyCatalogActions.listRequested({ kind }),
+              ),
+            ),
+          ),
+        ),
+        catchError((err: Error) => of(companyCatalogActions.mutateFailed(err.message))),
+      )
+    }),
+  )
+
 const deleteEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.deleteRequested.type),
@@ -364,5 +397,6 @@ export const companyCatalogEpics = combineEpics(
   updateEpic,
   updateGalleryEpic,
   updatePricingEpic,
+  updateWebPublishEpic,
   deleteEpic,
 )

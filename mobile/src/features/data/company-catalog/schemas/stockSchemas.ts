@@ -32,16 +32,6 @@ export const stockFormSchema = z
         message: 'Expired date must be on or after purchase date',
       })
     }
-
-    const hasSupplierId = Boolean(value.supplierUserId && value.supplierUserId !== '')
-    const hasSupplierName = Boolean(value.supplierDisplayName && value.supplierDisplayName !== '')
-    if (hasSupplierId !== hasSupplierName) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['supplierUserId'],
-        message: 'Supplier user and display name must both be provided',
-      })
-    }
   })
 
 export type StockFormValues = z.infer<typeof stockFormSchema>
@@ -115,8 +105,5 @@ export function toCreateStockPayload(values: StockFormValues) {
     purchase_date: values.purchaseDate,
     expired_date: values.expiredDate && values.expiredDate !== '' ? values.expiredDate : null,
     supplier_user_id: hasSupplier ? values.supplierUserId! : null,
-    supplier_display_name: hasSupplier ? values.supplierDisplayName! : null,
-    supplier_email:
-      hasSupplier && values.supplierEmail && values.supplierEmail !== '' ? values.supplierEmail : null,
   }
 }

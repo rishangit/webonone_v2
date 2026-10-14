@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CatalogReviewsDisplayCard } from '@webonone/ui-kit'
+import { CatalogReviewsDisplayCard, type CatalogReviewListItemData } from '@webonone/ui-kit'
 import { DISPLAY_DATE_OPTIONS, getIntlLocaleTag } from '@webonone/i18n'
 import { catalogApi } from '@/features/catalog/services/catalogApi'
 import type { CatalogKind } from '@/features/catalog/types/catalog.types'
@@ -16,9 +16,7 @@ export function CatalogPublicReviewsPanel({ kind, itemId, companyId }: CatalogPu
   const [loading, setLoading] = useState(true)
   const [averageRating, setAverageRating] = useState<number | null>(null)
   const [reviewCount, setReviewCount] = useState(0)
-  const [items, setItems] = useState<
-    { id: string; rating: number; comment: string | null; createdAtLabel?: string }[]
-  >([])
+  const [items, setItems] = useState<CatalogReviewListItemData[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -36,6 +34,8 @@ export function CatalogPublicReviewsPanel({ kind, itemId, companyId }: CatalogPu
             rating: row.rating,
             comment: row.comment,
             createdAtLabel: new Date(row.createdAt).toLocaleDateString(locale, DISPLAY_DATE_OPTIONS),
+            reviewerDisplayName: row.reviewerDisplayName,
+            reviewerAvatarUrl: row.reviewerAvatarUrl,
           })),
         )
       })
@@ -64,6 +64,7 @@ export function CatalogPublicReviewsPanel({ kind, itemId, companyId }: CatalogPu
       emptyLabel={t('reviewsEmpty')}
       loadingLabel={t('reviewsLoading')}
       ratingLabel={t('reviewsRatingLabel')}
+      reviewerFallbackLabel={t('reviewsReviewerFallbackLabel')}
       overallLabel={
         reviewCount > 0 && averageRating != null
           ? t('reviewsOverall', { average: averageRating.toFixed(1), count: reviewCount })

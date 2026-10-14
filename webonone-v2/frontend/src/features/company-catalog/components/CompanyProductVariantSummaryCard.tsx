@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { StatusTag, StockAvailabilityProgress } from '@webonone/ui-kit'
-import { EditableSectionCard } from '@/features/company-catalog/components/EditableSectionCard'
+import { EditableSectionCard, ReadOnlyField, StatusTag, StockAvailabilityProgress } from '@webonone/ui-kit'
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
 import type { LibraryProductVariant } from '@/features/company-catalog/services/dataLibraryApi'
 
@@ -9,15 +8,6 @@ type CompanyProductVariantSummaryCardProps = {
   companyProductId: string
   totalQuantity: number
   stocksLoading: boolean
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
 }
 
 export function CompanyProductVariantSummaryCard({
@@ -44,18 +34,21 @@ export function CompanyProductVariantSummaryCard({
         ) : null}
       </div>
       <ReadOnlyField label={t('variantDetail.variantCard.sku')} value={variant.sku} />
-      <div className="space-y-1.5 border-t border-border pt-4">
-        <p className="text-xs font-medium text-muted-foreground">{t('stocks.totalAvailability')}</p>
-        {stocksLoading ? (
-          <p className="text-sm text-muted-foreground">{t('stocks.loading')}</p>
-        ) : (
-          <StockAvailabilityProgress
-            quantity={totalQuantity}
-            maxQuantity={limits?.maxQuantity}
-            minQuantity={limits?.minQuantity}
-          />
-        )}
-      </div>
+      <ReadOnlyField
+        className="border-t border-border pt-4"
+        label={t('stocks.totalAvailability')}
+        value={
+          stocksLoading ? (
+            t('stocks.loading')
+          ) : (
+            <StockAvailabilityProgress
+              quantity={totalQuantity}
+              maxQuantity={limits?.maxQuantity}
+              minQuantity={limits?.minQuantity}
+            />
+          )
+        }
+      />
     </EditableSectionCard>
   )
 }

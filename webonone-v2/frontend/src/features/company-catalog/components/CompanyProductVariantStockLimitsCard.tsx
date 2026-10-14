@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, FormField, Input, useToast } from '@webonone/ui-kit'
-import { EditableSectionCard } from '@/features/company-catalog/components/EditableSectionCard'
+import { Button, EditableSectionCard, FormField, Input, ReadOnlyField, useToast } from '@webonone/ui-kit'
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
 import {
   formValuesToStockLimitsPayload,
@@ -15,15 +14,6 @@ type CompanyProductVariantStockLimitsCardProps = {
   companyProductId: string
   libraryVariantId: string
   canEdit: boolean
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm tabular-nums">{value}</p>
-    </div>
-  )
 }
 
 function formatLimitDisplay(value: number | null | undefined): string {
@@ -161,10 +151,12 @@ export function CompanyProductVariantStockLimitsCard({
           <ReadOnlyField
             label={t('variantDetail.stockLimits.min')}
             value={formatLimitDisplay(limits?.minQuantity)}
+            valueClassName="tabular-nums"
           />
           <ReadOnlyField
             label={t('variantDetail.stockLimits.max')}
             value={formatLimitDisplay(limits?.maxQuantity)}
+            valueClassName="tabular-nums"
           />
         </div>
       )}

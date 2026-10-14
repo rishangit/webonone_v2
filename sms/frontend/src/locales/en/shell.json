@@ -38,6 +38,7 @@
   "historySkipTemplateInactive": "Template was inactive for this company",
   "historyEmpty": "No send history for the selected filters.",
   "historyActionsFor": "History for {{name}}",
+  "historyColumnTemplate": "Template",
   "completingSignIn": "Completing sign in…",
   "backToSignIn": "Back to sign in",
   "loadingSession": "Loading session…"

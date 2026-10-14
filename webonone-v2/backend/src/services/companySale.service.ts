@@ -1,9 +1,14 @@
 import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
-import { fetchUserContact } from '../clients/identityUserContactClient.js'
+import {
+  fetchUserContactsByIds,
+  fetchUserContact,
+  resolveIdentityDisplay,
+} from '../clients/identityUserContactClient.js'
 import * as dataCatalog from '../clients/dataCatalogClient.js'
 import * as dataStockClient from '../clients/dataStockClient.js'
+import * as productStockService from './companyProductStock.service.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
 import * as companyRepo from '../repositories/company.repository.js'
 import * as saleRepo from '../repositories/companySale.repository.js'
@@ -87,7 +92,9 @@ export type SaleDto = {
   lines: SaleLineDto[]
 }
 
-export type SaleListItemDto = Omit<SaleDto, 'lines'>
+export type SaleListItemDto = Omit<SaleDto, 'lines'> & {
+  customerAvatarUrl: string | null
+}
 
 function toIso(value: Date | string): string {
   if (typeof value === 'string') {
@@ -103,8 +110,8 @@ function mapSale(row: saleRepo.CompanySaleRow, lines: saleRepo.CompanySaleLineRo
     companyId: row.company_id,
     billNumber: row.bill_number,
     customerUserId: row.customer_user_id,
-    customerDisplayName: row.customer_display_name,
-    customerEmail: row.customer_email,
+    customerDisplayName: 'Customer',
+    customerEmail: null,
     status: row.status,
     paymentMethod: row.payment_method,
     currency: row.currency,
@@ -134,7 +141,33 @@ function mapSale(row: saleRepo.CompanySaleRow, lines: saleRepo.CompanySaleLineRo
 
 function mapListItem(row: saleRepo.CompanySaleRow): SaleListItemDto {
   const { lines: _lines, ...rest } = mapSale(row)
-  return rest
+  return { ...rest, customerAvatarUrl: null }
+}
+
+async function hydrateSaleCustomer<T extends { customerUserId: string; customerDisplayName: string; customerEmail: string | null }>(
+  item: T,
+): Promise<T> {
+  const contact = await fetchUserContact(item.customerUserId)
+  const identity = resolveIdentityDisplay(contact, 'Customer')
+  return {
+    ...item,
+    customerDisplayName: identity.displayName,
+    customerEmail: identity.email,
+  }
+}
+
+async function enrichSaleListItems(items: SaleListItemDto[]): Promise<SaleListItemDto[]> {
+  if (items.length === 0) return items
+  const contacts = await fetchUserContactsByIds(items.map((item) => item.customerUserId))
+  return items.map((item) => {
+    const identity = resolveIdentityDisplay(contacts.get(item.customerUserId), 'Customer')
+    return {
+      ...item,
+      customerDisplayName: identity.displayName,
+      customerEmail: identity.email,
+      customerAvatarUrl: identity.avatarUrl,
+    }
+  })
 }
 
 async function resolveCatalogDisplayName(
@@ -188,19 +221,15 @@ async function resolveVariantNameSnapshot(
 }
 
 async function resolveProductUnitCost(
+  companyId: string,
   libraryEntityId: string | null,
   libraryVariantId: string | null,
   libraryStockId: string | null,
 ): Promise<number | null> {
   if (!libraryEntityId || !libraryVariantId || !libraryStockId) return null
-  if (!dataStockClient.hasDataStockConfig()) return null
   try {
-    const stock = await dataStockClient.getLibraryStock({
-      productId: libraryEntityId,
-      variantId: libraryVariantId,
-      stockId: libraryStockId,
-    })
-    if (!stock) return null
+    const stock = await productStockService.getCompanyStockById(companyId, libraryStockId)
+    if (!stock || stock.variantId !== libraryVariantId) return null
     return money(stock.costPrice)
   } catch {
     return null
@@ -211,20 +240,17 @@ async function consumeStockForPreparedLines(lines: PreparedSaleLine[]): Promise<
   for (const line of lines) {
     if (line.item_kind !== 'product') continue
     if (!line.library_entity_id || !line.library_variant_id || !line.library_stock_id) continue
-    if (!dataStockClient.hasDataStockConfig()) {
-      throw httpError('Stock service is not configured', 503)
-    }
     try {
-      await dataStockClient.consumeLibraryStock({
-        productId: line.library_entity_id,
-        variantId: line.library_variant_id,
+      await productStockService.consumeCompanyStock({
+        companyId: line.company_id,
+        libraryVariantId: line.library_variant_id,
         stockId: line.library_stock_id,
         quantity: line.quantity,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Stock consumption failed'
       const statusCode = (err as { statusCode?: number }).statusCode
-      throw httpError(message, statusCode === 400 ? 400 : 502)
+      throw httpError(message, statusCode === 400 || statusCode === 404 ? statusCode : 400)
     }
   }
 }
@@ -234,20 +260,17 @@ async function consumeStockForSaleLines(lines: saleRepo.CompanySaleLineRow[]): P
     if (line.item_kind !== 'product') continue
     if (!line.library_entity_id || !line.library_variant_id || !line.library_stock_id) continue
     const qty = catalogRepo.parseMoney(line.quantity) ?? 0
-    if (!dataStockClient.hasDataStockConfig()) {
-      throw httpError('Stock service is not configured', 503)
-    }
     try {
-      await dataStockClient.consumeLibraryStock({
-        productId: line.library_entity_id,
-        variantId: line.library_variant_id,
+      await productStockService.consumeCompanyStock({
+        companyId: line.company_id,
+        libraryVariantId: line.library_variant_id,
         stockId: line.library_stock_id,
         quantity: qty,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Stock consumption failed'
       const statusCode = (err as { statusCode?: number }).statusCode
-      throw httpError(message, statusCode === 400 ? 400 : 502)
+      throw httpError(message, statusCode === 400 || statusCode === 404 ? statusCode : 400)
     }
   }
 }
@@ -281,15 +304,12 @@ async function prepareSaleLines(
       if (!libraryVariantId || !libraryStockId) {
         throw httpError('Variant and stock are required for stocked product lines', 400)
       }
-      if (!dataStockClient.hasDataStockConfig()) {
-        throw httpError('Stock service is not configured', 503)
-      }
     }
 
     const variantNameSnapshot = await resolveVariantNameSnapshot(libraryEntityId, libraryVariantId)
     const unitCost =
       line.itemKind === 'product'
-        ? await resolveProductUnitCost(libraryEntityId, libraryVariantId, libraryStockId)
+        ? await resolveProductUnitCost(companyId, libraryEntityId, libraryVariantId, libraryStockId)
         : 0
 
     prepared.push({
@@ -359,46 +379,6 @@ async function assertSessionTokenSaleActor(
   }
 }
 
-async function resolveCustomerContact(
-  companyId: string,
-  customerUserId: string,
-  sessionTokenId: string | null,
-): Promise<{ displayName: string; email: string | null }> {
-  const contact = await fetchUserContact(customerUserId)
-  let displayName = contact?.displayName?.trim() || 'Customer'
-  let email = contact?.email?.trim() || null
-
-  if ((!email || displayName === 'Customer') && sessionTokenId) {
-    const token = await sessionTokenRepo.findTokenById(companyId, sessionTokenId)
-    if (token) {
-      if (!email && token.user_email?.trim()) {
-        email = token.user_email.trim()
-      }
-      if (displayName === 'Customer' && token.user_display_name?.trim()) {
-        displayName = token.user_display_name.trim()
-      }
-    }
-  }
-
-  return { displayName, email }
-}
-
-async function ensureSaleCustomerEmailFromToken(
-  companyId: string,
-  saleId: string,
-): Promise<void> {
-  const row = await saleRepo.findSaleById(companyId, saleId)
-  if (!row?.session_token_id || row.customer_email?.trim()) return
-
-  const token = await sessionTokenRepo.findTokenById(companyId, row.session_token_id)
-  const email = token?.user_email?.trim()
-  if (!email) return
-
-  await db('company_sales')
-    .where({ id: saleId, company_id: companyId })
-    .update({ customer_email: email, updated_at: new Date() })
-}
-
 export async function createSale(
   userId: string,
   companyId: string,
@@ -414,10 +394,6 @@ export async function createSale(
     throw httpError('Company not found', 404)
   }
   const enabled = parseDataEntities(company.data_entities)
-
-  const contact = await fetchUserContact(body.customerUserId)
-  const customerDisplayName = contact?.displayName?.trim() || 'Customer'
-  const customerEmail = contact?.email ?? null
 
   let sessionTokenId: string | null = null
   if (body.sessionTokenId) {
@@ -438,8 +414,6 @@ export async function createSale(
       company_id: companyId,
       bill_number: billNumber,
       customer_user_id: body.customerUserId,
-      customer_display_name: customerDisplayName,
-      customer_email: customerEmail,
       status: 'completed',
       payment_method: body.paymentMethod,
       currency: 'LKR',
@@ -469,7 +443,7 @@ export async function getDraftSaleForSessionToken(
   const row = await saleRepo.findDraftBySessionToken(companyId, sessionTokenId)
   if (!row) return null
   const lines = await saleRepo.listSaleLines(row.id)
-  return mapSale(row, lines)
+  return hydrateSaleCustomer(mapSale(row, lines))
 }
 
 export async function getSessionTokenBill(
@@ -484,7 +458,7 @@ export async function getSessionTokenBill(
   if (!latest) return null
 
   const lines = await saleRepo.listSaleLines(latest.id)
-  return mapSale(latest, lines)
+  return hydrateSaleCustomer(mapSale(latest, lines))
 }
 
 export async function upsertDraftSale(
@@ -508,12 +482,6 @@ export async function upsertDraftSale(
 
   const resolvedTokenId = await resolveSessionToken(companyId, sessionTokenId, body.customerUserId)
 
-  const { displayName: customerDisplayName, email: customerEmail } = await resolveCustomerContact(
-    companyId,
-    body.customerUserId,
-    resolvedTokenId,
-  )
-
   const prepared = await prepareSaleLines(companyId, enabled, body.lines)
   const subtotal = money(prepared.reduce((sum, line) => sum + line.line_total, 0))
   const notes = body.notes?.trim() || null
@@ -527,8 +495,6 @@ export async function upsertDraftSale(
       await saleRepo.updateSaleDraft(trx, companyId, saleId, {
         subtotal,
         total: subtotal,
-        customer_display_name: customerDisplayName,
-        customer_email: customerEmail,
         notes,
         updated_at: now,
       })
@@ -539,8 +505,6 @@ export async function upsertDraftSale(
         company_id: companyId,
         bill_number: null,
         customer_user_id: body.customerUserId,
-        customer_display_name: customerDisplayName,
-        customer_email: customerEmail,
         status: 'draft',
         payment_method: null,
         currency: 'LKR',
@@ -588,6 +552,7 @@ export async function completeSale(
     const cost =
       line.item_kind === 'product'
         ? await resolveProductUnitCost(
+            companyId,
             line.library_entity_id,
             line.library_variant_id,
             line.library_stock_id,
@@ -611,7 +576,6 @@ export async function completeSale(
     })
   })
 
-  await ensureSaleCustomerEmailFromToken(companyId, saleId)
   const completed = await getSale(companyId, saleId)
   notifySaleBillCompleted(completed)
   return completed
@@ -642,8 +606,9 @@ export async function listSales(
     page,
     pageSize,
   })
+  const items = await enrichSaleListItems(rows.map(mapListItem))
   return {
-    items: rows.map(mapListItem),
+    items,
     total,
     page,
     pageSize,
@@ -658,7 +623,7 @@ export async function getSale(companyId: string | null, id: string): Promise<Sal
     throw httpError('Sale not found', 404)
   }
   const lines = await saleRepo.listSaleLines(row.id)
-  return mapSale(row, lines)
+  return hydrateSaleCustomer(mapSale(row, lines))
 }
 
 export async function listSalesForSessionToken(
@@ -666,7 +631,7 @@ export async function listSalesForSessionToken(
   sessionTokenId: string,
 ): Promise<SaleListItemDto[]> {
   const rows = await saleRepo.listSalesForSessionToken(companyId, sessionTokenId)
-  return rows.map(mapListItem)
+  return enrichSaleListItems(rows.map(mapListItem))
 }
 
 export async function voidSale(companyId: string, id: string): Promise<SaleDto> {
@@ -685,5 +650,5 @@ export async function voidSale(companyId: string, id: string): Promise<SaleDto> 
     throw httpError('Sale not found', 404)
   }
   const lines = await saleRepo.listSaleLines(updated.id)
-  return mapSale(updated, lines)
+  return hydrateSaleCustomer(mapSale(updated, lines))
 }

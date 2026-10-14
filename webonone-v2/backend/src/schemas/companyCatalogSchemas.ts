@@ -12,6 +12,7 @@ export const catalogEntityKindSchema = z.enum([
 export const catalogBindingModeSchema = z.enum(['linked', 'forked', 'custom'])
 
 export const entityStatusSchema = z.enum(['verified', 'pending'])
+export const webPublishStatusSchema = z.enum(['draft', 'published'])
 export const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be #RRGGBB')
 export const timeOfDaySchema = z
   .string()
@@ -138,6 +139,10 @@ function refineServiceTime(
   }
 }
 
+const sellableWebPublishField = {
+  webPublishStatus: webPublishStatusSchema.optional(),
+}
+
 const servicePayloadSchema = catalogBasePayloadSchema
   .extend({
     listPrice: catalogListPriceSchema,
@@ -145,11 +150,13 @@ const servicePayloadSchema = catalogBasePayloadSchema
     durationMinutes: z.number().int().positive().optional().nullable(),
     startTime: timeOfDaySchema.optional().nullable(),
     endTime: timeOfDaySchema.optional().nullable(),
+    ...sellableWebPublishField,
   })
   .superRefine((data, ctx) => refineServiceTime(data, ctx, { requireMode: true }))
 
 const productOrSpacePayloadSchema = catalogBasePayloadSchema.extend({
   listPrice: catalogListPriceSchema,
+  ...sellableWebPublishField,
 })
 
 export const catalogPayloadByKind = {
@@ -213,7 +220,38 @@ export const updateCatalogPricingBodySchema = z.object({
   listPrice: z.number().min(0).max(99_999_999.99).nullable(),
 })
 
+export const updateCatalogWebPublishBodySchema = z.object({
+  webPublishStatus: webPublishStatusSchema,
+})
+
 const variantStockLimitQuantitySchema = z.number().min(0).max(999_999_999.999).nullable()
+
+const stockDateString = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date')
+
+export const createCompanyProductStockBodySchema = z
+  .object({
+    quantity: z.coerce.number().positive(),
+    batch_number: z.string().trim().min(1).max(255),
+    cost_price: z.coerce.number().min(0),
+    sell_price: z.coerce.number().min(0),
+    purchase_date: stockDateString,
+    expired_date: stockDateString.nullable().optional(),
+    supplier_user_id: z.string().trim().length(21).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.expired_date && value.expired_date < value.purchase_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['expired_date'],
+        message: 'Expired date must be on or after purchase date',
+      })
+    }
+  })
+
+export const updateCompanyProductStockBodySchema = createCompanyProductStockBodySchema
 
 export const upsertProductVariantStockLimitsBodySchema = z
   .object({
@@ -247,6 +285,10 @@ export const replaceServiceWorkflowBodySchema = z.object({
 export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>
 export type UpdateServiceFormBody = z.infer<typeof updateServiceFormBodySchema>
 export type UpdateCatalogPricingBody = z.infer<typeof updateCatalogPricingBodySchema>
+export type UpdateCatalogWebPublishBody = z.infer<typeof updateCatalogWebPublishBodySchema>
+export type WebPublishStatus = z.infer<typeof webPublishStatusSchema>
+export type CreateCompanyProductStockBody = z.infer<typeof createCompanyProductStockBodySchema>
+export type UpdateCompanyProductStockBody = z.infer<typeof updateCompanyProductStockBodySchema>
 export type UpsertProductVariantStockLimitsBody = z.infer<
   typeof upsertProductVariantStockLimitsBodySchema
 >

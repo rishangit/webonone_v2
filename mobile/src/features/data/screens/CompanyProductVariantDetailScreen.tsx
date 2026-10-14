@@ -104,17 +104,17 @@ export function CompanyProductVariantDetailScreen({
   }
 
   function handleCopyToAi() {
-    if (!variant || !libraryProductId) return
+    if (!variant) return
     requestEntityPaste({
       entities: [
         {
-          service: 'data',
+          service: 'webonone',
           kind: 'product',
-          id: libraryProductId,
+          id: productId,
           label: productName || variant.name,
         },
       ],
-      composerText: `Focus on variant "${variant.name}" (variantId: ${variantId}). List existing stocks with list_data_product_variant_stocks, then suggest or create stock batches with create_data_product_variant_stock when asked.`,
+      composerText: `Focus on variant "${variant.name}" (variantId: ${variantId}). List existing stocks with list_company_product_variant_stocks, then suggest or create stock batches with create_company_product_variant_stock when asked.`,
     })
     toast({ title: t('attributesTab.copyToAiSuccess') })
   }
@@ -166,7 +166,7 @@ export function CompanyProductVariantDetailScreen({
           </EditableSectionCard>
 
           <CompanyProductVariantStocksCard
-            libraryProductId={libraryProductId}
+            companyProductId={productId}
             variantId={variantId}
             canEdit={canAddStock}
           />

@@ -23,7 +23,7 @@ Agent skill: [.cursor/skills/webonone-agent/SKILL.md](../skills/webonone-agent/S
 
 ## Database
 
-MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, **companies** (no local `users_roles`). Migrations run via `npm run migrate -w @webonone/webonone-backend`.
+MySQL schema **`webonone_v2`** — themes, user preferences, site media refs, **companies**, company catalog reviews (no local `users_roles`). Migrations run via `npm run migrate -w @webonone/webonone-backend`.
 
 ## Ownership
 

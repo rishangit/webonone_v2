@@ -1,25 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Alert, AlertDescription, Button, FeaturePage, useToast } from '@webonone/ui-kit'
 import {
-  Alert,
-  AlertDescription,
-  Button,
-  Checkbox,
-  FeaturePage,
-  FormField,
-  Input,
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
-  useToast,
-} from '@webonone/ui-kit'
+  buildInitialFormAnswers,
+  FormFillFields,
+  validateFormAnswers,
+} from '@/features/forms/components/FormFillFields'
 import { useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
@@ -80,11 +67,7 @@ export function FormFillPage() {
       const loaded = await designApi.getForm(id)
       if (cancelled) return
       setForm(loaded)
-      const initial: Record<string, unknown> = {}
-      for (const field of loaded.definition.fields) {
-        if (field.type === 'checkbox') initial[field.id] = false
-        else initial[field.id] = ''
-      }
+      const initial = buildInitialFormAnswers(loaded.definition.fields)
       if ((isView || isEdit) && submissionId) {
         const submission = await designApi.getSubmission(submissionId)
         if (cancelled) return
@@ -122,15 +105,7 @@ export function FormFillPage() {
   }
 
   function validate(fieldsToCheck: FormFieldDef[]): boolean {
-    const next: Record<string, string> = {}
-    for (const field of fieldsToCheck) {
-      const value = answers[field.id]
-      if (!field.required) continue
-      if (field.type === 'checkbox') continue
-      if (value == null || value === '') {
-        next[field.id] = t('fieldRequired', { label: field.label })
-      }
-    }
+    const next = validateFormAnswers(fieldsToCheck, answers, t)
     setFieldErrors(next)
     return Object.keys(next).length === 0
   }
@@ -257,127 +232,14 @@ export function FormFillPage() {
         </Alert>
       ) : null}
 
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-        {fields.map((field) => {
-          if (field.type === 'checkbox') {
-            return (
-              <div key={field.id} className="flex items-start gap-3">
-                <Checkbox
-                  id={field.id}
-                  checked={Boolean(answers[field.id])}
-                  disabled={isReadOnly}
-                  onCheckedChange={(checked) => setAnswer(field.id, checked === true)}
-                />
-                <Label htmlFor={field.id} className="font-normal leading-snug">
-                  {field.label}
-                  {field.required ? <span className="text-destructive"> *</span> : null}
-                </Label>
-              </div>
-            )
-          }
-
-          if (field.type === 'textarea') {
-            return (
-              <FormField
-                key={field.id}
-                htmlFor={field.id}
-                label={field.label}
-                required={field.required}
-                error={fieldErrors[field.id]}
-              >
-                <Textarea
-                  value={String(answers[field.id] ?? '')}
-                  placeholder={field.placeholder}
-                  disabled={isReadOnly}
-                  onChange={(e) => setAnswer(field.id, e.target.value)}
-                />
-              </FormField>
-            )
-          }
-
-          if (field.type === 'select') {
-            return (
-              <FormField
-                key={field.id}
-                htmlFor={field.id}
-                label={field.label}
-                required={field.required}
-                error={fieldErrors[field.id]}
-              >
-                <Select
-                  value={String(answers[field.id] ?? '') || undefined}
-                  onValueChange={(value) => setAnswer(field.id, value)}
-                  disabled={isReadOnly}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={field.placeholder || t('selectPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(field.options ?? []).map((opt) => (
-                      <SelectItem key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            )
-          }
-
-          if (field.type === 'radio') {
-            return (
-              <div key={field.id} className="space-y-2">
-                <Label>
-                  {field.label}
-                  {field.required ? <span className="text-destructive"> *</span> : null}
-                </Label>
-                <RadioGroup
-                  value={String(answers[field.id] ?? '') || undefined}
-                  onValueChange={(value) => setAnswer(field.id, value)}
-                  disabled={isReadOnly}
-                  className="gap-2"
-                >
-                  {(field.options ?? []).map((opt) => (
-                    <div key={opt.id} className="flex items-center gap-2">
-                      <RadioGroupItem
-                        value={opt.id}
-                        id={`${field.id}-${opt.id}`}
-                        disabled={isReadOnly}
-                      />
-                      <Label htmlFor={`${field.id}-${opt.id}`} className="font-normal">
-                        {opt.label}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-                {fieldErrors[field.id] ? (
-                  <p className="text-sm text-destructive">{fieldErrors[field.id]}</p>
-                ) : null}
-              </div>
-            )
-          }
-
-          return (
-            <FormField
-              key={field.id}
-              htmlFor={field.id}
-              label={field.label}
-              required={field.required}
-              error={fieldErrors[field.id]}
-            >
-              <Input
-                value={String(answers[field.id] ?? '')}
-                placeholder={field.placeholder}
-                disabled={isReadOnly}
-                onChange={(e) => setAnswer(field.id, e.target.value)}
-              />
-            </FormField>
-          )
-        })}
-
-        {fields.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('noFields')}</p>
-        ) : null}
+      <div className="mx-auto w-full max-w-2xl">
+        <FormFillFields
+          fields={fields}
+          answers={answers}
+          fieldErrors={fieldErrors}
+          disabled={isReadOnly || submitting}
+          onAnswer={setAnswer}
+        />
       </div>
     </FeaturePage>
   )

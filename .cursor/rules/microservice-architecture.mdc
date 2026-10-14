@@ -253,12 +253,14 @@ Use **outbox pattern** when other services depend on your writes. Consumers must
 
 ## Data duplication
 
-Acceptable when it removes runtime dependencies:
+**Do not copy live peer entities into another service’s MySQL** (name, email, avatar, current catalog title). Store the foreign **ID** only; resolve from the owning service on read; cache in Redux/session for UI. See [mysql-database-architecture.mdc](mysql-database-architecture.mdc).
 
 ```text
-Prefer: UserUpdated event → Order Service local user_profiles copy
-Avoid:  Order Service → User Service HTTP on every read
+Prefer: events / sales store user_id; Identity contact API + Redux overlay for display
+Avoid:  reviewer_display_name / user_email / avatar_url columns beside user_id in a peer DB
 ```
+
+**Allowed:** immutable snapshots of a completed transaction in the owning service (sale-line name/price at checkout). Events may provision IDs and memberships — not profile mirrors.
 
 ## Frontend communication
 

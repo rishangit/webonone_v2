@@ -2,8 +2,9 @@ import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import {
   Body,
-  Card,
   EditableSectionCard,
+  imagePreviewGalleryClassName,
+  imagePreviewOverviewThumbClassName,
   ImagePreview,
   ReadOnlyField,
   TagChip,
@@ -35,12 +36,8 @@ export function CatalogOverviewTab({
   return (
     <DetailStack>
       {firstImage ? (
-        <Card className="gap-3">
-          <ImagePreview
-            src={firstImage.url}
-            alt={item.name}
-            className="h-48 w-full rounded-lg"
-          />
+        <View className="gap-3">
+          <ImagePreview src={firstImage.url} alt={item.name} className={imagePreviewGalleryClassName} />
           {restImages.length > 0 ? (
             <View className="flex-row flex-wrap gap-3">
               {restImages.map((image) => (
@@ -48,12 +45,12 @@ export function CatalogOverviewTab({
                   key={image.mediaId}
                   src={image.url}
                   alt={item.name}
-                  className="h-20 w-20 rounded-lg"
+                  className={imagePreviewOverviewThumbClassName}
                 />
               ))}
             </View>
           ) : null}
-        </Card>
+        </View>
       ) : null}
 
       <EditableSectionCard

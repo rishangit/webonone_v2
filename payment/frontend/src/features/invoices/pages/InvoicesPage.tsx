@@ -133,7 +133,7 @@ export function InvoicesPage() {
             className="w-64"
           />
           <ListFilterTrigger active={hasActiveFilters || filterOpen} onClick={() => setFilterOpen(true)} />
-          <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+          <ItemListViewToggle cardLayout={false} value={listDisplayMode} onChange={setListDisplayMode} />
         </ListPageActions>
       }
     >

@@ -39,8 +39,7 @@ const SERVICE_PATH_ALLOWED: Record<ToolServiceId, (path: string) => boolean> = {
     /^\/api\/v1\/(tags|units|attributes|products|services|spaces)(\/:id)?$/.test(path) ||
     /^\/api\/v1\/(products|services|spaces)\/:id\/attributes\/:attributeId\/values$/.test(path) ||
     /^\/api\/v1\/(products|services|spaces)\/:id\/attribute-values\/:valueId(\/default)?$/.test(path) ||
-    /^\/api\/v1\/products\/:id\/variants(\/:variantId)?$/.test(path) ||
-    /^\/api\/v1\/products\/:id\/variants\/:variantId\/stocks(\/:stockId\/active)?$/.test(path),
+    /^\/api\/v1\/products\/:id\/variants(\/:variantId)?$/.test(path),
   email: () => false,
   sms: (path) => /^\/api\/v1\/templates(\/:id)?$/.test(path),
   payment: (path) => /^\/api\/v1\/invoices(\/:id)?$/.test(path),

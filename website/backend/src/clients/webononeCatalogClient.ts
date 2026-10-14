@@ -388,20 +388,62 @@ export async function getCatalogItem(
 
 }
 
+export type PublicProductVariantOfferLine = {
+  variantId: string
+  name: string
+  isDefault: boolean
+  attributeValues: Array<{
+    attributeId: string
+    attributeName: string
+    attributeValueId: string
+    valueText: string | null
+    valueNumber: number | null
+    valueType: 'number' | 'text'
+    unitSymbol: string | null
+  }>
+  totalQuantity: number
+  sellPrice: number | null
+}
+
+export type PublicProductVariantOffer = {
+  listPrice: number | null
+  libraryUnavailable: boolean
+  variantCount: number
+  lines: PublicProductVariantOfferLine[]
+}
+
+export async function getProductVariantOffer(catalogProductId: string): Promise<PublicProductVariantOffer> {
+  const url = `${apiBase()}/api/v1/internal/catalog/products/${encodeURIComponent(catalogProductId)}/variant-offer`
+  const res = await fetch(url, {
+    headers: {
+      'X-WebOnOne-Service-Key': requireServiceKey(),
+      'Content-Type': 'application/json',
+    },
+  })
+  if (!res.ok) {
+    const message = await parseErrorMessage(res, `WebOnOne product variant offer failed (${res.status})`)
+    throw Object.assign(new Error(message), { statusCode: mapUpstreamStatus(res.status) })
+  }
+  return (await res.json()) as PublicProductVariantOffer
+}
+
 export type PublicReviewListResult = {
   summary: { averageRating: number | null; count: number }
   items: Array<{
     id: string
+    userId?: string
     rating: number
     comment: string | null
     createdAt: string
+    reviewerDisplayName: string
+    reviewerAvatarUrl: string | null
   }>
   total: number
   page: number
   pageSize: number
 }
 
-/** Proxy public catalog reviews (WebOnOne resolves company id → Data API). */
+/** Proxy public catalog reviews (WebOnOne company-owned reviews). */
 export async function listCatalogReviews(
   kind: string,
   id: string,

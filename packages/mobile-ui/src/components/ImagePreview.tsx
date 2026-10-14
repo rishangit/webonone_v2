@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Image, Pressable, View, type ImageStyle } from 'react-native'
+import { Image, Pressable, View, type ImageStyle, type ViewStyle } from 'react-native'
 import { Image as ImageIcon, Pencil } from 'lucide-react-native'
 import { cn } from '../lib/cn'
 import { useThemeColors } from '../theme/ThemeProvider'
 import {
   imagePreviewClipStyle,
+  imagePreviewIsFlush,
   imagePreviewShapeClass,
   resolveImagePreviewShape,
   stripImagePreviewRadiusClasses,
@@ -18,6 +19,8 @@ export type ImagePreviewProps = {
   alt: string
   mode?: ImagePreviewMode
   shape?: ImagePreviewShape
+  /** List/card thumbs — no separate border (matches web `ui-shape-image-flush`). */
+  flush?: boolean
   onEdit?: () => void
   className?: string
 }
@@ -59,6 +62,7 @@ export function ImagePreview({
   alt,
   mode = 'view',
   shape,
+  flush,
   onEdit,
   className,
 }: ImagePreviewProps) {
@@ -66,11 +70,14 @@ export function ImagePreview({
   const [failed, setFailed] = useState(false)
   const colors = useThemeColors()
   const showEditOverlay = mode === 'edit' && Boolean(onEdit)
+  const isFlush = imagePreviewIsFlush(className, flush)
+  const showFrameBorder = mode === 'edit' && !isFlush
   const resolvedShape = resolveImagePreviewShape(shape, className)
   const sizeClassName = stripImagePreviewRadiusClasses(className)
   const clipStyle = imagePreviewClipStyle(resolvedShape)
   const imageClipStyle: ImageStyle = {
     borderRadius: clipStyle.borderRadius,
+    backgroundColor: 'transparent',
   }
 
   useEffect(() => {
@@ -78,14 +85,19 @@ export function ImagePreview({
   }, [uri])
 
   const containerClass = cn(
-    'relative shrink-0 overflow-hidden border border-border bg-input',
+    'relative shrink-0 overflow-hidden bg-muted',
     imagePreviewShapeClass(resolvedShape),
     sizeClassName || 'h-40 w-40',
   )
+  const frameStyle: ViewStyle = {
+    ...clipStyle,
+    borderWidth: showFrameBorder ? 1 : 0,
+    borderColor: showFrameBorder ? colors.border : 'transparent',
+  }
   const iconSize = resolveIconSize(sizeClassName || className)
 
   return (
-    <View className={containerClass} style={clipStyle} accessibilityLabel={alt}>
+    <View className={containerClass} style={frameStyle} accessibilityLabel={alt}>
       {uri && !failed ? (
         <Image
           source={{ uri }}
@@ -96,7 +108,7 @@ export function ImagePreview({
           onError={() => setFailed(true)}
         />
       ) : (
-        <View className="h-full w-full items-center justify-center bg-input">
+        <View className="h-full w-full items-center justify-center bg-muted">
           <ImageIcon size={iconSize} color={colors.textMuted} strokeWidth={1.75} />
         </View>
       )}

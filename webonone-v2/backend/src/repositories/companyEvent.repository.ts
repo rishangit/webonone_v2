@@ -8,10 +8,7 @@ export interface CompanyEventRow {
   service_name: string
   time_mode: 'duration' | 'window'
   staff_id: string | null
-  staff_display_name: string | null
   attendee_user_id: string | null
-  attendee_display_name: string | null
-  attendee_email: string | null
   space_id: string | null
   space_name: string | null
   starts_on: string | Date
@@ -254,10 +251,7 @@ export async function insertEvent(row: {
   service_name: string
   time_mode: 'duration' | 'window'
   staff_id: string | null
-  staff_display_name: string | null
   attendee_user_id: string | null
-  attendee_display_name: string | null
-  attendee_email: string | null
   space_id: string | null
   space_name: string | null
   starts_on: string
@@ -288,10 +282,7 @@ export async function updateEvent(
     service_name: string
     time_mode: 'duration' | 'window'
     staff_id: string | null
-    staff_display_name: string | null
     attendee_user_id: string | null
-    attendee_display_name: string | null
-    attendee_email: string | null
     space_id: string | null
     space_name: string | null
     starts_on: string

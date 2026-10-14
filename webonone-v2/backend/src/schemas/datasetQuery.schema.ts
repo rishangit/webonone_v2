@@ -286,11 +286,14 @@ export function pickPublicFields(
   return out
 }
 
+export const datasetCatalogAudienceSchema = z.enum(['internal', 'public_web']).default('internal')
+
 export const datasetQueryBodySchema = z
   .object({
     sourceType: z.enum(DATASET_SOURCE_TYPES),
     filters: datasetFiltersSchema.optional().default({ match: 'all', rules: [] }),
     config: datasetConfigSchema.optional().default({}),
+    catalogAudience: datasetCatalogAudienceSchema.optional(),
     page: z.number().int().min(1).optional().default(1),
     pageSize: z.number().int().min(1).max(100).optional().default(20),
   })

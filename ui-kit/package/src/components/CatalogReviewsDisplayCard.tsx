@@ -1,18 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './Card'
-import { ItemList, ItemListContent, ItemListEmpty, ItemListItem } from './ItemList'
-import { StarRatingInput } from './StarRatingInput'
-
-export type CatalogReviewListItem = {
-  id: string
-  rating: number
-  comment: string | null
-  createdAtLabel?: string
-}
+import { CatalogRatingSummary } from './CatalogRatingSummary'
+import { CatalogReviewListItem } from './CatalogReviewListItem'
+import type { CatalogReviewListItemData } from './catalogReviewTypes'
+import { ItemList, ItemListEmpty } from './ItemList'
+import type { StarRatingSize } from './starRatingSizes'
 
 export type CatalogReviewsDisplayCardProps = {
   averageRating: number | null
   reviewCount: number
-  items: CatalogReviewListItem[]
+  items: CatalogReviewListItemData[]
   loading?: boolean
   title?: string
   description?: string
@@ -20,6 +16,9 @@ export type CatalogReviewsDisplayCardProps = {
   overallLabel?: string
   ratingLabel?: string
   loadingLabel?: string
+  reviewerFallbackLabel?: string
+  /** Star size for overall average and per-review rows */
+  starSize?: StarRatingSize
 }
 
 function formatOverall(average: number | null, count: number, overallLabel?: string): string {
@@ -41,6 +40,8 @@ export function CatalogReviewsDisplayCard({
   overallLabel,
   ratingLabel = 'Rating',
   loadingLabel = 'Loading reviews…',
+  reviewerFallbackLabel = 'Customer',
+  starSize = 'md',
 }: CatalogReviewsDisplayCardProps) {
   const overallText = formatOverall(averageRating, reviewCount, overallLabel)
 
@@ -55,41 +56,26 @@ export function CatalogReviewsDisplayCard({
           <p className="text-sm text-muted-foreground">{loadingLabel}</p>
         ) : (
           <>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <StarRatingInput
-                value={averageRating != null ? Math.round(averageRating) : null}
-                onChange={() => {}}
-                disabled
-                label={ratingLabel}
-              />
-              <p className="text-sm font-medium text-foreground">{overallText}</p>
-            </div>
+            <CatalogRatingSummary
+              averageRating={averageRating}
+              reviewCount={reviewCount}
+              countLabel={overallText}
+              size={starSize}
+              ratingLabel={ratingLabel}
+              showEmpty
+            />
             <ItemList>
               {items.length === 0 ? (
                 <ItemListEmpty>{emptyLabel}</ItemListEmpty>
               ) : (
                 items.map((review) => (
-                  <ItemListItem key={review.id} className="flex-col items-stretch gap-2">
-                    <div className="flex w-full flex-wrap items-center justify-between gap-2">
-                      <StarRatingInput
-                        value={review.rating}
-                        onChange={() => {}}
-                        disabled
-                        label={ratingLabel}
-                        className="pointer-events-none"
-                      />
-                      {review.createdAtLabel ? (
-                        <span className="text-xs text-muted-foreground">{review.createdAtLabel}</span>
-                      ) : null}
-                    </div>
-                    <ItemListContent>
-                      {review.comment ? (
-                        <p className="whitespace-pre-wrap text-sm text-foreground">{review.comment}</p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">—</p>
-                      )}
-                    </ItemListContent>
-                  </ItemListItem>
+                  <CatalogReviewListItem
+                    key={review.id}
+                    review={review}
+                    ratingLabel={ratingLabel}
+                    starSize={starSize}
+                    reviewerFallbackLabel={reviewerFallbackLabel}
+                  />
                 ))
               )}
             </ItemList>

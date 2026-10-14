@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/services/apiClient'
+import type { LibraryProductVariantStock } from '@/features/company-catalog/services/dataLibraryApi'
 import type {
   CatalogBindingMode,
   CatalogEntityKind,
@@ -94,6 +95,17 @@ export const companyCatalogApi = {
     })
   },
 
+  updateWebPublish(
+    kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
+    id: string,
+    webPublishStatus: 'draft' | 'published',
+  ) {
+    return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/web-publish`, {
+      method: 'PATCH',
+      body: JSON.stringify({ webPublishStatus }),
+    })
+  },
+
   updatePricing(
     kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
     id: string,
@@ -144,6 +156,62 @@ export const companyCatalogApi = {
         body: JSON.stringify(body),
         cache: 'no-store',
       },
+    )
+  },
+
+  suggestStockBatchNumber() {
+    return apiClient<{ batchNumber: string }>('/company/me/catalog/stocks/suggested-batch-number')
+  },
+
+  listProductVariantStocks(productId: string, variantId: string) {
+    return apiClient<{ items: LibraryProductVariantStock[] }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks`,
+    )
+  },
+
+  createProductVariantStock(
+    productId: string,
+    variantId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id?: string | null
+    },
+  ) {
+    return apiClient<LibraryProductVariantStock>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks`,
+      { method: 'POST', body: JSON.stringify(body) },
+    )
+  },
+
+  updateProductVariantStock(
+    productId: string,
+    variantId: string,
+    stockId: string,
+    body: {
+      quantity: number
+      batch_number: string
+      cost_price: number
+      sell_price: number
+      purchase_date: string
+      expired_date?: string | null
+      supplier_user_id?: string | null
+    },
+  ) {
+    return apiClient<LibraryProductVariantStock>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks/${encodeURIComponent(stockId)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    )
+  },
+
+  setProductVariantStockActive(productId: string, variantId: string, stockId: string) {
+    return apiClient<LibraryProductVariantStock>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/stocks/${encodeURIComponent(stockId)}/active`,
+      { method: 'PATCH' },
     )
   },
 
@@ -236,15 +304,11 @@ export const companyCatalogApi = {
     serviceId: string,
     eventId: string,
     occurrenceDate: string,
-    body: {
-      user_display_name: string
-      user_email?: string | null
-      user_avatar_url?: string | null
-    },
+    body?: Record<string, never>,
   ) {
     return apiClient<CatalogSessionTokenItem>(
       memberSessionTokenPath(companyId, serviceId, eventId, occurrenceDate),
-      { method: 'POST', body: JSON.stringify(body) },
+      { method: 'POST', body: JSON.stringify(body ?? {}) },
     )
   },
 }

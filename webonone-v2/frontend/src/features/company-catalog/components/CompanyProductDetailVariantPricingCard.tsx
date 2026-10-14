@@ -7,6 +7,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  EditableSectionCard,
+  ListPriceField,
+  ReadOnlyField,
   StockAvailabilityProgress,
 } from '@webonone/ui-kit'
 import { useCompanyProductListStockMeta } from '@/features/company-catalog/hooks/useCompanyProductListStockMeta'
@@ -16,7 +19,6 @@ import {
   getActiveCompanyProductListLine,
   resolveCompanyProductListUnitPrice,
 } from '@/features/company-catalog/utils/companyCatalogProductListStockLine'
-import { EditableSectionCard } from '@/features/company-catalog/components/EditableSectionCard'
 import {
   formatLibraryAttributeValueLabel,
   type LibraryProductVariantAttributeValue,
@@ -32,11 +34,6 @@ type CompanyProductDetailVariantPricingCardProps = {
   onEditListPrice: () => void
 }
 
-function formatLkr(value: number | null | undefined): string {
-  if (value == null) return '—'
-  return `LKR ${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
-}
-
 function formatStockLimit(value: number | null | undefined): string {
   if (value == null) return '—'
   return value.toLocaleString(undefined, { maximumFractionDigits: 3 })
@@ -48,12 +45,11 @@ function VariantAttributeFields({ values }: { values: LibraryProductVariantAttri
   return (
     <div className="space-y-3 border-y border-border py-3">
       {values.map((value) => (
-        <div key={`${value.attributeId}-${value.attributeValueId}`} className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground">{value.attributeName}</p>
-          <p className="text-sm text-foreground">
-            {formatLibraryAttributeValueLabel(value, value.unitSymbol)}
-          </p>
-        </div>
+        <ReadOnlyField
+          key={`${value.attributeId}-${value.attributeValueId}`}
+          label={value.attributeName}
+          value={formatLibraryAttributeValueLabel(value, value.unitSymbol)}
+        />
       ))}
     </div>
   )
@@ -71,8 +67,10 @@ export function CompanyProductDetailVariantPricingCard({
   const { t } = useTranslation('catalog')
   const libraryId = libraryProductId?.trim() ? libraryProductId : ''
   const { byVariantId: stockLimitsByVariantId } = useCompanyProductVariantStockLimitsMap(companyProductId)
-  const stockByLibraryId = useCompanyProductListStockMeta(libraryId ? [libraryId] : [])
-  const meta = libraryId ? stockByLibraryId[libraryId] : undefined
+  const stockByProductId = useCompanyProductListStockMeta(
+    libraryId ? [{ companyProductId, libraryProductId: libraryId }] : [],
+  )
+  const meta = libraryId ? stockByProductId[companyProductId] : undefined
   const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>()
 
   useEffect(() => {
@@ -129,47 +127,43 @@ export function CompanyProductDetailVariantPricingCard({
               </Select>
             </FormField>
           ) : (
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">{t('list.selectVariant')}</p>
-              <p className="text-sm">{line.name}</p>
-            </div>
+            <ReadOnlyField label={t('list.selectVariant')} value={line.name} />
           )}
 
           <VariantAttributeFields values={line.attributeValues} />
 
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">{t('list.stock')}</p>
-            <StockAvailabilityProgress
-              quantity={line.totalQuantity}
-              maxQuantity={stockLimits?.maxQuantity}
-              minQuantity={stockLimits?.minQuantity}
-              caption={
-                stockLimits?.maxQuantity != null && stockLimits.maxQuantity > 0
-                  ? undefined
-                  : formatCompanyProductListStockAvailability(line.totalQuantity, t)
-              }
+          <ReadOnlyField
+            label={t('list.stock')}
+            value={
+              <StockAvailabilityProgress
+                quantity={line.totalQuantity}
+                maxQuantity={stockLimits?.maxQuantity}
+                minQuantity={stockLimits?.minQuantity}
+                caption={
+                  stockLimits?.maxQuantity != null && stockLimits.maxQuantity > 0
+                    ? undefined
+                    : formatCompanyProductListStockAvailability(line.totalQuantity, t)
+                }
+              />
+            }
+          />
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ReadOnlyField
+              label={t('detail.variantPricing.minStock')}
+              value={formatStockLimit(stockLimits?.minQuantity)}
+              valueClassName="tabular-nums"
+            />
+            <ReadOnlyField
+              label={t('detail.variantPricing.maxStock')}
+              value={formatStockLimit(stockLimits?.maxQuantity)}
+              valueClassName="tabular-nums"
             />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">
-                {t('detail.variantPricing.minStock')}
-              </p>
-              <p className="text-sm tabular-nums">{formatStockLimit(stockLimits?.minQuantity)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">
-                {t('detail.variantPricing.maxStock')}
-              </p>
-              <p className="text-sm tabular-nums">{formatStockLimit(stockLimits?.maxQuantity)}</p>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">{t('list.price')}</p>
-            <p className="text-xl font-semibold tabular-nums text-foreground">{formatLkr(unitPrice)}</p>
-          </div>
+          {unitPrice != null ? (
+            <ListPriceField label={t('list.price')} value={unitPrice} />
+          ) : null}
         </div>
       ) : null}
     </EditableSectionCard>

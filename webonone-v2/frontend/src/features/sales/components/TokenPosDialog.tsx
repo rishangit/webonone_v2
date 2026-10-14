@@ -10,6 +10,7 @@ import {
   CardTitle,
   CustomDialog,
   ListAddButton,
+  PriceDisplay,
   useToast,
 } from '@webonone/ui-kit'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
@@ -37,7 +38,6 @@ import {
   mergeLibraryRequestsIntoNotes,
   parseLibraryRequestsNote,
 } from '@/features/sales/utils/libraryRequestNotes'
-import { formatLkr } from '@/features/sales/utils/formatMoney'
 import { findPosCartStockViolation, posCartLinesToSaleLines } from '@/features/sales/utils/posCartSaleLines'
 
 type TokenPosDialogProps = {
@@ -264,7 +264,10 @@ export function TokenPosDialog({
         sizeHeight="large"
         footer={
           <div className="flex w-full flex-wrap items-center justify-end gap-4">
-            <p className="text-lg font-semibold">{t('pos.total', { amount: formatLkr(total) })}</p>
+            <p className="flex items-baseline gap-2 text-lg font-semibold">
+              <span>{t('pos.total')}</span>
+              <PriceDisplay value={total} size="lg" />
+            </p>
             <Button
               type="button"
               variant="outline"

@@ -46,12 +46,9 @@ async function notifyOneCatalogReviewRequest(params: NotifyOneParams): Promise<v
   const companyName = company?.name?.trim() || 'Company'
 
   const contact = await fetchUserContact(params.userId)
-  const toEmail =
-    params.preferredEmail?.trim() ||
-    contact?.email?.trim() ||
-    null
+  const toEmail = contact?.email?.trim() || params.preferredEmail?.trim() || null
   const userName =
-    params.userDisplayName?.trim() || contact?.displayName?.trim() || 'Customer'
+    contact?.displayName?.trim() || params.userDisplayName?.trim() || 'Customer'
 
   const reviewUrl = absoluteWebOnOneUrl(params.reviewHref)
   const payload: Record<string, string> = {

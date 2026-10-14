@@ -14,18 +14,15 @@ import {
   ItemListMenu,
   ItemListStatus,
   itemListThumbClassName,
+  PriceDisplay,
   TagChip,
 } from '@webonone/ui-kit'
-import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { shouldShowCompanyStock } from '@/features/products/utils/companyStockVisibility'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import { CopyToAiMenuItem } from '@/features/shell/components/CopyToAiMenuItem'
-import { ProductListStockProgress } from '@/features/products/components/ProductListStockProgress'
 import { ProductListVariantStock } from '@/features/products/components/ProductListVariantStock'
 import { useProductListStockMeta } from '@/features/products/hooks/useProductListStockMeta'
 import {
-  formatProductListPrice,
   getActiveProductListLine,
   resolveProductListUnitPrice,
 } from '@/features/products/utils/productListStockLine'
@@ -39,7 +36,6 @@ import {
 import type { CatalogGalleryImage, CatalogItem } from '@/shared/types/data.types'
 
 const gridPriceColumnClass = 'text-right tabular-nums'
-const gridStockColumnClass = 'text-right text-muted-foreground'
 
 const ENTITY_KIND_BY_ITEM_TYPE = {
   products: 'product',
@@ -83,14 +79,11 @@ export function CatalogList({
   const [selectedVariantByProductId, setSelectedVariantByProductId] = useState<Record<string, string>>(
     {},
   )
-  const userRole = useAppSelector((s) => s.auth.user?.role)
-  const showCompanyStock = shouldShowCompanyStock(userRole)
-
   const productIds = useMemo(
     () => (itemType === 'products' ? items.map((item) => item.id) : []),
     [itemType, items],
   )
-  const stockByProductId = useProductListStockMeta(productIds, showCompanyStock)
+  const stockByProductId = useProductListStockMeta(productIds)
 
   const onSelectVariant = useCallback((productId: string, variantId: string) => {
     setSelectedVariantByProductId((prev) => ({ ...prev, [productId]: variantId }))
@@ -142,7 +135,7 @@ export function CatalogList({
               headerClassName: gridPriceColumnClass,
               cell: (item: CatalogItem) => {
                 const price = resolveServiceListPrice(item)
-                return price != null ? formatProductListPrice(price) : '—'
+                return price != null ? <PriceDisplay value={price} size="sm" align="right" /> : '—'
               },
             },
             {
@@ -219,52 +212,6 @@ export function CatalogList({
                 </div>
               ),
             },
-            ...(showCompanyStock
-              ? [
-                  {
-                    id: 'stock',
-                    header: tp('list.stock'),
-                    align: 'right' as const,
-                    sortable: true,
-                    compare: (a: CatalogItem, b: CatalogItem) => {
-                      const qtyA =
-                        getActiveProductListLine(
-                          stockByProductId[a.id],
-                          selectedVariantByProductId[a.id],
-                        )?.totalQuantity ?? -1
-                      const qtyB =
-                        getActiveProductListLine(
-                          stockByProductId[b.id],
-                          selectedVariantByProductId[b.id],
-                        )?.totalQuantity ?? -1
-                      return qtyA - qtyB
-                    },
-                    className: gridStockColumnClass,
-                    headerClassName: gridStockColumnClass,
-                    cell: (item: CatalogItem) => {
-                      const line = getActiveProductListLine(
-                        stockByProductId[item.id],
-                        selectedVariantByProductId[item.id],
-                      )
-                      if (!line) return '—'
-                      return (
-                        <div
-                          className="flex justify-end"
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                          role="presentation"
-                        >
-                          <ProductListStockProgress
-                            quantity={line.totalQuantity}
-                            align="end"
-                            translate={tp}
-                          />
-                        </div>
-                      )
-                    },
-                  },
-                ]
-              : []),
             {
               id: 'price',
               header: tp('list.price'),
@@ -296,7 +243,7 @@ export function CatalogList({
                     selectedVariantByProductId[item.id],
                   ),
                 )
-                return price != null ? formatProductListPrice(price) : '—'
+                return price != null ? <PriceDisplay value={price} size="sm" align="right" /> : '—'
               },
             },
           ]
@@ -307,7 +254,6 @@ export function CatalogList({
       onSelectVariant,
       onView,
       selectedVariantByProductId,
-      showCompanyStock,
       stockByProductId,
       t,
       tc,
@@ -424,12 +370,9 @@ export function CatalogList({
           showStock={false}
           align="end"
         />
-        {showCompanyStock && line ? (
-          <ProductListStockProgress quantity={line.totalQuantity} align="end" translate={tp} />
-        ) : null}
         {unitPrice != null ? (
           <span className="mt-auto text-right text-sm font-medium tabular-nums text-foreground">
-            {formatProductListPrice(unitPrice)}
+            <PriceDisplay value={unitPrice} size="sm" align="right" />
           </span>
         ) : null}
       </div>
@@ -478,7 +421,7 @@ export function CatalogList({
           selectedVariantId={selectedVariantByProductId[item.id]}
           onSelectVariant={onSelectVariant}
           showPrice={false}
-          showStock={showCompanyStock && meta.lines.length > 0}
+          showStock={false}
           fullWidth
           stockSize="full"
           align="start"
@@ -497,7 +440,7 @@ export function CatalogList({
 
     return (
       <p className="mt-auto pt-2 text-right text-sm font-medium tabular-nums text-foreground">
-        {formatProductListPrice(unitPrice)}
+        <PriceDisplay value={unitPrice} size="sm" align="right" className="mt-auto pt-2" />
       </p>
     )
   }

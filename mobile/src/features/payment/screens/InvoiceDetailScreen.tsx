@@ -12,6 +12,7 @@ import {
   FeatureScreen,
   ImagePreview,
   Muted,
+  PriceDisplay,
   ReadOnlyField,
   Spinner,
   StatusTag,
@@ -25,7 +26,6 @@ import type { InvoiceDetail, InvoiceStatus } from '@/features/payment/types/paym
 import {
   formatInvoiceDate,
   formatInvoicePeriod,
-  formatLkr,
 } from '@/features/payment/utils/formatInvoiceMoney'
 import { invoiceStatusLabel, invoiceStatusVariant } from '@/features/payment/utils/invoiceStatus'
 
@@ -214,7 +214,10 @@ export function InvoiceDetailScreen({ invoiceId }: { invoiceId: string }) {
           </StatusTag>
         </View>
         <ReadOnlyField label="Company" value={invoice.companyName} />
-        <ReadOnlyField label="Amount" value={formatLkr(invoice.amountMinor)} />
+        <View className="gap-1">
+          <Muted className="text-xs font-medium uppercase tracking-wide">Amount</Muted>
+          <PriceDisplay value={invoice.amountMinor} minorUnits size="md" />
+        </View>
         <ReadOnlyField label="Period" value={formatInvoicePeriod(invoice.periodStart, invoice.periodEnd)} />
         <ReadOnlyField label="Issued" value={formatInvoiceDate(invoice.issuedAt)} />
         <ReadOnlyField label="Due" value={formatInvoiceDate(invoice.dueAt)} />
@@ -226,12 +229,12 @@ export function InvoiceDetailScreen({ invoiceId }: { invoiceId: string }) {
         {invoice.lines.map((line) => (
           <View key={line.id} className="flex-row items-center justify-between gap-3">
             <Body className="flex-1">{line.description}</Body>
-            <Body className="font-semibold">{formatLkr(line.amountMinor)}</Body>
+            <PriceDisplay value={line.amountMinor} minorUnits size="sm" />
           </View>
         ))}
         <View className="flex-row items-center justify-between border-t border-border pt-3">
           <Body className="font-semibold">Total</Body>
-          <Body className="font-semibold">{formatLkr(invoice.amountMinor)}</Body>
+          <PriceDisplay value={invoice.amountMinor} minorUnits size="md" />
         </View>
       </Card>
 

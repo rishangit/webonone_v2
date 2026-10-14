@@ -1,3 +1,1 @@
-export function formatLkr(value: number, currency = 'LKR'): string {
-  return `${currency} ${value.toFixed(2)}`
-}
+export { formatLkr, formatMoney } from '@webonone/ui-kit'

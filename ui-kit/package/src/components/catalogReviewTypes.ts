@@ -18,3 +18,12 @@ export type CatalogReviewSubmitPayload = {
   rating: number
   comment: string | null
 }
+
+export type CatalogReviewListItemData = {
+  id: string
+  rating: number
+  comment: string | null
+  createdAtLabel?: string
+  reviewerDisplayName?: string
+  reviewerAvatarUrl?: string | null
+}

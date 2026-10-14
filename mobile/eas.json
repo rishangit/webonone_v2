@@ -9,8 +9,44 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
     },
-    "production": {}
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_NO_METRO_WORKSPACE_ROOT": "1",
+        "IDENTITY_API_BASE_URL": "https://identity.webonone.com/api/v1",
+        "SMS_API_BASE_URL": "https://sms.webonone.com/api/v1",
+        "EMAIL_API_BASE_URL": "https://email.webonone.com/api/v1",
+        "DATA_API_BASE_URL": "https://data.webonone.com/api/v1",
+        "PAYMENT_API_BASE_URL": "https://payment.webonone.com/api/v1",
+        "MEDIA_API_BASE_URL": "https://media.webonone.com/api/v1",
+        "WEBONONE_API_BASE_URL": "https://app.webonone.com/api/v1",
+        "IDENTITY_ORIGIN": "https://identity.webonone.com",
+        "EMAIL_ORIGIN": "https://email.webonone.com",
+        "DATA_ORIGIN": "https://data.webonone.com",
+        "PAYMENT_ORIGIN": "https://payment.webonone.com",
+        "MEDIA_ORIGIN": "https://media.webonone.com",
+        "DESIGN_ORIGIN": "https://design.webonone.com",
+        "DESIGN_API_BASE_URL": "https://design.webonone.com/api/v1",
+        "WEBONONE_ORIGIN": "https://app.webonone.com",
+        "SUPPORT_ORIGIN": "https://support.webonone.com",
+        "AI_ORIGIN": "https://ai.webonone.com",
+        "AI_API_BASE_URL": "https://ai.webonone.com/api/v1"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
   }
 }

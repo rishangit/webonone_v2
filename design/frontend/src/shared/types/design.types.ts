@@ -1,6 +1,13 @@
 export type DesignRole = 'super_admin' | 'company_admin' | 'member'
 
-export type FormFieldType = 'text' | 'textarea' | 'checkbox' | 'radio' | 'select'
+export type FormFieldType = 'text' | 'textarea' | 'checkbox' | 'radio' | 'select' | 'media'
+
+export type FormMediaFileRef = {
+  fileId: string
+  url: string
+  fileName?: string
+  mimeType?: string
+}
 export type FormTemplateStatus = 'draft' | 'published'
 
 export type FormFieldOption = {
@@ -15,6 +22,8 @@ export type FormField = {
   required?: boolean
   placeholder?: string
   options?: FormFieldOption[]
+  /** When type is `media`, allow one or many document uploads. */
+  allowMultiple?: boolean
 }
 
 export type FormDefinition = {

@@ -1,18 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CatalogOwnReviewCard,
   CatalogReviewDialog,
-  StarRatingInput,
   useToast,
   type CatalogReviewEntityKind,
+  type CatalogReviewListItemData,
   type CatalogReviewSubmitPayload,
 } from '@webonone/ui-kit'
+import { DISPLAY_DATE_OPTIONS, getIntlLocaleTag } from '@webonone/i18n'
+import { useAppSelector } from '@/app/store/hooks'
 import { reviewsApi, type CatalogReviewDto } from '@/features/reviews/services/reviewsApi'
 
 export type CompanyCatalogReviewCardProps = {
@@ -33,6 +30,20 @@ export type CompanyCatalogReviewCardProps = {
   autoOpenDialog?: boolean
 }
 
+function toListItem(
+  review: CatalogReviewDto,
+  locale: string,
+  reviewerName: string,
+): CatalogReviewListItemData {
+  return {
+    id: review.id,
+    rating: review.rating,
+    comment: review.comment,
+    createdAtLabel: new Date(review.createdAt).toLocaleDateString(locale, DISPLAY_DATE_OPTIONS),
+    reviewerDisplayName: reviewerName,
+  }
+}
+
 export function CompanyCatalogReviewCard({
   companyId,
   entityKind,
@@ -47,7 +58,8 @@ export function CompanyCatalogReviewCard({
   attendanceGated = false,
   autoOpenDialog = false,
 }: CompanyCatalogReviewCardProps) {
-  const { t } = useTranslation('reviews')
+  const { t, i18n } = useTranslation('reviews')
+  const sessionUser = useAppSelector((s) => s.auth.user)
   const { toast } = useToast()
   const [review, setReview] = useState<CatalogReviewDto | null>(null)
   const [loading, setLoading] = useState(true)
@@ -142,44 +154,38 @@ export function CompanyCatalogReviewCard({
     }
   }
 
+  const locale = getIntlLocaleTag(i18n.language)
+  const reviewerName = sessionUser?.displayName.trim() || t('yourReviewerName')
+  const listItem = useMemo(
+    () =>
+      review
+        ? {
+            ...toListItem(review, locale, reviewerName),
+            reviewerAvatarUrl: sessionUser?.avatarUrl ?? null,
+          }
+        : null,
+    [locale, review, reviewerName, sessionUser?.avatarUrl],
+  )
+
   if (!showCard) {
     return null
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{t('yourReviewTitle')}</CardTitle>
-          <CardDescription>{t('yourReviewDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {loading ? (
-            <p className="text-sm text-muted-foreground">{t('loading')}</p>
-          ) : review ? (
-            <>
-              <StarRatingInput
-                value={review.rating}
-                onChange={() => {}}
-                disabled
-                label={t('ratingLabel')}
-              />
-              {review.comment ? (
-                <p className="text-sm text-foreground whitespace-pre-wrap">{review.comment}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t('noComment')}</p>
-              )}
-              <Button type="button" size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
-                {t('editReview')}
-              </Button>
-            </>
-          ) : canSubmitNew ? (
-            <Button type="button" size="sm" onClick={() => setDialogOpen(true)}>
-              {t('writeReview')}
-            </Button>
-          ) : null}
-        </CardContent>
-      </Card>
+      <CatalogOwnReviewCard
+        title={t('yourReviewTitle')}
+        description={t('yourReviewDescription')}
+        loading={loading}
+        loadingLabel={t('loading')}
+        review={listItem}
+        ratingLabel={t('ratingLabel')}
+        reviewerFallbackLabel={t('yourReviewerName')}
+        writeLabel={t('writeReview')}
+        editLabel={t('editReview')}
+        onWrite={canSubmitNew ? () => setDialogOpen(true) : undefined}
+        onEdit={review ? () => setDialogOpen(true) : undefined}
+      />
 
       <CatalogReviewDialog
         open={dialogOpen}

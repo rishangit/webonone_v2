@@ -19,6 +19,7 @@ import {
   tabsPageContentClassName,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
+import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import { WebononeCopyToAiButton } from '@/features/ai/components/WebononeCopyToAiButton'
 import { canAccessCompanySession } from '@/features/session/utils/canAccessCompanySession'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
@@ -44,7 +45,16 @@ export function StaffDetailsPage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const detail = useAppSelector((s) => s.staff.detail) as CompanyStaff | null
+  const sessionUser = useAppSelector((s) => s.auth.user)
+  const rawDetail = useAppSelector((s) => s.staff.detail) as CompanyStaff | null
+  const detail = rawDetail
+    ? overlayIdentityFromSessionUser(rawDetail, sessionUser, {
+        userId: 'userId',
+        displayName: 'displayName',
+        email: 'email',
+        avatarUrl: 'avatarUrl',
+      })
+    : null
   const detailStatus = useAppSelector((s) => s.staff.detailStatus)
   const detailError = useAppSelector((s) => s.staff.detailError)
   const listItems = useAppSelector((s) => s.staff.items) as CompanyStaff[]

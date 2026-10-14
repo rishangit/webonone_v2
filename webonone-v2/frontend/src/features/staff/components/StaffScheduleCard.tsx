@@ -1,4 +1,4 @@
-import { EditableSectionCard } from '@/features/settings/companies/components/EditableSectionCard'
+import { EditableSectionCard } from '@webonone/ui-kit'
 import { DAY_LABELS } from '@/features/staff/schemas/staffSchemas'
 import type { CompanyStaff } from '@/features/staff/types/staff.types'
 

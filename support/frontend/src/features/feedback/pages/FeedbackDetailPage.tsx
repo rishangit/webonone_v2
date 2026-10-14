@@ -16,6 +16,7 @@ import {
   Form,
   FormField,
   ImagePreview,
+  ReadOnlyField,
   mapZodIssuesToFieldErrors,
   Spinner,
   StatusTag,
@@ -33,15 +34,6 @@ import { feedbackActions } from '@/features/feedback/store/feedbackSlice'
 import { feedbackStatusTagProps } from '@/features/feedback/utils/feedbackStatus'
 
 const DETAIL_POLL_MS = 15_000
-
-function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="text-sm text-foreground">{value}</div>
-    </div>
-  )
-}
 
 export function FeedbackDetailPage() {
   const { t, i18n } = useTranslation('feedback')

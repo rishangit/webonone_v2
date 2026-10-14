@@ -37,6 +37,16 @@ export function HistoryList({ items }: HistoryListProps) {
         cell: (item: HistoryItem) => item.recipient,
       },
       {
+        id: 'template',
+        header: t('historyColumnTemplate'),
+        sortable: true,
+        compare: (a: HistoryItem, b: HistoryItem) =>
+          a.templateSlug.localeCompare(b.templateSlug, undefined, { sensitivity: 'base' }),
+        cell: (item: HistoryItem) => (
+          <span className="text-muted-foreground">{item.templateSlug}</span>
+        ),
+      },
+      {
         id: 'status',
         header: 'Status',
         cell: (item: HistoryItem) => statusLabel(item.status),

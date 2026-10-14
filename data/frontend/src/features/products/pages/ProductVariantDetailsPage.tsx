@@ -12,30 +12,20 @@ import {
   CardHeader,
   CardTitle,
   FeaturePage,
+  EditableSectionCard,
+  ReadOnlyField,
   StatusTag,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
-import { ProductVariantStocksCard } from '@/features/products/components/ProductVariantStocksCard'
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
 import { copyProductVariantToAi } from '@/features/shell/utils/copyProductVariantToAi'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
-import { EditableSectionCard } from '@/shared/components/EditableSectionCard'
 import { dataApi } from '@/shared/services/dataApi'
 import type { ProductVariant } from '@/shared/types/data.types'
-import { shouldShowCompanyStock } from '@/features/products/utils/companyStockVisibility'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
-    </div>
-  )
-}
 
 export function ProductVariantDetailsPage() {
   const { t } = useTranslation('products')
@@ -46,8 +36,6 @@ export function ProductVariantDetailsPage() {
   const { goToDetail } = useNavigateDataEntity()
   const { accessToken, user } = useAppSelector((s) => s.auth)
   const canEdit = user?.role === 'super_admin' || user?.role === 'company_admin'
-  const canAddStock = user?.role === 'company_admin'
-  const showCompanyStock = shouldShowCompanyStock(user?.role)
   const [variant, setVariant] = useState<ProductVariant | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -169,14 +157,6 @@ export function ProductVariantDetailsPage() {
               </div>
               <ReadOnlyField label={t('variant.sku')} value={variant.sku} />
             </EditableSectionCard>
-
-            {showCompanyStock ? (
-              <ProductVariantStocksCard
-                productId={productId}
-                variantId={variantId}
-                canEdit={canAddStock}
-              />
-            ) : null}
           </div>
 
           <div className="flex flex-col gap-6 lg:col-span-1">

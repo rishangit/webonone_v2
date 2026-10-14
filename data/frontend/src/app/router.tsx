@@ -113,11 +113,6 @@ const ProductVariantFormEmbedPage = lazy(() =>
     default: m.ProductVariantFormEmbedPage,
   })),
 )
-const StockFormEmbedPage = lazy(() =>
-  import('@/features/products/pages/StockFormEmbedPage').then((m) => ({
-    default: m.StockFormEmbedPage,
-  })),
-)
 const UserSelectEmbedPage = lazy(() =>
   import('@/features/identity/pages/UserSelectEmbedPage').then((m) => ({
     default: m.UserSelectEmbedPage,
@@ -281,14 +276,6 @@ export function App() {
           {embedDialogRoute(
             '/embed/dialogs/products/:productId/variants/create',
             ProductVariantFormEmbedPage,
-          )}
-          {embedDialogRoute(
-            '/embed/dialogs/products/:productId/variants/:variantId/stocks/create',
-            StockFormEmbedPage,
-          )}
-          {embedDialogRoute(
-            '/embed/dialogs/products/:productId/variants/:variantId/stocks/:stockId/edit',
-            StockFormEmbedPage,
           )}
           {embedDialogRoute('/embed/dialogs/users/select', UserSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/catalog/:kind/select', CatalogLibrarySelectEmbedPage)}

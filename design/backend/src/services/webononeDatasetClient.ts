@@ -20,6 +20,7 @@ export async function queryCompanyDataset(input: {
   config?: DatasetConfig | null
   page?: number
   pageSize?: number
+  catalogAudience?: 'internal' | 'public_web'
 }): Promise<DatasetQueryResult> {
   const apiBase = env.webononeApiBaseUrl.replace(/\/$/, '')
   const apiKey = env.webononeServiceApiKey
@@ -42,6 +43,7 @@ export async function queryCompanyDataset(input: {
           sourceType: input.sourceType,
           filters: input.filters,
           config: input.config ?? {},
+          catalogAudience: input.catalogAudience ?? 'internal',
           page: input.page ?? 1,
           pageSize: input.pageSize ?? 20,
         }),

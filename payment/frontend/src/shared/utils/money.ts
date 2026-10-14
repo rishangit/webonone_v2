@@ -1,11 +1,8 @@
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+import { formatMoney } from '@webonone/ui-kit'
 
 export function formatLkr(amountMinor: number): string {
-  const major = amountMinor / 100
-  return `Rs ${major.toLocaleString('en-LK', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`
+  return formatMoney(amountMinor, { minorUnits: true, currency: 'LKR' })
 }
 
 export function formatDate(iso: string, language?: string): string {

@@ -507,6 +507,9 @@ function main() {
         '',
         `WEBONONE_API_BASE_URL=${originWebonone}`,
         `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
+        '',
+        `IDENTITY_API_BASE_URL=${originIdentity}`,
+        `IDENTITY_SERVICE_API_KEY=${identityKey}`,
       ]),
     ),
   );

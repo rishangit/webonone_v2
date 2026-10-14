@@ -15,9 +15,14 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
+  cn,
+  TagChip,
 } from '@webonone/ui-kit'
+import { websiteScrollportClassName } from '@/features/shell/layout/shellLayout'
 import { LoginRequiredDialog } from '@/features/auth/components/LoginRequiredDialog'
 import { useWebsiteAuth } from '@/features/auth/context/WebsiteAuthContext'
+import { CatalogPublicProductVariantPricingCard } from '@/features/catalog/components/CatalogPublicProductVariantPricingCard'
+import { CatalogPublicServiceOfferCard } from '@/features/catalog/components/CatalogPublicServiceOfferCard'
 import { CatalogPublicReviewsPanel } from '@/features/catalog/components/CatalogPublicReviewsPanel'
 import { IssueTokenDialog } from '@/features/catalog/components/IssueTokenDialog'
 import { TokenWorkflowProgress } from '@/features/catalog/components/TokenWorkflowProgress'
@@ -26,6 +31,7 @@ import {
   isCatalogKind,
   type CatalogDetailItem,
   type CatalogSessionItem,
+  type PublicProductVariantOffer,
   type SessionTokenItem,
 } from '@/features/catalog/types/catalog.types'
 import { CatalogSearchMapView } from '@/features/website/components/CatalogSearchMapView'
@@ -60,10 +66,6 @@ function hasMapLocation(item: CatalogDetailItem): boolean {
     Number.isFinite(item.latitude) &&
     Number.isFinite(item.longitude)
   )
-}
-
-function hasServiceTime(item: CatalogDetailItem): boolean {
-  return item.kind === 'services' && (item.timeMode === 'window' || item.timeMode === 'duration')
 }
 
 function weekdayLabel(ymd: string, t: (key: string) => string): string {
@@ -116,6 +118,8 @@ export function CatalogDetailPage() {
   const [tokensBySessionKey, setTokensBySessionKey] = useState<Record<string, SessionTokenItem>>({})
   const [bookingTarget, setBookingTarget] = useState<BookingTarget | null>(null)
   const [loginRequiredOpen, setLoginRequiredOpen] = useState(false)
+  const [productOffer, setProductOffer] = useState<PublicProductVariantOffer | null>(null)
+  const [productOfferLoading, setProductOfferLoading] = useState(false)
 
   const itemRef = useRef(item)
   itemRef.current = item
@@ -213,6 +217,33 @@ export function CatalogDetailPage() {
       cancelled = true
     }
   }, [item, t])
+
+  useEffect(() => {
+    if (!item || item.kind !== 'products') {
+      setProductOffer(null)
+      setProductOfferLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setProductOfferLoading(true)
+    void catalogApi
+      .getProductVariantOffer(item.id)
+      .then((offer) => {
+        if (cancelled) return
+        setProductOffer(offer)
+        setProductOfferLoading(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setProductOffer(null)
+        setProductOfferLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [item])
 
   useEffect(() => {
     if (!item || !isAuthenticated || !accessToken || sessions.length === 0) {
@@ -326,7 +357,12 @@ export function CatalogDetailPage() {
           </div>
         </div>
 
-        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-0 pb-12 sm:px-8">
+        <div
+          className={cn(
+            'relative z-10 min-h-0 flex-1 overflow-y-auto px-0 pb-12 sm:px-8',
+            websiteScrollportClassName,
+          )}
+        >
           <FeaturePage
             title={pageTitle}
             description={pageDescription}
@@ -424,45 +460,20 @@ export function CatalogDetailPage() {
                 </div>
 
                 <div className="flex flex-col gap-6 lg:col-span-1">
-                  {hasServiceTime(item) ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{t('time')}</CardTitle>
-                        <CardDescription>{t('timeScheduled')}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">{t('timeMode')}</p>
-                          <p className="text-sm text-foreground">
-                            {item.timeMode === 'window' ? t('specificTime') : t('duration')}
-                          </p>
-                        </div>
-                        {item.timeMode === 'duration' ? (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground">{t('duration')}</p>
-                            <p className="text-sm text-foreground">
-                              {item.durationMinutes != null
-                                ? t('durationMinutes', { minutes: String(item.durationMinutes) })
-                                : '—'}
-                            </p>
-                          </div>
-                        ) : null}
-                        {item.timeMode === 'window' ? (
-                          <>
-                            <div>
-                              <p className="text-xs font-medium text-muted-foreground">
-                                {t('startTime')}
-                              </p>
-                              <p className="text-sm text-foreground">{item.startTime ?? '—'}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-muted-foreground">{t('endTime')}</p>
-                              <p className="text-sm text-foreground">{item.endTime ?? '—'}</p>
-                            </div>
-                          </>
-                        ) : null}
-                      </CardContent>
-                    </Card>
+                  {item.kind === 'products' ? (
+                    <CatalogPublicProductVariantPricingCard
+                      offer={productOffer}
+                      loading={productOfferLoading}
+                      listPriceFallback={item.listPrice}
+                    />
+                  ) : null}
+
+                  {item.kind === 'services' ? (
+                    <CatalogPublicServiceOfferCard
+                      item={item}
+                      sessionSpaces={sessionSpaces}
+                      spacesLoading={sessionsLoading}
+                    />
                   ) : null}
 
                   {item.tags.length > 0 ? (
@@ -472,46 +483,11 @@ export function CatalogDetailPage() {
                         <CardDescription>{t('tagsDescription')}</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-1">
                           {item.tags.map((tag) => (
-                            <span
-                              key={tag.id}
-                              className="rounded-md border border-border px-1.5 py-0.5 text-xs text-muted-foreground"
-                              style={
-                                tag.color ? { borderColor: tag.color, color: tag.color } : undefined
-                              }
-                            >
-                              {tag.name}
-                            </span>
+                            <TagChip key={tag.id} name={tag.name} color={tag.color ?? ''} />
                           ))}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ) : null}
-
-                  {item.kind === 'services' && item.timeMode === 'window' ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{t('where')}</CardTitle>
-                        <CardDescription>
-                          {t('whereDescription')}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {sessionsLoading ? (
-                          <p className="text-sm text-muted-foreground">{t('loadingDetails')}</p>
-                        ) : sessionSpaces.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            {t('noSpaceYet')}
-                          </p>
-                        ) : (
-                          sessionSpaces.map((space) => (
-                            <div key={space.spaceId}>
-                              <p className="text-xs font-medium text-muted-foreground">{t('space')}</p>
-                              <p className="text-sm text-foreground">{space.spaceName}</p>
-                            </div>
-                          ))
-                        )}
                       </CardContent>
                     </Card>
                   ) : null}

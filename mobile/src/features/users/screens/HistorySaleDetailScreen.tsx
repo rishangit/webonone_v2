@@ -7,18 +7,17 @@ import {
   Card,
   FeatureScreen,
   Muted,
+  PriceDisplay,
   ReadOnlyField,
   Spinner,
   StatusTag,
   Subheading,
 } from '@webonone/mobile-ui'
+import { useSession } from '@/features/auth/SessionContext'
 import { getSaleHistoryDetail, type SaleHistoryDetail } from '@/features/users/services/userHistoryApi'
 import { userDetailPath } from '@/features/users/utils/userPaths'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
-
-function formatMoney(value: number, currency: string): string {
-  return `${currency} ${value.toFixed(2)}`
-}
+import { overlaySaleCustomerFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 
 type HistorySaleDetailScreenProps = {
   userId: string
@@ -29,6 +28,7 @@ export function HistorySaleDetailScreen({ userId, saleId }: HistorySaleDetailScr
   const { t } = useTranslation('users')
   const { t: tc } = useTranslation('common')
   const router = useRouter()
+  const { user: sessionUser } = useSession()
   const [detail, setDetail] = useState<SaleHistoryDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,6 +86,8 @@ export function HistorySaleDetailScreen({ userId, saleId }: HistorySaleDetailScr
 
   if (!detail) return null
 
+  const sale = overlaySaleCustomerFromSessionUser(detail, sessionUser)
+
   return (
     <FeatureScreen
       title={detail.billNumber}
@@ -99,16 +101,20 @@ export function HistorySaleDetailScreen({ userId, saleId }: HistorySaleDetailScr
           {detail.lines.map((line) => (
             <View key={line.id} className="gap-1 border-b border-border pb-3 last:border-0 last:pb-0">
               <Body className="font-medium">{line.name}</Body>
-              <Muted className="text-sm">
-                {t('history.qty')}: {line.quantity} · {t('history.unit')}:{' '}
-                {formatMoney(line.unitPrice, detail.currency)} · {t('history.lineTotal')}:{' '}
-                {formatMoney(line.lineTotal, detail.currency)}
-              </Muted>
+              <View className="flex-row flex-wrap items-baseline justify-between gap-2">
+                <Muted className="text-sm">
+                  {t('history.qty')}: {line.quantity}
+                </Muted>
+                <View className="flex-row items-baseline gap-3">
+                  <PriceDisplay value={line.unitPrice} currency={detail.currency} size="sm" />
+                  <PriceDisplay value={line.lineTotal} currency={detail.currency} size="sm" />
+                </View>
+              </View>
             </View>
           ))}
-          <Body className="text-right text-lg font-semibold">
-            {formatMoney(detail.total, detail.currency)}
-          </Body>
+          <View className="flex-row items-baseline justify-end">
+            <PriceDisplay value={detail.total} currency={detail.currency} size="lg" />
+          </View>
         </Card>
 
         <Card className="gap-3">
@@ -116,7 +122,7 @@ export function HistorySaleDetailScreen({ userId, saleId }: HistorySaleDetailScr
           <StatusTag variant={detail.status === 'completed' ? 'verified' : 'pending'}>
             {detail.status}
           </StatusTag>
-          <ReadOnlyField label={t('history.customer')} value={detail.customerDisplayName} />
+          <ReadOnlyField label={t('history.customer')} value={sale.customerDisplayName} />
           <ReadOnlyField label={t('history.payment')} value={detail.paymentMethod} />
           <ReadOnlyField
             label={t('history.submitted')}
