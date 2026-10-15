@@ -10,26 +10,19 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  EditableSectionCard,
   FeaturePage,
   ReadOnlyField,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
-import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { CompanyProductVariantStockLimitsCard } from '@/features/company-catalog/components/CompanyProductVariantStockLimitsCard'
 import { CompanyProductVariantStocksCard } from '@/features/company-catalog/components/CompanyProductVariantStocksCard'
+import { CompanyProductVariantAttributeValuesCard } from '@/features/company-catalog/components/CompanyProductVariantAttributeValuesCard'
 import { CompanyProductVariantSummaryCard } from '@/features/company-catalog/components/CompanyProductVariantSummaryCard'
 import { useLibraryProductVariantStocks } from '@/features/company-catalog/hooks/useLibraryProductVariantStocks'
-import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { companyCatalogApi } from '../services/companyCatalogApi'
-import {
-  dataLibraryApi,
-  formatLibraryAttributeValueLabel,
-  type LibraryProductVariant,
-} from '../services/dataLibraryApi'
+import { companyCatalogApi, type CompanyCatalogVariant } from '../services/companyCatalogApi'
 import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 
 export function CompanyProductVariantDetailsPage() {
@@ -42,13 +35,11 @@ export function CompanyProductVariantDetailsPage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const canEdit = activeRole === 'company_admin'
   const canAddStock = activeRole === 'company_admin'
-  const [variant, setVariant] = useState<LibraryProductVariant | null>(null)
+  const [variant, setVariant] = useState<CompanyCatalogVariant | null>(null)
   const [libraryProductId, setLibraryProductId] = useState<string | null>(null)
   const [productName, setProductName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     if (!productId || !variantId) return
@@ -56,16 +47,9 @@ export function CompanyProductVariantDetailsPage() {
     setError(null)
     try {
       const product = await companyCatalogApi.get('products', productId)
-      if (!product.libraryEntityId) {
-        setVariant(null)
-        setLibraryProductId(null)
-        setProductName('')
-        setError(t('variantDetail.notLinked'))
-        return
-      }
       setLibraryProductId(product.libraryEntityId)
       setProductName(typeof product.name === 'string' ? product.name.trim() : '')
-      const result = await dataLibraryApi.getProductVariant(product.libraryEntityId, variantId)
+      const result = await companyCatalogApi.getCopiedVariant(productId, variantId)
       setVariant(result)
     } catch (err) {
       setVariant(null)
@@ -84,21 +68,6 @@ export function CompanyProductVariantDetailsPage() {
   usePlatformLoading(loading && !variant ? t('variantDetail.loading') : null)
 
   const stocksQuery = useLibraryProductVariantStocks(productId, variantId)
-
-  async function handleDelete() {
-    if (!libraryProductId || !variantId || !variant || variant.isDefault) return
-    setDeleting(true)
-    setError(null)
-    try {
-      await dataLibraryApi.deleteProductVariant(libraryProductId, variantId)
-      navigate(`/data/products/${productId}?tab=variants`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('variantDetail.deleteFailed'))
-      setDeleteOpen(false)
-    } finally {
-      setDeleting(false)
-    }
-  }
 
   if (!productId || !variantId) {
     return <Navigate to="/data/products" replace />
@@ -133,17 +102,6 @@ export function CompanyProductVariantDetailsPage() {
               }}
             >
               {t('attributesTab.copyToAi')}
-            </Button>
-          ) : null}
-          {canEdit && variant && !variant.isDefault ? (
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteOpen(true)}
-              disabled={deleting}
-            >
-              {tc('delete')}
             </Button>
           ) : null}
         </div>
@@ -183,24 +141,12 @@ export function CompanyProductVariantDetailsPage() {
               canEdit={canEdit}
             />
 
-            <EditableSectionCard
-              title={t('variantDetail.attributeValues.title')}
-              description={t('variantDetail.attributeValues.description')}
-            >
-              {variant.values.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t('variantDetail.attributeValues.empty')}</p>
-              ) : (
-                <div className="space-y-4">
-                  {variant.values.map((value) => (
-                    <ReadOnlyField
-                      key={`${value.attributeId}-${value.attributeValueId}`}
-                      label={value.attributeName}
-                      value={formatLibraryAttributeValueLabel(value, value.unitSymbol)}
-                    />
-                  ))}
-                </div>
-              )}
-            </EditableSectionCard>
+            <CompanyProductVariantAttributeValuesCard
+              productId={productId}
+              variant={variant}
+              canEdit={canEdit}
+              onVariantUpdated={setVariant}
+            />
 
             <Card>
               <CardHeader>
@@ -221,22 +167,6 @@ export function CompanyProductVariantDetailsPage() {
           </div>
         </div>
       ) : null}
-
-      <PlatformAlertConfirmDialog
-        open={deleteOpen}
-        title={
-          variant
-            ? t('variantDetail.deleteConfirm', { name: variant.name })
-            : t('variantDetail.deleteConfirmFallback')
-        }
-        description={t('variantDetail.deleteDescription')}
-        isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel={tc('delete')}
-        onOpenChange={setDeleteOpen}
-        onConfirm={() => {
-          void handleDelete()
-        }}
-      />
     </FeaturePage>
   )
 }

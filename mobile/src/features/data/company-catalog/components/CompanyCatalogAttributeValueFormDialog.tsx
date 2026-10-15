@@ -13,16 +13,15 @@ import {
   catalogAttributeTextValueSchema,
 } from '@/features/data/company-catalog/schemas/catalogAttributeValueSchemas'
 import {
-  dataLibraryApi,
-  type LibraryCatalogAttribute,
-  type LibraryAttributeValueEntry,
-} from '@/features/sales/services/dataLibraryApi'
+  companyCatalogApi,
+  type CompanyCatalogAttribute,
+} from '@/features/data/services/companyCatalogApi'
 import type { CatalogKind } from '@/features/data/utils/dataPaths'
 
 export function CompanyCatalogAttributeValueFormDialog({
   open,
   kind,
-  libraryEntityId,
+  entityId,
   attribute,
   value,
   onOpenChange,
@@ -30,9 +29,9 @@ export function CompanyCatalogAttributeValueFormDialog({
 }: {
   open: boolean
   kind: CatalogKind
-  libraryEntityId: string
-  attribute: LibraryCatalogAttribute
-  value?: LibraryAttributeValueEntry | null
+  entityId: string
+  attribute: CompanyCatalogAttribute
+  value?: CompanyCatalogAttribute['values'][number] | null
   onOpenChange: (open: boolean) => void
   onSaved: () => void
 }) {
@@ -69,13 +68,13 @@ export function CompanyCatalogAttributeValueFormDialog({
       }
       setSaving(true)
       try {
-        const body = { value_number: Number(parsed.data.value) }
+        const body = { valueNumber: Number(parsed.data.value) }
         if (isEdit && value) {
-          await dataLibraryApi.updateCatalogAttributeValue(galleryKind, libraryEntityId, value.id, body)
+          await companyCatalogApi.updateCopiedAttributeValue(galleryKind, entityId, value.id, body)
         } else {
-          await dataLibraryApi.addCatalogAttributeValue(
+          await companyCatalogApi.createCopiedAttributeValue(
             galleryKind,
-            libraryEntityId,
+            entityId,
             attribute.attributeId,
             body,
           )
@@ -102,13 +101,13 @@ export function CompanyCatalogAttributeValueFormDialog({
     }
     setSaving(true)
     try {
-      const body = { value_text: parsed.data.value }
+      const body = { valueText: parsed.data.value }
       if (isEdit && value) {
-        await dataLibraryApi.updateCatalogAttributeValue(galleryKind, libraryEntityId, value.id, body)
+        await companyCatalogApi.updateCopiedAttributeValue(galleryKind, entityId, value.id, body)
       } else {
-        await dataLibraryApi.addCatalogAttributeValue(
+        await companyCatalogApi.createCopiedAttributeValue(
           galleryKind,
-          libraryEntityId,
+          entityId,
           attribute.attributeId,
           body,
         )

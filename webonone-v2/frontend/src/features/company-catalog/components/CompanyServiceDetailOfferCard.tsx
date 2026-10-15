@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, EditableSectionCard, ListPriceField, ReadOnlyField } from '@webonone/ui-kit'
+import { Button, EditableSectionCard, ReadOnlyField } from '@webonone/ui-kit'
+import { CatalogApplicablePrice } from '@/features/company-catalog/components/CatalogApplicablePrice'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
+import type { CatalogPriceRule } from '@/features/company-catalog/types/catalogPriceRule.types'
 import type { CatalogPayload } from '@/features/company-catalog/types/companyCatalog.types'
 
 type CompanyServiceDetailOfferCardProps = {
   serviceId: string
   companyId?: string
   servicePayload: CatalogPayload | null
-  listPrice: number | null | undefined
+  priceRules: CatalogPriceRule[]
+  priceRulesLoading?: boolean
   canManagePrice: boolean
   canEditSchedule: boolean
   busy?: boolean
   overviewActive?: boolean
-  onEditListPrice: () => void
+  onManagePrices: () => void
   onEditSchedule: () => void
   onManageWorkflow: () => void
 }
@@ -68,12 +71,13 @@ export function CompanyServiceDetailOfferCard({
   serviceId,
   companyId,
   servicePayload,
-  listPrice,
+  priceRules,
+  priceRulesLoading = false,
   canManagePrice,
   canEditSchedule,
   busy = false,
   overviewActive = true,
-  onEditListPrice,
+  onManagePrices,
   onEditSchedule,
   onManageWorkflow,
 }: CompanyServiceDetailOfferCardProps) {
@@ -109,7 +113,7 @@ export function CompanyServiceDetailOfferCard({
 
   function handleCardEdit() {
     if (canManagePrice) {
-      onEditListPrice()
+      onManagePrices()
       return
     }
     if (canEditSchedule) {
@@ -142,29 +146,43 @@ export function CompanyServiceDetailOfferCard({
                     : spaceNames?.join(', ')
             }
           />
-          {canEditSchedule ? (
+          {canEditSchedule || canManagePrice ? (
             <div className="flex flex-wrap gap-x-3 gap-y-1">
-              <Button
-                type="button"
-                variant="link"
-                className="h-auto p-0 text-sm"
-                onClick={onEditSchedule}
-              >
-                {t('detail.serviceOffer.editSchedule')}
-              </Button>
-              <Button
-                type="button"
-                variant="link"
-                className="h-auto p-0 text-sm"
-                onClick={onManageWorkflow}
-              >
-                {t('detail.serviceOffer.manageWorkflow')}
-              </Button>
+              {canEditSchedule ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-sm"
+                  onClick={onEditSchedule}
+                >
+                  {t('detail.serviceOffer.editSchedule')}
+                </Button>
+              ) : null}
+              {canEditSchedule ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-sm"
+                  onClick={onManageWorkflow}
+                >
+                  {t('detail.serviceOffer.manageWorkflow')}
+                </Button>
+              ) : null}
+              {canManagePrice ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-sm"
+                  onClick={onManagePrices}
+                >
+                  {t('priceList.manage')}
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </div>
 
-        <ListPriceField label={t('detail.pricing.listPrice')} value={listPrice} />
+        <CatalogApplicablePrice rules={priceRules} loading={priceRulesLoading && overviewActive} />
       </div>
     </EditableSectionCard>
   )

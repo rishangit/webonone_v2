@@ -45,6 +45,7 @@ export type LibraryAttributeValueEntry = {
 export type LibraryCatalogAttribute = {
   attributeId: string
   name: string
+  description: string | null
   valueType: 'number' | 'text'
   unit: LibraryAttributeUnit | null
   values: LibraryAttributeValueEntry[]
@@ -57,6 +58,14 @@ export type LibraryListItem = CatalogPayload & {
   galleryImages?: { mediaId: string; url: string }[]
   attributes?: LibraryCatalogAttribute[] | unknown
   tags?: { id: string; name?: string; color?: string }[]
+}
+
+export type LibraryAttributeListItem = {
+  id: string
+  name: string
+  description: string | null
+  valueType: 'number' | 'text'
+  unit: LibraryAttributeUnit | null
 }
 
 export type LibraryProductVariantAttributeValue = {
@@ -109,6 +118,20 @@ function parseUnit(raw: unknown): LibraryAttributeUnit | null {
   return { id: raw.id, name: raw.name, symbol: raw.symbol }
 }
 
+export function parseLibraryAttributeListItem(item: LibraryListItem): LibraryAttributeListItem {
+  const description =
+    typeof item.description === 'string' && item.description.trim().length > 0
+      ? item.description.trim()
+      : null
+  return {
+    id: item.id,
+    name: item.name,
+    description,
+    valueType: item.valueType === 'number' ? 'number' : 'text',
+    unit: parseUnit(item.unit),
+  }
+}
+
 function parseAttributeValues(raw: unknown): LibraryAttributeValueEntry[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -145,9 +168,14 @@ export function parseLibraryAttributes(raw: unknown): LibraryCatalogAttribute[] 
       ]
     }
 
+    const description =
+      typeof entry.description === 'string' && entry.description.trim().length > 0
+        ? entry.description.trim()
+        : null
     result.push({
       attributeId: entry.attributeId,
       name,
+      description,
       valueType,
       unit,
       values,

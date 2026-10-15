@@ -1,5 +1,10 @@
 import { apiClient } from '@/shared/services/apiClient'
 import type { LibraryProductVariantStock } from '@/features/company-catalog/services/dataLibraryApi'
+import type { CatalogPriceRuleBody } from '@/features/company-catalog/schemas/catalogPriceRuleSchemas'
+import type {
+  CatalogPriceKind,
+  CatalogPriceRule,
+} from '@/features/company-catalog/types/catalogPriceRule.types'
 import type {
   CatalogBindingMode,
   CatalogEntityKind,
@@ -11,38 +16,88 @@ import type {
   ServiceWorkflowItem,
 } from '../types/companyCatalog.types'
 
+export type CompanyCatalogAttributeValue = {
+  id: string
+  libraryValueId: string | null
+  valueText: string | null
+  valueNumber: number | null
+  isDefault: boolean
+  usedByVariants: string[]
+}
+
+export type CompanyCatalogAttribute = {
+  attributeId: string
+  name: string
+  description: string | null
+  valueType: 'number' | 'text'
+  unit: { id: string; name: string; symbol: string } | null
+  values: CompanyCatalogAttributeValue[]
+}
+
+export type CompanyCatalogVariant = {
+  id: string
+  libraryVariantId: string
+  productId: string
+  name: string
+  sku: string
+  isDefault: boolean
+  values: Array<{
+    attributeId: string
+    attributeName: string
+    attributeValueId: string
+    libraryValueId: string
+    valueText: string | null
+    valueNumber: number | null
+    valueType: 'number' | 'text'
+    unitSymbol: string | null
+  }>
+  createdAt: string
+  updatedAt: string
+}
+
+function catalogListQuery(kind: CatalogEntityKind, query?: { q?: string }): string {
+  const params = new URLSearchParams()
+  const q = query?.q?.trim()
+  if (q) params.set('q', q)
+  if (kind === 'services' || kind === 'spaces') {
+    const now = new Date()
+    params.set('atWeekday', String(now.getDay()))
+    params.set('atMinutes', String(now.getHours() * 60 + now.getMinutes()))
+  }
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
 export const companyCatalogApi = {
   list(kind: CatalogEntityKind, query?: { q?: string }) {
-    const q = query?.q?.trim()
-    const qs = q ? `?q=${encodeURIComponent(q)}` : ''
-    return apiClient<{ items: CompanyCatalogItem[] }>(`/company/me/catalog/${kind}${qs}`)
+    return apiClient<{ items: CompanyCatalogItem[] }>(
+      `/company/me/catalog/${kind}${catalogListQuery(kind, query)}`,
+    )
   },
 
   /** Membership-scoped list (Settings → My Companies; no company JWT session required). */
   listForCompany(companyId: string, kind: CatalogEntityKind, query?: { q?: string }) {
-    const q = query?.q?.trim()
-    const qs = q ? `?q=${encodeURIComponent(q)}` : ''
     return apiClient<{ items: CompanyCatalogItem[] }>(
-      `/company/${encodeURIComponent(companyId)}/catalog/${kind}${qs}`,
+      `/company/${encodeURIComponent(companyId)}/catalog/${kind}${catalogListQuery(kind, query)}`,
     )
   },
 
   /** Discover preview list (Find Companies dialog, before connect). */
   listForDiscover(companyId: string, kind: CatalogEntityKind, query?: { q?: string }) {
-    const q = query?.q?.trim()
-    const qs = q ? `?q=${encodeURIComponent(q)}` : ''
     return apiClient<{ items: CompanyCatalogItem[] }>(
-      `/company/discover/${encodeURIComponent(companyId)}/catalog/${kind}${qs}`,
+      `/company/discover/${encodeURIComponent(companyId)}/catalog/${kind}${catalogListQuery(kind, query)}`,
     )
   },
 
   get(kind: CatalogEntityKind, id: string) {
-    return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}`)
+    return apiClient<CompanyCatalogItem>(
+      `/company/me/catalog/${kind}/${id}${catalogListQuery(kind)}`,
+    )
   },
 
   getForCompany(companyId: string, kind: CatalogEntityKind, id: string) {
     return apiClient<CompanyCatalogItem>(
-      `/company/${encodeURIComponent(companyId)}/catalog/${kind}/${encodeURIComponent(id)}`,
+      `/company/${encodeURIComponent(companyId)}/catalog/${kind}/${encodeURIComponent(id)}${catalogListQuery(kind)}`,
     )
   },
 
@@ -117,10 +172,38 @@ export const companyCatalogApi = {
     })
   },
 
+  listPriceRules(kind: CatalogPriceKind, id: string, companyId?: string) {
+    const path = companyId
+      ? `/company/${companyId}/catalog/${kind}/${id}/price-rules`
+      : `/company/me/catalog/${kind}/${id}/price-rules`
+    return apiClient<{ items: CatalogPriceRule[] }>(path)
+  },
+
+  createPriceRule(kind: CatalogPriceKind, id: string, body: CatalogPriceRuleBody) {
+    return apiClient<CatalogPriceRule>(`/company/me/catalog/${kind}/${id}/price-rules`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  updatePriceRule(kind: CatalogPriceKind, id: string, ruleId: string, body: CatalogPriceRuleBody) {
+    return apiClient<CatalogPriceRule>(`/company/me/catalog/${kind}/${id}/price-rules/${ruleId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
+  deletePriceRule(kind: CatalogPriceKind, id: string, ruleId: string) {
+    return apiClient<void>(`/company/me/catalog/${kind}/${id}/price-rules/${ruleId}`, {
+      method: 'DELETE',
+    })
+  },
+
   listProductVariantStockLimits(productId: string) {
     return apiClient<{
       items: Array<{
         libraryVariantId: string
+        companyVariantId?: string | null
         minQuantity: number | null
         maxQuantity: number | null
       }>
@@ -309,6 +392,144 @@ export const companyCatalogApi = {
     return apiClient<CatalogSessionTokenItem>(
       memberSessionTokenPath(companyId, serviceId, eventId, occurrenceDate),
       { method: 'POST', body: JSON.stringify(body ?? {}) },
+    )
+  },
+
+  ensureLibraryLink(kind: CatalogEntityKind, id: string) {
+    return apiClient<{ libraryEntityId: string }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/ensure-library`,
+      { method: 'POST' },
+    )
+  },
+
+  listCopiedAttributes(kind: CatalogEntityKind, id: string) {
+    return apiClient<{
+      libraryEntityId: string | null
+      attributes: CompanyCatalogAttribute[]
+    }>(`/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes`)
+  },
+
+  attachAttributesToLibrary(kind: CatalogEntityKind, id: string, attributeIds: string[]) {
+    return apiClient<{
+      libraryEntityId: string
+      attributes: Array<{
+        attributeId: string
+        name: string
+        valueType: 'number' | 'text'
+        unit: { id: string; name: string; symbol: string } | null
+        values: CompanyCatalogAttributeValue[]
+      }>
+    }>(`/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/attach-to-library`, {
+      method: 'POST',
+      body: JSON.stringify({ attributeIds }),
+    })
+  },
+
+  copyAttributesFromLibrary(kind: CatalogEntityKind, id: string, attributeIds: string[]) {
+    return apiClient<{
+      libraryEntityId: string | null
+      attributes: CompanyCatalogAttribute[]
+    }>(`/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/from-library`, {
+      method: 'POST',
+      body: JSON.stringify({ attributeIds }),
+    })
+  },
+
+  deleteCopiedAttribute(kind: CatalogEntityKind, id: string, attributeId: string) {
+    return apiClient<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/${encodeURIComponent(attributeId)}`,
+      { method: 'DELETE' },
+    )
+  },
+
+  copyAttributeValuesFromLibrary(kind: CatalogEntityKind, id: string, libraryValueIds: string[]) {
+    return apiClient<{
+      libraryEntityId: string | null
+      attributes: CompanyCatalogAttribute[]
+    }>(`/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/from-library`, {
+      method: 'POST',
+      body: JSON.stringify({ libraryValueIds }),
+    })
+  },
+
+  createCopiedAttributeValue(
+    kind: CatalogEntityKind,
+    id: string,
+    attributeId: string,
+    body: { valueText?: string | null; valueNumber?: number | null },
+  ) {
+    return apiClient<{
+      libraryEntityId: string | null
+      attributes: CompanyCatalogAttribute[]
+    }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/${encodeURIComponent(attributeId)}/values`,
+      { method: 'POST', body: JSON.stringify(body) },
+    )
+  },
+
+  updateCopiedAttributeValue(
+    kind: CatalogEntityKind,
+    id: string,
+    valueId: string,
+    body: { valueText?: string | null; valueNumber?: number | null },
+  ) {
+    return apiClient<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/${encodeURIComponent(valueId)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    )
+  },
+
+  setCopiedAttributeValueDefault(kind: CatalogEntityKind, id: string, valueId: string) {
+    return apiClient<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/${encodeURIComponent(valueId)}/default`,
+      { method: 'PATCH' },
+    )
+  },
+
+  deleteCopiedAttributeValue(kind: CatalogEntityKind, id: string, valueId: string) {
+    return apiClient<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/${encodeURIComponent(valueId)}`,
+      { method: 'DELETE' },
+    )
+  },
+
+  listCopiedVariants(productId: string) {
+    return apiClient<{ libraryEntityId: string | null; items: CompanyCatalogVariant[] }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants`,
+    )
+  },
+
+  getCopiedVariant(productId: string, variantId: string) {
+    return apiClient<CompanyCatalogVariant>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
+    )
+  },
+
+  copyVariantsFromLibrary(productId: string, libraryVariantIds: string[]) {
+    return apiClient<{ libraryEntityId: string | null; items: CompanyCatalogVariant[] }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/from-library`,
+      { method: 'POST', body: JSON.stringify({ libraryVariantIds }) },
+    )
+  },
+
+  updateCopiedVariantAttributeValues(
+    productId: string,
+    variantId: string,
+    libraryValueIds: string[],
+  ) {
+    return apiClient<CompanyCatalogVariant>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/attribute-values`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ libraryValueIds }),
+      },
+    )
+  },
+
+  deleteCopiedVariant(productId: string, variantId: string) {
+    return apiClient<void>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
+      { method: 'DELETE' },
     )
   },
 }

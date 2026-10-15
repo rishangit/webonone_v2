@@ -30,5 +30,12 @@
   "descriptionLabel": "Description",
   "unit": "Unit",
   "noUnit": "—",
+  "pickerNoUnit": "No unit",
+  "pickerTitle": "Add library attributes",
+  "pickerDescription": "Select attributes from the Data library. They are added to the linked library product. Use Add on the left list to copy them onto this company item.",
+  "pickerSubmit": "Add to library",
+  "pickerSubmitCount": "Add to library ({{count}})",
+  "pickerSearch": "Attribute name",
+  "addNew": "Add new attribute",
   "references": "References"
 }

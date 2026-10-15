@@ -84,11 +84,11 @@
     --shell-chrome-bg: 240 5% 96%;
     --shell-chrome-border: 240 6% 88%;
     /**
-     * Shell chrome spacing — keep in sync with shellChromeRootClassName (`p-2 gap-2`).
-     * High-tech overrides below for larger page-style insets.
+     * Shell chrome spacing — keep in sync with shellChromeRootClassName
+     * (`p-1` below `md`, `md:p-2`, `gap-2`). High-tech overrides below for larger page-style insets.
      */
-    --shell-chrome-inset-x: 0.5rem;
-    --shell-chrome-inset-y: 0.5rem;
+    --shell-chrome-inset-x: 0.25rem;
+    --shell-chrome-inset-y: 0.25rem;
     --shell-chrome-gap: 0.5rem;
     --app-shell-header-inner-height: 3.5rem;
     --app-shell-notice-band-height: 0px;
@@ -434,13 +434,18 @@
   }
 
   [data-ui-theme='high-tech'] {
-    /* Match shellPagePadding horizontal; vertical inset stays `p-2` on mobile. */
-    --shell-chrome-inset-x: 0.5rem;
+    /* Mobile shell inset is `p-1`. Horizontal grows with page padding from `md`. */
+    --shell-chrome-inset-x: 0.25rem;
     --shell-chrome-gap: 0.5rem;
   }
 
-  /* md+ only — mobile drawer must match constant shell root `p-2`. */
+  /* md+ — classic shell root is `md:p-2`; mobile drawer matches `p-1`. */
   @media (min-width: 768px) {
+    :root {
+      --shell-chrome-inset-x: 0.5rem;
+      --shell-chrome-inset-y: 0.5rem;
+    }
+
     [data-ui-theme='high-tech'] {
       --shell-chrome-inset-x: 1.5rem;
       --shell-chrome-inset-y: 1.5rem;

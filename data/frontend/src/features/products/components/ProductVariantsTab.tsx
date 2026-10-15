@@ -13,7 +13,6 @@ import {
   StatusTag,
 } from '@webonone/ui-kit'
 import { ProductVariantFormDialog } from '@/features/products/components/ProductVariantFormDialog'
-import { ProductVariantsAiMenu } from '@/features/shell/components/ProductVariantsAiMenu'
 import { AI_PRODUCT_VARIANTS_CHANGED_EVENT } from '@/features/shell/utils/aiProductVariantsRefresh'
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
@@ -94,13 +93,10 @@ export function ProductVariantsTab({
           </p>
         </div>
         {canEdit ? (
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <ProductVariantsAiMenu productId={productId} productName={productName} />
-            <Button type="button" size="sm" onClick={() => setDialogOpen(true)} disabled={loading}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t('variant.addNew')}
-            </Button>
-          </div>
+          <Button type="button" size="sm" onClick={() => setDialogOpen(true)} disabled={loading}>
+            <Plus className="h-4 w-4" aria-hidden />
+            {t('variant.addNew')}
+          </Button>
         ) : null}
       </div>
 

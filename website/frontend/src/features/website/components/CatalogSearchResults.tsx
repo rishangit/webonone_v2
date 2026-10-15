@@ -47,7 +47,7 @@ export function CatalogSearchResults({
       <CatalogPublicItemCardGrid
         items={rows}
         distanceNamespace="search"
-        className="gap-2 py-0 md:gap-3"
+        className="gap-1 py-0 md:gap-3"
       />
     </div>
   )

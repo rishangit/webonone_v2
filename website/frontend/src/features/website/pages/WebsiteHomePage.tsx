@@ -341,7 +341,7 @@ export function WebsiteHomePage() {
 
         {!isMapView ? (
           <main className={resultsScrollMainClassName}>
-            <div className={cn('flex flex-col gap-6 py-4', homeContentClassName)}>
+            <div className={cn('flex flex-col gap-6 py-4', websitePageContentClassName)}>
               {hasSearchQuery ? (
                 <>
                   <CatalogSearchResults
@@ -372,7 +372,7 @@ export function WebsiteHomePage() {
 
         {isMapView && hasSearchQuery && !showSearchMap ? (
           <main className={resultsScrollMainClassName}>
-            <div className={homeContentClassName}>
+            <div className={websitePageContentClassName}>
               <CatalogSearchResults
                 items={items}
                 searched={searched}
@@ -385,7 +385,7 @@ export function WebsiteHomePage() {
 
         {isMapView && !hasSearchQuery && !coords ? (
           <main className={resultsScrollMainClassName}>
-            <div className={homeContentClassName}>
+            <div className={websitePageContentClassName}>
               <p className="text-sm text-muted-foreground">{tHome('nearbyNeedsLocation')}</p>
             </div>
           </main>
@@ -393,7 +393,7 @@ export function WebsiteHomePage() {
 
         {isMapView && !hasSearchQuery && coords && nearbyMapError ? (
           <main className={resultsScrollMainClassName}>
-            <div className={homeContentClassName}>
+            <div className={websitePageContentClassName}>
               <p className="text-sm text-destructive">{nearbyMapError}</p>
             </div>
           </main>
@@ -401,7 +401,7 @@ export function WebsiteHomePage() {
 
         {isMapView && !hasSearchQuery && coords && !nearbyMapLoading && mapCompanies.length === 0 && !nearbyMapError ? (
           <main className={resultsScrollMainClassName}>
-            <div className={homeContentClassName}>
+            <div className={websitePageContentClassName}>
               <p className="text-sm text-muted-foreground">{tHome('nearbyEmpty')}</p>
             </div>
           </main>

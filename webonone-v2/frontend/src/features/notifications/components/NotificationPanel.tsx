@@ -35,7 +35,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
 
   return (
     <div className="flex w-full min-w-0 flex-col sm:max-w-[22rem]">
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-b border-[hsl(var(--glass-border))] px-3 py-2">
         <p className="text-sm font-medium text-foreground">{t('notifications.title')}</p>
         <div className="flex items-center gap-1">
           {unreadCount > 0 ? (
@@ -72,7 +72,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
             {t('notifications.empty')}
           </p>
         ) : null}
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-[hsl(var(--glass-border))]">
           {items.map((item) => (
             <li key={item.id}>
               <button

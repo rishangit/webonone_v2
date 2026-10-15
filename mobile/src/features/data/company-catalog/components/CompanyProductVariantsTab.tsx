@@ -11,6 +11,7 @@ import {
   ItemListItem,
   ItemListMenu,
   ItemListMenuItem,
+  ListAddButton,
   Muted,
   StatusTag,
   Subheading,
@@ -18,55 +19,51 @@ import {
 } from '@webonone/mobile-ui'
 import { subscribeAiCatalogMutation } from '@/features/ai/utils/aiCatalogEvents'
 import { isDataProductVariantWriteTool } from '@/features/ai/utils/catalogAiMutationRefresh'
-import { CompanyProductVariantsAiMenu } from '@/features/data/company-catalog/components/CompanyProductVariantsAiMenu'
+import { CompanyProductVariantPickerDialog } from '@/features/data/company-catalog/components/CompanyProductVariantPickerDialog'
 import { companyProductVariantDetailPath } from '@/features/data/utils/dataPaths'
 import {
-  dataLibraryApi,
-  formatLibraryAttributeValueLabel,
-  type LibraryProductVariant,
-} from '@/features/sales/services/dataLibraryApi'
+  companyCatalogApi,
+  type CompanyCatalogVariant,
+} from '@/features/data/services/companyCatalogApi'
+import { formatLibraryAttributeValueLabel } from '@/features/sales/services/dataLibraryApi'
 
 export function CompanyProductVariantsTab({
   productId,
   productName,
   libraryEntityId,
-  canEdit,
+  canAdd,
 }: {
   productId: string
   productName: string
   libraryEntityId: string | null
-  canEdit: boolean
+  canAdd: boolean
 }) {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
   const router = useRouter()
   const { toast } = useToast()
-  const [items, setItems] = useState<LibraryProductVariant[]>([])
-  const [loading, setLoading] = useState(Boolean(libraryEntityId))
+  const [items, setItems] = useState<CompanyCatalogVariant[]>([])
+  const [linkedLibraryId, setLinkedLibraryId] = useState<string | null>(libraryEntityId)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<LibraryProductVariant | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<CompanyCatalogVariant | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const load = useCallback(async () => {
-    if (!libraryEntityId) {
-      setItems([])
-      setLoading(false)
-      setError(null)
-      return
-    }
-
     setLoading(true)
     setError(null)
     try {
-      const result = await dataLibraryApi.listProductVariants(libraryEntityId)
+      const result = await companyCatalogApi.listCopiedVariants(productId)
       setItems(result.items)
+      setLinkedLibraryId(result.libraryEntityId ?? libraryEntityId)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('variantsTab.failedLoad'))
       setItems([])
     } finally {
       setLoading(false)
     }
-  }, [libraryEntityId, t])
+  }, [libraryEntityId, productId, t])
 
   useEffect(() => {
     void load()
@@ -74,22 +71,20 @@ export function CompanyProductVariantsTab({
 
   useEffect(() => {
     return subscribeAiCatalogMutation((toolName) => {
-      if (isDataProductVariantWriteTool(toolName)) {
-        void load()
-      }
+      if (isDataProductVariantWriteTool(toolName)) void load()
     })
   }, [load])
 
   async function handleDelete() {
-    if (!libraryEntityId || !pendingDelete || pendingDelete.isDefault) return
+    if (!pendingDelete || pendingDelete.isDefault) return
     setBusy(true)
     try {
-      await dataLibraryApi.deleteProductVariant(libraryEntityId, pendingDelete.id)
-      toast({ title: tc('remove') })
+      await companyCatalogApi.deleteCopiedVariant(productId, pendingDelete.id)
+      toast({ title: t('variantsTab.removed') })
       await load()
     } catch (err) {
       toast({
-        title: tc('remove'),
+        title: t('variantsTab.removeFailed'),
         description: err instanceof Error ? err.message : undefined,
         variant: 'destructive',
       })
@@ -99,15 +94,20 @@ export function CompanyProductVariantsTab({
     }
   }
 
-  if (!libraryEntityId) {
-    return <Muted className="text-sm">{t('variantsTab.noLibraryProduct')}</Muted>
-  }
-
   return (
     <View className="gap-4">
-      <View className="flex-row items-center justify-between gap-2">
-        <Subheading>{t('detail.tabs.variants')}</Subheading>
-        <CompanyProductVariantsAiMenu libraryEntityId={libraryEntityId} entityName={productName} />
+      <View className="gap-3">
+        <View className="min-w-0 gap-1">
+          <Subheading>{t('detail.tabs.variants')}</Subheading>
+          <Muted className="text-sm">{t('variantsTab.copiedHint')}</Muted>
+        </View>
+        {canAdd ? (
+          <View className="items-end">
+            <ListAddButton onPress={() => setPickerOpen(true)} disabled={loading || busy}>
+              {t('variantsTab.add')}
+            </ListAddButton>
+          </View>
+        ) : null}
       </View>
       {error ? <Body className="text-destructive">{error}</Body> : null}
       {loading ? (
@@ -142,7 +142,7 @@ export function CompanyProductVariantsTab({
               {variant.isDefault ? (
                 <StatusTag variant="verified">{t('variantDetail.variantCard.default')}</StatusTag>
               ) : null}
-              {canEdit && !variant.isDefault ? (
+              {canAdd && !variant.isDefault ? (
                 <ItemListMenu ariaLabel={t('variantsTab.actionsFor', { name: variant.name })}>
                   <ItemListMenuItem destructive onPress={() => setPendingDelete(variant)}>
                     {tc('remove')}
@@ -153,6 +153,18 @@ export function CompanyProductVariantsTab({
           ))}
         </ItemList>
       )}
+      <CompanyProductVariantPickerDialog
+        open={pickerOpen}
+        productId={productId}
+        productName={productName}
+        libraryEntityId={linkedLibraryId}
+        copiedVariants={items}
+        onOpenChange={setPickerOpen}
+        onCopied={(nextLibraryId) => {
+          if (nextLibraryId) setLinkedLibraryId(nextLibraryId)
+          void load()
+        }}
+      />
       <ConfirmDialog
         open={pendingDelete != null}
         onOpenChange={(open) => !open && setPendingDelete(null)}

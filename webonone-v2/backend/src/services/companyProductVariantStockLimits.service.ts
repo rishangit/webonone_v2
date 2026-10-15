@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
+import { resolveCompanyVariant } from '../repositories/companyCatalogCopies.repository.js'
 import * as limitsRepo from '../repositories/companyProductVariantStockLimits.repository.js'
 import * as roleRepo from '../clients/identityRoleClient.js'
 
@@ -52,9 +53,15 @@ export async function getProductVariantStockLimits(
 ) {
   await assertCompanySessionAccess(userId, companyId)
   await assertCompanyProduct(companyId, companyProductId)
-  const row = await limitsRepo.findVariantStockLimits(companyProductId, libraryVariantId)
+  const resolved = await resolveCompanyVariant(companyProductId, libraryVariantId)
+  const row = await limitsRepo.findVariantStockLimits(companyProductId, resolved.libraryVariantId)
   if (!row) {
-    return { libraryVariantId, minQuantity: null, maxQuantity: null }
+    return {
+      libraryVariantId: resolved.libraryVariantId,
+      companyVariantId: resolved.companyVariantId,
+      minQuantity: null,
+      maxQuantity: null,
+    }
   }
   return limitsRepo.mapVariantStockLimitsRow(row)
 }
@@ -69,16 +76,23 @@ export async function upsertProductVariantStockLimits(
 ) {
   await assertCompanyAdmin(userId, companyId)
   await assertCompanyProduct(companyId, companyProductId)
+  const resolved = await resolveCompanyVariant(companyProductId, libraryVariantId)
   const row = await limitsRepo.upsertVariantStockLimits({
     id: nanoid(),
     companyId,
     companyProductId,
-    libraryVariantId,
+    libraryVariantId: resolved.libraryVariantId,
+    companyVariantId: resolved.companyVariantId,
     minQuantity,
     maxQuantity,
   })
   if (!row) {
-    return { libraryVariantId, minQuantity: null, maxQuantity: null }
+    return {
+      libraryVariantId: resolved.libraryVariantId,
+      companyVariantId: resolved.companyVariantId,
+      minQuantity: null,
+      maxQuantity: null,
+    }
   }
   return limitsRepo.mapVariantStockLimitsRow(row)
 }

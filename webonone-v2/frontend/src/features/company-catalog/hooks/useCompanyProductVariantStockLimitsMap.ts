@@ -30,12 +30,13 @@ export function invalidateProductVariantStockLimitsList(productId: string): void
 function mapItemsToRecord(
   items: StockLimitsListResponse['items'],
 ): Record<string, CompanyVariantStockLimits> {
-  return Object.fromEntries(
-    items.map((item) => [
-      item.libraryVariantId,
-      { minQuantity: item.minQuantity, maxQuantity: item.maxQuantity },
-    ]),
-  )
+  const record: Record<string, CompanyVariantStockLimits> = {}
+  for (const item of items) {
+    const limits = { minQuantity: item.minQuantity, maxQuantity: item.maxQuantity }
+    record[item.libraryVariantId] = limits
+    if (item.companyVariantId) record[item.companyVariantId] = limits
+  }
+  return record
 }
 
 export function useCompanyProductVariantStockLimitsMap(companyProductId: string | undefined): {

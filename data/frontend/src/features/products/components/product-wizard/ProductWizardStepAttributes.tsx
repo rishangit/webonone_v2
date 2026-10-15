@@ -1,12 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
+  AttributePickerListItem,
   Button,
   DropdownMenuItem,
   ItemList,
-  ItemListContent,
   ItemListEmpty,
-  ItemListItem,
   ItemListMenu,
 } from '@webonone/ui-kit'
 import type { ProductWizardFormValues } from '@/features/products/schemas/productSchemas'
@@ -25,6 +24,7 @@ export function ProductWizardStepAttributes({
   onRemove,
 }: ProductWizardStepAttributesProps) {
   const { t } = useTranslation('products')
+  const { t: ta } = useTranslation('attributes')
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -46,24 +46,29 @@ export function ProductWizardStepAttributes({
       ) : (
         <ItemList>
           {values.attributes.map((row) => (
-            <ItemListItem key={row.attributeId}>
-              <ItemListContent>
-                <p className="truncate font-medium">{row.name || row.attributeId}</p>
-                <p className="truncate text-sm text-muted-foreground">
-                  <span className="capitalize">{row.valueType}</span>
-                  {row.unit ? ` · ${row.unit.name} (${row.unit.symbol})` : ''}
-                </p>
-              </ItemListContent>
-              <ItemListMenu ariaLabel={t('wizard.actionsForAttribute', { name: row.name || t('wizard.attributeFallback') })}>
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  disabled={isSubmitting}
-                  onClick={() => onRemove(row.attributeId)}
+            <AttributePickerListItem
+              key={row.attributeId}
+              name={row.name || row.attributeId}
+              description={row.description}
+              valueTypeLabel={row.valueType === 'number' ? ta('number') : ta('text')}
+              unit={row.unit}
+              noUnitLabel={ta('pickerNoUnit')}
+              trailing={
+                <ItemListMenu
+                  ariaLabel={t('wizard.actionsForAttribute', {
+                    name: row.name || t('wizard.attributeFallback'),
+                  })}
                 >
-                  {t('common:remove')}
-                </DropdownMenuItem>
-              </ItemListMenu>
-            </ItemListItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    disabled={isSubmitting}
+                    onClick={() => onRemove(row.attributeId)}
+                  >
+                    {t('common:remove')}
+                  </DropdownMenuItem>
+                </ItemListMenu>
+              }
+            />
           ))}
         </ItemList>
       )}

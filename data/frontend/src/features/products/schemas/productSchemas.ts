@@ -10,6 +10,7 @@ export type ProductAttributeUnit = {
 export type ProductAttributeRow = {
   attributeId: string
   name: string
+  description?: string | null
   valueType: 'number' | 'text'
   unit: ProductAttributeUnit | null
   valueText: string
@@ -46,6 +47,7 @@ export const productWizardStep2Schema = z.object({
 export const productAttributeRowSchema = z.object({
   attributeId: z.string().length(21),
   name: z.string(),
+  description: z.string().nullable().optional(),
   valueType: z.enum(['number', 'text']),
   unit: z
     .object({

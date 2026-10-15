@@ -3,21 +3,22 @@ const shellContentPaddingX = 'px-2 sm:px-6'
 
 /**
  * Page content padding (moved off AppShell main so iframe routes can be full-bleed).
- * Mobile: `pl-0` matches AppHeader bar left edge; `pr-2` clears the 8px themed scrollbar
- * so cards/lists are not covered. `sm:px-6` aligns with AppHeader inner row / `shellContentPaddingX`.
+ * Below `sm`: `pl-0 pr-0` — no extra horizontal gutter inside `#main-content`.
+ * `sm:px-6` aligns with AppHeader inner row / `shellContentPaddingX`.
  */
-const shellPagePadding = 'pl-0 pr-2 py-4 sm:px-6 sm:py-6'
+const shellPagePadding = 'pl-0 pr-0 py-4 sm:px-6 sm:py-6'
 
 /**
- * CustomDialog overlay inset — horizontal matches `shellChromeRootClassName` (`p-2`) so the
- * dialog panel width aligns with the AppHeader bar inside AppShell.
+ * CustomDialog overlay inset — horizontal matches `shellChromeRootClassName`
+ * (`p-1` below `md`, `md:p-2`) so the dialog panel aligns with the AppHeader bar.
  */
-const shellDialogOverlayClassName = 'px-2 py-2 sm:py-4'
+const shellDialogOverlayClassName = 'px-1 py-2 sm:py-4 md:px-2'
 
 /**
- * Shell chrome outer inset — matches the gap between header, left nav, and main (`gap-2`).
+ * Shell chrome outer inset — `p-1` on mobile (below `md`), `p-2` from `md` up.
+ * Gap between header, left nav, and main stays `gap-2`.
  */
-const shellChromeRootClassName = 'gap-2 p-2'
+const shellChromeRootClassName = 'gap-2 p-1 md:p-2'
 
 /** Gap between left nav and main content inside the shell body row. */
 const shellChromeBodyClassName = 'gap-2'

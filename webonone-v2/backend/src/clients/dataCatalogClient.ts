@@ -215,6 +215,137 @@ export async function listMatchingLibraryIds(
   return [...ids]
 }
 
+export type DataCatalogAttributeValue = {
+  id: string
+  valueText: string | null
+  valueNumber: number | null
+  isDefault: boolean
+}
+
+export type DataCatalogAttributeLink = {
+  attributeId: string
+  name: string
+  description?: string | null
+  valueType: 'number' | 'text'
+  unit: { id: string; name: string; symbol: string } | null
+  values: DataCatalogAttributeValue[]
+}
+
+export type DataCatalogDetail = DataLibraryCatalogItem & {
+  attributes?: DataCatalogAttributeLink[]
+}
+
+export type DataProductVariantValue = {
+  attributeId: string
+  attributeName: string
+  attributeValueId: string
+  valueText: string | null
+  valueNumber: number | null
+  valueType: 'number' | 'text'
+  unitSymbol: string | null
+}
+
+export type DataProductVariant = {
+  id: string
+  productId: string
+  name: string
+  sku: string
+  isDefault: boolean
+  values: DataProductVariantValue[]
+}
+
+function authHeaders(accessToken: string): Record<string, string> {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  }
+}
+
+async function userRequest<T>(
+  accessToken: string,
+  path: string,
+  init?: { method?: string; body?: unknown },
+): Promise<T> {
+  const res = await fetch(`${apiBase()}/api/v1${path}`, {
+    method: init?.method ?? 'GET',
+    headers: authHeaders(accessToken),
+    body: init?.body != null ? JSON.stringify(init.body) : undefined,
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    const err = new Error(`Data library request failed (${res.status}): ${text}`) as Error & {
+      statusCode?: number
+    }
+    err.statusCode = res.status >= 400 && res.status < 500 ? res.status : 502
+    throw err
+  }
+  if (res.status === 204) return undefined as T
+  return (await res.json()) as T
+}
+
+export async function getLibraryCatalogDetail(
+  kind: CatalogKind,
+  libraryEntityId: string,
+  accessToken: string,
+): Promise<DataCatalogDetail | null> {
+  const res = await fetch(
+    `${apiBase()}/api/v1/${kind}/${encodeURIComponent(libraryEntityId)}`,
+    { headers: authHeaders(accessToken) },
+  )
+  if (res.status === 404) return null
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Data library get ${kind} failed (${res.status}): ${text}`)
+  }
+  return (await res.json()) as DataCatalogDetail
+}
+
+export async function createLibraryCatalogItem(
+  kind: CatalogKind,
+  body: Record<string, unknown>,
+  accessToken: string,
+): Promise<DataCatalogDetail> {
+  return userRequest<DataCatalogDetail>(accessToken, `/${kind}`, { method: 'POST', body })
+}
+
+export async function replaceLibraryCatalogAttributes(
+  kind: CatalogKind,
+  libraryEntityId: string,
+  attributeIds: string[],
+  accessToken: string,
+): Promise<DataCatalogDetail> {
+  return userRequest<DataCatalogDetail>(
+    accessToken,
+    `/${kind}/${encodeURIComponent(libraryEntityId)}/attributes`,
+    { method: 'PUT', body: { attribute_ids: attributeIds } },
+  )
+}
+
+export async function addLibraryCatalogAttributeValue(
+  kind: CatalogKind,
+  libraryEntityId: string,
+  attributeId: string,
+  body: { value_text?: string | null; value_number?: number | null },
+  accessToken: string,
+): Promise<DataCatalogDetail> {
+  return userRequest<DataCatalogDetail>(
+    accessToken,
+    `/${kind}/${encodeURIComponent(libraryEntityId)}/attributes/${encodeURIComponent(attributeId)}/values`,
+    { method: 'POST', body },
+  )
+}
+
+export async function listLibraryProductVariants(
+  libraryProductId: string,
+  accessToken: string,
+): Promise<DataProductVariant[]> {
+  const result = await userRequest<{ items: DataProductVariant[] }>(
+    accessToken,
+    `/products/${encodeURIComponent(libraryProductId)}/variants`,
+  )
+  return result.items ?? []
+}
+
 export async function listLibraryItemsByIds(
   kind: CatalogKind,
   ids: string[],

@@ -18,7 +18,7 @@ export type PublicCatalogSearchRow = {
   tag_ids: string | unknown[] | null
   kind: CatalogKind
   gallery_images?: string | unknown[] | null
-  list_price: string | number | null
+  list_price?: string | number | null
   /** Services only — null for products/spaces and linked rows without local copy. */
   time_mode?: 'duration' | 'window' | null
   duration_minutes?: number | null
@@ -40,7 +40,6 @@ const BASE_ITEM_SELECT = [
   'item.status',
   'item.tag_ids',
   'item.gallery_images',
-  'item.list_price',
 ] as const
 
 const SERVICE_TIME_SELECT = [
@@ -49,6 +48,14 @@ const SERVICE_TIME_SELECT = [
   'item.start_time',
   'item.end_time',
 ] as const
+
+function selectForKind(kind: CatalogKind): string[] {
+  return [
+    ...BASE_ITEM_SELECT,
+    ...(kind === 'products' ? ['item.list_price'] : []),
+    ...(kind === 'services' ? SERVICE_TIME_SELECT : []),
+  ]
+}
 
 const SELLABLE_KINDS: CatalogKind[] = ['products', 'services', 'spaces']
 
@@ -151,7 +158,7 @@ export async function searchApprovedCompanyCatalog(options: {
           })
         }
       })
-      .select(...BASE_ITEM_SELECT, ...(kind === 'services' ? SERVICE_TIME_SELECT : []))
+      .select(...selectForKind(kind))
       .orderBy('item.updated_at', 'desc')
       .limit(500)
 
@@ -187,7 +194,7 @@ export async function findApprovedCompanyCatalogById(
         )
       })
     })
-    .select(...BASE_ITEM_SELECT, ...(kind === 'services' ? SERVICE_TIME_SELECT : []))
+    .select(...selectForKind(kind))
     .first()) as Omit<PublicCatalogSearchRow, 'kind'> | undefined
 
   if (!row) return null
@@ -238,7 +245,7 @@ export async function listApprovedCatalogByCompanyIds(
           )
         })
       })
-      .select(...BASE_ITEM_SELECT, ...(kind === 'services' ? SERVICE_TIME_SELECT : []))
+      .select(...selectForKind(kind))
 
     const kindRows = (await query) as Array<Omit<PublicCatalogSearchRow, 'kind'>>
     for (const row of kindRows) {

@@ -12,6 +12,11 @@ export interface ItemListViewToggleProps {
    * Global preference `card` is shown as list until the user picks grid.
    */
   cardLayout?: boolean
+  /**
+   * When false, only list and card toggles are shown (media pickers).
+   * Global preference `grid` is shown as list until the user picks list or card.
+   */
+  gridLayout?: boolean
   /** Defaults: List view, Grid view, Card view */
   listLabel?: string
   gridLabel?: string
@@ -29,6 +34,7 @@ export function ItemListViewToggle({
   onChange,
   className,
   cardLayout = true,
+  gridLayout = true,
   listLabel = 'List view',
   gridLabel = 'Grid view',
   cardLabel = 'Card view',
@@ -39,8 +45,12 @@ export function ItemListViewToggle({
     card: cardLabel,
   }
 
-  const effectiveValue = resolveCollectionDisplayMode(value, cardLayout)
-  const visibleModes = cardLayout ? MODES : MODES.filter(({ mode }) => mode !== 'card')
+  const effectiveValue = resolveCollectionDisplayMode(value, cardLayout, gridLayout)
+  const visibleModes = MODES.filter(({ mode }) => {
+    if (!cardLayout && mode === 'card') return false
+    if (!gridLayout && mode === 'grid') return false
+    return true
+  })
 
   return (
     <div

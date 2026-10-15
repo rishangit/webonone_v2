@@ -33,7 +33,6 @@
   "overview": "දළ විශ්ලේෂණය",
   "gallery": "ගැලරිය",
   "attributes": "ගුණාංග",
-  "spaces": "අවකාශ",
   "noDescription": "—",
   "unableToLoad": "සේවාව පූරණය කළ නොහැක.",
   "sectionsAria": "සේවා අංශ",
@@ -44,12 +43,8 @@
   },
   "listPrice": "ලැයිස්තු මිල (LKR)",
   "detailOffer": {
-    "title": "මිල, කාලය සහ ස්ථානය",
-    "description": "ලැයිස්තු මිල, කාලසටහන සහ මෙම සේවාවට සම්බන්ධ අවකාශ.",
-    "where": "කොහේද",
-    "manageSpaces": "අවකාශ කළමනාකරණය",
-    "loadingSpaces": "අවකාශ පූරණය වෙමින්…",
-    "noSpaces": "තවම අවකාශ සම්බන්ධ කර නැත."
+    "title": "මිල සහ කාලය",
+    "description": "මෙම සේවාවේ ලැයිස්තු මිල සහ කාලසටහන."
   },
   "actionsFor": "{{name}} සඳහා ක්‍රියා",
   "viewDetails": "විස්තර බලන්න",
@@ -137,18 +132,6 @@
     "removeGalleryImage": "ගැලරි රූපය ඉවත් කරන්න",
     "removeGalleryTitle": "ගැලරි රූපය ඉවත් කරන්නද?",
     "removeGalleryDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. රූපය මෙම සේවා ගැලරියෙන් ඉවත් වේ.",
-    "galleryUpdateFailed": "ගැලරිය යාවත්කාලීන කිරීම අසාර්ථක විය",
-    "spacesTitle": "අවකාශ",
-    "spacesDescription": "මෙම සේවාවට සම්බන්ධ පවතින නාමාවලි අවකාශ. අනුපිළිවෙල ඉහළ සිට පහළටය.",
-    "addSpace": "අවකාශය එකතු කරන්න",
-    "noSpaces": "තවම සම්බන්ධිත අවකාශ නැත.",
-    "spacesLoading": "අවකාශ පූරණය වෙමින්…",
-    "spacesLoadFailed": "අවකාශ පූරණය කිරීම අසාර්ථක විය.",
-    "moveUp": "ඉහළට ගෙන යන්න",
-    "moveDown": "පහළට ගෙන යන්න",
-    "removeSpace": "අවකාශය ඉවත් කරන්න",
-    "removeSpaceConfirm": "{{name}} ඉවත් කරන්නද?",
-    "removeSpaceFallback": "අවකාශය ඉවත් කරන්නද?",
-    "removeSpaceDescription": "මෙම අවකාශය සේවාවෙන් ඉවත් කරන්න. අවකාශයම මකා නොදැමේ."
+    "galleryUpdateFailed": "ගැලරිය යාවත්කාලීන කිරීම අසාර්ථක විය"
   }
 }

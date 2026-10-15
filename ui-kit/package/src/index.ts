@@ -311,6 +311,8 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
 } from './components/DropdownMenu'
+export { AttributePickerListItem } from './components/AttributePickerListItem'
+export type { AttributePickerListItemProps } from './components/AttributePickerListItem'
 export {
   ItemList,
   ItemListItem,

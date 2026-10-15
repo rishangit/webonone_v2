@@ -12,6 +12,8 @@ import {
 } from '../schemas/datasetQuery.schema.js'
 import * as analyticsService from './companyAnalytics.service.js'
 import { applyLibrarySellPricesWhereMissing } from './companyProductPublicPrice.service.js'
+import { applicableListPriceByEntityId } from './companyCatalogPriceRules.service.js'
+import { priceClockFromDate } from '../utils/applicableCatalogPrice.js'
 import * as staffService from './companyStaff.service.js'
 import { applyDatasetFilters, paginateRows } from '../utils/datasetFilterEngine.js'
 
@@ -123,6 +125,19 @@ async function loadCatalogRows(
 
     return base
   })
+
+  if ((kind === 'services' || kind === 'spaces') && rows.length > 0) {
+    const prices = await applicableListPriceByEntityId(
+      companyId,
+      kind,
+      rows.map((row) => String(row.id)),
+      null,
+      priceClockFromDate(),
+    )
+    for (const row of rows) {
+      row.listPrice = prices.get(String(row.id)) ?? null
+    }
+  }
 
   if (kind === 'products' && rows.length > 0) {
     const priceTargets = rows.map((row, index) => ({

@@ -17,15 +17,11 @@ import {
   useToast,
 } from '@webonone/mobile-ui'
 import { useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
+import { CompanyProductVariantAttributeValuesCard } from '@/features/data/company-catalog/components/CompanyProductVariantAttributeValuesCard'
 import { CompanyProductVariantStocksCard } from '@/features/data/company-catalog/components/CompanyProductVariantStocksCard'
 import { useDataCatalogScope } from '@/features/data/hooks/useDataCatalogScope'
-import { companyCatalogApi } from '@/features/data/services/companyCatalogApi'
+import { companyCatalogApi, type CompanyCatalogVariant } from '@/features/data/services/companyCatalogApi'
 import { catalogDetailPath } from '@/features/data/utils/dataPaths'
-import {
-  dataLibraryApi,
-  formatLibraryAttributeValueLabel,
-  type LibraryProductVariant,
-} from '@/features/sales/services/dataLibraryApi'
 import { hydrateCatalogItems } from '@/features/sales/utils/hydrateCatalogItems'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
@@ -45,8 +41,7 @@ export function CompanyProductVariantDetailScreen({
   const canEdit = canManageCompanyCatalog
   const canAddStock = canManageCompanyCatalog
 
-  const [variant, setVariant] = useState<LibraryProductVariant | null>(null)
-  const [libraryProductId, setLibraryProductId] = useState<string | null>(null)
+  const [variant, setVariant] = useState<CompanyCatalogVariant | null>(null)
   const [productName, setProductName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -59,21 +54,12 @@ export function CompanyProductVariantDetailScreen({
     setError(null)
     try {
       const product = await companyCatalogApi.get('products', productId)
-      if (!product.libraryEntityId) {
-        setVariant(null)
-        setLibraryProductId(null)
-        setProductName('')
-        setError(t('variantDetail.notLinked'))
-        return
-      }
-      setLibraryProductId(product.libraryEntityId)
       const [hydrated] = await hydrateCatalogItems('products', [product])
       setProductName(hydrated?.displayName?.trim() ?? '')
-      const result = await dataLibraryApi.getProductVariant(product.libraryEntityId, variantId)
+      const result = await companyCatalogApi.getCopiedVariant(productId, variantId)
       setVariant(result)
     } catch (err) {
       setVariant(null)
-      setLibraryProductId(null)
       setProductName('')
       setError(err instanceof Error ? err.message : t('variantDetail.failedLoad'))
     } finally {
@@ -86,11 +72,11 @@ export function CompanyProductVariantDetailScreen({
   }, [load])
 
   async function handleDelete() {
-    if (!libraryProductId || !variantId || !variant || variant.isDefault) return
+    if (!variantId || !variant || variant.isDefault) return
     setDeleting(true)
     setError(null)
     try {
-      await dataLibraryApi.deleteProductVariant(libraryProductId, variantId)
+      await companyCatalogApi.deleteCopiedVariant(productId, variantId)
       toast({ title: tc('remove') })
       router.replace(catalogDetailPath('products', productId))
     } catch (err) {
@@ -120,7 +106,7 @@ export function CompanyProductVariantDetailScreen({
   }
 
   const actions =
-    variant && libraryProductId ? (
+    variant ? (
       <View className="flex-row flex-wrap justify-end gap-2">
         <Button variant="outline" size="sm" onPress={handleCopyToAi}>
           {t('attributesTab.copyToAi')}
@@ -150,7 +136,7 @@ export function CompanyProductVariantDetailScreen({
 
       {error ? <Body className="text-destructive">{error}</Body> : null}
 
-      {variant && libraryProductId ? (
+      {variant ? (
         <View className="gap-6">
           <EditableSectionCard
             title={t('variantDetail.variantCard.title')}
@@ -171,24 +157,12 @@ export function CompanyProductVariantDetailScreen({
             canEdit={canAddStock}
           />
 
-          <EditableSectionCard
-            title={t('variantDetail.attributeValues.title')}
-            description={t('variantDetail.attributeValues.description')}
-          >
-            {variant.values.length === 0 ? (
-              <Muted className="text-sm">{t('variantDetail.attributeValues.empty')}</Muted>
-            ) : (
-              <View className="gap-4">
-                {variant.values.map((value) => (
-                  <ReadOnlyField
-                    key={`${value.attributeId}-${value.attributeValueId}`}
-                    label={value.attributeName}
-                    value={formatLibraryAttributeValueLabel(value, value.unitSymbol)}
-                  />
-                ))}
-              </View>
-            )}
-          </EditableSectionCard>
+          <CompanyProductVariantAttributeValuesCard
+            productId={productId}
+            variant={variant}
+            canEdit={canEdit}
+            onVariantUpdated={setVariant}
+          />
 
           <Card className="gap-4">
             <View className="gap-1">

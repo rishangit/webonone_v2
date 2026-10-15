@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   FormField,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  EditableSectionCard,
   ListPriceField,
   ReadOnlyField,
-  StockAvailabilityProgress,
 } from '@webonone/ui-kit'
+import { CompanyCatalogListItemStockProgress } from '@/features/company-catalog/components/CompanyCatalogListItemStockProgress'
 import { useCompanyProductListStockMeta } from '@/features/company-catalog/hooks/useCompanyProductListStockMeta'
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
-import {
-  formatCompanyProductListStockAvailability,
-  getActiveCompanyProductListLine,
-  resolveCompanyProductListUnitPrice,
-} from '@/features/company-catalog/utils/companyCatalogProductListStockLine'
+import { getActiveCompanyProductListLine } from '@/features/company-catalog/utils/companyCatalogProductListStockLine'
 import {
   formatLibraryAttributeValueLabel,
   type LibraryProductVariantAttributeValue,
@@ -28,10 +28,6 @@ type CompanyProductDetailVariantPricingCardProps = {
   companyProductId: string
   libraryProductId: string | null | undefined
   libraryUnavailable: boolean
-  listPrice: number | null | undefined
-  canEdit: boolean
-  busy?: boolean
-  onEditListPrice: () => void
 }
 
 function formatStockLimit(value: number | null | undefined): string {
@@ -59,10 +55,6 @@ export function CompanyProductDetailVariantPricingCard({
   companyProductId,
   libraryProductId,
   libraryUnavailable,
-  listPrice,
-  canEdit,
-  busy = false,
-  onEditListPrice,
 }: CompanyProductDetailVariantPricingCardProps) {
   const { t } = useTranslation('catalog')
   const libraryId = libraryProductId?.trim() ? libraryProductId : ''
@@ -87,85 +79,82 @@ export function CompanyProductDetailVariantPricingCard({
   }, [meta, selectedVariantId])
 
   const line = getActiveCompanyProductListLine(meta, selectedVariantId)
-  const unitPrice = resolveCompanyProductListUnitPrice(line, listPrice)
+  const unitPrice = line?.sellPrice ?? null
   const stockLimits = line ? stockLimitsByVariantId[line.variantId] : undefined
   const loading = Boolean(libraryId) && !libraryUnavailable && meta === undefined
   const empty =
     Boolean(libraryId) && !libraryUnavailable && meta !== undefined && meta.lines.length === 0
 
   return (
-    <EditableSectionCard
-      title={t('detail.variantPricing.title')}
-      description={t('detail.variantPricing.description')}
-      canEdit={canEdit && !busy}
-      onEdit={onEditListPrice}
-    >
-      {libraryUnavailable || !libraryId ? (
-        <p className="text-sm text-muted-foreground">{t('detail.libraryItemUnavailable')}</p>
-      ) : loading ? (
-        <p className="text-sm text-muted-foreground">{t('detail.variantPricing.loading')}</p>
-      ) : empty ? (
-        <p className="text-sm text-muted-foreground">{t('detail.variantPricing.emptyVariants')}</p>
-      ) : meta && line ? (
-        <div className="space-y-4">
-          {meta.variantCount > 1 ? (
-            <FormField label={t('list.selectVariant')} htmlFor="company-product-detail-variant">
-              <Select
-                value={line.variantId}
-                onValueChange={(variantId) => setSelectedVariantId(variantId)}
-              >
-                <SelectTrigger id="company-product-detail-variant" className="w-full max-w-md">
-                  <SelectValue placeholder={t('list.selectVariant')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {meta.lines.map((variantLine) => (
-                    <SelectItem key={variantLine.variantId} value={variantLine.variantId}>
-                      {variantLine.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-          ) : (
-            <ReadOnlyField label={t('list.selectVariant')} value={line.name} />
-          )}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">{t('detail.variantPricing.title')}</CardTitle>
+        <CardDescription>{t('detail.variantPricing.description')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {libraryUnavailable || !libraryId ? (
+          <p className="text-sm text-muted-foreground">{t('detail.libraryItemUnavailable')}</p>
+        ) : loading ? (
+          <p className="text-sm text-muted-foreground">{t('detail.variantPricing.loading')}</p>
+        ) : empty ? (
+          <p className="text-sm text-muted-foreground">{t('detail.variantPricing.emptyVariants')}</p>
+        ) : meta && line ? (
+          <div className="space-y-4">
+            {meta.variantCount > 1 ? (
+              <FormField label={t('list.selectVariant')} htmlFor="company-product-detail-variant">
+                <Select
+                  value={line.variantId}
+                  onValueChange={(variantId) => setSelectedVariantId(variantId)}
+                >
+                  <SelectTrigger id="company-product-detail-variant" className="w-full max-w-md">
+                    <SelectValue placeholder={t('list.selectVariant')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {meta.lines.map((variantLine) => (
+                      <SelectItem key={variantLine.variantId} value={variantLine.variantId}>
+                        {variantLine.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            ) : (
+              <ReadOnlyField label={t('list.selectVariant')} value={line.name} />
+            )}
 
-          <VariantAttributeFields values={line.attributeValues} />
+            <VariantAttributeFields values={line.attributeValues} />
 
-          <ReadOnlyField
-            label={t('list.stock')}
-            value={
-              <StockAvailabilityProgress
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-label">
+                {t('list.stock')}
+              </p>
+              <CompanyCatalogListItemStockProgress
+                companyProductId={companyProductId}
+                variantId={line.variantId}
                 quantity={line.totalQuantity}
-                maxQuantity={stockLimits?.maxQuantity}
-                minQuantity={stockLimits?.minQuantity}
-                caption={
-                  stockLimits?.maxQuantity != null && stockLimits.maxQuantity > 0
-                    ? undefined
-                    : formatCompanyProductListStockAvailability(line.totalQuantity, t)
-                }
+                align="start"
               />
-            }
-          />
+            </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <ReadOnlyField
-              label={t('detail.variantPricing.minStock')}
-              value={formatStockLimit(stockLimits?.minQuantity)}
-              valueClassName="tabular-nums"
-            />
-            <ReadOnlyField
-              label={t('detail.variantPricing.maxStock')}
-              value={formatStockLimit(stockLimits?.maxQuantity)}
-              valueClassName="tabular-nums"
-            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ReadOnlyField
+                label={t('detail.variantPricing.minStock')}
+                value={formatStockLimit(stockLimits?.minQuantity)}
+                valueClassName="tabular-nums"
+              />
+              <ReadOnlyField
+                label={t('detail.variantPricing.maxStock')}
+                value={formatStockLimit(stockLimits?.maxQuantity)}
+                valueClassName="tabular-nums"
+              />
+            </div>
+
+            {unitPrice != null ? (
+              <ListPriceField label={t('list.price')} value={unitPrice} />
+            ) : null}
           </div>
-
-          {unitPrice != null ? (
-            <ListPriceField label={t('list.price')} value={unitPrice} />
-          ) : null}
-        </div>
-      ) : null}
-    </EditableSectionCard>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }

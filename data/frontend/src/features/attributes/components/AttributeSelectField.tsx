@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import {
   isPlatformPeerDialogCancelMessage,
@@ -18,7 +19,7 @@ import type { Attribute } from '@/shared/types/data.types'
 export type { AttributeSelectValue }
 
 export const ATTRIBUTE_PICKER_DIALOG = {
-  sizeWidth: 'small' as const,
+  sizeWidth: 'medium' as const,
   sizeHeight: 'large' as const,
 }
 
@@ -27,11 +28,12 @@ export const ATTRIBUTE_CREATE_DIALOG = {
   sizeHeight: 'large' as const,
 }
 
-/** Shared chrome for standalone stacked + core-hosted peer attribute select. */
+/** Shared chrome for standalone stacked + core-hosted peer attribute select. Matches the company add-to-library dialog. */
 export const ATTRIBUTE_SELECT_PEER = {
-  title: 'Add attributes',
-  description: 'Choose one or more attributes to add.',
-  submitLabel: 'Done',
+  title: 'Add library attributes',
+  description:
+    'Select attributes from the Data library. They are added to the linked library product. Use Add on the left list to copy them onto this company item.',
+  submitLabel: 'Add to library',
   ...ATTRIBUTE_PICKER_DIALOG,
 }
 
@@ -113,6 +115,7 @@ export function toAttributeSelectValue(
   return {
     id: attribute.id,
     name: attribute.name,
+    description: 'description' in attribute ? attribute.description ?? null : null,
     valueType: attribute.valueType,
     unit: attribute.unit ?? null,
   }
@@ -148,6 +151,8 @@ export function AttributeSelectStackedDialogs({
   onClosePicker,
   pickerStackLevel = 1,
 }: AttributeSelectStackedDialogsProps) {
+  const { t } = useTranslation('attributes')
+  const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isHosted = Boolean(parentOrigin)
@@ -216,13 +221,13 @@ export function AttributeSelectStackedDialogs({
     sendPlatformPeerDialogRequest(parentOrigin, {
       requestId,
       path: ATTRIBUTE_SELECT_EMBED_PATH,
-      title: ATTRIBUTE_SELECT_PEER.title,
-      description: ATTRIBUTE_SELECT_PEER.description,
-      submitLabel: ATTRIBUTE_SELECT_PEER.submitLabel,
+      title: t('pickerTitle'),
+      description: t('pickerDescription'),
+      submitLabel: t('pickerSubmitCount', { count: 0 }),
       sizeWidth: ATTRIBUTE_SELECT_PEER.sizeWidth,
       sizeHeight: ATTRIBUTE_SELECT_PEER.sizeHeight,
     })
-  }, [parentOrigin, pickerOpen])
+  }, [parentOrigin, pickerOpen, t])
 
   useEffect(() => {
     if (!parentOrigin) return
@@ -327,8 +332,8 @@ export function AttributeSelectStackedDialogs({
       <CustomDialog
         open={pickerOpen}
         onOpenChange={handlePickerOpenChange}
-        title={ATTRIBUTE_SELECT_PEER.title}
-        description={ATTRIBUTE_SELECT_PEER.description}
+        title={t('pickerTitle')}
+        description={t('pickerDescription')}
         sizeWidth={ATTRIBUTE_SELECT_PEER.sizeWidth}
         sizeHeight={ATTRIBUTE_SELECT_PEER.sizeHeight}
         noContentPadding
@@ -346,11 +351,15 @@ export function AttributeSelectStackedDialogs({
                 closePickerDialog()
               }}
             >
-              Cancel
+              {tc('cancel')}
             </Button>
-            <Button type="button" className="h-10 px-4" onClick={handleDone}>
-              {ATTRIBUTE_SELECT_PEER.submitLabel}
-              {pendingSelection.length > 0 ? ` (${pendingSelection.length})` : ''}
+            <Button
+              type="button"
+              className="h-10 px-4"
+              disabled={pendingSelection.length === 0}
+              onClick={handleDone}
+            >
+              {t('pickerSubmitCount', { count: pendingSelection.length })}
             </Button>
           </>
         }

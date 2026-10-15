@@ -29,7 +29,6 @@ import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity
 import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/CatalogLibraryDetailPageMenu'
 import { ServiceDetailOfferCard } from '@/features/services/components/ServiceDetailOfferCard'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
-import { ServiceSpacesTab } from '@/features/services/components/ServiceSpacesTab'
 import { servicesActions } from '@/features/services/store'
 import type { ServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
 import { StatusBadge } from '@/shared/components/StatusBadge'
@@ -40,7 +39,6 @@ const SERVICE_DETAIL_TABS: readonly CatalogDetailTabId[] = [
   'overview',
   'gallery',
   'attributes',
-  'spaces',
 ]
 
 export function ServiceDetailsPage() {
@@ -106,11 +104,8 @@ export function ServiceDetailsPage() {
       <div className="flex flex-col gap-6 lg:col-span-1">
         <ServiceDetailOfferCard
           service={service}
-          serviceId={id}
           canEdit={canEdit}
-          overviewActive={tab === 'overview'}
           onEdit={() => openWizard(1)}
-          onManageSpaces={() => setTab('spaces')}
         />
 
         <EditableSectionCard
@@ -202,7 +197,6 @@ export function ServiceDetailsPage() {
               onSaved={refreshDetail}
             />
           }
-          spaces={<ServiceSpacesTab serviceId={id} canEdit={canEdit} />}
         />
       ) : null}
 

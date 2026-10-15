@@ -26,15 +26,16 @@ import {
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { CompanyCatalogAttributeValueEditDialog } from '../components/CompanyCatalogAttributeValueEditDialog'
+import { CompanyCatalogAttributeValuePickerDialog } from '../components/CompanyCatalogAttributeValuePickerDialog'
 import { useCompanyCatalogAttributeValueDialog } from '@/features/company-catalog/hooks/useCompanyCatalogAttributeValueDialog'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
-import { companyCatalogApi } from '../services/companyCatalogApi'
+import { companyCatalogApi, type CompanyCatalogAttribute } from '../services/companyCatalogApi'
 import {
   dataLibraryApi,
   formatLibraryAttributeValueLabel,
   parseLibraryAttributes,
   type LibraryAttributeValueEntry,
-  type LibraryCatalogAttribute,
 } from '../services/dataLibraryApi'
 import {
   CATALOG_ENTITY_KINDS,
@@ -46,6 +47,10 @@ function isCatalogEntityKind(value: string): value is CatalogEntityKind {
   return (CATALOG_ENTITY_KINDS as readonly string[]).includes(value)
 }
 
+function isAttributeValueDeleteBlocked(value: CompanyCatalogAttribute['values'][number]): boolean {
+  return (value.usedByVariants?.length ?? 0) > 0
+}
+
 export function CompanyCatalogAttributeDetailsPage() {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
@@ -53,14 +58,17 @@ export function CompanyCatalogAttributeDetailsPage() {
   const navigate = useNavigate()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const canEdit = activeRole === 'company_admin'
-  const [attribute, setAttribute] = useState<LibraryCatalogAttribute | null>(null)
+  const [attribute, setAttribute] = useState<CompanyCatalogAttribute | null>(null)
+  const [libraryValues, setLibraryValues] = useState<LibraryAttributeValueEntry[]>([])
   const [libraryEntityId, setLibraryEntityId] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [editingValue, setEditingValue] = useState<CompanyCatalogAttribute['values'][number] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [pendingDeleteValue, setPendingDeleteValue] = useState<LibraryAttributeValueEntry | null>(
-    null,
-  )
+  const [pendingDeleteValue, setPendingDeleteValue] = useState<
+    CompanyCatalogAttribute['values'][number] | null
+  >(null)
 
   const galleryKind = isCatalogGalleryKind(kindParam as CatalogEntityKind)
     ? (kindParam as 'products' | 'services' | 'spaces')
@@ -71,22 +79,26 @@ export function CompanyCatalogAttributeDetailsPage() {
     setLoading(true)
     setError(null)
     try {
-      const companyEntity = await companyCatalogApi.get(kindParam, entityId)
-      if (!companyEntity.libraryEntityId) {
-        setAttribute(null)
-        setLibraryEntityId(null)
-        setError(t('attributeDetail.notLinked'))
-        return
-      }
-      setLibraryEntityId(companyEntity.libraryEntityId)
-      const libraryItem = await dataLibraryApi.get(kindParam, companyEntity.libraryEntityId)
-      const found =
-        parseLibraryAttributes(libraryItem.attributes).find(
-          (entry) => entry.attributeId === attributeId,
-        ) ?? null
+      const result = await companyCatalogApi.listCopiedAttributes(kindParam, entityId)
+      setLibraryEntityId(result.libraryEntityId)
+      const found = result.attributes.find((entry) => entry.attributeId === attributeId) ?? null
       setAttribute(found)
       if (!found) {
+        setLibraryValues([])
         setError(t('attributeDetail.notFound'))
+        return
+      }
+      if (result.libraryEntityId && galleryKind) {
+        const libraryItem = await dataLibraryApi.get(galleryKind, result.libraryEntityId)
+        const libraryAttribute = parseLibraryAttributes(libraryItem.attributes).find(
+          (entry) => entry.attributeId === attributeId,
+        )
+        const copied = new Set(found.values.map((value) => value.libraryValueId).filter(Boolean))
+        setLibraryValues(
+          (libraryAttribute?.values ?? []).filter((value) => !copied.has(value.id)),
+        )
+      } else {
+        setLibraryValues([])
       }
     } catch (err) {
       setAttribute(null)
@@ -95,30 +107,57 @@ export function CompanyCatalogAttributeDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }, [attributeId, entityId, kindParam, t])
+  }, [attributeId, entityId, galleryKind, kindParam, t])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const { openAdd, openEdit } = useCompanyCatalogAttributeValueDialog({
+  const { openAdd } = useCompanyCatalogAttributeValueDialog({
     kind: galleryKind ?? 'products',
     libraryEntityId,
     attributeId,
     attributeName: attribute?.name ?? '',
     onClosed: () => {
-      void load()
+      void (async () => {
+        if (!galleryKind || !libraryEntityId || !isCatalogEntityKind(kindParam)) {
+          await load()
+          return
+        }
+        const kind = kindParam
+        try {
+          const libraryItem = await dataLibraryApi.get(galleryKind, libraryEntityId)
+          const libraryAttribute = parseLibraryAttributes(libraryItem.attributes).find(
+            (entry) => entry.attributeId === attributeId,
+          )
+          const current = await companyCatalogApi.listCopiedAttributes(kind, entityId)
+          const copied = new Set(
+            (current.attributes.find((entry) => entry.attributeId === attributeId)?.values ?? [])
+              .map((value) => value.libraryValueId)
+              .filter(Boolean),
+          )
+          const missing = (libraryAttribute?.values ?? [])
+            .map((value) => value.id)
+            .filter((id) => !copied.has(id))
+          if (missing.length > 0) {
+            await companyCatalogApi.copyAttributeValuesFromLibrary(kind, entityId, missing)
+          }
+        } catch {
+          // The detail reload surfaces the error.
+        }
+        await load()
+      })()
     },
   })
 
   usePlatformLoading(loading && !attribute ? t('attributeDetail.loading') : null)
 
-  async function handleSetDefault(entry: LibraryAttributeValueEntry) {
-    if (!galleryKind || !libraryEntityId || entry.isDefault || busy) return
+  async function handleSetDefault(entry: { id: string; isDefault: boolean }) {
+    if (!isCatalogEntityKind(kindParam) || entry.isDefault || busy) return
     setBusy(true)
     setError(null)
     try {
-      await dataLibraryApi.setCatalogAttributeValueDefault(galleryKind, libraryEntityId, entry.id)
+      await companyCatalogApi.setCopiedAttributeValueDefault(kindParam, entityId, entry.id)
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('attributeDetail.setDefaultFailed'))
@@ -127,15 +166,16 @@ export function CompanyCatalogAttributeDetailsPage() {
     }
   }
 
-  async function handleDeleteValue(entry: LibraryAttributeValueEntry) {
-    if (!galleryKind || !libraryEntityId || busy) return
+  async function handleDeleteValue(entry: { id: string }) {
+    if (!isCatalogEntityKind(kindParam) || busy) return
     setBusy(true)
     setError(null)
     try {
-      await dataLibraryApi.deleteCatalogAttributeValue(galleryKind, libraryEntityId, entry.id)
+      await companyCatalogApi.deleteCopiedAttributeValue(kindParam, entityId, entry.id)
       setPendingDeleteValue(null)
       await load()
     } catch (err) {
+      setPendingDeleteValue(null)
       setError(err instanceof Error ? err.message : t('attributeDetail.deleteValueFailed'))
     } finally {
       setBusy(false)
@@ -166,14 +206,10 @@ export function CompanyCatalogAttributeDetailsPage() {
       {attribute ? (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="flex flex-col gap-6 lg:col-span-2">
-            <EditableSectionCard
-              title={t('attributeDetail.values.title')}
-              description={t('attributeDetail.values.description')}
-              variant="list"
-            >
-              {canEdit && galleryKind && libraryEntityId ? (
+            <EditableSectionCard title={t('attributeDetail.values.title')} variant="list">
+              {canEdit ? (
                 <div className="flex justify-end">
-                  <Button type="button" size="sm" onClick={() => openAdd()} disabled={busy}>
+                  <Button type="button" size="sm" onClick={() => setPickerOpen(true)} disabled={busy}>
                     <Plus className="h-4 w-4" aria-hidden />
                     {t('attributeDetail.addValue')}
                   </Button>
@@ -185,6 +221,7 @@ export function CompanyCatalogAttributeDetailsPage() {
                 <ItemList className="py-0">
                   {attribute.values.map((value) => {
                     const label = formatLibraryAttributeValueLabel(value, attribute.unit?.symbol)
+                    const deleteBlocked = isAttributeValueDeleteBlocked(value)
                     return (
                       <ItemListItem key={value.id}>
                         <ItemListContent>
@@ -197,7 +234,7 @@ export function CompanyCatalogAttributeDetailsPage() {
                             ) : null}
                           </div>
                         </ItemListContent>
-                        {canEdit && galleryKind && libraryEntityId ? (
+                        {canEdit ? (
                           <ItemListMenu
                             ariaLabel={t('attributeDetail.actionsForValue', { label })}
                           >
@@ -209,17 +246,17 @@ export function CompanyCatalogAttributeDetailsPage() {
                                 {t('attributeDetail.setAsDefault')}
                               </DropdownMenuItem>
                             ) : null}
-                            <DropdownMenuItem
-                              disabled={busy}
-                              onClick={() => openEdit(value.id)}
-                            >
+                            <DropdownMenuItem disabled={busy} onClick={() => setEditingValue(value)}>
                               {tc('edit')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
-                              disabled={busy}
-                              onClick={() => setPendingDeleteValue(value)}
+                              disabled={busy || deleteBlocked}
+                              onClick={() => {
+                                if (deleteBlocked) return
+                                setPendingDeleteValue(value)
+                              }}
                             >
                               {tc('delete')}
                             </DropdownMenuItem>
@@ -252,6 +289,40 @@ export function CompanyCatalogAttributeDetailsPage() {
         </div>
       ) : null}
 
+      <CompanyCatalogAttributeValuePickerDialog
+        open={pickerOpen}
+        kind={galleryKind ?? 'products'}
+        entityId={entityId}
+        attributeName={attribute?.name ?? ''}
+        unitSymbol={attribute?.unit?.symbol}
+        values={libraryValues}
+        onOpenChange={setPickerOpen}
+        onCopied={() => {
+          void load()
+        }}
+        onCreateNew={() => {
+          setPickerOpen(false)
+          openAdd()
+        }}
+      />
+      {galleryKind && editingValue ? (
+        <CompanyCatalogAttributeValueEditDialog
+          open={editingValue !== null}
+          kind={galleryKind}
+          entityId={entityId}
+          valueId={editingValue.id}
+          valueType={attribute?.valueType ?? 'text'}
+          initialText={editingValue.valueText}
+          initialNumber={editingValue.valueNumber}
+          onOpenChange={(next) => {
+            if (!next) setEditingValue(null)
+          }}
+          onSaved={() => {
+            void load()
+          }}
+        />
+      ) : null}
+
       <PlatformAlertConfirmDialog
         open={pendingDeleteValue !== null}
         title={
@@ -264,16 +335,17 @@ export function CompanyCatalogAttributeDetailsPage() {
               })
             : t('attributeDetail.deleteValueFallback')
         }
-        description={t('attributeDetail.deleteValueDescription', {
-          name: attribute?.name ?? '',
-        })}
+        description={t('attributeDetail.deleteValueDescription')}
         isAllowedParentOrigin={isAllowedParentOrigin}
         submitLabel={tc('delete')}
+        confirmDisabled={
+          pendingDeleteValue != null && isAttributeValueDeleteBlocked(pendingDeleteValue)
+        }
         onOpenChange={(open) => {
           if (!open) setPendingDeleteValue(null)
         }}
         onConfirm={() => {
-          if (pendingDeleteValue) {
+          if (pendingDeleteValue && !isAttributeValueDeleteBlocked(pendingDeleteValue)) {
             void handleDeleteValue(pendingDeleteValue)
           }
         }}

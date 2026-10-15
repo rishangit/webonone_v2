@@ -171,6 +171,7 @@ export function SelectorPage() {
         onToggleSelect={toggleItem}
         onNavigate={setCurrentPath}
         showIconToolbar
+        gridLayout={false}
         allowDelete
         enableUpload={showUpload}
         uploadAccept="image/*"

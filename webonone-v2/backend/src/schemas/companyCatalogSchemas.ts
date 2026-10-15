@@ -145,7 +145,6 @@ const sellableWebPublishField = {
 
 const servicePayloadSchema = catalogBasePayloadSchema
   .extend({
-    listPrice: catalogListPriceSchema,
     timeMode: z.enum(['duration', 'window']),
     durationMinutes: z.number().int().positive().optional().nullable(),
     startTime: timeOfDaySchema.optional().nullable(),
@@ -154,8 +153,12 @@ const servicePayloadSchema = catalogBasePayloadSchema
   })
   .superRefine((data, ctx) => refineServiceTime(data, ctx, { requireMode: true }))
 
-const productOrSpacePayloadSchema = catalogBasePayloadSchema.extend({
+const productPayloadSchema = catalogBasePayloadSchema.extend({
   listPrice: catalogListPriceSchema,
+  ...sellableWebPublishField,
+})
+
+const spacePayloadSchema = catalogBasePayloadSchema.extend({
   ...sellableWebPublishField,
 })
 
@@ -163,9 +166,9 @@ export const catalogPayloadByKind = {
   tags: tagPayloadSchema,
   units: unitPayloadSchema,
   attributes: attributePayloadSchema,
-  products: productOrSpacePayloadSchema,
+  products: productPayloadSchema,
   services: servicePayloadSchema,
-  spaces: productOrSpacePayloadSchema,
+  spaces: spacePayloadSchema,
 } as const
 
 export type CatalogEntityKind = z.infer<typeof catalogEntityKindSchema>
@@ -309,6 +312,47 @@ export function parsePayloadForKind(
 ): CatalogPayload {
   return catalogPayloadByKind[kind].parse(payload) as CatalogPayload
 }
+
+export const copyAttributesFromLibraryBodySchema = z.object({
+  attributeIds: z.array(z.string().length(21)).min(1),
+})
+
+export const copyAttributeValuesFromLibraryBodySchema = z.object({
+  libraryValueIds: z.array(z.string().length(21)).min(1),
+})
+
+export const copyVariantsFromLibraryBodySchema = z.object({
+  libraryVariantIds: z.array(z.string().length(21)).min(1),
+})
+
+export const updateCompanyVariantAttributeValuesBodySchema = z.object({
+  libraryValueIds: z.array(z.string().length(21)),
+})
+
+export const updateCompanyAttributeValueBodySchema = z
+  .object({
+    valueText: z.string().trim().min(1).max(5000).optional().nullable(),
+    valueNumber: z.number().optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    const hasText = data.valueText != null && data.valueText !== ''
+    const hasNumber = data.valueNumber != null
+    if (hasText === hasNumber) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide exactly one of valueText or valueNumber',
+        path: ['valueText'],
+      })
+    }
+  })
+
+export type CopyAttributesFromLibraryBody = z.infer<typeof copyAttributesFromLibraryBodySchema>
+export type CopyAttributeValuesFromLibraryBody = z.infer<typeof copyAttributeValuesFromLibraryBodySchema>
+export type CopyVariantsFromLibraryBody = z.infer<typeof copyVariantsFromLibraryBodySchema>
+export type UpdateCompanyVariantAttributeValuesBody = z.infer<
+  typeof updateCompanyVariantAttributeValuesBodySchema
+>
+export type UpdateCompanyAttributeValueBody = z.infer<typeof updateCompanyAttributeValueBodySchema>
 
 export function parsePartialPayloadForKind(
   kind: CatalogEntityKind,

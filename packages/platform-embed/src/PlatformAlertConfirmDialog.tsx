@@ -24,6 +24,8 @@ export type PlatformAlertConfirmDialogProps = {
   /** Primary action label (default Delete). */
   submitLabel?: string
   cancelLabel?: string
+  /** When true, the primary action is disabled (confirm is shown but cannot proceed). */
+  confirmDisabled?: boolean
 }
 
 /**
@@ -40,6 +42,7 @@ export function PlatformAlertConfirmDialog({
   isAllowedParentOrigin,
   submitLabel = 'Delete',
   cancelLabel = 'Cancel',
+  confirmDisabled = false,
 }: PlatformAlertConfirmDialogProps) {
   const parentOrigin =
     typeof window !== 'undefined'
@@ -82,8 +85,10 @@ export function PlatformAlertConfirmDialog({
           <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
+            disabled={confirmDisabled}
             onClick={(event) => {
               event.preventDefault()
+              if (confirmDisabled) return
               onConfirm()
               onOpenChange(false)
             }}

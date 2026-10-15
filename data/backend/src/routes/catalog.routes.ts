@@ -6,7 +6,6 @@ import {
   spacesController,
 } from '../controllers/catalog.controller.js'
 import { productVariantsController } from '../controllers/productVariants.controller.js'
-import { serviceSpacesController } from '../controllers/serviceSpaces.controller.js'
 import {
   requireAuth,
   requireCompanyAdminOrSuperAdmin,
@@ -17,7 +16,6 @@ import {
   catalogAttributeValueBodySchema,
   createCatalogBodySchema,
   replaceCatalogAttributesBodySchema,
-  replaceServiceSpacesBodySchema,
   updateCatalogBodySchema,
   updateCatalogGalleryBodySchema,
 } from '../schemas/catalog.schema.js'
@@ -127,15 +125,6 @@ router.delete(
   requireAuth,
   requireCompanyAdminOrSuperAdmin,
   productVariantsController.remove,
-)
-
-router.get('/services/:id/spaces', requireAuth, serviceSpacesController.list)
-router.put(
-  '/services/:id/spaces',
-  requireAuth,
-  requireCompanyAdminOrSuperAdmin,
-  validateBody(replaceServiceSpacesBodySchema),
-  serviceSpacesController.replace,
 )
 
 router.use(catalogRoutes('products', productsController))

@@ -2,7 +2,13 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger, tabsPageClassName, tabsPageContentClassName } from '@webonone/ui-kit'
 
-export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants' | 'workflow'
+export type CatalogDetailTabId =
+  | 'overview'
+  | 'attributes'
+  | 'gallery'
+  | 'variants'
+  | 'workflow'
+  | 'priceList'
 
 type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailTabId> = {
   ariaLabel: string
@@ -15,6 +21,8 @@ type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailT
   variants?: ReactNode
   /** Services only — when omitted, Workflow tab is hidden. */
   workflow?: ReactNode
+  /** Services and spaces — when omitted, Price list tab is hidden. */
+  priceList?: ReactNode
 }
 
 export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
@@ -26,6 +34,7 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
   gallery,
   variants,
   workflow,
+  priceList,
 }: CatalogDetailSectionTabsProps<T>) {
   const { t } = useTranslation('catalog')
   const tabs: { id: CatalogDetailTabId; label: string }[] = [
@@ -33,6 +42,9 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
     { id: 'gallery', label: t('detail.tabs.gallery') },
     { id: 'attributes', label: t('detail.tabs.attributes') },
   ]
+  if (priceList != null) {
+    tabs.push({ id: 'priceList', label: t('detail.tabs.priceList') })
+  }
   if (variants != null) {
     tabs.push({ id: 'variants', label: t('detail.tabs.variants') })
   }
@@ -47,9 +59,11 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
         ? attributes
         : tab === 'gallery'
           ? gallery
-          : tab === 'workflow'
-            ? workflow
-            : variants
+          : tab === 'priceList'
+            ? priceList
+            : tab === 'workflow'
+              ? workflow
+              : variants
 
   return (
     <Tabs

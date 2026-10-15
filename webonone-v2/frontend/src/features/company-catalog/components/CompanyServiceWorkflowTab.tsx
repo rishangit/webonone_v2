@@ -1,18 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   DropdownMenuItem,
   DropdownMenuSeparator,
   ItemListEmpty,
   ItemListMenu,
+  ListAddButton,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { designFormsApi, type DesignFormTemplateListItem } from '@/features/design/services/designFormsApi'
@@ -181,36 +175,32 @@ export function CompanyServiceWorkflowTab({
   }
 
   return (
-    <Card variant="list">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div className="space-y-1">
-          <CardTitle className="text-lg">{t('workflowTab.title')}</CardTitle>
-          <CardDescription>{t('workflowTab.description')}</CardDescription>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-foreground">{t('workflowTab.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('workflowTab.description')}</p>
         </div>
         {canEdit ? (
-          <Button
-            type="button"
-            size="sm"
-            className="shrink-0"
+          <ListAddButton
+            className="self-end sm:self-auto"
             onClick={() => setDialog({ index: null })}
             disabled={busy || loading}
           >
-            <Plus className="h-4 w-4" aria-hidden />
             {t('workflowTab.add')}
-          </Button>
+          </ListAddButton>
         ) : null}
-      </CardHeader>
-      <CardContent>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </div>
 
-        {loading && items.length === 0 ? (
-          <ItemListEmpty>{t('workflowTab.loading')}</ItemListEmpty>
-        ) : items.length === 0 ? (
-          <ItemListEmpty>{t('workflowTab.empty')}</ItemListEmpty>
-        ) : (
-          <WorkflowItemList
-            className="py-0"
-            items={items}
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      {loading && items.length === 0 ? (
+        <ItemListEmpty>{t('workflowTab.loading')}</ItemListEmpty>
+      ) : items.length === 0 ? (
+        <ItemListEmpty>{t('workflowTab.empty')}</ItemListEmpty>
+      ) : (
+        <WorkflowItemList
+          items={items}
             t={t}
             showQueue={timeMode === 'window'}
             renderMenu={
@@ -256,7 +246,6 @@ export function CompanyServiceWorkflowTab({
             }
           />
         )}
-      </CardContent>
 
       {dialog ? (
         <WorkflowItemFormDialog
@@ -300,6 +289,6 @@ export function CompanyServiceWorkflowTab({
           }
         }}
       />
-    </Card>
+    </div>
   )
 }

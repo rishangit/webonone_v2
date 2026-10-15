@@ -26,6 +26,8 @@ import {
 import { parseMoney } from '../repositories/companyCatalog.repository.js'
 import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import { applyLibrarySellPricesWhereMissing } from './companyProductPublicPrice.service.js'
+import { applicablePublicListPriceByEntityId } from './companyCatalogPriceRules.service.js'
+import { priceClockFromDate } from '../utils/applicableCatalogPrice.js'
 import { buildWindowSessionItems, parseSessionDateRange } from './companyEvent.service.js'
 import { distanceKm, parseLatLng, toFiniteNumber } from '../utils/geo.js'
 
@@ -344,6 +346,22 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
     await applyLibrarySellPricesWhereMissing(priceTargets)
     for (let i = 0; i < productPriceSlots.length; i++) {
       items[productPriceSlots[i].itemIndex].listPrice = priceTargets[i].listPrice
+    }
+  }
+
+  const clock = priceClockFromDate()
+  for (const kind of ['services', 'spaces'] as const) {
+    const slots = items
+      .map((item, itemIndex) => ({ item, itemIndex }))
+      .filter((slot) => slot.item.kind === kind)
+    if (slots.length === 0) continue
+    const prices = await applicablePublicListPriceByEntityId(
+      kind,
+      slots.map((slot) => slot.item.id),
+      clock,
+    )
+    for (const slot of slots) {
+      items[slot.itemIndex].listPrice = prices.get(slot.item.id) ?? null
     }
   }
 

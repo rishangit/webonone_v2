@@ -64,6 +64,11 @@ interface ScopedFolderBrowserProps {
   onNavigate?: (path: string) => void
   /** Header bar with breadcrumb left, icon toolbar right (selector embed). */
   showIconToolbar?: boolean
+  /**
+   * When false, the toolbar offers list and card only (add-media dialogs).
+   * The library keeps list, grid, and card.
+   */
+  gridLayout?: boolean
   allowDelete?: boolean
   enableUpload?: boolean
   uploadAccept?: string
@@ -91,6 +96,7 @@ export function ScopedFolderBrowser({
   onToggleSelect,
   onNavigate,
   showIconToolbar = false,
+  gridLayout = true,
   allowDelete = false,
   enableUpload = false,
   uploadAccept = 'image/*',
@@ -402,27 +408,35 @@ export function ScopedFolderBrowser({
         >
           <FolderPlus className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          size="icon"
-          variant={viewMode === 'list' ? 'default' : 'outline'}
-          aria-label="List view"
-          className="h-9 w-9 shrink-0"
-          onClick={() => setViewMode('list')}
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          size="icon"
-          variant={viewMode === 'thumb' ? 'default' : 'outline'}
-          aria-label="Thumbnail view"
-          className="h-9 w-9 shrink-0"
-          onClick={() => setViewMode('thumb')}
-        >
-          <LayoutGrid className="h-4 w-4" />
-        </Button>
-        <ItemListViewToggle value={listDisplayMode} onChange={setListDisplayMode} />
+        {gridLayout ? (
+          <>
+            <Button
+              type="button"
+              size="icon"
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              aria-label="List view"
+              className="h-9 w-9 shrink-0"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant={viewMode === 'thumb' ? 'default' : 'outline'}
+              aria-label="Thumbnail view"
+              className="h-9 w-9 shrink-0"
+              onClick={() => setViewMode('thumb')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </>
+        ) : null}
+        <ItemListViewToggle
+          value={listDisplayMode}
+          onChange={setListDisplayMode}
+          gridLayout={gridLayout}
+        />
       </ListPageActions>
     )
   }
@@ -468,6 +482,7 @@ export function ScopedFolderBrowser({
       <CollectionListView
         items={rows}
         getRowKey={(row) => row.id}
+        gridLayout={gridLayout}
         columns={columns}
         empty={
           <ItemListEmpty>
@@ -758,7 +773,9 @@ export function ScopedFolderBrowser({
             />
           ) : null}
           {showListContent ? (
-            viewMode === 'thumb' && showIconToolbar ? renderThumbView() : renderListView()
+            gridLayout && viewMode === 'thumb' && showIconToolbar
+              ? renderThumbView()
+              : renderListView()
           ) : null}
         </div>
 

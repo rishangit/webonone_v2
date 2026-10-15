@@ -88,7 +88,7 @@ export function isLibraryEntityReferenceKind(
   return (LIBRARY_ENTITY_REFERENCE_KINDS as readonly string[]).includes(kind)
 }
 
-/** Company catalog rows (linked or forked) that point at a Data library entity id. */
+/** Distinct companies whose catalog row points at a Data library entity id. */
 export async function countLibraryEntityReferences(
   kind: LibraryEntityReferenceKind,
   libraryEntityIds: string[],
@@ -104,11 +104,12 @@ export async function countLibraryEntityReferences(
     .whereNotNull('library_entity_id')
     .groupBy('library_entity_id')
     .select('library_entity_id')
-    .count('* as count')) as Array<{ library_entity_id: string; count: number }>
+    .countDistinct({ count: 'company_id' })) as Array<{ library_entity_id: string; count: number }>
 
   for (const row of rows) {
     counts[row.library_entity_id] = Number(row.count ?? 0)
   }
+
   return counts
 }
 
@@ -167,7 +168,6 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
         unitId: (row.unit_id as string | null) ?? null,
       }
     case 'products':
-    case 'spaces':
       return {
         ...base,
         tagIds: parseJsonArray(row.tag_ids as string | unknown[] | null) as string[] | undefined,
@@ -179,6 +179,18 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
             }[]
           | undefined,
         listPrice: parseMoney(row.list_price),
+      }
+    case 'spaces':
+      return {
+        ...base,
+        tagIds: parseJsonArray(row.tag_ids as string | unknown[] | null) as string[] | undefined,
+        attributes: parseJsonArray(row.attributes as string | unknown[] | null) as
+          | {
+              attributeId: string
+              valueText?: string | null
+              valueNumber?: number | null
+            }[]
+          | undefined,
       }
     case 'services':
       return {
@@ -195,7 +207,6 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
         durationMinutes: (row.duration_minutes as number | null) ?? null,
         startTime: formatTime((row.start_time as string | Date | null) ?? null),
         endTime: formatTime((row.end_time as string | Date | null) ?? null),
-        listPrice: parseMoney(row.list_price),
       }
   }
 }
@@ -247,7 +258,7 @@ export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unkno
       ...base,
       webPublishStatus,
       galleryImages: parseGalleryImages(row.gallery_images as string | unknown[] | null),
-      listPrice: parseMoney(row.list_price),
+      listPrice: kind === 'products' ? parseMoney(row.list_price) : null,
     }
     if (kind === 'services') {
       return {
@@ -424,9 +435,8 @@ export async function insertItem(input: {
 }): Promise<Record<string, unknown>> {
   const now = new Date()
   const table = CATALOG_TABLE_BY_KIND[input.entityKind]
-  const listPrice = isCatalogPricedKind(input.entityKind)
-    ? (extractListPrice(input.payload) ?? null)
-    : undefined
+  const listPrice =
+    input.entityKind === 'products' ? (extractListPrice(input.payload) ?? null) : undefined
   await db(table).insert({
     id: input.id,
     company_id: input.companyId,
@@ -471,7 +481,7 @@ export async function updateItem(
   const payload =
     patch.payload !== undefined ? patch.payload : payloadFromRow(kind, existing)
 
-  const listPrice = isCatalogPricedKind(kind) ? extractListPrice(payload) : undefined
+  const listPrice = kind === 'products' ? extractListPrice(payload) : undefined
 
   await db(CATALOG_TABLE_BY_KIND[kind])
     .where({ id, company_id: companyId })
@@ -529,6 +539,7 @@ export async function updateListPrice(
   id: string,
   listPrice: number | null,
 ): Promise<Record<string, unknown> | undefined> {
+  if (kind !== 'products') return undefined
   const existing = await findById(companyId, kind, id)
   if (!existing) return undefined
 

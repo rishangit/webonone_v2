@@ -24,28 +24,7 @@ export async function countAttributeReferences(attributeId: string): Promise<num
   return Number(rows[0]?.count ?? 0)
 }
 
-async function countLocalCatalogEntityReferences(
-  kind: LibraryCatalogReferenceKind,
-  entityIds: string[],
-): Promise<Map<string, number>> {
-  const uniqueIds = [...new Set(entityIds.filter((id) => id.length > 0))]
-  const counts = new Map<string, number>()
-  for (const id of uniqueIds) counts.set(id, 0)
-  if (uniqueIds.length === 0 || kind !== 'spaces') return counts
-
-  const rows = (await db('data_service_spaces')
-    .whereIn('space_id', uniqueIds)
-    .groupBy('space_id')
-    .select('space_id')
-    .count('* as count')) as Array<{ space_id: string; count: number }>
-
-  for (const row of rows) {
-    counts.set(row.space_id, Number(row.count ?? 0))
-  }
-  return counts
-}
-
-/** Company catalog links (WebOnOne) plus in-library links (e.g. services → spaces). */
+/** Distinct companies (WebOnOne catalog) that use each library product, service, or space. */
 export async function resolveCatalogReferenceCounts(
   kind: LibraryCatalogReferenceKind,
   entityIds: string[],
@@ -55,13 +34,9 @@ export async function resolveCatalogReferenceCounts(
   for (const id of uniqueIds) totals.set(id, 0)
   if (uniqueIds.length === 0) return totals
 
-  const [localCounts, companyCounts] = await Promise.all([
-    countLocalCatalogEntityReferences(kind, uniqueIds),
-    fetchCompanyCatalogReferenceCounts(kind, uniqueIds),
-  ])
-
+  const companyCounts = await fetchCompanyCatalogReferenceCounts(kind, uniqueIds)
   for (const id of uniqueIds) {
-    totals.set(id, (localCounts.get(id) ?? 0) + (companyCounts.get(id) ?? 0))
+    totals.set(id, companyCounts.get(id) ?? 0)
   }
   return totals
 }

@@ -236,14 +236,6 @@ export function CompanyCatalogDetailScreen({
     }
   }
 
-  function openAttributesEdit() {
-    if (kind === 'services') {
-      setServiceDialog({ initialStep: 4 })
-      return
-    }
-    setEditOpen(true)
-  }
-
   if (loading) {
     return (
       <FeatureScreen title={noun} onBack={() => router.back()}>
@@ -455,9 +447,7 @@ export function CompanyCatalogDetailScreen({
               entityId={itemId}
               entityName={item.displayName}
               libraryEntityId={item.libraryEntityId}
-              payload={entityPayload}
-              canEdit={canEdit && !busy}
-              onEdit={openAttributesEdit}
+              canAdd={canManage && !busy}
             />
           </TabsContent>
 
@@ -467,7 +457,7 @@ export function CompanyCatalogDetailScreen({
                 productId={itemId}
                 productName={item.displayName}
                 libraryEntityId={item.libraryEntityId}
-                canEdit={canEdit && !busy}
+                canAdd={canManage && !busy}
               />
             </TabsContent>
           ) : null}

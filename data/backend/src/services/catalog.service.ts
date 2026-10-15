@@ -58,6 +58,7 @@ export interface CatalogAttributeValueEntry {
 export interface CatalogAttributeLink {
   attributeId: string
   name: string
+  description: string | null
   valueType: 'number' | 'text'
   unit: AttributeUnitSummary | null
   values: CatalogAttributeValueEntry[]
@@ -210,9 +211,14 @@ async function loadAttributesForEntity(
     const attr = attrById.get(attributeId)
     if (!attr) continue
     const unitId = attr.unit_id as string | null
+    const description =
+      typeof attr.description === 'string' && attr.description.trim().length > 0
+        ? attr.description.trim()
+        : null
     result.push({
       attributeId,
       name: attr.name as string,
+      description,
       valueType: attr.value_type === 'number' ? 'number' : 'text',
       unit: unitId ? (unitById.get(unitId) ?? null) : null,
       values: valuesByAttribute.get(attributeId) ?? [],

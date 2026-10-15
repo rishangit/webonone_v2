@@ -20,6 +20,11 @@ export interface CollectionListViewProps<T> {
    * Default true — use false for collections without entity images.
    */
   cardLayout?: boolean
+  /**
+   * When false, grid layout is unavailable; global `grid` preference renders as list.
+   * Default true — use false for media pickers that only offer list and card.
+   */
+  gridLayout?: boolean
   /** Optional external sort state; defaults to internal client sort on current page. */
   sort?: CollectionSortState
   onSortChange?: (next: CollectionSortState) => void
@@ -39,6 +44,7 @@ export function CollectionListView<T>({
   renderCard,
   empty,
   cardLayout = true,
+  gridLayout = true,
   sort: sortProp,
   onSortChange,
   getGridRowClassName,
@@ -48,7 +54,7 @@ export function CollectionListView<T>({
   cardGridClassName,
   gridClassName,
 }: CollectionListViewProps<T>) {
-  const mode = resolveCollectionDisplayMode(useListDisplayMode(), cardLayout)
+  const mode = resolveCollectionDisplayMode(useListDisplayMode(), cardLayout, gridLayout)
   const internalSort = useClientCollectionSort(items, columns)
   const sort = sortProp ?? internalSort.sort
   const sortedItems = sortProp !== undefined ? items : internalSort.sortedItems

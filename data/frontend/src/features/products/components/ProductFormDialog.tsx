@@ -124,6 +124,7 @@ function appendAttributeSelection(
     result.push({
       attributeId: attribute.id,
       name: attribute.name,
+      description: attribute.description ?? null,
       valueType: attribute.valueType,
       unit: attribute.unit ?? null,
       valueText: '',
@@ -142,6 +143,7 @@ function valuesFromCatalogItem(item: CatalogItem): ProductWizardFormValues {
     attributes: item.attributes.map((a) => ({
       attributeId: a.attributeId,
       name: a.name,
+      description: a.description ?? null,
       valueType: a.valueType,
       unit: a.unit,
       valueText: '',
@@ -169,6 +171,7 @@ export function ProductFormDialog({
 }: ProductFormDialogProps) {
   const { t } = useTranslation('products')
   const { t: tc } = useTranslation('common')
+  const { t: ta } = useTranslation('attributes')
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isNew = !id
@@ -379,9 +382,9 @@ export function ProductFormDialog({
         parentRequestId: dialogRequestId,
         requestId: nestedRequestId,
         path: ATTRIBUTE_SELECT_EMBED_PATH,
-        title: ATTRIBUTE_SELECT_PEER.title,
-        description: ATTRIBUTE_SELECT_PEER.description,
-        submitLabel: ATTRIBUTE_SELECT_PEER.submitLabel,
+        title: ta('pickerTitle'),
+        description: ta('pickerDescription'),
+        submitLabel: ta('pickerSubmitCount', { count: 0 }),
         sizeWidth: ATTRIBUTE_SELECT_PEER.sizeWidth,
         sizeHeight: ATTRIBUTE_SELECT_PEER.sizeHeight,
       })
@@ -389,7 +392,7 @@ export function ProductFormDialog({
     }
     attributePickerOpenRef.current = true
     setAttributePickerOpen(true)
-  }, [chrome, dialogRequestId, parentOrigin, values.attributes])
+  }, [chrome, dialogRequestId, parentOrigin, ta, values.attributes])
 
   const applyAttributeSelection = useCallback((selected: AttributeSelectValue[]) => {
     setValues((prev) => ({

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import {
   getPlatformEmbedParentOrigin,
@@ -16,7 +17,6 @@ import { AttributePickerPanel } from '@/features/attributes/components/Attribute
 import {
   ATTRIBUTE_CREATE_DIALOG,
   ATTRIBUTE_CREATE_EMBED_PATH,
-  ATTRIBUTE_SELECT_PEER,
   clearAttributeSelectSession,
   createNestedRequestId,
   readAttributeSelectSession,
@@ -40,10 +40,20 @@ function isCreatedAttribute(value: unknown): value is Attribute | AttributeSelec
  * Session stores attributes already on the product (excluded from the list).
  * Done returns only newly chosen attributes — the product form appends them.
  */
+function excludedIdsFromQuery(value: string | null): string[] {
+  if (!value) return []
+  return value
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0)
+}
+
 export function AttributeSelectEmbedPage() {
+  const { t } = useTranslation('attributes')
   const [searchParams] = useSearchParams()
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
+  const excludedQuery = searchParams.get('excluded') ?? ''
 
   const [pendingSelection, setPendingSelection] = useState<AttributeSelectValue[]>([])
   const [excludedIds, setExcludedIds] = useState<string[]>([])
@@ -53,11 +63,15 @@ export function AttributeSelectEmbedPage() {
   useEffect(() => {
     if (!requestId) return
     const alreadySelected = readAttributeSelectSession(requestId)
-    setExcludedIds(alreadySelected.map((attribute) => attribute.id))
+    const excluded = new Set([
+      ...alreadySelected.map((attribute) => attribute.id),
+      ...excludedIdsFromQuery(excludedQuery),
+    ])
+    setExcludedIds([...excluded])
     setPendingSelection([])
     pendingSelectionRef.current = []
     return () => clearAttributeSelectSession(requestId)
-  }, [requestId])
+  }, [excludedQuery, requestId])
 
   useEffect(() => {
     pendingSelectionRef.current = pendingSelection
@@ -135,6 +149,9 @@ export function AttributeSelectEmbedPage() {
       if (nestedCreateRequestIdRef.current) {
         return
       }
+      if (pendingSelectionRef.current.length === 0) {
+        return
+      }
       sendPlatformPeerDialogComplete(parentOrigin, requestId, {
         attributes: pendingSelectionRef.current,
       })
@@ -143,12 +160,13 @@ export function AttributeSelectEmbedPage() {
 
   useEffect(() => {
     if (!parentOrigin || !requestId) return
-    const label =
-      pendingSelection.length > 0
-        ? `${ATTRIBUTE_SELECT_PEER.submitLabel} (${pendingSelection.length})`
-        : ATTRIBUTE_SELECT_PEER.submitLabel
-    sendPlatformPeerDialogBusy(parentOrigin, requestId, false, label)
-  }, [parentOrigin, pendingSelection.length, requestId])
+    sendPlatformPeerDialogBusy(
+      parentOrigin,
+      requestId,
+      false,
+      t('pickerSubmitCount', { count: pendingSelection.length }),
+    )
+  }, [parentOrigin, pendingSelection.length, requestId, t])
 
   if (!parentOrigin || !requestId) {
     return (

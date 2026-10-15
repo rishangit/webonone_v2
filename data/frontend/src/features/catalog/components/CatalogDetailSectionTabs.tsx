@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger, tabsPageClassName, tabsPageContentClassName } from '@webonone/ui-kit'
 
-export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants' | 'spaces'
+export type CatalogDetailTabId = 'overview' | 'attributes' | 'gallery' | 'variants'
 
 type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailTabId> = {
   ns: 'products' | 'services' | 'spaces'
@@ -14,8 +14,6 @@ type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailT
   gallery: ReactNode
   /** Products only — when omitted, Variants tab is hidden. */
   variants?: ReactNode
-  /** Services only — when omitted, Spaces tab is hidden. */
-  spaces?: ReactNode
 }
 
 export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
@@ -27,7 +25,6 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
   attributes,
   gallery,
   variants,
-  spaces,
 }: CatalogDetailSectionTabsProps<T>) {
   const { t } = useTranslation(ns)
   const tabs: { id: CatalogDetailTabId; label: string }[] = [
@@ -38,9 +35,6 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
   if (variants != null) {
     tabs.push({ id: 'variants', label: t('variants') })
   }
-  if (spaces != null) {
-    tabs.push({ id: 'spaces', label: t('spaces') })
-  }
 
   const panel =
     tab === 'overview'
@@ -49,9 +43,7 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
         ? attributes
         : tab === 'gallery'
           ? gallery
-          : tab === 'spaces'
-            ? spaces
-            : variants
+          : variants
 
   return (
     <Tabs

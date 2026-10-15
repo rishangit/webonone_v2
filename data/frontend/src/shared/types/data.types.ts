@@ -66,6 +66,7 @@ export interface CatalogAttributeValueEntry {
 export interface CatalogAttributeValue {
   attributeId: string
   name: string
+  description?: string | null
   valueType: 'number' | 'text'
   unit: AttributeUnitSummary | null
   values: CatalogAttributeValueEntry[]
@@ -96,14 +97,6 @@ export interface CatalogItem {
   endTime?: string | null
   /** Services only — optional list price when exposed by API */
   listPrice?: number | null
-}
-
-export interface ServiceSpaceLink {
-  id: string
-  name: string
-  description: string | null
-  status: EntityStatus
-  sortOrder: number
 }
 
 export interface ProductVariantAttributeValue {

@@ -3,6 +3,7 @@ import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
 import * as catalogService from '../services/companyCatalog.service.js'
+import { priceClockFromQuery } from '../utils/applicableCatalogPrice.js'
 import * as variantStockLimitsService from '../services/companyProductVariantStockLimits.service.js'
 import * as productStockService from '../services/companyProductStock.service.js'
 import * as memberCatalogBookingService from '../services/memberCatalogBooking.service.js'
@@ -37,7 +38,7 @@ export async function listCatalog(req: CompanySessionRequest, res: Response) {
       session.userId,
       session.companyId,
       kind,
-      { q },
+      { q, clock: priceClockFromQuery(req.query) },
     )
     res.json({ items })
   } catch (err) {
@@ -58,7 +59,7 @@ export async function listDiscoverableCatalogForCompany(req: AuthenticatedReques
       req.user.id,
       String(req.params.companyId),
       kind,
-      { q },
+      { q, clock: priceClockFromQuery(req.query) },
     )
     res.json({ items })
   } catch (err) {
@@ -79,7 +80,7 @@ export async function listCatalogForCompany(req: AuthenticatedRequest, res: Resp
       req.user.id,
       String(req.params.companyId),
       kind,
-      { q },
+      { q, clock: priceClockFromQuery(req.query) },
     )
     res.json({ items })
   } catch (err) {
@@ -97,6 +98,7 @@ export async function getCatalog(req: CompanySessionRequest, res: Response) {
       session.companyId,
       kind,
       String(req.params.id),
+      priceClockFromQuery(req.query),
     )
     res.json(item)
   } catch (err) {
@@ -117,6 +119,7 @@ export async function getCatalogForCompany(req: AuthenticatedRequest, res: Respo
       String(req.params.companyId),
       kind,
       String(req.params.id),
+      priceClockFromQuery(req.query),
     )
     res.json(item)
   } catch (err) {

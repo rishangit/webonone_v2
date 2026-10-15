@@ -15,11 +15,11 @@ Phone-width web pages (below Tailwind `sm`, 640px) should use the **maximum cont
 
 | Surface | Horizontal inset on a phone |
 |---------|-----------------------------|
-| Website shell | `shellChromeRootClassName` = `p-2` on `.app-shell-root` |
+| Website shell | `shellChromeRootClassName` = `p-1 md:p-2` on `.app-shell-root` |
 | Public catalog item details | **No extra** page gutter below `sm` (`px-0`). From `sm` up, `sm:px-8`. |
 | Expo product screens | `FeatureScreen` content `px-2 py-4` (`packages/mobile-ui/src/components/FeatureScreen.tsx`) |
 
-The shell `p-2` is the phone inset. Do not stack another `px-4` (or `px-8`) on the item details location bar or scroll body. That extra gutter is what makes the detail column narrower than the home page and the app.
+The shell `p-1` is the phone inset (`md:p-2` from 768px). Do not stack another `px-4` (or `px-8`) on the item details location bar or scroll body. That extra gutter is what makes the detail column narrower than the home page and the app.
 
 Reference: `website/frontend/src/features/website/pages/CatalogDetailPage.tsx`.
 

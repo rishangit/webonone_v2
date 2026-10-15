@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { TagChip } from '@webonone/ui-kit'
+import { AttributePickerListItem, ItemList, TagChip } from '@webonone/ui-kit'
 import type { ProductWizardFormValues } from '@/features/products/schemas/productSchemas'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 
@@ -13,6 +13,7 @@ export function ProductWizardStepSummary({
   showStatus,
 }: ProductWizardStepSummaryProps) {
   const { t } = useTranslation('products')
+  const { t: ta } = useTranslation('attributes')
   return (
     <div className="space-y-4">
       <div className="space-y-4 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg))] p-4">
@@ -47,19 +48,18 @@ export function ProductWizardStepSummary({
         {values.attributes.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('wizard.noAttributes')}</p>
         ) : (
-          <ul className="space-y-3">
+          <ItemList className="py-0">
             {values.attributes.map((row) => (
-              <li key={row.attributeId} className="space-y-0.5">
-                <p className="text-sm font-medium text-foreground">
-                  {row.name || row.attributeId}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <span className="capitalize">{row.valueType}</span>
-                  {row.unit ? ` · ${row.unit.name} (${row.unit.symbol})` : ''}
-                </p>
-              </li>
+              <AttributePickerListItem
+                key={row.attributeId}
+                name={row.name || row.attributeId}
+                description={row.description}
+                valueTypeLabel={row.valueType === 'number' ? ta('number') : ta('text')}
+                unit={row.unit}
+                noUnitLabel={ta('pickerNoUnit')}
+              />
             ))}
-          </ul>
+          </ItemList>
         )}
       </div>
     </div>

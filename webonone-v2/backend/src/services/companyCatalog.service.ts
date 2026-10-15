@@ -18,6 +18,14 @@ import {
   type CatalogPayload,
 } from '../schemas/companyCatalogSchemas.js'
 import { assertDiscoverableCompany } from './company.service.js'
+import {
+  applicableListPriceByEntityId,
+  deletePriceRulesForCatalogItem,
+} from './companyCatalogPriceRules.service.js'
+import {
+  priceClockFromDate,
+  type PriceClock,
+} from '../utils/applicableCatalogPrice.js'
 
 function httpError(message: string, statusCode: number): Error & { statusCode: number } {
   const err = new Error(message) as Error & { statusCode: number }
@@ -58,6 +66,31 @@ function toDto(kind: CatalogEntityKind, row: Record<string, unknown>) {
   return repo.mapCatalogRow(kind, row)
 }
 
+function isPriceListKind(kind: CatalogEntityKind): kind is 'services' | 'spaces' {
+  return kind === 'services' || kind === 'spaces'
+}
+
+async function withApplicableListPrices<T extends { id: string; listPrice?: number | null }>(
+  companyId: string,
+  kind: CatalogEntityKind,
+  items: T[],
+  userId: string,
+  clock: PriceClock,
+): Promise<T[]> {
+  if (!isPriceListKind(kind) || items.length === 0) return items
+  const prices = await applicableListPriceByEntityId(
+    companyId,
+    kind,
+    items.map((item) => item.id),
+    userId,
+    clock,
+  )
+  return items.map((item) => ({
+    ...item,
+    listPrice: prices.get(item.id) ?? null,
+  }))
+}
+
 export function parseKindParam(kind: string): CatalogEntityKind {
   const parsed = catalogEntityKindSchema.safeParse(kind)
   if (!parsed.success) {
@@ -70,25 +103,27 @@ export async function listCatalogItems(
   userId: string,
   companyId: string,
   kind: CatalogEntityKind,
-  options?: { q?: string },
+  options?: { q?: string; clock?: PriceClock },
 ) {
   await assertCompanySessionAccess(userId, companyId)
   const rows = await repo.listByCompanyAndKind(companyId, kind, options)
-  return rows.map((row) => toDto(kind, row))
+  const items = rows.map((row) => toDto(kind, row))
+  return withApplicableListPrices(companyId, kind, items, userId, options?.clock ?? priceClockFromDate())
 }
 
 export async function listDiscoverableCatalogItems(
   userId: string,
   companyId: string,
   kind: CatalogEntityKind,
-  options?: { q?: string },
+  options?: { q?: string; clock?: PriceClock },
 ) {
   await assertDiscoverableCompany(userId, companyId)
   const rows = await repo.listByCompanyAndKind(companyId, kind, {
     ...options,
     webPublishedOnly: repo.isCatalogPricedKind(kind),
   })
-  return rows.map((row) => toDto(kind, row))
+  const items = rows.map((row) => toDto(kind, row))
+  return withApplicableListPrices(companyId, kind, items, userId, options?.clock ?? priceClockFromDate())
 }
 
 export async function getCatalogItem(
@@ -96,13 +131,21 @@ export async function getCatalogItem(
   companyId: string,
   kind: CatalogEntityKind,
   id: string,
+  clock?: PriceClock,
 ) {
   await assertCompanySessionAccess(userId, companyId)
   const row = await repo.findById(companyId, kind, id)
   if (!row) {
     throw httpError('Catalog item not found', 404)
   }
-  return toDto(kind, row)
+  const [item] = await withApplicableListPrices(
+    companyId,
+    kind,
+    [toDto(kind, row)],
+    userId,
+    clock ?? priceClockFromDate(),
+  )
+  return item
 }
 
 export async function linkFromLibrary(
@@ -284,8 +327,8 @@ export async function updateCatalogPricing(
   listPrice: number | null,
 ) {
   await assertCompanyAdmin(userId, companyId)
-  if (!repo.isCatalogPricedKind(kind)) {
-    throw httpError('List price is only supported for products, services, and spaces', 400)
+  if (kind !== 'products') {
+    throw httpError('List price is only supported for products', 400)
   }
   const row = await repo.findById(companyId, kind, id)
   if (!row) {
@@ -355,6 +398,7 @@ export async function deleteCatalogItem(
   if (deleted === 0) {
     throw httpError('Catalog item not found', 404)
   }
+  await deletePriceRulesForCatalogItem(companyId, kind, id)
 }
 
 async function buildWorkflowStaffByItemId(

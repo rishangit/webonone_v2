@@ -1,23 +1,31 @@
 import { Router } from 'express'
 import * as companyCatalogController from '../controllers/companyCatalog.controller.js'
+import * as companyCatalogCopiesController from '../controllers/companyCatalogCopies.controller.js'
+import * as companyCatalogPriceRulesController from '../controllers/companyCatalogPriceRules.controller.js'
 import { requireAuth } from '../middleware/auth.js'
 import { requireCompanyAdminSession } from '../middleware/requireCompanyAdminSession.js'
 import { requireCompanySession } from '../middleware/requireCompanySession.js'
 import { validateBody } from '../middleware/validateBody.js'
 import { bookPublicSessionTokenBodySchema } from '../schemas/companyEventSchemas.js'
 import {
+  copyAttributesFromLibraryBodySchema,
+  copyAttributeValuesFromLibraryBodySchema,
+  copyVariantsFromLibraryBodySchema,
+  updateCompanyVariantAttributeValuesBodySchema,
   forkCatalogBodySchema,
   fromLibraryBodySchema,
   linkCatalogBodySchema,
   updateCatalogGalleryBodySchema,
   updateCatalogPricingBodySchema,
   updateCatalogWebPublishBodySchema,
+  updateCompanyAttributeValueBodySchema,
   upsertProductVariantStockLimitsBodySchema,
   createCompanyProductStockBodySchema,
   updateCompanyProductStockBodySchema,
   updateServiceFormBodySchema,
   replaceServiceWorkflowBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
+import { catalogPriceRuleBodySchema } from '../schemas/companyCatalogPriceRules.schema.js'
 
 const router = Router()
 
@@ -37,6 +45,33 @@ router.get(
   '/company/me/catalog/stocks/suggested-batch-number',
   requireCompanyAdminSession,
   companyCatalogController.suggestProductStockBatchNumber,
+)
+router.get(
+  '/company/me/catalog/products/:productId/variants',
+  requireCompanySession,
+  companyCatalogCopiesController.listVariants,
+)
+router.post(
+  '/company/me/catalog/products/:productId/variants/from-library',
+  requireCompanyAdminSession,
+  validateBody(copyVariantsFromLibraryBodySchema),
+  companyCatalogCopiesController.copyVariantsFromLibrary,
+)
+router.get(
+  '/company/me/catalog/products/:productId/variants/:variantId',
+  requireCompanySession,
+  companyCatalogCopiesController.getVariant,
+)
+router.patch(
+  '/company/me/catalog/products/:productId/variants/:variantId/attribute-values',
+  requireCompanyAdminSession,
+  validateBody(updateCompanyVariantAttributeValuesBodySchema),
+  companyCatalogCopiesController.updateVariantAttributeValues,
+)
+router.delete(
+  '/company/me/catalog/products/:productId/variants/:variantId',
+  requireCompanyAdminSession,
+  companyCatalogCopiesController.deleteVariant,
 )
 router.get(
   '/company/me/catalog/products/:productId/variants/:variantId/stocks',
@@ -104,6 +139,61 @@ router.post(
   requireCompanyAdminSession,
   companyCatalogController.createCustomCatalog,
 )
+router.post(
+  '/company/me/catalog/:kind/:id/ensure-library',
+  requireCompanyAdminSession,
+  companyCatalogCopiesController.ensureLibraryLink,
+)
+router.get(
+  '/company/me/catalog/:kind/:id/attributes',
+  requireCompanySession,
+  companyCatalogCopiesController.listAttributes,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/attributes/attach-to-library',
+  requireCompanyAdminSession,
+  validateBody(copyAttributesFromLibraryBodySchema),
+  companyCatalogCopiesController.attachAttributesToLibrary,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/attributes/from-library',
+  requireCompanyAdminSession,
+  validateBody(copyAttributesFromLibraryBodySchema),
+  companyCatalogCopiesController.copyAttributesFromLibrary,
+)
+router.delete(
+  '/company/me/catalog/:kind/:id/attributes/:attributeId',
+  requireCompanyAdminSession,
+  companyCatalogCopiesController.deleteAttribute,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/attributes/:attributeId/values',
+  requireCompanyAdminSession,
+  validateBody(updateCompanyAttributeValueBodySchema),
+  companyCatalogCopiesController.createAttributeValue,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/attribute-values/from-library',
+  requireCompanyAdminSession,
+  validateBody(copyAttributeValuesFromLibraryBodySchema),
+  companyCatalogCopiesController.copyAttributeValuesFromLibrary,
+)
+router.patch(
+  '/company/me/catalog/:kind/:id/attribute-values/:valueId/default',
+  requireCompanyAdminSession,
+  companyCatalogCopiesController.setAttributeValueDefault,
+)
+router.patch(
+  '/company/me/catalog/:kind/:id/attribute-values/:valueId',
+  requireCompanyAdminSession,
+  validateBody(updateCompanyAttributeValueBodySchema),
+  companyCatalogCopiesController.updateAttributeValue,
+)
+router.delete(
+  '/company/me/catalog/:kind/:id/attribute-values/:valueId',
+  requireCompanyAdminSession,
+  companyCatalogCopiesController.deleteAttributeValue,
+)
 router.get(
   '/company/me/catalog/:kind/:id',
   requireCompanySession,
@@ -120,6 +210,28 @@ router.patch(
   requireCompanyAdminSession,
   validateBody(updateCatalogGalleryBodySchema),
   companyCatalogController.updateCatalogGallery,
+)
+router.get(
+  '/company/me/catalog/:kind/:id/price-rules',
+  requireCompanySession,
+  companyCatalogPriceRulesController.listPriceRules,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/price-rules',
+  requireCompanyAdminSession,
+  validateBody(catalogPriceRuleBodySchema),
+  companyCatalogPriceRulesController.createPriceRule,
+)
+router.patch(
+  '/company/me/catalog/:kind/:id/price-rules/:ruleId',
+  requireCompanyAdminSession,
+  validateBody(catalogPriceRuleBodySchema),
+  companyCatalogPriceRulesController.updatePriceRule,
+)
+router.delete(
+  '/company/me/catalog/:kind/:id/price-rules/:ruleId',
+  requireCompanyAdminSession,
+  companyCatalogPriceRulesController.deletePriceRule,
 )
 router.patch(
   '/company/me/catalog/:kind/:id/pricing',
@@ -192,6 +304,11 @@ router.get(
   '/company/:companyId/catalog/:kind',
   requireAuth,
   companyCatalogController.listCatalogForCompany,
+)
+router.get(
+  '/company/:companyId/catalog/:kind/:id/price-rules',
+  requireAuth,
+  companyCatalogPriceRulesController.listPriceRulesForCompany,
 )
 router.get(
   '/company/:companyId/catalog/:kind/:id',

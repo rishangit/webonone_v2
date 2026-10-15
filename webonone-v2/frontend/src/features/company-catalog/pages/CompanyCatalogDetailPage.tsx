@@ -13,17 +13,17 @@ import {
   StatusTag,
   TagChip,
   type SelectTagValue,
-  ListPriceField,
   ReadOnlyField,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
+import { CatalogApplicablePrice } from '../components/CatalogApplicablePrice'
 import { CatalogDetailSectionTabs, type CatalogDetailTabId } from '../components/CatalogDetailSectionTabs'
+import { CatalogPriceListTab } from '../components/CatalogPriceListTab'
 import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard'
 import { CatalogFormDialog } from '../components/CatalogFormDialog'
-import { CatalogPricingDialog } from '../components/CatalogPricingDialog'
 import { CatalogWebPublishDialog } from '../components/CatalogWebPublishDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
 import { CompanyCatalogDetailPageMenu } from '../components/CompanyCatalogDetailPageMenu'
@@ -35,6 +35,7 @@ import { CompanyServiceWorkflowTab } from '../components/CompanyServiceWorkflowT
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { MemberServiceSessionsCard } from '../components/MemberServiceSessionsCard'
 import type { ServiceWizardStep } from '../schemas/serviceSchemas'
+import { useCatalogPriceRules } from '../hooks/useCatalogPriceRules'
 import { dataLibraryApi } from '../services/dataLibraryApi'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
@@ -65,7 +66,13 @@ const CATALOG_TABS_WITH_VARIANTS = [
 
 const CATALOG_TABS_WITH_WORKFLOW = [
   ...CATALOG_TABS_BASE,
+  'priceList',
   'workflow',
+] as const satisfies readonly CatalogDetailTabId[]
+
+const CATALOG_TABS_WITH_PRICES = [
+  ...CATALOG_TABS_BASE,
+  'priceList',
 ] as const satisfies readonly CatalogDetailTabId[]
 
 function isCatalogEntityKind(value: string): value is CatalogEntityKind {
@@ -107,6 +114,7 @@ export function CompanyCatalogDetailPage({
   const allowedTabs = useMemo(() => {
     if (kind === 'products') return CATALOG_TABS_WITH_VARIANTS
     if (kind === 'services') return CATALOG_TABS_WITH_WORKFLOW
+    if (kind === 'spaces') return CATALOG_TABS_WITH_PRICES
     return CATALOG_TABS_BASE
   }, [kind])
   const [tab, setTab] = useDetailTabParam(allowedTabs, 'overview')
@@ -115,8 +123,9 @@ export function CompanyCatalogDetailPage({
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
     null,
   )
-  const [pricingOpen, setPricingOpen] = useState(false)
   const [webPublishOpen, setWebPublishOpen] = useState(false)
+  const priceKind = kind === 'services' || kind === 'spaces' ? kind : null
+  const priceRules = useCatalogPriceRules(priceKind, id, companyId)
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
   const [pendingRemove, setPendingRemove] = useState(false)
 
@@ -234,14 +243,6 @@ export function CompanyCatalogDetailPage({
       />
     ) : null
 
-  function openAttributesEdit() {
-    if (kind === 'services') {
-      setServiceDialog({ initialStep: 4 })
-      return
-    }
-    setEditOpen(true)
-  }
-
   const serviceProfile = detail && kind === 'services' ? (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-6 lg:col-span-2">
@@ -276,12 +277,13 @@ export function CompanyCatalogDetailPage({
           serviceId={id}
           companyId={companyId}
           servicePayload={servicePayload}
-          listPrice={detail.listPrice}
+          priceRules={priceRules.rules}
+          priceRulesLoading={priceRules.loading}
           canManagePrice={canManage}
           canEditSchedule={canEdit}
           busy={busy}
           overviewActive={tab === 'overview'}
-          onEditListPrice={() => setPricingOpen(true)}
+          onManagePrices={() => setTab('priceList')}
           onEditSchedule={() => setServiceDialog({ initialStep: 2 })}
           onManageWorkflow={() => setTab('workflow')}
         />
@@ -382,21 +384,17 @@ export function CompanyCatalogDetailPage({
             companyProductId={id}
             libraryProductId={detail.libraryEntityId}
             libraryUnavailable={Boolean(detail.libraryUnavailable)}
-            listPrice={detail.listPrice}
-            canEdit={canManage}
-            busy={busy}
-            onEditListPrice={() => setPricingOpen(true)}
           />
         ) : null}
 
         {kind === 'spaces' ? (
           <EditableSectionCard
             title={t('detail.pricing.title')}
-            description={t('detail.pricing.description')}
+            description={t('priceList.overviewDescription')}
             canEdit={canManage && !busy}
-            onEdit={() => setPricingOpen(true)}
+            onEdit={() => setTab('priceList')}
           >
-            <ListPriceField label={t('detail.pricing.listPrice')} value={detail.listPrice} />
+            <CatalogApplicablePrice rules={priceRules.rules} loading={priceRules.loading} />
           </EditableSectionCard>
         ) : null}
 
@@ -518,9 +516,7 @@ export function CompanyCatalogDetailPage({
                 (typeof entityPayload?.name === 'string' ? entityPayload.name : '')
               }
               libraryEntityId={detail.libraryEntityId}
-              payload={entityPayload}
-              canEdit={canEdit && !busy}
-              onEdit={openAttributesEdit}
+              canAdd={canManage && !busy}
             />
           }
           gallery={
@@ -540,9 +536,8 @@ export function CompanyCatalogDetailPage({
             kind === 'products' ? (
               <CompanyProductVariantsTab
                 productId={id}
-                productName={detail.displayName}
                 libraryEntityId={detail.libraryEntityId}
-                canEdit={canEdit && !busy}
+                canAdd={canManage && !busy}
               />
             ) : undefined
           }
@@ -555,6 +550,21 @@ export function CompanyCatalogDetailPage({
                   servicePayload?.timeMode === 'window' ? 'window' : 'duration'
                 }
                 canEdit={canManage && !busy}
+              />
+            ) : undefined
+          }
+          priceList={
+            kind === 'services' || kind === 'spaces' ? (
+              <CatalogPriceListTab
+                kind={kind}
+                entityId={id}
+                rules={priceRules.rules}
+                loading={priceRules.loading}
+                error={priceRules.error}
+                canEdit={canManage && !busy}
+                onChanged={() => {
+                  void priceRules.reload()
+                }}
               />
             ) : undefined
           }
@@ -592,7 +602,7 @@ export function CompanyCatalogDetailPage({
             detail
               ? {
                   ...(detail.payload ?? {}),
-                  listPrice: detail.listPrice ?? null,
+                  ...(kind === 'products' ? { listPrice: detail.listPrice ?? null } : {}),
                 }
               : undefined
           }
@@ -604,16 +614,6 @@ export function CompanyCatalogDetailPage({
             setPendingEditClose(true)
             dispatch(companyCatalogActions.updateRequested({ kind, id, payload }))
           }}
-        />
-      ) : null}
-
-      {!readOnly && kind && isCatalogGalleryKind(kind) && detail ? (
-        <CatalogPricingDialog
-          open={pricingOpen}
-          kind={kind}
-          id={id}
-          listPrice={detail.listPrice}
-          onOpenChange={setPricingOpen}
         />
       ) : null}
 

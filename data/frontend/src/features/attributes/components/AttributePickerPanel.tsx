@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent, KeyboardEvent } from 'react'
-import { Check } from 'lucide-react'
+import type { ChangeEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
+  AttributePickerListItem,
   Button,
   ListAddButton,
   ListPageActions,
   SearchInput,
   ItemList,
-  ItemListContent,
   ItemListEmpty,
-  ItemListItem,
-  itemListRowActiveClassName,
   Spinner,
-  cn,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
 import { dataApi } from '@/shared/services/dataApi'
@@ -23,6 +20,7 @@ import type { Attribute, AttributeUnitSummary } from '@/shared/types/data.types'
 export type AttributeSelectValue = {
   id: string
   name: string
+  description?: string | null
   valueType: 'number' | 'text'
   unit: AttributeUnitSummary | null
 }
@@ -34,6 +32,7 @@ function toPickerAttribute(attribute: Attribute | AttributeSelectValue): Attribu
   return {
     id: attribute.id,
     name: attribute.name,
+    description: attribute.description ?? null,
     valueType: attribute.valueType,
     unit: attribute.unit ?? null,
   }
@@ -57,6 +56,7 @@ export function AttributePickerPanel({
   onCreateRequest,
   excludedIds,
 }: AttributePickerPanelProps) {
+  const { t } = useTranslation('attributes')
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const role = useAppSelector((s) => s.auth.user?.role)
   const canLoadAttributes = enabled && Boolean(accessToken)
@@ -216,12 +216,12 @@ export function AttributePickerPanel({
         <SearchInput
           value={searchInput}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchInput(event.target.value)}
-          placeholder="Search attributes"
-          aria-label="Search attributes"
+          placeholder={t('pickerSearch')}
+          aria-label={t('pickerSearch')}
           className="w-64"
         />
         {canCreate ? (
-          <ListAddButton onClick={onCreateRequest}>Add new attribute</ListAddButton>
+          <ListAddButton onClick={onCreateRequest}>{t('addNew')}</ListAddButton>
         ) : null}
       </ListPageActions>
 
@@ -246,47 +246,23 @@ export function AttributePickerPanel({
           </div>
         ) : null}
 
-        {showEmpty ? <ItemListEmpty>No attributes found.</ItemListEmpty> : null}
+        {showEmpty ? <ItemListEmpty>{t('emptyFound')}</ItemListEmpty> : null}
 
         {!initialLoading && visibleAttributes.length > 0 ? (
           <ItemList>
             {visibleAttributes.map((attribute) => {
               const isSelected = selectedAttributeIds.has(attribute.id)
               return (
-                <ItemListItem
+                <AttributePickerListItem
                   key={attribute.id}
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    'cursor-pointer transition-colors',
-                    isSelected && itemListRowActiveClassName,
-                  )}
-                  aria-label={`${multiple ? 'Toggle' : 'Select'} ${attribute.name}`}
-                  aria-pressed={isSelected}
-                  onClick={() => handleAttributeToggle(attribute)}
-                  onKeyDown={(event: KeyboardEvent<HTMLLIElement>) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      handleAttributeToggle(attribute)
-                    }
-                  }}
-                >
-                  <ItemListContent>
-                    <p className="truncate font-medium">{attribute.name}</p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      <span className="capitalize">{attribute.valueType}</span>
-                      {attribute.unit
-                        ? ` · ${attribute.unit.name} (${attribute.unit.symbol})`
-                        : ''}
-                    </p>
-                  </ItemListContent>
-                  {isSelected ? (
-                    <Check
-                      className="ml-auto h-5 w-5 shrink-0 self-center text-primary"
-                      aria-hidden
-                    />
-                  ) : null}
-                </ItemListItem>
+                  name={attribute.name}
+                  description={attribute.description}
+                  valueTypeLabel={attribute.valueType === 'number' ? t('number') : t('text')}
+                  unit={attribute.unit}
+                  noUnitLabel={t('pickerNoUnit')}
+                  selected={isSelected}
+                  onSelect={() => handleAttributeToggle(attribute)}
+                />
               )
             })}
           </ItemList>

@@ -126,11 +126,6 @@ const ServiceDetailsPage = lazy(() =>
     default: m.ServiceDetailsPage,
   })),
 )
-const SpaceSelectEmbedPage = lazy(() =>
-  import('@/features/services/pages/SpaceSelectEmbedPage').then((m) => ({
-    default: m.SpaceSelectEmbedPage,
-  })),
-)
 const SpacesPage = lazy(() =>
   import('@/features/spaces/pages/SpacesPage').then((m) => ({ default: m.SpacesPage })),
 )
@@ -279,7 +274,6 @@ export function App() {
           )}
           {embedDialogRoute('/embed/dialogs/users/select', UserSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/catalog/:kind/select', CatalogLibrarySelectEmbedPage)}
-          {embedDialogRoute('/embed/dialogs/services/spaces/select', SpaceSelectEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/create', CatalogFormEmbedPage)}
           {embedDialogRoute('/embed/dialogs/:kind/:id/edit', CatalogFormEmbedPage)}
           {embedPanelRoute('/embed/panels/tags/filters', TagsFilterEmbedPage)}

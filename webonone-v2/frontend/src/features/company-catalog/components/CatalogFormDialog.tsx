@@ -195,7 +195,7 @@ export function CatalogFormDialog({
           ? values.description.trim()
           : null,
     }
-    if (kind === 'products' || kind === 'spaces') {
+    if (kind === 'products') {
       const raw = values.listPrice
       if (raw == null || raw === '') {
         payload.listPrice = null
@@ -256,7 +256,7 @@ export function CatalogFormDialog({
         />
       </FormField>
 
-      {kind === 'products' || kind === 'spaces' ? (
+      {kind === 'products' ? (
         <FormField label="List price (LKR)" htmlFor="catalog-list-price">
           <Input
             id="catalog-list-price"

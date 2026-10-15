@@ -5,6 +5,7 @@ import {
 } from '../clients/identityUserContactClient.js'
 import { db } from '../models/db.js'
 import * as catalogRepo from '../repositories/companyCatalog.repository.js'
+import { resolveCompanyVariant } from '../repositories/companyCatalogCopies.repository.js'
 import type { CreateCompanyProductStockBody } from '../schemas/companyCatalogSchemas.js'
 
 const TABLE = 'company_product_stocks'
@@ -34,6 +35,7 @@ type StockRow = {
   company_product_id: string
   library_product_id: string
   library_variant_id: string
+  company_variant_id: string | null
   quantity: string | number
   batch_number: string
   cost_price: string | number
@@ -160,17 +162,24 @@ export async function suggestCompanyStockBatchNumber(companyId: string): Promise
   return suggestBatchNumber(companyId)
 }
 
+async function resolveStockVariant(companyProductId: string, variantId: string) {
+  const trimmed = variantId.trim()
+  if (!trimmed) throw httpError('Variant is required', 400)
+  return resolveCompanyVariant(companyProductId, trimmed)
+}
+
 export async function listCompanyProductVariantStocks(
   companyId: string,
   companyProductId: string,
   libraryVariantId: string,
 ): Promise<CompanyProductStockDto[]> {
   await requireLinkedProduct(companyId, companyProductId)
+  const resolved = await resolveStockVariant(companyProductId, libraryVariantId)
   const rows = (await db<StockRow>(TABLE)
     .where({
       company_id: companyId,
       company_product_id: companyProductId,
-      library_variant_id: libraryVariantId,
+      library_variant_id: resolved.libraryVariantId,
     })
     .orderBy([
       { column: 'is_active', order: 'desc' },
@@ -247,12 +256,13 @@ export async function getCompanyProductStock(
   stockId: string,
 ): Promise<CompanyProductStockDto> {
   await requireLinkedProduct(companyId, companyProductId)
+  const resolved = await resolveStockVariant(companyProductId, libraryVariantId)
   const row = (await db<StockRow>(TABLE)
     .where({
       id: stockId,
       company_id: companyId,
       company_product_id: companyProductId,
-      library_variant_id: libraryVariantId,
+      library_variant_id: resolved.libraryVariantId,
     })
     .first()) as StockRow | undefined
   if (!row) throw httpError('Stock not found', 404)
@@ -282,8 +292,8 @@ export async function createCompanyProductStock(
   body: CreateCompanyProductStockBody,
 ): Promise<CompanyProductStockDto> {
   const { libraryProductId } = await requireLinkedProduct(companyId, companyProductId)
-  const variantId = libraryVariantId.trim()
-  if (!variantId) throw httpError('Variant is required', 400)
+  const resolved = await resolveStockVariant(companyProductId, libraryVariantId)
+  const variantId = resolved.libraryVariantId
 
   const existing = await db(TABLE)
     .where({
@@ -309,6 +319,7 @@ export async function createCompanyProductStock(
     company_product_id: companyProductId,
     library_product_id: libraryProductId,
     library_variant_id: variantId,
+    company_variant_id: resolved.companyVariantId,
     quantity: body.quantity,
     batch_number: body.batch_number,
     cost_price: body.cost_price,
@@ -335,7 +346,8 @@ export async function updateCompanyProductStock(
   body: CreateCompanyProductStockBody,
 ): Promise<CompanyProductStockDto> {
   await requireLinkedProduct(companyId, companyProductId)
-  const variantId = libraryVariantId.trim()
+  const resolved = await resolveStockVariant(companyProductId, libraryVariantId)
+  const variantId = resolved.libraryVariantId
   const existing = await db(TABLE)
     .where({
       id: stockId,
@@ -384,7 +396,8 @@ export async function setCompanyProductStockActive(
   stockId: string,
 ): Promise<CompanyProductStockDto> {
   await requireLinkedProduct(companyId, companyProductId)
-  const variantId = libraryVariantId.trim()
+  const resolved = await resolveStockVariant(companyProductId, libraryVariantId)
+  const variantId = resolved.libraryVariantId
   const stock = await db(TABLE)
     .where({
       id: stockId,

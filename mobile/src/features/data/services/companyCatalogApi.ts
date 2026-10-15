@@ -10,6 +10,43 @@ import type {
 } from '@/features/sales/types/catalog.types'
 import type { LibraryProductVariantStock } from '@/features/sales/services/dataLibraryApi'
 
+export type CompanyCatalogAttribute = {
+  attributeId: string
+  name: string
+  description: string | null
+  valueType: 'number' | 'text'
+  unit: { id: string; name: string; symbol: string } | null
+  values: Array<{
+    id: string
+    libraryValueId: string | null
+    valueText: string | null
+    valueNumber: number | null
+    isDefault: boolean
+    usedByVariants: string[]
+  }>
+}
+
+export type CompanyCatalogVariant = {
+  id: string
+  libraryVariantId: string
+  productId: string
+  name: string
+  sku: string
+  isDefault: boolean
+  values: Array<{
+    attributeId: string
+    attributeName: string
+    attributeValueId: string
+    libraryValueId: string
+    valueText: string | null
+    valueNumber: number | null
+    valueType: 'number' | 'text'
+    unitSymbol: string | null
+  }>
+  createdAt: string
+  updatedAt: string
+}
+
 const client = createApiClient(env.webononeApiBaseUrl)
 
 type CompanyCatalogServiceRef = {
@@ -196,5 +233,124 @@ export const companyCatalogApi = {
     await client<unknown>(`/company/me/catalog/${kind}/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     })
+  },
+
+  ensureLibraryLink(kind: CatalogEntityKind, id: string) {
+    return client<{ libraryEntityId: string }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/ensure-library`,
+      { method: 'POST' },
+    )
+  },
+
+  listCopiedAttributes(kind: CatalogEntityKind, id: string) {
+    return client<{ libraryEntityId: string | null; attributes: CompanyCatalogAttribute[] }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes`,
+    )
+  },
+
+  attachAttributesToLibrary(kind: CatalogEntityKind, id: string, attributeIds: string[]) {
+    return client<{
+      libraryEntityId: string
+      attributes: CompanyCatalogAttribute[]
+    }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/attach-to-library`,
+      { method: 'POST', body: JSON.stringify({ attributeIds }) },
+    )
+  },
+
+  copyAttributesFromLibrary(kind: CatalogEntityKind, id: string, attributeIds: string[]) {
+    return client<{ libraryEntityId: string | null; attributes: CompanyCatalogAttribute[] }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/from-library`,
+      { method: 'POST', body: JSON.stringify({ attributeIds }) },
+    )
+  },
+
+  deleteCopiedAttribute(kind: CatalogEntityKind, id: string, attributeId: string) {
+    return client<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/${encodeURIComponent(attributeId)}`,
+      { method: 'DELETE' },
+    )
+  },
+
+  copyAttributeValuesFromLibrary(kind: CatalogEntityKind, id: string, libraryValueIds: string[]) {
+    return client<{ libraryEntityId: string | null; attributes: CompanyCatalogAttribute[] }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/from-library`,
+      { method: 'POST', body: JSON.stringify({ libraryValueIds }) },
+    )
+  },
+
+  createCopiedAttributeValue(
+    kind: CatalogEntityKind,
+    id: string,
+    attributeId: string,
+    body: { valueText?: string | null; valueNumber?: number | null },
+  ) {
+    return client<{ libraryEntityId: string | null; attributes: CompanyCatalogAttribute[] }>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attributes/${encodeURIComponent(attributeId)}/values`,
+      { method: 'POST', body: JSON.stringify(body) },
+    )
+  },
+
+  updateCopiedAttributeValue(
+    kind: CatalogEntityKind,
+    id: string,
+    valueId: string,
+    body: { valueText?: string | null; valueNumber?: number | null },
+  ) {
+    return client<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/${encodeURIComponent(valueId)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    )
+  },
+
+  setCopiedAttributeValueDefault(kind: CatalogEntityKind, id: string, valueId: string) {
+    return client<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/${encodeURIComponent(valueId)}/default`,
+      { method: 'PATCH' },
+    )
+  },
+
+  deleteCopiedAttributeValue(kind: CatalogEntityKind, id: string, valueId: string) {
+    return client<void>(
+      `/company/me/catalog/${kind}/${encodeURIComponent(id)}/attribute-values/${encodeURIComponent(valueId)}`,
+      { method: 'DELETE' },
+    )
+  },
+
+  listCopiedVariants(productId: string) {
+    return client<{ libraryEntityId: string | null; items: CompanyCatalogVariant[] }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants`,
+    )
+  },
+
+  getCopiedVariant(productId: string, variantId: string) {
+    return client<CompanyCatalogVariant>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
+    )
+  },
+
+  copyVariantsFromLibrary(productId: string, libraryVariantIds: string[]) {
+    return client<{ libraryEntityId: string | null; items: CompanyCatalogVariant[] }>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/from-library`,
+      { method: 'POST', body: JSON.stringify({ libraryVariantIds }) },
+    )
+  },
+
+  updateCopiedVariantAttributeValues(
+    productId: string,
+    variantId: string,
+    libraryValueIds: string[],
+  ) {
+    return client<CompanyCatalogVariant>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/attribute-values`,
+      { method: 'PATCH', body: JSON.stringify({ libraryValueIds }) },
+    )
+  },
+
+  deleteCopiedVariant(productId: string, variantId: string) {
+    return client<void>(
+      `/company/me/catalog/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
+      { method: 'DELETE' },
+    )
   },
 }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
   Alert,
   AlertDescription,
@@ -18,7 +17,6 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { formatAttributeValueLabel } from '@/features/products/schemas/productVariantSchemas'
 import { copyProductVariantToAi } from '@/features/shell/utils/copyProductVariantToAi'
@@ -34,13 +32,10 @@ export function ProductVariantDetailsPage() {
   const [searchParams] = useSearchParams()
   const { productId, variantId } = useParams<{ productId: string; variantId: string }>()
   const { goToDetail } = useNavigateDataEntity()
-  const { accessToken, user } = useAppSelector((s) => s.auth)
-  const canEdit = user?.role === 'super_admin' || user?.role === 'company_admin'
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
   const [variant, setVariant] = useState<ProductVariant | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const [productName, setProductName] = useState('')
 
   const load = useCallback(async () => {
@@ -71,21 +66,6 @@ export function ProductVariantDetailsPage() {
   }, [load])
 
   usePlatformLoading(loading && !variant ? t('loadingVariant') : null)
-
-  async function handleDelete() {
-    if (!productId || !variantId || !variant || variant.isDefault) return
-    setDeleting(true)
-    setError(null)
-    try {
-      await dataApi.deleteProductVariant(productId, variantId)
-      goToDetail('products', productId, { tab: 'variants' })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('variant.deleteFailed'))
-      setDeleteOpen(false)
-    } finally {
-      setDeleting(false)
-    }
-  }
 
   if (!accessToken) return <Navigate to="/login" replace />
   if (!productId || !variantId) return <Navigate to="/products" replace />
@@ -118,17 +98,6 @@ export function ProductVariantDetailsPage() {
               }}
             >
               {ts('copyToAi')}
-            </Button>
-          ) : null}
-          {canEdit && variant && !variant.isDefault ? (
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteOpen(true)}
-              disabled={deleting}
-            >
-              {t('common:delete')}
             </Button>
           ) : null}
         </div>
@@ -192,22 +161,6 @@ export function ProductVariantDetailsPage() {
           </div>
         </div>
       ) : null}
-
-      <PlatformAlertConfirmDialog
-        open={deleteOpen}
-        title={
-          variant
-            ? t('variant.deleteConfirm', { name: variant.name })
-            : t('variant.deleteConfirmFallback')
-        }
-        description={t('variant.deleteDescription')}
-        isAllowedParentOrigin={isAllowedParentOrigin}
-        submitLabel={t('common:delete')}
-        onOpenChange={setDeleteOpen}
-        onConfirm={() => {
-          void handleDelete()
-        }}
-      />
     </FeaturePage>
   )
 }

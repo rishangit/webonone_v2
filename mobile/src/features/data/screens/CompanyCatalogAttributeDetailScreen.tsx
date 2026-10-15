@@ -25,16 +25,20 @@ import {
 import { subscribeAiCatalogMutation } from '@/features/ai/utils/aiCatalogEvents'
 import { isDataAttributeValueWriteTool } from '@/features/ai/utils/catalogAiMutationRefresh'
 import { CompanyCatalogAttributeValueFormDialog } from '@/features/data/company-catalog/components/CompanyCatalogAttributeValueFormDialog'
+import { CompanyCatalogAttributeValuePickerDialog } from '@/features/data/company-catalog/components/CompanyCatalogAttributeValuePickerDialog'
 import { useDataCatalogScope } from '@/features/data/hooks/useDataCatalogScope'
-import { companyCatalogApi } from '@/features/data/services/companyCatalogApi'
-import { catalogDetailPath, type CatalogKind } from '@/features/data/utils/dataPaths'
 import {
-  dataLibraryApi,
-  formatLibraryAttributeValueLabel,
-  parseLibraryAttributes,
-  type LibraryAttributeValueEntry,
-  type LibraryCatalogAttribute,
-} from '@/features/sales/services/dataLibraryApi'
+  companyCatalogApi,
+  type CompanyCatalogAttribute,
+} from '@/features/data/services/companyCatalogApi'
+import { catalogDetailPath, type CatalogKind } from '@/features/data/utils/dataPaths'
+import { formatLibraryAttributeValueLabel } from '@/features/sales/services/dataLibraryApi'
+
+function isAttributeValueDeleteBlocked(
+  value: CompanyCatalogAttribute['values'][number],
+): boolean {
+  return (value.usedByVariants?.length ?? 0) > 0
+}
 
 export function CompanyCatalogAttributeDetailScreen({
   kind,
@@ -51,43 +55,32 @@ export function CompanyCatalogAttributeDetailScreen({
   const { toast } = useToast()
   const { canManageCompanyCatalog } = useDataCatalogScope()
 
-  const [attribute, setAttribute] = useState<LibraryCatalogAttribute | null>(null)
+  const [attribute, setAttribute] = useState<CompanyCatalogAttribute | null>(null)
   const [libraryEntityId, setLibraryEntityId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [valueDialog, setValueDialog] = useState<{
     open: boolean
-    value?: LibraryAttributeValueEntry | null
+    value?: CompanyCatalogAttribute['values'][number] | null
   }>({ open: false })
-  const [pendingDeleteValue, setPendingDeleteValue] = useState<LibraryAttributeValueEntry | null>(
-    null,
-  )
+  const [pendingDeleteValue, setPendingDeleteValue] = useState<
+    CompanyCatalogAttribute['values'][number] | null
+  >(null)
 
   const galleryKind = kind as 'products' | 'services' | 'spaces'
-  const canEdit = canManageCompanyCatalog && Boolean(libraryEntityId)
+  const canEdit = canManageCompanyCatalog
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const companyEntity = await companyCatalogApi.get(kind, entityId)
-      if (!companyEntity.libraryEntityId) {
-        setAttribute(null)
-        setLibraryEntityId(null)
-        setError(t('attributeDetail.notLinked'))
-        return
-      }
-      setLibraryEntityId(companyEntity.libraryEntityId)
-      const libraryItem = await dataLibraryApi.get(kind, companyEntity.libraryEntityId)
-      const found =
-        parseLibraryAttributes(libraryItem.attributes).find(
-          (entry) => entry.attributeId === attributeId,
-        ) ?? null
+      const result = await companyCatalogApi.listCopiedAttributes(kind, entityId)
+      setLibraryEntityId(result.libraryEntityId)
+      const found = result.attributes.find((entry) => entry.attributeId === attributeId) ?? null
       setAttribute(found)
-      if (!found) {
-        setError(t('attributeDetail.notFound'))
-      }
+      if (!found) setError(t('attributeDetail.notFound'))
     } catch (err) {
       setAttribute(null)
       setLibraryEntityId(null)
@@ -109,12 +102,12 @@ export function CompanyCatalogAttributeDetailScreen({
     })
   }, [load])
 
-  async function handleSetDefault(entry: LibraryAttributeValueEntry) {
-    if (!libraryEntityId || entry.isDefault || busy) return
+  async function handleSetDefault(entry: CompanyCatalogAttribute['values'][number]) {
+    if (entry.isDefault || busy) return
     setBusy(true)
     setError(null)
     try {
-      await dataLibraryApi.setCatalogAttributeValueDefault(galleryKind, libraryEntityId, entry.id)
+      await companyCatalogApi.setCopiedAttributeValueDefault(galleryKind, entityId, entry.id)
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('attributeDetail.setDefaultFailed'))
@@ -123,16 +116,17 @@ export function CompanyCatalogAttributeDetailScreen({
     }
   }
 
-  async function handleDeleteValue(entry: LibraryAttributeValueEntry) {
-    if (!libraryEntityId || busy) return
+  async function handleDeleteValue(entry: CompanyCatalogAttribute['values'][number]) {
+    if (busy) return
     setBusy(true)
     setError(null)
     try {
-      await dataLibraryApi.deleteCatalogAttributeValue(galleryKind, libraryEntityId, entry.id)
+      await companyCatalogApi.deleteCopiedAttributeValue(galleryKind, entityId, entry.id)
       setPendingDeleteValue(null)
       toast({ title: tc('delete') })
       await load()
     } catch (err) {
+      setPendingDeleteValue(null)
       toast({
         title: tc('delete'),
         description: err instanceof Error ? err.message : t('attributeDetail.deleteValueFailed'),
@@ -158,16 +152,15 @@ export function CompanyCatalogAttributeDetailScreen({
         {loading && !attribute ? <Spinner label={t('attributeDetail.loading')} /> : null}
         {error ? <Body className="text-destructive">{error}</Body> : null}
 
-        {attribute && libraryEntityId ? (
+        {attribute ? (
           <View className="gap-6">
             <EditableSectionCard
               title={t('attributeDetail.values.title')}
-              description={t('attributeDetail.values.description')}
               titleExtra={
                 canEdit ? (
                   <Button
                     size="sm"
-                    onPress={() => setValueDialog({ open: true, value: null })}
+                    onPress={() => setPickerOpen(true)}
                     disabled={busy}
                   >
                     <Plus className="mr-1 h-4 w-4 text-primary-foreground" aria-hidden />
@@ -182,6 +175,7 @@ export function CompanyCatalogAttributeDetailScreen({
                 <ItemList className="py-0" nestedInCard>
                   {attribute.values.map((value) => {
                     const label = formatLibraryAttributeValueLabel(value, attribute.unit?.symbol)
+                    const deleteBlocked = isAttributeValueDeleteBlocked(value)
                     return (
                       <ItemListItem key={value.id}>
                         <ItemListContent
@@ -210,8 +204,11 @@ export function CompanyCatalogAttributeDetailScreen({
                             </ItemListMenuItem>
                             <ItemListMenuItem
                               destructive
-                              disabled={busy}
-                              onPress={() => setPendingDeleteValue(value)}
+                              disabled={busy || deleteBlocked}
+                              onPress={() => {
+                                if (deleteBlocked) return
+                                setPendingDeleteValue(value)
+                              }}
                             >
                               {tc('delete')}
                             </ItemListMenuItem>
@@ -243,16 +240,35 @@ export function CompanyCatalogAttributeDetailScreen({
         ) : null}
       </FeatureScreen>
 
-      {libraryEntityId && attribute ? (
-        <CompanyCatalogAttributeValueFormDialog
-          open={valueDialog.open}
-          kind={galleryKind}
-          libraryEntityId={libraryEntityId}
-          attribute={attribute}
-          value={valueDialog.value}
-          onOpenChange={(open) => setValueDialog((current) => ({ ...current, open }))}
-          onSaved={() => void load()}
-        />
+      {attribute ? (
+        <>
+          <CompanyCatalogAttributeValuePickerDialog
+            open={pickerOpen}
+            kind={galleryKind}
+            entityId={entityId}
+            attributeId={attribute.attributeId}
+            libraryEntityId={libraryEntityId}
+            copiedLibraryValueIds={attribute.values
+              .map((value) => value.libraryValueId)
+              .filter((id): id is string => Boolean(id))}
+            unitSymbol={attribute.unit?.symbol ?? null}
+            onOpenChange={setPickerOpen}
+            onCopied={() => void load()}
+            onCreate={() => {
+              setPickerOpen(false)
+              setValueDialog({ open: true, value: null })
+            }}
+          />
+          <CompanyCatalogAttributeValueFormDialog
+            open={valueDialog.open}
+            kind={galleryKind}
+            entityId={entityId}
+            attribute={attribute}
+            value={valueDialog.value}
+            onOpenChange={(open) => setValueDialog((current) => ({ ...current, open }))}
+            onSaved={() => void load()}
+          />
+        </>
       ) : null}
 
       <ConfirmDialog
@@ -268,14 +284,17 @@ export function CompanyCatalogAttributeDetailScreen({
               })
             : t('attributeDetail.deleteValueFallback')
         }
-        description={t('attributeDetail.deleteValueDescription', {
-          name: attribute?.name ?? '',
-        })}
+        description={t('attributeDetail.deleteValueDescription')}
         confirmLabel={tc('delete')}
         destructive
         busy={busy}
+        confirmDisabled={
+          pendingDeleteValue != null && isAttributeValueDeleteBlocked(pendingDeleteValue)
+        }
         onConfirm={() => {
-          if (pendingDeleteValue) void handleDeleteValue(pendingDeleteValue)
+          if (pendingDeleteValue && !isAttributeValueDeleteBlocked(pendingDeleteValue)) {
+            void handleDeleteValue(pendingDeleteValue)
+          }
         }}
       />
     </>

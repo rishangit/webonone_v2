@@ -5,6 +5,7 @@ export type VariantStockLimitsRow = {
   company_id: string
   company_product_id: string
   library_variant_id: string
+  company_variant_id: string | null
   min_quantity: string | number | null
   max_quantity: string | number | null
   created_at: Date
@@ -20,6 +21,7 @@ function parseQuantity(value: string | number | null): number | null {
 export function mapVariantStockLimitsRow(row: VariantStockLimitsRow) {
   return {
     libraryVariantId: row.library_variant_id,
+    companyVariantId: row.company_variant_id,
     minQuantity: parseQuantity(row.min_quantity),
     maxQuantity: parseQuantity(row.max_quantity),
   }
@@ -48,6 +50,7 @@ export async function upsertVariantStockLimits(input: {
   companyId: string
   companyProductId: string
   libraryVariantId: string
+  companyVariantId?: string | null
   minQuantity: number | null
   maxQuantity: number | null
 }): Promise<VariantStockLimitsRow | null> {
@@ -67,6 +70,7 @@ export async function upsertVariantStockLimits(input: {
       .update({
         min_quantity: input.minQuantity,
         max_quantity: input.maxQuantity,
+        company_variant_id: input.companyVariantId ?? existing.company_variant_id,
         updated_at: now,
       })
     const updated = await findVariantStockLimits(input.companyProductId, input.libraryVariantId)
@@ -79,6 +83,7 @@ export async function upsertVariantStockLimits(input: {
     company_id: input.companyId,
     company_product_id: input.companyProductId,
     library_variant_id: input.libraryVariantId,
+    company_variant_id: input.companyVariantId ?? null,
     min_quantity: input.minQuantity,
     max_quantity: input.maxQuantity,
     created_at: now,
