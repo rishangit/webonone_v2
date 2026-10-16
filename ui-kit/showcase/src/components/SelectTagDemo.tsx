@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   AlertDescription,
@@ -61,6 +61,17 @@ function DataTagPickerField({
 
   const canOpen = dataOrigin.length > 0
   const primaryTag = selectedTags[0] ?? null
+  const selectedTagsRef = useRef(selectedTags)
+  selectedTagsRef.current = selectedTags
+
+  useEffect(() => {
+    if (!pickerOpen) {
+      return
+    }
+    setPendingSelection(
+      selectedTagsRef.current.map((tag) => ({ id: tag.id, name: tag.name, color: tag.color })),
+    )
+  }, [pickerOpen])
 
   function openPicker() {
     if (!canOpen) {
@@ -166,7 +177,7 @@ function DataTagPickerField({
               parentOrigin={window.location.origin}
               scope={scope}
               mode={pickerMode}
-              selectedTags={selectedTags}
+              selectedTags={pendingSelection}
               className="block h-full min-h-0 w-full border-0 bg-transparent"
               onSelectionChange={setPendingSelection}
               onCreateRequest={openCreateDialog}

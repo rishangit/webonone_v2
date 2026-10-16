@@ -70,7 +70,14 @@ function PublicServiceListMeta({
           {formatPublicServiceScheduleSummary(item, t)}
         </span>
       </div>
-      {showPrice ? <PriceDisplay value={price} size="sm" /> : null}
+      {showPrice ? (
+        <PriceDisplay
+          value={price}
+          compareAt={item.listPriceCompareAt}
+          discountPercent={item.listDiscountPercent}
+          size="sm"
+        />
+      ) : null}
     </div>
   )
 }
@@ -173,7 +180,14 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
               />
             ) : null}
             {showPrice ? (
-              <PriceDisplay value={item.listPrice} size="sm" align="right" className="w-full" />
+              <PriceDisplay
+                value={item.listPrice}
+                compareAt={item.kind === 'services' ? item.listPriceCompareAt : null}
+                discountPercent={item.kind === 'services' ? item.listDiscountPercent : null}
+                size="sm"
+                align="right"
+                className="w-full"
+              />
             ) : null}
           </div>
         ) : null}

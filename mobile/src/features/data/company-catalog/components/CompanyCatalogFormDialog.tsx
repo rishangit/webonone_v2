@@ -118,13 +118,6 @@ export function CompanyCatalogFormDialog({
           ? values.description.trim()
           : null,
     }
-    const raw = values.listPrice
-    if (raw == null || raw === '') {
-      payload.listPrice = null
-    } else {
-      const parsed = Number(raw)
-      payload.listPrice = Number.isFinite(parsed) ? parsed : null
-    }
     return payload
   }
 
@@ -167,24 +160,6 @@ export function CompanyCatalogFormDialog({
         <Textarea
           value={typeof values.description === 'string' ? values.description : ''}
           onChangeText={(description) => setValues((prev) => ({ ...prev, description }))}
-        />
-      </FormField>
-      <FormField label="List price (LKR)">
-        <TextField
-          value={
-            typeof values.listPrice === 'number'
-              ? String(values.listPrice)
-              : typeof values.listPrice === 'string'
-                ? values.listPrice
-                : ''
-          }
-          onChangeText={(listPrice) =>
-            setValues((prev) => ({
-              ...prev,
-              listPrice: listPrice.trim() === '' ? null : listPrice,
-            }))
-          }
-          keyboardType="decimal-pad"
         />
       </FormField>
     </View>

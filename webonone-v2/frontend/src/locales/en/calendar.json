@@ -49,7 +49,8 @@
     "toastRemoved": "Event removed",
     "toastRemoveFailed": "Failed to remove event",
     "columnService": "Service",
-    "columnWhen": "When"
+    "columnWhen": "When",
+    "columnUser": "User"
   },
   "eventDetail": {
     "title": "Event",

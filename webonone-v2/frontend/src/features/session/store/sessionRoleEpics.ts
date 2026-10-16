@@ -24,4 +24,15 @@ const sessionRoleBootstrapEpic: SessionRoleEpic = (action$) =>
     ),
   )
 
-export const sessionRoleEpics = combineEpics(sessionRoleBootstrapEpic)
+const accountChoiceEpic: SessionRoleEpic = (action$) =>
+  action$.pipe(
+    ofType(sessionRoleActions.accountChoiceRequested.type),
+    exhaustMap(() =>
+      from(sessionRoleApi.getAssumableRoles()).pipe(
+        map((result) => sessionRoleActions.accountChoiceReady(result)),
+        catchError(() => of(sessionRoleActions.accountChoiceFailed())),
+      ),
+    ),
+  )
+
+export const sessionRoleEpics = combineEpics(sessionRoleBootstrapEpic, accountChoiceEpic)

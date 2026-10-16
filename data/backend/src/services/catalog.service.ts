@@ -79,7 +79,6 @@ export interface CatalogDto {
   durationMinutes?: number | null
   startTime?: string | null
   endTime?: string | null
-  listPrice?: number | null
 }
 
 function parseGalleryImages(
@@ -254,8 +253,6 @@ async function rowToDto(
     dto.durationMinutes = service.duration_minutes
     dto.startTime = toHhMm(service.start_time)
     dto.endTime = toHhMm(service.end_time)
-    dto.listPrice =
-      service.list_price != null && service.list_price !== '' ? Number(service.list_price) : null
   }
   return dto
 }
@@ -378,9 +375,6 @@ export function createCatalogService(kind: CatalogKind) {
         if (kind === 'services') {
           const timeCols = serviceTimeColumns(body)
           if (timeCols) Object.assign(insert, timeCols)
-          if ('list_price' in body) {
-            insert.list_price = body.list_price ?? null
-          }
         }
 
         await trx(main).insert(insert)
@@ -426,9 +420,6 @@ export function createCatalogService(kind: CatalogKind) {
         if (kind === 'services') {
           const timeCols = serviceTimeColumns(body)
           if (timeCols) Object.assign(patch, timeCols)
-          if ('list_price' in body) {
-            patch.list_price = body.list_price ?? null
-          }
         }
 
         await trx(main).where({ id }).update(patch)

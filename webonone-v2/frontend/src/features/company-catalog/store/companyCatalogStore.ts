@@ -11,6 +11,7 @@ import type {
   CatalogPayload,
   CompanyCatalogItem,
   HydratedCatalogItem,
+  WebPublishStatus,
 } from '../types/companyCatalog.types'
 import { hydrateLinkedCatalogItems } from '../utils/hydrateLinkedCatalog'
 
@@ -134,23 +135,12 @@ const companyCatalogSlice = createSlice({
       state.mutateStatus = 'saving'
       state.mutateError = null
     },
-    updatePricingRequested(
-      state,
-      _action: PayloadAction<{
-        kind: CatalogGalleryKind
-        id: string
-        listPrice: number | null
-      }>,
-    ) {
-      state.mutateStatus = 'saving'
-      state.mutateError = null
-    },
     updateWebPublishRequested(
       state,
       _action: PayloadAction<{
         kind: CatalogGalleryKind
         id: string
-        webPublishStatus: 'draft' | 'published'
+        webPublishStatus: WebPublishStatus
       }>,
     ) {
       state.mutateStatus = 'saving'
@@ -327,28 +317,6 @@ const updateGalleryEpic: CatalogEpic = (action$) =>
     }),
   )
 
-const updatePricingEpic: CatalogEpic = (action$) =>
-  action$.pipe(
-    ofType(companyCatalogActions.updatePricingRequested.type),
-    exhaustMap((action: ReturnType<typeof companyCatalogActions.updatePricingRequested>) => {
-      const { kind, id, listPrice } = action.payload
-      return from(companyCatalogApi.updatePricing(kind, id, listPrice)).pipe(
-        mergeMap((item) =>
-          from(hydrateOne(kind, item)).pipe(
-            mergeMap((hydrated) =>
-              of(
-                companyCatalogActions.mutateSucceeded(item),
-                companyCatalogActions.detailSucceeded(hydrated),
-                companyCatalogActions.listRequested({ kind }),
-              ),
-            ),
-          ),
-        ),
-        catchError((err: Error) => of(companyCatalogActions.mutateFailed(err.message))),
-      )
-    }),
-  )
-
 const updateWebPublishEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.updateWebPublishRequested.type),
@@ -396,7 +364,6 @@ export const companyCatalogEpics = combineEpics(
   forkEpic,
   updateEpic,
   updateGalleryEpic,
-  updatePricingEpic,
   updateWebPublishEpic,
   deleteEpic,
 )

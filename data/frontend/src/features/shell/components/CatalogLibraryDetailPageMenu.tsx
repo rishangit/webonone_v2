@@ -35,7 +35,6 @@ export function CatalogLibraryDetailPageMenu({
   onEdit,
   onDelete,
 }: CatalogLibraryDetailPageMenuProps) {
-  const { t } = useTranslation('shell')
   const { t: tc } = useTranslation('common')
 
   return (
@@ -54,7 +53,7 @@ export function CatalogLibraryDetailPageMenu({
       <DropdownMenuContent align="end" className="w-48">
         <CopyToAiMenuItem kind={kind} id={entityId} label={entityLabel} />
         {canEdit && onEdit ? (
-          <DropdownMenuItem onClick={onEdit}>{t('customize')}</DropdownMenuItem>
+          <DropdownMenuItem onClick={onEdit}>{tc('edit')}</DropdownMenuItem>
         ) : null}
         {canDelete && onDelete ? (
           <>

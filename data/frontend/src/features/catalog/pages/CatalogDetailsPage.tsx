@@ -25,10 +25,11 @@ import {
   CatalogDetailSectionTabs,
   type CatalogDetailTabId,
 } from '@/features/catalog/components/CatalogDetailSectionTabs'
-import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
-import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/CatalogLibraryDetailPageMenu'
 import { CatalogLibraryGalleryCard } from '@/features/catalog/components/CatalogLibraryGalleryCard'
+import { CatalogLibraryDetailPageMenu } from '@/features/shell/components/CatalogLibraryDetailPageMenu'
+import { SpaceFormDialog } from '@/features/spaces/components/SpaceFormDialog'
 import { spacesActions } from '@/features/spaces/store'
+import type { SpaceWizardStep } from '@/features/spaces/schemas/spaceSchemas'
 import { useNavigateDataEntity } from '@/features/shell/utils/navigateDataEntity'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
@@ -75,7 +76,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const canEdit =
     user?.role === 'super_admin' || user?.role === 'company_admin'
   const canDelete = user?.role === 'super_admin'
-  const [editOpen, setEditOpen] = useState(false)
+  const [dialog, setDialog] = useState<{ initialStep: SpaceWizardStep } | null>(null)
   const [pendingDelete, setPendingDelete] = useState(false)
   const [tab, setTab] = useDetailTabParam(CATALOG_DETAIL_TABS, 'overview')
 
@@ -94,6 +95,10 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
   const id = entityId
   const item = detail?.id === id ? detail : null
 
+  function openWizard(initialStep: SpaceWizardStep) {
+    setDialog({ initialStep })
+  }
+
   function refreshDetail() {
     dispatch(config.actions.fetchDetailRequested({ id, force: true }))
   }
@@ -106,7 +111,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
           description="Name, status, and description"
           headerTrailing={<StatusBadge status={item.status} />}
           canEdit={canEdit}
-          onEdit={() => setEditOpen(true)}
+          onEdit={() => openWizard(1)}
         >
           {(item.galleryImages ?? []).length > 0 ? (
             <div className="overflow-hidden rounded-md">
@@ -126,7 +131,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
           title="Tags"
           description={`Labels linked to this ${config.singular.toLowerCase()}`}
           canEdit={canEdit}
-          onEdit={() => setEditOpen(true)}
+          onEdit={() => openWizard(2)}
         >
           {item.tags.length === 0 ? (
             <p className="text-sm text-muted-foreground">No tags.</p>
@@ -172,7 +177,7 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
             ariaLabel={t('actionsFor', { name: item.name })}
             canEdit={canEdit}
             canDelete={canDelete}
-            onEdit={() => setEditOpen(true)}
+            onEdit={() => openWizard(1)}
             onDelete={() => setPendingDelete(true)}
           />
         ) : undefined
@@ -214,17 +219,17 @@ export function CatalogDetailsPage({ kind }: { kind: CatalogDetailKind }) {
         />
       ) : null}
 
-      {editOpen ? (
-        <CatalogFormDialog
-          kind={kind}
+      {dialog ? (
+        <SpaceFormDialog
           open
           id={id}
+          initialStep={dialog.initialStep}
           onOpenChange={(open) => {
-            if (!open) setEditOpen(false)
+            if (!open) setDialog(null)
           }}
           onSaved={() => {
             refreshDetail()
-            setEditOpen(false)
+            setDialog(null)
           }}
         />
       ) : null}

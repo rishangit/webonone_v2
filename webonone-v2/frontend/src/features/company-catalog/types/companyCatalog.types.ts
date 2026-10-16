@@ -13,7 +13,14 @@ export type CatalogGalleryImage = {
   url: string
 }
 
-export type WebPublishStatus = 'draft' | 'published'
+export type WebPublishStatus = 'draft' | 'completed' | 'published'
+
+export function resolveWebPublishStatus(
+  status: WebPublishStatus | null | undefined,
+): WebPublishStatus {
+  if (status === 'completed' || status === 'published' || status === 'draft') return status
+  return 'draft'
+}
 
 export type CompanyCatalogItem = {
   id: string
@@ -31,6 +38,9 @@ export type CompanyCatalogItem = {
   formTemplateId?: string | null
   /** Product column price, or the service/space price that applies right now. */
   listPrice?: number | null
+  /** Original service/space price when a discount applies. */
+  listPriceCompareAt?: number | null
+  listDiscountPercent?: number | null
   /** Public website / marketplace visibility (products, services, spaces). */
   webPublishStatus?: WebPublishStatus
   createdAt: string

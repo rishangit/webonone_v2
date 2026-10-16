@@ -11,6 +11,7 @@ import {
 } from '@webonone/mobile-ui'
 import { TranslatedListPageFooter } from '@/shared/components/TranslatedListPageFooter'
 import { useTranslation } from 'react-i18next'
+import { useSession } from '@/features/auth/SessionContext'
 import { CompanyFormDialog } from '@/features/companies/components/CompanyFormDialog'
 import { MyCompaniesList } from '@/features/companies/components/MyCompaniesList'
 import { companyApi } from '@/features/companies/services/companyApi'
@@ -23,6 +24,7 @@ const PAGE_SIZE = 12
 export function MyCompaniesScreen() {
   const { t } = useTranslation('settings')
   const router = useRouter()
+  const { promptAccountChoice } = useSession()
   const [items, setItems] = useState<Awaited<ReturnType<typeof companyApi.listMyCompanies>>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -101,6 +103,9 @@ export function MyCompaniesScreen() {
         open={registerOpen}
         onOpenChange={setRegisterOpen}
         onSaved={() => void load()}
+        onRegistered={(companyId) => {
+          void promptAccountChoice(companyId)
+        }}
       />
     </FeatureScreen>
   )

@@ -124,20 +124,22 @@ export function TagSelectStackedDialogs({
   const blockPickerDismissRef = useRef(false)
   const blockTimerRef = useRef<number | null>(null)
   const createIframeRef = useRef<HTMLIFrameElement>(null)
+  const selectedTagsRef = useRef(selectedTags)
+  selectedTagsRef.current = selectedTags
 
   useEffect(() => {
     createOpenRef.current = createOpen
   }, [createOpen])
 
   useEffect(() => {
-    if (pickerOpen) {
-      setPendingSelection(selectedTags)
-    } else {
+    if (!pickerOpen) {
       setCreateOpen(false)
       createOpenRef.current = false
       setPendingSelection([])
+      return
     }
-  }, [pickerOpen, selectedTags])
+    setPendingSelection(selectedTagsRef.current)
+  }, [pickerOpen])
 
   useEffect(() => {
     return () => {

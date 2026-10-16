@@ -47,7 +47,8 @@
     "removeTitleNamed": "{{name}} ඉවත් කරන්නද?",
     "removeDescription": "මෙම ක්‍රියාව අහෝසි කළ නොහැක. සිදුවීම ස්ථිරවම ඉවත් වේ.",
     "toastRemoved": "සිදුවීම ඉවත් කරන ලදී",
-    "toastRemoveFailed": "සිදුවීම ඉවත් කිරීම අසාර්ථක විය"
+    "toastRemoveFailed": "සිදුවීම ඉවත් කිරීම අසාර්ථක විය",
+    "columnUser": "පරිශීලකයා"
   },
   "eventDetail": {
     "title": "සිදුවීම",

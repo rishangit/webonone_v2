@@ -13,5 +13,5 @@ summary: "Short definitions for token, session, connected company, and unverifie
 - **Session** — one occurrence of an event on a given day (start, serve, end).
 - **Connected company** — a business your **member** account linked to so you can browse and book, without becoming owner or staff.
 - **Unverified** — a catalog library record (for example a tag) waiting for Super Admin verification.
-- **Pending company** — registered but not yet approved; owner cannot Login until approved.
+- **Pending company** — registered but not yet approved. After the wizard, Choose account opens so you can use that company account while you wait.
 - **Gateway** — a phone or provider that actually sends SMS.

@@ -11,6 +11,13 @@ export type EventGalleryImage = {
   url: string
 }
 
+/** Assigned Specific time token holder — name and avatar only, no contact details. */
+export type EventTokenUser = {
+  userId: string
+  displayName: string
+  avatarUrl: string | null
+}
+
 export type CompanyEvent = {
   id: string
   companyId: string
@@ -44,6 +51,8 @@ export type CompanyEvent = {
   tokenOccurrenceDates?: string[]
   /** Company member viewer is assigned staff (series, run, or service workflow). */
   viewerIsAssignedStaff?: boolean
+  /** Specific time events — users assigned by an issued session token. */
+  tokenUsers?: EventTokenUser[]
 }
 
 export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'

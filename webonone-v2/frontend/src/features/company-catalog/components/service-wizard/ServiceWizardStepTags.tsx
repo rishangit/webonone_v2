@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Button,
   CustomDialog,
@@ -22,6 +22,8 @@ interface ServiceWizardStepTagsProps {
   isSubmitting: boolean
   onChange: (patch: Partial<ServiceWizardFormValues>) => void
   onNestedOpenChange?: (open: boolean) => void
+  hint?: string
+  scope?: string
 }
 
 export function ServiceWizardStepTags({
@@ -29,10 +31,11 @@ export function ServiceWizardStepTags({
   isSubmitting,
   onChange,
   onNestedOpenChange,
+  hint = 'Optional. Select one or more tags to label this service.',
+  scope = 'webonone:company-service-wizard:tags',
 }: ServiceWizardStepTagsProps) {
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const dataOrigin = getDataOrigin().replace(/\/$/, '')
-  const scope = 'webonone:company-service-wizard:tags'
 
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerAttempt, setPickerAttempt] = useState(0)
@@ -44,6 +47,17 @@ export function ServiceWizardStepTags({
 
   const canOpen = dataOrigin.length > 0 && Boolean(accessToken) && !isSubmitting
   const tags = values.tags as SelectTagValue[]
+  const tagsRef = useRef(values.tags)
+  tagsRef.current = values.tags
+
+  useEffect(() => {
+    if (!pickerOpen) {
+      return
+    }
+    setPendingSelection(
+      tagsRef.current.map((tag) => ({ id: tag.id, name: tag.name, color: tag.color })),
+    )
+  }, [pickerOpen])
 
   function openPicker() {
     if (!canOpen) return
@@ -107,9 +121,7 @@ export function ServiceWizardStepTags({
             aria-label="Open Data tag picker"
           />
         </FormField>
-        <p className="text-sm text-muted-foreground">
-          Optional. Select one or more tags to label this service.
-        </p>
+        <p className="text-sm text-muted-foreground">{hint}</p>
       </div>
 
       <CustomDialog
@@ -150,7 +162,7 @@ export function ServiceWizardStepTags({
               parentOrigin={window.location.origin}
               scope={scope}
               mode="multiple"
-              selectedTags={values.tags}
+              selectedTags={pendingSelection}
               className="block h-full min-h-0 w-full border-0 bg-transparent"
               onSelectionChange={setPendingSelection}
               onCreateRequest={openCreateDialog}

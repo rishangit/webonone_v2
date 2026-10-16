@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import {
   Alert,
@@ -36,7 +36,10 @@ import {
   type ServiceWizardFormValues,
   type ServiceWizardStep,
 } from '@/features/company-catalog/schemas/serviceSchemas'
+import { useCatalogLibraryBaseline } from '@/features/company-catalog/hooks/useCatalogLibraryBaseline'
 import { dataLibraryApi, type LibraryListItem } from '@/features/company-catalog/services/dataLibraryApi'
+import { catalogForkGallerySnapshot } from '@/features/company-catalog/utils/catalogForkGallerySnapshot'
+import { serviceWizardEditedFields } from '@/features/company-catalog/utils/catalogLibraryEdits'
 import { companyCatalogActions } from '@/features/company-catalog/store/companyCatalogStore'
 import type {
   CompanyCatalogItem,
@@ -114,6 +117,11 @@ export function ServiceFormDialog({
   const canSetStatus = false
   const isSubmitting = mutateStatus === 'saving'
   const detailForForm = !isNew && detail && detail.id === id ? detail : null
+  const libraryBaseline = useCatalogLibraryBaseline('services', detailForForm)
+  const editedFields = useMemo(
+    () => serviceWizardEditedFields(values, libraryBaseline),
+    [libraryBaseline, values],
+  )
   const showLoading = Boolean(
     !isNew && (seedLoading || (detailStatus === 'loading' && !detailForForm)),
   )
@@ -378,8 +386,15 @@ export function ServiceFormDialog({
       dispatch(companyCatalogActions.createCustomRequested({ kind: 'services', payload }))
       return
     }
-    if (!id) return
-    dispatch(companyCatalogActions.updateRequested({ kind: 'services', id, payload }))
+    if (!id || !detailForForm) return
+    const body =
+      detailForForm.bindingMode === 'linked'
+        ? {
+            ...payload,
+            galleryImages: catalogForkGallerySnapshot(detailForForm),
+          }
+        : payload
+    dispatch(companyCatalogActions.updateRequested({ kind: 'services', id, payload: body }))
   }
 
   function handleLibraryPick() {
@@ -561,6 +576,7 @@ export function ServiceFormDialog({
           values={values}
           attributeOptions={attributeOptions}
           showStatus={canSetStatus}
+          editedFields={libraryBaseline ? editedFields : undefined}
         />
       ) : null}
     </div>

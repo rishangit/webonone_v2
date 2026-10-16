@@ -1,10 +1,15 @@
 import { apiClient } from '@/shared/services/apiClient'
 import type { LibraryProductVariantStock } from '@/features/company-catalog/services/dataLibraryApi'
-import type { CatalogPriceRuleBody } from '@/features/company-catalog/schemas/catalogPriceRuleSchemas'
 import type {
+  CatalogDiscountBody,
+  CatalogPriceBody,
+} from '@/features/company-catalog/schemas/catalogPricingSchemas'
+import type {
+  CatalogDiscount,
+  CatalogDiscountKind,
+  CatalogPrice,
   CatalogPriceKind,
-  CatalogPriceRule,
-} from '@/features/company-catalog/types/catalogPriceRule.types'
+} from '@/features/company-catalog/types/catalogPricing.types'
 import type {
   CatalogBindingMode,
   CatalogEntityKind,
@@ -14,6 +19,7 @@ import type {
   CatalogSessionTokenItem,
   CompanyCatalogItem,
   ServiceWorkflowItem,
+  WebPublishStatus,
 } from '../types/companyCatalog.types'
 
 export type CompanyCatalogAttributeValue = {
@@ -61,8 +67,11 @@ function catalogListQuery(kind: CatalogEntityKind, query?: { q?: string }): stri
   if (q) params.set('q', q)
   if (kind === 'services' || kind === 'spaces') {
     const now = new Date()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
     params.set('atWeekday', String(now.getDay()))
     params.set('atMinutes', String(now.getHours() * 60 + now.getMinutes()))
+    params.set('atDate', `${now.getFullYear()}-${month}-${day}`)
   }
   const qs = params.toString()
   return qs ? `?${qs}` : ''
@@ -153,7 +162,7 @@ export const companyCatalogApi = {
   updateWebPublish(
     kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
     id: string,
-    webPublishStatus: 'draft' | 'published',
+    webPublishStatus: WebPublishStatus,
   ) {
     return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/web-publish`, {
       method: 'PATCH',
@@ -161,40 +170,62 @@ export const companyCatalogApi = {
     })
   },
 
-  updatePricing(
-    kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
-    id: string,
-    listPrice: number | null,
-  ) {
-    return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/pricing`, {
-      method: 'PATCH',
-      body: JSON.stringify({ listPrice }),
-    })
-  },
-
-  listPriceRules(kind: CatalogPriceKind, id: string, companyId?: string) {
+  listPrices(kind: CatalogPriceKind, id: string, companyId?: string) {
     const path = companyId
-      ? `/company/${companyId}/catalog/${kind}/${id}/price-rules`
-      : `/company/me/catalog/${kind}/${id}/price-rules`
-    return apiClient<{ items: CatalogPriceRule[] }>(path)
+      ? `/company/${companyId}/catalog/${kind}/${id}/prices`
+      : `/company/me/catalog/${kind}/${id}/prices`
+    return apiClient<{ items: CatalogPrice[] }>(path)
   },
 
-  createPriceRule(kind: CatalogPriceKind, id: string, body: CatalogPriceRuleBody) {
-    return apiClient<CatalogPriceRule>(`/company/me/catalog/${kind}/${id}/price-rules`, {
+  createPrice(kind: CatalogPriceKind, id: string, body: CatalogPriceBody) {
+    return apiClient<CatalogPrice>(`/company/me/catalog/${kind}/${id}/prices`, {
       method: 'POST',
       body: JSON.stringify(body),
     })
   },
 
-  updatePriceRule(kind: CatalogPriceKind, id: string, ruleId: string, body: CatalogPriceRuleBody) {
-    return apiClient<CatalogPriceRule>(`/company/me/catalog/${kind}/${id}/price-rules/${ruleId}`, {
+  updatePrice(kind: CatalogPriceKind, id: string, priceId: string, body: CatalogPriceBody) {
+    return apiClient<CatalogPrice>(`/company/me/catalog/${kind}/${id}/prices/${priceId}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
   },
 
-  deletePriceRule(kind: CatalogPriceKind, id: string, ruleId: string) {
-    return apiClient<void>(`/company/me/catalog/${kind}/${id}/price-rules/${ruleId}`, {
+  activatePrice(kind: CatalogPriceKind, id: string, priceId: string) {
+    return apiClient<CatalogPrice>(`/company/me/catalog/${kind}/${id}/prices/${priceId}/active`, {
+      method: 'POST',
+    })
+  },
+
+  deletePrice(kind: CatalogPriceKind, id: string, priceId: string) {
+    return apiClient<void>(`/company/me/catalog/${kind}/${id}/prices/${priceId}`, {
+      method: 'DELETE',
+    })
+  },
+
+  listDiscounts(kind: CatalogDiscountKind, id: string, companyId?: string) {
+    const path = companyId
+      ? `/company/${companyId}/catalog/${kind}/${id}/discounts`
+      : `/company/me/catalog/${kind}/${id}/discounts`
+    return apiClient<{ items: CatalogDiscount[] }>(path)
+  },
+
+  createDiscount(kind: CatalogDiscountKind, id: string, body: CatalogDiscountBody) {
+    return apiClient<CatalogDiscount>(`/company/me/catalog/${kind}/${id}/discounts`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  updateDiscount(kind: CatalogDiscountKind, id: string, discountId: string, body: CatalogDiscountBody) {
+    return apiClient<CatalogDiscount>(`/company/me/catalog/${kind}/${id}/discounts/${discountId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
+  deleteDiscount(kind: CatalogDiscountKind, id: string, discountId: string) {
+    return apiClient<void>(`/company/me/catalog/${kind}/${id}/discounts/${discountId}`, {
       method: 'DELETE',
     })
   },

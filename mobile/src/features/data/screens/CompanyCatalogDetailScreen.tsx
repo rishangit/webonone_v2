@@ -26,7 +26,6 @@ import {
 } from '@webonone/mobile-ui'
 import type { SelectTagValue } from '@webonone/mobile-ui'
 import { useSession } from '@/features/auth/SessionContext'
-import { CatalogPricingDialog } from '@/features/data/company-catalog/components/CatalogPricingDialog'
 import { CompanyCatalogAttributesTab } from '@/features/data/company-catalog/components/CompanyCatalogAttributesTab'
 import { CompanyCatalogFormDialog } from '@/features/data/company-catalog/components/CompanyCatalogFormDialog'
 import { CompanyCatalogGalleryTab } from '@/features/data/company-catalog/components/CompanyCatalogGalleryTab'
@@ -97,7 +96,6 @@ export function CompanyCatalogDetailScreen({
   const [customizeOpen, setCustomizeOpen] = useState(false)
   const [customizing, setCustomizing] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
-  const [pricingOpen, setPricingOpen] = useState(false)
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(null)
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
   const busy = false
@@ -303,13 +301,10 @@ export function CompanyCatalogDetailScreen({
           serviceId={itemId}
           servicePayload={servicePayload}
           listPrice={item.listPrice}
-          canManagePrice={canManage}
-          canEditSchedule={canEdit}
+          canEdit={canEdit}
           busy={busy}
           overviewActive={tab === 'overview'}
-          onEditListPrice={() => setPricingOpen(true)}
-          onEditSchedule={() => setServiceDialog({ initialStep: 2 })}
-          onManageWorkflow={() => setTab('workflow')}
+          onEdit={() => setServiceDialog({ initialStep: 1 })}
         />
         <EditableSectionCard
           title={t('detail.tags.title')}
@@ -352,14 +347,6 @@ export function CompanyCatalogDetailScreen({
         </EditableSectionCard>
         {reviewsPanel}
         {memberReviewCard}
-        <EditableSectionCard
-          title={t('detail.pricing.title')}
-          description={t('detail.pricing.description')}
-          canEdit={canManage && !busy}
-          onEdit={() => setPricingOpen(true)}
-        >
-          <ListPriceField label={t('detail.pricing.listPrice')} value={item.listPrice} />
-        </EditableSectionCard>
         {(kind === 'products' || kind === 'spaces') && (
           <EditableSectionCard
             title={t('detail.tags.title')}
@@ -490,21 +477,11 @@ export function CompanyCatalogDetailScreen({
           entityId={itemId}
           initialPayload={{
             ...(item.payload ?? item.hydrated ?? {}),
-            listPrice: item.listPrice ?? null,
           }}
           onOpenChange={setEditOpen}
           onSaved={() => void load()}
         />
       )}
-
-      <CatalogPricingDialog
-        open={pricingOpen}
-        kind={kind}
-        id={itemId}
-        listPrice={item.listPrice}
-        onOpenChange={setPricingOpen}
-        onSaved={() => void load()}
-      />
 
       <ConfirmDialog
         open={removeOpen}

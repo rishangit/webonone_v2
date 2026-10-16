@@ -23,7 +23,6 @@ import {
   searchApprovedCompanyCatalog,
   type PublicCatalogSearchRow,
 } from '../repositories/publicCatalogSearch.repository.js'
-import { parseMoney } from '../repositories/companyCatalog.repository.js'
 import { rewriteOptionalMediaFileUrl } from '../utils/rewriteMediaFileUrl.js'
 import { applyLibrarySellPricesWhereMissing } from './companyProductPublicPrice.service.js'
 import { applicablePublicListPriceByEntityId } from './companyCatalogPriceRules.service.js'
@@ -56,6 +55,9 @@ export type PublicCatalogSearchItem = {
   longitude: number | null
   referenceCount: number
   listPrice: number | null
+  /** Original price when a service or space discount applies. */
+  listPriceCompareAt?: number | null
+  listDiscountPercent?: number | null
   reviewSummary?: CatalogReviewSummary
   /** Services only — omitted for products and spaces when unset. */
   timeMode?: 'duration' | 'window' | null
@@ -295,7 +297,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
         tags: tagsFromLibrary(library, tagById, localTagIds),
         galleryImages: effectiveGalleryImages(row, library),
         referenceCount: library.referenceCount ?? 0,
-        listPrice: parseMoney(row.list_price),
+        listPrice: null,
         ...companyLocation,
         ...time,
       })
@@ -324,7 +326,7 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
       tags: tagsFromLibrary(undefined, tagById, localTagIds),
       galleryImages: effectiveGalleryImages(row, undefined),
       referenceCount: 0,
-      listPrice: parseMoney(row.list_price),
+      listPrice: null,
       ...companyLocation,
       ...time,
     })
@@ -361,7 +363,10 @@ async function hydrateRows(rows: PublicCatalogSearchRow[]): Promise<HydratedCata
       clock,
     )
     for (const slot of slots) {
-      items[slot.itemIndex].listPrice = prices.get(slot.item.id) ?? null
+      const offer = prices.get(slot.item.id)
+      items[slot.itemIndex].listPrice = offer?.price ?? null
+      items[slot.itemIndex].listPriceCompareAt = offer?.compareAt ?? null
+      items[slot.itemIndex].listDiscountPercent = offer?.discountPercent ?? null
     }
   }
 

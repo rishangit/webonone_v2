@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AccountOptionRow, Button, CustomDialog } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -8,6 +8,7 @@ import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { sessionRoleApi } from '@/features/session/services/sessionRoleApi'
 import type { AssumableRoleOption } from '@/features/session/types/sessionRole.types'
 import {
+  findCompanyOwner,
   findDefaultUser,
   findMatchingRole,
 } from '@/features/session/utils/accountLabels'
@@ -17,11 +18,11 @@ export function RoleSelectionDialog() {
   const dispatch = useAppDispatch()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const user = useAppSelector((s) => s.auth.user)
-  const { dialogOpen, dialogMode, assumableRoles, activeRole, activeCompanyId } = useAppSelector(
-    (s) => s.sessionRole,
-  )
+  const { dialogOpen, dialogMode, assumableRoles, activeRole, activeCompanyId, preferredCompanyId } =
+    useAppSelector((s) => s.sessionRole)
   const [pendingRole, setPendingRole] = useState<AssumableRoleOption | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const appliedPreferredRef = useRef<string | null>(null)
 
   const isSettingsMode = dialogMode === 'settings'
 
@@ -29,10 +30,20 @@ export function RoleSelectionDialog() {
     if (!dialogOpen) {
       setPendingRole(null)
       setSubmitting(false)
+      appliedPreferredRef.current = null
       return
     }
 
+    const created = preferredCompanyId
+      ? findCompanyOwner(assumableRoles, preferredCompanyId)
+      : null
+    const shouldApplyCreated =
+      Boolean(created && preferredCompanyId && appliedPreferredRef.current !== preferredCompanyId)
+
     setPendingRole((current) => {
+      if (shouldApplyCreated && created) {
+        return created
+      }
       if (current) {
         return current
       }
@@ -44,7 +55,21 @@ export function RoleSelectionDialog() {
       }
       return findDefaultUser(assumableRoles)
     })
-  }, [dialogOpen, dialogMode, isSettingsMode, assumableRoles, activeRole, activeCompanyId])
+
+    if (shouldApplyCreated && preferredCompanyId) {
+      appliedPreferredRef.current = preferredCompanyId
+      dispatch(sessionRoleActions.clearPreferredCompany())
+    }
+  }, [
+    dialogOpen,
+    dialogMode,
+    isSettingsMode,
+    assumableRoles,
+    activeRole,
+    activeCompanyId,
+    preferredCompanyId,
+    dispatch,
+  ])
 
   async function handleContinue() {
     if (!pendingRole || !accessToken) return

@@ -55,6 +55,23 @@ export function CompanyCatalogList({
               onOpen={() => onOpen(item)}
               trailing={
                 <>
+                  <StatusTag
+                    variant={
+                      item.webPublishStatus === 'published'
+                        ? 'approved'
+                        : item.webPublishStatus === 'completed'
+                          ? 'verified'
+                          : 'pending'
+                    }
+                  >
+                    {t(
+                      `detail.webPublish.${
+                        item.webPublishStatus === 'published' || item.webPublishStatus === 'completed'
+                          ? item.webPublishStatus
+                          : 'draft'
+                      }`,
+                    )}
+                  </StatusTag>
                   <StatusTag variant="verified">{t(`binding.${item.bindingMode}`)}</StatusTag>
                   {item.libraryUnavailable ? (
                     <StatusTag variant="pending">{t('list.libraryUnavailable')}</StatusTag>

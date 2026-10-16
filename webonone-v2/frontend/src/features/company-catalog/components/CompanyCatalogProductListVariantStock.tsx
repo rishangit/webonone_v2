@@ -11,9 +11,9 @@ import {
 } from '@webonone/ui-kit'
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
 import {
+  companyProductListPriceDisplay,
   formatCompanyProductListStockAvailability,
   getActiveCompanyProductListLine,
-  resolveCompanyProductListUnitPrice,
 } from '@/features/company-catalog/utils/companyCatalogProductListStockLine'
 import type { ProductPickerStockDisplay } from '@/features/sales/utils/resolveProductPickerStockDisplay'
 
@@ -57,7 +57,7 @@ export function CompanyCatalogProductListVariantStock({
   const activeLine = getActiveCompanyProductListLine(meta, selectedVariantId)
   if (!meta || !activeLine) return null
 
-  const unitPrice = resolveCompanyProductListUnitPrice(activeLine, listPrice)
+  const priceDisplay = companyProductListPriceDisplay(activeLine, listPrice)
   const quantity = activeLine.totalQuantity
   const limits = stockLimitsByVariantId[activeLine.variantId]
   const maxQuantity = maxQuantityProp ?? limits?.maxQuantity
@@ -116,8 +116,14 @@ export function CompanyCatalogProductListVariantStock({
           {activeLine.name}
         </span>
       )}
-      {showPrice && unitPrice != null ? (
-        <PriceDisplay value={unitPrice} size="sm" className="text-muted-foreground" />
+      {showPrice && priceDisplay != null ? (
+        <PriceDisplay
+          value={priceDisplay.value}
+          compareAt={priceDisplay.compareAt}
+          discountPercent={priceDisplay.discountPercent}
+          size="sm"
+          className="text-muted-foreground"
+        />
       ) : null}
       {showStock ? (
         <StockAvailabilityProgress

@@ -62,4 +62,4 @@ export type PlatformAnalytics = {
   companiesOverTime: TimeBucket[]
 }
 
-export type AnalyticsRangeKey = '7d' | '30d' | '90d' | 'year'
+export type AnalyticsRangeKey = 'today' | '7d' | '30d' | '90d' | 'year'

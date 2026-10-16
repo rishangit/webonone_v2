@@ -11,6 +11,12 @@ export type EventGalleryImage = {
   url: string
 }
 
+export type EventTokenUser = {
+  userId: string
+  displayName: string
+  avatarUrl: string | null
+}
+
 export type CompanyEvent = {
   id: string
   companyId: string
@@ -41,6 +47,7 @@ export type CompanyEvent = {
   updatedAt: string
   tokenOccurrenceDates?: string[]
   viewerIsAssignedStaff?: boolean
+  tokenUsers?: EventTokenUser[]
 }
 
 export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Slot, usePathname, useRouter, type Href } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { MobileAppShell } from '@webonone/mobile-ui'
@@ -30,11 +30,17 @@ export function AppShellLayout() {
   const { t } = useTranslation('common')
   const { t: tShell } = useTranslation('shell')
   const { t: tSession } = useTranslation('session')
-  const { user, roleOptions, locale, setLocale, logout } = useSession()
+  const { user, roleOptions, locale, setLocale, logout, accountChoiceCompanyId, clearAccountChoice } =
+    useSession()
   const [switchOpen, setSwitchOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const headerLabels = useAppHeaderLabels()
+
+  useEffect(() => {
+    if (!accountChoiceCompanyId) return
+    setSwitchOpen(true)
+  }, [accountChoiceCompanyId])
 
   const nav = useMemo(() => {
     if (!user) return []
@@ -126,7 +132,11 @@ export function AppShellLayout() {
         <Slot />
         <AccountSwitchDialog
           open={switchOpen}
-          onOpenChange={setSwitchOpen}
+          preferredCompanyId={accountChoiceCompanyId}
+          onOpenChange={(open) => {
+            setSwitchOpen(open)
+            if (!open) clearAccountChoice()
+          }}
           onSwitched={() => router.replace('/' as Href)}
         />
       </MobileAppShell>

@@ -54,19 +54,6 @@ export function ServiceWizardStepBasics({
         />
       </FormField>
 
-      <FormField label={t('listPrice')} htmlFor="service-wizard-list-price" error={fieldErrors.list_price}>
-        <Input
-          id="service-wizard-list-price"
-          type="number"
-          min={0}
-          step="0.01"
-          value={values.list_price}
-          onChange={(e) => onChange({ list_price: e.target.value })}
-          disabled={isSubmitting}
-          className="w-full"
-        />
-      </FormField>
-
       {canSetStatus ? (
         <FormField label={t('common:status')} htmlFor="service-wizard-status" required error={fieldErrors.status}>
           <Select

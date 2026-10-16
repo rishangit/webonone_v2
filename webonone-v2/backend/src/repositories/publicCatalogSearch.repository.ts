@@ -18,7 +18,6 @@ export type PublicCatalogSearchRow = {
   tag_ids: string | unknown[] | null
   kind: CatalogKind
   gallery_images?: string | unknown[] | null
-  list_price?: string | number | null
   /** Services only — null for products/spaces and linked rows without local copy. */
   time_mode?: 'duration' | 'window' | null
   duration_minutes?: number | null
@@ -52,7 +51,6 @@ const SERVICE_TIME_SELECT = [
 function selectForKind(kind: CatalogKind): string[] {
   return [
     ...BASE_ITEM_SELECT,
-    ...(kind === 'products' ? ['item.list_price'] : []),
     ...(kind === 'services' ? SERVICE_TIME_SELECT : []),
   ]
 }
@@ -110,8 +108,8 @@ export function parseTagIds(value: string | unknown[] | null): string[] {
 
 /**
  * Find company catalog sellables matching text and/or tag / library filters.
- * Only approved companies. Forked/custom must be verified; linked rows are included
- * when they match via library id or (rare) local fields.
+ * Approved companies only. Linked, customized (forked), and custom rows are included
+ * when `web_publish_status` is published — catalog verification status is not a gate.
  */
 export async function searchApprovedCompanyCatalog(options: {
   q: string
@@ -130,14 +128,6 @@ export async function searchApprovedCompanyCatalog(options: {
       .join('companies as company', 'company.id', 'item.company_id')
       .where('company.status', 'approved')
       .andWhere('item.web_publish_status', 'published')
-      .andWhere(function sellable() {
-        this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
-          this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(
-            'item.status',
-            'verified',
-          )
-        })
-      })
       .andWhere(function match() {
         this.where('item.name', 'like', pattern).orWhere('item.description', 'like', pattern)
 
@@ -150,8 +140,8 @@ export async function searchApprovedCompanyCatalog(options: {
         }
 
         if (libraryIds.length > 0) {
-          this.orWhere(function linkedLibrary() {
-            this.where('item.binding_mode', 'linked').whereIn(
+          this.orWhere(function libraryCopy() {
+            this.whereIn('item.binding_mode', ['linked', 'forked']).whereIn(
               'item.library_entity_id',
               libraryIds,
             )
@@ -172,7 +162,8 @@ export async function searchApprovedCompanyCatalog(options: {
 }
 
 /**
- * Load one marketplace sellable by kind + id (approved company + same binding rules as search).
+ * Load one marketplace sellable by kind + id.
+ * Approved company and published — linked, customized, and custom.
  */
 export async function findApprovedCompanyCatalogById(
   kind: CatalogKind,
@@ -186,14 +177,6 @@ export async function findApprovedCompanyCatalogById(
     .where('item.id', id)
     .where('company.status', 'approved')
     .andWhere('item.web_publish_status', 'published')
-    .andWhere(function sellable() {
-      this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
-        this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(
-          'item.status',
-          'verified',
-        )
-      })
-    })
     .select(...selectForKind(kind))
     .first()) as Omit<PublicCatalogSearchRow, 'kind'> | undefined
 
@@ -221,8 +204,8 @@ export async function listApprovedCompaniesWithCoordinates(): Promise<NearbyComp
 }
 
 /**
- * Sellable catalog rows for the given approved companies.
- * Same binding rules as text search.
+ * Published catalog rows for the given approved companies.
+ * Linked, customized, and custom — same publish rule as text search.
  */
 export async function listApprovedCatalogByCompanyIds(
   companyIds: string[],
@@ -237,14 +220,6 @@ export async function listApprovedCatalogByCompanyIds(
       .whereIn('item.company_id', companyIds)
       .where('company.status', 'approved')
       .andWhere('item.web_publish_status', 'published')
-      .andWhere(function sellable() {
-        this.where('item.binding_mode', 'linked').orWhere(function verifiedLocal() {
-          this.whereIn('item.binding_mode', ['forked', 'custom']).andWhere(
-            'item.status',
-            'verified',
-          )
-        })
-      })
       .select(...selectForKind(kind))
 
     const kindRows = (await query) as Array<Omit<PublicCatalogSearchRow, 'kind'>>

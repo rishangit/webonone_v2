@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '@webonone/ui-kit'
+import { useAppSelector } from '@/app/store/hooks'
 import type { HydratedCatalogItem } from '@/features/company-catalog/types/companyCatalog.types'
 import { catalogItemImageUrl } from '@/features/company-catalog/utils/firstGalleryImageUrl'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
@@ -49,6 +50,7 @@ function buildCartLine(
 export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
   const { t } = useTranslation('sales')
   const { toast } = useToast()
+  const userId = useAppSelector((state) => state.auth.user?.id ?? null)
   const [variantDialogOpen, setVariantDialogOpen] = useState(false)
   const [pendingPick, setPendingPick] = useState<PendingProductPick | null>(null)
   const [picking, setPicking] = useState(false)
@@ -93,7 +95,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
 
       setPicking(true)
       try {
-        const options = await resolveStockedProductVariants(item.libraryEntityId, item.id)
+        const options = await resolveStockedProductVariants(item.libraryEntityId, item.id, userId)
         if (options.length === 0) {
           await addPlainProduct(item)
           return 'added'
@@ -116,7 +118,7 @@ export function usePosProductPick({ onAddLine }: UsePosProductPickOptions) {
         setPicking(false)
       }
     },
-    [addPlainProduct, addWithSelection, onAddLine, t, toast],
+    [addPlainProduct, addWithSelection, onAddLine, t, toast, userId],
   )
 
   const confirmVariantSelection = useCallback(

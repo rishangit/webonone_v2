@@ -27,6 +27,8 @@ export type CompanyCatalogItem = {
   galleryImages?: CatalogGalleryImage[] | null
   formTemplateId?: string | null
   listPrice?: number | null
+  /** Draft while still being set up, completed for internal use, published on the public website. */
+  webPublishStatus?: 'draft' | 'completed' | 'published'
   createdAt: string
   updatedAt: string
 }

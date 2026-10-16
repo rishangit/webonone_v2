@@ -95,8 +95,6 @@ export interface CatalogItem {
   durationMinutes?: number | null
   startTime?: string | null
   endTime?: string | null
-  /** Services only — optional list price when exposed by API */
-  listPrice?: number | null
 }
 
 export interface ProductVariantAttributeValue {

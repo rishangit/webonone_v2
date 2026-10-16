@@ -67,10 +67,6 @@ export function ServiceWizardStepSummary({
             />
           ) : null}
           <SummaryRow
-            label={t('listPrice')}
-            value={values.list_price.trim() ? values.list_price.trim() : t('noDescription')}
-          />
-          <SummaryRow
             label={t('timeMode')}
             value={values.time_mode === 'window' ? t('timeModeWindow') : t('timeModeDuration')}
           />

@@ -139,12 +139,6 @@ export const companyCatalogApi = {
     })
   },
 
-  updatePricing(kind: CatalogEntityKind, id: string, listPrice: number | null) {
-    return client<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/pricing`, {
-      method: 'PATCH',
-      body: JSON.stringify({ listPrice }),
-    })
-  },
 
   suggestStockBatchNumber() {
     return client<{ batchNumber: string }>('/company/me/catalog/stocks/suggested-batch-number')

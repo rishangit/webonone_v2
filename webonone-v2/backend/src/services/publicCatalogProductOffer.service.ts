@@ -3,7 +3,8 @@ import {
   type DataLibraryProductVariant,
 } from '../clients/dataProductStockClient.js'
 import { listCompanyStocksForLibraryVariant } from './companyProductStock.service.js'
-import { parseMoney } from '../repositories/companyCatalog.repository.js'
+import { applicableProductVariantDiscountPercents } from './companyCatalogPriceRules.service.js'
+import { applyDiscountPercent, priceClockFromDate } from '../utils/applicableCatalogPrice.js'
 import { findApprovedCompanyCatalogById } from '../repositories/publicCatalogSearch.repository.js'
 
 export type PublicProductVariantAttributeValue = {
@@ -23,6 +24,8 @@ export type PublicProductVariantOfferLine = {
   attributeValues: PublicProductVariantAttributeValue[]
   totalQuantity: number
   sellPrice: number | null
+  compareAtSellPrice?: number | null
+  discountPercent?: number | null
 }
 
 export type PublicProductVariantOffer = {
@@ -59,12 +62,12 @@ export async function getPublicProductVariantOffer(
   const row = await findApprovedCompanyCatalogById('products', catalogProductId)
   if (!row) return null
 
-  const listPrice = parseMoney(row.list_price)
   const libraryProductId = row.library_entity_id?.trim() ?? ''
 
-  if (row.binding_mode !== 'linked' || !libraryProductId) {
+  // Linked and customized copies keep the library product id. Custom products have none.
+  if (!libraryProductId) {
     return {
-      listPrice,
+      listPrice: null,
       libraryUnavailable: false,
       variantCount: 0,
       lines: [],
@@ -73,21 +76,34 @@ export async function getPublicProductVariantOffer(
 
   try {
     const variants = await listLibraryProductVariants(libraryProductId)
+    const discountPercents = await applicableProductVariantDiscountPercents(
+      row.company_id,
+      [catalogProductId],
+      null,
+      priceClockFromDate(),
+    )
     const lines: PublicProductVariantOfferLine[] = []
 
     for (const variant of variants) {
       const stocks = await listCompanyStocksForLibraryVariant(row.company_id, variant.id)
       const active = pickActiveStock(stocks)
+      const base = active?.sellPrice ?? null
+      const percent = discountPercents.get(`${catalogProductId}:${variant.id}`)
+      const discounted = base != null && percent != null && percent > 0
       lines.push({
         variantId: variant.id,
         name: variant.name,
         isDefault: variant.isDefault,
         attributeValues: mapAttributeValues(variant.values),
         totalQuantity: stocks.reduce((sum, item) => sum + item.quantity, 0),
-        sellPrice: active?.sellPrice ?? null,
+        sellPrice: discounted && base != null && percent != null ? applyDiscountPercent(base, percent) : base,
+        compareAtSellPrice: discounted ? base : null,
+        discountPercent: discounted ? percent : null,
       })
     }
 
+    const listPrice =
+      lines.map((line) => line.sellPrice).find((price) => price != null) ?? null
     return {
       listPrice,
       libraryUnavailable: false,
@@ -96,7 +112,7 @@ export async function getPublicProductVariantOffer(
     }
   } catch {
     return {
-      listPrice,
+      listPrice: null,
       libraryUnavailable: true,
       variantCount: 0,
       lines: [],

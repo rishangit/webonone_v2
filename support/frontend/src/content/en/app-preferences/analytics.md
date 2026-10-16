@@ -11,7 +11,7 @@ summary: "Open Analytics for company progress, sales revenue and profit, catalog
 
 1. Sign in and [choose an account](/docs/getting-started/choose-account) if asked.
 2. Open **Analytics**.
-3. Pick a date range (last 7 days, 30 days, 90 days, or 12 months). Snapshot counts such as catalog size and staff are current, not limited to that range.
+3. Pick a date range (today, last 7 days, 30 days, 90 days, or 12 months). Snapshot counts such as catalog size and staff are current, not limited to that range.
 
 What you see depends on [role](/docs/getting-started/roles):
 

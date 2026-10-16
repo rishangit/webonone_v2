@@ -16,7 +16,6 @@ import {
   fromLibraryBodySchema,
   linkCatalogBodySchema,
   updateCatalogGalleryBodySchema,
-  updateCatalogPricingBodySchema,
   updateCatalogWebPublishBodySchema,
   updateCompanyAttributeValueBodySchema,
   upsertProductVariantStockLimitsBodySchema,
@@ -25,7 +24,10 @@ import {
   updateServiceFormBodySchema,
   replaceServiceWorkflowBodySchema,
 } from '../schemas/companyCatalogSchemas.js'
-import { catalogPriceRuleBodySchema } from '../schemas/companyCatalogPriceRules.schema.js'
+import {
+  catalogDiscountBodySchema,
+  catalogPriceBodySchema,
+} from '../schemas/companyCatalogPriceRules.schema.js'
 
 const router = Router()
 
@@ -212,32 +214,53 @@ router.patch(
   companyCatalogController.updateCatalogGallery,
 )
 router.get(
-  '/company/me/catalog/:kind/:id/price-rules',
+  '/company/me/catalog/:kind/:id/prices',
   requireCompanySession,
-  companyCatalogPriceRulesController.listPriceRules,
+  companyCatalogPriceRulesController.listPrices,
 )
 router.post(
-  '/company/me/catalog/:kind/:id/price-rules',
+  '/company/me/catalog/:kind/:id/prices',
   requireCompanyAdminSession,
-  validateBody(catalogPriceRuleBodySchema),
-  companyCatalogPriceRulesController.createPriceRule,
+  validateBody(catalogPriceBodySchema),
+  companyCatalogPriceRulesController.createPrice,
 )
 router.patch(
-  '/company/me/catalog/:kind/:id/price-rules/:ruleId',
+  '/company/me/catalog/:kind/:id/prices/:priceId',
   requireCompanyAdminSession,
-  validateBody(catalogPriceRuleBodySchema),
-  companyCatalogPriceRulesController.updatePriceRule,
+  validateBody(catalogPriceBodySchema),
+  companyCatalogPriceRulesController.updatePrice,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/prices/:priceId/active',
+  requireCompanyAdminSession,
+  companyCatalogPriceRulesController.activatePrice,
 )
 router.delete(
-  '/company/me/catalog/:kind/:id/price-rules/:ruleId',
+  '/company/me/catalog/:kind/:id/prices/:priceId',
   requireCompanyAdminSession,
-  companyCatalogPriceRulesController.deletePriceRule,
+  companyCatalogPriceRulesController.deletePrice,
+)
+router.get(
+  '/company/me/catalog/:kind/:id/discounts',
+  requireCompanySession,
+  companyCatalogPriceRulesController.listDiscounts,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/discounts',
+  requireCompanyAdminSession,
+  validateBody(catalogDiscountBodySchema),
+  companyCatalogPriceRulesController.createDiscount,
 )
 router.patch(
-  '/company/me/catalog/:kind/:id/pricing',
+  '/company/me/catalog/:kind/:id/discounts/:discountId',
   requireCompanyAdminSession,
-  validateBody(updateCatalogPricingBodySchema),
-  companyCatalogController.updateCatalogPricing,
+  validateBody(catalogDiscountBodySchema),
+  companyCatalogPriceRulesController.updateDiscount,
+)
+router.delete(
+  '/company/me/catalog/:kind/:id/discounts/:discountId',
+  requireCompanyAdminSession,
+  companyCatalogPriceRulesController.deleteDiscount,
 )
 router.patch(
   '/company/me/catalog/:kind/:id/web-publish',
@@ -306,9 +329,14 @@ router.get(
   companyCatalogController.listCatalogForCompany,
 )
 router.get(
-  '/company/:companyId/catalog/:kind/:id/price-rules',
+  '/company/:companyId/catalog/:kind/:id/prices',
   requireAuth,
-  companyCatalogPriceRulesController.listPriceRulesForCompany,
+  companyCatalogPriceRulesController.listPricesForCompany,
+)
+router.get(
+  '/company/:companyId/catalog/:kind/:id/discounts',
+  requireAuth,
+  companyCatalogPriceRulesController.listDiscountsForCompany,
 )
 router.get(
   '/company/:companyId/catalog/:kind/:id',

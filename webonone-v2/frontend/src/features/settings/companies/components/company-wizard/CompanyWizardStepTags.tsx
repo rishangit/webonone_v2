@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Button,
   CustomDialog,
@@ -43,6 +43,17 @@ export function CompanyWizardStepTags({
 
   const canOpen = dataOrigin.length > 0 && Boolean(accessToken) && !isSubmitting
   const tags = values.tags as SelectTagValue[]
+  const tagsRef = useRef(values.tags)
+  tagsRef.current = values.tags
+
+  useEffect(() => {
+    if (!pickerOpen) {
+      return
+    }
+    setPendingSelection(
+      tagsRef.current.map((tag) => ({ id: tag.id, name: tag.name, color: tag.color })),
+    )
+  }, [pickerOpen])
 
   function openPicker() {
     if (!canOpen) return
@@ -147,7 +158,7 @@ export function CompanyWizardStepTags({
               parentOrigin={window.location.origin}
               scope={scope}
               mode="multiple"
-              selectedTags={values.tags}
+              selectedTags={pendingSelection}
               className="block h-full min-h-0 w-full border-0 bg-transparent"
               onSelectionChange={setPendingSelection}
               onCreateRequest={openCreateDialog}

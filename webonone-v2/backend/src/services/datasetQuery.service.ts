@@ -90,12 +90,16 @@ async function loadCatalogRows(
     const status =
       payloadStatus(payload) ??
       (typeof library?.status === 'string' ? library.status : null)
-    const listPrice =
+    const listPrice = kind === 'products' ? null : (
       ('listPrice' in dto ? (dto.listPrice as number | null) : null) ??
       payloadNumber(payload, 'listPrice')
+    )
 
     const webPublishStatus =
-      'webPublishStatus' in dto && (dto.webPublishStatus === 'published' || dto.webPublishStatus === 'draft')
+      'webPublishStatus' in dto &&
+      (dto.webPublishStatus === 'published' ||
+        dto.webPublishStatus === 'completed' ||
+        dto.webPublishStatus === 'draft')
         ? dto.webPublishStatus
         : 'draft'
 
@@ -135,7 +139,10 @@ async function loadCatalogRows(
       priceClockFromDate(),
     )
     for (const row of rows) {
-      row.listPrice = prices.get(String(row.id)) ?? null
+      const offer = prices.get(String(row.id))
+      row.listPrice = offer?.price ?? null
+      row.listPriceCompareAt = offer?.compareAt ?? null
+      row.listDiscountPercent = offer?.discountPercent ?? null
     }
   }
 

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -12,10 +11,8 @@ import {
   CardTitle,
   FeaturePage,
   ReadOnlyField,
-  useToast,
 } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import { useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
 import { CompanyProductVariantStockLimitsCard } from '@/features/company-catalog/components/CompanyProductVariantStockLimitsCard'
 import { CompanyProductVariantStocksCard } from '@/features/company-catalog/components/CompanyProductVariantStocksCard'
 import { CompanyProductVariantAttributeValuesCard } from '@/features/company-catalog/components/CompanyProductVariantAttributeValuesCard'
@@ -28,8 +25,6 @@ import { formatLocaleDateTime } from '@/shared/utils/formatLocaleDate'
 export function CompanyProductVariantDetailsPage() {
   const { t, i18n } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
-  const { toast } = useToast()
-  const { requestEntityPaste } = useAiEntityPaste()
   const { productId = '', variantId = '' } = useParams()
   const navigate = useNavigate()
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
@@ -37,7 +32,6 @@ export function CompanyProductVariantDetailsPage() {
   const canAddStock = activeRole === 'company_admin'
   const [variant, setVariant] = useState<CompanyCatalogVariant | null>(null)
   const [libraryProductId, setLibraryProductId] = useState<string | null>(null)
-  const [productName, setProductName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -48,13 +42,11 @@ export function CompanyProductVariantDetailsPage() {
     try {
       const product = await companyCatalogApi.get('products', productId)
       setLibraryProductId(product.libraryEntityId)
-      setProductName(typeof product.name === 'string' ? product.name.trim() : '')
       const result = await companyCatalogApi.getCopiedVariant(productId, variantId)
       setVariant(result)
     } catch (err) {
       setVariant(null)
       setLibraryProductId(null)
-      setProductName('')
       setError(err instanceof Error ? err.message : t('variantDetail.failedLoad'))
     } finally {
       setLoading(false)
@@ -79,33 +71,6 @@ export function CompanyProductVariantDetailsPage() {
       description={t('variantDetail.description')}
       onBack={() => navigate(`/data/products/${productId}?tab=variants`)}
       backLabel={tc('back')}
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          {variant ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                requestEntityPaste({
-                  entities: [
-                    {
-                      service: 'webonone',
-                      kind: 'product',
-                      id: productId,
-                      label: productName || variant.name,
-                    },
-                  ],
-                  composerText: `Focus on variant "${variant.name}" (variantId: ${variantId}). List existing stocks with list_company_product_variant_stocks, then suggest or create stock batches with create_company_product_variant_stock when asked.`,
-                })
-                toast({ title: t('attributesTab.copyToAiSuccess') })
-              }}
-            >
-              {t('attributesTab.copyToAi')}
-            </Button>
-          ) : null}
-        </div>
-      }
     >
       {error ? (
         <Alert variant="destructive">

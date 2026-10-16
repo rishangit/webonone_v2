@@ -23,6 +23,8 @@ interface SessionRoleState {
   assumableRoles: AssumableRoleOption[]
   dialogOpen: boolean
   dialogMode: SessionRoleDialogMode
+  /** Company to preselect when Choose account opens after registration. */
+  preferredCompanyId: string | null
   loading: boolean
 }
 
@@ -33,6 +35,7 @@ const emptyState: SessionRoleState = {
   assumableRoles: [],
   dialogOpen: false,
   dialogMode: 'gate',
+  preferredCompanyId: null,
   loading: false,
 }
 
@@ -75,6 +78,7 @@ function applyRole(
   state.selectionComplete = true
   state.dialogOpen = false
   state.dialogMode = 'gate'
+  state.preferredCompanyId = null
   state.loading = false
   persistSelection(role, companyId, userId)
 }
@@ -112,6 +116,12 @@ export const sessionRoleSlice = createSlice({
       const { roles, requiresAccountSelection } = action.payload
       state.loading = false
       state.assumableRoles = roles
+
+      if (state.preferredCompanyId) {
+        state.dialogOpen = true
+        state.dialogMode = 'settings'
+        return
+      }
 
       // Sticky selection already restored — refresh labels only; never re-open gate.
       if (state.selectionComplete) {
@@ -160,12 +170,32 @@ export const sessionRoleSlice = createSlice({
       if (!state.selectionComplete) {
         return
       }
+      state.preferredCompanyId = null
       state.dialogOpen = true
       state.dialogMode = 'settings'
+    },
+    accountChoiceRequested(state, action: PayloadAction<{ companyId: string }>) {
+      state.preferredCompanyId = action.payload.companyId
+      state.loading = true
+    },
+    accountChoiceReady(state, action: PayloadAction<AssumableRolesResponse>) {
+      state.assumableRoles = action.payload.roles
+      state.loading = false
+      state.dialogOpen = true
+      state.dialogMode = 'settings'
+    },
+    accountChoiceFailed(state) {
+      state.loading = false
+      state.dialogOpen = true
+      state.dialogMode = 'settings'
+    },
+    clearPreferredCompany(state) {
+      state.preferredCompanyId = null
     },
     closeDialog(state) {
       state.dialogOpen = false
       state.dialogMode = 'gate'
+      state.preferredCompanyId = null
     },
     reset() {
       return clearSelectionState()

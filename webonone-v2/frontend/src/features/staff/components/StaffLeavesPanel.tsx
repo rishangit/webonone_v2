@@ -49,12 +49,13 @@ export function StaffLeavesPanel({ staff, canManage }: StaffLeavesPanelProps) {
 
   const canAdd = canManage || (authUser != null && authUser.id === staff.userId)
   const hasActiveFilters = list.status !== 'all'
+  const setExtraFilters = list.setExtraFilters
 
   usePlatformLoading(list.loading ? t('leaves.loading') : null)
 
   useEffect(() => {
-    list.setExtraFilters({ staffId: staff.id })
-  }, [list, staff.id, list.setExtraFilters])
+    setExtraFilters((current) => (current.staffId === staff.id ? current : { staffId: staff.id }))
+  }, [setExtraFilters, staff.id])
 
   const reloadLeaves = useCallback(
     (page = 1, force = true) => {

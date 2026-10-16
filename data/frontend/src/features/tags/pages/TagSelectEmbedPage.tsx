@@ -48,10 +48,11 @@ export function TagSelectEmbedPage() {
 
   useEffect(() => {
     if (!requestId) return
+    // Do not clear session in this effect. Strict Mode remounts and a cleanup
+    // clear would make the second read empty, so Done replaces existing tags.
     const initial = readTagSelectSession(requestId)
     setSelectedTags(initial)
     selectedTagsRef.current = initial
-    return () => clearTagSelectSession(requestId)
   }, [requestId])
 
   useEffect(() => {
@@ -128,6 +129,7 @@ export function TagSelectEmbedPage() {
       sendPlatformPeerDialogComplete(parentOrigin, requestId, {
         tags: selectedTagsRef.current,
       })
+      clearTagSelectSession(requestId)
     },
   })
 

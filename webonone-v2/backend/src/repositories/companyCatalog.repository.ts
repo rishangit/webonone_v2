@@ -5,6 +5,7 @@ import type {
   CatalogBindingMode,
   CatalogEntityKind,
   CatalogPayload,
+  WebPublishStatus,
 } from '../schemas/companyCatalogSchemas.js'
 
 export const CATALOG_TABLE_BY_KIND: Record<CatalogEntityKind, string> = {
@@ -41,7 +42,6 @@ type AttributeRow = CommonRow & {
 type ProductOrSpaceRow = CommonRow & {
   tag_ids: string | unknown[] | null
   attributes: string | unknown[] | null
-  list_price: string | number | null
 }
 type ServiceRow = ProductOrSpaceRow & {
   time_mode: 'duration' | 'window' | null
@@ -119,13 +119,6 @@ export function parseMoney(value: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-function extractListPrice(payload: CatalogPayload | null): number | null | undefined {
-  if (!payload || typeof payload !== 'object' || !('listPrice' in payload)) return undefined
-  const raw = (payload as { listPrice?: unknown }).listPrice
-  if (raw == null || raw === '') return null
-  return parseMoney(raw)
-}
-
 function formatTime(value: string | Date | null): string | null {
   if (value == null) return null
   if (typeof value === 'string') {
@@ -178,7 +171,6 @@ function payloadFromRow(kind: CatalogEntityKind, row: Record<string, unknown>): 
               valueNumber?: number | null
             }[]
           | undefined,
-        listPrice: parseMoney(row.list_price),
       }
     case 'spaces':
       return {
@@ -252,13 +244,15 @@ export function mapCatalogRow(kind: CatalogEntityKind, row: Record<string, unkno
 
   if (kind === 'products' || kind === 'services' || kind === 'spaces') {
     const webPublishRaw = row.web_publish_status
-    const webPublishStatus =
-      webPublishRaw === 'published' || webPublishRaw === 'draft' ? webPublishRaw : 'draft'
+    const webPublishStatus: WebPublishStatus =
+      webPublishRaw === 'published' || webPublishRaw === 'completed' || webPublishRaw === 'draft'
+        ? webPublishRaw
+        : 'draft'
     const withGallery = {
       ...base,
       webPublishStatus,
       galleryImages: parseGalleryImages(row.gallery_images as string | unknown[] | null),
-      listPrice: kind === 'products' ? parseMoney(row.list_price) : null,
+      listPrice: null,
     }
     if (kind === 'services') {
       return {
@@ -435,8 +429,6 @@ export async function insertItem(input: {
 }): Promise<Record<string, unknown>> {
   const now = new Date()
   const table = CATALOG_TABLE_BY_KIND[input.entityKind]
-  const listPrice =
-    input.entityKind === 'products' ? (extractListPrice(input.payload) ?? null) : undefined
   await db(table).insert({
     id: input.id,
     company_id: input.companyId,
@@ -446,7 +438,6 @@ export async function insertItem(input: {
       input.libraryEntityId,
       input.payload,
     ),
-    ...(listPrice !== undefined ? { list_price: listPrice } : {}),
     created_at: now,
     updated_at: now,
   })
@@ -481,13 +472,10 @@ export async function updateItem(
   const payload =
     patch.payload !== undefined ? patch.payload : payloadFromRow(kind, existing)
 
-  const listPrice = kind === 'products' ? extractListPrice(payload) : undefined
-
   await db(CATALOG_TABLE_BY_KIND[kind])
     .where({ id, company_id: companyId })
     .update({
       ...columnsFromPayload(kind, bindingMode, libraryEntityId, payload),
-      ...(listPrice !== undefined ? { list_price: listPrice } : {}),
       updated_at: new Date(),
     })
 
@@ -518,7 +506,7 @@ export async function updateWebPublishStatus(
   companyId: string,
   kind: CatalogPricedKind,
   id: string,
-  webPublishStatus: 'draft' | 'published',
+  webPublishStatus: WebPublishStatus,
 ): Promise<Record<string, unknown> | undefined> {
   const existing = await findById(companyId, kind, id)
   if (!existing) return undefined
@@ -527,26 +515,6 @@ export async function updateWebPublishStatus(
     .where({ id, company_id: companyId })
     .update({
       web_publish_status: webPublishStatus,
-      updated_at: new Date(),
-    })
-
-  return findById(companyId, kind, id)
-}
-
-export async function updateListPrice(
-  companyId: string,
-  kind: CatalogPricedKind,
-  id: string,
-  listPrice: number | null,
-): Promise<Record<string, unknown> | undefined> {
-  if (kind !== 'products') return undefined
-  const existing = await findById(companyId, kind, id)
-  if (!existing) return undefined
-
-  await db(CATALOG_TABLE_BY_KIND[kind])
-    .where({ id, company_id: companyId })
-    .update({
-      list_price: listPrice,
       updated_at: new Date(),
     })
 

@@ -25,6 +25,20 @@ export function findDefaultUser(roles: AssumableRoleOption[]): AssumableRoleOpti
   return roles.find((r) => r.role === 'member' && r.companyId === null) ?? null
 }
 
+export function findCompanyOwner(
+  roles: AssumableRoleOption[],
+  companyId: string,
+): AssumableRoleOption | null {
+  return (
+    roles.find(
+      (option) =>
+        option.role === 'company_admin' &&
+        option.companyId === companyId &&
+        option.accountKind !== 'staff',
+    ) ?? null
+  )
+}
+
 export function findMatchingRole(
   roles: AssumableRoleOption[],
   role: SessionRole | null,

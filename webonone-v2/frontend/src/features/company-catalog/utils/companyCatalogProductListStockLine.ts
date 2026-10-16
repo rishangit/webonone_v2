@@ -18,9 +18,25 @@ export function resolveCompanyProductListUnitPrice(
   listPrice?: number | null,
 ): number | null {
   if (!line || line.totalQuantity <= 0) return null
+  if (line.sellPrice != null) return line.sellPrice
   if (listPrice != null) return listPrice
-  if (line.sellPrice == null) return null
-  return line.sellPrice
+  return null
+}
+
+export function companyProductListPriceDisplay(
+  line: ProductPickerVariantStockLine | null,
+  listPrice?: number | null,
+): { value: number; compareAt: number | null; discountPercent: number | null } | null {
+  const value = resolveCompanyProductListUnitPrice(line, listPrice)
+  if (value == null) return null
+  if (line?.sellPrice != null) {
+    return {
+      value,
+      compareAt: line.compareAtSellPrice,
+      discountPercent: line.discountPercent,
+    }
+  }
+  return { value, compareAt: null, discountPercent: null }
 }
 
 export function formatCompanyProductListStockAvailability(

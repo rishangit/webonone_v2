@@ -66,7 +66,12 @@ export function CatalogPublicServiceOfferCard({
       ) : null}
 
       {item.listPrice != null ? (
-        <ListPriceField label={t('productPricing.price')} value={item.listPrice} />
+        <ListPriceField
+          label={t('productPricing.price')}
+          value={item.listPrice}
+          compareAt={item.listPriceCompareAt}
+          discountPercent={item.listDiscountPercent}
+        />
       ) : null}
     </EditableSectionCard>
   )

@@ -132,6 +132,7 @@ export function CompanyProductVariantStocksCard({
                       ) : null}
                     </div>
                     <StockAvailabilityProgress
+                      size="compact"
                       quantity={stock.quantity}
                       maxQuantity={limits?.maxQuantity}
                       minQuantity={limits?.minQuantity}

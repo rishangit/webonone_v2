@@ -27,6 +27,10 @@ interface SessionContextValue {
   selectRole: (option: SessionRoleOption) => Promise<void>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
+  refreshRoleOptions: () => Promise<SessionRoleOption[]>
+  promptAccountChoice: (companyId: string) => Promise<void>
+  accountChoiceCompanyId: string | null
+  clearAccountChoice: () => void
   setLocale: (locale: AppLocale) => Promise<void>
 }
 
@@ -41,6 +45,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [isBlocked, setBlocked] = useState(false)
   const [blockReason, setBlockReason] = useState<string | null>(null)
   const [roleOptions, setRoleOptions] = useState<SessionRoleOption[]>([])
+  const [accountChoiceCompanyId, setAccountChoiceCompanyId] = useState<string | null>(null)
   const [locale, setLocaleState] = useState<AppLocale>('en')
   const loggingOutRef = useRef(false)
 
@@ -50,6 +55,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setBlocked(false)
     setBlockReason(null)
     setRoleOptions([])
+    setAccountChoiceCompanyId(null)
   }, [])
 
   const logout = useCallback(async () => {
@@ -141,6 +147,30 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     },
     [applySessionRole],
   )
+
+  const refreshRoleOptions = useCallback(async () => {
+    const token = await secureStorage.getAccessToken()
+    if (!token) return []
+    const options = await sessionRoleApi.getAssumableRoles(token)
+    setRoleOptions(options)
+    return options
+  }, [])
+
+  const promptAccountChoice = useCallback(
+    async (companyId: string) => {
+      try {
+        await refreshRoleOptions()
+      } catch {
+        // Still offer Choose account if the role list cannot be refreshed.
+      }
+      setAccountChoiceCompanyId(companyId)
+    },
+    [refreshRoleOptions],
+  )
+
+  const clearAccountChoice = useCallback(() => {
+    setAccountChoiceCompanyId(null)
+  }, [])
 
   const refreshProfile = useCallback(async () => {
     const sticky = await secureStorage.getSessionRole()
@@ -253,6 +283,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       selectRole,
       logout,
       refreshProfile,
+      refreshRoleOptions,
+      promptAccountChoice,
+      accountChoiceCompanyId,
+      clearAccountChoice,
       setLocale,
     }),
     [
@@ -262,12 +296,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       isBlocked,
       blockReason,
       roleOptions,
+      accountChoiceCompanyId,
       locale,
       login,
       loginWithGoogle,
       selectRole,
       logout,
       refreshProfile,
+      refreshRoleOptions,
+      promptAccountChoice,
+      clearAccountChoice,
       setLocale,
     ],
   )

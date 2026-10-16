@@ -1,17 +1,31 @@
 import { z } from 'zod'
 
-const timeSchema = z.string().regex(/^\d{2}:\d{2}$/)
+const ymdSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 
-export const catalogPriceRuleBodySchema = z
+export const catalogPriceKindSchema = z.enum(['services', 'spaces'])
+export type CatalogPriceKind = z.infer<typeof catalogPriceKindSchema>
+
+export const catalogDiscountKindSchema = z.enum(['products', 'services', 'spaces'])
+export type CatalogDiscountKind = z.infer<typeof catalogDiscountKindSchema>
+
+export const catalogPriceBodySchema = z.object({
+  price: z.number().min(0),
+})
+
+export type CatalogPriceBody = z.infer<typeof catalogPriceBodySchema>
+
+export const catalogDiscountBodySchema = z
   .object({
-    price: z.number().min(0),
-    applyWhen: z.enum(['all_time', 'selected_days']),
+    percent: z.number().gt(0).max(100),
+    applyWhen: z.enum(['all_time', 'selected_days', 'date_range']),
     weekdays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
-    timeScope: z.enum(['full_day', 'specific_time']).optional(),
-    startTime: timeSchema.nullable().optional(),
-    endTime: timeSchema.nullable().optional(),
+    startDate: ymdSchema.nullable().optional(),
+    endDate: ymdSchema.nullable().optional(),
     applyTo: z.enum(['everyone', 'selected_users']),
     userIds: z.array(z.string().length(21)).max(50).optional(),
+    /** Products only. `all` covers every variant; `selected` uses variantIds. */
+    applyVariants: z.enum(['all', 'selected']).optional(),
+    variantIds: z.array(z.string().length(21)).max(50).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.applyWhen === 'selected_days') {
@@ -23,35 +37,28 @@ export const catalogPriceRuleBodySchema = z
           message: 'Select at least one day',
         })
       }
-      if (data.timeScope !== 'full_day' && data.timeScope !== 'specific_time') {
+    }
+    if (data.applyWhen === 'date_range') {
+      if (!data.startDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ['timeScope'],
-          message: 'Choose full day or a specific time',
+          path: ['startDate'],
+          message: 'Start date is required',
         })
       }
-      if (data.timeScope === 'specific_time') {
-        if (!data.startTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['startTime'],
-            message: 'Start time is required',
-          })
-        }
-        if (!data.endTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['endTime'],
-            message: 'End time is required',
-          })
-        }
-        if (data.startTime && data.endTime && data.endTime <= data.startTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['endTime'],
-            message: 'End time must be after start time',
-          })
-        }
+      if (!data.endDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['endDate'],
+          message: 'End date is required',
+        })
+      }
+      if (data.startDate && data.endDate && data.endDate < data.startDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['endDate'],
+          message: 'End date must be on or after the start date',
+        })
       }
     }
     if (data.applyTo === 'selected_users' && [...new Set(data.userIds ?? [])].length === 0) {
@@ -61,9 +68,13 @@ export const catalogPriceRuleBodySchema = z
         message: 'Select at least one user',
       })
     }
+    if (data.applyVariants === 'selected' && [...new Set(data.variantIds ?? [])].length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['variantIds'],
+        message: 'Select a variant',
+      })
+    }
   })
 
-export type CatalogPriceRuleBody = z.infer<typeof catalogPriceRuleBodySchema>
-
-export const catalogPriceKindSchema = z.enum(['services', 'spaces'])
-export type CatalogPriceKind = z.infer<typeof catalogPriceKindSchema>
+export type CatalogDiscountBody = z.infer<typeof catalogDiscountBodySchema>

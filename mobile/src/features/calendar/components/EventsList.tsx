@@ -64,8 +64,12 @@ export function EventsList({
   return (
     <>
       <ItemList>
-        {items.map((raw) => {
-          const item = overlayEventAttendeeFromSessionUser(raw, sessionUser)
+        {items.map((item) => {
+          const assignedName =
+            item.timeMode === 'duration'
+              ? overlayEventAttendeeFromSessionUser(item, sessionUser).attendeeDisplayName?.trim() ||
+                null
+              : null
           return (
           <ItemListItem key={item.id}>
             <Pressable
@@ -83,7 +87,7 @@ export function EventsList({
                   title={item.serviceName}
                   subtitle={[
                     item.staffDisplayName,
-                    item.attendeeDisplayName ? item.attendeeDisplayName : null,
+                    assignedName,
                     formatEventWhen(item),
                   ]
                     .filter(Boolean)

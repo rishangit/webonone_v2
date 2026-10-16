@@ -23,11 +23,16 @@ import { CompanyCatalogListItemStockProgress } from './CompanyCatalogListItemSto
 import { CompanyCatalogProductListVariantStock } from './CompanyCatalogProductListVariantStock'
 import { CompanyCatalogServiceListMeta } from './CompanyCatalogServiceListMeta'
 import { useCompanyProductListStockMeta } from '../hooks/useCompanyProductListStockMeta'
-import type { HydratedCatalogItem } from '../types/companyCatalog.types'
-import type { CatalogEntityKind } from '../types/companyCatalog.types'
+import {
+  resolveWebPublishStatus,
+  type CatalogEntityKind,
+  type HydratedCatalogItem,
+  type WebPublishStatus,
+} from '../types/companyCatalog.types'
 import { firstGalleryImageUrl } from '../utils/firstGalleryImageUrl'
 import {
   getActiveCompanyProductListLine,
+  companyProductListPriceDisplay,
   resolveCompanyProductListUnitPrice,
 } from '@/features/company-catalog/utils/companyCatalogProductListStockLine'
 import {
@@ -40,6 +45,18 @@ import type { ProductPickerStockDisplay } from '@/features/sales/utils/resolvePr
 
 const gridPriceColumnClass = 'text-right tabular-nums'
 const gridStockColumnClass = 'text-right text-muted-foreground'
+
+function catalogStatusVariant(status: WebPublishStatus): 'pending' | 'verified' | 'approved' {
+  if (status === 'published') return 'approved'
+  if (status === 'completed') return 'verified'
+  return 'pending'
+}
+
+function CatalogItemStatusTag({ status }: { status: WebPublishStatus | null | undefined }) {
+  const { t } = useTranslation('catalog')
+  const resolved = resolveWebPublishStatus(status)
+  return <StatusTag variant={catalogStatusVariant(resolved)}>{t(`detail.webPublish.${resolved}`)}</StatusTag>
+}
 
 type CompanyCatalogItemsListProps = {
   items: HydratedCatalogItem[]
@@ -128,6 +145,18 @@ export function CompanyCatalogItemsList({
         ),
       },
       {
+        id: 'itemStatus',
+        header: t('list.itemStatus'),
+        sortable: true,
+        compare: (a: HydratedCatalogItem, b: HydratedCatalogItem) =>
+          resolveWebPublishStatus(a.webPublishStatus).localeCompare(
+            resolveWebPublishStatus(b.webPublishStatus),
+            undefined,
+            { sensitivity: 'base' },
+          ),
+        cell: (item: HydratedCatalogItem) => <CatalogItemStatusTag status={item.webPublishStatus} />,
+      },
+      {
         id: 'description',
         header: tc('description'),
         sortable: true,
@@ -158,7 +187,7 @@ export function CompanyCatalogItemsList({
         : []),
       {
         id: 'binding',
-        header: tc('status'),
+        header: t('list.source'),
         cell: (item: HydratedCatalogItem) => (
           <div className="flex flex-wrap gap-1">
             <StatusTag variant="verified">{t(`binding.${item.bindingMode}`)}</StatusTag>
@@ -267,14 +296,24 @@ export function CompanyCatalogItemsList({
               className: gridPriceColumnClass,
               headerClassName: gridPriceColumnClass,
               cell: (item: HydratedCatalogItem) => {
-                const price = resolveCompanyProductListUnitPrice(
+                const price = companyProductListPriceDisplay(
                   getActiveCompanyProductListLine(
                     stockMetaForItem(item),
                     selectedVariantByItemId[item.id],
                   ),
                   item.listPrice,
                 )
-                return price != null ? <PriceDisplay value={price} size="sm" align="right" /> : '—'
+                return price != null ? (
+                  <PriceDisplay
+                    value={price.value}
+                    compareAt={price.compareAt}
+                    discountPercent={price.discountPercent}
+                    size="sm"
+                    align="right"
+                  />
+                ) : (
+                  '—'
+                )
               },
             },
           ]
@@ -330,7 +369,13 @@ export function CompanyCatalogItemsList({
               headerClassName: gridPriceColumnClass,
               cell: (item: HydratedCatalogItem) =>
                 item.listPrice != null ? (
-                  <PriceDisplay value={item.listPrice} size="sm" align="right" />
+                  <PriceDisplay
+                    value={item.listPrice}
+                    compareAt={item.listPriceCompareAt}
+                    discountPercent={item.listDiscountPercent}
+                    size="sm"
+                    align="right"
+                  />
                 ) : (
                   '—'
                 ),
@@ -370,6 +415,7 @@ export function CompanyCatalogItemsList({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{item.displayName}</span>
+          <CatalogItemStatusTag status={item.webPublishStatus} />
           <StatusTag variant="verified">{t(`binding.${item.bindingMode}`)}</StatusTag>
           {item.libraryUnavailable ? (
             <StatusTag variant="pending">{t('list.libraryUnavailable')}</StatusTag>
@@ -499,11 +545,18 @@ export function CompanyCatalogItemsList({
       stockMetaForItem(item),
       selectedVariantByItemId[item.id],
     )
-    const unitPrice = resolveCompanyProductListUnitPrice(line, item.listPrice)
-    if (unitPrice == null) return null
+    const price = companyProductListPriceDisplay(line, item.listPrice)
+    if (price == null) return null
 
     return (
-      <PriceDisplay value={unitPrice} size="sm" align="right" className="mt-auto pt-2" />
+      <PriceDisplay
+        value={price.value}
+        compareAt={price.compareAt}
+        discountPercent={price.discountPercent}
+        size="sm"
+        align="right"
+        className="mt-auto pt-2"
+      />
     )
   }
 
@@ -592,6 +645,8 @@ export function CompanyCatalogItemsList({
             {kind === 'services' && item.listPrice != null ? (
               <PriceDisplay
                 value={item.listPrice}
+                compareAt={item.listPriceCompareAt}
+                discountPercent={item.listDiscountPercent}
                 size="sm"
                 align="right"
                 className="mt-auto pt-2"

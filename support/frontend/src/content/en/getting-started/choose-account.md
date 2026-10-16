@@ -12,10 +12,12 @@ After you sign in, WebOnOne may ask which **account** to use. This is not a seco
 Typical choices:
 
 - **Default User (member)** — your personal account. Use this to register a company or connect to companies you book with.
-- **Company owner** — a company you registered that is **approved**.
+- **Company owner** — a company you registered, including one you just created (even while it is still pending).
 - **Staff** — a workplace where you are staff.
 - **Super Admin** — only if you are a platform administrator.
 
-You cannot open a company that is still **pending** approval. See [What happens while pending approval](/docs/companies/pending-approval).
+After you register a company, **Choose account** opens again with that company selected. See [Register your company](/docs/companies/register-company).
+
+You cannot open a company that was **rejected**. See [What happens while pending approval](/docs/companies/pending-approval).
 
 To switch later without signing out, see [Switch account](/docs/getting-started/switch-account).

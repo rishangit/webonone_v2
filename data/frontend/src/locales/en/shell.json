@@ -13,7 +13,6 @@
   "copyToAi": "Copy to AI",
   "copyToAiSuccess": "Added to AI assistant",
   "copyToAiUnavailable": "Open Data from WebOnOne to use AI",
-  "customize": "Customize",
   "aiSuggestAttributeValues": "Suggest values with AI",
   "aiSuggestAttributeValuesSuccess": "Opened AI assistant",
   "aiSuggestAttributeValuesPrompt": "Suggest attribute values for {{attributeName}} on {{entityName}} and add them using the attribute value tool.",

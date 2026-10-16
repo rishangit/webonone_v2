@@ -20,6 +20,7 @@ interface ServiceWizardStepAttributesProps {
   attributeOptions: AttributeOption[]
   isSubmitting: boolean
   onChange: (patch: Partial<ServiceWizardFormValues>) => void
+  emptyHint?: string
 }
 
 export function ServiceWizardStepAttributes({
@@ -27,6 +28,7 @@ export function ServiceWizardStepAttributes({
   attributeOptions,
   isSubmitting,
   onChange,
+  emptyHint = 'Optional. Add custom attribute values for this service.',
 }: ServiceWizardStepAttributesProps) {
   function addAttributeRow() {
     onChange({
@@ -71,7 +73,7 @@ export function ServiceWizardStepAttributes({
 
       {values.attributes.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Optional. Add custom attribute values for this service.
+          {emptyHint}
         </p>
       ) : null}
 

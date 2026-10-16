@@ -328,12 +328,14 @@
    */
   .stock-availability-progress-full {
     width: 100%;
+    min-width: 12rem;
     max-width: none;
     align-self: stretch;
   }
 
   .stock-availability-progress-full [role='progressbar'] {
     width: 100%;
+    min-width: 12rem;
     max-width: none;
   }
 }

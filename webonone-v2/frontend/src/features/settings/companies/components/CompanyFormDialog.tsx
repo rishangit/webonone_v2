@@ -46,6 +46,7 @@ import type {
   UpdateCompanyBody,
 } from '@/features/settings/basic/services/companyApi'
 import { companiesActions } from '@/features/settings/basic/store/companiesStore'
+import { sessionRoleActions } from '@/features/session/store/sessionRoleSlice'
 import { loadIdentityUsersForStaff } from '@/features/staff/services/identityUsersApi'
 import { CompanyWizardProgress } from './company-wizard/CompanyWizardProgress'
 import { CompanyWizardStepAddress } from './company-wizard/CompanyWizardStepAddress'
@@ -305,12 +306,26 @@ export function CompanyFormDialog({
       setPhase('idle')
       onSaved()
       onOpenChange(false)
+      if (newId) {
+        dispatch(sessionRoleActions.accountChoiceRequested({ companyId: newId }))
+      }
       return
     }
 
-    if (phase === 'update-after-register' || phase === 'idle') {
+    if (phase === 'update-after-register') {
+      const newId = myCompany?.company.id
       submittedRef.current = false
       setPhase('idle')
+      onSaved()
+      onOpenChange(false)
+      if (newId) {
+        dispatch(sessionRoleActions.accountChoiceRequested({ companyId: newId }))
+      }
+      return
+    }
+
+    if (phase === 'idle') {
+      submittedRef.current = false
       onSaved()
       onOpenChange(false)
     }

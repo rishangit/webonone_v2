@@ -17,6 +17,7 @@ import {
 import { useCompanyProductVariantStockLimitsMap } from '@/features/company-catalog/hooks/useCompanyProductVariantStockLimitsMap'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { companyCatalogApi, type CompanyCatalogVariant } from '@/features/company-catalog/services/companyCatalogApi'
+import { CompanyProductVariantCopyToAiMenuItem } from './CompanyProductVariantCopyToAiMenuItem'
 import { CompanyProductVariantPickerDialog } from './CompanyProductVariantPickerDialog'
 import { formatLibraryAttributeValueLabel } from '../services/dataLibraryApi'
 
@@ -25,12 +26,14 @@ const AI_PRODUCT_VARIANTS_CHANGED_EVENT = 'webonone:platform:ai-product-variants
 type CompanyProductVariantsTabProps = {
   /** Company catalog product id (used for variant detail navigation). */
   productId: string
+  productName: string
   libraryEntityId: string | null
   canAdd: boolean
 }
 
 export function CompanyProductVariantsTab({
   productId,
+  productName,
   libraryEntityId,
   canAdd,
 }: CompanyProductVariantsTabProps) {
@@ -182,10 +185,14 @@ export function CompanyProductVariantsTab({
                     {rowBody}
                   </button>
                 </ItemListContent>
-                {canAdd && !variant.isDefault ? (
-                  <ItemListMenu
-                    ariaLabel={t('variantsTab.actionsFor', { name: variant.name })}
-                  >
+                <ItemListMenu ariaLabel={t('variantsTab.actionsFor', { name: variant.name })}>
+                  <CompanyProductVariantCopyToAiMenuItem
+                    productId={productId}
+                    productName={productName}
+                    variantId={variant.id}
+                    variantName={variant.name}
+                  />
+                  {canAdd && !variant.isDefault ? (
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       disabled={busy}
@@ -193,8 +200,8 @@ export function CompanyProductVariantsTab({
                     >
                       {tc('delete')}
                     </DropdownMenuItem>
-                  </ItemListMenu>
-                ) : null}
+                  ) : null}
+                </ItemListMenu>
               </ItemListItem>
             )
           })}

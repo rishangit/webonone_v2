@@ -1,44 +1,47 @@
 import { useTranslation } from 'react-i18next'
 import { ListPriceField } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
-import type { CatalogPriceRule } from '@/features/company-catalog/types/catalogPriceRule.types'
-import { formatCatalogPriceWhen } from '@/features/company-catalog/utils/formatCatalogPriceWhen'
-import { resolveApplicableCatalogPrice } from '@/features/company-catalog/utils/resolveApplicableCatalogPrice'
+import type { CatalogDiscount, CatalogPrice } from '@/features/company-catalog/types/catalogPricing.types'
+import {
+  formatCatalogDiscountWhen,
+  formatCatalogDiscountWhom,
+  resolveApplicableCatalogOffer,
+} from '@/features/company-catalog/utils/resolveApplicableCatalogPrice'
 
 type CatalogApplicablePriceProps = {
-  rules: CatalogPriceRule[]
+  prices: CatalogPrice[]
+  discounts: CatalogDiscount[]
   loading?: boolean
 }
 
-export function CatalogApplicablePrice({ rules, loading = false }: CatalogApplicablePriceProps) {
-  const { t } = useTranslation('catalog')
+export function CatalogApplicablePrice({
+  prices,
+  discounts,
+  loading = false,
+}: CatalogApplicablePriceProps) {
+  const { t, i18n } = useTranslation('catalog')
   const userId = useAppSelector((s) => s.auth.user?.id)
-  const match = resolveApplicableCatalogPrice(rules, userId)
+  const offer = resolveApplicableCatalogOffer(prices, discounts, userId)
 
   const condition = loading
     ? t('priceList.loadingPrice')
-    : match
-      ? describeRule(match, t)
-      : rules.length === 0
+    : offer
+      ? offer.discount
+        ? `${formatCatalogDiscountWhen(offer.discount, t, i18n.language)} · ${formatCatalogDiscountWhom(offer.discount, t)}`
+        : t('priceList.activePrice')
+      : prices.length === 0
         ? t('priceList.noPrices')
-        : t('priceList.noMatch')
+        : t('priceList.noActivePrice')
 
   return (
     <div className="space-y-1">
-      <ListPriceField label={t('priceList.currentPrice')} value={loading ? null : (match?.price ?? null)} />
+      <ListPriceField
+        label={t('priceList.currentPrice')}
+        value={loading ? null : (offer?.price ?? null)}
+        compareAt={loading || !offer?.discount ? null : offer.basePrice}
+        discountPercent={loading ? null : (offer?.discount?.percent ?? null)}
+      />
       <p className="text-sm text-muted-foreground">{condition}</p>
     </div>
   )
-}
-
-function describeRule(
-  rule: CatalogPriceRule,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  const when = formatCatalogPriceWhen(rule, t)
-  const whom =
-    rule.applyTo === 'everyone'
-      ? t('priceList.everyone')
-      : t('priceList.userCount', { count: rule.users.length })
-  return `${when} · ${whom}`
 }

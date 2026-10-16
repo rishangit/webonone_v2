@@ -66,7 +66,6 @@ export type ServiceWizardFormValues = {
   name: string
   description: string
   status: 'verified' | 'pending'
-  list_price: string
   time_mode: ServiceTimeMode
   duration_minutes: string
   start_time: string
@@ -79,7 +78,6 @@ export const EMPTY_SERVICE_WIZARD_VALUES: ServiceWizardFormValues = {
   name: '',
   description: '',
   status: 'pending',
-  list_price: '',
   time_mode: 'duration',
   duration_minutes: '60',
   start_time: '',
@@ -162,15 +160,10 @@ export function toCreateServicePayload(
           end_time: time.end_time,
         }
 
-  const listPrice =
-    values.list_price.trim() === '' ? null : Number.parseFloat(values.list_price.trim())
-
   return {
     name: values.name.trim(),
     description: values.description.trim() || null,
     status: options.canSetStatus ? values.status : 'pending',
-    list_price:
-      listPrice != null && !Number.isNaN(listPrice) && listPrice >= 0 ? listPrice : null,
     tag_ids: values.tags.map((tag) => tag.id),
     attributes: values.attributes
       .filter((row) => row.attributeId)

@@ -57,6 +57,10 @@ export function ColorsPage() {
             <PriceDisplay value={1250} size="md" variant="cost" />
             <PriceDisplay value={1890} size="md" variant="sell" />
           </div>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">Discounted</p>
+            <PriceDisplay value={2700} compareAt={3000} discountPercent={10} size="lg" />
+          </div>
         </div>
       </DemoSection>
 

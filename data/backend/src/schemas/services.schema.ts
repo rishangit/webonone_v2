@@ -70,7 +70,6 @@ const serviceTimeFieldsSchema = z.object({
   duration_minutes: z.number().int().positive().optional().nullable(),
   start_time: timeOfDaySchema.optional().nullable(),
   end_time: timeOfDaySchema.optional().nullable(),
-  list_price: z.number().nonnegative().optional().nullable(),
 })
 
 export const createServiceBodySchema = createCatalogBodySchema

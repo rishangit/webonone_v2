@@ -90,6 +90,7 @@ export function CatalogWebPublishDialog({
         </>
       }
     >
+      <div className="space-y-3">
       {mutateError ? (
         <Alert variant="destructive">
           <AlertDescription>{mutateError}</AlertDescription>
@@ -106,10 +107,13 @@ export function CatalogWebPublishDialog({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="draft">{t('detail.webPublish.draft')}</SelectItem>
+            <SelectItem value="completed">{t('detail.webPublish.completed')}</SelectItem>
             <SelectItem value="published">{t('detail.webPublish.published')}</SelectItem>
           </SelectContent>
         </Select>
       </FormField>
+      <p className="text-sm text-muted-foreground">{t(`detail.webPublish.${value}Hint`)}</p>
+      </div>
     </CustomDialog>
   )
 }

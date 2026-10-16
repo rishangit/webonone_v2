@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAppSelector } from '@/app/store/hooks'
 import {
   resolveProductPickerStockDisplay,
   type ProductPickerStockDisplay,
@@ -15,6 +16,7 @@ export function useCompanyProductListStockMeta(
   const [stockByProductId, setStockByProductId] = useState<Record<string, ProductPickerStockDisplay>>(
     {},
   )
+  const userId = useAppSelector((state) => state.auth.user?.id ?? null)
   const idsKey = products
     .map((product) => `${product.companyProductId}:${product.libraryProductId}`)
     .sort()
@@ -33,7 +35,11 @@ export function useCompanyProductListStockMeta(
     let cancelled = false
     void Promise.all(
       refs.map(async (ref) => {
-        const meta = await resolveProductPickerStockDisplay(ref.libraryProductId, ref.companyProductId)
+        const meta = await resolveProductPickerStockDisplay(
+          ref.libraryProductId,
+          ref.companyProductId,
+          userId,
+        )
         return { id: ref.companyProductId, meta }
       }),
     )
@@ -48,7 +54,7 @@ export function useCompanyProductListStockMeta(
     return () => {
       cancelled = true
     }
-  }, [idsKey])
+  }, [idsKey, userId])
 
   return stockByProductId
 }

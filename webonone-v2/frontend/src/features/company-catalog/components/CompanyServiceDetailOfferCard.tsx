@@ -1,24 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, EditableSectionCard, ReadOnlyField } from '@webonone/ui-kit'
+import { EditableSectionCard, ReadOnlyField } from '@webonone/ui-kit'
 import { CatalogApplicablePrice } from '@/features/company-catalog/components/CatalogApplicablePrice'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
-import type { CatalogPriceRule } from '@/features/company-catalog/types/catalogPriceRule.types'
+import type { CatalogDiscount, CatalogPrice } from '@/features/company-catalog/types/catalogPricing.types'
 import type { CatalogPayload } from '@/features/company-catalog/types/companyCatalog.types'
 
 type CompanyServiceDetailOfferCardProps = {
   serviceId: string
   companyId?: string
   servicePayload: CatalogPayload | null
-  priceRules: CatalogPriceRule[]
-  priceRulesLoading?: boolean
-  canManagePrice: boolean
-  canEditSchedule: boolean
+  prices: CatalogPrice[]
+  discounts: CatalogDiscount[]
+  pricingLoading?: boolean
+  canEdit: boolean
   busy?: boolean
   overviewActive?: boolean
-  onManagePrices: () => void
-  onEditSchedule: () => void
-  onManageWorkflow: () => void
+  onEdit: () => void
 }
 
 function ServiceTimeFields({
@@ -71,15 +69,13 @@ export function CompanyServiceDetailOfferCard({
   serviceId,
   companyId,
   servicePayload,
-  priceRules,
-  priceRulesLoading = false,
-  canManagePrice,
-  canEditSchedule,
+  prices,
+  discounts,
+  pricingLoading = false,
+  canEdit,
   busy = false,
   overviewActive = true,
-  onManagePrices,
-  onEditSchedule,
-  onManageWorkflow,
+  onEdit,
 }: CompanyServiceDetailOfferCardProps) {
   const { t } = useTranslation('catalog')
   const [spaceNames, setSpaceNames] = useState<string[] | undefined>()
@@ -107,82 +103,39 @@ export function CompanyServiceDetailOfferCard({
     void loadSpaces()
   }, [loadSpaces, overviewActive])
 
-  const canEditCard = (canManagePrice || canEditSchedule) && !busy
   const loadingSpaces = spaceNames === undefined
   const emptySpaces = spaceNames !== undefined && spaceNames.length === 0
-
-  function handleCardEdit() {
-    if (canManagePrice) {
-      onManagePrices()
-      return
-    }
-    if (canEditSchedule) {
-      onEditSchedule()
-    }
-  }
 
   return (
     <EditableSectionCard
       title={t('detail.serviceOffer.title')}
       description={t('detail.serviceOffer.description')}
-      canEdit={canEditCard}
-      onEdit={handleCardEdit}
+      canEdit={canEdit && !busy}
+      onEdit={onEdit}
     >
       <div className="space-y-4">
         <div className="space-y-3 border-y border-border py-3">
           <ServiceTimeFields servicePayload={servicePayload} t={t} />
         </div>
 
-        <div className="space-y-2">
-          <ReadOnlyField
-            label={t('detail.sessions.where')}
-            value={
-              loadingSpaces
-                ? t('detail.serviceOffer.loadingSpaces')
-                : spacesError
-                  ? spacesError
-                  : emptySpaces
-                    ? t('detail.serviceOffer.noSpaces')
-                    : spaceNames?.join(', ')
-            }
-          />
-          {canEditSchedule || canManagePrice ? (
-            <div className="flex flex-wrap gap-x-3 gap-y-1">
-              {canEditSchedule ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto p-0 text-sm"
-                  onClick={onEditSchedule}
-                >
-                  {t('detail.serviceOffer.editSchedule')}
-                </Button>
-              ) : null}
-              {canEditSchedule ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto p-0 text-sm"
-                  onClick={onManageWorkflow}
-                >
-                  {t('detail.serviceOffer.manageWorkflow')}
-                </Button>
-              ) : null}
-              {canManagePrice ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto p-0 text-sm"
-                  onClick={onManagePrices}
-                >
-                  {t('priceList.manage')}
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+        <ReadOnlyField
+          label={t('detail.sessions.where')}
+          value={
+            loadingSpaces
+              ? t('detail.serviceOffer.loadingSpaces')
+              : spacesError
+                ? spacesError
+                : emptySpaces
+                  ? t('detail.serviceOffer.noSpaces')
+                  : spaceNames?.join(', ')
+          }
+        />
 
-        <CatalogApplicablePrice rules={priceRules} loading={priceRulesLoading && overviewActive} />
+        <CatalogApplicablePrice
+          prices={prices}
+          discounts={discounts}
+          loading={pricingLoading && overviewActive}
+        />
       </div>
     </EditableSectionCard>
   )

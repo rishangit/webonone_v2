@@ -15,7 +15,8 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { CompanyCatalogItemsList } from '../components/CompanyCatalogItemsList'
-import { CatalogFormDialog } from '../components/CatalogFormDialog'
+import { ProductFormDialog } from '../components/ProductFormDialog'
+import { SpaceFormDialog } from '../components/SpaceFormDialog'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
@@ -132,11 +133,18 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
           onSaved={() => setAddOpen(false)}
         />
       ) : null}
-      {canManage && kind !== 'services' ? (
-        <CatalogFormDialog
+      {canManage && kind === 'products' ? (
+        <ProductFormDialog
           open={addOpen}
-          kind={kind}
-          mode="create"
+          includeSourceStep
+          excludeLibraryIds={excludeLibraryIds}
+          onOpenChange={setAddOpen}
+          onSaved={() => setAddOpen(false)}
+        />
+      ) : null}
+      {canManage && kind === 'spaces' ? (
+        <SpaceFormDialog
+          open={addOpen}
           includeSourceStep
           excludeLibraryIds={excludeLibraryIds}
           onOpenChange={setAddOpen}

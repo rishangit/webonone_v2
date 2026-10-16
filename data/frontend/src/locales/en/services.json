@@ -41,7 +41,6 @@
     "price": "Price",
     "schedule": "Schedule"
   },
-  "listPrice": "List price (LKR)",
   "detailOffer": {
     "title": "Price & time",
     "description": "List price and schedule for this service."

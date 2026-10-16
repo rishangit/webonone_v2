@@ -47,6 +47,8 @@ export function CompanyCatalogServiceListMeta({
       {showPrice ? (
         <PriceDisplay
           value={item.listPrice}
+          compareAt={item.listPriceCompareAt}
+          discountPercent={item.listDiscountPercent}
           size="sm"
           className={align === 'end' ? 'mt-auto' : undefined}
           align={align === 'end' ? 'right' : 'left'}

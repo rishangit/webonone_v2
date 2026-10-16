@@ -178,7 +178,7 @@ export function toCreateServicePayload(
 }
 
 export function toCreateSpacePayload(
-  values: SpaceFormValues & { tags: SelectTagValue[] },
+  values: SpaceFormValues & { tags: SelectTagValue[]; attributes?: ProductAttributeRow[] },
   options: { canSetStatus: boolean },
 ) {
   return {
@@ -186,5 +186,8 @@ export function toCreateSpacePayload(
     description: (values.description ?? '').trim() || null,
     status: options.canSetStatus ? values.status : 'pending',
     tag_ids: values.tags.map((tag) => tag.id),
+    attributes: (values.attributes ?? []).map((row) => ({
+      attribute_id: row.attributeId,
+    })),
   }
 }

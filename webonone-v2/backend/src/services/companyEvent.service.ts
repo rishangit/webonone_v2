@@ -126,6 +126,17 @@ export type CompanyEventDto = {
   tokenOccurrenceDates?: string[]
   /** Company member viewer is assigned staff (series, run, or service workflow). */
   viewerIsAssignedStaff?: boolean
+  /**
+   * Specific time (window) events — users assigned by an issued session token.
+   * Name and avatar only; email stays off list payloads.
+   */
+  tokenUsers?: EventTokenUserDto[]
+}
+
+export type EventTokenUserDto = {
+  userId: string
+  displayName: string
+  avatarUrl: string | null
 }
 
 export type SessionTokenStatus = 'waiting' | 'serving' | 'completed'
@@ -1226,13 +1237,48 @@ export async function listCompanyEvents(
   const page = opts.page ?? 1
   const pageSize = opts.pageSize ?? 20
   const start = (page - 1) * pageSize
+  const pageItems = series.slice(start, start + pageSize)
   return {
-    items: series.slice(start, start + pageSize),
+    items: await attachWindowTokenUsers(pageItems),
     total: series.length,
     page,
     pageSize,
     mode: 'series',
   }
+}
+
+/**
+ * Users assigned to a Specific time event by an issued token.
+ * Personal lists pass `onlyUserId` so other customers' identities stay off the payload.
+ */
+async function attachWindowTokenUsers(
+  events: CompanyEventDto[],
+  onlyUserId?: string,
+): Promise<CompanyEventDto[]> {
+  const windowIds = events.filter((event) => event.timeMode === 'window').map((event) => event.id)
+  if (windowIds.length === 0) return events
+
+  const pairs = await sessionTokenRepo.listDistinctUsersForEvents(windowIds, onlyUserId)
+  const contacts = await fetchUserContactsByIds(pairs.map((pair) => pair.user_id))
+  const byEvent = new Map<string, EventTokenUserDto[]>()
+  for (const pair of pairs) {
+    const identity = resolveIdentityDisplay(contacts.get(pair.user_id), 'Customer')
+    const list = byEvent.get(pair.event_id) ?? []
+    list.push({
+      userId: pair.user_id,
+      displayName: identity.displayName,
+      avatarUrl: normalizeAvatarUrl(identity.avatarUrl),
+    })
+    byEvent.set(pair.event_id, list)
+  }
+  for (const list of byEvent.values()) {
+    list.sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }))
+  }
+
+  return events.map((event) => {
+    if (event.timeMode !== 'window') return event
+    return { ...event, tokenUsers: byEvent.get(event.id) ?? [] }
+  })
 }
 
 async function enrichEventsAcrossCompanies(events: CompanyEventDto[]): Promise<CompanyEventDto[]> {
@@ -1316,8 +1362,9 @@ export async function listMyBookedEvents(
   const page = opts.page ?? 1
   const pageSize = opts.pageSize ?? 20
   const start = (page - 1) * pageSize
+  const pageItems = series.slice(start, start + pageSize)
   return {
-    items: series.slice(start, start + pageSize),
+    items: await attachWindowTokenUsers(pageItems, userId),
     total: series.length,
     page,
     pageSize,

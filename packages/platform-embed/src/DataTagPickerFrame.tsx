@@ -8,6 +8,7 @@ import {
   isDataTagPickerCancelMessage,
   isDataTagPickerCreateRequestMessage,
   isDataTagPickerSelectionChangeMessage,
+  isPlatformContentReadyMessage,
   isPlatformReadyMessage,
 } from './types'
 import type { DataTagPickerMode, DataTagPickerTag } from './types'
@@ -129,6 +130,11 @@ export const DataTagPickerFrame = forwardRef<HTMLIFrameElement, DataTagPickerFra
           return
         }
 
+        if (isPlatformContentReadyMessage(event.data)) {
+          deliverInit()
+          return
+        }
+
         if (
           isDataTagPickerSelectionChangeMessage(event.data) &&
           event.data.scope === scope
@@ -167,6 +173,36 @@ export const DataTagPickerFrame = forwardRef<HTMLIFrameElement, DataTagPickerFra
       scope,
       src,
     ])
+
+    useEffect(() => {
+      if (!isOpen) {
+        return
+      }
+
+      function pushSelection() {
+        const iframe = internalRef.current
+        if (!iframe?.contentWindow) {
+          return
+        }
+        sendDataTagPickerSetSelection(
+          iframe,
+          dataOriginNormalized,
+          scope,
+          selectedTagsRef.current,
+        )
+      }
+
+      pushSelection()
+      const retryTimers = [50, 150, 400, 800].map((delay) =>
+        window.setTimeout(pushSelection, delay),
+      )
+
+      return () => {
+        for (const timer of retryTimers) {
+          window.clearTimeout(timer)
+        }
+      }
+    }, [dataOriginNormalized, isOpen, scope, selectedTags])
 
     if (!isOpen) {
       return null

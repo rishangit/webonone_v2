@@ -16,6 +16,7 @@ import {
   PriceDisplay,
   Spinner,
 } from '@webonone/ui-kit'
+import { useAppSelector } from '@/app/store/hooks'
 import { companyCatalogApi } from '@/features/company-catalog/services/companyCatalogApi'
 import {
   dataLibraryApi,
@@ -82,6 +83,7 @@ export function PosItemPickerDialog({
 }: PosItemPickerDialogProps) {
   const { t } = useTranslation('sales')
   const { t: tc } = useTranslation('common')
+  const userId = useAppSelector((state) => state.auth.user?.id ?? null)
   const tabs = useMemo(
     () => TABS.filter((tab) => enabledKinds.includes(tab.kind)),
     [enabledKinds],
@@ -156,7 +158,7 @@ export function PosItemPickerDialog({
     let cancelled = false
     void Promise.all(
       linkedProducts.map(async (item) => {
-        const meta = await resolveProductPickerStockDisplay(item.libraryEntityId!, item.id)
+        const meta = await resolveProductPickerStockDisplay(item.libraryEntityId!, item.id, userId)
         return { id: item.id, meta }
       }),
     )
@@ -171,7 +173,7 @@ export function PosItemPickerDialog({
     return () => {
       cancelled = true
     }
-  }, [open, isLibrarySource, tabKind, localItems])
+  }, [open, isLibrarySource, tabKind, localItems, userId])
 
   useEffect(() => {
     if (!open || !activeCatalogKind || !isLibrarySource) return
@@ -379,9 +381,24 @@ export function PosItemPickerDialog({
                       ) : null}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                         {activeTab ? <span>{t(`kinds.${activeTab.kind}`)}</span> : null}
-                        {item.listPrice != null ? (
-                          <PriceDisplay value={item.listPrice} size="sm" className="inline" />
-                        ) : null}
+                        {(() => {
+                          const stockLine =
+                            tabKind === 'product'
+                              ? (productStockById[item.id]?.lines.find((line) => line.isDefault) ??
+                                productStockById[item.id]?.lines[0])
+                              : undefined
+                          const price = stockLine?.sellPrice ?? item.listPrice
+                          if (price == null) return null
+                          return (
+                            <PriceDisplay
+                              value={price}
+                              compareAt={stockLine?.compareAtSellPrice}
+                              discountPercent={stockLine?.discountPercent}
+                              size="sm"
+                              className="inline"
+                            />
+                          )
+                        })()}
                         {tabKind === 'product' && item.libraryEntityId ? (
                           <PosPickerProductStockInline meta={productStockById[item.id]} />
                         ) : null}

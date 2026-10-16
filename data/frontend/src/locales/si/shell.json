@@ -13,7 +13,6 @@
   "copyToAi": "AI වෙත පිටපත් කරන්න",
   "copyToAiSuccess": "AI සහායකයට එකතු කළා",
   "copyToAiUnavailable": "AI භාවිතා කිරීමට WebOnOne වෙතින් Data විවෘත කරන්න",
-  "customize": "අභිරුචිකරණය",
   "aiSuggestAttributeValues": "AI සමඟ අගයන් යෝජනා කරන්න",
   "aiSuggestAttributeValuesSuccess": "AI සහායකය විවෘත කළා",
   "aiSuggestAttributeValuesPrompt": "{{entityName}} මත {{attributeName}} සඳහා ගුණාංග අගයන් යෝජනා කර ගුණාංග අගය මෙවලම භාවිතයෙන් එකතු කරන්න.",

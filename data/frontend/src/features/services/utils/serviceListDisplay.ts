@@ -6,7 +6,6 @@ type ServiceListSource = CatalogItem & {
   duration_minutes?: number | null
   start_time?: string | null
   end_time?: string | null
-  list_price?: number | string | null
 }
 
 export function normalizeServiceListItem(item: CatalogItem): CatalogItem {
@@ -17,9 +16,6 @@ export function normalizeServiceListItem(item: CatalogItem): CatalogItem {
     durationMinutes: item.durationMinutes ?? raw.duration_minutes ?? null,
     startTime: item.startTime ?? raw.start_time ?? null,
     endTime: item.endTime ?? raw.end_time ?? null,
-    listPrice:
-      item.listPrice ??
-      (raw.list_price != null && raw.list_price !== '' ? Number(raw.list_price) : null),
   }
 }
 
@@ -49,11 +45,4 @@ export function formatServiceScheduleSummary(item: CatalogItem, t: TFunction<'se
     return '—'
   }
   return '—'
-}
-
-export function resolveServiceListPrice(item: CatalogItem): number | null {
-  const service = normalizeServiceListItem(item)
-  const price = service.listPrice
-  if (price == null || Number.isNaN(price)) return null
-  return price
 }

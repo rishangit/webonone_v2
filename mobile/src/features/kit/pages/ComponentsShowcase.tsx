@@ -64,6 +64,7 @@ export function ComponentsShowcase() {
 
       <DemoSection title="Price">
         <PriceDisplay value={1250} size="lg" />
+        <PriceDisplay value={2700} compareAt={3000} discountPercent={10} size="lg" />
         <StockBatchPriceRow costLabel="Cost" sellLabel="Sell" costValue={800} sellValue={1250} />
       </DemoSection>
 

@@ -25,7 +25,10 @@ function Progress({
       aria-valuemin={0}
       aria-valuemax={safeMax}
       aria-valuenow={clamped}
-      className={cn('h-2 w-full overflow-hidden rounded-full bg-muted', className)}
+      className={cn(
+        'h-2 w-full overflow-hidden rounded-full bg-foreground/10 dark:bg-foreground/20',
+        className,
+      )}
       {...props}
     >
       <div

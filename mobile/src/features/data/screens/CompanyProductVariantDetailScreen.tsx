@@ -22,7 +22,6 @@ import { CompanyProductVariantStocksCard } from '@/features/data/company-catalog
 import { useDataCatalogScope } from '@/features/data/hooks/useDataCatalogScope'
 import { companyCatalogApi, type CompanyCatalogVariant } from '@/features/data/services/companyCatalogApi'
 import { catalogDetailPath } from '@/features/data/utils/dataPaths'
-import { hydrateCatalogItems } from '@/features/sales/utils/hydrateCatalogItems'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 export function CompanyProductVariantDetailScreen({
@@ -42,7 +41,6 @@ export function CompanyProductVariantDetailScreen({
   const canAddStock = canManageCompanyCatalog
 
   const [variant, setVariant] = useState<CompanyCatalogVariant | null>(null)
-  const [productName, setProductName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -53,14 +51,10 @@ export function CompanyProductVariantDetailScreen({
     setLoading(true)
     setError(null)
     try {
-      const product = await companyCatalogApi.get('products', productId)
-      const [hydrated] = await hydrateCatalogItems('products', [product])
-      setProductName(hydrated?.displayName?.trim() ?? '')
       const result = await companyCatalogApi.getCopiedVariant(productId, variantId)
       setVariant(result)
     } catch (err) {
       setVariant(null)
-      setProductName('')
       setError(err instanceof Error ? err.message : t('variantDetail.failedLoad'))
     } finally {
       setLoading(false)
@@ -89,33 +83,12 @@ export function CompanyProductVariantDetailScreen({
     }
   }
 
-  function handleCopyToAi() {
-    if (!variant) return
-    requestEntityPaste({
-      entities: [
-        {
-          service: 'webonone',
-          kind: 'product',
-          id: productId,
-          label: productName || variant.name,
-        },
-      ],
-      composerText: `Focus on variant "${variant.name}" (variantId: ${variantId}). List existing stocks with list_company_product_variant_stocks, then suggest or create stock batches with create_company_product_variant_stock when asked.`,
-    })
-    toast({ title: t('attributesTab.copyToAiSuccess') })
-  }
-
   const actions =
-    variant ? (
+    variant && canEdit && !variant.isDefault ? (
       <View className="flex-row flex-wrap justify-end gap-2">
-        <Button variant="outline" size="sm" onPress={handleCopyToAi}>
-          {t('attributesTab.copyToAi')}
+        <Button variant="destructive" size="sm" disabled={deleting} onPress={() => setDeleteOpen(true)}>
+          {tc('delete')}
         </Button>
-        {canEdit && !variant.isDefault ? (
-          <Button variant="destructive" size="sm" disabled={deleting} onPress={() => setDeleteOpen(true)}>
-            {tc('delete')}
-          </Button>
-        ) : null}
       </View>
     ) : null
 

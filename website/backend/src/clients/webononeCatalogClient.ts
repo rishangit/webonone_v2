@@ -36,6 +36,10 @@ export type CatalogSearchItem = {
 
   listPrice: number | null
 
+  listPriceCompareAt?: number | null
+
+  listDiscountPercent?: number | null
+
   timeMode?: 'duration' | 'window' | null
 
   durationMinutes?: number | null
@@ -403,6 +407,8 @@ export type PublicProductVariantOfferLine = {
   }>
   totalQuantity: number
   sellPrice: number | null
+  compareAtSellPrice?: number | null
+  discountPercent?: number | null
 }
 
 export type PublicProductVariantOffer = {

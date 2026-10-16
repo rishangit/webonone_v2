@@ -19,4 +19,4 @@ You can change account without signing out.
 
 Use **Change account** when it appears in the user menu, then pick the same options.
 
-Company accounts only appear after the company is [approved](/docs/companies/pending-approval).
+A company you just registered appears in **Choose account** immediately, including while it is still [pending approval](/docs/companies/pending-approval).

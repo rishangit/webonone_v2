@@ -16,6 +16,7 @@ import {
   parsePayloadForKind,
   type CatalogEntityKind,
   type CatalogPayload,
+  type WebPublishStatus,
 } from '../schemas/companyCatalogSchemas.js'
 import { assertDiscoverableCompany } from './company.service.js'
 import {
@@ -26,6 +27,7 @@ import {
   priceClockFromDate,
   type PriceClock,
 } from '../utils/applicableCatalogPrice.js'
+import { applyLibrarySellPricesWhereMissing } from './companyProductPublicPrice.service.js'
 
 function httpError(message: string, statusCode: number): Error & { statusCode: number } {
   const err = new Error(message) as Error & { statusCode: number }
@@ -42,6 +44,36 @@ function parseOrBadRequest<T>(fn: () => T): T {
     }
     throw err
   }
+}
+
+type GalleryImageInput = { mediaId: string; url: string }
+
+function extractGalleryImagesFromBody(body: unknown): GalleryImageInput[] | undefined {
+  if (!body || typeof body !== 'object' || !('galleryImages' in body)) return undefined
+  const raw = (body as { galleryImages?: unknown }).galleryImages
+  if (!Array.isArray(raw)) return undefined
+  const images: GalleryImageInput[] = []
+  for (const entry of raw) {
+    if (
+      entry &&
+      typeof entry === 'object' &&
+      typeof (entry as { mediaId?: unknown }).mediaId === 'string' &&
+      typeof (entry as { url?: unknown }).url === 'string'
+    ) {
+      images.push({
+        mediaId: (entry as { mediaId: string }).mediaId,
+        url: (entry as { url: string }).url,
+      })
+    }
+  }
+  return images
+}
+
+function stripGalleryImagesFromBody(body: unknown): unknown {
+  if (!body || typeof body !== 'object') return body
+  const { galleryImages: _galleryImages, ...rest } = body as Record<string, unknown>
+  void _galleryImages
+  return rest
 }
 
 async function assertCompanyAdmin(userId: string, companyId: string): Promise<void> {
@@ -70,7 +102,14 @@ function isPriceListKind(kind: CatalogEntityKind): kind is 'services' | 'spaces'
   return kind === 'services' || kind === 'spaces'
 }
 
-async function withApplicableListPrices<T extends { id: string; listPrice?: number | null }>(
+async function withApplicableListPrices<
+  T extends {
+    id: string
+    listPrice?: number | null
+    listPriceCompareAt?: number | null
+    listDiscountPercent?: number | null
+  },
+>(
   companyId: string,
   kind: CatalogEntityKind,
   items: T[],
@@ -85,10 +124,46 @@ async function withApplicableListPrices<T extends { id: string; listPrice?: numb
     userId,
     clock,
   )
-  return items.map((item) => ({
-    ...item,
-    listPrice: prices.get(item.id) ?? null,
+  return items.map((item) => {
+    const offer = prices.get(item.id)
+    return {
+      ...item,
+      listPrice: offer?.price ?? null,
+      listPriceCompareAt: offer?.compareAt ?? null,
+      listDiscountPercent: offer?.discountPercent ?? null,
+    }
+  })
+}
+
+async function withApplicableProductListPrices<
+  T extends {
+    libraryEntityId?: string | null
+    companyId: string
+    listPrice?: number | null
+  },
+>(companyId: string, kind: CatalogEntityKind, items: T[]): Promise<T[]> {
+  if (kind !== 'products' || items.length === 0) return items
+  const priceTargets = items.map((item) => ({
+    listPrice: null as number | null,
+    libraryEntityId: item.libraryEntityId ?? null,
+    companyId: item.companyId ?? companyId,
   }))
+  await applyLibrarySellPricesWhereMissing(priceTargets)
+  return items.map((item, index) => ({
+    ...item,
+    listPrice: priceTargets[index].listPrice,
+  }))
+}
+
+async function enrichCatalogItems(
+  companyId: string,
+  kind: CatalogEntityKind,
+  items: ReturnType<typeof toDto>[],
+  userId: string,
+  clock: PriceClock,
+): Promise<ReturnType<typeof toDto>[]> {
+  const withRules = await withApplicableListPrices(companyId, kind, items, userId, clock)
+  return withApplicableProductListPrices(companyId, kind, withRules)
 }
 
 export function parseKindParam(kind: string): CatalogEntityKind {
@@ -108,7 +183,13 @@ export async function listCatalogItems(
   await assertCompanySessionAccess(userId, companyId)
   const rows = await repo.listByCompanyAndKind(companyId, kind, options)
   const items = rows.map((row) => toDto(kind, row))
-  return withApplicableListPrices(companyId, kind, items, userId, options?.clock ?? priceClockFromDate())
+  return enrichCatalogItems(
+    companyId,
+    kind,
+    items,
+    userId,
+    options?.clock ?? priceClockFromDate(),
+  )
 }
 
 export async function listDiscoverableCatalogItems(
@@ -123,7 +204,13 @@ export async function listDiscoverableCatalogItems(
     webPublishedOnly: repo.isCatalogPricedKind(kind),
   })
   const items = rows.map((row) => toDto(kind, row))
-  return withApplicableListPrices(companyId, kind, items, userId, options?.clock ?? priceClockFromDate())
+  return enrichCatalogItems(
+    companyId,
+    kind,
+    items,
+    userId,
+    options?.clock ?? priceClockFromDate(),
+  )
 }
 
 export async function getCatalogItem(
@@ -138,7 +225,7 @@ export async function getCatalogItem(
   if (!row) {
     throw httpError('Catalog item not found', 404)
   }
-  const [item] = await withApplicableListPrices(
+  const [item] = await enrichCatalogItems(
     companyId,
     kind,
     [toDto(kind, row)],
@@ -282,7 +369,9 @@ export async function updateCatalogItem(
     throw httpError('Catalog item not found', 404)
   }
   if (row.binding_mode === 'linked') {
-    throw httpError('Linked items are read-only; customize first', 409)
+    const galleryImages = extractGalleryImagesFromBody(payloadInput)
+    const payloadOnly = stripGalleryImagesFromBody(payloadInput)
+    return forkCatalogItem(userId, companyId, kind, id, payloadOnly, galleryImages)
   }
   const current = toDto(kind, row).payload as CatalogPayload
   const nextPayload = parseOrBadRequest(() =>
@@ -319,34 +408,12 @@ export async function updateCatalogGallery(
   return toDto(kind, updated)
 }
 
-export async function updateCatalogPricing(
-  userId: string,
-  companyId: string,
-  kind: CatalogEntityKind,
-  id: string,
-  listPrice: number | null,
-) {
-  await assertCompanyAdmin(userId, companyId)
-  if (kind !== 'products') {
-    throw httpError('List price is only supported for products', 400)
-  }
-  const row = await repo.findById(companyId, kind, id)
-  if (!row) {
-    throw httpError('Catalog item not found', 404)
-  }
-  const updated = await repo.updateListPrice(companyId, kind, id, listPrice)
-  if (!updated) {
-    throw httpError('Catalog item not found', 404)
-  }
-  return toDto(kind, updated)
-}
-
 export async function updateCatalogWebPublish(
   userId: string,
   companyId: string,
   kind: CatalogEntityKind,
   id: string,
-  webPublishStatus: 'draft' | 'published',
+  webPublishStatus: WebPublishStatus,
 ) {
   await assertCompanyAdmin(userId, companyId)
   if (!repo.isCatalogPricedKind(kind)) {

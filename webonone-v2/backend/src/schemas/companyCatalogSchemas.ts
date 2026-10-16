@@ -12,7 +12,7 @@ export const catalogEntityKindSchema = z.enum([
 export const catalogBindingModeSchema = z.enum(['linked', 'forked', 'custom'])
 
 export const entityStatusSchema = z.enum(['verified', 'pending'])
-export const webPublishStatusSchema = z.enum(['draft', 'published'])
+export const webPublishStatusSchema = z.enum(['draft', 'completed', 'published'])
 export const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be #RRGGBB')
 export const timeOfDaySchema = z
   .string()
@@ -59,13 +59,6 @@ const attributePayloadSchema = z.object({
   unitId: z.string().length(21).optional().nullable(),
   status: entityStatusSchema.optional(),
 })
-
-export const catalogListPriceSchema = z
-  .number()
-  .min(0)
-  .max(99_999_999.99)
-  .nullable()
-  .optional()
 
 const catalogBasePayloadSchema = z.object({
   name: z.string().trim().min(1).max(255),
@@ -154,7 +147,6 @@ const servicePayloadSchema = catalogBasePayloadSchema
   .superRefine((data, ctx) => refineServiceTime(data, ctx, { requireMode: true }))
 
 const productPayloadSchema = catalogBasePayloadSchema.extend({
-  listPrice: catalogListPriceSchema,
   ...sellableWebPublishField,
 })
 
@@ -217,10 +209,6 @@ export const updateCatalogGalleryBodySchema = z.object({
 
 export const updateServiceFormBodySchema = z.object({
   formTemplateId: z.string().length(21).nullable(),
-})
-
-export const updateCatalogPricingBodySchema = z.object({
-  listPrice: z.number().min(0).max(99_999_999.99).nullable(),
 })
 
 export const updateCatalogWebPublishBodySchema = z.object({
@@ -287,7 +275,6 @@ export const replaceServiceWorkflowBodySchema = z.object({
 
 export type UpdateCatalogGalleryBody = z.infer<typeof updateCatalogGalleryBodySchema>
 export type UpdateServiceFormBody = z.infer<typeof updateServiceFormBodySchema>
-export type UpdateCatalogPricingBody = z.infer<typeof updateCatalogPricingBodySchema>
 export type UpdateCatalogWebPublishBody = z.infer<typeof updateCatalogWebPublishBodySchema>
 export type WebPublishStatus = z.infer<typeof webPublishStatusSchema>
 export type CreateCompanyProductStockBody = z.infer<typeof createCompanyProductStockBodySchema>
@@ -306,11 +293,52 @@ export function isCatalogGalleryKind(kind: CatalogEntityKind): kind is CatalogGa
   return (CATALOG_GALLERY_KINDS as readonly string[]).includes(kind)
 }
 
+function sanitizeSellablePayloadAttributes(
+  kind: CatalogEntityKind,
+  payload: unknown,
+): unknown {
+  if (kind !== 'products' && kind !== 'services' && kind !== 'spaces') return payload
+  if (!payload || typeof payload !== 'object') return payload
+  const record = payload as Record<string, unknown>
+  if (!Array.isArray(record.attributes)) return payload
+
+  const attributes = record.attributes
+    .filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object')
+    .map((row) => {
+      const attributeId = row.attributeId
+      if (typeof attributeId !== 'string' || attributeId.length !== 21) return null
+
+      const textRaw = row.valueText
+      const hasText = typeof textRaw === 'string' && textRaw.trim() !== ''
+      const numberRaw = row.valueNumber
+      const number =
+        typeof numberRaw === 'number'
+          ? numberRaw
+          : typeof numberRaw === 'string' && numberRaw.trim() !== ''
+            ? Number(numberRaw)
+            : null
+      const hasNumber = number != null && Number.isFinite(number)
+
+      if (hasText && !hasNumber) {
+        return { attributeId, valueText: textRaw.trim() }
+      }
+      if (hasNumber && !hasText) {
+        return { attributeId, valueNumber: number }
+      }
+      return null
+    })
+    .filter((row) => row != null)
+
+  return { ...record, attributes }
+}
+
 export function parsePayloadForKind(
   kind: CatalogEntityKind,
   payload: unknown,
 ): CatalogPayload {
-  return catalogPayloadByKind[kind].parse(payload) as CatalogPayload
+  return catalogPayloadByKind[kind].parse(
+    sanitizeSellablePayloadAttributes(kind, payload),
+  ) as CatalogPayload
 }
 
 export const copyAttributesFromLibraryBodySchema = z.object({

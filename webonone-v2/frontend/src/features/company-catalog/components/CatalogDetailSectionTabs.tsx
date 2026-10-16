@@ -9,6 +9,7 @@ export type CatalogDetailTabId =
   | 'variants'
   | 'workflow'
   | 'priceList'
+  | 'discounts'
 
 type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailTabId> = {
   ariaLabel: string
@@ -21,8 +22,10 @@ type CatalogDetailSectionTabsProps<T extends CatalogDetailTabId = CatalogDetailT
   variants?: ReactNode
   /** Services only — when omitted, Workflow tab is hidden. */
   workflow?: ReactNode
-  /** Services and spaces — when omitted, Price list tab is hidden. */
+  /** Services and spaces — when omitted, Prices & discounts tab is hidden. */
   priceList?: ReactNode
+  /** Products — when omitted, Discounts tab is hidden. */
+  discounts?: ReactNode
 }
 
 export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
@@ -35,6 +38,7 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
   variants,
   workflow,
   priceList,
+  discounts,
 }: CatalogDetailSectionTabsProps<T>) {
   const { t } = useTranslation('catalog')
   const tabs: { id: CatalogDetailTabId; label: string }[] = [
@@ -44,6 +48,9 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
   ]
   if (priceList != null) {
     tabs.push({ id: 'priceList', label: t('detail.tabs.priceList') })
+  }
+  if (discounts != null) {
+    tabs.push({ id: 'discounts', label: t('detail.tabs.discounts') })
   }
   if (variants != null) {
     tabs.push({ id: 'variants', label: t('detail.tabs.variants') })
@@ -61,7 +68,9 @@ export function CatalogDetailSectionTabs<T extends CatalogDetailTabId>({
           ? gallery
           : tab === 'priceList'
             ? priceList
-            : tab === 'workflow'
+            : tab === 'discounts'
+              ? discounts
+              : tab === 'workflow'
               ? workflow
               : variants
 

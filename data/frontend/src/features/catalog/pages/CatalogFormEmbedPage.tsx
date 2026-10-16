@@ -7,9 +7,10 @@ import {
 } from '@webonone/platform-embed'
 import { Alert, AlertDescription } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { parseProductWizardStep } from '@/features/products/schemas/productSchemas'
+import { SpaceFormDialog } from '@/features/spaces/components/SpaceFormDialog'
+import { parseSpaceWizardStep } from '@/features/spaces/schemas/spaceSchemas'
 import { ServiceFormDialog } from '@/features/services/components/ServiceFormDialog'
 import { parseServiceWizardStep } from '@/features/services/schemas/serviceSchemas'
 
@@ -22,6 +23,7 @@ export function CatalogFormEmbedPage() {
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
   const serviceInitialStep = parseServiceWizardStep(searchParams.get('step'))
   const productInitialStep = parseProductWizardStep(searchParams.get('step'))
+  const spaceInitialStep = parseSpaceWizardStep(searchParams.get('step'))
 
   if (!kind || !CATALOG_KINDS.has(kind) || !parentOrigin || !requestId) {
     return (
@@ -66,11 +68,11 @@ export function CatalogFormEmbedPage() {
   }
 
   return (
-    <CatalogFormDialog
+    <SpaceFormDialog
       chrome="embed-page"
-      kind="spaces"
       open
       id={id}
+      initialStep={spaceInitialStep}
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}

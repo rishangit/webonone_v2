@@ -19,10 +19,10 @@ type CompanyCatalogDetailPageMenuProps = {
   entityId: string
   entityLabel: string
   ariaLabel: string
-  canCustomize: boolean
+  canEdit: boolean
   canRemove: boolean
   busy: boolean
-  onCustomize: () => void
+  onEdit: () => void
   onRemove: () => void
 }
 
@@ -31,13 +31,12 @@ export function CompanyCatalogDetailPageMenu({
   entityId,
   entityLabel,
   ariaLabel,
-  canCustomize,
+  canEdit,
   canRemove,
   busy,
-  onCustomize,
+  onEdit,
   onRemove,
 }: CompanyCatalogDetailPageMenuProps) {
-  const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
 
   return (
@@ -55,9 +54,9 @@ export function CompanyCatalogDetailPageMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <CompanyCatalogCopyToAiMenuItem kind={kind} id={entityId} label={entityLabel} />
-        {canCustomize ? (
-          <DropdownMenuItem disabled={busy} onClick={onCustomize}>
-            {t('detail.customize')}
+        {canEdit ? (
+          <DropdownMenuItem disabled={busy} onClick={onEdit}>
+            {tc('edit')}
           </DropdownMenuItem>
         ) : null}
         {canRemove ? (

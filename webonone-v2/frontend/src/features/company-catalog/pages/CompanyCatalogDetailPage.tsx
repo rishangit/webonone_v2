@@ -21,9 +21,14 @@ import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingCont
 import { useDetailTabParam } from '@/shared/hooks/useDetailTabParam'
 import { CatalogApplicablePrice } from '../components/CatalogApplicablePrice'
 import { CatalogDetailSectionTabs, type CatalogDetailTabId } from '../components/CatalogDetailSectionTabs'
-import { CatalogPriceListTab } from '../components/CatalogPriceListTab'
+import {
+  CatalogPricesDiscountsTab,
+  CatalogProductDiscountsTab,
+} from '../components/CatalogPricesDiscountsTab'
 import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard'
-import { CatalogFormDialog } from '../components/CatalogFormDialog'
+import { ProductFormDialog } from '../components/ProductFormDialog'
+import { ServiceFormDialog } from '../components/ServiceFormDialog'
+import { SpaceFormDialog } from '../components/SpaceFormDialog'
 import { CatalogWebPublishDialog } from '../components/CatalogWebPublishDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
 import { CompanyCatalogDetailPageMenu } from '../components/CompanyCatalogDetailPageMenu'
@@ -32,10 +37,10 @@ import { CompanyServiceDetailOfferCard } from '../components/CompanyServiceDetai
 import { CompanyProductVariantsTab } from '../components/CompanyProductVariantsTab'
 import { CompanyServiceWorkflowOverviewCard } from '../components/CompanyServiceWorkflowOverviewCard'
 import { CompanyServiceWorkflowTab } from '../components/CompanyServiceWorkflowTab'
-import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { MemberServiceSessionsCard } from '../components/MemberServiceSessionsCard'
+import type { ProductWizardStep } from '../schemas/productSchemas'
 import type { ServiceWizardStep } from '../schemas/serviceSchemas'
-import { useCatalogPriceRules } from '../hooks/useCatalogPriceRules'
+import { useCatalogPricing } from '../hooks/useCatalogPricing'
 import { dataLibraryApi } from '../services/dataLibraryApi'
 import { companyCatalogActions } from '../store/companyCatalogStore'
 import {
@@ -44,8 +49,12 @@ import {
   isCatalogGalleryKind,
   type CatalogEntityKind,
   type CatalogPayload,
-  type WebPublishStatus,
+  resolveWebPublishStatus,
 } from '../types/companyCatalog.types'
+import { CatalogEditedLabel } from '@/features/company-catalog/components/CatalogEditedLabel'
+import { CatalogReadOnlyField } from '@/features/company-catalog/components/CatalogReadOnlyField'
+import { useCatalogLibraryBaseline } from '@/features/company-catalog/hooks/useCatalogLibraryBaseline'
+import { catalogEditedFieldsFromPayload } from '@/features/company-catalog/utils/catalogLibraryEdits'
 import { CompanyCatalogReviewCard } from '@/features/reviews/components/CompanyCatalogReviewCard'
 import { CompanyCatalogReviewsPanel } from '@/features/reviews/components/CompanyCatalogReviewsPanel'
 import {
@@ -61,6 +70,7 @@ const CATALOG_TABS_BASE = [
 
 const CATALOG_TABS_WITH_VARIANTS = [
   ...CATALOG_TABS_BASE,
+  'discounts',
   'variants',
 ] as const satisfies readonly CatalogDetailTabId[]
 
@@ -79,10 +89,6 @@ function isCatalogEntityKind(value: string): value is CatalogEntityKind {
   return (CATALOG_ENTITY_KINDS as readonly string[]).includes(value)
 }
 
-function resolveWebPublishStatus(status: WebPublishStatus | undefined): WebPublishStatus {
-  return status === 'published' ? 'published' : 'draft'
-}
-
 export type CompanyCatalogDetailPageProps = {
   /**
    * When set, load via membership-scoped API (`/company/:id/catalog/…`)
@@ -91,7 +97,7 @@ export type CompanyCatalogDetailPageProps = {
   companyId?: string
   /** Override back navigation target (default `/data/:kind`). */
   backTo?: string
-  /** Force member/read-only: no Customize, Remove, or section Edit. */
+  /** Force member/read-only: no Edit, Remove, or section Edit. */
   readOnly?: boolean
 }
 
@@ -109,7 +115,7 @@ export function CompanyCatalogDetailPage({
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const openReviewFromLink = searchParams.get('openReview') === '1'
-  const { detail, detailStatus, mutateStatus, mutateError } = useAppSelector((s) => s.companyCatalog)
+  const { detail, detailStatus, mutateStatus } = useAppSelector((s) => s.companyCatalog)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const allowedTabs = useMemo(() => {
     if (kind === 'products') return CATALOG_TABS_WITH_VARIANTS
@@ -118,14 +124,17 @@ export function CompanyCatalogDetailPage({
     return CATALOG_TABS_BASE
   }, [kind])
   const [tab, setTab] = useDetailTabParam(allowedTabs, 'overview')
-  const [editOpen, setEditOpen] = useState(false)
-  const [pendingEditClose, setPendingEditClose] = useState(false)
   const [serviceDialog, setServiceDialog] = useState<{ initialStep: ServiceWizardStep } | null>(
     null,
   )
+  const [productDialog, setProductDialog] = useState<{ initialStep: ProductWizardStep } | null>(
+    null,
+  )
+  const [spaceDialog, setSpaceDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
   const [webPublishOpen, setWebPublishOpen] = useState(false)
-  const priceKind = kind === 'services' || kind === 'spaces' ? kind : null
-  const priceRules = useCatalogPriceRules(priceKind, id, companyId)
+  const priceKind =
+    kind === 'products' || kind === 'services' || kind === 'spaces' ? kind : null
+  const pricing = useCatalogPricing(priceKind, id, companyId)
   const [resolvedTags, setResolvedTags] = useState<SelectTagValue[]>([])
   const [pendingRemove, setPendingRemove] = useState(false)
 
@@ -147,16 +156,6 @@ export function CompanyCatalogDetailPage({
       dispatch(companyCatalogActions.clearDetail())
     }
   }, [companyId, dispatch, kind, id])
-
-  useEffect(() => {
-    if (!pendingEditClose) return
-    if (mutateStatus === 'idle' && !mutateError) {
-      setEditOpen(false)
-      setPendingEditClose(false)
-    } else if (mutateStatus === 'error') {
-      setPendingEditClose(false)
-    }
-  }, [mutateStatus, mutateError, pendingEditClose])
 
   useEffect(() => {
     if (!detail || (kind !== 'services' && kind !== 'products' && kind !== 'spaces')) {
@@ -194,6 +193,16 @@ export function CompanyCatalogDetailPage({
     }
   }, [detail, kind])
 
+  const libraryBaseline = useCatalogLibraryBaseline(kind, detail)
+  const companyPayload = useMemo(() => {
+    if (!detail) return null
+    return (detail.payload ?? detail.hydrated) as CatalogPayload | null
+  }, [detail])
+  const editedFields = useMemo(() => {
+    if (!kind || !companyPayload) return new Set()
+    return catalogEditedFieldsFromPayload(kind, companyPayload, libraryBaseline)
+  }, [kind, companyPayload, libraryBaseline])
+
   if (!kind) {
     return (
       <FeaturePage
@@ -211,9 +220,9 @@ export function CompanyCatalogDetailPage({
   const busy = mutateStatus === 'saving'
   const canManage = !readOnly && activeRole === 'company_admin'
   const canEdit =
-    canManage && (detail?.bindingMode === 'forked' || detail?.bindingMode === 'custom')
-  const canCustomize =
-    canManage && detail?.bindingMode === 'linked' && detail.hydrated && !detail.libraryUnavailable
+    canManage &&
+    (detail?.bindingMode !== 'linked' ||
+      (Boolean(detail?.hydrated) && !detail?.libraryUnavailable))
   const showGalleryTabs = isCatalogGalleryKind(kind)
   const listPath = backTo ?? `/data/${kind}`
   const servicePayload = detail?.payload ?? detail?.hydrated ?? null
@@ -260,11 +269,19 @@ export function CompanyCatalogDetailPage({
               <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
             </div>
           ) : null}
-          <ReadOnlyField label={tc('name')} value={detail.displayName} />
-          <ReadOnlyField
+          <CatalogReadOnlyField
+            label={tc('name')}
+            value={detail.displayName}
+            edited={editedFields.has('name')}
+          />
+          <CatalogReadOnlyField
             label={tc('description')}
             value={detail.displayDescription?.trim() ? detail.displayDescription : '—'}
+            edited={editedFields.has('description')}
           />
+          {detail.libraryEntityId ? (
+            <p className="text-sm text-muted-foreground">{t('detail.linkedLibraryNote')}</p>
+          ) : null}
           {detail.libraryUnavailable ? (
             <div className="text-destructive">{t('detail.libraryItemUnavailable')}</div>
           ) : null}
@@ -277,15 +294,13 @@ export function CompanyCatalogDetailPage({
           serviceId={id}
           companyId={companyId}
           servicePayload={servicePayload}
-          priceRules={priceRules.rules}
-          priceRulesLoading={priceRules.loading}
-          canManagePrice={canManage}
-          canEditSchedule={canEdit}
+          prices={pricing.prices}
+          discounts={pricing.discounts}
+          pricingLoading={pricing.loading}
+          canEdit={canEdit}
           busy={busy}
           overviewActive={tab === 'overview'}
-          onManagePrices={() => setTab('priceList')}
-          onEditSchedule={() => setServiceDialog({ initialStep: 2 })}
-          onManageWorkflow={() => setTab('workflow')}
+          onEdit={() => setServiceDialog({ initialStep: 1 })}
         />
 
         <EditableSectionCard
@@ -296,11 +311,7 @@ export function CompanyCatalogDetailPage({
         >
           <ReadOnlyField
             label={t('detail.webPublish.statusLabel')}
-            value={
-              resolveWebPublishStatus(detail.webPublishStatus) === 'published'
-                ? t('detail.webPublish.published')
-                : t('detail.webPublish.draft')
-            }
+            value={t(`detail.webPublish.${resolveWebPublishStatus(detail.webPublishStatus)}`)}
           />
         </EditableSectionCard>
 
@@ -311,6 +322,7 @@ export function CompanyCatalogDetailPage({
         <EditableSectionCard
           title={t('detail.tags.title')}
           description={t('detail.tags.description')}
+          titleExtra={<CatalogEditedLabel show={editedFields.has('tags')} />}
           canEdit={canEdit && !busy}
           onEdit={() => setServiceDialog({ initialStep: 3 })}
         >
@@ -359,18 +371,29 @@ export function CompanyCatalogDetailPage({
             <StatusTag variant="verified">{t(`binding.${detail.bindingMode}`)}</StatusTag>
           }
           canEdit={canEdit && !busy}
-          onEdit={() => setEditOpen(true)}
+          onEdit={() => {
+            if (kind === 'products') setProductDialog({ initialStep: 1 })
+            else if (kind === 'spaces') setSpaceDialog({ initialStep: 1 })
+          }}
         >
           {showGalleryTabs && overviewGalleryImages.length > 0 ? (
             <div className="overflow-hidden rounded-md">
               <ImageCarousel images={overviewGalleryImages} alt={detail.displayName} />
             </div>
           ) : null}
-          <ReadOnlyField label={tc('name')} value={detail.displayName} />
-          <ReadOnlyField
+          <CatalogReadOnlyField
+            label={tc('name')}
+            value={detail.displayName}
+            edited={editedFields.has('name')}
+          />
+          <CatalogReadOnlyField
             label={tc('description')}
             value={detail.displayDescription?.trim() ? detail.displayDescription : '—'}
+            edited={editedFields.has('description')}
           />
+          {detail.libraryEntityId ? (
+            <p className="text-sm text-muted-foreground">{t('detail.linkedLibraryNote')}</p>
+          ) : null}
           {detail.libraryUnavailable ? (
             <div className="text-destructive">{t('detail.libraryItemUnavailable')}</div>
           ) : null}
@@ -394,7 +417,11 @@ export function CompanyCatalogDetailPage({
             canEdit={canManage && !busy}
             onEdit={() => setTab('priceList')}
           >
-            <CatalogApplicablePrice rules={priceRules.rules} loading={priceRules.loading} />
+            <CatalogApplicablePrice
+              prices={pricing.prices}
+              discounts={pricing.discounts}
+              loading={pricing.loading}
+            />
           </EditableSectionCard>
         ) : null}
 
@@ -407,11 +434,7 @@ export function CompanyCatalogDetailPage({
           >
             <ReadOnlyField
               label={t('detail.webPublish.statusLabel')}
-              value={
-                resolveWebPublishStatus(detail.webPublishStatus) === 'published'
-                  ? t('detail.webPublish.published')
-                  : t('detail.webPublish.draft')
-              }
+              value={t(`detail.webPublish.${resolveWebPublishStatus(detail.webPublishStatus)}`)}
             />
           </EditableSectionCard>
         ) : null}
@@ -421,7 +444,10 @@ export function CompanyCatalogDetailPage({
             title={t('detail.tags.title')}
             description={t('detail.tags.descriptionEntity', { noun })}
             canEdit={canEdit && !busy}
-            onEdit={() => setEditOpen(true)}
+            onEdit={() => {
+              if (kind === 'products') setProductDialog({ initialStep: 2 })
+              else if (kind === 'spaces') setSpaceDialog({ initialStep: 2 })
+            }}
           >
             {resolvedTags.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t('detail.tags.empty')}</p>
@@ -475,22 +501,13 @@ export function CompanyCatalogDetailPage({
             entityId={id}
             entityLabel={detail.displayName}
             ariaLabel={t('detail.actionsFor', { name: detail.displayName })}
-            canCustomize={Boolean(canCustomize)}
+            canEdit={Boolean(canEdit)}
             canRemove={canManage}
             busy={busy}
-            onCustomize={() => {
-              if (!detail?.hydrated) return
-              dispatch(
-                companyCatalogActions.forkRequested({
-                  kind,
-                  id,
-                  payload: detail.hydrated,
-                  galleryImages:
-                    detail.galleryImages == null
-                      ? (detail.displayGalleryImages ?? [])
-                      : undefined,
-                }),
-              )
+            onEdit={() => {
+              if (kind === 'services') setServiceDialog({ initialStep: 1 })
+              else if (kind === 'products') setProductDialog({ initialStep: 1 })
+              else if (kind === 'spaces') setSpaceDialog({ initialStep: 1 })
             }}
             onRemove={() => setPendingRemove(true)}
           />
@@ -536,6 +553,7 @@ export function CompanyCatalogDetailPage({
             kind === 'products' ? (
               <CompanyProductVariantsTab
                 productId={id}
+                productName={detail.displayName}
                 libraryEntityId={detail.libraryEntityId}
                 canAdd={canManage && !busy}
               />
@@ -553,17 +571,32 @@ export function CompanyCatalogDetailPage({
               />
             ) : undefined
           }
-          priceList={
-            kind === 'services' || kind === 'spaces' ? (
-              <CatalogPriceListTab
-                kind={kind}
-                entityId={id}
-                rules={priceRules.rules}
-                loading={priceRules.loading}
-                error={priceRules.error}
+          discounts={
+            kind === 'products' ? (
+              <CatalogProductDiscountsTab
+                productId={id}
+                discounts={pricing.discounts}
+                loading={pricing.loading}
+                error={pricing.error}
                 canEdit={canManage && !busy}
                 onChanged={() => {
-                  void priceRules.reload()
+                  void pricing.reload()
+                }}
+              />
+            ) : undefined
+          }
+          priceList={
+            kind === 'services' || kind === 'spaces' ? (
+              <CatalogPricesDiscountsTab
+                kind={kind}
+                entityId={id}
+                prices={pricing.prices}
+                discounts={pricing.discounts}
+                loading={pricing.loading}
+                error={pricing.error}
+                canEdit={canManage && !busy}
+                onChanged={() => {
+                  void pricing.reload()
                 }}
               />
             ) : undefined
@@ -593,26 +626,43 @@ export function CompanyCatalogDetailPage({
           }}
         />
       ) : null}
-      {!readOnly && kind !== 'services' ? (
-        <CatalogFormDialog
-          open={editOpen}
-          kind={kind}
-          mode="edit"
-          initialPayload={
-            detail
-              ? {
-                  ...(detail.payload ?? {}),
-                  ...(kind === 'products' ? { listPrice: detail.listPrice ?? null } : {}),
-                }
-              : undefined
-          }
-          onOpenChange={setEditOpen}
-          busy={busy}
-          error={mutateError}
-          onSubmit={(payload: CatalogPayload) => {
-            dispatch(companyCatalogActions.clearMutateError())
-            setPendingEditClose(true)
-            dispatch(companyCatalogActions.updateRequested({ kind, id, payload }))
+      {!readOnly && kind === 'products' ? (
+        <ProductFormDialog
+          open={productDialog != null}
+          id={id}
+          initialStep={productDialog?.initialStep ?? 1}
+          onOpenChange={(next) => {
+            if (!next) setProductDialog(null)
+          }}
+          onSaved={() => {
+            setProductDialog(null)
+            dispatch(
+              companyCatalogActions.detailRequested({
+                kind: 'products',
+                id,
+                ...(companyId ? { companyId } : {}),
+              }),
+            )
+          }}
+        />
+      ) : null}
+      {!readOnly && kind === 'spaces' ? (
+        <SpaceFormDialog
+          open={spaceDialog != null}
+          id={id}
+          initialStep={spaceDialog?.initialStep ?? 1}
+          onOpenChange={(next) => {
+            if (!next) setSpaceDialog(null)
+          }}
+          onSaved={() => {
+            setSpaceDialog(null)
+            dispatch(
+              companyCatalogActions.detailRequested({
+                kind: 'spaces',
+                id,
+                ...(companyId ? { companyId } : {}),
+              }),
+            )
           }}
         />
       ) : null}

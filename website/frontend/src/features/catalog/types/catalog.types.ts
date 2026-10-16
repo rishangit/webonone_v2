@@ -17,6 +17,8 @@ export type CatalogSearchItem = {
   longitude: number | null
   referenceCount: number
   listPrice: number | null
+  listPriceCompareAt?: number | null
+  listDiscountPercent?: number | null
   reviewSummary?: { averageRating: number | null; count: number }
   timeMode?: ServiceTimeMode | null
   durationMinutes?: number | null
@@ -45,6 +47,8 @@ export type PublicProductVariantOfferLine = {
   attributeValues: PublicProductVariantAttributeValue[]
   totalQuantity: number
   sellPrice: number | null
+  compareAtSellPrice?: number | null
+  discountPercent?: number | null
 }
 
 export type PublicProductVariantOffer = {

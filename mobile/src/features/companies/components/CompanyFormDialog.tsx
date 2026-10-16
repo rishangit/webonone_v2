@@ -161,6 +161,7 @@ export function CompanyFormDialog({
   detail,
   onOpenChange,
   onSaved,
+  onRegistered,
 }: {
   open: boolean
   id?: string
@@ -168,6 +169,7 @@ export function CompanyFormDialog({
   detail?: CompanyDetail | null
   onOpenChange: (open: boolean) => void
   onSaved?: () => void
+  onRegistered?: (companyId: string) => void
 }) {
   const { user } = useSession()
   const { toast } = useToast()
@@ -352,6 +354,7 @@ export function CompanyFormDialog({
         }
         toast({ title: 'Registration submitted' })
         onOpenChange(false)
+        onRegistered?.(newId)
         onSaved?.()
       } catch (err) {
         toast({

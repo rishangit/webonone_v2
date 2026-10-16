@@ -280,6 +280,25 @@ export async function listOccurrenceDatesForUserEvent(
   })
 }
 
+/** Distinct users who hold an issued token on any of these events. */
+export async function listDistinctUsersForEvents(
+  eventIds: string[],
+  userId?: string,
+): Promise<Array<{ event_id: string; user_id: string }>> {
+  if (eventIds.length === 0) return []
+  const query = db('company_event_session_tokens')
+    .distinct('event_id', 'user_id')
+    .whereIn('event_id', eventIds)
+    .orderBy('event_id', 'asc')
+    .orderBy('user_id', 'asc')
+  if (userId) query.andWhere({ user_id: userId })
+  const rows = await query
+  return rows.map((row) => ({
+    event_id: String((row as { event_id: string }).event_id),
+    user_id: String((row as { user_id: string }).user_id),
+  }))
+}
+
 export async function listDistinctTokenHolders(): Promise<
   Array<{ company_id: string; user_id: string }>
 > {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
@@ -17,13 +17,39 @@ import {
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { overlayIdentityFromSessionUser } from '@/shared/utils/overlayIdentityFromSessionUser'
 import { WebononeCopyToAiMenuItem } from '@/features/ai/components/WebononeCopyToAiMenuItem'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { formatEventWhen } from '@/features/calendar/schemas/eventSchemas'
 import { eventsActions } from '@/features/calendar/store'
 import { eventsApi } from '@/features/calendar/services/eventsApi'
 import type { CompanyEvent } from '@/features/calendar/types/event.types'
+import {
+  overlayIdentityFromSessionUser,
+  type SessionIdentityProfile,
+} from '@/shared/utils/overlayIdentityFromSessionUser'
+
+const ASSIGNED_USER_THUMB_CLASS = 'h-8 w-8 shrink-0 rounded-md'
+
+type AssignedDurationUser = {
+  displayName: string
+  avatarUrl: string | null
+}
+
+/** Duration events show the assigned attendee. Specific-time token sessions do not. */
+function assignedDurationUser(
+  item: CompanyEvent,
+  sessionUser: SessionIdentityProfile | null | undefined,
+): AssignedDurationUser | null {
+  if (item.timeMode !== 'duration') return null
+  const overlaid = overlayIdentityFromSessionUser(item, sessionUser, {
+    userId: 'attendeeUserId',
+    displayName: 'attendeeDisplayName',
+    avatarUrl: 'attendeeImageUrl',
+  })
+  const displayName = overlaid.attendeeDisplayName?.trim()
+  if (!displayName) return null
+  return { displayName, avatarUrl: overlaid.attendeeImageUrl }
+}
 
 type EventsListProps = {
   items: CompanyEvent[]
@@ -43,18 +69,6 @@ export function EventsList({
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const sessionUser = useAppSelector((s) => s.auth.user)
-  const displayItems = useMemo(
-    () =>
-      items.map((item) =>
-        overlayIdentityFromSessionUser(item, sessionUser, {
-          userId: 'attendeeUserId',
-          displayName: 'attendeeDisplayName',
-          email: 'attendeeEmail',
-          avatarUrl: 'attendeeImageUrl',
-        }),
-      ),
-    [items, sessionUser],
-  )
   const { toast } = useToast()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<CompanyEvent | null>(null)
@@ -62,9 +76,12 @@ export function EventsList({
   const empty =
     emptyMessage ?? (canManage ? t('events.emptyAdmin') : t('events.emptyMember'))
 
-  function openDetails(id: string) {
-    navigate(`/calendar/events/${id}`)
-  }
+  const openDetails = useCallback(
+    (id: string) => {
+      navigate(`/calendar/events/${id}`)
+    },
+    [navigate],
+  )
 
   const columns = useMemo(
     () => [
@@ -92,8 +109,34 @@ export function EventsList({
           `${a.startsOn}${a.startTime}`.localeCompare(`${b.startsOn}${b.startTime}`),
         cell: (item: CompanyEvent) => formatEventWhen(item),
       },
+      {
+        id: 'user',
+        header: t('events.columnUser'),
+        sortable: true,
+        compare: (a: CompanyEvent, b: CompanyEvent) =>
+          (assignedDurationUser(a, sessionUser)?.displayName ?? '').localeCompare(
+            assignedDurationUser(b, sessionUser)?.displayName ?? '',
+            undefined,
+            { sensitivity: 'base' },
+          ),
+        cell: (item: CompanyEvent) => {
+          const user = assignedDurationUser(item, sessionUser)
+          if (!user) return '—'
+          return (
+            <span className="flex min-w-0 items-center gap-2">
+              <ImagePreview
+                src={user.avatarUrl}
+                alt={user.displayName}
+                mode="view"
+                className={ASSIGNED_USER_THUMB_CLASS}
+              />
+              <span className="truncate">{user.displayName}</span>
+            </span>
+          )
+        },
+      },
     ],
-    [t],
+    [openDetails, sessionUser, t],
   )
 
   async function handleRemove(item: CompanyEvent) {
@@ -135,15 +178,24 @@ export function EventsList({
   }
 
   function eventDetails(item: CompanyEvent) {
+    const user = assignedDurationUser(item, sessionUser)
     return (
       <div className="min-w-0 space-y-1">
         <p className="truncate font-medium text-foreground">{item.serviceName}</p>
         <p className="truncate text-xs text-muted-foreground">
           {t('staffLabel', { name: item.staffDisplayName })}
-          {item.attendeeDisplayName
-            ? ` · ${t('attendeeLabel', { name: item.attendeeDisplayName })}`
-            : ''}
         </p>
+        {user ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <ImagePreview
+              src={user.avatarUrl}
+              alt={user.displayName}
+              mode="view"
+              className={ASSIGNED_USER_THUMB_CLASS}
+            />
+            <p className="truncate text-xs text-foreground">{user.displayName}</p>
+          </div>
+        ) : null}
         <p className="truncate text-xs text-muted-foreground">{formatEventWhen(item)}</p>
       </div>
     )
@@ -166,7 +218,7 @@ export function EventsList({
   return (
     <>
       <CollectionListView
-        items={displayItems}
+        items={items}
         getRowKey={(item) => item.id}
         columns={columns}
         empty={<ItemListEmpty>{empty}</ItemListEmpty>}

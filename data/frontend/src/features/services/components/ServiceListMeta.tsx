@@ -1,29 +1,21 @@
 import { useTranslation } from 'react-i18next'
-import { cn, PriceDisplay } from '@webonone/ui-kit'
+import { cn } from '@webonone/ui-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
 import {
   formatServiceScheduleSummary,
   formatServiceTimeModeLabel,
   normalizeServiceListItem,
-  resolveServiceListPrice,
 } from '@/features/services/utils/serviceListDisplay'
 
 type ServiceListMetaProps = {
   item: CatalogItem
   align?: 'start' | 'end'
-  showPrice?: boolean
   className?: string
 }
 
-export function ServiceListMeta({
-  item,
-  align = 'start',
-  showPrice = true,
-  className,
-}: ServiceListMetaProps) {
+export function ServiceListMeta({ item, align = 'start', className }: ServiceListMetaProps) {
   const { t } = useTranslation('services')
   const service = normalizeServiceListItem(item)
-  const price = resolveServiceListPrice(service)
 
   return (
     <div
@@ -46,13 +38,6 @@ export function ServiceListMeta({
           {formatServiceScheduleSummary(service, t)}
         </span>
       </div>
-      {showPrice ? (
-        <PriceDisplay
-          value={price}
-          size="sm"
-          align={align === 'end' ? 'right' : 'left'}
-        />
-      ) : null}
     </div>
   )
 }

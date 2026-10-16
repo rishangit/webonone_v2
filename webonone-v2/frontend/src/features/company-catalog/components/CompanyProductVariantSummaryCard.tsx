@@ -42,6 +42,7 @@ export function CompanyProductVariantSummaryCard({
             t('stocks.loading')
           ) : (
             <StockAvailabilityProgress
+              size="compact"
               quantity={totalQuantity}
               maxQuantity={limits?.maxQuantity}
               minQuantity={limits?.minQuantity}

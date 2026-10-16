@@ -6,6 +6,7 @@ import {
   PLATFORM_EMBED_QUERY,
   sendDataTagPickerCreateRequest,
   sendDataTagPickerSelectionChange,
+  sendPlatformContentReady,
   type DataTagPickerTag,
 } from '@webonone/platform-embed'
 import { Alert, AlertDescription, Spinner } from '@webonone/ui-kit'
@@ -57,12 +58,18 @@ export function TagPickerPage() {
         : event.data.tags.slice(0, 1).map(toPickerTag)
 
       setSelectedTags(nextSelectedTags)
-      notifySelectionChange(nextSelectedTags)
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [multiple, notifySelectionChange, parentOrigin, scope])
+  }, [multiple, parentOrigin, scope])
+
+  useEffect(() => {
+    if (!parentOrigin || !scope) {
+      return
+    }
+    sendPlatformContentReady(parentOrigin)
+  }, [parentOrigin, scope])
 
   function handleSelectionChange(nextSelectedTags: DataTagPickerTag[]) {
     setSelectedTags(nextSelectedTags)

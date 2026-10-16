@@ -19,7 +19,7 @@ import type { RootState } from '@/app/store'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
-import { CatalogFormDialog } from '@/features/catalog/components/CatalogFormDialog'
+import { SpaceFormDialog } from '@/features/spaces/components/SpaceFormDialog'
 import { CatalogList } from '@/features/catalog/components/CatalogList'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { productsActions } from '@/features/products/store'
@@ -198,8 +198,7 @@ export function CatalogListPage({ kind }: { kind: CatalogKind }) {
       ) : null}
 
       {dialog !== null && kind === 'spaces' ? (
-        <CatalogFormDialog
-          kind="spaces"
+        <SpaceFormDialog
           open
           id={dialog.id}
           onOpenChange={(o) => {

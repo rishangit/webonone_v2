@@ -31,7 +31,6 @@ import {
   formatServiceScheduleSummary,
   formatServiceTimeModeLabel,
   normalizeServiceListItem,
-  resolveServiceListPrice,
 } from '@/features/services/utils/serviceListDisplay'
 import type { CatalogGalleryImage, CatalogItem } from '@/shared/types/data.types'
 
@@ -124,20 +123,6 @@ export function CatalogList({
       },
       ...(itemType === 'services'
         ? [
-            {
-              id: 'price',
-              header: ts('list.price'),
-              align: 'right' as const,
-              sortable: true,
-              compare: (a: CatalogItem, b: CatalogItem) =>
-                (resolveServiceListPrice(a) ?? -1) - (resolveServiceListPrice(b) ?? -1),
-              className: gridPriceColumnClass,
-              headerClassName: gridPriceColumnClass,
-              cell: (item: CatalogItem) => {
-                const price = resolveServiceListPrice(item)
-                return price != null ? <PriceDisplay value={price} size="sm" align="right" /> : '—'
-              },
-            },
             {
               id: 'timeMode',
               header: ts('timeMode'),
@@ -339,7 +324,7 @@ export function CatalogList({
           />
         ) : null}
         {itemType === 'services' && showServiceMeta ? (
-          <ServiceListMeta item={item} className="mt-2" showPrice={showPrice} />
+          <ServiceListMeta item={item} className="mt-2" />
         ) : null}
       </div>
     )

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { EditableSectionCard, ListPriceField, ReadOnlyField } from '@webonone/ui-kit'
+import { EditableSectionCard, ReadOnlyField } from '@webonone/ui-kit'
 import type { CatalogItem } from '@/shared/types/data.types'
 
 type ServiceDetailOfferCardProps = {
@@ -61,7 +61,6 @@ export function ServiceDetailOfferCard({
         <div className="space-y-3 border-y border-border py-3">
           <ServiceTimeFields service={service} />
         </div>
-        <ListPriceField label={t('list.price', { ns: 'products' })} value={service.listPrice} />
       </div>
     </EditableSectionCard>
   )

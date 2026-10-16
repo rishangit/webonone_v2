@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { SelectTagValue } from '@webonone/ui-kit'
+import { catalogWizardAttributesToPayload } from '@/features/company-catalog/utils/catalogWizardAttributePayload'
 import type { CatalogPayload } from '../types/companyCatalog.types'
 
 export const timeOfDaySchema = z
@@ -156,15 +157,7 @@ export function toCompanyServicePayload(
     description: values.description.trim() || null,
     ...(options.canSetStatus ? { status: values.status } : { status: 'pending' as const }),
     tagIds: values.tags.map((tag) => tag.id),
-    attributes: values.attributes
-      .filter((row) => row.attributeId)
-      .map((row) => {
-        const attr = options.attributes.find((a) => a.id === row.attributeId)
-        if (attr?.valueType === 'number') {
-          return { attributeId: row.attributeId, valueNumber: Number(row.valueNumber) }
-        }
-        return { attributeId: row.attributeId, valueText: row.valueText }
-      }),
+    attributes: catalogWizardAttributesToPayload(values.attributes, options.attributes),
     ...timePayload,
   }
 }

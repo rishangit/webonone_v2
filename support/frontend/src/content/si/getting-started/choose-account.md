@@ -12,10 +12,12 @@ Sign in වූ පසු, WebOnOne භාවිතා කිරීමට **accou
 සාමාන්‍ය තේරීම්:
 
 - **Default User (member)** — ඔබගේ පුද්ගලික ගිණුම. සමාගමක් ලියාපදිංචි කිරීමට හෝ ඔබ වෙන්කරවා ගන්නා සමාගම් සමඟ සම්බන්ධ වීමට මෙය භාවිතා කරන්න.
-- **Company owner** — ඔබ ලියාපදිංචි කළ **approved** සමාගමක්.
+- **Company owner** — ඔබ ලියාපදිංචි කළ සමාගමක්, දැන් සාදන ලද්දක් ඇතුළුව (තවම pending වුවද).
 - **Staff** — ඔබ staff ලෙස සිටින workplace එකක්.
 - **Super Admin** — ඔබ platform administrator කෙනෙක් නම් පමණි.
 
-**Pending** approval තවමත් ඇති සමාගමක් විවෘත කළ නොහැක. [Pending approval අතරතුර සිදුවන්නේ කුමක්ද](/docs/companies/pending-approval) බලන්න.
+සමාගමක් ලියාපදිංචි කළ පසු **Choose account** නැවත විවෘත වී එම සමාගම තෝරා ඇත. [ඔබගේ සමාගම ලියාපදිංචි කරන්න](/docs/companies/register-company) බලන්න.
+
+**Rejected** සමාගමක් විවෘත කළ නොහැක. [Pending approval අතරතුර සිදුවන්නේ කුමක්ද](/docs/companies/pending-approval) බලන්න.
 
 Sign out නොකර පසුව මාරු වීමට, [Switch account](/docs/getting-started/switch-account) බලන්න.

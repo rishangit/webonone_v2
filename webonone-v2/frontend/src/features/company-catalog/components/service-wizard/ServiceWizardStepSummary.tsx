@@ -1,16 +1,30 @@
+import { CatalogEditedLabel } from '@/features/company-catalog/components/CatalogEditedLabel'
 import type { ServiceWizardFormValues } from '@/features/company-catalog/schemas/serviceSchemas'
+import type { CatalogEditedField } from '@/features/company-catalog/utils/catalogLibraryEdits'
 import type { AttributeOption } from './ServiceWizardStepAttributes'
 
 interface ServiceWizardStepSummaryProps {
   values: ServiceWizardFormValues
   attributeOptions: AttributeOption[]
   showStatus: boolean
+  editedFields?: Set<CatalogEditedField>
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryRow({
+  label,
+  value,
+  edited,
+}: {
+  label: string
+  value: string
+  edited?: boolean
+}) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-4">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dt className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+        {label}
+        <CatalogEditedLabel show={Boolean(edited)} />
+      </dt>
       <dd className="text-sm font-medium text-foreground sm:text-right">{value || '—'}</dd>
     </div>
   )
@@ -30,6 +44,7 @@ export function ServiceWizardStepSummary({
   values,
   attributeOptions,
   showStatus,
+  editedFields,
 }: ServiceWizardStepSummaryProps) {
   const timeSummary =
     values.time_mode === 'duration'
@@ -60,8 +75,17 @@ export function ServiceWizardStepSummary({
           <SummaryRow
             label="Time mode"
             value={values.time_mode === 'window' ? 'Specific time' : 'Duration'}
+            edited={editedFields?.has('timeMode')}
           />
-          <SummaryRow label="Time" value={timeSummary} />
+          <SummaryRow
+            label="Time"
+            value={timeSummary}
+            edited={
+              values.time_mode === 'duration'
+                ? editedFields?.has('duration')
+                : editedFields?.has('timeWindow')
+            }
+          />
           <SummaryRow
             label="Tags"
             value={
@@ -69,6 +93,7 @@ export function ServiceWizardStepSummary({
                 ? values.tags.map((tag) => tag.name).join(', ')
                 : ''
             }
+            edited={editedFields?.has('tags')}
           />
         </dl>
       </div>

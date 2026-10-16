@@ -67,6 +67,23 @@ export async function findVariant(companyProductId: string, variantId: string) {
     .first()
 }
 
+export async function variantNamesByLibraryId(
+  pairs: Array<{ companyProductId: string; libraryVariantId: string }>,
+): Promise<Map<string, string>> {
+  const names = new Map<string, string>()
+  const productIds = [...new Set(pairs.map((pair) => pair.companyProductId).filter(Boolean))]
+  const libraryIds = [...new Set(pairs.map((pair) => pair.libraryVariantId).filter(Boolean))]
+  if (productIds.length === 0 || libraryIds.length === 0) return names
+  const rows = await db<CompanyVariantRow>(COMPANY_PRODUCT_VARIANTS)
+    .whereIn('company_product_id', productIds)
+    .whereIn('library_variant_id', libraryIds)
+    .select('company_product_id', 'library_variant_id', 'name')
+  for (const row of rows) {
+    names.set(`${row.company_product_id}:${row.library_variant_id}`, row.name)
+  }
+  return names
+}
+
 export async function findVariantByLibraryId(companyProductId: string, libraryVariantId: string) {
   return db<CompanyVariantRow>(COMPANY_PRODUCT_VARIANTS)
     .where({ company_product_id: companyProductId, library_variant_id: libraryVariantId })

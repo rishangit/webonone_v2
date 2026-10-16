@@ -1,0 +1,787 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
+import {
+  isPlatformPeerDialogNestedCancelMessage,
+  isPlatformPeerDialogNestedResultMessage,
+  PLATFORM_EMBED_QUERY,
+  resolvePlatformEmbedParentOrigin,
+  sendPlatformPeerDialogBusy,
+  sendPlatformPeerDialogNestedRequest,
+  usePlatformPeerDialogSubmit,
+  useRequestPlatformPeerDialog,
+} from '@webonone/platform-embed'
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  CustomDialog,
+  mapZodIssuesToFieldErrors,
+  Spinner,
+  type SelectTagValue,
+} from '@webonone/ui-kit'
+import { useAppSelector } from '@/app/store/hooks'
+import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import {
+  ATTRIBUTE_SELECT_EMBED_PATH,
+  ATTRIBUTE_SELECT_PEER,
+  AttributeSelectStackedDialogs,
+  writeAttributeSelectSession,
+  type AttributeSelectValue,
+} from '@/features/attributes/components/AttributeSelectField'
+import { spacesActions } from '@/features/spaces/store'
+import {
+  EMPTY_SPACE_WIZARD_VALUES,
+  parseSpaceWizardStep,
+  spaceWizardStep1Schema,
+  spaceWizardStep2Schema,
+  spaceWizardStep3Schema,
+  toCreateSpacePayload,
+  type SpaceAttributeRow,
+  type SpaceWizardFormValues,
+  type SpaceWizardStep,
+} from '@/features/spaces/schemas/spaceSchemas'
+import { SpaceWizardProgress } from '@/features/spaces/components/space-wizard/SpaceWizardProgress'
+import { SpaceWizardStepBasics } from '@/features/spaces/components/space-wizard/SpaceWizardStepBasics'
+import { SpaceWizardStepTags } from '@/features/spaces/components/space-wizard/SpaceWizardStepTags'
+import { SpaceWizardStepAttributes } from '@/features/spaces/components/space-wizard/SpaceWizardStepAttributes'
+import { SpaceWizardStepSummary } from '@/features/spaces/components/space-wizard/SpaceWizardStepSummary'
+import {
+  createNestedRequestId,
+  TAG_SELECT_EMBED_PATH,
+  TagSelectStackedDialogs,
+  writeTagSelectSession,
+} from '@/features/tags/components/TagSelectField'
+import { useEpicCatalogEditor } from '@/shared/hooks/useEpicCatalogEditor'
+import type { CatalogItem } from '@/shared/types/data.types'
+
+const TOTAL_STEPS = 4
+
+const SPACE_WIZARD_DIALOG_SIZE = {
+  sizeWidth: 'large' as const,
+  sizeHeight: 'xlarge' as const,
+}
+
+const TAG_PICKER_PEER_SIZE = {
+  sizeWidth: 'small' as const,
+  sizeHeight: 'large' as const,
+}
+
+function isSelectTagValue(value: unknown): value is SelectTagValue {
+  if (!value || typeof value !== 'object') return false
+  const tag = value as Record<string, unknown>
+  return (
+    typeof tag.id === 'string' &&
+    typeof tag.name === 'string' &&
+    typeof tag.color === 'string'
+  )
+}
+
+function parseTagsPayload(payload: unknown): SelectTagValue[] | null {
+  if (!payload || typeof payload !== 'object') return null
+  const record = payload as Record<string, unknown>
+  if (!Array.isArray(record.tags)) return null
+  return record.tags.filter(isSelectTagValue)
+}
+
+function isAttributeSelectValue(value: unknown): value is AttributeSelectValue {
+  if (!value || typeof value !== 'object') return false
+  const attribute = value as Record<string, unknown>
+  const unit = attribute.unit
+  const unitOk =
+    unit === null ||
+    unit === undefined ||
+    (Boolean(unit) &&
+      typeof unit === 'object' &&
+      typeof (unit as { id?: unknown }).id === 'string' &&
+      typeof (unit as { name?: unknown }).name === 'string' &&
+      typeof (unit as { symbol?: unknown }).symbol === 'string')
+  return (
+    typeof attribute.id === 'string' &&
+    typeof attribute.name === 'string' &&
+    (attribute.valueType === 'number' || attribute.valueType === 'text') &&
+    unitOk
+  )
+}
+
+function parseAttributesPayload(payload: unknown): AttributeSelectValue[] | null {
+  if (!payload || typeof payload !== 'object') return null
+  const record = payload as Record<string, unknown>
+  if (!Array.isArray(record.attributes)) return null
+  return record.attributes.filter(isAttributeSelectValue)
+}
+
+function appendAttributeSelection(
+  previous: SpaceAttributeRow[],
+  selected: AttributeSelectValue[],
+): SpaceAttributeRow[] {
+  const result = [...previous]
+  const seen = new Set(previous.map((row) => row.attributeId))
+  for (const attribute of selected) {
+    if (seen.has(attribute.id)) continue
+    seen.add(attribute.id)
+    result.push({
+      attributeId: attribute.id,
+      name: attribute.name,
+      description: attribute.description ?? null,
+      valueType: attribute.valueType,
+      unit: attribute.unit ?? null,
+      valueText: '',
+      valueNumber: '',
+    })
+  }
+  return result
+}
+
+function valuesFromCatalogItem(item: CatalogItem): SpaceWizardFormValues {
+  return {
+    name: item.name,
+    description: item.description ?? '',
+    status: item.status,
+    tags: item.tags.map((t) => ({ id: t.id, name: t.name, color: t.color })),
+    attributes: item.attributes.map((a) => ({
+      attributeId: a.attributeId,
+      name: a.name,
+      description: a.description ?? null,
+      valueType: a.valueType,
+      unit: a.unit,
+      valueText: '',
+      valueNumber: '',
+    })),
+  }
+}
+
+export interface SpaceFormDialogProps {
+  open: boolean
+  id?: string
+  initialStep?: SpaceWizardStep
+  onOpenChange: (open: boolean) => void
+  onSaved: (item?: CatalogItem) => void
+  chrome?: 'dialog' | 'embed-page'
+}
+
+export function SpaceFormDialog({
+  open,
+  id,
+  initialStep = 1,
+  onOpenChange,
+  onSaved,
+  chrome = 'dialog',
+}: SpaceFormDialogProps) {
+  const { t } = useTranslation('spaces')
+  const { t: tc } = useTranslation('common')
+  const { t: ta } = useTranslation('attributes')
+  const [searchParams] = useSearchParams()
+  const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
+  const isNew = !id
+  const title = isNew ? t('createTitle') : t('editTitle')
+  const embedStep =
+    chrome === 'embed-page'
+      ? parseSpaceWizardStep(searchParams.get('step'))
+      : initialStep
+  const stepQuery = embedStep > 1 ? `?step=${embedStep}` : ''
+  const path = isNew
+    ? `/embed/dialogs/spaces/create${stepQuery}`
+    : `/embed/dialogs/spaces/${id}/edit${stepQuery}`
+  const finalSubmitLabel = isNew ? t('createTitle') : t('saveChanges')
+  const stepTitles = [
+    t('wizard.stepBasics'),
+    t('wizard.stepTags'),
+    t('wizard.stepAttributes'),
+    t('wizard.stepSummary'),
+  ]
+  const stepDescriptions = useMemo(
+    () => [
+      t('wizard.descBasics'),
+      t('wizard.descTags'),
+      t('wizard.descAttributes'),
+      t('wizard.descSummary'),
+    ],
+    [t],
+  )
+  const dialogRequestId =
+    chrome === 'embed-page'
+      ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
+      : null
+
+  const [step, setStep] = useState<SpaceWizardStep>(embedStep)
+  const [values, setValues] = useState<SpaceWizardFormValues>(EMPTY_SPACE_WIZARD_VALUES)
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof SpaceWizardFormValues, string>>
+  >({})
+  const [tagPickerOpen, setTagPickerOpen] = useState(false)
+  const [attributePickerOpen, setAttributePickerOpen] = useState(false)
+  const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
+  const submittedRef = useRef(false)
+  const seededDetailIdRef = useRef<string | null>(null)
+  const tagPickerOpenRef = useRef(false)
+  const attributePickerOpenRef = useRef(false)
+  const blockOuterDismissRef = useRef(false)
+  const blockTimerRef = useRef<number | null>(null)
+  const nestedTagRequestIdRef = useRef<string | null>(null)
+  const nestedAttributeRequestIdRef = useRef<string | null>(null)
+
+  const userRole = useAppSelector((s) => s.auth.user?.role)
+  const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const canSetStatus = userRole === 'super_admin'
+
+  const editor = useEpicCatalogEditor(id, isNew, (s) => s.spaces, spacesActions)
+  const cachedDetail = useAppSelector((s) => s.spaces.detail)
+  const detailForForm =
+    !isNew && editor.detail && (editor.detail as CatalogItem).id === id
+      ? (editor.detail as CatalogItem)
+      : !isNew && cachedDetail?.id === id
+        ? cachedDetail
+        : null
+  const showLoading = Boolean(!isNew && editor.loading && !detailForForm)
+
+  const primaryLabelForStep = useCallback(
+    (current: SpaceWizardStep, saving: boolean) => {
+      if (saving) return t('saving')
+      if (current < TOTAL_STEPS) return tc('next')
+      return finalSubmitLabel
+    },
+    [finalSubmitLabel, t, tc],
+  )
+
+  const { isHosted } = useRequestPlatformPeerDialog({
+    parentOrigin: chrome === 'dialog' ? parentOrigin : null,
+    open: chrome === 'dialog' && open,
+    path,
+    title,
+    description: stepDescriptions[embedStep - 1],
+    submitLabel: primaryLabelForStep(embedStep, false),
+    secondaryLabel: embedStep > 1 ? tc('previous') : undefined,
+    ...SPACE_WIZARD_DIALOG_SIZE,
+    onResult: () => {
+      onSaved()
+      onOpenChange(false)
+    },
+    onCancel: () => onOpenChange(false),
+  })
+
+  useEffect(() => {
+    tagPickerOpenRef.current = tagPickerOpen
+  }, [tagPickerOpen])
+
+  useEffect(() => {
+    attributePickerOpenRef.current = attributePickerOpen
+  }, [attributePickerOpen])
+
+  useEffect(() => {
+    return () => {
+      if (blockTimerRef.current !== null) {
+        window.clearTimeout(blockTimerRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!open && chrome === 'dialog') return
+    const nextStep = chrome === 'embed-page' ? embedStep : initialStep
+    setStep(nextStep)
+    setFieldErrors({})
+    seededDetailIdRef.current = null
+    if (isNew) {
+      setValues(EMPTY_SPACE_WIZARD_VALUES)
+    }
+  }, [chrome, embedStep, initialStep, isNew, open])
+
+  useEffect(() => {
+    if (!open || isNew || !detailForForm) return
+    if (seededDetailIdRef.current === detailForForm.id) return
+    seededDetailIdRef.current = detailForForm.id
+    setValues(valuesFromCatalogItem(detailForForm))
+  }, [detailForForm, isNew, open])
+
+  useEffect(() => {
+    if (!open) {
+      setTagPickerOpen(false)
+      tagPickerOpenRef.current = false
+      nestedTagRequestIdRef.current = null
+      setAttributePickerOpen(false)
+      attributePickerOpenRef.current = false
+      nestedAttributeRequestIdRef.current = null
+      setBlockOuterDismiss(false)
+      blockOuterDismissRef.current = false
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!submittedRef.current || editor.saving) return
+    submittedRef.current = false
+    if (!editor.error) onSaved(editor.detail ?? undefined)
+  }, [editor.saving, editor.error, editor.detail, onSaved])
+
+  const scheduleBlockOuterDismiss = useCallback(() => {
+    blockOuterDismissRef.current = true
+    setBlockOuterDismiss(true)
+    if (blockTimerRef.current !== null) {
+      window.clearTimeout(blockTimerRef.current)
+    }
+    blockTimerRef.current = window.setTimeout(() => {
+      blockOuterDismissRef.current = false
+      setBlockOuterDismiss(false)
+      blockTimerRef.current = null
+    }, 150)
+  }, [])
+
+  const closeTagPicker = useCallback(() => {
+    setTagPickerOpen(false)
+    tagPickerOpenRef.current = false
+    nestedTagRequestIdRef.current = null
+    scheduleBlockOuterDismiss()
+  }, [scheduleBlockOuterDismiss])
+
+  const closeAttributePicker = useCallback(() => {
+    setAttributePickerOpen(false)
+    attributePickerOpenRef.current = false
+    nestedAttributeRequestIdRef.current = null
+    scheduleBlockOuterDismiss()
+  }, [scheduleBlockOuterDismiss])
+
+  const openTagPicker = useCallback(() => {
+    if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {
+      const nestedRequestId = createNestedRequestId()
+      nestedTagRequestIdRef.current = nestedRequestId
+      writeTagSelectSession(nestedRequestId, values.tags)
+      tagPickerOpenRef.current = true
+      setTagPickerOpen(true)
+      sendPlatformPeerDialogNestedRequest(parentOrigin, {
+        parentRequestId: dialogRequestId,
+        requestId: nestedRequestId,
+        path: TAG_SELECT_EMBED_PATH,
+        title: t('selectTagsTitle'),
+        description: t('selectTagsDescription'),
+        submitLabel: tc('done'),
+        ...TAG_PICKER_PEER_SIZE,
+      })
+      return
+    }
+    tagPickerOpenRef.current = true
+    setTagPickerOpen(true)
+  }, [chrome, dialogRequestId, parentOrigin, t, tc, values.tags])
+
+  const openAttributePicker = useCallback(() => {
+    if (chrome === 'embed-page' && parentOrigin && dialogRequestId) {
+      const nestedRequestId = createNestedRequestId()
+      nestedAttributeRequestIdRef.current = nestedRequestId
+      writeAttributeSelectSession(
+        nestedRequestId,
+        values.attributes.map((row) => ({
+          id: row.attributeId,
+          name: row.name,
+          valueType: row.valueType,
+          unit: row.unit,
+        })),
+      )
+      attributePickerOpenRef.current = true
+      setAttributePickerOpen(true)
+      sendPlatformPeerDialogNestedRequest(parentOrigin, {
+        parentRequestId: dialogRequestId,
+        requestId: nestedRequestId,
+        path: ATTRIBUTE_SELECT_EMBED_PATH,
+        title: ta('pickerTitle'),
+        description: ta('pickerDescription'),
+        submitLabel: ta('pickerSubmitCount', { count: 0 }),
+        sizeWidth: ATTRIBUTE_SELECT_PEER.sizeWidth,
+        sizeHeight: ATTRIBUTE_SELECT_PEER.sizeHeight,
+      })
+      return
+    }
+    attributePickerOpenRef.current = true
+    setAttributePickerOpen(true)
+  }, [chrome, dialogRequestId, parentOrigin, ta, values.attributes])
+
+  const applyAttributeSelection = useCallback((selected: AttributeSelectValue[]) => {
+    setValues((prev) => ({
+      ...prev,
+      attributes: appendAttributeSelection(prev.attributes, selected),
+    }))
+  }, [])
+
+  useEffect(() => {
+    if (chrome !== 'embed-page' || !parentOrigin || !dialogRequestId) {
+      return
+    }
+
+    function handleMessage(event: MessageEvent) {
+      if (event.origin !== parentOrigin || event.source !== window.parent) {
+        return
+      }
+
+      const nestedTagId = nestedTagRequestIdRef.current
+      if (nestedTagId) {
+        if (
+          isPlatformPeerDialogNestedResultMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedTagId
+        ) {
+          const tags = parseTagsPayload(event.data.payload)
+          if (tags) {
+            setValues((prev) => ({ ...prev, tags }))
+          }
+          closeTagPicker()
+          return
+        }
+
+        if (
+          isPlatformPeerDialogNestedCancelMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedTagId
+        ) {
+          closeTagPicker()
+          return
+        }
+      }
+
+      const nestedAttributeId = nestedAttributeRequestIdRef.current
+      if (nestedAttributeId) {
+        if (
+          isPlatformPeerDialogNestedResultMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedAttributeId
+        ) {
+          const attributes = parseAttributesPayload(event.data.payload)
+          if (attributes) {
+            applyAttributeSelection(attributes)
+          }
+          closeAttributePicker()
+          return
+        }
+
+        if (
+          isPlatformPeerDialogNestedCancelMessage(event.data) &&
+          event.data.parentRequestId === dialogRequestId &&
+          event.data.requestId === nestedAttributeId
+        ) {
+          closeAttributePicker()
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [
+    applyAttributeSelection,
+    chrome,
+    closeAttributePicker,
+    closeTagPicker,
+    dialogRequestId,
+    parentOrigin,
+  ])
+
+  function patchValues(patch: Partial<SpaceWizardFormValues>) {
+    setValues((prev) => ({ ...prev, ...patch }))
+  }
+
+  function removeAttribute(attributeId: string) {
+    setValues((prev) => ({
+      ...prev,
+      attributes: prev.attributes.filter((row) => row.attributeId !== attributeId),
+    }))
+  }
+
+  function validateStep(current: SpaceWizardStep): boolean {
+    if (current === 1) {
+      const result = spaceWizardStep1Schema.safeParse({
+        name: values.name,
+        description: values.description,
+        status: values.status,
+      })
+      if (!result.success) {
+        setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
+        return false
+      }
+      setFieldErrors({})
+      return true
+    }
+
+    if (current === 2) {
+      const result = spaceWizardStep2Schema.safeParse({
+        tag_ids: values.tags.map((tag) => tag.id),
+      })
+      if (!result.success) {
+        setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
+        return false
+      }
+      setFieldErrors({})
+      return true
+    }
+
+    if (current === 3) {
+      const result = spaceWizardStep3Schema.safeParse({
+        attributes: values.attributes,
+      })
+      if (!result.success) {
+        setFieldErrors(mapZodIssuesToFieldErrors(result.error.issues))
+        return false
+      }
+      setFieldErrors({})
+      return true
+    }
+
+    return true
+  }
+
+  function handleNext() {
+    if (!validateStep(step)) return
+    if (step < TOTAL_STEPS) {
+      setStep((step + 1) as SpaceWizardStep)
+    }
+  }
+
+  function handlePrevious() {
+    setFieldErrors({})
+    if (step > 1) {
+      setStep((step - 1) as SpaceWizardStep)
+    }
+  }
+
+  function handleSubmit() {
+    const step1 = spaceWizardStep1Schema.safeParse({
+      name: values.name,
+      description: values.description,
+      status: values.status,
+    })
+    if (!step1.success) {
+      setFieldErrors(mapZodIssuesToFieldErrors(step1.error.issues))
+      setStep(1)
+      return
+    }
+
+    setFieldErrors({})
+    submittedRef.current = true
+    editor.save(
+      toCreateSpacePayload(values, {
+        canSetStatus,
+      }),
+    )
+  }
+
+  function handlePrimaryAction() {
+    if (step < TOTAL_STEPS) {
+      handleNext()
+      return
+    }
+    handleSubmit()
+  }
+
+  const nestedPickerOpen = tagPickerOpen || attributePickerOpen
+
+  usePlatformPeerDialogSubmit({
+    parentOrigin: chrome === 'embed-page' ? parentOrigin : null,
+    requestId: dialogRequestId,
+    onSubmit: () => {
+      if (tagPickerOpenRef.current || attributePickerOpenRef.current) {
+        return
+      }
+      handlePrimaryAction()
+    },
+    onSecondary: () => {
+      if (tagPickerOpenRef.current || attributePickerOpenRef.current || editor.saving) {
+        return
+      }
+      handlePrevious()
+    },
+  })
+
+  useEffect(() => {
+    if (chrome !== 'embed-page' || !parentOrigin || !dialogRequestId) return
+    sendPlatformPeerDialogBusy(
+      parentOrigin,
+      dialogRequestId,
+      editor.saving || nestedPickerOpen,
+      primaryLabelForStep(step, editor.saving),
+      {
+        description: stepDescriptions[step - 1],
+        secondaryLabel: step > 1 ? tc('previous') : null,
+      },
+    )
+  }, [
+    chrome,
+    dialogRequestId,
+    editor.saving,
+    nestedPickerOpen,
+    parentOrigin,
+    primaryLabelForStep,
+    step,
+    stepDescriptions,
+    tc,
+  ])
+
+  function handleFormOpenChange(next: boolean) {
+    if (next) return
+    if (tagPickerOpenRef.current || tagPickerOpen) {
+      closeTagPicker()
+      return
+    }
+    if (attributePickerOpenRef.current || attributePickerOpen) {
+      closeAttributePicker()
+      return
+    }
+    if (blockOuterDismissRef.current || blockOuterDismiss) {
+      return
+    }
+    onOpenChange(false)
+  }
+
+  const stepIndex = step - 1
+  const isSubmitting = editor.saving
+  const selectedAttributeValues = useMemo(
+    () =>
+      values.attributes.map((row) => ({
+        id: row.attributeId,
+        name: row.name,
+        valueType: row.valueType,
+        unit: row.unit,
+      })),
+    [values.attributes],
+  )
+
+  const footer = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+        onClick={() => handleFormOpenChange(false)}
+        disabled={isSubmitting}
+      >
+        {tc('cancel')}
+      </Button>
+      {step > 1 ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+          onClick={handlePrevious}
+          disabled={isSubmitting}
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          {tc('previous')}
+        </Button>
+      ) : null}
+      {step < TOTAL_STEPS ? (
+        <Button
+          type="button"
+          className="h-10 px-4"
+          onClick={handleNext}
+          disabled={isSubmitting || showLoading || nestedPickerOpen}
+        >
+          {tc('next')}
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          className="h-10"
+          onClick={handleSubmit}
+          disabled={isSubmitting || showLoading || nestedPickerOpen}
+        >
+          <Save className="mr-2 h-4 w-4" />
+          {isSubmitting ? t('saving') : finalSubmitLabel}
+        </Button>
+      )}
+    </div>
+  )
+
+  const body = showLoading ? (
+    <div className="flex min-h-[200px] items-center justify-center">
+      <Spinner size="lg" />
+    </div>
+  ) : (
+    <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t('stepOf', { current: step, total: TOTAL_STEPS, title: stepTitles[stepIndex] })}
+        </p>
+        <SpaceWizardProgress currentStep={step} totalSteps={TOTAL_STEPS} />
+      </div>
+
+      {editor.error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{editor.error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {step === 1 ? (
+        <SpaceWizardStepBasics
+          values={values}
+          fieldErrors={fieldErrors}
+          isSubmitting={isSubmitting}
+          canSetStatus={canSetStatus}
+          onChange={patchValues}
+        />
+      ) : null}
+
+      {step === 2 ? (
+        <SpaceWizardStepTags
+          values={values}
+          isSubmitting={isSubmitting}
+          disabled={!accessToken}
+          onOpenPicker={openTagPicker}
+        />
+      ) : null}
+
+      {step === 3 ? (
+        <SpaceWizardStepAttributes
+          values={values}
+          isSubmitting={isSubmitting}
+          onOpenPicker={openAttributePicker}
+          onRemove={removeAttribute}
+        />
+      ) : null}
+
+      {step === 4 ? (
+        <SpaceWizardStepSummary values={values} showStatus={canSetStatus} />
+      ) : null}
+    </div>
+  )
+
+  if (chrome === 'embed-page') {
+    return <div className="flex w-full flex-col gap-4 p-4 sm:p-6">{body}</div>
+  }
+
+  if (isHosted) {
+    return null
+  }
+
+  return (
+    <>
+      <CustomDialog
+        open={open}
+        onOpenChange={handleFormOpenChange}
+        title={title}
+        description={stepDescriptions[stepIndex]}
+        sizeWidth={SPACE_WIZARD_DIALOG_SIZE.sizeWidth}
+        sizeHeight={SPACE_WIZARD_DIALOG_SIZE.sizeHeight}
+        nestedDismissGuard={nestedPickerOpen || blockOuterDismiss}
+        footer={footer}
+      >
+        {body}
+      </CustomDialog>
+      <TagSelectStackedDialogs
+        pickerOpen={tagPickerOpen}
+        selectedTags={values.tags}
+        onDone={(tags) => {
+          patchValues({ tags })
+          closeTagPicker()
+        }}
+        onClosePicker={closeTagPicker}
+        pickerStackLevel={1}
+      />
+      <AttributeSelectStackedDialogs
+        pickerOpen={attributePickerOpen}
+        alreadySelectedAttributes={selectedAttributeValues}
+        onDone={(attributes) => {
+          applyAttributeSelection(attributes)
+          closeAttributePicker()
+        }}
+        onClosePicker={closeAttributePicker}
+        pickerStackLevel={1}
+      />
+    </>
+  )
+}

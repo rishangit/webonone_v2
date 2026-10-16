@@ -150,7 +150,12 @@ export function CompanyProductDetailVariantPricingCard({
             </div>
 
             {unitPrice != null ? (
-              <ListPriceField label={t('list.price')} value={unitPrice} />
+              <ListPriceField
+                label={t('list.price')}
+                value={unitPrice}
+                compareAt={line.compareAtSellPrice}
+                discountPercent={line.discountPercent}
+              />
             ) : null}
           </div>
         ) : null}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Platform, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { AccountOptionRow, Body, Button, CustomDialog } from '@webonone/mobile-ui'
@@ -10,10 +10,12 @@ export function AccountSwitchDialog({
   open,
   onOpenChange,
   onSwitched,
+  preferredCompanyId = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSwitched?: () => void
+  preferredCompanyId?: string | null
 }) {
   const { t } = useTranslation('session')
   const { t: tc } = useTranslation('common')
@@ -21,7 +23,27 @@ export function AccountSwitchDialog({
   const [pending, setPending] = useState<SessionRoleOption | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const appliedPreferredRef = useRef<string | null>(null)
   const stackedActions = Platform.OS === 'web'
+
+  useEffect(() => {
+    if (!open) {
+      setPending(null)
+      setError(null)
+      appliedPreferredRef.current = null
+      return
+    }
+    if (!preferredCompanyId || appliedPreferredRef.current === preferredCompanyId) return
+    const created = roleOptions.find(
+      (option) =>
+        option.role === 'company_admin' &&
+        option.companyId === preferredCompanyId &&
+        option.accountKind !== 'staff',
+    )
+    if (!created) return
+    appliedPreferredRef.current = preferredCompanyId
+    setPending(created)
+  }, [open, preferredCompanyId, roleOptions])
 
   async function handleSwitch() {
     if (!pending) return

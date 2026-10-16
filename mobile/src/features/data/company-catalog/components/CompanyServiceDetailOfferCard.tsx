@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { Body, Button, EditableSectionCard, ListPriceField, Muted, ReadOnlyField } from '@webonone/mobile-ui'
+import { Body, EditableSectionCard, ListPriceField, Muted, ReadOnlyField } from '@webonone/mobile-ui'
 import { companyCatalogApi } from '@/features/data/services/companyCatalogApi'
 import type { CatalogPayload } from '@/features/sales/types/catalog.types'
 
@@ -9,26 +9,20 @@ type CompanyServiceDetailOfferCardProps = {
   serviceId: string
   servicePayload: CatalogPayload | null
   listPrice: number | null | undefined
-  canManagePrice: boolean
-  canEditSchedule: boolean
+  canEdit: boolean
   busy?: boolean
   overviewActive?: boolean
-  onEditListPrice: () => void
-  onEditSchedule: () => void
-  onManageWorkflow: () => void
+  onEdit: () => void
 }
 
 export function CompanyServiceDetailOfferCard({
   serviceId,
   servicePayload,
   listPrice,
-  canManagePrice,
-  canEditSchedule,
+  canEdit,
   busy = false,
   overviewActive = true,
-  onEditListPrice,
-  onEditSchedule,
-  onManageWorkflow,
+  onEdit,
 }: CompanyServiceDetailOfferCardProps) {
   const { t } = useTranslation('catalog')
   const [spaceNames, setSpaceNames] = useState<string[] | undefined>()
@@ -54,27 +48,16 @@ export function CompanyServiceDetailOfferCard({
     void loadSpaces()
   }, [loadSpaces, overviewActive])
 
-  const canEditCard = (canManagePrice || canEditSchedule) && !busy
   const loadingSpaces = spaceNames === undefined
   const emptySpaces = spaceNames !== undefined && spaceNames.length === 0
   const mode = servicePayload?.timeMode
-
-  function handleCardEdit() {
-    if (canManagePrice) {
-      onEditListPrice()
-      return
-    }
-    if (canEditSchedule) {
-      onEditSchedule()
-    }
-  }
 
   return (
     <EditableSectionCard
       title={t('detail.serviceOffer.title')}
       description={t('detail.serviceOffer.description')}
-      canEdit={canEditCard}
-      onEdit={handleCardEdit}
+      canEdit={canEdit && !busy}
+      onEdit={onEdit}
     >
       <View className="gap-3 border-y border-border py-3">
         <ReadOnlyField
@@ -125,17 +108,6 @@ export function CompanyServiceDetailOfferCard({
           <Body className="text-sm">{spaceNames?.join(', ')}</Body>
         )}
       </View>
-
-      {canEditSchedule ? (
-        <View className="flex-row flex-wrap gap-2">
-          <Button variant="ghost" size="sm" onPress={onEditSchedule}>
-            {t('detail.serviceOffer.editSchedule')}
-          </Button>
-          <Button variant="ghost" size="sm" onPress={onManageWorkflow}>
-            {t('detail.serviceOffer.manageWorkflow')}
-          </Button>
-        </View>
-      ) : null}
 
       <ListPriceField label={t('detail.pricing.listPrice')} value={listPrice} />
     </EditableSectionCard>

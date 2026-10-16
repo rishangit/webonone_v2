@@ -120,7 +120,12 @@ export function CatalogPublicProductVariantPricingCard({
           />
 
           {unitPrice != null ? (
-            <ListPriceField label={t('productPricing.price')} value={unitPrice} />
+            <ListPriceField
+              label={t('productPricing.price')}
+              value={unitPrice}
+              compareAt={line.sellPrice != null ? line.compareAtSellPrice : null}
+              discountPercent={line.sellPrice != null ? line.discountPercent : null}
+            />
           ) : null}
         </div>
       ) : null}
