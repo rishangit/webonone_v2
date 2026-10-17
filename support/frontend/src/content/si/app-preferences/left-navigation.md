@@ -7,8 +7,8 @@ order: 3
 summary: "Sidebar මගින් ඔබේ වර්තමාන ගිණුමට විවෘත කිරීමට අවසර ඇති ප්‍රදේශ පමණක් ලැයිස්තු කරයි."
 ---
 
-වම් menu කණ්ඩායම් වශයෙන් සකසා ඇත (Dashboard, Analytics, Calendar, Identity, Data, Email, SMS, Sales, Payment, Design, Companies, Settings). [mobile app](/docs/getting-started/mobile-app) හි එකම කණ්ඩායම් ඉහළ වම් menu එකෙන් විවෘත වේ. SMS හි දුරකථනයේ පමණක් **This device** ඇත (Android gateway).
+වම් menu කණ්ඩායම් වශයෙන් සකසා ඇත (Dashboard, Analytics, Calendar, Identity, Data, Email, SMS, Sales, Payment, Forms, Website, Companies, Settings). [mobile app](/docs/getting-started/mobile-app) හි එකම කණ්ඩායම් ඉහළ වම් menu එකෙන් විවෘත වේ. SMS හි දුරකථනයේ පමණක් **This device** ඇත (Android gateway).
 
-ඔබ තෝරාගත් [account](/docs/getting-started/choose-account) සඳහා පමණක් අයිතම දිස්වේ. Super Admin එක් සමාගමක Calendar සහ POS වෙනුවට All Companies දකී. Super Admin **Design → Website** විවෘත කර බෙදාගත් වෙබ් අඩවි පුස්තකාලය පවත්වාගෙන යයි. සමාගම් පරිපාලකයින් එම අයිතම තම වෙබ් අඩවියට පිටපතක් ලෙස එක් කරයි.
+ඔබ තෝරාගත් [account](/docs/getting-started/choose-account) සඳහා පමණක් අයිතම දිස්වේ. Super Admin එක් සමාගමක Calendar සහ POS වෙනුවට All Companies දකී. Super Admin **Website** විවෘත කර බෙදාගත් වෙබ් අඩවි පුස්තකාලය පවත්වාගෙන යයි. සමාගම් පරිපාලකයින් එම අයිතම තම වෙබ් අඩවියට පිටපතක් ලෙස එක් කරයි.
 
 එම පිටුව විවෘත කිරීමට පේළියක් click කරන්න. Email හෝ Data වැනි peer ප්‍රදේශ යෙදුමේ ප්‍රධාන content ප්‍රදේශයේ load වේ.

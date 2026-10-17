@@ -7,13 +7,13 @@ order: 5
 summary: "නම් කළ ශීර්ෂ, පාදම සහ තේමා කොටස් සාදා පිටු යොදන්න — මුල් පිටුව සහ About එකම layout එකක් බෙදා ගත හැකි අතර Help වෙනත් එකක් භාවිතා කරයි."
 ---
 
-1. **Design → Website → Layouts** විවෘත කරන්න.
+1. **Website → Layouts** විවෘත කරන්න.
 2. පිරිසැලසුමක් එක් කරන්න. නමක් දී **header**, **footer** සහ **theme** තෝරන්න, අවශ්‍ය නම් පෙරනිමිය ලෙස සලකුණු කරන්න.
 3. එක් එක් **page** මත එම layout එක තෝරන්න (Home සහ About Main බෙදා ගත හැකි අතර Help වෙනත් එකක් භාවිතා කරයි).
 4. Layout එකේ **Menu order** භාවිතා කර ශීර්ෂ මෙනුවේ සබැඳි අනුපිළිවෙල සකසන්න.
 
 සජීවී අඩවිය එක් එක් පිටුව එම layout එකේ ශීර්ෂයෙන්, පාදමෙන් සහ තේමාවෙන් ඔතයි. එකම layout එකේ පිටු එකම chrome, පෙනුම සහ මෙනුව බෙදා ගනී.
 
-**Add from library** මගින් බෙදාගත් layout එකක්, එහි ශීර්ෂය, පාදම සහ තේමාව සමඟ, මෙම වෙබ් අඩවියට පිටපත් වේ. පිටපත සංස්කරණය කිරීම පුස්තකාලය වෙනස් නොකරයි. Super Admin **Design → Website** යටතේ පුස්තකාල layouts පවත්වාගෙන යයි.
+**Add from library** මගින් බෙදාගත් layout එකක්, එහි ශීර්ෂය, පාදම සහ තේමාව සමඟ, මෙම වෙබ් අඩවියට පිටපත් වේ. පිටපත සංස්කරණය කිරීම පුස්තකාලය වෙනස් නොකරයි. Super Admin **Website** යටතේ පුස්තකාල layouts පවත්වාගෙන යයි.
 
 [Headers and footers](/docs/website-forms/headers-footers), [Website themes](/docs/website-forms/website-themes) සහ [Header menu](/docs/website-forms/header-menu) සමඟ යුගල කරන්න. පිටු [Website pages](/docs/website-forms/website-pages) යටතේ සාදන්න.

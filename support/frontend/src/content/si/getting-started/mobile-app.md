@@ -15,4 +15,4 @@ summary: "දුරකථනයෙන් web හි එකම WebOnOne ගිණ
 
 Company owners සහ Super Admins ට **SMS** ද පෙනේ. මෙම දුරකථනයේ SIM එකෙන් පණිවිඩ යැවීමට [mobile app SMS gateway ලෙස ස්ථාපනය කරන්න](/docs/communications/mobile-gateway) අනුගමනය කරන්න.
 
-**Analytics**, Calendar, Sales, Data, Email, Payment, සහ Profile native screens වේ (web යෙදුමේ එකම දත්ත). **Design** තවමත් app තුළ හෝ browser එකේ web පිටුව විවෘත කරයි.
+**Analytics**, Calendar, Sales, Data, Email, Payment, **Forms**, **Website**, සහ Profile native screens වේ (web යෙදුමේ එකම දත්ත).

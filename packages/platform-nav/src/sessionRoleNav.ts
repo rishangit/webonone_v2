@@ -11,8 +11,11 @@ import {
 
 export type SessionRole = 'super_admin' | 'company_admin' | 'member'
 
-/** Identity/Data/Design remain staff/company-session only. Default User keeps Calendar. */
-export const COMPANY_SESSION_ONLY_GROUPS = new Set(['Identity', 'Data', 'Design'])
+/** Identity/Data groups and Forms/Website stay staff/company-session only. Default User keeps Calendar. */
+export const COMPANY_SESSION_ONLY_GROUPS = new Set(['Identity', 'Data'])
+
+/** Top-level leaves hidden for a member with no company. */
+export const COMPANY_SESSION_ONLY_ITEMS = new Set(['Forms', 'Website'])
 
 export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
   if (role === 'super_admin') return 'superAdmin'
@@ -21,15 +24,17 @@ export function sessionRoleToNavVariant(role: SessionRole): PlatformNavVariant {
 }
 
 export function withoutCompanySessionOnlyGroups(defs: CoreNavDef[]): CoreNavDef[] {
-  return defs.filter(
-    (item) => !(item.kind === 'group' && COMPANY_SESSION_ONLY_GROUPS.has(item.label)),
-  )
+  return defs.filter((item) => {
+    if (item.kind === 'group' && COMPANY_SESSION_ONLY_GROUPS.has(item.label)) return false
+    if (item.kind === 'item' && COMPANY_SESSION_ONLY_ITEMS.has(item.label)) return false
+    return true
+  })
 }
 
 /**
  * Role-filtered platform nav defs (paths + labels only). Clients map icons.
  * `company_admin` / company `member` filter Data children by enabled catalog entities.
- * Default User (`member` with no company) drops Identity/Data/Design.
+ * Default User (`member` with no company) drops Identity, Data, Forms, and Website.
  */
 export function buildNavDefsForSessionRole(
   role: SessionRole,

@@ -4,6 +4,7 @@ import {
   Calendar,
   CalendarDays,
   Database,
+  FileText,
   Globe,
   History,
   Home,
@@ -67,7 +68,7 @@ const ICON_BY_PATH: Record<string, LucideIcon> = {
   [SMS_NAV_SENTINELS.history]: History,
   [SMS_NAV_SENTINELS.templates]: MessageSquare,
   [PAYMENT_NAV_SENTINELS.invoices]: Wallet,
-  [DESIGN_NAV_SENTINELS.forms]: Palette,
+  [DESIGN_NAV_SENTINELS.forms]: FileText,
   [DESIGN_NAV_SENTINELS.website]: Globe,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
@@ -83,7 +84,6 @@ const GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   SMS: MessageSquare,
   Payment: Wallet,
   Sales: ShoppingCart,
-  Design: Palette,
   Calendar: Calendar,
 }
 

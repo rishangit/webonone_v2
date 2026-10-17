@@ -34,20 +34,28 @@ describe('sessionRoleNav', () => {
     assert.equal(groupLabels(buildNavDefsForSessionRole('member')).includes('SMS'), false)
   })
 
-  it('strips Identity/Data/Design for Default User', () => {
-    const labels = groupLabels(buildNavDefsForSessionRole('member', undefined, null))
+  it('strips Identity/Data/Forms/Website for Default User', () => {
+    const defs = buildNavDefsForSessionRole('member', undefined, null)
+    const labels = defs.map((item) => item.label)
     assert.equal(labels.includes('Identity'), false)
     assert.equal(labels.includes('Data'), false)
-    assert.equal(labels.includes('Design'), false)
+    assert.equal(labels.includes('Forms'), false)
+    assert.equal(labels.includes('Website'), false)
     assert.ok(labels.includes('Calendar'))
     assert.ok(labels.includes('Settings'))
   })
 
-  it('keeps Identity/Data/Design for staff with a company', () => {
-    const labels = groupLabels(buildNavDefsForSessionRole('member', ['products'], 'co_1'))
+  it('keeps Identity/Data/Forms/Website for staff with a company', () => {
+    const defs = buildNavDefsForSessionRole('member', ['products'], 'co_1')
+    const labels = defs.map((item) => item.label)
     assert.ok(labels.includes('Identity'))
     assert.ok(labels.includes('Data'))
-    assert.ok(labels.includes('Design'))
+    assert.ok(labels.includes('Forms'))
+    assert.ok(labels.includes('Website'))
+    const forms = defs.find((item) => item.label === 'Forms')
+    const website = defs.find((item) => item.label === 'Website')
+    assert.equal(forms?.kind, 'item')
+    assert.equal(website?.kind, 'item')
   })
 
   it('filters company Data children to enabled catalog entities', () => {

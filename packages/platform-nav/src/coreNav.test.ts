@@ -349,27 +349,29 @@ describe('coreNav', () => {
       '/website/pages/abc/edit',
     )
     const defs = getPlatformNavDefs('main')
-    const design = defs.find((item) => item.kind === 'group' && item.label === 'Design')
-    assert.ok(design?.kind === 'group')
-    if (design?.kind === 'group') {
-      assert.deepEqual(
-        design.children.map((child) => child.label),
-        ['Forms', 'Website'],
-      )
+    const forms = defs.find((item) => item.kind === 'item' && item.label === 'Forms')
+    const website = defs.find((item) => item.kind === 'item' && item.label === 'Website')
+    assert.equal(defs.some((item) => item.kind === 'group' && item.label === 'Design'), false)
+    assert.ok(forms?.kind === 'item')
+    assert.ok(website?.kind === 'item')
+    if (forms?.kind === 'item' && website?.kind === 'item') {
+      assert.equal(forms.externalPath, '/forms')
+      assert.equal(website.externalPath, '/website')
+      const formsIndex = defs.indexOf(forms)
+      const websiteIndex = defs.indexOf(website)
+      assert.ok(formsIndex >= 0 && websiteIndex === formsIndex + 1)
     }
   })
 
-  it('gives super admin Design Website without Forms', () => {
+  it('gives super admin a top-level Website item without Forms', () => {
     const defs = getPlatformNavDefs('superAdmin')
-    const design = defs.find((item) => item.kind === 'group' && item.label === 'Design')
-    assert.ok(design?.kind === 'group')
-    if (design?.kind === 'group') {
-      assert.deepEqual(
-        design.children.map((child) => child.label),
-        ['Website'],
-      )
-      assert.equal(design.children[0]?.externalService, 'design')
-      assert.equal(design.children[0]?.externalPath, '/website')
+    const website = defs.find((item) => item.kind === 'item' && item.label === 'Website')
+    assert.equal(defs.some((item) => item.label === 'Forms'), false)
+    assert.equal(defs.some((item) => item.kind === 'group' && item.label === 'Design'), false)
+    assert.ok(website?.kind === 'item')
+    if (website?.kind === 'item') {
+      assert.equal(website.externalService, 'design')
+      assert.equal(website.externalPath, '/website')
     }
   })
 })

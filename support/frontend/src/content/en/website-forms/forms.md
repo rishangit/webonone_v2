@@ -4,10 +4,10 @@ category: website-forms
 slug: forms
 audience: owner
 order: 1
-summary: "Open Design → Forms to list, create, and open forms."
+summary: "Open Forms to list, create, and open forms."
 ---
 
-1. Open **Design → Forms**.
+1. Open **Forms**.
 2. Choose **Add** to create a form, or click a row to open it.
 3. Use the [visual designer](/docs/website-forms/form-designer) to add fields.
 

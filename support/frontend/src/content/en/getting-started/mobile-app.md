@@ -15,4 +15,4 @@ summary: "Sign in on your phone to the same WebOnOne account, menu, and roles as
 
 Company owners and Super Admins also see **SMS**. To send messages from this phone’s SIM, follow [Install the mobile app as an SMS gateway](/docs/communications/mobile-gateway).
 
-**Analytics**, Calendar, Sales, Data, Email, Payment, and Profile are native screens (same data as the web app). **Design** still opens the web page inside the app or in the browser.
+**Analytics**, Calendar, Sales, Data, Email, Payment, **Forms**, **Website**, and Profile are native screens (same data as the web app).

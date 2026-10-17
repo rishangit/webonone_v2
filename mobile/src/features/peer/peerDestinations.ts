@@ -17,7 +17,7 @@ export function resolvePeerDestination(pathname: string): PeerDestination {
   if (isDesignNavSentinel(pathname) && !pathname.startsWith('/design/website')) {
     return {
       kind: 'webview',
-      title: 'Design',
+      title: 'Forms',
       origin: env.designOrigin,
       path: designSentinelToExternalPath(pathname) ?? '/forms',
       storageKey: 'design_auth',

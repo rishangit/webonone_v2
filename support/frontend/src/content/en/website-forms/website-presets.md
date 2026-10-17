@@ -7,7 +7,7 @@ order: 10
 summary: "Save reusable content-element layouts and insert them while designing pages, headers, or footers."
 ---
 
-1. Open **Design → Website** and choose the **Presets** tab.
+1. Open **Website** and choose the **Presets** tab.
 2. Add a preset, give it a name, then design it in the same webpage designer used for pages (content elements and add-ons).
 3. Save the preset.
 4. Or, in a page, header, or footer designer, open a content element’s menu and choose **Save as preset** (unavailable while you are already editing a preset).
@@ -16,7 +16,7 @@ summary: "Save reusable content-element layouts and insert them while designing 
 
 Nav menu add-ons in a preset are skipped when you insert into a page or footer. Presets are not shown on the public site.
 
-**Add from library** copies a shared preset into this website. Editing the copy does not change the library. Super Admin maintains library presets under **Design → Website**.
+**Add from library** copies a shared preset into this website. Editing the copy does not change the library. Super Admin maintains library presets under **Website**.
 
 To expose catalog or analytics data on the public site, use [Website data sets](/docs/website-forms/website-datasets).
 

@@ -18,7 +18,7 @@ You sign in at the **app**. From the left menu you can:
 - Keep a **catalog** of products, services, and spaces
 - Send **email** and **SMS**
 - Take **sales** and view **invoices**
-- Design **forms** and your **company website**
+- **Forms** and your **company website**
 
 The public site at webonone.com is for visitors who search the catalog. This help site explains how to use the app.
 

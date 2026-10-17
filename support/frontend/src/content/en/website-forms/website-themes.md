@@ -7,7 +7,7 @@ order: 8
 summary: "Add a website theme by name, then edit basic settings, fonts, colors, texts, and buttons on the theme page. Pick that theme on a layout."
 ---
 
-1. Open Design website **themes**.
+1. Open **Website** and choose **themes**.
 2. Choose **Add theme** and enter a name. This is the website theme, separate from Settings themes.
 3. The theme detail page opens with **Basic settings**, **Fonts**, **Colors**, **Texts**, and **Buttons**.
 4. On **Basic settings**, set the name, page background, and body text color.
@@ -16,4 +16,4 @@ summary: "Add a website theme by name, then edit basic settings, fonts, colors, 
 7. On **Texts** and **Buttons**, add styles that use those fonts and colors.
 8. On each **layout**, pick which theme those pages use. If a layout has no theme, the company default theme is used.
 
-See [Website layouts](/docs/website-forms/website-layouts). Media for the site is managed under website media in Design.
+See [Website layouts](/docs/website-forms/website-layouts). Media for the site is managed under **Website → Media**.

@@ -84,6 +84,7 @@ export type {
 } from './types'
 export {
   COMPANY_SESSION_ONLY_GROUPS,
+  COMPANY_SESSION_ONLY_ITEMS,
   MOBILE_SMS_THIS_DEVICE_NAV,
   appendMobileSmsThisDeviceNav,
   buildNavDefsForSessionRole,

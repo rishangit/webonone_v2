@@ -7,7 +7,7 @@ order: 7
 summary: "Service අවශ්‍ය නම් session workflow හි Design form විවෘත කරන්න."
 ---
 
-සමහර sessions හි Design හි සිට **form** එකක් ඇතුළත් වේ. එය විවෘත කරන තැන ඔබ ලොග් වූ ආකාරය අනුව වෙනස් වේ.
+සමහර sessions හි **form** එකක් ඇතුළත් වේ. එය විවෘත කරන තැන ඔබ ලොග් වූ ආකාරය අනුව වෙනස් වේ.
 
 ## Member login
 
@@ -24,4 +24,4 @@ summary: "Service අවශ්‍ය නම් session workflow හි Design fo
 2. Session අතරතුර, form action දිස්වූ විට එය විවෘත කරන්න.
 3. ක්ෂේත්‍ර පුරවා submit කරන්න.
 
-Forms [Design → Forms](/docs/website-forms/forms) යටතේ සාදනු ලැබේ. සම්පූර්ණ Design designer විවෘත නොකර session තුළ ඒවා පුරවා යැවිය හැක.
+Forms [Forms](/docs/website-forms/forms) යටතේ සාදනු ලැබේ. සම්පූර්ණ Design designer විවෘත නොකර session තුළ ඒවා පුරවා යැවිය හැක.

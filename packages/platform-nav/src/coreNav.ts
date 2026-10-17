@@ -425,40 +425,20 @@ export function designSentinelToExternalPath(sentinel: string): string | null {
   return null
 }
 
-const DESIGN_PLATFORM_NAV_GROUP: CoreNavGroup = {
-  kind: 'group',
-  label: 'Design',
-  children: [
-    {
-      kind: 'item',
-      path: DESIGN_NAV_SENTINELS.forms,
-      label: 'Forms',
-      externalService: 'design',
-      externalPath: '/forms',
-    },
-    {
-      kind: 'item',
-      path: DESIGN_NAV_SENTINELS.website,
-      label: 'Website',
-      externalService: 'design',
-      externalPath: '/website',
-    },
-  ],
+const FORMS_NAV_ITEM: CoreNavLeaf = {
+  kind: 'item',
+  path: DESIGN_NAV_SENTINELS.forms,
+  label: 'Forms',
+  externalService: 'design',
+  externalPath: '/forms',
 }
 
-/** Super admin curates the shared website library. Forms stay company-scoped. */
-const DESIGN_SUPER_ADMIN_NAV_GROUP: CoreNavGroup = {
-  kind: 'group',
-  label: 'Design',
-  children: [
-    {
-      kind: 'item',
-      path: DESIGN_NAV_SENTINELS.website,
-      label: 'Website',
-      externalService: 'design',
-      externalPath: '/website',
-    },
-  ],
+const WEBSITE_NAV_ITEM: CoreNavLeaf = {
+  kind: 'item',
+  path: DESIGN_NAV_SENTINELS.website,
+  label: 'Website',
+  externalService: 'design',
+  externalPath: '/website',
 }
 
 const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
@@ -622,7 +602,8 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   SMS_PLATFORM_NAV_GROUP,
   SALES_PLATFORM_NAV_GROUP,
   PAYMENT_PLATFORM_NAV_GROUP,
-  DESIGN_PLATFORM_NAV_GROUP,
+  FORMS_NAV_ITEM,
+  WEBSITE_NAV_ITEM,
   COMPANIES_PLATFORM_NAV_GROUP,
   SETTINGS_PLATFORM_NAV_GROUP,
 ]
@@ -633,7 +614,8 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
   CALENDAR_PLATFORM_NAV_GROUP,
   IDENTITY_COMPANY_NAV_GROUP,
   DATA_PLATFORM_NAV_GROUP,
-  DESIGN_PLATFORM_NAV_GROUP,
+  FORMS_NAV_ITEM,
+  WEBSITE_NAV_ITEM,
   COMPANIES_PLATFORM_NAV_GROUP,
   SETTINGS_PLATFORM_NAV_GROUP,
 ]
@@ -656,7 +638,7 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
     ],
   },
   DATA_PLATFORM_NAV_GROUP,
-  DESIGN_SUPER_ADMIN_NAV_GROUP,
+  WEBSITE_NAV_ITEM,
   {
     kind: 'group',
     label: 'Email',
