@@ -86,7 +86,7 @@ export function WebsiteDatasetsScreen() {
     }
   }
 
-  if (!hasCompany) return <WebsiteNeedCompany section="datasets" description={t('datasetsDescription')} />
+  if (!hasCompany) return <WebsiteNeedCompany description={t('datasetsDescription')} />
 
   return (
     <FeatureScreen
@@ -111,7 +111,6 @@ export function WebsiteDatasetsScreen() {
       }
     >
       <WebsiteHubListPage
-        section="datasets"
         loading={list.loading}
         error={list.error}
         loadedCount={list.items.length}

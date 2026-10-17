@@ -3,11 +3,8 @@ import { View } from 'react-native'
 import { Alert, AlertDescription, ListPageBody, Spinner } from '@webonone/mobile-ui'
 import { useTranslation } from 'react-i18next'
 import { TranslatedListPageFooter } from '@/shared/components/TranslatedListPageFooter'
-import { WebsiteHubTabs } from './WebsiteHubTabs'
-import type { WebsiteSection } from '@/features/design/utils/designPaths'
 
 export type WebsiteHubListPageProps = {
-  section: WebsiteSection
   loading: boolean
   error?: string | null
   filterPanel?: ReactNode
@@ -19,11 +16,10 @@ export type WebsiteHubListPageProps = {
 }
 
 /**
- * Hub tabs + optional filter panel + list body. Search / filter / add belong in
+ * Optional filter panel + list body. Search / filter / add belong in
  * `FeatureScreen` `actions` via `ListPageActions` (same as Tags, Invoices).
  */
 export function WebsiteHubListPage({
-  section,
   loading,
   error,
   filterPanel,
@@ -37,7 +33,6 @@ export function WebsiteHubListPage({
 
   return (
     <View className="min-h-0 flex-1 gap-3">
-      <WebsiteHubTabs section={section} />
       {filterPanel}
       {error ? (
         <Alert variant="destructive">

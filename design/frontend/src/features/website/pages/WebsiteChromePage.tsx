@@ -73,7 +73,6 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
-        <WebsiteHubTabs section={kind} />
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -87,7 +86,6 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
       description={kind === 'headers' ? t('headersDescription') : t('footersDescription')}
     >
       <WebsiteHubTabs
-        section={kind}
         actions={
           <WebsiteHubListToolbar
             searchValue={list.q}

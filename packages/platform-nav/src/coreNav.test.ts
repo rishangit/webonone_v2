@@ -350,28 +350,36 @@ describe('coreNav', () => {
     )
     const defs = getPlatformNavDefs('main')
     const forms = defs.find((item) => item.kind === 'item' && item.label === 'Forms')
-    const website = defs.find((item) => item.kind === 'item' && item.label === 'Website')
+    const website = defs.find((item) => item.kind === 'group' && item.label === 'Website')
     assert.equal(defs.some((item) => item.kind === 'group' && item.label === 'Design'), false)
     assert.ok(forms?.kind === 'item')
-    assert.ok(website?.kind === 'item')
-    if (forms?.kind === 'item' && website?.kind === 'item') {
+    assert.ok(website?.kind === 'group')
+    if (forms?.kind === 'item' && website?.kind === 'group') {
       assert.equal(forms.externalPath, '/forms')
-      assert.equal(website.externalPath, '/website')
+      assert.deepEqual(
+        website.children.map((child) => child.label),
+        ['Pages', 'Layouts', 'Headers', 'Footers', 'Presets', 'Data Sets', 'Themes', 'Media', 'Settings'],
+      )
+      assert.equal(website.children[0]?.externalPath, '/website/pages')
       const formsIndex = defs.indexOf(forms)
       const websiteIndex = defs.indexOf(website)
       assert.ok(formsIndex >= 0 && websiteIndex === formsIndex + 1)
     }
   })
 
-  it('gives super admin a top-level Website item without Forms', () => {
+  it('gives super admin a Website group without Forms, Data Sets, Media, or Settings', () => {
     const defs = getPlatformNavDefs('superAdmin')
-    const website = defs.find((item) => item.kind === 'item' && item.label === 'Website')
+    const website = defs.find((item) => item.kind === 'group' && item.label === 'Website')
     assert.equal(defs.some((item) => item.label === 'Forms'), false)
     assert.equal(defs.some((item) => item.kind === 'group' && item.label === 'Design'), false)
-    assert.ok(website?.kind === 'item')
-    if (website?.kind === 'item') {
-      assert.equal(website.externalService, 'design')
-      assert.equal(website.externalPath, '/website')
+    assert.ok(website?.kind === 'group')
+    if (website?.kind === 'group') {
+      assert.deepEqual(
+        website.children.map((child) => child.label),
+        ['Pages', 'Layouts', 'Headers', 'Footers', 'Presets', 'Themes'],
+      )
+      assert.equal(website.children[0]?.externalService, 'design')
+      assert.equal(website.children[0]?.externalPath, '/website/pages')
     }
   })
 })

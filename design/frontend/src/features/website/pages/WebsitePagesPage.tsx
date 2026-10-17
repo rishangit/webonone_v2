@@ -24,8 +24,6 @@ import { WebsiteHubListPage } from '../components/WebsiteHubListPage'
 
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 
-import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
-
 import { WebsitePageDialog } from '../components/WebsiteEntityDialogs'
 
 import { WebsitePagesList } from '../components/WebsitePagesList'
@@ -126,8 +124,6 @@ export function WebsitePagesPage() {
 
       <FeaturePage title={t('title')} description={t('description')}>
 
-        <WebsiteHubTabs section="pages" />
-
         <Alert>
 
           <AlertDescription>{t('needCompany')}</AlertDescription>
@@ -169,8 +165,6 @@ export function WebsitePagesPage() {
     <FeaturePage title={t('title')} description={t('pagesDescription')} className="min-h-full">
 
       <WebsiteHubListPage
-
-        section="pages"
 
         list={list}
 

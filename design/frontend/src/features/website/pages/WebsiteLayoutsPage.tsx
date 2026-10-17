@@ -23,7 +23,6 @@ import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 import { websiteFootersActions, websiteHeadersActions, websiteLayoutsActions, websiteThemesActions } from '../store'
 import { WebsiteHubListPage } from '../components/WebsiteHubListPage'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
-import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteLayoutDialog } from '../components/WebsiteLayoutDialog'
 import type { LayoutMetaValues } from '../schemas/websiteMeta'
 import type { WebsiteLayout } from '../types'
@@ -70,7 +69,6 @@ export function WebsiteLayoutsPage() {
   if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
-        <WebsiteHubTabs section="layouts" />
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -85,7 +83,6 @@ export function WebsiteLayoutsPage() {
   return (
     <FeaturePage title={t('title')} description={t('layoutsDescription')} className="min-h-full">
       <WebsiteHubListPage
-        section="layouts"
         list={list}
         loading={list.loading}
         error={list.error}

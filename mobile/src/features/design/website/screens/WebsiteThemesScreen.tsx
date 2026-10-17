@@ -107,7 +107,7 @@ export function WebsiteThemesScreen() {
     }
   }
 
-  if (!hasCompany) return <WebsiteNeedCompany section="themes" description={t('themesDescription')} />
+  if (!hasCompany) return <WebsiteNeedCompany description={t('themesDescription')} />
 
   return (
     <FeatureScreen
@@ -132,7 +132,6 @@ export function WebsiteThemesScreen() {
       }
     >
       <WebsiteHubListPage
-        section="themes"
         loading={list.loading}
         error={list.error}
         loadedCount={list.items.length}

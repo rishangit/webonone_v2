@@ -63,7 +63,6 @@ export function WebsitePresetsPage() {
   if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
-        <WebsiteHubTabs section="presets" />
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -86,7 +85,6 @@ export function WebsitePresetsPage() {
   return (
     <FeaturePage title={t('title')} description={t('presetsDescription')}>
       <WebsiteHubTabs
-        section="presets"
         actions={
           <WebsiteHubListToolbar
             searchValue={list.q}

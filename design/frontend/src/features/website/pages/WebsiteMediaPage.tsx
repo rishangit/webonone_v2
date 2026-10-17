@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
 import { MediaSelectorFrame, useMediaEmbedMessage } from '@webonone/media-embed'
 import { useAppSelector } from '@/app/store/hooks'
-import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteMediaCropDialog, useWebsiteMediaCrop } from '../components/WebsiteMediaCropDialog'
 import {
   buildWebsiteFolderPath,
@@ -38,7 +37,6 @@ export function WebsiteMediaPage() {
   if (!companyId) {
     return (
       <FeaturePage title={t('title')} description={t('mediaDescription')}>
-        <WebsiteHubTabs section="media" />
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -50,7 +48,6 @@ export function WebsiteMediaPage() {
 
   return (
     <FeaturePage title={t('title')} description={t('mediaDescription')}>
-      <WebsiteHubTabs section="media" />
       <div className="mt-6 min-h-[480px] overflow-hidden rounded-lg border border-[hsl(var(--glass-border))]">
         <MediaSelectorFrame
           isOpen

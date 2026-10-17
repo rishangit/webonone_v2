@@ -7,7 +7,7 @@ order: 6
 summary: "header සහ footer designers වල site chrome සංස්කරණය කර, layout එකක ඒවා තෝරන්න."
 ---
 
-1. **Website** විවෘත කර **headers** හෝ **footers** තෝරන්න.
+1. **Website → Headers** හෝ **Website → Footers** විවෘත කරන්න.
 2. designer හි chrome (logo, Nav menu, සහ blocks) සංස්කරණය කරන්න.
 3. සුරකින්න. **layout** එකක් එක් එක් පිටුව ඔතන ශීර්ෂය සහ පාදම තෝරයි.
 

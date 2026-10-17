@@ -122,7 +122,7 @@ export function WebsiteLayoutsScreen() {
     }
   }
 
-  if (!hasCompany) return <WebsiteNeedCompany section="layouts" description={t('layoutsDescription')} />
+  if (!hasCompany) return <WebsiteNeedCompany description={t('layoutsDescription')} />
 
   return (
     <FeatureScreen
@@ -147,7 +147,6 @@ export function WebsiteLayoutsScreen() {
       }
     >
       <WebsiteHubListPage
-        section="layouts"
         loading={list.loading}
         error={list.error}
         loadedCount={list.items.length}

@@ -55,7 +55,7 @@ describe('sessionRoleNav', () => {
     const forms = defs.find((item) => item.label === 'Forms')
     const website = defs.find((item) => item.label === 'Website')
     assert.equal(forms?.kind, 'item')
-    assert.equal(website?.kind, 'item')
+    assert.equal(website?.kind, 'group')
   })
 
   it('filters company Data children to enabled catalog entities', () => {

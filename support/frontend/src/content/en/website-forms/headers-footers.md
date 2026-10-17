@@ -7,7 +7,7 @@ order: 6
 summary: "Edit site chrome in the header and footer designers, then pick them on a layout."
 ---
 
-1. Open **Website** and choose **headers** or **footers**.
+1. Open **Website → Headers** or **Website → Footers**.
 2. Edit the chrome (logo, Nav menu, and blocks) in the designer.
 3. Save. A **layout** picks which header and footer wrap each page.
 

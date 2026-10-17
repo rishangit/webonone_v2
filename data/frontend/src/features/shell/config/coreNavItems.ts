@@ -1,10 +1,16 @@
 import {
   Building2,
   Database,
+  FileText,
+  Globe,
   Home,
+  Image,
   Layers,
+  LayoutTemplate,
   Package,
   Palette,
+  PanelBottom,
+  PanelTop,
   Ruler,
   Settings,
   Shapes,
@@ -32,6 +38,15 @@ const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/spaces': Layers,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
+  '/website/pages': FileText,
+  '/website/layouts': LayoutTemplate,
+  '/website/headers': PanelTop,
+  '/website/footers': PanelBottom,
+  '/website/presets': Layers,
+  '/website/datasets': Database,
+  '/website/themes': Palette,
+  '/website/media': Image,
+  '/website/settings': Settings,
 }
 
 const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
@@ -39,6 +54,7 @@ const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Data: Database,
   Email: Database,
   SMS: Database,
+  Website: Globe,
 }
 
 function iconForCoreHref(href: string): LucideIcon {

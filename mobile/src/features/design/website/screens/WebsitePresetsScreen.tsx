@@ -90,7 +90,7 @@ export function WebsitePresetsScreen() {
     }
   }
 
-  if (!hasCompany) return <WebsiteNeedCompany section="presets" description={t('presetsDescription')} />
+  if (!hasCompany) return <WebsiteNeedCompany description={t('presetsDescription')} />
 
   return (
     <FeatureScreen
@@ -115,7 +115,6 @@ export function WebsitePresetsScreen() {
       }
     >
       <WebsiteHubListPage
-        section="presets"
         loading={list.loading}
         error={list.error}
         loadedCount={list.items.length}

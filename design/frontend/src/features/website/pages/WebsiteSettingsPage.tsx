@@ -24,7 +24,6 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { websitePagesActions } from '../store'
 import { websiteSettingsActions } from '../store/websiteSettingsStore'
-import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import type { WebsitePage } from '../types'
 
 const NONE_VALUE = '__none'
@@ -82,7 +81,6 @@ export function WebsiteSettingsPage() {
   if (!companyId) {
     return (
       <FeaturePage title={t('title')} description={t('settingsDescription')}>
-        <WebsiteHubTabs section="settings" />
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -97,7 +95,6 @@ export function WebsiteSettingsPage() {
 
   return (
     <FeaturePage title={t('title')} description={t('settingsDescription')}>
-      <WebsiteHubTabs section="settings" />
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

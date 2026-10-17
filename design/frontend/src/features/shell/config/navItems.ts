@@ -1,37 +1,63 @@
-import { FileText, Globe } from 'lucide-react'
+import {
+  Database,
+  FileText,
+  Globe,
+  Image,
+  Layers,
+  LayoutTemplate,
+  Palette,
+  PanelBottom,
+  PanelTop,
+  Settings,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { NavConfigItem } from '@webonone/ui-kit'
+import type { NavConfigItem, NavItemConfig } from '@webonone/ui-kit'
 import type { DesignRole } from '@/features/auth/types/auth.types'
 
-export type DesignNavItem = {
-  to: string
+type WebsiteSectionNav = {
+  section: string
   label: string
   icon: LucideIcon
-  roles: DesignRole[]
+  superAdmin: boolean
 }
 
-const TOP_LEVEL_ITEMS: DesignNavItem[] = [
-  {
-    to: '/forms',
-    label: 'Forms',
-    icon: FileText,
-    roles: ['company_admin', 'member'],
-  },
-  {
-    to: '/website',
-    label: 'Website',
-    icon: Globe,
-    roles: ['super_admin', 'company_admin', 'member'],
-  },
+const WEBSITE_SECTIONS: WebsiteSectionNav[] = [
+  { section: 'pages', label: 'Pages', icon: FileText, superAdmin: true },
+  { section: 'layouts', label: 'Layouts', icon: LayoutTemplate, superAdmin: true },
+  { section: 'headers', label: 'Headers', icon: PanelTop, superAdmin: true },
+  { section: 'footers', label: 'Footers', icon: PanelBottom, superAdmin: true },
+  { section: 'presets', label: 'Presets', icon: Layers, superAdmin: true },
+  { section: 'datasets', label: 'Data Sets', icon: Database, superAdmin: false },
+  { section: 'themes', label: 'Themes', icon: Palette, superAdmin: true },
+  { section: 'media', label: 'Media', icon: Image, superAdmin: false },
+  { section: 'settings', label: 'Settings', icon: Settings, superAdmin: false },
 ]
 
-export function buildStandaloneNav(role: DesignRole): NavConfigItem[] {
-  return TOP_LEVEL_ITEMS.filter((item) => item.roles.includes(role)).map((item) => ({
-    type: 'item' as const,
-    to: item.to,
+function websiteChildren(role: DesignRole): NavItemConfig[] {
+  return WEBSITE_SECTIONS.filter((item) => role !== 'super_admin' || item.superAdmin).map((item) => ({
+    to: `/website/${item.section}`,
     label: item.label,
     icon: item.icon,
   }))
+}
+
+export function buildStandaloneNav(role: DesignRole): NavConfigItem[] {
+  const items: NavConfigItem[] = []
+  if (role === 'company_admin' || role === 'member') {
+    items.push({
+      type: 'item',
+      to: '/forms',
+      label: 'Forms',
+      icon: FileText,
+    })
+  }
+  items.push({
+    type: 'group',
+    label: 'Website',
+    icon: Globe,
+    children: websiteChildren(role),
+  })
+  return items
 }
 
 export function filterNavByRole(role: DesignRole): NavConfigItem[] {

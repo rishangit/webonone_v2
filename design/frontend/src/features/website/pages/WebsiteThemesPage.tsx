@@ -62,7 +62,6 @@ export function WebsiteThemesPage() {
   if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
-        <WebsiteHubTabs section="themes" />
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -73,7 +72,6 @@ export function WebsiteThemesPage() {
   return (
     <FeaturePage title={t('title')} description={t('themesDescription')}>
       <WebsiteHubTabs
-        section="themes"
         actions={
           <WebsiteHubListToolbar
             searchValue={list.q}

@@ -117,7 +117,7 @@ export function WebsitePagesScreen() {
   }
 
   if (!hasCompany) {
-    return <WebsiteNeedCompany section="pages" description={t('pagesDescription')} />
+    return <WebsiteNeedCompany description={t('pagesDescription')} />
   }
 
   return (
@@ -148,7 +148,6 @@ export function WebsitePagesScreen() {
       }
     >
       <WebsiteHubListPage
-        section="pages"
         loading={list.loading}
         error={list.error}
         loadedCount={list.items.length}

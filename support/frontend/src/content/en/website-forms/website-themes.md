@@ -7,7 +7,7 @@ order: 8
 summary: "Add a website theme by name, then edit basic settings, fonts, colors, texts, and buttons on the theme page. Pick that theme on a layout."
 ---
 
-1. Open **Website** and choose **themes**.
+1. Open **Website → Themes**.
 2. Choose **Add theme** and enter a name. This is the website theme, separate from Settings themes.
 3. The theme detail page opens with **Basic settings**, **Fonts**, **Colors**, **Texts**, and **Buttons**.
 4. On **Basic settings**, set the name, page background, and body text color.

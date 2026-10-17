@@ -105,7 +105,7 @@ export function WebsiteChromeScreen({ kind }: { kind: 'headers' | 'footers' }) {
     }
   }
 
-  if (!hasCompany) return <WebsiteNeedCompany section={kind} description={description} />
+  if (!hasCompany) return <WebsiteNeedCompany description={description} />
 
   return (
     <FeatureScreen
@@ -130,7 +130,6 @@ export function WebsiteChromeScreen({ kind }: { kind: 'headers' | 'footers' }) {
       }
     >
       <WebsiteHubListPage
-        section={kind}
         loading={list.loading}
         error={list.error}
         loadedCount={list.items.length}

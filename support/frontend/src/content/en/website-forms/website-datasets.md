@@ -7,7 +7,7 @@ order: 11
 summary: "Define live filter queries over products, services, spaces, staff, users, or analytics that the public website is allowed to show."
 ---
 
-1. Open **Website** and choose the **Data Sets** tab.
+1. Open **Website → Data Sets**.
 2. Click **Add data set**, give it a name, and pick a **source type** (products, services, spaces, staff, users, or analytics).
 3. For analytics, also choose a **dimension** (for example KPIs or top products) and an optional date range.
 4. On the **Filters** step, add rules such as status equals active or price greater than 200. Conditions include equals, not equal, greater/less than, between, contains, and in list.

@@ -20,7 +20,6 @@ import {
   useThemeColors,
   useToast,
 } from '@webonone/mobile-ui'
-import { WebsiteHubTabs } from '@/features/design/website/components/WebsiteHubTabs'
 import { WebsiteNeedCompany } from '@/features/design/website/components/WebsiteNeedCompany'
 import { useDesignPermissions } from '@/features/design/hooks/useDesignPermissions'
 import type { WebsitePage, WebsiteSiteSettings } from '@/features/design/website/types'
@@ -84,13 +83,12 @@ export function WebsiteSettingsScreen() {
     }
   }
 
-  if (!hasCompany) return <WebsiteNeedCompany section="settings" description={t('settingsDescription')} />
+  if (!hasCompany) return <WebsiteNeedCompany description={t('settingsDescription')} />
 
   const dirty = (settings?.homePageId ?? null) !== homePageId
 
   return (
     <FeatureScreen title={t('title')} description={t('settingsDescription')}>
-      <WebsiteHubTabs section="settings" />
       {loading ? <Spinner label={t('loadingSettings')} /> : null}
       {error ? (
         <Alert variant="destructive">

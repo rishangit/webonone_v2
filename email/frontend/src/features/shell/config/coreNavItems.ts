@@ -1,4 +1,21 @@
-import { Building2, History, Home, Mail, Palette, Rows3, Send, Settings } from 'lucide-react'
+import {
+  Building2,
+  Database,
+  FileText,
+  Globe,
+  History,
+  Home,
+  Image,
+  Layers,
+  LayoutTemplate,
+  Mail,
+  Palette,
+  PanelBottom,
+  PanelTop,
+  Rows3,
+  Send,
+  Settings,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   getCoreOriginFromReturnUrl,
@@ -18,12 +35,22 @@ const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/templates': Mail,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
+  '/website/pages': FileText,
+  '/website/layouts': LayoutTemplate,
+  '/website/headers': PanelTop,
+  '/website/footers': PanelBottom,
+  '/website/presets': Layers,
+  '/website/datasets': Database,
+  '/website/themes': Palette,
+  '/website/media': Image,
+  '/website/settings': Settings,
 }
 
 const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings,
   Email: Mail,
   SMS: Mail,
+  Website: Globe,
 }
 
 function iconForCoreHref(href: string): LucideIcon {

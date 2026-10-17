@@ -62,7 +62,6 @@ export function WebsiteDatasetsPage() {
   if (!companyId) {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
-        <WebsiteHubTabs section="datasets" />
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -82,7 +81,6 @@ export function WebsiteDatasetsPage() {
   return (
     <FeaturePage title={t('title')} description={t('datasetsDescription')}>
       <WebsiteHubTabs
-        section="datasets"
         actions={
           <WebsiteHubListToolbar
             searchValue={list.q}

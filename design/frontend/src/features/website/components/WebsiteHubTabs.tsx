@@ -1,60 +1,21 @@
 import { type ReactNode } from 'react'
-import { ListPageActions, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
-import { useTranslation } from 'react-i18next'
-import { useAppSelector } from '@/app/store/hooks'
-import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
-import type { WebsiteSection } from '../types'
+import { ListPageActions } from '@webonone/ui-kit'
 import { isLocalWebsitePreviewHost } from '../utils/companyPublicHost'
 
-const SECTIONS: WebsiteSection[] = [
-  'pages',
-  'layouts',
-  'headers',
-  'footers',
-  'presets',
-  'datasets',
-  'themes',
-  'media',
-  'settings',
-]
-
 export function WebsiteHubTabs({
-  section,
   actions,
   actionsVariant = 'list',
 }: {
-  section: WebsiteSection
   actions?: ReactNode
   /** `list` — search/filter/add row with mobile collapse; `end` — right-aligned controls only (e.g. upload). */
   actionsVariant?: 'list' | 'end'
 }) {
-  const { t } = useTranslation('website')
-  const { goToWebsite } = useNavigateDesign()
-  const role = useAppSelector((state) => state.auth.user?.role)
-  const sections =
-    role === 'super_admin'
-      ? SECTIONS.filter((item) => item !== 'datasets' && item !== 'media' && item !== 'settings')
-      : SECTIONS
+  if (!actions) return null
 
-  return (
-    <div className="flex w-full flex-col gap-2">
-      <Tabs value={section} onValueChange={(value) => goToWebsite(`/website/${value}`)}>
-        <TabsList aria-label={t('ariaSections')}>
-          {sections.map((item) => (
-            <TabsTrigger key={item} value={item}>
-              {t(item)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      {actions ? (
-        actionsVariant === 'end' ? (
-          <div className="flex w-full flex-wrap items-center justify-end gap-2">{actions}</div>
-        ) : (
-          <ListPageActions>{actions}</ListPageActions>
-        )
-      ) : null}
-    </div>
+  return actionsVariant === 'end' ? (
+    <div className="flex w-full flex-wrap items-center justify-end gap-2">{actions}</div>
+  ) : (
+    <ListPageActions>{actions}</ListPageActions>
   )
 }
 

@@ -15,11 +15,11 @@ import {
   ItemListMenu,
   ItemListMenuItem,
   ListAddButton,
+  ListPageActions,
   ListPageBody,
   Spinner,
   useToast,
 } from '@webonone/mobile-ui'
-import { WebsiteHubTabs } from '@/features/design/website/components/WebsiteHubTabs'
 import { WebsiteNeedCompany } from '@/features/design/website/components/WebsiteNeedCompany'
 import { useDesignPermissions } from '@/features/design/hooks/useDesignPermissions'
 import { useSession } from '@/features/auth/SessionContext'
@@ -103,20 +103,23 @@ export function WebsiteMediaScreen() {
     }
   }
 
-  if (!hasCompany) return <WebsiteNeedCompany section="media" description={t('mediaDescription')} />
+  if (!hasCompany) return <WebsiteNeedCompany description={t('mediaDescription')} />
 
   return (
-    <FeatureScreen title={t('title')} description={t('mediaDescription')} onScroll={onScroll}>
-      <WebsiteHubTabs
-        section="media"
-        actions={
-          canManage ? (
+    <FeatureScreen
+      title={t('title')}
+      description={t('mediaDescription')}
+      onScroll={onScroll}
+      actions={
+        canManage ? (
+          <ListPageActions>
             <ListAddButton compactLabel={tc('add')} onPress={() => void handleUpload()} disabled={uploading}>
               {tc('upload')}
             </ListAddButton>
-          ) : undefined
-        }
-      />
+          </ListPageActions>
+        ) : undefined
+      }
+    >
       {list.loading || uploading ? <Spinner label={uploading ? t('saving') : t('loading')} /> : null}
       {list.error ? (
         <Alert variant="destructive">

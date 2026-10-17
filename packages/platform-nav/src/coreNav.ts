@@ -433,13 +433,49 @@ const FORMS_NAV_ITEM: CoreNavLeaf = {
   externalPath: '/forms',
 }
 
-const WEBSITE_NAV_ITEM: CoreNavLeaf = {
-  kind: 'item',
-  path: DESIGN_NAV_SENTINELS.website,
-  label: 'Website',
-  externalService: 'design',
-  externalPath: '/website',
+const WEBSITE_COMPANY_SECTIONS: ReadonlyArray<readonly [section: string, label: string]> = [
+  ['pages', 'Pages'],
+  ['layouts', 'Layouts'],
+  ['headers', 'Headers'],
+  ['footers', 'Footers'],
+  ['presets', 'Presets'],
+  ['datasets', 'Data Sets'],
+  ['themes', 'Themes'],
+  ['media', 'Media'],
+  ['settings', 'Settings'],
+]
+
+const WEBSITE_SUPER_ADMIN_SECTIONS: ReadonlyArray<readonly [section: string, label: string]> = [
+  ['pages', 'Pages'],
+  ['layouts', 'Layouts'],
+  ['headers', 'Headers'],
+  ['footers', 'Footers'],
+  ['presets', 'Presets'],
+  ['themes', 'Themes'],
+]
+
+function websiteSectionLeaf(section: string, label: string): CoreNavLeaf {
+  return {
+    kind: 'item',
+    path: `${DESIGN_NAV_SENTINELS.website}/${section}`,
+    label,
+    externalService: 'design',
+    externalPath: `/website/${section}`,
+  }
 }
+
+function websiteNavGroup(
+  sections: ReadonlyArray<readonly [section: string, label: string]>,
+): CoreNavGroup {
+  return {
+    kind: 'group',
+    label: 'Website',
+    children: sections.map(([section, label]) => websiteSectionLeaf(section, label)),
+  }
+}
+
+const WEBSITE_COMPANY_NAV_GROUP = websiteNavGroup(WEBSITE_COMPANY_SECTIONS)
+const WEBSITE_SUPER_ADMIN_NAV_GROUP = websiteNavGroup(WEBSITE_SUPER_ADMIN_SECTIONS)
 
 const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
   kind: 'group',
@@ -603,7 +639,7 @@ export const MAIN_PLATFORM_NAV: CoreNavDef[] = [
   SALES_PLATFORM_NAV_GROUP,
   PAYMENT_PLATFORM_NAV_GROUP,
   FORMS_NAV_ITEM,
-  WEBSITE_NAV_ITEM,
+  WEBSITE_COMPANY_NAV_GROUP,
   COMPANIES_PLATFORM_NAV_GROUP,
   SETTINGS_PLATFORM_NAV_GROUP,
 ]
@@ -615,7 +651,7 @@ export const MEMBER_PLATFORM_NAV: CoreNavDef[] = [
   IDENTITY_COMPANY_NAV_GROUP,
   DATA_PLATFORM_NAV_GROUP,
   FORMS_NAV_ITEM,
-  WEBSITE_NAV_ITEM,
+  WEBSITE_COMPANY_NAV_GROUP,
   COMPANIES_PLATFORM_NAV_GROUP,
   SETTINGS_PLATFORM_NAV_GROUP,
 ]
@@ -638,7 +674,7 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
     ],
   },
   DATA_PLATFORM_NAV_GROUP,
-  WEBSITE_NAV_ITEM,
+  WEBSITE_SUPER_ADMIN_NAV_GROUP,
   {
     kind: 'group',
     label: 'Email',

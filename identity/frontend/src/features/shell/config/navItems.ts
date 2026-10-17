@@ -1,4 +1,26 @@
-import { Building2, History, Home, KeyRound, Mail, MessageSquare, Palette, Rows3, Send, Settings, User, UserPlus, Users } from 'lucide-react'
+import {
+  Building2,
+  Database,
+  FileText,
+  Globe,
+  History,
+  Home,
+  Image,
+  KeyRound,
+  Layers,
+  LayoutTemplate,
+  Mail,
+  MessageSquare,
+  Palette,
+  PanelBottom,
+  PanelTop,
+  Rows3,
+  Send,
+  Settings,
+  User,
+  UserPlus,
+  Users,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   EMAIL_NAV_SENTINELS,
@@ -32,12 +54,22 @@ const CORE_ICON_BY_PATH_SUFFIX: Record<string, LucideIcon> = {
   '/sms/templates': MessageSquare,
   '/settings/basic': Building2,
   '/settings/system-theme': Palette,
+  '/website/pages': FileText,
+  '/website/layouts': LayoutTemplate,
+  '/website/headers': PanelTop,
+  '/website/footers': PanelBottom,
+  '/website/presets': Layers,
+  '/website/datasets': Database,
+  '/website/themes': Palette,
+  '/website/media': Image,
+  '/website/settings': Settings,
 }
 
 const CORE_GROUP_ICON_BY_LABEL: Record<string, LucideIcon> = {
   Settings: Settings,
   Email: Mail,
   SMS: MessageSquare,
+  Website: Globe,
 }
 
 export const standaloneNav: NavConfigItem[] = [
