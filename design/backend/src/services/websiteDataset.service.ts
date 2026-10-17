@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { db, type DesignWebsiteDatasetRow } from '../models/db.js'
 import { HttpError } from './httpError.js'
+import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { queryCompanyDataset } from './webononeDatasetClient.js'
 import {
@@ -28,6 +29,7 @@ export type WebsiteDatasetDto = {
   config: DatasetConfig
   selectedFields: string[]
   status: 'active' | 'inactive'
+  isLocked: boolean
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -62,6 +64,7 @@ function toDto(row: DesignWebsiteDatasetRow): WebsiteDatasetDto {
     config,
     selectedFields: resolveSelectedFields(row.source_type, selectedRaw, config),
     status: row.status,
+    isLocked: isLockedFlag(row.is_locked),
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -137,6 +140,7 @@ export async function updateWebsiteDataset(input: {
   body: UpdateWebsiteDatasetBody
 }): Promise<WebsiteDatasetDto> {
   const existing = await getWebsiteDataset({ companyId: input.companyId, id: input.id })
+  assertWebsiteUnlocked(existing.isLocked)
   const nextSource = input.body.sourceType ?? existing.sourceType
   const nextFilters = input.body.filters ?? existing.filters
   const nextConfig = input.body.config ?? existing.config
@@ -159,6 +163,7 @@ export async function deleteWebsiteDataset(input: { companyId: string; id: strin
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Not found', 'WEBSITE_DATASET_NOT_FOUND')
+  assertWebsiteUnlocked(existing.is_locked)
   await db('design_website_datasets').where({ id: input.id, company_id: input.companyId }).del()
 }
 

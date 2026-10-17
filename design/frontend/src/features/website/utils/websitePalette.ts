@@ -38,11 +38,6 @@ export const WEBSITE_PALETTE_DEFAULT_NAMES = [
 
 export const WEBSITE_PALETTE_IMPORT_EMBED_PATH = '/embed/dialogs/website/themes/import-palette'
 
-export const WEBSITE_THEME_CREATE_DIALOG_SIZE = {
-  sizeWidth: 'medium' as const,
-  sizeHeight: 'large' as const,
-}
-
 export const WEBSITE_PALETTE_IMPORT_DIALOG_SIZE = {
   sizeWidth: 'small' as const,
   sizeHeight: 'auto' as const,
@@ -159,16 +154,3 @@ function parseSwatchArray(value: unknown[]): string[] | null {
   return value.map((hex) => (hex as string).toUpperCase())
 }
 
-export type WebsiteThemeCreateValues = {
-  name: string
-  colors: WebsiteColorToken[]
-  pageBackground: string
-  bodyTextColor: string
-}
-
-export function createNestedRequestId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID()
-  }
-  return `palette-import-${Date.now()}-${Math.random().toString(36).slice(2)}`
-}

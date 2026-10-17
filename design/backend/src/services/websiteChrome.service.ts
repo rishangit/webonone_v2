@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { db, type DesignWebsiteChromeRow } from '../models/db.js'
 import { HttpError } from './httpError.js'
+import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 import type { CreateWebsiteChromeBody, UpdateWebsiteChromeBody } from '../schemas/websiteChrome.schema.js'
@@ -13,6 +14,7 @@ export type WebsiteChromeDto = {
   companyId: string
   name: string
   isDefault: boolean
+  isLocked: boolean
   document: WebsiteDocumentV1
   createdBy: string | null
   createdAt: string
@@ -43,6 +45,7 @@ function toDto(row: DesignWebsiteChromeRow): WebsiteChromeDto {
     companyId: row.company_id,
     name: row.name,
     isDefault: toBool(row.is_default),
+    isLocked: isLockedFlag(row.is_locked),
     document: parseDocument(row.document),
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -135,6 +138,7 @@ export async function updateWebsiteChrome(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Not found', notFoundCode(input.kind))
+  assertWebsiteUnlocked(existing.is_locked)
   if (input.body.isDefault) {
     await clearDefaults(input.kind, input.companyId)
   }
@@ -168,6 +172,7 @@ export async function deleteWebsiteChrome(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Not found', notFoundCode(input.kind))
+  assertWebsiteUnlocked(existing.is_locked)
   const used = await countLayoutsUsingChrome({ kind: input.kind, companyId: input.companyId, id: input.id })
   if (used > 0) {
     throw new HttpError(

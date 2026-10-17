@@ -43,7 +43,11 @@ const SERVICE_PATH_ALLOWED: Record<ToolServiceId, (path: string) => boolean> = {
   email: () => false,
   sms: (path) => /^\/api\/v1\/templates(\/:id)?$/.test(path),
   payment: (path) => /^\/api\/v1\/invoices(\/:id)?$/.test(path),
-  design: () => false,
+  design: (path) =>
+    path === '/api/v1/forms' ||
+    path === '/api/v1/forms/:id' ||
+    path === '/api/v1/forms/:id/fields' ||
+    path === '/api/v1/forms/:id/fields/:fieldId',
 }
 
 export function isAllowedInvokePath(service: string, path: string): boolean {
@@ -88,7 +92,14 @@ export function buildInvokeRequest(
       }
       return value
     }
-    if (name === 'id' || name === 'attributeId' || name === 'valueId' || name === 'variantId' || name === 'stockId') {
+    if (
+      name === 'id' ||
+      name === 'attributeId' ||
+      name === 'valueId' ||
+      name === 'variantId' ||
+      name === 'stockId' ||
+      name === 'fieldId'
+    ) {
       if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{8,32}$/.test(value)) {
         throw new Error('invalid_id')
       }

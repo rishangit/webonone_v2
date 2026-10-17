@@ -78,6 +78,10 @@ export function FormsPage() {
     return <Navigate to="/login" replace />
   }
 
+  if (role === 'super_admin' && !hasCompany) {
+    return <Navigate to="/website/pages" replace />
+  }
+
   if (!hasCompany) {
     return (
       <FeaturePage

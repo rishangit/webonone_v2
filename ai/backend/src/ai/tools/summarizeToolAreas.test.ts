@@ -63,4 +63,37 @@ describe('summarizeToolAreas', () => {
     assert.equal(companyCatalog?.requiresCompany, true)
     assert.equal(publicCatalog?.requiresCompany, false)
   })
+
+  it('groups design form tools and marks them as company-scoped', () => {
+    const tools = [
+      tool({
+        name: 'list_design_forms',
+        service: 'design',
+        invoke: { method: 'GET', path: '/api/v1/forms' },
+      }),
+      tool({
+        name: 'create_design_form',
+        service: 'design',
+        riskLevel: 'write',
+        invoke: { method: 'POST', path: '/api/v1/forms' },
+      }),
+      tool({
+        name: 'add_design_form_field',
+        service: 'design',
+        riskLevel: 'write',
+        invoke: { method: 'POST', path: '/api/v1/forms/:id/fields' },
+      }),
+      tool({
+        name: 'update_design_form_field',
+        service: 'design',
+        riskLevel: 'write',
+        invoke: { method: 'PATCH', path: '/api/v1/forms/:id/fields/:fieldId' },
+      }),
+    ]
+    const areas = summarizeToolAreas(tools)
+    assert.equal(areas.length, 1)
+    assert.equal(areas[0]?.id, 'design.forms')
+    assert.equal(areas[0]?.requiresCompany, true)
+    assert.deepEqual(areas[0]?.operations, ['list', 'create', 'update'])
+  })
 })

@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { ItemListViewToggle, ListAddButton, ListFilterTrigger, SearchInput } from '@webonone/ui-kit'
 import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 
@@ -18,6 +19,7 @@ export type WebsiteHubListToolbarProps = {
   filterActive?: boolean
   onFilterOpen?: () => void
   filterAriaLabel?: string
+  extra?: ReactNode
 }
 
 /** Search → filter (optional) → add — consumed by `WebsiteHubTabs` → `ListPageActions`. */
@@ -33,6 +35,7 @@ export function WebsiteHubListToolbar({
   filterActive,
   onFilterOpen,
   filterAriaLabel = 'Filters',
+  extra,
 }: WebsiteHubListToolbarProps) {
   const { mode: listDisplayMode, setMode: setListDisplayMode } = useListDisplayModeControl()
 
@@ -59,6 +62,7 @@ export function WebsiteHubListToolbar({
           {addLabel}
         </ListAddButton>
       ) : null}
+      {extra}
     </>
   )
 }

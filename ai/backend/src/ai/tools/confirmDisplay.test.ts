@@ -93,6 +93,42 @@ describe('buildConfirmDisplayFields', () => {
     assert.equal(timeMode?.editable, false)
   })
 
+  it('shows one line per labeled control and hides related tag arrays', () => {
+    const fields = buildConfirmDisplayFields(
+      {
+        ...createServiceTool,
+        jsonSchema: {
+          ...createServiceTool.jsonSchema,
+          properties: {
+            ...(createServiceTool.jsonSchema.properties as Record<string, unknown>),
+            fields: {
+              type: 'array',
+              items: { type: 'object' },
+            },
+          },
+        },
+      },
+      {
+        name: 'Patient intake',
+        description: 'Collects visit details.',
+        time_mode: 'duration',
+        tags: [{ label: 'Clinic', name: 'Clinic' }],
+        fields: [
+          { type: 'text', label: 'Name' },
+          { type: 'select', label: 'Reason', required: true, options: [{ label: 'Visit' }, { label: 'Follow-up' }] },
+        ],
+      },
+    )
+    assert.equal(fields.some((field) => field.key.startsWith('tags')), false)
+    const name = fields.find((field) => field.key === 'fields.0')
+    const reason = fields.find((field) => field.key === 'fields.1')
+    assert.equal(name?.label, 'Name')
+    assert.equal(name?.value, 'text')
+    assert.equal(reason?.label, 'Reason')
+    assert.equal(reason?.value, 'select · required · Visit, Follow-up')
+    assert.equal(reason?.editable, false)
+  })
+
   it('omits missing fields when omitMissing is set', () => {
     const fields = buildConfirmDisplayFields(
       createServiceTool,

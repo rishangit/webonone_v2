@@ -1,13 +1,16 @@
 import type { Response, NextFunction } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import {
+  addFormField,
   createForm,
   deleteForm,
   getForm,
   HttpError,
   listForms,
   updateForm,
+  updateFormField,
 } from '../services/form.service.js'
+import { normalizeCreateFormBody } from '../services/formDefinition.js'
 import { createFormSchema, updateFormSchema } from '../schemas/formSchemas.js'
 import type { FormTemplateStatus } from '../models/db.js'
 
@@ -51,7 +54,7 @@ export async function getFormHandler(req: AuthenticatedRequest, res: Response, n
 export async function createFormHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     const companyId = companyIdOrThrow(req)
-    const body = createFormSchema.parse(req.body)
+    const body = createFormSchema.parse(normalizeCreateFormBody(req.body))
     const form = await createForm({ companyId, userId: req.user!.id, body })
     res.status(201).json({ form })
   } catch (err) {
@@ -65,6 +68,29 @@ export async function updateFormHandler(req: AuthenticatedRequest, res: Response
     const id = String(req.params.id)
     const body = updateFormSchema.parse(req.body)
     const form = await updateForm({ companyId, id, body })
+    res.json({ form })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function addFormFieldHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const companyId = companyIdOrThrow(req)
+    const id = String(req.params.id)
+    const form = await addFormField({ companyId, id, field: req.body })
+    res.status(201).json({ form })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateFormFieldHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const companyId = companyIdOrThrow(req)
+    const id = String(req.params.id)
+    const fieldId = String(req.params.fieldId)
+    const form = await updateFormField({ companyId, id, fieldId, patch: req.body })
     res.json({ form })
   } catch (err) {
     next(err)

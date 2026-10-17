@@ -103,9 +103,9 @@ export function WebsiteThemeCreateEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSubmit={(values) => {
+      onSubmit={(name) => {
         setAwaiting(true)
-        dispatch(websiteThemesActions.saveDetailRequested({ body: { ...values, isActive: true } }))
+        dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true } }))
       }}
     />
   )

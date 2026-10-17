@@ -114,6 +114,11 @@ export function WebsiteThemeEditorPage() {
           <AlertDescription>{detailError}</AlertDescription>
         </Alert>
       ) : null}
+      {theme.isLocked ? (
+        <Alert>
+          <AlertDescription>{t('defaultLocked')}</AlertDescription>
+        </Alert>
+      ) : null}
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as ThemeTabId)}

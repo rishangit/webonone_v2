@@ -23,6 +23,8 @@ export function toolRequiresCompanySession(tool: ToolDefinition): boolean {
     /\/company\/me(\/|$)/.test(path) ||
     /\/company\/events(\/|$)/.test(path) ||
     /\/company\/staff(\/|$)/.test(path) ||
+    path === '/api/v1/forms' ||
+    path.startsWith('/api/v1/forms/') ||
     path.includes(':companyId')
   )
 }

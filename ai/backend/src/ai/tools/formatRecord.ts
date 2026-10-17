@@ -67,6 +67,12 @@ export function recordsFromUnknown(value: unknown): Record<string, unknown>[] {
       return nested.filter(isRecord)
     }
   }
+  for (const key of ['form', 'item']) {
+    const nested = unwrapped[key]
+    if (isRecord(nested) && typeof nested.id === 'string') {
+      return [nested]
+    }
+  }
   return [unwrapped]
 }
 

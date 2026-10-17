@@ -10,7 +10,12 @@ import {
   websiteThemesEpics,
 } from '@/features/website/store/websiteStore'
 import { websiteDatasetsEpics } from '@/features/website/store/websiteDatasetsStore'
+import { websiteFontLibraryEpics } from '@/features/website/store/websiteFontLibraryStore'
 import { websiteSettingsEpics } from '@/features/website/store/websiteSettingsStore'
+import {
+  websiteLibraryBrowseEpics,
+  websiteLibraryCopyEpics,
+} from '@/features/website/store/websiteLibraryCopyStore'
 
 export const rootEpic = combineEpics(
   authEpics,
@@ -23,4 +28,7 @@ export const rootEpic = combineEpics(
   websiteLayoutsEpics,
   websiteThemesEpics,
   websiteSettingsEpics,
+  websiteFontLibraryEpics,
+  websiteLibraryCopyEpics,
+  websiteLibraryBrowseEpics,
 )

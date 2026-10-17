@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { ListPageActions, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
+import { useAppSelector } from '@/app/store/hooks'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import type { WebsiteSection } from '../types'
 import { isLocalWebsitePreviewHost } from '../utils/companyPublicHost'
@@ -29,12 +30,17 @@ export function WebsiteHubTabs({
 }) {
   const { t } = useTranslation('website')
   const { goToWebsite } = useNavigateDesign()
+  const role = useAppSelector((state) => state.auth.user?.role)
+  const sections =
+    role === 'super_admin'
+      ? SECTIONS.filter((item) => item !== 'datasets' && item !== 'media' && item !== 'settings')
+      : SECTIONS
 
   return (
     <div className="flex w-full flex-col gap-2">
       <Tabs value={section} onValueChange={(value) => goToWebsite(`/website/${value}`)}>
         <TabsList aria-label={t('ariaSections')}>
-          {SECTIONS.map((item) => (
+          {sections.map((item) => (
             <TabsTrigger key={item} value={item}>
               {t(item)}
             </TabsTrigger>

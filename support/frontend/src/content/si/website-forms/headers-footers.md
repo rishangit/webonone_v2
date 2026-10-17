@@ -12,3 +12,5 @@ summary: "header සහ footer designers වල site chrome සංස්කර�
 3. සුරකින්න. **layout** එකක් එක් එක් පිටුව ඔතන ශීර්ෂය සහ පාදම තෝරයි.
 
 ශීර්ෂයේ **Nav menu** add-on එකක් එක් කර layout පිටු සබැඳි ලෙස පෙන්වන්න. දුරකථනයේදී එම මෙනුව hamburger බවට පත් වේ. [Header menu](/docs/website-forms/header-menu) සහ [Website layouts](/docs/website-forms/website-layouts) බලන්න.
+
+**Add from library** මගින් බෙදාගත් ශීර්ෂයක් හෝ පාදමක් මෙම වෙබ් අඩවියට පිටපත් වේ. පිටපත සංස්කරණය කිරීම පුස්තකාලය වෙනස් නොකරයි. Super Admin **Design → Website** යටතේ එම පුස්තකාල අයිතම පවත්වාගෙන යයි.

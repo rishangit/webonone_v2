@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { isAllowedInvokePath } from './invokePath.js'
+import { buildInvokeRequest, isAllowedInvokePath } from './invokePath.js'
 
 describe('isAllowedInvokePath', () => {
   it('allows Data library resource paths', () => {
@@ -40,6 +40,25 @@ describe('isAllowedInvokePath', () => {
       isAllowedInvokePath('webonone', '/api/v1/company/me/catalog/products/:id/variants/:variantId/stocks'),
       true,
     )
+  })
+
+  it('allows Design form paths and rejects other Design routes', () => {
+    assert.equal(isAllowedInvokePath('design', '/api/v1/forms'), true)
+    assert.equal(isAllowedInvokePath('design', '/api/v1/forms/:id'), true)
+    assert.equal(isAllowedInvokePath('design', '/api/v1/forms/:id/fields'), true)
+    assert.equal(isAllowedInvokePath('design', '/api/v1/forms/:id/fields/:fieldId'), true)
+    assert.equal(isAllowedInvokePath('design', '/api/v1/website/pages'), false)
+    assert.equal(isAllowedInvokePath('design', '/api/v1/internal/ai/capabilities'), false)
+  })
+
+  it('substitutes a form field id into the path', () => {
+    const built = buildInvokeRequest(
+      '/api/v1/forms/:id/fields/:fieldId',
+      { id: 'formId12345678', fieldId: 'fieldId123456', required: true },
+      null,
+    )
+    assert.equal(built.path, '/api/v1/forms/formId12345678/fields/fieldId123456')
+    assert.deepEqual(built.remaining, { required: true })
   })
 
   it('rejects unpublished services and other nested Data paths', () => {

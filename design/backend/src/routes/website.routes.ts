@@ -7,7 +7,10 @@ import * as layouts from '../controllers/websiteLayout.controller.js'
 import * as themes from '../controllers/websiteThemes.controller.js'
 import * as pub from '../controllers/websitePublic.controller.js'
 import * as settings from '../controllers/websiteSettings.controller.js'
-import { requireAuth, requireCompanyContext, requireRole } from '../middleware/auth.js'
+import { requireAuth, requireCompanyContext, requireCompanyContextUnlessSuperAdmin, requireRole } from '../middleware/auth.js'
+import { requireInternalAuth } from '../middleware/internalAuth.js'
+import * as library from '../controllers/websiteLibrary.controller.js'
+import * as componentLibrary from '../controllers/websiteComponentLibrary.controller.js'
 import { validateBody } from '../middleware/validateBody.js'
 import { updateWebsiteSettingsSchema } from '../schemas/websiteSettings.schema.js'
 import {
@@ -18,6 +21,8 @@ import {
 const router = Router()
 const companyRoles = ['super_admin', 'company_admin', 'member'] as const
 const manageRoles = ['super_admin', 'company_admin'] as const
+const libraryReadRoles = ['super_admin', 'company_admin'] as const
+const libraryWriteRoles = ['super_admin'] as const
 
 router.get('/public/sites/:companyId', pub.getPublicWebsiteSiteHandler)
 router.get(
@@ -49,12 +54,26 @@ router.patch(
   settings.updateWebsiteSettingsHandler,
 )
 
+router.post(
+  '/website/pages/from-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole('company_admin'),
+  componentLibrary.copyLibraryPageHandler,
+)
 router.get('/website/pages', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.listWebsitePagesHandler)
 router.get('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.getWebsitePageHandler)
 router.post('/website/pages', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.createWebsitePageHandler)
 router.patch('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.updateWebsitePageHandler)
 router.delete('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.deleteWebsitePageHandler)
 
+router.post(
+  '/website/presets/from-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole('company_admin'),
+  componentLibrary.copyLibraryPresetHandler,
+)
 router.get('/website/presets', requireAuth, requireCompanyContext, requireRole(...companyRoles), presets.listWebsitePresetsHandler)
 router.get('/website/presets/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), presets.getWebsitePresetHandler)
 router.post('/website/presets', requireAuth, requireCompanyContext, requireRole(...manageRoles), presets.createWebsitePresetHandler)
@@ -113,6 +132,13 @@ router.post(
   datasets.previewWebsiteDatasetHandler,
 )
 
+router.post(
+  '/website/layouts/from-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole('company_admin'),
+  componentLibrary.copyLibraryLayoutHandler,
+)
 router.get('/website/layouts', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.listWebsiteLayoutsHandler)
 router.get('/website/layouts/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.getWebsiteLayoutHandler)
 router.post('/website/layouts', requireAuth, requireCompanyContext, requireRole(...manageRoles), layouts.createWebsiteLayoutHandler)
@@ -125,6 +151,74 @@ router.post(
   layouts.setDefaultWebsiteLayoutHandler,
 )
 router.delete('/website/layouts/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), layouts.deleteWebsiteLayoutHandler)
+
+router.get(
+  '/website/font-library',
+  requireAuth,
+  requireCompanyContextUnlessSuperAdmin,
+  requireRole(...companyRoles),
+  library.listFontLibraryHandler,
+)
+router.post(
+  '/website/font-library',
+  requireAuth,
+  requireRole('super_admin'),
+  library.createFontLibraryHandler,
+)
+
+const libraryRead = [requireAuth, requireRole(...libraryReadRoles)] as const
+const libraryWrite = [requireAuth, requireRole(...libraryWriteRoles)] as const
+
+router.get('/website/library/pages', ...libraryRead, componentLibrary.listLibraryPagesHandler)
+router.post('/website/library/pages', ...libraryWrite, componentLibrary.createLibraryPageHandler)
+router.get('/website/library/pages/:id', ...libraryRead, componentLibrary.getLibraryPageHandler)
+router.patch('/website/library/pages/:id', ...libraryWrite, componentLibrary.updateLibraryPageHandler)
+router.delete('/website/library/pages/:id', ...libraryWrite, componentLibrary.deleteLibraryPageHandler)
+
+router.get('/website/library/presets', ...libraryRead, componentLibrary.listLibraryPresetsHandler)
+router.post('/website/library/presets', ...libraryWrite, componentLibrary.createLibraryPresetHandler)
+router.get('/website/library/presets/:id', ...libraryRead, componentLibrary.getLibraryPresetHandler)
+router.patch('/website/library/presets/:id', ...libraryWrite, componentLibrary.updateLibraryPresetHandler)
+router.delete('/website/library/presets/:id', ...libraryWrite, componentLibrary.deleteLibraryPresetHandler)
+
+router.get('/website/library/layouts', ...libraryRead, componentLibrary.listLibraryLayoutsHandler)
+router.post('/website/library/layouts', ...libraryWrite, componentLibrary.createLibraryLayoutHandler)
+router.get('/website/library/layouts/:id', ...libraryRead, componentLibrary.getLibraryLayoutHandler)
+router.patch('/website/library/layouts/:id', ...libraryWrite, componentLibrary.updateLibraryLayoutHandler)
+router.delete('/website/library/layouts/:id', ...libraryWrite, componentLibrary.deleteLibraryLayoutHandler)
+
+router.get('/website/library/themes', ...libraryRead, componentLibrary.listLibraryThemesHandler)
+router.post('/website/library/themes', ...libraryWrite, componentLibrary.createLibraryThemeHandler)
+router.get('/website/library/themes/:id', ...libraryRead, componentLibrary.getLibraryThemeHandler)
+router.patch('/website/library/themes/:id', ...libraryWrite, componentLibrary.updateLibraryThemeHandler)
+router.delete('/website/library/themes/:id', ...libraryWrite, componentLibrary.deleteLibraryThemeHandler)
+
+router.get('/website/library/:kind', ...libraryRead, componentLibrary.listLibraryChromeHandler)
+router.post('/website/library/:kind', ...libraryWrite, componentLibrary.createLibraryChromeHandler)
+router.get('/website/library/:kind/:id', ...libraryRead, componentLibrary.getLibraryChromeHandler)
+router.patch('/website/library/:kind/:id', ...libraryWrite, componentLibrary.updateLibraryChromeHandler)
+router.delete('/website/library/:kind/:id', ...libraryWrite, componentLibrary.deleteLibraryChromeHandler)
+
+router.post(
+  '/website/headers/from-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole('company_admin'),
+  (req, res, next) => {
+    req.params.kind = 'headers'
+    componentLibrary.copyLibraryChromeHandler(req, res, next)
+  },
+)
+router.post(
+  '/website/footers/from-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole('company_admin'),
+  (req, res, next) => {
+    req.params.kind = 'footers'
+    componentLibrary.copyLibraryChromeHandler(req, res, next)
+  },
+)
 
 router.get('/website/:kind', requireAuth, requireCompanyContext, requireRole(...companyRoles), chrome.listWebsiteChromeHandler)
 router.get('/website/:kind/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), chrome.getWebsiteChromeHandler)
@@ -139,6 +233,13 @@ router.post(
 )
 router.delete('/website/:kind/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), chrome.deleteWebsiteChromeHandler)
 
+router.post(
+  '/website-themes/from-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole('company_admin'),
+  componentLibrary.copyLibraryThemeHandler,
+)
 router.get('/website-themes', requireAuth, requireCompanyContext, requireRole(...companyRoles), themes.listWebsiteThemesHandler)
 router.get('/website-themes/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), themes.getWebsiteThemeHandler)
 router.post('/website-themes', requireAuth, requireCompanyContext, requireRole(...manageRoles), themes.createWebsiteThemeHandler)
@@ -151,5 +252,11 @@ router.post(
   themes.setDefaultWebsiteThemeHandler,
 )
 router.delete('/website-themes/:id', requireAuth, requireCompanyContext, requireRole(...manageRoles), themes.deleteWebsiteThemeHandler)
+
+router.post(
+  '/internal/companies/:companyId/website/ensure-starter',
+  requireInternalAuth,
+  library.ensureStarterWebsiteHandler,
+)
 
 export default router

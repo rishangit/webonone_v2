@@ -14,4 +14,6 @@ summary: "Create named header, footer, and theme shells and assign pages so Home
 
 The live site wraps each page with that layout’s header, footer, and theme. Pages on the same layout share chrome, look, and the same nav menu.
 
+**Add from library** copies a shared layout into this website, including its header, footer, and theme. Editing the copy does not change the library. Super Admin maintains library layouts under **Design → Website**.
+
 Pair this with [Headers and footers](/docs/website-forms/headers-footers), [Website themes](/docs/website-forms/website-themes), and [Header menu](/docs/website-forms/header-menu). Create pages under [Website pages](/docs/website-forms/website-pages).

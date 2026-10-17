@@ -13,3 +13,5 @@ summary: "Design fields and layout in the Design form designer."
 4. Close the panel, add more fields as needed, then **Save**.
 
 Staff can [fill the form in a session](/docs/calendar/session-forms) without opening this designer.
+
+You can also ask the [chat assistant](/docs/app-preferences/ai-assistant) to create a form, add a control, or change a control’s settings. Review the suggestion and choose **Confirm** before it is saved.

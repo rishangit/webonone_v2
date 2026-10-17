@@ -42,6 +42,10 @@ import type { PageMetaValues } from '../schemas/websiteMeta'
 
 import type { WebsitePage } from '../types'
 
+import { duplicateItemName, duplicatePagePath } from '../utils/duplicateWebsiteItem'
+
+import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
+
 
 
 export function WebsitePagesPage() {
@@ -116,7 +120,7 @@ export function WebsitePagesPage() {
 
   if (!accessToken) return <Navigate to="/login" replace />
 
-  if (!companyId) {
+  if (!companyId && user?.role !== 'super_admin') {
 
     return (
 
@@ -200,6 +204,8 @@ export function WebsitePagesPage() {
 
             compactAddLabel={tc('add')}
 
+            extra={user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind="pages" /> : undefined}
+
           />
 
         }
@@ -254,10 +260,10 @@ export function WebsitePagesPage() {
 
           canManage={canManage}
 
-          onBrowse={(page) =>
-
-            window.open(websiteLiveUrl(liveOrigin, page.companyId, page.path), '_blank', 'noopener')
-
+          onBrowse={
+            companyId
+              ? (page) => window.open(websiteLiveUrl(liveOrigin, page.companyId, page.path), '_blank', 'noopener')
+              : undefined
           }
 
           onEditDetails={(page) =>
@@ -281,6 +287,34 @@ export function WebsitePagesPage() {
             })
 
           }
+
+          onDuplicate={(page) => {
+
+            setAwaitingCreate(true)
+
+            dispatch(
+
+              websitePagesActions.saveDetailRequested({
+
+                body: {
+
+                  name: duplicateItemName(page.name),
+
+                  path: duplicatePagePath(page.path),
+
+                  status: page.status,
+
+                  layoutId: page.layoutId,
+
+                  document: page.document,
+
+                },
+
+              }),
+
+            )
+
+          }}
 
           onDeleted={(id) => {
 

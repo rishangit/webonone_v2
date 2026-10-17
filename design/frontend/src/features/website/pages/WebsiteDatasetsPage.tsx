@@ -14,6 +14,7 @@ import {
   ItemListItem,
   ItemListMenu,
   ListPageBody,
+  StatusTag,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -27,6 +28,7 @@ import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteDatasetDialog } from '../components/WebsiteDatasetDialog'
 import type { CreateWebsiteDatasetValues } from '../schemas/websiteDatasetSchemas'
 import type { WebsiteDataset } from '../types'
+import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 
 export function WebsiteDatasetsPage() {
   const { t } = useTranslation('website')
@@ -56,6 +58,7 @@ export function WebsiteDatasetsPage() {
   }, [awaitingSave, detail, detailStatus, dialog?.id, list, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
+  if (user?.role === 'super_admin') return <Navigate to="/website/pages" replace />
   if (!companyId) {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
@@ -111,9 +114,10 @@ export function WebsiteDatasetsPage() {
                     <button
                       type="button"
                       className="block w-full text-left"
-                      onClick={() => canManage && setDialog({ id: item.id, initial: item })}
+                      onClick={() => canManage && !item.isLocked && setDialog({ id: item.id, initial: item })}
                     >
                       <p className="font-medium">{item.name}</p>
+                      {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
                       <p className="text-sm text-muted-foreground">
                         {t(`datasetSource.${item.sourceType}`)} · {item.filters?.rules?.length ?? 0}{' '}
                         {t('datasetRules')} · {t(item.status === 'active' ? 'active' : 'inactive')}
@@ -122,16 +126,40 @@ export function WebsiteDatasetsPage() {
                   </ItemListContent>
                   {canManage ? (
                     <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
-                      <DropdownMenuItem onClick={() => setDialog({ id: item.id, initial: item })}>
-                        {t('editDetails')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                        onClick={() => {
+                          dispatch(
+                            websiteDatasetsActions.saveDetailRequested({
+                              body: {
+                                name: duplicateItemName(item.name),
+                                sourceType: item.sourceType,
+                                filters: item.filters,
+                                config: item.config,
+                                selectedFields: item.selectedFields,
+                                status: item.status,
+                              },
+                            }),
+                          )
+                          list.load(1, list.pageSize, true)
+                          toast({ title: t('duplicate') })
+                        }}
                       >
-                        {t('common:delete')}
+                        {t('duplicate')}
                       </DropdownMenuItem>
+                      {item.isLocked ? null : (
+                        <DropdownMenuItem onClick={() => setDialog({ id: item.id, initial: item })}>
+                          {t('editDetails')}
+                        </DropdownMenuItem>
+                      )}
+                      {item.isLocked ? null : <DropdownMenuSeparator />}
+                      {item.isLocked ? null : (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                        >
+                          {t('common:delete')}
+                        </DropdownMenuItem>
+                      )}
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>

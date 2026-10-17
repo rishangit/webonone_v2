@@ -3,6 +3,7 @@ import { db, type DesignFormTemplateRow, type FormTemplateStatus } from '../mode
 import { HttpError } from './httpError.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import type { CreateFormBody, FormDefinition, UpdateFormBody } from '../schemas/formSchemas.js'
+import { appendFormField, patchFormField } from './formDefinition.js'
 
 export type FormTemplateDto = {
   id: string
@@ -158,6 +159,27 @@ export async function updateForm(input: {
 
   await db('design_form_templates').where({ id: input.id }).update(updates)
   return getForm({ companyId: input.companyId, id: input.id })
+}
+
+export async function addFormField(input: {
+  companyId: string
+  id: string
+  field: unknown
+}): Promise<FormTemplateDto> {
+  const existing = await getForm({ companyId: input.companyId, id: input.id })
+  const definition = appendFormField(existing.definition, input.field)
+  return updateForm({ companyId: input.companyId, id: input.id, body: { definition } })
+}
+
+export async function updateFormField(input: {
+  companyId: string
+  id: string
+  fieldId: string
+  patch: unknown
+}): Promise<FormTemplateDto> {
+  const existing = await getForm({ companyId: input.companyId, id: input.id })
+  const definition = patchFormField(existing.definition, input.fieldId, input.patch)
+  return updateForm({ companyId: input.companyId, id: input.id, body: { definition } })
 }
 
 export async function deleteForm(input: { companyId: string; id: string }): Promise<void> {

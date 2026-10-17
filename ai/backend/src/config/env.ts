@@ -55,6 +55,8 @@ const envSchema = z.object({
   PAYMENT_SERVICE_API_KEY: z.string().optional(),
   SMS_API_BASE_URL: z.string().optional(),
   SMS_SERVICE_API_KEY: z.string().optional(),
+  DESIGN_API_BASE_URL: z.string().optional(),
+  DESIGN_SERVICE_API_KEY: z.string().optional(),
   AI_CAPABILITY_REFRESH_MS: z.coerce.number().default(300_000),
   AI_TOOL_HTTP_TIMEOUT_MS: z.coerce.number().default(15_000),
   /** 32-byte key as 64 hex chars or base64 — encrypts provider API keys at rest */
@@ -133,6 +135,8 @@ export const env = {
   paymentServiceApiKey: parsed.PAYMENT_SERVICE_API_KEY?.trim() ?? '',
   smsApiBaseUrl: parsed.SMS_API_BASE_URL?.trim() ?? '',
   smsServiceApiKey: parsed.SMS_SERVICE_API_KEY?.trim() ?? '',
+  designApiBaseUrl: parsed.DESIGN_API_BASE_URL?.trim() ?? '',
+  designServiceApiKey: parsed.DESIGN_SERVICE_API_KEY?.trim() ?? '',
   aiCapabilityRefreshMs: parsed.AI_CAPABILITY_REFRESH_MS,
   aiToolHttpTimeoutMs: parsed.AI_TOOL_HTTP_TIMEOUT_MS,
   aiCredentialsEncryptionKey: parsed.AI_CREDENTIALS_ENCRYPTION_KEY,

@@ -28,6 +28,7 @@ import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteThemeDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsiteTheme } from '../types'
+import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 
 export function WebsiteThemesPage() {
   const { t } = useTranslation('website')
@@ -58,7 +59,7 @@ export function WebsiteThemesPage() {
   }, [awaitingCreate, detail, detailStatus, goToWebsite, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
-  if (!companyId) {
+  if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
         <WebsiteHubTabs section="themes" />
@@ -109,16 +110,42 @@ export function WebsiteThemesPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{theme.name}</p>
                         {theme.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
+                        {theme.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
                         {!theme.isActive ? <StatusTag variant="pending">{t('inactive')}</StatusTag> : null}
                       </div>
                     </button>
                   </ItemListContent>
                   {canManage ? (
                     <ItemListMenu ariaLabel={t('actionsFor', { name: theme.name })}>
-                      <DropdownMenuItem onClick={() => goToWebsite(`/website/themes/${theme.id}`)}>
-                        {t('common:edit')}
+                      <DropdownMenuItem
+                        onClick={() => {
+                          dispatch(
+                            websiteThemesActions.saveDetailRequested({
+                              body: {
+                                name: duplicateItemName(theme.name),
+                                pageBackground: theme.pageBackground,
+                                bodyTextColor: theme.bodyTextColor,
+                                isActive: true,
+                                isDefault: false,
+                                fonts: theme.fonts,
+                                colors: theme.colors,
+                                textStyles: theme.textStyles,
+                                buttonStyles: theme.buttonStyles,
+                              },
+                            }),
+                          )
+                          list.load(1, list.pageSize, true)
+                          toast({ title: t('duplicate') })
+                        }}
+                      >
+                        {t('duplicate')}
                       </DropdownMenuItem>
-                      {!theme.isDefault ? (
+                      {theme.isLocked ? null : (
+                        <DropdownMenuItem onClick={() => goToWebsite(`/website/themes/${theme.id}`)}>
+                          {t('common:edit')}
+                        </DropdownMenuItem>
+                      )}
+                      {!theme.isDefault && !theme.isLocked ? (
                         <DropdownMenuItem
                           onClick={() => {
                             dispatch(
@@ -134,13 +161,15 @@ export function WebsiteThemesPage() {
                           {t('setDefault')}
                         </DropdownMenuItem>
                       ) : null}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setPendingDelete({ id: theme.id, name: theme.name })}
-                      >
-                        {t('common:delete')}
-                      </DropdownMenuItem>
+                      {theme.isLocked ? null : <DropdownMenuSeparator />}
+                      {theme.isLocked ? null : (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setPendingDelete({ id: theme.id, name: theme.name })}
+                        >
+                          {t('common:delete')}
+                        </DropdownMenuItem>
+                      )}
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>
@@ -156,11 +185,18 @@ export function WebsiteThemesPage() {
         isSaving={detailStatus === 'saving'}
         error={detailError}
         onOpenChange={setDialogOpen}
-        onSubmit={(values) => {
+        onSubmit={(name) => {
           setAwaitingCreate(true)
-          dispatch(websiteThemesActions.saveDetailRequested({ body: { ...values, isActive: true } }))
+          dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true } }))
         }}
-        onHostedSaved={() => list.load(1, list.pageSize, true)}
+        onHostedSaved={(themeId) => {
+          if (!themeId) {
+            list.load(1, list.pageSize, true)
+            return
+          }
+          toast({ title: t('created') })
+          goToWebsite(`/website/themes/${themeId}`)
+        }}
       />
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}

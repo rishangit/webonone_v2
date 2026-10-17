@@ -1,4 +1,5 @@
 import { apiClient, API_BASE } from '@/shared/services/apiClient'
+import { websiteEntityPath } from './utils/websiteCatalogScope'
 import type { PaginatedResult } from '@/shared/types/design.types'
 import type {
   PublicWebsiteSite,
@@ -15,6 +16,7 @@ import type {
   WebsiteDatasetStatus,
   WebsiteSiteSettings,
   WebsiteTheme,
+  WebsiteFontLibraryItem,
 } from './types'
 
 type ListQuery = { page?: number; pageSize?: number; q?: string; status?: string }
@@ -138,6 +140,26 @@ export type UpdateWebsiteSettingsBody = {
   homePageId: string | null
 }
 
+function websiteClient<T>(path: string, init?: RequestInit): Promise<T> {
+  return apiClient<T>(websiteEntityPath(path), init)
+}
+
+export type WebsiteLibraryKind = 'pages' | 'headers' | 'footers' | 'layouts' | 'presets' | 'themes'
+
+export type WebsiteLibraryBrowseItem = {
+  id: string
+  name: string
+  path?: string
+}
+
+function libraryListPath(kind: WebsiteLibraryKind): string {
+  return kind === 'themes' ? '/website/library/themes' : `/website/library/${kind}`
+}
+
+function libraryCopyPath(kind: WebsiteLibraryKind): string {
+  return kind === 'themes' ? '/website-themes/from-library' : `/website/${kind}/from-library`
+}
+
 export const websiteApi = {
   async getSettings() {
     const data = await apiClient<{ settings: WebsiteSiteSettings }>('/website/settings')
@@ -152,78 +174,78 @@ export const websiteApi = {
   },
 
   listPages(query: ListQuery = {}) {
-    return apiClient<PaginatedResult<WebsitePage>>(`/website/pages${toQueryString(query)}`)
+    return websiteClient<PaginatedResult<WebsitePage>>(`/website/pages${toQueryString(query)}`)
   },
   async getPage(id: string) {
-    const data = await apiClient<{ page: WebsitePage }>(`/website/pages/${id}`)
+    const data = await websiteClient<{ page: WebsitePage }>(`/website/pages/${id}`)
     return data.page
   },
   async createPage(body: CreatePageBody) {
-    const data = await apiClient<{ page: WebsitePage }>('/website/pages', {
+    const data = await websiteClient<{ page: WebsitePage }>('/website/pages', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.page
   },
   async updatePage(id: string, body: UpdatePageBody) {
-    const data = await apiClient<{ page: WebsitePage }>(`/website/pages/${id}`, {
+    const data = await websiteClient<{ page: WebsitePage }>(`/website/pages/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
     return data.page
   },
   deletePage(id: string) {
-    return apiClient<void>(`/website/pages/${id}`, { method: 'DELETE' })
+    return websiteClient<void>(`/website/pages/${id}`, { method: 'DELETE' })
   },
 
   listChrome(kind: 'headers' | 'footers', query: ListQuery = {}) {
-    return apiClient<PaginatedResult<WebsiteChrome>>(`/website/${kind}${toQueryString(query)}`)
+    return websiteClient<PaginatedResult<WebsiteChrome>>(`/website/${kind}${toQueryString(query)}`)
   },
   async getChrome(kind: 'headers' | 'footers', id: string) {
-    const data = await apiClient<{ item: WebsiteChrome }>(`/website/${kind}/${id}`)
+    const data = await websiteClient<{ item: WebsiteChrome }>(`/website/${kind}/${id}`)
     return data.item
   },
   async createChrome(kind: 'headers' | 'footers', body: CreateChromeBody) {
-    const data = await apiClient<{ item: WebsiteChrome }>(`/website/${kind}`, {
+    const data = await websiteClient<{ item: WebsiteChrome }>(`/website/${kind}`, {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.item
   },
   async updateChrome(kind: 'headers' | 'footers', id: string, body: UpdateChromeBody) {
-    const data = await apiClient<{ item: WebsiteChrome }>(`/website/${kind}/${id}`, {
+    const data = await websiteClient<{ item: WebsiteChrome }>(`/website/${kind}/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
     return data.item
   },
   deleteChrome(kind: 'headers' | 'footers', id: string) {
-    return apiClient<void>(`/website/${kind}/${id}`, { method: 'DELETE' })
+    return websiteClient<void>(`/website/${kind}/${id}`, { method: 'DELETE' })
   },
 
   listPresets(query: ListQuery = {}) {
-    return apiClient<PaginatedResult<WebsitePreset>>(`/website/presets${toQueryString(query)}`)
+    return websiteClient<PaginatedResult<WebsitePreset>>(`/website/presets${toQueryString(query)}`)
   },
   async getPreset(id: string) {
-    const data = await apiClient<{ item: WebsitePreset }>(`/website/presets/${id}`)
+    const data = await websiteClient<{ item: WebsitePreset }>(`/website/presets/${id}`)
     return data.item
   },
   async createPreset(body: CreatePresetBody) {
-    const data = await apiClient<{ item: WebsitePreset }>('/website/presets', {
+    const data = await websiteClient<{ item: WebsitePreset }>('/website/presets', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.item
   },
   async updatePreset(id: string, body: UpdatePresetBody) {
-    const data = await apiClient<{ item: WebsitePreset }>(`/website/presets/${id}`, {
+    const data = await websiteClient<{ item: WebsitePreset }>(`/website/presets/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
     return data.item
   },
   deletePreset(id: string) {
-    return apiClient<void>(`/website/presets/${id}`, { method: 'DELETE' })
+    return websiteClient<void>(`/website/presets/${id}`, { method: 'DELETE' })
   },
 
   getDatasetFieldCatalog() {
@@ -261,53 +283,84 @@ export const websiteApi = {
   },
 
   listLayouts(query: ListQuery = {}) {
-    return apiClient<PaginatedResult<WebsiteLayout>>(`/website/layouts${toQueryString(query)}`)
+    return websiteClient<PaginatedResult<WebsiteLayout>>(`/website/layouts${toQueryString(query)}`)
   },
   async getLayout(id: string) {
-    const data = await apiClient<{ item: WebsiteLayout }>(`/website/layouts/${id}`)
+    const data = await websiteClient<{ item: WebsiteLayout }>(`/website/layouts/${id}`)
     return data.item
   },
   async createLayout(body: CreateLayoutBody) {
-    const data = await apiClient<{ item: WebsiteLayout }>('/website/layouts', {
+    const data = await websiteClient<{ item: WebsiteLayout }>('/website/layouts', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.item
   },
   async updateLayout(id: string, body: UpdateLayoutBody) {
-    const data = await apiClient<{ item: WebsiteLayout }>(`/website/layouts/${id}`, {
+    const data = await websiteClient<{ item: WebsiteLayout }>(`/website/layouts/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
     return data.item
   },
   deleteLayout(id: string) {
-    return apiClient<void>(`/website/layouts/${id}`, { method: 'DELETE' })
+    return websiteClient<void>(`/website/layouts/${id}`, { method: 'DELETE' })
+  },
+
+  listFontLibrary(query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsiteFontLibraryItem>>(`/website/font-library${toQueryString(query)}`)
+  },
+  async createFontLibrary(body: { name: string; googleFontUrl: string; family: string }) {
+    const data = await apiClient<{ item: WebsiteFontLibraryItem }>('/website/font-library', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.item
   },
 
   listThemes(query: ListQuery = {}) {
-    return apiClient<PaginatedResult<WebsiteTheme>>(`/website-themes${toQueryString(query)}`)
+    return websiteClient<PaginatedResult<WebsiteTheme>>(`/website-themes${toQueryString(query)}`)
   },
   async getTheme(id: string) {
-    const data = await apiClient<{ theme: WebsiteTheme }>(`/website-themes/${id}`)
+    const data = await websiteClient<{ theme: WebsiteTheme }>(`/website-themes/${id}`)
     return data.theme
   },
   async createTheme(body: CreateThemeBody) {
-    const data = await apiClient<{ theme: WebsiteTheme }>('/website-themes', {
+    const data = await websiteClient<{ theme: WebsiteTheme }>('/website-themes', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.theme
   },
   async updateTheme(id: string, body: UpdateThemeBody) {
-    const data = await apiClient<{ theme: WebsiteTheme }>(`/website-themes/${id}`, {
+    const data = await websiteClient<{ theme: WebsiteTheme }>(`/website-themes/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
     return data.theme
   },
   deleteTheme(id: string) {
-    return apiClient<void>(`/website-themes/${id}`, { method: 'DELETE' })
+    return websiteClient<void>(`/website-themes/${id}`, { method: 'DELETE' })
+  },
+
+  listLibrary(kind: WebsiteLibraryKind, query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsiteLibraryBrowseItem>>(
+      `${libraryListPath(kind)}${toQueryString(query)}`,
+    ).then((result) => ({
+      ...result,
+      items: result.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        path: 'path' in item && typeof item.path === 'string' ? item.path : undefined,
+      })),
+    }))
+  },
+
+  copyFromLibrary(kind: WebsiteLibraryKind, libraryId: string) {
+    return apiClient<unknown>(libraryCopyPath(kind), {
+      method: 'POST',
+      body: JSON.stringify({ libraryId }),
+    })
   },
 }
 

@@ -14,4 +14,6 @@ summary: "නම් කළ ශීර්ෂ, පාදම සහ තේමා ක
 
 සජීවී අඩවිය එක් එක් පිටුව එම layout එකේ ශීර්ෂයෙන්, පාදමෙන් සහ තේමාවෙන් ඔතයි. එකම layout එකේ පිටු එකම chrome, පෙනුම සහ මෙනුව බෙදා ගනී.
 
+**Add from library** මගින් බෙදාගත් layout එකක්, එහි ශීර්ෂය, පාදම සහ තේමාව සමඟ, මෙම වෙබ් අඩවියට පිටපත් වේ. පිටපත සංස්කරණය කිරීම පුස්තකාලය වෙනස් නොකරයි. Super Admin **Design → Website** යටතේ පුස්තකාල layouts පවත්වාගෙන යයි.
+
 [Headers and footers](/docs/website-forms/headers-footers), [Website themes](/docs/website-forms/website-themes) සහ [Header menu](/docs/website-forms/header-menu) සමඟ යුගල කරන්න. පිටු [Website pages](/docs/website-forms/website-pages) යටතේ සාදන්න.

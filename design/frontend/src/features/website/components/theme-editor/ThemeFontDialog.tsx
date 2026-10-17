@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
+import { Check } from 'lucide-react'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -10,43 +11,49 @@ import {
   useRequestPlatformPeerDialog,
 } from '@webonone/platform-embed'
 import {
+  Alert,
+  AlertDescription,
   Button,
+  Callout,
+  CalloutDescription,
+  CalloutTitle,
   CustomDialog,
   Form,
   FormField,
   Input,
+  ItemList,
+  ItemListContent,
+  ItemListEmpty,
+  ItemListItem,
+  SegmentedSwitch,
+  SegmentedSwitchItem,
+  Spinner,
+  cn,
+  itemListRowActiveClassName,
   mapZodIssuesToFieldErrors,
   useToast,
 } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteFontTokenSchema } from '../../schemas/websiteThemeSchemas'
-import type { WebsiteFontToken } from '../../types'
-import {
-  normalizeGoogleFontInput,
-  parseGoogleFontFamily,
-} from '../../utils/parseGoogleFontFamily'
+import { websiteFontLibraryActions, websiteFontLibraryCreateActions } from '../../store'
+import type { WebsiteFontLibraryItem, WebsiteFontToken } from '../../types'
 import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
-import { GOOGLE_FONTS_ORIGIN } from '../../utils/googleFontsConfig'
+import { normalizeGoogleFontInput, parseGoogleFontFamily } from '../../utils/parseGoogleFontFamily'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
 
-const GOOGLE_FONT_URL_PLACEHOLDER =
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap'
+type FontSource = 'library' | 'custom'
 
-function mapFontFieldErrors(
-  issues: { path: (string | number)[]; message: string }[],
-  invalidUrlMessage: string,
-): Partial<Record<string, string>> {
-  const errors = mapZodIssuesToFieldErrors(issues)
-  if (errors.googleFontUrl === 'Enter a valid Google Font URL') {
-    errors.googleFontUrl = invalidUrlMessage
-  }
-  return errors
+const FONT_LIBRARY_DIALOG_SIZE = {
+  sizeWidth: 'medium' as const,
+  sizeHeight: 'large' as const,
 }
 
 export function ThemeFontDialog({
   open,
   themeId,
   initial,
+  takenGoogleFontUrls = [],
   onOpenChange,
   onSubmit,
   chrome = 'dialog',
@@ -54,6 +61,7 @@ export function ThemeFontDialog({
   open: boolean
   themeId: string
   initial?: WebsiteFontToken
+  takenGoogleFontUrls?: string[]
   onOpenChange: (open: boolean) => void
   onSubmit: (font: WebsiteFontToken) => void
   chrome?: 'dialog' | 'embed-page'
@@ -61,16 +69,36 @@ export function ThemeFontDialog({
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
+  const dispatch = useAppDispatch()
+  const fontLibrary = useAppSelector((state) => state.websiteFontLibrary)
+  const fontLibraryCreate = useAppSelector((state) => state.websiteFontLibraryCreate)
+  const isSuperAdmin = useAppSelector((state) => state.auth.user?.role === 'super_admin')
+  const [pendingLibraryFont, setPendingLibraryFont] = useState<WebsiteFontToken | null>(null)
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isEdit = Boolean(initial)
+  const [source, setSource] = useState<FontSource>('library')
   const [name, setName] = useState(initial?.name ?? '')
-  const [googleFontUrl, setGoogleFontUrl] = useState(initial?.googleFontUrl ?? '')
+  const [googleFontUrl, setGoogleFontUrl] = useState('')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
+  const dialogSize = isEdit || source === 'custom' ? WEBSITE_PAGE_DIALOG_SIZE : FONT_LIBRARY_DIALOG_SIZE
+  const taken = new Set(
+    takenGoogleFontUrls.filter((url) => url && url !== initial?.googleFontUrl),
+  )
+  const takenFamilies = new Set(
+    [...taken].map((url) => parseGoogleFontFamily(url)).filter((family): family is string => Boolean(family)),
+  )
+  function isLibraryFontTaken(font: { googleFontUrl: string; family: string }) {
+    return taken.has(font.googleFontUrl) || takenFamilies.has(font.family)
+  }
+  const selected = fontLibrary.items.find((font) => font.id === selectedId) ?? null
+  const customUrl = normalizeGoogleFontInput(googleFontUrl)
+  const customFamily = parseGoogleFontFamily(customUrl)
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
@@ -81,7 +109,7 @@ export function ThemeFontDialog({
     title: isEdit ? t('editFontTitle') : t('createFontTitle'),
     description: isEdit ? undefined : t('createFontDescription'),
     submitLabel: isEdit ? tc('save') : t('create'),
-    ...WEBSITE_PAGE_DIALOG_SIZE,
+    ...dialogSize,
     onResult: (payload) => {
       const parsed = websiteFontTokenSchema.safeParse(payload)
       if (parsed.success) {
@@ -101,38 +129,113 @@ export function ThemeFontDialog({
   useEffect(() => {
     if (!open && chrome === 'dialog') return
     setName(initial?.name ?? '')
-    setGoogleFontUrl(initial?.googleFontUrl ?? '')
+    setGoogleFontUrl('')
+    setSource('library')
+    setSelectedId(null)
     setFieldErrors({})
-  }, [chrome, initial, open])
+    setPendingLibraryFont(null)
+    dispatch(websiteFontLibraryCreateActions.createReset())
+  }, [chrome, dispatch, initial, open])
+
+  useEffect(() => {
+    if (isEdit || source !== 'library' || (!open && chrome === 'dialog')) return
+    dispatch(websiteFontLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+  }, [chrome, dispatch, isEdit, open, source])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
-    sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, false)
-  }, [dialogRequestId, parentOrigin])
+    const waitingForChoice = !isEdit && source === 'library' && !selected
+    const savingLibrary = fontLibraryCreate.status === 'saving'
+    sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, waitingForChoice || savingLibrary)
+  }, [dialogRequestId, fontLibraryCreate.status, isEdit, parentOrigin, selected, source])
 
-  const normalizedUrl = useMemo(() => normalizeGoogleFontInput(googleFontUrl), [googleFontUrl])
-  const family = parseGoogleFontFamily(googleFontUrl) ?? (initial?.family ?? '')
-  const previewStyles = themeFontFamilyStyle(family)
-
-  function normalizeUrlField() {
-    setGoogleFontUrl((current) => normalizeGoogleFontInput(current))
-  }
+  useEffect(() => {
+    if (!pendingLibraryFont) return
+    if (fontLibraryCreate.status === 'succeeded') {
+      const font = pendingLibraryFont
+      setPendingLibraryFont(null)
+      dispatch(websiteFontLibraryCreateActions.createReset())
+      onSubmit(font)
+      return
+    }
+    if (fontLibraryCreate.status === 'error') {
+      setPendingLibraryFont(null)
+      toast({
+        title: t('fontLibrarySaveFailed'),
+        description: fontLibraryCreate.error ?? undefined,
+        variant: 'destructive',
+      })
+      dispatch(websiteFontLibraryCreateActions.createReset())
+    }
+  }, [dispatch, fontLibraryCreate.error, fontLibraryCreate.status, onSubmit, pendingLibraryFont, t, toast])
 
   function submit() {
-    const url = normalizeGoogleFontInput(googleFontUrl)
-    const parsedFamily = parseGoogleFontFamily(url) ?? ''
-    const styleName = name.trim() || parsedFamily
+    if (isEdit && initial) {
+      const parsed = websiteFontTokenSchema.safeParse({
+        id: initial.id,
+        name: name.trim() || initial.family,
+        googleFontUrl: initial.googleFontUrl,
+        family: initial.family,
+      })
+      if (!parsed.success) {
+        setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
+        return
+      }
+      setFieldErrors({})
+      onSubmit(parsed.data)
+      return
+    }
+
+    if (source === 'library') {
+      if (!selected) {
+        setFieldErrors({ library: t('pickFontRequired') })
+        return
+      }
+      if (isLibraryFontTaken(selected)) {
+        setFieldErrors({ library: t('fontAlreadyOnTheme') })
+        return
+      }
+      const parsed = websiteFontTokenSchema.safeParse({
+        id: nanoid(8),
+        name: selected.name,
+        googleFontUrl: selected.googleFontUrl,
+        family: selected.family,
+      })
+      if (!parsed.success) {
+        setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
+        return
+      }
+      setFieldErrors({})
+      onSubmit(parsed.data)
+      return
+    }
+
+    if (taken.has(customUrl)) {
+      setFieldErrors({ googleFontUrl: t('fontAlreadyOnTheme') })
+      return
+    }
     const parsed = websiteFontTokenSchema.safeParse({
-      id: initial?.id ?? nanoid(8),
-      name: styleName,
-      googleFontUrl: url,
-      family: parsedFamily,
+      id: nanoid(8),
+      name: name.trim() || customFamily || '',
+      googleFontUrl: customUrl,
+      family: customFamily ?? '',
     })
     if (!parsed.success) {
-      setFieldErrors(mapFontFieldErrors(parsed.error.issues, t('invalidGoogleFontUrl')))
+      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
     }
     setFieldErrors({})
+    if (isSuperAdmin) {
+      setPendingLibraryFont(parsed.data)
+      dispatch(
+        websiteFontLibraryCreateActions.createRequested({
+          name: parsed.data.name,
+          googleFontUrl: parsed.data.googleFontUrl,
+          family: parsed.data.family,
+        }),
+      )
+      return
+    }
     onSubmit(parsed.data)
   }
 
@@ -142,52 +245,129 @@ export function ThemeFontDialog({
     onSubmit: submit,
   })
 
-  const body = (
+  const customPreview = themeFontFamilyStyle(customFamily ?? undefined)
+  const editPreview = themeFontFamilyStyle(initial?.family)
+
+  const sourceSwitch = (
+    <SegmentedSwitch
+      value={source}
+      onValueChange={(value) => {
+        setSource(value as FontSource)
+        setFieldErrors({})
+      }}
+      size="sm"
+      aria-label={t('addFontSource')}
+    >
+      <SegmentedSwitchItem value="library">{t('addFontFromLibrary')}</SegmentedSwitchItem>
+      <SegmentedSwitchItem value="custom">{t('addFontCustom')}</SegmentedSwitchItem>
+    </SegmentedSwitch>
+  )
+
+  const libraryBody = (
+    <div className="space-y-3">
+      {fontLibrary.items.map((font) =>
+        font.googleFontUrl ? <link key={font.id} rel="stylesheet" href={font.googleFontUrl} /> : null,
+      )}
+      {isSuperAdmin ? (
+        <Callout>
+          <CalloutTitle>{t('fontLibrarySuperAdminTitle')}</CalloutTitle>
+          <CalloutDescription>{t('fontLibrarySuperAdminMessage')}</CalloutDescription>
+        </Callout>
+      ) : (
+        <p className="text-sm text-muted-foreground">{t('pickFontHint')}</p>
+      )}
+      {fieldErrors.library ? (
+        <p className="text-sm text-destructive" role="alert">
+          {fieldErrors.library}
+        </p>
+      ) : null}
+      {fontLibrary.listStatus === 'error' ? (
+        <Alert variant="destructive">
+          <AlertDescription>{fontLibrary.listError ?? t('fontLibraryLoadFailed')}</AlertDescription>
+        </Alert>
+      ) : null}
+      {fontLibrary.listStatus === 'loading' && fontLibrary.items.length === 0 ? (
+        <div className="flex justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : fontLibrary.items.length === 0 ? (
+        <ItemListEmpty>{isSuperAdmin ? t('fontLibraryEmptySuperAdmin') : t('fontLibraryEmpty')}</ItemListEmpty>
+      ) : (
+        <ItemList>
+          {fontLibrary.items.map((font) => (
+            <FontLibraryRow
+              key={font.id}
+              font={font}
+              selected={selectedId === font.id}
+              alreadyAdded={isLibraryFontTaken(font)}
+              alreadyAddedLabel={t('fontAlreadyOnTheme')}
+              sample={t('textPreviewSample')}
+              onSelect={() => {
+                if (isLibraryFontTaken(font)) return
+                setSelectedId(font.id)
+                setFieldErrors({})
+              }}
+            />
+          ))}
+        </ItemList>
+      )}
+    </div>
+  )
+
+  const customBody = (
     <Form className="space-y-4">
-      {normalizedUrl ? <link rel="stylesheet" href={normalizedUrl} /> : null}
+      {customFamily && customUrl ? <link rel="stylesheet" href={customUrl} /> : null}
       <FormField label={t('styleName')} htmlFor="theme-font-name" required error={fieldErrors.name}>
         <Input id="theme-font-name" value={name} onChange={(event) => setName(event.target.value)} />
       </FormField>
-      <FormField
-        label={t('googleFontUrl')}
-        htmlFor="theme-font-url"
-        required
-        error={fieldErrors.googleFontUrl}
-      >
+      <FormField label={t('googleFontUrl')} htmlFor="theme-font-url" required error={fieldErrors.googleFontUrl}>
         <Input
           id="theme-font-url"
           value={googleFontUrl}
-          placeholder={GOOGLE_FONT_URL_PLACEHOLDER}
-          onChange={(event) => setGoogleFontUrl(event.target.value)}
-          onPaste={(event) => {
-            const pasted = event.clipboardData.getData('text')
-            const normalized = normalizeGoogleFontInput(pasted)
-            if (normalized !== pasted.trim()) {
-              event.preventDefault()
-              setGoogleFontUrl(normalized)
-            }
+          onChange={(event) => {
+            setGoogleFontUrl(event.target.value)
+            setFieldErrors((current) => ({ ...current, googleFontUrl: undefined }))
           }}
-          onBlur={normalizeUrlField}
+          placeholder="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
         />
-        <p className="text-sm text-muted-foreground">{t('googleFontUrlHint')}</p>
-        <a
-          href={GOOGLE_FONTS_ORIGIN}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
-        >
-          {t('openGoogleFonts')}
-        </a>
       </FormField>
+      <p className="text-sm text-muted-foreground">{t('googleFontUrlHint')}</p>
+      {isSuperAdmin ? <p className="text-sm text-muted-foreground">{t('customFontLibraryNote')}</p> : null}
       <FormField label={t('fontFamily')} htmlFor="theme-font-family" error={fieldErrors.family}>
-        <Input id="theme-font-family" value={family} readOnly style={previewStyles} />
-        {family ? (
-          <p className="text-sm text-muted-foreground" style={previewStyles}>
+        <Input id="theme-font-family" value={customFamily ?? ''} readOnly style={customPreview} />
+        {customFamily ? (
+          <p className="text-sm text-muted-foreground" style={customPreview}>
             {t('textPreviewSample')}
           </p>
         ) : null}
       </FormField>
     </Form>
+  )
+
+  const body = isEdit ? (
+    <Form className="space-y-4">
+      {initial?.googleFontUrl ? <link rel="stylesheet" href={initial.googleFontUrl} /> : null}
+      <FormField label={t('styleName')} htmlFor="theme-font-name" required error={fieldErrors.name}>
+        <Input id="theme-font-name" value={name} onChange={(event) => setName(event.target.value)} />
+      </FormField>
+      <FormField label={t('googleFontUrl')} htmlFor="theme-font-url">
+        <Input id="theme-font-url" value={initial?.googleFontUrl ?? ''} readOnly />
+      </FormField>
+      <FormField label={t('fontFamily')} htmlFor="theme-font-family">
+        <Input id="theme-font-family" value={initial?.family ?? ''} readOnly style={editPreview} />
+        {initial?.family ? (
+          <p className="text-sm text-muted-foreground" style={editPreview}>
+            {t('textPreviewSample')}
+          </p>
+        ) : null}
+      </FormField>
+      <p className="text-sm text-muted-foreground">{t('editFontNameHint')}</p>
+    </Form>
+  ) : (
+    <div className="space-y-4">
+      {sourceSwitch}
+      {source === 'library' ? libraryBody : customBody}
+    </div>
   )
 
   if (chrome === 'embed-page') {
@@ -201,20 +381,80 @@ export function ThemeFontDialog({
       onOpenChange={onOpenChange}
       title={isEdit ? t('editFontTitle') : t('createFontTitle')}
       description={isEdit ? undefined : t('createFontDescription')}
-      sizeWidth={WEBSITE_PAGE_DIALOG_SIZE.sizeWidth}
-      sizeHeight={WEBSITE_PAGE_DIALOG_SIZE.sizeHeight}
+      sizeWidth={dialogSize.sizeWidth}
+      sizeHeight={dialogSize.sizeHeight}
       footer={
         <>
           <Button type="button" variant="outline" className="h-10 px-4" onClick={() => onOpenChange(false)}>
             {tc('cancel')}
           </Button>
-          <Button type="button" className="h-10 px-4" onClick={submit}>
-            {isEdit ? tc('save') : t('create')}
+          <Button
+            type="button"
+            className="h-10 px-4"
+            onClick={submit}
+            disabled={fontLibraryCreate.status === 'saving' || (!isEdit && source === 'library' && !selected)}
+          >
+            {fontLibraryCreate.status === 'saving' ? t('creating') : isEdit ? tc('save') : t('create')}
           </Button>
         </>
       }
     >
       {body}
     </CustomDialog>
+  )
+}
+
+function FontLibraryRow({
+  font,
+  selected,
+  alreadyAdded,
+  alreadyAddedLabel,
+  sample,
+  onSelect,
+}: {
+  font: WebsiteFontLibraryItem
+  selected: boolean
+  alreadyAdded: boolean
+  alreadyAddedLabel: string
+  sample: string
+  onSelect: () => void
+}) {
+  const previewStyle = themeFontFamilyStyle(font.family)
+  const marked = selected || alreadyAdded
+  return (
+    <ItemListItem
+      role="button"
+      tabIndex={alreadyAdded ? -1 : 0}
+      aria-pressed={marked}
+      aria-disabled={alreadyAdded}
+      className={cn('cursor-pointer transition-colors', marked && itemListRowActiveClassName)}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (alreadyAdded) return
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect()
+        }
+      }}
+    >
+      <ItemListContent>
+        <div className="flex items-center gap-3">
+          <span
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[hsl(var(--glass-border))] bg-background text-lg leading-none"
+            style={previewStyle}
+            aria-hidden
+          >
+            Aa
+          </span>
+          <div className="min-w-0">
+            <p className="font-medium">{font.name}</p>
+            <p className="truncate text-base leading-snug text-muted-foreground" style={previewStyle}>
+              {alreadyAdded ? alreadyAddedLabel : sample}
+            </p>
+          </div>
+        </div>
+      </ItemListContent>
+      {marked ? <Check className="ml-auto h-5 w-5 shrink-0 self-center text-primary" aria-hidden /> : null}
+    </ItemListItem>
   )
 }

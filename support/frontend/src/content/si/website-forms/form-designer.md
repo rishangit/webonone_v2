@@ -13,3 +13,5 @@ summary: "Design form designer හි ක්ෂේත්‍ර සහ layout ස
 4. Panel එක වසා, අවශ්‍ය ක්ෂේත්‍ර තවත් එක් කර, **Save** කරන්න.
 
 staff මෙම designer විවෘත නොකර [session එකක form fill කළ හැක](/docs/calendar/session-forms).
+
+[Chat assistant](/docs/app-preferences/ai-assistant) ගෙන් form එකක් සෑදීමට, control එකක් එක් කිරීමට, හෝ control සැකසුම් වෙනස් කිරීමට ඉල්ලා සිටිය හැක. සුරැකීමට පෙර යෝජනාව බලා **Confirm** තෝරන්න.

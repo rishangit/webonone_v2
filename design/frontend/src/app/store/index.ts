@@ -11,7 +11,16 @@ import {
   websiteThemesReducer,
 } from '@/features/website/store/websiteStore'
 import { websiteDatasetsReducer } from '@/features/website/store/websiteDatasetsStore'
+import {
+  websiteFontLibraryCreateReducer,
+  websiteFontLibraryReducer,
+} from '@/features/website/store/websiteFontLibraryStore'
 import { websiteSettingsReducer } from '@/features/website/store/websiteSettingsStore'
+import {
+  websiteLibraryBrowseReducer,
+  websiteLibraryCopyReducer,
+} from '@/features/website/store/websiteLibraryCopyStore'
+import { setWebsiteLibraryCatalog } from '@/features/website/utils/websiteCatalogScope'
 import { initApiClient } from '@/shared/services/apiClient'
 import { rootEpic } from '@/app/store/epics/rootEpic'
 
@@ -29,11 +38,21 @@ export const store = configureStore({
     websiteLayouts: websiteLayoutsReducer,
     websiteThemes: websiteThemesReducer,
     websiteSettings: websiteSettingsReducer,
+    websiteFontLibrary: websiteFontLibraryReducer,
+    websiteFontLibraryCreate: websiteFontLibraryCreateReducer,
+    websiteLibraryCopy: websiteLibraryCopyReducer,
+    websiteLibraryBrowse: websiteLibraryBrowseReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware({ thunk: false }).concat(epicMiddleware),
 })
 
 initApiClient(store)
+
+function syncWebsiteCatalogScope() {
+  setWebsiteLibraryCatalog(store.getState().auth.user?.role === 'super_admin')
+}
+syncWebsiteCatalogScope()
+store.subscribe(syncWebsiteCatalogScope)
 
 epicMiddleware.run(rootEpic)
 

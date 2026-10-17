@@ -27,6 +27,7 @@ function operationFromToolName(name: string, riskLevel: ToolDefinition['riskLeve
   }
   if (
     name.startsWith('create_') ||
+    name.startsWith('add_') ||
     name === 'register_company' ||
     name.startsWith('approve_') ||
     name.startsWith('reject_')
@@ -120,6 +121,10 @@ function areaIdFromTool(tool: ToolDefinition): string {
 
   if (name.startsWith('list_sms_') || name.startsWith('get_sms_')) {
     return 'sms.templates'
+  }
+
+  if (name.includes('design_form')) {
+    return 'design.forms'
   }
 
   return `${tool.service}.other`

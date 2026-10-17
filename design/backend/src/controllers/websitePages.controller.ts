@@ -27,7 +27,7 @@ export async function listWebsitePagesHandler(req: AuthenticatedRequest, res: Re
       typeof req.query.status === 'string' && (req.query.status === 'active' || req.query.status === 'inactive')
         ? (req.query.status as WebsitePageStatus)
         : undefined
-    res.json(await listWebsitePages({ companyId, page, pageSize, q, status }))
+    res.json(await listWebsitePages({ companyId, userId: req.user?.id, page, pageSize, q, status }))
   } catch (err) {
     next(err)
   }

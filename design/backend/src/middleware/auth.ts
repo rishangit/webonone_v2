@@ -61,3 +61,16 @@ export function requireCompanyContext(req: AuthenticatedRequest, res: Response, 
   }
   next()
 }
+
+/** Super admin curates platform catalogs that have no company id. */
+export function requireCompanyContextUnlessSuperAdmin(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  if (req.user?.role === 'super_admin') {
+    next()
+    return
+  }
+  requireCompanyContext(req, res, next)
+}

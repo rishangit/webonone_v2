@@ -7,6 +7,7 @@ import healthRoutes from './routes/health.routes.js'
 import formsRoutes from './routes/forms.routes.js'
 import submissionsRoutes from './routes/submissions.routes.js'
 import websiteRoutes from './routes/website.routes.js'
+import aiCapabilitiesRoutes from './routes/aiCapabilities.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -25,6 +26,7 @@ export function createApp() {
   app.use('/api/v1', formsRoutes)
   app.use('/api/v1', submissionsRoutes)
   app.use('/api/v1', websiteRoutes)
+  app.use('/api/v1', aiCapabilitiesRoutes)
 
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir, { index: 'index.html' }))

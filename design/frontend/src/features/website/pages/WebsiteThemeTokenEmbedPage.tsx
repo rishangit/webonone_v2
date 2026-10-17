@@ -64,6 +64,7 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
         chrome="embed-page"
         themeId={theme.id}
         initial={initial}
+        takenGoogleFontUrls={theme.fonts.map((font) => font.googleFontUrl)}
         onOpenChange={onOpenChange}
         onSubmit={complete}
       />

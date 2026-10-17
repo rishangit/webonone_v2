@@ -31,6 +31,10 @@ const executor = new HttpToolExecutor({
       apiBaseUrl: env.smsApiBaseUrl,
       serviceApiKey: env.smsServiceApiKey,
     },
+    design: {
+      apiBaseUrl: env.designApiBaseUrl,
+      serviceApiKey: env.designServiceApiKey,
+    },
   },
   timeoutMs: env.aiToolHttpTimeoutMs,
 })
@@ -63,6 +67,13 @@ function configuredPeers(): CapabilityPeer[] {
       service: 'sms',
       apiBaseUrl: env.smsApiBaseUrl,
       serviceApiKey: env.smsServiceApiKey,
+    })
+  }
+  if (env.designApiBaseUrl && env.designServiceApiKey) {
+    peers.push({
+      service: 'design',
+      apiBaseUrl: env.designApiBaseUrl,
+      serviceApiKey: env.designServiceApiKey,
     })
   }
   return peers

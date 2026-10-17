@@ -1,5 +1,11 @@
 import { z } from 'zod'
 
+export const createFontLibrarySchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  googleFontUrl: z.string().trim().min(1).max(2048),
+  family: z.string().trim().min(1).max(255),
+})
+
 export const websiteFontTokenSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(128),

@@ -136,21 +136,95 @@ export function buildConfirmDisplayFields(
   const presentArgKeys = new Set(
     Object.keys(args).filter((key) => !isHiddenConfirmKey(key) && isPresent(args[key])),
   )
-  const fields = scalarDisplayKeys(tool, displayArgs).map((key) => {
-    const prop = props[key]
-    const raw = displayArgs[key]
-    const missing = !isPresent(raw)
-    return {
-      key,
-      label: propertyLabel(key, prop),
-      value: formatScalarValue(raw),
-      missing,
-      editable: allowEdit && missing && isEditableConfirmProperty(prop),
-      inputType: propertyInputType(prop),
-    }
-  })
+  const fields = [
+    ...scalarDisplayKeys(tool, displayArgs).map((key) => {
+      const prop = props[key]
+      const raw = displayArgs[key]
+      const missing = !isPresent(raw)
+      return {
+        key,
+        label: propertyLabel(key, prop),
+        value: formatScalarValue(raw),
+        missing,
+        editable: allowEdit && missing && isEditableConfirmProperty(prop),
+        inputType: propertyInputType(prop),
+      }
+    }),
+    ...labeledArrayDisplayFields(tool, displayArgs),
+  ]
   if (options?.omitMissing) {
-    return fields.filter((field) => presentArgKeys.has(field.key))
+    return fields.filter((field) => field.key.split('.')[0] != null && presentArgKeys.has(field.key.split('.')[0]!))
+  }
+  return fields
+}
+
+function optionLabels(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  const labels: string[] = []
+  for (const entry of value) {
+    if (typeof entry === 'string' && entry.trim()) {
+      labels.push(entry.trim())
+    } else if (isRecord(entry) && typeof entry.label === 'string' && entry.label.trim()) {
+      labels.push(entry.label.trim())
+    }
+  }
+  return labels
+}
+
+function summarizeLabeledItem(item: Record<string, unknown>): string {
+  const parts: string[] = []
+  if (typeof item.type === 'string' && item.type.trim()) {
+    parts.push(item.type.trim())
+  }
+  if (item.required === true) {
+    parts.push('required')
+  }
+  const options = optionLabels(item.options)
+  if (options.length > 0) {
+    parts.push(options.join(', '))
+  }
+  return parts.length > 0 ? parts.join(' · ') : MISSING_DISPLAY_VALUE
+}
+
+function isObjectArrayProperty(prop: unknown): boolean {
+  return isRecord(prop) && prop.type === 'array' && isRecord(prop.items) && prop.items.type === 'object'
+}
+
+function labeledArrayDisplayFields(
+  tool: Pick<ToolDefinition, 'jsonSchema' | 'relatedArgs' | 'argCompletion'>,
+  args: Record<string, unknown>,
+): ConfirmDisplayField[] {
+  const props = schemaProperties(tool.jsonSchema)
+  const relatedKeys = new Set(
+    (tool.relatedArgs ?? []).flatMap((spec) => [spec.argKey, spec.displayKey]),
+  )
+  const fields: ConfirmDisplayField[] = []
+  for (const [key, prop] of Object.entries(props)) {
+    if (isHiddenConfirmKey(key) || relatedKeys.has(key) || !isObjectArrayProperty(prop)) {
+      continue
+    }
+    const value = args[key]
+    if (!Array.isArray(value)) {
+      continue
+    }
+    let index = 0
+    for (const entry of value) {
+      if (!isRecord(entry) || typeof entry.label !== 'string' || !entry.label.trim()) {
+        index += 1
+        continue
+      }
+      fields.push({
+        key: `${key}.${index}`,
+        label: entry.label.trim(),
+        value: summarizeLabeledItem(entry),
+        missing: false,
+        editable: false,
+        inputType: 'text',
+      })
+      index += 1
+    }
   }
   return fields
 }

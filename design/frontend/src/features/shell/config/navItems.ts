@@ -15,7 +15,7 @@ const TOP_LEVEL_ITEMS: DesignNavItem[] = [
     to: '/forms',
     label: 'Forms',
     icon: FileText,
-    roles: ['super_admin', 'company_admin', 'member'],
+    roles: ['company_admin', 'member'],
   },
   {
     to: '/website',

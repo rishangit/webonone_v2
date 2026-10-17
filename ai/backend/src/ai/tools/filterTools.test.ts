@@ -190,6 +190,33 @@ describe('filterToolsForContext', () => {
     assert.equal(withSession.includes('get_my_company'), true)
   })
 
+  it('hides design form tools without a company session', () => {
+    const createForm: ToolDefinition = {
+      name: 'create_design_form',
+      description: 'Create a form',
+      jsonSchema: { type: 'object', properties: {} },
+      riskLevel: 'write',
+      requiredRoles: ['company_admin', 'super_admin'],
+      requiredPermissions: ['ai:design:write'],
+      service: 'design',
+      auth: 'user_jwt',
+      invoke: { method: 'POST', path: '/api/v1/forms' },
+      capabilityVersion: '1',
+    }
+    const hidden = filterToolsForContext([createForm], {
+      role: 'company_admin',
+      permissions: permissionsForRole('company_admin', null),
+      companyId: null,
+    })
+    assert.equal(hidden.length, 0)
+    const shown = filterToolsForContext([createForm], {
+      role: 'company_admin',
+      permissions: permissionsForRole('company_admin', 'company00000000000001'),
+      companyId: 'company00000000000001',
+    })
+    assert.equal(shown.length, 1)
+  })
+
   it('does not give super_admin company catalog writes', () => {
     const names = namesFor('super_admin', 'company00000000000001')
     assert.equal(names.includes('create_catalog_item'), false)

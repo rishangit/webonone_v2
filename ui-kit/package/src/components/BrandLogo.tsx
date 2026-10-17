@@ -14,8 +14,20 @@ interface BrandLogoProps {
 }
 
 function BrandLogo({ href, className, children, mark = true, alt, markClassName }: BrandLogoProps) {
-  const wordmark = children ?? (typeof alt === 'string' && alt.length > 0 ? alt : 'WebOnOne')
-  const wordmarkClassName = cn('text-lg font-semibold tracking-tight text-foreground', className)
+  const defaultWordmark =
+    typeof alt === 'string' && alt.length > 0 ? alt : 'WebOnOne'
+  const wordmark = children ?? defaultWordmark
+  const brandNameForA11y =
+    typeof children === 'string'
+      ? children
+      : typeof alt === 'string' && alt.length > 0
+        ? alt
+        : 'WebOnOne'
+  const wordmarkClassName = cn(
+    'text-lg font-semibold tracking-tight text-foreground',
+    mark && 'hidden md:inline',
+    className,
+  )
   const content = mark ? (
     <>
       <WebOnOneLogoMark className={markClassName} decorative />
@@ -25,15 +37,23 @@ function BrandLogo({ href, className, children, mark = true, alt, markClassName 
     <span className={wordmarkClassName}>{wordmark}</span>
   )
 
+  const wrapperClassName = 'inline-flex items-center gap-2'
+  /** Logo mark only below `md`; name the control for assistive tech on narrow viewports. */
+  const brandAriaLabel = mark ? brandNameForA11y : undefined
+
   if (href) {
     return (
-      <a href={href} className="inline-flex items-center gap-2 hover:opacity-90">
+      <a href={href} className={cn(wrapperClassName, 'hover:opacity-90')} aria-label={brandAriaLabel}>
         {content}
       </a>
     )
   }
 
-  return <div className="inline-flex items-center gap-2">{content}</div>
+  return (
+    <div className={wrapperClassName} aria-label={brandAriaLabel}>
+      {content}
+    </div>
+  )
 }
 
 export { BrandLogo }

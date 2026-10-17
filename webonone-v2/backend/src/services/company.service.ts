@@ -21,6 +21,7 @@ import * as roleRepo from '../clients/identityRoleClient.js'
 import { ensureWelcomeTemplate as ensureEmailWelcomeTemplate, sendTransactionalEmail } from './emailClient.service.js'
 import { webOnOneLoginUrl } from '../utils/webOnOneAppLinks.js'
 import { ensureWelcomeTemplate as ensureSmsWelcomeTemplate } from './smsClient.service.js'
+import { ensureStarterWebsite } from './designClient.service.js'
 import { upsertPaymentCompany } from './paymentClient.service.js'
 import {
   notifyCompanyPendingReview,
@@ -577,6 +578,9 @@ export async function registerCompany(
   })
   void ensureSmsWelcomeTemplate(companyId, company.name).catch((err) => {
     console.error('[company] ensure SMS welcome template failed:', err)
+  })
+  void ensureStarterWebsite(companyId, company.name, userId).catch((err) => {
+    console.error('[company] ensure starter website failed:', err)
   })
 
   return toCompanyWithMembership(company, role)

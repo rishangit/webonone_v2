@@ -110,6 +110,7 @@ export function ThemeFontsTab({ theme, onPersist, saving, onFontInUse }: ThemeFo
         open={dialog !== null}
         themeId={theme.id}
         initial={dialog?.font}
+        takenGoogleFontUrls={theme.fonts.map((font) => font.googleFontUrl)}
         onOpenChange={(open) => {
           if (!open) setDialog(null)
         }}

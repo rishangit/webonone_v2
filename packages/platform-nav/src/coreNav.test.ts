@@ -358,4 +358,18 @@ describe('coreNav', () => {
       )
     }
   })
+
+  it('gives super admin Design Website without Forms', () => {
+    const defs = getPlatformNavDefs('superAdmin')
+    const design = defs.find((item) => item.kind === 'group' && item.label === 'Design')
+    assert.ok(design?.kind === 'group')
+    if (design?.kind === 'group') {
+      assert.deepEqual(
+        design.children.map((child) => child.label),
+        ['Website'],
+      )
+      assert.equal(design.children[0]?.externalService, 'design')
+      assert.equal(design.children[0]?.externalPath, '/website')
+    }
+  })
 })

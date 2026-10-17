@@ -446,6 +446,21 @@ const DESIGN_PLATFORM_NAV_GROUP: CoreNavGroup = {
   ],
 }
 
+/** Super admin curates the shared website library. Forms stay company-scoped. */
+const DESIGN_SUPER_ADMIN_NAV_GROUP: CoreNavGroup = {
+  kind: 'group',
+  label: 'Design',
+  children: [
+    {
+      kind: 'item',
+      path: DESIGN_NAV_SENTINELS.website,
+      label: 'Website',
+      externalService: 'design',
+      externalPath: '/website',
+    },
+  ],
+}
+
 const DATA_PLATFORM_NAV_GROUP: CoreNavGroup = {
   kind: 'group',
   label: 'Data',
@@ -641,6 +656,7 @@ export const SUPER_ADMIN_PLATFORM_NAV: CoreNavDef[] = [
     ],
   },
   DATA_PLATFORM_NAV_GROUP,
+  DESIGN_SUPER_ADMIN_NAV_GROUP,
   {
     kind: 'group',
     label: 'Email',

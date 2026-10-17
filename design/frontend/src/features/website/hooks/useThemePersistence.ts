@@ -38,6 +38,10 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
 
   const persistTheme = useCallback(
     (next: WebsiteTheme) => {
+      if (next.isLocked || theme?.isLocked) {
+        toast({ title: t('defaultLocked'), variant: 'destructive' })
+        return false
+      }
       const parsed = websiteThemeEditorSchema.safeParse({
         name: next.name,
         pageBackground: next.pageBackground,
@@ -80,7 +84,7 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
       )
       return true
     },
-    [dispatch, onSynced, t, toast],
+    [dispatch, onSynced, t, theme, toast],
   )
 
   return {

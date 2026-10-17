@@ -16,7 +16,8 @@ import { withAppliedUserTheme } from '../utils/mediaEmbedTheme'
 export function WebsiteMediaPage() {
   const { t } = useTranslation('website')
   const accessToken = useAppSelector((s) => s.auth.accessToken)
-  const companyId = useAppSelector((s) => s.auth.user?.companyId ?? null)
+  const user = useAppSelector((s) => s.auth.user)
+  const companyId = user?.companyId ?? null
   const crop = useWebsiteMediaCrop()
   const scope = companyId ? buildWebsiteMediaScope(companyId) : ''
   const folderPath = buildWebsiteFolderPath()
@@ -33,6 +34,7 @@ export function WebsiteMediaPage() {
   })
 
   if (!accessToken) return <Navigate to="/login" replace />
+  if (user?.role === 'super_admin') return <Navigate to="/website/pages" replace />
   if (!companyId) {
     return (
       <FeaturePage title={t('title')} description={t('mediaDescription')}>

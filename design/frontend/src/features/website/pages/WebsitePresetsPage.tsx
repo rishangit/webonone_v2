@@ -14,6 +14,7 @@ import {
   ItemListItem,
   ItemListMenu,
   ListPageBody,
+  StatusTag,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -27,6 +28,8 @@ import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsitePreset } from '../types'
+import { duplicateItemName } from '../utils/duplicateWebsiteItem'
+import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
 
 export function WebsitePresetsPage() {
   const { t } = useTranslation('website')
@@ -57,7 +60,7 @@ export function WebsitePresetsPage() {
   }, [awaitingCreate, detail, detailStatus, goToWebsiteEdit, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
-  if (!companyId) {
+  if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
         <WebsiteHubTabs section="presets" />
@@ -94,6 +97,7 @@ export function WebsitePresetsPage() {
             addLabel={t('addPreset')}
             onAdd={() => setDialog({})}
             compactAddLabel={tc('add')}
+            extra={user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind="presets" /> : undefined}
           />
         }
       />
@@ -119,6 +123,11 @@ export function WebsitePresetsPage() {
                       className="block w-full text-left"
                     >
                       <p className="font-medium">{item.name}</p>
+                      {item.isLocked ? (
+                        <StatusTag variant="pending" className="mt-1">
+                          {t('lockedDefault')}
+                        </StatusTag>
+                      ) : null}
                     </a>
                   </ItemListContent>
                   {canManage ? (
@@ -128,16 +137,33 @@ export function WebsitePresetsPage() {
                           {t('openDesigner')}
                         </a>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setDialog({ id: item.id, initialName: item.name })}>
-                        {t('editDetails')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                        onClick={() => {
+                          dispatch(
+                            websitePresetsActions.saveDetailRequested({
+                              body: { name: duplicateItemName(item.name), document: item.document },
+                            }),
+                          )
+                          list.load(1, list.pageSize, true)
+                          toast({ title: t('duplicate') })
+                        }}
                       >
-                        {t('common:delete')}
+                        {t('duplicate')}
                       </DropdownMenuItem>
+                      {item.isLocked ? null : (
+                        <DropdownMenuItem onClick={() => setDialog({ id: item.id, initialName: item.name })}>
+                          {t('editDetails')}
+                        </DropdownMenuItem>
+                      )}
+                      {item.isLocked ? null : <DropdownMenuSeparator />}
+                      {item.isLocked ? null : (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                        >
+                          {t('common:delete')}
+                        </DropdownMenuItem>
+                      )}
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>

@@ -9,6 +9,8 @@ import {
   getWebsiteLayout,
   nextPageSortOrder,
 } from './websiteLayout.service.js'
+import { ensureCompanyWebsiteDefaults } from './websiteLibrary.service.js'
+import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 
 export type WebsitePageDto = {
   id: string
@@ -20,6 +22,7 @@ export type WebsitePageDto = {
   layoutName: string | null
   sortOrder: number
   document: WebsiteDocumentV1
+  isLocked: boolean
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -44,6 +47,7 @@ function toDto(row: PageRowWithLayout): WebsitePageDto {
     layoutName: row.layout_name ?? null,
     sortOrder: row.sort_order ?? 0,
     document: parseDocument(row.document),
+    isLocked: isLockedFlag(row.is_locked),
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -65,11 +69,21 @@ async function resolveLayoutId(input: {
 
 export async function listWebsitePages(input: {
   companyId: string
+  userId?: string
   page?: number
   pageSize?: number
   q?: string
   status?: WebsitePageStatus
 }): Promise<{ items: WebsitePageDto[]; total: number; page: number; pageSize: number }> {
+  try {
+    await ensureCompanyWebsiteDefaults({
+      companyId: input.companyId,
+      userId: input.userId ?? null,
+    })
+  } catch (err) {
+    console.error('[website] ensure starter website failed:', err)
+  }
+
   const page = Math.max(1, input.page ?? 1)
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
   const offset = (page - 1) * pageSize
@@ -166,6 +180,7 @@ export async function updateWebsitePage(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Page not found', 'WEBSITE_PAGE_NOT_FOUND')
+  assertWebsiteUnlocked(existing.is_locked)
   if (input.body.path != null && input.body.path !== existing.path) {
     const clash = await db('design_website_pages')
       .where({ company_id: input.companyId, path: input.body.path })
@@ -196,8 +211,10 @@ export async function updateWebsitePage(input: {
 }
 
 export async function deleteWebsitePage(input: { companyId: string; id: string }): Promise<void> {
-  const deleted = await db('design_website_pages')
+  const existing = await db<DesignWebsitePageRow>('design_website_pages')
     .where({ id: input.id, company_id: input.companyId })
-    .del()
-  if (!deleted) throw new HttpError(404, 'Page not found', 'WEBSITE_PAGE_NOT_FOUND')
+    .first()
+  if (!existing) throw new HttpError(404, 'Page not found', 'WEBSITE_PAGE_NOT_FOUND')
+  assertWebsiteUnlocked(existing.is_locked)
+  await db('design_website_pages').where({ id: input.id, company_id: input.companyId }).del()
 }

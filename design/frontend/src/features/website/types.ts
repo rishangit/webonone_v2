@@ -223,6 +223,7 @@ export type WebsitePage = {
   layoutName: string | null
   sortOrder: number
   document: WebsiteDocumentV1
+  isLocked: boolean
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -244,6 +245,7 @@ export type WebsiteLayout = {
   footerId: string | null
   themeId: string | null
   isDefault: boolean
+  isLocked: boolean
   pages: WebsiteLayoutPage[]
   createdBy: string | null
   createdAt: string
@@ -255,6 +257,7 @@ export type WebsiteChrome = {
   companyId: string
   name: string
   isDefault: boolean
+  isLocked: boolean
   document: WebsiteDocumentV1
   createdBy: string | null
   createdAt: string
@@ -266,6 +269,7 @@ export type WebsitePreset = {
   companyId: string
   name: string
   document: WebsiteDocumentV1
+  isLocked: boolean
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -276,6 +280,14 @@ export type WebsiteFontToken = {
   name: string
   googleFontUrl: string
   family: string
+}
+
+export type WebsiteFontLibraryItem = {
+  id: string
+  name: string
+  googleFontUrl: string
+  family: string
+  sortOrder: number
 }
 
 export type WebsiteColorToken = {
@@ -312,6 +324,7 @@ export type WebsiteTheme = {
   bodyTextColor: string
   isActive: boolean
   isDefault: boolean
+  isLocked: boolean
   fonts: WebsiteFontToken[]
   colors: WebsiteColorToken[]
   textStyles: WebsiteTextStyle[]
@@ -383,6 +396,7 @@ export type WebsiteDataset = {
   config: WebsiteDatasetConfig
   selectedFields: string[]
   status: WebsiteDatasetStatus
+  isLocked: boolean
   createdBy: string | null
   createdAt: string
   updatedAt: string

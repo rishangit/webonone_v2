@@ -86,10 +86,9 @@ export async function getPublicWebsiteSite(input: {
   const company = await resolveCompanyFromWebOnOne(input.companyId)
   const companyId = company.id
   try {
-    const [page, listed] = await Promise.all([
-      resolvePublicWebsitePage({ companyId, path: input.path }),
-      listWebsitePages({ companyId, page: 1, pageSize: 100, status: 'active' }),
-    ])
+    // Create the starter site before resolving the page. Existing pages are left as they are.
+    const listed = await listWebsitePages({ companyId, page: 1, pageSize: 100, status: 'active' })
+    const page = await resolvePublicWebsitePage({ companyId, path: input.path })
     const resolvedLayout = await resolveLayoutForPage({ companyId, layoutId: page.layoutId })
     const [header, footer, theme] = resolvedLayout
       ? await Promise.all([

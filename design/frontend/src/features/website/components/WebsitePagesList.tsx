@@ -18,8 +18,9 @@ import type { WebsitePage } from '../types'
 interface WebsitePagesListProps {
   pages: WebsitePage[]
   canManage: boolean
-  onBrowse: (page: WebsitePage) => void
+  onBrowse?: (page: WebsitePage) => void
   onEditDetails: (page: WebsitePage) => void
+  onDuplicate: (page: WebsitePage) => void
   onDeleted: (id: string) => void
 }
 
@@ -28,6 +29,7 @@ export function WebsitePagesList({
   canManage,
   onBrowse,
   onEditDetails,
+  onDuplicate,
   onDeleted,
 }: WebsitePagesListProps) {
   const { t } = useTranslation('website')
@@ -43,14 +45,17 @@ export function WebsitePagesList({
         compare: (a: WebsitePage, b: WebsitePage) =>
           a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
         cell: (page: WebsitePage) => (
-          <a
-            href={websiteDesignerUrl('pages', page.id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-foreground hover:underline"
-          >
-            {page.name}
-          </a>
+          <span className="inline-flex items-center gap-2">
+            <a
+              href={websiteDesignerUrl('pages', page.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground hover:underline"
+            >
+              {page.name}
+            </a>
+            {page.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
+          </span>
         ),
       },
       {
@@ -75,15 +80,22 @@ export function WebsitePagesList({
             {t('openDesigner')}
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onBrowse(page)}>{t('browseLive')}</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onEditDetails(page)}>{t('editDetails')}</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
-          onClick={() => setPendingDelete({ id: page.id, name: page.name })}
-        >
-          {t('common:delete')}
-        </DropdownMenuItem>
+        {onBrowse ? (
+          <DropdownMenuItem onClick={() => onBrowse(page)}>{t('browseLive')}</DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem onClick={() => onDuplicate(page)}>{t('duplicate')}</DropdownMenuItem>
+        {page.isLocked ? null : (
+          <DropdownMenuItem onClick={() => onEditDetails(page)}>{t('editDetails')}</DropdownMenuItem>
+        )}
+        {page.isLocked ? null : <DropdownMenuSeparator />}
+        {page.isLocked ? null : (
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={() => setPendingDelete({ id: page.id, name: page.name })}
+          >
+            {t('common:delete')}
+          </DropdownMenuItem>
+        )}
       </ItemListMenu>
     )
   }
@@ -93,6 +105,7 @@ export function WebsitePagesList({
       <>
         <div className="flex items-center gap-2">
           <p className="font-medium">{page.name}</p>
+          {page.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
           <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
             {page.status === 'active' ? t('active') : t('inactive')}
           </StatusTag>

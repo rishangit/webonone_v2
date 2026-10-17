@@ -32,6 +32,9 @@ export function webononePathForOpen(open: RecordOpenMeta): string {
   if (open.service === 'data' && !open.path.startsWith('/data/')) {
     return `/data${open.path}`
   }
+  if (open.service === 'design' && !open.path.startsWith('/design/')) {
+    return `/design${open.path}`
+  }
   return open.path
 }
 

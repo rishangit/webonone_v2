@@ -27,6 +27,8 @@ import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteLayoutDialog } from '../components/WebsiteLayoutDialog'
 import type { LayoutMetaValues } from '../schemas/websiteMeta'
 import type { WebsiteLayout } from '../types'
+import { duplicateItemName } from '../utils/duplicateWebsiteItem'
+import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
 
 export function WebsiteLayoutsPage() {
   const { t } = useTranslation('website')
@@ -65,7 +67,7 @@ export function WebsiteLayoutsPage() {
   }, [accessToken, dispatch])
 
   if (!accessToken) return <Navigate to="/login" replace />
-  if (!companyId) {
+  if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
         <WebsiteHubTabs section="layouts" />
@@ -97,6 +99,7 @@ export function WebsiteLayoutsPage() {
             addLabel={t('addLayout')}
             onAdd={() => setDialog({})}
             compactAddLabel={tc('add')}
+            extra={user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind="layouts" /> : undefined}
           />
         }
       >
@@ -111,7 +114,7 @@ export function WebsiteLayoutsPage() {
                       type="button"
                       className="block w-full text-left"
                       onClick={() =>
-                        canManage
+                        canManage && !item.isLocked
                           ? setDialog({
                               id: item.id,
                               initial: {
@@ -129,6 +132,7 @@ export function WebsiteLayoutsPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
+                        {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {t('layoutPagesCount', { count: item.pages.length })}
@@ -141,23 +145,44 @@ export function WebsiteLayoutsPage() {
                   {canManage ? (
                     <ItemListMenu ariaLabel={t('actionsFor', { name: item.name })}>
                       <DropdownMenuItem
-                        onClick={() =>
-                          setDialog({
-                            id: item.id,
-                            initial: {
-                              name: item.name,
-                              headerId: item.headerId,
-                              footerId: item.footerId,
-                              themeId: item.themeId,
-                              isDefault: item.isDefault,
-                              pageIds: item.pages.map((page) => page.id),
-                            },
-                          })
-                        }
+                        onClick={() => {
+                          dispatch(
+                            websiteLayoutsActions.saveDetailRequested({
+                              body: {
+                                name: duplicateItemName(item.name),
+                                headerId: item.headerId,
+                                footerId: item.footerId,
+                                themeId: item.themeId,
+                                isDefault: false,
+                              },
+                            }),
+                          )
+                          list.load(1, list.pageSize, true)
+                          toast({ title: t('duplicate') })
+                        }}
                       >
-                        {t('editDetails')}
+                        {t('duplicate')}
                       </DropdownMenuItem>
-                      {!item.isDefault ? (
+                      {item.isLocked ? null : (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setDialog({
+                              id: item.id,
+                              initial: {
+                                name: item.name,
+                                headerId: item.headerId,
+                                footerId: item.footerId,
+                                themeId: item.themeId,
+                                isDefault: item.isDefault,
+                                pageIds: item.pages.map((page) => page.id),
+                              },
+                            })
+                          }
+                        >
+                          {t('editDetails')}
+                        </DropdownMenuItem>
+                      )}
+                      {!item.isDefault && !item.isLocked ? (
                         <DropdownMenuItem
                           onClick={() => {
                             dispatch(websiteLayoutsActions.saveDetailRequested({ id: item.id, body: { isDefault: true } }))
@@ -168,13 +193,15 @@ export function WebsiteLayoutsPage() {
                           {t('setDefault')}
                         </DropdownMenuItem>
                       ) : null}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
-                      >
-                        {t('common:delete')}
-                      </DropdownMenuItem>
+                      {item.isLocked ? null : <DropdownMenuSeparator />}
+                      {item.isLocked ? null : (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                        >
+                          {t('common:delete')}
+                        </DropdownMenuItem>
+                      )}
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>

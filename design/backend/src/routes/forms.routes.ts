@@ -28,6 +28,20 @@ router.post(
   requireRole(...manageRoles),
   formsController.createFormHandler,
 )
+router.post(
+  '/forms/:id/fields',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  formsController.addFormFieldHandler,
+)
+router.patch(
+  '/forms/:id/fields/:fieldId',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  formsController.updateFormFieldHandler,
+)
 router.patch(
   '/forms/:id',
   requireAuth,

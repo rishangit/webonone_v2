@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { db, type DesignWebsiteLayoutRow, type DesignWebsitePageRow } from '../models/db.js'
 import { HttpError } from './httpError.js'
+import { assertWebsiteUnlocked } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import type { CreateWebsiteLayoutBody, UpdateWebsiteLayoutBody } from '../schemas/websiteLayouts.schema.js'
 import type { WebsitePageStatus } from '../models/db.js'
@@ -21,6 +22,7 @@ export type WebsiteLayoutDto = {
   footerId: string | null
   themeId: string | null
   isDefault: boolean
+  isLocked: boolean
   pages: WebsiteLayoutPageDto[]
   createdBy: string | null
   createdAt: string
@@ -40,6 +42,7 @@ function toLayoutDto(row: DesignWebsiteLayoutRow, pages: WebsiteLayoutPageDto[])
     footerId: row.footer_id,
     themeId: row.theme_id,
     isDefault: toBool(row.is_default),
+    isLocked: toBool(row.is_locked),
     pages,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -247,6 +250,7 @@ export async function updateWebsiteLayout(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Layout not found', 'WEBSITE_LAYOUT_NOT_FOUND')
+  assertWebsiteUnlocked(existing.is_locked)
   if (input.body.headerId !== undefined) {
     await assertChromeBelongs({ kind: 'headers', companyId: input.companyId, id: input.body.headerId })
   }
@@ -283,6 +287,7 @@ export async function deleteWebsiteLayout(input: { companyId: string; id: string
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Layout not found', 'WEBSITE_LAYOUT_NOT_FOUND')
+  assertWebsiteUnlocked(existing.is_locked)
   const inUse = await db('design_website_pages').where({ layout_id: input.id, company_id: input.companyId }).first()
   if (inUse) {
     throw new HttpError(409, 'Reassign pages before deleting this layout', 'WEBSITE_LAYOUT_IN_USE')

@@ -28,7 +28,9 @@ import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteChromeDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsiteChrome } from '../types'
+import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 import type { RootState } from '@/app/store'
+import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
 
 export function WebsiteHeadersPage() {
   return <WebsiteChromePage kind="headers" />
@@ -68,7 +70,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   }, [awaitingCreate, detailStatus, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
-  if (!companyId) {
+  if (!companyId && user?.role !== 'super_admin') {
     return (
       <FeaturePage title={t('title')} description={t('description')}>
         <WebsiteHubTabs section={kind} />
@@ -96,6 +98,9 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
             addLabel={kind === 'headers' ? t('addHeader') : t('addFooter')}
             onAdd={() => setDialogOpen(true)}
             compactAddLabel={tc('add')}
+            extra={
+              user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind={kind} /> : undefined
+            }
           />
         }
       />
@@ -123,6 +128,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
+                        {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
                       </div>
                     </a>
                   </ItemListContent>
@@ -133,7 +139,24 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                           {t('openDesigner')}
                         </a>
                       </DropdownMenuItem>
-                      {!item.isDefault ? (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          dispatch(
+                            actions.saveDetailRequested({
+                              body: {
+                                name: duplicateItemName(item.name),
+                                isDefault: false,
+                                document: item.document,
+                              },
+                            }),
+                          )
+                          list.load(1, list.pageSize, true)
+                          toast({ title: t('duplicate') })
+                        }}
+                      >
+                        {t('duplicate')}
+                      </DropdownMenuItem>
+                      {!item.isDefault && !item.isLocked ? (
                         <DropdownMenuItem
                           onClick={() => {
                             dispatch(actions.saveDetailRequested({ id: item.id, body: { isDefault: true } }))
@@ -144,13 +167,15 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                           {t('setDefault')}
                         </DropdownMenuItem>
                       ) : null}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
-                      >
-                        {t('common:delete')}
-                      </DropdownMenuItem>
+                      {item.isLocked ? null : <DropdownMenuSeparator />}
+                      {item.isLocked ? null : (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                        >
+                          {t('common:delete')}
+                        </DropdownMenuItem>
+                      )}
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>

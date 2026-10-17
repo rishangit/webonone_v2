@@ -16,6 +16,8 @@ summary: "නැවත භාවිතා කළ හැකි අන්තර්
 
 පිටුවකට හෝ පාදමකට ඇතුළු කරන විට පෙරසැකසුමේ Nav menu ඇඩෝන මඟහරිනු ලැබේ. පෙරසැකසුම් public site හි නොපෙනේ.
 
+**Add from library** මගින් බෙදාගත් preset එකක් මෙම වෙබ් අඩවියට පිටපත් වේ. පිටපත සංස්කරණය කිරීම පුස්තකාලය වෙනස් නොකරයි. Super Admin **Design → Website** යටතේ පුස්තකාල presets පවත්වාගෙන යයි.
+
 පොදු අඩවියට නාමාවලි හෝ විශ්ලේෂණ දත්ත නිරාවරණය කිරීමට [වෙබ් අඩවි දත්ත කට්ටල](/docs/website-forms/website-datasets) භාවිතා කරන්න.
 
 [Website pages](/docs/website-forms/website-pages) සහ [Headers and footers](/docs/website-forms/headers-footers) බලන්න.

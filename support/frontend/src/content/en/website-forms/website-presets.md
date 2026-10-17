@@ -16,6 +16,8 @@ summary: "Save reusable content-element layouts and insert them while designing 
 
 Nav menu add-ons in a preset are skipped when you insert into a page or footer. Presets are not shown on the public site.
 
+**Add from library** copies a shared preset into this website. Editing the copy does not change the library. Super Admin maintains library presets under **Design → Website**.
+
 To expose catalog or analytics data on the public site, use [Website data sets](/docs/website-forms/website-datasets).
 
 See [Website pages](/docs/website-forms/website-pages) and [Headers and footers](/docs/website-forms/headers-footers).

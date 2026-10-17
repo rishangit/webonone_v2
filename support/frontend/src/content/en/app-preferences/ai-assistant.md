@@ -43,6 +43,7 @@ Depending on your account, the card may include areas such as:
 | **Data library — Products / Services / Spaces** | Platform templates with descriptions, tags, and attributes before they are linked into a company catalog |
 | **Payment — Invoices** | Read-only subscription invoices when you can open Payment |
 | **SMS — Templates** | List and view SMS templates when your role includes SMS access |
+| **Design — Forms** | Create a form with its controls, add a control, or change a control’s label, required setting, placeholder, or options. Needs an active company. Confirm before anything is saved |
 
 Rows marked **Needs active company** require that you are logged into a company, not only signed in as a platform user.
 

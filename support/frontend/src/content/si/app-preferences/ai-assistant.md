@@ -43,6 +43,7 @@ Depending on your account, the card may include:
 | **Data library — Products / Services / Spaces** | Platform templates before they are linked into a company catalog |
 | **Payment — Invoices** | Read-only subscription invoices when you can open Payment |
 | **SMS — Templates** | List and view SMS templates when your role includes SMS access |
+| **Design — Forms** | Form එකක් controls සමඟ සාදන්න, control එකක් එක් කරන්න, හෝ control එකක label, required, placeholder, හෝ options වෙනස් කරන්න. සක්‍රිය company එකක් අවශ්‍යයි. සුරැකීමට පෙර Confirm කරන්න |
 
 Rows marked **Needs active company** require company login — platform user sign-in alone is not enough.
 

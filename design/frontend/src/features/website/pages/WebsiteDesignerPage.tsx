@@ -102,6 +102,9 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         : kind === 'footers'
           ? footersState
           : presetsState
+  const lockedDocument = Boolean(
+    feature.detail && feature.detail.id === id && feature.detail.isLocked,
+  )
   const [document, setDocument] = useState<WebsiteDocumentV1>(emptyWebsiteDocument())
   const [saved, setSaved] = useState(() => JSON.stringify(emptyWebsiteDocument()))
   const [mode, setMode] = useState<DesignerMode>('edit')
@@ -346,6 +349,10 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
 
   function save() {
     if (!id) return
+    if (lockedDocument) {
+      toast({ title: t('defaultLocked'), variant: 'destructive' })
+      return
+    }
     const next = snapshotDocument(document, theme ?? null)
     const body = { document: next }
     if (kind === 'pages') dispatch(websitePagesActions.saveDetailRequested({ id, body }))
@@ -759,6 +766,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         <link key={url} rel="stylesheet" href={url} />
       ))}
       <header className="glass-card z-50 shrink-0 border-b">
+        {lockedDocument ? (
+          <Alert className="rounded-none border-x-0 border-t-0">
+            <AlertDescription>{t('defaultLocked')}</AlertDescription>
+          </Alert>
+        ) : null}
         <div className="flex h-14 w-full items-center gap-2 px-2 sm:px-6">
           {mode === 'edit' ? (
             <button
@@ -778,8 +790,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-themed">
             <div className="flex shrink-0 items-center gap-2">
               <SegmentedSwitch
-                value={mode}
-                onValueChange={(value) => setMode(value as DesignerMode)}
+                value={lockedDocument ? 'visual' : mode}
+                onValueChange={(value) => {
+                  if (lockedDocument) return
+                  setMode(value as DesignerMode)
+                }}
                 size="sm"
                 className="shrink-0"
                 aria-label={t('designerMode')}
@@ -792,7 +807,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   {t('addBlock')}
                 </Button>
               ) : null}
-              {kind === 'pages' && pagesState.detail ? (
+              {kind === 'pages' && pagesState.detail?.companyId ? (
                 <Button
                   type="button"
                   size="sm"
@@ -824,7 +839,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                 ))}
               </SegmentedSwitch>
               {canManage ? (
-                <Button type="button" size="sm" onClick={save} disabled={feature.detailStatus === 'saving'}>
+                <Button type="button" size="sm" onClick={save} disabled={lockedDocument || feature.detailStatus === 'saving'}>
                   {feature.detailStatus === 'saving' ? t('saving') : t('save')}
                 </Button>
               ) : null}

@@ -32,6 +32,23 @@ describe('recordsFromUnknown', () => {
     assert.equal(records[0]?.name, 'PatientCare')
   })
 
+  it('unwraps a single form record so the designer path can open', () => {
+    const records = recordsFromUnknown({
+      status: 'executed',
+      data: { form: { id: 'formId12345678', name: 'Patient intake' } },
+    })
+    assert.equal(records.length, 1)
+    assert.equal(records[0]?.id, 'formId12345678')
+    const [record] = withRecordOpen(records, {
+      service: 'design',
+      viewPath: '/forms/{id}/edit',
+    })
+    assert.deepEqual(record?.__open, {
+      service: 'design',
+      path: '/forms/formId12345678/edit',
+    })
+  })
+
   it('skips pending confirmation payloads', () => {
     assert.deepEqual(
       recordsFromUnknown({

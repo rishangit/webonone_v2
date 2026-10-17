@@ -38,6 +38,11 @@ const FormFieldPropertiesPanelEmbedPage = lazy(() =>
 const WebsitePagesPage = lazy(() =>
   import('@/features/website/pages/WebsitePagesPage').then((m) => ({ default: m.WebsitePagesPage })),
 )
+const WebsiteLibraryPickerEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteLibraryPickerEmbedPage').then((m) => ({
+    default: m.WebsiteLibraryPickerEmbedPage,
+  })),
+)
 const WebsitePagesFilterEmbedPage = lazy(() =>
   import('@/features/website/pages/WebsitePagesFilterEmbedPage').then((m) => ({
     default: m.WebsitePagesFilterEmbedPage,
@@ -387,6 +392,16 @@ export function App() {
                 <RoleRoute roles={[...companyRoles]}>
                   <LazyRoute>
                     <WebsiteSettingsPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/library/:kind"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteLibraryPickerEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

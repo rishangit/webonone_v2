@@ -41,11 +41,13 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
   const [searchParams] = useSearchParams()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const companyId = useAppSelector((s) => s.auth.user?.companyId ?? '')
+  const role = useAppSelector((s) => s.auth.user?.role)
   const hostParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const hostRequestIdRef = useRef<string | null>(null)
   const [selected, setSelected] = useState<MediaItemDto | null>(null)
   const [openKey, setOpenKey] = useState(0)
-  const scope = buildWebsiteMediaScope(companyId)
+  const scope =
+    role === 'super_admin' ? 'webonone:platform:website-library' : buildWebsiteMediaScope(companyId)
   const folderPath = buildWebsiteFolderPath()
   const crop = useWebsiteMediaCrop()
 
@@ -171,7 +173,7 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
           </>
         }
       >
-        {!accessToken || !companyId ? (
+        {!accessToken || (!companyId && role !== 'super_admin') ? (
           <div className="flex flex-col items-center gap-3 py-8">
             <p className="text-sm text-muted-foreground">{t('needCompany')}</p>
           </div>

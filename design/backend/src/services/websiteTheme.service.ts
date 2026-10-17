@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { db, type DesignWebsiteThemeRow } from '../models/db.js'
 import { HttpError } from './httpError.js'
+import { assertWebsiteUnlocked } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { countLayoutsUsingTheme } from './websiteLayout.service.js'
 import type {
@@ -20,6 +21,7 @@ export type WebsiteThemeDto = {
   bodyTextColor: string
   isActive: boolean
   isDefault: boolean
+  isLocked: boolean
   fonts: WebsiteFontToken[]
   colors: WebsiteColorToken[]
   textStyles: WebsiteTextStyle[]
@@ -55,6 +57,7 @@ function toDto(row: DesignWebsiteThemeRow): WebsiteThemeDto {
     bodyTextColor: row.body_text_color,
     isActive: toBool(row.is_active),
     isDefault: toBool(row.is_default),
+    isLocked: toBool(row.is_locked),
     fonts: parseJsonArray<WebsiteFontToken>(row.fonts),
     colors: parseJsonArray<WebsiteColorToken>(row.colors),
     textStyles: parseJsonArray<WebsiteTextStyle>(row.text_styles),
@@ -149,6 +152,7 @@ export async function updateWebsiteTheme(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+  assertWebsiteUnlocked(existing.is_locked)
   if (input.body.isDefault) await clearDefaults(input.companyId)
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
@@ -180,6 +184,7 @@ export async function deleteWebsiteTheme(input: { companyId: string; id: string 
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+  assertWebsiteUnlocked(existing.is_locked)
   const used = await countLayoutsUsingTheme({ companyId: input.companyId, id: input.id })
   if (used > 0) {
     throw new HttpError(409, 'This theme is used by a layout', 'WEBSITE_THEME_IN_USE')

@@ -78,6 +78,7 @@ export function WebsiteSettingsPage() {
   }, [status, error, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
+  if (user?.role === 'super_admin') return <Navigate to="/website/pages" replace />
   if (!companyId) {
     return (
       <FeaturePage title={t('title')} description={t('settingsDescription')}>
